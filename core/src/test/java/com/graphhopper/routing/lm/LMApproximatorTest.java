@@ -25,6 +25,7 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -33,22 +34,25 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.IntToDoubleFunction;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LMApproximatorTest {
 
     @RepeatedTest(value = 10)
     public void randomGraph() {
         final long seed = System.nanoTime();
-        run(seed);
+        runRandomGraph(seed);
     }
 
-    private void run(long seed) {
+    private void runRandomGraph(long seed) {
         FlagEncoder encoder = FlagEncoders.createCar(new PMap("turn_costs=true|speed_two_directions=true"));
         EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
@@ -59,6 +63,7 @@ public class LMApproximatorTest {
         GHUtility.buildRandomGraph(graph, rnd, 20, 2.2, false, true,
                 encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60.0, 0, 1.0, 0);
 
+        // todo: maybe we should also test this with turn costs, just setting 'turn_costs=true' above doesn't really do anything
         Weighting weighting = new FastestWeighting(encoder);
 
         // todo: try with more landmarks, but first make it work with one...
@@ -192,4 +197,72 @@ public class LMApproximatorTest {
         }
     }
 
+    @Test
+    void virtualNode() {
+        // 0-1-snap-2-LM
+
+        // case 1: the snap is closer to node 2, i.e. closer to the node that is closer to the landmark
+        checkVirtualNode(52.536227, 13.417928);
+        // case 2: the snap is closer to node 1, i.e. closer to the node that is further away from the landmark
+        checkVirtualNode(52.535715, 13.417343);
+    }
+
+    void checkVirtualNode(double lat, double lon) {
+        FlagEncoder encoder = FlagEncoders.createCar(new PMap("speed_two_directions=true"));
+        EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 52.532344, 13.413556);
+        na.setNode(1, 52.535372, 13.416989);
+        na.setNode(2, 52.536599, 13.418319);
+        na.setNode(3, 52.539405, 13.421431);
+        BiConsumer<Integer, Integer> addEdge = (from, to) ->
+                GHUtility.setSpeed(60, 60, encoder, graph.edge(from, to).setDistance(GHUtility.getDistance(from, to, na)));
+        // 0-1-2-3
+        addEdge.accept(0, 1);
+        addEdge.accept(1, 2);
+        addEdge.accept(2, 3);
+
+        // we create a landmark at node 3
+        final int landmarkNode = 3;
+        Weighting weighting = new FastestWeighting(encoder);
+        LandmarkStorage landmarkStorage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", weighting), 1);
+        landmarkStorage.setLandmarkSuggestions(Arrays.asList(
+                new LandmarkSuggestion(Arrays.asList(landmarkNode), new BBox(10, 15, 50, 55))
+        ));
+        landmarkStorage.createLandmarks();
+
+        LocationIndexTree locationIndex = new LocationIndexTree(graph, graph.getDirectory());
+        locationIndex.prepareIndex();
+
+        Snap snap = locationIndex.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
+        // we want a snap that snaps between nodes 1 and 2
+        assertEquals(1, snap.getClosestEdge().getEdge());
+        assertEquals(1, snap.getClosestEdge().getBaseNode());
+        assertEquals(2, snap.getClosestEdge().getAdjNode());
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
+
+        IntToDoubleFunction getExactWeight = from -> new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED).calcPath(from, landmarkNode).getWeight();
+        LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, landmarkStorage, 1);
+        lmApproximator.setTo(landmarkNode);
+        // make sure the approximator never over-approximates
+        for (int i = 0; i < 5; i++)
+            assertTrue(lmApproximator.approximate(i) <= getExactWeight.applyAsDouble(i));
+
+        // check feasibility
+        BiFunction<Integer, Integer, Optional<String>> checkFeasibility = (u, v) -> {
+            double w_uv = weighting.calcEdgeWeight(GHUtility.getEdge(queryGraph, u, v), false);
+            double h_u = lmApproximator.approximate(u);
+            double h_v = lmApproximator.approximate(v);
+            boolean feasible = w_uv + h_v - h_u + lmApproximator.getSlack() >= 0;
+            return feasible ? Optional.empty() : Optional.of("Feasibility condition violated, u=" + u + ", v=" + v + ", w_uv=" + w_uv + ", h_u=" + h_u + ", h_v=" + h_v + ", slack: " + lmApproximator.getSlack() + "\n");
+        };
+        List<String> errors = new ArrayList<>();
+        // 0-1-4-2-3, node 4 is the virtual one
+        checkFeasibility.apply(4, 2).ifPresent(errors::add);
+        checkFeasibility.apply(4, 1).ifPresent(errors::add);
+        checkFeasibility.apply(2, 4).ifPresent(errors::add);
+        checkFeasibility.apply(1, 4).ifPresent(errors::add);
+        assertTrue(errors.isEmpty(), errors.toString());
+    }
 }
