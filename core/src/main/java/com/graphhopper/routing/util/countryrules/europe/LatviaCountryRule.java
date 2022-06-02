@@ -16,26 +16,26 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.util.countryrules;
+package com.graphhopper.routing.util.countryrules.europe;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.Toll;
-import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.countryrules.CountryRule;
 
-/**
- * GraphHopper uses country rules to adjust the routing behavior based on the country an edge is located in
- */
-public interface CountryRule {
-    default double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
-        return currentMaxSpeed;
-    }
-
-    default RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
-        return currentRoadAccess;
-    }
+public class LatviaCountryRule implements CountryRule {
     
-    default Toll getToll(ReaderWay readerWay, Toll currentToll) {
+    @Override
+    public Toll getToll(ReaderWay readerWay, Toll currentToll) {
+        if (currentToll != Toll.MISSING) {
+            return currentToll;
+        }
+
+        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
+        if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK || roadClass == RoadClass.PRIMARY) {
+            return Toll.HGV;
+        }
+        
         return currentToll;
     }
 }
