@@ -28,7 +28,7 @@ public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
     @Override
     public FlagEncoder createFlagEncoder(String name, PMap configuration) {
         if (name.equals(ROADS))
-            return FlagEncoders.createRoads();
+            return FlagEncoders.createRoads(configuration);
 
         if (name.equals(CAR))
             return FlagEncoders.createCar(configuration);
