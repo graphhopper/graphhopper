@@ -41,8 +41,8 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Override
-    protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup) {
-        MountainBikeTagParser parser = new MountainBikeTagParser(lookup, new PMap("block_fords=true"));
+    protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup, PMap pMap) {
+        MountainBikeTagParser parser = new MountainBikeTagParser(lookup, pMap);
         parser.init(new DateRangeParser());
         return parser;
     }
