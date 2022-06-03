@@ -26,6 +26,7 @@ import com.graphhopper.routing.util.parsers.OSMTurnRelationParser;
 import com.graphhopper.routing.util.parsers.RelationTagParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
+import com.graphhopper.routing.util.parsers.helpers.TagParserSorter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
@@ -40,6 +41,8 @@ public class OSMParsers {
     private final List<RelationTagParser> relationTagParsers;
     private final List<TurnCostParser> turnCostParsers;
     private final EncodedValue.InitializerConfig relConfig = new EncodedValue.InitializerConfig();
+    
+    private List<TagParser> parsers;
 
     public OSMParsers() {
         this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
@@ -86,12 +89,19 @@ public class OSMParsers {
     }
 
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
-        for (RelationTagParser relParser : relationTagParsers)
-            relParser.handleWayTags(edgeFlags, way, relationFlags);
-        for (TagParser parser : wayTagParsers)
+        if (parsers == null) {
+            this.parsers = new ArrayList<>();
+            parsers.addAll(relationTagParsers);
+            parsers.addAll(wayTagParsers);
+            parsers.addAll(vehicleTagParsers);
+            
+            TagParserSorter sorter = new TagParserSorter(parsers);
+            sorter.sort();
+        }
+        
+        for (TagParser parser : parsers)
             parser.handleWayTags(edgeFlags, way, relationFlags);
-        for (VehicleTagParser vehicleTagParser : vehicleTagParsers)
-            vehicleTagParser.handleWayTags(edgeFlags, way, relationFlags);
+        
         return edgeFlags;
     }
 
