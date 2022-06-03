@@ -79,7 +79,7 @@ public class FlagEncoders {
         return VehicleEncodedValues.mountainbike(properties);
     }
 
-    public static FlagEncoder createRoads() {
-        return VehicleEncodedValues.roads();
+    public static FlagEncoder createRoads(PMap properties) {
+        return VehicleEncodedValues.roads(properties);
     }
 }
