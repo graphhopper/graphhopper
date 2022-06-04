@@ -14,14 +14,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class StringIndexTest {
 
+    private final static String location = "./target/stringindex-store";
+
     private StringIndex create() {
-        return new StringIndex(new RAMDirectory(), 1000, -1).create(1000);
+        return new StringIndex(new RAMDirectory(), 1000).create(1000);
     }
 
-    Map<String, String> createMap(String... strings) {
+    Map<String, Object> createMap(String... strings) {
         if (strings.length % 2 != 0)
             throw new IllegalArgumentException("Cannot create map from strings " + Arrays.toString(strings));
-        Map<String, String> map = new LinkedHashMap<>();
+        Map<String, Object> map = new LinkedHashMap<>();
         for (int i = 0; i < strings.length; i += 2) {
             map.put(strings[i], strings[i + 1]);
         }
@@ -58,10 +60,13 @@ public class StringIndexTest {
         StringIndex index = create();
         assertEquals(1, index.add(createMap("", "")));
         assertEquals(5, index.add(createMap("", null)));
-        assertEquals(9, index.add(createMap(null, null)));
-        assertEquals("", index.get(0, ""));
+        // cannot store null value if it is the first value of the key:
+        assertThrows(IllegalArgumentException.class, () -> index.add(createMap("blup", null)));
+        assertThrows(IllegalArgumentException.class, () -> index.add(createMap(null, null)));
 
-        assertEquals(13, index.add(createMap("else", "else")));
+        assertNull(index.get(0, ""));
+
+        assertEquals(9, index.add(createMap("else", "else")));
     }
 
     @Test
@@ -131,7 +136,7 @@ public class StringIndexTest {
             str += "ß";
         }
         long result = index.add(createMap("", str));
-        assertEquals(127, index.get(result, "").length());
+        assertEquals(127, ((String) index.get(result, "")).length());
     }
 
     @Test
@@ -156,20 +161,19 @@ public class StringIndexTest {
 
         index.throwExceptionIfTooLong = false;
         long pointer = index.add(createMap("", "Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))"));
-        assertTrue(index.get(pointer, "").startsWith("Бухарестская улица (h"));
+        assertTrue(((String) index.get(pointer, "")).startsWith("Бухарестская улица (h"));
     }
 
     @Test
     public void testFlush() {
-        String location = "./target/stringindex-store";
         Helper.removeDir(new File(location));
 
-        StringIndex index = new StringIndex(new RAMDirectory(location, true).create(), 1000, -1).create(1000);
+        StringIndex index = new StringIndex(new RAMDirectory(location, true).create(), 1000);
         long pointer = index.add(createMap("", "test"));
         index.flush();
         index.close();
 
-        index = new StringIndex(new RAMDirectory(location, true), 1000, -1);
+        index = new StringIndex(new RAMDirectory(location, true), 1000);
         assertTrue(index.loadExisting());
         assertEquals("test", index.get(pointer, ""));
         // make sure bytePointer is correctly set after loadExisting
@@ -182,10 +186,9 @@ public class StringIndexTest {
 
     @Test
     public void testLoadKeys() {
-        String location = "./target/stringindex-store";
         Helper.removeDir(new File(location));
 
-        StringIndex index = new StringIndex(new RAMDirectory(location, true).create(), 1000, -1).create(1000);
+        StringIndex index = new StringIndex(new RAMDirectory(location, true).create(), 1000).create(1000);
         long pointerA = index.add(createMap("c", "test value"));
         assertEquals(2, index.getKeys().size());
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
@@ -194,7 +197,7 @@ public class StringIndexTest {
         index.flush();
         index.close();
 
-        index = new StringIndex(new RAMDirectory(location, true), 1000, -1);
+        index = new StringIndex(new RAMDirectory(location, true), 1000);
         assertTrue(index.loadExisting());
         assertEquals("[, c, a, b]", index.getKeys().toString());
         assertEquals("test value", index.get(pointerA, "c"));
@@ -224,17 +227,17 @@ public class StringIndexTest {
 
     @RepeatedTest(20)
     public void testRandom() {
-        long seed = new Random().nextLong();
+        final long seed = new Random().nextLong();
         try {
-            StringIndex index = create();
+            StringIndex index = new StringIndex(new RAMDirectory(location, true).create()).create(1000);
             Random random = new Random(seed);
-            List<String> keys = createRandomList(random, "_key", 1000);
-            List<String> values = createRandomList(random, "_value", 5000);
+            List<String> keys = createRandomStringList(random, "_key", 100);
+            List<Integer> values = createRandomList(random, 500);
 
-            int size = 20000;
+            int size = 10000;
             LongArrayList pointers = new LongArrayList(size);
             for (int i = 0; i < size; i++) {
-                Map<String, String> map = createRandomMap(random, keys, values);
+                Map<String, Object> map = createRandomMap(random, keys, values);
                 long pointer = index.add(map);
                 try {
                     assertEquals(map.size(), index.getAll(pointer).size(), "" + i);
@@ -245,15 +248,41 @@ public class StringIndexTest {
             }
 
             for (int i = 0; i < size; i++) {
-                Map<String, String> map = index.getAll(pointers.get(i));
+                Map<String, Object> map = index.getAll(pointers.get(i));
                 assertTrue(map.size() > 0, i + " " + map);
+                for (Map.Entry<String, Object> entry : map.entrySet()) {
+                    Object value = index.get(pointers.get(i), entry.getKey());
+                    assertEquals(entry.getValue(), value, i + " " + map);
+                }
             }
+            index.flush();
+            index.close();
+
+            index = new StringIndex(new RAMDirectory(location, true).create());
+            assertTrue(index.loadExisting());
+            for (int i = 0; i < size; i++) {
+                Map<String, Object> map = index.getAll(pointers.get(i));
+                assertTrue(map.size() > 0, i + " " + map);
+                for (Map.Entry<String, Object> entry : map.entrySet()) {
+                    Object value = index.get(pointers.get(i), entry.getKey());
+                    assertEquals(entry.getValue(), value, i + " " + map);
+                }
+            }
+            index.close();
         } catch (Throwable t) {
-            throw new RuntimeException("seed:" + seed + ", error:" + t);
+            throw new RuntimeException("EdgeKVStorageTest.testRandom seed:" + seed, t);
         }
     }
 
-    private List<String> createRandomList(Random random, String postfix, int size) {
+    private List<Integer> createRandomList(Random random, int size) {
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            list.add(random.nextInt(size * 5));
+        }
+        return list;
+    }
+
+    private List<String> createRandomStringList(Random random, String postfix, int size) {
         List<String> list = new ArrayList<>();
         for (int i = 0; i < size; i++) {
             list.add(random.nextInt(size * 5) + postfix);
@@ -261,11 +290,13 @@ public class StringIndexTest {
         return list;
     }
 
-    private Map<String, String> createRandomMap(Random random, List<String> keys, List<String> values) {
+    private Map<String, Object> createRandomMap(Random random, List<String> keys, List<Integer> values) {
         int count = random.nextInt(10) + 2;
-        Map<String, String> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
         for (int i = 0; i < count; i++) {
-            map.put(keys.get(random.nextInt(keys.size())), values.get(random.nextInt(values.size())));
+            String key = keys.get(random.nextInt(keys.size()));
+            Object o = values.get(random.nextInt(values.size()));
+            map.put(key, key.endsWith("_s") ? o + "_s" : o);
         }
         return map;
     }

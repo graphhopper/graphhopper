@@ -62,7 +62,7 @@ public class BaseGraph implements Graph, Closeable {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
         this.wayGeometry = dir.create("geometry", segmentSize);
-        this.stringIndex = new StringIndex(dir, 1000, segmentSize);
+        this.stringIndex = new StringIndex(dir, 1000);
         this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
@@ -956,7 +956,7 @@ public class BaseGraph implements Graph, Closeable {
         @Override
         public String getName() {
             int stringIndexRef = store.getNameRef(edgePointer);
-            String name = baseGraph.stringIndex.get(stringIndexRef, STRING_IDX_NAME_KEY);
+            String name = (String) baseGraph.stringIndex.get(stringIndexRef, STRING_IDX_NAME_KEY);
             // preserve backward compatibility (returns null if not explicitly set)
             return name == null ? "" : name;
         }
