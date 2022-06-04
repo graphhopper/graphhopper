@@ -118,7 +118,7 @@ public class MapMatchingResource {
         MatchResult matchResult = matching.match(measurements);
 
         // TODO: Request logging and timing should perhaps be done somewhere outside
-        double took = sw.stop().getMillisWithFraction();
+        double took = sw.stop().getMillisDouble();
         String infoStr = request.getRemoteAddr() + " " + request.getLocale() + " " + request.getHeader("User-Agent");
         String logStr = request.getQueryString() + ", " + infoStr + ", took:" + String.format("%.1f", took) + "ms, entries:" + measurements.size() +
                 ", profile: " + profile + ", " + weightingVehicleLogStr;

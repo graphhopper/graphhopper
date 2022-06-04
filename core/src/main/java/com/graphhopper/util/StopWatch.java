@@ -84,7 +84,7 @@ public class StopWatch {
     /**
      * returns the elapsed time in ms but includes the fraction as well to get a precise value
      */
-    public double getMillisWithFraction() {
+    public double getMillisDouble() {
         return elapsedNanos / 1_000_000.0;
     }
 
