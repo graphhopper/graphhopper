@@ -135,7 +135,7 @@ public class VehicleEncodedValues implements FlagEncoder {
         return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, curvatureEnc, turnCostEnc, speedEnc.getNextStorableValue(maxSpeed), true, false);
     }
 
-    public static VehicleEncodedValues roads() {
+    public static VehicleEncodedValues roads(PMap properties) {
         String name = "roads";
         int speedBits = 7;
         double speedFactor = 2;
@@ -144,7 +144,9 @@ public class VehicleEncodedValues implements FlagEncoder {
         BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, null, turnCostEnc, speedEnc.getNextStorableValue(ROADS_MAX_SPEED), true, false);
+        boolean isMotorVehicle = properties.getBool("is_motor_vehicle", true);
+        boolean isHGV = properties.getBool("is_hgv", false);
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, null, turnCostEnc, speedEnc.getNextStorableValue(ROADS_MAX_SPEED), isMotorVehicle, isHGV);
     }
 
     public VehicleEncodedValues(String name, BooleanEncodedValue accessEnc, DecimalEncodedValue avgSpeedEnc,

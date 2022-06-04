@@ -42,8 +42,8 @@ public class Bike2WeightTagParserTest extends BikeTagParserTest {
     }
 
     @Override
-    protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup) {
-        Bike2WeightTagParser parser = new Bike2WeightTagParser(lookup, new PMap("block_fords=true"));
+    protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup, PMap pMap) {
+        Bike2WeightTagParser parser = new Bike2WeightTagParser(lookup, pMap);
         parser.init(new DateRangeParser());
         return parser;
     }

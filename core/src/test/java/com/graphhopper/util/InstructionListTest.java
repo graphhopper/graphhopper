@@ -424,7 +424,7 @@ public class InstructionListTest {
 
     @Test
     public void testInstructionWithHighlyCustomProfileWithRoadsBase() {
-        FlagEncoder roads = FlagEncoders.createRoads();
+        FlagEncoder roads = FlagEncoders.createRoads(new PMap());
         EncodingManager tmpEM = EncodingManager.create(roads);
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
