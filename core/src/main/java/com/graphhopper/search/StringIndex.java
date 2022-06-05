@@ -20,8 +20,6 @@ package com.graphhopper.search;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 
 import java.util.*;
@@ -38,12 +36,20 @@ public class StringIndex {
     private static final int MAX_LENGTH = (1 << 8) - 1;
     boolean throwExceptionIfTooLong = false;
     private final DataAccess keys;
-    // storage layout per entry:
-    // 1 byte    | 2 bytes  | 1 byte      | x    | 2 bytes  | 1 byte      | x    | 2 bytes  (dup example) | 4 bytes | ...
-    // vals count| key_idx_0| val_length_0| val_0| key_idx_1| val_length_1| val_1| -key_idx_2             | delta_2 | key_idx_3 | val_length_3 | val_3
-    // Drawback: we need to loop through the entries to get the start of val_x.
-    // Note, that we detect duplicate values via smallCache and then use the negative key index as 'duplicate' marker.
-    // We then store only the delta (signed int) instead the absolute unsigned long value to reduce memory usage when duplicate entries.
+    // storage layout per entry, examples:
+    // vals count (1 byte)|
+    // key_idx_0  (2 byte)| val_length_0 (1 byte)| val_0 (x bytes) <- store String or byte[] with dynamic length
+    // key_idx_1  (2 byte)| int          (4 byte)                  <- store int with fixed length
+    // -key_idx_2 (2 byte)| delta_2      (4 byte)                  <- store duplicate, then key is negative
+    // key_idx_3  (2 byte)| val_length_3 (1 byte)| val_3 (x bytes)
+
+    // Note:
+    // 1. The key strings are limited to 32767 unique values (see MAX_UNIQUE_KEYS).
+    //    A dynamic value has a maximum byte length of 255.
+    // 2. Every key is able to store values of the same type
+    // 3. We need to loop through the entries to get the start of val_x.
+    // 4. We detect duplicate values via smallCache and then use the negative key index as 'duplicate' marker.
+    //    We then store only the delta (signed int) instead the absolute unsigned long value to reduce memory usage when duplicate entries.
     private final DataAccess vals;
     private final Map<String, Integer> keyToIndex = new HashMap<>();
     private final List<Class<?>> indexToClass = new ArrayList<>();
@@ -160,19 +166,20 @@ public class StringIndex {
                 indexToClass.add(clazz = value.getClass());
             } else {
                 clazz = indexToClass.get(keyIndex);
-            }
-
-            if (value == null) {
-                vals.ensureCapacity(currentPointer + 3);
-                vals.setShort(currentPointer, keyIndex.shortValue());
-                // ensure that also in case of MMap value is set to 0
-                vals.setByte(currentPointer + 2, (byte) 0);
-                currentPointer += 3;
-                continue;
+                if (value == null) {
+                    vals.ensureCapacity(currentPointer + 3);
+                    vals.setShort(currentPointer, keyIndex.shortValue());
+                    // ensure that also in case of MMap value is set to 0
+                    vals.setByte(currentPointer + 2, (byte) 0);
+                    currentPointer += 3;
+                    continue;
+                } else if (clazz != value.getClass())
+                    throw new IllegalArgumentException("Class of value for key " + key + " must be " + clazz.getSimpleName() + " but was " + value.getClass().getSimpleName());
             }
 
             boolean hasDynLength = hasDynLength(clazz);
             if (hasDynLength) {
+                // optimization for empty string or empty byte array
                 if (clazz.equals(String.class) && ((String) value).isEmpty() ||
                         clazz.equals(byte[].class) && ((byte[]) value).length == 0) {
                     vals.ensureCapacity(currentPointer + 3);
@@ -274,7 +281,7 @@ public class StringIndex {
 
     private byte[] getBytesForValue(Class<?> clazz, Object value) {
         if (clazz.equals(String.class)) {
-            return getBytesForString("Value", (String) value);
+            return getBytesForString("String", (String) value);
         } else if (clazz.equals(Integer.class)) {
             return bitUtil.fromInt((int) value);
         } else if (clazz.equals(Long.class)) {
@@ -284,7 +291,10 @@ public class StringIndex {
         } else if (clazz.equals(Double.class)) {
             return bitUtil.fromDouble((double) value);
         } else if (clazz.equals(byte[].class)) {
-            return (byte[]) value;
+            byte[] bytes = (byte[]) value;
+            if (bytes.length > 255)
+                throw new IllegalArgumentException("bytes.length cannot be > 255 but was " + bytes.length);
+            return bytes;
         }
         throw new IllegalArgumentException("value class not supported " + clazz.getSimpleName());
     }
@@ -354,11 +364,11 @@ public class StringIndex {
 
         Integer keyIndex = keyToIndex.get(key);
         if (keyIndex == null)
-            return null;
+            return null; // key wasn't stored before
 
         int keyCount = vals.getByte(entryPointer) & 0xFF;
         if (keyCount == 0)
-            return null;
+            return null; // no entries
 
         long tmpPointer = entryPointer + 1;
         for (int i = 0; i < keyCount; i++) {
@@ -398,6 +408,7 @@ public class StringIndex {
         byte[] bytes = name.getBytes(Helper.UTF_CS);
         if (bytes.length > MAX_LENGTH) {
             String newString = new String(bytes, 0, MAX_LENGTH, Helper.UTF_CS);
+            // TODO NOW throw exception and provide simple helper to truncate string instead
             if (throwExceptionIfTooLong)
                 throw new IllegalStateException(info + " is too long: " + name + " truncated to " + newString);
             return newString.getBytes(Helper.UTF_CS);

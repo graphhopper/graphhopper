@@ -7,6 +7,7 @@ import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.graphhopper.search.StringIndex.MAX_UNIQUE_KEYS;
@@ -128,19 +129,19 @@ public class StringIndexTest {
     }
 
     @Test
-    public void testNoErrorOnLargeName() {
+    public void testNoErrorOnLargeStringValue() {
         StringIndex index = create();
-        // 127 => bytes.length == 254
         String str = "";
         for (int i = 0; i < 127; i++) {
             str += "ß";
         }
+        assertEquals(254, str.getBytes(StandardCharsets.UTF_8).length);
         long result = index.add(createMap("", str));
         assertEquals(127, ((String) index.get(result, "")).length());
     }
 
     @Test
-    public void testTooLongNameNoError() {
+    public void testTooLongStringValueNoError() {
         StringIndex index = create();
         index.throwExceptionIfTooLong = true;
         try {
@@ -162,6 +163,64 @@ public class StringIndexTest {
         index.throwExceptionIfTooLong = false;
         long pointer = index.add(createMap("", "Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))"));
         assertTrue(((String) index.get(pointer, "")).startsWith("Бухарестская улица (h"));
+    }
+
+    @Test
+    public void testNoErrorOnLargestByteArray() {
+        StringIndex index = create();
+        byte[] bytes = new byte[255];
+        byte[] copy = new byte[255];
+        for (int i = 0; i < bytes.length; i++) {
+            bytes[i] = (byte) (i % 255);
+            copy[i] = bytes[i];
+        }
+        long result = index.add(Collections.singletonMap("myval", bytes));
+        bytes = (byte[]) index.get(result, "myval");
+        assertArrayEquals(copy, bytes);
+
+        final byte[] biggerByteArray = Arrays.copyOf(bytes, 256);
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> index.add(Collections.singletonMap("myval2", biggerByteArray)));
+        assertTrue(e.getMessage().contains("bytes.length cannot be > 255"));
+    }
+
+    @Test
+    public void testIntLongDoubleFloat() {
+        StringIndex index = create();
+        long intres = index.add(Collections.singletonMap("intres", 4));
+        long doubleres = index.add(Collections.singletonMap("doubleres", 4d));
+        long floatres = index.add(Collections.singletonMap("floatres", 4f));
+        long longres = index.add(Collections.singletonMap("longres", 4L));
+        long after4Inserts = index.add(Collections.singletonMap("somenext", 0));
+
+        // initial point is 1, then twice plus 1 + (2+4) and twice plus 1 + (2+8)
+        assertEquals(1 + 36, after4Inserts);
+
+        assertEquals(4f, index.get(floatres, "floatres"));
+        assertEquals(4L, index.get(longres, "longres"));
+        assertEquals(4d, index.get(doubleres, "doubleres"));
+        assertEquals(4, index.get(intres, "intres"));
+    }
+
+    @Test
+    public void testIntLongDoubleFloat2() {
+        StringIndex index = create();
+        Map<String, Object> map = new HashMap<>();
+        map.put("int", 4);
+        map.put("long", 4L);
+        map.put("double", 4d);
+        map.put("float", 4f);
+        long allInOne = index.add(map);
+
+        long afterMapInsert = index.add(Collections.singletonMap("somenext", 0));
+
+        // 1 + 1 + (2+4) + (2+8) + (2+8) + (2+4)
+        assertEquals(1 + 1 + 32, afterMapInsert);
+
+        Map<String, Object> resMap = index.getAll(allInOne);
+        assertEquals(4, resMap.get("int"));
+        assertEquals(4L, resMap.get("long"));
+        assertEquals(4d, resMap.get("double"));
+        assertEquals(4f, resMap.get("float"));
     }
 
     @Test
