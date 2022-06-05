@@ -645,7 +645,7 @@ public abstract class AbstractGraphStorageTester {
     }
 
     @Test
-    public void testStringIndex() {
+    public void testEdgeKVStorage() {
         graph = createGHStorage();
         EdgeIteratorState iter1 = graph.edge(0, 1).setDistance(10).set(carAccessEnc, true, true);
         iter1.setName("named street1");

@@ -27,7 +27,7 @@ import java.util.*;
 /**
  * @author Peter Karich
  */
-public class StringIndex {
+public class EdgeKVStorage {
 
     private static final long EMPTY_POINTER = 0, START_POINTER = 1;
     // Store the key index in 2 bytes. Use negative values for marking the value as duplicate.
@@ -59,14 +59,14 @@ public class StringIndex {
     private long lastEntryPointer = -1;
     private Map<String, Object> lastEntryMap;
 
-    public StringIndex(Directory dir) {
+    public EdgeKVStorage(Directory dir) {
         this(dir, 1000);
     }
 
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
-    public StringIndex(Directory dir, final int cacheSize) {
+    public EdgeKVStorage(Directory dir, final int cacheSize) {
         keys = dir.create("edgekv_keys", 10 * 1024);
         vals = dir.create("edgekv_vals");
 
@@ -78,7 +78,7 @@ public class StringIndex {
         };
     }
 
-    public StringIndex create(long initBytes) {
+    public EdgeKVStorage create(long initBytes) {
         keys.create(initBytes);
         vals.create(initBytes);
         // add special empty case to have a reliable duplicate detection via negative keyIndex
@@ -229,7 +229,7 @@ public class StringIndex {
 
     public Map<String, Object> getAll(final long entryPointer) {
         if (entryPointer < 0)
-            throw new IllegalStateException("Pointer to access StringIndex cannot be negative:" + entryPointer);
+            throw new IllegalStateException("Pointer to access EdgeKVStorage cannot be negative:" + entryPointer);
 
         if (entryPointer == EMPTY_POINTER)
             return Collections.emptyMap();
@@ -357,7 +357,7 @@ public class StringIndex {
 
     public Object get(final long entryPointer, String key) {
         if (entryPointer < 0)
-            throw new IllegalStateException("Pointer to access StringIndex cannot be negative:" + entryPointer);
+            throw new IllegalStateException("Pointer to access EdgeKVStorage cannot be negative:" + entryPointer);
 
         if (entryPointer == EMPTY_POINTER)
             return null;

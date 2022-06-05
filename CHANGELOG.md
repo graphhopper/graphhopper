@@ -1,4 +1,5 @@
 ### 6.0 [not yet released]
+- StringIndex is now EdgeKVStorage and string values needs to be limited to 255 bytes before storing them
 - the Matrix client changed and users have to adapt the usage, see #2587
 - replaced car$access with car_access (and same for <vehicle>$average_speed and <vehicle>$priority)
 - don't allow cars or motorcycles to use ways tagged with service=emergency_access (#2484)
