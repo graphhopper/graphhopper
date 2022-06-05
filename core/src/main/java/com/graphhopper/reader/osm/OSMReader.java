@@ -35,6 +35,7 @@ import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
+import com.graphhopper.search.StringIndex;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
@@ -332,7 +333,8 @@ public class OSMReader {
         if (edgeFlags.isEmpty())
             return;
 
-        String name = way.getTag("way_name", "");
+        // the storage does not accept too long strings
+        String name = Helper.cutString(way.getTag("way_name", ""), 255);
         EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags).setName(name);
 
         // If the entire way is just the first and last point, do not waste space storing an empty way geometry

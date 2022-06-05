@@ -34,7 +34,6 @@ public class StringIndex {
     static final int MAX_UNIQUE_KEYS = (1 << 15);
     // Store string value as byte array and store the length into 1 byte
     private static final int MAX_LENGTH = (1 << 8) - 1;
-    boolean throwExceptionIfTooLong = false;
     private final DataAccess keys;
     // storage layout per entry, examples:
     // vals count (1 byte)|
@@ -46,8 +45,8 @@ public class StringIndex {
     // Note:
     // 1. The key strings are limited to 32767 unique values (see MAX_UNIQUE_KEYS).
     //    A dynamic value has a maximum byte length of 255.
-    // 2. Every key is able to store values of the same type
-    // 3. We need to loop through the entries to get the start of val_x.
+    // 2. Every key is can store values only of the same type
+    // 3. We need to loop through X entries to get the start val_x.
     // 4. We detect duplicate values via smallCache and then use the negative key index as 'duplicate' marker.
     //    We then store only the delta (signed int) instead the absolute unsigned long value to reduce memory usage when duplicate entries.
     private final DataAccess vals;
@@ -280,8 +279,9 @@ public class StringIndex {
     }
 
     private byte[] getBytesForValue(Class<?> clazz, Object value) {
+        byte[] bytes;
         if (clazz.equals(String.class)) {
-            return getBytesForString("String", (String) value);
+            bytes = ((String) value).getBytes(Helper.UTF_CS);
         } else if (clazz.equals(Integer.class)) {
             return bitUtil.fromInt((int) value);
         } else if (clazz.equals(Long.class)) {
@@ -291,12 +291,12 @@ public class StringIndex {
         } else if (clazz.equals(Double.class)) {
             return bitUtil.fromDouble((double) value);
         } else if (clazz.equals(byte[].class)) {
-            byte[] bytes = (byte[]) value;
-            if (bytes.length > 255)
-                throw new IllegalArgumentException("bytes.length cannot be > 255 but was " + bytes.length);
-            return bytes;
-        }
-        throw new IllegalArgumentException("value class not supported " + clazz.getSimpleName());
+            bytes = (byte[]) value;
+        } else
+            throw new IllegalArgumentException("value class not supported " + clazz.getSimpleName());
+        if (bytes.length > MAX_LENGTH)
+            throw new IllegalArgumentException("bytes.length cannot be > " + MAX_LENGTH + " but was " + bytes.length);
+        return bytes;
     }
 
     private String classToShortName(Class<?> clazz) {
@@ -400,21 +400,8 @@ public class StringIndex {
             }
         }
 
-        // value for specified key does not existing for the specified pointer
+        // value for specified key does not exist for the specified pointer
         return null;
-    }
-
-    private byte[] getBytesForString(String info, String name) {
-        byte[] bytes = name.getBytes(Helper.UTF_CS);
-        if (bytes.length > MAX_LENGTH) {
-            String newString = new String(bytes, 0, MAX_LENGTH, Helper.UTF_CS);
-            // TODO NOW throw exception and provide simple helper to truncate string instead
-            if (throwExceptionIfTooLong)
-                throw new IllegalStateException(info + " is too long: " + name + " truncated to " + newString);
-            return newString.getBytes(Helper.UTF_CS);
-        }
-
-        return bytes;
     }
 
     public void flush() {
@@ -423,7 +410,7 @@ public class StringIndex {
         long keyBytePointer = 2;
         for (int i = 0; i < indexToKey.size(); i++) {
             String key = indexToKey.get(i);
-            byte[] keyBytes = getBytesForString("key", key);
+            byte[] keyBytes = getBytesForValue(String.class, key);
             keys.ensureCapacity(keyBytePointer + 2 + keyBytes.length);
             keys.setShort(keyBytePointer, (short) keyBytes.length);
             keyBytePointer += 2;
@@ -432,9 +419,9 @@ public class StringIndex {
             keyBytePointer += keyBytes.length;
 
             Class<?> clazz = indexToClass.get(i);
-            byte[] clazzBytes = getBytesForString("class name", classToShortName(clazz));
+            byte[] clazzBytes = getBytesForValue(String.class, classToShortName(clazz));
             if (clazzBytes.length != 1)
-                throw new IllegalArgumentException("class name must be 1");
+                throw new IllegalArgumentException("class name byte length must be 1 but was " + clazzBytes.length);
             keys.ensureCapacity(keyBytePointer + 1);
             keys.setBytes(keyBytePointer, clazzBytes, 1);
             keyBytePointer += 1;
