@@ -128,6 +128,11 @@ public class PtGraphAsAdjacencyList implements Graph {
             }
 
             @Override
+            public int getReverseEdgeKey() {
+                throw new RuntimeException();
+            }
+
+            @Override
             public int getBaseNode() {
                 throw new RuntimeException();
             }
