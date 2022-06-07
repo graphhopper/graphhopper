@@ -1,4 +1,5 @@
 ### 6.0 [not yet released]
+- backward incompatible change as instructions and the street_name path detail do not longer contain the ref #2598
 - StringIndex is now EdgeKVStorage and string values needs to be limited to 255 bytes before storing them
 - the Matrix client changed and users have to adapt the usage, see #2587
 - replaced car$access with car_access (and same for <vehicle>$average_speed and <vehicle>$priority)
