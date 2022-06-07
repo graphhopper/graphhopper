@@ -43,9 +43,8 @@ public class EdgeKVStorage {
     // key_idx_3  (2 byte)| val_length_3 (1 byte)| val_3 (x bytes)
 
     // Note:
-    // 1. The key strings are limited to 32767 unique values (see MAX_UNIQUE_KEYS).
-    //    A dynamic value has a maximum byte length of 255.
-    // 2. Every key is can store values only of the same type
+    // 1. The key strings are limited to 32767 unique values (see MAX_UNIQUE_KEYS). A dynamic value has a maximum byte length of 255.
+    // 2. Every key can store values only of the same type
     // 3. We need to loop through X entries to get the start val_x.
     // 4. We detect duplicate values via smallCache and then use the negative key index as 'duplicate' marker.
     //    We then store only the delta (signed int) instead the absolute unsigned long value to reduce memory usage when duplicate entries.
@@ -125,7 +124,8 @@ public class EdgeKVStorage {
     }
 
     /**
-     * This method writes the specified key-value pairs into the storage.
+     * This method writes the specified key-value pairs into the storage. Please note that null keys or null values
+     * are rejected.
      *
      * @return entryPointer to later fetch the entryMap via get
      */
@@ -150,8 +150,10 @@ public class EdgeKVStorage {
         for (Map.Entry<String, Object> entry : entryMap.entrySet()) {
             String key = entry.getKey();
             if (key == null)
-                throw new IllegalArgumentException("key must not be null");
+                throw new IllegalArgumentException("key cannot be null");
             Object value = entry.getValue();
+            if (value == null)
+                throw new IllegalArgumentException("value for key " + key + " cannot be null");
             Integer keyIndex = keyToIndex.get(key);
             Class<?> clazz;
             if (keyIndex == null) {
@@ -160,19 +162,10 @@ public class EdgeKVStorage {
                     throw new IllegalArgumentException("Cannot store more than " + MAX_UNIQUE_KEYS + " unique keys");
                 keyToIndex.put(key, keyIndex);
                 indexToKey.add(key);
-                if (value == null)
-                    throw new IllegalArgumentException("value cannot be null on the first occurrence");
                 indexToClass.add(clazz = value.getClass());
             } else {
                 clazz = indexToClass.get(keyIndex);
-                if (value == null) {
-                    vals.ensureCapacity(currentPointer + 3);
-                    vals.setShort(currentPointer, keyIndex.shortValue());
-                    // ensure that also in case of MMap value is set to 0
-                    vals.setByte(currentPointer + 2, (byte) 0);
-                    currentPointer += 3;
-                    continue;
-                } else if (clazz != value.getClass())
+                if (clazz != value.getClass())
                     throw new IllegalArgumentException("Class of value for key " + key + " must be " + clazz.getSimpleName() + " but was " + value.getClass().getSimpleName());
             }
 

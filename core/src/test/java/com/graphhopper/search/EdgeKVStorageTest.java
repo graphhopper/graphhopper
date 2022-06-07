@@ -60,14 +60,14 @@ public class EdgeKVStorageTest {
     public void putEmpty() {
         EdgeKVStorage index = create();
         assertEquals(1, index.add(createMap("", "")));
-        assertEquals(5, index.add(createMap("", null)));
-        // cannot store null value if it is the first value of the key:
+        // cannot store null (in its first version we accepted null once it was clear which type the value has, but this is inconsequential)
+        assertThrows(IllegalArgumentException.class, () -> assertEquals(5, index.add(createMap("", null))));
         assertThrows(IllegalArgumentException.class, () -> index.add(createMap("blup", null)));
         assertThrows(IllegalArgumentException.class, () -> index.add(createMap(null, null)));
 
         assertNull(index.get(0, ""));
 
-        assertEquals(9, index.add(createMap("else", "else")));
+        assertEquals(5, index.add(createMap("else", "else")));
     }
 
     @Test
