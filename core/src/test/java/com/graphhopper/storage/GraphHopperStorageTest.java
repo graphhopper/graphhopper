@@ -21,6 +21,8 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
+
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static com.graphhopper.util.FetchMode.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -62,8 +64,8 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         graph.edge(9, 11).setDistance(200).set(carAccessEnc, true, true);
         graph.edge(1, 2).setDistance(120).set(carAccessEnc, true, false);
 
-        iter1.setName("named street1");
-        iter2.setName("named street2");
+        iter1.setKeyValues(Collections.singletonMap("name", "named street1"));
+        iter2.setKeyValues(Collections.singletonMap("name", "named street2"));
 
         checkGraph(graph);
         graph.flush();

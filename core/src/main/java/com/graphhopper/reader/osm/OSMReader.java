@@ -332,9 +332,14 @@ public class OSMReader {
         if (edgeFlags.isEmpty())
             return;
 
-        // the storage does not accept too long strings
-        String name = Helper.cutString(way.getTag("way_name", ""), 255);
-        EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags).setName(name);
+        Map<String, Object> map = new HashMap<>(2);
+        // the storage does not accept too long strings -> Helper.cutString
+        if (way.hasTag("way_name")) // do not store empty string is missing tag
+            map.put("name", Helper.cutString(way.getTag("way_name", ""), 255));
+        if (way.hasTag("way_ref"))
+            map.put("ref", Helper.cutString(way.getTag("way_ref", ""), 255));
+        EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags).
+                setKeyValues(map);
 
         // If the entire way is just the first and last point, do not waste space storing an empty way geometry
         if (pointList.size() > 2) {
@@ -380,23 +385,20 @@ public class OSMReader {
     protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
         // storing the road name does not yet depend on the flagEncoder so manage it directly
         if (config.isParseWayNames()) {
-            // String wayInfo = carFlagEncoder.getWayInfo(way);
             // http://wiki.openstreetmap.org/wiki/Key:name
             String name = "";
             if (!config.getPreferredLanguage().isEmpty())
                 name = fixWayName(way.getTag("name:" + config.getPreferredLanguage()));
             if (name.isEmpty())
                 name = fixWayName(way.getTag("name"));
+
+            if (!name.isEmpty())
+                way.setTag("way_name", name);
+
             // http://wiki.openstreetmap.org/wiki/Key:ref
             String refName = fixWayName(way.getTag("ref"));
-            if (!refName.isEmpty()) {
-                if (name.isEmpty())
-                    name = refName;
-                else
-                    name += ", " + refName;
-            }
-
-            way.setTag("way_name", name);
+            if (!refName.isEmpty())
+                way.setTag("way_ref", refName);
         }
 
         if (!isCalculateWayDistance(way))

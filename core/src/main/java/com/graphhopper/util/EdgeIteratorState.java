@@ -21,6 +21,8 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Map;
+
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
  * Example:
@@ -185,20 +187,35 @@ public interface EdgeIteratorState {
     <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value);
 
     <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd);
-    
+
     String get(StringEncodedValue property);
-    
+
     EdgeIteratorState set(StringEncodedValue property, String value);
-    
+
     String getReverse(StringEncodedValue property);
-    
+
     EdgeIteratorState setReverse(StringEncodedValue property, String value);
-    
+
     EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd);
 
+    /**
+     * Identical to calling getKeyValues().get("name"). I.e. if you need other properties you should prefer to call
+     * getKeyValues directly instead of getName. Please note that for backward compatibility getName returns an empty
+     * String instead of null if there was no name set.
+     *
+     * @return the stored value for the key "name" in the key-values space of this edge
+     */
     String getName();
 
-    EdgeIteratorState setName(String name);
+    /**
+     * This stores the specified key-value pairs in the storage of the current edge. This is more flexible compared to
+     * the mechanism of flags and EncodedValue but is slower and more inefficient on retrieval and this setKeyValues method
+     * should be called only once per edge as it allocates new space everytime this method is called. I.e. for many
+     * usages like in a custom_model currently the EncodedValue-approach should be preferred.
+     */
+    EdgeIteratorState setKeyValues(Map<String, Object> map);
+
+    Map<String, Object> getKeyValues();
 
     /**
      * Clones this EdgeIteratorState.

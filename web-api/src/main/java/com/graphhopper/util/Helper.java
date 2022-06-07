@@ -477,6 +477,7 @@ public class Helper {
     }
 
     public static String cutString(String value, int maxLength) {
+        if (value == null) return null;
         byte[] bytes = value.getBytes(UTF_CS);
         return bytes.length > maxLength ? new String(bytes, 0, maxLength, UTF_CS) : value;
     }

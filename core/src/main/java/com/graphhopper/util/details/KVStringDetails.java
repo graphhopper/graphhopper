@@ -19,25 +19,30 @@ package com.graphhopper.util.details;
 
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.util.Parameters.Details.STREET_NAME;
-
 /**
- * Calculate the speed name segments of a Path
+ * Return a String value from the key-values
  *
  * @author Robin Boldt
  */
-public class StreetNameDetails extends AbstractPathDetailsBuilder {
+public class KVStringDetails extends AbstractPathDetailsBuilder {
 
-    private String curStreetName = null;
+    private String curString = null;
+    private String key;
 
-    public StreetNameDetails() {
-        super(STREET_NAME);
+    public KVStringDetails(String name, String key) {
+        super(name);
+        this.key = key;
     }
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        if (curStreetName == null || !curStreetName.equals(edge.getName())) {
-            curStreetName = edge.getName();
+        if (curString == null) {
+            curString = (String) edge.getKeyValues().get(key);
+            return true;
+        }
+        String val = (String) edge.getKeyValues().get(key);
+        if (!curString.equals(val)) {
+            curString = val;
             return true;
         }
         return false;
@@ -45,6 +50,6 @@ public class StreetNameDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public Object getCurrentValue() {
-        return this.curStreetName;
+        return this.curString;
     }
 }
