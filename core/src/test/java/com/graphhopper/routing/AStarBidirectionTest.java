@@ -53,7 +53,7 @@ class AStarBidirectionTest {
         // the distance 1-2 is longer than 1-10-2
         // we deliberately use 2-1 as storage direction, even though the edge points from 1 to 2, because this way
         // we can reproduce the 'Calculating time should not require to read speed from edge in wrong direction' error
-        // from #3000
+        // from #2600
         graph.edge(2, 1).setDistance(300).set(encoder.getAccessEnc(), false, true).set(encoder.getAverageSpeedEnc(), 60);
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(100));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(100));
