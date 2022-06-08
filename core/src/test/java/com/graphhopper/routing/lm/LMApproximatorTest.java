@@ -36,7 +36,10 @@ import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.IntToDoubleFunction;
@@ -60,11 +63,12 @@ public class LMApproximatorTest {
         Random rnd = new Random(seed);
         // todo: try with more nodes and also using one-ways (pBothDir<1) and different speeds (speed=null)
         //       and maybe even with loops (or maybe not, because we don't want loops anyway)
-        GHUtility.buildRandomGraph(graph, rnd, 20, 2.2, false, true,
+        GHUtility.buildRandomGraph(graph, rnd, 3, 2.2, false, true,
                 encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), 60.0, 0, 1.0, 0);
+        GHUtility.printGraphForUnitTest(graph, encoder);
 
         // todo: maybe we should also test this with turn costs, just setting 'turn_costs=true' above doesn't really do anything
-        Weighting weighting = new FastestWeighting(encoder);
+        Weighting weighting = new ShortestWeighting(encoder);
 
         // todo: try with more landmarks, but first make it work with one...
         int landmarks = 1;
@@ -88,11 +92,11 @@ public class LMApproximatorTest {
 
         for (int t = 0; t < queryGraph.getNodes(); t++) {
             LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, landmarkStorage, Math.min(landmarks, 8));
-            WeightApproximator reverseLmApproximator = lmApproximator.reverse();
+            LMApproximator reverseLmApproximator = lmApproximator.reverse();
             BeelineWeightApproximator beelineApproximator = new BeelineWeightApproximator(queryGraph.getNodeAccess(), weighting);
-            WeightApproximator reverseBeelineApproximator = beelineApproximator.reverse();
+            BeelineWeightApproximator reverseBeelineApproximator = beelineApproximator.reverse();
             PerfectApproximator perfectApproximator = new PerfectApproximator(queryGraph, weighting, TraversalMode.NODE_BASED, false);
-            PerfectApproximator reversePerfectApproximator = new PerfectApproximator(queryGraph, weighting, TraversalMode.NODE_BASED, true);
+            PerfectApproximator reversePerfectApproximator = perfectApproximator.reverse();
             BalancedWeightApproximator balancedWeightApproximator = new BalancedWeightApproximator(lmApproximator);
 
             lmApproximator.setTo(t);
@@ -172,7 +176,7 @@ public class LMApproximatorTest {
                     double realRemainingWeight = reversePath.getWeight();
                     double approximatedRemainingWeight = reverseLmApproximator.approximate(v);
                     if (approximatedRemainingWeight > realRemainingWeight) {
-                        System.out.printf("LM: %f\treal: %f\n", approximatedRemainingWeight, realRemainingWeight);
+                        System.out.printf("LM rev: %f\treal: %f\n", approximatedRemainingWeight, realRemainingWeight);
                         nOverApproximatedWeights++;
                     }
                     // Give the beelineApproximator some slack, because the map distance of an edge
@@ -180,12 +184,12 @@ public class LMApproximatorTest {
                     double slack = reversePath.getEdgeCount() * (1 / 1000.0);
                     double beelineApproximatedRemainingWeight = reverseBeelineApproximator.approximate(v);
                     if (beelineApproximatedRemainingWeight - slack > realRemainingWeight) {
-                        System.out.printf("beeline: %f\treal: %f\n", beelineApproximatedRemainingWeight, realRemainingWeight);
+                        System.out.printf("beeline rev: %f\treal: %f\n", beelineApproximatedRemainingWeight, realRemainingWeight);
                         nOverApproximatedWeights++;
                     }
                     double approximate = reversePerfectApproximator.approximate(v);
                     if (approximate > realRemainingWeight) {
-                        System.out.printf("perfect: %f\treal: %f\n", approximate, realRemainingWeight);
+                        System.out.printf("perfect rev: %f\treal: %f\n", approximate, realRemainingWeight);
                         nOverApproximatedWeights++;
                     }
                 }
@@ -224,6 +228,8 @@ public class LMApproximatorTest {
         addEdge.accept(2, 3);
 
         // we create a landmark at node 3
+        // we only use a single landmark. when there are multiple ones (which are themselves feasible) taking the
+        // maximum over all landmark approximations will still be feasible, so considering only one is fine.
         final int landmarkNode = 3;
         Weighting weighting = new FastestWeighting(encoder);
         LandmarkStorage landmarkStorage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", weighting), 1);
@@ -242,27 +248,38 @@ public class LMApproximatorTest {
         assertEquals(2, snap.getClosestEdge().getAdjNode());
         QueryGraph queryGraph = QueryGraph.create(graph, snap);
 
-        IntToDoubleFunction getExactWeight = from -> new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED).calcPath(from, landmarkNode).getWeight();
+        IntToDoubleFunction getExactWeightFwd = from -> new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED).calcPath(from, landmarkNode).getWeight();
+        IntToDoubleFunction getExactWeightBwd = to -> new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED).calcPath(landmarkNode, to).getWeight();
         LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, landmarkStorage, 1);
+        LMApproximator reverseLmApproximator = lmApproximator.reverse();
         lmApproximator.setTo(landmarkNode);
+        reverseLmApproximator.setTo(landmarkNode);
         // make sure the approximator never over-approximates
-        for (int i = 0; i < 5; i++)
-            assertTrue(lmApproximator.approximate(i) <= getExactWeight.applyAsDouble(i));
+        for (int i = 0; i < 5; i++) {
+            assertTrue(lmApproximator.approximate(i) <= getExactWeightFwd.applyAsDouble(i));
+            assertTrue(reverseLmApproximator.approximate(i) <= getExactWeightBwd.applyAsDouble(i));
+        }
 
         // check feasibility
-        BiFunction<Integer, Integer, Optional<String>> checkFeasibility = (u, v) -> {
-            double w_uv = weighting.calcEdgeWeight(GHUtility.getEdge(queryGraph, u, v), false);
-            double h_u = lmApproximator.approximate(u);
-            double h_v = lmApproximator.approximate(v);
-            boolean feasible = w_uv + h_v - h_u + lmApproximator.getSlack() >= 0;
-            return feasible ? Optional.empty() : Optional.of("Feasibility condition violated, u=" + u + ", v=" + v + ", w_uv=" + w_uv + ", h_u=" + h_u + ", h_v=" + h_v + ", slack: " + lmApproximator.getSlack() + "\n");
+        BiFunction<Integer, Integer, List<String>> checkFeasibility = (u, v) -> {
+            List<String> errors = new ArrayList<>();
+            for (LMApproximator approximator : Arrays.asList(lmApproximator, reverseLmApproximator)) {
+                double w_uv = weighting.calcEdgeWeight(GHUtility.getEdge(queryGraph, u, v), false);
+                double h_u = approximator.approximate(u);
+                double h_v = approximator.approximate(v);
+                boolean feasible = w_uv + h_v - h_u + approximator.getSlack() >= 0;
+                String dir = approximator == lmApproximator ? "fwd" : "bwd";
+                if (!feasible)
+                    errors.add("Feasibility condition violated by " + dir + " approximator: u=" + u + ", v=" + v + ", w_uv=" + w_uv + ", h_u=" + h_u + ", h_v=" + h_v + ", slack: " + approximator.getSlack() + "\n");
+            }
+            return errors;
         };
         List<String> errors = new ArrayList<>();
         // 0-1-4-2-3, node 4 is the virtual one
-        checkFeasibility.apply(4, 2).ifPresent(errors::add);
-        checkFeasibility.apply(4, 1).ifPresent(errors::add);
-        checkFeasibility.apply(2, 4).ifPresent(errors::add);
-        checkFeasibility.apply(1, 4).ifPresent(errors::add);
+        errors.addAll(checkFeasibility.apply(4, 2));
+        errors.addAll(checkFeasibility.apply(4, 1));
+        errors.addAll(checkFeasibility.apply(2, 4));
+        errors.addAll(checkFeasibility.apply(1, 4));
         assertTrue(errors.isEmpty(), errors.toString());
     }
 }

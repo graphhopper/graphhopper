@@ -17,13 +17,16 @@
  */
 package com.graphhopper.routing.lm;
 
-import com.carrotsearch.hppc.IntDoubleHashMap;
+import com.carrotsearch.hppc.DoubleArrayList;
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Arrays;
 import java.util.concurrent.Callable;
@@ -37,7 +40,6 @@ public class LMApproximator implements WeightApproximator {
 
     private final LandmarkStorage lms;
     private final Weighting weighting;
-    private final IntDoubleHashMap queryGraphNodeApproximations;
     private int[] activeLandmarkIndices;
     private int[] weightsFromActiveLandmarksToT;
     private int[] weightsFromTToActiveLandmarks;
@@ -75,7 +77,6 @@ public class LMApproximator implements WeightApproximator {
         this.weighting = weighting;
         this.fallBackApproximation = new BeelineWeightApproximator(graph.getNodeAccess(), weighting);
         this.maxBaseNodes = maxBaseNodes;
-        this.queryGraphNodeApproximations = new IntDoubleHashMap();
     }
 
     /**
@@ -97,18 +98,30 @@ public class LMApproximator implements WeightApproximator {
         if (v >= maxBaseNodes) {
             // handle virtual node (unless it is t, in which case ^^)
             return new Callable<Double>() {
-                double w;
-                int j;
+                IntArrayList realNodes = new IntArrayList();
+                DoubleArrayList realWeights = new DoubleArrayList();
 
                 @Override
                 public Double call() {
                     Dijkstra dijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED) {
 
                         @Override
+                        protected boolean accept(EdgeIteratorState iter, int prevOrNextEdgeId) {
+                            return super.accept(iter, prevOrNextEdgeId) && iter.getBaseNode() >= maxBaseNodes;
+                        }
+
+                        @Override
                         protected boolean finished() {
-                            j = currEdge.adjNode;
-                            w = currEdge.weight;
-                            return currEdge.adjNode < maxBaseNodes;
+                            if (currEdge.adjNode < maxBaseNodes) {
+                                realNodes.add(currEdge.adjNode);
+                                realWeights.add(currEdge.weight);
+                            }
+                            return false;
+                        }
+
+                        @Override
+                        protected Path extractPath() {
+                            return null;
                         }
 
                         // We only expect a very short search
@@ -118,7 +131,19 @@ public class LMApproximator implements WeightApproximator {
                         }
                     };
                     dijkstra.calcPath(v, -1);
-                    return approximate(j) + w;
+                    double min = Double.MAX_VALUE;
+                    int j = Integer.MAX_VALUE;
+                    int bi = Integer.MAX_VALUE;
+                    for (int i = 0; i < realNodes.size(); i++) {
+                        if (realWeights.get(i) < min) {
+                            min = realWeights.get(i);
+                            j = realNodes.get(i);
+                            bi = i;
+                        }
+                    }
+                    if (bi == Integer.MAX_VALUE)
+                        throw new RuntimeException();
+                    return approximate(j) + realWeights.get(bi);
                 }
             }.call();
         }
@@ -220,7 +245,7 @@ public class LMApproximator implements WeightApproximator {
     }
 
     @Override
-    public WeightApproximator reverse() {
+    public LMApproximator reverse() {
         return new LMApproximator(graph, weighting, maxBaseNodes, lms, activeLandmarkIndices.length, factor, !reverse);
     }
 
