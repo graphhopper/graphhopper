@@ -164,12 +164,12 @@ public class Router {
     }
 
     private void checkPointHints(GHRequest request) {
-        if (request.getPointHints().size() > 0 && request.getPointHints().size() != request.getPoints().size())
+        if (!request.getPointHints().isEmpty() && request.getPointHints().size() != request.getPoints().size())
             throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
     }
 
     private void checkCurbsides(GHRequest request) {
-        if (request.getCurbsides().size() > 0 && request.getCurbsides().size() != request.getPoints().size())
+        if (!request.getCurbsides().isEmpty() && request.getCurbsides().size() != request.getPoints().size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
     }
 
