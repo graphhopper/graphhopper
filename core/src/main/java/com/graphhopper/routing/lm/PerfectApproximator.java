@@ -56,7 +56,7 @@ public class PerfectApproximator implements WeightApproximator {
     }
 
     @Override
-    public WeightApproximator reverse() {
+    public PerfectApproximator reverse() {
         return new PerfectApproximator(graph, weighting, traversalMode, !reverse);
     }
 

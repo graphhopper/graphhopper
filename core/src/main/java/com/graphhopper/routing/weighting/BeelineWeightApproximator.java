@@ -45,13 +45,13 @@ public class BeelineWeightApproximator implements WeightApproximator {
         toLon = nodeAccess.getLon(toNode);
     }
 
-    public WeightApproximator setEpsilon(double epsilon) {
+    public BeelineWeightApproximator setEpsilon(double epsilon) {
         this.epsilon = epsilon;
         return this;
     }
 
     @Override
-    public WeightApproximator reverse() {
+    public BeelineWeightApproximator reverse() {
         return new BeelineWeightApproximator(nodeAccess, weighting).setDistanceCalc(distanceCalc).setEpsilon(epsilon);
     }
 
