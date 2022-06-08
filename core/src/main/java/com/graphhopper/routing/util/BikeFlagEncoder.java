@@ -31,7 +31,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     public BikeFlagEncoder(String name) {
-        this(name, 4, 2, 0, false);
+        this(name, 4, 2, 0, false, true);
     }
 
     public BikeFlagEncoder(PMap properties) {
@@ -39,18 +39,21 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
                 properties.getInt("speed_bits", 4),
                 properties.getInt("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0,
-                properties.getBool("speed_two_directions", false));
+                properties.getBool("speed_two_directions", false),
+                properties.getBool("use_ferries", true));
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        this("bike", speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
+    public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections,
+            boolean useFerries) {
+        this("bike", speedBits, speedFactor, maxTurnCosts, speedTwoDirections, useFerries);
     }
 
-    public BikeFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        super(name, speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
+    public BikeFlagEncoder(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections,
+            boolean useFerries) {
+        super(name, speedBits, speedFactor, maxTurnCosts, speedTwoDirections, useFerries);
         addPushingSection("footway");
         addPushingSection("steps");
         addPushingSection("platform");

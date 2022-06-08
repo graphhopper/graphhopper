@@ -32,20 +32,20 @@ import static com.graphhopper.routing.util.PenaltyCode.*;
  */
 public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
     public RacingBikeFlagEncoder() {
-        this(4, 2, 0);
+        this(4, 2, 0, true);
     }
 
     public RacingBikeFlagEncoder(PMap properties) {
         this(properties.getInt("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
-                properties.getBool("turn_costs", false) ? 1 : 0);
+                properties.getBool("turn_costs", false) ? 1 : 0, properties.getBool("use_ferries", true));
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected RacingBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super("racingbike", speedBits, speedFactor, maxTurnCosts, false);
+    protected RacingBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean useFerries) {
+        super("racingbike", speedBits, speedFactor, maxTurnCosts, false, useFerries);
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");
         preferHighwayTags.add("secondary_link");

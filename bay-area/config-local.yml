@@ -51,9 +51,11 @@ graphhopper:
     - name: bike2
       vehicle: bike2
       weighting: fastest
+      use_ferries: false
     - name: foot
       vehicle: foot
       weighting: fastest
+      use_ferries: false
 
   #  - name: car_with_turn_costs
   #    vehicle: car

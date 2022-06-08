@@ -33,20 +33,20 @@ import static com.graphhopper.routing.util.PenaltyCode.*;
  */
 public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
     public MountainBikeFlagEncoder() {
-        this(4, 2, 0);
+        this(4, 2, 0, true);
     }
 
     public MountainBikeFlagEncoder(PMap properties) {
         this(properties.getInt("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
-                properties.getBool("turn_costs", false) ? 1 : 0);
+                properties.getBool("turn_costs", false) ? 1 : 0, properties.getBool("use_ferries", true));
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected MountainBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
-        super("mtb", speedBits, speedFactor, maxTurnCosts, false);
+    protected MountainBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts, boolean useFerries) {
+        super("mtb", speedBits, speedFactor, maxTurnCosts, false, useFerries);
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 16); // now unpaved ...
         setTrackTypeSpeed("grade3", 12);
