@@ -28,8 +28,8 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -56,20 +56,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Peter Karich
  */
 public class PrepareLandmarksTest {
-    private GraphHopperStorage graph;
-    private EncodingManager encodingManager;
+    private BaseGraph graph;
     private FlagEncoder encoder;
     private TraversalMode tm;
+    private EncodingManager encodingManager;
 
     @BeforeEach
     public void setUp() {
-        encoder = new CarFlagEncoder();
+        encoder = FlagEncoders.createCar();
         tm = TraversalMode.NODE_BASED;
         encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
-        GraphHopperStorage tmp = new GraphHopperStorage(new RAMDirectory(),
-                encodingManager, false);
-        tmp.create(1000);
-        graph = tmp;
+        graph = new BaseGraph.Builder(encodingManager).create();
     }
 
     @Test
@@ -105,7 +102,7 @@ public class PrepareLandmarksTest {
         int lm = 5, activeLM = 2;
         Weighting weighting = new FastestWeighting(encoder);
         LMConfig lmConfig = new LMConfig("car", weighting);
-        LandmarkStorage store = new LandmarkStorage(graph, dir, lmConfig, lm);
+        LandmarkStorage store = new LandmarkStorage(graph, encodingManager, dir, lmConfig, lm);
         store.setMinimumNodes(2);
         store.createLandmarks();
 
@@ -141,9 +138,10 @@ public class PrepareLandmarksTest {
         // TODO should better select 0 and 224?
         assertEquals(Arrays.asList(224, 70), list);
 
-        PrepareLandmarks prepare = new PrepareLandmarks(new RAMDirectory(), graph, lmConfig, 4);
+        PrepareLandmarks prepare = new PrepareLandmarks(new RAMDirectory(), graph, encodingManager, lmConfig, 4);
         prepare.setMinimumNodes(2);
         prepare.doWork();
+        LandmarkStorage lms = prepare.getLandmarkStorage();
 
         AStar expectedAlgo = new AStar(graph, weighting, tm);
         Path expectedPath = expectedAlgo.calcPath(41, 183);
@@ -151,7 +149,7 @@ public class PrepareLandmarksTest {
         PMap hints = new PMap().putObject(Parameters.Landmark.ACTIVE_COUNT, 2);
 
         // landmarks with A*
-        RoutingAlgorithm oneDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory().createAlgo(graph, weighting,
+        RoutingAlgorithm oneDirAlgoWithLandmarks = new LMRoutingAlgorithmFactory(lms).createAlgo(graph, weighting,
                 new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(tm).setHints(hints));
 
         Path path = oneDirAlgoWithLandmarks.calcPath(41, 183);
@@ -161,7 +159,7 @@ public class PrepareLandmarksTest {
         assertEquals(expectedAlgo.getVisitedNodes() - 135, oneDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with bidir A*
-        RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getRoutingAlgorithmFactory().createAlgo(graph, weighting,
+        RoutingAlgorithm biDirAlgoWithLandmarks = new LMRoutingAlgorithmFactory(lms).createAlgo(graph, weighting,
                 new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(tm).setHints(hints));
         path = biDirAlgoWithLandmarks.calcPath(41, 183);
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
@@ -173,7 +171,7 @@ public class PrepareLandmarksTest {
         Snap fromSnap = index.findClosest(-0.0401, 0.2201, EdgeFilter.ALL_EDGES);
         Snap toSnap = index.findClosest(-0.2401, 0.0601, EdgeFilter.ALL_EDGES);
         QueryGraph qGraph = QueryGraph.create(graph, fromSnap, toSnap);
-        RoutingAlgorithm qGraphOneDirAlgo = prepare.getRoutingAlgorithmFactory().createAlgo(qGraph, weighting,
+        RoutingAlgorithm qGraphOneDirAlgo = new LMRoutingAlgorithmFactory(lms).createAlgo(qGraph, weighting,
                 new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(tm).setHints(hints));
         path = qGraphOneDirAlgo.calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
 
@@ -194,7 +192,7 @@ public class PrepareLandmarksTest {
         Directory dir = new RAMDirectory(fileStr, true).create();
         Weighting weighting = new FastestWeighting(encoder);
         LMConfig lmConfig = new LMConfig("car", weighting);
-        PrepareLandmarks plm = new PrepareLandmarks(dir, graph, lmConfig, 2);
+        PrepareLandmarks plm = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 2);
         plm.setMinimumNodes(2);
         plm.doWork();
 
@@ -206,7 +204,7 @@ public class PrepareLandmarksTest {
         assertEquals(4800, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
 
         dir = new RAMDirectory(fileStr, true);
-        plm = new PrepareLandmarks(dir, graph, lmConfig, 2);
+        plm = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 2);
         assertTrue(plm.loadExisting());
         assertEquals(expectedFactor, plm.getLandmarkStorage().getFactor(), 1e-6);
         assertEquals(Arrays.toString(new int[]{

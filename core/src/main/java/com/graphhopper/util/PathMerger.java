@@ -59,7 +59,7 @@ public class PathMerger {
 
     public PathMerger(Graph graph, Weighting weighting) {
         this.graph = graph;
-        this.weighting = weighting;
+        this.weighting = graph.wrapWeighting(weighting);
     }
 
     public PathMerger setCalcPoints(boolean calcPoints) {

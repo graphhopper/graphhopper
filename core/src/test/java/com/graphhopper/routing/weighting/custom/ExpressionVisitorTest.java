@@ -4,7 +4,6 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,14 +24,15 @@ public class ExpressionVisitorTest {
     @BeforeEach
     public void before() {
         StringEncodedValue sev = new StringEncodedValue("country", 10);
-        lookup = new GraphBuilder(new EncodingManager.Builder().add(sev).build()).create().getEncodingManager();
+        lookup = new EncodingManager.Builder().add(sev).build();
         sev.setString(false, new IntsRef(1), "DEU");
     }
 
     @Test
     public void protectUsFromStuff() {
         ExpressionVisitor.NameValidator allNamesInvalid = s -> false;
-        for (String toParse : Arrays.asList("",
+        for (String toParse : Arrays.asList(
+                "",
                 "new Object()",
                 "java.lang.Object",
                 "Test.class",
@@ -48,7 +48,8 @@ public class ExpressionVisitorTest {
                 "edge . getClass()",
                 "(edge = edge) == edge",
                 ") edge (",
-                "in(area_blup(), edge)")) {
+                "in(area_blup(), edge)",
+                "s -> truevalue")) {
             ExpressionVisitor.ParseResult res = parseExpression(toParse, allNamesInvalid, lookup);
             assertFalse(res.ok, "should not be simple condition: " + toParse);
             assertTrue(res.guessedVariables == null || res.guessedVariables.isEmpty());
@@ -142,7 +143,7 @@ public class ExpressionVisitorTest {
                         validVariable, "[HERE]", new HashSet<>(),
                         Arrays.asList(If("max_weight > 10", Statement.Op.MULTIPLY, 0)),
                         lookup, ""));
-        assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"max_weight > 10\": encoded value 'max_weight' not available"), ret.getMessage());
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"max_weight > 10\": 'max_weight' not available"), ret.getMessage());
 
         // invalid variable or constant (NameValidator returns false)
         ret = assertThrows(IllegalArgumentException.class,
@@ -150,7 +151,7 @@ public class ExpressionVisitorTest {
                         validVariable, "[HERE]", new HashSet<>(),
                         Arrays.asList(If("country == GERMANY", Statement.Op.MULTIPLY, 0)),
                         lookup, ""));
-        assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"country == GERMANY\": identifier GERMANY invalid"), ret.getMessage());
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid expression \"country == GERMANY\": 'GERMANY' not available"), ret.getMessage());
 
         // not whitelisted method
         ret = assertThrows(IllegalArgumentException.class,

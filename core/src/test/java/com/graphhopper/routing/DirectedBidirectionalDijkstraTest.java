@@ -10,11 +10,15 @@ import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -34,10 +38,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * For other bidirectional algorithms we simply compare with {@link DijkstraBidirectionRef} in {@link DirectedRoutingTest}
  */
 public class DirectedBidirectionalDijkstraTest {
-    private Directory dir;
     private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
-    private GraphHopperStorage graph;
+    private BaseGraph graph;
     private FlagEncoder encoder;
     private EncodingManager encodingManager;
     private Weighting weighting;
@@ -45,11 +48,10 @@ public class DirectedBidirectionalDijkstraTest {
 
     @BeforeEach
     public void setup() {
-        dir = new RAMDirectory();
         maxTurnCosts = 10;
-        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+        encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxTurnCosts));
         encodingManager = EncodingManager.create(encoder);
-        graph = new GraphHopperStorage(dir, encodingManager, false, true).create(1000);
+        graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         turnCostStorage = graph.getTurnCostStorage();
         weighting = createWeighting(Weighting.INFINITE_U_TURN_COSTS);
         turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
@@ -478,7 +480,7 @@ public class DirectedBidirectionalDijkstraTest {
         na.setNode(4, 0, 1);
         na.setNode(5, 0, 0);
 
-        LocationIndexTree locationIndex = new LocationIndexTree(graph, dir);
+        LocationIndexTree locationIndex = new LocationIndexTree(graph, graph.getDirectory());
         locationIndex.prepareIndex();
         Snap snap = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, snap);

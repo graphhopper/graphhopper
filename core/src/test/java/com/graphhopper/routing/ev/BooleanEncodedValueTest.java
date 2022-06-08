@@ -11,7 +11,7 @@ public class BooleanEncodedValueTest {
     @Test
     public void testBit() {
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
-        IntEncodedValue intProp = new UnsignedIntEncodedValue("somevalue", 5, false);
+        IntEncodedValue intProp = new IntEncodedValueImpl("somevalue", 5, false);
         intProp.init(config);
 
         BooleanEncodedValue bool = new SimpleBooleanEncodedValue("access", false);

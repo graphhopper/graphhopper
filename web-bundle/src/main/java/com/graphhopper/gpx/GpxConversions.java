@@ -31,16 +31,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public class GpxConversions {
 
     private static final AngleCalc AC = AngleCalc.ANGLE_CALC;
+    private static final Pattern XML_ESCAPE_PATTERN = Pattern.compile("[\\<\\>]");
 
     static String simpleXMLEscape(String str) {
-        // We could even use the 'more flexible' CDATA section but for now do the following. The 'and' could be important sometimes:
-        return str.replaceAll("&", "&amp;").
-                // but do not care for:
-                        replaceAll("[\\<\\>]", "_");
+        // We could even use the 'more flexible' CDATA section but for now do the following:
+        // The 'and' could be important sometimes but remove others
+        return XML_ESCAPE_PATTERN.matcher(str.replace("&", "&amp;")).replaceAll("_");
     }
 
     public static List<GPXEntry> createGPXList(InstructionList instructions) {

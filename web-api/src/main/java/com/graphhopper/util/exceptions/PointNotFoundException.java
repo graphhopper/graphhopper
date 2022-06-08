@@ -18,7 +18,6 @@
 package com.graphhopper.util.exceptions;
 
 import java.util.Collections;
-import java.util.Map;
 
 /**
  * Represents an instance of the "Cannot find Point" Exception, whereas the Point that cannot be
@@ -26,21 +25,17 @@ import java.util.Map;
  *
  * @author Robin Boldt
  */
-public class PointNotFoundException extends IllegalArgumentException implements GHException {
+public class PointNotFoundException extends DetailedIllegalArgumentException {
 
-    protected final int pointIndex;
+    private static final long serialVersionUID = 1L;
+    
+    public static final String INDEX_KEY = "point_index";
 
     public PointNotFoundException(String message, int pointIndex) {
-        super(message);
-        this.pointIndex = pointIndex;
+        super(message, Collections.singletonMap(INDEX_KEY, pointIndex));
     }
 
     public int getPointIndex() {
-        return this.pointIndex;
-    }
-
-    @Override
-    public Map<String, Object> getDetails() {
-        return Collections.<String, Object>singletonMap("point_index", pointIndex);
+        return (int) getDetails().get(INDEX_KEY);
     }
 }

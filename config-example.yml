@@ -18,7 +18,7 @@ graphhopper:
   # Add additional information to every edge. Used for path details (#1548), better instructions (#1844) and tunnel/bridge interpolation (#798).
   # Default values are: road_class,road_class_link,road_environment,max_speed,road_access (since #1805)
   # More are: surface,smoothness,max_width,max_height,max_weight,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,toll,track_type,
-  #           mtb_rating, hiking_rating,horse_rating,lanes
+  #           mtb_rating, hike_rating,horse_rating,lanes
   # graph.encoded_values: surface,toll,track_type
 
   ##### Routing Profiles ####
@@ -41,7 +41,7 @@ graphhopper:
   #   You can also use th e`custom_model` field instead and specify your custom model in the profile directly.
   #
   #   For more information about profiles and especially custom profiles have a look into the documentation
-  #   at docs/core/profiles.md or the examples under web/src/test/resources/com/graphhopper/http/resources/ or
+  #   at docs/core/profiles.md or the examples under web/src/test/java/com/graphhopper/application/resources/ or
   #   the CustomWeighting class for the raw details.
   #
   # To prevent long running routing queries you should usually enable either speed or hybrid mode for all the given
@@ -148,7 +148,7 @@ graphhopper:
 
 
   # configure the memory access, use RAM_STORE for well equipped servers (default and recommended)
-  graph.dataaccess: RAM_STORE
+  graph.dataaccess.default_type: RAM_STORE
 
 
   # will write way names in the preferred language (language code as defined in ISO 639-1 or ISO 639-2):
@@ -187,11 +187,11 @@ logging:
   - type: file
     time_zone: UTC
     current_log_filename: logs/graphhopper.log
-    log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    log_format: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
     archive: true
     archived_log_filename_pattern: ./logs/graphhopper-%d.log.gz
     archived_file_count: 30
     never_block: true
   - type: console
     time_zone: UTC
-    log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    log_format: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

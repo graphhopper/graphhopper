@@ -26,9 +26,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import java.util.zip.ZipFile;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -41,10 +41,10 @@ public class TransfersTest {
     @BeforeAll
     public void init() throws IOException {
         GTFSFeed gtfsFeed1 = new GTFSFeed();
-        gtfsFeed1.loadFromFile(new ZipFile("files/sample-feed.zip"), "");
+        gtfsFeed1.loadFromZipfileOrDirectory(new File("files/sample-feed"), "");
         sampleFeed = new Transfers(gtfsFeed1);
         GTFSFeed gtfsFeed2 = new GTFSFeed();
-        gtfsFeed2.loadFromFile(new ZipFile("files/another-sample-feed.zip"), "");
+        gtfsFeed2.loadFromZipfileOrDirectory(new File("files/another-sample-feed"), "");
         anotherSampleFeed = new Transfers(gtfsFeed2);
     }
 
@@ -59,7 +59,7 @@ public class TransfersTest {
         assertEquals("NEXT_TO_MUSEUM", transfer.to_stop_id);
         Assertions.assertNull(transfer.from_route_id);
         Assertions.assertNull(transfer.to_route_id);
-        Assertions.assertNotEquals(0, transfer.min_transfer_time);
+        Assertions.assertEquals(600, transfer.min_transfer_time);
 
         Transfer withinStationTransfer = transfersToStop.get(1);
         assertEquals("NEXT_TO_MUSEUM", withinStationTransfer.from_stop_id);

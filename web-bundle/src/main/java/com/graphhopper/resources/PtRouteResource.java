@@ -25,11 +25,11 @@ import com.graphhopper.gtfs.PtRouter;
 import com.graphhopper.gtfs.Request;
 import com.graphhopper.http.DurationParam;
 import com.graphhopper.http.GHLocationParam;
+import com.graphhopper.http.OffsetDateTimeParam;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import io.dropwizard.jersey.params.AbstractParam;
-import io.dropwizard.jersey.params.InstantParam;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -55,7 +55,7 @@ public class PtRouteResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public ObjectNode route(@QueryParam("point") @Size(min=2,max=2) List<GHLocationParam> requestPoints,
-                            @QueryParam("pt.earliest_departure_time") @NotNull InstantParam departureTimeParam,
+                            @QueryParam("pt.earliest_departure_time") @NotNull OffsetDateTimeParam departureTimeParam,
                             @QueryParam("pt.profile_duration") DurationParam profileDuration,
                             @QueryParam("pt.arrive_by") @DefaultValue("false") boolean arriveBy,
                             @QueryParam("locale") String localeStr,
@@ -68,7 +68,7 @@ public class PtRouteResource {
                             @QueryParam("pt.egress_profile") String egressProfile) {
         StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
-        Instant departureTime = departureTimeParam.get();
+        Instant departureTime = departureTimeParam.get().toInstant();
 
         Request request = new Request(points, departureTime);
         request.setArriveBy(arriveBy);

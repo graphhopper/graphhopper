@@ -25,6 +25,9 @@ import java.util.Map;
  * @author Peter Karich
  */
 public class ConnectionNotFoundException extends DetailedIllegalArgumentException {
+
+    private static final long serialVersionUID = 1L;
+    
     public ConnectionNotFoundException(String var1, Map<String, Object> details) {
         super(var1, details);
     }

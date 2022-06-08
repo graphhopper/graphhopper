@@ -25,17 +25,17 @@ import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 
 import java.io.File;
-import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.Arrays;
-import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -51,7 +51,7 @@ public class FreeWalkIT {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.putObject("datareader.file", "files/beatty.osm");
-        ghConfig.putObject("gtfs.file", "files/sample-feed.zip,files/another-sample-feed.zip");
+        ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
         ghConfig.putObject("gtfs.max_transfer_interpolation_walk_time_seconds", 0);
         // TODO: This setting vv is currently "dead", as in production it switches to PtRouterFreeWalkImpl, but
         // TODO: here it is instantiated directly. Refactor by having only one Router but two Solvers, similar
@@ -64,7 +64,7 @@ public class FreeWalkIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouter = PtRouterFreeWalkImpl.createFactory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs, graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+        ptRouter = new PtRouterFreeWalkImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -97,9 +97,42 @@ public class FreeWalkIT {
         assertEquals(LocalDateTime.parse("2007-01-01T10:00:00").atZone(zoneId).toInstant(), transferLeg.getDepartureTime().toInstant());
         assertEquals(LocalDateTime.parse("2007-01-01T10:08:06.660").atZone(zoneId).toInstant(), transferLeg.getArrivalTime().toInstant());
 
+        assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), transitSolution.getLegs().get(1).geometry);
+
         assertEquals(4500000L, transitSolution.getTime());
         assertEquals(4500000.0, transitSolution.getRouteWeight());
         assertEquals(time(1, 15), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
+    }
+
+    @Test
+    public void testFastWalking() {
+        Request ghRequest = new Request(
+                36.91311729030539, -116.76769495010377,
+                36.91260259593356, -116.76149368286134
+        );
+        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
+        ghRequest.setWalkSpeedKmH(50); // Yes, I can walk very fast, 50 km/h. Problem?
+
+        GHResponse response = ptRouter.route(ghRequest);
+
+        ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
+        assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:40"));
+        assertThat(walkSolution.getLegs().get(0).getArrivalTime().toInstant().atZone(zoneId).toLocalTime())
+                .isEqualTo(LocalTime.parse("06:41:07.025"));
+        assertThat(walkSolution.getLegs().size()).isEqualTo(1);
+        assertThat(walkSolution.getNumChanges()).isEqualTo(-1);
+    }
+
+    private LineString readWktLineString(String wkt) {
+        WKTReader wktReader = new WKTReader();
+        LineString expectedGeometry = null;
+        try {
+            expectedGeometry = (LineString) wktReader.read(wkt);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return expectedGeometry;
     }
 
 }

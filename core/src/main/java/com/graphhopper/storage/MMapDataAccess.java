@@ -29,7 +29,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.security.AccessController;
@@ -61,10 +60,10 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
     private final boolean allowWrites;
     private RandomAccessFile raFile;
-    private List<MappedByteBuffer> segments = new ArrayList<>();
+    private final List<MappedByteBuffer> segments = new ArrayList<>();
 
-    MMapDataAccess(String name, String location, ByteOrder order, boolean allowWrites, int segmentSize) {
-        super(name, location, order, segmentSize);
+    MMapDataAccess(String name, String location, boolean allowWrites, int segmentSize) {
+        super(name, location, segmentSize);
         this.allowWrites = allowWrites;
     }
 
@@ -305,6 +304,18 @@ public final class MMapDataAccess extends AbstractDataAccess {
             // equivalent to raFile.getChannel().force(true);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
+        }
+    }
+
+    /**
+     * Load memory mapped files into physical memory.
+     */
+    public void load(int percentage) {
+        if (percentage < 0 || percentage > 100)
+            throw new IllegalArgumentException("Percentage for MMapDataAccess.load for " + getName() + " must be in [0,100] but was " + percentage);
+        int max = Math.round(segments.size() * percentage / 100f);
+        for (int i = 0; i < max; i++) {
+            segments.get(i).load();
         }
     }
 

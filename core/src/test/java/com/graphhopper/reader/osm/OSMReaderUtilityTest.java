@@ -20,7 +20,7 @@ package com.graphhopper.reader.osm;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * @author Peter Karich
@@ -48,24 +48,13 @@ public class OSMReaderUtilityTest {
 
     @Test
     public void testWrongDurationFormats() {
-        try {
-            OSMReaderUtility.parseDuration("PT5h12m36s");
-            fail("parseDuration didn't throw when I expected it to");
-        } catch (IllegalArgumentException expectedException) {
-            assertEquals(expectedException.getMessage(), "Cannot parse duration tag value: PT5h12m36s");
-        }
-        try {
-            OSMReaderUtility.parseDuration("oh");
-            fail("parseDuration didn't throw when I expected it to");
-        } catch (IllegalArgumentException expectedException) {
-            assertEquals(expectedException.getMessage(), "Cannot parse duration tag value: oh");
-        }
-        try {
-            OSMReaderUtility.parseDuration("01:10:2");
-            fail("parseDuration didn't throw when I expected it to");
-        } catch (IllegalArgumentException expectedException) {
-            assertEquals(expectedException.getMessage(), "Cannot parse duration tag value: 01:10:2");
-        }
+        assertParsDurationError("PT5h12m36s");
+        assertParsDurationError("oh");
+        assertParsDurationError("01:10:2");
+    }
 
+    private void assertParsDurationError(String value) {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> OSMReaderUtility.parseDuration(value));
+        assertEquals("Cannot parse duration tag value: " + value, e.getMessage());
     }
 }

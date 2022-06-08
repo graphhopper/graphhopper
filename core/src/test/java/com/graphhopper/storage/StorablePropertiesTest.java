@@ -48,23 +48,6 @@ public class StorablePropertiesTest {
     }
 
     @Test
-    public void testVersionCheck() {
-        StorableProperties instance = new StorableProperties(createDir("", false));
-        instance.putCurrentVersions();
-        assertTrue(instance.checkVersions(true));
-
-        instance.put("nodes.version", 0);
-        assertFalse(instance.checkVersions(true));
-
-        try {
-            instance.checkVersions(false);
-            assertTrue(false);
-        } catch (Exception ex) {
-        }
-        instance.close();
-    }
-
-    @Test
     public void testStore() {
         String dir = "./target/test";
         Helper.removeDir(new File(dir));

@@ -17,12 +17,11 @@
  */
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.routing.util.AbstractAlgoPreparation;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
@@ -37,17 +36,18 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class PrepareLandmarks extends AbstractAlgoPreparation {
+public class PrepareLandmarks {
     private static final Logger LOGGER = LoggerFactory.getLogger(PrepareLandmarks.class);
-    private final Graph graph;
+    private final BaseGraph graph;
     private final LandmarkStorage lms;
     private final LMConfig lmConfig;
     private long totalPrepareTime;
+    private boolean prepared = false;
 
-    public PrepareLandmarks(Directory dir, GraphHopperStorage graph, LMConfig lmConfig, int landmarks) {
+    public PrepareLandmarks(Directory dir, BaseGraph graph, EncodedValueLookup encodedValueLookup, LMConfig lmConfig, int landmarks) {
         this.graph = graph;
         this.lmConfig = lmConfig;
-        lms = new LandmarkStorage(graph, dir, lmConfig, landmarks);
+        lms = new LandmarkStorage(graph, encodedValueLookup, dir, lmConfig, landmarks);
     }
 
     /**
@@ -100,10 +100,6 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         return lms;
     }
 
-    public int getSubnetworksWithLandmarks() {
-        return lms.getSubnetworksWithLandmarks();
-    }
-
     public LMConfig getLMConfig() {
         return lmConfig;
     }
@@ -112,8 +108,10 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         return lms.loadExisting();
     }
 
-    @Override
-    public void doSpecificWork() {
+    public void doWork() {
+        if (prepared)
+            throw new IllegalStateException("Call doWork only once!");
+        prepared = true;
         StopWatch sw = new StopWatch().start();
         LOGGER.info("Start calculating " + lms.getLandmarkCount() + " landmarks, weighting:" + lms.getLmSelectionWeighting() + ", " + Helper.getMemInfo());
 
@@ -126,15 +124,12 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         totalPrepareTime = sw.getMillis();
     }
 
-    public long getTotalPrepareTime() {
-        return totalPrepareTime;
+    public boolean isPrepared() {
+        return prepared;
     }
 
-    /**
-     * Convenience method to obtain a routing algo factory from the preparation.
-     */
-    public LMRoutingAlgorithmFactory getRoutingAlgorithmFactory() {
-        return new LMRoutingAlgorithmFactory(getLandmarkStorage());
+    public long getTotalPrepareTime() {
+        return totalPrepareTime;
     }
 
     /**

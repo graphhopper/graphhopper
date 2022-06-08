@@ -69,4 +69,18 @@ public class PMapTest {
         assertFalse(subject.has("baz"));
     }
 
+    @Test
+    public void nameAndProperties() {
+        PMap pMap = new PMap("name|x=3|y=2");
+        assertEquals(2, pMap.toMap().size());
+        assertEquals(3, pMap.getInt("x", -1));
+        assertEquals(2, pMap.getInt("y", -1));
+    }
+
+    @Test
+    public void empty() {
+        assertTrue(new PMap("").toMap().isEmpty());
+        assertTrue(new PMap("name").toMap().isEmpty());
+    }
+
 }
