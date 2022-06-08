@@ -16,7 +16,7 @@ public class TurnCost {
      */
     public static DecimalEncodedValue create(String name, int maxTurnCosts) {
         int turnBits = Helper.countBitValue(maxTurnCosts);
-        return new UnsignedDecimalEncodedValue(key(name), turnBits, 1, 0, false, true);
+        return new DecimalEncodedValueImpl(key(name), turnBits, 0, 1, false, false, false, true);
     }
 
     public static IntsRef createFlags() {

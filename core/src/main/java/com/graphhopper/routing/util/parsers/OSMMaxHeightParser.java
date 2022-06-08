@@ -19,9 +19,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.MaxHeight;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
@@ -32,21 +29,12 @@ public class OSMMaxHeightParser implements TagParser {
 
     private final DecimalEncodedValue heightEncoder;
 
-    public OSMMaxHeightParser() {
-        this(MaxHeight.create());
-    }
-
     public OSMMaxHeightParser(DecimalEncodedValue heightEncoder) {
         this.heightEncoder = heightEncoder;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(heightEncoder);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         List<String> heightTags = Arrays.asList("maxheight", "maxheight:physical"/*, the OSM tag "height" is not used for the height of a road, so omit it here! */);
         OSMValueExtractor.extractMeter(edgeFlags, way, heightEncoder, heightTags);
         return edgeFlags;

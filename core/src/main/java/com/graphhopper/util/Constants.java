@@ -30,12 +30,12 @@ import static com.graphhopper.util.Helper.*;
  */
 public class Constants {
     /**
-     * The value of <tt>System.getProperty("java.version")</tt>. *
+     * The value of <code>System.getProperty("java.version")</code>. *
      */
     public static final String JAVA_VERSION = System.getProperty("java.version");
 
     /**
-     * The value of <tt>System.getProperty("os.name")</tt>. *
+     * The value of <code>System.getProperty("os.name")</code>. *
      */
     public static final String OS_NAME = System.getProperty("os.name");
     /**
@@ -66,12 +66,13 @@ public class Constants {
     private static final int JVM_MAJOR_VERSION;
     private static final int JVM_MINOR_VERSION;
 
-    public static final int VERSION_NODE = 7;
-    public static final int VERSION_EDGE = 20;
-    public static final int VERSION_SHORTCUT = 7;
-    public static final int VERSION_GEOMETRY = 5;
-    public static final int VERSION_LOCATION_IDX = 4;
-    public static final int VERSION_STRING_IDX = 5;
+    public static final int VERSION_NODE = 9;
+    public static final int VERSION_EDGE = 21;
+    public static final int VERSION_SHORTCUT = 9;
+    public static final int VERSION_NODE_CH = 0;
+    public static final int VERSION_GEOMETRY = 6;
+    public static final int VERSION_LOCATION_IDX = 5;
+    public static final int VERSION_STRING_IDX = 6;
     /**
      * The version without the snapshot string
      */

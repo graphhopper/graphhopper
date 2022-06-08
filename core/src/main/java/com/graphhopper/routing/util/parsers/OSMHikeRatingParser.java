@@ -18,13 +18,8 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.HikeRating;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 /**
  * Parses the hiking difficulty. Where hiking corresponds to 1, mountain_hiking to 2 until 6.
@@ -35,17 +30,12 @@ public class OSMHikeRatingParser implements TagParser {
 
     private final IntEncodedValue sacScaleEnc;
 
-    public OSMHikeRatingParser() {
-        this.sacScaleEnc = HikeRating.create();
+    public OSMHikeRatingParser(IntEncodedValue sacScaleEnc) {
+        this.sacScaleEnc = sacScaleEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
-        link.add(sacScaleEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         String scale = readerWay.getTag("sac_scale");
         int rating = 0;
         if (scale != null) {

@@ -23,12 +23,12 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.lm.LMConfig;
-import com.graphhopper.routing.lm.PerfectApproximator;
-import com.graphhopper.routing.lm.PrepareLandmarks;
+import com.graphhopper.routing.lm.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -43,6 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
@@ -95,7 +96,7 @@ public class RandomizedRoutingTest {
         private final boolean prepareLM;
         private final TraversalMode traversalMode;
         private final Directory dir;
-        private final GraphHopperStorage graph;
+        private final BaseGraph graph;
         private final List<CHConfig> chConfigs;
         private final LMConfig lmConfig;
         private final FlagEncoder encoder;
@@ -104,7 +105,7 @@ public class RandomizedRoutingTest {
         private final Weighting weighting;
         private final EncodingManager encodingManager;
         private RoutingCHGraph routingCHGraph;
-        private PrepareLandmarks lm;
+        private LandmarkStorage lm;
 
         Fixture(Algo algo, boolean prepareCH, boolean prepareLM, TraversalMode traversalMode) {
             this.algo = algo;
@@ -116,14 +117,16 @@ public class RandomizedRoutingTest {
             // todo: this test only works with speedTwoDirections=false (as long as loops are enabled), otherwise it will
             // fail sometimes for edge-based algorithms, #1631, but maybe we can should disable different fwd/bwd speeds
             // only for loops instead?
-            encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
+            encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxTurnCosts));
             encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
-            graph = new GraphBuilder(encodingManager)
-                    .setCHConfigStrings("p1|car|fastest|node", "p2|car|fastest|edge")
+            graph = new BaseGraph.Builder(encodingManager)
                     .setDir(dir)
                     .create();
             turnCostStorage = graph.getTurnCostStorage();
-            chConfigs = graph.getCHConfigs();
+            chConfigs = Arrays.asList(
+                    CHConfig.nodeBased("p1", new FastestWeighting(encoder)),
+                    CHConfig.edgeBased("p2", new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())))
+            );
             // important: for LM preparation we need to use a weighting without turn costs #1960
             lmConfig = new LMConfig("car", chConfigs.get(0).getWeighting());
             weighting = traversalMode.isEdgeBased() ? chConfigs.get(1).getWeighting() : chConfigs.get(0).getWeighting();
@@ -138,14 +141,15 @@ public class RandomizedRoutingTest {
             graph.freeze();
             if (prepareCH) {
                 CHConfig chConfig = !traversalMode.isEdgeBased() ? chConfigs.get(0) : chConfigs.get(1);
-                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraphHopperStorage(graph, chConfig);
-                pch.doWork();
-                routingCHGraph = graph.getRoutingCHGraph(chConfig.getName());
+                PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
+                PrepareContractionHierarchies.Result res = pch.doWork();
+                routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             }
             if (prepareLM) {
-                lm = new PrepareLandmarks(dir, graph, lmConfig, 16);
-                lm.setMaximumWeight(10000);
-                lm.doWork();
+                PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 16);
+                prepare.setMaximumWeight(10000);
+                prepare.doWork();
+                lm = prepare.getLandmarkStorage();
             }
         }
 
@@ -174,9 +178,9 @@ public class RandomizedRoutingTest {
                     return algoFactory.createAlgo(new PMap().putObject(ALGORITHM, ASTAR_BI));
                 }
                 case LM_BIDIR:
-                    return lm.getRoutingAlgorithmFactory().createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(traversalMode));
+                    return new LMRoutingAlgorithmFactory(lm).createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(traversalMode));
                 case LM_UNIDIR:
-                    return lm.getRoutingAlgorithmFactory().createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(traversalMode));
+                    return new LMRoutingAlgorithmFactory(lm).createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR).setTraversalMode(traversalMode));
                 case PERFECT_ASTAR: {
                     AStarBidirection perfectAStarBi = new AStarBidirection(graph, weighting, traversalMode);
                     perfectAStarBi.setApproximation(new PerfectApproximator(graph, weighting, traversalMode, false));

@@ -18,10 +18,12 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
@@ -45,8 +47,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class EdgeBasedNodeContractorTest {
     private final int maxCost = 10;
-    private CarFlagEncoder encoder;
-    private GraphHopperStorage graph;
+    private FlagEncoder encoder;
+    private BaseGraph graph;
     private Weighting weighting;
     private CHStorage chStore;
     private CHStorageBuilder chBuilder;
@@ -59,18 +61,21 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void initialize() {
-        encoder = new CarFlagEncoder(5, 5, maxCost);
+        encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxCost));
         EncodingManager encodingManager = EncodingManager.create(encoder);
-        graph = new GraphBuilder(encodingManager)
-                .setCHConfigStrings(
-                        "p1|car|shortest|edge",
-                        "p2|car|shortest|edge|60"
-                )
-                .create();
-        chConfigs = graph.getCHConfigs();
-        chStore = graph.getCHStore(chConfigs.get(0).getName());
+        graph = new BaseGraph.Builder(encodingManager).create();
+        chConfigs = Arrays.asList(
+                CHConfig.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()))),
+                CHConfig.edgeBased("p2", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 60))),
+                CHConfig.edgeBased("p3", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 0)))
+        );
+    }
+
+    private void freeze() {
+        graph.freeze();
+        chStore = CHStorage.fromGraph(graph, chConfigs.get(0));
         chBuilder = new CHStorageBuilder(chStore);
-        weighting = graph.getRoutingCHGraph(chConfigs.get(0).getName()).getWeighting();
+        weighting = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfigs.get(0)).getWeighting();
     }
 
     @Test
@@ -86,7 +91,7 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState edge3to2 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 2).setDistance(2));
         final EdgeIteratorState edge2to7 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 7).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(7, 9).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
 
         setRestriction(6, 7, 9);
@@ -95,8 +100,8 @@ public class EdgeBasedNodeContractorTest {
         contractNodes(5, 6, 3, 2, 9, 1, 8, 4, 7, 0);
         checkShortcuts(
                 createShortcut(2, 8, edge8to3, edge3to2, 5, false, true),
-                createShortcut(8, 7, edge8to3.getEdge(), edge2to7.getEdge(), 6, edge2to7.getEdge(), 6, true, false),
-                createShortcut(7, 7, edge7to8.getEdge(), edge2to7.getEdge(), edge7to8.getEdge(), 7, 8, true, false)
+                createShortcut(8, 7, edge8to3.getEdgeKey(), edge2to7.getEdgeKey(), 6, edge2to7.getEdge(), 6, true, false),
+                createShortcut(7, 7, edge7to8.getEdgeKey(), edge2to7.getEdgeKey(), edge7to8.getEdge(), 7, 8, true, false)
         );
     }
 
@@ -115,7 +120,7 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState e3to5 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 5).setDistance(2));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 6).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 4).setDistance(2));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         setRestriction(1, 6, 3);
         contractAllNodesInOrder();
@@ -125,7 +130,7 @@ public class EdgeBasedNodeContractorTest {
                 // from contracting node 3: two shortcuts:
                 // 1) in case we come from 1->6 (cant turn left)
                 // 2) in case we come from 2->6 (going via node 0 would be more expensive)
-                createShortcut(5, 6, e6to0.getEdge(), e3to5.getEdge(), 7, e3to5.getEdge(), 11, false, true),
+                createShortcut(5, 6, e6to0.getEdgeKey(), e3to5.getEdgeKey(), 7, e3to5.getEdge(), 11, false, true),
                 createShortcut(5, 6, e6to3, e3to5, 3, false, true)
         );
     }
@@ -140,7 +145,7 @@ public class EdgeBasedNodeContractorTest {
         EdgeIteratorState e2to3 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(2));
         EdgeIteratorState e1to3 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 1).setDistance(2));
         EdgeIteratorState e2to4 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 2).setDistance(2));
-        graph.freeze();
+        freeze();
 
         setMaxLevelOnAllNodes();
         contractAllNodesInOrder();
@@ -150,7 +155,7 @@ public class EdgeBasedNodeContractorTest {
                 // from contraction of node 2
                 // It might look like it is always better to go directly from 4 to 2, but when we come from edge (2->4)
                 // we may not do a u-turn at 4.
-                createShortcut(3, 4, e0to4.getEdge(), e2to3.getEdge(), 5, e2to3.getEdge(), 10, false, true),
+                createShortcut(3, 4, e0to4.getEdgeKey(), e2to3.getEdgeKey(), 5, e2to3.getEdge(), 10, false, true),
                 createShortcut(3, 4, e2to4, e2to3, 4, false, true)
         );
     }
@@ -165,11 +170,11 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 0).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 4).setDistance(2));
         final EdgeIteratorState e4to6 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 6).setDistance(2));
-        final EdgeIteratorState e3to6 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 3).setDistance(1));
+        final EdgeIteratorState e6to3 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 3).setDistance(1));
         final EdgeIteratorState e3to4 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1));
         final EdgeIteratorState e4to5 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 5).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 2).setDistance(2));
-        graph.freeze();
+        freeze();
 
         // enforce loop (going counter-clockwise)
         setRestriction(0, 4, 5);
@@ -180,12 +185,12 @@ public class EdgeBasedNodeContractorTest {
         contractAllNodesInOrder();
         checkShortcuts(
                 // from contraction of node 3
-                createShortcut(4, 6, e3to4, e3to6, 6, true, false),
-                createShortcut(4, 6, e3to6, e3to4, 4, false, true),
+                createShortcut(4, 6, e3to4.detach(true), e6to3.detach(true), 6, true, false),
+                createShortcut(4, 6, e6to3, e3to4, 4, false, true),
                 // from contraction of node 4
                 // two 'parallel' shortcuts to preserve shortest paths to 5 when coming from 4->6 and 3->6 !!
-                createShortcut(5, 6, e3to6.getEdge(), e4to5.getEdge(), 8, e4to5.getEdge(), 5, false, true),
-                createShortcut(5, 6, e4to6, e4to5, 3, false, true)
+                createShortcut(5, 6, e6to3.getEdgeKey(), e4to5.getEdgeKey(), 8, e4to5.getEdge(), 5, false, true),
+                createShortcut(5, 6, e4to6.detach(true), e4to5, 3, false, true)
         );
     }
 
@@ -195,7 +200,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 0).setDistance(3));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 2).setDistance(5));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(0, 3, 1, 2);
         // it looks like we need a shortcut from 1 to 2, but shortcuts are only introduced to maintain shortest paths
@@ -210,7 +215,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 0).setDistance(3));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 2).setDistance(5));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(0, 3, 1, 2);
         // it looks like we need a shortcut from 1 to 2, but shortcuts are only introduced to maintain shortest paths
@@ -228,7 +233,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 1).setDistance(1));
         setRestriction(0, 3, 2);
         setRestriction(2, 4, 1);
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 3, 4, 1);
         // It looks like we need a shortcut from 3 to 4, but due to the turn restrictions there should be none.
@@ -242,7 +247,7 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState e3to2 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 2).setDistance(3));
         final EdgeIteratorState e2to4 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 4).setDistance(5));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 1).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
         contractNode(nodeContractor, 0, 0);
@@ -265,7 +270,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(3));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(5));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractAllNodesInOrder();
         // for each contraction the node levels are such that no shortcuts are introduced
@@ -279,7 +284,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(3));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 2).setDistance(5));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 3).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
         checkShortcuts();
@@ -292,7 +297,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 1).setDistance(3));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(5));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
         checkShortcuts();
@@ -310,12 +315,12 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(2));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
         // there should be only one shortcut
         checkShortcuts(
-                createShortcut(1, 3, 1, 3, 1, 3, 2)
+                createShortcut(1, 3, 2, 6, 1, 3, 2)
         );
     }
 
@@ -328,11 +333,11 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
         checkShortcuts(
-                createShortcut(1, 3, 2, 3, 2, 3, 2)
+                createShortcut(1, 3, 4, 6, 2, 3, 2)
         );
     }
 
@@ -350,7 +355,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
         checkNumShortcuts(1);
@@ -365,7 +370,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
         checkNumShortcuts(1);
@@ -379,7 +384,7 @@ public class EdgeBasedNodeContractorTest {
         final EdgeIteratorState e2to4 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 4).setDistance(5));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 1).setDistance(1));
         setTurnCost(3, 2, 4, 4);
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3, 4);
         checkShortcuts(createShortcut(3, 4, e3to2, e2to4, 12));
@@ -393,7 +398,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 4).setDistance(5));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 1).setDistance(1));
         setRestriction(3, 2, 4);
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3, 4);
         checkShortcuts();
@@ -408,15 +413,15 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 1).setDistance(1));
         setTurnCost(e3to2, e2to4, 2, 4);
         setTurnCost(e2to4, e3to2, 2, 4);
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3, 4);
         checkShortcuts(
                 // note that for now we add a shortcut for each direction. using fwd/bwd flags would be more efficient,
                 // but requires a more sophisticated way to determine the 'first' and 'last' original edges at various
                 // places
-                createShortcut(3, 4, e3to2, e2to4, 12, true, false),
-                createShortcut(3, 4, e2to4, e3to2, 12, false, true)
+                createShortcut(3, 4, 2, 4, 1, 2, 12, true, false),
+                createShortcut(3, 4, 5, 3, 2, 1, 12, false, true)
         );
     }
 
@@ -424,17 +429,17 @@ public class EdgeBasedNodeContractorTest {
     public void testContractNode_twoNormalEdges_bidirectional_differentCosts() {
         // 0 -- 3 -- 2 -- 4 -- 1
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 3).setDistance(1));
-        final EdgeIteratorState e2to3 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 2).setDistance(3));
+        final EdgeIteratorState e3to2 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 2).setDistance(3));
         final EdgeIteratorState e2to4 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4).setDistance(5));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 1).setDistance(1));
-        setTurnCost(e2to3, e2to4, 2, 4);
-        setTurnCost(e2to4, e2to3, 2, 7);
-        graph.freeze();
+        setTurnCost(e3to2, e2to4, 2, 4);
+        setTurnCost(e2to4, e3to2, 2, 7);
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3, 4);
         checkShortcuts(
-                createShortcut(3, 4, e2to3, e2to4, 12, true, false),
-                createShortcut(3, 4, e2to4, e2to3, 15, false, true)
+                createShortcut(3, 4, e3to2, e2to4, 12, true, false),
+                createShortcut(3, 4, e2to4.detach(true), e3to2.detach(true), 15, false, true)
         );
     }
 
@@ -444,7 +449,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 2).setDistance(2));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 1).setDistance(3));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 4).setDistance(6));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
 
         contractNodes(1, 2, 3, 4);
@@ -475,7 +480,7 @@ public class EdgeBasedNodeContractorTest {
         setTurnCost(e3to2, e2to2, 2, 2);
         setTurnCost(e2to2, e2to4, 2, 1);
         setTurnCost(e3to2, e2to4, 2, loopHelps ? 6 : 3);
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
 
         contractNodes(2, 0, 1, 3, 4);
@@ -484,7 +489,7 @@ public class EdgeBasedNodeContractorTest {
             // the first (this is important for path unpacking)
             checkShortcuts(
                     createShortcut(2, 3, e3to2, e2to2, 7, false, true),
-                    createShortcut(3, 4, e3to2.getEdge(), e2to4.getEdge(), 5, e2to4.getEdge(), 13, true, false));
+                    createShortcut(3, 4, e3to2.getEdgeKey(), e2to4.getEdgeKey(), 5, e2to4.getEdge(), 13, true, false));
         } else {
             // taking the loop would be worse, so the path is just 3-2-4 and we only need a single shortcut
             checkShortcuts(
@@ -503,14 +508,14 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 7).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 6).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 4).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         setRestriction(7, 3, 5);
         contractNodes(3, 4, 2, 6, 7, 5, 1);
         checkShortcuts(
                 // from contracting node 3
                 createShortcut(4, 7, e7to3, e3to4, 3, false, true),
-                createShortcut(4, 5, e3to4, e3to5, 3, true, false)
+                createShortcut(4, 5, e3to4.detach(true), e3to5, 3, true, false)
                 // important! no shortcut from 7 to 5 when contracting node 4, because it includes a u-turn
         );
     }
@@ -528,8 +533,8 @@ public class EdgeBasedNodeContractorTest {
         // direct turn is restricted, so we take the left loop -> two extra shortcuts
         GraphWithTwoLoops g = new GraphWithTwoLoops(2, maxCost, 1, 2, 3, maxCost);
         g.contractAndCheckShortcuts(
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(3), 12, false, true),
-                createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(4), g.e6to8.getEdge(), 20, true, false)
+                createShortcut(6, 7, g.e7to6.getEdgeKey(), g.e1to6.getEdgeKey(), g.e7to6.getEdge(), g.getScEdge(3), 12, false, true),
+                createShortcut(7, 8, g.e7to6.getEdgeKey(), g.e6to8.getEdgeKey(), g.getScEdge(4), g.e6to8.getEdge(), 20, true, false)
         );
     }
 
@@ -538,8 +543,8 @@ public class EdgeBasedNodeContractorTest {
         // direct turn is restricted, going on left loop is expensive, so we take the right loop -> two extra shortcuts
         GraphWithTwoLoops g = new GraphWithTwoLoops(8, 1, 1, 2, 3, maxCost);
         g.contractAndCheckShortcuts(
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(2), 12, false, true),
-                createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(4), g.e6to8.getEdge(), 21, true, false)
+                createShortcut(6, 7, g.e7to6.getEdgeKey(), g.e3to6.getEdgeKey(), g.e7to6.getEdge(), g.getScEdge(2), 12, false, true),
+                createShortcut(7, 8, g.e7to6.getEdgeKey(), g.e6to8.getEdgeKey(), g.getScEdge(4), g.e6to8.getEdge(), 21, true, false)
         );
     }
 
@@ -548,9 +553,9 @@ public class EdgeBasedNodeContractorTest {
         // multiple turns are restricted, it is best to take the left and the right loop -> three extra shortcuts
         GraphWithTwoLoops g = new GraphWithTwoLoops(3, maxCost, 1, maxCost, 3, maxCost);
         g.contractAndCheckShortcuts(
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(3), 13, false, true),
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.getScEdge(5), g.getScEdge(2), 24, false, true),
-                createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(4), g.e6to8.getEdge(), 33, true, false)
+                createShortcut(6, 7, g.e7to6.getEdgeKey(), g.e1to6.getEdgeKey(), g.e7to6.getEdge(), g.getScEdge(3), 13, false, true),
+                createShortcut(6, 7, g.e7to6.getEdgeKey(), g.e3to6.getEdgeKey(), g.getScEdge(5), g.getScEdge(2), 24, false, true),
+                createShortcut(7, 8, g.e7to6.getEdgeKey(), g.e6to8.getEdgeKey(), g.getScEdge(4), g.e6to8.getEdge(), 33, true, false)
         );
     }
 
@@ -559,9 +564,9 @@ public class EdgeBasedNodeContractorTest {
         // multiple turns are restricted, it is best to take the right and the left loop -> three extra shortcuts
         GraphWithTwoLoops g = new GraphWithTwoLoops(maxCost, 5, 4, 2, maxCost, maxCost);
         g.contractAndCheckShortcuts(
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e3to6.getEdge(), g.e7to6.getEdge(), g.getScEdge(2), 16, false, true),
-                createShortcut(6, 7, g.e7to6.getEdge(), g.e1to6.getEdge(), g.getScEdge(5), g.getScEdge(3), 25, false, true),
-                createShortcut(7, 8, g.e7to6.getEdge(), g.e6to8.getEdge(), g.getScEdge(4), g.e6to8.getEdge(), 33, true, false)
+                createShortcut(6, 7, g.e7to6.getEdgeKey(), g.e3to6.getEdgeKey(), g.e7to6.getEdge(), g.getScEdge(2), 16, false, true),
+                createShortcut(6, 7, g.e7to6.getEdgeKey(), g.e1to6.getEdgeKey(), g.getScEdge(5), g.getScEdge(3), 25, false, true),
+                createShortcut(7, 8, g.e7to6.getEdgeKey(), g.e6to8.getEdgeKey(), g.getScEdge(4), g.e6to8.getEdge(), 33, true, false)
         );
     }
 
@@ -599,7 +604,7 @@ public class EdgeBasedNodeContractorTest {
             setRestriction(e5to6, e6to2, centerNode);
             setRestriction(e4to6, e6to0, centerNode);
 
-            graph.freeze();
+            freeze();
             setMaxLevelOnAllNodes();
         }
 
@@ -608,9 +613,9 @@ public class EdgeBasedNodeContractorTest {
             HashSet<Shortcut> expectedShortcuts = new HashSet<>();
             expectedShortcuts.addAll(Arrays.asList(
                     createShortcut(1, 6, e6to0, e0to1, 7, false, true),
-                    createShortcut(6, 6, e6to0.getEdge(), e1to6.getEdge(), getScEdge(0), e1to6.getEdge(), 9, true, false),
+                    createShortcut(6, 6, e6to0.getEdgeKey(), e1to6.getEdgeKey(), getScEdge(0), e1to6.getEdge(), 9, true, false),
                     createShortcut(3, 6, e6to2, e2to3, 3, false, true),
-                    createShortcut(6, 6, e6to2.getEdge(), e3to6.getEdge(), getScEdge(1), e3to6.getEdge(), 10, true, false)
+                    createShortcut(6, 6, e6to2.getEdgeKey(), e3to6.getEdgeKey(), getScEdge(1), e3to6.getEdge(), 10, true, false)
             ));
             expectedShortcuts.addAll(Arrays.asList(shortcuts));
             checkShortcuts(expectedShortcuts);
@@ -655,7 +660,7 @@ public class EdgeBasedNodeContractorTest {
             setTurnCost(e4to1, e1to0, 1, turnCost40);
             setTurnCost(e1to2, e2to3, 2, turnCost13);
             setTurnCost(e0to2, e2to3, 2, turnCost03);
-            graph.freeze();
+            freeze();
             setMaxLevelOnAllNodes();
         }
 
@@ -702,7 +707,7 @@ public class EdgeBasedNodeContractorTest {
             setTurnCost(e5to1, e1to0, 1, turnCost50);
             setTurnCost(e5to1, e1to3, 1, turnCost53);
             setTurnCost(e3to4, e4to6, 4, turnCost36);
-            graph.freeze();
+            freeze();
             setMaxLevelOnAllNodes();
         }
     }
@@ -715,7 +720,7 @@ public class EdgeBasedNodeContractorTest {
         final int numEdges = 6;
         checkShortcuts(
                 createShortcut(1, 2, g.e2to0, g.e0to1, 3, false, true),
-                createShortcut(2, 2, g.e2to0.getEdge(), g.e1to2.getEdge(), numEdges, g.e1to2.getEdge(), 4, true, false)
+                createShortcut(2, 2, g.e2to0.getEdgeKey(), g.e1to2.getEdgeKey(), numEdges, g.e1to2.getEdge(), 4, true, false)
         );
     }
 
@@ -744,7 +749,7 @@ public class EdgeBasedNodeContractorTest {
 
         GraphWithLoop(int turnCost34) {
             setTurnCost(e3to2, e2to4, 2, turnCost34);
-            graph.freeze();
+            freeze();
             setMaxLevelOnAllNodes();
         }
     }
@@ -766,7 +771,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 7).setDistance(6));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(9, 7).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(7, 10).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 10, 4, 1, 5, 7, 9, 3);
         checkShortcuts();
@@ -786,7 +791,7 @@ public class EdgeBasedNodeContractorTest {
         EdgeIteratorState e3to4 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 5).setDistance(1));
         EdgeIteratorState e5to3 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 3).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(3, 2, 0, 1, 5, 4);
         // when contracting node 2 there is a witness (1-5-3-4) and no shortcut from 1 to 4 should be introduced.
@@ -815,7 +820,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 5).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 5).setDistance(1)); // bidirectional
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 6).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(3, 0, 6, 1, 2, 5, 4);
 
@@ -846,7 +851,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 5).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 5).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 6).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(3, 0, 6, 1, 2, 5, 4);
 
@@ -872,11 +877,11 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 5).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 3).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 5, 4, 3);
         // we might come from (5->1) so we still need a way back to (3->4) -> we need a shortcut
-        Shortcut expectedShortcuts = createShortcut(1, 3, 1, 2, 1, 2, 2);
+        Shortcut expectedShortcuts = createShortcut(1, 3, 2, 4, 1, 2, 2);
         checkShortcuts(expectedShortcuts);
     }
 
@@ -891,7 +896,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 5).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 3).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(5, 0, 4, 1, 2, 3);
         // wherever we come from we can always go via node 2 -> no shortcut needed
@@ -915,17 +920,17 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(9, 6).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(10, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(7, 11).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 6, 3, 5, 4, 0, 8, 10, 11, 1, 7, 9);
         // note that the shortcut edge ids depend on the insertion order which might change when changing the implementation
         checkShortcuts(
-                createShortcut(3, 1, 1, 2, 1, 2, 2, false, true),
-                createShortcut(1, 9, 1, 8, 1, 8, 2, true, false),
-                createShortcut(5, 7, 5, 6, 5, 6, 2, true, false),
-                createShortcut(7, 9, 9, 6, 9, 6, 2, false, true),
-                createShortcut(4, 1, 1, 3, 12, 3, 3, false, true),
-                createShortcut(4, 7, 4, 6, 4, 13, 3, true, false)
+                createShortcut(3, 1, 2, 4, 1, 2, 2, false, true),
+                createShortcut(1, 9, 2, 16, 1, 8, 2, true, false),
+                createShortcut(5, 7, 10, 12, 5, 6, 2, true, false),
+                createShortcut(7, 9, 18, 12, 9, 6, 2, false, true),
+                createShortcut(4, 1, 2, 6, 12, 3, 3, false, true),
+                createShortcut(4, 7, 8, 12, 4, 13, 3, true, false)
         );
     }
 
@@ -944,7 +949,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 3).setDistance(1));
         setTurnCost(2, 3, 4, 5);
         setTurnCost(5, 3, 4, 2);
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3, 5);
         checkShortcuts();
@@ -967,11 +972,11 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 3).setDistance(4));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 5).setDistance(1));
 
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(3, 0, 5, 1, 4, 2);
         checkShortcuts(
-                createShortcut(4, 2, 2, 3, 2, 3, 2, false, true)
+                createShortcut(4, 2, 4, 6, 2, 3, 2, false, true)
         );
     }
 
@@ -991,29 +996,29 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 5).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 4).setDistance(4));
 
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 5, 1, 4, 3);
         checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 2)
+                createShortcut(1, 3, 2, 4, 1, 2, 2)
         );
     }
 
     @Test
     public void testNodeContraction_parallelEdges_onlyOneLoopShortcutNeeded() {
+        //  /--\
         // 0 -- 1 -- 2
-        //  \--/
         EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(2));
         EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 0).setDistance(4));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(5));
         setTurnCost(edge0, edge1, 0, 1);
         setTurnCost(edge1, edge0, 0, 2);
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(0, 2, 1);
         // it is sufficient to be able to travel the 1-0-1 loop in one (the cheaper) direction
         checkShortcuts(
-                createShortcut(1, 1, 0, 1, 0, 1, 7)
+                createShortcut(1, 1, 1, 3, 0, 1, 7)
         );
     }
 
@@ -1036,25 +1041,25 @@ public class EdgeBasedNodeContractorTest {
         setTurnCost(e3, e5, 5, 2);
         setTurnCost(e2, e5, 5, 2);
         setTurnCost(e5, e2, 5, 1);
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(4, 5, 1, 3, 2);
         // note that the shortcut edge ids depend on the insertion order which might change when changing the implementation
         checkNumShortcuts(11);
         checkShortcuts(
                 // from node 4 contraction
-                createShortcut(5, 3, 5, 4, 5, 4, 66, true, false),
-                createShortcut(5, 3, 4, 5, 4, 5, 66, false, true),
-                createShortcut(3, 2, 1, 4, 1, 4, 29, false, true),
-                createShortcut(3, 2, 4, 1, 4, 1, 29, true, false),
-                createShortcut(5, 2, 1, 5, 1, 5, 75, false, true),
-                createShortcut(5, 2, 5, 1, 5, 1, 75, true, false),
+                createShortcut(5, 3, 11, 9, 5, 4, 66, true, false),
+                createShortcut(5, 3, 8, 10, 4, 5, 66, false, true),
+                createShortcut(3, 2, 2, 9, 1, 4, 29, false, true),
+                createShortcut(3, 2, 8, 3, 4, 1, 29, true, false),
+                createShortcut(5, 2, 2, 10, 1, 5, 75, false, true),
+                createShortcut(5, 2, 11, 3, 5, 1, 75, true, false),
                 // from node 5 contraction
-                createShortcut(2, 2, 3, 2, 3, 2, 99, true, false),
-                createShortcut(2, 2, 3, 1, 3, 6, 134, true, false),
-                createShortcut(2, 2, 1, 2, 8, 2, 114, true, false),
-                createShortcut(3, 2, 2, 4, 2, 7, 106, false, true),
-                createShortcut(3, 2, 4, 2, 9, 2, 105, true, false)
+                createShortcut(2, 2, 6, 5, 3, 2, 99, true, false),
+                createShortcut(2, 2, 6, 3, 3, 6, 134, true, false),
+                createShortcut(2, 2, 2, 5, 8, 2, 114, true, false),
+                createShortcut(3, 2, 4, 9, 2, 7, 106, false, true),
+                createShortcut(3, 2, 8, 5, 9, 2, 105, true, false)
         );
     }
 
@@ -1063,13 +1068,13 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1.0));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(2.0));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(3.5));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(1, 0);
         checkShortcuts(
-                createShortcut(0, 0, 1, 2, 1, 2, 5.5),
-                createShortcut(0, 0, 0, 2, 0, 2, 4.5),
-                createShortcut(0, 0, 0, 1, 0, 1, 3.0)
+                createShortcut(0, 0, 2, 5, 1, 2, 5.5),
+                createShortcut(0, 0, 0, 5, 0, 2, 4.5),
+                createShortcut(0, 0, 0, 3, 0, 1, 3.0)
         );
     }
 
@@ -1084,7 +1089,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 1).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 3).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3);
         checkShortcuts();
@@ -1102,7 +1107,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 2).setDistance(1));
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 1).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
 
         // enforce loop (going counter-clockwise)
@@ -1111,16 +1116,13 @@ public class EdgeBasedNodeContractorTest {
         setTurnCost(3, 2, 4, 2);
         contractNodes(2, 0, 1, 4, 3);
         checkShortcuts(
-                createShortcut(4, 3, 3, 2, 3, 2, 6, true, false),
-                createShortcut(4, 3, 2, 3, 2, 3, 4, false, true)
+                createShortcut(4, 3, 7, 5, 3, 2, 6, true, false),
+                createShortcut(4, 3, 4, 6, 2, 3, 4, false, true)
         );
     }
 
     @Test
     public void testFindPath_finiteUTurnCost() {
-        chStore = graph.getCHStore(chConfigs.get(1).getName());
-        chBuilder = new CHStorageBuilder(chStore);
-        weighting = graph.getRoutingCHGraph(chConfigs.get(1).getName()).getWeighting();
         // turning to 1 at node 3 when coming from 0 is forbidden, but taking the full loop 3-4-2-3 is very
         // expensive, so the best solution is to go straight to 4 and take a u-turn there
         //   1
@@ -1133,13 +1135,16 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 2).setDistance(500));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(200));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 1).setDistance(100));
-        graph.freeze();
+        freeze();
+        chStore = CHStorage.fromGraph(graph, chConfigs.get(1));
+        chBuilder = new CHStorageBuilder(chStore);
+        weighting = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfigs.get(1)).getWeighting();
         setMaxLevelOnAllNodes();
         setRestriction(0, 3, 1);
         contractNodes(4, 0, 1, 2, 3);
         checkShortcuts(
-                createShortcut(2, 3, 1, 2, 1, 2, 600, false, true),
-                createShortcut(3, 3, 1, 1, 1, 1, 260, true, false)
+                createShortcut(2, 3, 2, 4, 1, 2, 600, false, true),
+                createShortcut(3, 3, 2, 3, 1, 1, 260, true, false)
         );
     }
 
@@ -1154,7 +1159,7 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 2).setDistance(3));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 4).setDistance(3));
         setRestriction(3, 2, 4);
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(0, 3, 4, 2, 1);
         checkNumShortcuts(1);
@@ -1171,7 +1176,7 @@ public class EdgeBasedNodeContractorTest {
         EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
         EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
         setRestriction(edge0, edge2, 1);
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
         checkShortcuts(
@@ -1189,11 +1194,11 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(70.041));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(75.806));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(05.003));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3, 4);
         checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 145.847)
+                createShortcut(1, 3, 2, 4, 1, 2, 145.847)
         );
     }
 
@@ -1206,11 +1211,11 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 3).setDistance(0));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3);
         checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 2)
+                createShortcut(1, 3, 2, 4, 1, 2, 2)
         );
     }
 
@@ -1225,11 +1230,11 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 3).setDistance(0));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 4, 3);
         checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 2)
+                createShortcut(1, 3, 2, 4, 1, 2, 2)
         );
     }
 
@@ -1243,11 +1248,11 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 3).setDistance(0));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 3).setDistance(0));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3);
         checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 2)
+                createShortcut(1, 3, 2, 4, 1, 2, 2)
         );
     }
 
@@ -1263,11 +1268,11 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 3).setDistance(0));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 3).setDistance(0));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 4, 3);
         checkShortcuts(
-                createShortcut(1, 3, 1, 2, 1, 2, 2)
+                createShortcut(1, 3, 2, 4, 1, 2, 2)
         );
     }
 
@@ -1283,11 +1288,11 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 3).setDistance(0));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 4, 3);
         checkShortcuts(
-                createShortcut(1, 3, 1, 4, 1, 4, 2)
+                createShortcut(1, 3, 2, 8, 1, 4, 2)
         );
     }
 
@@ -1307,11 +1312,39 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 3).setDistance(0));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 4).setDistance(1));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 3).setDistance(0));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 4, 3);
         checkShortcuts(
-                createShortcut(1, 3, 3, 5, 3, 5, 2)
+                createShortcut(1, 3, 6, 10, 3, 5, 2)
+        );
+    }
+
+    @Test
+    public void testNodeContraction_zeroWeightLoop_another() {
+        //         1 - 4 - 6 - 7
+        //       /
+        // 0 - 5 - 2
+        //    oo
+        // note there are two (directed) zero weight loops at node 5!
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 1).setDistance(100)); // edgeId=0
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 2).setDistance(100)); // edgeId=1
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 4).setDistance(100)); // edgeId=2
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 0).setDistance(100)); // edgeId=3
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 4).setDistance(100)); // edgeId=4
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 5).setDistance(0)); // edgeId=5
+        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(100)); // edgeId=6
+        GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 5).setDistance(0)); // edgeId=7
+        freeze();
+        setMaxLevelOnAllNodes();
+        contractNodes(1, 3, 0, 2, 7, 6, 4);
+        // contracting node 1 leads to two shortcuts. it is important that we do not consider the path 5-5-1-4 a
+        // witness for the bridge path 5-1-4. it has the same weight and 'looks' like a witness path, because it
+        // connects the same nodes and is not a bridge path. this needs special handling in our edge-based witness path
+        // searcher.
+        checkShortcuts(
+                createShortcut(4, 5, 0, 4, 0, 2, 200, false, true),
+                createShortcut(4, 5, 5, 1, 2, 0, 200, true, false)
         );
     }
 
@@ -1332,7 +1365,7 @@ public class EdgeBasedNodeContractorTest {
         // we have to use the zero weight loop so it may not be excluded
         setTurnCost(edge2, edge3, 3, 5);
         setRestriction(edge2, edge4, 3);
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
         checkNumShortcuts(1);
@@ -1340,6 +1373,10 @@ public class EdgeBasedNodeContractorTest {
 
     @Test
     public void testNodeContraction_numPolledEdges() {
+        //           1<-6
+        //           |
+        // 0 -> 3 -> 2 <-> 4 -> 5
+        //  \---<----|
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 2).setDistance(71.203000));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 3).setDistance(79.003000));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 0).setDistance(21.328000));
@@ -1348,12 +1385,32 @@ public class EdgeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(6, 1).setDistance(55.603000));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 1).setDistance(33.453000));
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 5).setDistance(29.665000));
-        graph.freeze();
+        freeze();
         setMaxLevelOnAllNodes();
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(0);
         assertTrue(nodeContractor.getNumPolledEdges() > 0, "no polled edges, something is wrong");
         assertTrue(nodeContractor.getNumPolledEdges() <= 8, "too many edges polled: " + nodeContractor.getNumPolledEdges());
+    }
+
+    @Test
+    void issue_2564() {
+        // 0-1-2-3-4-5
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 1).setDistance(100));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(1, 2).setDistance(7.336));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(2, 3).setDistance(10.161));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(3, 4).setDistance(0));
+        GHUtility.setSpeed(60, 60, encoder, graph.edge(4, 5).setDistance(100));
+        freeze();
+        chStore = CHStorage.fromGraph(graph, chConfigs.get(2));
+        chBuilder = new CHStorageBuilder(chStore);
+        weighting = chConfigs.get(2).getWeighting();
+        setMaxLevelOnAllNodes();
+        contractNodes(0, 5, 2, 1, 3, 4);
+        checkShortcuts(
+                createShortcut(1, 3, 2, 4, 1, 2, 17.497, true, false),
+                createShortcut(1, 3, 5, 3, 2, 1, 17.497, false, true)
+        );
     }
 
     private void contractNode(NodeContractor nodeContractor, int node, int level) {
@@ -1406,7 +1463,7 @@ public class EdgeBasedNodeContractorTest {
 
     private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double cost) {
         double cost1 = cost >= maxCost ? Double.POSITIVE_INFINITY : cost;
-        graph.getTurnCostStorage().set(((EncodedValueLookup) encoder).getDecimalEncodedValue(TurnCost.key("car")), inEdge.getEdge(), viaNode, outEdge.getEdge(), cost1);
+        graph.getTurnCostStorage().set(encoder.getDecimalEncodedValue(TurnCost.key("car")), inEdge.getEdge(), viaNode, outEdge.getEdge(), cost1);
     }
 
     private EdgeIteratorState getEdge(int from, int to) {
@@ -1418,15 +1475,15 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private Shortcut createShortcut(int from, int to, EdgeIteratorState edge1, EdgeIteratorState edge2, double weight, boolean fwd, boolean bwd) {
-        return createShortcut(from, to, edge1.getEdge(), edge2.getEdge(), edge1.getEdge(), edge2.getEdge(), weight, fwd, bwd);
+        return createShortcut(from, to, edge1.getEdgeKey(), edge2.getEdgeKey(), edge1.getEdge(), edge2.getEdge(), weight, fwd, bwd);
     }
 
-    private Shortcut createShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipEdge1, int skipEdge2, double weight) {
-        return createShortcut(from, to, firstOrigEdge, lastOrigEdge, skipEdge1, skipEdge2, weight, true, false);
+    private Shortcut createShortcut(int from, int to, int firstOrigEdgeKey, int lastOrigEdgeKey, int skipEdge1, int skipEdge2, double weight) {
+        return createShortcut(from, to, firstOrigEdgeKey, lastOrigEdgeKey, skipEdge1, skipEdge2, weight, true, false);
     }
 
-    private Shortcut createShortcut(int from, int to, int firstOrigEdge, int lastOrigEdge, int skipEdge1, int skipEdge2, double weight, boolean fwd, boolean bwd) {
-        return new Shortcut(from, to, firstOrigEdge, lastOrigEdge, skipEdge1, skipEdge2, weight, fwd, bwd);
+    private Shortcut createShortcut(int from, int to, int firstOrigEdgeKey, int lastOrigEdgeKey, int skipEdge1, int skipEdge2, double weight, boolean fwd, boolean bwd) {
+        return new Shortcut(from, to, firstOrigEdgeKey, lastOrigEdgeKey, skipEdge1, skipEdge2, weight, fwd, bwd);
     }
 
     /**
@@ -1454,7 +1511,7 @@ public class EdgeBasedNodeContractorTest {
             long ptr = chStore.toShortcutPointer(i);
             shortcuts.add(new Shortcut(
                     chStore.getNodeA(ptr), chStore.getNodeB(ptr),
-                    chStore.getOrigEdgeFirst(ptr), chStore.getOrigEdgeLast(ptr),
+                    chStore.getOrigEdgeKeyFirst(ptr), chStore.getOrigEdgeKeyLast(ptr),
                     chStore.getSkippedEdge1(ptr), chStore.getSkippedEdge2(ptr),
                     chStore.getWeight(ptr),
                     chStore.getFwdAccess(ptr), chStore.getBwdAccess(ptr)
@@ -1474,20 +1531,20 @@ public class EdgeBasedNodeContractorTest {
     private static class Shortcut {
         int baseNode;
         int adjNode;
-        int firstOrigEdge;
-        int lastOrigEdge;
+        int firstOrigEdgeKey;
+        int lastOrigEdgeKey;
         double weight;
         boolean fwd;
         boolean bwd;
         int skipEdge1;
         int skipEdge2;
 
-        public Shortcut(int baseNode, int adjNode, int firstOrigEdge, int lastOrigEdge, int skipEdge1, int skipEdge2, double weight,
+        public Shortcut(int baseNode, int adjNode, int firstOrigEdgeKey, int lastOrigEdgeKey, int skipEdge1, int skipEdge2, double weight,
                         boolean fwd, boolean bwd) {
             this.baseNode = baseNode;
             this.adjNode = adjNode;
-            this.firstOrigEdge = firstOrigEdge;
-            this.lastOrigEdge = lastOrigEdge;
+            this.firstOrigEdgeKey = firstOrigEdgeKey;
+            this.lastOrigEdgeKey = lastOrigEdgeKey;
             this.weight = weight;
             this.fwd = fwd;
             this.bwd = bwd;
@@ -1502,8 +1559,8 @@ public class EdgeBasedNodeContractorTest {
             Shortcut shortcut = (Shortcut) o;
             return baseNode == shortcut.baseNode &&
                     adjNode == shortcut.adjNode &&
-                    firstOrigEdge == shortcut.firstOrigEdge &&
-                    lastOrigEdge == shortcut.lastOrigEdge &&
+                    firstOrigEdgeKey == shortcut.firstOrigEdgeKey &&
+                    lastOrigEdgeKey == shortcut.lastOrigEdgeKey &&
                     Double.compare(shortcut.weight, weight) == 0 &&
                     fwd == shortcut.fwd &&
                     bwd == shortcut.bwd &&
@@ -1513,7 +1570,7 @@ public class EdgeBasedNodeContractorTest {
 
         @Override
         public int hashCode() {
-            return Objects.hash(baseNode, adjNode, firstOrigEdge, lastOrigEdge, weight, fwd, bwd,
+            return Objects.hash(baseNode, adjNode, firstOrigEdgeKey, lastOrigEdgeKey, weight, fwd, bwd,
                     skipEdge1, skipEdge2);
         }
 
@@ -1522,8 +1579,8 @@ public class EdgeBasedNodeContractorTest {
             return "Shortcut{" +
                     "baseNode=" + baseNode +
                     ", adjNode=" + adjNode +
-                    ", firstOrigEdge=" + firstOrigEdge +
-                    ", lastOrigEdge=" + lastOrigEdge +
+                    ", firstOrigEdgeKey=" + firstOrigEdgeKey +
+                    ", lastOrigEdgeKey=" + lastOrigEdgeKey +
                     ", weight=" + weight +
                     ", fwd=" + fwd +
                     ", bwd=" + bwd +

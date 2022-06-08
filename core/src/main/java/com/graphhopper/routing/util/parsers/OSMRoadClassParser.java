@@ -18,34 +18,22 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 import static com.graphhopper.routing.ev.RoadClass.OTHER;
 
 public class OSMRoadClassParser implements TagParser {
 
-    private final EnumEncodedValue<RoadClass> roadClassEnc;
+    protected final EnumEncodedValue<RoadClass> roadClassEnc;
 
-    public OSMRoadClassParser() {
-        this.roadClassEnc = new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
+    public OSMRoadClassParser(EnumEncodedValue<RoadClass> roadClassEnc) {
+        this.roadClassEnc = roadClassEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
-        link.add(roadClassEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-        if (ferry)
-            return edgeFlags;
-
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         String roadClassTag = readerWay.getTag("highway");
         if (roadClassTag == null)
             return edgeFlags;

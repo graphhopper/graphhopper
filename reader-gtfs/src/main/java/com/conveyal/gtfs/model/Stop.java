@@ -72,7 +72,7 @@ public class Stop extends Entity {
             s.stop_lon  = getDoubleField("stop_lon", true, -180D, 180D);
             s.zone_id   = getStringField("zone_id", false);
             s.stop_url  = getUrlField("stop_url", false);
-            s.location_type  = getIntField("location_type", false, 0, 1);
+            s.location_type  = getIntField("location_type", false, 0, 4);
             s.parent_station = getStringField("parent_station", false);
             s.stop_timezone  = getStringField("stop_timezone", false);
             s.wheelchair_boarding = getStringField("wheelchair_boarding", false);
@@ -85,4 +85,10 @@ public class Stop extends Entity {
 
     }
 
+    @Override
+    public String toString() {
+        return "Stop{" +
+                "stop_id='" + stop_id + '\'' +
+                '}';
+    }
 }

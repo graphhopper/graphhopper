@@ -18,13 +18,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Surface;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 import static com.graphhopper.routing.ev.Surface.*;
 
@@ -32,21 +28,12 @@ public class OSMSurfaceParser implements TagParser {
 
     private final EnumEncodedValue<Surface> surfaceEnc;
 
-    public OSMSurfaceParser() {
-        this(new EnumEncodedValue<>(KEY, Surface.class));
-    }
-
     public OSMSurfaceParser(EnumEncodedValue<Surface> surfaceEnc) {
         this.surfaceEnc = surfaceEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(surfaceEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         String surfaceTag = readerWay.getTag("surface");
         Surface surface = Surface.find(surfaceTag);
         if (surface == MISSING)

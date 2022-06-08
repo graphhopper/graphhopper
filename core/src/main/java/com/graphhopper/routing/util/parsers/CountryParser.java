@@ -18,28 +18,19 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 public class CountryParser implements TagParser {
     private final EnumEncodedValue<Country> countryEnc;
 
-    public CountryParser() {
-        this.countryEnc = Country.create();
+    public CountryParser(EnumEncodedValue<Country> countryEnc) {
+        this.countryEnc = countryEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(countryEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         Country country = way.getTag("country", Country.MISSING);
         countryEnc.setEnum(false, edgeFlags, country);
         return edgeFlags;

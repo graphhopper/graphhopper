@@ -80,11 +80,6 @@ public class StopTime extends Entity implements Cloneable, Serializable {
             st.timepoint      = getIntField("timepoint", false, 0, 1, INT_MISSING);
             st.feed           = null; // this could circular-serialize the whole feed
             feed.stop_times.put(new Fun.Tuple2(st.trip_id, st.stop_sequence), st);
-
-            /*
-              Check referential integrity without storing references. StopTime cannot directly reference Trips or
-              Stops because they would be serialized into the MapDB.
-             */
             getRefField("trip_id", true, feed.trips);
             getRefField("stop_id", true, feed.stops);
         }

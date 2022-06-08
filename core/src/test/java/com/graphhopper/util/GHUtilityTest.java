@@ -18,13 +18,13 @@
 package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.routing.util.FlagEncoders;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -33,12 +33,11 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class GHUtilityTest {
-    private final FlagEncoder carEncoder = new CarFlagEncoder();
+    private final FlagEncoder carEncoder = FlagEncoders.createCar();
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
-    private final BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
 
-    Graph createGraph() {
-        return new GraphBuilder(encodingManager).create();
+    BaseGraph createGraph() {
+        return new BaseGraph.Builder(encodingManager).create();
     }
 
     // 7      8\
@@ -124,20 +123,10 @@ public class GHUtilityTest {
 
     @Test
     public void testEdgeStuff() {
-        assertEquals(6, GHUtility.createEdgeKey(1, 2, 3, false));
-        assertEquals(7, GHUtility.createEdgeKey(2, 1, 3, false));
-        assertEquals(7, GHUtility.createEdgeKey(1, 2, 3, true));
-        assertEquals(6, GHUtility.createEdgeKey(2, 1, 3, true));
-
-        assertEquals(8, GHUtility.createEdgeKey(1, 2, 4, false));
-        assertEquals(9, GHUtility.createEdgeKey(2, 1, 4, false));
-
-        assertEquals(6, GHUtility.createEdgeKey(1, 1, 3, false));
-        assertEquals(6, GHUtility.createEdgeKey(1, 1, 3, true));
-
-        assertTrue(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(1, 2, 4, false), GHUtility.createEdgeKey(1, 2, 4, false)));
-        assertTrue(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(2, 1, 4, false), GHUtility.createEdgeKey(1, 2, 4, false)));
-        assertFalse(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(1, 2, 4, false), GHUtility.createEdgeKey(1, 2, 5, false)));
+        assertEquals(2, GHUtility.createEdgeKey(1, false, false));
+        assertEquals(2, GHUtility.createEdgeKey(1, true, false));
+        assertEquals(2, GHUtility.createEdgeKey(1, true, true));
+        assertEquals(3, GHUtility.createEdgeKey(1, false, true));
     }
 
     @Test

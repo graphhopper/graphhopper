@@ -22,6 +22,6 @@ public class Lanes {
     public static final String KEY = "lanes";
 
     public static IntEncodedValue create() {
-        return new UnsignedIntEncodedValue(KEY, 3, false);
+        return new IntEncodedValueImpl(KEY, 3, false);
     }
 }

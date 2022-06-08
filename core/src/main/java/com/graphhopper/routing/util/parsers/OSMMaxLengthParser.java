@@ -19,34 +19,21 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.MaxLength;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Collections;
-import java.util.List;
 
 public class OSMMaxLengthParser implements TagParser {
 
     private final DecimalEncodedValue lengthEncoder;
-
-    public OSMMaxLengthParser() {
-        this(MaxLength.create());
-    }
 
     public OSMMaxLengthParser(DecimalEncodedValue lengthEncoder) {
         this.lengthEncoder = lengthEncoder;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(lengthEncoder);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         OSMValueExtractor.extractMeter(edgeFlags, way, lengthEncoder, Collections.singletonList("maxlength"));
         return edgeFlags;
     }

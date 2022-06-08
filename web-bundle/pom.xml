@@ -5,14 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>graphhopper-web-bundle</artifactId>
     <packaging>jar</packaging>
-    <version>5.0-SNAPSHOT</version>
+    <version>6.0-SNAPSHOT</version>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>5.0-SNAPSHOT</version>
+        <version>6.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -128,7 +128,7 @@
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
-                <version>1.10.0</version>
+                <version>1.12.1</version>
                 <executions>
                     <execution>
                         <id>install node and npm</id>
@@ -136,8 +136,8 @@
                             <goal>install-node-and-npm</goal>
                         </goals>
                         <configuration>
-                            <nodeVersion>v12.3.1</nodeVersion>
-                            <npmVersion>6.14.5</npmVersion>
+                            <nodeVersion>v16.13.0</nodeVersion>
+                            <npmVersion>8.1.0</npmVersion>
                         </configuration>
                     </execution>
                     <execution>

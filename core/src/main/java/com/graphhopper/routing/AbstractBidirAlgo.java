@@ -196,8 +196,6 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
 
     protected abstract double getInEdgeWeight(SPTEntry entry);
 
-    protected abstract int getOtherNode(int edge, int node);
-
     protected int getIncomingEdge(SPTEntry entry) {
         return entry.edge;
     }

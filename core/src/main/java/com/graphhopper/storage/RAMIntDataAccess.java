@@ -20,7 +20,6 @@ package com.graphhopper.storage;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -36,8 +35,8 @@ class RAMIntDataAccess extends AbstractDataAccess {
     private boolean store;
     private int segmentSizeIntsPower;
 
-    RAMIntDataAccess(String name, String location, boolean store, ByteOrder order, int segmentSize) {
-        super(name, location, order, segmentSize);
+    RAMIntDataAccess(String name, String location, boolean store, int segmentSize) {
+        super(name, location, segmentSize);
         this.store = store;
     }
 
@@ -107,15 +106,14 @@ class RAMIntDataAccess extends AbstractDataAccess {
             return false;
         }
         try {
-            RandomAccessFile raFile = new RandomAccessFile(getFullName(), "r");
-            try {
+            try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "r")) {
                 long byteCount = readHeader(raFile) - HEADER_OFFSET;
                 if (byteCount < 0) {
                     return false;
                 }
                 byte[] bytes = new byte[segmentSizeInBytes];
                 raFile.seek(HEADER_OFFSET);
-                // raFile.readInt() <- too slow                
+                // raFile.readInt() <- too slow
                 int segmentCount = (int) (byteCount / segmentSizeInBytes);
                 if (byteCount % segmentSizeInBytes != 0)
                     segmentCount++;
@@ -123,15 +121,13 @@ class RAMIntDataAccess extends AbstractDataAccess {
                 segments = new int[segmentCount][];
                 for (int s = 0; s < segmentCount; s++) {
                     int read = raFile.read(bytes) / 4;
-                    int area[] = new int[read];
+                    int[] area = new int[read];
                     for (int j = 0; j < read; j++) {
                         area[j] = bitUtil.toInt(bytes, j * 4);
                     }
                     segments[s] = area;
                 }
                 return true;
-            } finally {
-                raFile.close();
             }
         } catch (IOException ex) {
             throw new RuntimeException("Problem while loading " + getFullName(), ex);
@@ -147,14 +143,13 @@ class RAMIntDataAccess extends AbstractDataAccess {
             return;
         }
         try {
-            RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw");
-            try {
+            try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
                 long len = getCapacity();
                 writeHeader(raFile, len, segmentSizeInBytes);
                 raFile.seek(HEADER_OFFSET);
                 // raFile.writeInt() <- too slow, so copy into byte array
                 for (int s = 0; s < segments.length; s++) {
-                    int area[] = segments[s];
+                    int[] area = segments[s];
                     int intLen = area.length;
                     byte[] byteArea = new byte[intLen * 4];
                     for (int i = 0; i < intLen; i++) {
@@ -162,8 +157,6 @@ class RAMIntDataAccess extends AbstractDataAccess {
                     }
                     raFile.write(byteArea);
                 }
-            } finally {
-                raFile.close();
             }
         } catch (Exception ex) {
             throw new RuntimeException("Couldn't store integers to " + toString(), ex);
