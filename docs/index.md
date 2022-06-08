@@ -79,7 +79,8 @@ See the necessary changes for modern iOS and GraphHopper 1.0 in [this pull reque
 
 #### Windows
 
-Documentation about how to get an GraphHopper instance running on windows via cygwin is available [here](./core/windows-setup.md).
+Install the Windows Subsystem for Linux (WSL) or cygwin and the normal installation
+steps can be followed.
 
 #### Eclipse
 
