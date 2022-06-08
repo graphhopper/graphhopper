@@ -95,6 +95,24 @@ public class LMApproximator implements WeightApproximator {
         if (v == t || v == towerNodeNextToT)
             return 0;
 
+        // select better active landmarks, LATER: use 'success' statistics about last active landmark
+        // we have to update the priority queues and the maps if done in the middle of the search http://cstheory.stackexchange.com/q/36355/13229
+        if (recalculateActiveLandmarks) {
+            recalculateActiveLandmarks = false;
+            if (lms.chooseActiveLandmarks(v, towerNodeNextToT, activeLandmarkIndices, reverse)) {
+                for (int i = 0; i < activeLandmarkIndices.length; i++) {
+                    weightsFromActiveLandmarksToT[i] = lms.getFromWeight(activeLandmarkIndices[i], towerNodeNextToT);
+                    weightsFromTToActiveLandmarks[i] = lms.getToWeight(activeLandmarkIndices[i], towerNodeNextToT);
+                }
+            } else {
+                // note: fallback==true means forever true!
+                fallback = true;
+                // todonow: this should probably not called for virtual nodes, i.e. so far we had the virtual node handling
+                // before this code. but for the virtual node handling we need the chosen active landmarks..
+                return fallBackApproximation.approximate(v);
+            }
+        }
+
         if (v >= maxBaseNodes) {
             // handle virtual node (unless it is t, in which case ^^)
             return new Callable<Double>() {
@@ -131,38 +149,20 @@ public class LMApproximator implements WeightApproximator {
                         }
                     };
                     dijkstra.calcPath(v, -1);
-                    double min = Double.MAX_VALUE;
-                    int j = Integer.MAX_VALUE;
-                    int bi = Integer.MAX_VALUE;
-                    for (int i = 0; i < realNodes.size(); i++) {
-                        if (realWeights.get(i) < min) {
-                            min = realWeights.get(i);
-                            j = realNodes.get(i);
-                            bi = i;
-                        }
+                    double max = 0;
+                    for (int l = 0; l < activeLandmarkIndices.length; l++) {
+                        double weight_virtual_to_LM = Double.MAX_VALUE;
+                        for (int i = 0; i < realNodes.size(); i++)
+                            weight_virtual_to_LM = Math.min(weight_virtual_to_LM, realWeights.get(i) + factor * lms.getToWeight(activeLandmarkIndices[l], realNodes.get(i)));
+                        weight_virtual_to_LM -= factor * weightsFromTToActiveLandmarks[l];
+                        max = Math.max(max, weight_virtual_to_LM);
                     }
-                    if (bi == Integer.MAX_VALUE)
-                        throw new RuntimeException();
-                    return approximate(j) + realWeights.get(bi);
+                    return (max - weightFromTToTowerNode) * epsilon;
                 }
             }.call();
         }
 
-        // select better active landmarks, LATER: use 'success' statistics about last active landmark
-        // we have to update the priority queues and the maps if done in the middle of the search http://cstheory.stackexchange.com/q/36355/13229
-        if (recalculateActiveLandmarks) {
-            recalculateActiveLandmarks = false;
-            if (lms.chooseActiveLandmarks(v, towerNodeNextToT, activeLandmarkIndices, reverse)) {
-                for (int i = 0; i < activeLandmarkIndices.length; i++) {
-                    weightsFromActiveLandmarksToT[i] = lms.getFromWeight(activeLandmarkIndices[i], towerNodeNextToT);
-                    weightsFromTToActiveLandmarks[i] = lms.getToWeight(activeLandmarkIndices[i], towerNodeNextToT);
-                }
-            } else {
-                // note: fallback==true means forever true!
-                fallback = true;
-                return fallBackApproximation.approximate(v);
-            }
-        }
+
         return Math.max(0.0, (getRemainingWeightUnderestimationUpToTowerNode(v) - weightFromTToTowerNode) * epsilon);
     }
 
