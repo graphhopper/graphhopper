@@ -26,6 +26,7 @@ public class RouterConfig {
     private int maxRoundTripRetries = 3;
     private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
     private boolean calcPoints = true;
+    private boolean instructionsEnabled = true;
     private boolean simplifyResponse = true;
     private double elevationWayPointMaxDistance = Double.MAX_VALUE;
     private int activeLandmarkCount = 8;
@@ -67,6 +68,14 @@ public class RouterConfig {
      */
     public void setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
+    }
+
+    public boolean isInstructionsEnabled() {
+        return instructionsEnabled;
+    }
+
+    public void setInstructionsEnabled(boolean instructionsEnabled) {
+        this.instructionsEnabled = instructionsEnabled;
     }
 
     public boolean isSimplifyResponse() {

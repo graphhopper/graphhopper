@@ -72,17 +72,20 @@ public class AStar extends AbstractRoutingAlgorithm {
         this.to = to;
         weightApprox.setTo(to);
         double weightToGoal = weightApprox.approximate(from);
-        currEdge = new AStarEntry(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
-        if (!traversalMode.isEdgeBased()) {
+        AStarEntry startEntry = new AStarEntry(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
+        fromHeap.add(startEntry);
+        if (!traversalMode.isEdgeBased())
             fromMap.put(from, currEdge);
-        }
         runAlgo();
         return extractPath();
     }
 
     private void runAlgo() {
         double currWeightToGoal, estimationFullWeight;
-        while (true) {
+        while (!fromHeap.isEmpty()) {
+            currEdge = fromHeap.poll();
+            if (currEdge.isDeleted())
+                continue;
             visitedNodes++;
             if (isMaxVisitedNodesExceeded() || finished())
                 break;
@@ -105,32 +108,20 @@ public class AStar extends AbstractRoutingAlgorithm {
                     currWeightToGoal = weightApprox.approximate(neighborNode);
                     estimationFullWeight = tmpWeight + currWeightToGoal;
                     if (ase == null) {
-                        ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, tmpWeight);
+                        ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, tmpWeight, currEdge);
                         fromMap.put(traversalId, ase);
                     } else {
 //                        assert (ase.weight > 0.9999999 * estimationFullWeight) : "Inconsistent distance estimate. It is expected weight >= estimationFullWeight but was "
 //                                + ase.weight + " < " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and weightOfVisitedPath:"
 //                                + ase.weightOfVisitedPath + " vs. alreadyVisitedWeight:" + alreadyVisitedWeight + " (" + ase.weightOfVisitedPath / alreadyVisitedWeight + ")";
-
-                        fromHeap.remove(ase);
-                        ase.edge = iter.getEdge();
-                        ase.weight = estimationFullWeight;
-                        ase.weightOfVisitedPath = tmpWeight;
+                        ase.setDeleted();
+                        ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, tmpWeight, currEdge);
+                        fromMap.put(traversalId, ase);
                     }
-
-                    ase.parent = currEdge;
                     fromHeap.add(ase);
-
                     updateBestPath(iter, ase, traversalId);
                 }
             }
-
-            if (fromHeap.isEmpty())
-                break;
-
-            currEdge = fromHeap.poll();
-            if (currEdge == null)
-                throw new AssertionError("Empty edge cannot happen");
         }
     }
 
@@ -159,7 +150,11 @@ public class AStar extends AbstractRoutingAlgorithm {
         double weightOfVisitedPath;
 
         public AStarEntry(int edgeId, int adjNode, double weightForHeap, double weightOfVisitedPath) {
-            super(edgeId, adjNode, weightForHeap);
+            this(edgeId, adjNode, weightForHeap, weightOfVisitedPath, null);
+        }
+
+        public AStarEntry(int edgeId, int adjNode, double weightForHeap, double weightOfVisitedPath, SPTEntry parent) {
+            super(edgeId, adjNode, weightForHeap, parent);
             this.weightOfVisitedPath = weightOfVisitedPath;
         }
 

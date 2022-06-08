@@ -17,9 +17,7 @@
  */
 package com.graphhopper.routing.subnetwork;
 
-import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
 
 /**
  * This class handles storage of subnetwork ids for every node. Useful to pick the correct set of
@@ -28,11 +26,10 @@ import com.graphhopper.storage.Directory;
  * @author Peter Karich
  */
 public class SubnetworkStorage {
-    private final DataAccess da;
+    final DataAccess da;
 
-    public SubnetworkStorage(Directory dir, String postfix) {
-        DAType type = dir.getDefaultType();
-        da = dir.create("subnetwork_" + postfix, type.isMMap() ? DAType.MMAP : (type.isStoring() ? DAType.RAM_STORE : DAType.RAM));
+    public SubnetworkStorage(DataAccess da) {
+        this.da = da;
     }
 
     /**

@@ -55,15 +55,12 @@ import java.util.concurrent.atomic.AtomicInteger;
  * </li>
  * </ul>
  *
+ * Note: This algorithm is quite slow and alternatives are only really practical in combination with CH, see #2566
+ *
  * @author Peter Karich
  */
 public class AlternativeRoute implements RoutingAlgorithm {
-    private static final Comparator<AlternativeInfo> ALT_COMPARATOR = new Comparator<AlternativeInfo>() {
-        @Override
-        public int compare(AlternativeInfo o1, AlternativeInfo o2) {
-            return Double.compare(o1.sortBy, o2.sortBy);
-        }
-    };
+    private static final Comparator<AlternativeInfo> ALT_COMPARATOR = Comparator.comparingDouble(o -> o.sortBy);
     private final Graph graph;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
@@ -356,8 +353,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
                         // e.g. when starting point has two edges and one is part of the best path the other edge is path of an alternative
                         assert traversalMode.isEdgeBased();
                     } else {
-                        int nextToTraversalId = traversalMode.createTraversalId(tmpFromEntry.adjNode,
-                                tmpFromEntry.parent.adjNode, tmpFromEntry.edge, true);
+                        int nextToTraversalId = traversalMode.createTraversalId(graph.getEdgeIteratorState(tmpFromEntry.edge, tmpFromEntry.parent.adjNode), true);
                         SPTEntry tmpNextToSPTEntry = bestWeightMapTo.get(nextToTraversalId);
                         if (tmpNextToSPTEntry == null)
                             return true;
@@ -384,9 +380,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
                     SPTEntry prevToSPTEntry = toSPTEntry;
                     // List<Integer> plateauEdges = new ArrayList<Integer>();
                     while (prevToSPTEntry.parent != null) {
-                        int nextFromTraversalId = traversalMode.createTraversalId(prevToSPTEntry.adjNode, prevToSPTEntry.parent.adjNode,
-                                prevToSPTEntry.edge, false);
-
+                        int nextFromTraversalId = traversalMode.createTraversalId(graph.getEdgeIteratorState(prevToSPTEntry.edge, prevToSPTEntry.parent.adjNode), false);
                         SPTEntry nextFromSPTEntry = bestWeightMapFrom.get(nextFromTraversalId);
                         // end of a plateau
                         if (nextFromSPTEntry == null)
@@ -445,7 +439,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
                 SPTEntry getFirstShareEE(SPTEntry startEE, boolean reverse) {
                     while (startEE.parent != null) {
                         // TODO we could make use of traversal ID directly if stored in SPTEntry
-                        int tid = traversalMode.createTraversalId(startEE.adjNode, startEE.parent.adjNode, startEE.edge, reverse);
+                        int tid = traversalMode.createTraversalId(graph.getEdgeIteratorState(startEE.edge, startEE.parent.adjNode), reverse);
                         if (isAlreadyExisting(tid))
                             return startEE;
 

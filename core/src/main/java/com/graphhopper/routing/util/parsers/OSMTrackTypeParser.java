@@ -18,13 +18,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.TrackType;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 import static com.graphhopper.routing.ev.TrackType.MISSING;
 
@@ -32,20 +28,12 @@ public class OSMTrackTypeParser implements TagParser {
 
     private final EnumEncodedValue<TrackType> trackTypeEnc;
 
-    public OSMTrackTypeParser() {
-        this.trackTypeEnc = new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
+    public OSMTrackTypeParser(EnumEncodedValue<TrackType> trackTypeEnc) {
+        this.trackTypeEnc = trackTypeEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
-        link.add(trackTypeEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, boolean ferry, IntsRef relationFlags) {
-        if (ferry)
-            return edgeFlags;
-
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         String trackTypeTag = readerWay.getTag("tracktype");
         TrackType trackType = TrackType.find(trackTypeTag);
         if (trackType != MISSING)

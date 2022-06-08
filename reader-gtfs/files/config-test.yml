@@ -1,6 +1,6 @@
 graphhopper:
   datareader.file: reader-gtfs/files/beatty.osm
-  gtfs.file: reader-gtfs/files/sample-feed.zip,reader-gtfs/files/another-sample-feed.zip
+  gtfs.file: reader-gtfs/files/sample-feed,reader-gtfs/files/another-sample-feed
   graph.location: graphs/beatty
 
   profiles:
@@ -30,11 +30,11 @@ logging:
     #  - type: file
     #    time_zone: UTC
     #    current_log_filename: logs/graphhopper.log
-    #    log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    #    log_format: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
     #    archive: true
     #    archived_log_filename_pattern: ./logs/graphhopper-%d.log.gz
     #    archived_file_count: 30
     #    never_block: true
     - type: console
       time_zone: UTC
-      log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+      log_format: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

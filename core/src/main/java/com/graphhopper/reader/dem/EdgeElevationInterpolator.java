@@ -25,7 +25,7 @@ import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 
@@ -54,25 +54,25 @@ import com.graphhopper.util.*;
  */
 public class EdgeElevationInterpolator {
 
-    private final GraphHopperStorage storage;
+    private final BaseGraph graph;
     protected final EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc;
     private final NodeElevationInterpolator nodeElevationInterpolator;
     private final RoadEnvironment interpolateKey;
     private final ElevationInterpolator elevationInterpolator = new ElevationInterpolator();
 
-    public EdgeElevationInterpolator(GraphHopperStorage storage, EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc, RoadEnvironment interpolateKey) {
-        this.storage = storage;
+    public EdgeElevationInterpolator(BaseGraph graph, EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc, RoadEnvironment interpolateKey) {
+        this.graph = graph;
         this.roadEnvironmentEnc = roadEnvironmentEnc;
         this.interpolateKey = interpolateKey;
-        this.nodeElevationInterpolator = new NodeElevationInterpolator(storage);
+        this.nodeElevationInterpolator = new NodeElevationInterpolator(graph);
     }
 
     protected boolean isInterpolatableEdge(EdgeIteratorState edge) {
         return edge.get(roadEnvironmentEnc) == interpolateKey;
     }
 
-    public GraphHopperStorage getStorage() {
-        return storage;
+    public BaseGraph getGraph() {
+        return graph;
     }
 
     public void execute() {
@@ -81,9 +81,9 @@ public class EdgeElevationInterpolator {
     }
 
     private void interpolateElevationsOfTowerNodes() {
-        final AllEdgesIterator edge = storage.getAllEdges();
+        final AllEdgesIterator edge = graph.getAllEdges();
         final GHBitSet visitedEdgeIds = new GHBitSetImpl(edge.length());
-        final EdgeExplorer edgeExplorer = storage.createEdgeExplorer();
+        final EdgeExplorer edgeExplorer = graph.createEdgeExplorer();
 
         while (edge.next()) {
             final int edgeId = edge.getEdge();
@@ -131,8 +131,8 @@ public class EdgeElevationInterpolator {
     }
 
     private void interpolateElevationsOfPillarNodes() {
-        final EdgeIterator edge = storage.getAllEdges();
-        final NodeAccess nodeAccess = storage.getNodeAccess();
+        final EdgeIterator edge = graph.getAllEdges();
+        final NodeAccess nodeAccess = graph.getNodeAccess();
         while (edge.next()) {
             if (isInterpolatableEdge(edge)) {
                 int firstNodeId = edge.getBaseNode();

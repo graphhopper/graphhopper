@@ -1,0 +1,2 @@
+from_stop_id,to_stop_id,from_route_id,to_route_id,transfer_type,min_transfer_time
+PARENT_OF_MUSEUM,PARENT_OF_NEXT_TO_MUSEUM,,,2,600

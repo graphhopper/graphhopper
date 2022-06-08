@@ -19,17 +19,14 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadEnvironment;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
@@ -38,38 +35,35 @@ import org.junit.jupiter.api.BeforeEach;
  */
 public abstract class EdgeElevationInterpolatorTest {
 
-    protected final static EncodingManager.AcceptWay ACCEPT_WAY = new EncodingManager.AcceptWay().
-            put(RoadEnvironment.KEY, EncodingManager.Access.WAY).put("car", EncodingManager.Access.WAY).put("foot", EncodingManager.Access.WAY);
     protected static final double PRECISION = ElevationInterpolator.EPSILON2;
-    protected ReaderWay interpolatableWay;
-    protected ReaderWay normalWay;
+    protected IntsRef interpolatableFlags;
+    protected IntsRef normalFlags;
 
-    protected GraphHopperStorage graph;
+    protected BaseGraph graph;
     protected EnumEncodedValue<RoadEnvironment> roadEnvEnc;
+    protected FlagEncoder encoder;
     protected EncodingManager encodingManager;
-    protected IntsRef relFlags;
     protected EdgeElevationInterpolator edgeElevationInterpolator;
 
     @SuppressWarnings("resource")
     @BeforeEach
     public void setUp() {
-        graph = new GraphHopperStorage(new RAMDirectory(),
-                encodingManager = new EncodingManager.Builder().add(new CarFlagEncoder()).add(new FootFlagEncoder()).build(),
-                true).create(100);
+        encoder = FlagEncoders.createCar();
+        encodingManager = EncodingManager.create(encoder);
+        graph = new BaseGraph.Builder(encodingManager).set3D(true).create();
         roadEnvEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         edgeElevationInterpolator = createEdgeElevationInterpolator();
-        relFlags = encodingManager.createRelationFlags();
-        interpolatableWay = createInterpolatableWay();
-        normalWay = new ReaderWay(0);
-        normalWay.setTag("highway", "primary");
+        interpolatableFlags = createInterpolatableFlags();
+        normalFlags = new IntsRef(1);
+        roadEnvEnc.setEnum(false, normalFlags, RoadEnvironment.ROAD);
     }
 
     @AfterEach
     public void tearDown() {
-        Helper.close(graph);
+        graph.close();
     }
 
-    protected abstract ReaderWay createInterpolatableWay();
+    protected abstract IntsRef createInterpolatableFlags();
 
     protected EdgeElevationInterpolator createEdgeElevationInterpolator() {
         return new EdgeElevationInterpolator(graph, roadEnvEnc, RoadEnvironment.BRIDGE);
@@ -78,7 +72,7 @@ public abstract class EdgeElevationInterpolatorTest {
     protected void gatherOuterAndInnerNodeIdsOfStructure(EdgeIteratorState edge,
                                                          final GHIntHashSet outerNodeIds, final GHIntHashSet innerNodeIds) {
         edgeElevationInterpolator.gatherOuterAndInnerNodeIds(
-                edgeElevationInterpolator.getStorage().createEdgeExplorer(), edge,
+                edgeElevationInterpolator.getGraph().createEdgeExplorer(), edge,
                 new GHBitSetImpl(), outerNodeIds, innerNodeIds);
     }
 }

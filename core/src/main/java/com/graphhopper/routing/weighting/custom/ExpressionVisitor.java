@@ -18,7 +18,6 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.Statement;
-import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.routing.ev.StringEncodedValue;
@@ -72,12 +71,8 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                 } else {
                     // e.g. like road_class
                     if (isValidIdentifier(arg)) return true;
-                    try {
-                        new DefaultEncodedValueFactory().create(arg);
-                        invalidMessage = "encoded value '" + arg + "' not available";
-                        return false;
-                    } catch (Exception ex) {
-                    }
+                    invalidMessage = "'" + arg + "' not available";
+                    return false;
                 }
             }
             invalidMessage = "identifier " + n + " invalid";
@@ -170,7 +165,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                     expressions.append("else ");
                 expressions.append("if (" + parseResult.converted + ") {" + statement.getOperation().build(statement.getValue()) + "; }\n");
             } else {
-                throw new IllegalArgumentException("The clause must be either 'if', 'else_if' or 'else'");
+                throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");
             }
         }
         expressions.append(lastStmt);
@@ -227,7 +222,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         boolean isValid(String name);
     }
 
-    class Replacement {
+    static class Replacement {
         int start;
         int oldLength;
         String newString;

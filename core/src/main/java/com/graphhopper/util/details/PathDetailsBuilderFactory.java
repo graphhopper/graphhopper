@@ -21,10 +21,8 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.Parameters.Details.*;
 
 /**
@@ -58,32 +56,21 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(DISTANCE))
             builders.add(new DistanceDetails());
 
-        for (String checkSuffix : requestedPathDetails) {
-            if (checkSuffix.endsWith(getKey("", "priority")) && evl.hasEncodedValue(checkSuffix))
-                builders.add(new DecimalDetails(checkSuffix, evl.getDecimalEncodedValue(checkSuffix)));
-        }
+        for (String pathDetail : requestedPathDetails) {
+            if (!evl.hasEncodedValue(pathDetail)) continue; // path details like "time" won't be found
 
-        for (String key : Arrays.asList(MaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY,
-                MaxAxleLoad.KEY, MaxLength.KEY)) {
-            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new DecimalDetails(key, evl.getDecimalEncodedValue(key)));
-        }
-
-        for (String key : Arrays.asList(Roundabout.KEY, RoadClassLink.KEY, GetOffBike.KEY)) {
-            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new BooleanDetails(key, evl.getBooleanEncodedValue(key)));
-        }
-
-        for (String key : Arrays.asList(RoadClass.KEY, RoadEnvironment.KEY, Surface.KEY, Smoothness.KEY, RoadAccess.KEY,
-                BikeNetwork.KEY, FootNetwork.KEY, Toll.KEY, TrackType.KEY, Hazmat.KEY, HazmatTunnel.KEY,
-                HazmatWater.KEY, Country.KEY)) {
-            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new EnumDetails<>(key, evl.getEnumEncodedValue(key, Enum.class)));
-        }
-
-        for (String key : Arrays.asList(MtbRating.KEY, HikeRating.KEY, HorseRating.KEY, Lanes.KEY)) {
-            if (requestedPathDetails.contains(key) && evl.hasEncodedValue(key))
-                builders.add(new IntDetails(key, evl.getIntEncodedValue(key)));
+            EncodedValue ev = evl.getEncodedValue(pathDetail, EncodedValue.class);
+            if (ev instanceof DecimalEncodedValue)
+                builders.add(new DecimalDetails(pathDetail, (DecimalEncodedValue) ev));
+            else if (ev instanceof BooleanEncodedValue)
+                builders.add(new BooleanDetails(pathDetail, (BooleanEncodedValue) ev));
+            else if (ev instanceof EnumEncodedValue)
+                builders.add(new EnumDetails<>(pathDetail, (EnumEncodedValue) ev));
+            else if (ev instanceof StringEncodedValue)
+                builders.add(new StringDetails(pathDetail, (StringEncodedValue) ev));
+            else if (ev instanceof IntEncodedValue)
+                builders.add(new IntDetails(pathDetail, (IntEncodedValue) ev));
+            else throw new IllegalArgumentException("unknown EncodedValue class " + ev.getClass().getName());
         }
 
         if (requestedPathDetails.size() != builders.size()) {

@@ -19,7 +19,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>hmm-lib-external</artifactId>
     <!-- SNAPSHOT is necessary otherwise it says: Deployment failed: repository element was not specified in the POM inside distributionManagement element-->
-    <version>5.0-SNAPSHOT</version>
+    <version>6.0-SNAPSHOT</version>
     <packaging>jar</packaging>
   
     <name>hmm-lib</name>
@@ -29,7 +29,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>5.0-SNAPSHOT</version>
+        <version>6.0-SNAPSHOT</version>
     </parent>
 
     <developers>

@@ -166,7 +166,7 @@ public class RoutingAlgorithmWithOSMTest {
 
     @Test
     public void testMoscow() {
-        // extracted via ./graphhopper.sh extract "37.582641,55.805261,37.626929,55.824455"
+        // extracted from OSM area: "37.582641,55.805261,37.626929,55.824455"
         List<Query> queries = new ArrayList<>();
         // choose perpendicular
         // http://localhost:8989/?point=55.818994%2C37.595354&point=55.819175%2C37.596931
@@ -335,7 +335,7 @@ public class RoutingAlgorithmWithOSMTest {
         // 1.
         queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2599, 115));
         queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4180, 165));
-        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 3244, 177));
+        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 3244, 179));
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 2436, 112));
         GraphHopper hopper = createHopper(MONACO, new Profile("bike2").setVehicle("bike2").setWeighting("fastest"));

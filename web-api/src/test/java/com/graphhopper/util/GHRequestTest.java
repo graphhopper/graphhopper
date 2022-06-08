@@ -22,11 +22,10 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -49,46 +48,21 @@ public class GHRequestTest {
         points.add(new GHPoint(lat0, lon0));
         points.add(new GHPoint(lat1, lon1));
         points.add(new GHPoint(lat2, lon2));
-        List<Double> favoredHeadings = Arrays.asList(3.14, 4.15, Double.NaN);
         GHRequest instance;
 
-        instance = new GHRequest(points, favoredHeadings);
-        compareFavoredHeadings(instance, favoredHeadings);
-        comparePoints(instance, points);
-
-        instance = new GHRequest(points.get(0), points.get(1), favoredHeadings.get(0), favoredHeadings.get(1));
-        compareFavoredHeadings(instance, favoredHeadings.subList(0, 2));
-        comparePoints(instance, points.subList(0, 2));
-
-        instance = new GHRequest(lat0, lon0, lat1, lon1, favoredHeadings.get(0), favoredHeadings.get(1));
-        compareFavoredHeadings(instance, favoredHeadings.subList(0, 2));
-        comparePoints(instance, points.subList(0, 2));
-
-        // check init without favoredHeadings
         instance = new GHRequest(points);
         comparePoints(instance, points);
-        compareFavoredHeadings(instance, emptyList());
+        assertTrue(instance.getHeadings().isEmpty());
 
         instance = new GHRequest(points.get(0), points.get(1));
         comparePoints(instance, points.subList(0, 2));
-        compareFavoredHeadings(instance, emptyList());
 
         instance = new GHRequest(lat0, lon0, lat1, lon1);
         comparePoints(instance, points.subList(0, 2));
-        compareFavoredHeadings(instance, emptyList());
     }
 
     private void comparePoints(GHRequest request, List<GHPoint> points) {
         assertEquals(points, request.getPoints(), "Points do not match");
     }
 
-    private void compareFavoredHeadings(GHRequest request, List<Double> expected) {
-        assertEquals(expected.size(), request.getHeadings().size());
-        for (int i = 0; i < expected.size(); i++) {
-            double favoredHeading = request.getHeadings().get(i);
-            assertEquals(
-                    expected.get(i), favoredHeading, 0.01, i + " favored Heading does not match" + expected.get(i) + " vs ." + favoredHeading);
-        }
-
-    }
 }

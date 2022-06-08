@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.ch.NodeBasedCHBidirPathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.*;
+import com.graphhopper.util.GHUtility;
 
 import java.util.PriorityQueue;
 import java.util.function.Supplier;
@@ -84,7 +85,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
         } else {
             // need to use a local reference here, because levelEdgeFilter is modified when calling fillEdgesFromUsingFilter
             final CHEdgeFilter tmpFilter = levelEdgeFilter;
-            fillEdgesFromUsingFilter(edgeState -> (tmpFilter == null || tmpFilter.accept(edgeState)) && edgeState.getOrigEdgeFirst() == fromOutEdge);
+            fillEdgesFromUsingFilter(edgeState -> (tmpFilter == null || tmpFilter.accept(edgeState)) && GHUtility.getEdgeFromEdgeKey(edgeState.getOrigEdgeKeyFirst()) == fromOutEdge);
         }
     }
 
@@ -94,7 +95,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
             fillEdgesToUsingFilter(levelEdgeFilter);
         } else {
             final CHEdgeFilter tmpFilter = levelEdgeFilter;
-            fillEdgesToUsingFilter(edgeState -> (tmpFilter == null || tmpFilter.accept(edgeState)) && edgeState.getOrigEdgeLast() == toInEdge);
+            fillEdgesToUsingFilter(edgeState -> (tmpFilter == null || tmpFilter.accept(edgeState)) && GHUtility.getEdgeFromEdgeKey(edgeState.getOrigEdgeKeyLast()) == toInEdge);
         }
     }
 
@@ -133,10 +134,13 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
 
     @Override
     boolean fillEdgesFrom() {
-        if (pqOpenSetFrom.isEmpty()) {
-            return false;
+        while (true) {
+            if (pqOpenSetFrom.isEmpty())
+                return false;
+            currFrom = pqOpenSetFrom.poll();
+            if (!currFrom.isDeleted())
+                break;
         }
-        currFrom = pqOpenSetFrom.poll();
         visitedCountFrom++;
         if (fromEntryCanBeSkipped()) {
             return true;
@@ -151,10 +155,13 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
 
     @Override
     boolean fillEdgesTo() {
-        if (pqOpenSetTo.isEmpty()) {
-            return false;
+        while (true) {
+            if (pqOpenSetTo.isEmpty())
+                return false;
+            currTo = pqOpenSetTo.poll();
+            if (!currTo.isDeleted())
+                break;
         }
-        currTo = pqOpenSetTo.poll();
         visitedCountTo++;
         if (toEntryCanBeSkipped()) {
             return true;
@@ -178,17 +185,28 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
             if (Double.isInfinite(weight)) {
                 continue;
             }
-            final int origEdgeId = getOrigEdgeId(iter, reverse);
-            final int traversalId = getTraversalId(iter, origEdgeId, reverse);
+            final int origEdgeId = GHUtility.getEdgeFromEdgeKey(reverse ? iter.getOrigEdgeKeyFirst() : iter.getOrigEdgeKeyLast());
+            final int traversalId = traversalMode.createTraversalId(iter, reverse);
             SPTEntry entry = bestWeightMap.get(traversalId);
             if (entry == null) {
                 entry = createEntry(iter.getEdge(), iter.getAdjNode(), origEdgeId, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry);
-                updateEntry(entry, iter.getEdge(), iter.getAdjNode(), origEdgeId, weight, currEdge, reverse);
+                // flagging this entry, so it will be ignored when it is polled the next time
+                // this is faster than removing the entry from the queue and adding again, but for CH it does not really
+                // make a difference overall.
+                entry.setDeleted();
+                boolean isBestEntry = reverse ? (entry == bestBwdEntry) : (entry == bestFwdEntry);
+                entry = createEntry(iter.getEdge(), iter.getAdjNode(), origEdgeId, weight, currEdge, reverse);
+                bestWeightMap.put(traversalId, entry);
                 prioQueue.add(entry);
+                // if this is the best entry we need to update the best reference as well
+                if (isBestEntry)
+                    if (reverse)
+                        bestBwdEntry = entry;
+                    else
+                        bestFwdEntry = entry;
             } else
                 continue;
 
@@ -201,7 +219,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
 
     protected double calcWeight(RoutingCHEdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         double edgeWeight = edgeState.getWeight(reverse);
-        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
+        final int origEdgeId = GHUtility.getEdgeFromEdgeKey(reverse ? edgeState.getOrigEdgeKeyLast() : edgeState.getOrigEdgeKeyFirst());
         double turnCosts = reverse
                 ? graph.getTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : graph.getTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
@@ -221,19 +239,6 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
             return false;
 
         return levelEdgeFilter == null || levelEdgeFilter.accept(edge);
-    }
-
-    protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {
-        return edge.getEdge();
-    }
-
-    protected int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, boolean reverse) {
-        return traversalMode.createTraversalId(edge.getBaseNode(), edge.getAdjNode(), edge.getEdge(), reverse);
-    }
-
-    @Override
-    protected int getOtherNode(int edge, int node) {
-        return graph.getBaseGraph().getOtherNode(edge, node);
     }
 
     protected double calcWeight(RoutingCHEdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {

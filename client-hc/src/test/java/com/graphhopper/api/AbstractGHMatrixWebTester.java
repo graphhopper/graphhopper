@@ -9,6 +9,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,10 +28,13 @@ public abstract class AbstractGHMatrixWebTester {
 
     public static GHMRequest createRequest() {
         GHMRequest req = new GHMRequest();
-        req.addPoint(new GHPoint(51.534377, -0.087891));
-        req.addPoint(new GHPoint(51.467697, -0.090637));
-        req.addPoint(new GHPoint(51.521241, -0.171833));
-        req.addPoint(new GHPoint(51.473685, -0.211487));
+        req.setPoints(Arrays.asList(
+                new GHPoint(51.534377, -0.087891),
+                new GHPoint(51.467697, -0.090637),
+                new GHPoint(51.521241, -0.171833),
+                new GHPoint(51.473685, -0.211487)
+        ));
+        req.setOutArrays(Arrays.asList("weights"));
         return req;
     }
 
@@ -70,11 +74,11 @@ public abstract class AbstractGHMatrixWebTester {
         GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
 
         GHMRequest req = new GHMRequest();
-        req.addPoint(new GHPoint(0, 1));
-        req.addPoint(new GHPoint(2, 3));
-        req.addOutArray("weights");
-        req.addOutArray("distances");
-        req.addOutArray("times");
+        req.setPoints(Arrays.asList(
+                new GHPoint(0, 1),
+                new GHPoint(2, 3)
+        ));
+        req.setOutArrays(Arrays.asList("weights", "distances", "times"));
         req.setFailFast(false);
 
         MatrixResponse rsp = matrixWeb.route(req);
@@ -99,12 +103,12 @@ public abstract class AbstractGHMatrixWebTester {
         GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
 
         GHMRequest req = new GHMRequest();
-        req.addPoint(new GHPoint(0, 1));
-        req.addPoint(new GHPoint(2, 3));
-        req.addPoint(new GHPoint(4, 5));
-        req.addOutArray("weights");
-        req.addOutArray("distances");
-        req.addOutArray("times");
+        req.setPoints(Arrays.asList(
+                new GHPoint(0, 1),
+                new GHPoint(2, 3),
+                new GHPoint(4, 5)
+        ));
+        req.setOutArrays(Arrays.asList("weights", "distances", "times"));
         req.setFailFast(false);
 
         MatrixResponse rsp = matrixWeb.route(req);
@@ -164,9 +168,7 @@ public abstract class AbstractGHMatrixWebTester {
         GraphHopperMatrixWeb matrixWeb = createMatrixClient(ghMatrix);
 
         GHMRequest req = createRequest();
-        req.addOutArray("weights");
-        req.addOutArray("distances");
-        req.addOutArray("times");
+        req.setOutArrays(Arrays.asList("weights", "distances", "times"));
         MatrixResponse rsp = matrixWeb.route(req);
 
         assertFalse(rsp.hasErrors());
@@ -183,19 +185,25 @@ public abstract class AbstractGHMatrixWebTester {
     }
 
     @Test
-    public void noVehicleWhenNotSpecified() {
+    public void noProfileWhenNotSpecified() {
         GHMatrixBatchRequester requester = new GHMatrixBatchRequester("url");
-        JsonNode json = requester.createPostRequest(new GHMRequest(5), Collections.singletonList("weights"));
-        assertEquals("{\"out_arrays\":[\"weights\"],\"fail_fast\":true}", json.toString());
+        JsonNode json = requester.createPostRequest(new GHMRequest().setOutArrays(Collections.singletonList("weights")).setPoints(Arrays.asList(new GHPoint(11, 12))));
+        assertEquals("{\"points\":[[12.0,11.0]],\"out_arrays\":[\"weights\"],\"fail_fast\":true}", json.toString());
     }
 
     @Test
     public void hasHintsWhenSpecified() {
         GHMatrixAbstractRequester requester = createRequester("url");
-        GHMRequest ghmRequest = new GHMRequest(5);
-        ghmRequest.putHint("vehicle", "my_car").putHint("profile", "my_profile");
-        JsonNode json = requester.createPostRequest(ghmRequest, Collections.singletonList("weights"));
-        assertEquals("{\"out_arrays\":[\"weights\"],\"fail_fast\":true,\"vehicle\":\"my_car\",\"profile\":\"my_profile\"}", json.toString());
+        GHMRequest ghmRequest = new GHMRequest();
+        ghmRequest.putHint("some_property", "value");
+        ghmRequest.setOutArrays(Collections.singletonList("weights"));
+        ghmRequest.setPoints(Arrays.asList(new GHPoint(11, 12)));
+        JsonNode json = requester.createPostRequest(ghmRequest);
+        assertEquals("{\"points\":[[12.0,11.0]],\"out_arrays\":[\"weights\"],\"fail_fast\":true,\"some_property\":\"value\"}", json.toString());
+
+        ghmRequest.putHint("profile", "car");
+        Exception ex = assertThrows(IllegalArgumentException.class, () -> requester.createPostRequest(ghmRequest));
+        assertTrue(ex.getMessage().contains("use setProfile"), ex.getMessage());
     }
 
     public static String readFile(Reader simpleReader) throws IOException {

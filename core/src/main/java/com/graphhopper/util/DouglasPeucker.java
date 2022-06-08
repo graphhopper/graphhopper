@@ -88,7 +88,7 @@ public class DouglasPeucker {
      * @param points    The PointList to simplify
      * @param fromIndex Start index to simplify, should be <= <code>lastIndex</code>
      * @param lastIndex Simplify up to this index
-     * @param compress  Whether or not the <code>points</code> shall be compressed or not, if set to false no points
+     * @param compress  Whether the <code>points</code> shall be compressed or not, if set to false no points
      *                  are actually removed, but instead their lat/lon/ele is only set to NaN
      * @return The number of removed points
      */

@@ -19,34 +19,18 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.Roundabout;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 public class OSMRoundaboutParser implements TagParser {
 
     private final BooleanEncodedValue roundaboutEnc;
-
-    public OSMRoundaboutParser() {
-        this(Roundabout.create());
-    }
 
     public OSMRoundaboutParser(BooleanEncodedValue roundaboutEnc) {
         this.roundaboutEnc = roundaboutEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(roundaboutEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, boolean ferry, IntsRef relationFlags) {
-        if (ferry)
-            return edgeFlags;
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
         if (isRoundabout)
             roundaboutEnc.setBool(false, edgeFlags, true);

@@ -3,6 +3,7 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 import java.util.Locale;
 
@@ -108,11 +109,10 @@ public class ShortcutUnpacker {
 
     private int getOppositeEdge(RoutingCHEdgeIteratorState edgeState, int adjNode) {
         assert edgeState.getBaseNode() == adjNode || edgeState.getAdjNode() == adjNode : "adjNode " + adjNode + " must be one of adj/base of edgeState: " + edgeState;
-        // since the first/last orig edge is not stateful (just like skipped1/2) we have to find out which one
+        // since the first/last orig edge key is not stateful (just like skipped1/2) we have to find out which one
         // is attached to adjNode, similar as we do for skipped1/2.
-        return graph.getBaseGraph().isAdjacentToNode(edgeState.getOrigEdgeLast(), adjNode)
-                ? edgeState.getOrigEdgeFirst()
-                : edgeState.getOrigEdgeLast();
+        boolean adjacentToNode = graph.getBaseGraph().isAdjacentToNode(GHUtility.getEdgeFromEdgeKey(edgeState.getOrigEdgeKeyLast()), adjNode);
+        return GHUtility.getEdgeFromEdgeKey(adjacentToNode ? edgeState.getOrigEdgeKeyFirst() : edgeState.getOrigEdgeKeyLast());
     }
 
     private RoutingCHEdgeIteratorState getEdge(int edgeId, int adjNode) {
