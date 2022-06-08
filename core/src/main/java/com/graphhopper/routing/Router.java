@@ -24,9 +24,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -166,12 +164,12 @@ public class Router {
     }
 
     private void checkPointHints(GHRequest request) {
-        if (!request.getPointHints().isEmpty() && request.getPointHints().size() != request.getPoints().size())
+        if (request.getPointHints().size() > 0 && request.getPointHints().size() != request.getPoints().size())
             throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
     }
 
     private void checkCurbsides(GHRequest request) {
-        if (!request.getCurbsides().isEmpty() && request.getCurbsides().size() != request.getPoints().size())
+        if (request.getCurbsides().size() > 0 && request.getCurbsides().size() != request.getPoints().size())
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
     }
 
@@ -243,6 +241,22 @@ public class Router {
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (snaps.size() - 1));
         return ghRsp;
+    }
+
+    public Solver createAndInitSolver(GHRequest request) {
+        Solver solver = createSolver(request);
+        solver.init();
+        return solver;
+    }
+
+    public Snap getSnap(GHPoint point, Solver solver) {
+        return locationIndex.findClosest(point.lat, point.lon, solver.createSnapFilter());
+    }
+
+    public PathCalculator createPathCalculatorForSnaps(List<Snap> snaps, Solver solver) {
+        QueryGraph queryGraph = QueryGraph.create(ghStorage, snaps);
+        PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
+        return pathCalculator;
     }
 
     protected GHResponse routeVia(GHRequest request, Solver solver) {
