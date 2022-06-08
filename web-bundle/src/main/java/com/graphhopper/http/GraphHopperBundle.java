@@ -276,6 +276,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         environment.jersey().register(InfoResource.class);
         environment.healthChecks().register("graphhopper", new GraphHopperHealthCheck(graphHopper));
         environment.jersey().register(environment.healthChecks());
-        environment.jersey().register(HealthcheckResource.class);
+        environment.jersey().register(HealthCheckResource.class);
     }
 }

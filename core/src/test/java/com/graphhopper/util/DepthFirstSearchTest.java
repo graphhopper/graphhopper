@@ -21,15 +21,16 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.BaseGraph;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author jansoe
@@ -63,18 +64,19 @@ public class DepthFirstSearchTest {
             }
         };
 
-        EncodingManager em = EncodingManager.create("car");
-        FlagEncoder encoder = em.getEncoder("car");
-        Graph g = new GraphBuilder(em).create();
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(6, 4).setDistance(1));
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        EncodedValue.InitializerConfig evConf = new EncodedValue.InitializerConfig();
+        accessEnc.init(evConf);
+        BaseGraph g = new BaseGraph.Builder(evConf.getRequiredInts()).create();
+        g.edge(1, 2).setDistance(1).set(accessEnc, true, false);
+        g.edge(1, 5).setDistance(1).set(accessEnc, true, false);
+        g.edge(1, 4).setDistance(1).set(accessEnc, true, false);
+        g.edge(2, 3).setDistance(1).set(accessEnc, true, false);
+        g.edge(3, 4).setDistance(1).set(accessEnc, true, false);
+        g.edge(5, 6).setDistance(1).set(accessEnc, true, false);
+        g.edge(6, 4).setDistance(1).set(accessEnc, true, false);
 
-        dfs.start(g.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc())), 1);
+        dfs.start(g.createEdgeExplorer(AccessFilter.outEdges(accessEnc)), 1);
 
         assertTrue(counter > 0);
         assertEquals(list.toString(), "[1, 2, 3, 4, 5, 6]");
@@ -98,16 +100,17 @@ public class DepthFirstSearchTest {
             }
         };
 
-        EncodingManager em = EncodingManager.create("car");
-        FlagEncoder encoder = em.getEncoder("car");
-        Graph g = new GraphBuilder(em).create();
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 3).setDistance(1));
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        EncodedValue.InitializerConfig evConf = new EncodedValue.InitializerConfig();
+        accessEnc.init(evConf);
+        BaseGraph g = new BaseGraph.Builder(evConf.getRequiredInts()).create();
+        g.edge(1, 2).setDistance(1).set(accessEnc, true, false);
+        g.edge(1, 4).setDistance(1).set(accessEnc, true, true);
+        g.edge(1, 3).setDistance(1).set(accessEnc, true, false);
+        g.edge(2, 3).setDistance(1).set(accessEnc, true, false);
+        g.edge(4, 3).setDistance(1).set(accessEnc, true, true);
 
-        dfs.start(g.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc())), 1);
+        dfs.start(g.createEdgeExplorer(AccessFilter.outEdges(accessEnc)), 1);
 
         assertTrue(counter > 0);
         assertEquals(list.toString(), "[1, 2, 3, 4]");

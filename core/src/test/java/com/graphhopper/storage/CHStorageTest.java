@@ -4,13 +4,25 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.ByteOrder;
 import java.nio.file.Path;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CHStorageTest {
+
+    @Test
+    void setAndGetLevels() {
+        RAMDirectory dir = new RAMDirectory();
+        CHStorage store = new CHStorage(dir, "ch1", -1, false);
+        store.create();
+        store.init(30, 5);
+        assertEquals(0, store.getLevel(store.toNodePointer(10)));
+        store.setLevel(store.toNodePointer(10), 100);
+        assertEquals(100, store.getLevel(store.toNodePointer(10)));
+        store.setLevel(store.toNodePointer(29), 300);
+        assertEquals(300, store.getLevel(store.toNodePointer(29)));
+    }
 
     @Test
     void createAndLoad(@TempDir Path path) {
@@ -71,7 +83,7 @@ class CHStorageTest {
     @Test
     public void testLargeNodeA() {
         int nodeA = Integer.MAX_VALUE;
-        RAMIntDataAccess access = new RAMIntDataAccess("", "", false, ByteOrder.LITTLE_ENDIAN, -1);
+        RAMIntDataAccess access = new RAMIntDataAccess("", "", false, -1);
         access.create(1000);
         access.setInt(0, nodeA << 1 | 1 & PrepareEncoder.getScFwdDir());
         assertTrue(access.getInt(0) < 0);

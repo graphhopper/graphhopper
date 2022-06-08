@@ -94,7 +94,7 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
 
     @Override
     public String toString() {
-        return baseIterator.toString();
+        return getEdge() + " " + getBaseNode() + "-" + getAdjNode();
     }
 
     private boolean finiteWeight(boolean reverse) {

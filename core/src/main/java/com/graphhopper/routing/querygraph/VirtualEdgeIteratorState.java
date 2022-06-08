@@ -78,6 +78,11 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     }
 
     @Override
+    public int getReverseEdgeKey() {
+        return baseNode == adjNode ? edgeKey : GHUtility.reverseEdgeKey(edgeKey);
+    }
+
+    @Override
     public int getBaseNode() {
         return baseNode;
     }
@@ -268,29 +273,29 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         property.setEnum(!reverse, edgeFlags, bwd);
         return this;
     }
-    
+
     @Override
     public String get(StringEncodedValue property) {
         return property.getString(reverse, edgeFlags);
     }
-    
+
     @Override
     public EdgeIteratorState set(StringEncodedValue property, String value) {
         property.setString(reverse, edgeFlags, value);
         return this;
     }
-    
+
     @Override
     public String getReverse(StringEncodedValue property) {
         return property.getString(!reverse, edgeFlags);
     }
-    
+
     @Override
     public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
         property.setString(!reverse, edgeFlags, value);
         return this;
     }
-    
+
     @Override
     public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
         if (!property.isStoreTwoDirections())
@@ -321,16 +326,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     @Override
     public String toString() {
         return baseNode + "->" + adjNode;
-    }
-
-    @Override
-    public int getOrigEdgeFirst() {
-        return getEdge();
-    }
-
-    @Override
-    public int getOrigEdgeLast() {
-        return getEdge();
     }
 
     @Override

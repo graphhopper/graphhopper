@@ -20,9 +20,7 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntContainer;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.coll.MinHeapWithUpdate;
-import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -50,7 +48,7 @@ import static com.graphhopper.util.Helper.nf;
  *
  * @author Peter Karich
  */
-public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
+public class PrepareContractionHierarchies {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final CHConfig chConfig;
     private final CHStorage chStore;
@@ -62,7 +60,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private final StopWatch neighborUpdateSW = new StopWatch();
     private final StopWatch contractionSW = new StopWatch();
     private final Params params;
-    private final GraphHopperStorage graph;
+    private final BaseGraph graph;
     private NodeContractor nodeContractor;
     private final int nodes;
     private NodeOrderingProvider nodeOrderingProvider;
@@ -71,22 +69,23 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     private MinHeapWithUpdate sortedNodes;
     private PMap pMap = new PMap();
     private int checkCounter;
+    private boolean prepared = false;
 
-    public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHConfig chConfig) {
-        return new PrepareContractionHierarchies(ghStorage, chConfig);
+    public static PrepareContractionHierarchies fromGraph(BaseGraph graph, CHConfig chConfig) {
+        return new PrepareContractionHierarchies(graph.getBaseGraph(), chConfig);
     }
 
-    private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHConfig chConfig) {
-        graph = ghStorage;
-        chStore = ghStorage.getCHStore(chConfig.getName());
-        if (chStore == null)
-            throw new IllegalArgumentException("There is no CH graph '" + chConfig.getName() + "', existing: " + ghStorage.getCHGraphNames());
+    private PrepareContractionHierarchies(BaseGraph graph, CHConfig chConfig) {
+        if (!graph.isFrozen())
+            throw new IllegalStateException("BaseGraph must be frozen before creating CHs");
+        this.graph = graph;
+        chStore = CHStorage.fromGraph(graph, chConfig);
         chBuilder = new CHStorageBuilder(chStore);
         this.chConfig = chConfig;
         params = Params.forTraversalMode(chConfig.getTraversalMode());
-        nodes = ghStorage.getNodes();
+        nodes = graph.getNodes();
         if (chConfig.getTraversalMode().isEdgeBased()) {
-            TurnCostStorage turnCostStorage = ghStorage.getTurnCostStorage();
+            TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
             if (turnCostStorage == null) {
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
             }
@@ -98,6 +97,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         params.setPeriodicUpdatesPercentage(pMap.getInt(PERIODIC_UPDATES, params.getPeriodicUpdatesPercentage()));
         params.setLastNodesLazyUpdatePercentage(pMap.getInt(LAST_LAZY_NODES_UPDATES, params.getLastNodesLazyUpdatePercentage()));
         params.setNeighborUpdatePercentage(pMap.getInt(NEIGHBOR_UPDATES, params.getNeighborUpdatePercentage()));
+        params.setMaxNeighborUpdates(pMap.getInt(NEIGHBOR_UPDATES_MAX, params.getMaxNeighborUpdates()));
         params.setNodesContractedPercentage(pMap.getInt(CONTRACTED_NODES, params.getNodesContractedPercentage()));
         params.setLogMessagesPercentage(pMap.getInt(LOG_MESSAGES, params.getLogMessagesPercentage()));
         return this;
@@ -118,8 +118,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         return this;
     }
 
-    @Override
-    public void doSpecificWork() {
+    public Result doWork() {
+        if (prepared)
+            throw new IllegalStateException("Call doWork only once!");
+        prepared = true;
         if (!graph.isFrozen()) {
             throw new IllegalStateException("Given GraphHopperStorage has not been frozen yet");
         }
@@ -131,6 +133,18 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         runGraphContraction();
         allSW.stop();
         logFinalGraphStats();
+        return new Result(
+                chConfig, chStore,
+                nodeContractor.getAddedShortcutsCount(),
+                lazyUpdateSW.getCurrentSeconds(),
+                periodicUpdateSW.getCurrentSeconds(),
+                neighborUpdateSW.getCurrentSeconds(),
+                allSW.getMillis()
+        );
+    }
+
+    public boolean isPrepared() {
+        return prepared;
     }
 
     private void logFinalGraphStats() {
@@ -150,7 +164,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         }
     }
 
-    public boolean isEdgeBased() {
+    private boolean isEdgeBased() {
         return chConfig.isEdgeBased();
     }
 
@@ -181,7 +195,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         sortedNodes = new MinHeapWithUpdate(prepareGraph.getNodes());
         logger.info("Building CH prepare graph, {}", getMemInfo());
         StopWatch sw = new StopWatch().start();
-        CHPreparationGraph.buildFromGraph(prepareGraph, graph, getWeighting());
+        CHPreparationGraph.buildFromGraph(prepareGraph, graph, chConfig.getWeighting());
         logger.info("Finished building CH prepare graph, took: {}s, {}", sw.stop().getSeconds(), getMemInfo());
         nodeContractor.initFromGraph();
     }
@@ -209,7 +223,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         // but has always been like that and changing it would possibly require retuning the contraction parameters
         updatePrioritiesOfRemainingNodes();
         logger.info("Finished building queue, took: {}s, {}", sw.stop().getSeconds(), getMemInfo());
-        nodeContractor.prepareContraction();
         final int initSize = sortedNodes.size();
         int level = 0;
         checkCounter = 0;
@@ -276,13 +289,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
                 // skipped nodes are already set to maxLevel
                 break;
 
+            int neighborCount = 0;
             // there might be multiple edges going to the same neighbor nodes -> only calculate priority once per node
             for (IntCursor neighbor : neighbors) {
-                int nn = neighbor.value;
-                if (neighborUpdate && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
+                if (neighborUpdate && (params.getMaxNeighborUpdates() < 0 || neighborCount < params.getMaxNeighborUpdates()) && rand.nextInt(100) < params.getNeighborUpdatePercentage()) {
+                    neighborCount++;
                     neighborUpdateSW.start();
-                    float priority = calculatePriority(nn);
-                    sortedNodes.update(nn, priority);
+                    float priority = calculatePriority(neighbor.value);
+                    sortedNodes.update(neighbor.value, priority);
                     neighborUpdateSW.stop();
                 }
             }
@@ -309,7 +323,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
     }
 
     private void contractNodesUsingFixedNodeOrdering() {
-        nodeContractor.prepareContraction();
         final int nodesToContract = nodeOrderingProvider.getNumNodes();
         final int logSize = Math.max(10, (int) (params.getLogMessagesPercentage() / 100.0 * nodesToContract));
         StopWatch stopWatch = new StopWatch();
@@ -373,30 +386,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         );
     }
 
-    public long getDijkstraCount() {
-        return nodeContractor.getDijkstraCount();
-    }
-
-    public long getShortcuts() {
-        return nodeContractor.getAddedShortcutsCount();
-    }
-
-    public double getLazyTime() {
-        return lazyUpdateSW.getCurrentSeconds();
-    }
-
-    public double getPeriodTime() {
-        return periodicUpdateSW.getCurrentSeconds();
-    }
-
-    public double getNeighborTime() {
-        return neighborUpdateSW.getCurrentSeconds();
-    }
-
-    public Weighting getWeighting() {
-        return chConfig.getWeighting();
-    }
-
     public CHConfig getCHConfig() {
         return chConfig;
     }
@@ -435,9 +424,60 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         sortedNodes = null;
     }
 
-    void close() {
+    void flush() {
         chStore.flush();
+    }
+
+    void close() {
         chStore.close();
+    }
+
+    public static class Result {
+        private final CHConfig chConfig;
+        private final CHStorage chStorage;
+        private final long shortcuts;
+        private final double lazyTime;
+        private final double periodTime;
+        private final double neighborTime;
+        private final long totalPrepareTime;
+
+        private Result(CHConfig chConfig, CHStorage chStorage, long shortcuts, double lazyTime, double periodTime, double neighborTime, long totalPrepareTime) {
+            this.chStorage = chStorage;
+            this.shortcuts = shortcuts;
+            this.lazyTime = lazyTime;
+            this.periodTime = periodTime;
+            this.neighborTime = neighborTime;
+            this.totalPrepareTime = totalPrepareTime;
+            this.chConfig = chConfig;
+        }
+
+        public CHConfig getCHConfig() {
+            return chConfig;
+        }
+
+        public CHStorage getCHStorage() {
+            return chStorage;
+        }
+
+        public long getShortcuts() {
+            return shortcuts;
+        }
+
+        public double getLazyTime() {
+            return lazyTime;
+        }
+
+        public double getPeriodTime() {
+            return periodTime;
+        }
+
+        public double getNeighborTime() {
+            return neighborTime;
+        }
+
+        public long getTotalPrepareTime() {
+            return totalPrepareTime;
+        }
     }
 
     private static class Params {
@@ -464,6 +504,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
          */
         private int neighborUpdatePercentage;
         /**
+         * Specifies the maximum number of neighbor updates per contracted node. For example for the foot profile we
+         * see a large number of neighbor updates that can be limited with this setting. -1 means unlimited.
+         */
+        private int maxNeighborUpdates;
+        /**
          * Defines how many nodes (percentage) should be contracted. A value of 20 means only the first 20% of all nodes
          * will be contracted. Higher values here mean longer preparation times, but faster queries (because the
          * graph will be fully contracted).
@@ -477,19 +522,21 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         private int logMessagesPercentage;
 
         static Params forTraversalMode(TraversalMode traversalMode) {
+            // Lower values for the neighbor update percentage (and/or max neighbor updates) yield a slower
+            // preparation but possibly fewer shortcuts and a slightly better query time.
             if (traversalMode.isEdgeBased()) {
-                // todo: optimize
-                return new Params(0, 100, 0, 100, 5);
+                return new Params(0, 100, 50, 3, 100, 5);
             } else {
-                return new Params(20, 10, 20, 100, 20);
+                return new Params(0, 100, 100, 2, 100, 20);
             }
         }
 
-        private Params(int periodicUpdatesPercentage, int lastNodesLazyUpdatePercentage, int neighborUpdatePercentage,
+        private Params(int periodicUpdatesPercentage, int lastNodesLazyUpdatePercentage, int neighborUpdatePercentage, int maxNeighborUpdates,
                        int nodesContractedPercentage, int logMessagesPercentage) {
             setPeriodicUpdatesPercentage(periodicUpdatesPercentage);
             setLastNodesLazyUpdatePercentage(lastNodesLazyUpdatePercentage);
             setNeighborUpdatePercentage(neighborUpdatePercentage);
+            setMaxNeighborUpdates(maxNeighborUpdates);
             setNodesContractedPercentage(nodesContractedPercentage);
             setLogMessagesPercentage(logMessagesPercentage);
         }
@@ -519,6 +566,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation {
         void setNeighborUpdatePercentage(int neighborUpdatePercentage) {
             checkPercentage(NEIGHBOR_UPDATES, neighborUpdatePercentage);
             this.neighborUpdatePercentage = neighborUpdatePercentage;
+        }
+
+        int getMaxNeighborUpdates() {
+            return maxNeighborUpdates;
+        }
+
+        void setMaxNeighborUpdates(int maxNeighborUpdates) {
+            this.maxNeighborUpdates = maxNeighborUpdates;
         }
 
         int getNodesContractedPercentage() {

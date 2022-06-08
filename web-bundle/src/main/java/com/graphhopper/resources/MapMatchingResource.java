@@ -24,12 +24,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
+import com.graphhopper.gpx.GpxConversions;
+import com.graphhopper.jackson.Gpx;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
-import com.graphhopper.jackson.Gpx;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.*;
-import com.graphhopper.gpx.GpxConversions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -166,7 +166,7 @@ public class MapMatchingResource {
                     for (EdgeMatch em : matchResult.getEdgeMatches()) {
                         EdgeIteratorState edge = em.getEdgeState();
                         // encode edges as traversal keys which includes orientation, decode simply by multiplying with 0.5
-                        traversalKeylist.add(GHUtility.createEdgeKey(edge.getBaseNode(), edge.getAdjNode(), edge.getEdge(), false));
+                        traversalKeylist.add(edge.getEdgeKey());
                     }
                     map.putPOJO("traversal_keys", traversalKeylist);
                 }

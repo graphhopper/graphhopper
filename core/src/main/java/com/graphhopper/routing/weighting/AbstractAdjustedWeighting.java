@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -37,6 +36,11 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
     @Override
     public double getMinWeight(double distance) {
         return superWeighting.getMinWeight(distance);
+    }
+
+    @Override
+    public boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse) {
+        return superWeighting.edgeHasNoAccess(edgeState, reverse);
     }
 
     @Override
@@ -62,14 +66,6 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
     @Override
     public boolean hasTurnCosts() {
         return superWeighting.hasTurnCosts();
-    }
-
-    /**
-     * Returns the flagEncoder of the superWeighting. Usually we do not have a FlagEncoder here.
-     */
-    @Override
-    public FlagEncoder getFlagEncoder() {
-        return superWeighting.getFlagEncoder();
     }
 
     @Override

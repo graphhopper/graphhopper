@@ -26,8 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static com.graphhopper.routing.ch.CHParameters.EDGE_DIFFERENCE_WEIGHT;
-import static com.graphhopper.routing.ch.CHParameters.ORIGINAL_EDGE_COUNT_WEIGHT;
+import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.Helper.nf;
 
 class NodeBasedNodeContractor implements NodeContractor {
@@ -59,6 +58,8 @@ class NodeBasedNodeContractor implements NodeContractor {
     private void extractParams(PMap pMap) {
         params.edgeDifferenceWeight = pMap.getFloat(EDGE_DIFFERENCE_WEIGHT, params.edgeDifferenceWeight);
         params.originalEdgesCountWeight = pMap.getFloat(ORIGINAL_EDGE_COUNT_WEIGHT, params.originalEdgesCountWeight);
+        params.maxPollFactorHeuristic = pMap.getDouble(MAX_POLL_FACTOR_HEURISTIC_NODE, params.maxPollFactorHeuristic);
+        params.maxPollFactorContraction = pMap.getDouble(MAX_POLL_FACTOR_CONTRACTION_NODE, params.maxPollFactorContraction);
     }
 
     @Override
@@ -67,16 +68,7 @@ class NodeBasedNodeContractor implements NodeContractor {
         outEdgeExplorer = prepareGraph.createOutEdgeExplorer();
         existingShortcutExplorer = prepareGraph.createOutEdgeExplorer();
         witnessPathSearcher = new NodeBasedWitnessPathSearcher(prepareGraph);
-    }
-
-    @Override
-    public void prepareContraction() {
-        // todo: initializing meanDegree here instead of in initFromGraph() means that in the first round of calculating
-        // node priorities all shortcut searches are cancelled immediately and all possible shortcuts are counted because
-        // no witness path can be found. this is not really what we want, but changing it requires re-optimizing the
-        // graph contraction parameters, because it affects the node contraction order.
-        // when this is done there should be no need for this method any longer.
-        meanDegree = prepareGraph.getOriginalEdges() / prepareGraph.getNodes();
+        meanDegree = prepareGraph.getOriginalEdges() * 1.0 / prepareGraph.getNodes();
     }
 
     @Override
@@ -105,7 +97,7 @@ class NodeBasedNodeContractor implements NodeContractor {
         // originalEdgesCount = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
         shortcutsCount = 0;
         originalEdgesCount = 0;
-        findAndHandleShortcuts(node, this::countShortcuts);
+        findAndHandleShortcuts(node, this::countShortcuts, (int) (meanDegree * params.maxPollFactorHeuristic));
 
         // from shortcuts we can compute the edgeDifference
         // # low influence: with it the shortcut creation is slightly faster
@@ -124,7 +116,7 @@ class NodeBasedNodeContractor implements NodeContractor {
 
     @Override
     public IntContainer contractNode(int node) {
-        long degree = findAndHandleShortcuts(node, this::addOrUpdateShortcut);
+        long degree = findAndHandleShortcuts(node, this::addOrUpdateShortcut, (int) (meanDegree * params.maxPollFactorContraction));
         insertShortcuts(node);
         // put weight factor on meanDegree instead of taking the average => meanDegree is more stable
         meanDegree = (meanDegree * 2 + degree) / 3;
@@ -214,8 +206,7 @@ class NodeBasedNodeContractor implements NodeContractor {
      * Returns the 'degree' of the given node (disregarding edges from/to already contracted nodes).
      * Note that here the degree is not the total number of adjacent edges, but only the number of incoming edges
      */
-    private long findAndHandleShortcuts(int node, PrepareShortcutHandler handler) {
-        int maxVisitedNodes = getMaxVisitedNodesEstimate();
+    private long findAndHandleShortcuts(int node, PrepareShortcutHandler handler, int maxVisitedNodes) {
         long degree = 0;
         PrepareGraphEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         // collect outgoing nodes (goal-nodes) only once
@@ -298,19 +289,8 @@ class NodeBasedNodeContractor implements NodeContractor {
     }
 
     @Override
-    public long getDijkstraCount() {
-        return dijkstraCount;
-    }
-
-    @Override
     public float getDijkstraSeconds() {
         return dijkstraSW.getCurrentSeconds();
-    }
-
-    private int getMaxVisitedNodesEstimate() {
-        // todo: we return 0 here if meanDegree is < 1, which is not really what we want, but changing this changes
-        // the node contraction order and requires re-optimizing the parameters of the graph contraction
-        return (int) meanDegree * 100;
     }
 
     @FunctionalInterface
@@ -324,6 +304,11 @@ class NodeBasedNodeContractor implements NodeContractor {
         // default values were optimized for Unterfranken
         private float edgeDifferenceWeight = 10;
         private float originalEdgesCountWeight = 1;
+        // these values seemed to work best for planet (fast prep without compromising too much for the query time)
+        // higher values can further decrease the number of shortcuts and improve the query time, but normally at the
+        // cost of a longer preparation (see #2514)
+        private double maxPollFactorHeuristic = 5;
+        private double maxPollFactorContraction = 200;
     }
 
     private static class Shortcut {
@@ -358,5 +343,4 @@ class NodeBasedNodeContractor implements NodeContractor {
             return str + to + ", weight:" + weight + " (" + skippedEdge1 + "," + skippedEdge2 + ")";
         }
     }
-
 }

@@ -19,33 +19,35 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Karl Hübner
  */
 public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest {
     @Override
-    CarFlagEncoder createCarFlagEncoder() {
-        return new CarFlagEncoder(5, 5, 1400);
+    FlagEncoder createCarFlagEncoder() {
+        return FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 1400));
     }
 
     @Override
-    protected GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
+    protected BaseGraph newGHStorage(Directory dir, boolean is3D) {
         return newGHStorage(dir, is3D, -1);
     }
 
     @Override
-    protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
-        return GraphBuilder.start(encodingManager).setDir(dir).set3D(enabled3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
+    protected BaseGraph newGHStorage(Directory dir, boolean enabled3D, int segmentSize) {
+        return new BaseGraph.Builder(encodingManager).setDir(dir).set3D(enabled3D).withTurnCosts(true).setSegmentSize(segmentSize).build();
     }
 
     @Override
@@ -58,13 +60,13 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         na.setNode(1, 11, 20, 1);
         na.setNode(2, 12, 12, 0.4);
 
-        EdgeIteratorState iter2 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(100));
+        EdgeIteratorState iter2 = graph.edge(0, 1).setDistance(100).set(carAccessEnc, true, true);
         iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0));
-        EdgeIteratorState iter1 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 2).setDistance(200));
+        EdgeIteratorState iter1 = graph.edge(0, 2).setDistance(200).set(carAccessEnc, true, true);
         iter1.setWayGeometry(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(9, 10).setDistance(200));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(9, 11).setDistance(200));
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(120));
+        graph.edge(9, 10).setDistance(200).set(carAccessEnc, true, true);
+        graph.edge(9, 11).setDistance(200).set(carAccessEnc, true, true);
+        graph.edge(1, 2).setDistance(120).set(carAccessEnc, true, false);
 
         setTurnCost(iter1.getEdge(), 0, iter2.getEdge(), 1337);
         setTurnCost(iter2.getEdge(), 0, iter1.getEdge(), 666);
@@ -78,7 +80,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         graph.close();
 
         graph = newGHStorage(new MMapDirectory(defaultGraphLoc), true);
-        assertTrue(graph.loadExisting());
+        graph.loadExisting();
 
         assertEquals(12, graph.getNodes());
         checkGraph(graph);
@@ -91,7 +93,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         assertEquals(815, getTurnCost(iter2, 1, iter1), .1);
         assertEquals(0, getTurnCost(iter2, 3, iter1), .1);
 
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(123)).
+        graph.edge(3, 4).setDistance(123).set(carAccessEnc, true, true).
                 setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
         checkGraph(graph);
     }
@@ -117,10 +119,10 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
 
         // Make node 50 the 'center' node
         for (int nodeId = 51; nodeId < 100; nodeId++) {
-            GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(50, nodeId).setDistance(r.nextDouble()));
+            graph.edge(50, nodeId).setDistance(r.nextDouble()).set(carAccessEnc, true, true);
         }
         for (int nodeId = 0; nodeId < 50; nodeId++) {
-            GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(nodeId, 50).setDistance(r.nextDouble()));
+            graph.edge(nodeId, 50).setDistance(r.nextDouble()).set(carAccessEnc, true, true);
         }
 
         // add 100 turn cost entries around node 50

@@ -20,6 +20,8 @@ package com.graphhopper.routing.util;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.routing.ch.PrepareEncoder;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
@@ -27,13 +29,11 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AccessFilterTest {
-    private final CarFlagEncoder encoder = new CarFlagEncoder();
+    private final FlagEncoder encoder = FlagEncoders.createCar();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
-    private final GraphHopperStorage graph = new GraphBuilder(encodingManager)
+    private final BaseGraph graph = new BaseGraph.Builder(encodingManager)
             .withTurnCosts(true)
-            .setCHConfigStrings("profile|car|shortest|edge")
             .create();
-    private final RoutingCHGraph chGraph = graph.getRoutingCHGraph();
 
     @Test
     public void testAccept_fwdLoopShortcut_acceptedByInExplorer() {
@@ -45,10 +45,12 @@ public class AccessFilterTest {
         GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 0).setDistance(3));
         graph.freeze();
         // add loop shortcut in 'fwd' direction
-        CHStorage chStore = graph.getCHStore();
+        CHConfig chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())));
+        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
-        chBuilder.addShortcutEdgeBased(0, 0, PrepareEncoder.getScFwdDir(), 5, 0, 2, 0, 2);
+        chBuilder.addShortcutEdgeBased(0, 0, PrepareEncoder.getScFwdDir(), 5, 0, 2, 0, 5);
+        RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
         RoutingCHEdgeExplorer outExplorer = chGraph.createOutEdgeExplorer();
         RoutingCHEdgeExplorer inExplorer = chGraph.createInEdgeExplorer();
 

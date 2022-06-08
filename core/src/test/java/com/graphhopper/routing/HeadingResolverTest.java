@@ -20,11 +20,10 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.routing.util.FlagEncoders;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistanceCalcEuclidean;
@@ -44,9 +43,9 @@ class HeadingResolverTest {
         // 7 -- 8 --- 3
         //     /|\
         //    6 5 4
-        FlagEncoder encoder = new CarFlagEncoder();
+        FlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 49.5073, 1.5545);
         na.setNode(1, 49.5002, 2.3895);
@@ -86,9 +85,9 @@ class HeadingResolverTest {
         //    1 -|
         // |- 0 -|
         // |- 2
-        FlagEncoder encoder = new CarFlagEncoder();
+        FlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(1, 0.01, 0.00);
         na.setNode(0, 0.00, 0.00);
@@ -109,9 +108,9 @@ class HeadingResolverTest {
     public void withQueryGraph() {
         //    2
         // 0 -x- 1
-        FlagEncoder encoder = new CarFlagEncoder();
+        FlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(encoder);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 48.8611, 1.2194);
         na.setNode(1, 48.8538, 2.3950);
