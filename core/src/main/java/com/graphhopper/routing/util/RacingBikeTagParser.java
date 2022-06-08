@@ -45,6 +45,8 @@ public class RacingBikeTagParser extends BikeCommonTagParser {
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 lookup.hasEncodedValue(TurnCost.key("racingbike")) ? lookup.getDecimalEncodedValue(TurnCost.key("racingbike")) : null
         );
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
     }
 
     protected RacingBikeTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,

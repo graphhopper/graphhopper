@@ -23,6 +23,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -49,7 +50,7 @@ public abstract class AbstractBikeTagParserTester {
         encodingManager = createEncodingManager();
         if (encodingManager.fetchEdgeEncoders().size() > 1)
             fail("currently we assume there is only one encoder per test");
-        parser = createBikeTagParser(encodingManager);
+        parser = createBikeTagParser(encodingManager, new PMap("block_fords=true"));
         osmParsers = createOSMParsers(parser, encodingManager);
         roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
         priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(parser.getName(), "priority"));
@@ -58,7 +59,7 @@ public abstract class AbstractBikeTagParserTester {
 
     protected abstract EncodingManager createEncodingManager();
 
-    protected abstract BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup);
+    protected abstract BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup, PMap pMap);
 
     protected abstract OSMParsers createOSMParsers(BikeCommonTagParser parser, EncodedValueLookup lookup);
 
@@ -494,5 +495,20 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("route", "ferry");
         way.setTag("foot", "yes");
         assertTrue(parser.getAccess(way).canSkip());
+    }
+
+    @Test
+    void privateAndFords() {
+        // defaults: do not block fords, block private
+        BikeCommonTagParser bike = createBikeTagParser(encodingManager, new PMap());
+        assertFalse(bike.isBlockFords());
+        assertTrue(bike.restrictedValues.contains("private"));
+        assertFalse(bike.intendedValues.contains("private"));
+
+        // block fords, unblock private
+        bike = createBikeTagParser(encodingManager, new PMap("block_fords=true|block_private=false"));
+        assertTrue(bike.isBlockFords());
+        assertFalse(bike.restrictedValues.contains("private"));
+        assertTrue(bike.intendedValues.contains("private"));
     }
 }

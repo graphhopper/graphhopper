@@ -5,7 +5,6 @@ import com.graphhopper.jackson.ResponsePathDeserializer;
 import okhttp3.OkHttpClient;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -29,15 +28,15 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
 
     @Override
     public MatrixResponse route(GHMRequest ghRequest) {
-        Collection<String> outArraysList = createOutArrayList(ghRequest);
-        JsonNode requestJson = createPostRequest(ghRequest, outArraysList);
+        JsonNode requestJson = createPostRequest(ghRequest);
 
-        boolean withTimes = outArraysList.contains("times");
-        boolean withDistances = outArraysList.contains("distances");
-        boolean withWeights = outArraysList.contains("weights");
+        boolean withTimes = ghRequest.getOutArrays().contains("times");
+        boolean withDistances = ghRequest.getOutArrays().contains("distances");
+        boolean withWeights = ghRequest.getOutArrays().contains("weights");
         final MatrixResponse matrixResponse = new MatrixResponse(
-                ghRequest.getFromPoints().size(),
-                ghRequest.getToPoints().size(), withTimes, withDistances, withWeights);
+                ghRequest.getPoints() == null ? ghRequest.getFromPoints().size() : ghRequest.getPoints().size(),
+                ghRequest.getPoints() == null ? ghRequest.getToPoints().size() : ghRequest.getPoints().size(),
+                withTimes, withDistances, withWeights);
 
         try {
             String postUrl = buildURLNoHints("/", ghRequest);
@@ -49,7 +48,7 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
 
             matrixResponse.addErrors(ResponsePathDeserializer.readErrors(objectMapper, responseJson));
             if (!matrixResponse.hasErrors())
-                matrixResponse.addErrors(readUsableEntityError(outArraysList, responseJson));
+                matrixResponse.addErrors(readUsableEntityError(ghRequest.getOutArrays(), responseJson));
 
             if (!matrixResponse.hasErrors())
                 fillResponseFromJson(matrixResponse, responseJson, ghRequest.getFailFast());
