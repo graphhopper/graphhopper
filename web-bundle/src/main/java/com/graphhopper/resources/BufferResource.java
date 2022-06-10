@@ -191,7 +191,7 @@ public class BufferResource {
                 // Roads sometimes have multiple names delineated by a comma
                 String[] queryRoadNames = sanitizeRoadNames(state.getName());
 
-                if (Arrays.stream(queryRoadNames).anyMatch(roadName::equals)) {
+                if (Arrays.stream(queryRoadNames).anyMatch(x -> x.contains(roadName))) {
                     filteredEdgesInBbox.add(edgeId);
                 }
             };
@@ -201,13 +201,13 @@ public class BufferResource {
     }
 
     /**
-     * Given a lat/long, finds all nearby edges with a corresponding road name. Uses three expanding
-     * 'pulses' based off the queryMultiplier until at least a single matching edge is found.
-     *
-     * @param startLat latitude at center of query box
-     * @param startLon longitude at center of query box
+     * Given a starting segment, finds the edge at the distance threshold and then the point along
+     *  that edge at the threshold. 
+     * 
+     * @param startFeature buffer feature to start at
      * @param roadName name of road
-     * @param queryMultiplier base dimension of query box
+     * @param upstreamPath direction to build path - either along or against road's flow
+     * @param upstreamStart initial 'launch' direction - used only for a bidirectional start
      * @return lineString representing start -> end
     */
     private LineString computeBufferSegment(BufferFeature startFeature, String roadName, Double thresholdDistance,
@@ -234,7 +234,6 @@ public class BufferResource {
     private String[] sanitizeRoadNames(String roadNames) {
         String[] separatedNames = roadNames.split(",");
 
-        // TODO: Add in removal of road directionality (i.e. N US-80)
         for (int i = 0; i < separatedNames.length; i++) {
             separatedNames[i] = separatedNames[i].trim().replace("-", "").toLowerCase();
         }
@@ -325,7 +324,7 @@ public class BufferResource {
 
                     // Temp has proper road name, isn't part of a roundabout, and bidirectional.
                     // Higher priority escape.
-                    if (Arrays.stream(roadNames).anyMatch(roadName::equals)
+                    if (Arrays.stream(roadNames).anyMatch(x -> x.contains(roadName))
                             && !tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))
                             && isBidirectional(tempState)) {
                         currentEdge = tempEdge;
@@ -335,13 +334,13 @@ public class BufferResource {
 
                     // Temp has proper road name and isn't part of a roundabout. Lower priority
                     // escape.
-                    else if (Arrays.stream(roadNames).anyMatch(roadName::equals)
+                    else if (Arrays.stream(roadNames).anyMatch(x -> x.contains(roadName))
                             && !tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))) {
                         potentialEdges.add(tempEdge);
                     }
 
                     // Temp has proper road name and is part of a roundabout. Higher entry priority.
-                    else if (Arrays.stream(roadNames).anyMatch(roadName::equals)
+                    else if (Arrays.stream(roadNames).anyMatch(x -> x.contains(roadName))
                             && tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))) {
                         potentialRoundaboutEdges.add(tempEdge);
                     }
@@ -359,7 +358,7 @@ public class BufferResource {
 
                     // The Michigan Left
                     if (potentialEdges.size() > 1) {
-                        // This logic is not very robust as it stands, change it
+                        // This logic is not infallible as it stands, but there's no clear alternative.
                         // In the case of a Michigan left, choose the edge that's further away
 
                         EdgeIteratorState tempState = graph.getEdgeIteratorState(potentialEdges.get(0),
