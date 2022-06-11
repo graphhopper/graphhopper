@@ -22,19 +22,17 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
-import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
-import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RoutingCHGraph;
@@ -80,7 +78,6 @@ public class MiniGraphUI {
     // for moving
     int currentPosX;
     int currentPosY;
-    private Path path;
     private LocationIndexTree index;
     private String latLon = "";
     private GraphicsWrapper mg;
@@ -88,6 +85,7 @@ public class MiniGraphUI {
     private LayeredPanel mainPanel;
     private MapLayer roadsLayer;
     private boolean fastPaint = false;
+    private boolean showQuadTree = false;
     private Snap fromRes;
     private Snap toRes;
 
@@ -95,19 +93,19 @@ public class MiniGraphUI {
         PMap args = PMap.read(strs);
         args.putObject("datareader.file", args.getString("datareader.file", "core/files/monaco.osm.gz"));
         args.putObject("graph.location", args.getString("graph.location", "tools/target/mini-graph-ui-gh"));
-        args.putObject("graph.flag_encoders", args.getString("graph.flag_encoders", "car"));
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("profile")
                         .setVehicle("car")
+                        .setTurnCosts(true)
                         .setWeighting("fastest")
         ));
-        ghConfig.setCHProfiles(Arrays.asList(
-                new CHProfile("profile")
-        ));
-        ghConfig.setLMProfiles(Arrays.asList(
-                new LMProfile("profile")
-        ));
+//        ghConfig.setCHProfiles(Arrays.asList(
+//                new CHProfile("profile")
+//        ));
+//        ghConfig.setLMProfiles(Arrays.asList(
+//                new LMProfile("profile")
+//        ));
         GraphHopper hopper = new GraphHopper().init(ghConfig).importOrLoad();
         boolean debug = args.getBool("minigraphui.debug", false);
         boolean useCH = args.getBool("minigraphui.useCH", false);
@@ -125,8 +123,11 @@ public class MiniGraphUI {
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug);
         mg = new GraphicsWrapper(graph);
 
-        // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
-//         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
+        mg.scale(500, 300, true);
+        mg.scale(500, 300, true);
+        mg.scale(500, 200, true);
+        mg.scale(500, 200, true);
+
         this.index = (LocationIndexTree) hopper.getLocationIndex();
         infoPanel = new JPanel() {
             @Override
@@ -154,7 +155,6 @@ public class MiniGraphUI {
             @Override
             public void paintComponent(final Graphics2D g2) {
                 clearGraphics(g2);
-                int locs = graph.getNodes();
                 Rectangle d = getBounds();
                 BBox b = mg.setBounds(0, d.width, 0, d.height);
                 if (fastPaint) {
@@ -162,18 +162,6 @@ public class MiniGraphUI {
                     bitset.clear();
                 }
 
-//                g2.setColor(Color.BLUE);
-//                double fromLat = 42.56819, fromLon = 1.603231;
-//                mg.plotText(g2, fromLat, fromLon, "from");
-//                Snap from = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
-//                double toLat = 42.571034, toLon = 1.520662;
-//                mg.plotText(g2, toLat, toLon, "to");
-//                Snap to = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
-//
-//                g2.setColor(Color.RED.brighter().brighter());
-//                path = prepare.createAlgo().calcPath(from, to);
-//                System.out.println("now: " + path.toFlagEncodersAsString());
-//                plotPath(path, g2, 1);
                 g2.setColor(Color.black);
 
                 Color[] speedColors = generateColors(15);
@@ -238,27 +226,28 @@ public class MiniGraphUI {
                     }
                 }
 
-                index.query(graph.getBounds(), new LocationIndexTree.Visitor() {
-                    @Override
-                    public boolean isTileInfo() {
-                        return true;
-                    }
+                if (showQuadTree)
+                    index.query(graph.getBounds(), new LocationIndexTree.Visitor() {
+                        @Override
+                        public boolean isTileInfo() {
+                            return true;
+                        }
 
-                    @Override
-                    public void onTile(BBox bbox, int depth) {
-                        int width = Math.max(1, Math.min(4, 4 - depth));
-                        g2.setColor(Color.GRAY);
-                        mg.plotEdge(g2, bbox.minLat, bbox.minLon, bbox.minLat, bbox.maxLon, width);
-                        mg.plotEdge(g2, bbox.minLat, bbox.maxLon, bbox.maxLat, bbox.maxLon, width);
-                        mg.plotEdge(g2, bbox.maxLat, bbox.maxLon, bbox.maxLat, bbox.minLon, width);
-                        mg.plotEdge(g2, bbox.maxLat, bbox.minLon, bbox.minLat, bbox.minLon, width);
-                    }
+                        @Override
+                        public void onTile(BBox bbox, int depth) {
+                            int width = Math.max(1, Math.min(4, 4 - depth));
+                            g2.setColor(Color.GRAY);
+                            mg.plotEdge(g2, bbox.minLat, bbox.minLon, bbox.minLat, bbox.maxLon, width);
+                            mg.plotEdge(g2, bbox.minLat, bbox.maxLon, bbox.maxLat, bbox.maxLon, width);
+                            mg.plotEdge(g2, bbox.maxLat, bbox.maxLon, bbox.maxLat, bbox.minLon, width);
+                            mg.plotEdge(g2, bbox.maxLat, bbox.minLon, bbox.minLat, bbox.minLon, width);
+                        }
 
-                    @Override
-                    public void onEdge(int edgeId) {
-                        // mg.plotNode(g2, node, Color.BLUE);
-                    }
-                });
+                        @Override
+                        public void onEdge(int edgeId) {
+                            // mg.plotNode(g2, node, Color.BLUE);
+                        }
+                    });
 
                 g2.setColor(Color.WHITE);
                 g2.fillRect(0, 0, 1000, 20);
@@ -274,12 +263,19 @@ public class MiniGraphUI {
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
             @Override
             public void paintComponent(final Graphics2D g2) {
+//                 **** overwrite
+//                double fromLat = 52.468821, fromLon = 13.319261, toLat = 52.495914, toLon = 13.400179;
+//                logger.info("start searching from " + fromLat + "," + fromLon + " to " + toLat + "," + toLon);
+//                fromRes = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
+//                toRes = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
+                // **** overwrite end
+
                 if (fromRes == null || toRes == null)
                     return;
 
                 makeTransparent(g2);
                 QueryGraph qGraph = QueryGraph.create(graph, fromRes, toRes);
-                RoutingAlgorithm algo = createAlgo(hopper);
+                RoutingAlgorithm algo = createAlgo(hopper, qGraph);
                 if (algo instanceof DebugAlgo) {
                     ((DebugAlgo) algo).setGraphics2D(g2);
                 }
@@ -287,40 +283,27 @@ public class MiniGraphUI {
                 StopWatch sw = new StopWatch().start();
                 logger.info("start searching with " + algo + " from:" + fromRes + " to:" + toRes);
 
-//                GHPoint qp = fromRes.getQueryPoint();
-//                TIntHashSet set = index.findNetworkEntries(qp.lat, qp.lon, 1);
-//                TIntIterator nodeIter = set.iterator();
-//                DistanceCalc distCalc = new DistancePlaneProjection();
-//                System.out.println("set:" + set.size());
-//                while (nodeIter.hasNext())
-//                {
-//                    int nodeId = nodeIter.next();
-//                    double lat = graph.getNodeAccess().getLat(nodeId);
-//                    double lon = graph.getNodeAccess().getLon(nodeId);
-//                    int dist = (int) Math.round(distCalc.calcDist(qp.lat, qp.lon, lat, lon));
-//                    mg.plotText(g2, lat, lon, nodeId + ": " + dist);
-//                    mg.plotNode(g2, nodeId, Color.red);
-//                }
                 Color red = Color.red.brighter();
                 g2.setColor(red);
                 mg.plotNode(g2, qGraph.getNodeAccess(), fromRes.getClosestNode(), red, 10, "");
                 mg.plotNode(g2, qGraph.getNodeAccess(), toRes.getClosestNode(), red, 10, "");
 
                 g2.setColor(Color.blue.brighter().brighter());
-                path = algo.calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
+                java.util.List<Path> paths = algo.calcPaths(fromRes.getClosestNode(), toRes.getClosestNode());
                 sw.stop();
 
                 // if directed edges
-                if (!path.isFound()) {
+                if (paths.isEmpty() || !paths.get(0).isFound()) {
                     logger.warn("path not found! direction not valid?");
                     return;
                 }
-
+                Path best = paths.get(0);
                 logger.info("found path in " + sw.getSeconds() + "s with nodes:"
-                        + path.calcNodes().size() + ", millis: " + path.getTime()
+                        + best.calcNodes().size() + ", millis: " + best.getTime()
                         + ", visited nodes:" + algo.getVisitedNodes());
                 g2.setColor(red);
-                plotPath(path, g2, 4);
+                for (Path p : paths)
+                    plotPath(p, g2, 3);
             }
         });
 
@@ -332,19 +315,21 @@ public class MiniGraphUI {
         }
     }
 
-    private RoutingAlgorithm createAlgo(GraphHopper hopper) {
+    private RoutingAlgorithm createAlgo(GraphHopper hopper, QueryGraph qGraph) {
         Profile profile = hopper.getProfiles().iterator().next();
         if (useCH) {
             RoutingCHGraph chGraph = hopper.getCHGraphs().get(profile.getName());
             logger.info("CH algo, profile: " + profile.getName());
-            QueryGraph qGraph = QueryGraph.create(hopper.getGraphHopperStorage(), fromRes, toRes);
             QueryRoutingCHGraph queryRoutingCHGraph = new QueryRoutingCHGraph(chGraph, qGraph);
             return new CHDebugAlgo(queryRoutingCHGraph, mg);
         } else {
-            LandmarkStorage landmarks = hopper.getLandmarks().get(profile.getName());
+            // LandmarkStorage landmarks = hopper.getLandmarks().get(profile.getName());
             RoutingAlgorithmFactory algoFactory = (g, w, opts) -> {
-                RoutingAlgorithm algo = new LMRoutingAlgorithmFactory(landmarks).createAlgo(g, w, opts);
-                if (algo instanceof AStarBidirection) {
+                // RoutingAlgorithm algo = new LMRoutingAlgorithmFactory(landmarks).createAlgo(g, w, opts);
+                RoutingAlgorithm algo = new RoutingAlgorithmFactorySimple().createAlgo(g, w, opts);
+                if (algo instanceof AlternativeRoute) {
+                    return new DebugAlternativeRoute(g, w, opts.getTraversalMode(), 1.5, mg);
+                } else if (algo instanceof AStarBidirection) {
                     return new DebugAStarBi(g, w, opts.getTraversalMode(), mg).
                             setApproximation(((AStarBidirection) algo).getApproximation());
                 } else if (algo instanceof AStar) {
@@ -353,13 +338,11 @@ public class MiniGraphUI {
                     return new DebugDijkstraBidirection(g, w, opts.getTraversalMode(), mg);
                 } else if (algo instanceof Dijkstra) {
                     return new DebugDijkstraSimple(g, w, opts.getTraversalMode(), mg);
-                }
-                return algo;
+                } else
+                    return algo;
             };
-            AlgorithmOptions algoOpts = new AlgorithmOptions().setAlgorithm(Algorithms.ASTAR_BI);
-            logger.info("algoOpts:" + algoOpts + ", weighting: " + landmarks.getWeighting() + ", profile: " + profile.getName());
-            QueryGraph qGraph = QueryGraph.create(graph, fromRes, toRes);
-            return algoFactory.createAlgo(qGraph, landmarks.getWeighting(), algoOpts);
+            AlgorithmOptions algoOpts = new AlgorithmOptions().setAlgorithm(Algorithms.ALT_ROUTE).setTraversalMode(TraversalMode.EDGE_BASED);
+            return algoFactory.createAlgo(qGraph, new FastestWeighting(encoder), algoOpts);
         }
     }
 
@@ -394,19 +377,6 @@ public class MiniGraphUI {
         return cols;
     }
 
-    // for debugging
-    private Path calcPath(RoutingAlgorithm algo) {
-//        int from = index.findID(50.042, 10.19);
-//        int to = index.findID(50.049, 10.23);
-//
-////        System.out.println("path " + from + "->" + to);
-//        return algo.calcPath(from, to);
-        // System.out.println(GraphUtility.getNodeInfo(graph, 60139, AccessFilter.allEdges(new CarFlagEncoder()).direction(false, true)));
-        // System.out.println(((GraphStorage) graph).debug(202947, 10));
-//        GraphUtility.printInfo(graph, 106511, 10);
-        return algo.calcPath(162810, 35120);
-    }
-
     void plotNodeName(Graphics2D g2, int node) {
         double lat = na.getLat(node);
         double lon = na.getLon(node);
@@ -415,7 +385,7 @@ public class MiniGraphUI {
 
     private Path plotPath(Path tmpPath, Graphics2D g2, int w) {
         if (!tmpPath.isFound()) {
-            logger.info("nothing found " + w);
+            logger.info("cannot plot path as not found: " + tmpPath);
             return tmpPath;
         }
 
@@ -505,6 +475,8 @@ public class MiniGraphUI {
                                 // get from and to node id
                                 fromRes = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
                                 toRes = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
+                                if (!fromRes.isValid()) fromRes = null;
+                                if (!toRes.isValid()) toRes = null;
                                 logger.info("found ids " + fromRes + " -> " + toRes + " in " + sw.stop().getSeconds() + "s");
 
                                 repaintPaths();
@@ -549,22 +521,6 @@ public class MiniGraphUI {
                     mainPanel.addMouseListener(ml);
                     mainPanel.addMouseMotionListener(ml);
 
-                    // just for fun
-//                    mainPanel.getInputMap().put(KeyStroke.getKeyStroke("DELETE"), "removedNodes");
-//                    mainPanel.getActionMap().put("removedNodes", new AbstractAction() {
-//                        @Override public void actionPerformed(ActionEvent e) {
-//                            int counter = 0;
-//                            for (CoordTrig<Long> coord : quadTreeNodes) {
-//                                int ret = quadTree.remove(coord.lat, coord.lon);
-//                                if (ret < 1) {
-////                                    logger.info("cannot remove " + coord + " " + ret);
-////                                    ret = quadTree.remove(coord.getLat(), coord.getLon());
-//                                } else
-//                                    counter += ret;
-//                            }
-//                            logger.info("Removed " + counter + " of " + quadTreeNodes.size() + " nodes");
-//                        }
-//                    });
                     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                     frame.setSize(frameWidth + 10, frameHeight + 30);
                     frame.setVisible(true);

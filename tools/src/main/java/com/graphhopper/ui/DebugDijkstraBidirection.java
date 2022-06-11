@@ -50,7 +50,6 @@ public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements 
         if (g2 != null) {
             mg.plotEdge(g2, na.getLat(entry.parent.adjNode), na.getLon(entry.parent.adjNode), na.getLat(entry.adjNode), na.getLon(entry.adjNode), .8f);
         }
-        // System.out.println("new node:" + currLoc);
         super.updateBestPath(edgeWeight, entry, origEdgeId, traversalId, reverse);
     }
 }

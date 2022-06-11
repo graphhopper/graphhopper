@@ -42,5 +42,5 @@ local.properties
 **/node_modules
 *.zip
 .DS_Store
-/graph-cache
+/graph-cache-edge
 package-lock.json
