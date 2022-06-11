@@ -69,9 +69,9 @@ public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
             algo.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
             algo.setMinPlateauFactor(opts.getHints().getDouble("alternative_route.min_plateau_factor", 0.2));
             algo.setApproximation(getApproximator(g, activeLM, epsilon));
-            // landmark algorithm follows good compromise between fast response and exploring 'interesting' paths so we
-            // can decrease this exploration factor further (1->dijkstra, 0.8->bidir. A*)
-            algo.setMaxExplorationFactor(0.6);
+            // landmark algorithm follows good compromise between fast response and exploring 'interesting' paths, so we
+            // can decrease this exploration factor
+            algo.setMaxExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1.2));
             algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
             return algo;
         } else {
