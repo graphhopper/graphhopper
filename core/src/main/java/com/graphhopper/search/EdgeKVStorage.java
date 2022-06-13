@@ -29,7 +29,7 @@ import java.util.*;
 /**
  * @author Peter Karich
  */
-public class StringIndex {
+public class EdgeKVStorage {
     private static final long EMPTY_POINTER = 0, START_POINTER = 1;
     // Store the key index in 2 bytes. Use negative values for marking the value as duplicate.
     static final int MAX_UNIQUE_KEYS = (1 << 15);
@@ -55,7 +55,7 @@ public class StringIndex {
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
-    public StringIndex(Directory dir, final int cacheSize, final int segmentSize) {
+    public EdgeKVStorage(Directory dir, final int cacheSize, final int segmentSize) {
         keys = dir.create("string_index_keys", segmentSize);
         vals = dir.create("string_index_vals", segmentSize);
         smallCache = new LinkedHashMap<String, Long>(cacheSize, 0.75f, true) {
@@ -66,7 +66,7 @@ public class StringIndex {
         };
     }
 
-    public StringIndex create(long initBytes) {
+    public EdgeKVStorage create(long initBytes) {
         keys.create(initBytes);
         vals.create(initBytes);
         // add special empty case to have a reliable duplicate detection via negative keyIndex

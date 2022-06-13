@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.*;
 
-import static com.graphhopper.search.StringIndex.MAX_UNIQUE_KEYS;
+import static com.graphhopper.search.EdgeKVStorage.MAX_UNIQUE_KEYS;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class StringIndexTest {
+public class EdgeKVStorageTest {
 
-    private StringIndex create() {
-        return new StringIndex(new RAMDirectory(), 1000, -1).create(1000);
+    private EdgeKVStorage create() {
+        return new EdgeKVStorage(new RAMDirectory(), 1000, -1).create(1000);
     }
 
     Map<String, String> createMap(String... strings) {
@@ -30,7 +30,7 @@ public class StringIndexTest {
 
     @Test
     public void putSame() {
-        StringIndex index = create();
+        EdgeKVStorage index = create();
         long aPointer = index.add(createMap("a", "same name", "b", "same name"));
 
         assertNull(index.get(aPointer, ""));
@@ -45,7 +45,7 @@ public class StringIndexTest {
 
     @Test
     public void putAB() {
-        StringIndex index = create();
+        EdgeKVStorage index = create();
         long aPointer = index.add(createMap("a", "a name", "b", "b name"));
 
         assertNull(index.get(aPointer, ""));
@@ -55,7 +55,7 @@ public class StringIndexTest {
 
     @Test
     public void putEmpty() {
-        StringIndex index = create();
+        EdgeKVStorage index = create();
         assertEquals(1, index.add(createMap("", "")));
         assertEquals(5, index.add(createMap("", null)));
         assertEquals(9, index.add(createMap(null, null)));
@@ -66,7 +66,7 @@ public class StringIndexTest {
 
     @Test
     public void putMany() {
-        StringIndex index = create();
+        EdgeKVStorage index = create();
         long aPointer = 0, tmpPointer = 0;
 
         for (int i = 0; i < 10000; i++) {
@@ -85,7 +85,7 @@ public class StringIndexTest {
 
     @Test
     public void putManyKeys() {
-        StringIndex index = create();
+        EdgeKVStorage index = create();
         // one key is already stored => empty key
         for (int i = 1; i < MAX_UNIQUE_KEYS; i++) {
             index.add(createMap("a" + i, "a name"));
@@ -99,7 +99,7 @@ public class StringIndexTest {
 
     @Test
     public void putDuplicate() {
-        StringIndex index = create();
+        EdgeKVStorage index = create();
         long aPointer = index.add(createMap("a", "longer name", "b", "longer name"));
         long bPointer = index.add(createMap("c", "longer other name"));
         // value storage: 1 byte for count, 2 bytes for keyIndex and 4 bytes for delta of dup_marker and 3 bytes (keyIndex + length for "longer name")
@@ -124,7 +124,7 @@ public class StringIndexTest {
 
     @Test
     public void testNoErrorOnLargeName() {
-        StringIndex index = create();
+        EdgeKVStorage index = create();
         // 127 => bytes.length == 254
         String str = "";
         for (int i = 0; i < 127; i++) {
@@ -136,7 +136,7 @@ public class StringIndexTest {
 
     @Test
     public void testTooLongNameNoError() {
-        StringIndex index = create();
+        EdgeKVStorage index = create();
         index.throwExceptionIfTooLong = true;
         try {
             index.add(createMap("", "Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))"));
@@ -164,12 +164,12 @@ public class StringIndexTest {
         String location = "./target/stringindex-store";
         Helper.removeDir(new File(location));
 
-        StringIndex index = new StringIndex(new RAMDirectory(location, true).create(), 1000, -1).create(1000);
+        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create(), 1000, -1).create(1000);
         long pointer = index.add(createMap("", "test"));
         index.flush();
         index.close();
 
-        index = new StringIndex(new RAMDirectory(location, true), 1000, -1);
+        index = new EdgeKVStorage(new RAMDirectory(location, true), 1000, -1);
         assertTrue(index.loadExisting());
         assertEquals("test", index.get(pointer, ""));
         // make sure bytePointer is correctly set after loadExisting
@@ -185,7 +185,7 @@ public class StringIndexTest {
         String location = "./target/stringindex-store";
         Helper.removeDir(new File(location));
 
-        StringIndex index = new StringIndex(new RAMDirectory(location, true).create(), 1000, -1).create(1000);
+        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create(), 1000, -1).create(1000);
         long pointerA = index.add(createMap("c", "test value"));
         assertEquals(2, index.getKeys().size());
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
@@ -194,7 +194,7 @@ public class StringIndexTest {
         index.flush();
         index.close();
 
-        index = new StringIndex(new RAMDirectory(location, true), 1000, -1);
+        index = new EdgeKVStorage(new RAMDirectory(location, true), 1000, -1);
         assertTrue(index.loadExisting());
         assertEquals("[, c, a, b]", index.getKeys().toString());
         assertEquals("test value", index.get(pointerA, "c"));
@@ -211,7 +211,7 @@ public class StringIndexTest {
 
     @Test
     public void testEmptyKey() {
-        StringIndex index = create();
+        EdgeKVStorage index = create();
         long pointerA = index.add(createMap("", "test value"));
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
 
@@ -226,7 +226,7 @@ public class StringIndexTest {
     public void testRandom() {
         long seed = new Random().nextLong();
         try {
-            StringIndex index = create();
+            EdgeKVStorage index = create();
             Random random = new Random(seed);
             List<String> keys = createRandomList(random, "_key", 1000);
             List<String> values = createRandomList(random, "_value", 5000);
