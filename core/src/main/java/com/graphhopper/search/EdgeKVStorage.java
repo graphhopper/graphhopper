@@ -94,6 +94,8 @@ public class EdgeKVStorage {
             if (!keys.loadExisting())
                 throw new IllegalStateException("Loaded values but cannot load keys");
             bytePointer = bitUtil.combineIntsToLong(vals.getHeader(0), vals.getHeader(4));
+            GHUtility.checkDAVersion(vals.getName(), Constants.VERSION_EDGEKV_STORAGE, vals.getHeader(8));
+            GHUtility.checkDAVersion(keys.getName(), Constants.VERSION_EDGEKV_STORAGE, keys.getHeader(0));
 
             // load keys into memory
             int count = keys.getShort(0);
@@ -421,10 +423,12 @@ public class EdgeKVStorage {
             keys.setBytes(keyBytePointer, clazzBytes, 1);
             keyBytePointer += 1;
         }
+        keys.setHeader(0, Constants.VERSION_EDGEKV_STORAGE);
         keys.flush();
 
         vals.setHeader(0, bitUtil.getIntLow(bytePointer));
         vals.setHeader(4, bitUtil.getIntHigh(bytePointer));
+        vals.setHeader(8, Constants.VERSION_EDGEKV_STORAGE);
         vals.flush();
     }
 
