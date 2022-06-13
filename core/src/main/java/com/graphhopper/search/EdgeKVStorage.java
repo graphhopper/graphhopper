@@ -42,7 +42,8 @@ public class EdgeKVStorage {
 
     // It stores the mapping of "key to index" in the keys DataAccess. E.g. if your first key is "some" then we will
     // store the mapping "1->some" there (the 0th index is skipped on purpose). As this map is 'small' the keys
-    // DataAccess is only used for long term storage, i.e. only in loadExisting and flush. Otherwise we use keysInMem and keyList.
+    // DataAccess is only used for long term storage, i.e. only in loadExisting and flush. For add and getAll we use
+    // keyToIndex, indexToClass and indexToClass.
     private final DataAccess keys;
 
     // The storage layout in the vals DataAccess for one Map of key-value pairs. For example the map:
