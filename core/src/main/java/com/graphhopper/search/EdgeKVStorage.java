@@ -172,6 +172,11 @@ public class EdgeKVStorage {
         // can often re-use the serialized key-value pairs of the previous edge.
         if (isEquals(entryMap, lastEntryMap)) return lastEntryPointer;
 
+        // If the Class of a value is unknown it should already fail here, before we modify internal data. (see #2597#discussion_r896469840)
+        for (Map.Entry<String, Object> entry : entryMap.entrySet())
+            if (keyToIndex.get(entry.getKey()) != null)
+                getBytesForValue(indexToClass.get(keyToIndex.get(entry.getKey())), entry.getValue());
+
         lastEntryMap = entryMap;
         lastEntryPointer = bytePointer;
         // while adding there could be exceptions and we need to avoid that the bytePointer is modified
