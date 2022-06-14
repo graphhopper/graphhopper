@@ -59,24 +59,25 @@ public class EdgeKVStorage {
     // "some2" (the bytes from "some2")
 
     // So more generic: the values could be of dynamic length, fixed length like int or be duplicates:
-    // vals count    (1 byte)
+    // vals count      (1 byte)
     // --- 1. key-value pair (store String or byte[] with dynamic length)
-    // key_idx_0     (2 byte)
-    // val_length_0  (1 byte)
+    // key_idx_0       (2 byte)
+    // val_length_0    (1 byte)
     // val_0 (x bytes)
     // --- 2. key-value pair (store int with fixed length)
-    // key_idx_1     (2 byte)
-    // int           (4 byte)
-    // --- 3. key-value pair (store duplicate, then key is negative and the value is a link to the actual value but stored as delta i.e. relative to the current pointer)
-    // -key_idx_2    (2 byte)
-    // delta_2       (4 byte)
+    // key_idx_1       (2 byte)
+    // int             (4 byte)
+    // --- 3. key-value pair (store duplicate, then key is negative and the value is a pointer to the actual value (relative to the current pointer)
+    // -key_idx_2      (2 byte)
+    // delta_pointer_2 (4 byte)
     //
     // Note:
     // 1. The key strings are limited to 32767 unique values (see MAX_UNIQUE_KEYS). A dynamic value has a maximum byte length of 255.
     // 2. Every key can store values only of the same type
     // 3. We need to loop through X entries to get the start val_x.
-    // 4. We detect duplicate values via smallCache and then use the negative key index as 'duplicate' marker.
-    //    We then store only the delta (signed int) instead of the absolute unsigned long value to reduce memory usage when there are duplicate values.
+    // 4. We detect duplicate values for byte[] and String values via smallCache and then use the negative key index as
+    //    'duplicate' marker. We then store only the delta (signed int) instead of the absolute unsigned long value to
+    //    reduce memory usage when there are duplicate values.
     private final DataAccess vals;
     private final Map<String, Integer> keyToIndex = new HashMap<>();
     private final List<Class<?>> indexToClass = new ArrayList<>();
@@ -154,10 +155,12 @@ public class EdgeKVStorage {
     }
 
     /**
-     * This method writes the specified key-value pairs into the storage. Please note that null keys or null values
-     * are rejected.
+     * This method writes the specified entryMap (key-value pairs) into the storage. Please note that null keys or null
+     * values are rejected. The Class of a value can be only: byte[], String, int, long, float or double
+     * (or more precisely, their wrapper equivalent). For all other types an exception is thrown. The first call of add
+     * assigns a Class to every key in the Map and future calls of add will throw an exception if this Class differs.
      *
-     * @return entryPointer to later fetch the entryMap via get
+     * @return entryPointer with which you can later fetch the entryMap via the get or getAll method
      */
     public long add(final Map<String, Object> entryMap) {
         if (entryMap.isEmpty()) return EMPTY_POINTER;
