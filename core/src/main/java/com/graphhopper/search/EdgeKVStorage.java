@@ -163,12 +163,14 @@ public class EdgeKVStorage {
      * @return entryPointer with which you can later fetch the entryMap via the get or getAll method
      */
     public long add(final Map<String, Object> entryMap) {
+        if (entryMap == null) throw new IllegalArgumentException("specified Map must not be null");
         if (entryMap.isEmpty()) return EMPTY_POINTER;
         else if (entryMap.size() > 200)
             throw new IllegalArgumentException("Cannot store more than 200 entries per entry");
 
-        // This is a very important "compression" mechanism due to the nature of OSM.
-        if (entryMap.equals(lastEntryMap)) return lastEntryPointer;
+        // This is a very important "compression" mechanism because one OSM way is split into multiple edges and so we
+        // can often re-use the serialized key-value pairs of the previous edge.
+        if (isEquals(entryMap, lastEntryMap)) return lastEntryPointer;
 
         lastEntryMap = entryMap;
         lastEntryPointer = bytePointer;
@@ -247,6 +249,22 @@ public class EdgeKVStorage {
         return lastEntryPointer;
     }
 
+    private boolean isEquals(Map<String, Object> entryMap, Map<String, Object> lastEntryMap) {
+        if (lastEntryMap != null && entryMap.size() == lastEntryMap.size()) {
+            for (Map.Entry<String, Object> entry : entryMap.entrySet()) {
+                Object val = entry.getValue();
+                if (val == null)
+                    throw new IllegalArgumentException("value for key " + entry.getKey() + " cannot be null");
+                Object lastVal = lastEntryMap.get(entry.getKey());
+                if (val instanceof byte[] && lastVal instanceof byte[] && Arrays.equals((byte[]) lastVal, (byte[]) val)
+                        || val.equals(lastVal)) continue;
+                return false;
+            }
+            return true;
+        }
+        return false;
+    }
+
     public Map<String, Object> getAll(final long entryPointer) {
         if (entryPointer < 0)
             throw new IllegalStateException("Pointer to access EdgeKVStorage cannot be negative:" + entryPointer);
@@ -311,7 +329,8 @@ public class EdgeKVStorage {
             return bitUtil.fromDouble((double) value);
         } else if (clazz.equals(byte[].class)) {
             bytes = (byte[]) value;
-        } else throw new IllegalArgumentException("value class not supported " + clazz.getSimpleName());
+        } else
+            throw new IllegalArgumentException("The Class of a value was " + clazz.getSimpleName() + ", currently supported: byte[], String, int, long, float and double");
         if (bytes.length > MAX_LENGTH)
             throw new IllegalArgumentException("bytes.length cannot be > " + MAX_LENGTH + " but was " + bytes.length);
         return bytes;

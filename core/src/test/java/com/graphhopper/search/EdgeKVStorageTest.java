@@ -20,12 +20,12 @@ public class EdgeKVStorageTest {
         return new EdgeKVStorage(new RAMDirectory(), 1000).create(1000);
     }
 
-    Map<String, Object> createMap(String... strings) {
-        if (strings.length % 2 != 0)
-            throw new IllegalArgumentException("Cannot create map from strings " + Arrays.toString(strings));
+    Map<String, Object> createMap(Object... keyValues) {
+        if (keyValues.length % 2 != 0)
+            throw new IllegalArgumentException("Cannot create map from " + Arrays.toString(keyValues));
         Map<String, Object> map = new LinkedHashMap<>();
-        for (int i = 0; i < strings.length; i += 2) {
-            map.put(strings[i], strings[i + 1]);
+        for (int i = 0; i < keyValues.length; i += 2) {
+            map.put((String) keyValues[i], keyValues[i + 1]);
         }
         return map;
     }
@@ -274,6 +274,27 @@ public class EdgeKVStorageTest {
 
         assertEquals("value", index.get(pointerB, "a"));
         assertNull(index.get(pointerB, ""));
+    }
+
+    @Test
+    public void testSameByteArray() {
+        EdgeKVStorage index = create();
+
+        long pointerA = index.add(createMap("mykey", new byte[]{1, 2, 3, 4}));
+        long pointerB = index.add(createMap("mykey", new byte[]{1, 2, 3, 4}));
+        assertEquals(pointerA, pointerB);
+
+        byte[] sameRef = new byte[]{1, 2, 3, 4};
+        pointerA = index.add(createMap("mykey", sameRef));
+        pointerB = index.add(createMap("mykey", sameRef));
+        assertEquals(pointerA, pointerB);
+    }
+
+    @Test
+    public void testUnknownValueClass() {
+        EdgeKVStorage index = create();
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> index.add(createMap("mykey", new Object())));
+        assertTrue(ex.getMessage().contains("The Class of a value was Object, currently supported"), ex.getMessage());
     }
 
     @RepeatedTest(20)
