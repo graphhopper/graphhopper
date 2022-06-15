@@ -25,10 +25,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -36,6 +33,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * This class implements the alternative paths search using the "plateau" and partially the
@@ -54,7 +52,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * http://algo2.iti.kit.edu/download/altgraph_tapas_extended.pdf
  * </li>
  * </ul>
- *
+ * <p>
  * Note: This algorithm is quite slow and alternatives are only really practical in combination with CH, see #2566
  *
  * @author Peter Karich
@@ -69,7 +67,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
     private double maxWeightFactor = 1.4;
     // the higher the maxWeightFactor the higher the explorationFactor needs to be
     // 1 is default for bidir Dijkstra, 0.8 seems to be a very similar value for bidir A* but roughly 1/2 of the nodes explored
-    private double maxExplorationFactor = 0.8;
+    private double maxExplorationFactor = 1.6;
     private double maxShareFactor = 0.6;
     private double minPlateauFactor = 0.2;
     private int maxPaths = 2;
@@ -165,7 +163,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
      */
     public List<AlternativeInfo> calcAlternatives(int from, int to) {
         AlternativeBidirSearch altBidirDijktra = new AlternativeBidirSearch(
-                graph, weighting, traversalMode, maxExplorationFactor * 2);
+                graph, weighting, traversalMode, maxExplorationFactor);
         altBidirDijktra.setMaxVisitedNodes(maxVisitedNodes);
         if (weightApproximator != null) {
             altBidirDijktra.setApproximation(weightApproximator);
@@ -313,7 +311,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
             final AlternativeInfo bestAlt = new AlternativeInfo(sortBy, bestPath,
                     bestFwdEntry, bestBwdEntry, bestShare, getAltNames(graph, bestFwdEntry));
             alternatives.add(bestAlt);
-            final List<SPTEntry> bestPathEntries = new ArrayList<>(2);
+            AtomicReference<SPTEntry> bestEntry = new AtomicReference<>();
 
             bestWeightMapFrom.forEach(new IntObjectPredicate<SPTEntry>() {
                 @Override
@@ -322,27 +320,20 @@ public class AlternativeRoute implements RoutingAlgorithm {
                     if (toSPTEntry == null)
                         return true;
 
-                    if (traversalMode.isEdgeBased()) {
-                        if (toSPTEntry.parent != null)
-                            // move to parent for two reasons:
-                            // 1. make only turn costs missing in 'weight' and not duplicating current edge.weight
-                            // 2. to avoid duplicate edge in Path
-                            toSPTEntry = toSPTEntry.parent;
-                        // TODO else if fromSPTEntry.parent != null fromSPTEntry = fromSPTEntry.parent;
+                    // Using the parent is required to avoid duplicate edge in Path.
+                    // TODO we miss the turn cost weight (but at least we not duplicate the current edge weight)
+                    if (traversalMode.isEdgeBased() && toSPTEntry.parent != null)
+                        toSPTEntry = toSPTEntry.parent;
 
-                    } else // The alternative path is suboptimal when both entries are parallel
-                        if (fromSPTEntry.edge == toSPTEntry.edge)
-                            return true;
+                    // The alternative path is suboptimal if U-turn (after fromSPTEntry)
+                    if (fromSPTEntry.edge == toSPTEntry.edge)
+                        return true;
 
                     // (1) skip too long paths
                     final double weight = fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath();
                     if (weight > maxWeight)
                         return true;
 
-                    // (2) Use the start traversal ID of a plateau as ID for the alternative path.
-                    // Accept from-EdgeEntries only if such a start of a plateau
-                    // i.e. discard if its parent has the same edgeId as the next to-SPTEntry.
-                    // Ignore already added best path
                     if (isBestPath(fromSPTEntry))
                         return true;
 
@@ -354,15 +345,13 @@ public class AlternativeRoute implements RoutingAlgorithm {
                         assert traversalMode.isEdgeBased();
                     } else {
                         int nextToTraversalId = traversalMode.createTraversalId(graph.getEdgeIteratorState(tmpFromEntry.edge, tmpFromEntry.parent.adjNode), true);
-                        SPTEntry tmpNextToSPTEntry = bestWeightMapTo.get(nextToTraversalId);
-                        if (tmpNextToSPTEntry == null)
-                            return true;
-
-                        if (traversalMode.isEdgeBased())
-                            tmpNextToSPTEntry = tmpNextToSPTEntry.parent;
-                        // skip if on plateau
-                        if (fromSPTEntry.edge == tmpNextToSPTEntry.edge)
-                            return true;
+                        SPTEntry correspondingToEntry = bestWeightMapTo.get(nextToTraversalId);
+                        if (correspondingToEntry != null) {
+                            if (traversalMode.isEdgeBased())
+                                correspondingToEntry = correspondingToEntry.parent;
+                            if (correspondingToEntry.edge == fromSPTEntry.edge)
+                                return true;
+                        }
                     }
 
                     // (3a) calculate plateau, we know we are at the beginning of the 'from'-side of
@@ -377,20 +366,17 @@ public class AlternativeRoute implements RoutingAlgorithm {
                     // that the from-SPTEntry is the start of the plateau or there is no plateau at all
                     //
                     double plateauWeight = 0;
-                    SPTEntry prevToSPTEntry = toSPTEntry;
-                    // List<Integer> plateauEdges = new ArrayList<Integer>();
+                    SPTEntry prevToSPTEntry = toSPTEntry, prevFrom = fromSPTEntry;
                     while (prevToSPTEntry.parent != null) {
                         int nextFromTraversalId = traversalMode.createTraversalId(graph.getEdgeIteratorState(prevToSPTEntry.edge, prevToSPTEntry.parent.adjNode), false);
-                        SPTEntry nextFromSPTEntry = bestWeightMapFrom.get(nextFromTraversalId);
+                        SPTEntry otherFromEntry = bestWeightMapFrom.get(nextFromTraversalId);
                         // end of a plateau
-                        if (nextFromSPTEntry == null)
+                        if (otherFromEntry == null ||
+                                otherFromEntry.parent != prevFrom ||
+                                otherFromEntry.edge != prevToSPTEntry.edge)
                             break;
 
-                        // is the next from-SPTEntry on the plateau?
-                        if (prevToSPTEntry.edge != nextFromSPTEntry.edge)
-                            break;
-
-                        // plateauEdges.add(prevToSPTEntry.edge);
+                        prevFrom = otherFromEntry;
                         plateauWeight += (prevToSPTEntry.getWeightOfVisitedPath() - prevToSPTEntry.parent.getWeightOfVisitedPath());
                         prevToSPTEntry = prevToSPTEntry.parent;
                     }
@@ -484,19 +470,21 @@ public class AlternativeRoute implements RoutingAlgorithm {
                         if (GHUtility.getEdgeFromEdgeKey(startTID.get()) == fromSPTEntry.edge) {
                             if (fromSPTEntry.parent == null)
                                 throw new IllegalStateException("best path must have no parent but was non-null: " + fromSPTEntry);
-
+                            if (bestEntry.get() != null && bestEntry.get().edge != fromSPTEntry.edge)
+                                throw new IllegalStateException("there can be only one best entry but was " + fromSPTEntry + " vs old: " + bestEntry.get()
+                                        + " " + graph.getEdgeIteratorState(fromSPTEntry.edge, fromSPTEntry.adjNode).fetchWayGeometry(FetchMode.ALL));
+                            bestEntry.set(fromSPTEntry);
                             return true;
                         }
 
                     } else if (fromSPTEntry.parent == null) {
-                        bestPathEntries.add(fromSPTEntry);
-                        if (bestPathEntries.size() > 1)
-                            throw new IllegalStateException("There is only one best path but was: " + bestPathEntries);
-
                         if (startTID.get() != fromSPTEntry.adjNode)
                             throw new IllegalStateException("Start traversal ID has to be identical to root edge entry "
                                     + "which is the plateau start of the best path but was: " + startTID + " vs. adjNode: " + fromSPTEntry.adjNode);
-
+                        if (bestEntry.get() != null)
+                            throw new IllegalStateException("there can be only one best entry but was " + fromSPTEntry + " vs old: " + bestEntry.get()
+                                    + " " + graph.getEdgeIteratorState(fromSPTEntry.edge, fromSPTEntry.adjNode).fetchWayGeometry(FetchMode.ALL));
+                        bestEntry.set(fromSPTEntry);
                         return true;
                     }
 

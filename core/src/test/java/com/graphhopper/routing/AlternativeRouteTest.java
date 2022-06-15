@@ -149,8 +149,7 @@ public class AlternativeRouteTest {
         altDijkstra.setMaxShareFactor(0.7);
         altDijkstra.setMinPlateauFactor(0.15);
         altDijkstra.setMaxWeightFactor(2);
-        // edge based traversal requires a bit more exploration than the default of 1
-        altDijkstra.setMaxExplorationFactor(1.2);
+        altDijkstra.setMaxExplorationFactor(1.8);
 
         List<AlternativeRoute.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4);
         checkAlternatives(pathInfos);
