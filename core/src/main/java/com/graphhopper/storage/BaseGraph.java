@@ -43,7 +43,7 @@ import static com.graphhopper.util.Helper.nf;
  * loadExisting, (4) usage, (5) flush, (6) close
  */
 public class BaseGraph implements Graph, Closeable {
-    private final static String STRING_IDX_NAME_KEY = "name";
+    private final static String EDGEKV_NAME_KEY = "name";
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final EdgeKVStorage edgeKVStorage;
@@ -62,7 +62,7 @@ public class BaseGraph implements Graph, Closeable {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
         this.wayGeometry = dir.create("geometry", segmentSize);
-        this.edgeKVStorage = new EdgeKVStorage(dir, 1000, segmentSize);
+        this.edgeKVStorage = new EdgeKVStorage(dir, 1000);
         this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
@@ -176,7 +176,7 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     /**
-     * Flush and free resources that are not needed for post-processing (way geometries and StringIndex).
+     * Flush and free resources that are not needed for post-processing (way geometries and EdgeKVStorage).
      */
     void flushAndCloseGeometryAndNameStorage() {
         setWayGeometryHeader();
@@ -460,10 +460,10 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     private void setName(long edgePointer, String name) {
-        int stringIndexRef = (int) edgeKVStorage.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
-        if (stringIndexRef < 0)
+        int nameRef = (int) edgeKVStorage.add(Collections.singletonMap(EDGEKV_NAME_KEY, name));
+        if (nameRef < 0)
             throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
-        store.setNameRef(edgePointer, stringIndexRef);
+        store.setNameRef(edgePointer, nameRef);
     }
 
     private void ensureGeometry(long bytePos, int byteLength) {
@@ -955,8 +955,8 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public String getName() {
-            int stringIndexRef = store.getNameRef(edgePointer);
-            String name = baseGraph.edgeKVStorage.get(stringIndexRef, STRING_IDX_NAME_KEY);
+            int nameRef = store.getNameRef(edgePointer);
+            String name = (String) baseGraph.edgeKVStorage.get(nameRef, EDGEKV_NAME_KEY);
             // preserve backward compatibility (returns null if not explicitly set)
             return name == null ? "" : name;
         }

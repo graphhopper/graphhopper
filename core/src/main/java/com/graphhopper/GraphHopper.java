@@ -994,7 +994,7 @@ public class GraphHopper {
         if (closeEarly) {
             boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> p instanceof CustomProfile);
             if (!includesCustomProfiles)
-                // when there are custom profiles we must not close way geometry or StringIndex, because
+                // when there are custom profiles we must not close way geometry or EdgeKVStorage, because
                 // they might be needed to evaluate the custom weightings for the following preparations
                 ghStorage.flushAndCloseGeometryAndNameStorage();
         }
