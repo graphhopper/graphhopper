@@ -36,8 +36,7 @@ import static java.util.Collections.emptyMap;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
- * EncodingManager to be usable. If you want the full long to be stored you need to enable this in
- * the GraphHopperStorage.
+ * EncodingManager to be usable.
  *
  * @author Peter Karich
  * @author Nop

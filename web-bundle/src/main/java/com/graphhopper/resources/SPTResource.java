@@ -13,7 +13,7 @@ import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
@@ -95,7 +95,7 @@ public class SPTResource {
         if (profile == null)
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
         LocationIndex locationIndex = graphHopper.getLocationIndex();
-        Graph graph = graphHopper.getBaseGraph();
+        BaseGraph graph = graphHopper.getBaseGraph();
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         BooleanEncodedValue inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName));
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA)) {

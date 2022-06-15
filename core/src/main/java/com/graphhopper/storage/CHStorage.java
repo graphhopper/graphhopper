@@ -83,12 +83,11 @@ public class CHStorage {
                     " nodeA (" + nodeAccess.getLat(s.nodeA) + "," + nodeAccess.getLon(s.nodeA) +
                     " nodeB " + nodeAccess.getLat(s.nodeB) + "," + nodeAccess.getLon(s.nodeB));
         });
-        store.create();
         // we use a rather small value here. this might result in more allocations later, but they should
         // not matter that much. if we expect a too large value the shortcuts DataAccess will end up
         // larger than needed, because we do not do something like trimToSize in the end.
         double expectedShortcuts = 0.3 * baseGraph.getEdges();
-        store.init(baseGraph.getNodes(), (int) expectedShortcuts);
+        store.create(baseGraph.getNodes(), (int) expectedShortcuts);
         return store;
     }
 
@@ -123,30 +122,21 @@ public class CHStorage {
 
     /**
      * Creates a new storage. Alternatively we could load an existing one using {@link #loadExisting()}}.
-     */
-    public void create() {
-        // We have to create the DataAccess here before we flush it. Otherwise we get an error when calling
-        // loadExisting() later, see #2384
-        nodesCH.create(0);
-        shortcuts.create(0);
-    }
-
-    /**
-     * Initializes the storage. The number of nodes must be given here while the expected number of shortcuts can
+     * The number of nodes must be given here while the expected number of shortcuts can
      * be given to prevent some memory allocations, but is not a requirement. When in doubt rather use a small value
      * so the resulting files/byte arrays won't be unnecessarily large.
      * todo: we could also trim down the shortcuts DataAccess when we are done adding shortcuts
      */
-    public void init(int nodes, int expectedShortcuts) {
+    public void create(int nodes, int expectedShortcuts) {
         if (nodeCount >= 0)
-            throw new IllegalStateException("CHStorage can only be initialized once");
+            throw new IllegalStateException("CHStorage can only be created once");
         if (nodes < 0)
-            throw new IllegalStateException("CHStorage must be initialized with a positive number of nodes");
-        nodesCH.ensureCapacity((long) nodes * nodeCHEntryBytes);
+            throw new IllegalStateException("CHStorage must be created with a positive number of nodes");
+        nodesCH.create((long) nodes * nodeCHEntryBytes);
         nodeCount = nodes;
-        shortcuts.ensureCapacity((long) expectedShortcuts * shortcutEntryBytes);
         for (int node = 0; node < nodes; node++)
             setLastShortcut(toNodePointer(node), -1);
+        shortcuts.create((long) expectedShortcuts * shortcutEntryBytes);
     }
 
     public void flush() {

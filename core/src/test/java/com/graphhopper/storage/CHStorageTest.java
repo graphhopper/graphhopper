@@ -15,8 +15,7 @@ class CHStorageTest {
     void setAndGetLevels() {
         RAMDirectory dir = new RAMDirectory();
         CHStorage store = new CHStorage(dir, "ch1", -1, false);
-        store.create();
-        store.init(30, 5);
+        store.create(30, 5);
         assertEquals(0, store.getLevel(store.toNodePointer(10)));
         store.setLevel(store.toNodePointer(10), 100);
         assertEquals(100, store.getLevel(store.toNodePointer(10)));
@@ -30,11 +29,7 @@ class CHStorageTest {
             GHDirectory dir = new GHDirectory(path.toAbsolutePath().toString(), DAType.RAM_INT_STORE);
             CHStorage chStorage = new CHStorage(dir, "car", -1, false);
             // we have to call create, because we want to create a new storage not load an existing one
-            chStorage.create();
-            // init is needed as well, because we have to set the nodes capacity and we cannot do this in create() yet.
-            // we can also not use init instead of create, because currently GraphHopperStorage needs to 'create' all
-            // its data objects. if we want to change this lifecycle we need to change this in GraphHopperStorage first
-            chStorage.init(5, 3);
+            chStorage.create(5, 3);
             assertEquals(0, chStorage.shortcutNodeBased(0, 1, PrepareEncoder.getScFwdDir(), 10, 3, 5));
             assertEquals(1, chStorage.shortcutNodeBased(1, 2, PrepareEncoder.getScFwdDir(), 11, 4, 6));
             assertEquals(2, chStorage.shortcutNodeBased(2, 3, PrepareEncoder.getScFwdDir(), 12, 5, 7));

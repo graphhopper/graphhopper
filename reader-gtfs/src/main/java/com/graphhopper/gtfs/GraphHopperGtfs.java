@@ -23,7 +23,6 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.InMemConstructionIndex;
 import com.graphhopper.storage.index.IndexStructureInfo;
 import com.graphhopper.storage.index.LineIntIndex;
@@ -56,7 +55,7 @@ public class GraphHopperGtfs extends GraphHopper {
         if (ghConfig.has("datareader.file")) {
             super.importOSM();
         } else {
-            getBaseGraph().create(1000);
+            createBaseGraphAndProperties();
         }
     }
 
@@ -86,7 +85,7 @@ public class GraphHopperGtfs extends GraphHopper {
                 getGtfsStorage().getGtfsFeeds().forEach((id, gtfsFeed) -> {
                     Transfers transfers = new Transfers(gtfsFeed);
                     allTransfers.put(id, transfers);
-                    GtfsReader gtfsReader = new GtfsReader(id, getBaseGraph(), ptGraph, ptGraph, getGtfsStorage(), getLocationIndex(), transfers, indexBuilder);
+                    GtfsReader gtfsReader = new GtfsReader(id, getBaseGraph(), getEncodingManager(), ptGraph, ptGraph, getGtfsStorage(), getLocationIndex(), transfers, indexBuilder);
                     gtfsReader.connectStopsToStreetNetwork();
                     LOGGER.info("Building transit graph for feed {}", gtfsFeed.feedId);
                     gtfsReader.buildPtNetwork();
@@ -107,8 +106,7 @@ public class GraphHopperGtfs extends GraphHopper {
     private void interpolateTransfers(HashMap<String, GtfsReader> readers, Map<String, Transfers> allTransfers) {
         LOGGER.info("Looking for transfers");
         final int maxTransferWalkTimeSeconds = ghConfig.getInt("gtfs.max_transfer_interpolation_walk_time_seconds", 120);
-        GraphHopperStorage graphHopperStorage = getBaseGraph();
-        QueryGraph queryGraph = QueryGraph.create(graphHopperStorage.getBaseGraph(), Collections.emptyList());
+        QueryGraph queryGraph = QueryGraph.create(getBaseGraph(), Collections.emptyList());
         Weighting transferWeighting = createWeighting(getProfile("foot"), new PMap());
         final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, transferWeighting, getGtfsStorage(), RealtimeFeed.empty(), true, true, false, 5.0, false, 0);
         getGtfsStorage().getStationNodes().values().stream().distinct().map(n -> {

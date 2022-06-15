@@ -175,7 +175,7 @@ public class Measurement {
 
         hopper.importOrLoad();
 
-        BaseGraph g = hopper.getBaseGraph().getBaseGraph();
+        BaseGraph g = hopper.getBaseGraph();
         EncodingManager encodingManager = hopper.getEncodingManager();
         if (encodingManager.fetchEdgeEncoders().size() != 1) {
             throw new IllegalArgumentException("There has to be exactly one encoder for each measurement");

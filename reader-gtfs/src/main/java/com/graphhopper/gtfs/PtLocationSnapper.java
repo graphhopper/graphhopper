@@ -6,7 +6,7 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.PointList;
@@ -33,12 +33,12 @@ public class PtLocationSnapper {
         }
     }
 
-    GraphHopperStorage graphHopperStorage;
+    BaseGraph baseGraph;
     LocationIndex locationIndex;
     GtfsStorage gtfsStorage;
 
-    public PtLocationSnapper(GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-        this.graphHopperStorage = graphHopperStorage;
+    public PtLocationSnapper(BaseGraph baseGraph, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        this.baseGraph = baseGraph;
         this.locationIndex = locationIndex;
         this.gtfsStorage = gtfsStorage;
     }
@@ -80,7 +80,7 @@ public class PtLocationSnapper {
                 points.add(stopSnap.getQueryPoint().lat, stopSnap.getQueryPoint().lon);
             }
         }
-        QueryGraph queryGraph = QueryGraph.create(graphHopperStorage.getBaseGraph(), pointSnaps); // modifies pointSnaps!
+        QueryGraph queryGraph = QueryGraph.create(baseGraph.getBaseGraph(), pointSnaps); // modifies pointSnaps!
 
         List<Label.NodeId> nodes = new ArrayList<>();
         for (Supplier<Label.NodeId> supplier : allSnaps) {

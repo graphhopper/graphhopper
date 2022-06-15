@@ -82,12 +82,13 @@ public class OSMReaderTest {
     @Test
     public void testMain() {
         GraphHopper hopper = new GraphHopperFacade(file1).importOrLoad();
-        GraphHopperStorage graph = hopper.getBaseGraph();
+        BaseGraph graph = hopper.getBaseGraph();
+        StorableProperties properties = hopper.getProperties();
 
-        assertNotNull(graph.getProperties().get("datareader.import.date"));
-        assertNotEquals("", graph.getProperties().get("datareader.import.date"));
+        assertNotNull(properties.get("datareader.import.date"));
+        assertNotEquals("", properties.get("datareader.import.date"));
 
-        assertEquals("2013-01-02T01:10:14Z", graph.getProperties().get("datareader.data.date"));
+        assertEquals("2013-01-02T01:10:14Z", properties.get("datareader.data.date"));
 
         assertEquals(4, graph.getNodes());
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
@@ -153,9 +154,10 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopperFacade(file2)
                 .setMinNetworkSize(0)
                 .importOrLoad();
-        GraphHopperStorage graph = hopper.getBaseGraph();
+        BaseGraph graph = hopper.getBaseGraph();
+        StorableProperties properties = hopper.getProperties();
 
-        assertEquals("2014-01-02T01:10:14Z", graph.getProperties().get("datareader.data.date"));
+        assertEquals("2014-01-02T01:10:14Z", properties.get("datareader.data.date"));
 
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52.0);
         int n22 = AbstractGraphStorageTester.getIdOf(graph, 52.133);
@@ -256,7 +258,7 @@ public class OSMReaderTest {
     @Test
     public void testDoNotRejectEdgeIfFirstNodeIsMissing_issue2221() {
         GraphHopper hopper = new GraphHopperFacade("test-osm9.xml").importOrLoad();
-        GraphHopperStorage graph = hopper.getBaseGraph();
+        BaseGraph graph = hopper.getBaseGraph();
         assertEquals(2, graph.getNodes());
         assertEquals(1, graph.getEdges());
         AllEdgesIterator iter = graph.getAllEdges();
@@ -276,7 +278,7 @@ public class OSMReaderTest {
     @Test
     public void test_edgeDistanceWhenFirstNodeIsMissing_issue2221() {
         GraphHopper hopper = new GraphHopperFacade("test-osm10.xml").importOrLoad();
-        GraphHopperStorage graph = hopper.getBaseGraph();
+        BaseGraph graph = hopper.getBaseGraph();
         assertEquals(3, graph.getNodes());
         assertEquals(3, graph.getEdges());
         AllEdgesIterator iter = graph.getAllEdges();
@@ -437,7 +439,7 @@ public class OSMReaderTest {
     }
 
     void checkLoop(GraphHopper hopper) {
-        GraphHopperStorage graph = hopper.getBaseGraph();
+        BaseGraph graph = hopper.getBaseGraph();
 
         // A, B, E and one of C or D should be tower nodes, in any case C and D should not be collapsed entirely
         // into a loop edge from B to B.
@@ -838,7 +840,7 @@ public class OSMReaderTest {
     public void testPreferredLanguage() {
         GraphHopper hopper = new GraphHopperFacade(file1, false, "de").
                 importOrLoad();
-        GraphHopperStorage graph = hopper.getBaseGraph();
+        BaseGraph graph = hopper.getBaseGraph();
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         EdgeIterator iter = carOutExplorer.setBaseNode(n20);
         assertTrue(iter.next());
@@ -859,9 +861,8 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopperFacade("test-osm6.pbf")
                 .setMinNetworkSize(0)
                 .importOrLoad();
-        GraphHopperStorage graph = hopper.getBaseGraph();
-
-        assertEquals("2014-01-02T00:10:14Z", graph.getProperties().get("datareader.data.date"));
+        StorableProperties properties = hopper.getProperties();
+        assertEquals("2014-01-02T00:10:14Z", properties.get("datareader.data.date"));
     }
 
     @Test
@@ -1004,8 +1005,8 @@ public class OSMReaderTest {
 
         @Override
         protected void importOSM() {
-            GraphHopperStorage tmpGraph = new GraphBuilder(getEncodingManager()).set3D(hasElevation()).withTurnCosts(getEncodingManager().needsTurnCostsSupport()).build();
-            setGraphHopperStorage(tmpGraph);
+            BaseGraph baseGraph = new BaseGraph.Builder(getEncodingManager()).set3D(hasElevation()).withTurnCosts(getEncodingManager().needsTurnCostsSupport()).build();
+            setBaseGraph(baseGraph);
             super.importOSM();
             carEncoder = getEncodingManager().getEncoder("car");
             footEncoder = getEncodingManager().getEncoder("foot");

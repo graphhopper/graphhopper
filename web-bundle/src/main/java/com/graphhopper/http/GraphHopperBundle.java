@@ -31,7 +31,7 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.resources.*;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
@@ -61,18 +61,18 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
-    static class GraphHopperStorageFactory implements Factory<GraphHopperStorage> {
+    static class BaseGraphFactory implements Factory<BaseGraph> {
 
         @Inject
         GraphHopper graphHopper;
 
         @Override
-        public GraphHopperStorage provide() {
+        public BaseGraph provide() {
             return graphHopper.getBaseGraph();
         }
 
         @Override
-        public void dispose(GraphHopperStorage instance) {
+        public void dispose(BaseGraph instance) {
 
         }
     }
@@ -242,7 +242,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
                 bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
-                bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
+                bindFactory(BaseGraphFactory.class).to(BaseGraph.class);
                 bindFactory(GtfsStorageFactory.class).to(GtfsStorage.class);
             }
         });

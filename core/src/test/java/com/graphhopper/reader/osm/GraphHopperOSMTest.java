@@ -540,7 +540,7 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         // older versions <= 0.12 did not store this property, ensure that we fail to load it
-        instance.getBaseGraph().getProperties().remove("graph.encoded_values");
+        instance.getProperties().remove("graph.encoded_values");
         instance.getBaseGraph().flush();
         assertEquals(5, instance.getBaseGraph().getNodes());
         instance.close();
@@ -732,11 +732,11 @@ public class GraphHopperOSMTest {
                     assertEquals((long) shortcutCount, chGraph.getValue().getShortcuts());
 
                 String keyError = Parameters.CH.PREPARE + "error." + name;
-                String valueError = hopper.getBaseGraph().getProperties().get(keyError);
+                String valueError = hopper.getProperties().get(keyError);
                 assertTrue(valueError.isEmpty(), "Properties for " + name + " should NOT contain error " + valueError + " [" + threadCount + "]");
 
                 String key = Parameters.CH.PREPARE + "date." + name;
-                String value = hopper.getBaseGraph().getProperties().get(key);
+                String value = hopper.getProperties().get(key);
                 assertFalse(value.isEmpty(), "Properties for " + name + " did NOT contain finish date [" + threadCount + "]");
             }
             hopper.close();
@@ -781,11 +781,11 @@ public class GraphHopperOSMTest {
                     assertEquals((int) landmarksCount, landmarks.getValue().getSubnetworksWithLandmarks());
 
                 String keyError = Parameters.Landmark.PREPARE + "error." + name;
-                String valueError = hopper.getBaseGraph().getProperties().get(keyError);
+                String valueError = hopper.getProperties().get(keyError);
                 assertTrue(valueError.isEmpty(), "Properties for " + name + " should NOT contain error " + valueError + " [" + threadCount + "]");
 
                 String key = Parameters.Landmark.PREPARE + "date." + name;
-                String value = hopper.getBaseGraph().getProperties().get(key);
+                String value = hopper.getProperties().get(key);
                 assertFalse(value.isEmpty(), "Properties for " + name + " did NOT contain finish date [" + threadCount + "]");
             }
             hopper.close();
@@ -846,8 +846,7 @@ public class GraphHopperOSMTest {
                     new Profile("car2").setVehicle("car").setWeighting("fastest")
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
-            // so far we get another error message in this case, because GraphHopperStorage checks the encoded values
-            // in loadExisting already
+            // so far we get another error message in this case, because we check the encoded values and encoders first
             assertTrue(e.getMessage().contains("Flag encoders do not match"), e.getMessage());
             hopper.close();
         }
