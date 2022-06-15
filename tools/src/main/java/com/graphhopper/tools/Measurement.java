@@ -245,7 +245,7 @@ public class Measurement {
                     gcAndWait();
                     measureRouting(hopper, new QuerySettings("routingCH", count, isCH, isLM).
                             withInstructions().sod());
-                    measureRouting(hopper, new QuerySettings("routingCH_alt", count / 10, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_alt", count / 100, isCH, isLM).
                             withInstructions().sod().alternative());
                     measureRouting(hopper, new QuerySettings("routingCH_with_hints", count, isCH, isLM).
                             withInstructions().sod().withPointHints());
@@ -265,7 +265,7 @@ public class Measurement {
                 if (edgeBasedCH != null) {
                     measureRouting(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
                             edgeBased().withInstructions());
-                    measureRouting(hopper, new QuerySettings("routingCH_edge_alt", count / 10, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_edge_alt", count / 100, isCH, isLM).
                             edgeBased().withInstructions().alternative());
                     measureRouting(hopper, new QuerySettings("routingCH_edge_no_instr", count, isCH, isLM).
                             edgeBased());
