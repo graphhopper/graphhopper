@@ -35,7 +35,6 @@ public class PathDetailsBuilderFactory {
     public List<PathDetailsBuilder> createPathDetailsBuilders(List<String> requestedPathDetails, EncodedValueLookup evl, Weighting weighting) {
         List<PathDetailsBuilder> builders = new ArrayList<>();
 
-        // TODO it would be a bit more efficient if we fetch the KVMap only once per edge but then we would have to couple these path detail somehow
         if (requestedPathDetails.contains(STREET_NAME))
             builders.add(new KVStringDetails(STREET_NAME, "name"));
         if (requestedPathDetails.contains(STREET_REF))

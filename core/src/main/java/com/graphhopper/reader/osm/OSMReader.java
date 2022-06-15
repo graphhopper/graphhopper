@@ -334,7 +334,7 @@ public class OSMReader {
 
         Map<String, Object> map = new HashMap<>(2);
         // the storage does not accept too long strings -> Helper.cutString
-        if (way.hasTag("way_name")) // do not store empty string is missing tag
+        if (way.hasTag("way_name")) // do not store empty string if missing tag
             map.put("name", Helper.cutString(way.getTag("way_name", ""), 255));
         if (way.hasTag("way_ref"))
             map.put("ref", Helper.cutString(way.getTag("way_ref", ""), 255));
