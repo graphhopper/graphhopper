@@ -85,8 +85,7 @@ java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server co
 After a while you see a log message with 'Server - Started', then go to http://localhost:8989/ and
 you'll see a map of Berlin. You should be able to right click on the map to create a route.
 
-For more details about the installation, see [here](./docs/web/quickstart.md)
-and the [deployment guide](./docs/core/deploy.md).
+See the [documentation](./docs/index.md) that contains e.g. [the elevation guide](./docs/core/elevation.md) and the [deployment guide](./docs/core/deploy.md).
 
 ### Docker
 

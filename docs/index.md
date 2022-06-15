@@ -18,7 +18,7 @@ For bugs see our contribute section below.
 
 ## Installation
 
-Install the web demo 'GraphHopper Maps' with [this user installation guide](../README.md#installation) on your
+Install the GraphHopper routing engine with the GraphHopper Maps UI with [this installation guide](../README.md#installation) on your
 machine. This will also install a web API that can be used in many programming languages.
 
  * [Routing API](./web/api-doc.md): Documentation of the Web API to communicate with any GraphHopper server via http.
