@@ -476,9 +476,11 @@ public class Helper {
         return val;
     }
 
-    public static String cutString(String value, int maxLength) {
-        if (value == null) return null;
+    /**
+     * This method limits the specified String value to the specified maxBytes.
+     */
+    public static String cutString(String value, int maxBytes) {
         byte[] bytes = value.getBytes(UTF_CS);
-        return bytes.length > maxLength ? new String(bytes, 0, maxLength, UTF_CS) : value;
+        return bytes.length > maxBytes ? new String(bytes, 0, maxBytes, UTF_CS) : value;
     }
 }

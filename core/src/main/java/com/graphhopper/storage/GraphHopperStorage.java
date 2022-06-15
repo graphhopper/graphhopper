@@ -169,7 +169,7 @@ public final class GraphHopperStorage implements Graph, Closeable {
                 ",edges:" + Constants.VERSION_EDGE +
                 ",geometry:" + Constants.VERSION_GEOMETRY +
                 ",location_index:" + Constants.VERSION_LOCATION_IDX +
-                ",string_index:" + Constants.VERSION_STRING_IDX +
+                ",string_index:" + Constants.VERSION_EDGEKV_STORAGE +
                 ",nodesCH:" + Constants.VERSION_NODE_CH +
                 ",shortcuts:" + Constants.VERSION_SHORTCUT;
     }
