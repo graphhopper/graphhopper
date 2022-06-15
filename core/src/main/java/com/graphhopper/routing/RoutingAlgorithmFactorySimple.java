@@ -67,7 +67,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
             altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
             altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
             altRouteAlgo.setMinPlateauFactor(opts.getHints().getDouble("alternative_route.min_plateau_factor", 0.2));
-            altRouteAlgo.setMaxExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1.6));
+            altRouteAlgo.setExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1.6));
             ra = altRouteAlgo;
 
         } else {

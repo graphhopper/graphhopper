@@ -22,7 +22,6 @@ import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
@@ -53,39 +52,23 @@ import java.util.concurrent.atomic.AtomicReference;
  * </li>
  * </ul>
  * <p>
- * Note: This algorithm is quite slow and alternatives are only really practical in combination with CH, see #2566
+ * Note: This algorithm can be slow for longer routes and alternatives are only really practical in combination with CH, see #2566
  *
  * @author Peter Karich
  */
-public class AlternativeRoute implements RoutingAlgorithm {
+public class AlternativeRoute extends AStarBidirection implements RoutingAlgorithm {
     private static final Comparator<AlternativeInfo> ALT_COMPARATOR = Comparator.comparingDouble(o -> o.sortBy);
-    private final Graph graph;
-    private final Weighting weighting;
-    private final TraversalMode traversalMode;
-    private int visitedNodes;
-    private int maxVisitedNodes = Integer.MAX_VALUE;
     private double maxWeightFactor = 1.4;
     // the higher the maxWeightFactor the higher the explorationFactor needs to be
-    // 1 is default for bidir Dijkstra, 0.8 seems to be a very similar value for bidir A* but roughly 1/2 of the nodes explored
-    private double maxExplorationFactor = 1.6;
+    private double explorationFactor = 1.6;
     private double maxShareFactor = 0.6;
     private double minPlateauFactor = 0.2;
     private int maxPaths = 2;
-    private WeightApproximator weightApproximator;
 
     public AlternativeRoute(Graph graph, Weighting weighting, TraversalMode traversalMode) {
+        super(graph, weighting, traversalMode);
         if (weighting.hasTurnCosts() && !traversalMode.isEdgeBased())
             throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
-        this.graph = graph;
-        this.weighting = weighting;
-        this.traversalMode = traversalMode;
-    }
-
-    /**
-     * This method sets the approximation used for the internal bidirectional A*.
-     */
-    public void setApproximation(WeightApproximator weightApproximator) {
-        this.weightApproximator = weightApproximator;
     }
 
     static List<String> getAltNames(Graph graph, SPTEntry ee) {
@@ -117,7 +100,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
     /**
      * Increasing this factor results in returning more alternatives. E.g. if the factor is 2 than
      * all alternatives with a weight 2 times longer than the optimal weight are return. (default is
-     * 1)
+     * 1.4)
      */
     public void setMaxWeightFactor(double maxWeightFactor) {
         this.maxWeightFactor = maxWeightFactor;
@@ -140,11 +123,11 @@ public class AlternativeRoute implements RoutingAlgorithm {
 
     /**
      * This method sets the graph exploration percentage for alternative paths. Default for bidirectional A*
-     * is 0.8 (80%). Specify a higher value to get more alternatives (especially if maxWeightFactor is higher than
+     * is 1.6 (160%). Specify a higher value to get more alternatives (especially if maxWeightFactor is higher than
      * 1.5) and a lower value to improve query time but reduces the possibility to find alternatives.
      */
-    public void setMaxExplorationFactor(double explorationFactor) {
-        this.maxExplorationFactor = explorationFactor;
+    public void setExplorationFactor(double explorationFactor) {
+        this.explorationFactor = explorationFactor;
     }
 
     /**
@@ -156,36 +139,19 @@ public class AlternativeRoute implements RoutingAlgorithm {
             throw new IllegalArgumentException("Use normal algorithm with less overhead instead if no alternatives are required");
     }
 
-    /**
-     * This method calculates best paths (alternatives) between 'from' and 'to', where maxPaths-1
-     * alternatives are searched and they are only accepted if they are not too similar but close to
-     * the best path.
-     */
     public List<AlternativeInfo> calcAlternatives(int from, int to) {
-        AlternativeBidirSearch altBidirDijktra = new AlternativeBidirSearch(
-                graph, weighting, traversalMode, maxExplorationFactor);
-        altBidirDijktra.setMaxVisitedNodes(maxVisitedNodes);
-        if (weightApproximator != null) {
-            altBidirDijktra.setApproximation(weightApproximator);
-        }
-
-        Path bestPath = altBidirDijktra.searchBest(from, to);
-        visitedNodes = altBidirDijktra.getVisitedNodes();
-
-        return altBidirDijktra.
-                calcAlternatives(bestPath, maxPaths, maxWeightFactor, 7, maxShareFactor, 0.8, minPlateauFactor, -0.2);
-    }
-
-    @Override
-    public Path calcPath(int from, int to) {
-        return calcPaths(from, to).get(0);
+        Path bestPath = searchBest(from, to);
+        return calcAlternatives(bestPath, maxPaths,
+                maxWeightFactor, 7,
+                maxShareFactor, 0.8,
+                minPlateauFactor, -0.2);
     }
 
     @Override
     public List<Path> calcPaths(int from, int to) {
-        List<AlternativeInfo> alts = calcAlternatives(from, to);
-        List<Path> paths = new ArrayList<>(alts.size());
-        for (AlternativeInfo a : alts) {
+        List<AlternativeInfo> alternatives = calcAlternatives(from, to);
+        List<Path> paths = new ArrayList<>(alternatives.size());
+        for (AlternativeInfo a : alternatives) {
             paths.add(a.getPath());
         }
         return paths;
@@ -194,11 +160,6 @@ public class AlternativeRoute implements RoutingAlgorithm {
     @Override
     public String getName() {
         return Parameters.Algorithms.ALT_ROUTE;
-    }
-
-    @Override
-    public int getVisitedNodes() {
-        return visitedNodes;
     }
 
     public static class AlternativeInfo {
@@ -246,299 +207,263 @@ public class AlternativeRoute implements RoutingAlgorithm {
         }
     }
 
+    @Override
+    public boolean finished() {
+        // we need to finish BOTH searches identical to CH
+        if (finishedFrom && finishedTo)
+            return true;
+
+        if (isMaxVisitedNodesExceeded())
+            return true;
+
+        // The following condition is necessary to avoid traversing the full graph if areas are disconnected
+        // but it is only valid for non-CH e.g. for CH it can happen that finishedTo is true but the from-SPT could still reach 'to'
+        if (finishedFrom || finishedTo)
+            return true;
+
+        // increase overlap of both searches:
+        return currFrom.weight + currTo.weight > explorationFactor * (bestWeight + stoppingCriterionOffset);
+        // This is more precise but takes roughly 20% longer: return currFrom.weight > bestWeight && currTo.weight > bestWeight;
+        // For bidir A* and AStarEdge.getWeightOfVisitedPath see comment in AStarBidirection.finished
+    }
+
+    public Path searchBest(int from, int to) {
+        init(from, 0, to, 0);
+        // init collections and bestPath.getWeight properly
+        runAlgo();
+        return extractPath();
+    }
+
     /**
-     * Helper class to find alternatives and alternatives for round trip.
+     * @return the information necessary to handle alternative paths. Note that the paths are
+     * not yet extracted.
      */
-    public static class AlternativeBidirSearch extends AStarBidirection {
-        private final double explorationFactor;
+    public List<AlternativeInfo> calcAlternatives(final Path bestPath, final int maxPaths,
+                                                  double maxWeightFactor, final double weightInfluence,
+                                                  final double maxShareFactor, final double shareInfluence,
+                                                  final double minPlateauFactor, final double plateauInfluence) {
+        final double maxWeight = maxWeightFactor * bestWeight;
+        final GHIntObjectHashMap<IntSet> traversalIdMap = new GHIntObjectHashMap<>();
+        final AtomicInteger startTID = addToMap(traversalIdMap, bestPath);
 
-        public AlternativeBidirSearch(Graph graph, Weighting weighting, TraversalMode tMode,
-                                      double explorationFactor) {
-            super(graph, weighting, tMode);
-            this.explorationFactor = explorationFactor;
-        }
+        // find all 'good' alternatives from forward-SPT matching the backward-SPT and optimize by
+        // small total weight (1), small share and big plateau (3a+b) and do these expensive calculations
+        // only for plateau start candidates (2)
+        final List<AlternativeInfo> alternatives = new ArrayList<>(maxPaths);
 
-        @Override
-        public boolean finished() {
-            // we need to finish BOTH searches identical to CH
-            if (finishedFrom && finishedTo)
-                return true;
+        double bestPlateau = bestWeight;
+        double bestShare = 0;
+        double sortBy = calcSortBy(weightInfluence, bestWeight,
+                shareInfluence, bestShare,
+                plateauInfluence, bestPlateau);
 
-            if (isMaxVisitedNodesExceeded())
-                return true;
+        final AlternativeInfo bestAlt = new AlternativeInfo(sortBy, bestPath,
+                bestFwdEntry, bestBwdEntry, bestShare, getAltNames(graph, bestFwdEntry));
+        alternatives.add(bestAlt);
+        AtomicReference<SPTEntry> bestEntry = new AtomicReference<>();
 
-            // The following condition is necessary to avoid traversing the full graph if areas are disconnected
-            // but it is only valid for non-CH e.g. for CH it can happen that finishedTo is true but the from-SPT could still reach 'to'
-            if (finishedFrom || finishedTo)
-                return true;
-
-            // increase overlap of both searches:
-            return currFrom.weight + currTo.weight > explorationFactor * (bestWeight + stoppingCriterionOffset);
-            // This is more precise but takes roughly 20% longer: return currFrom.weight > bestWeight && currTo.weight > bestWeight;
-            // For bidir A* and AStarEdge.getWeightOfVisitedPath see comment in AStarBidirection.finished
-        }
-
-        public Path searchBest(int from, int to) {
-            init(from, 0, to, 0);
-            // init collections and bestPath.getWeight properly
-            runAlgo();
-            return extractPath();
-        }
-
-        /**
-         * @return the information necessary to handle alternative paths. Note that the paths are
-         * not yet extracted.
-         */
-        public List<AlternativeInfo> calcAlternatives(final Path bestPath, final int maxPaths,
-                                                      double maxWeightFactor, final double weightInfluence,
-                                                      final double maxShareFactor, final double shareInfluence,
-                                                      final double minPlateauFactor, final double plateauInfluence) {
-            final double maxWeight = maxWeightFactor * bestWeight;
-            final GHIntObjectHashMap<IntSet> traversalIdMap = new GHIntObjectHashMap<>();
-            final AtomicInteger startTID = addToMap(traversalIdMap, bestPath);
-
-            // find all 'good' alternatives from forward-SPT matching the backward-SPT and optimize by
-            // small total weight (1), small share and big plateau (3a+b) and do these expensive calculations
-            // only for plateau start candidates (2)
-            final List<AlternativeInfo> alternatives = new ArrayList<>(maxPaths);
-
-            double bestPlateau = bestWeight;
-            double bestShare = 0;
-            double sortBy = calcSortBy(weightInfluence, bestWeight,
-                    shareInfluence, bestShare,
-                    plateauInfluence, bestPlateau);
-
-            final AlternativeInfo bestAlt = new AlternativeInfo(sortBy, bestPath,
-                    bestFwdEntry, bestBwdEntry, bestShare, getAltNames(graph, bestFwdEntry));
-            alternatives.add(bestAlt);
-            AtomicReference<SPTEntry> bestEntry = new AtomicReference<>();
-
-            bestWeightMapFrom.forEach(new IntObjectPredicate<SPTEntry>() {
-                @Override
-                public boolean apply(final int traversalId, final SPTEntry fromSPTEntry) {
-                    SPTEntry toSPTEntry = bestWeightMapTo.get(traversalId);
-                    if (toSPTEntry == null)
-                        return true;
-
-                    // Using the parent is required to avoid duplicate edge in Path.
-                    // TODO we miss the turn cost weight (but at least we not duplicate the current edge weight)
-                    if (traversalMode.isEdgeBased() && toSPTEntry.parent != null)
-                        toSPTEntry = toSPTEntry.parent;
-
-                    // The alternative path is suboptimal if U-turn (after fromSPTEntry)
-                    if (fromSPTEntry.edge == toSPTEntry.edge)
-                        return true;
-
-                    // (1) skip too long paths
-                    final double weight = fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath();
-                    if (weight > maxWeight)
-                        return true;
-
-                    if (isBestPath(fromSPTEntry))
-                        return true;
-
-                    // For edge based traversal we need the next entry to find out the plateau start
-                    SPTEntry tmpFromEntry = traversalMode.isEdgeBased() ? fromSPTEntry.parent : fromSPTEntry;
-                    if (tmpFromEntry == null || tmpFromEntry.parent == null) {
-                        // we can be here only if edge based and only if entry is not part of the best path
-                        // e.g. when starting point has two edges and one is part of the best path the other edge is path of an alternative
-                        assert traversalMode.isEdgeBased();
-                    } else {
-                        int nextToTraversalId = traversalMode.createTraversalId(graph.getEdgeIteratorState(tmpFromEntry.edge, tmpFromEntry.parent.adjNode), true);
-                        SPTEntry correspondingToEntry = bestWeightMapTo.get(nextToTraversalId);
-                        if (correspondingToEntry != null) {
-                            if (traversalMode.isEdgeBased())
-                                correspondingToEntry = correspondingToEntry.parent;
-                            if (correspondingToEntry.edge == fromSPTEntry.edge)
-                                return true;
-                        }
-                    }
-
-                    // (3a) calculate plateau, we know we are at the beginning of the 'from'-side of
-                    // the plateau A-B-C and go further to B
-                    // where B is the next-'from' of A and B is also the previous-'to' of A.
-                    //
-                    //      *<-A-B-C->*
-                    //        /    \
-                    //    start    end
-                    //
-                    // extend plateau in only one direction necessary (A to B to ...) as we know
-                    // that the from-SPTEntry is the start of the plateau or there is no plateau at all
-                    //
-                    double plateauWeight = 0;
-                    SPTEntry prevToSPTEntry = toSPTEntry, prevFrom = fromSPTEntry;
-                    while (prevToSPTEntry.parent != null) {
-                        int nextFromTraversalId = traversalMode.createTraversalId(graph.getEdgeIteratorState(prevToSPTEntry.edge, prevToSPTEntry.parent.adjNode), false);
-                        SPTEntry otherFromEntry = bestWeightMapFrom.get(nextFromTraversalId);
-                        // end of a plateau
-                        if (otherFromEntry == null ||
-                                otherFromEntry.parent != prevFrom ||
-                                otherFromEntry.edge != prevToSPTEntry.edge)
-                            break;
-
-                        prevFrom = otherFromEntry;
-                        plateauWeight += (prevToSPTEntry.getWeightOfVisitedPath() - prevToSPTEntry.parent.getWeightOfVisitedPath());
-                        prevToSPTEntry = prevToSPTEntry.parent;
-                    }
-
-                    if (plateauWeight <= 0 || plateauWeight / weight < minPlateauFactor)
-                        return true;
-
-                    if (fromSPTEntry.parent == null)
-                        throw new IllegalStateException("not implemented yet. in case of an edge based traversal the parent of fromSPTEntry could be null");
-
-                    // (3b) calculate share
-                    SPTEntry fromEE = getFirstShareEE(fromSPTEntry.parent, true);
-                    SPTEntry toEE = getFirstShareEE(toSPTEntry.parent, false);
-                    double shareWeight = fromEE.getWeightOfVisitedPath() + toEE.getWeightOfVisitedPath();
-                    boolean smallShare = shareWeight / bestWeight < maxShareFactor;
-                    if (smallShare) {
-                        List<String> altNames = getAltNames(graph, fromSPTEntry);
-
-                        double sortBy = calcSortBy(weightInfluence, weight, shareInfluence, shareWeight, plateauInfluence, plateauWeight);
-                        double worstSortBy = getWorstSortBy();
-
-                        // plateaus.add(new PlateauInfo(altName, plateauEdges));
-                        if (sortBy < worstSortBy || alternatives.size() < maxPaths) {
-                            Path path = DefaultBidirPathExtractor.extractPath(graph, weighting, fromSPTEntry, toSPTEntry, weight);
-
-                            // for now do not add alternatives to set, if we do we need to remove then on alternatives.clear too (see below)
-                            // AtomicInteger tid = addToMap(traversalIDMap, path);
-                            // int tid = traversalMode.createTraversalId(path.calcEdges().get(0), false);
-                            alternatives.add(new AlternativeInfo(sortBy, path, fromEE, toEE, shareWeight, altNames));
-
-                            Collections.sort(alternatives, ALT_COMPARATOR);
-                            if (alternatives.get(0) != bestAlt)
-                                throw new IllegalStateException("best path should be always first entry");
-
-                            if (alternatives.size() > maxPaths)
-                                alternatives.subList(maxPaths, alternatives.size()).clear();
-                        }
-                    }
-
+        bestWeightMapFrom.forEach(new IntObjectPredicate<SPTEntry>() {
+            @Override
+            public boolean apply(final int traversalId, final SPTEntry fromSPTEntry) {
+                SPTEntry toSPTEntry = bestWeightMapTo.get(traversalId);
+                if (toSPTEntry == null)
                     return true;
-                }
 
-                /**
-                 * Extract path until we stumble over an existing traversal id
-                 */
-                SPTEntry getFirstShareEE(SPTEntry startEE, boolean reverse) {
-                    while (startEE.parent != null) {
-                        // TODO we could make use of traversal ID directly if stored in SPTEntry
-                        int tid = traversalMode.createTraversalId(graph.getEdgeIteratorState(startEE.edge, startEE.parent.adjNode), reverse);
-                        if (isAlreadyExisting(tid))
-                            return startEE;
+                // Using the parent is required to avoid duplicate edge in Path.
+                // TODO we miss the turn cost weight (but at least we not duplicate the current edge weight)
+                if (traversalMode.isEdgeBased() && toSPTEntry.parent != null)
+                    toSPTEntry = toSPTEntry.parent;
 
-                        startEE = startEE.parent;
+                // The alternative path is suboptimal if U-turn (after fromSPTEntry)
+                if (fromSPTEntry.edge == toSPTEntry.edge)
+                    return true;
+
+                // (1) skip too long paths
+                final double weight = fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath();
+                if (weight > maxWeight)
+                    return true;
+
+                if (isBestPath(fromSPTEntry))
+                    return true;
+
+                // For edge based traversal we need the next entry to find out the plateau start
+                SPTEntry tmpFromEntry = traversalMode.isEdgeBased() ? fromSPTEntry.parent : fromSPTEntry;
+                if (tmpFromEntry == null || tmpFromEntry.parent == null) {
+                    // we can be here only if edge based and only if entry is not part of the best path
+                    // e.g. when starting point has two edges and one is part of the best path the other edge is path of an alternative
+                    assert traversalMode.isEdgeBased();
+                } else {
+                    int nextToTraversalId = traversalMode.createTraversalId(graph.getEdgeIteratorState(tmpFromEntry.edge, tmpFromEntry.parent.adjNode), true);
+                    SPTEntry correspondingToEntry = bestWeightMapTo.get(nextToTraversalId);
+                    if (correspondingToEntry != null) {
+                        if (traversalMode.isEdgeBased())
+                            correspondingToEntry = correspondingToEntry.parent;
+                        if (correspondingToEntry.edge == fromSPTEntry.edge)
+                            return true;
                     }
-
-                    return startEE;
                 }
 
-                /**
-                 * This method returns true if the specified tid is already existent in the
-                 * traversalIDMap
-                 */
-                boolean isAlreadyExisting(final int tid) {
-                    final AtomicBoolean exists = new AtomicBoolean(false);
-                    traversalIdMap.forEach(new IntObjectPredicate<IntSet>() {
-                        @Override
-                        public boolean apply(int key, IntSet set) {
-                            if (set.contains(tid)) {
-                                exists.set(true);
-                                return false;
-                            }
-                            return true;
+                // (3a) calculate plateau, we know we are at the beginning of the 'from'-side of
+                // the plateau A-B-C and go further to B
+                // where B is the next-'from' of A and B is also the previous-'to' of A.
+                //
+                //      *<-A-B-C->*
+                //        /    \
+                //    start    end
+                //
+                // extend plateau in only one direction necessary (A to B to ...) as we know
+                // that the from-SPTEntry is the start of the plateau or there is no plateau at all
+                //
+                double plateauWeight = 0;
+                SPTEntry prevToSPTEntry = toSPTEntry, prevFrom = fromSPTEntry;
+                while (prevToSPTEntry.parent != null) {
+                    int nextFromTraversalId = traversalMode.createTraversalId(graph.getEdgeIteratorState(prevToSPTEntry.edge, prevToSPTEntry.parent.adjNode), false);
+                    SPTEntry otherFromEntry = bestWeightMapFrom.get(nextFromTraversalId);
+                    // end of a plateau
+                    if (otherFromEntry == null ||
+                            otherFromEntry.parent != prevFrom ||
+                            otherFromEntry.edge != prevToSPTEntry.edge)
+                        break;
+
+                    prevFrom = otherFromEntry;
+                    plateauWeight += (prevToSPTEntry.getWeightOfVisitedPath() - prevToSPTEntry.parent.getWeightOfVisitedPath());
+                    prevToSPTEntry = prevToSPTEntry.parent;
+                }
+
+                if (plateauWeight <= 0 || plateauWeight / weight < minPlateauFactor)
+                    return true;
+
+                if (fromSPTEntry.parent == null)
+                    throw new IllegalStateException("not implemented yet. in case of an edge based traversal the parent of fromSPTEntry could be null");
+
+                // (3b) calculate share
+                SPTEntry fromEE = getFirstShareEE(fromSPTEntry.parent, true);
+                SPTEntry toEE = getFirstShareEE(toSPTEntry.parent, false);
+                double shareWeight = fromEE.getWeightOfVisitedPath() + toEE.getWeightOfVisitedPath();
+                boolean smallShare = shareWeight / bestWeight < maxShareFactor;
+                if (smallShare) {
+                    List<String> altNames = getAltNames(graph, fromSPTEntry);
+
+                    double sortBy = calcSortBy(weightInfluence, weight, shareInfluence, shareWeight, plateauInfluence, plateauWeight);
+                    double worstSortBy = getWorstSortBy();
+
+                    // plateaus.add(new PlateauInfo(altName, plateauEdges));
+                    if (sortBy < worstSortBy || alternatives.size() < maxPaths) {
+                        Path path = DefaultBidirPathExtractor.extractPath(graph, weighting, fromSPTEntry, toSPTEntry, weight);
+
+                        // for now do not add alternatives to set, if we do we need to remove then on alternatives.clear too (see below)
+                        // AtomicInteger tid = addToMap(traversalIDMap, path);
+                        // int tid = traversalMode.createTraversalId(path.calcEdges().get(0), false);
+                        alternatives.add(new AlternativeInfo(sortBy, path, fromEE, toEE, shareWeight, altNames));
+
+                        Collections.sort(alternatives, ALT_COMPARATOR);
+                        if (alternatives.get(0) != bestAlt)
+                            throw new IllegalStateException("best path should be always first entry");
+
+                        if (alternatives.size() > maxPaths)
+                            alternatives.subList(maxPaths, alternatives.size()).clear();
+                    }
+                }
+
+                return true;
+            }
+
+            /**
+             * Extract path until we stumble over an existing traversal id
+             */
+            SPTEntry getFirstShareEE(SPTEntry startEE, boolean reverse) {
+                while (startEE.parent != null) {
+                    // TODO we could make use of traversal ID directly if stored in SPTEntry
+                    int tid = traversalMode.createTraversalId(graph.getEdgeIteratorState(startEE.edge, startEE.parent.adjNode), reverse);
+                    if (isAlreadyExisting(tid))
+                        return startEE;
+
+                    startEE = startEE.parent;
+                }
+
+                return startEE;
+            }
+
+            /**
+             * This method returns true if the specified tid is already existent in the
+             * traversalIDMap
+             */
+            boolean isAlreadyExisting(final int tid) {
+                final AtomicBoolean exists = new AtomicBoolean(false);
+                traversalIdMap.forEach(new IntObjectPredicate<IntSet>() {
+                    @Override
+                    public boolean apply(int key, IntSet set) {
+                        if (set.contains(tid)) {
+                            exists.set(true);
+                            return false;
                         }
-                    });
+                        return true;
+                    }
+                });
 
-                    return exists.get();
-                }
+                return exists.get();
+            }
 
-                /**
-                 * Return the current worst weight for all alternatives
-                 */
-                double getWorstSortBy() {
-                    if (alternatives.isEmpty())
-                        throw new IllegalStateException("Empty alternative list cannot happen");
-                    return alternatives.get(alternatives.size() - 1).sortBy;
-                }
+            /**
+             * Return the current worst weight for all alternatives
+             */
+            double getWorstSortBy() {
+                if (alternatives.isEmpty())
+                    throw new IllegalStateException("Empty alternative list cannot happen");
+                return alternatives.get(alternatives.size() - 1).sortBy;
+            }
 
-                // returns true if fromSPTEntry is identical to the specified best path
-                boolean isBestPath(SPTEntry fromSPTEntry) {
-                    if (traversalMode.isEdgeBased()) {
-                        if (GHUtility.getEdgeFromEdgeKey(startTID.get()) == fromSPTEntry.edge) {
-                            if (fromSPTEntry.parent == null)
-                                throw new IllegalStateException("best path must have no parent but was non-null: " + fromSPTEntry);
-                            if (bestEntry.get() != null && bestEntry.get().edge != fromSPTEntry.edge)
-                                throw new IllegalStateException("there can be only one best entry but was " + fromSPTEntry + " vs old: " + bestEntry.get()
-                                        + " " + graph.getEdgeIteratorState(fromSPTEntry.edge, fromSPTEntry.adjNode).fetchWayGeometry(FetchMode.ALL));
-                            bestEntry.set(fromSPTEntry);
-                            return true;
-                        }
-
-                    } else if (fromSPTEntry.parent == null) {
-                        if (startTID.get() != fromSPTEntry.adjNode)
-                            throw new IllegalStateException("Start traversal ID has to be identical to root edge entry "
-                                    + "which is the plateau start of the best path but was: " + startTID + " vs. adjNode: " + fromSPTEntry.adjNode);
-                        if (bestEntry.get() != null)
+            // returns true if fromSPTEntry is identical to the specified best path
+            boolean isBestPath(SPTEntry fromSPTEntry) {
+                if (traversalMode.isEdgeBased()) {
+                    if (GHUtility.getEdgeFromEdgeKey(startTID.get()) == fromSPTEntry.edge) {
+                        if (fromSPTEntry.parent == null)
+                            throw new IllegalStateException("best path must have no parent but was non-null: " + fromSPTEntry);
+                        if (bestEntry.get() != null && bestEntry.get().edge != fromSPTEntry.edge)
                             throw new IllegalStateException("there can be only one best entry but was " + fromSPTEntry + " vs old: " + bestEntry.get()
                                     + " " + graph.getEdgeIteratorState(fromSPTEntry.edge, fromSPTEntry.adjNode).fetchWayGeometry(FetchMode.ALL));
                         bestEntry.set(fromSPTEntry);
                         return true;
                     }
 
-                    return false;
+                } else if (fromSPTEntry.parent == null) {
+                    if (startTID.get() != fromSPTEntry.adjNode)
+                        throw new IllegalStateException("Start traversal ID has to be identical to root edge entry "
+                                + "which is the plateau start of the best path but was: " + startTID + " vs. adjNode: " + fromSPTEntry.adjNode);
+                    if (bestEntry.get() != null)
+                        throw new IllegalStateException("there can be only one best entry but was " + fromSPTEntry + " vs old: " + bestEntry.get()
+                                + " " + graph.getEdgeIteratorState(fromSPTEntry.edge, fromSPTEntry.adjNode).fetchWayGeometry(FetchMode.ALL));
+                    bestEntry.set(fromSPTEntry);
+                    return true;
                 }
-            });
 
-            return alternatives;
-        }
-
-        /**
-         * This method adds the traversal IDs of the specified path as set to the specified map.
-         */
-        AtomicInteger addToMap(GHIntObjectHashMap<IntSet> map, Path path) {
-            IntSet set = new GHIntHashSet();
-            final AtomicInteger startTID = new AtomicInteger(-1);
-            for (EdgeIteratorState iterState : path.calcEdges()) {
-                int tid = traversalMode.createTraversalId(iterState, false);
-                set.add(tid);
-                if (startTID.get() < 0) {
-                    // for node based traversal we need to explicitly add base node as starting node and to list
-                    if (!traversalMode.isEdgeBased()) {
-                        tid = iterState.getBaseNode();
-                        set.add(tid);
-                    }
-
-                    startTID.set(tid);
-                }
+                return false;
             }
-            map.put(startTID.get(), set);
-            return startTID;
-        }
+        });
+
+        return alternatives;
     }
 
-    public static class PlateauInfo {
-        String name;
-        List<Integer> edges;
+    /**
+     * This method adds the traversal IDs of the specified path as set to the specified map.
+     */
+    AtomicInteger addToMap(GHIntObjectHashMap<IntSet> map, Path path) {
+        IntSet set = new GHIntHashSet();
+        final AtomicInteger startTID = new AtomicInteger(-1);
+        for (EdgeIteratorState iterState : path.calcEdges()) {
+            int tid = traversalMode.createTraversalId(iterState, false);
+            set.add(tid);
+            if (startTID.get() < 0) {
+                // for node based traversal we need to explicitly add base node as starting node and to list
+                if (!traversalMode.isEdgeBased()) {
+                    tid = iterState.getBaseNode();
+                    set.add(tid);
+                }
 
-        public PlateauInfo(String name, List<Integer> edges) {
-            this.name = name;
-            this.edges = edges;
+                startTID.set(tid);
+            }
         }
-
-        @Override
-        public String toString() {
-            return name;
-        }
-
-        public List<Integer> getEdges() {
-            return edges;
-        }
-
-        public String getName() {
-            return name;
-        }
+        map.put(startTID.get(), set);
+        return startTID;
     }
 }

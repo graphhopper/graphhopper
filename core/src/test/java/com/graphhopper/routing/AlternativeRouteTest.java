@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.AlternativeRoute.AlternativeBidirSearch;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
@@ -149,7 +148,7 @@ public class AlternativeRouteTest {
         altDijkstra.setMaxShareFactor(0.7);
         altDijkstra.setMinPlateauFactor(0.15);
         altDijkstra.setMaxWeightFactor(2);
-        altDijkstra.setMaxExplorationFactor(1.8);
+        altDijkstra.setExplorationFactor(1.8);
 
         List<AlternativeRoute.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4);
         checkAlternatives(pathInfos);
@@ -184,7 +183,8 @@ public class AlternativeRouteTest {
         // one single disconnected node
         updateDistancesFor(p.graph, 20, 0.00, -0.01);
 
-        AlternativeBidirSearch altDijkstra = new AlternativeBidirSearch(p.graph, p.weighting, p.traversalMode, 1);
+        AlternativeRoute altDijkstra = new AlternativeRoute(p.graph, p.weighting, p.traversalMode);
+        altDijkstra.setExplorationFactor(1);
         Path path = altDijkstra.calcPath(1, 20);
         assertFalse(path.isFound());
 
