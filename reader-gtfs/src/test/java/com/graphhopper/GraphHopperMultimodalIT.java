@@ -67,7 +67,7 @@ public class GraphHopperMultimodalIT {
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
         locationIndex = graphHopperGtfs.getLocationIndex();
-        graphHopper = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), locationIndex, graphHopperGtfs.getGtfsStorage())
+        graphHopper = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), locationIndex, graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -281,11 +281,11 @@ public class GraphHopperMultimodalIT {
 
         // Go through all edges on removed foot subnetworks, and check that we can get to our destination station from there
         List<GHResponse> responses = new ArrayList<>();
-        AllEdgesIterator edges = graphHopperGtfs.getGraphHopperStorage().getAllEdges();
+        AllEdgesIterator edges = graphHopperGtfs.getBaseGraph().getAllEdges();
         while (edges.next()) {
             if (edges.get(footSub)) {
                 Request ghRequest = new Request(Arrays.asList(
-                        new GHPointLocation(new GHPoint(graphHopperGtfs.getGraphHopperStorage().getNodeAccess().getLat(edges.getBaseNode()), graphHopperGtfs.getGraphHopperStorage().getNodeAccess().getLon(edges.getBaseNode()))),
+                        new GHPointLocation(new GHPoint(graphHopperGtfs.getBaseGraph().getNodeAccess().getLat(edges.getBaseNode()), graphHopperGtfs.getBaseGraph().getNodeAccess().getLon(edges.getBaseNode()))),
                         new GHStationLocation("EMSI")),
                         LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
                 ghRequest.setWalkSpeedKmH(50); // Yes, I can walk very fast, 50 km/h. Problem?

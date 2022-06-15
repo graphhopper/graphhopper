@@ -69,7 +69,7 @@ public class MapMatching2Test {
         MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
 
         // make sure no virtual edges are returned
-        int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();
+        int edgeCount = hopper.getBaseGraph().getAllEdges().length();
         for (EdgeMatch em : mr.getEdgeMatches()) {
             assertTrue(em.getEdgeState().getEdge() < edgeCount, "result contains virtual edges:" + em.getEdgeState().toString());
             validateEdgeMatch(em);
@@ -115,7 +115,7 @@ public class MapMatching2Test {
         MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
 
         // make sure no virtual edges are returned
-        int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();
+        int edgeCount = hopper.getBaseGraph().getAllEdges().length();
         for (EdgeMatch em : mr.getEdgeMatches()) {
             assertTrue(em.getEdgeState().getEdge() < edgeCount, "result contains virtual edges:" + em.getEdgeState().toString());
             validateEdgeMatch(em);

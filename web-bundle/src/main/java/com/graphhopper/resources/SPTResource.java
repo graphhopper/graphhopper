@@ -95,7 +95,7 @@ public class SPTResource {
         if (profile == null)
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
         LocationIndex locationIndex = graphHopper.getLocationIndex();
-        Graph graph = graphHopper.getGraphHopperStorage();
+        Graph graph = graphHopper.getBaseGraph();
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         BooleanEncodedValue inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName));
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA)) {

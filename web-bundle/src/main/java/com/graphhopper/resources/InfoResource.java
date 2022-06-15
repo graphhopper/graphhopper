@@ -47,7 +47,7 @@ public class InfoResource {
     @Inject
     public InfoResource(GraphHopperConfig config, GraphHopper graphHopper, @Named("hasElevation") Boolean hasElevation) {
         this.config = config;
-        this.storage = graphHopper.getGraphHopperStorage();
+        this.storage = graphHopper.getBaseGraph();
         this.hasElevation = hasElevation;
     }
 

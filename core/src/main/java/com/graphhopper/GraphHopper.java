@@ -311,7 +311,7 @@ public class GraphHopper {
      *
      * @throws IllegalStateException if graph is not instantiated.
      */
-    public GraphHopperStorage getGraphHopperStorage() {
+    public GraphHopperStorage getBaseGraph() {
         if (ghStorage == null)
             throw new IllegalStateException("GraphHopper storage not initialized");
 

@@ -31,7 +31,7 @@ public class GraphHopperHealthCheck extends HealthCheck {
 
     @Override
     protected Result check() {
-        if (!graphHopper.getGraphHopperStorage().getBounds().isValid()) {
+        if (!graphHopper.getBaseGraph().getBounds().isValid()) {
             return Result.unhealthy("GraphHopperStorage has invalid bounds.");
         }
         if (!graphHopper.getFullyLoaded()) {

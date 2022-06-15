@@ -30,7 +30,9 @@ import org.locationtech.jts.io.ParseException;
 import org.locationtech.jts.io.WKTReader;
 
 import java.io.File;
-import java.time.*;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -64,7 +66,7 @@ public class FreeWalkIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
-        ptRouter = new PtRouterFreeWalkImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
+        ptRouter = new PtRouterFreeWalkImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 

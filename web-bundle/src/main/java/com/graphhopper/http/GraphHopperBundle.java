@@ -68,7 +68,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
         @Override
         public GraphHopperStorage provide() {
-            return graphHopper.getGraphHopperStorage();
+            return graphHopper.getBaseGraph();
         }
 
         @Override

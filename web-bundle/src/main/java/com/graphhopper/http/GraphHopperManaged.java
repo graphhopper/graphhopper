@@ -105,7 +105,7 @@ public class GraphHopperManaged implements Managed {
                 graphHopper.getGraphHopperLocation(), graphHopper.getOSMFile(),
                 graphHopper.getEncodingManager().toEncodedValuesAsString(),
                 graphHopper.getEncodingManager().getIntsForFlags(),
-                graphHopper.getGraphHopperStorage().toDetailsString());
+                graphHopper.getBaseGraph().toDetailsString());
     }
 
     public GraphHopper getGraphHopper() {

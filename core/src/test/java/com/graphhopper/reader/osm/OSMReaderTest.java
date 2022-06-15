@@ -82,7 +82,7 @@ public class OSMReaderTest {
     @Test
     public void testMain() {
         GraphHopper hopper = new GraphHopperFacade(file1).importOrLoad();
-        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        GraphHopperStorage graph = hopper.getBaseGraph();
 
         assertNotNull(graph.getProperties().get("datareader.import.date"));
         assertNotEquals("", graph.getProperties().get("datareader.import.date"));
@@ -143,7 +143,7 @@ public class OSMReaderTest {
     @Test
     public void testSort() {
         GraphHopper hopper = new GraphHopperFacade(file1).setSortGraph(true).importOrLoad();
-        NodeAccess na = hopper.getGraphHopperStorage().getNodeAccess();
+        NodeAccess na = hopper.getBaseGraph().getNodeAccess();
         assertEquals(10, na.getLon(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
         assertEquals(51.249, na.getLat(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
     }
@@ -153,7 +153,7 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopperFacade(file2)
                 .setMinNetworkSize(0)
                 .importOrLoad();
-        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        GraphHopperStorage graph = hopper.getBaseGraph();
 
         assertEquals("2014-01-02T01:10:14Z", graph.getProperties().get("datareader.data.date"));
 
@@ -205,7 +205,7 @@ public class OSMReaderTest {
             public void cleanUp() {
             }
         }.importOrLoad();
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
 
         int n40 = AbstractGraphStorageTester.getIdOf(graph, 54.0);
         int n50 = AbstractGraphStorageTester.getIdOf(graph, 55.0);
@@ -231,7 +231,7 @@ public class OSMReaderTest {
             public void cleanUp() {
             }
         }.importOrLoad();
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
 
         int n60 = AbstractGraphStorageTester.getIdOf(graph, 56.0);
         EdgeIterator iter = carOutExplorer.setBaseNode(n60);
@@ -242,7 +242,7 @@ public class OSMReaderTest {
     @Test
     public void testWayReferencesNotExistingAdjNode_issue19() {
         GraphHopper hopper = new GraphHopperFacade(file4).importOrLoad();
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
 
         assertEquals(2, graph.getNodes());
         // the missing node is ignored, but the separated nodes are still connected
@@ -256,7 +256,7 @@ public class OSMReaderTest {
     @Test
     public void testDoNotRejectEdgeIfFirstNodeIsMissing_issue2221() {
         GraphHopper hopper = new GraphHopperFacade("test-osm9.xml").importOrLoad();
-        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        GraphHopperStorage graph = hopper.getBaseGraph();
         assertEquals(2, graph.getNodes());
         assertEquals(1, graph.getEdges());
         AllEdgesIterator iter = graph.getAllEdges();
@@ -276,7 +276,7 @@ public class OSMReaderTest {
     @Test
     public void test_edgeDistanceWhenFirstNodeIsMissing_issue2221() {
         GraphHopper hopper = new GraphHopperFacade("test-osm10.xml").importOrLoad();
-        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        GraphHopperStorage graph = hopper.getBaseGraph();
         assertEquals(3, graph.getNodes());
         assertEquals(3, graph.getEdges());
         AllEdgesIterator iter = graph.getAllEdges();
@@ -293,7 +293,7 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopperFacade(file3)
                 .setMinNetworkSize(0)
                 .importOrLoad();
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
 
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 11.1);
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 12);
@@ -316,7 +316,7 @@ public class OSMReaderTest {
     public void testNegativeIds() {
         String fileNegIds = "test-osm-negative-ids.xml";
         GraphHopper hopper = new GraphHopperFacade(fileNegIds).importOrLoad();
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
         assertEquals(4, graph.getNodes());
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
@@ -343,7 +343,7 @@ public class OSMReaderTest {
                 setMinNetworkSize(0).
                 importOrLoad();
 
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
         // we ignore the barrier at node 50, but not the one at node 20
         assertEquals(7, graph.getNodes());
         assertEquals(7, graph.getEdges());
@@ -382,7 +382,7 @@ public class OSMReaderTest {
                 setMinNetworkSize(0).
                 importOrLoad();
 
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
         // there are seven ways, but there should also be six barrier edges
         // we first split the loop way into two parts, and then we split the barrier node => 3 edges total
         assertEquals(7 + 6, graph.getEdges());
@@ -408,7 +408,7 @@ public class OSMReaderTest {
                 ).
                 setMinNetworkSize(0).
                 importOrLoad();
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
         // our way is split into five edges, because there are two ford nodes
         assertEquals(5, graph.getEdges());
         FlagEncoder encoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
@@ -437,7 +437,7 @@ public class OSMReaderTest {
     }
 
     void checkLoop(GraphHopper hopper) {
-        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        GraphHopperStorage graph = hopper.getBaseGraph();
 
         // A, B, E and one of C or D should be tower nodes, in any case C and D should not be collapsed entirely
         // into a loop edge from B to B.
@@ -471,7 +471,7 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopperFacade(fileBarriers).
                 setMinNetworkSize(0).
                 importOrLoad();
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
         // we ignore the barrier at node 50
         // 10-20-30 produces three edges: 10-20, 20-2x, 2x-30, the second one is a barrier edge
         assertEquals(7, graph.getNodes());
@@ -526,7 +526,7 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
                 importOrLoad();
 
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
         assertEquals(15, graph.getNodes());
         TurnCostStorage tcStorage = graph.getTurnCostStorage();
         assertNotNull(tcStorage);
@@ -601,7 +601,7 @@ public class OSMReaderTest {
         DecimalEncodedValue heightEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxHeight.KEY);
         DecimalEncodedValue weightEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWeight.KEY);
 
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
         assertEquals(5, graph.getNodes());
 
         int na = AbstractGraphStorageTester.getIdOf(graph, 11.1, 50);
@@ -644,7 +644,7 @@ public class OSMReaderTest {
         hopper.setElevationProvider(provider);
         hopper.importOrLoad();
 
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 49.501);
         int n30 = AbstractGraphStorageTester.getIdOf(graph, 49.5011);
         int n50 = AbstractGraphStorageTester.getIdOf(graph, 49.5001);
@@ -698,7 +698,7 @@ public class OSMReaderTest {
         DecimalEncodedValue truckTCEnc = manager.getDecimalEncodedValue(TurnCost.key("truck"));
         DecimalEncodedValue bikeTCEnc = manager.getDecimalEncodedValue(TurnCost.key("bike"));
 
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
         TurnCostStorage tcStorage = graph.getTurnCostStorage();
 
         int edge1 = GHUtility.getEdge(graph, 1, 0).getEdge();
@@ -729,7 +729,7 @@ public class OSMReaderTest {
                 setMinNetworkSize(0).
                 importOrLoad();
 
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
         assertEquals(8, graph.getNodes());
         TurnCostStorage tcStorage = graph.getTurnCostStorage();
         assertNotNull(tcStorage);
@@ -797,7 +797,7 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopperFacade(fileMultipleConditionalTurnRestrictions, true, "").
                 importOrLoad();
 
-        Graph graph = hopper.getGraphHopperStorage();
+        Graph graph = hopper.getBaseGraph();
         assertEquals(5, graph.getNodes());
         TurnCostStorage tcStorage = graph.getTurnCostStorage();
         assertNotNull(tcStorage);
@@ -838,7 +838,7 @@ public class OSMReaderTest {
     public void testPreferredLanguage() {
         GraphHopper hopper = new GraphHopperFacade(file1, false, "de").
                 importOrLoad();
-        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        GraphHopperStorage graph = hopper.getBaseGraph();
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         EdgeIterator iter = carOutExplorer.setBaseNode(n20);
         assertTrue(iter.next());
@@ -846,7 +846,7 @@ public class OSMReaderTest {
 
         hopper = new GraphHopperFacade(file1, false, "el").
                 importOrLoad();
-        graph = hopper.getGraphHopperStorage();
+        graph = hopper.getBaseGraph();
         n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
         iter = carOutExplorer.setBaseNode(n20);
         assertTrue(iter.next());
@@ -859,7 +859,7 @@ public class OSMReaderTest {
         GraphHopper hopper = new GraphHopperFacade("test-osm6.pbf")
                 .setMinNetworkSize(0)
                 .importOrLoad();
-        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+        GraphHopperStorage graph = hopper.getBaseGraph();
 
         assertEquals("2014-01-02T00:10:14Z", graph.getProperties().get("datareader.data.date"));
     }
@@ -1010,8 +1010,8 @@ public class OSMReaderTest {
             carEncoder = getEncodingManager().getEncoder("car");
             footEncoder = getEncodingManager().getEncoder("foot");
             carAccessEnc = carEncoder.getAccessEnc();
-            carOutExplorer = getGraphHopperStorage().createEdgeExplorer(AccessFilter.outEdges(carAccessEnc));
-            carAllExplorer = getGraphHopperStorage().createEdgeExplorer(AccessFilter.allEdges(carAccessEnc));
+            carOutExplorer = getBaseGraph().createEdgeExplorer(AccessFilter.outEdges(carAccessEnc));
+            carAllExplorer = getBaseGraph().createEdgeExplorer(AccessFilter.allEdges(carAccessEnc));
         }
 
         @Override
