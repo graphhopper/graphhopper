@@ -2,9 +2,9 @@
 
 ## Try out
 
-To build the GraphHopper jar from the Java sources you need to install `git` and [a recent JDK](https://adoptium.net).
+For a simpler start consider the pre-built jar and the general [installation documentation](../../README.md)
 
-(For a simpler start consider the pre-built jar and the documentation [here](../web/quickstart.md)).
+To build the GraphHopper jar from the Java sources you need to install `git` and [a recent JDK](https://adoptium.net).
 
 Now create the jar from sources via:
 
