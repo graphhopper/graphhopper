@@ -163,14 +163,14 @@ public class EncodingManager implements EncodedValueLookup {
 
             for (VehicleEncodedValues encoder : em.flagEncoders.values()) {
                 if (encoder.getName().contains("bike") || encoder.getName().contains("mtb")) {
-                    if (!em.hasEncodedValue(RouteNetwork.key("bike")))
+                    if (!em.hasEncodedValue(BikeNetwork.KEY))
                         add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class));
                     if (!em.hasEncodedValue(GetOffBike.KEY))
                         add(GetOffBike.create());
                     if (!em.hasEncodedValue(Smoothness.KEY))
                         add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class));
                 } else if (encoder.getName().contains("foot") || encoder.getName().contains("hike") || encoder.getName().contains("wheelchair")) {
-                    if (!em.hasEncodedValue(RouteNetwork.key("foot")))
+                    if (!em.hasEncodedValue(FootNetwork.KEY))
                         add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class));
                 }
             }
