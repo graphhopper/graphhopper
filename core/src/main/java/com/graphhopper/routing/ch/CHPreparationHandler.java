@@ -115,14 +115,14 @@ public class CHPreparationHandler {
         return loaded;
     }
 
-    public Map<String, PrepareContractionHierarchies.Result> prepare(GraphHopperStorage ghStorage, List<CHConfig> chConfigs, final boolean closeEarly) {
+    public Map<String, PrepareContractionHierarchies.Result> prepare(BaseGraph baseGraph, StorableProperties properties, List<CHConfig> chConfigs, final boolean closeEarly) {
         if (chConfigs.isEmpty()) {
             LOGGER.info("There are no CHs to prepare");
             return Collections.emptyMap();
         }
         LOGGER.info("Creating CH preparations, {}", getMemInfo());
         List<PrepareContractionHierarchies> preparations = chConfigs.stream()
-                .map(c -> createCHPreparation(ghStorage.getBaseGraph(), c))
+                .map(c -> createCHPreparation(baseGraph, c))
                 .collect(Collectors.toList());
         Map<String, PrepareContractionHierarchies.Result> results = Collections.synchronizedMap(new LinkedHashMap<>());
         List<Callable<String>> callables = new ArrayList<>(preparations.size());
@@ -139,7 +139,7 @@ public class CHPreparationHandler {
                 prepare.flush();
                 if (closeEarly)
                     prepare.close();
-                ghStorage.getProperties().put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
+                properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
                 return name;
             });
         }

@@ -31,7 +31,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.EdgeIteratorState;
@@ -59,14 +59,14 @@ public class PtIsochroneResource {
 
     private final GtfsStorage gtfsStorage;
     private final EncodingManager encodingManager;
-    private final GraphHopperStorage graphHopperStorage;
+    private final BaseGraph baseGraph;
     private final LocationIndex locationIndex;
 
     @Inject
-    public PtIsochroneResource(GtfsStorage gtfsStorage, EncodingManager encodingManager, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex) {
+    public PtIsochroneResource(GtfsStorage gtfsStorage, EncodingManager encodingManager, BaseGraph baseGraph, LocationIndex locationIndex) {
         this.gtfsStorage = gtfsStorage;
         this.encodingManager = encodingManager;
-        this.graphHopperStorage = graphHopperStorage;
+        this.baseGraph = baseGraph;
         this.locationIndex = locationIndex;
     }
 
@@ -96,9 +96,9 @@ public class PtIsochroneResource {
         GeometryFactory geometryFactory = new GeometryFactory();
         final FlagEncoder footEncoder = encodingManager.getEncoder("foot");
         final Weighting weighting = new FastestWeighting(footEncoder);
-        DefaultSnapFilter snapFilter = new DefaultSnapFilter(weighting, graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key("foot")));
+        DefaultSnapFilter snapFilter = new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("foot")));
 
-        PtLocationSnapper.Result snapResult = new PtLocationSnapper(graphHopperStorage, locationIndex, gtfsStorage).snapAll(Arrays.asList(location), Arrays.asList(snapFilter));
+        PtLocationSnapper.Result snapResult = new PtLocationSnapper(baseGraph, locationIndex, gtfsStorage).snapAll(Arrays.asList(location), Arrays.asList(snapFilter));
         GraphExplorer graphExplorer = new GraphExplorer(snapResult.queryGraph, gtfsStorage.getPtGraph(), weighting, gtfsStorage, RealtimeFeed.empty(), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
         MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, reverseFlow, false, false, 0, Collections.emptyList());
 

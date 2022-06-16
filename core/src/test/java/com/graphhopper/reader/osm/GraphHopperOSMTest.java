@@ -164,13 +164,13 @@ public class GraphHopperOSMTest {
                 setOSMFile("../core/files/monaco.osm.gz");
         gh.importOrLoad();
 
-        final NodeAccess na = gh.getGraphHopperStorage().getNodeAccess();
+        final NodeAccess na = gh.getBaseGraph().getNodeAccess();
         final Collection<Integer> indexNodeList = new TreeSet<>();
         LocationIndexTree index = (LocationIndexTree) gh.getLocationIndex();
-        final EdgeExplorer edgeExplorer = gh.getGraphHopperStorage().createEdgeExplorer();
+        final EdgeExplorer edgeExplorer = gh.getBaseGraph().createEdgeExplorer();
         final BBox bbox = new BBox(7.422, 7.429, 43.729, 43.734);
         index.query(bbox, edgeId -> {
-            EdgeIteratorState edge = gh.getGraphHopperStorage().getEdgeIteratorStateForKey(edgeId * 2);
+            EdgeIteratorState edge = gh.getBaseGraph().getEdgeIteratorStateForKey(edgeId * 2);
             for (int i = 0; i < 2; i++) {
                 int nodeId = i == 0 ? edge.getBaseNode() : edge.getAdjNode();
                 double lat = na.getLat(nodeId);
@@ -190,7 +190,7 @@ public class GraphHopperOSMTest {
         new BreadthFirstSearch() {
             @Override
             protected GHBitSet createBitSet() {
-                return new GHBitSetImpl(gh.getGraphHopperStorage().getNodes());
+                return new GHBitSetImpl(gh.getBaseGraph().getNodes());
             }
 
             @Override
@@ -417,8 +417,8 @@ public class GraphHopperOSMTest {
         // Now it doesn't work like that anymore, so I set this parameter so the test doesn't fail.
         ((LocationIndexTree) instance.getLocationIndex()).setMaxRegionSearch(300);
 
-        assertEquals(5, instance.getGraphHopperStorage().getNodes());
-        assertEquals(8, instance.getGraphHopperStorage().getEdges());
+        assertEquals(5, instance.getBaseGraph().getNodes());
+        assertEquals(8, instance.getBaseGraph().getEdges());
 
         // A to D
         GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setProfile(profile1));
@@ -466,7 +466,7 @@ public class GraphHopperOSMTest {
                                 ))).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
-        assertEquals(5, instance.getGraphHopperStorage().getNodes());
+        assertEquals(5, instance.getBaseGraph().getNodes());
         instance.close();
 
         // different config (flagEncoder list)
@@ -540,9 +540,9 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         // older versions <= 0.12 did not store this property, ensure that we fail to load it
-        instance.getGraphHopperStorage().getProperties().remove("graph.encoded_values");
-        instance.getGraphHopperStorage().flush();
-        assertEquals(5, instance.getGraphHopperStorage().getNodes());
+        instance.getProperties().remove("graph.encoded_values");
+        instance.getBaseGraph().flush();
+        assertEquals(5, instance.getBaseGraph().getNodes());
         instance.close();
 
         // different encoded values should fail to load
@@ -647,8 +647,8 @@ public class GraphHopperOSMTest {
 
         ((LocationIndexTree) instance.getLocationIndex()).setMaxRegionSearch(300);
 
-        assertEquals(2, instance.getGraphHopperStorage().getNodes());
-        assertEquals(2, instance.getGraphHopperStorage().getAllEdges().length());
+        assertEquals(2, instance.getBaseGraph().getNodes());
+        assertEquals(2, instance.getBaseGraph().getAllEdges().length());
 
         // A to E only for foot
         GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.19, 52).setProfile(profile));
@@ -732,11 +732,11 @@ public class GraphHopperOSMTest {
                     assertEquals((long) shortcutCount, chGraph.getValue().getShortcuts());
 
                 String keyError = Parameters.CH.PREPARE + "error." + name;
-                String valueError = hopper.getGraphHopperStorage().getProperties().get(keyError);
+                String valueError = hopper.getProperties().get(keyError);
                 assertTrue(valueError.isEmpty(), "Properties for " + name + " should NOT contain error " + valueError + " [" + threadCount + "]");
 
                 String key = Parameters.CH.PREPARE + "date." + name;
-                String value = hopper.getGraphHopperStorage().getProperties().get(key);
+                String value = hopper.getProperties().get(key);
                 assertFalse(value.isEmpty(), "Properties for " + name + " did NOT contain finish date [" + threadCount + "]");
             }
             hopper.close();
@@ -781,11 +781,11 @@ public class GraphHopperOSMTest {
                     assertEquals((int) landmarksCount, landmarks.getValue().getSubnetworksWithLandmarks());
 
                 String keyError = Parameters.Landmark.PREPARE + "error." + name;
-                String valueError = hopper.getGraphHopperStorage().getProperties().get(keyError);
+                String valueError = hopper.getProperties().get(keyError);
                 assertTrue(valueError.isEmpty(), "Properties for " + name + " should NOT contain error " + valueError + " [" + threadCount + "]");
 
                 String key = Parameters.Landmark.PREPARE + "date." + name;
-                String value = hopper.getGraphHopperStorage().getProperties().get(key);
+                String value = hopper.getProperties().get(key);
                 assertFalse(value.isEmpty(), "Properties for " + name + " did NOT contain finish date [" + threadCount + "]");
             }
             hopper.close();
@@ -846,8 +846,7 @@ public class GraphHopperOSMTest {
                     new Profile("car2").setVehicle("car").setWeighting("fastest")
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
-            // so far we get another error message in this case, because GraphHopperStorage checks the encoded values
-            // in loadExisting already
+            // so far we get another error message in this case, because we check the encoded values and encoders first
             assertTrue(e.getMessage().contains("Flag encoders do not match"), e.getMessage());
             hopper.close();
         }

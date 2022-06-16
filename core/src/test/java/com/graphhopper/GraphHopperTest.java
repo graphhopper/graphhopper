@@ -1763,7 +1763,7 @@ public class GraphHopperTest {
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         for (int i = 0; i < 100; i++) {
-            BBox bounds = hopper.getGraphHopperStorage().getBounds();
+            BBox bounds = hopper.getBaseGraph().getBounds();
             double lat1 = bounds.minLat + rnd.nextDouble() * (bounds.maxLat - bounds.minLat);
             double lat2 = bounds.minLat + rnd.nextDouble() * (bounds.maxLat - bounds.minLat);
             double lon1 = bounds.minLon + rnd.nextDouble() * (bounds.maxLon - bounds.minLon);
@@ -2031,10 +2031,10 @@ public class GraphHopperTest {
                 setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
         hopper.importOrLoad();
         int count = 0;
-        AllEdgesIterator iter = hopper.getGraphHopperStorage().getAllEdges();
+        AllEdgesIterator iter = hopper.getBaseGraph().getAllEdges();
         while (iter.next())
             count++;
-        assertEquals(hopper.getGraphHopperStorage().getEdges(), count);
+        assertEquals(hopper.getBaseGraph().getEdges(), count);
     }
 
     @Test
@@ -2542,7 +2542,7 @@ public class GraphHopperTest {
                 .setGraphHopperLocation(GH_LOCATION)
                 .setOSMFile(BAYREUTH);
         hopper.importOrLoad();
-        int nodes = hopper.getGraphHopperStorage().getNodes();
+        int nodes = hopper.getBaseGraph().getNodes();
         hopper.close();
 
         // load without configured FlagEncoders
@@ -2553,8 +2553,8 @@ public class GraphHopperTest {
         );
         hopper.setGraphHopperLocation(GH_LOCATION);
         assertTrue(hopper.load());
-        hopper.getGraphHopperStorage();
-        assertEquals(nodes, hopper.getGraphHopperStorage().getNodes());
+        hopper.getBaseGraph();
+        assertEquals(nodes, hopper.getBaseGraph().getNodes());
         hopper.close();
 
         // load via explicitly configured FlagEncoders
@@ -2566,7 +2566,7 @@ public class GraphHopperTest {
         );
         hopper.setGraphHopperLocation(GH_LOCATION);
         assertTrue(hopper.load());
-        assertEquals(nodes, hopper.getGraphHopperStorage().getNodes());
+        assertEquals(nodes, hopper.getBaseGraph().getNodes());
         hopper.close();
     }
 

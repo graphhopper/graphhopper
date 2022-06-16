@@ -175,7 +175,7 @@ public class Measurement {
 
         hopper.importOrLoad();
 
-        BaseGraph g = hopper.getGraphHopperStorage().getBaseGraph();
+        BaseGraph g = hopper.getBaseGraph();
         EncodingManager encodingManager = hopper.getEncodingManager();
         if (encodingManager.fetchEdgeEncoders().size() != 1) {
             throw new IllegalArgumentException("There has to be exactly one encoder for each measurement");
@@ -538,7 +538,7 @@ public class Measurement {
     }
 
     private void measureRouting(final GraphHopper hopper, final QuerySettings querySettings) {
-        final Graph g = hopper.getGraphHopperStorage();
+        final Graph g = hopper.getBaseGraph();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
         final AtomicLong distSum = new AtomicLong(0);
@@ -586,7 +586,7 @@ public class Measurement {
                 try {
                     req.getHints().putObject(BLOCK_AREA, querySettings.blockArea);
                     // run this method to check if creating the blocked area is possible
-                    GraphEdgeIdFinder.createBlockArea(hopper.getGraphHopperStorage(), hopper.getLocationIndex(), req.getPoints(), req.getHints(), edgeFilter);
+                    GraphEdgeIdFinder.createBlockArea(hopper.getBaseGraph(), hopper.getLocationIndex(), req.getPoints(), req.getHints(), edgeFilter);
                     break;
                 } catch (IllegalArgumentException ex) {
                     if (i >= 4)

@@ -169,7 +169,11 @@ public class BaseGraph implements Graph, Closeable {
         return this;
     }
 
-    String toDetailsString() {
+    public int getIntsForFlags() {
+        return store.getIntsForFlags();
+    }
+
+    public String toDetailsString() {
         return store.toDetailsString() + ", "
                 + "name:(" + edgeKVStorage.getCapacity() / Helper.MB + "MB), "
                 + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB)";
@@ -178,7 +182,7 @@ public class BaseGraph implements Graph, Closeable {
     /**
      * Flush and free resources that are not needed for post-processing (way geometries and EdgeKVStorage).
      */
-    void flushAndCloseGeometryAndNameStorage() {
+    public void flushAndCloseGeometryAndNameStorage() {
         setWayGeometryHeader();
 
         wayGeometry.flush();
