@@ -34,6 +34,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
+
 /**
  * This class implements the alternative paths search using the "plateau" and partially the
  * "penalty" method described in the following papers.
@@ -58,17 +60,45 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class AlternativeRoute extends AStarBidirection implements RoutingAlgorithm {
     private static final Comparator<AlternativeInfo> ALT_COMPARATOR = Comparator.comparingDouble(o -> o.sortBy);
-    private double maxWeightFactor = 1.4;
-    // the higher the maxWeightFactor the higher the explorationFactor needs to be
-    private double explorationFactor = 1.6;
-    private double maxShareFactor = 0.6;
-    private double minPlateauFactor = 0.2;
-    private int maxPaths = 2;
 
-    public AlternativeRoute(Graph graph, Weighting weighting, TraversalMode traversalMode) {
+    private final int maxPaths;
+    /**
+     * This variable influences the graph exploration for alternative paths. Specify a higher value than the default to
+     * potentially get more alternatives and a lower value to improve query time but reduces chance to find alternatives.
+     */
+    private final double explorationFactor;
+    /**
+     * Decreasing this factor filters found alternatives and increases quality. E.g. if the factor is 2 than
+     * all alternatives with a weight 2 times longer than the optimal weight are return.
+     */
+    private final double maxWeightFactor;
+    /**
+     * Decreasing this factor filters found alternatives and might increase quality. This parameter is used to avoid
+     * alternatives too similar to the best path. Specify 0.2 to ensure maximum 20% of the best path are on the same roads.
+     * The unit is also the 'weight'.
+     */
+    private final double maxShareFactor;
+    /**
+     * Increasing this factor filters found alternatives and might increase quality. This specifies the minimum plateau
+     * portion of every alternative path that is required. Keep in mind that a plateau is often not complete especially
+     * when the explorationFactor is low (and for performance reasons the explorationFactor should be as low as possible).
+     * This is the reason we cannot require a too big plateau portion here as default.
+     */
+    private final double minPlateauFactor;
+
+    public AlternativeRoute(Graph graph, Weighting weighting, TraversalMode traversalMode, PMap hints) {
         super(graph, weighting, traversalMode);
         if (weighting.hasTurnCosts() && !traversalMode.isEdgeBased())
             throw new IllegalStateException("Weightings supporting turn costs cannot be used with node-based traversal mode");
+
+        this.maxPaths = hints.getInt(MAX_PATHS, 2);
+        if (this.maxPaths < 2)
+            throw new IllegalArgumentException("Use normal algorithm with less overhead instead if no alternatives are required");
+
+        this.explorationFactor = hints.getDouble("alternative_route.max_exploration_factor", 1.12);
+        this.maxWeightFactor = hints.getDouble(MAX_WEIGHT, 1.25);
+        this.maxShareFactor = hints.getDouble(MAX_SHARE, 0.6);
+        this.minPlateauFactor = hints.getDouble("alternative_route.min_plateau_factor", 0.1);
     }
 
     static List<String> getAltNames(Graph graph, SPTEntry ee) {
@@ -95,48 +125,6 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
     @Override
     public void setMaxVisitedNodes(int numberOfNodes) {
         this.maxVisitedNodes = numberOfNodes;
-    }
-
-    /**
-     * Increasing this factor results in returning more alternatives. E.g. if the factor is 2 than
-     * all alternatives with a weight 2 times longer than the optimal weight are return. (default is
-     * 1.4)
-     */
-    public void setMaxWeightFactor(double maxWeightFactor) {
-        this.maxWeightFactor = maxWeightFactor;
-    }
-
-    /**
-     * This parameter is used to avoid alternatives too similar to the best path. Specify 0.5 to
-     * force a same paths of maximum 50%. The unit is the 'weight' returned in the Weighting.
-     */
-    public void setMaxShareFactor(double maxShareFactor) {
-        this.maxShareFactor = maxShareFactor;
-    }
-
-    /**
-     * This method sets the minimum plateau portion of every alternative path that is required.
-     */
-    public void setMinPlateauFactor(double minPlateauFactor) {
-        this.minPlateauFactor = minPlateauFactor;
-    }
-
-    /**
-     * This method sets the graph exploration percentage for alternative paths. Default for bidirectional A*
-     * is 1.6 (160%). Specify a higher value to get more alternatives (especially if maxWeightFactor is higher than
-     * 1.5) and a lower value to improve query time but reduces the possibility to find alternatives.
-     */
-    public void setExplorationFactor(double explorationFactor) {
-        this.explorationFactor = explorationFactor;
-    }
-
-    /**
-     * Specifies how many paths (including the optimal) are returned. (default is 2)
-     */
-    public void setMaxPaths(int maxPaths) {
-        this.maxPaths = maxPaths;
-        if (this.maxPaths < 2)
-            throw new IllegalArgumentException("Use normal algorithm with less overhead instead if no alternatives are required");
     }
 
     public List<AlternativeInfo> calcAlternatives(int from, int to) {
