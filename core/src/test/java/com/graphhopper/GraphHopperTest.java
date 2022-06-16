@@ -463,6 +463,7 @@ public class GraphHopperTest {
         GHRequest req = new GHRequest(50.023513, 11.548862, 49.969441, 11.537876).
                 setAlgorithm(ALT_ROUTE).setProfile(profile);
         req.putHint("alternative_route.max_paths", 3);
+        req.putHint("alternative_route.max_exploration_factor", 1.2);
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
 
