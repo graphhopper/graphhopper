@@ -17,10 +17,13 @@
  */
 package com.graphhopper.routing.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
+import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -94,29 +97,49 @@ public class EncodingManager implements EncodedValueLookup {
         private EncodingManager em = new EncodingManager();
 
         public Builder add(FlagEncoder encoder) {
+            return add(encoder, true);
+        }
+
+        public Builder addWithoutAddingEncodedValues(FlagEncoder encoder) {
+            return add(encoder, false);
+        }
+
+        private Builder add(FlagEncoder encoder, boolean addEncodedValues) {
             checkNotBuiltAlready();
             if (em.hasEncoder(encoder.getName()))
                 throw new IllegalArgumentException("FlagEncoder already exists: " + encoder.getName());
             VehicleEncodedValues v = (VehicleEncodedValues) encoder;
             v.setEncodedValueLookup(em);
 
-            List<EncodedValue> list = new ArrayList<>();
-            v.createEncodedValues(list);
-            list.forEach(this::add);
+            if (addEncodedValues) {
+                List<EncodedValue> list = new ArrayList<>();
+                v.createEncodedValues(list);
+                list.forEach(this::add);
 
-            list = new ArrayList<>();
-            v.createTurnCostEncodedValues(list);
-            list.forEach(this::addTurnCostEncodedValue);
+                list = new ArrayList<>();
+                v.createTurnCostEncodedValues(list);
+                list.forEach(this::addTurnCostEncodedValue);
+            }
 
             em.flagEncoders.put(v.getName(), v);
             return this;
         }
 
         public Builder add(EncodedValue encodedValue) {
+            return add(encodedValue, true);
+        }
+
+        // todonow: remove or keep if we go this way
+        public Builder addWithoutChangingConfig(EncodedValue encodedValue) {
+            return add(encodedValue, false);
+        }
+
+        private Builder add(EncodedValue encodedValue, boolean changeConfig) {
             checkNotBuiltAlready();
             if (em.hasEncodedValue(encodedValue.getName()))
                 throw new IllegalArgumentException("EncodedValue already exists: " + encodedValue.getName());
-            encodedValue.init(em.edgeConfig);
+            if (changeConfig)
+                encodedValue.init(em.edgeConfig);
             em.encodedValueMap.put(encodedValue.getName(), encodedValue);
             return this;
         }
@@ -218,11 +241,16 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public String toFlagEncodersAsString() {
-        return flagEncoders.values().stream().map(fe -> fe.getName() + "|" + fe.getSharedEncodedValueString()).collect(Collectors.joining(","));
+        return flagEncoders.values().stream().map(VehicleEncodedValues::toSerializationString).collect(Collectors.joining(","));
     }
 
     public String toEncodedValuesAsString() {
-        return encodedValueMap.values().stream().map(Object::toString).collect(Collectors.joining(","));
+        List<String> serializedEVsList = encodedValueMap.values().stream().map(EncodedValueSerializer::serializeEncodedValue).collect(Collectors.toList());
+        try {
+            return Jackson.newObjectMapper().writeValueAsString(serializedEVsList);
+        } catch (JsonProcessingException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @Override

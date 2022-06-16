@@ -18,10 +18,13 @@
 package com.graphhopper;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
@@ -63,6 +66,7 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.graphhopper.util.GHUtility.readCountries;
 import static com.graphhopper.util.Helper.*;
@@ -497,7 +501,6 @@ public class GraphHopper {
         flagEncodersString = ghConfig.getString("graph.flag_encoders", flagEncodersString);
         encodedValuesString = ghConfig.getString("graph.encoded_values", encodedValuesString);
         dateRangeParserString = ghConfig.getString("datareader.date_range_parser_day", dateRangeParserString);
-        buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
 
         if (ghConfig.getString("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -858,39 +861,50 @@ public class GraphHopper {
 
         if (!allowWrites && dataAccessDefaultType.isMMap())
             dataAccessDefaultType = DAType.MMAP_RO;
-        if (encodingManager == null)
-            // we did not call init(), so we build the encoding manager now.
-            // just like when calling init, users have to make sure they use the same setup for import and load
+
+        if (!new File(ghLocation).exists()) {
+            // there is nothing to load, so we create the EM from the config and create the things
+            // to be... created *rolling_eyes*
             buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
+
+            GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
+            directory.configure(dataAccessConfig);
+            baseGraph = new BaseGraph.Builder(getEncodingManager())
+                    .setDir(directory)
+                    .set3D(hasElevation())
+                    .withTurnCosts(encodingManager.needsTurnCostsSupport())
+                    .setSegmentSize(defaultSegmentSize)
+                    .build();
+            properties = new StorableProperties(directory);
+            checkProfilesConsistency();
+            // ... and continue elsewhere
+            return false;
+        }
 
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
-        baseGraph = new BaseGraph.Builder(getEncodingManager())
-                .setDir(directory)
-                .set3D(hasElevation())
-                .withTurnCosts(encodingManager.needsTurnCostsSupport())
-                .setSegmentSize(defaultSegmentSize)
-                .build();
-        properties = new StorableProperties(directory);
-        checkProfilesConsistency();
-
-        if (!new File(ghLocation).exists())
-            return false;
-
         GHLock lock = null;
         try {
             // create locks only if writes are allowed, if they are not allowed a lock cannot be created
             // (e.g. on a read only filesystem locks would fail)
-            if (baseGraph.getDirectory().getDefaultType().isStoring() && isAllowWrites()) {
+            if (directory.getDefaultType().isStoring() && isAllowWrites()) {
                 lockFactory.setLockDir(new File(ghLocation));
                 lock = lockFactory.create(fileLockName, false);
                 if (!lock.tryLock())
                     throw new RuntimeException("To avoid reading partial data we need to obtain the read lock but it failed. In " + ghLocation, lock.getObtainFailedReason());
             }
-
-            if (!loadBaseGraphAndProperties())
+            properties = new StorableProperties(directory);
+            if (!properties.loadExisting())
                 return false;
-
+            loadEncodingManagerFromProperties(properties);
+            baseGraph = new BaseGraph.Builder(getEncodingManager())
+                    .setDir(directory)
+                    .set3D(hasElevation())
+                    .withTurnCosts(encodingManager.needsTurnCostsSupport())
+                    .setSegmentSize(defaultSegmentSize)
+                    .build();
+            baseGraph.loadExisting();
+            checkProfilesConsistency();
             String storedProfiles = properties.get("profiles");
             String configuredProfiles = getProfilesString();
             if (!storedProfiles.equals(configuredProfiles))
@@ -909,32 +923,35 @@ public class GraphHopper {
         }
     }
 
-    private boolean loadBaseGraphAndProperties() {
-        if (properties.loadExisting()) {
-            if (properties.containsVersion())
-                throw new IllegalStateException("The GraphHopper file format is not compatible with the data you are " +
-                        "trying to load. You either need to use an older version of GraphHopper or run a new import");
-            // check encoding for compatibility
-            String flagEncodersStr = properties.get("graph.flag_encoders");
+    private void loadEncodingManagerFromProperties(StorableProperties properties) {
+        if (properties.containsVersion())
+            throw new IllegalStateException("The GraphHopper file format is not compatible with the data you are " +
+                    "trying to load. You either need to use an older version of GraphHopper or run a new import");
+        String encodedValueStr = properties.get("graph.encoded_values");
+        ArrayNode evList = deserializeEncodedValueList(encodedValueStr);
+        List<EncodedValue> encodedValues = new ArrayList<>();
+        evList.forEach(serializedEV -> encodedValues.add(EncodedValueSerializer.deserializeEncodedValue(serializedEV.textValue())));
 
-            if (!encodingManager.toFlagEncodersAsString().equalsIgnoreCase(flagEncodersStr)) {
-                throw new IllegalStateException("Flag encoders do not match:"
-                        + "\nGraphhopper config: " + encodingManager.toFlagEncodersAsString()
-                        + "\nLoaded graph:       " + flagEncodersStr
-                        + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
-            }
+        String flagEncodersStr = properties.get("graph.flag_encoders");
+        List<FlagEncoder> flagEncoders = Stream.of(flagEncodersStr.split(","))
+                .map(str -> flagEncoderFactory.deserializeFlagEncoder(str, name -> encodedValues.stream()
+                        .filter(ev -> ev.getName().equals(name))
+                        .findFirst()
+                        .orElseThrow(() -> new IllegalStateException("FlagEncoder " + str + " uses unknown encoded value: " + name))))
+                .collect(Collectors.toList());
 
-            String encodedValueStr = properties.get("graph.encoded_values");
-            if (!encodingManager.toEncodedValuesAsString().equalsIgnoreCase(encodedValueStr)) {
-                throw new IllegalStateException("Encoded values do not match:"
-                        + "\nGraphhopper config: " + encodingManager.toEncodedValuesAsString()
-                        + "\nLoaded graph:       " + encodedValueStr
-                        + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
-            }
-            baseGraph.loadExisting();
-            return true;
+        EncodingManager.Builder emBuilder = EncodingManager.start();
+        flagEncoders.forEach(emBuilder::addWithoutAddingEncodedValues);
+        encodedValues.forEach(emBuilder::add);
+        encodingManager = emBuilder.build();
+    }
+
+    private ArrayNode deserializeEncodedValueList(String encodedValueStr) {
+        try {
+            return Jackson.newObjectMapper().readValue(encodedValueStr, ArrayNode.class);
+        } catch (JsonProcessingException e) {
+            throw new UncheckedIOException(e);
         }
-        return false;
     }
 
     private String getProfilesString() {
