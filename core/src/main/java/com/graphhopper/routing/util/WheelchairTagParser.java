@@ -100,25 +100,25 @@ public class WheelchairTagParser extends FootTagParser {
      * Avoid some more ways than for pedestrian like hiking trails.
      */
     @Override
-    public EncodingManager.Access getAccess(ReaderWay way) {
+    public WayAccess getAccess(ReaderWay way) {
         if (way.hasTag("surface", excludeSurfaces)) {
             if (!way.hasTag("sidewalk", sidewalkValues)) {
-                return EncodingManager.Access.CAN_SKIP;
+                return WayAccess.CAN_SKIP;
             } else {
                 String sidewalk = way.getTag("sidewalk");
                 if (way.hasTag("sidewalk:" + sidewalk + ":surface", excludeSurfaces)) {
-                    return EncodingManager.Access.CAN_SKIP;
+                    return WayAccess.CAN_SKIP;
                 }
             }
         }
 
         if (way.hasTag("smoothness", excludeSmoothness)) {
             if (!way.hasTag("sidewalk", sidewalkValues)) {
-                return EncodingManager.Access.CAN_SKIP;
+                return WayAccess.CAN_SKIP;
             } else {
                 String sidewalk = way.getTag("sidewalk");
                 if (way.hasTag("sidewalk:" + sidewalk + ":smoothness", excludeSmoothness)) {
-                    return EncodingManager.Access.CAN_SKIP;
+                    return WayAccess.CAN_SKIP;
                 }
             }
         }
@@ -133,7 +133,7 @@ public class WheelchairTagParser extends FootTagParser {
                     }
 
                     if (-maxInclinePercent > incline || incline > maxInclinePercent) {
-                        return EncodingManager.Access.CAN_SKIP;
+                        return WayAccess.CAN_SKIP;
                     }
                 } catch (NumberFormatException ex) {
                 }
@@ -141,7 +141,7 @@ public class WheelchairTagParser extends FootTagParser {
         }
 
         if (way.hasTag("kerb", "raised"))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (way.hasTag("kerb")) {
             String tagValue = way.getTag("kerb");
@@ -154,7 +154,7 @@ public class WheelchairTagParser extends FootTagParser {
 
                     int maxKerbHeightCm = 3;
                     if (kerbHeight > maxKerbHeightCm) {
-                        return EncodingManager.Access.CAN_SKIP;
+                        return WayAccess.CAN_SKIP;
                     }
                 } catch (NumberFormatException ex) {
                 }
@@ -166,7 +166,7 @@ public class WheelchairTagParser extends FootTagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
-        EncodingManager.Access access = getAccess(way);
+        WayAccess access = getAccess(way);
         if (access.canSkip())
             return edgeFlags;
 

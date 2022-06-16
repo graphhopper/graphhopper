@@ -154,7 +154,7 @@ public abstract class VehicleTagParser implements TagParser {
      *
      * @return the encoded value to indicate if this encoder allows travel or not.
      */
-    public abstract EncodingManager.Access getAccess(ReaderWay way);
+    public abstract WayAccess getAccess(ReaderWay way);
 
     /**
      * @return true if the given OSM node blocks access for this vehicle, false otherwise

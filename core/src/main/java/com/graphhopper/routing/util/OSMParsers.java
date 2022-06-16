@@ -75,7 +75,7 @@ public class OSMParsers {
     }
 
     public boolean acceptWay(ReaderWay way) {
-        return vehicleTagParsers.stream().anyMatch(v -> !v.getAccess(way).equals(EncodingManager.Access.CAN_SKIP));
+        return vehicleTagParsers.stream().anyMatch(v -> !v.getAccess(way).equals(WayAccess.CAN_SKIP));
     }
 
     public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {

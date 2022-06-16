@@ -255,26 +255,6 @@ public class EncodingManager implements EncodedValueLookup {
         return null;
     }
 
-    public enum Access {
-        WAY, FERRY, OTHER, CAN_SKIP;
-
-        public boolean isFerry() {
-            return this.ordinal() == FERRY.ordinal();
-        }
-
-        public boolean isWay() {
-            return this.ordinal() == WAY.ordinal();
-        }
-
-        public boolean isOther() {
-            return this.ordinal() == OTHER.ordinal();
-        }
-
-        public boolean canSkip() {
-            return this.ordinal() == CAN_SKIP.ordinal();
-        }
-    }
-
     public String toFlagEncodersAsString() {
         StringBuilder str = new StringBuilder();
         for (FlagEncoder encoder : edgeEncoders) {

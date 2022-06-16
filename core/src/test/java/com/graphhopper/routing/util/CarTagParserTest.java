@@ -574,8 +574,8 @@ public class CarTagParserTest {
 
         BikeTagParser bikeParser = new BikeTagParser(em, new PMap());
         bikeParser.init(new DateRangeParser());
-        assertEquals(EncodingManager.Access.CAN_SKIP, parser.getAccess(way));
-        assertNotEquals(EncodingManager.Access.CAN_SKIP, bikeParser.getAccess(way));
+        assertEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
+        assertNotEquals(WayAccess.CAN_SKIP, bikeParser.getAccess(way));
         IntsRef edgeFlags = em.createEdgeFlags();
         parser.handleWayTags(edgeFlags, way);
         bikeParser.handleWayTags(edgeFlags, way);
