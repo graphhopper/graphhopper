@@ -841,13 +841,14 @@ public class GraphHopperOSMTest {
         {
             // problem: we add another profile, which is not allowed, because there would be no subnetwork ev for it
             GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
-                    new Profile("car").setVehicle("car").setWeighting("shortest"),
+                    new Profile("car").setVehicle("car").setWeighting("fastest"),
                     new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3)).setVehicle("car"),
                     new Profile("car2").setVehicle("car").setWeighting("fastest")
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
-            // so far we get another error message in this case, because we check the encoded values and encoders first
-            assertTrue(e.getMessage().contains("Flag encoders do not match"), e.getMessage());
+            // so far we get another error message in this case, because we check the encoded values (and encoders) first,
+            // for example here the encoded values are different, because of the extra car2_subnetwork EV
+            assertTrue(e.getMessage().contains("Encoded values do not match"), e.getMessage());
             hopper.close();
         }
         {
@@ -857,7 +858,7 @@ public class GraphHopperOSMTest {
                     new Profile("car").setVehicle("car").setWeighting("shortest")
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
-            assertTrue(e.getMessage().contains("Flag encoders do not match"), e.getMessage());
+            assertTrue(e.getMessage().contains("Encoded values do not match"), e.getMessage());
             hopper.close();
         }
     }
