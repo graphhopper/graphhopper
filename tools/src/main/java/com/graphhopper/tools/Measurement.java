@@ -215,7 +215,7 @@ public class Measurement {
                 gcAndWait();
                 boolean isCH = false;
                 boolean isLM = true;
-                Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
+                Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12]")).stream()
                         .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
                             measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount, count / 20, isCH, isLM).
                                     withInstructions().activeLandmarks(activeLMCount));
