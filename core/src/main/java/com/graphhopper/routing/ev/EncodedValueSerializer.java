@@ -51,11 +51,9 @@ public class EncodedValueSerializer {
             int storedVersion = jsonNode.get("version").asInt();
             ((ObjectNode) jsonNode).remove("version");
             EncodedValue encodedValue = MAPPER.treeToValue(jsonNode, EncodedValue.class);
-            // todonow: shall we store the version (with edge config stuff/position) **and** keep it when deserializing,
-            //          or skip both?
-//            if (storedVersion != encodedValue.getVersion())
-//                throw new IllegalStateException("Version does not match. Cannot properly read encoded value: " + encodedValue.getName() + ". " +
-//                        "You need to use the same version of GraphHopper you used to import the data");
+            if (storedVersion != encodedValue.getVersion())
+                throw new IllegalStateException("Version does not match. Cannot properly read encoded value: " + encodedValue.getName() + ". " +
+                        "You need to use the same version of GraphHopper you used to import the data");
             return encodedValue;
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Could not deserialize encoded value: " + serializedEncodedValue + ", error: " + e.getMessage());

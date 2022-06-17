@@ -213,7 +213,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     @Override
     public final String toString() {
         return getName() + "|version=" + getVersion() + "|bits=" + bits + "|min_value=" + minValue
-                + "|negate_reverse_direction" + negateReverseDirection + "|index=" + fwdDataIndex
+                + "|negate_reverse_direction=" + negateReverseDirection + "|index=" + fwdDataIndex
                 + "|shift=" + fwdShift + "|store_both_directions=" + storeTwoDirections;
     }
 
@@ -243,10 +243,11 @@ public class IntEncodedValueImpl implements IntEncodedValue {
 
     @Override
     public int getVersion() {
+        // todonow: there isn't really any 'version' here...
         int val = Helper.staticHashCode(name);
         val = 31 * val + (storeTwoDirections ? 1231 : 1237);
         val = 31 * val + (negateReverseDirection ? 13 : 17);
-        return staticHashCode(val, fwdDataIndex, bwdDataIndex, bits, minValue, maxValue, fwdShift, bwdShift, fwdMask, bwdMask);
+        return staticHashCode(val, bits, minValue, maxValue);
     }
 
     /**
