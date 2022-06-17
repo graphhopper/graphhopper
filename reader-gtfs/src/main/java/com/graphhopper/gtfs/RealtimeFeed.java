@@ -26,7 +26,8 @@ import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.BaseGraph;
 import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +68,7 @@ public class RealtimeFeed {
         return new RealtimeFeed(Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList());
     }
 
-    public static RealtimeFeed fromProtobuf(GraphHopperStorage graphHopperStorage, GtfsStorage staticGtfs, Map<String, Transfers> transfers, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
+    public static RealtimeFeed fromProtobuf(BaseGraph baseGraph, EncodingManager encodingManager, GtfsStorage staticGtfs, Map<String, Transfers> transfers, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
         final IntHashSet blockedEdges = new IntHashSet();
         final IntLongHashMap delaysForBoardEdges = new IntLongHashMap();
         final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
@@ -94,7 +95,7 @@ public class RealtimeFeed {
             GTFSFeed feed = staticGtfs.getGtfsFeeds().get(feedKey);
             ZoneId timezone = ZoneId.of(feed.agency.values().stream().findFirst().get().agency_timezone);
             PtGraph ptGraphNodesAndEdges = staticGtfs.getPtGraph();
-            final GtfsReader gtfsReader = new GtfsReader(feedKey, graphHopperStorage, ptGraphNodesAndEdges, overlayGraph, staticGtfs, null, transfers.get(feedKey), null);
+            final GtfsReader gtfsReader = new GtfsReader(feedKey, baseGraph, encodingManager, ptGraphNodesAndEdges, overlayGraph, staticGtfs, null, transfers.get(feedKey), null);
             Instant timestamp = Instant.ofEpochSecond(feedMessage.getHeader().getTimestamp());
             LocalDate dateToChange = timestamp.atZone(timezone).toLocalDate(); //FIXME
             BitSet validOnDay = new BitSet();

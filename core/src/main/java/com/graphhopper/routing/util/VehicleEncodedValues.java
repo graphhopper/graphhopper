@@ -280,6 +280,7 @@ public class VehicleEncodedValues implements FlagEncoder {
         return encodedValueLookup.hasEncodedValue(key);
     }
 
+    @Override
     public String getName() {
         return name;
     }

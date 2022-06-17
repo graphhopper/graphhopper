@@ -423,28 +423,25 @@ public class GHUtility {
         return toSortedGraph;
     }
 
-    static Directory guessDirectory(GraphHopperStorage store) {
-        if (store.getDirectory() instanceof MMapDirectory) {
+    static Directory guessDirectory(BaseGraph graph) {
+        if (graph.getDirectory() instanceof MMapDirectory) {
             throw new IllegalStateException("not supported yet: mmap will overwrite existing storage at the same location");
         }
-        String location = store.getDirectory().getLocation();
-        boolean isStoring = ((GHDirectory) store.getDirectory()).isStoring();
+        String location = graph.getDirectory().getLocation();
+        boolean isStoring = ((GHDirectory) graph.getDirectory()).isStoring();
         return new RAMDirectory(location, isStoring);
     }
 
     /**
      * Create a new storage from the specified one without copying the data. CHGraphs won't be copied.
      */
-    public static GraphHopperStorage newStorage(GraphHopperStorage store) {
-        Directory outdir = guessDirectory(store);
-        boolean is3D = store.getNodeAccess().is3D();
-        GraphHopperStorage copy = new GraphBuilder(store.getEncodingManager())
-                .withTurnCosts(store.getTurnCostStorage() != null)
-                .set3D(is3D)
+    public static BaseGraph newGraph(BaseGraph baseGraph) {
+        Directory outdir = guessDirectory(baseGraph);
+        return new BaseGraph.Builder(baseGraph.getIntsForFlags())
+                .withTurnCosts(baseGraph.getTurnCostStorage() != null)
+                .set3D(baseGraph.getNodeAccess().is3D())
                 .setDir(outdir)
                 .create();
-        copy.getProperties().putAll(store.getProperties().getAll());
-        return copy;
     }
 
     public static int getAdjNode(Graph g, int edge, int adjNode) {

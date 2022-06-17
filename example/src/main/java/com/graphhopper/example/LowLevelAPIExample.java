@@ -33,7 +33,7 @@ public class LowLevelAPIExample {
         {
             FlagEncoder encoder = FlagEncoders.createCar();
             EncodingManager em = EncodingManager.create(encoder);
-            GraphHopperStorage graph = new GraphBuilder(em).setRAM(graphLocation, true).create();
+            BaseGraph graph = new BaseGraph.Builder(em).setDir(new RAMDirectory(graphLocation, true)).create();
             // Make a weighted edge between two nodes and set average speed to 50km/h
             EdgeIteratorState edge = graph.edge(0, 1).setDistance(1234).set(encoder.getAverageSpeedEnc(), 50);
 
@@ -57,7 +57,7 @@ public class LowLevelAPIExample {
             // note that the EncodingManager must be the same
             FlagEncoder encoder = FlagEncoders.createCar();
             EncodingManager em = EncodingManager.create(encoder);
-            GraphHopperStorage graph = new GraphBuilder(em).setRAM(graphLocation, true).build();
+            BaseGraph graph = new BaseGraph.Builder(em).setDir(new RAMDirectory(graphLocation, true)).build();
             graph.loadExisting();
 
             // Load the location index

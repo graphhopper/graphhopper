@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author Karl Hübner
  */
-public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest {
+public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
     @Override
     FlagEncoder createCarFlagEncoder() {
         return FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 1400));

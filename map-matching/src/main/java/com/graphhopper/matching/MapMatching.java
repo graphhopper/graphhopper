@@ -129,7 +129,7 @@ public class MapMatching {
         } else {
             landmarks = null;
         }
-        graph = graphHopper.getGraphHopperStorage().getBaseGraph();
+        graph = graphHopper.getBaseGraph();
         unwrappedWeighting = graphHopper.createWeighting(profile, hints);
         inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileStr));
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);

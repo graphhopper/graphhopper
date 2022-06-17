@@ -16,27 +16,24 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.http.health;
+package com.graphhopper.routing.util;
 
-import com.codahale.metrics.health.HealthCheck;
-import com.graphhopper.GraphHopper;
+public enum WayAccess {
+    WAY, FERRY, OTHER, CAN_SKIP;
 
-public class GraphHopperHealthCheck extends HealthCheck {
-
-    private final GraphHopper graphHopper;
-
-    public GraphHopperHealthCheck(GraphHopper graphHopper) {
-        this.graphHopper = graphHopper;
+    public boolean isFerry() {
+        return this.ordinal() == FERRY.ordinal();
     }
 
-    @Override
-    protected Result check() {
-        if (!graphHopper.getBaseGraph().getBounds().isValid()) {
-            return Result.unhealthy("BaseGraph has invalid bounds.");
-        }
-        if (!graphHopper.getFullyLoaded()) {
-            return Result.unhealthy("GraphHopper is not fully loaded.");
-        }
-        return Result.healthy();
+    public boolean isWay() {
+        return this.ordinal() == WAY.ordinal();
+    }
+
+    public boolean isOther() {
+        return this.ordinal() == OTHER.ordinal();
+    }
+
+    public boolean canSkip() {
+        return this.ordinal() == CAN_SKIP.ordinal();
     }
 }

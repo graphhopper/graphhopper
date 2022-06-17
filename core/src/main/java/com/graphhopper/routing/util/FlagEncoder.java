@@ -29,6 +29,8 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
  */
 public interface FlagEncoder extends EncodedValueLookup {
 
+    String getName();
+
     boolean isMotorVehicle();
 
     boolean isHGV();

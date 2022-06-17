@@ -208,7 +208,7 @@ public class CHMeasurement {
     private static void runCompareTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts, final int uTurnCosts,
                                        long seed, final int iterations, final double threshold, final PMap results) {
         LOGGER.info("Running compare test for {}, using seed {}", algo, seed);
-        Graph g = graphHopper.getGraphHopperStorage();
+        Graph g = graphHopper.getBaseGraph();
         final int numNodes = g.getNodes();
         final NodeAccess nodeAccess = g.getNodeAccess();
         final Random random = new Random(seed);
@@ -291,7 +291,7 @@ public class CHMeasurement {
 
     private static void runPerformanceTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts,
                                            long seed, final int iterations, final PMap results) {
-        Graph g = graphHopper.getGraphHopperStorage();
+        Graph g = graphHopper.getBaseGraph();
         final int numNodes = g.getNodes();
         final NodeAccess nodeAccess = g.getNodeAccess();
         final Random random = new Random(seed);

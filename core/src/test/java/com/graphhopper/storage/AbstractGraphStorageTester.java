@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Abstract test class to be extended for implementations of the Graph interface. Graphs
- * implementing GraphStorage should extend {@link GraphHopperStorageTest} instead.
+ * implementing GraphStorage should extend {@link BaseGraphTest} instead.
  * <p>
  *
  * @author Peter Karich
