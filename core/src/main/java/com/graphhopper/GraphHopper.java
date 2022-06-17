@@ -495,8 +495,6 @@ public class GraphHopper {
         if (!ghConfig.getString("spatial_rules.max_bbox", "").isEmpty())
             throw new IllegalArgumentException("spatial_rules.max_bbox has been deprecated. There is no replacement, all custom areas will be considered.");
 
-        if (encodingManager != null)
-            throw new IllegalStateException("Cannot call init twice. EncodingManager was already initialized.");
         setProfiles(ghConfig.getProfiles());
         flagEncodersString = ghConfig.getString("graph.flag_encoders", flagEncodersString);
         encodedValuesString = ghConfig.getString("graph.encoded_values", encodedValuesString);
