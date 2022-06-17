@@ -862,27 +862,23 @@ public class GraphHopper {
         if (!allowWrites && dataAccessDefaultType.isMMap())
             dataAccessDefaultType = DAType.MMAP_RO;
 
-        if (!new File(ghLocation).exists()) {
-            // there is nothing to load, so we create the EM from the config and create the things
-            // to be... created *rolling_eyes*
-            buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
+        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
+        directory.configure(dataAccessConfig);
+        properties = new StorableProperties(directory);
 
-            GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
-            directory.configure(dataAccessConfig);
+        if (!new File(ghLocation).exists()) {
+            // there is nothing to load, so we create the EM from the config
+            buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
             baseGraph = new BaseGraph.Builder(getEncodingManager())
                     .setDir(directory)
                     .set3D(hasElevation())
                     .withTurnCosts(encodingManager.needsTurnCostsSupport())
                     .setSegmentSize(defaultSegmentSize)
                     .build();
-            properties = new StorableProperties(directory);
             checkProfilesConsistency();
-            // ... and continue elsewhere
             return false;
         }
 
-        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
-        directory.configure(dataAccessConfig);
         GHLock lock = null;
         try {
             // create locks only if writes are allowed, if they are not allowed a lock cannot be created
@@ -893,7 +889,6 @@ public class GraphHopper {
                 if (!lock.tryLock())
                     throw new RuntimeException("To avoid reading partial data we need to obtain the read lock but it failed. In " + ghLocation, lock.getObtainFailedReason());
             }
-            properties = new StorableProperties(directory);
             if (!properties.loadExisting())
                 return false;
             loadEncodingManagerFromProperties(properties);

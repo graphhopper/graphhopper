@@ -126,20 +126,10 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         public Builder add(EncodedValue encodedValue) {
-            return add(encodedValue, true);
-        }
-
-        // todonow: remove or keep if we go this way
-        public Builder addWithoutChangingConfig(EncodedValue encodedValue) {
-            return add(encodedValue, false);
-        }
-
-        private Builder add(EncodedValue encodedValue, boolean changeConfig) {
             checkNotBuiltAlready();
             if (em.hasEncodedValue(encodedValue.getName()))
                 throw new IllegalArgumentException("EncodedValue already exists: " + encodedValue.getName());
-            if (changeConfig)
-                encodedValue.init(em.edgeConfig);
+            encodedValue.init(em.edgeConfig);
             em.encodedValueMap.put(encodedValue.getName(), encodedValue);
             return this;
         }
