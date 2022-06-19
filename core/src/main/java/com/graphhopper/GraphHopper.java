@@ -875,7 +875,7 @@ public class GraphHopper {
             dataAccessDefaultType = DAType.MMAP_RO;
 
         if (!new File(ghLocation).exists())
-            // there is nothing to load, so we create the EM from the config
+            // there is just nothing to load
             return false;
 
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
