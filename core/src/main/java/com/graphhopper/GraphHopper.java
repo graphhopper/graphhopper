@@ -866,14 +866,7 @@ public class GraphHopper {
 
         if (!new File(ghLocation).exists()) {
             // there is nothing to load, so we create the EM from the config
-            buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
-            baseGraph = new BaseGraph.Builder(getEncodingManager())
-                    .setDir(directory)
-                    .set3D(hasElevation())
-                    .withTurnCosts(encodingManager.needsTurnCostsSupport())
-                    .setSegmentSize(defaultSegmentSize)
-                    .build();
-            checkProfilesConsistency();
+            prepareImport(directory);
             return false;
         }
 
@@ -887,8 +880,12 @@ public class GraphHopper {
                 if (!lock.tryLock())
                     throw new RuntimeException("To avoid reading partial data we need to obtain the read lock but it failed. In " + ghLocation, lock.getObtainFailedReason());
             }
-            if (!properties.loadExisting())
+            if (!properties.loadExisting()) {
+                // the -gh folder exists, but there is no properties file. it might be just empty, so let's act as if
+                // the import did not run yet or is not complete for some reason
+                prepareImport(directory);
                 return false;
+            }
             loadEncodingManagerFromProperties(properties);
             baseGraph = new BaseGraph.Builder(getEncodingManager())
                     .setDir(directory)
@@ -914,6 +911,17 @@ public class GraphHopper {
             if (lock != null)
                 lock.release();
         }
+    }
+
+    private void prepareImport(GHDirectory directory) {
+        buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
+        baseGraph = new BaseGraph.Builder(getEncodingManager())
+                .setDir(directory)
+                .set3D(hasElevation())
+                .withTurnCosts(encodingManager.needsTurnCostsSupport())
+                .setSegmentSize(defaultSegmentSize)
+                .build();
+        checkProfilesConsistency();
     }
 
     private void loadEncodingManagerFromProperties(StorableProperties properties) {
