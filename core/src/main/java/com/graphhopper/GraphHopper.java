@@ -723,11 +723,21 @@ public class GraphHopper {
      * Creates the graph from OSM data.
      */
     private void process(boolean closeEarly) {
+        GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
+        directory.configure(dataAccessConfig);
+        buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
+        baseGraph = new BaseGraph.Builder(getEncodingManager())
+                .setDir(directory)
+                .set3D(hasElevation())
+                .withTurnCosts(encodingManager.needsTurnCostsSupport())
+                .setSegmentSize(defaultSegmentSize)
+                .build();
+        properties = new StorableProperties(directory);
+        checkProfilesConsistency();
+
         GHLock lock = null;
         try {
-            if (baseGraph == null)
-                throw new IllegalStateException("BaseGraph must be initialized before starting the import");
-            if (baseGraph.getDirectory().getDefaultType().isStoring()) {
+            if (directory.getDefaultType().isStoring()) {
                 lockFactory.setLockDir(new File(ghLocation));
                 lock = lockFactory.create(fileLockName, true);
                 if (!lock.tryLock())
@@ -801,6 +811,9 @@ public class GraphHopper {
         baseGraph.getDirectory().create();
         baseGraph.create(100);
         properties.create(100);
+        properties.put("graph.em.version", Constants.VERSION_EM);
+        properties.put("graph.em.edge_config", encodingManager.toEdgeConfigAsString());
+        properties.put("graph.em.turn_cost_config", encodingManager.toTurnCostConfigAsString());
         properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
         properties.put("graph.flag_encoders", encodingManager.toFlagEncodersAsString());
     }
@@ -857,19 +870,16 @@ public class GraphHopper {
             }
         }
 
+        // todo: this does not really belong here, we abuse the load method to derive the dataAccessDefaultType setting from others
         if (!allowWrites && dataAccessDefaultType.isMMap())
             dataAccessDefaultType = DAType.MMAP_RO;
 
+        if (!new File(ghLocation).exists())
+            // there is nothing to load, so we create the EM from the config
+            return false;
+
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
-        properties = new StorableProperties(directory);
-
-        if (!new File(ghLocation).exists()) {
-            // there is nothing to load, so we create the EM from the config
-            prepareImport(directory);
-            return false;
-        }
-
         GHLock lock = null;
         try {
             // create locks only if writes are allowed, if they are not allowed a lock cannot be created
@@ -880,12 +890,11 @@ public class GraphHopper {
                 if (!lock.tryLock())
                     throw new RuntimeException("To avoid reading partial data we need to obtain the read lock but it failed. In " + ghLocation, lock.getObtainFailedReason());
             }
-            if (!properties.loadExisting()) {
+            properties = new StorableProperties(directory);
+            if (!properties.loadExisting())
                 // the -gh folder exists, but there is no properties file. it might be just empty, so let's act as if
                 // the import did not run yet or is not complete for some reason
-                prepareImport(directory);
                 return false;
-            }
             loadEncodingManagerFromProperties(properties);
             baseGraph = new BaseGraph.Builder(getEncodingManager())
                     .setDir(directory)
@@ -913,39 +922,41 @@ public class GraphHopper {
         }
     }
 
-    private void prepareImport(GHDirectory directory) {
-        buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
-        baseGraph = new BaseGraph.Builder(getEncodingManager())
-                .setDir(directory)
-                .set3D(hasElevation())
-                .withTurnCosts(encodingManager.needsTurnCostsSupport())
-                .setSegmentSize(defaultSegmentSize)
-                .build();
-        checkProfilesConsistency();
-    }
-
     private void loadEncodingManagerFromProperties(StorableProperties properties) {
         if (properties.containsVersion())
             throw new IllegalStateException("The GraphHopper file format is not compatible with the data you are " +
                     "trying to load. You either need to use an older version of GraphHopper or run a new import");
+
+        String versionStr = properties.get("graph.em.version");
+        if (versionStr.isEmpty() || !String.valueOf(Constants.VERSION_EM).equals(versionStr))
+            throw new IllegalStateException("Incompatible encoding version. You need to use the same GraphHopper version you used to import the graph, or run a new import. "
+                    + " Stored encoding version: " + (versionStr.isEmpty() ? "missing" : versionStr) + ", used encoding version: " + Constants.VERSION_EM);
         String encodedValueStr = properties.get("graph.encoded_values");
         ArrayNode evList = deserializeEncodedValueList(encodedValueStr);
-        List<EncodedValue> encodedValues = new ArrayList<>();
-        evList.forEach(serializedEV -> encodedValues.add(EncodedValueSerializer.deserializeEncodedValue(serializedEV.textValue())));
+        LinkedHashMap<String, EncodedValue> encodedValues = new LinkedHashMap<>();
+        evList.forEach(serializedEV -> {
+            EncodedValue encodedValue = EncodedValueSerializer.deserializeEncodedValue(serializedEV.textValue());
+            if (encodedValues.put(encodedValue.getName(), encodedValue) != null)
+                throw new IllegalStateException("Duplicate encoded value name: " + encodedValue.getName() + " in: graph.encoded_values=" + encodedValueStr);
+        });
 
         String flagEncodersStr = properties.get("graph.flag_encoders");
-        List<FlagEncoder> flagEncoders = Stream.of(flagEncodersStr.split(","))
-                .map(str -> flagEncoderFactory.deserializeFlagEncoder(str, name -> encodedValues.stream()
-                        .filter(ev -> ev.getName().equals(name))
-                        .findFirst()
-                        .orElseThrow(() -> new IllegalStateException("FlagEncoder " + str + " uses unknown encoded value: " + name))))
-                .collect(Collectors.toList());
+        LinkedHashMap<String, VehicleEncodedValues> flagEncoders = Stream.of(flagEncodersStr.split(","))
+                .map(str -> flagEncoderFactory.deserializeFlagEncoder(str, name -> {
+                    EncodedValue ev = encodedValues.get(name);
+                    if (ev == null)
+                        throw new IllegalStateException("FlagEncoder " + str + " uses unknown encoded value: " + name);
+                    return ev;
+                }))
+                .collect(Collectors.toMap(FlagEncoder::getName, f -> (VehicleEncodedValues) f,
+                        (f1, f2) -> {
+                            throw new IllegalStateException("Duplicate flag encoder: " + f1.getName() + " in: " + flagEncodersStr);
+                        },
+                        LinkedHashMap::new));
 
-        EncodingManager.Builder emBuilder = EncodingManager.start();
-        flagEncoders.forEach(emBuilder::addWithoutAddingEncodedValues);
-        // todonow: this cannot be right, because we need to distinguish edge EVs from turn cost EVs, but do any tests fail?
-        encodedValues.forEach(emBuilder::addWithoutInit);
-        encodingManager = emBuilder.build();
+        EncodedValue.InitializerConfig edgeConfig = EncodedValueSerializer.deserializeInitializerConfig(properties.get("graph.em.edge_config"));
+        EncodedValue.InitializerConfig turnCostConfig = EncodedValueSerializer.deserializeInitializerConfig(properties.get("graph.em.turn_cost_config"));
+        encodingManager = new EncodingManager(encodedValues, flagEncoders, edgeConfig, turnCostConfig);
     }
 
     private ArrayNode deserializeEncodedValueList(String encodedValueStr) {

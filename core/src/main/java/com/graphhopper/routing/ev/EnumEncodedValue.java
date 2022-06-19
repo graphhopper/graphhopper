@@ -75,8 +75,4 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
         return arr[value];
     }
 
-    @Override
-    public int getVersion() {
-        return 31 * super.getVersion() + staticHashCode(arr);
-    }
 }

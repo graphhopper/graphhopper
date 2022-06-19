@@ -96,7 +96,7 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     @Override
     public void setDecimal(boolean reverse, IntsRef ref, double value) {
         if (!isInitialized())
-            throw new IllegalStateException("Call init before usage for EncodedValue " + toString());
+            throw new IllegalStateException("Call init before using EncodedValue " + getName());
         if (Double.isInfinite(value)) {
             if (useMaximumAsInfinity) {
                 super.setInt(reverse, ref, maxValue);
@@ -149,11 +149,4 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
         return maxValue * factor;
     }
 
-    @Override
-    public int getVersion() {
-        int version = 31 * super.getVersion() + staticHashCode(factor);
-        if (useMaximumAsInfinity) return 31 * version + 13;
-        if (defaultIsInfinity) return 31 * version + 17;
-        return version;
-    }
 }

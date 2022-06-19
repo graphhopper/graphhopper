@@ -121,8 +121,4 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
         return Collections.unmodifiableList(values);
     }
 
-    @Override
-    public int getVersion() {
-        return 31 * super.getVersion() + staticHashCode(values);
-    }
 }

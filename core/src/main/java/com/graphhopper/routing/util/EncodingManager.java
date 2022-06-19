@@ -39,10 +39,10 @@ import static com.graphhopper.util.Helper.toLowerCase;
  * @author Nop
  */
 public class EncodingManager implements EncodedValueLookup {
-    private final Map<String, VehicleEncodedValues> flagEncoders;
-    private final Map<String, EncodedValue> encodedValueMap;
-    private final EncodedValue.InitializerConfig turnCostConfig;
+    private final LinkedHashMap<String, EncodedValue> encodedValueMap;
+    private final LinkedHashMap<String, VehicleEncodedValues> flagEncoders;
     private final EncodedValue.InitializerConfig edgeConfig;
+    private final EncodedValue.InitializerConfig turnCostConfig;
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
@@ -86,68 +86,44 @@ public class EncodingManager implements EncodedValueLookup {
         return new Builder();
     }
 
+    public EncodingManager(LinkedHashMap<String, EncodedValue> encodedValueMap, LinkedHashMap<String, VehicleEncodedValues> flagEncoders, EncodedValue.InitializerConfig edgeConfig, EncodedValue.InitializerConfig turnCostConfig) {
+        this.flagEncoders = flagEncoders;
+        this.encodedValueMap = encodedValueMap;
+        this.turnCostConfig = turnCostConfig;
+        this.edgeConfig = edgeConfig;
+        flagEncoders.values().forEach(f -> f.setEncodedValueLookup(this));
+    }
+
     private EncodingManager() {
-        flagEncoders = new LinkedHashMap<>();
-        encodedValueMap = new LinkedHashMap<>();
-        edgeConfig = new EncodedValue.InitializerConfig();
-        turnCostConfig = new EncodedValue.InitializerConfig();
+        this(new LinkedHashMap<>(), new LinkedHashMap<>(), new EncodedValue.InitializerConfig(), new EncodedValue.InitializerConfig());
     }
 
     public static class Builder {
         private EncodingManager em = new EncodingManager();
 
         public Builder add(FlagEncoder encoder) {
-            return add(encoder, true);
-        }
-
-        public Builder addWithoutAddingEncodedValues(FlagEncoder encoder) {
-            return add(encoder, false);
-        }
-
-        private Builder add(FlagEncoder encoder, boolean addEncodedValues) {
             checkNotBuiltAlready();
             if (em.hasEncoder(encoder.getName()))
                 throw new IllegalArgumentException("FlagEncoder already exists: " + encoder.getName());
             VehicleEncodedValues v = (VehicleEncodedValues) encoder;
             v.setEncodedValueLookup(em);
+            List<EncodedValue> list = new ArrayList<>();
+            v.createEncodedValues(list);
+            list.forEach(this::add);
 
-            if (addEncodedValues) {
-                List<EncodedValue> list = new ArrayList<>();
-                v.createEncodedValues(list);
-                list.forEach(this::add);
-
-                list = new ArrayList<>();
-                v.createTurnCostEncodedValues(list);
-                list.forEach(this::addTurnCostEncodedValue);
-            }
+            list = new ArrayList<>();
+            v.createTurnCostEncodedValues(list);
+            list.forEach(this::addTurnCostEncodedValue);
 
             em.flagEncoders.put(v.getName(), v);
             return this;
         }
 
         public Builder add(EncodedValue encodedValue) {
-            return add(encodedValue, true);
-        }
-
-        public Builder addWithoutInit(EncodedValue encodedValue) {
-            return add(encodedValue, false);
-        }
-
-        private Builder add(EncodedValue encodedValue, boolean init) {
             checkNotBuiltAlready();
             if (em.hasEncodedValue(encodedValue.getName()))
                 throw new IllegalArgumentException("EncodedValue already exists: " + encodedValue.getName());
-            if (init)
-                encodedValue.init(em.edgeConfig);
-            else {
-                // we do not 'init' the encoded value, but we still need to update the edge config
-                // todonow: real ugly, bc right now it only works for IntEncodedValueImpl. at the very least there should
-                //          be EncodedValue#getBits(), but maybe we need to reconsider the way the encoding manager or the
-                //          encoded values are serialized/deserialized.
-                em.edgeConfig.next(((IntEncodedValueImpl) encodedValue).bits);
-                if (encodedValue.isStoreTwoDirections())
-                    em.edgeConfig.next(((IntEncodedValueImpl) encodedValue).bits);
-            }
+            encodedValue.init(em.edgeConfig);
             em.encodedValueMap.put(encodedValue.getName(), encodedValue);
             return this;
         }
@@ -259,6 +235,14 @@ public class EncodingManager implements EncodedValueLookup {
         } catch (JsonProcessingException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public String toEdgeConfigAsString() {
+        return EncodedValueSerializer.serializeInitializerConfig(edgeConfig);
+    }
+
+    public String toTurnCostConfigAsString() {
+        return EncodedValueSerializer.serializeInitializerConfig(turnCostConfig);
     }
 
     @Override

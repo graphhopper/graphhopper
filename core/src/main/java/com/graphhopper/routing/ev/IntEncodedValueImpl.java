@@ -21,10 +21,6 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
-
-import java.util.Arrays;
-import java.util.Collection;
 
 /**
  * Implementation of the IntEncodedValue via a certain number of bits (that determines the maximum value) and
@@ -38,8 +34,7 @@ import java.util.Collection;
 public class IntEncodedValueImpl implements IntEncodedValue {
     private final String name;
     private final boolean storeTwoDirections;
-    // todonow: revert public
-    public final int bits;
+    final int bits;
     final boolean negateReverseDirection;
     final int minValue;
     final int maxValue;
@@ -216,77 +211,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
 
     @Override
     public final String toString() {
-        return getName() + "|version=" + getVersion() + "|bits=" + bits + "|min_value=" + minValue
-                + "|negate_reverse_direction=" + negateReverseDirection + "|index=" + fwdDataIndex
-                + "|shift=" + fwdShift + "|store_both_directions=" + storeTwoDirections;
+        return getName();
     }
 
-    @Override
-    public int getVersion() {
-        // todonow: there isn't really any 'version' here...
-        int val = Helper.staticHashCode(name);
-        val = 31 * val + (storeTwoDirections ? 1231 : 1237);
-        val = 31 * val + (negateReverseDirection ? 13 : 17);
-        return staticHashCode(val, fwdDataIndex, bwdDataIndex, bits, minValue, maxValue, fwdShift, bwdShift, fwdMask, bwdMask);
-    }
-
-    /**
-     * Produces a static hashcode for an integer arrays that is platform independent and still compatible to the default
-     * of openjdk.
-     *
-     * @see Arrays#hashCode(int[])
-     */
-    static int staticHashCode(int... vals) {
-        if (vals == null)
-            return 0;
-        int len = vals.length;
-        int val = 1;
-        for (int idx = 0; idx < len; ++idx) {
-            val = 31 * val + vals[idx];
-        }
-
-        return val;
-    }
-
-    /**
-     * Produces a static hashcode for an Enum arrays that is platform independent and still compatible to the default
-     * of openjdk.
-     */
-    static int staticHashCode(Enum<?>... vals) {
-        if (vals == null)
-            return 0;
-        int len = vals.length;
-        int val = 1;
-        for (int idx = 0; idx < len; ++idx) {
-            val = 31 * val + vals[idx].ordinal();
-        }
-
-        return val;
-    }
-
-    /**
-     * Produces a static hashcode for a collection of Strings that is platform independent and still compatible to the default
-     * of openjdk.
-     */
-    static int staticHashCode(Collection<String> vals) {
-        if (vals == null)
-            return 0;
-        int val = 1;
-        for (String str : vals) {
-            val = 31 * val + Helper.staticHashCode(str);
-        }
-
-        return val;
-    }
-
-    /**
-     * Produces a static hashcode for an integer arrays that is platform independent and still compatible to the default
-     * of openjdk
-     *
-     * @see Double#hashCode
-     */
-    static int staticHashCode(double val) {
-        long var2 = Double.doubleToLongBits(val);
-        return (int) (var2 ^ var2 >>> 32);
-    }
 }
