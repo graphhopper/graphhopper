@@ -126,10 +126,28 @@ public class EncodingManager implements EncodedValueLookup {
         }
 
         public Builder add(EncodedValue encodedValue) {
+            return add(encodedValue, true);
+        }
+
+        public Builder addWithoutInit(EncodedValue encodedValue) {
+            return add(encodedValue, false);
+        }
+
+        private Builder add(EncodedValue encodedValue, boolean init) {
             checkNotBuiltAlready();
             if (em.hasEncodedValue(encodedValue.getName()))
                 throw new IllegalArgumentException("EncodedValue already exists: " + encodedValue.getName());
-            encodedValue.init(em.edgeConfig);
+            if (init)
+                encodedValue.init(em.edgeConfig);
+            else {
+                // we do not 'init' the encoded value, but we still need to update the edge config
+                // todonow: real ugly, bc right now it only works for IntEncodedValueImpl. at the very least there should
+                //          be EncodedValue#getBits(), but maybe we need to reconsider the way the encoding manager or the
+                //          encoded values are serialized/deserialized.
+                em.edgeConfig.next(((IntEncodedValueImpl) encodedValue).bits);
+                if (encodedValue.isStoreTwoDirections())
+                    em.edgeConfig.next(((IntEncodedValueImpl) encodedValue).bits);
+            }
             em.encodedValueMap.put(encodedValue.getName(), encodedValue);
             return this;
         }

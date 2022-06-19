@@ -64,7 +64,8 @@ public interface EncodedValue {
          *
          * @param usedBits
          */
-        void next(int usedBits) {
+        // todonow: revert public
+        public void next(int usedBits) {
             shift = nextShift;
             if ((shift - 1 + usedBits) / 32 > (shift - 1) / 32) {
                 dataIndex++;

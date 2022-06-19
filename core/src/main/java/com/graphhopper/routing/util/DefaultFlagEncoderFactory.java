@@ -72,7 +72,7 @@ public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
     public FlagEncoder deserializeFlagEncoder(String serializedFlagEncoder, Function<String, EncodedValue> evLookup) {
         String[] strings = serializedFlagEncoder.split("\\|");
         if (strings.length != 9)
-            throw new IllegalStateException("Deserialized FlagEncoders should consist of nine comma-separated strings");
+            throw new IllegalStateException("Deserialized FlagEncoders should consist of nine pipe-separated strings");
         String name = strings[0];
         BooleanEncodedValue accessEnc = strings[1].equals("null") ? null : (BooleanEncodedValue) evLookup.apply(strings[1]);
         DecimalEncodedValue avgSpeedEnc = strings[2].equals("null") ? null : (DecimalEncodedValue) evLookup.apply(strings[2]);

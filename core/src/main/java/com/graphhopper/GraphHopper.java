@@ -943,7 +943,8 @@ public class GraphHopper {
 
         EncodingManager.Builder emBuilder = EncodingManager.start();
         flagEncoders.forEach(emBuilder::addWithoutAddingEncodedValues);
-        encodedValues.forEach(emBuilder::add);
+        // todonow: this cannot be right, because we need to distinguish edge EVs from turn cost EVs, but do any tests fail?
+        encodedValues.forEach(emBuilder::addWithoutInit);
         encodingManager = emBuilder.build();
     }
 

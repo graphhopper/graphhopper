@@ -40,10 +40,16 @@ public final class SimpleBooleanEncodedValue extends IntEncodedValueImpl impleme
             @JsonProperty("minValue") int minValue,
             @JsonProperty("maxValue") int maxValue,
             @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
-            @JsonProperty("storeTwoDirections") boolean storeTwoDirections
+            @JsonProperty("storeTwoDirections") boolean storeTwoDirections,
+            @JsonProperty("fwd_data_index") int fwdDataIndex,
+            @JsonProperty("bwd_data_index") int bwdDataIndex,
+            @JsonProperty("fwd_shift") int fwdShift,
+            @JsonProperty("bwd_shift") int bwdShift,
+            @JsonProperty("fwd_mask") int fwdMask,
+            @JsonProperty("bwd_mask") int bwdMask
     ) {
         // we need this constructor for Jackson
-        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
     }
 
     @Override
