@@ -2572,8 +2572,7 @@ public class GraphHopperTest {
     }
 
     @Test
-    @Disabled("todonow")
-    void testLoadingWithAnotherSpeedFactorFails() {
+    void testLoadingWithAnotherSpeedFactorWorks() {
         {
             GraphHopper hopper = new GraphHopper()
                     .setFlagEncodersString("car|speed_factor=7")
@@ -2583,16 +2582,16 @@ public class GraphHopperTest {
             hopper.importOrLoad();
         }
         {
-            // todonow: what do we want here: setting the flag encoder string obviously has no effect, because we
-            //          load the encoding manager from disk instead. should there be an error? and how? basically this
-            //          is where we deviate from our current approach and we would probably have to adjust the GH api
-            //          to make this clear
+            // now we use another speed_factor, but changing the flag encoder string has no effect when we are loading
+            // a graph. This API is a bit confusing, but we have been mixing configuration options that only matter
+            // during import with those that only matter when routing for some time already. At some point we should
+            // separate the 'import' from the 'routing' config (and split the GraphHopper class).
             GraphHopper hopper = new GraphHopper()
                     .setFlagEncodersString("car|speed_factor=9")
                     .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"))
                     .setGraphHopperLocation(GH_LOCATION);
-            IllegalStateException ex = assertThrows(IllegalStateException.class, hopper::load);
-            assertTrue(ex.getMessage().contains("Flag encoders do not match"), ex.getMessage());
+            hopper.load();
+            assertEquals(1942, hopper.getBaseGraph().getNodes());
         }
     }
 
