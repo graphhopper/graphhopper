@@ -1,5 +1,6 @@
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.json.MinMax;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
@@ -120,7 +121,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return result;
     }
 
-    static double[] findMinMax(Set<String> createdObjects, String valueExpression, EncodedValueLookup lookup) {
+    static MinMax findMinMax(Set<String> createdObjects, String valueExpression, EncodedValueLookup lookup) {
         ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
@@ -132,7 +133,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             // We still call the parse() method before as it is only ~3x slower and might increase security slightly. Because certain
             // expressions are accepted from Double.parseDouble but parse() rejects them. With this call order we avoid unexpected security problems.
             double val = Double.parseDouble(valueExpression);
-            return new double[]{val, val};
+            return new MinMax(val, val);
         } catch (NumberFormatException ex) {
         }
 
@@ -141,14 +142,14 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 ExpressionEvaluator ee = new ExpressionEvaluator();
                 ee.cook(valueExpression);
                 double val = ((Number) ee.evaluate()).doubleValue();
-                return new double[]{val, val};
+                return new MinMax(val, val);
             }
 
             createdObjects.addAll(result.guessedVariables);
             if (lookup.hasEncodedValue(valueExpression)) { // speed up for common case that complete right side is the encoded value
                 EncodedValue enc = lookup.getEncodedValue(valueExpression, EncodedValue.class);
                 double min = getMin(enc), max = getMax(enc);
-                return new double[]{min, max};
+                return new MinMax(min, max);
             }
 
             ExpressionEvaluator ee = new ExpressionEvaluator();
@@ -159,7 +160,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             Number val1 = (Number) ee.evaluate(max);
             double min = getMin(lookup.getEncodedValue(var, EncodedValue.class));
             Number val2 = (Number) ee.evaluate(min);
-            return new double[]{Math.min(val1.doubleValue(), val2.doubleValue()), Math.max(val1.doubleValue(), val2.doubleValue())};
+            return new MinMax(Math.min(val1.doubleValue(), val2.doubleValue()), Math.max(val1.doubleValue(), val2.doubleValue()));
         } catch (CompileException | InvocationTargetException ex) {
             throw new IllegalArgumentException(ex);
         }

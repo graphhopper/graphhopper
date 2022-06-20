@@ -1,5 +1,6 @@
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.json.MinMax;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.EncodedValueLookup;
@@ -87,7 +88,9 @@ class ValueExpressionVisitorTest {
 
     @Test
     public void runMaxMin() {
-        Set<String> objs = new HashSet<>();
+        long x = 6_000_000_000L;
+        System.out.println((int)x);
+
         DecimalEncodedValue prio1 = new DecimalEncodedValueImpl("my_priority", 5, 1, false);
         IntEncodedValueImpl prio2 = new IntEncodedValueImpl("my_priority2", 5, -5, false, false);
         EncodedValueLookup lookup = new EncodingManager.Builder().add(prio1).add(prio2).build();
@@ -100,8 +103,8 @@ class ValueExpressionVisitorTest {
     }
 
     void assertInterval(double min, double max, String expression, EncodedValueLookup lookup) {
-        double[] minmax = findMinMax(new HashSet<>(), expression, lookup);
-        assertEquals(min, minmax[0], 0.1, expression);
-        assertEquals(max, minmax[1], 0.1, expression);
+        MinMax minmax = findMinMax(new HashSet<>(), expression, lookup);
+        assertEquals(min, minmax.min, 0.1, expression);
+        assertEquals(max, minmax.max, 0.1, expression);
     }
 }

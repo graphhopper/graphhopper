@@ -84,12 +84,12 @@ public class Statement {
             }
         }
 
-        public double[] apply(double[] minMax1, double[] minMax2) {
+        public MinMax apply(MinMax minMax1, MinMax minMax2) {
             switch (this) {
                 case MULTIPLY:
-                    return new double[]{minMax1[0] * minMax2[0], minMax1[1] * minMax2[1]};
+                    return new MinMax(minMax1.min * minMax2.min, minMax1.max * minMax2.max);
                 case LIMIT:
-                    return new double[]{Math.min(minMax1[0], minMax2[0]), Math.min(minMax1[1], minMax2[1])};
+                    return new MinMax(Math.min(minMax1.min, minMax2.min), Math.min(minMax1.max, minMax2.max));
                 default:
                     throw new IllegalArgumentException();
             }

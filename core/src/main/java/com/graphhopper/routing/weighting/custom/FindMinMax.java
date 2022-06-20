@@ -1,5 +1,6 @@
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.CustomModel;
@@ -35,52 +36,52 @@ public class FindMinMax {
         Set<String> createdObjects = new HashSet<>();
         for (Statement statement : list) {
             if (statement.getOperation() == Statement.Op.MULTIPLY) {
-                double[] minMax = ValueExpressionVisitor.findMinMax(createdObjects, statement.getValue(), lookup);
-                if (minMax[1] > 1)
-                    throw new IllegalArgumentException("maximum of value '" + statement.getValue() + "'cannot be larger than 1, but was: " + minMax[1]);
-                else if (minMax[0] < 0)
-                    throw new IllegalArgumentException("minimum of value '" + statement.getValue() + "' cannot be smaller than 0, but was: " + minMax[0]);
+                MinMax minMax = ValueExpressionVisitor.findMinMax(createdObjects, statement.getValue(), lookup);
+                if (minMax.max > 1)
+                    throw new IllegalArgumentException("maximum of value '" + statement.getValue() + "'cannot be larger than 1, but was: " + minMax.max);
+                else if (minMax.min < 0)
+                    throw new IllegalArgumentException("minimum of value '" + statement.getValue() + "' cannot be smaller than 0, but was: " + minMax.min);
             }
         }
     }
 
     /**
-     * This method returns the smallest value possible in minMax[0] ("minimum") and the smallest value that cannot be
-     * exceeded by any edge in minMax[1] ("maximum").
+     * This method returns the smallest value possible in "min" and the smallest value that cannot be
+     * exceeded by any edge in max.
      */
-    static double[] findMinMax(Set<String> createdObjects, double[] minMax, List<Statement> statements, EncodedValueLookup lookup) {
+    static MinMax findMinMax(Set<String> createdObjects, MinMax minMax, List<Statement> statements, EncodedValueLookup lookup) {
         // 'blocks' of the statements are applied one after the other. A block consists of one (if) or more statements (elseif+else)
         List<List<Statement>> blocks = splitIntoBlocks(statements);
         for (List<Statement> block : blocks) findMinMaxForBlock(createdObjects, minMax, block, lookup);
         return minMax;
     }
 
-    private static void findMinMaxForBlock(Set<String> createdObjects, final double[] minMax, List<Statement> block, EncodedValueLookup lookup) {
+    private static void findMinMaxForBlock(Set<String> createdObjects, final MinMax minMax, List<Statement> block, EncodedValueLookup lookup) {
         if (block.isEmpty() || !IF.equals(block.get(0).getKeyword()))
             throw new IllegalArgumentException("Every block must start with an if-statement");
 
-        double[] minMaxBlock;
+        MinMax minMaxBlock;
         if (block.get(0).getCondition().trim().equals("true")) {
             minMaxBlock = block.get(0).getOperation().apply(minMax, ValueExpressionVisitor.findMinMax(createdObjects, block.get(0).getValue(), lookup));
         } else {
-            minMaxBlock = new double[]{Double.MAX_VALUE, 0};
+            minMaxBlock = new MinMax(Double.MAX_VALUE, 0);
             boolean foundElse = false;
             for (Statement s : block) {
                 if (s.getKeyword() == ELSE) foundElse = true;
-                double[] tmp = s.getOperation().apply(minMax, ValueExpressionVisitor.findMinMax(createdObjects, s.getValue(), lookup));
-                minMaxBlock[0] = Math.min(minMaxBlock[0], tmp[0]);
-                minMaxBlock[1] = Math.max(minMaxBlock[1], tmp[1]);
+                MinMax tmp = s.getOperation().apply(minMax, ValueExpressionVisitor.findMinMax(createdObjects, s.getValue(), lookup));
+                minMaxBlock.min = Math.min(minMaxBlock.min, tmp.min);
+                minMaxBlock.max = Math.max(minMaxBlock.max, tmp.max);
             }
 
             // if there is no 'else' statement it's like there is a 'neutral' branch that leaves the initial value as is
             if (!foundElse) {
-                minMaxBlock[0] = Math.min(minMaxBlock[0], minMax[0]);
-                minMaxBlock[1] = Math.max(minMaxBlock[1], minMax[1]);
+                minMaxBlock.min = Math.min(minMaxBlock.min, minMax.min);
+                minMaxBlock.max = Math.max(minMaxBlock.max, minMax.max);
             }
         }
 
-        minMax[0] = minMaxBlock[0];
-        minMax[1] = minMaxBlock[1];
+        minMax.min = minMaxBlock.min;
+        minMax.max = minMaxBlock.max;
     }
 
     /**
