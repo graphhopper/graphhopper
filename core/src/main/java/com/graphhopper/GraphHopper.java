@@ -442,6 +442,13 @@ public class GraphHopper {
     /**
      * Reads the configuration from a {@link GraphHopperConfig} object which can be manually filled, or more typically
      * is read from `config.yml`.
+     * <p>
+     * Important note: Calling this method overwrites the configuration done in some of the setter methods of this class,
+     * so generally it is advised to either use this method to configure GraphHopper or the different setter methods,
+     * but not both. Unfortunately, this still does not cover all cases and sometimes you have to use both, but then you
+     * should make sure there are no conflicts. If you need both it might also help to call the init before calling the
+     * setters, because this way the init method won't apply defaults to configuration options you already chose using
+     * the setters.
      */
     public GraphHopper init(GraphHopperConfig ghConfig) {
         ensureNotLoaded();
