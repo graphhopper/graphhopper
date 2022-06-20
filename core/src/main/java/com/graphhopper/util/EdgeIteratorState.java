@@ -209,7 +209,8 @@ public interface EdgeIteratorState {
 
     /**
      * This stores the specified key-value pairs in the storage of the current edge. This is more flexible compared to
-     * the mechanism of flags and EncodedValue but is slower and more inefficient on retrieval and this setKeyValues method
+     * the mechanism of flags and EncodedValue and allows to store sparse key value pairs much more efficient.
+     * But it is slower and more inefficient on retrieval and this setKeyValues method
      * should be called only once per edge as it allocates new space everytime this method is called. I.e. for many
      * usages like in a custom_model currently the EncodedValue-approach should be preferred.
      */

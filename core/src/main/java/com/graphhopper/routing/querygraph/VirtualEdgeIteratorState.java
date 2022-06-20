@@ -310,7 +310,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     @Override
     public String getName() {
         String name = (String) keyValues.get("name");
-        // preserve backward compatibility (returns null if not explicitly set)
+        // preserve backward compatibility (returns empty string if name tag missing)
         return name == null ? "" : name;
     }
 
