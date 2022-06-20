@@ -83,7 +83,7 @@ class ValueExpressionVisitorTest {
         assertTrue(msg.contains("invalid operation '/'"), msg);
 
         msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "my_priority*my_priority2 * 3", lookup)).getMessage();
-        assertTrue(msg.contains("Currently only a single EncodedValue is allowed on the right side"), msg);
+        assertTrue(msg.contains("Currently only a single EncodedValue is allowed on the right-hand side"), msg);
     }
 
     @Test

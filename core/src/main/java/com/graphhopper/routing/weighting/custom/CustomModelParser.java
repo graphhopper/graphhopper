@@ -126,6 +126,23 @@ public class CustomModelParser {
         }
     }
 
+    /**
+     * This method does the following:
+     * <ul>
+     * <li>0. optionally we already checked the right-hand side expressions before this method call in FindMinMax.checkLMConstraints
+     *     (only the client-side custom model statements)
+     * </li>
+     * <li>1. determine minimum and maximum values via parsing the right-hand side expression -> done in ValueExpressionVisitor.
+     *     We need the maximum values for a simple negative check AND for the CustomWeighting.Parameters which is for
+     *     Weighting.getMinWeight which is for A*. Note: we could make this step optional somehow for other algorithms,
+     *     but parsing would be still required in the next step for security reasons.
+     * </li>
+     * <li>2. parse condition value of priority and speed statements -> done in ConditionalExpressionVisitor (don't parse RHS expressions again)
+     * </li>
+     * <li>3. create class template as String, inject the created statements and create the Class
+     * </li>
+     * </ul>
+     */
     private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup,
                                         double globalMaxSpeed, double globalMaxPriority) {
         try {
@@ -361,8 +378,7 @@ public class CustomModelParser {
                                  String exceptionInfo, Set<String> createObjects, List<Statement> list, String lastStmt) {
 
         for (Statement statement : list) {
-            // avoid parsing again as we just did it to get the maximum values
-            // ParseResult valueParseResult = ValueExpressionVisitor.parse(statement.getValue(), nameInValueValidator);
+            // avoid parsing the RHS value expression again as we just did it to get the maximum values in createClazz
             if (statement.getKeyword() == Statement.Keyword.ELSE) {
                 if (!Helper.isEmpty(statement.getCondition()))
                     throw new IllegalArgumentException("condition must be empty but was " + statement.getCondition());

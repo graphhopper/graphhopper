@@ -16,7 +16,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 
 /**
- * Expression visitor for right-hand side of e.g. limit_to and multiply_by
+ * Expression visitor for right-hand side value of limit_to or multiply_by.
  */
 public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
@@ -126,7 +126,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
         if (result.guessedVariables.size() > 1)
-            throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right side, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
+            throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
 
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
@@ -146,7 +146,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             }
 
             createdObjects.addAll(result.guessedVariables);
-            if (lookup.hasEncodedValue(valueExpression)) { // speed up for common case that complete right side is the encoded value
+            if (lookup.hasEncodedValue(valueExpression)) { // speed up for common case that complete right-hand side is the encoded value
                 EncodedValue enc = lookup.getEncodedValue(valueExpression, EncodedValue.class);
                 double min = getMin(enc), max = getMax(enc);
                 return new MinMax(min, max);

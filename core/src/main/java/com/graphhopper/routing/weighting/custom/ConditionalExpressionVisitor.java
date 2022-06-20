@@ -29,6 +29,9 @@ import java.util.*;
 
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.IN_AREA_PREFIX;
 
+/**
+ * Expression visitor for the if or else_if condition.
+ */
 class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
     private final ParseResult result;
