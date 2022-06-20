@@ -40,7 +40,6 @@ android/.gradle
 local/
 local.properties
 **/node_modules
-*.zip
 .DS_Store
 /graph-cache
 package-lock.json
