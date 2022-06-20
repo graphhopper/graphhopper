@@ -66,8 +66,6 @@ public class Router {
     private final TranslationMap translationMap;
     private final RouterConfig routerConfig;
     private final WeightingFactory weightingFactory;
-    // todo: these should not be necessary anymore as soon as GraphHopperStorage (or something that replaces) it acts
-    // like a 'graph database'
     private final Map<String, RoutingCHGraph> chGraphs;
     private final Map<String, LandmarkStorage> landmarks;
     private final boolean chEnabled;

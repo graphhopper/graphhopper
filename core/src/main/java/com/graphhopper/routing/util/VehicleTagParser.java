@@ -36,8 +36,7 @@ import static java.util.Collections.emptyMap;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
- * EncodingManager to be usable. If you want the full long to be stored you need to enable this in
- * the GraphHopperStorage.
+ * EncodingManager to be usable.
  *
  * @author Peter Karich
  * @author Nop
@@ -155,7 +154,7 @@ public abstract class VehicleTagParser implements TagParser {
      *
      * @return the encoded value to indicate if this encoder allows travel or not.
      */
-    public abstract EncodingManager.Access getAccess(ReaderWay way);
+    public abstract WayAccess getAccess(ReaderWay way);
 
     /**
      * @return true if the given OSM node blocks access for this vehicle, false otherwise

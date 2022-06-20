@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Peter Karich
  */
-public class GraphHopperStorageTest extends AbstractGraphStorageTester {
+public class BaseGraphTest extends AbstractGraphStorageTester {
     @Override
     public BaseGraph createGHStorage(String location, boolean enabled3D) {
         // reduce segment size in order to test the case where multiple segments come into the game

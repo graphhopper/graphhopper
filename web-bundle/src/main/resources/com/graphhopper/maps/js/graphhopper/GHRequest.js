@@ -261,7 +261,7 @@ GHRequest.prototype.flatParameter = function (key, val) {
 GHRequest.prototype.doRequest = function (url, callback) {
     var that = this;
     $.ajax({
-        timeout: 30000,
+        timeout: 60000,
         url: url,
         beforeSend: function(request) {
             request.setRequestHeader("GH-Client", "web-ui 3.0")

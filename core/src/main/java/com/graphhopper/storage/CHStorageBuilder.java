@@ -31,9 +31,7 @@ public class CHStorageBuilder {
     private final CHStorage storage;
 
     public CHStorageBuilder(CHStorage chStorage) {
-        // todo: currently we create a GraphHopperStorage which creates a CHStorage for us, but really we should rather
-        // be able to create a GraphHopperStorage and build a CHStorage on top. So if anything CHStorageBuilder should
-        // create CHStorage, not receive it here.
+        // todo: maybe CHStorageBuilder should create CHStorage, not receive it here
         this.storage = chStorage;
     }
 

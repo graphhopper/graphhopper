@@ -119,7 +119,7 @@ public class Bike2WeightTagParserTest extends BikeTagParserTest {
         way.setTag("route", "ferry");
         way.setTag("edge_distance", 500.0);
 
-        assertNotEquals(EncodingManager.Access.CAN_SKIP, parser.getAccess(way));
+        assertNotEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
         edgeFlags = osmParsers.handleWayTags(edgeFlags, way, encodingManager.createRelationFlags());
         graph.edge(0, 1).setDistance(247).setFlags(edgeFlags);

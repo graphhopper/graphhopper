@@ -129,7 +129,7 @@ public class MapMatching {
         } else {
             landmarks = null;
         }
-        graph = graphHopper.getGraphHopperStorage().getBaseGraph();
+        graph = graphHopper.getBaseGraph();
         unwrappedWeighting = graphHopper.createWeighting(profile, hints);
         inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileStr));
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
@@ -400,8 +400,6 @@ public class MapMatching {
             };
             int activeLM = Math.min(8, landmarks.getLandmarkCount());
             LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, landmarks, activeLM);
-            // todo: we use 0.9, because of some LM bug we do not understand yet
-            lmApproximator.setEpsilon(0.9);
             algo.setApproximation(lmApproximator);
             algo.setMaxVisitedNodes(maxVisitedNodes);
             router = algo;

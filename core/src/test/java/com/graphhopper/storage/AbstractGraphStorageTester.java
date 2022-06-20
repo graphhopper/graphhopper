@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Abstract test class to be extended for implementations of the Graph interface. Graphs
- * implementing GraphStorage should extend {@link GraphHopperStorageTest} instead.
+ * implementing GraphStorage should extend {@link BaseGraphTest} instead.
  * <p>
  *
  * @author Peter Karich
@@ -645,7 +645,7 @@ public abstract class AbstractGraphStorageTester {
     }
 
     @Test
-    public void testStringIndex() {
+    public void testEdgeKVStorage() {
         graph = createGHStorage();
         EdgeIteratorState iter1 = graph.edge(0, 1).setDistance(10).set(carAccessEnc, true, true);
         iter1.setName("named street1");

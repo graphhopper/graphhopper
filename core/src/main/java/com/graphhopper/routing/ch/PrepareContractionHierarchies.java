@@ -123,7 +123,7 @@ public class PrepareContractionHierarchies {
             throw new IllegalStateException("Call doWork only once!");
         prepared = true;
         if (!graph.isFrozen()) {
-            throw new IllegalStateException("Given GraphHopperStorage has not been frozen yet");
+            throw new IllegalStateException("Given BaseGraph has not been frozen yet");
         }
         if (chStore.getShortcuts() > 0) {
             throw new IllegalStateException("Given CHStore already contains shortcuts");

@@ -78,7 +78,7 @@ measurement.weighting=fastest \
 measurement.ch.node=true \
 measurement.ch.edge=false \
 measurement.lm=true \
-"measurement.lm.active_counts=[4,8,12,16]" \
+"measurement.lm.active_counts=[4,8,12]" \
 measurement.lm.edge_based=true \
 "graph.flag_encoders=car|turn_costs=true" \
 graph.location=${TMP_DIR}measurement-big-gh \
@@ -165,7 +165,7 @@ measurement.weighting=fastest \
 measurement.ch.node=true \
 measurement.ch.edge=false \
 measurement.lm=true \
-"measurement.lm.active_counts=[4,8,12,16]" \
+"measurement.lm.active_counts=[4,8,12]" \
 measurement.lm.edge_based=false \
 "graph.flag_encoders=foot" \
 graph.location=${TMP_DIR}measurement-big-outdoor-gh \
