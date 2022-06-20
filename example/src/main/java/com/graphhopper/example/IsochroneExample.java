@@ -25,7 +25,7 @@ public class IsochroneExample {
         // snap some GPS coordinates to the routing graph and build a query graph
         FastestWeighting weighting = new FastestWeighting(encoder);
         Snap snap = hopper.getLocationIndex().findClosest(42.508679, 1.532078, new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("car"))));
-        QueryGraph queryGraph = QueryGraph.create(hopper.getGraphHopperStorage(), snap);
+        QueryGraph queryGraph = QueryGraph.create(hopper.getBaseGraph(), snap);
 
         // run the isochrone calculation
         ShortestPathTree tree = new ShortestPathTree(queryGraph, weighting, false, TraversalMode.NODE_BASED);

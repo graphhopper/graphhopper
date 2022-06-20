@@ -71,15 +71,15 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
 
     @Override
     public MatrixResponse route(GHMRequest ghRequest) {
-        Collection<String> outArraysList = createOutArrayList(ghRequest);
-        JsonNode requestJson = createPostRequest(ghRequest, outArraysList);
+        JsonNode requestJson = createPostRequest(ghRequest);
 
-        boolean withTimes = outArraysList.contains("times");
-        boolean withDistances = outArraysList.contains("distances");
-        boolean withWeights = outArraysList.contains("weights");
+        boolean withTimes = ghRequest.getOutArrays().contains("times");
+        boolean withDistances = ghRequest.getOutArrays().contains("distances");
+        boolean withWeights = ghRequest.getOutArrays().contains("weights");
         final MatrixResponse matrixResponse = new MatrixResponse(
-                ghRequest.getFromPoints().size(),
-                ghRequest.getToPoints().size(), withTimes, withDistances, withWeights);
+                ghRequest.getPoints() == null ? ghRequest.getFromPoints().size() : ghRequest.getPoints().size(),
+                ghRequest.getPoints() == null ? ghRequest.getToPoints().size() : ghRequest.getPoints().size(),
+                withTimes, withDistances, withWeights);
         try {
             String postUrl = buildURLNoHints("/calculate", ghRequest);
             String postResponseStr = postJson(postUrl, requestJson);
@@ -131,7 +131,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
 
                 if ("finished".equals(status)) {
                     JsonNode solution = getResponseJson.get("solution");
-                    matrixResponse.addErrors(readUsableEntityError(outArraysList, solution));
+                    matrixResponse.addErrors(readUsableEntityError(ghRequest.getOutArrays(), solution));
                     if (!matrixResponse.hasErrors())
                         fillResponseFromJson(matrixResponse, solution, ghRequest.getFailFast());
 

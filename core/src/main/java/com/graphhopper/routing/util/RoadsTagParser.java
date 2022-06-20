@@ -37,10 +37,10 @@ public class RoadsTagParser extends VehicleTagParser {
     }
 
     @Override
-    public EncodingManager.Access getAccess(ReaderWay way) {
+    public WayAccess getAccess(ReaderWay way) {
         if (way.getTag("highway", "").isEmpty())
-            return EncodingManager.Access.CAN_SKIP;
-        return EncodingManager.Access.WAY;
+            return WayAccess.CAN_SKIP;
+        return WayAccess.WAY;
     }
 
 }

@@ -70,7 +70,7 @@ public class MVTResource {
         Coordinate nw = num2deg(xInfo, yInfo, zInfo);
         Coordinate se = num2deg(xInfo + 1, yInfo + 1, zInfo);
         LocationIndexTree locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
-        final NodeAccess na = graphHopper.getGraphHopperStorage().getNodeAccess();
+        final NodeAccess na = graphHopper.getBaseGraph().getNodeAccess();
         BBox bbox = new BBox(nw.x, se.x, se.y, nw.y);
         if (!bbox.isValid())
             throw new IllegalStateException("Invalid bbox " + bbox);
@@ -92,7 +92,7 @@ public class MVTResource {
         final VectorTile.Tile.Layer.Builder layerBuilder = MvtLayerBuild.newLayerBuilder("roads", layerParams);
 
         locationIndex.query(bbox, edgeId -> {
-            EdgeIteratorState edge = graphHopper.getGraphHopperStorage().getEdgeIteratorStateForKey(edgeId * 2);
+            EdgeIteratorState edge = graphHopper.getBaseGraph().getEdgeIteratorStateForKey(edgeId * 2);
             LineString lineString;
             RoadClass rc = edge.get(roadClassEnc);
             if (zInfo >= 14) {

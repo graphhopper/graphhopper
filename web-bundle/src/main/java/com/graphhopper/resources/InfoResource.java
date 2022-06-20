@@ -21,7 +21,9 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.Constants;
 import org.locationtech.jts.geom.Envelope;
 
@@ -41,13 +43,17 @@ import java.util.*;
 public class InfoResource {
 
     private final GraphHopperConfig config;
-    private final GraphHopperStorage storage;
+    private final BaseGraph baseGraph;
+    private final EncodingManager encodingManager;
+    private final StorableProperties properties;
     private final boolean hasElevation;
 
     @Inject
     public InfoResource(GraphHopperConfig config, GraphHopper graphHopper, @Named("hasElevation") Boolean hasElevation) {
         this.config = config;
-        this.storage = graphHopper.getGraphHopperStorage();
+        this.baseGraph = graphHopper.getBaseGraph();
+        this.encodingManager = graphHopper.getEncodingManager();
+        this.properties = graphHopper.getProperties();
         this.hasElevation = hasElevation;
     }
 
@@ -78,7 +84,7 @@ public class InfoResource {
     @GET
     public Info getInfo() {
         final Info info = new Info();
-        info.bbox = new Envelope(storage.getBounds().minLon, storage.getBounds().maxLon, storage.getBounds().minLat, storage.getBounds().maxLat);
+        info.bbox = new Envelope(baseGraph.getBounds().minLon, baseGraph.getBounds().maxLon, baseGraph.getBounds().minLat, baseGraph.getBounds().maxLat);
         for (Profile p : config.getProfiles()) {
             Info.ProfileData profileData = new Info.ProfileData(p.getName(), p.getVehicle());
             info.profiles.add(profileData);
@@ -87,15 +93,15 @@ public class InfoResource {
             info.profiles.add(new Info.ProfileData("pt", "pt"));
 
         info.elevation = hasElevation;
-        List<String> encoderNames = Arrays.asList(storage.getEncodingManager().toString().split(","));
+        List<String> encoderNames = Arrays.asList(encodingManager.toString().split(","));
         info.supported_vehicles = new ArrayList<>(encoderNames);
         if (config.has("gtfs.file")) {
             info.supported_vehicles.add("pt");
         }
-        info.import_date = storage.getProperties().get("datareader.import.date");
-        info.data_date = storage.getProperties().get("datareader.data.date");
+        info.import_date = properties.get("datareader.import.date");
+        info.data_date = properties.get("datareader.data.date");
 
-        List<EncodedValue> evList = storage.getEncodingManager().getEncodedValues();
+        List<EncodedValue> evList = encodingManager.getEncodedValues();
         info.encoded_values = new LinkedHashMap<>();
         for (EncodedValue encodedValue : evList) {
             List<Object> possibleValueList = new ArrayList<>();

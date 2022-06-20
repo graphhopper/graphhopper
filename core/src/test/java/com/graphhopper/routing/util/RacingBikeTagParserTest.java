@@ -28,8 +28,8 @@ import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.routing.util.BikeCommonTagParser.PUSHING_SECTION_SPEED;
-import static com.graphhopper.routing.util.EncodingManager.Access.WAY;
 import static com.graphhopper.routing.util.PriorityCode.*;
+import static com.graphhopper.routing.util.WayAccess.WAY;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -44,8 +44,8 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Override
-    protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup) {
-        RacingBikeTagParser parser = new RacingBikeTagParser(lookup, new PMap("block_fords=true"));
+    protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup, PMap pMap) {
+        RacingBikeTagParser parser = new RacingBikeTagParser(lookup, pMap);
         parser.init(new DateRangeParser());
         return parser;
     }
@@ -223,7 +223,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         EncodingManager encodingManager = EncodingManager.create("racingbike");
         BikeCommonTagParser parser = new RacingBikeTagParser(encodingManager, new PMap("block_fords=true")) {
             @Override
-            public EncodingManager.Access getAccess(ReaderWay way) {
+            public WayAccess getAccess(ReaderWay way) {
                 return WAY;
             }
         };

@@ -455,7 +455,7 @@ public class EdgeBasedTarjanSCC {
 
         @Override
         public void minTo(int key, int value) {
-            // todonow: optimize
+            // todo: optimize with map.indexOf(key) etc
             map.put(key, Math.min(map.getOrDefault(key, -1), value));
         }
 

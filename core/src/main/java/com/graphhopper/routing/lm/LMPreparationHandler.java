@@ -23,8 +23,9 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.AreaIndex;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.JsonFeatureCollection;
@@ -172,8 +173,8 @@ public class LMPreparationHandler {
     /**
      * Prepares the landmark data for all given configs
      */
-    public List<PrepareLandmarks> prepare(List<LMConfig> lmConfigs, GraphHopperStorage ghStorage, LocationIndex locationIndex, final boolean closeEarly) {
-        List<PrepareLandmarks> preparations = createPreparations(lmConfigs, ghStorage.getBaseGraph(), ghStorage.getEncodingManager(), locationIndex);
+    public List<PrepareLandmarks> prepare(List<LMConfig> lmConfigs, BaseGraph baseGraph, EncodingManager encodingManager, StorableProperties properties, LocationIndex locationIndex, final boolean closeEarly) {
+        List<PrepareLandmarks> preparations = createPreparations(lmConfigs, baseGraph, encodingManager, locationIndex);
         List<Callable<String>> prepareCallables = new ArrayList<>();
         for (int i = 0; i < preparations.size(); i++) {
             PrepareLandmarks prepare = preparations.get(i);
@@ -186,7 +187,7 @@ public class LMPreparationHandler {
                 if (closeEarly)
                     prepare.close();
                 LOGGER.info("LM {} finished {}", name, getMemInfo());
-                ghStorage.getProperties().put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
+                properties.put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
                 return name;
             });
         }
