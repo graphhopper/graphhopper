@@ -80,6 +80,9 @@ class ValueExpressionVisitorTest {
 
         msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "1/my_priority", lookup)).getMessage();
         assertTrue(msg.contains("invalid operation '/'"), msg);
+
+        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "my_priority*my_priority2 * 3", lookup)).getMessage();
+        assertTrue(msg.contains("Currently only a single EncodedValue is allowed on the right side"), msg);
     }
 
     @Test
@@ -88,8 +91,6 @@ class ValueExpressionVisitorTest {
         DecimalEncodedValue prio1 = new DecimalEncodedValueImpl("my_priority", 5, 1, false);
         IntEncodedValueImpl prio2 = new IntEncodedValueImpl("my_priority2", 5, -5, false, false);
         EncodedValueLookup lookup = new EncodingManager.Builder().add(prio1).add(prio2).build();
-
-        assertInterval(0, 2418, "my_priority*my_priority2 * 3", lookup);
 
         assertInterval(2, 2, "2", lookup);
 

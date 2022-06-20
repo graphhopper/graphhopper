@@ -5,12 +5,14 @@ import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import org.codehaus.commons.compiler.CompileException;
-import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
 
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Expression visitor for right-hand side of e.g. limit_to and multiply_by
@@ -122,8 +124,8 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
-        if (result.operators.contains("-") && result.guessedVariables.size() > 1)
-            throw new IllegalArgumentException("Operation '-' is only allowed when there is a single EncodedValue, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
+        if (result.guessedVariables.size() > 1)
+            throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right side, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
 
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
@@ -143,34 +145,20 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             }
 
             createdObjects.addAll(result.guessedVariables);
-            if (result.guessedVariables.size() == 1 && lookup.hasEncodedValue(valueExpression)) { // speed up for common case
+            if (lookup.hasEncodedValue(valueExpression)) { // speed up for common case that complete right side is the encoded value
                 EncodedValue enc = lookup.getEncodedValue(valueExpression, EncodedValue.class);
                 double min = getMin(enc), max = getMax(enc);
                 return new double[]{min, max};
             }
 
             ExpressionEvaluator ee = new ExpressionEvaluator();
-            List<String> names = new ArrayList<>(result.guessedVariables.size());
-            List<Class<?>> values = new ArrayList<>(result.guessedVariables.size());
-            for (String var : result.guessedVariables) {
-                names.add(var);
-                values.add(double.class);
-            }
-            ee.setParameters(names.toArray(new String[0]), values.toArray(new Class[0]));
+            String var = result.guessedVariables.iterator().next();
+            ee.setParameters(new String[]{var}, new Class[]{double.class});
             ee.cook(valueExpression);
-            List<Double> args = new ArrayList<>();
-            for (String var : result.guessedVariables) {
-                double max = getMax(lookup.getEncodedValue(var, EncodedValue.class));
-                args.add(max);
-            }
-            Number val1 = (Number) ee.evaluate(args.toArray());
-
-            args.clear();
-            for (String var : result.guessedVariables) {
-                double min = getMin(lookup.getEncodedValue(var, EncodedValue.class));
-                args.add(min);
-            }
-            Number val2 = (Number) ee.evaluate(args.toArray());
+            double max = getMax(lookup.getEncodedValue(var, EncodedValue.class));
+            Number val1 = (Number) ee.evaluate(max);
+            double min = getMin(lookup.getEncodedValue(var, EncodedValue.class));
+            Number val2 = (Number) ee.evaluate(min);
             return new double[]{Math.min(val1.doubleValue(), val2.doubleValue()), Math.max(val1.doubleValue(), val2.doubleValue())};
         } catch (CompileException | InvocationTargetException ex) {
             throw new IllegalArgumentException(ex);
