@@ -749,7 +749,6 @@ public class BaseGraph implements Graph, Closeable {
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
             assert edgeId < store.getEdges() : "must be edge but was shortcut: " + edgeId + " >= " + store.getEdges() + ". Use setFlagsAndWeight";
             store.writeFlags(edgePointer, edgeFlags);
-            refreshFlags = true;
             return this;
         }
 
