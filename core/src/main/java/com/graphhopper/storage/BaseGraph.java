@@ -587,7 +587,7 @@ public class BaseGraph implements Graph, Closeable {
             boolean baseNodeIsNodeA = baseNode == nodeA;
             adjNode = baseNodeIsNodeA ? store.getNodeB(edgePointer) : nodeA;
             reverse = !baseNodeIsNodeA;
-            freshFlags = false;
+            refreshFlags = true;
 
             // position to next edge
             nextEdgeId = baseNodeIsNodeA ? store.getLinkA(edgePointer) : store.getLinkB(edgePointer);
@@ -624,7 +624,7 @@ public class BaseGraph implements Graph, Closeable {
             edgePointer = store.toEdgePointer(edgeId);
             baseNode = store.getNodeA(edgePointer);
             adjNode = store.getNodeB(edgePointer);
-            freshFlags = false;
+            refreshFlags = true;
             reverse = false;
             return true;
         }
@@ -658,7 +658,7 @@ public class BaseGraph implements Graph, Closeable {
         int adjNode;
         // we need reverse if detach is called
         boolean reverse = false;
-        boolean freshFlags;
+        boolean refreshFlags;
         int edgeId = -1;
         private final IntsRef edgeFlags;
 
@@ -678,7 +678,7 @@ public class BaseGraph implements Graph, Closeable {
             edgePointer = store.toEdgePointer(edgeId);
             baseNode = store.getNodeA(edgePointer);
             adjNode = store.getNodeB(edgePointer);
-            freshFlags = false;
+            refreshFlags = true;
 
             if (expectedAdjNode == adjNode || expectedAdjNode == Integer.MIN_VALUE) {
                 reverse = false;
@@ -703,7 +703,7 @@ public class BaseGraph implements Graph, Closeable {
             edgePointer = store.toEdgePointer(edgeId);
             baseNode = store.getNodeA(edgePointer);
             adjNode = store.getNodeB(edgePointer);
-            freshFlags = false;
+            refreshFlags = true;
 
             if (edgeKey % 2 == 0 || baseNode == adjNode) {
                 reverse = false;
@@ -738,9 +738,9 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public IntsRef getFlags() {
-            if (!freshFlags) {
+            if (refreshFlags) {
                 store.readFlags(edgePointer, edgeFlags);
-                freshFlags = true;
+                refreshFlags = false;
             }
             return edgeFlags;
         }
@@ -749,10 +749,6 @@ public class BaseGraph implements Graph, Closeable {
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
             assert edgeId < store.getEdges() : "must be edge but was shortcut: " + edgeId + " >= " + store.getEdges() + ". Use setFlagsAndWeight";
             store.writeFlags(edgePointer, edgeFlags);
-            for (int i = 0; i < edgeFlags.ints.length; i++) {
-                this.edgeFlags.ints[i] = edgeFlags.ints[i];
-            }
-            freshFlags = true;
             return this;
         }
 
