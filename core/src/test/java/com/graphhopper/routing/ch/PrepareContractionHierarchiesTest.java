@@ -22,6 +22,8 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -53,51 +55,55 @@ public class PrepareContractionHierarchiesTest {
     // |         |    |
     // 17-16-...-11<-/
     private static void initDirected2(Graph g, FlagEncoder encoder) {
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(7, 8).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(8, 9).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(9, 10).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(10, 11).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(11, 12).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(11, 9).setDistance(3));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(12, 13).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(13, 14).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(14, 15).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(15, 16).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(16, 17).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(17, 0).setDistance(1));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(4, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(6, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(7, 8).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(8, 9).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(9, 10).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(10, 11).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(11, 12).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(11, 9).setDistance(3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(12, 13).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(13, 14).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(14, 15).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(15, 16).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(16, 17).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(17, 0).setDistance(1));
     }
 
     // prepare-routing.svg
     private static void initShortcutsGraph(Graph g, FlagEncoder encoder) {
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(1.5));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 9).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(9, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(10, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(6, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(7, 8).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(8, 9).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 11).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(9, 14).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(10, 14).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(11, 12).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(12, 15).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(12, 13).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(13, 16).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(15, 16).setDistance(2));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(14, 16).setDistance(1));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(1.5));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 9).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(9, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(10, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(4, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(6, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(7, 8).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(8, 9).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(4, 11).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(9, 14).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(10, 14).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(11, 12).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(12, 15).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(12, 13).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(13, 16).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(15, 16).setDistance(2));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(14, 16).setDistance(1));
     }
 
     private static void initExampleGraph(Graph g, FlagEncoder encoder) {
@@ -107,13 +113,15 @@ public class PrepareContractionHierarchiesTest {
         //   /    |
         //  4-----3
         //
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 4).setDistance(3));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(3));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 3).setDistance(2));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 1).setDistance(2));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 4).setDistance(3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(4, 3).setDistance(2));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(5, 1).setDistance(2));
     }
 
     @BeforeEach
@@ -152,12 +160,14 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testDirectedGraph() {
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(5, 4).setDistance(3));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(4, 5).setDistance(10));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(2, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(5, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(3, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(4, 3).setDistance(1));
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(5, 4).setDistance(3));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(4, 5).setDistance(10));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(2, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(5, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(3, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(4, 3).setDistance(1));
         g.freeze();
         assertEquals(6, g.getEdges());
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
@@ -201,47 +211,48 @@ public class PrepareContractionHierarchiesTest {
         // -15-1--2--3--4       /     /
         //     /         \-5->6/     /
         //  -14            \________/
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(16, 0).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 9).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 17).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(9, 10).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(10, 11).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(11, 28).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(28, 29).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(29, 30).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(30, 31).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(31, 4).setDistance(1));
 
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(16, 0).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 9).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 17).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(9, 10).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(10, 11).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(11, 28).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(28, 29).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(29, 30).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(30, 31).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(31, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(17, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(15, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(14, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(14, 18).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(18, 19).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(19, 20).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(20, 15).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(19, 21).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(21, 16).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 4).setDistance(1));
 
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(17, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(15, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(14, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(14, 18).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(18, 19).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(19, 20).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(20, 15).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(19, 21).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(21, 16).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(4, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(6, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(7, 13).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(13, 12).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(12, 4).setDistance(1));
 
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(4, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(6, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(7, 13).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(13, 12).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(12, 4).setDistance(1));
-
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(7, 8).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(8, 22).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(22, 23).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(23, 24).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(24, 25).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(25, 27).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(27, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(25, 26).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(26, 25).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(7, 8).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(8, 22).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(22, 23).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(23, 24).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(24, 25).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(25, 27).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(27, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(25, 26).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(26, 25).setDistance(1));
     }
 
     @Test
@@ -271,14 +282,16 @@ public class PrepareContractionHierarchiesTest {
         //            2
         //            v
         //            7
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(8, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(3, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(6, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(1, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(4, 0).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(0, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(6, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(2, 7).setDistance(1));
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(8, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(3, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(6, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(1, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(4, 0).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(0, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(6, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(2, 7).setDistance(1));
         g.freeze();
 
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g)
@@ -331,13 +344,15 @@ public class PrepareContractionHierarchiesTest {
         // start 0 - 3 - x - 1 - 2
         //             \         |
         //               sc ---- 4 - 5 - 6 - 7 finish
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 3).setDistance(1));
-        EdgeIteratorState edge31 = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(1, 2).setDistance(1));
-        EdgeIteratorState edge24 = GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(4, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(6, 7).setDistance(1));
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 3).setDistance(1));
+        EdgeIteratorState edge31 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(1));
+        EdgeIteratorState edge24 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(4, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(6, 7).setDistance(1));
         updateDistancesFor(g, 0, 0.001, 0.0000);
         updateDistancesFor(g, 3, 0.001, 0.0001);
         updateDistancesFor(g, 1, 0.001, 0.0002);
@@ -352,14 +367,14 @@ public class PrepareContractionHierarchiesTest {
         // at node 2 coming from 3. this happens because due to the virtual node x between 3 and 1, the weight of the
         // spt entry at 2 is different to the sum of the weights of the spt entry at node 3 and the shortcut edge. this
         // is due to different floating point rounding arithmetic of shortcuts and virtual edges on the query graph.
-        edge31.set(carEncoder.getAverageSpeedEnc(), 12, 12);
+        edge31.set(speedEnc, 12, 12);
 
         // just stalling node 2 alone would not lead to connection not found, because the shortcut 3-4 still finds node
         // 4. however, we can choose the weight of edge 2-4 such that node 4 also gets stalled via node 2.
         // it is important that node 2 gets stalled before otherwise node 4 would have already be discovered.
         // note that without the virtual node between 3 and 1 node 2 would not even be explored in the forward search,
         // but because of the virtual node the strict upward search is modified and goes like 0-3-x-1-2.
-        edge24.set(carEncoder.getAverageSpeedEnc(), 27.5, 27.5);
+        edge24.set(speedEnc, 27.5, 27.5);
 
         // prepare ch, use node ids as levels
         PrepareContractionHierarchies pch = createPrepareContractionHierarchies(g, chConfig);
@@ -420,10 +435,12 @@ public class PrepareContractionHierarchiesTest {
         //  /--1
         // -0--/
         //  |
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(10));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(4));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 2).setDistance(10));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 3).setDistance(10));
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(4));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 3).setDistance(10));
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         PrepareContractionHierarchies.Result result = prepare.doWork();
         assertEquals(0, result.getShortcuts());
@@ -436,15 +453,17 @@ public class PrepareContractionHierarchiesTest {
         // 0-1->-2--3--4
         //   \-<-/
         //
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(2, 1).setDistance(1));
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(2, 1).setDistance(1));
 
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 0).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(6, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(5, 0).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(6, 3).setDistance(1));
 
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         useNodeOrdering(prepare, new int[]{4, 1, 2, 0, 5, 6, 3});
@@ -476,7 +495,7 @@ public class PrepareContractionHierarchiesTest {
         initShortcutsGraph(graph, tmpCarEncoder);
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            GHUtility.setSpeed(18, true, true, tmpBikeEncoder, iter);
+            GHUtility.setSpeed(18, true, true, tmpBikeEncoder.getAccessEnc(), tmpBikeEncoder.getAverageSpeedEnc(), iter);
         }
         graph.freeze();
 
@@ -497,7 +516,7 @@ public class PrepareContractionHierarchiesTest {
         initShortcutsGraph(graph, tmpCarEncoder);
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            GHUtility.setSpeed(18, true, true, tmpBikeEncoder, iter);
+            GHUtility.setSpeed(18, true, true, tmpBikeEncoder.getAccessEnc(), tmpBikeEncoder.getAverageSpeedEnc(), iter);
         }
         GHUtility.getEdge(graph, 9, 14).
                 set(tmpBikeEncoder.getAccessEnc(), false).

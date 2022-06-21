@@ -108,8 +108,8 @@ public class FastestWeightingTest {
     public void calcWeightAndTime_withTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         Weighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(100));
-        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(100));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(0, 1).setDistance(100));
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(1, 2).setDistance(100));
         // turn costs are given in seconds
         setTurnCost(graph, 0, 1, 2, 5);
         assertEquals(6 + 5, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
@@ -120,7 +120,7 @@ public class FastestWeightingTest {
     public void calcWeightAndTime_uTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         Weighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 40));
-        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(100));
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(0, 1).setDistance(100));
         assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
     }
@@ -129,8 +129,8 @@ public class FastestWeightingTest {
     public void calcWeightAndTime_withTurnCosts_shortest() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         Weighting weighting = new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(100));
-        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(100));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(0, 1).setDistance(100));
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(1, 2).setDistance(100));
         // turn costs are given in seconds
         setTurnCost(graph, 0, 1, 2, 5);
         // todo: for the shortest weighting turn costs cannot be interpreted as seconds? at least when they are added

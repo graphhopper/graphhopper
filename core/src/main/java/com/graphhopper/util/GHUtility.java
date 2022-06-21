@@ -633,11 +633,12 @@ public class GHUtility {
     }
 
     public static EdgeIteratorState setSpeed(double averageSpeed, boolean fwd, boolean bwd, FlagEncoder encoder, EdgeIteratorState edge) {
+        return setSpeed(averageSpeed, fwd, bwd, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), edge);
+    }
+
+    public static EdgeIteratorState setSpeed(double averageSpeed, boolean fwd, boolean bwd, BooleanEncodedValue accessEnc, DecimalEncodedValue avSpeedEnc, EdgeIteratorState edge) {
         if (averageSpeed < 0.0001 && (fwd || bwd))
             throw new IllegalStateException("Zero speed is only allowed if edge will get inaccessible. Otherwise Weighting can produce inconsistent results");
-
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
         edge.set(accessEnc, fwd, bwd);
         if (fwd)
             edge.set(avSpeedEnc, averageSpeed);

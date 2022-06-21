@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
@@ -40,6 +41,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 public class DefaultBidirPathExtractorTest {
     private final FlagEncoder carEncoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 10));
+    private final BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+    private final DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
 
     BaseGraph createGraph() {
@@ -49,7 +52,7 @@ public class DefaultBidirPathExtractorTest {
     @Test
     public void testExtract() {
         Graph graph = createGraph();
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(10));
         SPTEntry fwdEntry = new SPTEntry(0, 2, 0, new SPTEntry(1, 10));
         SPTEntry bwdEntry = new SPTEntry(2, 0);
         Path p = DefaultBidirPathExtractor.extractPath(graph, new FastestWeighting(carEncoder), fwdEntry, bwdEntry, 0);
@@ -61,8 +64,8 @@ public class DefaultBidirPathExtractorTest {
     public void testExtract2() {
         // 1->2->3
         Graph graph = createGraph();
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(10));
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(2, 3).setDistance(20));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(20));
         // add some turn costs at node 2 where fwd&bwd searches meet. these costs have to be included in the
         // weight and the time of the path
         TurnCostStorage turnCostStorage = graph.getTurnCostStorage();

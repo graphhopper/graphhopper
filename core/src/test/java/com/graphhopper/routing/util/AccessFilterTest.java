@@ -20,6 +20,8 @@ package com.graphhopper.routing.util;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.routing.ch.PrepareEncoder;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
@@ -30,6 +32,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AccessFilterTest {
     private final FlagEncoder encoder = FlagEncoders.createCar();
+    private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+    private final DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final BaseGraph graph = new BaseGraph.Builder(encodingManager)
             .withTurnCosts(true)
@@ -40,9 +44,9 @@ public class AccessFilterTest {
         // 0-1
         //  \|
         //   2
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(2));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 0).setDistance(3));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(2));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 0).setDistance(3));
         graph.freeze();
         // add loop shortcut in 'fwd' direction
         CHConfig chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())));

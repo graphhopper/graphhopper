@@ -19,6 +19,7 @@ package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
@@ -96,13 +97,15 @@ public class LocationIndexTreeTest {
         na.setNode(2, -1, -1);
         na.setNode(3, -0.4, 0.9);
         na.setNode(4, -0.6, 1.6);
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 4));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 4));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4));
         return graph;
     }
 
@@ -156,9 +159,11 @@ public class LocationIndexTreeTest {
         na.setNode(2, 51.2, 9.4);
         na.setNode(3, 49, 10);
 
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 0));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 3)).setWayGeometry(Helper.createPointList(51.21, 9.43));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 0));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 3)).setWayGeometry(Helper.createPointList(51.21, 9.43));
         LocationIndex index = createIndexNoPrepare(graph, 500000).prepareIndex();
         assertEquals(1, findClosestEdge(index, 51.2, 9.4));
     }
@@ -181,14 +186,16 @@ public class LocationIndexTreeTest {
         na.setNode(2, -1, -1);
         na.setNode(3, -0.4, 0.9);
         na.setNode(4, -0.6, 1.6);
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2));
         // insert A and B, without this we would get 0 for 0,0
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4)).setWayGeometry(Helper.createPointList(1, 1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 3)).setWayGeometry(Helper.createPointList(0, 0));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 4)).setWayGeometry(Helper.createPointList(1, 1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3)).setWayGeometry(Helper.createPointList(0, 0));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 4));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4));
         return graph;
     }
 
@@ -211,9 +218,9 @@ public class LocationIndexTreeTest {
         na.setNode(20, 52, 9);
         na.setNode(30, 51.2, 9.4);
         na.setNode(50, 49, 10);
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(20, 50)).setWayGeometry(Helper.createPointList(51.25, 9.43));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(10, 20));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(20, 30));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), g.edge(20, 50)).setWayGeometry(Helper.createPointList(51.25, 9.43));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), g.edge(10, 20));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), g.edge(20, 30));
 
         LocationIndex index = createIndexNoPrepare(g, 2000).prepareIndex();
         assertEquals(0, findClosestEdge(index, 51.25, 9.43));
@@ -350,10 +357,10 @@ public class LocationIndexTreeTest {
                 int index = lonIdx * 10 + latIdx;
                 na.setNode(index, 0.01 * latIdx, 0.01 * lonIdx);
                 if (latIdx < MAX - 1)
-                    GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(index, index + 1));
+                    GHUtility.setSpeed(60, true, true, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), graph.edge(index, index + 1));
 
                 if (lonIdx < MAX - 1)
-                    GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(index, index + 10));
+                    GHUtility.setSpeed(60, true, true, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), graph.edge(index, index + 10));
             }
         }
 
@@ -414,9 +421,9 @@ public class LocationIndexTreeTest {
         // as last edges: create cross boundary edges
         // See #667 where the recommendation is to adjust the import and introduce two pillar nodes 
         // where the connection is cross boundary and would be okay if ignored as real length is 0
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2)).setWayGeometry(Helper.createPointList(0, 180, 0, -180));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(1, 2)).setWayGeometry(Helper.createPointList(0, 180, 0, -180));
         // but this unit test succeeds even without this adjusted import:
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(5, 6));
 
         LocationIndexTree index = createIndexNoPrepare(graph, 500);
         index.prepareIndex();
@@ -568,26 +575,28 @@ public class LocationIndexTreeTest {
         // => 17 locations
 
         FlagEncoder encoder = encodingManager.getEncoder("car");
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(a0, b1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(c2, b1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(c2, d3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, b1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(e4, f5));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(m12, d3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(e4, k10));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, d3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, i8));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, j9));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(k10, g6));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(j9, l11));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(i8, l11));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(i8, h7));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(k10, n13));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(k10, o14));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(l11, p15));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(m12, p15));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(q16, p15));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(q16, m12));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(a0, b1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(c2, b1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(c2, d3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(f5, b1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(e4, f5));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(m12, d3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(e4, k10));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(f5, d3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(f5, i8));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(f5, j9));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(k10, g6));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(j9, l11));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(i8, l11));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(i8, h7));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(k10, n13));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(k10, o14));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(l11, p15));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(m12, p15));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(q16, p15));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(q16, m12));
         return graph;
     }
 

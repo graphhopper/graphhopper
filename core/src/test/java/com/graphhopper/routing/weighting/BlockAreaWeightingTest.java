@@ -33,7 +33,7 @@ public class BlockAreaWeightingTest {
         em = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(em).create();
         // 0-1
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(0, 1).setDistance(1));
         updateDistancesFor(graph, 0, 0.00, 0.00);
         updateDistancesFor(graph, 1, 0.01, 0.01);
     }

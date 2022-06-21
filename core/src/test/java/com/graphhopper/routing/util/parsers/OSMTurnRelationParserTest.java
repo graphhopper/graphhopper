@@ -1,6 +1,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
@@ -74,15 +75,17 @@ public class OSMTurnRelationParserTest {
     // |  |  |
     // 5--6--7
     private static void initGraph(BaseGraph graph, FlagEncoder encoder) {
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 5).setDistance(0.5));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(1));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 5).setDistance(0.5));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 7).setDistance(1));
     }
 }

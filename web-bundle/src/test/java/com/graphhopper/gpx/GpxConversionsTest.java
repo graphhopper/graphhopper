@@ -21,6 +21,8 @@ package com.graphhopper.gpx;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
@@ -76,12 +78,14 @@ public class GpxConversionsTest {
         na.setNode(6, 15.1, 10.1);
         na.setNode(7, 15.1, 9.8);
 
-        GHUtility.setSpeed(63, true, true, carEncoder, g.edge(1, 2).setDistance(7000).setName("1-2"));
-        GHUtility.setSpeed(72, true, true, carEncoder, g.edge(2, 3).setDistance(8000).setName("2-3"));
-        GHUtility.setSpeed(9, true, true, carEncoder, g.edge(2, 6).setDistance(10000).setName("2-6"));
-        GHUtility.setSpeed(81, true, true, carEncoder, g.edge(3, 4).setDistance(9000).setName("3-4"));
-        GHUtility.setSpeed(9, true, true, carEncoder, g.edge(3, 7).setDistance(10000).setName("3-7"));
-        GHUtility.setSpeed(90, true, true, carEncoder, g.edge(4, 5).setDistance(10000).setName("4-5"));
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(63, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(7000).setName("1-2"));
+        GHUtility.setSpeed(72, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(8000).setName("2-3"));
+        GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(2, 6).setDistance(10000).setName("2-6"));
+        GHUtility.setSpeed(81, true, true, accessEnc, speedEnc, g.edge(3, 4).setDistance(9000).setName("3-4"));
+        GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(3, 7).setDistance(10000).setName("3-7"));
+        GHUtility.setSpeed(90, true, true, accessEnc, speedEnc, g.edge(4, 5).setDistance(10000).setName("4-5"));
 
         ShortestWeighting weighting = new ShortestWeighting(carEncoder);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);

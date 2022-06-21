@@ -25,7 +25,10 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -184,8 +187,8 @@ public class PrepareLandmarksTest {
 
     @Test
     public void testStoreAndLoad() {
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(80_000));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(80_000));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(0, 1).setDistance(80_000));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(1, 2).setDistance(80_000));
         String fileStr = "./target/tmp-lm";
         Helper.removeDir(new File(fileStr));
 

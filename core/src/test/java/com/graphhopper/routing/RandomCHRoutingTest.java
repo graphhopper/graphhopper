@@ -5,7 +5,10 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -33,8 +36,6 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class RandomCHRoutingTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(RandomCHRoutingTest.class);
@@ -251,7 +252,7 @@ public class RandomCHRoutingTest {
             maxDist = Math.max(maxDist, distance);
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
-            EdgeIteratorState edge = GHUtility.setSpeed(60, true, bothDirections, encoder, graph.edge(from, to).setDistance(distance));
+            EdgeIteratorState edge = GHUtility.setSpeed(60, true, bothDirections, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(from, to).setDistance(distance));
             double fwdSpeed = 10 + random.nextDouble() * 120;
             double bwdSpeed = 10 + random.nextDouble() * 120;
             DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
