@@ -33,6 +33,8 @@ import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
+import com.graphhopper.routing.matrix.GHMatrixRequest;
+import com.graphhopper.routing.matrix.GHMatrixResponse;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.*;
@@ -124,6 +126,7 @@ public class GraphHopper {
     private String dateRangeParserString = "";
     private String encodedValuesString = "";
     private String flagEncodersString = "";
+
 
     public GraphHopper setEncodedValuesString(String encodedValuesString) {
         this.encodedValuesString = encodedValuesString;
@@ -989,6 +992,10 @@ public class GraphHopper {
 
     public GHResponse route(GHRequest request) {
         return createRouter().route(request);
+    }
+
+    public GHMatrixResponse matrix(GHMatrixRequest request) {
+        return createRouter().matrix(request);
     }
 
     private Router createRouter() {

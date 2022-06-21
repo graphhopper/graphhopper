@@ -60,7 +60,7 @@ public class BridgePathFinder {
         queue.clear();
         map.clear();
         IntObjectMap<BridePathEntry> result = new IntObjectHashMap<>(16, 0.5, HashOrderMixing.constant(123));
-        PrepareCHEntry startEntry = new PrepareCHEntry(NO_EDGE, startInEdgeKey, startInEdgeKey, startNode, 0, 0);
+        PrepareCHEntry startEntry = new PrepareCHEntry(NO_EDGE, startInEdgeKey, startInEdgeKey, startNode, 0, 0,0,0);
         map.put(startInEdgeKey, startEntry);
         queue.add(startEntry);
         while (!queue.isEmpty()) {
@@ -72,11 +72,16 @@ public class BridgePathFinder {
                     double weight = currEntry.weight +
                             graph.getTurnWeight(currEntry.incEdgeKey, currEntry.adjNode, iter.getOrigEdgeKeyFirst()) +
                             iter.getWeight();
+
+                    double distance = currEntry.distance + iter.getDistance();
+                    long time = currEntry.time +
+                            graph.getTurnTime(currEntry.incEdgeKey, currEntry.adjNode, iter.getOrigEdgeKeyFirst()) +
+                            iter.getTime();;
                     if (Double.isInfinite(weight))
                         continue;
                     PrepareCHEntry entry = map.get(iter.getOrigEdgeKeyLast());
                     if (entry == null) {
-                        entry = new PrepareCHEntry(iter.getPrepareEdge(), iter.getOrigEdgeKeyFirst(), iter.getOrigEdgeKeyLast(), iter.getAdjNode(), weight, currEntry.origEdges + iter.getOrigEdgeCount());
+                        entry = new PrepareCHEntry(iter.getPrepareEdge(), iter.getOrigEdgeKeyFirst(), iter.getOrigEdgeKeyLast(), iter.getAdjNode(), weight, time,distance,currEntry.origEdges + iter.getOrigEdgeCount());
                         entry.parent = currEntry;
                         map.put(iter.getOrigEdgeKeyLast(), entry);
                         queue.add(entry);
@@ -86,6 +91,8 @@ public class BridgePathFinder {
                         entry.origEdges = currEntry.origEdges + iter.getOrigEdgeCount();
                         entry.firstEdgeKey = iter.getOrigEdgeKeyFirst();
                         entry.weight = weight;
+                        entry.distance = distance;
+                        entry.time = time;
                         entry.parent = currEntry;
                         queue.add(entry);
                     }
@@ -98,15 +105,23 @@ public class BridgePathFinder {
                             iter.getWeight();
                     if (Double.isInfinite(weight))
                         continue;
+
+                    double distance = currEntry.distance + iter.getDistance();
+                    long time = currEntry.time +
+                            graph.getTurnTime(currEntry.incEdgeKey, currEntry.adjNode, iter.getOrigEdgeKeyFirst()) +
+                            iter.getTime();
+
                     PrepareGraphOrigEdgeIterator origOutIter = origOutExplorer.setBaseNode(iter.getAdjNode());
                     while (origOutIter.next()) {
                         double totalWeight = weight + graph.getTurnWeight(
                                 iter.getOrigEdgeKeyLast(), iter.getAdjNode(), origOutIter.getOrigEdgeKeyFirst());
+
                         if (Double.isInfinite(totalWeight))
                             continue;
                         BridePathEntry resEntry = result.get(origOutIter.getOrigEdgeKeyFirst());
                         if (resEntry == null) {
-                            PrepareCHEntry chEntry = new PrepareCHEntry(iter.getPrepareEdge(), iter.getOrigEdgeKeyFirst(), iter.getOrigEdgeKeyLast(), iter.getAdjNode(), weight, currEntry.origEdges + iter.getOrigEdgeCount());
+                            PrepareCHEntry chEntry = new PrepareCHEntry(iter.getPrepareEdge(), iter.getOrigEdgeKeyFirst(), iter.getOrigEdgeKeyLast(), iter.getAdjNode(),
+                                    weight, time,distance, currEntry.origEdges + iter.getOrigEdgeCount());
                             chEntry.parent = currEntry;
                             resEntry = new BridePathEntry(totalWeight, chEntry);
                             result.put(origOutIter.getOrigEdgeKeyFirst(), resEntry);
@@ -117,6 +132,8 @@ public class BridgePathFinder {
                             resEntry.chEntry.origEdges = currEntry.origEdges + iter.getOrigEdgeCount();
                             resEntry.chEntry.incEdgeKey = iter.getOrigEdgeKeyLast();
                             resEntry.chEntry.weight = weight;
+                            resEntry.chEntry.distance = distance;
+                            resEntry.chEntry.time = time;
                             resEntry.chEntry.parent = currEntry;
                         }
                     }

@@ -41,6 +41,10 @@ public class Parameters {
          */
         public static final String DIJKSTRA_ONE_TO_MANY = "dijkstra_one_to_many";
         /**
+         * many to many CH Bidirectional Dijkstra
+         */
+        public static final String DIJKSTRA_MANY_TO_MANY = "dijkstra_ch_many_to_many";
+        /**
          * Unidirectional A* (not for CH)
          */
         public static final String ASTAR = "astar";

@@ -29,7 +29,14 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
+import com.graphhopper.routing.matrix.DistanceMatrix;
+import com.graphhopper.routing.matrix.GHMatrixRequest;
+import com.graphhopper.routing.matrix.GHMatrixResponse;
+import com.graphhopper.routing.matrix.MatrixCalculator;
+import com.graphhopper.routing.matrix.solver.CHMatrixSolver;
+import com.graphhopper.routing.matrix.solver.MatrixSolver;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -133,6 +140,43 @@ public class Router {
         }
     }
 
+    public GHMatrixResponse matrix(GHMatrixRequest request) {
+
+        Profile profile = profilesByName.get(request.getProfile());
+        RoutingCHGraph chGraph = chGraphs.get(profile.getName());
+
+
+        MatrixSolver solver = createMatrixSolver(request);
+        solver.checkRequest();
+        solver.init();
+
+        GHMatrixResponse ghMtxRsp = new GHMatrixResponse();
+
+        DirectedEdgeFilter directedEdgeFilter = solver.createDirectedEdgeFilter();
+        // For the usage of the Matrix use case, we don't need neither pointHints, SnapPreventions or Headings.
+        List<Double> headings = new ArrayList<>();
+        List<String> pointHints = new ArrayList<>();
+        List<String> snapPreventions = new ArrayList<>();
+        List<Snap> origins = ViaRouting.lookupMatrix(encodingManager, request.getOrigins(), solver.createSnapFilter(), locationIndex,
+                snapPreventions, pointHints, directedEdgeFilter, headings);
+
+        List<Snap> destinations = ViaRouting.lookupMatrix(encodingManager, request.getDestinations(), solver.createSnapFilter(), locationIndex,
+                snapPreventions, pointHints, directedEdgeFilter, headings);
+
+        // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
+        // the (possibly implementation specific) query graph used by PathCalculator
+        List<Snap> allSnaps = new ArrayList<>(origins);
+        allSnaps.addAll(destinations);
+        QueryGraph queryGraph = QueryGraph.create(graph, allSnaps);
+
+
+        MatrixCalculator matrixCalculator = solver.createMatrixCalculator(queryGraph);
+        DistanceMatrix matrix = matrixCalculator.calcMatrix(origins, destinations);
+        ghMtxRsp.setMatrix(matrix);
+
+        return ghMtxRsp;
+    }
+
     private void checkNoLegacyParameters(GHRequest request) {
         if (request.getHints().has("vehicle"))
             throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see docs/core/profiles.md");
@@ -193,6 +237,11 @@ public class Router {
         } else {
             return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex);
         }
+    }
+
+    protected MatrixSolver createMatrixSolver(GHMatrixRequest request) {
+        // TODO For now MatrixSolver is just implemented with CHMatrixSolver
+        return new CHMatrixSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
     }
 
     protected GHResponse routeRoundTrip(GHRequest request, FlexSolver solver) {

@@ -154,4 +154,37 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
         } else if (shouldBeShortcut)
             throw new IllegalStateException("Method " + methodName + " only for shortcuts " + getEdge());
     }
+
+    /* STUART Custom Methods*/
+
+    @Override
+    public long getTime(boolean reverse) {
+        if (isShortcut()) {
+            return store.getTime(shortcutPointer);
+        } else {
+            return getOrigEdgeTime(reverse);
+        }
+    }
+
+    @Override
+    public double getDistance() {
+        if (isShortcut()) {
+            return store.getDistance(shortcutPointer);
+        } else {
+            return getOrigEdgeDistance();
+        }
+    }
+
+    double getOrigEdgeDistance() {
+        final EdgeIteratorState baseEdge = getBaseGraphEdgeState();
+        return baseEdge.getDistance();
+    }
+
+    long getOrigEdgeTime(boolean reverse) {
+        final EdgeIteratorState baseEdge = getBaseGraphEdgeState();
+        if (baseEdge.getBaseNode() != baseEdge.getAdjNode() && weighting.edgeHasNoAccess(baseEdge, reverse))
+            return 0;
+
+        return weighting.calcEdgeMillis(baseEdge, reverse);
+    }
 }

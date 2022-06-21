@@ -38,14 +38,19 @@ public class PrepareCHEntry implements Comparable<PrepareCHEntry> {
     public int prepareEdge;
     public int adjNode;
     public double weight;
+    public double distance;
+    public long time;
     public PrepareCHEntry parent;
 
-    public PrepareCHEntry(int prepareEdge, int firstEdgeKey, int incEdgeKey, int adjNode, double weight, int origEdges) {
+    public PrepareCHEntry(int prepareEdge, int firstEdgeKey, int incEdgeKey, int adjNode,
+                          double weight, long time, double distance, int origEdges) {
         this.prepareEdge = prepareEdge;
         this.firstEdgeKey = firstEdgeKey;
         this.incEdgeKey = incEdgeKey;
         this.adjNode = adjNode;
         this.weight = weight;
+        this.distance = distance;
+        this.time = time;
         this.origEdges = origEdges;
     }
 

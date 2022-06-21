@@ -75,6 +75,7 @@ public class PrepareContractionHierarchies {
         return new PrepareContractionHierarchies(graph.getBaseGraph(), chConfig);
     }
 
+
     private PrepareContractionHierarchies(BaseGraph graph, CHConfig chConfig) {
         if (!graph.isFrozen())
             throw new IllegalStateException("BaseGraph must be frozen before creating CHs");
@@ -181,6 +182,7 @@ public class PrepareContractionHierarchies {
             }
             logger.info("Creating CH prepare graph, {}", getMemInfo());
             CHPreparationGraph.TurnCostFunction turnCostFunction = CHPreparationGraph.buildTurnCostFunctionFromTurnCostStorage(graph, chConfig.getWeighting());
+
             prepareGraph = CHPreparationGraph.edgeBased(graph.getNodes(), graph.getEdges(), turnCostFunction);
             nodeContractor = new EdgeBasedNodeContractor(prepareGraph, chBuilder, pMap);
         } else {

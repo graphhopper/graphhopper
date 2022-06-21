@@ -15,41 +15,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+package com.graphhopper.routing.matrix;
 
-package com.graphhopper.routing.ch;
+public class BucketEntry {
 
-public interface PrepareGraphEdgeIterator {
-    boolean next();
+    public double weight;
+    public double distance;
+    public long time;
 
-    int getBaseNode();
-
-    int getAdjNode();
-
-    int getPrepareEdge();
-
-    boolean isShortcut();
-
-    int getOrigEdgeKeyFirst();
-
-    int getOrigEdgeKeyLast();
-
-    int getSkipped1();
-
-    int getSkipped2();
-
-    double getWeight();
-
-    int getOrigEdgeCount();
-
-    void setSkippedEdges(int skipped1, int skipped2);
-
-    void setWeight(double weight);
-
-    void setOrigEdgeCount(int origEdgeCount);
-
-    double getDistance();
-    void setDistance(double distance);
-
-    long getTime();
-    void setTime(long time);
+    public BucketEntry(double weight, long time, double distance) {
+        this.weight = weight;
+        this.time = time;
+        this.distance = distance;
+    }
 }

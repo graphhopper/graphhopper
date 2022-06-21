@@ -62,4 +62,8 @@ public interface RoutingCHEdgeIteratorState {
 
     double getWeight(boolean reverse);
 
+    double getDistance();
+
+    long getTime(boolean reverse);
+
 }

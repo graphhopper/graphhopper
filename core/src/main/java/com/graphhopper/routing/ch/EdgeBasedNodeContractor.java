@@ -244,11 +244,15 @@ class EdgeBasedNodeContractor implements NodeContractor {
         while (iter.next()) {
             if (!iter.isShortcut())
                 continue;
-            int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
-                    PrepareEncoder.getScFwdDir(), iter.getWeight(),
-                    iter.getSkipped1(), iter.getSkipped2(),
-                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
-                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+            int shortcut;
+
+                shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
+                        PrepareEncoder.getScFwdDir(), iter.getWeight(),
+                        iter.getDistance(),iter.getTime(),
+                        iter.getSkipped1(), iter.getSkipped2(),
+                        getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
+                        getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+
             prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), prepareGraph.getOriginalEdges() + shortcut);
             addedShortcutsCount++;
         }
@@ -262,11 +266,17 @@ class EdgeBasedNodeContractor implements NodeContractor {
             // we added loops already using the outEdgeExplorer
             if (iter.getAdjNode() == node)
                 continue;
-            int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
-                    PrepareEncoder.getScBwdDir(), iter.getWeight(),
-                    iter.getSkipped1(), iter.getSkipped2(),
-                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
-                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+
+            int shortcut;
+
+                shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
+                        PrepareEncoder.getScBwdDir(), iter.getWeight(),
+                        iter.getDistance(),iter.getTime(),
+                        iter.getSkipped1(), iter.getSkipped2(),
+                        getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
+                        getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+
+
             prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), prepareGraph.getOriginalEdges() + shortcut);
             addedShortcutsCount++;
         }
@@ -325,15 +335,19 @@ class EdgeBasedNodeContractor implements NodeContractor {
             final double existingWeight = iter.getWeight();
             if (existingWeight <= edgeTo.weight) {
                 // our shortcut already exists with lower weight --> do nothing
-                PrepareCHEntry entry = new PrepareCHEntry(iter.getPrepareEdge(), iter.getOrigEdgeKeyFirst(), iter.getOrigEdgeKeyLast(), adjNode, existingWeight, origEdgeCount);
+                PrepareCHEntry entry = new PrepareCHEntry(iter.getPrepareEdge(), iter.getOrigEdgeKeyFirst(),
+                        iter.getOrigEdgeKeyLast(), adjNode, existingWeight, iter.getTime(),iter.getDistance(), origEdgeCount);
                 entry.parent = edgeFrom.parent;
                 return entry;
             } else {
                 // update weight
                 iter.setSkippedEdges(edgeFrom.prepareEdge, edgeTo.prepareEdge);
                 iter.setWeight(edgeTo.weight);
+                iter.setDistance(edgeTo.distance);
+                iter.setTime(edgeTo.time);
                 iter.setOrigEdgeCount(origEdgeCount);
-                PrepareCHEntry entry = new PrepareCHEntry(iter.getPrepareEdge(), iter.getOrigEdgeKeyFirst(), iter.getOrigEdgeKeyLast(), adjNode, edgeTo.weight, origEdgeCount);
+                PrepareCHEntry entry = new PrepareCHEntry(iter.getPrepareEdge(), iter.getOrigEdgeKeyFirst(),
+                        iter.getOrigEdgeKeyLast(), adjNode, edgeTo.weight, edgeTo.time,edgeTo.distance, origEdgeCount);
                 entry.parent = edgeFrom.parent;
                 return entry;
             }
@@ -343,10 +357,12 @@ class EdgeBasedNodeContractor implements NodeContractor {
         int origFirstKey = edgeFrom.firstEdgeKey;
         LOGGER.trace("Adding shortcut from {} to {}, weight: {}, firstOrigEdgeKey: {}, lastOrigEdgeKey: {}",
                 from, adjNode, edgeTo.weight, origFirstKey, edgeTo.incEdgeKey);
-        int prepareEdge = prepareGraph.addShortcut(from, adjNode, origFirstKey, edgeTo.incEdgeKey, edgeFrom.prepareEdge, edgeTo.prepareEdge, edgeTo.weight, origEdgeCount);
+        int prepareEdge = prepareGraph.addShortcut(from, adjNode, origFirstKey, edgeTo.incEdgeKey, edgeFrom.prepareEdge,
+                edgeTo.prepareEdge, edgeTo.weight, edgeTo.time, edgeTo.distance, origEdgeCount);
         // does not matter here
         int incEdgeKey = -1;
-        PrepareCHEntry entry = new PrepareCHEntry(prepareEdge, origFirstKey, incEdgeKey, edgeTo.adjNode, edgeTo.weight, origEdgeCount);
+        PrepareCHEntry entry = new PrepareCHEntry(prepareEdge, origFirstKey, incEdgeKey, edgeTo.adjNode,
+                edgeTo.weight, edgeTo.time,edgeTo.distance, origEdgeCount);
         entry.parent = edgeFrom.parent;
         return entry;
     }

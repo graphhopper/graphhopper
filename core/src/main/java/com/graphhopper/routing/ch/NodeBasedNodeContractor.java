@@ -134,7 +134,12 @@ class NodeBasedNodeContractor implements NodeContractor {
         insertInShortcuts(node);
         int origEdges = prepareGraph.getOriginalEdges();
         for (Shortcut sc : shortcuts) {
-            int shortcut = chBuilder.addShortcutNodeBased(sc.from, sc.to, sc.flags, sc.weight, sc.skippedEdge1, sc.skippedEdge2);
+
+            int shortcut;
+
+            shortcut = chBuilder.addShortcutNodeBased(
+                        sc.from, sc.to, sc.flags, sc.weight,sc.distance,sc.time, sc.skippedEdge1, sc.skippedEdge2);
+
             if (sc.flags == PrepareEncoder.getScFwdDir()) {
                 prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeFwd, origEdges + shortcut);
             } else if (sc.flags == PrepareEncoder.getScBwdDir()) {
@@ -153,7 +158,7 @@ class NodeBasedNodeContractor implements NodeContractor {
             if (!iter.isShortcut())
                 continue;
             shortcuts.add(new Shortcut(iter.getPrepareEdge(), -1, node, iter.getAdjNode(), iter.getSkipped1(),
-                    iter.getSkipped2(), PrepareEncoder.getScFwdDir(), iter.getWeight()));
+                    iter.getSkipped2(), PrepareEncoder.getScFwdDir(), iter.getWeight(),iter.getDistance(),iter.getTime()));
         }
     }
 
@@ -182,7 +187,9 @@ class NodeBasedNodeContractor implements NodeContractor {
                 }
             }
             if (!bidir) {
-                shortcuts.add(new Shortcut(-1, iter.getPrepareEdge(), node, iter.getAdjNode(), skippedEdge1, skippedEdge2, PrepareEncoder.getScBwdDir(), iter.getWeight()));
+                shortcuts.add(new Shortcut(-1, iter.getPrepareEdge(), node, iter.getAdjNode(),
+                        skippedEdge1, skippedEdge2, PrepareEncoder.getScBwdDir(),
+                        iter.getWeight(),iter.getDistance(),iter.getTime()));
             }
         }
     }
@@ -217,6 +224,8 @@ class NodeBasedNodeContractor implements NodeContractor {
                 continue;
 
             final double incomingEdgeWeight = incomingEdges.getWeight();
+            final double incomingEdgeDistance = incomingEdges.getDistance();
+            final long incomingEdgeTime = incomingEdges.getTime();
             // this check is important to prevent calling calcMillis on inaccessible edges and also allows early exit
             if (Double.isInfinite(incomingEdgeWeight)) {
                 continue;
@@ -235,6 +244,7 @@ class NodeBasedNodeContractor implements NodeContractor {
                 // If we decrease the correct weight we only explore less and introduce more shortcuts.
                 // I.e. no change to accuracy is made.
                 double existingDirectWeight = incomingEdgeWeight + outgoingEdges.getWeight();
+
                 if (Double.isInfinite(existingDirectWeight))
                     continue;
 
@@ -246,8 +256,10 @@ class NodeBasedNodeContractor implements NodeContractor {
                 if (maxWeight <= existingDirectWeight)
                     // FOUND witness path, so do not add shortcut
                     continue;
+                double existingDirectDistance = incomingEdgeDistance + outgoingEdges.getDistance();
+                long existingDirectTime = incomingEdgeTime + outgoingEdges.getTime();
 
-                handler.handleShortcut(fromNode, toNode, existingDirectWeight,
+                handler.handleShortcut(fromNode, toNode, existingDirectWeight,existingDirectDistance,existingDirectTime,
                         outgoingEdges.getPrepareEdge(), outgoingEdges.getOrigEdgeCount(),
                         incomingEdges.getPrepareEdge(), incomingEdges.getOrigEdgeCount());
             }
@@ -256,13 +268,14 @@ class NodeBasedNodeContractor implements NodeContractor {
     }
 
     private void countShortcuts(int fromNode, int toNode, double existingDirectWeight,
+                                double existingDirectDistance, long existingDirectTime,
                                 int outgoingEdge, int outOrigEdgeCount,
                                 int incomingEdge, int inOrigEdgeCount) {
         shortcutsCount++;
         originalEdgesCount += inOrigEdgeCount + outOrigEdgeCount;
     }
 
-    private void addOrUpdateShortcut(int fromNode, int toNode, double weight,
+    private void addOrUpdateShortcut(int fromNode, int toNode, double weight, double distance, long time,
                                      int outgoingEdge, int outOrigEdgeCount,
                                      int incomingEdge, int inOrigEdgeCount) {
         boolean exists = false;
@@ -275,13 +288,17 @@ class NodeBasedNodeContractor implements NodeContractor {
             exists = true;
             if (weight < iter.getWeight()) {
                 iter.setWeight(weight);
+                iter.setDistance(distance);
+                iter.setTime(time);
                 iter.setSkippedEdges(incomingEdge, outgoingEdge);
                 iter.setOrigEdgeCount(inOrigEdgeCount + outOrigEdgeCount);
             }
         }
-        if (!exists)
-            prepareGraph.addShortcut(fromNode, toNode, -1, -1, incomingEdge, outgoingEdge, weight, inOrigEdgeCount + outOrigEdgeCount);
-    }
+        if (!exists){
+                prepareGraph.addShortcut(fromNode, toNode, -1, -1,
+                        incomingEdge, outgoingEdge, weight, time,distance,inOrigEdgeCount + outOrigEdgeCount);
+        }
+           }
 
     @Override
     public long getAddedShortcutsCount() {
@@ -296,6 +313,7 @@ class NodeBasedNodeContractor implements NodeContractor {
     @FunctionalInterface
     private interface PrepareShortcutHandler {
         void handleShortcut(int fromNode, int toNode, double existingDirectWeight,
+                            double existingDirectDistance, long existingDirectTime,
                             int outgoingEdge, int outOrigEdgeCount,
                             int incomingEdge, int inOrigEdgeCount);
     }
@@ -319,9 +337,12 @@ class NodeBasedNodeContractor implements NodeContractor {
         int skippedEdge1;
         int skippedEdge2;
         double weight;
+        double distance;
+        long time;
         int flags;
 
-        public Shortcut(int prepareEdgeFwd, int prepareEdgeBwd, int from, int to, int skippedEdge1, int skippedEdge2, int flags, double weight) {
+        public Shortcut(int prepareEdgeFwd, int prepareEdgeBwd, int from, int to, int skippedEdge1, int skippedEdge2,
+                        int flags, double weight, double distance, long time) {
             this.prepareEdgeFwd = prepareEdgeFwd;
             this.prepareEdgeBwd = prepareEdgeBwd;
             this.from = from;
@@ -330,6 +351,8 @@ class NodeBasedNodeContractor implements NodeContractor {
             this.skippedEdge2 = skippedEdge2;
             this.flags = flags;
             this.weight = weight;
+            this.distance = distance;
+            this.time = time;
         }
 
         @Override

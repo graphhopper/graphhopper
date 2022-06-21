@@ -46,6 +46,7 @@ public class CHPreparationGraph {
     private final int edges;
     private final boolean edgeBased;
     private final TurnCostFunction turnCostFunction;
+
     // each edge/shortcut between nodes a/b is represented as a single object and we maintain two linked lists of such
     // objects for every node (one for outgoing edges and one for incoming edges).
     private PrepareEdge[] prepareEdgesOut;
@@ -64,6 +65,7 @@ public class CHPreparationGraph {
     private int nextShortcutId;
     private boolean ready;
 
+
     public static CHPreparationGraph nodeBased(int nodes, int edges) {
         return new CHPreparationGraph(nodes, edges, false, (in, via, out) -> 0);
     }
@@ -72,13 +74,15 @@ public class CHPreparationGraph {
         return new CHPreparationGraph(nodes, edges, true, turnCostFunction);
     }
 
+
     /**
      * @param nodes (fixed) number of nodes of the graph
      * @param edges the maximum number of (non-shortcut) edges in this graph. edges-1 is the maximum edge id that may
      *              be used.
      */
-    private CHPreparationGraph(int nodes, int edges, boolean edgeBased, TurnCostFunction turnCostFunction) {
+    private CHPreparationGraph(int nodes, int edges, boolean edgeBased, TurnCostFunction turnCostFunction ) {
         this.turnCostFunction = turnCostFunction;
+
         this.nodes = nodes;
         this.edges = edges;
         this.edgeBased = edgeBased;
@@ -91,6 +95,7 @@ public class CHPreparationGraph {
         nextShortcutId = edges;
     }
 
+
     public static void buildFromGraph(CHPreparationGraph prepareGraph, Graph graph, Weighting weighting) {
         if (graph.getNodes() != prepareGraph.getNodes())
             throw new IllegalArgumentException("Cannot initialize from given graph. The number of nodes does not match: " +
@@ -100,12 +105,23 @@ public class CHPreparationGraph {
                     graph.getEdges() + " vs. " + prepareGraph.getOriginalEdges());
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
+
             double weightFwd = weighting.calcEdgeWeightWithAccess(iter, false);
             double weightBwd = weighting.calcEdgeWeightWithAccess(iter, true);
-            prepareGraph.addEdge(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(), weightFwd, weightBwd);
+
+
+                long timeFwd = weighting.calcEdgeMillisWithAccess(iter,false);
+                long timeBwd = weighting.calcEdgeMillisWithAccess(iter,true);
+
+                double distance = iter.getDistance();
+
+                prepareGraph.addEdge(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(),
+                        weightFwd, weightBwd, timeFwd,timeBwd,distance);
+
         }
         prepareGraph.prepareForContraction();
     }
+
 
     /**
      * Builds a turn cost function for a given graph('s turn cost storage) and given uTurnCosts.
@@ -166,6 +182,7 @@ public class CHPreparationGraph {
         };
     }
 
+
     public int getNodes() {
         return nodes;
     }
@@ -184,7 +201,7 @@ public class CHPreparationGraph {
         boolean bwd = Double.isFinite(weightBwd);
         if (!fwd && !bwd)
             return;
-        PrepareBaseEdge prepareEdge = new PrepareBaseEdge(edge, from, to, (float) weightFwd, (float) weightBwd);
+        PrepareBaseEdge prepareEdge = new PrepareBaseEdge(edge, from, to, (float) weightFwd, (float) weightBwd, 0,0,0);
         if (fwd) {
             addOutEdge(from, prepareEdge);
             addInEdge(to, prepareEdge);
@@ -197,17 +214,53 @@ public class CHPreparationGraph {
             origGraphBuilder.addEdge(from, to, edge, fwd, bwd);
     }
 
+    public void addEdge(int from, int to, int edge, double weightFwd, double weightBwd,
+                        long timeFwd, long timeBwd, double distance) {
+        checkNotReady();
+        boolean fwd = Double.isFinite(weightFwd);
+        boolean bwd = Double.isFinite(weightBwd);
+        if (!fwd && !bwd)
+            return;
+        PrepareBaseEdge prepareEdge = new PrepareBaseEdge(edge, from, to, (float) weightFwd, (float) weightBwd, timeFwd,timeBwd,distance);
+        if (fwd) {
+            addOutEdge(from, prepareEdge);
+            addInEdge(to, prepareEdge);
+        }
+        if (bwd && from != to) {
+            addOutEdge(to, prepareEdge);
+            addInEdge(from, prepareEdge);
+        }
+        if (edgeBased)
+            origGraphBuilder.addEdge(from, to, edge, fwd, bwd);
+    }
+
+
     public int addShortcut(int from, int to, int origEdgeKeyFirst, int origEdgeKeyLast, int skipped1,
                            int skipped2, double weight, int origEdgeCount) {
         checkReady();
         PrepareEdge prepareEdge = edgeBased
-                ? new EdgeBasedPrepareShortcut(nextShortcutId, from, to, origEdgeKeyFirst, origEdgeKeyLast, weight, skipped1, skipped2, origEdgeCount)
-                : new PrepareShortcut(nextShortcutId, from, to, weight, skipped1, skipped2, origEdgeCount);
+                ? new EdgeBasedPrepareShortcut(nextShortcutId, from, to, origEdgeKeyFirst, origEdgeKeyLast,
+                weight, 0,0,skipped1, skipped2, origEdgeCount)
+                : new PrepareShortcut(nextShortcutId, from, to, weight,0,0, skipped1, skipped2, origEdgeCount);
         addOutEdge(from, prepareEdge);
         if (from != to)
             addInEdge(to, prepareEdge);
         return nextShortcutId++;
     }
+
+    public int addShortcut(int from, int to, int origEdgeKeyFirst, int origEdgeKeyLast, int skipped1,
+                           int skipped2, double weight, long time, double distance, int origEdgeCount) {
+        checkReady();
+        PrepareEdge prepareEdge = edgeBased
+                ? new EdgeBasedPrepareShortcut(nextShortcutId, from, to, origEdgeKeyFirst, origEdgeKeyLast,
+                weight, distance,time, skipped1, skipped2, origEdgeCount)
+                : new PrepareShortcut(nextShortcutId, from, to, weight, distance,time, skipped1, skipped2, origEdgeCount);
+        addOutEdge(from, prepareEdge);
+        if (from != to)
+            addInEdge(to, prepareEdge);
+        return nextShortcutId++;
+    }
+
 
     public void prepareForContraction() {
         checkNotReady();
@@ -256,6 +309,13 @@ public class CHPreparationGraph {
 
     public double getTurnWeight(int inEdgeKey, int viaNode, int outEdgeKey) {
         return turnCostFunction.getTurnWeight(GHUtility.getEdgeFromEdgeKey(inEdgeKey), viaNode, GHUtility.getEdgeFromEdgeKey(outEdgeKey));
+    }
+
+    public long getTurnTime(int inEdgeKey, int viaNode, int outEdgeKey){
+        double turnCost = turnCostFunction.getTurnWeight(GHUtility.getEdgeFromEdgeKey(inEdgeKey), viaNode, GHUtility.getEdgeFromEdgeKey(outEdgeKey));
+        //Turn cost is in seconds and we want the time in millis
+        long timeTurnCost = Math.round(turnCost) * 1000;
+        return timeTurnCost;
     }
 
     public IntContainer disconnect(int node) {
@@ -369,6 +429,13 @@ public class CHPreparationGraph {
     @FunctionalInterface
     public interface TurnCostFunction {
         double getTurnWeight(int inEdge, int viaNode, int outEdge);
+
+    }
+
+    @FunctionalInterface
+    public interface TurnCostTimeFunction {
+        long getTurnTime(int inEdge, int viaNode, int outEdge);
+
     }
 
     private static class PrepareGraphEdgeExplorerImpl implements PrepareGraphEdgeExplorer, PrepareGraphEdgeIterator {
@@ -450,6 +517,20 @@ public class CHPreparationGraph {
         }
 
         @Override
+        public long getTime() {
+            if (nodeAisBase()) {
+                return reverse ? currEdge.getTimeBA() : currEdge.getTimeAB();
+            } else {
+                return reverse ? currEdge.getTimeAB() : currEdge.getTimeBA();
+            }
+        }
+
+        @Override
+        public double getDistance() {
+            return currEdge.getDistance();
+        }
+
+        @Override
         public int getOrigEdgeCount() {
             return currEdge.getOrigEdgeCount();
         }
@@ -464,6 +545,17 @@ public class CHPreparationGraph {
         public void setWeight(double weight) {
             assert Double.isFinite(weight);
             currEdge.setWeight(weight);
+        }
+
+        @Override
+        public void setDistance(double distance) {
+            assert Double.isFinite(distance);
+            currEdge.setDistance(distance);
+        }
+
+        @Override
+        public void setTime(long time) {
+            currEdge.setTime(time);
         }
 
         @Override
@@ -495,6 +587,11 @@ public class CHPreparationGraph {
 
         double getWeightBA();
 
+        long getTimeAB();
+        long getTimeBA();
+
+        double getDistance();
+
         int getOrigEdgeKeyFirstAB();
 
         int getOrigEdgeKeyFirstBA();
@@ -515,6 +612,9 @@ public class CHPreparationGraph {
 
         void setWeight(double weight);
 
+        void setTime(long time);
+        void setDistance(double distance);
+
         void setOrigEdgeCount(int origEdgeCount);
 
         PrepareEdge getNextOut(int base);
@@ -533,17 +633,26 @@ public class CHPreparationGraph {
         private final int nodeB;
         private final float weightAB;
         private final float weightBA;
+
+        private final long timeAB;
+        private final long timeBA;
+        private final double distance;
+
         private PrepareEdge nextOutA;
         private PrepareEdge nextOutB;
         private PrepareEdge nextInA;
         private PrepareEdge nextInB;
 
-        public PrepareBaseEdge(int prepareEdge, int nodeA, int nodeB, float weightAB, float weightBA) {
+        public PrepareBaseEdge(int prepareEdge, int nodeA, int nodeB,
+                               float weightAB, float weightBA, long timeAB, long timeBA, double distance) {
             this.prepareEdge = prepareEdge;
             this.nodeA = nodeA;
             this.nodeB = nodeB;
             this.weightAB = weightAB;
             this.weightBA = weightBA;
+            this.timeAB = timeAB;
+            this.timeBA = timeBA;
+            this.distance = distance;
         }
 
         @Override
@@ -574,6 +683,21 @@ public class CHPreparationGraph {
         @Override
         public double getWeightBA() {
             return weightBA;
+        }
+
+        @Override
+        public long getTimeBA() {
+            return timeBA;
+        }
+
+        @Override
+        public long getTimeAB() {
+            return timeAB;
+        }
+
+        @Override
+        public double getDistance() {
+            return distance;
         }
 
         @Override
@@ -625,6 +749,16 @@ public class CHPreparationGraph {
 
         @Override
         public void setWeight(double weight) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setTime(long time) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public void setDistance(double distance) {
             throw new UnsupportedOperationException();
         }
 
@@ -684,18 +818,24 @@ public class CHPreparationGraph {
         private final int from;
         private final int to;
         private double weight;
+
+        private double distance;
+        private long time;
         private int skipped1;
         private int skipped2;
         private int origEdgeCount;
         private PrepareEdge nextOut;
         private PrepareEdge nextIn;
 
-        private PrepareShortcut(int prepareEdge, int from, int to, double weight, int skipped1, int skipped2, int origEdgeCount) {
+        private PrepareShortcut(int prepareEdge, int from, int to, double weight, double distance, long time,
+                                int skipped1, int skipped2, int origEdgeCount) {
             this.prepareEdge = prepareEdge;
             this.from = from;
             this.to = to;
             assert Double.isFinite(weight);
             this.weight = weight;
+            this.distance = distance;
+            this.time = time;
             this.skipped1 = skipped1;
             this.skipped2 = skipped2;
             this.origEdgeCount = origEdgeCount;
@@ -729,6 +869,31 @@ public class CHPreparationGraph {
         @Override
         public double getWeightBA() {
             return weight;
+        }
+
+        @Override
+        public double getDistance() {
+            return distance;
+        }
+
+        @Override
+        public long getTimeBA() {
+            return time;
+        }
+
+        @Override
+        public long getTimeAB() {
+            return time;
+        }
+
+        @Override
+        public void setTime(long time) {
+            this.time = time;
+        }
+
+        @Override
+        public void setDistance(double distance) {
+            this.distance = distance;
         }
 
         @Override
@@ -818,8 +983,9 @@ public class CHPreparationGraph {
         private final int origEdgeKeyLast;
 
         public EdgeBasedPrepareShortcut(int prepareEdge, int from, int to, int origEdgeKeyFirst, int origEdgeKeyLast,
-                                        double weight, int skipped1, int skipped2, int origEdgeCount) {
-            super(prepareEdge, from, to, weight, skipped1, skipped2, origEdgeCount);
+                                        double weight, double distance, long time,
+                                        int skipped1, int skipped2, int origEdgeCount) {
+            super(prepareEdge, from, to, weight, distance,time, skipped1, skipped2, origEdgeCount);
             this.origEdgeKeyFirst = origEdgeKeyFirst;
             this.origEdgeKeyLast = origEdgeKeyLast;
         }

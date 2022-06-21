@@ -85,6 +85,16 @@ public abstract class AbstractWeighting implements Weighting {
     }
 
     @Override
+    public double getSpeed(EdgeIteratorState edgeState, boolean reverse) {
+
+        if (edgeState.getBaseNode() == edgeState.getAdjNode()) {
+            reverse = false;
+        }
+
+        return reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
+    }
+
+    @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
         return turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
     }

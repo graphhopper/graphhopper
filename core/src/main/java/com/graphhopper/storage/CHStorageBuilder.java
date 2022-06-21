@@ -51,9 +51,21 @@ public class CHStorageBuilder {
             setLevel(node, node);
     }
 
+
     public int addShortcutNodeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2) {
         checkNewShortcut(a, b);
         int shortcut = storage.shortcutNodeBased(a, b, accessFlags, weight, skippedEdge1, skippedEdge2);
+        // we keep track of the last shortcut for each node (-1 if there are no shortcuts), but
+        // we do not register the shortcut at node b, because b is the higher level node (so no need to 'see' the lower
+        // level node a)
+        setLastShortcut(a, shortcut);
+        return shortcut;
+    }
+
+    public int addShortcutNodeBased(int a, int b, int accessFlags,
+                                          double weight, double distance, long time, int skippedEdge1, int skippedEdge2) {
+        checkNewShortcut(a, b);
+        int shortcut = storage.shortcutNodeBased(a, b, accessFlags, weight, distance,time, skippedEdge1, skippedEdge2);
         // we keep track of the last shortcut for each node (-1 if there are no shortcuts), but
         // we do not register the shortcut at node b, because b is the higher level node (so no need to 'see' the lower
         // level node a)
@@ -71,6 +83,15 @@ public class CHStorageBuilder {
                                     int origFirst, int origLast) {
         checkNewShortcut(a, b);
         int shortcut = storage.shortcutEdgeBased(a, b, accessFlags, weight, skippedEdge1, skippedEdge2, origFirst, origLast);
+        setLastShortcut(a, shortcut);
+        return shortcut;
+    }
+
+    public int addShortcutEdgeBased(int a, int b, int accessFlags, double weight,  double distance, long time,
+                                          int skippedEdge1, int skippedEdge2,
+                                    int origFirst, int origLast) {
+        checkNewShortcut(a, b);
+        int shortcut = storage.shortcutEdgeBased(a, b, accessFlags, weight, distance,time, skippedEdge1, skippedEdge2, origFirst, origLast);
         setLastShortcut(a, shortcut);
         return shortcut;
     }

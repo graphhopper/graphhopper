@@ -26,6 +26,7 @@ import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 import java.util.Locale;
 import java.util.function.Consumer;
 
@@ -44,15 +45,22 @@ public class CHStorage {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHStorage.class);
     // we store double weights as integers (rounded to three decimal digits)
     private static final double WEIGHT_FACTOR = 1000;
+    private static final double DISTANCE_FACTOR = 1000;
     // the maximum integer value we can store
-    private static final long MAX_STORED_INTEGER_WEIGHT = ((long) Integer.MAX_VALUE) << 1;
+    private static final long MAX_STORED_INTEGER = ((long) Integer.MAX_VALUE) << 1;
     // the maximum double weight we can store. if this is exceeded the shortcut will gain infinite weight, potentially yielding connection-not-found errors
-    private static final double MAX_WEIGHT = MAX_STORED_INTEGER_WEIGHT / WEIGHT_FACTOR;
+    private static final double MAX_WEIGHT = MAX_STORED_INTEGER / WEIGHT_FACTOR;
     private static final double MIN_WEIGHT = 1 / WEIGHT_FACTOR;
+
+    private static final double MAX_DISTANCE = MAX_STORED_INTEGER / DISTANCE_FACTOR;
+    private static final double MIN_DISTANCE = 1 / DISTANCE_FACTOR;
+
+    private static final long MAX_TIME = MAX_STORED_INTEGER;
+    private static final long MIN_TIME = 0L;
 
     // shortcuts
     private final DataAccess shortcuts;
-    private final int S_NODEA, S_NODEB, S_WEIGHT, S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;
+    private final int S_NODEA, S_NODEB, S_WEIGHT, S_DISTANCE,S_TIME, S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;
     private int shortcutEntryBytes;
     private int shortcutCount = 0;
 
@@ -69,12 +77,15 @@ public class CHStorage {
     // use this to report shortcuts with too small weights
     private Consumer<LowWeightShortcut> lowShortcutWeightConsumer;
 
+
     public static CHStorage fromGraph(BaseGraph baseGraph, CHConfig chConfig) {
         String name = chConfig.getName();
         boolean edgeBased = chConfig.isEdgeBased();
         if (!baseGraph.isFrozen())
             throw new IllegalStateException("graph must be frozen before we can create ch graphs");
+
         CHStorage store = new CHStorage(baseGraph.getDirectory(), name, baseGraph.getSegmentSize(), edgeBased);
+
         store.setLowShortcutWeightConsumer(s -> {
             // we just log these to find mapping errors
             NodeAccess nodeAccess = baseGraph.getNodeAccess();
@@ -92,27 +103,34 @@ public class CHStorage {
         return store;
     }
 
+
+
     public CHStorage(Directory dir, String name, int segmentSize, boolean edgeBased) {
         this.edgeBased = edgeBased;
         this.nodesCH = dir.create("nodes_ch_" + name, dir.getDefaultType("nodes_ch_" + name, true), segmentSize);
         this.shortcuts = dir.create("shortcuts_" + name, dir.getDefaultType("shortcuts_" + name, true), segmentSize);
-        // shortcuts are stored consecutively using this layout (the last two entries only exist for edge-based):
-        // NODEA | NODEB | WEIGHT | SKIP_EDGE1 | SKIP_EDGE2 | S_ORIG_FIRST | S_ORIG_LAST
-        S_NODEA = 0;
-        S_NODEB = S_NODEA + 4;
-        S_WEIGHT = S_NODEB + 4;
-        S_SKIP_EDGE1 = S_WEIGHT + 4;
-        S_SKIP_EDGE2 = S_SKIP_EDGE1 + 4;
-        S_ORIG_FIRST = S_SKIP_EDGE2 + (edgeBased ? 4 : 0);
-        S_ORIG_LAST = S_ORIG_FIRST + (edgeBased ? 4 : 0);
-        shortcutEntryBytes = S_ORIG_LAST + 4;
 
-        // nodes/levels are stored consecutively using this layout:
-        // LEVEL | N_LAST_SC
-        N_LEVEL = 0;
-        N_LAST_SC = N_LEVEL + 4;
-        nodeCHEntryBytes = N_LAST_SC + 4;
+
+            // NODEA | NODEB | WEIGHT | DISTANCE | TIME | SKIP_EDGE1 | SKIP_EDGE2 | S_ORIG_FIRST | S_ORIG_LAST
+            S_NODEA = 0;
+            S_NODEB = S_NODEA + 4;
+            S_WEIGHT = S_NODEB + 4;
+            S_DISTANCE = S_WEIGHT + 4;
+            S_TIME = S_DISTANCE + 4;
+            S_SKIP_EDGE1 = S_TIME + 4;
+            S_SKIP_EDGE2 = S_SKIP_EDGE1 + 4;
+            S_ORIG_FIRST = S_SKIP_EDGE2 + (edgeBased ? 4 : 0);
+            S_ORIG_LAST = S_ORIG_FIRST + (edgeBased ? 4 : 0);
+            shortcutEntryBytes = S_ORIG_LAST + 4;
+
+            // nodes/levels are stored consecutively using this layout:
+            // LEVEL | N_LAST_SC
+            N_LEVEL = 0;
+            N_LAST_SC = N_LEVEL + 4;
+            nodeCHEntryBytes = N_LAST_SC + 4;
+
     }
+
 
     /**
      * Sets a callback called for shortcuts that are below the minimum weight. e.g. used to find/log mapping errors
@@ -198,27 +216,58 @@ public class CHStorage {
     public int shortcutNodeBased(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2) {
         if (edgeBased)
             throw new IllegalArgumentException("Cannot add node-based shortcuts to edge-based CH");
-        return shortcut(nodeA, nodeB, accessFlags, weight, skip1, skip2);
+
+        return shortcut(nodeA, nodeB, accessFlags, weight,0,0, skip1, skip2);
     }
 
     public int shortcutEdgeBased(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2, int origFirst, int origLast) {
         if (!edgeBased)
             throw new IllegalArgumentException("Cannot add edge-based shortcuts to node-based CH");
-        int shortcut = shortcut(nodeA, nodeB, accessFlags, weight, skip1, skip2);
+
+
+        int shortcut = shortcut(nodeA, nodeB, accessFlags, weight,0,0, skip1, skip2);
         setOrigEdges(toShortcutPointer(shortcut), origFirst, origLast);
         return shortcut;
     }
 
-    private int shortcut(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2) {
+
+    public int shortcutNodeBased(int nodeA, int nodeB, int accessFlags, double weight, double distance, long time,
+                                       int skip1, int skip2) {
+        if (edgeBased)
+            throw new IllegalArgumentException("Cannot add node-based shortcuts to edge-based CH");
+
+        return shortcut(nodeA, nodeB, accessFlags, weight, distance,time, skip1, skip2);
+    }
+
+    public int shortcutEdgeBased(int nodeA, int nodeB, int accessFlags, double weight, double distance, long time,
+                                       int skip1, int skip2, int origFirst, int origLast) {
+        if (!edgeBased)
+            throw new IllegalArgumentException("Cannot add edge-based shortcuts to node-based CH");
+
+
+
+        int shortcut = shortcut(nodeA, nodeB, accessFlags, weight, distance,time, skip1, skip2);
+        setOrigEdges(toShortcutPointer(shortcut), origFirst, origLast);
+        return shortcut;
+    }
+
+    private int shortcut(int nodeA, int nodeB, int accessFlags, double weight, double distance, long time, int skip1, int skip2) {
+
         if (shortcutCount == Integer.MAX_VALUE)
             throw new IllegalStateException("Maximum shortcut count exceeded: " + shortcutCount);
+
         if (lowShortcutWeightConsumer != null && weight < MIN_WEIGHT)
             lowShortcutWeightConsumer.accept(new LowWeightShortcut(nodeA, nodeB, shortcutCount, weight, MIN_WEIGHT));
+
         long shortcutPointer = (long) shortcutCount * shortcutEntryBytes;
         shortcutCount++;
         shortcuts.ensureCapacity((long) shortcutCount * shortcutEntryBytes);
         int weightInt = weightFromDouble(weight);
+        int distanceInt = distanceFromDouble(distance);
+        int timeInt = timeFromLong(time);
         setNodesAB(shortcutPointer, nodeA, nodeB, accessFlags);
+        setDistanceInt(shortcutPointer,distanceInt);
+        setTimeInt(shortcutPointer,timeInt);
         setWeightInt(shortcutPointer, weightInt);
         setSkippedEdges(shortcutPointer, skip1, skip2);
         return shortcutCount - 1;
@@ -285,6 +334,22 @@ public class CHStorage {
 
     private void setWeightInt(long shortcutPointer, int weightInt) {
         shortcuts.setInt(shortcutPointer + S_WEIGHT, weightInt);
+    }
+
+    public void setDistance(long shortcutPointer, double distance) {
+        setDistanceInt(shortcutPointer, distanceFromDouble(distance));
+    }
+
+    private void setDistanceInt(long shortcutPointer, int distanceInt) {
+        shortcuts.setInt(shortcutPointer + S_DISTANCE, distanceInt);
+    }
+
+    public void setTime(long shortcutPointer, long time) {
+        setTimeInt(shortcutPointer, timeFromLong(time));
+    }
+
+    private void setTimeInt(long shortcutPointer, int timeInt) {
+        shortcuts.setInt(shortcutPointer + S_TIME, timeInt);
     }
 
     public void setSkippedEdges(long shortcutPointer, int edge1, int edge2) {
@@ -409,6 +474,17 @@ public class CHStorage {
         return nodesCH.isClosed();
     }
 
+    private int distanceFromDouble(double distance) {
+        if (distance < 0)
+            throw new IllegalArgumentException("distance cannot be negative but was " + distance);
+        if (distance < MIN_DISTANCE)
+            distance = MIN_DISTANCE;
+        if (distance >= MAX_DISTANCE) {
+            return (int) MAX_STORED_INTEGER; // negative
+        } else
+            return (int) Math.round(distance * DISTANCE_FACTOR);
+    }
+
     private int weightFromDouble(double weight) {
         if (weight < 0)
             throw new IllegalArgumentException("weight cannot be negative but was " + weight);
@@ -416,21 +492,32 @@ public class CHStorage {
             weight = MIN_WEIGHT;
         if (weight >= MAX_WEIGHT) {
             numShortcutsExceedingWeight++;
-            return (int) MAX_STORED_INTEGER_WEIGHT; // negative
+            return (int) MAX_STORED_INTEGER; // negative
         } else
             return (int) Math.round(weight * WEIGHT_FACTOR);
+    }
+
+    private int timeFromLong(long time) {
+        if (time < 0)
+            throw new IllegalArgumentException("time cannot be negative but was " + time);
+        if (time < MIN_TIME)
+            time = MIN_TIME;
+        if (time >= MAX_TIME) {
+            return (int) MAX_STORED_INTEGER; // negative
+        } else
+            return Math.toIntExact(time);
     }
 
     private double weightToDouble(int intWeight) {
         // If the value is too large (> Integer.MAX_VALUE) the `int` is negative. Converted to `long` the JVM fills the
         // high bits with 1's which we remove via "& 0xFFFFFFFFL" to get the unsigned value. (The L is necessary or prepend 8 zeros.)
         long weightLong = (long) intWeight & 0xFFFFFFFFL;
-        if (weightLong == MAX_STORED_INTEGER_WEIGHT)
+        if (weightLong == MAX_STORED_INTEGER)
             return Double.POSITIVE_INFINITY;
         double weight = weightLong / WEIGHT_FACTOR;
         if (weight >= MAX_WEIGHT)
             throw new IllegalArgumentException("too large shortcut weight " + weight + " should get infinity marker bits "
-                    + MAX_STORED_INTEGER_WEIGHT);
+                    + MAX_STORED_INTEGER);
         return weight;
     }
 
@@ -449,4 +536,41 @@ public class CHStorage {
             this.minWeight = minWeight;
         }
     }
+
+    /* STUART Custom Methods*/
+    public double getDistance(long shortcutPointer){
+        return distanceToDouble(shortcuts.getInt(shortcutPointer + S_DISTANCE));
+    }
+
+    private double distanceToDouble(int intDistance) {
+        // If the value is too large (> Integer.MAX_VALUE) the `int` is negative. Converted to `long` the JVM fills the
+        // high bits with 1's which we remove via "& 0xFFFFFFFFL" to get the unsigned value. (The L is necessary or prepend 8 zeros.)
+        long distanceLong = (long) intDistance & 0xFFFFFFFFL;
+        if (distanceLong == MAX_STORED_INTEGER)
+            return Double.POSITIVE_INFINITY;
+        double distance = distanceLong / DISTANCE_FACTOR;
+        if (distance >= MAX_DISTANCE)
+            throw new IllegalArgumentException("too large shortcut distance " + distance + " should get infinity marker bits "
+                    + MAX_STORED_INTEGER);
+        return distance;
+    }
+
+
+    public long getTime(long shortcutPointer){
+        return timeToLong(shortcuts.getInt(shortcutPointer + S_TIME));
+    }
+
+    private long timeToLong(int intTime) {
+        // If the value is too large (> Integer.MAX_VALUE) the `int` is negative. Converted to `long` the JVM fills the
+        // high bits with 1's which we remove via "& 0xFFFFFFFFL" to get the unsigned value. (The L is necessary or prepend 8 zeros.)
+        long timeLong = (long) intTime & 0xFFFFFFFFL;
+        if (timeLong == MAX_STORED_INTEGER)
+            return Integer.MAX_VALUE;
+
+        if (timeLong >= MAX_TIME)
+            throw new IllegalArgumentException("too large shortcut time " + timeLong + " should get infinity marker bits "
+                    + MAX_STORED_INTEGER);
+        return timeLong;
+    }
+
 }

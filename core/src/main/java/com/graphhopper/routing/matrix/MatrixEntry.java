@@ -15,58 +15,49 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
+package com.graphhopper.routing.matrix;
 
 import com.graphhopper.util.EdgeIterator;
 
-/**
- * This class is used to create the shortest-path-tree from linked entities.
- * <p>
- *
- * @author Peter Karich
- */
-public class SPTEntry implements Comparable<SPTEntry> {
+
+public class MatrixEntry implements Comparable<MatrixEntry> {
+
     public int edge;
     public int adjNode;
     public double weight;
-    public SPTEntry parent;
+    public double distance;
+    public long time;
+    public int incEdge;
 
-    public SPTEntry(int node, double weight) {
-        this(EdgeIterator.NO_EDGE, node, weight, null);
+    public MatrixEntry(int node, double weight, long time, double distance) {
+        this(EdgeIterator.NO_EDGE,EdgeIterator.NO_EDGE, node, weight,time,distance);
     }
 
-    public SPTEntry(int edgeId, int adjNode, double weight, SPTEntry parent) {
-        this.edge = edgeId;
+    public MatrixEntry(int edge, int incEdge,int adjNode, double weight, long time, double distance) {
+        this.edge = edge;
         this.adjNode = adjNode;
         this.weight = weight;
-        this.parent = parent;
+        this.time = time;
+        this.distance = distance;
+        this.incEdge = incEdge;
     }
 
-    /**
-     * This method returns the weight to the origin e.g. to the start for the forward SPT and to the
-     * destination for the backward SPT. Where the variable 'weight' is used to let heap select
-     * smallest *full* weight (from start to destination).
-     */
     public double getWeightOfVisitedPath() {
         return weight;
     }
 
-    public SPTEntry getParent() {
-        return parent;
+    @Override
+    public String toString() {
+        return adjNode + " (" + edge + ") weight: " + weight + ", incEdge: " + incEdge + " time: " + time + " distance :" + distance;
     }
 
     @Override
-    public int compareTo(SPTEntry o) {
+    public int compareTo(MatrixEntry o) {
 
         if (weight < o.weight)
             return -1;
 
         // assumption no NaN and no -0
         return weight > o.weight ? 1 : 0;
-    }
-
-    @Override
-    public String toString() {
-        return adjNode + " (" + edge + ") weight: " + weight;
     }
 }

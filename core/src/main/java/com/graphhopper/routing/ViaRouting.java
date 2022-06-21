@@ -47,6 +47,52 @@ import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
  */
 public class ViaRouting {
 
+
+    /**
+     * @throws MultiplePointsNotFoundException in case one or more points could not be resolved
+     */
+    public static List<Snap> lookupMatrix(EncodedValueLookup lookup, List<GHPoint> points, EdgeFilter snapFilter,
+                                    LocationIndex locationIndex, List<String> snapPreventions, List<String> pointHints,
+                                    DirectedEdgeFilter directedSnapFilter, List<Double> headings) {
+        if (points.size() < 1)
+            throw new IllegalArgumentException("At least 1 point have to be specified, but was:" + points.size());
+
+        final EnumEncodedValue<RoadClass> roadClassEnc = lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        final EnumEncodedValue<RoadEnvironment> roadEnvEnc = lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
+        EdgeFilter strictEdgeFilter = snapPreventions.isEmpty()
+                ? snapFilter
+                : new SnapPreventionEdgeFilter(snapFilter, roadClassEnc, roadEnvEnc, snapPreventions);
+        List<Snap> snaps = new ArrayList<>(points.size());
+        IntArrayList pointsNotFound = new IntArrayList();
+        for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
+            GHPoint point = points.get(placeIndex);
+            Snap snap = null;
+            if (placeIndex < headings.size() && !Double.isNaN(headings.get(placeIndex))) {
+                if (!pointHints.isEmpty() && !Helper.isEmpty(pointHints.get(placeIndex)))
+                    throw new IllegalArgumentException("Cannot specify heading and point_hint at the same time. " +
+                            "Make sure you specify either an empty point_hint (String) or a NaN heading (double) for point " + placeIndex);
+                snap = locationIndex.findClosest(point.lat, point.lon, new HeadingEdgeFilter(directedSnapFilter, headings.get(placeIndex), point));
+            } else if (!pointHints.isEmpty()) {
+                snap = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter,
+                        pointHints.get(placeIndex), point, 100));
+            } else if (!snapPreventions.isEmpty()) {
+                snap = locationIndex.findClosest(point.lat, point.lon, strictEdgeFilter);
+            }
+
+            if (snap == null || !snap.isValid())
+                snap = locationIndex.findClosest(point.lat, point.lon, snapFilter);
+            if (!snap.isValid())
+                pointsNotFound.add(placeIndex);
+
+            snaps.add(snap);
+        }
+
+        if (!pointsNotFound.isEmpty())
+            throw new MultiplePointsNotFoundException(pointsNotFound);
+
+        return snaps;
+    }
+
     /**
      * @throws MultiplePointsNotFoundException in case one or more points could not be resolved
      */

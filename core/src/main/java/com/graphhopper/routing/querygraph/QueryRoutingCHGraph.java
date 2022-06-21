@@ -154,6 +154,10 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         return weighting;
     }
 
+    public Weighting getWrappedWeighting() {
+        return queryGraphWeighting;
+    }
+
     @Override
     public void close() {
         routingCHGraph.close();
@@ -198,11 +202,16 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
                     if (iter.isShortcut()) {
                         virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), NO_EDGE,
                                 iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
-                                iter.getSkippedEdge1(), iter.getSkippedEdge2(), iter.getWeight(false), iter.getWeight(true)));
+                                iter.getSkippedEdge1(), iter.getSkippedEdge2(),
+                                iter.getWeight(false), iter.getWeight(true),
+                                iter.getTime(false),iter.getTime(true), iter.getDistance()
+                        ));
                     } else if (!edgeChanges.getRemovedEdges().contains(iter.getOrigEdge())) {
                         virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), iter.getOrigEdge(),
                                 iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
-                                NO_EDGE, NO_EDGE, iter.getWeight(false), iter.getWeight(true)));
+                                NO_EDGE, NO_EDGE, iter.getWeight(false), iter.getWeight(true),
+                                iter.getTime(false),iter.getTime(true),iter.getDistance()
+                        ));
                     }
                 }
                 virtualEdgesAtRealNodes.put(node, virtualEdges);
@@ -233,8 +242,15 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         int origEdge = edgeState.getEdge();
         double fwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, false);
         double bwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, true);
+
+        long fwdTime = weighting.calcEdgeMillisWithAccess(edgeState, false);
+        long bwdTime = weighting.calcEdgeMillisWithAccess(edgeState, true);
+
+        double distance = edgeState.getDistance();
+
+
         return new VirtualCHEdgeIteratorState(edgeID, origEdge, edgeState.getBaseNode(), edgeState.getAdjNode(),
-                origEdge, origEdge, NO_EDGE, NO_EDGE, fwdWeight, bwdWeight);
+                origEdge, origEdge, NO_EDGE, NO_EDGE, fwdWeight, bwdWeight, fwdTime,bwdTime,distance);
     }
 
     private int shiftVirtualEdgeIDForCH(int edge) {
@@ -265,7 +281,16 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         private final double weightFwd;
         private final double weightBwd;
 
-        public VirtualCHEdgeIteratorState(int edge, int origEdge, int baseNode, int adjNode, int origEdgeFirst, int origEdgeLast, int skippedEdge1, int skippedEdge2, double weightFwd, double weightBwd) {
+        private final long timeFwd;
+        private final long timeBwd;
+        private final double distance;
+
+        public VirtualCHEdgeIteratorState(int edge, int origEdge, int baseNode, int adjNode, int origEdgeFirst,
+                                          int origEdgeLast, int skippedEdge1, int skippedEdge2,
+                                          double weightFwd, double weightBwd,
+                                          long timeFwd, long timeBwd,
+                                          double distance
+                                          ) {
             this.edge = edge;
             this.origEdge = origEdge;
             this.baseNode = baseNode;
@@ -276,6 +301,9 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
             this.skippedEdge2 = skippedEdge2;
             this.weightFwd = weightFwd;
             this.weightBwd = weightBwd;
+            this.timeFwd = timeFwd;
+            this.timeBwd = timeBwd;
+            this.distance = distance;
         }
 
         @Override
@@ -326,6 +354,16 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         @Override
         public double getWeight(boolean reverse) {
             return reverse ? weightBwd : weightFwd;
+        }
+
+        @Override
+        public long getTime(boolean reverse) {
+            return reverse ? timeBwd : timeFwd;
+        }
+
+        @Override
+        public double getDistance() {
+            return distance;
         }
 
         @Override
@@ -402,6 +440,16 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         @Override
         public double getWeight(boolean reverse) {
             return getCurrent().getWeight(reverse);
+        }
+
+        @Override
+        public double getDistance() {
+            return getCurrent().getDistance();
+        }
+
+        @Override
+        public long getTime(boolean reverse) {
+            return getCurrent().getTime(reverse);
         }
 
         @Override

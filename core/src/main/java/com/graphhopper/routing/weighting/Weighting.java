@@ -74,10 +74,24 @@ public interface Weighting {
 
     String getName();
 
+    default double getSpeed(EdgeIteratorState edgeState, boolean reverse) {
+        return 0;
+    };
+
     default double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse) {
         if (edgeHasNoAccess(edgeState, reverse))
             return Double.POSITIVE_INFINITY;
         return calcEdgeWeight(edgeState, reverse);
+    }
+
+    default  long calcEdgeMillisWithAccess(EdgeIteratorState edgeState, boolean reverse){
+        if (edgeHasNoAccess(edgeState, reverse))
+            return 0;
+
+        if(getSpeed(edgeState,reverse) == 0)
+            return 0;
+
+        return calcEdgeMillis(edgeState, reverse);
     }
 
 }
