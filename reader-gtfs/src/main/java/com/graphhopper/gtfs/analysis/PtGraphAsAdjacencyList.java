@@ -1,5 +1,6 @@
-package com.graphhopper.gtfs;
+package com.graphhopper.gtfs.analysis;
 
+import com.graphhopper.gtfs.PtGraph;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -10,13 +11,10 @@ import com.graphhopper.util.shapes.BBox;
 
 import java.util.Iterator;
 
-public class PtGraphAsAdjacencyList implements Graph {
+class PtGraphAsAdjacencyList implements Graph {
     private final PtGraph ptGraph;
 
     public PtGraphAsAdjacencyList(PtGraph ptGraph) {
-        for (GtfsStorage.PlatformDescriptor platformDescriptor : ptGraph.platformDescriptorList) {
-            System.out.println(platformDescriptor.toString());
-        }
         this.ptGraph = ptGraph;
     }
 
