@@ -1,35 +1,31 @@
 # GraphHopper - Quick Start Guide for Developers
 
-[Watch this video](https://www.youtube.com/watch?v=HBVe_E5j0TM) for a simple introduction.
-
 ## Try out
 
-For a start which requires only the JRE have a look [here](../web/quickstart.md). 
-Windows users will need Cygwin - find more details [here](./windows-setup.md).
+For a simpler start consider the pre-built jar and the general [installation documentation](../../README.md)
 
-To proceed install `git` and `openjdk8` or `openjdk11`. Get the a jdk from your package manager, 
-[AdoptOpenJDK](https://adoptopenjdk.net/) or [Red Hat](https://github.com/ojdkbuild/ojdkbuild/releases).
+To build the GraphHopper jar from the Java sources you need to install `git` and [a recent JDK](https://adoptium.net).
 
-Then create the jar from sources via:
+Now create the jar from sources via:
 
 ```bash
-# first download some road data
-wget http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 # now get the source code and create the jar in web/target
 git clone git://github.com/graphhopper/graphhopper.git
 cd graphhopper
 git checkout master # if you prefer a less moving branch you can use e.g. 4.x
 mvn clean install -DskipTests
-# start GraphHopper
+# start GraphHopper and before download the road data
+wget http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar web/target/graphhopper-web-*.jar server config-example.yml
 # This does mainly 3 things:
 # - it creates routable files for graphhopper in the folder graph-data (see the config.yml)
-# - it creates data for a special routing algorithm to dramatically improve query speed. It skips this and the previous step if these files are already present.
-# - it starts the web service to service the UI and also the many endpoints like /route
+# - it creates data for a special routing algorithm to improve query speed. (this and the previous step is skipped, if the graph-data folder is already present)
+# - it starts the web service to service the UI and endpoints like /route
 # After 'Server - Started' appears go to http://localhost:8989/ and you should see something similar to GraphHopper Maps: https://graphhopper.com/maps/
 ```
 
-To use a different area make sure you use a different folder instead of graph-data or remove this.
+To use a different geographical area make sure you use a different folder instead of graph-data or remove this
+and download the appropriate PBF file.
 
 For larger maps you need to add some parameters to the JVM: `java -Xmx10g -Xms10g ...`.
 See [the deployment section](deploy.md) for more details.

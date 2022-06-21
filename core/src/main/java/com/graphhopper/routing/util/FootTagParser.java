@@ -135,67 +135,67 @@ public class FootTagParser extends VehicleTagParser {
      * Some ways are okay but not separate for pedestrians.
      */
     @Override
-    public EncodingManager.Access getAccess(ReaderWay way) {
+    public WayAccess getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            EncodingManager.Access acceptPotentially = EncodingManager.Access.CAN_SKIP;
+            WayAccess acceptPotentially = WayAccess.CAN_SKIP;
 
             if (way.hasTag("route", ferries)) {
                 String footTag = way.getTag("foot");
                 if (footTag == null || intendedValues.contains(footTag))
-                    acceptPotentially = EncodingManager.Access.FERRY;
+                    acceptPotentially = WayAccess.FERRY;
             }
 
             // special case not for all acceptedRailways, only platform
             if (way.hasTag("railway", "platform"))
-                acceptPotentially = EncodingManager.Access.WAY;
+                acceptPotentially = WayAccess.WAY;
 
             if (way.hasTag("man_made", "pier"))
-                acceptPotentially = EncodingManager.Access.WAY;
+                acceptPotentially = WayAccess.WAY;
 
             if (!acceptPotentially.canSkip()) {
                 if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-                    return EncodingManager.Access.CAN_SKIP;
+                    return WayAccess.CAN_SKIP;
                 return acceptPotentially;
             }
 
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
         }
 
         // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
         if (way.getTag("sac_scale") != null && !way.hasTag("sac_scale", allowedSacScale))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         // no need to evaluate ferries or fords - already included here
         if (way.hasTag("foot", intendedValues))
-            return EncodingManager.Access.WAY;
+            return WayAccess.WAY;
 
         // check access restrictions
         if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (way.hasTag("sidewalk", sidewalkValues))
-            return EncodingManager.Access.WAY;
+            return WayAccess.WAY;
 
         if (!allowedHighwayTags.contains(highwayValue))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (way.hasTag("motorroad", "yes"))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         // do not get our feet wet, "yes" is already included above
         if (isBlockFords() && (way.hasTag("highway", "ford") || way.hasTag("ford")))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
-        return EncodingManager.Access.WAY;
+        return WayAccess.WAY;
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
-        EncodingManager.Access access = getAccess(way);
+        WayAccess access = getAccess(way);
         if (access.canSkip())
             return edgeFlags;
 

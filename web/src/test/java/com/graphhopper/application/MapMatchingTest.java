@@ -108,7 +108,7 @@ public class MapMatchingTest {
         MatchResult mr = mapMatching.match(inputGPXEntries);
 
         // make sure no virtual edges are returned
-        int edgeCount = graphHopper.getGraphHopperStorage().getAllEdges().length();
+        int edgeCount = graphHopper.getBaseGraph().getAllEdges().length();
         for (EdgeMatch em : mr.getEdgeMatches()) {
             assertTrue(em.getEdgeState().getEdge() < edgeCount, "result contains virtual edges:" + em.getEdgeState().toString());
         }

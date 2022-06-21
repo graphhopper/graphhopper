@@ -18,7 +18,7 @@ import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -35,11 +35,7 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.OptionalInt;
-import java.util.OptionalLong;
+import java.util.*;
 import java.util.function.ToDoubleFunction;
 
 import static com.graphhopper.resources.IsochroneResource.ResponseType.geojson;
@@ -95,7 +91,7 @@ public class IsochroneResource {
         if (profile == null)
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
         LocationIndex locationIndex = graphHopper.getLocationIndex();
-        Graph graph = graphHopper.getGraphHopperStorage();
+        BaseGraph graph = graphHopper.getBaseGraph();
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         BooleanEncodedValue inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName));
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA)) {

@@ -18,7 +18,7 @@ For bugs see our contribute section below.
 
 ## Installation
 
-Install the web demo 'GraphHopper Maps' with [this user installation guide](./web/quickstart.md) on your
+Install the GraphHopper routing engine with the GraphHopper Maps UI with [this installation guide](../README.md#installation) on your
 machine. This will also install a web API that can be used in many programming languages.
 
  * [Routing API](./web/api-doc.md): Documentation of the Web API to communicate with any GraphHopper server via http.
@@ -79,7 +79,8 @@ See the necessary changes for modern iOS and GraphHopper 1.0 in [this pull reque
 
 #### Windows
 
-Documentation about how to get an GraphHopper instance running on windows via cygwin is available [here](./core/windows-setup.md).
+Install the Windows Subsystem for Linux (WSL) or cygwin and follow the
+[normal installation steps](../README.md#installation).
 
 #### Eclipse
 

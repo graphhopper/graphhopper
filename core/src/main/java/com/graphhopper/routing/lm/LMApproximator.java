@@ -153,16 +153,14 @@ public class LMApproximator implements WeightApproximator {
         //
         // ...and we can get the right-hand sides of III) and IV) by multiplying those of II) and I) by -1.
 
-        int rhs1Int = weightsFromActiveLandmarksToT[i] - lms.getFromWeight(activeLandmarkIndices[i], v);
-        int rhs2Int = lms.getToWeight(activeLandmarkIndices[i], v) - weightsFromTToActiveLandmarks[i];
+        int rhs1Int = lms.getToWeight(activeLandmarkIndices[i], v) - weightsFromTToActiveLandmarks[i];
+        int rhs2Int = weightsFromActiveLandmarksToT[i] - lms.getFromWeight(activeLandmarkIndices[i], v);
 
-        int resultInt;
         if (reverse) {
-            resultInt = Math.max(-rhs2Int, -rhs1Int);
-        } else {
-            resultInt = Math.max(rhs1Int, rhs2Int);
+            rhs1Int *= -1;
+            rhs2Int *= -1;
         }
-        return resultInt;
+        return Math.max(rhs1Int, rhs2Int);
     }
 
     @Override
