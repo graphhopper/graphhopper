@@ -70,9 +70,10 @@ public class BufferResourceTest {
         Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
 
         // Identical start points
-        assertEquals(lineString0.getCoordinates()[1], lineString1.getCoordinates()[1]);
-        // Different endpoints
-        assertNotEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
+        assertEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
+
+        // Different end points
+        assertNotEquals(lineString0.getCoordinates()[lineString0.getCoordinates().length - 1], lineString1.getCoordinates()[lineString1.getCoordinates().length - 1]);
     }
 
     @Test
@@ -89,9 +90,9 @@ public class BufferResourceTest {
         Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
 
         // Different start points
-        assertNotEquals(lineString0.getCoordinates()[1], lineString1.getCoordinates()[1]);
-        // Arbitrary - different endpoints
         assertNotEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
+        // Arbitrary - different endpoints
+        assertNotEquals(lineString0.getCoordinates()[lineString0.getCoordinates().length - 1], lineString1.getCoordinates()[lineString1.getCoordinates().length - 1]);
     }
 
     @Test
@@ -128,17 +129,19 @@ public class BufferResourceTest {
         Geometry shortLineString0 = shortFeatureCollection.getFeatures().get(0).getGeometry();
         Geometry shortLineString1 = shortFeatureCollection.getFeatures().get(1).getGeometry();
 
-        // Identical start points
-        assertEquals(longLineString0.getCoordinates()[1], longLineString1.getCoordinates()[1]);
-        assertEquals(longLineString0.getCoordinates()[1], shortLineString0.getCoordinates()[1]);
-        assertEquals(longLineString0.getCoordinates()[1], shortLineString1.getCoordinates()[1]);
-        // Different endpoints
-        assertNotEquals(longLineString0.getCoordinates()[0], longLineString1.getCoordinates()[0]);
-        assertNotEquals(longLineString0.getCoordinates()[0], shortLineString0.getCoordinates()[0]);
-        assertNotEquals(longLineString0.getCoordinates()[0], shortLineString1.getCoordinates()[0]);
-        assertNotEquals(longLineString1.getCoordinates()[0], shortLineString0.getCoordinates()[0]);
-        assertNotEquals(longLineString1.getCoordinates()[0], shortLineString1.getCoordinates()[0]);
-        assertNotEquals(shortLineString0.getCoordinates()[0], shortLineString1.getCoordinates()[0]);
+
+        // Identical end points
+        assertEquals(longLineString0.getCoordinates()[0], longLineString1.getCoordinates()[0]);
+        assertEquals(longLineString0.getCoordinates()[0], shortLineString0.getCoordinates()[0]);
+        assertEquals(longLineString0.getCoordinates()[0], shortLineString1.getCoordinates()[0]);
+
+        // Different start points
+        assertNotEquals(longLineString0.getCoordinates()[longLineString0.getCoordinates().length - 1], longLineString1.getCoordinates()[longLineString1.getCoordinates().length - 1]);
+        assertNotEquals(longLineString0.getCoordinates()[longLineString0.getCoordinates().length - 1], shortLineString0.getCoordinates()[shortLineString0.getCoordinates().length - 1]);
+        assertNotEquals(longLineString0.getCoordinates()[longLineString0.getCoordinates().length - 1], shortLineString1.getCoordinates()[shortLineString1.getCoordinates().length - 1]);
+        assertNotEquals(longLineString1.getCoordinates()[longLineString1.getCoordinates().length - 1], shortLineString0.getCoordinates()[shortLineString0.getCoordinates().length - 1]);
+        assertNotEquals(longLineString1.getCoordinates()[longLineString1.getCoordinates().length - 1], shortLineString1.getCoordinates()[shortLineString1.getCoordinates().length - 1]);
+        assertNotEquals(shortLineString0.getCoordinates()[shortLineString0.getCoordinates().length - 1], shortLineString1.getCoordinates()[shortLineString1.getCoordinates().length - 1]);
     }
 
     @Test
@@ -162,7 +165,7 @@ public class BufferResourceTest {
     @Test
     public void testBidirectionalUpstreamPath() {
         final Response response = clientTarget(app, "/buffer?profile=my_car&"
-                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000&upstream=true")
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000&buildUpstream=true")
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
 
@@ -172,9 +175,10 @@ public class BufferResourceTest {
         Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
         Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
 
-        // Identical start points
-        assertEquals(lineString0.getCoordinates()[1], lineString1.getCoordinates()[1]);
-        // Different endpoints
+        // Identical start points (reversed index)
+        assertEquals(lineString0.getCoordinates()[lineString0.getCoordinates().length - 1], lineString1.getCoordinates()[lineString1.getCoordinates().length - 1]);
+
+        // Different endpoints (reversed index)
         assertNotEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
     }
 
@@ -184,7 +188,7 @@ public class BufferResourceTest {
                 + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000").request()
                 .buildGet().invoke();
         final Response upstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
-                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000&upstream=true")
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000&buildUpstream=true")
                 .request().buildGet().invoke();
         assertEquals(200, downstreamResponse.getStatus());
         assertEquals(200, upstreamResponse.getStatus());
@@ -198,13 +202,17 @@ public class BufferResourceTest {
         Geometry downstreamLineString0 = downstreamFeatureCollection.getFeatures().get(0).getGeometry();
         Geometry downstreamLineString1 = downstreamFeatureCollection.getFeatures().get(1).getGeometry();
 
-        // Since bidirectional road has an arbitrary flow, every aspect should
-        // be identical
-        assertEquals(upstreamLineString0.getCoordinates()[1], upstreamLineString1.getCoordinates()[1]);
-        assertEquals(downstreamLineString0.getCoordinates()[1], downstreamLineString1.getCoordinates()[1]);
-        assertEquals(upstreamLineString0.getCoordinates()[1], downstreamLineString0.getCoordinates()[1]);
-        assertEquals(upstreamLineString0.getCoordinates()[0], downstreamLineString0.getCoordinates()[0]);
-        assertEquals(upstreamLineString1.getCoordinates()[0], downstreamLineString1.getCoordinates()[0]);
+        // Since bidirectional road has an arbitrary flow, downstream-start and upstream-end should match
+        assertEquals(upstreamLineString1.getCoordinates()[upstreamLineString1.getCoordinates().length - 1], downstreamLineString1.getCoordinates()[0]);
+        assertEquals(upstreamLineString0.getCoordinates()[upstreamLineString0.getCoordinates().length - 1], downstreamLineString0.getCoordinates()[0]);
+
+        // And downstream-end and upstream-start should match
+        assertEquals(upstreamLineString0.getCoordinates()[0], downstreamLineString0.getCoordinates()[downstreamLineString0.getCoordinates().length - 1]);
+        assertEquals(upstreamLineString1.getCoordinates()[0], downstreamLineString1.getCoordinates()[downstreamLineString1.getCoordinates().length - 1]);
+
+        // And origin points should match internally
+        assertEquals(upstreamLineString0.getCoordinates()[upstreamLineString0.getCoordinates().length - 1], upstreamLineString1.getCoordinates()[upstreamLineString1.getCoordinates().length - 1]);
+        assertEquals(downstreamLineString0.getCoordinates()[0], downstreamLineString1.getCoordinates()[0]);
     }
 
     @Test
@@ -213,7 +221,7 @@ public class BufferResourceTest {
                 + "point=42.57839,1.631823&roadName=CG-2&thresholdDistance=2000").request()
                 .buildGet().invoke();
         final Response upstreamResponse = clientTarget(app, "/buffer?profile=my_car&"
-                + "point=42.57839,1.631823&roadName=CG-2&thresholdDistance=2000&upstream=true")
+                + "point=42.57839,1.631823&roadName=CG-2&thresholdDistance=2000&buildUpstream=true")
                 .request().buildGet().invoke();
         assertEquals(200, downstreamResponse.getStatus());
         assertEquals(200, upstreamResponse.getStatus());
@@ -228,12 +236,47 @@ public class BufferResourceTest {
         Geometry downstreamLineString1 = downstreamFeatureCollection.getFeatures().get(1).getGeometry();
 
         // Identical start points despite reversed direction
-        assertEquals(upstreamLineString0.getCoordinates()[1], downstreamLineString0.getCoordinates()[1]);
-        assertEquals(upstreamLineString1.getCoordinates()[1], downstreamLineString1.getCoordinates()[1]);
+        assertEquals(upstreamLineString0.getCoordinates()[upstreamLineString0.getCoordinates().length - 1], downstreamLineString0.getCoordinates()[0]);
+        assertEquals(upstreamLineString1.getCoordinates()[upstreamLineString1.getCoordinates().length - 1], downstreamLineString1.getCoordinates()[0]);
 
         // Different endpoints
-        assertNotEquals(upstreamLineString0.getCoordinates()[0], downstreamLineString0.getCoordinates()[0]);
-        assertNotEquals(upstreamLineString1.getCoordinates()[0], downstreamLineString1.getCoordinates()[0]);
+        assertNotEquals(upstreamLineString0.getCoordinates()[0], downstreamLineString0.getCoordinates()[downstreamLineString0.getCoordinates().length - 1]);
+        assertNotEquals(upstreamLineString1.getCoordinates()[0], downstreamLineString1.getCoordinates()[downstreamLineString1.getCoordinates().length - 1]);
+    }
+
+    @Test
+    public void testBidirectionalStartQueryWithSmallerThresholdDistance() {
+        final Response response = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=100").request()
+                .buildGet().invoke();
+        assertEquals(200, response.getStatus());
+
+        JsonFeatureCollection featureCollection = response.readEntity(JsonFeatureCollection.class);
+
+        assertEquals(2, featureCollection.getFeatures().size());
+        Geometry lineString0 = featureCollection.getFeatures().get(0).getGeometry();
+        Geometry lineString1 = featureCollection.getFeatures().get(1).getGeometry();
+
+        // Identical start points
+        assertEquals(lineString0.getCoordinates()[0], lineString1.getCoordinates()[0]);
+
+        // Different end points
+        assertNotEquals(lineString0.getCoordinates()[lineString0.getCoordinates().length - 1], lineString1.getCoordinates()[lineString1.getCoordinates().length - 1]);
+    }
+
+    @Test
+    public void testBidirectionalStartQueryWithTooSmallThresholdDistance() {
+        final Response response = clientTarget(app, "/buffer?profile=my_car&"
+                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=50").request()
+                .buildGet().invoke();
+
+        assertEquals(500, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertTrue(json.has("message"), "There should have been an error response");
+        String expected = "Threshold distance is too short to construct a valid path.";
+        assertTrue(json.get("message").asText().contains(expected),
+                "There should be an error containing " + expected + ", but got: "
+                        + json.get("message"));
     }
 
     @Test

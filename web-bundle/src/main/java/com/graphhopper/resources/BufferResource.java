@@ -2,6 +2,7 @@ package com.graphhopper.resources;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -34,6 +35,7 @@ import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 import com.graphhopper.buffer.BufferFeature;
 
@@ -70,7 +72,7 @@ public class BufferResource {
             @QueryParam("roadName") @NotNull String roadName,
             @QueryParam("thresholdDistance") @NotNull Double thresholdDistance,
             @QueryParam("queryMultiplier") @DefaultValue(".01") Double queryMultiplier,
-            @QueryParam("upstream") @DefaultValue("false") Boolean upstream) {
+            @QueryParam("buildUpstream") @DefaultValue("false") Boolean buildUpstream) {
         if (queryMultiplier > 1) {
             throw new IllegalArgumentException("Query multiplier is too high.");
         } else if (queryMultiplier <= 0) {
@@ -87,14 +89,14 @@ public class BufferResource {
 
         // Start feature edge is bidirectional. Simple
         if (isBidirectional(state)) {
-            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, upstream, true));
-            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, upstream, false));
+            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, buildUpstream, true));
+            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, buildUpstream, false));
         }
         // Start feature edge is unidirectional. Requires finding sister road
         else {
             BufferFeature secondaryStartFeature = calculateSecondaryStartFeature(primaryStartFeature, roadName, .005);
-            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, upstream, upstream));
-            lineStrings.add(computeBufferSegment(secondaryStartFeature, roadName, thresholdDistance, upstream, upstream));
+            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance, buildUpstream, buildUpstream));
+            lineStrings.add(computeBufferSegment(secondaryStartFeature, roadName, thresholdDistance, buildUpstream, buildUpstream));
         }
 
         return createGeoJsonResponse(lineStrings, sw);
@@ -201,7 +203,7 @@ public class BufferResource {
     }
 
     /**
-     * Given a starting segment, finds the edge at the distance threshold and then the point along
+     * Given a starting segment, finds the buffer feature at the distance threshold and then the point along
      *  that edge at the threshold. 
      * 
      * @param startFeature buffer feature to start at
@@ -212,17 +214,41 @@ public class BufferResource {
     */
     private LineString computeBufferSegment(BufferFeature startFeature, String roadName, Double thresholdDistance,
             Boolean upstreamPath, Boolean upstreamStart) {
-        BufferFeature edgeAtThreshold = computeEdgeAtDistanceThreshold(startFeature, thresholdDistance, roadName,
+
+        BufferFeature featureToThreshold = computeEdgeAtDistanceThreshold(startFeature, thresholdDistance, roadName,
                 upstreamPath, upstreamStart);
-        GHPoint3D pointAtThreshold = computePointAtDistanceThreshold(startFeature, thresholdDistance,
-                edgeAtThreshold, upstreamPath, upstreamStart);
+        PointList finalSegmentToThreshold = computePointAtDistanceThreshold(startFeature, thresholdDistance,
+                featureToThreshold, upstreamPath);
+        PointList startingEdgeGeometry = computeWayGeometryOfStartingEdge(startFeature, upstreamStart, thresholdDistance);
 
-        Coordinate[] coordinates = new Coordinate[]{
-            new Coordinate(pointAtThreshold.getLon(), pointAtThreshold.getLat()),
-            new Coordinate(startFeature.getPoint().getLon(), startFeature.getPoint().getLat())
-        };
+        List<Coordinate> coordinates = new ArrayList<Coordinate>();
 
-        return geometryFactory.createLineString(coordinates);
+        // Add start feature point
+        for (GHPoint point : startingEdgeGeometry) {
+            coordinates.add(new Coordinate(point.getLon(), point.getLat()));
+        }
+
+        // Add to threshold points
+        for (GHPoint point : featureToThreshold.getPath()) {
+            coordinates.add(new Coordinate(point.getLon(), point.getLat()));
+        }
+
+        // Add final segment points
+        for (GHPoint point : finalSegmentToThreshold) {
+            coordinates.add(new Coordinate(point.getLon(), point.getLat()));
+        }
+
+        // Reverse final path when building upstream
+        if (upstreamPath) {
+            Collections.reverse(coordinates);
+        }
+
+        // LineString must have at least 2 points
+        if (coordinates.size() <= 1) {
+            throw new WebApplicationException("Threshold distance is too short to construct a valid path.");
+        }
+
+        return geometryFactory.createLineString(coordinates.toArray(Coordinate[]::new));
     }
 
     /**
@@ -257,7 +283,7 @@ public class BufferResource {
         for (Integer edge : edgeList) {
             EdgeIteratorState state = graph.getEdgeIteratorState(edge, Integer.MIN_VALUE);
 
-            PointList pointList = state.fetchWayGeometry(FetchMode.ALL);
+            PointList pointList = state.fetchWayGeometry(FetchMode.PILLAR_ONLY);
 
             for (GHPoint3D point : pointList) {
                 Double dist = DistancePlaneProjection.DIST_PLANE.calcDist(startLat, startLon, point.lat, point.lon);
@@ -295,6 +321,7 @@ public class BufferResource {
 
         EdgeIteratorState currentState = graph.getEdgeIteratorState(startFeature.getEdge(), Integer.MIN_VALUE);
         Integer currentNode = upstreamStart ? currentState.getBaseNode() : currentState.getAdjNode();
+        PointList path = new PointList();
 
         // Check starting edge
         Double currentDistance = DistancePlaneProjection.DIST_PLANE.calcDist(startFeature.getPoint().getLat(),
@@ -376,23 +403,23 @@ public class BufferResource {
 
                         if (dist1 > dist2) {
                             currentEdge = potentialEdges.get(0);
-                            usedEdges.add(potentialEdges.get(0));
+                            usedEdges.add(currentEdge);
                         } else {
                             currentEdge = potentialEdges.get(potentialEdges.size() - 1);
-                            usedEdges.add(potentialEdges.get(potentialEdges.size() - 1));
+                            usedEdges.add(currentEdge);
                         }
                     }
                     // Only one possible route
                     else {
                         currentEdge = potentialEdges.get(0);
-                        usedEdges.add(potentialEdges.get(0));
+                        usedEdges.add(currentEdge);
                     }
                 } else if (potentialRoundaboutEdges.size() > 0) {
                     currentEdge = potentialRoundaboutEdges.get(0);
-                    usedEdges.add(potentialRoundaboutEdges.get(0));
+                    usedEdges.add(currentEdge);
                 } else if (potentialRoundaboutEdgesWithoutName.size() > 0) {
                     currentEdge = potentialRoundaboutEdgesWithoutName.get(0);
-                    usedEdges.add(potentialRoundaboutEdgesWithoutName.get(0));
+                    usedEdges.add(currentEdge);
                 } else {
                     throw new WebApplicationException("Dead end found.");
                 }
@@ -408,74 +435,60 @@ public class BufferResource {
             if (currentDistance >= thresholdDistance) {
                 break;
             }
+            
+            EdgeIteratorState state = graph.getEdgeIteratorState(currentEdge, Integer.MIN_VALUE);
+            PointList wayGeometry = state.fetchWayGeometry(FetchMode.PILLAR_ONLY);
+            
+            // Reverse path if segment is flipped
+            if (state.getAdjNode() == currentNode) {
+                if (!wayGeometry.isEmpty()) {
+                    wayGeometry.reverse();  
+                }
+            }
+            // Add current node first
+            path.add(new GHPoint(nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode)));
+            path.add(wayGeometry);
 
             // Move to next node
             currentNode = otherNode;
             currentState = graph.getEdgeIteratorState(currentEdge, Integer.MIN_VALUE);
         }
 
-        return new BufferFeature(currentEdge,
+        return new BufferFeature(currentEdge, currentNode,
                         new GHPoint3D(nodeAccess.getLat(currentNode), nodeAccess.getLon(currentNode), 0),
-                        previousDistance);
+                        previousDistance, path);
     }
 
     /**
-     * Iterates along the way geometry of a given edge until hitting the denoted threshold. Has separate
-     * logic to break up edges where the original start feature is along the same edge (to ensure directionality).
+     * Iterates along the way geometry of a given edge until hitting the denoted threshold. Returns an empty list
+     *  when the edge of the start feature and end feature are the same.
      * 
      * @param startFeature original starting buffer feature
      * @param thresholdDistance maximum distance in meters
-     * @param finalEdge buffer feature of edge at distance threshold
+     * @param endFeature buffer feature of edge at distance threshold
      * @param upstreamPath direction to build path - either along or against road's flow
      * @param upstreamStart initial 'launch' direction - used only for a bidirectional start
-     * @return GHPoint3D at specified distance
+     * @return PointList to threshold along given edge of end feature
     */
-    private GHPoint3D computePointAtDistanceThreshold(BufferFeature startFeature, Double thresholdDistance,
-            BufferFeature finalEdge, Boolean upstreamPath, Boolean upstreamStart) {
-        EdgeIteratorState finalState = graph.getEdgeIteratorState(finalEdge.getEdge(), Integer.MIN_VALUE);
-        PointList pointList = finalState.fetchWayGeometry(FetchMode.ALL);
+    private PointList computePointAtDistanceThreshold(BufferFeature startFeature, Double thresholdDistance,
+            BufferFeature endFeature, Boolean upstreamPath) {
+        EdgeIteratorState finalState = graph.getEdgeIteratorState(endFeature.getEdge(), Integer.MIN_VALUE);
+        PointList pointList = finalState.fetchWayGeometry(FetchMode.PILLAR_ONLY);
 
         // When the buffer is only as wide as a single edge, truncate one half of the
         // segment
-        if (startFeature.getEdge().equals(finalEdge.getEdge())) {
-            PointList tempList = new PointList();
-
-            // Truncate _until_ startPoint
-            if (upstreamStart) {
-                for (GHPoint3D point : pointList) {
-                    tempList.add(point);
-                    if (startFeature.getPoint().equals(point)) {
-                        break;
-                    }
-                }
-            }
-            // Truncate _after_ startPoint
-            else {
-                Boolean pastPoint = false;
-                for (GHPoint3D point : pointList) {
-                    if (startFeature.getPoint().equals(point)) {
-                        pastPoint = true;
-                    }
-                    if (pastPoint) {
-                        tempList.add(point);
-                    }
-                }
-            }
-
-            pointList = tempList;
+        if (startFeature.getEdge().equals(endFeature.getEdge())) {
+            return new PointList();
         }
 
-        // Reverse geometry when going upstream
-        if (isBidirectional(finalState)) {
-            if (upstreamStart) {
-                pointList.reverse();
-            }
-        } else if (upstreamPath) {
+        // Reverse geometry when starting at adjacent node
+        if (upstreamPath && finalState.getAdjNode() == endFeature.getNode() || !upstreamPath && finalState.getAdjNode() == endFeature.getNode()) {
             pointList.reverse();
         }
 
-        Double currentDistance = finalEdge.getDistance();
+        Double currentDistance = endFeature.getDistance();
         GHPoint3D previousPoint = pointList.get(0);
+        PointList pathList = new PointList();
 
         for (GHPoint3D currentPoint : pointList) {
             // Filter zero-points made by PointList() scaling
@@ -484,15 +497,79 @@ public class BufferResource {
                 currentDistance += DistancePlaneProjection.DIST_PLANE.calcDist(currentPoint.getLat(),
                         currentPoint.getLon(), previousPoint.getLat(), previousPoint.getLon());
                 if (currentDistance >= thresholdDistance) {
-                    return currentPoint;
+                    return pathList;
                 }
 
+                pathList.add(currentPoint);
                 previousPoint = currentPoint;
             }
         }
 
-        // Default to previous point in case of a miscalculation
-        return previousPoint;
+        // Default to full path in case the threshold isn't hit
+        return pathList;
+    }
+
+    /**
+     * Truncates the geometry of the given start feature's edge based on the 'launch' direction then
+     *  returns path
+     * 
+     * @param startFeature original starting buffer feature
+     * @param upstreamStart initial 'launch' direction
+     * @return PointList of given start feature
+    */
+    private PointList computeWayGeometryOfStartingEdge(BufferFeature startFeature, Boolean upstreamStart,
+        Double thresholdDistance) {
+        EdgeIteratorState startState = graph.getEdgeIteratorState(startFeature.getEdge(), Integer.MIN_VALUE);
+        PointList pathList = startState.fetchWayGeometry(FetchMode.ALL);
+        PointList tempList = new PointList();
+
+        // Truncate before startPoint
+        if (upstreamStart) {
+            for (GHPoint3D point : pathList) {
+                tempList.add(point);
+                if (startFeature.getPoint().equals(point)) {
+                    break;
+                }
+            }
+        }
+        // Truncate after startPoint
+        else {
+            Boolean pastPoint = false;
+            for (GHPoint3D point : pathList) {
+                if (startFeature.getPoint().equals(point)) {
+                    pastPoint = true;
+                }
+                if (pastPoint) {
+                    tempList.add(point);
+                }
+            }
+        }
+
+        // Doesn't matter if bidirectional since upstreamStart will always go toward adjacent node
+        if (upstreamStart) {
+            tempList.reverse();
+        }
+
+        Double currentDistance = 0.0;
+        GHPoint3D previousPoint = tempList.get(0);
+        pathList = new PointList();
+
+        for (GHPoint3D currentPoint : tempList) {
+            // Filter zero-points made by PointList() scaling
+            if (currentPoint.lat != 0 && currentPoint.lon != 0) {
+                // Check if exceeds thresholdDistance
+                currentDistance += DistancePlaneProjection.DIST_PLANE.calcDist(currentPoint.getLat(),
+                        currentPoint.getLon(), previousPoint.getLat(), previousPoint.getLon());
+                if (currentDistance >= thresholdDistance) {
+                    return pathList;
+                }
+
+                pathList.add(currentPoint);
+                previousPoint = currentPoint;
+            }
+        }
+
+        return pathList;
     }
 
     /**
