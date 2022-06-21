@@ -203,11 +203,12 @@ public class BufferResource {
     }
 
     /**
-     * Given a starting segment, finds the buffer feature at the distance threshold and then the point along
-     *  that edge at the threshold. 
+     * Given a starting segment, finds the buffer feature at the distance threshold, the point along
+     *  that edge at the threshold, and the geometry of of the starting edge.
      * 
      * @param startFeature buffer feature to start at
      * @param roadName name of road
+     * @param thresholdDistance maximum distance in meters
      * @param upstreamPath direction to build path - either along or against road's flow
      * @param upstreamStart initial 'launch' direction - used only for a bidirectional start
      * @return lineString representing start -> end
