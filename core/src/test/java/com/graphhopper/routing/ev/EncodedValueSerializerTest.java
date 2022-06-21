@@ -68,7 +68,7 @@ class EncodedValueSerializerTest {
     @Test
     void explicitString() {
         EncodedValue.InitializerConfig initializerConfig = new EncodedValue.InitializerConfig();
-        List<EncodedValue> evs = Arrays.asList(Lanes.create(), MaxWidth.create());
+        List<EncodedValue> evs = Arrays.asList(Lanes.create(), MaxWidth.create(), GetOffBike.create());
         evs.forEach(ev -> ev.init(initializerConfig));
 
         List<String> serialized = evs.stream().map(EncodedValueSerializer::serializeEncodedValue).collect(Collectors.toList());
@@ -79,11 +79,16 @@ class EncodedValueSerializerTest {
                 "\"min_value\":0,\"max_value\":127,\"negate_reverse_direction\":false,\"store_two_directions\":false," +
                 "\"fwd_data_index\":0,\"bwd_data_index\":0,\"fwd_shift\":3,\"bwd_shift\":-1,\"fwd_mask\":1016,\"bwd_mask\":0," +
                 "\"factor\":0.1,\"default_is_infinity\":true,\"use_maximum_as_infinity\":false}", serialized.get(1));
+        assertEquals("{\"className\":\"com.graphhopper.routing.ev.SimpleBooleanEncodedValue\",\"name\":\"get_off_bike\",\"bits\":1," +
+                "\"min_value\":0,\"max_value\":1,\"negate_reverse_direction\":false,\"store_two_directions\":false,\"fwd_data_index\":0," +
+                "\"bwd_data_index\":0,\"fwd_shift\":10,\"bwd_shift\":-1,\"fwd_mask\":1024,\"bwd_mask\":0}", serialized.get(2));
 
         EncodedValue ev0 = EncodedValueSerializer.deserializeEncodedValue(serialized.get(0));
         assertEquals("lanes", ev0.getName());
         EncodedValue ev1 = EncodedValueSerializer.deserializeEncodedValue(serialized.get(1));
         assertEquals("max_width", ev1.getName());
+        EncodedValue ev2 = EncodedValueSerializer.deserializeEncodedValue(serialized.get(2));
+        assertEquals("get_off_bike", ev2.getName());
     }
 
     @Test
