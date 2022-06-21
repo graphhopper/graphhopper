@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.Test;
@@ -259,4 +261,26 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertThrows(IllegalArgumentException.class, () -> graph.getEdgeIteratorState(0, Integer.MIN_VALUE));
     }
 
+    @Test
+    public void setGetFlagsRaw() {
+        BaseGraph graph = new BaseGraph.Builder(1).create();
+        EdgeIteratorState edge = graph.edge(0, 1);
+        IntsRef flags = new IntsRef(graph.getIntsForFlags());
+        flags.ints[0] = 10;
+        edge.setFlags(flags);
+        assertEquals(10, edge.getFlags().ints[0]);
+        flags.ints[0] = 9;
+        edge.setFlags(flags);
+        assertEquals(9, edge.getFlags().ints[0]);
+    }
+
+    @Test
+    public void setGetFlags() {
+        BaseGraph graph = createGHStorage();
+        EnumEncodedValue<RoadClass> rcEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        EdgeIteratorState edge = graph.edge(0, 1).set(rcEnc, RoadClass.BRIDLEWAY);
+        assertEquals(RoadClass.BRIDLEWAY, edge.get(rcEnc));
+        edge.set(rcEnc, RoadClass.CORRIDOR);
+        assertEquals(RoadClass.CORRIDOR, edge.get(rcEnc));
+    }
 }
