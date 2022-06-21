@@ -250,8 +250,9 @@ public class EdgeKVStorage {
             vals.setBytes(currentPointer, valueBytes, valueBytes.length);
             currentPointer += valueBytes.length;
         }
-        // System.out.println(lastEntryPointer + " " + entryMap);
         bytePointer = currentPointer;
+        if (bytePointer < 0)
+            throw new IllegalStateException("Negative bytePointer in EdgeKVStorage");
         return lastEntryPointer;
     }
 

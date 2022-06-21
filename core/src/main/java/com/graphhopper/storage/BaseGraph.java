@@ -947,10 +947,10 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public EdgeIteratorState setKeyValues(Map<String, Object> map) {
-            int kvEntryRef = (int) baseGraph.edgeKVStorage.add(map);
-            if (kvEntryRef < 0)
-                throw new IllegalStateException("Too many maps are stored, currently limited to 'int' pointer");
-            store.setKeyValuesRef(edgePointer, kvEntryRef);
+            long pointer = baseGraph.edgeKVStorage.add(map);
+            if (pointer > Integer.MAX_VALUE)
+                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + Integer.MAX_VALUE + " was " + pointer);
+            store.setKeyValuesRef(edgePointer, (int) pointer);
             return this;
         }
 
@@ -958,6 +958,12 @@ public class BaseGraph implements Graph, Closeable {
         public Map<String, Object> getKeyValues() {
             int kvEntryRef = store.getKeyValuesRef(edgePointer);
             return baseGraph.edgeKVStorage.getAll(kvEntryRef);
+        }
+
+        @Override
+        public Object getValue(String key) {
+            int kvEntryRef = store.getKeyValuesRef(edgePointer);
+            return baseGraph.edgeKVStorage.get(kvEntryRef, key);
         }
 
         @Override

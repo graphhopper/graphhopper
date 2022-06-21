@@ -24,8 +24,6 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
-import java.util.Map;
-
 /**
  * This class calculates instructions from the edges in a Path.
  *
@@ -139,13 +137,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             assert Double.compare(prevLon, nodeAccess.getLon(baseNode)) == 0;
         }
 
-        Map<String, Object> keyValues = edge.getKeyValues();
-        final String name = (String) keyValues.get("name");
+        final String name = (String) edge.getValue("name");
         if ((prevInstruction == null) && (!isRoundabout)) // very first instruction (if not in Roundabout)
         {
             int sign = Instruction.CONTINUE_ON_STREET;
             prevInstruction = new Instruction(sign, name, new PointList(10, nodeAccess.is3D()));
-            prevInstruction.setExtraInfo("ref", keyValues.get("ref"));
+            prevInstruction.setExtraInfo("ref", edge.getValue("ref"));
             double startLat = nodeAccess.getLat(baseNode);
             double startLon = nodeAccess.getLon(baseNode);
             double heading = AngleCalc.ANGLE_CALC.calcAzimuth(startLat, startLon, latitude, longitude);
@@ -203,7 +200,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         } else if (prevInRoundabout) //previously in roundabout but not anymore
         {
             prevInstruction.setName(name);
-            prevInstruction.setExtraInfo("ref", keyValues.get("ref"));
+            prevInstruction.setExtraInfo("ref", edge.getValue("ref"));
 
             // calc angle between roundabout entrance and exit
             double orientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
@@ -277,7 +274,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     prevInstructionName = prevName;
                     ways.add(prevInstruction);
                 }
-                prevInstruction.setExtraInfo("ref", keyValues.get("ref"));
+                prevInstruction.setExtraInfo("ref", edge.getValue("ref"));
             }
             // Update the prevName, since we don't always create an instruction on name changes the previous
             // name can be an old name. This leads to incorrect turn instructions due to name changes

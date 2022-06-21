@@ -37,12 +37,11 @@ public class KVStringDetails extends AbstractPathDetailsBuilder {
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         if (curString == null) {
-            // TODO it would be a bit more efficient if we fetch the Map only once per edge (we don't if more than one KV path detail is requested)
-            //  but then we would have to couple these path detail somehow. Or at least use the slightly more efficient EdgeKVStorage.get method instead of getAll
-            curString = (String) edge.getKeyValues().get(key);
+            // TODO it would be a bit more efficient if we fetch the Map only once per edge when more than one KVStringDetails are requested
+            curString = (String) edge.getValue(key);
             return true;
         }
-        String val = (String) edge.getKeyValues().get(key);
+        String val = (String) edge.getValue(key);
         if (!curString.equals(val)) {
             curString = val;
             return true;

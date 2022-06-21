@@ -325,6 +325,11 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         return keyValues;
     }
 
+    @Override
+    public Object getValue(String key) {
+        return keyValues.get(key);
+    }
+
     /**
      * This method sets edge to unfavored status for routing from the start or to the stop location.
      */

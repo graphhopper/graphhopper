@@ -293,9 +293,9 @@ public class RouteResourceClientHCTest {
         assertEquals("", finishInstructionName);
     }
 
-    void isBetween(double from, double to, double expected) {
-        assertTrue(expected >= from, "expected value " + expected + " was smaller than limit " + from);
-        assertTrue(expected <= to, "expected value " + expected + " was bigger than limit " + to);
+    void isBetween(double from, double to, double value) {
+        assertTrue(value >= from, "value " + value + " was smaller than expected limit " + from);
+        assertTrue(value <= to, "value " + value + " was bigger than expected limit " + to);
     }
 
     @ParameterizedTest

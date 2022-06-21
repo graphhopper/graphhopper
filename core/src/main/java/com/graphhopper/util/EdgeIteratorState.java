@@ -219,6 +219,14 @@ public interface EdgeIteratorState {
     Map<String, Object> getKeyValues();
 
     /**
+     * This method returns the value of the specified key. If you need more than one value you should likely better use
+     * getKeyValues().
+     *
+     * @see #setKeyValues(Map)
+     */
+    Object getValue(String key);
+
+    /**
      * Clones this EdgeIteratorState.
      *
      * @param reverse if true a detached edgeState with reversed properties is created where base

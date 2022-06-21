@@ -272,6 +272,11 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
+    public Object getValue(String key) {
+        return getCurrentEdge().getValue(key);
+    }
+
+    @Override
     public String toString() {
         if (current >= 0 && current < edges.size()) {
             return "virtual edge: " + getCurrentEdge() + ", all: " + edges.toString();

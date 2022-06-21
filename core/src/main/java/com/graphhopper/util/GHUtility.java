@@ -818,6 +818,11 @@ public class GHUtility {
         }
 
         @Override
+        public Object getValue(String key) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
         public boolean get(BooleanEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
