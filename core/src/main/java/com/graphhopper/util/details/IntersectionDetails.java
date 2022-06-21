@@ -38,7 +38,6 @@ import static com.graphhopper.util.Parameters.Details.INTERSECTION;
  * - <code>bearings</code> contain an array of the edges at that intersection. They are sorted by bearing, starting from 0 (which is 0° north) to 359.  The array contains the bearings of each edge at that intersection.
  * - <code>in</code> marks the index in the “bearings” edge we are coming from.
  * - <code>out</code> the index we are going to.
- * - <code>location</code> is the coordinate of the intersection.
  *
  * @author Robin Boldt
  */
@@ -67,7 +66,7 @@ public class IntersectionDetails extends AbstractPathDetailsBuilder {
             // Important to create a new map and not to clean the old map!
             intersectionMap = new HashMap<>();
 
-            List<IntersectionValues> intersections = new ArrayList<>();
+            List<IntersectionValues> intersectingEdges = new ArrayList<>();
 
             int baseNode = edge.getBaseNode();
             EdgeIteratorState tmpEdge;
@@ -87,24 +86,22 @@ public class IntersectionDetails extends AbstractPathDetailsBuilder {
                 }
 
                 IntersectionValues intersectionValues = new IntersectionValues();
-                intersectionValues.location = new GHPoint(startLat, startLon);
                 intersectionValues.bearing = calculateBearing(startLat, startLon, tmpEdge);
                 intersectionValues.in = edgeId(tmpEdge) == fromEdge;
                 intersectionValues.out = edgeId(tmpEdge) == edgeId(edge);
                 // The in edge is always false, this means that u-turns are not considered as possible turning option
                 intersectionValues.entry = !intersectionValues.in && Double.isFinite(weighting.calcEdgeWeightWithAccess(tmpEdge, false));
 
-                intersections.add(intersectionValues);
+                intersectingEdges.add(intersectionValues);
             }
 
-            intersections.sort(null);
+            intersectingEdges.sort(null);
 
-            List<Integer> bearings = new ArrayList<>(intersections.size());
-            List<Boolean> entry = new ArrayList<>(intersections.size());
+            List<Integer> bearings = new ArrayList<>(intersectingEdges.size());
+            List<Boolean> entry = new ArrayList<>(intersectingEdges.size());
 
-            for (int i = 0; i < intersections.size(); i++) {
-                IntersectionValues intersectionValues = intersections.get(i);
-                intersectionMap.put("location", Arrays.asList(intersectionValues.location.lon, intersectionValues.location.lat));
+            for (int i = 0; i < intersectingEdges.size(); i++) {
+                IntersectionValues intersectionValues = intersectingEdges.get(i);
                 bearings.add(intersectionValues.bearing);
                 entry.add(intersectionValues.entry);
                 if (intersectionValues.in) {
@@ -153,7 +150,6 @@ public class IntersectionDetails extends AbstractPathDetailsBuilder {
 
     private class IntersectionValues implements Comparable {
 
-        public GHPoint location;
         public int bearing;
         public boolean entry;
         public boolean in;

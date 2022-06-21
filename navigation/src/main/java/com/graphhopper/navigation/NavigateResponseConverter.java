@@ -95,7 +95,7 @@ public class NavigateResponseConverter {
             if (instruction.getSign() != Instruction.REACHED_VIA && instruction.getSign() != Instruction.FINISH) {
                 pointIndexTo += instructions.get(i).getPoints().size();
             }
-            putInstruction(instructions, i, locale, translationMap, instructionJson, isFirstInstructionOfLeg, distanceConfig, intersectionDetails, pointIndexFrom, pointIndexTo);
+            putInstruction(path.getPoints(), instructions, i, locale, translationMap, instructionJson, isFirstInstructionOfLeg, distanceConfig, intersectionDetails, pointIndexFrom, pointIndexTo);
             pointIndexFrom = pointIndexTo;
             time += instruction.getTime();
             distance += instruction.getDistance();
@@ -136,9 +136,10 @@ public class NavigateResponseConverter {
         legJson.put("distance", Helper.round(distance, 1));
     }
 
-    private static ObjectNode putInstruction(InstructionList instructions, int instructionIndex, Locale locale, TranslationMap translationMap,
-                                             ObjectNode instructionJson, boolean isFirstInstructionOfLeg, DistanceConfig distanceConfig,
-                                             List<PathDetail> intersectionDetails, int pointIndexFrom, int pointIndexTo) {
+    private static ObjectNode putInstruction(PointList points, InstructionList instructions, int instructionIndex, Locale locale,
+                                             TranslationMap translationMap, ObjectNode instructionJson, boolean isFirstInstructionOfLeg,
+                                             DistanceConfig distanceConfig, List<PathDetail> intersectionDetails, int pointIndexFrom,
+                                             int pointIndexTo) {
         Instruction instruction = instructions.get(instructionIndex);
         ArrayNode intersections = instructionJson.putArray("intersections");
 
@@ -150,11 +151,9 @@ public class NavigateResponseConverter {
                 ObjectNode intersection = intersections.addObject();
                 Map<String, Object> intersectionValue = (Map<String, Object>) intersectionDetail.getValue();
                 // Location
-                List<Double> locationList = (List<Double>) intersectionValue.getOrDefault("location", Collections.emptyList());
                 ArrayNode locationArray = intersection.putArray("location");
-                for (Double location : locationList) {
-                    locationArray.add(Helper.round6(location));
-                }
+                locationArray.add(Helper.round6(points.getLon(intersectionDetail.getFirst())));
+                locationArray.add(Helper.round6(points.getLat(intersectionDetail.getFirst())));
                 // Entry
                 List<Boolean> entryList = (List<Boolean>) intersectionValue.getOrDefault("entry", Collections.emptyList());
                 ArrayNode entryArray = intersection.putArray("entry");

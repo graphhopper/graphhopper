@@ -460,7 +460,6 @@ public class PathTest {
         intersectionMap.put("out", 0);
         intersectionMap.put("entry", Arrays.asList(true));
         intersectionMap.put("bearings", Arrays.asList(90));
-        intersectionMap.put("location", Arrays.asList(13.348, 52.514));
 
         assertEquals(intersectionMap, intersectionDetails.get(0).getValue());
 
@@ -469,7 +468,6 @@ public class PathTest {
         intersectionMap.put("in", 1);
         intersectionMap.put("entry", Arrays.asList(true, false));
         intersectionMap.put("bearings", Arrays.asList(90, 270));
-        intersectionMap.put("location", Arrays.asList(13.349, 52.514));
 
         assertEquals(intersectionMap, intersectionDetails.get(1).getValue());
     }
