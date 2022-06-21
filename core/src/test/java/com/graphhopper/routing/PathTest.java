@@ -458,7 +458,7 @@ public class PathTest {
 
         Map<String, Object> intersectionMap = new HashMap<>();
         intersectionMap.put("out", 0);
-        intersectionMap.put("entry", Arrays.asList(true));
+        intersectionMap.put("entries", Arrays.asList(true));
         intersectionMap.put("bearings", Arrays.asList(90));
 
         assertEquals(intersectionMap, intersectionDetails.get(0).getValue());
@@ -466,7 +466,7 @@ public class PathTest {
         intersectionMap.clear();
         intersectionMap.put("out", 0);
         intersectionMap.put("in", 1);
-        intersectionMap.put("entry", Arrays.asList(true, false));
+        intersectionMap.put("entries", Arrays.asList(true, false));
         intersectionMap.put("bearings", Arrays.asList(90, 270));
 
         assertEquals(intersectionMap, intersectionDetails.get(1).getValue());

@@ -155,9 +155,9 @@ public class NavigateResponseConverter {
                 locationArray.add(Helper.round6(points.getLon(intersectionDetail.getFirst())));
                 locationArray.add(Helper.round6(points.getLat(intersectionDetail.getFirst())));
                 // Entry
-                List<Boolean> entryList = (List<Boolean>) intersectionValue.getOrDefault("entry", Collections.emptyList());
+                List<Boolean> entries = (List<Boolean>) intersectionValue.getOrDefault("entries", Collections.emptyList());
                 ArrayNode entryArray = intersection.putArray("entry");
-                for (Boolean entry : entryList) {
+                for (Boolean entry : entries) {
                     entryArray.add(entry);
                 }
                 // Bearings

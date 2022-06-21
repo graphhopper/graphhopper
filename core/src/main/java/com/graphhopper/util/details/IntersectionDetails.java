@@ -98,12 +98,12 @@ public class IntersectionDetails extends AbstractPathDetailsBuilder {
             intersectingEdges.sort(null);
 
             List<Integer> bearings = new ArrayList<>(intersectingEdges.size());
-            List<Boolean> entry = new ArrayList<>(intersectingEdges.size());
+            List<Boolean> entries = new ArrayList<>(intersectingEdges.size());
 
             for (int i = 0; i < intersectingEdges.size(); i++) {
                 IntersectionValues intersectionValues = intersectingEdges.get(i);
                 bearings.add(intersectionValues.bearing);
-                entry.add(intersectionValues.entry);
+                entries.add(intersectionValues.entry);
                 if (intersectionValues.in) {
                     intersectionMap.put("in", i);
                 }
@@ -113,7 +113,7 @@ public class IntersectionDetails extends AbstractPathDetailsBuilder {
             }
 
             intersectionMap.put("bearings", bearings);
-            intersectionMap.put("entry", entry);
+            intersectionMap.put("entries", entries);
 
             fromEdge = toEdge;
             return true;
