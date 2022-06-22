@@ -19,6 +19,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.PrepareEncoder;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -78,7 +80,7 @@ public class RoutingCHGraphImplTest {
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeExplorer baseCarOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 1).setDistance(30));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(4, 1).setDistance(30));
         graph.freeze();
 
         CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(encoder));
@@ -168,8 +170,10 @@ public class RoutingCHGraphImplTest {
         FlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(1));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
         graph.freeze();
 
         CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(encoder));
@@ -193,8 +197,10 @@ public class RoutingCHGraphImplTest {
         EncodingManager em = EncodingManager.create(encoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
 
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 3).setDistance(10));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3).setDistance(10));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10));
         graph.freeze();
 
         FastestWeighting weighting = new FastestWeighting(encoder);
@@ -216,8 +222,10 @@ public class RoutingCHGraphImplTest {
         FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(carEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10));
-        final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(10));
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3).setDistance(10));
+        final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10));
         graph.freeze();
 
         FastestWeighting weighting = new FastestWeighting(carEncoder);
@@ -237,8 +245,10 @@ public class RoutingCHGraphImplTest {
         FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(carEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10));
-        final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(10));
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3).setDistance(10));
+        final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10));
         graph.freeze();
 
         FastestWeighting weighting = new FastestWeighting(carEncoder);
@@ -257,8 +267,10 @@ public class RoutingCHGraphImplTest {
         EncodingManager em = EncodingManager.create(carEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).create();
 
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(1));
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
         graph.freeze();
 
         FastestWeighting weighting = new FastestWeighting(carEncoder);
@@ -274,8 +286,10 @@ public class RoutingCHGraphImplTest {
         FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(carEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(3));
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(3));
         graph.freeze();
 
         FastestWeighting weighting = new FastestWeighting(carEncoder);
@@ -307,8 +321,10 @@ public class RoutingCHGraphImplTest {
         FlagEncoder carEncoder = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(carEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(1, 2).setDistance(1));
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
         graph.freeze();
 
         FastestWeighting weighting = new FastestWeighting(carEncoder);

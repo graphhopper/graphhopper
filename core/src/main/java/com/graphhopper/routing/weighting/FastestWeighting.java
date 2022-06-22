@@ -59,7 +59,7 @@ public class FastestWeighting extends AbstractWeighting {
     }
 
     public FastestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
-        super(encoder, turnCostProvider);
+        super(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), turnCostProvider);
         headingPenalty = map.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);
         maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
@@ -82,7 +82,7 @@ public class FastestWeighting extends AbstractWeighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
+        double speed = reverse ? edgeState.getReverse(speedEnc) : edgeState.get(speedEnc);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
 

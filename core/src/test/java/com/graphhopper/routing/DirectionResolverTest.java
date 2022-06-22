@@ -382,7 +382,7 @@ public class DirectionResolverTest {
     }
 
     private EdgeIteratorState addEdge(int from, int to, boolean bothDirections) {
-        return GHUtility.setSpeed(60, true, bothDirections, encoder, graph.edge(from, to).setDistance(1));
+        return GHUtility.setSpeed(60, true, bothDirections, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(from, to).setDistance(1));
     }
 
     private boolean isAccessible(EdgeIteratorState edge, boolean reverse) {

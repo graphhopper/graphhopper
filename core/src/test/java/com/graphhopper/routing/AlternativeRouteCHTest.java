@@ -56,7 +56,7 @@ public class AlternativeRouteCHTest {
         // has to be locally-shortest to be considered.
         // So we get all three alternatives.
 
-        GHUtility.setSpeed(60, 60, carFE,
+        GHUtility.setSpeed(60, 60, carFE.getAccessEnc(), carFE.getAverageSpeedEnc(),
                 graph.edge(5, 6).setDistance(10000),
                 graph.edge(6, 3).setDistance(10000),
                 graph.edge(3, 4).setDistance(10000),

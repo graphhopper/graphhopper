@@ -22,6 +22,8 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -324,19 +326,21 @@ class HeadingRoutingTest {
         na.setNode(7, 0.000, 0.001);
         na.setNode(8, 0.001, 0.001);
 
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(1, 2).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 3).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 4).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(4, 5).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 6).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(6, 7).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(7, 0).setDistance(100));
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 4).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(4, 5).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(5, 6).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(6, 7).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(7, 0).setDistance(100));
 
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(1, 8).setDistance(110));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 8).setDistance(110));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 8).setDistance(110));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(7, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(5, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(7, 8).setDistance(110));
 
         return g;
     }
@@ -361,18 +365,20 @@ class HeadingRoutingTest {
         na.setNode(7, 0.000, 0.001);
         na.setNode(8, 0.001, 0.001);
 
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(1, 2).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 3).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 4).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(4, 5).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 6).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(6, 7).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(7, 0).setDistance(100));
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 4).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(4, 5).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(5, 6).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(6, 7).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(7, 0).setDistance(100));
 
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(1, 5).setDistance(110));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 8).setDistance(110));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(7, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(1, 5).setDistance(110));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(7, 8).setDistance(110));
 
         return g;
     }
