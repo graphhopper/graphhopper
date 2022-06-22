@@ -77,8 +77,8 @@ public class DijkstraBidirectionCHTest {
         EncodingManager em = EncodingManager.create("foot,car");
         FlagEncoder footEncoder = em.getEncoder("foot");
         FlagEncoder carEncoder = em.getEncoder("car");
-        FastestWeighting footWeighting = new FastestWeighting(footEncoder);
-        FastestWeighting carWeighting = new FastestWeighting(carEncoder);
+        FastestWeighting footWeighting = new FastestWeighting(footEncoder.getAccessEnc(), footEncoder.getAverageSpeedEnc());
+        FastestWeighting carWeighting = new FastestWeighting(carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc());
 
         CHConfig carConfig = CHConfig.nodeBased("p_car", carWeighting);
         BaseGraph g = new BaseGraph.Builder(em).create();
@@ -184,7 +184,7 @@ public class DijkstraBidirectionCHTest {
 
         GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(1, 2).setDistance(1));
         graph.freeze();
-        FastestWeighting weighting = new FastestWeighting(encoder);
+        FastestWeighting weighting = new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
         CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         new CHStorageBuilder(chStore).setIdentityLevels();

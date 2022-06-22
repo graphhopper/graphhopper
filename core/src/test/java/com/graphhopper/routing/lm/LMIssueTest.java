@@ -71,7 +71,7 @@ public class LMIssueTest {
         graph = new BaseGraph.Builder(encodingManager)
                 .setDir(dir)
                 .create();
-        weighting = new FastestWeighting(encoder);
+        weighting = new FastestWeighting(accessEnc, speedEnc);
     }
 
     private void preProcessGraph() {

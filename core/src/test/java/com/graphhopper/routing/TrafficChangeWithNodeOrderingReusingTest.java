@@ -57,7 +57,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
             carParser.init(new DateRangeParser());
             osmParsers = new OSMParsers()
                     .addVehicleTagParser(carParser);
-            baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(encoder));
+            baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc()));
             trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), encoder, maxDeviationPercentage));
             graph = new BaseGraph.Builder(em).create();
         }

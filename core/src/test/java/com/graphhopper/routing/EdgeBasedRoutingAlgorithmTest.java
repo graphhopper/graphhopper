@@ -157,7 +157,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private Weighting createWeighting(int uTurnCosts) {
-        return new FastestWeighting(carEncoder, new DefaultTurnCostProvider(turnCostEnc, tcs, uTurnCosts));
+        return new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, tcs, uTurnCosts));
     }
 
     @ParameterizedTest
@@ -170,7 +170,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         BaseGraph g = createStorage(em);
         GHUtility.buildRandomGraph(g, rnd, 50, 2.2, true, true,
                 accessEnc, speedEnc, null, 0.8, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(g, seed, em, carEncoder, 3, tcs);
+        GHUtility.addRandomTurnCosts(g, seed, carEncoder.getAccessEnc(), carEncoder.getTurnCostEnc(), 3, tcs);
         g.freeze();
         int numPathsNotFound = 0;
         // todo: reduce redundancy with RandomCHRoutingTest
@@ -418,7 +418,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         setTurnCost(g, 2, 5, 6, 3);
         setTurnCost(g, 1, 6, 7, 4);
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder, new DefaultTurnCostProvider(turnCostEnc, tcs) {
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, tcs) {
             @Override
             public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
                 if (edgeFrom >= 0)

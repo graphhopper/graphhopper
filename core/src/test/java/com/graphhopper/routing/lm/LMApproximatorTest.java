@@ -53,7 +53,7 @@ public class LMApproximatorTest {
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true,
                 encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.8, 0.8);
 
-        Weighting weighting = new FastestWeighting(encoder);
+        Weighting weighting = new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
 
         PrepareLandmarks lm = new PrepareLandmarks(dir, graph, encodingManager, new LMConfig("car", weighting), 16);
         lm.setMaximumWeight(10000);

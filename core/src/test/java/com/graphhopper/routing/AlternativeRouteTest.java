@@ -58,7 +58,7 @@ public class AlternativeRouteTest {
             TurnCostProvider turnCostProvider = tMode.isEdgeBased()
                     ? new DefaultTurnCostProvider(carFE.getTurnCostEnc(), graph.getTurnCostStorage())
                     : TurnCostProvider.NO_TURN_COST_PROVIDER;
-            weighting = new FastestWeighting(carFE, turnCostProvider);
+            weighting = new FastestWeighting(carFE.getAccessEnc(), carFE.getAverageSpeedEnc(), turnCostProvider);
         }
 
         @Override

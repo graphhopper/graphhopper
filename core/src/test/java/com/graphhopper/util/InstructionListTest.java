@@ -132,7 +132,7 @@ public class InstructionListTest {
     public void testWayList() {
         Graph g = createTestGraph();
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(0, 10);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
@@ -201,7 +201,7 @@ public class InstructionListTest {
         list.add(10.20, 10.05);
         iter.setWayGeometry(list);
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(2, 3);
 
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
@@ -240,7 +240,7 @@ public class InstructionListTest {
         list.add(10.20, 10.05);
         iter.setWayGeometry(list);
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(2, 3);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
@@ -269,7 +269,7 @@ public class InstructionListTest {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(10));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 4).setDistance(10));
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
@@ -298,7 +298,7 @@ public class InstructionListTest {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(10));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 4).setDistance(10));
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
@@ -334,7 +334,7 @@ public class InstructionListTest {
         g.edge(2, 3).set(rcEV, RoadClass.RESIDENTIAL).setName("pfarr");
         g.edge(2, 4).set(rcEV, RoadClass.PEDESTRIAN).setName("markt");
 
-        FastestWeighting weighting = new FastestWeighting(bike);
+        FastestWeighting weighting = new FastestWeighting(bike.getAccessEnc(), bike.getAverageSpeedEnc());
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 3);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
@@ -372,7 +372,7 @@ public class InstructionListTest {
         g.edge(2, 3).set(rcEV, RoadClass.SECONDARY).setName("ring");
         g.edge(2, 4).set(rcEV, RoadClass.SECONDARY).setName("ring");
 
-        FastestWeighting weighting = new FastestWeighting(bike);
+        FastestWeighting weighting = new FastestWeighting(bike.getAccessEnc(), bike.getAverageSpeedEnc());
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 4);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
@@ -469,7 +469,7 @@ public class InstructionListTest {
     public void testEmptyList() {
         BaseGraph g = new BaseGraph.Builder(carManager).create();
         g.getNodeAccess().setNode(1, 0, 0);
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 1);
         InstructionList il = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         assertEquals(0, il.size());
@@ -501,7 +501,7 @@ public class InstructionListTest {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 7).setDistance(10000)).setName("3-7");
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(4, 5).setDistance(10000)).setName("4-5");
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 5);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
 

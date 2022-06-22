@@ -55,7 +55,7 @@ class QueryRoutingCHGraphTest {
         encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 5).putObject("speed_two_directions", true));
         encodingManager = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(encodingManager).create();
-        weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage()));
+        weighting = new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage()));
         na = graph.getNodeAccess();
     }
 

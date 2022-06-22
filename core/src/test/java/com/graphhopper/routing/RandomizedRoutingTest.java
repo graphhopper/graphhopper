@@ -124,8 +124,8 @@ public class RandomizedRoutingTest {
                     .create();
             turnCostStorage = graph.getTurnCostStorage();
             chConfigs = Arrays.asList(
-                    CHConfig.nodeBased("p1", new FastestWeighting(encoder)),
-                    CHConfig.edgeBased("p2", new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage())))
+                    CHConfig.nodeBased("p1", new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc())),
+                    CHConfig.edgeBased("p2", new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage())))
             );
             // important: for LM preparation we need to use a weighting without turn costs #1960
             lmConfig = new LMConfig("car", chConfigs.get(0).getWeighting());
@@ -304,8 +304,8 @@ public class RandomizedRoutingTest {
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(f.graph, rnd, 100, 2.2, true, true,
                 f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(), null, 0.7, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(f.graph, seed, f.encodingManager, f.encoder, f.maxTurnCosts, f.turnCostStorage);
-//        GHUtility.printGraphForUnitTest(f.graph, f.encoder);
+        GHUtility.addRandomTurnCosts(f.graph, seed, f.encoder.getAccessEnc(), f.encoder.getTurnCostEnc(), f.maxTurnCosts, f.turnCostStorage);
+//        GHUtility.printGraphForUnitTest(f.graph, f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc());
         f.preProcessGraph();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
@@ -342,8 +342,8 @@ public class RandomizedRoutingTest {
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.2, true, true,
                 f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(), null, 0.7, 0.8, pOffset);
-        GHUtility.addRandomTurnCosts(f.graph, seed, f.encodingManager, f.encoder, f.maxTurnCosts, f.turnCostStorage);
-//        GHUtility.printGraphForUnitTest(f.graph, f.encoder);
+        GHUtility.addRandomTurnCosts(f.graph, seed, f.encoder.getAccessEnc(), f.encoder.getTurnCostEnc(), f.maxTurnCosts, f.turnCostStorage);
+//        GHUtility.printGraphForUnitTest(f.graph, f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc());
         f.preProcessGraph();
         LocationIndexTree index = new LocationIndexTree(f.graph, f.dir);
         index.prepareIndex();

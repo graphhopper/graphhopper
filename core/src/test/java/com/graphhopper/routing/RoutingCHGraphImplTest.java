@@ -45,7 +45,7 @@ public class RoutingCHGraphImplTest {
         graph.edge(8, 9);
         graph.freeze();
 
-        CHConfig chConfig = CHConfig.nodeBased("p", new FastestWeighting(carEncoder));
+        CHConfig chConfig = CHConfig.nodeBased("p", new FastestWeighting(carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc()));
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
@@ -83,7 +83,7 @@ public class RoutingCHGraphImplTest {
         GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(4, 1).setDistance(30));
         graph.freeze();
 
-        CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(encoder));
+        CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc()));
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
@@ -120,7 +120,7 @@ public class RoutingCHGraphImplTest {
         EdgeIteratorState edge2 = graph.edge(1, 2);
         graph.freeze();
 
-        CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(encoder));
+        CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc()));
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
         RoutingCHGraph g = RoutingCHGraphImpl.fromGraph(graph, store, chConfig);
         assertFalse(g.getEdgeIteratorState(edge1.getEdge(), Integer.MIN_VALUE).isShortcut());
@@ -146,7 +146,7 @@ public class RoutingCHGraphImplTest {
         ghStorage.edge(0, 3);
         ghStorage.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(customEncoder);
+        FastestWeighting weighting = new FastestWeighting(customEncoder.getAccessEnc(), customEncoder.getAverageSpeedEnc());
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(ghStorage, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
@@ -176,7 +176,7 @@ public class RoutingCHGraphImplTest {
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
         graph.freeze();
 
-        CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(encoder));
+        CHConfig chConfig = CHConfig.nodeBased("ch", new FastestWeighting(accessEnc, speedEnc));
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);
         chBuilder.setIdentityLevels();
@@ -203,7 +203,7 @@ public class RoutingCHGraphImplTest {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10));
         graph.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(encoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
@@ -228,7 +228,7 @@ public class RoutingCHGraphImplTest {
         final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10));
         graph.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
@@ -251,7 +251,7 @@ public class RoutingCHGraphImplTest {
         final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10));
         graph.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
@@ -273,7 +273,7 @@ public class RoutingCHGraphImplTest {
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
         graph.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
@@ -292,7 +292,7 @@ public class RoutingCHGraphImplTest {
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(3));
         graph.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         CHConfig chConfig = CHConfig.edgeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
 
@@ -309,7 +309,7 @@ public class RoutingCHGraphImplTest {
         EncodingManager em = EncodingManager.create(carEncoder);
         BaseGraph graph = new BaseGraph.Builder(em).set3D(true).create();
         graph.freeze();
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc());
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
@@ -327,7 +327,7 @@ public class RoutingCHGraphImplTest {
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
         graph.freeze();
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         CHConfig chConfig = CHConfig.edgeBased("p1", weighting);
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(store);

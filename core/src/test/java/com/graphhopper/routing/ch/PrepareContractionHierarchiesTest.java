@@ -331,8 +331,10 @@ public class PrepareContractionHierarchiesTest {
         // here we will construct a special case where a connection is not found without the fix in #1574.
 
         g = createGraph();
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
         // use fastest weighting in this test to be able to fine-tune some weights via the speed (see below)
-        Weighting fastestWeighting = new FastestWeighting(carEncoder);
+        Weighting fastestWeighting = new FastestWeighting(accessEnc, speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("c", fastestWeighting);
         // the following graph reproduces the issue. note that we will use the node ids as ch levels, so there will
         // be a shortcut 3->2 visible at node 2 and another one 3->4 visible at node 3.
@@ -344,8 +346,6 @@ public class PrepareContractionHierarchiesTest {
         // start 0 - 3 - x - 1 - 2
         //             \         |
         //               sc ---- 4 - 5 - 6 - 7 finish
-        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 3).setDistance(1));
         EdgeIteratorState edge31 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 1).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(1));
@@ -509,8 +509,8 @@ public class PrepareContractionHierarchiesTest {
         FlagEncoder tmpBikeEncoder = FlagEncoders.createBike();
         EncodingManager tmpEncodingManager = EncodingManager.create(tmpCarEncoder, tmpBikeEncoder);
 
-        CHConfig carConfig = CHConfig.nodeBased("c1", new FastestWeighting(tmpCarEncoder));
-        CHConfig bikeConfig = CHConfig.nodeBased("c2", new FastestWeighting(tmpBikeEncoder));
+        CHConfig carConfig = CHConfig.nodeBased("c1", new FastestWeighting(tmpCarEncoder.getAccessEnc(), tmpCarEncoder.getAverageSpeedEnc()));
+        CHConfig bikeConfig = CHConfig.nodeBased("c2", new FastestWeighting(tmpBikeEncoder.getAccessEnc(), tmpBikeEncoder.getAverageSpeedEnc()));
 
         BaseGraph graph = new BaseGraph.Builder(tmpEncodingManager).create();
         initShortcutsGraph(graph, tmpCarEncoder);
@@ -534,8 +534,8 @@ public class PrepareContractionHierarchiesTest {
         FlagEncoder car1FlagEncoder = FlagEncoders.createCar(new PMap("name=car1|turn_costs=true|speed_two_directions=true"));
         FlagEncoder car2FlagEncoder = FlagEncoders.createCar(new PMap("name=car2|turn_costs=true|speed_two_directions=true"));
         EncodingManager em = EncodingManager.create(car1FlagEncoder, car2FlagEncoder);
-        CHConfig car1Config = CHConfig.nodeBased("c1", new FastestWeighting(car1FlagEncoder));
-        CHConfig car2Config = CHConfig.nodeBased("c2", new FastestWeighting(car2FlagEncoder));
+        CHConfig car1Config = CHConfig.nodeBased("c1", new FastestWeighting(car1FlagEncoder.getAccessEnc(), car1FlagEncoder.getAverageSpeedEnc()));
+        CHConfig car2Config = CHConfig.nodeBased("c2", new FastestWeighting(car2FlagEncoder.getAccessEnc(), car2FlagEncoder.getAverageSpeedEnc()));
         BaseGraph graph = new BaseGraph.Builder(em).create();
 
         int numNodes = 5_000;

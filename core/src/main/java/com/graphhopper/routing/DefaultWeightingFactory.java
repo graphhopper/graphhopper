@@ -19,6 +19,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.*;
@@ -80,16 +82,26 @@ public class DefaultWeightingFactory implements WeightingFactory {
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), turnCostProvider);
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {
+            if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
+                throw new IllegalArgumentException("fastest weighting requires road_access");
+            EnumEncodedValue<RoadAccess> roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
             if (encoder.getPriorityEnc() != null)
-                weighting = new PriorityWeighting(encoder, hints, turnCostProvider);
+                weighting = new PriorityWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), encoder.getPriorityEnc(), roadAccessEnc, hints, turnCostProvider);
             else
-                weighting = new FastestWeighting(encoder, hints, turnCostProvider);
+                weighting = new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), roadAccessEnc, hints, turnCostProvider);
         } else if ("curvature".equalsIgnoreCase(weightingStr)) {
-            if (encoder.getCurvatureEnc() != null)
-                weighting = new CurvatureWeighting(encoder, hints, turnCostProvider);
-
+            if (encoder.getCurvatureEnc() == null || encoder.getPriorityEnc() == null)
+                throw new IllegalArgumentException("curvature weighting requires curvature and priority, but not found for " + encoder.getName());
+            if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
+                throw new IllegalArgumentException("curvature weighting requires road_access");
+            EnumEncodedValue<RoadAccess> roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+            weighting = new CurvatureWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), encoder.getPriorityEnc(),
+                    encoder.getCurvatureEnc(), roadAccessEnc, hints, turnCostProvider);
         } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
-            weighting = new ShortFastestWeighting(encoder, hints, turnCostProvider);
+            if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
+                throw new IllegalArgumentException("curvature weighting requires road_access");
+            EnumEncodedValue<RoadAccess> roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+            weighting = new ShortFastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), roadAccessEnc, hints, turnCostProvider);
         }
 
         if (weighting == null)

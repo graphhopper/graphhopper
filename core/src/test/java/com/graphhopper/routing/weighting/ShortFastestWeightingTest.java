@@ -38,18 +38,18 @@ public class ShortFastestWeightingTest {
     @Test
     public void testShort() {
         EdgeIteratorState edge = createMockedEdgeIteratorState(10, GHUtility.setSpeed(50, 0, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), encodingManager.createEdgeFlags()));
-        Weighting instance = new ShortFastestWeighting(encoder, 0.03);
-        assertEquals(1.02, instance.calcEdgeWeight(edge, false), 1e-8);
+        Weighting instance = new ShortFastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, new PMap("short_fastest.distance_factor=0.03"), TurnCostProvider.NO_TURN_COST_PROVIDER);
+        assertEquals(1.02, instance.calcEdgeWeight(edge, false), 1e-6);
 
         // more influence from distance
-        instance = new ShortFastestWeighting(encoder, 0.1);
-        assertEquals(1.72, instance.calcEdgeWeight(edge, false), 1e-8);
+        instance = new ShortFastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, new PMap("short_fastest.distance_factor=0.1"), TurnCostProvider.NO_TURN_COST_PROVIDER);
+        assertEquals(1.72, instance.calcEdgeWeight(edge, false), 1e-6);
     }
 
     @Test
     public void testTooSmall() {
         try {
-            new ShortFastestWeighting(encoder, new PMap("short_fastest.distance_factor=0|short_fastest.time_factor=0"),
+            new ShortFastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, new PMap("short_fastest.distance_factor=0|short_fastest.time_factor=0"),
                     TurnCostProvider.NO_TURN_COST_PROVIDER);
             fail();
         } catch (Exception ex) {

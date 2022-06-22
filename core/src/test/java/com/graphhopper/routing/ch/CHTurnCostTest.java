@@ -1209,7 +1209,7 @@ public class CHTurnCostTest {
         // for larger graphs preparation takes much longer the higher the degree is!
         GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, true,
                 accessEnc, speedEnc, null, 0.7, 0.9, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
+        GHUtility.addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
         IntArrayList contractionOrder = getRandomIntegerSequence(graph.getNodes(), rnd);
@@ -1237,7 +1237,7 @@ public class CHTurnCostTest {
     private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
         GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, true,
                 accessEnc, speedEnc, null, 0.7, 0.9, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
+        GHUtility.addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
         automaticCompareCHWithDijkstra(100);
@@ -1351,7 +1351,7 @@ public class CHTurnCostTest {
         }
         if (algosDisagree) {
             System.out.println("Graph that produced error:");
-            GHUtility.printGraphForUnitTest(graph, encoder);
+            GHUtility.printGraphForUnitTest(graph, accessEnc, speedEnc);
             fail("Dijkstra and CH did not find equal shortest paths for route from " + from + " to " + to + "\n" +
                     " dijkstra: weight: " + dijkstraPath.getWeight() + ", distance: " + dijkstraPath.getDistance() +
                     ", time: " + dijkstraPath.getTime() + ", nodes: " + dijkstraPath.calcNodes() + "\n" +

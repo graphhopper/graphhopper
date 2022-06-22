@@ -273,7 +273,7 @@ public class PrepareRoutingSubnetworksTest {
 
     private static PrepareRoutingSubnetworks.PrepareJob createJob(EncodingManager em, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
         return new PrepareRoutingSubnetworks.PrepareJob(em.getBooleanEncodedValue(Subnetwork.key(encoder.toString())),
-                new FastestWeighting(encoder, turnCostProvider));
+                new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), turnCostProvider));
     }
 
 }

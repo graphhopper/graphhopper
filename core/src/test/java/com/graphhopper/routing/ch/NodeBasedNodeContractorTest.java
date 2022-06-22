@@ -280,7 +280,7 @@ public class NodeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(distances[3]));
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(distances[4]));
         graph.freeze();
-        Weighting weighting = new FastestWeighting(encoder);
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         setMaxLevelOnAllNodes(chStore);
@@ -307,6 +307,8 @@ public class NodeBasedNodeContractorTest {
         // see also #1583
         FlagEncoder encoder = FlagEncoders.createCar();
         EncodingManager encodingManager = EncodingManager.create(encoder);
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         // 0 - 1 - 2 - 3
         // o           o
@@ -317,7 +319,7 @@ public class NodeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 3).setDistance(1));
 
         graph.freeze();
-        Weighting weighting = new FastestWeighting(encoder);
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         setMaxLevelOnAllNodes(chStore);

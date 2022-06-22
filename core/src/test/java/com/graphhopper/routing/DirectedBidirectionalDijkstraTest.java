@@ -62,7 +62,7 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     private Weighting createWeighting(int uTurnCosts) {
-        return new FastestWeighting(encoder, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts));
+        return new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts));
     }
 
     @Test
@@ -396,7 +396,7 @@ public class DirectedBidirectionalDijkstraTest {
         int numNodes = 100;
         GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.2, true, true,
                 accessEnc, speedEnc, null, 0.7, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
+        GHUtility.addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxTurnCosts, turnCostStorage);
 
         long numStrictViolations = 0;
         for (int i = 0; i < numQueries; i++) {

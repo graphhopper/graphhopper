@@ -512,7 +512,7 @@ public class QueryGraphTest {
         EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graphWithTurnCosts.edge(0, 1).setDistance(10));
         EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graphWithTurnCosts.edge(2, 1).setDistance(10));
 
-        Weighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graphWithTurnCosts.getTurnCostStorage()));
+        Weighting weighting = new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graphWithTurnCosts.getTurnCostStorage()));
 
         // no turn costs initially
         assertEquals(0, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);

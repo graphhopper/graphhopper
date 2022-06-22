@@ -63,8 +63,8 @@ public class RandomCHRoutingTest {
         void freeze() {
             graph.freeze();
             chConfig = traversalMode.isEdgeBased()
-                    ? CHConfig.edgeBased("p", new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage(), uTurnCosts)))
-                    : CHConfig.nodeBased("p", new FastestWeighting(encoder));
+                    ? CHConfig.edgeBased("p", new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage(), uTurnCosts)))
+                    : CHConfig.nodeBased("p", new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc()));
             weighting = chConfig.getWeighting();
         }
 
@@ -105,7 +105,7 @@ public class RandomCHRoutingTest {
         GHUtility.buildRandomGraph(f.graph, rnd, numNodes, 2.5, true, true,
                 f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(), null, 0.7, 0.9, pOffset);
         if (f.traversalMode.isEdgeBased()) {
-            GHUtility.addRandomTurnCosts(f.graph, seed, f.encodingManager, f.encoder, f.maxTurnCosts, f.graph.getTurnCostStorage());
+            GHUtility.addRandomTurnCosts(f.graph, seed, f.encoder.getAccessEnc(), f.encoder.getTurnCostEnc(), f.maxTurnCosts, f.graph.getTurnCostStorage());
         }
         runRandomTest(f, rnd, 20);
     }
@@ -154,7 +154,7 @@ public class RandomCHRoutingTest {
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.5, true, true,
                 f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(), null, 0.7, 0.9, 0.0);
-        GHUtility.addRandomTurnCosts(f.graph, seed, f.encodingManager, f.encoder, f.maxTurnCosts, f.graph.getTurnCostStorage());
+        GHUtility.addRandomTurnCosts(f.graph, seed, f.encoder.getAccessEnc(), f.encoder.getTurnCostEnc(), f.maxTurnCosts, f.graph.getTurnCostStorage());
         runRandomTest(f, rnd, 20);
     }
 

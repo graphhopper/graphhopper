@@ -17,9 +17,10 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadAccess;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Routing;
@@ -46,33 +47,38 @@ public class FastestWeighting extends AbstractWeighting {
     // this factor puts a penalty on roads with a "destination"-only or private access, see #733 and #1936
     private final double destinationPenalty, privatePenalty;
 
-    public FastestWeighting(FlagEncoder encoder) {
-        this(encoder, new PMap(0));
+    public FastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+        this(accessEnc, speedEnc, NO_TURN_COST_PROVIDER);
     }
 
-    public FastestWeighting(FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        this(encoder, new PMap(0), turnCostProvider);
+    public FastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, TurnCostProvider turnCostProvider) {
+        this(accessEnc, speedEnc, null, new PMap(0), turnCostProvider);
     }
 
-    public FastestWeighting(FlagEncoder encoder, PMap map) {
-        this(encoder, map, NO_TURN_COST_PROVIDER);
-    }
-
-    public FastestWeighting(FlagEncoder encoder, PMap map, TurnCostProvider turnCostProvider) {
-        super(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), turnCostProvider);
+    public FastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EnumEncodedValue<RoadAccess> roadAccessEnc, PMap map, TurnCostProvider turnCostProvider) {
+        super(accessEnc, speedEnc, turnCostProvider);
         headingPenalty = map.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);
-        maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
-
-        if (!encoder.hasEncodedValue(RoadAccess.KEY))
-            throw new IllegalArgumentException("road_access is not available but expected for FastestWeighting");
+        // todonow: take max speed from speedEnc
+//        maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
+        maxSpeed = 140 / SPEED_CONV;
 
         // ensure that we do not need to change getMinWeight, i.e. road_access_factor >= 1
-        double defaultDestinationFactor = encoder.isMotorVehicle() ? 10 : 1;
+        // todonow: maybe setup these factors in weighting factory?
+//        double defaultDestinationFactor = encoder.isMotorVehicle() ? 10 : 1;
+        double defaultDestinationFactor = 10;
         destinationPenalty = checkBounds("road_access_destination_factor", map.getDouble("road_access_destination_factor", defaultDestinationFactor), 1, 10);
-        double defaultPrivateFactor = encoder.isMotorVehicle() ? 10 : 1.2;
+        // todonow: maybe setup these factors in weighting factory?
+//        double defaultPrivateFactor = encoder.isMotorVehicle() ? 10 : 1.2;
+        double defaultPrivateFactor = 10;
         privatePenalty = checkBounds("road_access_private_factor", map.getDouble("road_access_private_factor", defaultPrivateFactor), 1, 10);
-        roadAccessEnc = destinationPenalty > 1 || privatePenalty > 1 ? encoder.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class) : null;
+        if (destinationPenalty > 1 || privatePenalty > 1) {
+            // todonow: maybe only error when factors are given *explicitly*
+//            if (roadAccessEnc == null)
+//                throw new IllegalArgumentException("road_access must not be null when destination or private penalties are > 1");
+            this.roadAccessEnc = roadAccessEnc;
+        } else
+            this.roadAccessEnc = null;
     }
 
     @Override

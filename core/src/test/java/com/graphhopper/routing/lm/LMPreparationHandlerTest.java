@@ -38,7 +38,7 @@ public class LMPreparationHandlerTest {
         FlagEncoder car = FlagEncoders.createCar();
         EncodingManager em = EncodingManager.create(car);
         List<LMConfig> lmConfigs = Arrays.asList(
-                new LMConfig("conf1", new FastestWeighting(car)),
+                new LMConfig("conf1", new FastestWeighting(car.getAccessEnc(), car.getAverageSpeedEnc())),
                 new LMConfig("conf2", new ShortestWeighting(car.getAccessEnc(), car.getAverageSpeedEnc()))
         );
         List<PrepareLandmarks> preparations = handler.createPreparations(lmConfigs, new BaseGraph.Builder(em).build(), em, null);

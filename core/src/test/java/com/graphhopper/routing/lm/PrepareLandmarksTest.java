@@ -100,7 +100,7 @@ public class PrepareLandmarksTest {
         index.prepareIndex();
 
         int lm = 5, activeLM = 2;
-        Weighting weighting = new FastestWeighting(encoder);
+        Weighting weighting = new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
         LMConfig lmConfig = new LMConfig("car", weighting);
         LandmarkStorage store = new LandmarkStorage(graph, encodingManager, dir, lmConfig, lm);
         store.setMinimumNodes(2);
@@ -190,7 +190,7 @@ public class PrepareLandmarksTest {
         Helper.removeDir(new File(fileStr));
 
         Directory dir = new RAMDirectory(fileStr, true).create();
-        Weighting weighting = new FastestWeighting(encoder);
+        Weighting weighting = new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
         LMConfig lmConfig = new LMConfig("car", weighting);
         PrepareLandmarks plm = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 2);
         plm.setMinimumNodes(2);
