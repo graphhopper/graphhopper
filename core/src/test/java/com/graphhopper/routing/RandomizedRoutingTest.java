@@ -22,11 +22,13 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -95,11 +97,12 @@ public class RandomizedRoutingTest {
         private final boolean prepareCH;
         private final boolean prepareLM;
         private final TraversalMode traversalMode;
-        private final Directory dir;
         private final BaseGraph graph;
         private final List<CHConfig> chConfigs;
         private final LMConfig lmConfig;
-        private final FlagEncoder encoder;
+        private final BooleanEncodedValue accessEnc;
+        private final DecimalEncodedValue speedEnc;
+        private final DecimalEncodedValue turnCostEnc;
         private final TurnCostStorage turnCostStorage;
         private final int maxTurnCosts;
         private final Weighting weighting;
@@ -113,19 +116,20 @@ public class RandomizedRoutingTest {
             this.prepareLM = prepareLM;
             this.traversalMode = traversalMode;
             maxTurnCosts = 10;
-            dir = new RAMDirectory();
             // todo: this test only works with speedTwoDirections=false (as long as loops are enabled), otherwise it will
             // fail sometimes for edge-based algorithms, #1631, but maybe we can should disable different fwd/bwd speeds
             // only for loops instead?
-            encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxTurnCosts));
-            encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
+            accessEnc = new SimpleBooleanEncodedValue("access", true);
+            speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+            turnCostEnc = TurnCost.create("car", maxTurnCosts);
+            encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("car")).build();
             graph = new BaseGraph.Builder(encodingManager)
-                    .setDir(dir)
+                    .withTurnCosts(true)
                     .create();
             turnCostStorage = graph.getTurnCostStorage();
             chConfigs = Arrays.asList(
-                    CHConfig.nodeBased("p1", new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc())),
-                    CHConfig.edgeBased("p2", new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage())))
+                    CHConfig.nodeBased("p1", new FastestWeighting(accessEnc, speedEnc)),
+                    CHConfig.edgeBased("p2", new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage())))
             );
             // important: for LM preparation we need to use a weighting without turn costs #1960
             lmConfig = new LMConfig("car", chConfigs.get(0).getWeighting());
@@ -146,7 +150,7 @@ public class RandomizedRoutingTest {
                 routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             }
             if (prepareLM) {
-                PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 16);
+                PrepareLandmarks prepare = new PrepareLandmarks(graph.getDirectory(), graph, encodingManager, lmConfig, 16);
                 prepare.setMaximumWeight(10000);
                 prepare.doWork();
                 lm = prepare.getLandmarkStorage();
@@ -303,9 +307,9 @@ public class RandomizedRoutingTest {
         final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(f.graph, rnd, 100, 2.2, true, true,
-                f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(), null, 0.7, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(f.graph, seed, f.encoder.getAccessEnc(), f.encoder.getTurnCostEnc(), f.maxTurnCosts, f.turnCostStorage);
-//        GHUtility.printGraphForUnitTest(f.graph, f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc());
+                f.accessEnc, f.speedEnc, null, 0.7, 0.8, 0.8);
+        GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
+//        GHUtility.printGraphForUnitTest(f.graph, f.accessEnc, f.speedEnc);
         f.preProcessGraph();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
@@ -341,11 +345,11 @@ public class RandomizedRoutingTest {
         double pOffset = 0;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.2, true, true,
-                f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(), null, 0.7, 0.8, pOffset);
-        GHUtility.addRandomTurnCosts(f.graph, seed, f.encoder.getAccessEnc(), f.encoder.getTurnCostEnc(), f.maxTurnCosts, f.turnCostStorage);
-//        GHUtility.printGraphForUnitTest(f.graph, f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc());
+                f.accessEnc, f.speedEnc, null, 0.7, 0.8, pOffset);
+        GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
+//        GHUtility.printGraphForUnitTest(f.graph, f.accessEnc, f.speedEnc);
         f.preProcessGraph();
-        LocationIndexTree index = new LocationIndexTree(f.graph, f.dir);
+        LocationIndexTree index = new LocationIndexTree(f.graph, f.graph.getDirectory());
         index.prepareIndex();
         List<String> strictViolations = new ArrayList<>();
         for (int i = 0; i < numQueries; i++) {
