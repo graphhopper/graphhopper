@@ -110,7 +110,7 @@ public class DirectedRoutingTest {
             encodingManager = EncodingManager.start().add(encoder).add(Subnetwork.create("c2")).build();
             graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
             turnCostStorage = graph.getTurnCostStorage();
-            weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
+            weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), turnCostStorage, uTurnCosts));
             chConfig = CHConfig.edgeBased("p1", weighting);
             // important: for LM preparation we need to use a weighting without turn costs #1960
             lmConfig = new LMConfig("c2", new FastestWeighting(encoder));

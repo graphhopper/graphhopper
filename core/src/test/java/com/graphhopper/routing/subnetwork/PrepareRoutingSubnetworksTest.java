@@ -142,7 +142,7 @@ public class PrepareRoutingSubnetworksTest {
         // since the middle edge is blocked the upper component is a subnetwork (regardless of turn costs)
         BaseGraph g = createSubnetworkTestStorage(em);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(
-                createJob(em, encoder, new DefaultTurnCostProvider(encoder, g.getTurnCostStorage(), 0))));
+                createJob(em, encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), g.getTurnCostStorage(), 0))));
         instance.setMinNetworkSize(4);
         assertEquals(3, instance.doWork());
         assertEquals(IntArrayList.from(7, 8, 9), getSubnetworkEdges(g, encoder));
@@ -152,7 +152,7 @@ public class PrepareRoutingSubnetworksTest {
         EdgeIteratorState edge = GHUtility.getEdge(g, 3, 4);
         GHUtility.setSpeed(10, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), edge);
         instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(
-                createJob(em, encoder, new DefaultTurnCostProvider(encoder, g.getTurnCostStorage(), 0))));
+                createJob(em, encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), g.getTurnCostStorage(), 0))));
         instance.setMinNetworkSize(4);
         assertEquals(0, instance.doWork());
         assertEquals(IntArrayList.from(), getSubnetworkEdges(g, encoder));
@@ -166,7 +166,7 @@ public class PrepareRoutingSubnetworksTest {
         g.getTurnCostStorage().set(turnCostEnc, 0, 4, 7, 1);
         g.getTurnCostStorage().set(turnCostEnc, 0, 4, 9, 1);
         instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(
-                createJob(em, encoder, new DefaultTurnCostProvider(encoder, g.getTurnCostStorage(), 0))));
+                createJob(em, encoder, new DefaultTurnCostProvider(turnCostEnc, g.getTurnCostStorage(), 0))));
         instance.setMinNetworkSize(4);
         assertEquals(3, instance.doWork());
         assertEquals(IntArrayList.from(7, 8, 9), getSubnetworkEdges(g, encoder));

@@ -49,7 +49,7 @@ public class AccessFilterTest {
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 0).setDistance(3));
         graph.freeze();
         // add loop shortcut in 'fwd' direction
-        CHConfig chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())));
+        CHConfig chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage())));
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();

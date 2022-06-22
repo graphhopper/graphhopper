@@ -56,7 +56,7 @@ public class AlternativeRouteTest {
             EncodingManager em = EncodingManager.create(carFE);
             graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
             TurnCostProvider turnCostProvider = tMode.isEdgeBased()
-                    ? new DefaultTurnCostProvider(carFE, graph.getTurnCostStorage())
+                    ? new DefaultTurnCostProvider(carFE.getTurnCostEnc(), graph.getTurnCostStorage())
                     : TurnCostProvider.NO_TURN_COST_PROVIDER;
             weighting = new FastestWeighting(carFE, turnCostProvider);
         }

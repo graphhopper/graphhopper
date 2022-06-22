@@ -52,6 +52,7 @@ public class EdgeBasedNodeContractorTest {
     private FlagEncoder encoder;
     private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue speedEnc;
+    private DecimalEncodedValue turnCostEnc;
     private BaseGraph graph;
     private Weighting weighting;
     private CHStorage chStore;
@@ -69,11 +70,12 @@ public class EdgeBasedNodeContractorTest {
         EncodingManager encodingManager = EncodingManager.create(encoder);
         accessEnc = encoder.getAccessEnc();
         speedEnc = encoder.getAverageSpeedEnc();
+        turnCostEnc = encoder.getTurnCostEnc();
         graph = new BaseGraph.Builder(encodingManager).create();
         chConfigs = Arrays.asList(
-                CHConfig.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()))),
-                CHConfig.edgeBased("p2", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 60))),
-                CHConfig.edgeBased("p3", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 0)))
+                CHConfig.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()))),
+                CHConfig.edgeBased("p2", new ShortestWeighting(encoder, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 60))),
+                CHConfig.edgeBased("p3", new ShortestWeighting(encoder, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 0)))
         );
     }
 

@@ -75,7 +75,7 @@ public class DefaultBidirPathExtractorTest {
         SPTEntry fwdEntry = new SPTEntry(0, 2, 0.6, new SPTEntry(1, 0));
         SPTEntry bwdEntry = new SPTEntry(1, 2, 1.2, new SPTEntry(3, 0));
 
-        Path p = DefaultBidirPathExtractor.extractPath(graph, new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, turnCostStorage)), fwdEntry, bwdEntry, 0);
+        Path p = DefaultBidirPathExtractor.extractPath(graph, new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder.getTurnCostEnc(), turnCostStorage)), fwdEntry, bwdEntry, 0);
         p.setWeight(5 + 1.8);
 
         assertEquals(IntArrayList.from(1, 2, 3), p.calcNodes());

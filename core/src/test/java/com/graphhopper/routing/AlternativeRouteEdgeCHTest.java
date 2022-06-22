@@ -92,7 +92,7 @@ public class AlternativeRouteEdgeCHTest {
     }
 
     private RoutingCHGraph prepareCH(BaseGraph graph) {
-        TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, graph.getTurnCostStorage());
+        TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE.getTurnCostEnc(), graph.getTurnCostStorage());
         CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
         PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraph(graph, chConfig);
         PrepareContractionHierarchies.Result res = contractionHierarchies.doWork();
@@ -102,7 +102,7 @@ public class AlternativeRouteEdgeCHTest {
     @Test
     public void testAssumptions() {
         BaseGraph g = createTestGraph(em);
-        TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE, g.getTurnCostStorage());
+        TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(carFE.getTurnCostEnc(), g.getTurnCostStorage());
         CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(carFE, turnCostProvider));
         CHStorage chStorage = CHStorage.fromGraph(g, chConfig);
         RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(g, chStorage, chConfig);

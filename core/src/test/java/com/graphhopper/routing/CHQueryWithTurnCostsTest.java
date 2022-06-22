@@ -69,7 +69,7 @@ public class CHQueryWithTurnCostsTest {
         public Fixture(String algoString) {
             this.algoString = algoString;
             graph = new BaseGraph.Builder(encodingManager).create();
-            chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())));
+            chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage())));
         }
 
         @Override

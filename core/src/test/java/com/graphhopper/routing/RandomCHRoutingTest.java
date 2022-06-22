@@ -63,7 +63,7 @@ public class RandomCHRoutingTest {
         void freeze() {
             graph.freeze();
             chConfig = traversalMode.isEdgeBased()
-                    ? CHConfig.edgeBased("p", new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), uTurnCosts)))
+                    ? CHConfig.edgeBased("p", new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage(), uTurnCosts)))
                     : CHConfig.nodeBased("p", new FastestWeighting(encoder));
             weighting = chConfig.getWeighting();
         }

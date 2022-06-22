@@ -4,7 +4,6 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
@@ -56,14 +55,14 @@ public class DirectedBidirectionalDijkstraTest {
         encodingManager = EncodingManager.create(encoder);
         accessEnc = encoder.getAccessEnc();
         speedEnc = encoder.getAverageSpeedEnc();
+        turnCostEnc = encoder.getTurnCostEnc();
         graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         turnCostStorage = graph.getTurnCostStorage();
         weighting = createWeighting(Weighting.INFINITE_U_TURN_COSTS);
-        turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
     }
 
     private Weighting createWeighting(int uTurnCosts) {
-        return new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
+        return new FastestWeighting(encoder, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts));
     }
 
     @Test

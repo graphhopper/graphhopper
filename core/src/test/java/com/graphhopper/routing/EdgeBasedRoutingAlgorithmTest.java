@@ -157,7 +157,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private Weighting createWeighting(int uTurnCosts) {
-        return new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, tcs, uTurnCosts));
+        return new FastestWeighting(carEncoder, new DefaultTurnCostProvider(turnCostEnc, tcs, uTurnCosts));
     }
 
     @ParameterizedTest
@@ -418,7 +418,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         setTurnCost(g, 2, 5, 6, 3);
         setTurnCost(g, 1, 6, 7, 4);
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, tcs) {
+        FastestWeighting weighting = new FastestWeighting(carEncoder, new DefaultTurnCostProvider(turnCostEnc, tcs) {
             @Override
             public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
                 if (edgeFrom >= 0)
