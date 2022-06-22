@@ -17,9 +17,15 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
@@ -81,8 +87,7 @@ public class NameSimilarityEdgeFilterTest {
 
     @Test
     public void testDistanceFiltering() {
-        FlagEncoder encoder = FlagEncoders.createCar();
-        BaseGraph g = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
+        BaseGraph g = new BaseGraph.Builder(1).create();
         NodeAccess na = g.getNodeAccess();
 
         GHPoint pointFarAway = new GHPoint(49.458629, 11.146124);
@@ -272,8 +277,9 @@ public class NameSimilarityEdgeFilterTest {
         // -----
         //
         //    2 -- 3
-        FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("speed_two_directions", true));
-        EncodingManager em = EncodingManager.create(encoder);
+        SimpleBooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         PointList pointList = new PointList(20, false);
         pointList.add(43.844377, -79.264005);
@@ -302,14 +308,14 @@ public class NameSimilarityEdgeFilterTest {
         pointList.add(43.842711, -79.264588);
         graph.getNodeAccess().setNode(0, 43.844521, -79.263976);
         graph.getNodeAccess().setNode(1, 43.842775, -79.264649);
-        EdgeIteratorState doubtfire = graph.edge(0, 1).setWayGeometry(pointList).set(encoder.getAccessEnc(), true, true).set(encoder.getAverageSpeedEnc(), 60, 60).setName("Doubtfire Crescent");
-        EdgeIteratorState golden = graph.edge(0, 1).set(encoder.getAccessEnc(), true, true).set(encoder.getAverageSpeedEnc(), 60, 60).setName("Golden Avenue");
+        EdgeIteratorState doubtfire = graph.edge(0, 1).setWayGeometry(pointList).set(accessEnc, true, true).set(speedEnc, 60, 60).setName("Doubtfire Crescent");
+        EdgeIteratorState golden = graph.edge(0, 1).set(accessEnc, true, true).set(speedEnc, 60, 60).setName("Golden Avenue");
 
         graph.getNodeAccess().setNode(2, 43.841501560244744, -79.26366394602502);
         graph.getNodeAccess().setNode(3, 43.842247922172724, -79.2605663670726);
         PointList pointList2 = new PointList(1, false);
         pointList2.add(43.84191413615452, -79.261912128223);
-        EdgeIteratorState denison = graph.edge(2, 3).setWayGeometry(pointList2).set(encoder.getAccessEnc(), true, true).set(encoder.getAverageSpeedEnc(), 60, 60).setName("Denison Street");
+        EdgeIteratorState denison = graph.edge(2, 3).setWayGeometry(pointList2).set(accessEnc, true, true).set(speedEnc, 60, 60).setName("Denison Street");
         double qlat = 43.842122;
         double qLon = -79.262162;
 

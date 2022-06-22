@@ -2,9 +2,10 @@ package com.graphhopper.isochrone.algorithm;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -59,10 +60,9 @@ public class ShortestPathTreeTest {
 
     };
 
-    private final EncodingManager encodingManager = EncodingManager.create("car");
-    private final FlagEncoder carEncoder = encodingManager.getEncoder("car");
-    private final BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
-    private final DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+    private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+    private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+    private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
     private BaseGraph graph;
 
 

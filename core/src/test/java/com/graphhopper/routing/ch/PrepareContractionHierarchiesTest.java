@@ -54,9 +54,7 @@ public class PrepareContractionHierarchiesTest {
     // |         ^   \
     // |         |    |
     // 17-16-...-11<-/
-    private static void initDirected2(Graph g, FlagEncoder encoder) {
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+    private static void initDirected2(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(1));
@@ -79,9 +77,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     // prepare-routing.svg
-    private static void initShortcutsGraph(Graph g, FlagEncoder encoder) {
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+    private static void initShortcutsGraph(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 2).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(1));
@@ -106,15 +102,13 @@ public class PrepareContractionHierarchiesTest {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(14, 16).setDistance(1));
     }
 
-    private static void initExampleGraph(Graph g, FlagEncoder encoder) {
+    private static void initExampleGraph(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         //5-1-----2
         //   \ __/|
         //    0   |
         //   /    |
         //  4-----3
         //
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 2).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 4).setDistance(3));
@@ -142,7 +136,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testAddShortcuts() {
-        initExampleGraph(g, carEncoder);
+        initExampleGraph(g, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc());
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         useNodeOrdering(prepare, new int[]{5, 3, 4, 0, 1, 2});
         PrepareContractionHierarchies.Result res = prepare.doWork();
@@ -151,7 +145,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testMoreComplexGraph() {
-        initShortcutsGraph(g, carEncoder);
+        initShortcutsGraph(g, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc());
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         useNodeOrdering(prepare, new int[]{0, 5, 6, 7, 8, 10, 11, 13, 15, 1, 3, 9, 14, 16, 12, 4, 2});
         PrepareContractionHierarchies.Result res = prepare.doWork();
@@ -183,7 +177,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testDirectedGraph2() {
-        initDirected2(g, carEncoder);
+        initDirected2(g, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc());
         int oldCount = g.getEdges();
         assertEquals(19, oldCount);
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
@@ -203,7 +197,7 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(IntArrayList.from(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), p.calcNodes());
     }
 
-    private static void initRoundaboutGraph(Graph g, FlagEncoder encoder) {
+    private static void initRoundaboutGraph(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         //              roundabout:
         //16-0-9-10--11   12<-13
         //    \       \  /      \
@@ -211,8 +205,6 @@ public class PrepareContractionHierarchiesTest {
         // -15-1--2--3--4       /     /
         //     /         \-5->6/     /
         //  -14            \________/
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(16, 0).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 9).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 17).setDistance(1));
@@ -257,7 +249,7 @@ public class PrepareContractionHierarchiesTest {
 
     @Test
     public void testRoundaboutUnpacking() {
-        initRoundaboutGraph(g, carEncoder);
+        initRoundaboutGraph(g, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc());
         int oldCount = g.getEdges();
         PrepareContractionHierarchies prepare = createPrepareContractionHierarchies(g);
         useNodeOrdering(prepare, new int[]{26, 6, 12, 13, 2, 3, 8, 9, 10, 11, 14, 15, 16, 17, 18, 20, 21, 23, 24, 25, 19, 22, 27, 5, 29, 30, 31, 28, 7, 1, 0, 4});
@@ -492,7 +484,7 @@ public class PrepareContractionHierarchiesTest {
         CHConfig bikeProfile = CHConfig.nodeBased("c2", new ShortestWeighting(tmpBikeEncoder.getAccessEnc(), tmpBikeEncoder.getAverageSpeedEnc()));
 
         BaseGraph graph = new BaseGraph.Builder(tmpEncodingManager).create();
-        initShortcutsGraph(graph, tmpCarEncoder);
+        initShortcutsGraph(graph, tmpCarEncoder.getAccessEnc(), tmpCarEncoder.getAverageSpeedEnc());
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             GHUtility.setSpeed(18, true, true, tmpBikeEncoder.getAccessEnc(), tmpBikeEncoder.getAverageSpeedEnc(), iter);
@@ -513,7 +505,7 @@ public class PrepareContractionHierarchiesTest {
         CHConfig bikeConfig = CHConfig.nodeBased("c2", new FastestWeighting(tmpBikeEncoder.getAccessEnc(), tmpBikeEncoder.getAverageSpeedEnc()));
 
         BaseGraph graph = new BaseGraph.Builder(tmpEncodingManager).create();
-        initShortcutsGraph(graph, tmpCarEncoder);
+        initShortcutsGraph(graph, tmpCarEncoder.getAccessEnc(), tmpCarEncoder.getAverageSpeedEnc());
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             GHUtility.setSpeed(18, true, true, tmpBikeEncoder.getAccessEnc(), tmpBikeEncoder.getAverageSpeedEnc(), iter);

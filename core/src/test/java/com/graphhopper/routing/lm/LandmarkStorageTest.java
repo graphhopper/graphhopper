@@ -18,14 +18,10 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.RoutingAlgorithmTest;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -49,7 +45,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class LandmarkStorageTest {
     private BaseGraph graph;
-    private FlagEncoder encoder;
     private BooleanEncodedValue subnetworkEnc;
     private EncodingManager encodingManager;
     private BooleanEncodedValue accessEnc;
@@ -57,12 +52,11 @@ public class LandmarkStorageTest {
 
     @BeforeEach
     public void setUp() {
-        encoder = FlagEncoders.createCar();
         subnetworkEnc = Subnetwork.create("car");
-        encodingManager = new EncodingManager.Builder().add(encoder).add(subnetworkEnc).build();
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(subnetworkEnc).build();
         graph = new BaseGraph.Builder(encodingManager).create();
-        accessEnc = encoder.getAccessEnc();
-        speedEnc = encoder.getAverageSpeedEnc();
     }
 
     @AfterEach
@@ -226,7 +220,7 @@ public class LandmarkStorageTest {
 
     @Test
     public void testWithBorderBlocking() {
-        RoutingAlgorithmTest.initBiGraph(graph, encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
+        RoutingAlgorithmTest.initBiGraph(graph, accessEnc, speedEnc);
 
         LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", new FastestWeighting(accessEnc, speedEnc)), 2);
         final SplitArea right = new SplitArea(emptyList());
