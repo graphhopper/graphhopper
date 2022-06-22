@@ -54,7 +54,7 @@ public class TurnCostStorageTest {
     // |
     // 4
     public static void initGraph(BaseGraph g, FlagEncoder encoder) {
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
                 g.edge(0, 1).setDistance(3),
                 g.edge(0, 2).setDistance(1),
                 g.edge(1, 3).setDistance(1),

@@ -255,7 +255,7 @@ public class CHQueryWithTurnCostsTest {
         //       1   2
         //        \ /
         // 5 - 6 - 4 - 7 - 8 - 0
-        GHUtility.setSpeed(60, 0, f.encoder,
+        GHUtility.setSpeed(60, 0, f.accessEnc, f.speedEnc,
                 f.graph.edge(5, 6).setDistance(1),
                 f.graph.edge(6, 4).setDistance(1),
                 f.graph.edge(4, 1).setDistance(1),
@@ -393,7 +393,7 @@ public class CHQueryWithTurnCostsTest {
         //      |    |
         //      v    v
         //      3 -> 4 -> 2
-        GHUtility.setSpeed(60, 0, f.encoder,
+        GHUtility.setSpeed(60, 0, f.accessEnc, f.speedEnc,
                 f.graph.edge(0, 1).setDistance(9),
                 f.graph.edge(1, 5).setDistance(2),
                 f.graph.edge(1, 3).setDistance(2),
@@ -546,7 +546,7 @@ public class CHQueryWithTurnCostsTest {
         // 0 --- 3 --- 1
         //  \         /
         //   --- 4 ---
-        GHUtility.setSpeed(60, 0, f.encoder,
+        GHUtility.setSpeed(60, 0, f.accessEnc, f.speedEnc,
                 f.graph.edge(0, 2).setDistance(1),
                 f.graph.edge(0, 3).setDistance(3),
                 f.graph.edge(0, 4).setDistance(2),
@@ -671,7 +671,7 @@ public class CHQueryWithTurnCostsTest {
         //  A-5->2
         //    |
         //    B-7
-        GHUtility.setSpeed(60, 0, f.encoder,
+        GHUtility.setSpeed(60, 0, f.accessEnc, f.speedEnc,
                 f.graph.edge(4, nodeA).setDistance(1),
                 f.graph.edge(nodeA, 5).setDistance(2),
                 f.graph.edge(5, 2).setDistance(2),

@@ -108,7 +108,7 @@ public class ShortcutUnpackerTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testUnpacking(Fixture f) {
         // 0-1-2-3-4-5-6
-        GHUtility.setSpeed(60, 30, f.encoder,
+        GHUtility.setSpeed(60, 30, f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(),
                 f.graph.edge(0, 1).setDistance(1),
                 f.graph.edge(1, 2).setDistance(1),
                 f.graph.edge(2, 3).setDistance(1),
@@ -197,7 +197,7 @@ public class ShortcutUnpackerTest {
         //   2   4
         //    \ /
         // 0 - 1 - 5
-        GHUtility.setSpeed(60, 30, f.encoder,
+        GHUtility.setSpeed(60, 30, f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(),
                 f.graph.edge(0, 1).setDistance(1),
                 f.graph.edge(1, 2).setDistance(1),
                 f.graph.edge(2, 3).setDistance(1),
@@ -274,7 +274,7 @@ public class ShortcutUnpackerTest {
         // prev 0-1-2-3-4-5-6 next
         //      1 0 1 4 2 3 2      turn costs <-
         EdgeIteratorState edge0, edge1, edge2, edge3, edge4, edge5;
-        GHUtility.setSpeed(60, 30, f.encoder,
+        GHUtility.setSpeed(60, 30, f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(),
                 edge0 = f.graph.edge(0, 1).setDistance(1),
                 edge1 = f.graph.edge(1, 2).setDistance(1),
                 edge2 = f.graph.edge(2, 3).setDistance(1),

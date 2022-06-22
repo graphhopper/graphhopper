@@ -72,7 +72,7 @@ public class LocationIndexTreeTest {
                 g.edge(6, 4));
         for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
             double speed = encoder.getMaxSpeed() / 2;
-            GHUtility.setSpeed(speed, speed, encoder, list);
+            GHUtility.setSpeed(speed, speed, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), list);
         }
     }
 
@@ -289,7 +289,7 @@ public class LocationIndexTreeTest {
         // top right
         na.setNode(101, 49.96053, 11.58814);
 
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
                 graph.edge(0, 1),
                 graph.edge(1, 2),
                 graph.edge(2, 3),
@@ -407,7 +407,7 @@ public class LocationIndexTreeTest {
         na.setNode(7, 0, -179.5);
 
         // just use 1 as distance which is incorrect but does not matter in this unit case
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
                 graph.edge(0, 1),
                 graph.edge(0, 4),
                 graph.edge(1, 5),

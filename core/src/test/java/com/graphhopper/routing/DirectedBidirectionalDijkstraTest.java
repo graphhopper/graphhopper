@@ -239,7 +239,7 @@ public class DirectedBidirectionalDijkstraTest {
         //   |    / \    |
         //   8 = 7   6 = 5
         EdgeIteratorState rightNorth, rightSouth, leftSouth, leftNorth;
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
                 graph.edge(0, 1).setDistance(1),
                 graph.edge(1, 2).setDistance(1),
                 graph.edge(2, 3).setDistance(1),

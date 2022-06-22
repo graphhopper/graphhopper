@@ -47,7 +47,7 @@ public class FastestWeightingTest {
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
         Weighting instance = new FastestWeighting(encoder);
-        IntsRef flags = GHUtility.setSpeed(encoder.getMaxSpeed(), 0, encoder, encodingManager.createEdgeFlags());
+        IntsRef flags = GHUtility.setSpeed(encoder.getMaxSpeed(), 0, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), encodingManager.createEdgeFlags());
         assertEquals(instance.getMinWeight(10), instance.calcEdgeWeight(createMockedEdgeIteratorState(10, flags), false), 1e-8);
     }
 
@@ -56,7 +56,7 @@ public class FastestWeightingTest {
         Weighting instance = new FastestWeighting(encoder, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, 100));
 
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, GHUtility.createEdgeKey(1, false, false), 1, 2, 10,
-                GHUtility.setSpeed(10, 0, encoder, encodingManager.createEdgeFlags()), "test", Helper.createPointList(51, 0, 51, 1), false);
+                GHUtility.setSpeed(10, 0, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), encodingManager.createEdgeFlags()), "test", Helper.createPointList(51, 0, 51, 1), false);
         double time = instance.calcEdgeWeight(virtEdge, false);
 
         virtEdge.setUnfavored(true);
@@ -93,7 +93,7 @@ public class FastestWeightingTest {
         BaseGraph g = new BaseGraph.Builder(em).create();
         Weighting w = new FastestWeighting(tmpEnc);
 
-        IntsRef edgeFlags = GHUtility.setSpeed(15, 15, tmpEnc, em.createEdgeFlags());
+        IntsRef edgeFlags = GHUtility.setSpeed(15, 15, tmpEnc.getAccessEnc(), tmpEnc.getAverageSpeedEnc(), em.createEdgeFlags());
         tmpEnc.getAverageSpeedEnc().setDecimal(true, edgeFlags, 10.0);
 
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(100000, edgeFlags);

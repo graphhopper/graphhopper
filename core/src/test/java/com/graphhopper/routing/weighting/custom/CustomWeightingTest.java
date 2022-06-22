@@ -49,7 +49,7 @@ class CustomWeightingTest {
     public void speedOnly() {
         // 50km/h -> 72s per km, 100km/h -> 36s per km
         EdgeIteratorState edge;
-        GHUtility.setSpeed(50, 100, carFE, edge = graph.edge(0, 1).setDistance(1000));
+        GHUtility.setSpeed(50, 100, accessEnc, avSpeedEnc, edge = graph.edge(0, 1).setDistance(1000));
         assertEquals(72, createWeighting(new CustomModel().setDistanceInfluence(0)).calcEdgeWeight(edge, false), 1.e-6);
         assertEquals(36, createWeighting(new CustomModel().setDistanceInfluence(0)).calcEdgeWeight(edge, true), 1.e-6);
     }

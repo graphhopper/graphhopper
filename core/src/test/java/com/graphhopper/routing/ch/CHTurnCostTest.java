@@ -809,14 +809,14 @@ public class CHTurnCostTest {
         // 0 - 5 - 2
         //    oo
         // note there are two (directed) zero weight loops at node 5!
-        GHUtility.setSpeed(60.000000, 60.000000, encoder, graph.edge(5, 1).setDistance(263.944000)); // edgeId=0
-        GHUtility.setSpeed(120.000000, 120.000000, encoder, graph.edge(5, 2).setDistance(315.026000)); // edgeId=1
-        GHUtility.setSpeed(40.000000, 40.000000, encoder, graph.edge(1, 4).setDistance(157.012000)); // edgeId=2
-        GHUtility.setSpeed(45.000000, 45.000000, encoder, graph.edge(5, 0).setDistance(513.913000)); // edgeId=3
-        GHUtility.setSpeed(15.000000, 15.000000, encoder, graph.edge(6, 4).setDistance(678.992000)); // edgeId=4
-        GHUtility.setSpeed(60.000000, 0.000000, encoder, graph.edge(5, 5).setDistance(0.000000)); // edgeId=5
-        GHUtility.setSpeed(40.000000, 40.000000, encoder, graph.edge(6, 7).setDistance(890.261000)); // edgeId=6
-        GHUtility.setSpeed(90.000000, 0.000000, encoder, graph.edge(5, 5).setDistance(0.000000)); // edgeId=7
+        GHUtility.setSpeed(60.000000, 60.000000, accessEnc, speedEnc, graph.edge(5, 1).setDistance(263.944000)); // edgeId=0
+        GHUtility.setSpeed(120.000000, 120.000000, accessEnc, speedEnc, graph.edge(5, 2).setDistance(315.026000)); // edgeId=1
+        GHUtility.setSpeed(40.000000, 40.000000, accessEnc, speedEnc, graph.edge(1, 4).setDistance(157.012000)); // edgeId=2
+        GHUtility.setSpeed(45.000000, 45.000000, accessEnc, speedEnc, graph.edge(5, 0).setDistance(513.913000)); // edgeId=3
+        GHUtility.setSpeed(15.000000, 15.000000, accessEnc, speedEnc, graph.edge(6, 4).setDistance(678.992000)); // edgeId=4
+        GHUtility.setSpeed(60.000000, 0.000000, accessEnc, speedEnc, graph.edge(5, 5).setDistance(0.000000)); // edgeId=5
+        GHUtility.setSpeed(40.000000, 40.000000, accessEnc, speedEnc, graph.edge(6, 7).setDistance(890.261000)); // edgeId=6
+        GHUtility.setSpeed(90.000000, 0.000000, accessEnc, speedEnc, graph.edge(5, 5).setDistance(0.000000)); // edgeId=7
         graph.freeze();
         automaticCompareCHWithDijkstra(100);
     }
@@ -1118,13 +1118,13 @@ public class CHTurnCostTest {
     void testZeroUTurnCosts_atBarrier_issue2564() {
         // lvl: 0 3 2 4 5 1
         //  nd: 0-1-2-3-4-5
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 1).setDistance(100));
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         // the original bug was sometimes hidden depending on the exact distance, so we use these odd numbers here
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(1, 2).setDistance(7.336));
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(2, 3).setDistance(10.161));
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(1, 2).setDistance(7.336));
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(2, 3).setDistance(10.161));
         // a zero distance edge (like a passable barrier)!
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(3, 4).setDistance(0));
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(4, 5).setDistance(100));
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(3, 4).setDistance(0));
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(4, 5).setDistance(100));
         graph.freeze();
         // u-turn costs are zero!
         chConfig = chConfigs.get(1);
@@ -1139,11 +1139,11 @@ public class CHTurnCostTest {
         // 2-3
         // | |
         // 0-4-1
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(2, 0).setDistance(800.22));
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(3, 4).setDistance(478.84));
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 4).setDistance(547.08));
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(4, 1).setDistance(288.95));
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(2, 3).setDistance(90));
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(2, 0).setDistance(800.22));
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(3, 4).setDistance(478.84));
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(0, 4).setDistance(547.08));
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(4, 1).setDistance(288.95));
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(2, 3).setDistance(90));
         graph.freeze();
         prepareCH(1, 3, 0, 2, 4);
         compareCHQueryWithDijkstra(1, 2);
@@ -1154,11 +1154,11 @@ public class CHTurnCostTest {
         // 1 - 2 - 0 - 4
         //          \ /
         //           3
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 3).setDistance(100)); // edgeId=0
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(4, 3).setDistance(100)); // edgeId=1
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 4).setDistance(100)); // edgeId=2
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(1, 2).setDistance(100)); // edgeId=3
-        GHUtility.setSpeed(60, 60, encoder, graph.edge(0, 2).setDistance(100)); // edgeId=4
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(0, 3).setDistance(100)); // edgeId=0
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(4, 3).setDistance(100)); // edgeId=1
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(0, 4).setDistance(100)); // edgeId=2
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100)); // edgeId=3
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(0, 2).setDistance(100)); // edgeId=4
         graph.freeze();
         prepareCH(2, 0, 1, 3, 4);
         assertEquals(2, chGraph.getShortcuts());

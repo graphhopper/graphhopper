@@ -85,7 +85,7 @@ public class AlternativeRouteTest {
          5--6-7---8
         
          */
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
                 graph.edge(1, 9).setDistance(1),
                 graph.edge(9, 2).setDistance(1),
                 graph.edge(2, 3).setDistance(1),

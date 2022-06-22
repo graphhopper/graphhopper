@@ -116,7 +116,7 @@ public class DijkstraBidirectionCHTest {
     @Test
     public void testStallingNodesReducesNumberOfVisitedNodes() {
         BaseGraph graph = createGHStorage();
-        GHUtility.setSpeed(60, 0, carEncoder,
+        GHUtility.setSpeed(60, 0, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(),
                 graph.edge(8, 9).setDistance(100),
                 graph.edge(8, 3).setDistance(2),
                 graph.edge(8, 5).setDistance(1),
