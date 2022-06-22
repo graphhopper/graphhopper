@@ -504,21 +504,24 @@ public class WheelchairTagParserTest {
         na.setNode(1, 51.1, 12.0015, 55);
         EdgeIteratorState edge01 = graph.edge(0, 1).setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
         edge01.setDistance(100);
-        GHUtility.setSpeed(5, 5, encodingManager.getEncoder("wheelchair"), edge01);
+        FlagEncoder encoder2 = encodingManager.getEncoder("wheelchair");
+        GHUtility.setSpeed(5, 5, encoder2.getAccessEnc(), encoder2.getAverageSpeedEnc(), edge01);
 
         // incline of 10% & shorter edge
         na.setNode(2, 51.2, 12.1010, 50);
         na.setNode(3, 51.2, 12.1015, 60);
         EdgeIteratorState edge23 = graph.edge(2, 3).setWayGeometry(Helper.createPointList3D(51.2, 12.1011, 49, 51.2, 12.1015, 55));
         edge23.setDistance(30);
-        GHUtility.setSpeed(5, 5, encodingManager.getEncoder("wheelchair"), edge23);
+        FlagEncoder encoder1 = encodingManager.getEncoder("wheelchair");
+        GHUtility.setSpeed(5, 5, encoder1.getAccessEnc(), encoder1.getAverageSpeedEnc(), edge23);
 
         // incline of 10% & longer edge
         na.setNode(4, 51.2, 12.101, 50);
         na.setNode(5, 51.2, 12.102, 60);
         EdgeIteratorState edge45 = graph.edge(2, 3).setWayGeometry(Helper.createPointList3D(51.2, 12.1011, 49, 51.2, 12.1015, 55));
         edge45.setDistance(100);
-        GHUtility.setSpeed(5, 5, encodingManager.getEncoder("wheelchair"), edge45);
+        FlagEncoder encoder = encodingManager.getEncoder("wheelchair");
+        GHUtility.setSpeed(5, 5, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), edge45);
 
 
         wheelchairParser.applyWayTags(new ReaderWay(1), edge01);

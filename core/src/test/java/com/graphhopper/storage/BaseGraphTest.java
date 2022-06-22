@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.Test;
@@ -77,7 +79,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
         assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
         assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(123)).
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(3, 4).setDistance(123)).
                 setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
         checkGraph(graph);
     }
@@ -198,9 +200,9 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         Graph graph = storage.getBaseGraph();
         IntsRef ref = encodingManager.createEdgeFlags();
         ref.ints[0] = 12;
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10)).setFlags(ref);
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(1, 2).setDistance(10)).setFlags(ref);
         ref.ints[0] = 13;
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10)).setFlags(ref);
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(1, 3).setDistance(10)).setFlags(ref);
 
         EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(1);
         assertTrue(iter.next());
@@ -217,7 +219,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     @Test
     public void testEdgeKey() {
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(0, 1).setDistance(10));
         // storage direction
         assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 1, false, 0, 0);
         // reverse direction
@@ -231,7 +233,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     @Test
     public void testEdgeKey_loop() {
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 0).setDistance(10));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(0, 0).setDistance(10));
         // storage direction
         assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 0, false, 0, 0);
         // reverse direction cannot be retrieved, we get forward direction anyway
@@ -257,4 +259,26 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertThrows(IllegalArgumentException.class, () -> graph.getEdgeIteratorState(0, Integer.MIN_VALUE));
     }
 
+    @Test
+    public void setGetFlagsRaw() {
+        BaseGraph graph = new BaseGraph.Builder(1).create();
+        EdgeIteratorState edge = graph.edge(0, 1);
+        IntsRef flags = new IntsRef(graph.getIntsForFlags());
+        flags.ints[0] = 10;
+        edge.setFlags(flags);
+        assertEquals(10, edge.getFlags().ints[0]);
+        flags.ints[0] = 9;
+        edge.setFlags(flags);
+        assertEquals(9, edge.getFlags().ints[0]);
+    }
+
+    @Test
+    public void setGetFlags() {
+        BaseGraph graph = createGHStorage();
+        EnumEncodedValue<RoadClass> rcEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        EdgeIteratorState edge = graph.edge(0, 1).set(rcEnc, RoadClass.BRIDLEWAY);
+        assertEquals(RoadClass.BRIDLEWAY, edge.get(rcEnc));
+        edge.set(rcEnc, RoadClass.CORRIDOR);
+        assertEquals(RoadClass.CORRIDOR, edge.get(rcEnc));
+    }
 }
