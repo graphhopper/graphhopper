@@ -46,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class PrepareContractionHierarchiesTest {
     private final FlagEncoder carEncoder = FlagEncoders.createCar(new PMap().putObject("speed_two_directions", true));
     private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
-    private final Weighting weighting = new ShortestWeighting(carEncoder);
+    private final Weighting weighting = new ShortestWeighting(carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc());
     private final CHConfig chConfig = CHConfig.nodeBased("c", weighting);
     private BaseGraph g;
 
@@ -488,8 +488,8 @@ public class PrepareContractionHierarchiesTest {
         EncodingManager tmpEncodingManager = EncodingManager.create(tmpCarEncoder, tmpBikeEncoder);
 
         // FastestWeighting would lead to different shortcuts due to different default speeds for bike and car
-        CHConfig carProfile = CHConfig.nodeBased("c1", new ShortestWeighting(tmpCarEncoder));
-        CHConfig bikeProfile = CHConfig.nodeBased("c2", new ShortestWeighting(tmpBikeEncoder));
+        CHConfig carProfile = CHConfig.nodeBased("c1", new ShortestWeighting(tmpCarEncoder.getAccessEnc(), tmpCarEncoder.getAverageSpeedEnc()));
+        CHConfig bikeProfile = CHConfig.nodeBased("c2", new ShortestWeighting(tmpBikeEncoder.getAccessEnc(), tmpBikeEncoder.getAverageSpeedEnc()));
 
         BaseGraph graph = new BaseGraph.Builder(tmpEncodingManager).create();
         initShortcutsGraph(graph, tmpCarEncoder);

@@ -47,7 +47,7 @@ public class DijkstraOneToManyTest {
     public DijkstraOneToManyTest() {
         encodingManager = EncodingManager.create("car");
         encoder = encodingManager.getEncoder("car");
-        defaultWeighting = new ShortestWeighting(encoder);
+        defaultWeighting = new ShortestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
     }
 
     private static void initGraphWeightLimit(Graph graph, FlagEncoder encoder) {

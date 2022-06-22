@@ -7,6 +7,7 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
@@ -193,7 +194,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         private final double maxDeviationPercentage;
 
         public RandomDeviationWeighting(Weighting baseWeighting, FlagEncoder encoder, double maxDeviationPercentage) {
-            super(encoder);
+            super(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), TurnCostProvider.NO_TURN_COST_PROVIDER);
             this.baseWeighting = baseWeighting;
             this.maxDeviationPercentage = maxDeviationPercentage;
         }

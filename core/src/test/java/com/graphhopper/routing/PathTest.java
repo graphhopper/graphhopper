@@ -209,7 +209,7 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundabout() {
         for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders()) {
-            ShortestWeighting weighting = new ShortestWeighting(encoder);
+            ShortestWeighting weighting = new ShortestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
             Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                     .calcPath(1, 8);
             assertTrue(p.isFound());
@@ -244,7 +244,8 @@ public class PathTest {
 
     @Test
     public void testCalcInstructionsRoundaboutBegin() {
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder encoder = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(2, 8);
         assertTrue(p.isFound());
@@ -258,7 +259,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundaboutDirectExit() {
         roundaboutGraph.inverse3to9();
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder encoder = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(6, 8);
         assertTrue(p.isFound());
@@ -273,7 +275,7 @@ public class PathTest {
 
     @Test
     public void testCalcAverageSpeedDetails() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
@@ -297,7 +299,7 @@ public class PathTest {
 
     @Test
     public void testCalcAverageSpeedDetailsWithShortDistances_issue1848() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 6);
         assertTrue(p.isFound());
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
@@ -319,7 +321,7 @@ public class PathTest {
 
     @Test
     public void testCalcStreetNameDetails() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
@@ -345,7 +347,7 @@ public class PathTest {
 
     @Test
     public void testCalcEdgeIdDetails() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
@@ -370,7 +372,7 @@ public class PathTest {
 
     @Test
     public void testCalcEdgeKeyDetailsForward() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
@@ -387,7 +389,7 @@ public class PathTest {
 
     @Test
     public void testCalcEdgeKeyDetailsBackward() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(5, 1);
         assertTrue(p.isFound());
 
@@ -404,7 +406,7 @@ public class PathTest {
 
     @Test
     public void testCalcTimeDetails() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
@@ -428,7 +430,7 @@ public class PathTest {
 
     @Test
     public void testCalcDistanceDetails() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
@@ -449,7 +451,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundabout2() {
         roundaboutGraph.inverse3to6();
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 8);
         assertTrue(p.isFound());
@@ -521,7 +524,7 @@ public class PathTest {
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(5, 8).setDistance(5)).setName("5-8");
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(3, 6).setDistance(5)).setName("3-6");
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
                 .calcPath(6, 11);
         assertTrue(p.isFound());
@@ -535,7 +538,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundaboutClockwise() {
         roundaboutGraph.setRoundabout(true);
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 8);
         assertTrue(p.isFound());
@@ -554,7 +558,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsIgnoreContinue() {
         // Follow a couple of straight edges, including a name change
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(4, 11);
         assertTrue(p.isFound());
@@ -567,7 +572,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsIgnoreTurnIfNoAlternative() {
         // The street turns left, but there is not turn
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(10, 12);
         assertTrue(p.isFound());
@@ -599,7 +605,7 @@ public class PathTest {
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(2, 4).setDistance(5)).setName("Regener Weg");
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(2, 3).setDistance(5));
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 4);
         assertTrue(p.isFound());
@@ -632,7 +638,7 @@ public class PathTest {
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(2, 4).setDistance(5)).setName("A 8").set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(2, 3).setDistance(5)).set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, true);
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 4);
         assertTrue(p.isFound());
@@ -660,7 +666,7 @@ public class PathTest {
         GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(2, 3).setDistance(5)).setName("A 8");
         GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(4, 2).setDistance(5)).setName("A 8");
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
                 .calcPath(4, 3);
         assertTrue(p.isFound());
@@ -689,7 +695,7 @@ public class PathTest {
         GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, g.edge(2, 3).setDistance(5)).setName("A 8");
         GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, g.edge(2, 4).setDistance(5)).setName("A 8");
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 3);
         assertTrue(p.isFound());
@@ -719,7 +725,7 @@ public class PathTest {
         GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, g.edge(2, 3).setDistance(5)).setName("Pacific Highway");
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(4, 2).setDistance(5)).setName("Greenwich Road");
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(4, 3);
         assertTrue(p.isFound());
@@ -754,7 +760,7 @@ public class PathTest {
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 4).setDistance(5)).setName("S 108").set(roadClassEnc, RoadClass.SECONDARY).set(roadClassLinkEnc, false);
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 3).setDistance(5)).setName("B 156").set(roadClassEnc, RoadClass.PRIMARY).set(roadClassLinkEnc, false);
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 4);
         assertTrue(p.isFound());
@@ -788,7 +794,7 @@ public class PathTest {
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 4).setDistance(5));
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 3).setDistance(5)).setName("Regener Weg");
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 4);
         assertTrue(p.isFound());
@@ -818,7 +824,7 @@ public class PathTest {
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 3).setDistance(5));
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 4).setDistance(5)).setName("Stöhrgasse");
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(4, 1);
         assertTrue(p.isFound());
@@ -856,7 +862,7 @@ public class PathTest {
                 g.edge(2, 5).setDistance(5).setName("Neithardtstraße"),
                 g.edge(5, 7).setDistance(5).setName("Neithardtstraße"));
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 4);
         assertTrue(p.isFound());
@@ -894,7 +900,7 @@ public class PathTest {
                 g.edge(2, 5).setDistance(5).setName("Larkin Street"),
                 g.edge(5, 7).setDistance(5).setName("Larkin Street"));
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 6);
         assertTrue(p.isFound());
@@ -907,7 +913,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsForTurn() {
         // The street turns left, but there is not turn
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(11, 13);
         assertTrue(p.isFound());
@@ -922,7 +929,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsForSlightTurnWithOtherSlightTurn() {
         // Test for a fork with two sligh turns. Since there are two sligh turns, show the turn instruction
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(12, 16);
         assertTrue(p.isFound());
@@ -953,7 +961,7 @@ public class PathTest {
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 3).setDistance(5)).setName("Calmbacher Straße, K 4312");
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(3, 4).setDistance(5)).setName("Calmbacher Straße, K 4312");
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 2);
         assertTrue(p.isFound());
@@ -966,7 +974,8 @@ public class PathTest {
     @Test
     public void testIgnoreInstructionsForSlightTurnWithOtherTurn() {
         // Test for a fork with one sligh turn and one actual turn. We are going along the slight turn. No turn instruction needed in this case
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(16, 19);
         assertTrue(p.isFound());

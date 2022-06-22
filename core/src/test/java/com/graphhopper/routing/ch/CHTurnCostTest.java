@@ -104,17 +104,17 @@ public class CHTurnCostTest {
     private List<CHConfig> createCHConfigs() {
         Set<CHConfig> configs = new LinkedHashSet<>(5);
         // the first one is always the one with infinite u-turn costs
-        configs.add(CHConfig.edgeBased("p0", new ShortestWeighting(encoder, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, INFINITE_U_TURN_COSTS))));
+        configs.add(CHConfig.edgeBased("p0", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, INFINITE_U_TURN_COSTS))));
         // this one we also always add
-        configs.add(CHConfig.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, 0))));
+        configs.add(CHConfig.edgeBased("p1", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, 0))));
         // ... and this one
-        configs.add(CHConfig.edgeBased("p2", new ShortestWeighting(encoder, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, 50))));
+        configs.add(CHConfig.edgeBased("p2", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, 50))));
         // add more (distinct) profiles
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         while (configs.size() < 6) {
             int uTurnCosts = 10 + rnd.nextInt(90);
-            configs.add(CHConfig.edgeBased("p" + configs.size(), new ShortestWeighting(encoder, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts))));
+            configs.add(CHConfig.edgeBased("p" + configs.size(), new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts))));
         }
         return new ArrayList<>(configs);
     }

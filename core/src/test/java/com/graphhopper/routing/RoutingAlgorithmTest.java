@@ -105,12 +105,12 @@ public class RoutingAlgorithmTest {
             carEncoder = encodingManager.getEncoder("car");
             footEncoder = encodingManager.getEncoder("foot");
             bike2Encoder = encodingManager.getEncoder("bike2");
-            // most tests use the default weighting, but this can be chosen for each test separately
-            defaultWeighting = new ShortestWeighting(carEncoder);
-            // most tests do not limit the number of visited nodes, but this can be chosen for each test separately
-            defaultMaxVisitedNodes = Integer.MAX_VALUE;
             carAccessEnc = carEncoder.getAccessEnc();
             carSpeedEnc = carEncoder.getAverageSpeedEnc();
+            // most tests use the default weighting, but this can be chosen for each test separately
+            defaultWeighting = new ShortestWeighting(carAccessEnc, carSpeedEnc);
+            // most tests do not limit the number of visited nodes, but this can be chosen for each test separately
+            defaultMaxVisitedNodes = Integer.MAX_VALUE;
         }
 
         @Override
@@ -343,7 +343,7 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcFootPath(Fixture f) {
-        ShortestWeighting shortestWeighting = new ShortestWeighting(f.footEncoder);
+        ShortestWeighting shortestWeighting = new ShortestWeighting(f.footEncoder.getAccessEnc(), f.footEncoder.getAverageSpeedEnc());
         BaseGraph graph = f.createGHStorage(false);
         initFootVsCar(f.carEncoder, f.footEncoder, graph);
         Path p1 = f.calcPath(graph, shortestWeighting, 0, 7);
@@ -755,7 +755,7 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testWithCoordinates(Fixture f) {
-        Weighting weighting = new ShortestWeighting(f.carEncoder);
+        Weighting weighting = new ShortestWeighting(f.carAccessEnc, f.carSpeedEnc);
         BaseGraph graph = f.createGHStorage(false);
         GHUtility.setSpeed(60, true, true, f.carAccessEnc, f.carSpeedEnc, graph.edge(0, 1).setDistance(2)).
                 setWayGeometry(Helper.createPointList(1.5, 1));
