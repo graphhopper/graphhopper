@@ -78,7 +78,8 @@ public class DefaultWeightingFactory implements WeightingFactory {
             CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             CustomProfile customProfile = (CustomProfile) profile;
             queryCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
-            weighting = CustomModelParser.createWeighting(encoder, encodingManager, turnCostProvider, queryCustomModel);
+            weighting = CustomModelParser.createWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
+                    encoder.getPriorityEnc(), encoder.getMaxSpeed(), encodingManager, turnCostProvider, queryCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), turnCostProvider);
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {

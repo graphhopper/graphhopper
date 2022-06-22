@@ -3,11 +3,11 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.index.LocationIndex;
@@ -25,18 +25,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class BlockAreaWeightingTest {
 
-    private FlagEncoder encoder = FlagEncoders.createCar();
-    private EncodingManager em;
     private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue speedEnc;
     private BaseGraph graph;
 
     @BeforeEach
     public void setUp() {
-        encoder = FlagEncoders.createCar();
-        em = EncodingManager.create(encoder);
-        accessEnc = encoder.getAccessEnc();
-        speedEnc = encoder.getAverageSpeedEnc();
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         graph = new BaseGraph.Builder(em).create();
         // 0-1
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));

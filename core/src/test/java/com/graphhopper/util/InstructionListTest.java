@@ -410,7 +410,9 @@ public class InstructionListTest {
         pointList.add(43.729627, 7.41749);
         GHUtility.setSpeed(5, true, true, foot.getAccessEnc(), foot.getAverageSpeedEnc(), g.edge(2, 4).setDistance(20).setName("myroad").set(priorityEnc, 1).setWayGeometry(pointList));
 
-        Weighting weighting = CustomModelParser.createWeighting(foot, tmpEM, DefaultTurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel().setDistanceInfluence(0));
+        Weighting weighting = CustomModelParser.createWeighting(foot.getAccessEnc(), foot.getAverageSpeedEnc(),
+                foot.getPriorityEnc(), foot.getMaxSpeed(), tmpEM, DefaultTurnCostProvider.NO_TURN_COST_PROVIDER,
+                new CustomModel().setDistanceInfluence(0));
         Path p = new Dijkstra(g, weighting, tMode).calcPath(4, 3);
         assertTrue(p.isFound());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
@@ -458,7 +460,8 @@ public class InstructionListTest {
 
         CustomModel customModel = new CustomModel();
         customModel.addToPriority(Statement.If("road_class == PEDESTRIAN", Statement.Op.MULTIPLY, 0));
-        Weighting weighting = CustomModelParser.createWeighting(roads, tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+        Weighting weighting = CustomModelParser.createWeighting(roadsAccessEnc, roadsSpeedEnc, roads.getPriorityEnc(),
+                roads.getMaxSpeed(), tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(3, 4);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);

@@ -23,11 +23,12 @@ import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -87,11 +88,12 @@ public class RoutingAlgorithmTest {
 
     private static class Fixture {
         private final EncodingManager encodingManager;
-        private final FlagEncoder carEncoder;
-        private final FlagEncoder footEncoder;
-        private final FlagEncoder bike2Encoder;
         private final BooleanEncodedValue carAccessEnc;
+        private final BooleanEncodedValue footAccessEnc;
+        private final BooleanEncodedValue bike2AccessEnc;
         private final DecimalEncodedValue carSpeedEnc;
+        private final DecimalEncodedValue footSpeedEnc;
+        private final DecimalEncodedValue bike2SpeedEnc;
         private final PathCalculator pathCalculator;
         private final TraversalMode traversalMode;
         private final Weighting defaultWeighting;
@@ -100,13 +102,16 @@ public class RoutingAlgorithmTest {
         public Fixture(PathCalculator pathCalculator, TraversalMode traversalMode) {
             this.pathCalculator = pathCalculator;
             this.traversalMode = traversalMode;
-            // vehicles used in this test
-            encodingManager = EncodingManager.create("car,foot,bike2");
-            carEncoder = encodingManager.getEncoder("car");
-            footEncoder = encodingManager.getEncoder("foot");
-            bike2Encoder = encodingManager.getEncoder("bike2");
-            carAccessEnc = carEncoder.getAccessEnc();
-            carSpeedEnc = carEncoder.getAverageSpeedEnc();
+            carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+            footAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+            bike2AccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+            carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
+            footSpeedEnc = new DecimalEncodedValueImpl("foot_speed", 4, 1, false);
+            bike2SpeedEnc = new DecimalEncodedValueImpl("bike2_speed", 4, 2, true);
+            encodingManager = EncodingManager.start()
+                    .add(carAccessEnc).add(carSpeedEnc)
+                    .add(footAccessEnc).add(footSpeedEnc)
+                    .add(bike2AccessEnc).add(bike2SpeedEnc).build();
             // most tests use the default weighting, but this can be chosen for each test separately
             defaultWeighting = new ShortestWeighting(carAccessEnc, carSpeedEnc);
             // most tests do not limit the number of visited nodes, but this can be chosen for each test separately
@@ -230,7 +235,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcShortestPath(Fixture f) {
         BaseGraph graph = f.createGHStorage();
-        initTestStorage(graph, f.carEncoder);
+        initTestStorage(graph, f.carAccessEnc, f.carSpeedEnc);
         Path p = f.calcPath(graph, 0, 7);
         assertEquals(nodes(0, 4, 5, 7), p.calcNodes(), p.toString());
         assertEquals(62.1, p.getDistance(), .1, p.toString());
@@ -285,7 +290,7 @@ public class RoutingAlgorithmTest {
     public void testCalcFastestPath(Fixture f) {
         FastestWeighting fastestWeighting = new FastestWeighting(f.carAccessEnc, f.carSpeedEnc);
         BaseGraph graph = f.createGHStorage(false);
-        initDirectedAndDiffSpeed(graph, f.carEncoder);
+        initDirectedAndDiffSpeed(graph, f.carAccessEnc, f.carSpeedEnc);
 
         Path p1 = f.calcPath(graph, f.defaultWeighting, 0, 3);
         assertEquals(nodes(0, 1, 5, 2, 3), p1.calcNodes());
@@ -303,9 +308,7 @@ public class RoutingAlgorithmTest {
     // 4-5-- |
     // |/ \--7
     // 6----/
-    static void initDirectedAndDiffSpeed(Graph graph, FlagEncoder enc) {
-        BooleanEncodedValue accessEnc = enc.getAccessEnc();
-        DecimalEncodedValue speedEnc = enc.getAverageSpeedEnc();
+    static void initDirectedAndDiffSpeed(Graph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         GHUtility.setSpeed(10, true, false, accessEnc, speedEnc, graph.edge(0, 1));
         GHUtility.setSpeed(100, true, false, accessEnc, speedEnc, graph.edge(0, 4));
 
@@ -343,21 +346,17 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcFootPath(Fixture f) {
-        ShortestWeighting shortestWeighting = new ShortestWeighting(f.footEncoder.getAccessEnc(), f.footEncoder.getAverageSpeedEnc());
+        ShortestWeighting shortestWeighting = new ShortestWeighting(f.footAccessEnc, f.footSpeedEnc);
         BaseGraph graph = f.createGHStorage(false);
-        initFootVsCar(f.carEncoder, f.footEncoder, graph);
+        initFootVsCar(f.carAccessEnc, f.carSpeedEnc, f.footAccessEnc, f.footSpeedEnc, graph);
         Path p1 = f.calcPath(graph, shortestWeighting, 0, 7);
         assertEquals(17000, p1.getDistance(), 1e-6, p1.toString());
         assertEquals(12240 * 1000, p1.getTime(), p1.toString());
         assertEquals(nodes(0, 4, 5, 7), p1.calcNodes());
     }
 
-    static void initFootVsCar(FlagEncoder carEncoder, FlagEncoder footEncoder, Graph graph) {
-        BooleanEncodedValue footAccessEnc = footEncoder.getAccessEnc();
-        DecimalEncodedValue footSpeedEnc = footEncoder.getAverageSpeedEnc();
-        BooleanEncodedValue carAccessEnc = carEncoder.getAccessEnc();
-        DecimalEncodedValue carSpeedEnc = carEncoder.getAverageSpeedEnc();
-
+    static void initFootVsCar(BooleanEncodedValue carAccessEnc, DecimalEncodedValue carSpeedEnc,
+                              BooleanEncodedValue footAccessEnc, DecimalEncodedValue footSpeedEnc, Graph graph) {
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(7000);
         GHUtility.setSpeed(5, true, true, footAccessEnc, footSpeedEnc, edge);
         GHUtility.setSpeed(10, true, false, carAccessEnc, carSpeedEnc, edge);
@@ -395,9 +394,7 @@ public class RoutingAlgorithmTest {
     }
 
     // see test-graph.svg !
-    static void initTestStorage(Graph graph, FlagEncoder encoder) {
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+    static void initTestStorage(Graph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(7));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 4).setDistance(6));
 
@@ -468,7 +465,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testWikipediaShortestPath(Fixture f) {
         BaseGraph graph = f.createGHStorage();
-        initWikipediaTestGraph(graph, f.carEncoder);
+        initWikipediaTestGraph(graph, f.carAccessEnc, f.carSpeedEnc);
         Path p = f.calcPath(graph, 0, 4);
         assertEquals(nodes(0, 2, 5, 4), p.calcNodes(), p.toString());
         assertEquals(20, p.getDistance(), 1e-4, p.toString());
@@ -478,16 +475,14 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcIf1EdgeAway(Fixture f) {
         BaseGraph graph = f.createGHStorage();
-        initTestStorage(graph, f.carEncoder);
+        initTestStorage(graph, f.carAccessEnc, f.carSpeedEnc);
         Path p = f.calcPath(graph, 1, 2);
         assertEquals(nodes(1, 2), p.calcNodes());
         assertEquals(35.1, p.getDistance(), .1, p.toString());
     }
 
     // see wikipedia-graph.svg !
-    private void initWikipediaTestGraph(Graph graph, FlagEncoder encoder) {
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+    private void initWikipediaTestGraph(Graph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(7));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2).setDistance(9));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 5).setDistance(14));
@@ -503,7 +498,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testBidirectional(Fixture f) {
         BaseGraph graph = f.createGHStorage();
-        initBiGraph(graph, f.carEncoder);
+        initBiGraph(graph, f.carAccessEnc, f.carSpeedEnc);
 
         Path p = f.calcPath(graph, 0, 4);
         assertEquals(nodes(0, 7, 6, 8, 3, 4), p.calcNodes(), p.toString());
@@ -520,10 +515,8 @@ public class RoutingAlgorithmTest {
     // |    8  |
     // \   /   |
     //  7-6----5
-    public static void initBiGraph(Graph graph, FlagEncoder encoder) {
+    public static void initBiGraph(Graph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         // distance will be overwritten in second step as we need to calculate it from lat,lon
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
@@ -582,7 +575,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testMaxVisitedNodes(Fixture f) {
         BaseGraph graph = f.createGHStorage();
-        initBiGraph(graph, f.carEncoder);
+        initBiGraph(graph, f.carAccessEnc, f.carSpeedEnc);
 
         Path p = f.calcPath(graph, 0, 4);
         assertTrue(p.isFound());
@@ -595,21 +588,19 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testBidirectional2(Fixture f) {
         BaseGraph graph = f.createGHStorage();
-        initBidirGraphManualDistances(graph, f.carEncoder);
+        initBidirGraphManualDistances(graph, f.carAccessEnc, f.carSpeedEnc);
         Path p = f.calcPath(graph, 0, 4);
         assertEquals(40, p.getDistance(), 1e-4, p.toString());
         assertEquals(5, p.calcNodes().size(), p.toString());
         assertEquals(nodes(0, 7, 6, 5, 4), p.calcNodes());
     }
 
-    private void initBidirGraphManualDistances(BaseGraph graph, FlagEncoder encoder) {
+    private void initBidirGraphManualDistances(BaseGraph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         // 0-1-2-3-4
         // |     / |
         // |    8  |
         // \   /   /
         //  7-6-5-/
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
@@ -627,7 +618,7 @@ public class RoutingAlgorithmTest {
     public void testRekeyBugOfIntBinHeap(Fixture f) {
         // using Dijkstra + IntBinHeap then rekey loops endlessly
         BaseGraph matrixGraph = f.createGHStorage();
-        initMatrixALikeGraph(matrixGraph, f.carEncoder);
+        initMatrixALikeGraph(matrixGraph, f.carAccessEnc, f.carSpeedEnc);
         Path p = f.calcPath(matrixGraph, 36, 91);
         assertEquals(12, p.calcNodes().size());
 
@@ -642,7 +633,7 @@ public class RoutingAlgorithmTest {
         testCorrectWeight(f, matrixGraph);
     }
 
-    private static void initMatrixALikeGraph(BaseGraph tmpGraph, FlagEncoder encoder) {
+    private static void initMatrixALikeGraph(BaseGraph tmpGraph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         int WIDTH = 10;
         int HEIGHT = 15;
         int[][] matrix = new int[WIDTH][HEIGHT];
@@ -664,7 +655,7 @@ public class RoutingAlgorithmTest {
                     if (print)
                         System.out.print(" " + (int) dist + "\t           ");
 
-                    GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), tmpGraph.edge(matrix[w][h], matrix[w][h - 1]).setDistance(dist));
+                    GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, tmpGraph.edge(matrix[w][h], matrix[w][h - 1]).setDistance(dist));
                 }
             }
             if (print) {
@@ -682,7 +673,7 @@ public class RoutingAlgorithmTest {
                     float dist = 5 + Math.abs(rand.nextInt(5));
                     if (print)
                         System.out.print("-- " + (int) dist + "\t-- ");
-                    GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), tmpGraph.edge(matrix[w][h], matrix[w - 1][h]).setDistance(dist));
+                    GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, tmpGraph.edge(matrix[w][h], matrix[w - 1][h]).setDistance(dist));
                 }
                 if (print)
                     System.out.print("(" + matrix[w][h] + ")\t");
@@ -794,7 +785,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcIfEmptyWay(Fixture f) {
         BaseGraph graph = f.createGHStorage();
-        initTestStorage(graph, f.carEncoder);
+        initTestStorage(graph, f.carAccessEnc, f.carSpeedEnc);
         Path p = f.calcPath(graph, 0, 0);
         assertPathFromEqualsTo(p, 0);
     }
@@ -803,7 +794,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testViaEdges_FromEqualsTo(Fixture f) {
         BaseGraph graph = f.createGHStorage();
-        initTestStorage(graph, f.carEncoder);
+        initTestStorage(graph, f.carAccessEnc, f.carSpeedEnc);
         // identical tower nodes
         Path p = f.calcPath(graph, new GHPoint(0.001, 0.000), new GHPoint(0.001, 0.000));
         assertPathFromEqualsTo(p, 0);
@@ -822,7 +813,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testViaEdges_BiGraph(Fixture f) {
         BaseGraph graph = f.createGHStorage();
-        initBiGraph(graph, f.carEncoder);
+        initBiGraph(graph, f.carAccessEnc, f.carSpeedEnc);
 
         // 0-7 to 4-3
         Path p = f.calcPath(graph, new GHPoint(0.0009, 0), new GHPoint(0.001, 0.001105));
@@ -839,7 +830,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testViaEdges_WithCoordinates(Fixture f) {
         BaseGraph graph = f.createGHStorage();
-        initTestStorage(graph, f.carEncoder);
+        initTestStorage(graph, f.carAccessEnc, f.carSpeedEnc);
         Path p = f.calcPath(graph, f.defaultWeighting, 0, 1, 2, 3);
         assertEquals(nodes(8, 1, 2, 9), p.calcNodes());
         assertEquals(56.7, p.getDistance(), .1, p.toString());
@@ -885,7 +876,7 @@ public class RoutingAlgorithmTest {
     public void testQueryGraphAndFastest(Fixture f) {
         Weighting weighting = new FastestWeighting(f.carAccessEnc, f.carSpeedEnc);
         BaseGraph graph = f.createGHStorage(false);
-        initDirectedAndDiffSpeed(graph, f.carEncoder);
+        initDirectedAndDiffSpeed(graph, f.carAccessEnc, f.carSpeedEnc);
         Path p = f.calcPath(graph, weighting, new GHPoint(0.002, 0.0005), new GHPoint(0.0017, 0.0031));
         assertEquals(nodes(8, 1, 5, 3, 9), p.calcNodes());
         assertEquals(602.98, p.getDistance(), 1e-1);
@@ -894,11 +885,11 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testTwoWeightsPerEdge(Fixture f) {
-        FastestWeighting fastestWeighting = new FastestWeighting(f.bike2Encoder.getAccessEnc(), f.bike2Encoder.getAverageSpeedEnc());
+        FastestWeighting fastestWeighting = new FastestWeighting(f.bike2AccessEnc, f.bike2SpeedEnc);
         BaseGraph graph = f.createGHStorage(true);
-        initEleGraph(graph, f.bike2Encoder, 18);
+        initEleGraph(graph, 18, f.bike2AccessEnc, f.bike2SpeedEnc);
         // force the other path
-        GHUtility.setSpeed(10, false, true, f.bike2Encoder.getAccessEnc(), f.bike2Encoder.getAverageSpeedEnc(), GHUtility.getEdge(graph, 0, 3));
+        GHUtility.setSpeed(10, false, true, f.bike2AccessEnc, f.bike2SpeedEnc, GHUtility.getEdge(graph, 0, 3));
 
         // for two weights per edge it happened that Path (and also the Weighting) read the wrong side
         // of the speed and read 0 => infinity weight => overflow of millis => negative millis!
@@ -997,12 +988,12 @@ public class RoutingAlgorithmTest {
         };
 
         BaseGraph graph = f.createGHStorage(true);
-        initEleGraph(graph, f.carEncoder, 60);
+        initEleGraph(graph, 60, f.carAccessEnc, f.carSpeedEnc);
         Path p = f.calcPath(graph, 0, 10);
         assertEquals(nodes(0, 4, 6, 10), p.calcNodes());
 
         graph = f.createGHStorage(true);
-        initEleGraph(graph, f.carEncoder, 60);
+        initEleGraph(graph, 60, f.carAccessEnc, f.carSpeedEnc);
         p = f.calcPath(graph, fakeWeighting, 3, 0, 10, 9);
         assertEquals(nodes(12, 0, 1, 2, 11, 7, 10, 13), p.calcNodes());
         assertEquals(37009621, p.getTime());
@@ -1037,11 +1028,11 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testMultipleVehicles_issue548(Fixture f) {
-        FastestWeighting footWeighting = new FastestWeighting(f.footEncoder.getAccessEnc(), f.footEncoder.getAverageSpeedEnc());
+        FastestWeighting footWeighting = new FastestWeighting(f.footAccessEnc, f.footSpeedEnc);
         FastestWeighting carWeighting = new FastestWeighting(f.carAccessEnc, f.carSpeedEnc);
 
         BaseGraph graph = f.createGHStorage(false);
-        initFootVsCar(f.carEncoder, f.footEncoder, graph);
+        initFootVsCar(f.carAccessEnc, f.carSpeedEnc, f.footAccessEnc, f.footSpeedEnc, graph);
 
         // normal path would be 0-4-6-7 for car:
         Path carPath1 = f.calcPath(graph, carWeighting, 0, 7);
@@ -1055,7 +1046,7 @@ public class RoutingAlgorithmTest {
         // ... but now we block 4-6 for car. note that we have to recreate the storage to create a new directory so
         //     we can create new CHs :(
         graph = f.createGHStorage(false);
-        initFootVsCar(f.carEncoder, f.footEncoder, graph);
+        initFootVsCar(f.carAccessEnc, f.carSpeedEnc, f.footAccessEnc, f.footSpeedEnc, graph);
         GHUtility.setSpeed(20, false, false, f.carAccessEnc, f.carSpeedEnc, GHUtility.getEdge(graph, 4, 6));
         f.resetCH();
 
@@ -1076,9 +1067,7 @@ public class RoutingAlgorithmTest {
     // 5-6-7
     // | |\|
     // 8-9-10
-    private void initEleGraph(Graph graph, FlagEncoder encoder, double s) {
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+    private void initEleGraph(Graph graph, double s, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         GHUtility.setSpeed(s, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(10));
         GHUtility.setSpeed(s, true, true, accessEnc, speedEnc, graph.edge(0, 4).setDistance(12));
         GHUtility.setSpeed(s, true, true, accessEnc, speedEnc, graph.edge(0, 3).setDistance(5));

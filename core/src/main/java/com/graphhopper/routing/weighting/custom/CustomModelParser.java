@@ -20,7 +20,6 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
@@ -70,17 +69,13 @@ public class CustomModelParser {
         // utility class
     }
 
-    public static CustomWeighting createWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
+    public static CustomWeighting createWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                                                  double maxSpeed, EncodedValueLookup lookup,
                                                   TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-        DecimalEncodedValue avgSpeedEnc = lookup.getDecimalEncodedValue(EncodingManager.getKey(baseFlagEncoder.toString(), "average_speed"));
-        final String pKey = EncodingManager.getKey(baseFlagEncoder.toString(), "priority");
-        DecimalEncodedValue priorityEnc = lookup.hasEncodedValue(pKey) ? lookup.getDecimalEncodedValue(pKey) : null;
-
-        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup,
-                avgSpeedEnc, baseFlagEncoder.getMaxSpeed(), priorityEnc);
-        return new CustomWeighting(baseFlagEncoder.getAccessEnc(), baseFlagEncoder.getAverageSpeedEnc(), turnCostProvider, parameters);
+        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, speedEnc, maxSpeed, priorityEnc);
+        return new CustomWeighting(accessEnc, speedEnc, turnCostProvider, parameters);
     }
 
     /**

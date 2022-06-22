@@ -226,7 +226,7 @@ public class LandmarkStorageTest {
 
     @Test
     public void testWithBorderBlocking() {
-        RoutingAlgorithmTest.initBiGraph(graph, encoder);
+        RoutingAlgorithmTest.initBiGraph(graph, encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
 
         LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(), new LMConfig("car", new FastestWeighting(accessEnc, speedEnc)), 2);
         final SplitArea right = new SplitArea(emptyList());

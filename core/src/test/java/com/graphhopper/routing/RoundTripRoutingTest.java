@@ -122,7 +122,7 @@ public class RoundTripRoutingTest {
 
     private BaseGraph createTestGraph() {
         BaseGraph graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
-        AlternativeRouteTest.initTestGraph(graph, carFE);
+        AlternativeRouteTest.initTestGraph(graph, carFE.getAccessEnc(), carFE.getAverageSpeedEnc());
         return graph;
     }
 

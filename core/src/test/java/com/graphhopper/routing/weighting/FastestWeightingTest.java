@@ -38,15 +38,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Peter Karich
  */
 public class FastestWeightingTest {
-    private final FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 10));
-    private final EncodingManager encodingManager = EncodingManager.create(encoder);
-    private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-    private final DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+    private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+    private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+    private final DecimalEncodedValue turnCostEnc = TurnCost.create("car", 10);
+    private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
         Weighting instance = new FastestWeighting(accessEnc, speedEnc);
-        IntsRef flags = GHUtility.setSpeed(encoder.getMaxSpeed(), 0, accessEnc, speedEnc, encodingManager.createEdgeFlags());
+        IntsRef flags = GHUtility.setSpeed(140, 0, accessEnc, speedEnc, encodingManager.createEdgeFlags());
         assertEquals(instance.getMinWeight(10), instance.calcEdgeWeight(createMockedEdgeIteratorState(10, flags), false), 1e-8);
     }
 
@@ -78,7 +78,7 @@ public class FastestWeightingTest {
     public void testSpeed0() {
         Weighting instance = new FastestWeighting(accessEnc, speedEnc);
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        encoder.getAverageSpeedEnc().setDecimal(false, edgeFlags, 0);
+        speedEnc.setDecimal(false, edgeFlags, 0);
         assertEquals(1.0 / 0, instance.calcEdgeWeight(createMockedEdgeIteratorState(10, edgeFlags), false), 1e-8);
 
         // 0 / 0 returns NaN but calcWeight should not return NaN!
@@ -105,10 +105,10 @@ public class FastestWeightingTest {
 
     @Test
     public void calcWeightAndTime_withTurnCosts() {
-        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage()));
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
-        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(1, 2).setDistance(100));
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100));
         // turn costs are given in seconds
         setTurnCost(graph, 0, 1, 2, 5);
         assertEquals(6 + 5, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
@@ -117,8 +117,8 @@ public class FastestWeightingTest {
 
     @Test
     public void calcWeightAndTime_uTurnCosts() {
-        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage(), 40));
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 40));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
@@ -126,8 +126,8 @@ public class FastestWeightingTest {
 
     @Test
     public void calcWeightAndTime_withTurnCosts_shortest() {
-        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
-        Weighting weighting = new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage()));
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
+        Weighting weighting = new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100));
         // turn costs are given in seconds
@@ -198,7 +198,7 @@ public class FastestWeightingTest {
     }
 
     private void setTurnCost(Graph graph, int from, int via, int to, double turnCost) {
-        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key(encoder.toString())), getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), turnCost);
+        graph.getTurnCostStorage().set(turnCostEnc, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), turnCost);
     }
 
 }

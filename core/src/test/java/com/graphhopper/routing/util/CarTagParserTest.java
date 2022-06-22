@@ -267,6 +267,12 @@ public class CarTagParserTest {
         way.setTag("maxspeed", "none");
         edgeFlags = parser.handleWayTags(edgeFlags, way);
         assertEquals(135, avSpeedEnc.getDecimal(false, edgeFlags), .1);
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "motorway_link");
+        way.setTag("maxspeed", "70 mph");
+        IntsRef flags = parser.handleWayTags(em.createEdgeFlags(), way);
+        assertEquals(100, avSpeedEnc.getDecimal(true, flags), 1e-1);
     }
 
     @Test

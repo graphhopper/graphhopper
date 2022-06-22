@@ -20,19 +20,13 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -56,10 +50,9 @@ public class CHQueryWithTurnCostsTest {
 
     private static class Fixture {
         private final int maxCost = 10;
-        private final FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxCost).putObject("speed_two_directions", true));
-        private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        private final DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        private final EncodingManager encodingManager = EncodingManager.create(encoder);
+        private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+        private final DecimalEncodedValue turnCostEnc = TurnCost.create("car", maxCost);
         private final BaseGraph graph;
         private final CHConfig chConfig;
         private final String algoString;
@@ -68,8 +61,9 @@ public class CHQueryWithTurnCostsTest {
 
         public Fixture(String algoString) {
             this.algoString = algoString;
-            graph = new BaseGraph.Builder(encodingManager).create();
-            chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage())));
+            EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+            graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
+            chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage())));
         }
 
         @Override
@@ -103,7 +97,7 @@ public class CHQueryWithTurnCostsTest {
         }
 
         private void setTurnCost(EdgeIteratorState edge1, EdgeIteratorState edge2, int viaNode, double costs) {
-            graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key(encoder.toString())), edge1.getEdge(), viaNode, edge2.getEdge(), costs);
+            graph.getTurnCostStorage().set(turnCostEnc, edge1.getEdge(), viaNode, edge2.getEdge(), costs);
         }
 
         private void setRestriction(int from, int via, int to) {

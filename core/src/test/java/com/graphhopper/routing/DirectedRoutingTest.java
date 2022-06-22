@@ -20,9 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
@@ -30,7 +28,9 @@ import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -87,7 +87,9 @@ public class DirectedRoutingTest {
         private final BaseGraph graph;
         private final CHConfig chConfig;
         private final LMConfig lmConfig;
-        private final FlagEncoder encoder;
+        private final BooleanEncodedValue accessEnc;
+        private final DecimalEncodedValue speedEnc;
+        private final DecimalEncodedValue turnCostEnc;
         private final TurnCostStorage turnCostStorage;
         private final int maxTurnCosts;
         private final Weighting weighting;
@@ -106,14 +108,16 @@ public class DirectedRoutingTest {
             // todo: this test only works with speedTwoDirections=false (as long as loops are enabled), otherwise it will
             // fail sometimes for edge-based algorithms, #1631, but maybe we can should disable different fwd/bwd speeds
             // only for loops instead?
-            encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxTurnCosts));
-            encodingManager = EncodingManager.start().add(encoder).add(Subnetwork.create("c2")).build();
+            accessEnc = new SimpleBooleanEncodedValue("access", true);
+            speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+            turnCostEnc = TurnCost.create("car", maxTurnCosts);
+            encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("c2")).build();
             graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
             turnCostStorage = graph.getTurnCostStorage();
-            weighting = new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), new DefaultTurnCostProvider(encoder.getTurnCostEnc(), turnCostStorage, uTurnCosts));
+            weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts));
             chConfig = CHConfig.edgeBased("p1", weighting);
             // important: for LM preparation we need to use a weighting without turn costs #1960
-            lmConfig = new LMConfig("c2", new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc()));
+            lmConfig = new LMConfig("c2", new FastestWeighting(accessEnc, speedEnc));
         }
 
         @Override
@@ -216,8 +220,8 @@ public class DirectedRoutingTest {
         final int numQueries = 50;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(f.graph, rnd, 100, 2.2, true, true,
-                f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(), null, 0.7, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(f.graph, seed, f.encoder.getAccessEnc(), f.encoder.getTurnCostEnc(), f.maxTurnCosts, f.turnCostStorage);
+                f.accessEnc, f.speedEnc, null, 0.7, 0.8, 0.8);
+        GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
 //        GHUtility.printGraphForUnitTest(f.graph, f.encoder);
         f.preProcessGraph();
         List<String> strictViolations = new ArrayList<>();
@@ -258,8 +262,8 @@ public class DirectedRoutingTest {
         double pOffset = 0;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.2, true, true,
-                f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(), null, 0.7, 0.8, pOffset);
-        GHUtility.addRandomTurnCosts(f.graph, seed, f.encoder.getAccessEnc(), f.encoder.getTurnCostEnc(), f.maxTurnCosts, f.turnCostStorage);
+                f.accessEnc, f.speedEnc, null, 0.7, 0.8, pOffset);
+        GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
         // GHUtility.printGraphForUnitTest(graph, encoder);
         f.preProcessGraph();
         LocationIndexTree index = new LocationIndexTree(f.graph, f.dir);
@@ -311,8 +315,8 @@ public class DirectedRoutingTest {
         // 3-0=1-2=7-5
         //   |
         //   4
-        BooleanEncodedValue accessEnc = f.encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = f.encoder.getAverageSpeedEnc();
+        BooleanEncodedValue accessEnc = f.accessEnc;
+        DecimalEncodedValue speedEnc = f.speedEnc;
         GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(0, 1).setDistance(300.186000)); // edgeId=0
         GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(0, 4).setDistance(751.113000)); // edgeId=1
         GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(7, 2).setDistance(113.102000)); // edgeId=2
