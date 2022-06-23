@@ -77,11 +77,17 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
                             @JsonProperty("max_value") int maxValue,
                             @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
                             @JsonProperty("store_two_directions") boolean storeTwoDirections,
+                            @JsonProperty("fwd_data_index") int fwdDataIndex,
+                            @JsonProperty("bwd_data_index") int bwdDataIndex,
+                            @JsonProperty("fwd_shift") int fwdShift,
+                            @JsonProperty("bwd_shift") int bwdShift,
+                            @JsonProperty("fwd_mask") int fwdMask,
+                            @JsonProperty("bwd_mask") int bwdMask,
                             @JsonProperty("factor") double factor,
                             @JsonProperty("default_is_infinity") boolean defaultIsInfinity,
                             @JsonProperty("use_maximum_as_infinity") boolean useMaximumAsInfinity) {
         // we need this constructor for Jackson
-        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
         this.factor = factor;
         this.defaultIsInfinity = defaultIsInfinity;
         this.useMaximumAsInfinity = useMaximumAsInfinity;
@@ -90,7 +96,7 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     @Override
     public void setDecimal(boolean reverse, IntsRef ref, double value) {
         if (!isInitialized())
-            throw new IllegalStateException("Call init before usage for EncodedValue " + toString());
+            throw new IllegalStateException("Call init before using EncodedValue " + getName());
         if (Double.isInfinite(value)) {
             if (useMaximumAsInfinity) {
                 super.setInt(reverse, ref, maxValue);
@@ -143,19 +149,4 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
         return maxValue * factor;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (!super.equals(o)) return false;
-        DecimalEncodedValueImpl that = (DecimalEncodedValueImpl) o;
-        return Double.compare(that.factor, factor) == 0 && useMaximumAsInfinity == that.useMaximumAsInfinity
-                && defaultIsInfinity == that.defaultIsInfinity;
-    }
-
-    @Override
-    public int getVersion() {
-        int version = 31 * super.getVersion() + staticHashCode(factor);
-        if (useMaximumAsInfinity) return 31 * version + 13;
-        if (defaultIsInfinity) return 31 * version + 17;
-        return version;
-    }
 }

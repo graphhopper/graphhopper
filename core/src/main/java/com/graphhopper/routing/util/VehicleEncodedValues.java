@@ -22,7 +22,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -218,11 +217,14 @@ public class VehicleEncodedValues implements FlagEncoder {
         return turnCostEnc;
     }
 
-    public String getSharedEncodedValueString() {
-        return Stream.of(accessEnc, avgSpeedEnc, priorityEnc, curvatureEnc, turnCostEnc)
-                .filter(Objects::nonNull)
-                .map(EncodedValueSerializer::serializeEncodedValue)
-                .collect(Collectors.joining(","));
+    public String toSerializationString() {
+        return
+                String.join("|",
+                        name,
+                        Stream.of(accessEnc, avgSpeedEnc, priorityEnc, curvatureEnc, turnCostEnc)
+                                .map(ev -> ev == null ? "null" : ev.getName())
+                                .collect(Collectors.joining("|")),
+                        String.valueOf(maxPossibleSpeed), String.valueOf(isMotorVehicle), String.valueOf(isHGV));
     }
 
     @Override

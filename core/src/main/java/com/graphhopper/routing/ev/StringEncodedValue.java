@@ -54,11 +54,17 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
             @JsonProperty("max_value") int maxValue,
             @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
             @JsonProperty("store_two_directions") boolean storeTwoDirections,
+            @JsonProperty("fwd_data_index") int fwdDataIndex,
+            @JsonProperty("bwd_data_index") int bwdDataIndex,
+            @JsonProperty("fwd_shift") int fwdShift,
+            @JsonProperty("bwd_shift") int bwdShift,
+            @JsonProperty("fwd_mask") int fwdMask,
+            @JsonProperty("bwd_mask") int bwdMask,
             @JsonProperty("max_values") int maxValues,
             @JsonProperty("values") List<String> values,
             @JsonProperty("index_map") HashMap<String, Integer> indexMap) {
         // we need this constructor for Jackson
-        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
         if (values.size() > maxValues)
             throw new IllegalArgumentException("Number of values is higher than the maximum value count: "
                     + values.size() + " > " + maxValues);
@@ -115,23 +121,4 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
         return Collections.unmodifiableList(values);
     }
 
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (!(obj instanceof StringEncodedValue)) {
-            return false;
-        }
-        StringEncodedValue other = (StringEncodedValue) obj;
-        if (this.bits != other.bits) {
-            return false;
-        }
-        return Objects.equals(values, other.values);
-    }
-
-    @Override
-    public int getVersion() {
-        return 31 * super.getVersion() + staticHashCode(values);
-    }
 }
