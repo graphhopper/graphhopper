@@ -332,8 +332,8 @@ public class OSMReader {
         if (edgeFlags.isEmpty())
             return;
 
-        // the storage does not accept too long strings
-        String name = Helper.cutString(way.getTag("way_name", ""), 255);
+        // the storage does not allow too long Strings
+        String name = Helper.cutStringForKV(way.getTag("way_name", ""));
         EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags).setName(name);
 
         // If the entire way is just the first and last point, do not waste space storing an empty way geometry
