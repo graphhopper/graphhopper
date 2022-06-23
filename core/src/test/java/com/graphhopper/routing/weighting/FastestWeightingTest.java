@@ -21,8 +21,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
@@ -87,20 +85,15 @@ public class FastestWeightingTest {
 
     @Test
     public void testTime() {
-        FlagEncoder tmpEnc = FlagEncoders.createBike2();
-        EncodingManager em = EncodingManager.create(tmpEnc);
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 2, true);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph g = new BaseGraph.Builder(em).create();
-        Weighting w = new FastestWeighting(tmpEnc.getAccessEnc(), tmpEnc.getAverageSpeedEnc());
-
-        IntsRef edgeFlags = GHUtility.setSpeed(15, 15, tmpEnc.getAccessEnc(), tmpEnc.getAverageSpeedEnc(), em.createEdgeFlags());
-        tmpEnc.getAverageSpeedEnc().setDecimal(true, edgeFlags, 10.0);
-
-        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(100000, edgeFlags);
-
+        Weighting w = new FastestWeighting(accessEnc, speedEnc);
+        EdgeIteratorState edge = g.edge(0, 1).setDistance(100_000);
+        GHUtility.setSpeed(15, 10, accessEnc, speedEnc, edge);
         assertEquals(375 * 60 * 1000, w.calcEdgeMillis(edge, false));
         assertEquals(600 * 60 * 1000, w.calcEdgeMillis(edge, true));
-
-        g.close();
     }
 
     @Test
@@ -140,21 +133,21 @@ public class FastestWeightingTest {
 
     @Test
     public void testDestinationTag() {
-        FlagEncoder carEncoder = FlagEncoders.createCar();
-        FlagEncoder bikeEncoder = FlagEncoders.createBike();
-        EncodingManager em = EncodingManager.create(carEncoder, bikeEncoder);
+        BooleanEncodedValue carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+        DecimalEncodedValue carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
+        BooleanEncodedValue bikeAccessEnc = new SimpleBooleanEncodedValue("bike_access", true);
+        DecimalEncodedValue bikeSpeedEnc = new DecimalEncodedValueImpl("bike_speed", 4, 2, false);
+        EncodingManager em = EncodingManager.start().add(carAccessEnc).add(carSpeedEnc).add(bikeAccessEnc).add(bikeSpeedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000);
-        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
-            edge.set(encoder.getAccessEnc(), true);
-            edge.setReverse(encoder.getAccessEnc(), true);
-        }
-        edge.set(carEncoder.getAverageSpeedEnc(), 60);
-        edge.set(bikeEncoder.getAverageSpeedEnc(), 18);
+        edge.set(carAccessEnc, true, true);
+        edge.set(bikeAccessEnc, true, true);
+        edge.set(carSpeedEnc, 60);
+        edge.set(bikeSpeedEnc, 18);
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc());
-        FastestWeighting bikeWeighting = new FastestWeighting(bikeEncoder.getAccessEnc(), bikeEncoder.getAverageSpeedEnc());
+        FastestWeighting weighting = new FastestWeighting(carAccessEnc, carSpeedEnc);
+        FastestWeighting bikeWeighting = new FastestWeighting(bikeAccessEnc, bikeSpeedEnc);
 
         edge.set(roadAccessEnc, RoadAccess.YES);
         assertEquals(60, weighting.calcEdgeWeight(edge, false), 1.e-6);
@@ -168,21 +161,21 @@ public class FastestWeightingTest {
 
     @Test
     public void testPrivateTag() {
-        FlagEncoder carEncoder = FlagEncoders.createCar();
-        FlagEncoder bikeEncoder = FlagEncoders.createBike();
-        EncodingManager em = EncodingManager.create(carEncoder, bikeEncoder);
+        BooleanEncodedValue carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+        DecimalEncodedValue carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
+        BooleanEncodedValue bikeAccessEnc = new SimpleBooleanEncodedValue("bike_access", true);
+        DecimalEncodedValue bikeSpeedEnc = new DecimalEncodedValueImpl("bike_speed", 4, 2, false);
+        EncodingManager em = EncodingManager.start().add(carAccessEnc).add(carSpeedEnc).add(bikeAccessEnc).add(bikeSpeedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000);
-        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
-            edge.set(encoder.getAccessEnc(), true);
-            edge.setReverse(encoder.getAccessEnc(), true);
-        }
-        edge.set(carEncoder.getAverageSpeedEnc(), 60);
-        edge.set(bikeEncoder.getAverageSpeedEnc(), 18);
+        edge.set(carAccessEnc, true, true);
+        edge.set(bikeAccessEnc, true, true);
+        edge.set(carSpeedEnc, 60);
+        edge.set(bikeSpeedEnc, 18);
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc());
-        FastestWeighting bikeWeighting = new FastestWeighting(bikeEncoder.getAccessEnc(), bikeEncoder.getAverageSpeedEnc());
+        FastestWeighting weighting = new FastestWeighting(carAccessEnc, carSpeedEnc);
+        FastestWeighting bikeWeighting = new FastestWeighting(bikeAccessEnc, bikeSpeedEnc);
 
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
