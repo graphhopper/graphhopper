@@ -107,7 +107,7 @@ public class PathSimplificationTest {
         tmpEdge.setWayGeometry(list);
 
         // Path is: [0 0-1, 3 1-4, 6 4-7, 9 7-8, 11 8-9, 10 9-10]
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        ShortestWeighting weighting = new ShortestWeighting(accessEnc, speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 10);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,

@@ -87,7 +87,7 @@ public class GpxConversionsTest {
         GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(3, 7).setDistance(10000).setName("3-7"));
         GHUtility.setSpeed(90, true, true, accessEnc, speedEnc, g.edge(4, 5).setDistance(10000).setName("4-5"));
 
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        ShortestWeighting weighting = new ShortestWeighting(accessEnc, speedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, trMap.getWithFallBack(Locale.US));
         PointList points = p.calcPoints();

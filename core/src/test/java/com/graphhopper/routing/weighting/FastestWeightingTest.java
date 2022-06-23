@@ -18,10 +18,7 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadAccess;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -43,6 +40,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class FastestWeightingTest {
     private final FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 10));
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
+    private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+    private final DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
@@ -128,9 +127,9 @@ public class FastestWeightingTest {
     @Test
     public void calcWeightAndTime_withTurnCosts_shortest() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
-        Weighting weighting = new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage()));
-        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(0, 1).setDistance(100));
-        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(1, 2).setDistance(100));
+        Weighting weighting = new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage()));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100));
         // turn costs are given in seconds
         setTurnCost(graph, 0, 1, 2, 5);
         // todo: for the shortest weighting turn costs cannot be interpreted as seconds? at least when they are added

@@ -73,9 +73,9 @@ public class EdgeBasedNodeContractorTest {
         turnCostEnc = encoder.getTurnCostEnc();
         graph = new BaseGraph.Builder(encodingManager).create();
         chConfigs = Arrays.asList(
-                CHConfig.edgeBased("p1", new ShortestWeighting(encoder, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()))),
-                CHConfig.edgeBased("p2", new ShortestWeighting(encoder, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 60))),
-                CHConfig.edgeBased("p3", new ShortestWeighting(encoder, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 0)))
+                CHConfig.edgeBased("p1", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()))),
+                CHConfig.edgeBased("p2", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 60))),
+                CHConfig.edgeBased("p3", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 0)))
         );
     }
 

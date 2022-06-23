@@ -39,7 +39,7 @@ public class LMPreparationHandlerTest {
         EncodingManager em = EncodingManager.create(car);
         List<LMConfig> lmConfigs = Arrays.asList(
                 new LMConfig("conf1", new FastestWeighting(car)),
-                new LMConfig("conf2", new ShortestWeighting(car))
+                new LMConfig("conf2", new ShortestWeighting(car.getAccessEnc(), car.getAverageSpeedEnc()))
         );
         List<PrepareLandmarks> preparations = handler.createPreparations(lmConfigs, new BaseGraph.Builder(em).build(), em, null);
         assertEquals(1, preparations.get(0).getLandmarkStorage().getFactor(), .1);
