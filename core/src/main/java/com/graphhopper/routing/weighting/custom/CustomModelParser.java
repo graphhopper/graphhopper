@@ -78,7 +78,7 @@ public class CustomModelParser {
 
         CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup,
                 avgSpeedEnc, baseFlagEncoder.getMaxSpeed(), priorityEnc);
-        return new CustomWeighting(baseFlagEncoder, turnCostProvider, parameters);
+        return new CustomWeighting(baseFlagEncoder.getAccessEnc(), baseFlagEncoder.getAverageSpeedEnc(), turnCostProvider, parameters);
     }
 
     /**

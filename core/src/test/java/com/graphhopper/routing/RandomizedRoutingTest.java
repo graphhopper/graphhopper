@@ -125,7 +125,7 @@ public class RandomizedRoutingTest {
             turnCostStorage = graph.getTurnCostStorage();
             chConfigs = Arrays.asList(
                     CHConfig.nodeBased("p1", new FastestWeighting(encoder)),
-                    CHConfig.edgeBased("p2", new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())))
+                    CHConfig.edgeBased("p2", new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage())))
             );
             // important: for LM preparation we need to use a weighting without turn costs #1960
             lmConfig = new LMConfig("car", chConfigs.get(0).getWeighting());

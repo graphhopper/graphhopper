@@ -20,6 +20,8 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
@@ -108,7 +110,7 @@ public class DirectedRoutingTest {
             encodingManager = EncodingManager.start().add(encoder).add(Subnetwork.create("c2")).build();
             graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
             turnCostStorage = graph.getTurnCostStorage();
-            weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, turnCostStorage, uTurnCosts));
+            weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), turnCostStorage, uTurnCosts));
             chConfig = CHConfig.edgeBased("p1", weighting);
             // important: for LM preparation we need to use a weighting without turn costs #1960
             lmConfig = new LMConfig("c2", new FastestWeighting(encoder));
@@ -309,14 +311,16 @@ public class DirectedRoutingTest {
         // 3-0=1-2=7-5
         //   |
         //   4
-        GHUtility.setSpeed(60, 60, f.encoder, f.graph.edge(0, 1).setDistance(300.186000)); // edgeId=0
-        GHUtility.setSpeed(60, 60, f.encoder, f.graph.edge(0, 4).setDistance(751.113000)); // edgeId=1
-        GHUtility.setSpeed(60, 60, f.encoder, f.graph.edge(7, 2).setDistance(113.102000)); // edgeId=2
-        GHUtility.setSpeed(60, 60, f.encoder, f.graph.edge(3, 0).setDistance(226.030000)); // edgeId=3
-        GHUtility.setSpeed(60, 60, f.encoder, f.graph.edge(1, 2).setDistance(494.601000)); // edgeId=4
-        GHUtility.setSpeed(60, 60, f.encoder, f.graph.edge(7, 2).setDistance(113.102000)); // edgeId=5
-        GHUtility.setSpeed(60, 60, f.encoder, f.graph.edge(5, 7).setDistance(274.848000)); // edgeId=6
-        GHUtility.setSpeed(60, 60, f.encoder, f.graph.edge(0, 1).setDistance(300.186000)); // edgeId=7
+        BooleanEncodedValue accessEnc = f.encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = f.encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(0, 1).setDistance(300.186000)); // edgeId=0
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(0, 4).setDistance(751.113000)); // edgeId=1
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(7, 2).setDistance(113.102000)); // edgeId=2
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(3, 0).setDistance(226.030000)); // edgeId=3
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(1, 2).setDistance(494.601000)); // edgeId=4
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(7, 2).setDistance(113.102000)); // edgeId=5
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(5, 7).setDistance(274.848000)); // edgeId=6
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(0, 1).setDistance(300.186000)); // edgeId=7
         f.preProcessGraph();
         LocationIndexTree index = new LocationIndexTree(f.graph, f.dir);
         index.prepareIndex();

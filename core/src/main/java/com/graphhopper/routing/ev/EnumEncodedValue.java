@@ -22,8 +22,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Arrays;
-
 /**
  * This class allows to store distinct values via an enum. I.e. it stores just the indices
  */
@@ -50,9 +48,15 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
                      @JsonProperty("max_value") int maxValue,
                      @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
                      @JsonProperty("store_two_directions") boolean storeTwoDirections,
+                     @JsonProperty("fwd_data_index") int fwdDataIndex,
+                     @JsonProperty("bwd_data_index") int bwdDataIndex,
+                     @JsonProperty("fwd_shift") int fwdShift,
+                     @JsonProperty("bwd_shift") int bwdShift,
+                     @JsonProperty("fwd_mask") int fwdMask,
+                     @JsonProperty("bwd_mask") int bwdMask,
                      @JsonProperty("enum_type") Class<E> enumType) {
         // we need this constructor for Jackson
-        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
         this.enumType = enumType;
         arr = enumType.getEnumConstants();
     }
@@ -71,15 +75,4 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
         return arr[value];
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (!super.equals(o)) return false;
-        EnumEncodedValue that = (EnumEncodedValue) o;
-        return Arrays.equals(arr, that.arr);
-    }
-
-    @Override
-    public int getVersion() {
-        return 31 * super.getVersion() + staticHashCode(arr);
-    }
 }

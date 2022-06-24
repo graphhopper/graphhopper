@@ -21,6 +21,8 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
@@ -72,19 +74,21 @@ public class PathSimplificationTest {
         na.setNode(7, 1.0, 1.1);
         na.setNode(8, 1.0, 1.2);
 
-        GHUtility.setSpeed(9, true, true, carEncoder, g.edge(0, 1).setDistance(10000)).setName("0-1");
-        GHUtility.setSpeed(9, true, true, carEncoder, g.edge(1, 2).setDistance(11000)).setName("1-2");
+        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(10000)).setName("0-1");
+        GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(11000)).setName("1-2");
 
-        GHUtility.setSpeed(18, true, true, carEncoder, g.edge(0, 3).setDistance(11000));
-        GHUtility.setSpeed(18, true, true, carEncoder, g.edge(1, 4).setDistance(10000)).setName("1-4");
-        GHUtility.setSpeed(18, true, true, carEncoder, g.edge(2, 5).setDistance(11000)).setName("5-2");
+        GHUtility.setSpeed(18, true, true, accessEnc, speedEnc, g.edge(0, 3).setDistance(11000));
+        GHUtility.setSpeed(18, true, true, accessEnc, speedEnc, g.edge(1, 4).setDistance(10000)).setName("1-4");
+        GHUtility.setSpeed(18, true, true, accessEnc, speedEnc, g.edge(2, 5).setDistance(11000)).setName("5-2");
 
-        GHUtility.setSpeed(27, true, true, carEncoder, g.edge(3, 6).setDistance(11000)).setName("3-6");
-        GHUtility.setSpeed(27, true, true, carEncoder, g.edge(4, 7).setDistance(10000)).setName("4-7");
-        GHUtility.setSpeed(27, true, true, carEncoder, g.edge(5, 8).setDistance(10000)).setName("5-8");
+        GHUtility.setSpeed(27, true, true, accessEnc, speedEnc, g.edge(3, 6).setDistance(11000)).setName("3-6");
+        GHUtility.setSpeed(27, true, true, accessEnc, speedEnc, g.edge(4, 7).setDistance(10000)).setName("4-7");
+        GHUtility.setSpeed(27, true, true, accessEnc, speedEnc, g.edge(5, 8).setDistance(10000)).setName("5-8");
 
-        GHUtility.setSpeed(36, true, true, carEncoder, g.edge(6, 7).setDistance(11000)).setName("6-7");
-        EdgeIteratorState tmpEdge = GHUtility.setSpeed(36, true, true, carEncoder, g.edge(7, 8).setDistance(10000));
+        GHUtility.setSpeed(36, true, true, accessEnc, speedEnc, g.edge(6, 7).setDistance(11000)).setName("6-7");
+        EdgeIteratorState tmpEdge = GHUtility.setSpeed(36, true, true, accessEnc, speedEnc, g.edge(7, 8).setDistance(10000));
         PointList list = new PointList();
         list.add(1.0, 1.15);
         list.add(1.0, 1.16);
@@ -92,8 +96,8 @@ public class PathSimplificationTest {
         tmpEdge.setName("7-8");
 
         // missing edge name
-        GHUtility.setSpeed(45, true, true, carEncoder, g.edge(9, 10).setDistance(10000));
-        tmpEdge = GHUtility.setSpeed(45, true, true, carEncoder, g.edge(8, 9).setDistance(20000));
+        GHUtility.setSpeed(45, true, true, accessEnc, speedEnc, g.edge(9, 10).setDistance(10000));
+        tmpEdge = GHUtility.setSpeed(45, true, true, accessEnc, speedEnc, g.edge(8, 9).setDistance(20000));
         list.clear();
         list.add(1.0, 1.3);
         list.add(1.0, 1.3001);
@@ -103,7 +107,7 @@ public class PathSimplificationTest {
         tmpEdge.setWayGeometry(list);
 
         // Path is: [0 0-1, 3 1-4, 6 4-7, 9 7-8, 11 8-9, 10 9-10]
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        ShortestWeighting weighting = new ShortestWeighting(accessEnc, speedEnc);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 10);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,

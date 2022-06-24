@@ -18,15 +18,9 @@
 package com.graphhopper.routing.ev;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
-
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Objects;
 
 /**
  * Implementation of the IntEncodedValue via a certain number of bits (that determines the maximum value) and
@@ -45,22 +39,14 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     final int minValue;
     final int maxValue;
 
-    // the following fields will be set by the init() method and we do not store them on disk, because they will be
-    // set again when we create the EncodingManager
     /**
      * There are multiple int values possible per edge. Here we specify the index into this integer array.
      */
-    @JsonIgnore
     private int fwdDataIndex;
-    @JsonIgnore
     private int bwdDataIndex;
-    @JsonIgnore
     int fwdShift = -1;
-    @JsonIgnore
     int bwdShift = -1;
-    @JsonIgnore
     int fwdMask;
-    @JsonIgnore
     int bwdMask;
 
     /**
@@ -110,7 +96,14 @@ public class IntEncodedValueImpl implements IntEncodedValue {
                         @JsonProperty("min_value") int minValue,
                         @JsonProperty("max_value") int maxValue,
                         @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
-                        @JsonProperty("store_two_directions") boolean storeTwoDirections) {
+                        @JsonProperty("store_two_directions") boolean storeTwoDirections,
+                        @JsonProperty("fwd_data_index") int fwdDataIndex,
+                        @JsonProperty("bwd_data_index") int bwdDataIndex,
+                        @JsonProperty("fwd_shift") int fwdShift,
+                        @JsonProperty("bwd_shift") int bwdShift,
+                        @JsonProperty("fwd_mask") int fwdMask,
+                        @JsonProperty("bwd_mask") int bwdMask
+    ) {
         // we need this constructor for Jackson
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
@@ -118,6 +111,12 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         this.negateReverseDirection = negateReverseDirection;
         this.minValue = minValue;
         this.maxValue = maxValue;
+        this.fwdDataIndex = fwdDataIndex;
+        this.bwdDataIndex = bwdDataIndex;
+        this.fwdShift = fwdShift;
+        this.bwdShift = bwdShift;
+        this.fwdMask = fwdMask;
+        this.bwdMask = bwdMask;
     }
 
     @Override
@@ -217,100 +216,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
 
     @Override
     public final String toString() {
-        return getName() + "|version=" + getVersion() + "|bits=" + bits + "|min_value=" + minValue
-                + "|negate_reverse_direction" + negateReverseDirection + "|index=" + fwdDataIndex
-                + "|shift=" + fwdShift + "|store_both_directions=" + storeTwoDirections;
+        return getName();
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        IntEncodedValueImpl that = (IntEncodedValueImpl) o;
-        return fwdDataIndex == that.fwdDataIndex &&
-                bwdDataIndex == that.bwdDataIndex &&
-                bits == that.bits &&
-                maxValue == that.maxValue &&
-                minValue == that.minValue &&
-                fwdShift == that.fwdShift &&
-                bwdShift == that.bwdShift &&
-                fwdMask == that.fwdMask &&
-                bwdMask == that.bwdMask &&
-                negateReverseDirection == that.negateReverseDirection &&
-                storeTwoDirections == that.storeTwoDirections &&
-                Objects.equals(name, that.name);
-    }
-
-    @Override
-    public final int hashCode() {
-        return getVersion();
-    }
-
-    @Override
-    public int getVersion() {
-        int val = Helper.staticHashCode(name);
-        val = 31 * val + (storeTwoDirections ? 1231 : 1237);
-        val = 31 * val + (negateReverseDirection ? 13 : 17);
-        return staticHashCode(val, fwdDataIndex, bwdDataIndex, bits, minValue, maxValue, fwdShift, bwdShift, fwdMask, bwdMask);
-    }
-
-    /**
-     * Produces a static hashcode for an integer arrays that is platform independent and still compatible to the default
-     * of openjdk.
-     *
-     * @see Arrays#hashCode(int[])
-     */
-    static int staticHashCode(int... vals) {
-        if (vals == null)
-            return 0;
-        int len = vals.length;
-        int val = 1;
-        for (int idx = 0; idx < len; ++idx) {
-            val = 31 * val + vals[idx];
-        }
-
-        return val;
-    }
-
-    /**
-     * Produces a static hashcode for an Enum arrays that is platform independent and still compatible to the default
-     * of openjdk.
-     */
-    static int staticHashCode(Enum<?>... vals) {
-        if (vals == null)
-            return 0;
-        int len = vals.length;
-        int val = 1;
-        for (int idx = 0; idx < len; ++idx) {
-            val = 31 * val + vals[idx].ordinal();
-        }
-
-        return val;
-    }
-
-    /**
-     * Produces a static hashcode for a collection of Strings that is platform independent and still compatible to the default
-     * of openjdk.
-     */
-    static int staticHashCode(Collection<String> vals) {
-        if (vals == null)
-            return 0;
-        int val = 1;
-        for (String str : vals) {
-            val = 31 * val + Helper.staticHashCode(str);
-        }
-
-        return val;
-    }
-
-    /**
-     * Produces a static hashcode for an integer arrays that is platform independent and still compatible to the default
-     * of openjdk
-     *
-     * @see Double#hashCode
-     */
-    static int staticHashCode(double val) {
-        long var2 = Double.doubleToLongBits(val);
-        return (int) (var2 ^ var2 >>> 32);
-    }
 }

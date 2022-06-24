@@ -63,7 +63,7 @@ public class RandomCHRoutingTest {
         void freeze() {
             graph.freeze();
             chConfig = traversalMode.isEdgeBased()
-                    ? CHConfig.edgeBased("p", new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), uTurnCosts)))
+                    ? CHConfig.edgeBased("p", new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage(), uTurnCosts)))
                     : CHConfig.nodeBased("p", new FastestWeighting(encoder));
             weighting = chConfig.getWeighting();
         }
@@ -251,7 +251,7 @@ public class RandomCHRoutingTest {
             maxDist = Math.max(maxDist, distance);
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
-            EdgeIteratorState edge = GHUtility.setSpeed(60, true, bothDirections, encoder, graph.edge(from, to).setDistance(distance));
+            EdgeIteratorState edge = GHUtility.setSpeed(60, true, bothDirections, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(from, to).setDistance(distance));
             double fwdSpeed = 10 + random.nextDouble() * 120;
             double bwdSpeed = 10 + random.nextDouble() * 120;
             DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();

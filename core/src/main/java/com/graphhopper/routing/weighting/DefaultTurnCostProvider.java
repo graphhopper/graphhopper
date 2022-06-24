@@ -19,8 +19,6 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 
@@ -32,19 +30,15 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final int uTurnCostsInt;
     private final double uTurnCosts;
 
-    public DefaultTurnCostProvider(FlagEncoder encoder, TurnCostStorage turnCostStorage) {
-        this(encoder, turnCostStorage, Weighting.INFINITE_U_TURN_COSTS);
-    }
-
-    public DecimalEncodedValue getTurnCostEnc() {
-        return turnCostEnc;
+    public DefaultTurnCostProvider(DecimalEncodedValue turnCostEnc, TurnCostStorage turnCostStorage) {
+        this(turnCostEnc, turnCostStorage, Weighting.INFINITE_U_TURN_COSTS);
     }
 
     /**
      * @param uTurnCosts the costs of a u-turn in seconds, for {@link Weighting#INFINITE_U_TURN_COSTS} the u-turn costs
      *                   will be infinite
      */
-    public DefaultTurnCostProvider(FlagEncoder encoder, TurnCostStorage turnCostStorage, int uTurnCosts) {
+    public DefaultTurnCostProvider(DecimalEncodedValue turnCostEnc, TurnCostStorage turnCostStorage, int uTurnCosts) {
         if (uTurnCosts < 0 && uTurnCosts != INFINITE_U_TURN_COSTS) {
             throw new IllegalArgumentException("u-turn costs must be positive, or equal to " + INFINITE_U_TURN_COSTS + " (=infinite costs)");
         }
@@ -53,10 +47,13 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         if (turnCostStorage == null) {
             throw new IllegalArgumentException("No storage set to calculate turn weight");
         }
-        String key = TurnCost.key(encoder.toString());
         // if null the TurnCostProvider can be still useful for edge-based routing
-        this.turnCostEnc = encoder.hasEncodedValue(key) ? encoder.getDecimalEncodedValue(key) : null;
+        this.turnCostEnc = turnCostEnc;
         this.turnCostStorage = turnCostStorage;
+    }
+
+    public DecimalEncodedValue getTurnCostEnc() {
+        return turnCostEnc;
     }
 
     @Override
