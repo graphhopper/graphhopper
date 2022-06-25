@@ -1337,18 +1337,17 @@ public class GraphHopperTest {
                 new CHProfile(profile2)
         );
         hopper.importOrLoad();
-        String str = hopper.getEncodingManager().toString();
         GHResponse rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile2"));
         ResponsePath res = rsp.getBest();
-        assertFalse(rsp.hasErrors(), "car routing for " + str + " should not have errors:" + rsp.getErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(207, res.getTime() / 1000f, 1);
         assertEquals(2837, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile1"));
         res = rsp.getBest();
-        assertFalse(rsp.hasErrors(), "bike routing for " + str + " should not have errors:" + rsp.getErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(511, res.getTime() / 1000f, 1);
         assertEquals(2481, res.getDistance(), 1);
 

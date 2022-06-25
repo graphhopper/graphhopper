@@ -40,7 +40,6 @@ import static com.graphhopper.util.Helper.toLowerCase;
  */
 public class EncodingManager implements EncodedValueLookup {
     private final LinkedHashMap<String, EncodedValue> encodedValueMap;
-    private final LinkedHashMap<String, VehicleEncodedValues> flagEncoders;
     private final EncodedValue.InitializerConfig edgeConfig;
     private final EncodedValue.InitializerConfig turnCostConfig;
 
@@ -57,13 +56,6 @@ public class EncodingManager implements EncodedValueLookup {
                 map(s -> parseEncoderString(factory, s)).collect(Collectors.toList())).build();
     }
 
-    /**
-     * Instantiate manager with the given list of encoders.
-     */
-    public static EncodingManager create(FlagEncoder... flagEncoders) {
-        return EncodingManager.createBuilder(Arrays.asList(flagEncoders)).build();
-    }
-
     private static EncodingManager.Builder createBuilder(List<? extends FlagEncoder> flagEncoders) {
         Builder builder = new Builder();
         for (FlagEncoder flagEncoder : flagEncoders)
@@ -78,16 +70,14 @@ public class EncodingManager implements EncodedValueLookup {
         return new Builder();
     }
 
-    public EncodingManager(LinkedHashMap<String, EncodedValue> encodedValueMap, LinkedHashMap<String, VehicleEncodedValues> flagEncoders, EncodedValue.InitializerConfig edgeConfig, EncodedValue.InitializerConfig turnCostConfig) {
-        this.flagEncoders = flagEncoders;
+    public EncodingManager(LinkedHashMap<String, EncodedValue> encodedValueMap, EncodedValue.InitializerConfig edgeConfig, EncodedValue.InitializerConfig turnCostConfig) {
         this.encodedValueMap = encodedValueMap;
         this.turnCostConfig = turnCostConfig;
         this.edgeConfig = edgeConfig;
-        flagEncoders.values().forEach(f -> f.setEncodedValueLookup(this));
     }
 
     private EncodingManager() {
-        this(new LinkedHashMap<>(), new LinkedHashMap<>(), new EncodedValue.InitializerConfig(), new EncodedValue.InitializerConfig());
+        this(new LinkedHashMap<>(), new EncodedValue.InitializerConfig(), new EncodedValue.InitializerConfig());
     }
 
     public static class Builder {
@@ -95,8 +85,6 @@ public class EncodingManager implements EncodedValueLookup {
 
         public Builder add(FlagEncoder encoder) {
             checkNotBuiltAlready();
-            if (em.flagEncoders.containsKey(encoder.getName()))
-                throw new IllegalArgumentException("FlagEncoder already exists: " + encoder.getName());
             VehicleEncodedValues v = (VehicleEncodedValues) encoder;
             v.setEncodedValueLookup(em);
             List<EncodedValue> list = new ArrayList<>();
@@ -106,8 +94,6 @@ public class EncodingManager implements EncodedValueLookup {
             list = new ArrayList<>();
             v.createTurnCostEncodedValues(list);
             list.forEach(this::addTurnCostEncodedValue);
-
-            em.flagEncoders.put(v.getName(), v);
             return this;
         }
 
@@ -160,15 +146,15 @@ public class EncodingManager implements EncodedValueLookup {
             if (!em.hasEncodedValue(RoadAccess.KEY))
                 add(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class));
 
-            for (VehicleEncodedValues encoder : em.flagEncoders.values()) {
-                if (encoder.getName().contains("bike") || encoder.getName().contains("mtb")) {
+            for (String vehicle : em.getVehicles()) {
+                if (vehicle.contains("bike") || vehicle.contains("mtb")) {
                     if (!em.hasEncodedValue(BikeNetwork.KEY))
                         add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class));
                     if (!em.hasEncodedValue(GetOffBike.KEY))
                         add(GetOffBike.create());
                     if (!em.hasEncodedValue(Smoothness.KEY))
                         add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class));
-                } else if (encoder.getName().contains("foot") || encoder.getName().contains("hike") || encoder.getName().contains("wheelchair")) {
+                } else if (vehicle.contains("foot") || vehicle.contains("hike") || vehicle.contains("wheelchair")) {
                     if (!em.hasEncodedValue(FootNetwork.KEY))
                         add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class));
                 }
@@ -201,8 +187,13 @@ public class EncodingManager implements EncodedValueLookup {
         return encodedValueMap.get(key) != null;
     }
 
-    public String toFlagEncodersAsString() {
-        return flagEncoders.values().stream().map(VehicleEncodedValues::toSerializationString).collect(Collectors.joining(","));
+    public List<String> getVehicles() {
+        // the supported vehicles are all those prefixes for which there is an access and speed EV
+        return getEncodedValues().stream()
+                .filter(ev -> ev.getName().endsWith("_access"))
+                .map(ev -> ev.getName().replaceAll("_access", ""))
+                .filter(v -> hasEncodedValue(EncodingManager.getKey(v, "average_speed")))
+                .collect(Collectors.toList());
     }
 
     public String toEncodedValuesAsString() {
@@ -224,7 +215,7 @@ public class EncodingManager implements EncodedValueLookup {
 
     @Override
     public String toString() {
-        return flagEncoders.values().stream().map(Object::toString).collect(Collectors.joining(","));
+        return String.join(",", getVehicles());
     }
 
     // TODO hide IntsRef even more in a later version: https://gist.github.com/karussell/f4c2b2b1191be978d7ee9ec8dd2cd48f
@@ -237,15 +228,8 @@ public class EncodingManager implements EncodedValueLookup {
         return new IntsRef(2);
     }
 
-    public List<FlagEncoder> fetchEdgeEncoders() {
-        return new ArrayList<>(flagEncoders.values());
-    }
-
     public boolean needsTurnCostsSupport() {
-        for (FlagEncoder encoder : flagEncoders.values())
-            if (encoder.supportsTurnCosts())
-                return true;
-        return false;
+        return turnCostConfig.getRequiredBits() > 0;
     }
 
     @Override

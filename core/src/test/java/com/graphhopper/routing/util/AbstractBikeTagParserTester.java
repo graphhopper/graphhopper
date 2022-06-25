@@ -48,8 +48,6 @@ public abstract class AbstractBikeTagParserTester {
     @BeforeEach
     public void setUp() {
         encodingManager = createEncodingManager();
-        if (encodingManager.fetchEdgeEncoders().size() > 1)
-            fail("currently we assume there is only one encoder per test");
         parser = createBikeTagParser(encodingManager, new PMap("block_fords=true"));
         osmParsers = createOSMParsers(parser, encodingManager);
         roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);

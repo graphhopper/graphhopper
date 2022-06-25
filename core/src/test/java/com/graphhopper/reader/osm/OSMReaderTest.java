@@ -46,7 +46,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.Function;
 
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
@@ -675,11 +674,6 @@ public class OSMReaderTest {
                 } else {
                     return new DefaultFlagEncoderFactory().createFlagEncoder(name, config);
                 }
-            }
-
-            @Override
-            public FlagEncoder deserializeFlagEncoder(String serializedFlagEncoder, Function<String, EncodedValue> evLookup) {
-                return null;
             }
         });
         hopper.setVehicleTagParserFactory((lookup, name, config) -> {

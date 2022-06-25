@@ -34,7 +34,7 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -75,7 +75,6 @@ public class MiniGraphUI {
     private final BaseGraph graph;
     private final NodeAccess na;
     private final MapLayer pathLayer;
-    private final FlagEncoder encoder;
     private final DecimalEncodedValue avSpeedEnc;
     private final BooleanEncodedValue accessEnc;
     private final boolean useCH;
@@ -120,9 +119,9 @@ public class MiniGraphUI {
     public MiniGraphUI(GraphHopper hopper, boolean debug, boolean useCH) {
         this.graph = hopper.getBaseGraph();
         this.na = graph.getNodeAccess();
-        encoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
-        avSpeedEnc = encoder.getAverageSpeedEnc();
-        accessEnc = encoder.getAccessEnc();
+        String vehicle = hopper.getProfiles().get(0).getVehicle();
+        avSpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(EncodingManager.getKey(vehicle, "average_speed"));
+        accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(EncodingManager.getKey(vehicle, "access"));
         this.useCH = useCH;
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug);
@@ -333,7 +332,7 @@ public class MiniGraphUI {
             };
             AlgorithmOptions algoOpts = new AlgorithmOptions().setAlgorithm(Algorithms.ASTAR_BI).
                     setTraversalMode(TraversalMode.EDGE_BASED);
-            return algoFactory.createAlgo(qGraph, new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc()), algoOpts);
+            return algoFactory.createAlgo(qGraph, new FastestWeighting(accessEnc, avSpeedEnc), algoOpts);
         }
     }
 

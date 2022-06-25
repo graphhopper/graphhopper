@@ -66,7 +66,6 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.graphhopper.util.GHUtility.readCountries;
 import static com.graphhopper.util.Helper.*;
@@ -822,7 +821,6 @@ public class GraphHopper {
         properties.put("graph.em.edge_config", encodingManager.toEdgeConfigAsString());
         properties.put("graph.em.turn_cost_config", encodingManager.toTurnCostConfigAsString());
         properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
-        properties.put("graph.flag_encoders", encodingManager.toFlagEncodersAsString());
     }
 
     private List<CustomArea> readCustomAreas() {
@@ -947,23 +945,9 @@ public class GraphHopper {
                 throw new IllegalStateException("Duplicate encoded value name: " + encodedValue.getName() + " in: graph.encoded_values=" + encodedValueStr);
         });
 
-        String flagEncodersStr = properties.get("graph.flag_encoders");
-        LinkedHashMap<String, VehicleEncodedValues> flagEncoders = Stream.of(flagEncodersStr.split(","))
-                .map(str -> flagEncoderFactory.deserializeFlagEncoder(str, name -> {
-                    EncodedValue ev = encodedValues.get(name);
-                    if (ev == null)
-                        throw new IllegalStateException("FlagEncoder " + str + " uses unknown encoded value: " + name);
-                    return ev;
-                }))
-                .collect(Collectors.toMap(FlagEncoder::getName, f -> (VehicleEncodedValues) f,
-                        (f1, f2) -> {
-                            throw new IllegalStateException("Duplicate flag encoder: " + f1.getName() + " in: " + flagEncodersStr);
-                        },
-                        LinkedHashMap::new));
-
         EncodedValue.InitializerConfig edgeConfig = EncodedValueSerializer.deserializeInitializerConfig(properties.get("graph.em.edge_config"));
         EncodedValue.InitializerConfig turnCostConfig = EncodedValueSerializer.deserializeInitializerConfig(properties.get("graph.em.turn_cost_config"));
-        encodingManager = new EncodingManager(encodedValues, flagEncoders, edgeConfig, turnCostConfig);
+        encodingManager = new EncodingManager(encodedValues, edgeConfig, turnCostConfig);
     }
 
     private ArrayNode deserializeEncodedValueList(String encodedValueStr) {

@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.util.PMap;
-
-import java.util.function.Function;
 
 /**
  * @author Peter Karich
@@ -40,5 +37,4 @@ public interface FlagEncoderFactory {
 
     FlagEncoder createFlagEncoder(String name, PMap configuration);
 
-    FlagEncoder deserializeFlagEncoder(String serializedFlagEncoder, Function<String, EncodedValue> evLookup);
 }

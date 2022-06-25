@@ -17,12 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.util.PMap;
-
-import java.util.function.Function;
 
 /**
  * This class creates FlagEncoders that are already included in the GraphHopper distribution.
@@ -66,24 +61,5 @@ public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
             return FlagEncoders.createWheelchair(configuration);
 
         throw new IllegalArgumentException("entry in encoder list not supported: " + name);
-    }
-
-    @Override
-    public FlagEncoder deserializeFlagEncoder(String serializedFlagEncoder, Function<String, EncodedValue> evLookup) {
-        String[] strings = serializedFlagEncoder.split("\\|");
-        if (strings.length != 9)
-            throw new IllegalStateException("Deserialized FlagEncoders should consist of nine pipe-separated strings");
-        String name = strings[0];
-        BooleanEncodedValue accessEnc = strings[1].equals("null") ? null : (BooleanEncodedValue) evLookup.apply(strings[1]);
-        DecimalEncodedValue avgSpeedEnc = strings[2].equals("null") ? null : (DecimalEncodedValue) evLookup.apply(strings[2]);
-        DecimalEncodedValue priorityEnc = strings[3].equals("null") ? null : (DecimalEncodedValue) evLookup.apply(strings[3]);
-        DecimalEncodedValue curvatureEnc = strings[4].equals("null") ? null : (DecimalEncodedValue) evLookup.apply(strings[4]);
-        DecimalEncodedValue turnCostEnc = strings[5].equals("null") ? null : (DecimalEncodedValue) evLookup.apply(strings[5]);
-        double maxPossibleSpeed = Double.parseDouble(strings[6]);
-        boolean isMotorVehicle = Boolean.parseBoolean(strings[7]);
-        boolean isHGV = Boolean.parseBoolean(strings[8]);
-        return new VehicleEncodedValues(
-                name, accessEnc, avgSpeedEnc, priorityEnc, curvatureEnc, turnCostEnc, maxPossibleSpeed, isMotorVehicle, isHGV
-        );
     }
 }
