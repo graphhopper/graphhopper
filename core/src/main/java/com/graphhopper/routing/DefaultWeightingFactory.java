@@ -30,6 +30,8 @@ import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
+import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FACTOR;
+import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.toLowerCase;
@@ -55,6 +57,15 @@ public class DefaultWeightingFactory implements WeightingFactory {
         hints.putAll(requestHints);
 
         final String vehicle = profile.getVehicle();
+        // todonow: we used to take this information from the 'encoder', but now it is gone. We probably need to take
+        // it from the profile now somehow.
+        final boolean isMotorVehicle = true;
+        if (isMotorVehicle) {
+            hints.putObject(DESTINATION_FACTOR, hints.getDouble(DESTINATION_FACTOR, 10));
+            hints.putObject(PRIVATE_FACTOR, hints.getDouble(PRIVATE_FACTOR, 10));
+        } else {
+            hints.putObject(PRIVATE_FACTOR, hints.getDouble(PRIVATE_FACTOR, 1.2));
+        }
         TurnCostProvider turnCostProvider;
         if (profile.isTurnCosts() && !disableTurnCosts) {
             DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(vehicle));

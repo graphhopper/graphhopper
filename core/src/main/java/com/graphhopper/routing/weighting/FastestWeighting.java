@@ -35,6 +35,8 @@ import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PR
  * @author Peter Karich
  */
 public class FastestWeighting extends AbstractWeighting {
+    public static String DESTINATION_FACTOR = "road_access_destination_factor";
+    public static String PRIVATE_FACTOR = "road_access_private_factor";
     /**
      * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
      * costs or traffic light costs etc)
@@ -63,19 +65,14 @@ public class FastestWeighting extends AbstractWeighting {
 //        maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
         maxSpeed = 140 / SPEED_CONV;
 
-        // ensure that we do not need to change getMinWeight, i.e. road_access_factor >= 1
-        // todonow: maybe setup these factors in weighting factory?
-//        double defaultDestinationFactor = encoder.isMotorVehicle() ? 10 : 1;
-        double defaultDestinationFactor = 10;
-        destinationPenalty = checkBounds("road_access_destination_factor", map.getDouble("road_access_destination_factor", defaultDestinationFactor), 1, 10);
-        // todonow: maybe setup these factors in weighting factory?
-//        double defaultPrivateFactor = encoder.isMotorVehicle() ? 10 : 1.2;
-        double defaultPrivateFactor = 10;
-        privatePenalty = checkBounds("road_access_private_factor", map.getDouble("road_access_private_factor", defaultPrivateFactor), 1, 10);
+        destinationPenalty = map.getDouble(DESTINATION_FACTOR, 1);
+        privatePenalty = map.getDouble(PRIVATE_FACTOR, 1);
+        // ensure that we do not need to change getMinWeight, i.e. both factors need to be >= 1
+        checkBounds(DESTINATION_FACTOR, destinationPenalty, 1, 10);
+        checkBounds(PRIVATE_FACTOR, privatePenalty, 1, 10);
         if (destinationPenalty > 1 || privatePenalty > 1) {
-            // todonow: maybe only error when factors are given *explicitly*
-//            if (roadAccessEnc == null)
-//                throw new IllegalArgumentException("road_access must not be null when destination or private penalties are > 1");
+            if (roadAccessEnc == null)
+                throw new IllegalArgumentException("road_access must not be null when destination or private penalties are > 1");
             this.roadAccessEnc = roadAccessEnc;
         } else
             this.roadAccessEnc = null;
