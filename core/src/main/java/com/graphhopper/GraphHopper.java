@@ -983,11 +983,15 @@ public class GraphHopper {
             throw new IllegalArgumentException("There has to be at least one profile");
         EncodingManager encodingManager = getEncodingManager();
         for (Profile profile : profilesByName.values()) {
-            if (!encodingManager.hasEncoder(profile.getVehicle())) {
-                throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure all vehicles used in 'profiles' exist in 'graph.flag_encoders'");
-            }
-            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-            if (profile.isTurnCosts() && !encoder.supportsTurnCosts()) {
+            String accessEncName = EncodingManager.getKey(profile.getVehicle(), "access");
+            String speedEncName = EncodingManager.getKey(profile.getVehicle(), "average_speed");
+            if (!encodingManager.hasEncodedValue(accessEncName) || !encodingManager.hasEncodedValue(speedEncName))
+                throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". " +
+                        "Encoded values " + accessEncName + " and " + speedEncName + " are required");
+            DecimalEncodedValue turnCostEnc = encodingManager.hasEncodedValue(TurnCost.key(profile.getVehicle()))
+                    ? encodingManager.getDecimalEncodedValue(TurnCost.key(profile.getVehicle()))
+                    : null;
+            if (profile.isTurnCosts() && turnCostEnc == null) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +
                         "'turn_costs=true', but the corresponding vehicle '" + profile.getVehicle() + "' does not support turn costs." +
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");

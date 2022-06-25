@@ -95,7 +95,7 @@ public class EncodingManager implements EncodedValueLookup {
 
         public Builder add(FlagEncoder encoder) {
             checkNotBuiltAlready();
-            if (em.hasEncoder(encoder.getName()))
+            if (em.flagEncoders.containsKey(encoder.getName()))
                 throw new IllegalArgumentException("FlagEncoder already exists: " + encoder.getName());
             VehicleEncodedValues v = (VehicleEncodedValues) encoder;
             v.setEncodedValueLookup(em);
@@ -199,21 +199,6 @@ public class EncodingManager implements EncodedValueLookup {
 
     public boolean hasEncodedValue(String key) {
         return encodedValueMap.get(key) != null;
-    }
-
-    public boolean hasEncoder(String encoder) {
-        return flagEncoders.containsKey(encoder);
-    }
-
-    public FlagEncoder getEncoder(String name) {
-        return getEncoder(name, true);
-    }
-
-    private FlagEncoder getEncoder(String name, boolean throwExc) {
-        VehicleEncodedValues flagEncoder = flagEncoders.get(name);
-        if (flagEncoder == null && throwExc)
-            throw new IllegalArgumentException("FlagEncoder " + name + " not found. Existing: " + flagEncoders.keySet());
-        return flagEncoder;
     }
 
     public String toFlagEncodersAsString() {

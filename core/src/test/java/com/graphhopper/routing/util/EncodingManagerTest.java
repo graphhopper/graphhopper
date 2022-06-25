@@ -36,13 +36,6 @@ public class EncodingManagerTest {
     }
 
     @Test
-    public void testEncoderAcceptNoException() {
-        EncodingManager manager = EncodingManager.create("car");
-        assertTrue(manager.hasEncoder("car"));
-        assertFalse(manager.hasEncoder("foot"));
-    }
-
-    @Test
     public void testSupportFords() {
         String flagEncoderStrings = "car,bike,foot";
         EncodingManager manager = EncodingManager.create(flagEncoderStrings);

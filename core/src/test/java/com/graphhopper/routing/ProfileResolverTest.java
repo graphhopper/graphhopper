@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -92,6 +93,8 @@ public class ProfileResolverTest {
         // if we set the weighting as well it works
         assertEquals("fast_bike", profileResolver.resolveProfile(new PMap().putObject("vehicle", "bike").putObject("weighting", "fastest")).getName());
         assertEquals("short_bike", profileResolver.resolveProfile(new PMap().putObject("vehicle", "bike").putObject("weighting", "shortest")).getName());
+
+        assertUnsupportedVehicle(profileResolver, "unknown", Arrays.asList("car", "bike"));
     }
 
     @Test
@@ -163,6 +166,11 @@ public class ProfileResolverTest {
         } catch (IllegalArgumentException e) {
             assertTrue(e.getMessage().contains("Cannot find matching profile for your request"), e.getMessage());
         }
+    }
+
+    private void assertUnsupportedVehicle(ProfileResolver profileResolver, String vehicle, List<String> supported) {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> profileResolver.resolveProfile(new PMap().putObject("vehicle", vehicle)));
+        assertTrue(e.getMessage().contains("Vehicle not supported: `" + vehicle + "`. Supported are: `" + supported + "`"), e.getMessage());
     }
 
 }

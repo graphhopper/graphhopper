@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 
@@ -79,11 +80,22 @@ public class ProfileResolver {
         boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
 
         String vehicle = hints.getString("vehicle", "").toLowerCase();
-        if (!vehicle.isEmpty() && !encodingManager.hasEncoder(vehicle))
-            throw new IllegalArgumentException("Vehicle not supported: `" + vehicle + "`. Supported are: `" + encodingManager.toString() +
-                    "`\nYou should consider using the `profile` parameter instead of specifying a vehicle." +
-                    "\nAvailable profiles: " + getProfileNames() +
-                    "\nTo learn more about profiles, see: docs/core/profiles.md");
+        if (!vehicle.isEmpty()) {
+            String accessEncName = EncodingManager.getKey(vehicle, "access");
+            String speedEncName = EncodingManager.getKey(vehicle, "average_speed");
+            if (!encodingManager.hasEncodedValue(accessEncName) || !encodingManager.hasEncodedValue(speedEncName)) {
+                // we define the supported vehicles as all vehicle names for which there is an access and speed EV
+                List<String> vehicles = encodingManager.getEncodedValues().stream()
+                        .filter(ev -> ev.getName().endsWith("_access"))
+                        .map(ev -> ev.getName().replaceAll("_access", ""))
+                        .filter(v -> encodingManager.hasEncodedValue(EncodingManager.getKey(v, "average_speed")))
+                        .collect(Collectors.toList());
+                throw new IllegalArgumentException("Vehicle not supported: `" + vehicle + "`. Supported are: `" + vehicles +
+                        "`\nYou should consider using the `profile` parameter instead of specifying a vehicle." +
+                        "\nAvailable profiles: " + getProfileNames() +
+                        "\nTo learn more about profiles, see: docs/core/profiles.md");
+            }
+        }
 
         // we select the profile based on the given request hints and the available profiles
         if (!chProfiles.isEmpty() && !disableCH) {
