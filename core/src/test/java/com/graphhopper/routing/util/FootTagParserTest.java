@@ -20,8 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
@@ -36,13 +35,19 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class FootTagParserTest {
-    private final EncodingManager encodingManager = EncodingManager.create("car,bike,foot");
-    private final FlagEncoder encoder = encodingManager.getEncoder("foot");
+    private final BooleanEncodedValue footAccessEnc = new SimpleBooleanEncodedValue("foot_access", true);
+    private final DecimalEncodedValue footAvgSpeedEnc = new DecimalEncodedValueImpl("foot_average_speed", 4, 1, false);
+    private final DecimalEncodedValue footPriorityEnc = new DecimalEncodedValueImpl("foot_priority", 4, PriorityCode.getFactor(1), false);
+    private final BooleanEncodedValue bikeAccessEnc = new SimpleBooleanEncodedValue("bike_access", true);
+    private final DecimalEncodedValue bikeAvgSpeedEnc = new DecimalEncodedValueImpl("bike_average_speed", 4, 2, false);
+    private final BooleanEncodedValue carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+    private final DecimalEncodedValue carAvSpeedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+    private final EncodingManager encodingManager = EncodingManager.start()
+            .add(footAccessEnc).add(footAvgSpeedEnc).add(footPriorityEnc).add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
+            .add(bikeAccessEnc).add(bikeAvgSpeedEnc).add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
+            .add(carAccessEnc).add(carAvSpeedEnc)
+            .build();
     private final FootTagParser footParser = new FootTagParser(encodingManager, new PMap());
-    private final DecimalEncodedValue footAvgSpeedEnc = encoder.getAverageSpeedEnc();
-    private final BooleanEncodedValue footAccessEnc = encoder.getAccessEnc();
-    private final DecimalEncodedValue carAvSpeedEnc = encodingManager.getEncoder("car").getAverageSpeedEnc();
-    private final BooleanEncodedValue carAccessEnc = encodingManager.getEncoder("car").getAccessEnc();
 
     public FootTagParserTest() {
         footParser.init(new DateRangeParser());
