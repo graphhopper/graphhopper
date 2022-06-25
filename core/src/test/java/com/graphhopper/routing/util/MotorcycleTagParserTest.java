@@ -20,6 +20,9 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
@@ -37,10 +40,17 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class MotorcycleTagParserTest {
-    private final EncodingManager em = EncodingManager.create("motorcycle,foot");
-    private final FlagEncoder encoder = em.getEncoder("motorcycle");
+    private final BooleanEncodedValue motorcycleAccessEnc = new SimpleBooleanEncodedValue("motorcycle_access", true);
+    private final DecimalEncodedValue motorcycleSpeedEnc = new DecimalEncodedValueImpl("motorcycle_average_speed", 5, 5, true);
+    private final DecimalEncodedValue motorcyclePriorityEnc = new DecimalEncodedValueImpl("motorcycle_priority", 4, PriorityCode.getFactor(1), false);
+    private final DecimalEncodedValue motorcycleCurvatureEnc = new DecimalEncodedValueImpl("motorcycle_curvature", 4, 0.1, false);
+    private final BooleanEncodedValue footAccessEnc = new SimpleBooleanEncodedValue("foot_access", true);
+    private final DecimalEncodedValue footSpeedEnc = new DecimalEncodedValueImpl("foot_speed", 4, 1, false);
+    private final EncodingManager em = EncodingManager.start()
+            .add(motorcycleAccessEnc).add(motorcycleSpeedEnc).add(motorcyclePriorityEnc).add(motorcyclePriorityEnc)
+            .add(footAccessEnc).add(footSpeedEnc)
+            .build();
     private final MotorcycleTagParser parser;
-    private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
 
     public MotorcycleTagParserTest() {
         parser = new MotorcycleTagParser(em, new PMap());
@@ -57,7 +67,7 @@ public class MotorcycleTagParserTest {
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
         edge.setDistance(100);
 
-        edge.set(accessEnc, true, true).set(encoder.getAverageSpeedEnc(), 10.0, 15.0);
+        edge.set(motorcycleAccessEnc, true, true).set(motorcycleSpeedEnc, 10.0, 15.0);
         return gs;
     }
 
@@ -150,8 +160,8 @@ public class MotorcycleTagParserTest {
     @Test
     public void testSetSpeed0_issue367() {
         IntsRef edgeFlags = em.createEdgeFlags();
-        accessEnc.setBool(false, edgeFlags, true);
-        accessEnc.setBool(true, edgeFlags, true);
+        motorcycleAccessEnc.setBool(false, edgeFlags, true);
+        motorcycleAccessEnc.setBool(true, edgeFlags, true);
         parser.getAverageSpeedEnc().setDecimal(false, edgeFlags, 10);
         parser.getAverageSpeedEnc().setDecimal(true, edgeFlags, 10);
 
@@ -161,8 +171,8 @@ public class MotorcycleTagParserTest {
         parser.setSpeed(false, edgeFlags, 0);
         assertEquals(0, parser.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
         assertEquals(10, parser.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
-        assertFalse(accessEnc.getBool(false, edgeFlags));
-        assertTrue(accessEnc.getBool(true, edgeFlags));
+        assertFalse(motorcycleAccessEnc.getBool(false, edgeFlags));
+        assertTrue(motorcycleAccessEnc.getBool(true, edgeFlags));
     }
 
     @Test
@@ -191,6 +201,6 @@ public class MotorcycleTagParserTest {
         IntsRef flags = parser.handleWayTags(em.createEdgeFlags(), way);
         edge.setFlags(flags);
         parser.applyWayTags(way, edge);
-        return edge.get(encoder.getCurvatureEnc());
+        return edge.get(motorcycleCurvatureEnc);
     }
 }

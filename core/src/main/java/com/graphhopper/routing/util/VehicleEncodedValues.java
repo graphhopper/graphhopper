@@ -64,7 +64,7 @@ public class VehicleEncodedValues implements FlagEncoder {
 
     public static VehicleEncodedValues wheelchair(PMap properties) {
         if (properties.has("speed_two_directions"))
-            throw new IllegalArgumentException("bike2 always uses two directions");
+            throw new IllegalArgumentException("wheelchair always uses two directions");
         return foot(new PMap(properties)
                 .putObject("name", properties.getString("name", "wheelchair"))
                 .putObject("speed_two_directions", true)
