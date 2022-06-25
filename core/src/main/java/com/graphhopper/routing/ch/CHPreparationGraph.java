@@ -983,7 +983,7 @@ public class CHPreparationGraph {
 
         @Override
         public int getOrigEdgeKeyFirst() {
-            return graph.keysAndFlags.get(index) >>> 2;
+            return graph.keysAndFlags.get(index) >> 2;
         }
 
         @Override
