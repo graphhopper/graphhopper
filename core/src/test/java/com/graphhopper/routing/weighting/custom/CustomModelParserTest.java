@@ -49,8 +49,8 @@ class CustomModelParserTest {
 
     @BeforeEach
     void setup() {
-        accessEnc = new SimpleBooleanEncodedValue("access", true);
-        avgSpeedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        accessEnc = new SimpleBooleanEncodedValue("car_access", true);
+        avgSpeedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
         countryEnc = new StringEncodedValue("country", 10);
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avgSpeedEnc).add(countryEnc).add(new EnumEncodedValue<>(Surface.KEY, Surface.class)).build();
         graph = new BaseGraph.Builder(encodingManager).create();

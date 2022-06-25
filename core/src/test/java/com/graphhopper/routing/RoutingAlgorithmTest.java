@@ -103,8 +103,8 @@ public class RoutingAlgorithmTest {
             this.pathCalculator = pathCalculator;
             this.traversalMode = traversalMode;
             carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
-            footAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
-            bike2AccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+            footAccessEnc = new SimpleBooleanEncodedValue("foot_access", true);
+            bike2AccessEnc = new SimpleBooleanEncodedValue("bike2_access", true);
             carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
             footSpeedEnc = new DecimalEncodedValueImpl("foot_speed", 4, 1, false);
             bike2SpeedEnc = new DecimalEncodedValueImpl("bike2_speed", 4, 2, true);

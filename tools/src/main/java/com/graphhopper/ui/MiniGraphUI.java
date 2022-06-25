@@ -333,7 +333,7 @@ public class MiniGraphUI {
             };
             AlgorithmOptions algoOpts = new AlgorithmOptions().setAlgorithm(Algorithms.ASTAR_BI).
                     setTraversalMode(TraversalMode.EDGE_BASED);
-            return algoFactory.createAlgo(qGraph, new FastestWeighting(encoder), algoOpts);
+            return algoFactory.createAlgo(qGraph, new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc()), algoOpts);
         }
     }
 

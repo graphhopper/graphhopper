@@ -54,7 +54,7 @@ class QueryRoutingCHGraphTest {
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         turnCostEnc = TurnCost.create("car", 5);
         encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
-        graph = new BaseGraph.Builder(encodingManager).create();
+        graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()));
         na = graph.getNodeAccess();
     }

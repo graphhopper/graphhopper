@@ -25,10 +25,11 @@ import com.graphhopper.http.OffsetDateTimeParam;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
 import com.graphhopper.jackson.ResponsePathSerializer;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -94,8 +95,9 @@ public class PtIsochroneResource {
         double targetZ = seconds * 1000;
 
         GeometryFactory geometryFactory = new GeometryFactory();
-        final FlagEncoder footEncoder = encodingManager.getEncoder("foot");
-        final Weighting weighting = new FastestWeighting(footEncoder);
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(EncodingManager.getKey("foot", "access"));
+        DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey("foot", "average_speed"));
+        final Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
         DefaultSnapFilter snapFilter = new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("foot")));
 
         PtLocationSnapper.Result snapResult = new PtLocationSnapper(baseGraph, locationIndex, gtfsStorage).snapAll(Arrays.asList(location), Arrays.asList(snapFilter));

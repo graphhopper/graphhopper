@@ -19,10 +19,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
@@ -56,13 +54,14 @@ public class DefaultWeightingFactory implements WeightingFactory {
         hints.putAll(profile.getHints());
         hints.putAll(requestHints);
 
-        FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
+        final String vehicle = profile.getVehicle();
         TurnCostProvider turnCostProvider;
         if (profile.isTurnCosts() && !disableTurnCosts) {
-            if (!encoder.supportsTurnCosts())
-                throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
+            DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(vehicle));
+            if (turnCostEnc == null)
+                throw new IllegalArgumentException("Vehicle " + vehicle + " does not support turn costs");
             int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-            turnCostProvider = new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage(), uTurnCosts);
+            turnCostProvider = new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), uTurnCosts);
         } else {
             turnCostProvider = NO_TURN_COST_PROVIDER;
         }
@@ -72,37 +71,46 @@ public class DefaultWeightingFactory implements WeightingFactory {
             throw new IllegalArgumentException("You have to specify a weighting");
 
         Weighting weighting = null;
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(EncodingManager.getKey(vehicle, "access"));
+        DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(vehicle, "average_speed"));
+        DecimalEncodedValue priorityEnc = encodingManager.hasEncodedValue(EncodingManager.getKey(vehicle, "priority"))
+                ? encodingManager.getDecimalEncodedValue(EncodingManager.getKey(vehicle, "priority"))
+                : null;
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
             if (!(profile instanceof CustomProfile))
                 throw new IllegalArgumentException("custom weighting requires a CustomProfile but was profile=" + profile.getName());
             CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             CustomProfile customProfile = (CustomProfile) profile;
             queryCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
-            weighting = CustomModelParser.createWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
-                    encoder.getPriorityEnc(), encoder.getMaxSpeed(), encodingManager, turnCostProvider, queryCustomModel);
+            // todonow: this used to be encoder.getMaxSpeed()!
+            double maxSpeed = speedEnc.getMaxDecimal();
+            weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
+                    priorityEnc, maxSpeed, encodingManager, turnCostProvider, queryCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
-            weighting = new ShortestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), turnCostProvider);
+            weighting = new ShortestWeighting(accessEnc, speedEnc, turnCostProvider);
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {
             if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
                 throw new IllegalArgumentException("fastest weighting requires road_access");
             EnumEncodedValue<RoadAccess> roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-            if (encoder.getPriorityEnc() != null)
-                weighting = new PriorityWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), encoder.getPriorityEnc(), roadAccessEnc, hints, turnCostProvider);
+            if (priorityEnc != null)
+                weighting = new PriorityWeighting(accessEnc, speedEnc, priorityEnc, roadAccessEnc, hints, turnCostProvider);
             else
-                weighting = new FastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), roadAccessEnc, hints, turnCostProvider);
+                weighting = new FastestWeighting(accessEnc, speedEnc, roadAccessEnc, hints, turnCostProvider);
         } else if ("curvature".equalsIgnoreCase(weightingStr)) {
-            if (encoder.getCurvatureEnc() == null || encoder.getPriorityEnc() == null)
-                throw new IllegalArgumentException("curvature weighting requires curvature and priority, but not found for " + encoder.getName());
+            DecimalEncodedValue curvatureEnc = encodingManager.hasEncodedValue(EncodingManager.getKey(vehicle, "curvature"))
+                    ? encodingManager.getDecimalEncodedValue(EncodingManager.getKey(vehicle, "curvature"))
+                    : null;
+            if (curvatureEnc == null || priorityEnc == null)
+                throw new IllegalArgumentException("curvature weighting requires curvature and priority, but not found for " + vehicle);
             if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
                 throw new IllegalArgumentException("curvature weighting requires road_access");
             EnumEncodedValue<RoadAccess> roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-            weighting = new CurvatureWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), encoder.getPriorityEnc(),
-                    encoder.getCurvatureEnc(), roadAccessEnc, hints, turnCostProvider);
+            weighting = new CurvatureWeighting(accessEnc, speedEnc, priorityEnc, curvatureEnc, roadAccessEnc, hints, turnCostProvider);
         } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
             if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
                 throw new IllegalArgumentException("curvature weighting requires road_access");
             EnumEncodedValue<RoadAccess> roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-            weighting = new ShortFastestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), roadAccessEnc, hints, turnCostProvider);
+            weighting = new ShortFastestWeighting(accessEnc, speedEnc, roadAccessEnc, hints, turnCostProvider);
         }
 
         if (weighting == null)

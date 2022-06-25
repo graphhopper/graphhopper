@@ -22,7 +22,6 @@ public class DecimalEncodedValueTest {
     public void testMaxValue() {
         DecimalEncodedValue ev = new DecimalEncodedValueImpl("test1", 8, 0.5, false);
         EncodingManager em = EncodingManager.start().add(ev).build();
-        ev.init(new EncodedValue.InitializerConfig());
         IntsRef flags = em.createEdgeFlags();
         ev.setDecimal(false, flags, 100d);
         assertEquals(100, ev.getDecimal(false, flags), 1e-1);

@@ -28,6 +28,7 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
@@ -188,7 +189,7 @@ public class Measurement {
 
             final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             printGraphDetails(g, vehicle);
-            measureGraphTraversal(g, encoder, count * 100);
+            measureGraphTraversal(g, encoder.getAccessEnc(), count * 100);
             measureLocationIndex(g, hopper.getLocationIndex(), count);
 
             if (runSlow) {
@@ -447,10 +448,10 @@ public class Measurement {
         print("location_index", miniPerf);
     }
 
-    private void measureGraphTraversal(final Graph graph, final FlagEncoder encoder, int count) {
+    private void measureGraphTraversal(final Graph graph, BooleanEncodedValue accessEnc, int count) {
         final Random rand = new Random(seed);
 
-        EdgeFilter outFilter = AccessFilter.outEdges(encoder.getAccessEnc());
+        EdgeFilter outFilter = AccessFilter.outEdges(accessEnc);
         final EdgeExplorer outExplorer = graph.createEdgeExplorer(outFilter);
         MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             int nodeId = rand.nextInt(maxNode);

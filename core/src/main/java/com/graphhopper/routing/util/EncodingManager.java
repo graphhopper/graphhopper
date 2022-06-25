@@ -61,21 +61,13 @@ public class EncodingManager implements EncodedValueLookup {
      * Instantiate manager with the given list of encoders.
      */
     public static EncodingManager create(FlagEncoder... flagEncoders) {
-        return create(Arrays.asList(flagEncoders));
-    }
-
-    /**
-     * Instantiate manager with the given list of encoders.
-     */
-    public static EncodingManager create(List<? extends FlagEncoder> flagEncoders) {
-        return createBuilder(flagEncoders).build();
+        return EncodingManager.createBuilder(Arrays.asList(flagEncoders)).build();
     }
 
     private static EncodingManager.Builder createBuilder(List<? extends FlagEncoder> flagEncoders) {
         Builder builder = new Builder();
-        for (FlagEncoder flagEncoder : flagEncoders) {
+        for (FlagEncoder flagEncoder : flagEncoders)
             builder.add(flagEncoder);
-        }
         return builder;
     }
 
@@ -315,10 +307,6 @@ public class EncodingManager implements EncodedValueLookup {
      * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as
      * "none-shared" across the other FlagEncoders.
      */
-    public static String getKey(FlagEncoder encoder, String str) {
-        return getKey(encoder.toString(), str);
-    }
-
     public static String getKey(String prefix, String str) {
         return prefix + "_" + str;
     }

@@ -47,7 +47,7 @@ public class MotorcycleTagParserTest {
     private final BooleanEncodedValue footAccessEnc = new SimpleBooleanEncodedValue("foot_access", true);
     private final DecimalEncodedValue footSpeedEnc = new DecimalEncodedValueImpl("foot_speed", 4, 1, false);
     private final EncodingManager em = EncodingManager.start()
-            .add(motorcycleAccessEnc).add(motorcycleSpeedEnc).add(motorcyclePriorityEnc).add(motorcyclePriorityEnc)
+            .add(motorcycleAccessEnc).add(motorcycleSpeedEnc).add(motorcyclePriorityEnc).add(motorcycleCurvatureEnc)
             .add(footAccessEnc).add(footSpeedEnc)
             .build();
     private final MotorcycleTagParser parser;

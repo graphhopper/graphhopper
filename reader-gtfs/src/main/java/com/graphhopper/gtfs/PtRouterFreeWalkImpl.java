@@ -64,7 +64,10 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
     public PtRouterFreeWalkImpl(GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
         this.config = config;
         this.weightingFactory = new DefaultWeightingFactory(baseGraph.getBaseGraph(), encodingManager);
-        this.accessEgressWeighting = new FastestWeighting(encodingManager.getEncoder("foot"));
+        this.accessEgressWeighting = new FastestWeighting(
+                encodingManager.getBooleanEncodedValue(EncodingManager.getKey("foot", "access")),
+                encodingManager.getDecimalEncodedValue(EncodingManager.getKey("foot", "average_speed"))
+        );
         this.translationMap = translationMap;
         this.baseGraph = baseGraph;
         this.encodingManager = encodingManager;
@@ -166,10 +169,16 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             requestedPathDetails = request.getPathDetails();
             accessProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getAccessProfile())).findFirst().get();
             accessWeighting = weightingFactory.createWeighting(accessProfile, new PMap(), false);
-            accessSnapFilter = new DefaultSnapFilter(new FastestWeighting(encodingManager.getEncoder(accessProfile.getVehicle())), encodingManager.getBooleanEncodedValue(Subnetwork.key(accessProfile.getVehicle())));
+            accessSnapFilter = new DefaultSnapFilter(new FastestWeighting(
+                    encodingManager.getBooleanEncodedValue(EncodingManager.getKey(accessProfile.getVehicle(), "access")),
+                    encodingManager.getDecimalEncodedValue(EncodingManager.getKey(accessProfile.getVehicle(), "average_speed"))
+            ), encodingManager.getBooleanEncodedValue(Subnetwork.key(accessProfile.getVehicle())));
             egressProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getEgressProfile())).findFirst().get();
             egressWeighting = weightingFactory.createWeighting(egressProfile, new PMap(), false);
-            egressSnapFilter = new DefaultSnapFilter(new FastestWeighting(encodingManager.getEncoder(egressProfile.getVehicle())), encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
+            egressSnapFilter = new DefaultSnapFilter(new FastestWeighting(
+                    encodingManager.getBooleanEncodedValue(EncodingManager.getKey(egressProfile.getVehicle(), "access")),
+                    encodingManager.getDecimalEncodedValue(EncodingManager.getKey(egressProfile.getVehicle(), "average_speed"))
+            ), encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
         }
 
         GHResponse route() {

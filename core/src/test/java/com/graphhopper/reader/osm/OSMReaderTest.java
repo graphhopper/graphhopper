@@ -64,9 +64,9 @@ public class OSMReaderTest {
     private final String file7 = "test-osm7.xml";
     private final String fileBarriers = "test-barriers.xml";
     private final String dir = "./target/tmp/test-db";
-    private FlagEncoder carEncoder;
     private BooleanEncodedValue carAccessEnc;
-    private FlagEncoder footEncoder;
+    private DecimalEncodedValue carSpeedEnc;
+    private BooleanEncodedValue footAccessEnc;
     private EdgeExplorer carOutExplorer;
     private EdgeExplorer carAllExplorer;
 
@@ -218,13 +218,13 @@ public class OSMReaderTest {
         int n80 = AbstractGraphStorageTester.getIdOf(graph, 54.1);
         EdgeIterator iter = carOutExplorer.setBaseNode(n80);
         iter.next();
-        assertEquals(5, iter.get(carEncoder.getAverageSpeedEnc()), 1e-1);
+        assertEquals(5, iter.get(carSpeedEnc), 1e-1);
 
         // duration 01:10 is given => more precise speed calculation!
         // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 71km/h
         iter = carOutExplorer.setBaseNode(n40);
         iter.next();
-        assertEquals(70, iter.get(carEncoder.getAverageSpeedEnc()), 1e-1);
+        assertEquals(70, iter.get(carSpeedEnc), 1e-1);
     }
 
     @Test
@@ -239,7 +239,7 @@ public class OSMReaderTest {
         int n60 = AbstractGraphStorageTester.getIdOf(graph, 56.0);
         EdgeIterator iter = carOutExplorer.setBaseNode(n60);
         iter.next();
-        assertEquals(35, iter.get(carEncoder.getAverageSpeedEnc()), 1e-1);
+        assertEquals(35, iter.get(carSpeedEnc), 1e-1);
     }
 
     @Test
@@ -309,7 +309,7 @@ public class OSMReaderTest {
         assertEquals(GHUtility.asSet(n10, n30, n40), GHUtility.getNeighbors(carAllExplorer.setBaseNode(n20)));
         assertEquals(GHUtility.asSet(n30, n40), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n20)));
 
-        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(footEncoder.getAccessEnc()));
+        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(footAccessEnc));
         assertEquals(GHUtility.asSet(n20, n50), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n10)));
         assertEquals(GHUtility.asSet(n20, n50), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n30)));
         assertEquals(GHUtility.asSet(n10, n30), GHUtility.getNeighbors(footOutExplorer.setBaseNode(n20)));
@@ -414,12 +414,12 @@ public class OSMReaderTest {
         Graph graph = hopper.getBaseGraph();
         // our way is split into five edges, because there are two ford nodes
         assertEquals(5, graph.getEdges());
-        FlagEncoder encoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
+        BooleanEncodedValue accessEnc = hopper.getEncodingManager().getBooleanEncodedValue("car_access");
         int blocked = 0;
         int notBlocked = 0;
         AllEdgesIterator edge = graph.getAllEdges();
         while (edge.next()) {
-            if (!edge.get(encoder.getAccessEnc()))
+            if (!edge.get(accessEnc))
                 blocked++;
             else
                 notBlocked++;
@@ -1017,11 +1017,11 @@ public class OSMReaderTest {
             BaseGraph baseGraph = new BaseGraph.Builder(getEncodingManager()).set3D(hasElevation()).withTurnCosts(getEncodingManager().needsTurnCostsSupport()).build();
             setBaseGraph(baseGraph);
             super.importOSM();
-            carEncoder = getEncodingManager().getEncoder("car");
-            footEncoder = getEncodingManager().getEncoder("foot");
-            carAccessEnc = carEncoder.getAccessEnc();
+            carAccessEnc = getEncodingManager().getBooleanEncodedValue("car_access");
+            carSpeedEnc = getEncodingManager().getDecimalEncodedValue("car_average_speed");
             carOutExplorer = getBaseGraph().createEdgeExplorer(AccessFilter.outEdges(carAccessEnc));
             carAllExplorer = getBaseGraph().createEdgeExplorer(AccessFilter.allEdges(carAccessEnc));
+            footAccessEnc = getEncodingManager().getBooleanEncodedValue("foot_access");
         }
 
         @Override
