@@ -35,7 +35,6 @@ import java.util.List;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * @author Peter Karich
@@ -182,8 +181,6 @@ public class PrepareRoutingSubnetworksTest {
 
 
     private BaseGraph createSubnetworkTestStorageWithOneWays(EncodingManager em, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
-        if (em.fetchEdgeEncoders().size() > 1)
-            fail("Warning: This method only sets access/speed for a single encoder, but the given encoding manager has multiple encoders");
         BaseGraph g = new BaseGraph.Builder(em).create();
         // 0 - 1 - 2 - 3 - 4 <- 5 - 6
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(1));

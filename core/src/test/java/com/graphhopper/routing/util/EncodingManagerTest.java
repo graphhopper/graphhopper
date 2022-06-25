@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -39,17 +40,6 @@ public class EncodingManagerTest {
         EncodingManager manager = EncodingManager.create("car");
         assertTrue(manager.hasEncoder("car"));
         assertFalse(manager.hasEncoder("foot"));
-    }
-
-    @Test
-    public void testWrongEncoders() {
-        try {
-            FlagEncoder foot = FlagEncoders.createFoot();
-            EncodingManager.create(foot, foot);
-            fail("There should have been an exception");
-        } catch (Exception ex) {
-            assertEquals("FlagEncoder already exists: foot", ex.getMessage());
-        }
     }
 
     @Test
@@ -89,4 +79,12 @@ public class EncodingManagerTest {
             assertFalse(EncodingManager.isValidEncodedValue(str), str);
         }
     }
+
+    @Test
+    public void testRegisterOnlyOnceAllowed() {
+        DecimalEncodedValueImpl speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager.start().add(speedEnc).build();
+        assertThrows(IllegalStateException.class, () -> EncodingManager.start().add(speedEnc).build());
+    }
+
 }

@@ -462,17 +462,18 @@ public class FootTagParserTest {
 
     @Test
     public void maxSpeed() {
-        FlagEncoder encoder = FlagEncoders.createFoot(new PMap().putObject("speed_bits", 4).putObject("speed_factor", 2));
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("foot_speed", 4, 2, true);
         // The foot max speed is supposed to be 15km/h, but for speed_bits=4,speed_factor=2 as we use here 15 cannot
         // be stored. In fact, when we set the speed of an edge to 15 and call the getter afterwards we get a value of 16
         // because of the internal (scaled) integer representation:
-        EncodingManager em = EncodingManager.create(encoder);
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        EdgeIteratorState edge = graph.edge(0, 1).setDistance(100).set(encoder.getAverageSpeedEnc(), 15);
-        assertEquals(16, edge.get(encoder.getAverageSpeedEnc()));
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(100).set(speedEnc, 15);
+        assertEquals(16, edge.get(speedEnc));
 
         // ... because of this we have to make sure the max speed is set to a value that cannot be exceeded even when
         // such conversion occurs. in our case it must be 16 not 15!
-        assertEquals(16, encoder.getMaxSpeed());
+        // note that this test made more sense when we used encoders that defined a max speed.
+        assertEquals(16, speedEnc.getNextStorableValue(15));
     }
 }
