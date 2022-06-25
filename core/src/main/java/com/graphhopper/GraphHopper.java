@@ -120,7 +120,7 @@ public class GraphHopper {
     // for data reader
     private String osmFile;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
-    private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
+    private VehicleEncodedValuesFactory vehicleEncodedValuesFactory = new DefaultVehicleEncodedValuesFactory();
     private VehicleTagParserFactory vehicleTagParserFactory = new DefaultVehicleTagParserFactory();
     private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
@@ -389,8 +389,8 @@ public class GraphHopper {
         return trMap;
     }
 
-    public GraphHopper setFlagEncoderFactory(FlagEncoderFactory factory) {
-        this.flagEncoderFactory = factory;
+    public GraphHopper setVehicleEncodedValuesFactory(VehicleEncodedValuesFactory factory) {
+        this.vehicleEncodedValuesFactory = factory;
         return this;
     }
 
@@ -579,7 +579,7 @@ public class GraphHopper {
                 .collect(Collectors.toList());
 
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
-        flagEncodersMap.forEach((name, encoderStr) -> emBuilder.add(flagEncoderFactory.createFlagEncoder(name, new PMap(encoderStr))));
+        flagEncodersMap.forEach((name, encoderStr) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, new PMap(encoderStr))));
         profiles.forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
         encodedValueStrings.forEach(s -> emBuilder.add(encodedValueFactory.create(s)));
         encodingManager = emBuilder.build();

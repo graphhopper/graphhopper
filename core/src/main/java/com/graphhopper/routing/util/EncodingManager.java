@@ -45,21 +45,21 @@ public class EncodingManager implements EncodedValueLookup {
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
-     * encoders using DefaultFlagEncoderFactory.
+     * encoders using DefaultVehicleEncodedValuesFactory.
      */
     public static EncodingManager create(String flagEncodersStr) {
-        return create(new DefaultFlagEncoderFactory(), flagEncodersStr);
+        return create(new DefaultVehicleEncodedValuesFactory(), flagEncodersStr);
     }
 
-    public static EncodingManager create(FlagEncoderFactory factory, String flagEncodersStr) {
+    public static EncodingManager create(VehicleEncodedValuesFactory factory, String flagEncodersStr) {
         return createBuilder(Arrays.stream(flagEncodersStr.split(",")).filter(s -> !s.trim().isEmpty()).
                 map(s -> parseEncoderString(factory, s)).collect(Collectors.toList())).build();
     }
 
-    private static EncodingManager.Builder createBuilder(List<? extends FlagEncoder> flagEncoders) {
+    private static EncodingManager.Builder createBuilder(List<? extends VehicleEncodedValues> vehicleEncodedValues) {
         Builder builder = new Builder();
-        for (FlagEncoder flagEncoder : flagEncoders)
-            builder.add(flagEncoder);
+        for (VehicleEncodedValues v : vehicleEncodedValues)
+            builder.add(v);
         return builder;
     }
 
@@ -83,16 +83,14 @@ public class EncodingManager implements EncodedValueLookup {
     public static class Builder {
         private EncodingManager em = new EncodingManager();
 
-        public Builder add(FlagEncoder encoder) {
+        public Builder add(VehicleEncodedValues vehicleEncodedValues) {
             checkNotBuiltAlready();
-            VehicleEncodedValues v = (VehicleEncodedValues) encoder;
-            v.setEncodedValueLookup(em);
             List<EncodedValue> list = new ArrayList<>();
-            v.createEncodedValues(list);
+            vehicleEncodedValues.createEncodedValues(list);
             list.forEach(this::add);
 
             list = new ArrayList<>();
-            v.createTurnCostEncodedValues(list);
+            vehicleEncodedValues.createTurnCostEncodedValues(list);
             list.forEach(this::addTurnCostEncodedValue);
             return this;
         }
@@ -162,13 +160,13 @@ public class EncodingManager implements EncodedValueLookup {
         }
     }
 
-    static FlagEncoder parseEncoderString(FlagEncoderFactory factory, String encoderString) {
+    static VehicleEncodedValues parseEncoderString(VehicleEncodedValuesFactory factory, String encoderString) {
         if (!encoderString.equals(toLowerCase(encoderString)))
-            throw new IllegalArgumentException("An upper case name for the FlagEncoder is not allowed: " + encoderString);
+            throw new IllegalArgumentException("An upper case name for the vehicle is not allowed: " + encoderString);
 
         encoderString = encoderString.trim();
         if (encoderString.isEmpty())
-            throw new IllegalArgumentException("FlagEncoder cannot be empty. " + encoderString);
+            throw new IllegalArgumentException("vehicle cannot be empty. " + encoderString);
 
         String entryVal = "";
         if (encoderString.contains("|")) {
@@ -176,7 +174,7 @@ public class EncodingManager implements EncodedValueLookup {
             encoderString = encoderString.split("\\|")[0];
         }
         PMap configuration = new PMap(entryVal);
-        return factory.createFlagEncoder(encoderString, configuration);
+        return factory.createVehicleEncodedValues(encoderString, configuration);
     }
 
     public int getIntsForFlags() {
@@ -272,10 +270,6 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
-    /**
-     * All EncodedValue names that are created from a FlagEncoder should use this method to mark them as
-     * "none-shared" across the other FlagEncoders.
-     */
     public static String getKey(String prefix, String str) {
         return prefix + "_" + str;
     }

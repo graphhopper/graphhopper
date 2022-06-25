@@ -21,7 +21,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.PMap;
 
-import static com.graphhopper.routing.util.FlagEncoderFactory.*;
+import static com.graphhopper.routing.util.VehicleEncodedValuesFactory.*;
 
 public class DefaultVehicleTagParserFactory implements VehicleTagParserFactory {
     public VehicleTagParser createParser(EncodedValueLookup lookup, String name, PMap configuration) {

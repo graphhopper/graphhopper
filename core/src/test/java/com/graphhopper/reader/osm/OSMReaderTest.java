@@ -666,14 +666,11 @@ public class OSMReaderTest {
     @Test
     public void testTurnFlagCombination() {
         GraphHopper hopper = new GraphHopper();
-        hopper.setFlagEncoderFactory(new FlagEncoderFactory() {
-            @Override
-            public FlagEncoder createFlagEncoder(String name, PMap config) {
-                if (name.equals("truck")) {
-                    return FlagEncoders.createCar(new PMap(config).putObject("name", "truck"));
-                } else {
-                    return new DefaultFlagEncoderFactory().createFlagEncoder(name, config);
-                }
+        hopper.setVehicleEncodedValuesFactory((name, config) -> {
+            if (name.equals("truck")) {
+                return VehicleEncodedValues.car(new PMap(config).putObject("name", "truck"));
+            } else {
+                return new DefaultVehicleEncodedValuesFactory().createVehicleEncodedValues(name, config);
             }
         });
         hopper.setVehicleTagParserFactory((lookup, name, config) -> {
@@ -959,7 +956,7 @@ public class OSMReaderTest {
         // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
         EnumEncodedValue<Country> countryEnc = new EnumEncodedValue<>(Country.KEY, Country.class);
         EncodingManager em = EncodingManager.start()
-                .add(FlagEncoders.createCar())
+                .add(VehicleEncodedValues.car(new PMap()))
                 .add(countryEnc)
                 .build();
         CarTagParser carParser = new CarTagParser(em, new PMap());

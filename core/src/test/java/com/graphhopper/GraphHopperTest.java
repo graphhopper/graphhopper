@@ -2545,7 +2545,7 @@ public class GraphHopperTest {
         int nodes = hopper.getBaseGraph().getNodes();
         hopper.close();
 
-        // load without configured FlagEncoders
+        // load without configured graph.flag_encoders
         hopper = new GraphHopper();
         hopper.setProfiles(Arrays.asList(
                 new Profile("p_car").setVehicle("car").setWeighting("fastest"),
@@ -2557,7 +2557,7 @@ public class GraphHopperTest {
         assertEquals(nodes, hopper.getBaseGraph().getNodes());
         hopper.close();
 
-        // load via explicitly configured FlagEncoders
+        // load via explicitly configured graph.flag_encoders
         hopper = new GraphHopper();
         hopper.setFlagEncodersString("car,bike");
         hopper.setProfiles(Arrays.asList(

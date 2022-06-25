@@ -20,46 +20,46 @@ package com.graphhopper.routing.util;
 import com.graphhopper.util.PMap;
 
 /**
- * This class creates FlagEncoders that are already included in the GraphHopper distribution.
+ * This class creates vehicle encoded values that are already included in the GraphHopper distribution.
  *
  * @author Peter Karich
  */
-public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
+public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesFactory {
     @Override
-    public FlagEncoder createFlagEncoder(String name, PMap configuration) {
+    public VehicleEncodedValues createVehicleEncodedValues(String name, PMap configuration) {
         if (name.equals(ROADS))
-            return FlagEncoders.createRoads(configuration);
+            return VehicleEncodedValues.roads();
 
         if (name.equals(CAR))
-            return FlagEncoders.createCar(configuration);
+            return VehicleEncodedValues.car(configuration);
 
         if (name.equals(CAR4WD))
-            return FlagEncoders.createCar4wd(configuration);
+            return VehicleEncodedValues.car4wd(configuration);
 
         if (name.equals(BIKE))
-            return FlagEncoders.createBike(configuration);
+            return VehicleEncodedValues.bike(configuration);
 
         if (name.equals(BIKE2))
-            return FlagEncoders.createBike2(configuration);
+            return VehicleEncodedValues.bike2(configuration);
 
         if (name.equals(RACINGBIKE))
-            return FlagEncoders.createRacingBike(configuration);
+            return VehicleEncodedValues.racingbike(configuration);
 
         if (name.equals(MOUNTAINBIKE))
-            return FlagEncoders.createMountainBike(configuration);
+            return VehicleEncodedValues.mountainbike(configuration);
 
         if (name.equals(FOOT))
-            return FlagEncoders.createFoot(configuration);
+            return VehicleEncodedValues.foot(configuration);
 
         if (name.equals(HIKE))
-            return FlagEncoders.createHike(configuration);
+            return VehicleEncodedValues.hike(configuration);
 
         if (name.equals(MOTORCYCLE))
-            return FlagEncoders.createMotorcycle(configuration);
+            return VehicleEncodedValues.motorcycle(configuration);
 
         if (name.equals(WHEELCHAIR))
-            return FlagEncoders.createWheelchair(configuration);
+            return VehicleEncodedValues.wheelchair(configuration);
 
-        throw new IllegalArgumentException("entry in encoder list not supported: " + name);
+        throw new IllegalArgumentException("entry in vehicle list not supported: " + name);
     }
 }
