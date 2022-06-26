@@ -18,9 +18,10 @@
 
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * So far there aren't many tests but the graph should be very easy to test as it has basically no dependencies and
@@ -52,5 +53,25 @@ class CHPreparationGraphTest {
             res.append(iter).append(",");
         }
         assertEquals("3-4 16.0,", res.toString());
+    }
+
+    @Test
+    void useLargeEdgeId() {
+        CHPreparationGraph.OrigGraph.Builder builder = new CHPreparationGraph.OrigGraph.Builder();
+        int largeEdgeID = Integer.MAX_VALUE >> 2;
+        assertEquals(536_870_911, largeEdgeID);
+        // 0->1
+        builder.addEdge(0, 1, largeEdgeID, true, false);
+        CHPreparationGraph.OrigGraph g = builder.build();
+        PrepareGraphOrigEdgeIterator iter = g.createOutOrigEdgeExplorer().setBaseNode(0);
+        assertTrue(iter.next());
+        assertEquals(largeEdgeID, GHUtility.getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()));
+        iter = g.createInOrigEdgeExplorer().setBaseNode(0);
+        assertFalse(iter.next());
+
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () ->
+                new CHPreparationGraph.OrigGraph.Builder().addEdge(0, 1, largeEdgeID + 1, true, false)
+        );
+        assertTrue(e.getMessage().contains("Maximum edge key exceeded: 1073741824, max: 1073741823"), e.getMessage());
     }
 }

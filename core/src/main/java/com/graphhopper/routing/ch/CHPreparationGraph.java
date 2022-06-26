@@ -853,7 +853,7 @@ public class CHPreparationGraph {
      * edge-based CH. In principle we could use base graph for this, but it turned out it is faster to use this
      * graph (because it does not need to read all the edge flags to determine the access flags).
      */
-    private static class OrigGraph {
+    static class OrigGraph {
         // we store a list of 'edges' in the format: adjNode|edgeId|accessFlags, we use two ints for each edge
         private final IntArrayList adjNodes;
         private final IntArrayList keysAndFlags;
