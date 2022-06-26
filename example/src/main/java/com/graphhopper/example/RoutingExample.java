@@ -140,10 +140,10 @@ public class RoutingExample {
         // 2. now avoid primary roads and reduce maximum speed, see docs/core/custom-models.md for an in-depth explanation
         // and also the blog posts https://www.graphhopper.com/?s=customizable+routing
         CustomModel model = new CustomModel();
-        model.addToPriority(If("road_class == PRIMARY", MULTIPLY, 0.5));
+        model.addToPriority(If("road_class == PRIMARY", MULTIPLY, "0.5"));
 
         // unconditional limit to 100km/h
-        model.addToPriority(If("true", LIMIT, 100));
+        model.addToPriority(If("true", LIMIT, "100"));
 
         req.setCustomModel(model);
         res = hopper.route(req);

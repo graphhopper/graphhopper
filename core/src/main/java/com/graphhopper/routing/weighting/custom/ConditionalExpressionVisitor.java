@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.routing.ev.StringEncodedValue;
@@ -30,7 +29,10 @@ import java.util.*;
 
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.IN_AREA_PREFIX;
 
-class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
+/**
+ * Expression visitor for the if or else_if condition.
+ */
+class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
     private final ParseResult result;
     private final EncodedValueLookup lookup;
@@ -40,7 +42,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
             "contains", "sqrt", "abs"));
     private String invalidMessage;
 
-    public ExpressionVisitor(ParseResult result, NameValidator nameValidator, EncodedValueLookup lookup) {
+    public ConditionalExpressionVisitor(ParseResult result, NameValidator nameValidator, EncodedValueLookup lookup) {
         this.result = result;
         this.nameValidator = nameValidator;
         this.lookup = lookup;
@@ -94,7 +96,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
                     if (n.identifiers.length == 2 && isValidIdentifier(n.identifiers[0])) return true;
                 }
             }
-            invalidMessage = mi.methodName + " is illegal method";
+            invalidMessage = mi.methodName + " is an illegal method";
             return false;
         } else if (rv instanceof Java.ParenthesizedExpression) {
             return ((Java.ParenthesizedExpression) rv).value.accept(this);
@@ -146,31 +148,6 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         return false;
     }
 
-    static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, String exceptionInfo,
-                                 Set<String> createObjects, List<Statement> list, EncodedValueLookup lookup, String lastStmt) {
-
-        for (Statement statement : list) {
-            if (statement.getKeyword() == Statement.Keyword.ELSE) {
-                if (!Helper.isEmpty(statement.getCondition()))
-                    throw new IllegalArgumentException("expression must be empty but was " + statement.getCondition());
-
-                expressions.append("else {" + statement.getOperation().build(statement.getValue()) + "; }\n");
-            } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ExpressionVisitor.ParseResult parseResult = parseExpression(statement.getCondition(), nameInConditionValidator, lookup);
-                if (!parseResult.ok)
-                    throw new IllegalArgumentException(exceptionInfo + " invalid expression \"" + statement.getCondition() + "\"" +
-                            (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
-                createObjects.addAll(parseResult.guessedVariables);
-                if (statement.getKeyword() == Statement.Keyword.ELSEIF)
-                    expressions.append("else ");
-                expressions.append("if (" + parseResult.converted + ") {" + statement.getOperation().build(statement.getValue()) + "; }\n");
-            } else {
-                throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");
-            }
-        }
-        expressions.append(lastStmt);
-    }
-
     /**
      * Enforce simple expressions of user input to increase security.
      *
@@ -178,7 +155,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
      * converted expression that includes class names for constants to avoid conflicts e.g. when doing "toll == Toll.NO"
      * instead of "toll == NO".
      */
-    static ParseResult parseExpression(String expression, NameValidator validator, EncodedValueLookup lookup) {
+    static ParseResult parse(String expression, NameValidator validator, EncodedValueLookup lookup) {
         ParseResult result = new ParseResult();
         try {
             Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
@@ -186,7 +163,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
             // after parsing the expression the input should end (otherwise it is not "simple")
             if (parser.peek().type == TokenType.END_OF_INPUT) {
                 result.guessedVariables = new LinkedHashSet<>();
-                ExpressionVisitor visitor = new ExpressionVisitor(result, validator, lookup);
+                ConditionalExpressionVisitor visitor = new ConditionalExpressionVisitor(result, validator, lookup);
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;
                 if (result.ok) {
@@ -211,18 +188,7 @@ class ExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
         return Character.toUpperCase(clazz.charAt(0)) + clazz.substring(1);
     }
 
-    static class ParseResult {
-        StringBuilder converted;
-        boolean ok;
-        String invalidMessage;
-        Set<String> guessedVariables;
-    }
-
-    interface NameValidator {
-        boolean isValid(String name);
-    }
-
-    static class Replacement {
+    class Replacement {
         int start;
         int oldLength;
         String newString;
