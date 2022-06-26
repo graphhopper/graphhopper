@@ -905,6 +905,9 @@ public class CHPreparationGraph {
 
             private static int getKeyWithFlags(int key, boolean fwd, boolean bwd) {
                 // we use only 30 bits for the key and store two access flags along with the same int
+                // this allows for a maximum of 536mio edges in base graph which is still enough for planet-wide OSM,
+                // but if we exceed this limit we should probably move one of the fwd/bwd bits to the nodes field or
+                // store the edge instead of the key as we did before #2567 (only here)
                 if (key > Integer.MAX_VALUE >> 1)
                     throw new IllegalArgumentException("Maximum edge key exceeded: " + key + ", max: " + (Integer.MAX_VALUE >> 1));
                 key <<= 1;
