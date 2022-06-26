@@ -168,7 +168,7 @@ public class CHPreparationGraph {
 
     static int getKeyWithFlags(int key, boolean fwd, boolean bwd) {
         // we use only 30 bits for the key and store two access flags along with the same int
-        if (key >= Integer.MAX_VALUE >> 1)
+        if (key > Integer.MAX_VALUE >> 1)
             throw new IllegalArgumentException("Maximum edge key exceeded: " + key);
         key <<= 1;
         if (fwd)
@@ -180,7 +180,7 @@ public class CHPreparationGraph {
     }
 
     static int getKeyFromKeyWithFlags(int k) {
-        return k >> 2;
+        return k >>> 2;
     }
 
     static boolean getFwdAccessFromKeyWithFlags(int k) {
