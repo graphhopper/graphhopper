@@ -53,4 +53,24 @@ class CHPreparationGraphTest {
         }
         assertEquals("3-4 16.0,", res.toString());
     }
+
+    @Test
+    void convertKeyWithFlags() {
+        int max = Integer.MAX_VALUE >> 1;
+        for (int key = 0; key <= max; key++) {
+            for (int ifwd = 0; ifwd < 2; ifwd++) {
+                for (int ibwd = 0; ibwd < 2; ibwd++) {
+                    boolean fwd = ifwd > 0;
+                    boolean bwd = ibwd > 0;
+                    int keyWithFlags = CHPreparationGraph.getKeyWithFlags(key, fwd, bwd);
+                    int keyAfter = CHPreparationGraph.getKeyFromKeyWithFlags(keyWithFlags);
+                    boolean fwdAfter = CHPreparationGraph.getFwdAccessFromKeyWithFlags(keyWithFlags);
+                    boolean bwdAfter = CHPreparationGraph.getBwdAccessFromKeyWithFlags(keyWithFlags);
+                    assertEquals(key, keyAfter);
+                    assertEquals(fwd, fwdAfter);
+                    assertEquals(bwd, bwdAfter);
+                }
+            }
+        }
+    }
 }

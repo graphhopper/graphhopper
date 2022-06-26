@@ -166,6 +166,31 @@ public class CHPreparationGraph {
         };
     }
 
+    static int getKeyWithFlags(int key, boolean fwd, boolean bwd) {
+        // we use only 30 bits for the key and store two access flags along with the same int
+        if (key >= Integer.MAX_VALUE >> 1)
+            throw new IllegalArgumentException("Maximum edge key exceeded: " + key);
+        key <<= 1;
+        if (fwd)
+            key++;
+        key <<= 1;
+        if (bwd)
+            key++;
+        return key;
+    }
+
+    static int getKeyFromKeyWithFlags(int k) {
+        return k >> 2;
+    }
+
+    static boolean getFwdAccessFromKeyWithFlags(int k) {
+        return (k & 0b10) == 0b10;
+    }
+
+    static boolean getBwdAccessFromKeyWithFlags(int k) {
+        return (k & 0b01) == 0b01;
+    }
+
     public int getNodes() {
         return nodes;
     }
@@ -903,19 +928,6 @@ public class CHPreparationGraph {
                 return new OrigGraph(buildFirstEdgesByNode(), toNodes, keysAndFlags);
             }
 
-            private int getKeyWithFlags(int key, boolean fwd, boolean bwd) {
-                // we use only 30 bits for the key and store two access flags along with the same int
-                if (key >= Integer.MAX_VALUE >> 1)
-                    throw new IllegalArgumentException("Maximum edge key exceeded: " + key);
-                key <<= 1;
-                if (fwd)
-                    key++;
-                key <<= 1;
-                if (bwd)
-                    key++;
-                return key;
-            }
-
             private IntArrayList buildFirstEdgesByNode() {
                 // it is assumed the edges have been sorted already
                 final int numFroms = maxFrom + 1;
@@ -983,7 +995,7 @@ public class CHPreparationGraph {
 
         @Override
         public int getOrigEdgeKeyFirst() {
-            return graph.keysAndFlags.get(index) >> 2;
+            return getKeyFromKeyWithFlags(graph.keysAndFlags.get(index));
         }
 
         @Override
@@ -993,11 +1005,10 @@ public class CHPreparationGraph {
 
         private boolean hasAccess() {
             int e = graph.keysAndFlags.get(index);
-            if (reverse) {
-                return (e & 0b01) == 0b01;
-            } else {
-                return (e & 0b10) == 0b10;
-            }
+            if (reverse)
+                return getBwdAccessFromKeyWithFlags(e);
+            else
+                return getFwdAccessFromKeyWithFlags(e);
         }
 
         @Override
