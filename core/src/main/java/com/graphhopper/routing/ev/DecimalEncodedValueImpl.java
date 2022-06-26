@@ -29,6 +29,7 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     private final double factor;
     private final boolean defaultIsInfinity;
     private final boolean useMaximumAsInfinity;
+    private double realMax = -1;
 
     /**
      * @see #DecimalEncodedValueImpl(String, int, double, double, boolean, boolean, boolean, boolean)
@@ -75,6 +76,7 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
                             @JsonProperty("bits") int bits,
                             @JsonProperty("min_value") int minValue,
                             @JsonProperty("max_value") int maxValue,
+                            @JsonProperty("real_max") double realMax,
                             @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
                             @JsonProperty("store_two_directions") boolean storeTwoDirections,
                             @JsonProperty("fwd_data_index") int fwdDataIndex,
@@ -91,6 +93,7 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
         this.factor = factor;
         this.defaultIsInfinity = defaultIsInfinity;
         this.useMaximumAsInfinity = useMaximumAsInfinity;
+        this.realMax = realMax;
     }
 
     @Override
@@ -109,6 +112,8 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
         }
         if (Double.isNaN(value))
             throw new IllegalArgumentException("NaN value for " + getName() + " not allowed!");
+
+        realMax = Math.max(realMax, value);
 
         value /= factor;
         if (value > maxValue)
@@ -152,5 +157,10 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     @Override
     public double getMinDecimal() {
         return minValue * factor;
+    }
+
+    @Override
+    public double getRealMax() {
+        return realMax;
     }
 }

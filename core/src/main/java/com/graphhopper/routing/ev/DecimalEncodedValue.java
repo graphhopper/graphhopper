@@ -40,4 +40,6 @@ public interface DecimalEncodedValue extends EncodedValue {
     double getNextStorableValue(double value);
 
     double getSmallestNonZeroValue();
+
+    double getRealMax();
 }

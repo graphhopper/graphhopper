@@ -47,7 +47,8 @@ public class CurvatureWeighting extends PriorityWeighting {
         curvatureEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "curvature"));
         avSpeedEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "average_speed"));
         double minBendiness = 1; // see correctErrors
-        minFactor = minBendiness / Math.log(flagEncoder.getMaxSpeed()) / PriorityCode.getValue(BEST.getValue());
+        double maxSpeed = avSpeedEnc.getRealMax() < 0 ? avSpeedEnc.getMaxDecimal() : avSpeedEnc.getRealMax();
+        minFactor = minBendiness / Math.log(maxSpeed) / PriorityCode.getValue(BEST.getValue());
     }
 
     @Override
