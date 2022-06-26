@@ -22,9 +22,14 @@ public interface IntEncodedValue extends EncodedValue {
     void setInt(boolean reverse, IntsRef ref, int value);
 
     /**
-     * The int value this EncodedValue accepts for setInt without throwing an exception.
+     * The maximum int value this EncodedValue accepts for setInt without throwing an exception.
      */
     int getMaxInt();
+
+    /**
+     * The minimum int value this EncodedValue accepts for setInt without throwing an exception.
+     */
+    int getMinInt();
 
     /**
      * @return true if this EncodedValue can store a different value for its reverse direction

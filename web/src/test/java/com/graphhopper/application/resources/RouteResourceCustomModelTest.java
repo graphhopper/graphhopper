@@ -80,21 +80,21 @@ public class RouteResourceCustomModelTest {
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile("car_no_unclassified").setCustomModel(
                                         new CustomModel(new CustomModel().
-                                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, 0)))).
+                                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0")))).
                                 setVehicle("car"),
                         new CustomProfile("custom_bike").
                                 setCustomModel(new CustomModel().
-                                        addToSpeed(If("road_class == PRIMARY", LIMIT, 28)).
-                                        addToPriority(If("max_width < 1.2", MULTIPLY, 0))).
+                                        addToSpeed(If("road_class == PRIMARY", LIMIT, "28")).
+                                        addToPriority(If("max_width < 1.2", MULTIPLY, "0"))).
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike2").setCustomModel(
                                         new CustomModel(new CustomModel().
-                                                addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, 0)))).
+                                                addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0")))).
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike3").setCustomModel(
                                         new CustomModel(new CustomModel().
-                                                addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, 10)).
-                                                addToSpeed(If("true", LIMIT, 40)))).
+                                                addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "10")).
+                                                addToSpeed(If("true", LIMIT, "40")))).
                                 setVehicle("bike"))).
                 setCHProfiles(Arrays.asList(new CHProfile("truck"), new CHProfile("car_no_unclassified")));
         return config;

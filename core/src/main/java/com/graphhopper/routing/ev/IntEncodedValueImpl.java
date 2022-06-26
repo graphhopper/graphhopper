@@ -200,6 +200,11 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     }
 
     @Override
+    public int getMinInt() {
+        return minValue;
+    }
+
+    @Override
     public final boolean isStoreTwoDirections() {
         return storeTwoDirections;
     }

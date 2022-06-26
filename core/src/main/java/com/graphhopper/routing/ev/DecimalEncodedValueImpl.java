@@ -149,4 +149,8 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
         return maxValue * factor;
     }
 
+    @Override
+    public double getMinDecimal() {
+        return minValue * factor;
+    }
 }
