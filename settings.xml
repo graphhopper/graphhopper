@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 http://maven.apache.org/xsd/settings-1.0.0.xsd">
+    <servers>
+        <server>
+            <id>${repo.id}</id>
+            <username>${repo.login}</username>
+            <password>${repo.pwd}</password>
+        </server>
+    </servers>
+
+    <profiles>
+        <profile>
+            <id>stuart-proxy</id>
+            <repositories>
+                <repository>
+                    <id>stuart-maven-public</id>
+                    <name>Stuart Maven Public</name>
+                    <url>https://nexus.internal.stuart.com/repository/maven-public/</url>
+                </repository>
+                <repository>
+                    <id>stuart-maven-releases</id>
+                    <name>Stuart Maven Releases</name>
+                    <url>https://nexus.internal.stuart.com/repository/maven-releases/</url>
+                </repository>
+                <repository>
+                    <id>stuart-maven-central</id>
+                    <name>Stuart Maven Central</name>
+                    <url>https://nexus.internal.stuart.com/repository/maven-central/</url>
+                </repository>
+                <repository>
+                    <id>stuart-maven-snapshots</id>
+                    <name>Stuart Maven Snapshots</name>
+                    <url>https://nexus.internal.stuart.com/repository/maven-snapshots/</url>
+                </repository>
+            </repositories>
+        </profile>
+    </profiles>
+
+    <activeProfiles>
+        <activeProfile>stuart-proxy</activeProfile>
+    </activeProfiles>
+</settings>

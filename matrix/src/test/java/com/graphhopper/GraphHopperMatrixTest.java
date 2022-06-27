@@ -113,10 +113,10 @@ public class GraphHopperMatrixTest {
         config.setCHProfiles(chProfiles);
 
 
-        GraphHopper hopper = new GraphHopper().
-                setGraphHopperLocation(GH_LOCATION).
-                setOSMFile(ANDORRA).
-                init(config)
+        GraphHopperMatrix hopper = new GraphHopperMatrix()
+                .setGraphHopperLocation(GH_LOCATION)
+                .setOSMFile(ANDORRA)
+                .init(config)
                 .setOSMFile(ANDORRA)
                 .setGraphHopperLocation(GH_LOCATION);
 

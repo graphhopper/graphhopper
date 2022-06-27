@@ -1,6 +1,5 @@
 package com.graphhopper.routing.matrix;
 
-import com.graphhopper.routing.EdgeRestrictions;
 import com.graphhopper.storage.index.Snap;
 
 import java.util.List;

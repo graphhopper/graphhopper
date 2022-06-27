@@ -5,7 +5,6 @@ import com.graphhopper.routing.matrix.MatrixEntry;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.GHUtility;
 
 
 public class ManyToManyEdge extends AbstractManyToMany {

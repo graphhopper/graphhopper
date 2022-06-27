@@ -1,15 +1,11 @@
 package com.graphhopper.routing.matrix.algorithm;
 
 import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.BidirRoutingAlgorithm;
-import com.graphhopper.routing.matrix.algorithm.MatrixAlgorithm;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
 

@@ -33,8 +33,6 @@ import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
-import com.graphhopper.routing.matrix.GHMatrixRequest;
-import com.graphhopper.routing.matrix.GHMatrixResponse;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.*;
@@ -78,17 +76,17 @@ import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
  */
 public class GraphHopper {
     private static final Logger logger = LoggerFactory.getLogger(GraphHopper.class);
-    private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
+    protected final Map<String, Profile> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
-    private final TranslationMap trMap = new TranslationMap().doImport();
+    protected final TranslationMap trMap = new TranslationMap().doImport();
     boolean removeZipped = true;
     // for country rules:
     private CountryRuleFactory countryRuleFactory = null;
     // for custom areas:
     private String customAreasDirectory = "";
     // for graph:
-    private GraphHopperStorage ghStorage;
+    protected GraphHopperStorage ghStorage;
     private TagParserManager tagParserManager;
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
@@ -98,12 +96,12 @@ public class GraphHopper {
     private boolean elevation = false;
     private LockFactory lockFactory = new NativeFSLockFactory();
     private boolean allowWrites = true;
-    private boolean fullyLoaded = false;
+    protected boolean fullyLoaded = false;
     private final OSMReaderConfig osmReaderConfig = new OSMReaderConfig();
     // for routing
-    private final RouterConfig routerConfig = new RouterConfig();
+    protected final RouterConfig routerConfig = new RouterConfig();
     // for index
-    private LocationIndex locationIndex;
+    protected LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
     private int maxRegionSearch = 4;
     // for prepare
@@ -112,8 +110,8 @@ public class GraphHopper {
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
     private final CHPreparationHandler chPreparationHandler = new CHPreparationHandler();
-    private Map<String, RoutingCHGraph> chGraphs = Collections.emptyMap();
-    private Map<String, LandmarkStorage> landmarks = Collections.emptyMap();
+    protected Map<String, RoutingCHGraph> chGraphs = Collections.emptyMap();
+    protected Map<String, LandmarkStorage> landmarks = Collections.emptyMap();
 
     // for data reader
     private String osmFile;
@@ -121,7 +119,7 @@ public class GraphHopper {
     private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
     private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
-    private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
+    protected PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     private String dateRangeParserString = "";
     private String encodedValuesString = "";
@@ -994,11 +992,7 @@ public class GraphHopper {
         return createRouter().route(request);
     }
 
-    public GHMatrixResponse matrix(GHMatrixRequest request) {
-        return createRouter().matrix(request);
-    }
-
-    private Router createRouter() {
+    protected Router createRouter() {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
         if (ghStorage.isClosed())

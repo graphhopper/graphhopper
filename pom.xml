@@ -3,14 +3,14 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.graphhopper</groupId>
-    <artifactId>graphhopper-parent</artifactId>
+    <groupId>com.stuart.platform.graphhopper</groupId>
+    <artifactId>graphhopper-matrix-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>6.0-SNAPSHOT</version>
+    <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>https://www.graphhopper.com</url>
     <inceptionYear>2012</inceptionYear>
-    <description>Super pom of GraphHopper, the fast and flexible routing engine</description>
+    <description>Fork of project Graphhopper created from v5.3 of original sources</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -64,6 +64,7 @@
         <module>client-hc</module>
         <module>navigation</module>
         <module>example</module>
+        <module>matrix</module>
     </modules>
     <dependencyManagement>
         <dependencies>
@@ -276,10 +277,13 @@
 
     <distributionManagement>
         <repository>
-            <id>github</id>
-            <name>GitHub GraphHopper Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/graphhopper/graphhopper</url>
+            <id>stuart-maven-public</id>
+            <url>https://nexus.internal.stuart.com/repository/maven-public/</url>
         </repository>
+        <snapshotRepository>
+            <id>stuart-maven-snapshots</id>
+            <url>https://nexus.internal.stuart.com/repository/maven-snapshots/</url>
+        </snapshotRepository>
     </distributionManagement>
 
     <!-- mvn clean deploy -P release -->

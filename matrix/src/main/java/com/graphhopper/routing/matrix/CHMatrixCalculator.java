@@ -22,7 +22,6 @@ import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.matrix.algorithm.MatrixAlgorithm;
 import com.graphhopper.routing.matrix.algorithm.MatrixRoutingAlgorithmFactory;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 

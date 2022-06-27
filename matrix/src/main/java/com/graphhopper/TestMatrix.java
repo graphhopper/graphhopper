@@ -4,7 +4,6 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.matrix.GHMatrixRequest;
 import com.graphhopper.routing.matrix.GHMatrixResponse;
-import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
@@ -80,11 +79,10 @@ public class TestMatrix{
         config.setProfiles(profiles);
         config.setCHProfiles(chProfiles);
 
-        GraphHopper gh = new GraphHopper()
+        GraphHopperMatrix gh = new GraphHopperMatrix()
                 .setGraphHopperLocation("/home/jp.lopez/maps/matrix/andorra/")
-                .init(config)
                 .setOSMFile("/home/jp.lopez/maps/osm/andorra.osm.pbf")
-                .setGraphHopperLocation("/home/jp.lopez/maps/matrix/andorra/")
+                .init(config)
                 .importOrLoad();
 
 

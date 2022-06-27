@@ -1,3 +1,14 @@
-Please read [our contributing guide](https://github.com/graphhopper/graphhopper/blob/master/CONTRIBUTING.md) and note that also your contribution falls under the Apache License 2.0 as outlined there.
+## Bear in mind
+- Use in the title of the PR the following format: `[RSPS-XX]: Description`
 
-Your first contribution should include a change where you add yourself to the CONTRIBUTORS.md file.
+## Jira Ticket
+[Example-ticket-to-be-replaced](https://stuart-team.atlassian.net/browse/RSPS-XX)
+
+## Implementation details
+Type a brief description of the implementation details and/or sensitive parts of the code that can be affected by this change
+
+## Examples
+Write some examples if you consider them necessary to contextualize better your development done.
+
+## Testing
+If necessary add description on what is tested locally and all the types of tests you added.
