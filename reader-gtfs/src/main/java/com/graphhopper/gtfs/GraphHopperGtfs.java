@@ -56,6 +56,7 @@ public class GraphHopperGtfs extends GraphHopper {
             super.importOSM();
         } else {
             createBaseGraphAndProperties();
+            writeEncodingManagerToProperties();
         }
     }
 

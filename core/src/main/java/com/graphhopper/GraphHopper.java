@@ -813,17 +813,21 @@ public class GraphHopper {
         if (reader.getDataDate() != null)
             properties.put("datareader.data.date", f.format(reader.getDataDate()));
 
-        properties.put("graph.em.version", Constants.VERSION_EM);
-        properties.put("graph.em.edge_config", encodingManager.toEdgeConfigAsString());
-        properties.put("graph.em.turn_cost_config", encodingManager.toTurnCostConfigAsString());
-        properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
-        properties.put("graph.flag_encoders", encodingManager.toFlagEncodersAsString());
+        writeEncodingManagerToProperties();
     }
 
     protected void createBaseGraphAndProperties() {
         baseGraph.getDirectory().create();
         baseGraph.create(100);
         properties.create(100);
+    }
+
+    protected void writeEncodingManagerToProperties() {
+        properties.put("graph.em.version", Constants.VERSION_EM);
+        properties.put("graph.em.edge_config", encodingManager.toEdgeConfigAsString());
+        properties.put("graph.em.turn_cost_config", encodingManager.toTurnCostConfigAsString());
+        properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
+        properties.put("graph.flag_encoders", encodingManager.toFlagEncodersAsString());
     }
 
     private List<CustomArea> readCustomAreas() {
