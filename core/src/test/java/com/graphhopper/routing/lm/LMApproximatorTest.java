@@ -29,14 +29,12 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.RepeatedTest;
 
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-@Disabled("todonow")
 public class LMApproximatorTest {
 
     @RepeatedTest(value = 10)

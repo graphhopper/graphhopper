@@ -113,7 +113,7 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
         if (Double.isNaN(value))
             throw new IllegalArgumentException("NaN value for " + getName() + " not allowed!");
 
-        realMax = Math.max(realMax, value);
+        realMax = Math.max(realMax, getNextStorableValue(value));
 
         value /= factor;
         if (value > maxValue)
