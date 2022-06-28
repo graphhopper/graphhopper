@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.stuart.platform.graphhopper</groupId>
-    <artifactId>graphhopper-matrix-parent</artifactId>
+    <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>

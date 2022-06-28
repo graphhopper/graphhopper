@@ -1,22 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.graphhopper</groupId>
-    <artifactId>graphhopper-matrix-map-matching</artifactId>
-    <version>6.0-SNAPSHOT</version>
+    <artifactId>graphhopper-map-matching</artifactId>
     <packaging>jar</packaging>
     <name>GraphHopper Map Matching</name>
 
     <parent>
-        <groupId>com.graphhopper</groupId>
-        <artifactId>graphhopper-matrix-parent</artifactId>
-        <version>6.0-SNAPSHOT</version>
+        <groupId>com.stuart.platform.graphhopper</groupId>
+        <artifactId>graphhopper-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
     </parent>
     
     <dependencies>
         <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-matrix-core</artifactId>
+            <groupId>com.stuart.platform.graphhopper</groupId>
+            <artifactId>graphhopper-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
@@ -24,8 +22,8 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-matrix-hmm-lib-external</artifactId>
+            <groupId>com.stuart.platform.graphhopper</groupId>
+            <artifactId>hmm-lib-external</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>

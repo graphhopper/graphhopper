@@ -4,21 +4,20 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>graphhopper-matrix-extension</artifactId>
-    <version>6.0-SNAPSHOT</version>
+    <artifactId>graphhopper-matrix</artifactId>
     <packaging>jar</packaging>
     <name>GraphHopper Matrix Support</name>
 
     <parent>
-        <groupId>com.graphhopper</groupId>
-        <artifactId>graphhopper-matrix-parent</artifactId>
-        <version>6.0-SNAPSHOT</version>
+        <groupId>com.stuart.platform.graphhopper</groupId>
+        <artifactId>graphhopper-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>
         <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-matrix-core</artifactId>
+            <groupId>com.stuart.platform.graphhopper</groupId>
+            <artifactId>graphhopper-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
     </dependencies>

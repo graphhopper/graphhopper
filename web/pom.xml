@@ -3,16 +3,15 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <artifactId>graphhopper-matrix-web</artifactId>
+    <artifactId>graphhopper-web</artifactId>
     <packaging>jar</packaging>
-    <version>6.0-SNAPSHOT</version>
     <name>GraphHopper Web</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
     <parent>
-        <groupId>com.graphhopper</groupId>
-        <artifactId>graphhopper-matrix-parent</artifactId>
-        <version>6.0-SNAPSHOT</version>
+        <groupId>com.stuart.platform.graphhopper</groupId>
+        <artifactId>graphhopper-parent</artifactId>
+        <version>1.0-SNAPSHOT</version>
     </parent>
     <properties>
         <shade-phase>package</shade-phase>
@@ -28,13 +27,13 @@
             <artifactId>dropwizard-assets</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-matrix-web-bundle</artifactId>
+            <groupId>com.stuart.platform.graphhopper</groupId>
+            <artifactId>graphhopper-web-bundle</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-matrix-nav</artifactId>
+            <groupId>com.stuart.platform.graphhopper</groupId>
+            <artifactId>graphhopper-nav</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
@@ -52,8 +51,8 @@
 
         <!-- for integration tests of service -->
         <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-matrix-directions-api-client-hc</artifactId>
+            <groupId>com.stuart.platform.graphhopper</groupId>
+            <artifactId>directions-api-client-hc</artifactId>
             <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
