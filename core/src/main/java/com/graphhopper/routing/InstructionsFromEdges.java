@@ -318,8 +318,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         }
 
         // ORS-GH MOD START - additional parameter
-        long time = times.get(index);
-        updatePointsAndInstruction(edge, wayGeo, time);
+        if (times != null) {
+            long time = times.get(index);
+            updatePointsAndInstruction(edge, wayGeo, time);
+        }
         // ORS-GH MOD END
 
         if (wayGeo.size() <= 2) {
