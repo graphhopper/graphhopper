@@ -47,15 +47,24 @@ public class GraphHopperGtfs extends GraphHopper {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GraphHopperGtfs.class);
 
-    private final GraphHopperConfig ghConfig;
+    private GraphHopperConfig ghConfig;
     private GtfsStorage gtfsStorage;
+
+    public GraphHopperGtfs() {
+    }
 
     public GraphHopperGtfs(GraphHopperConfig ghConfig) {
         this.ghConfig = ghConfig;
         PtEncodedValues.createAndAddEncodedValues(getEncodingManagerBuilder());
     }
 
-    @Override
+    public GraphHopper init(GraphHopperConfig ghConfig) {
+        this.ghConfig = ghConfig;
+        PtEncodedValues.createAndAddEncodedValues(getEncodingManagerBuilder());
+        return super.init(ghConfig);
+    }
+
+        @Override
     protected void importOSM() {
         if (ghConfig.has("datareader.file")) {
             super.importOSM();
@@ -138,7 +147,7 @@ public class GraphHopperGtfs extends GraphHopper {
         final int maxTransferWalkTimeSeconds = ghConfig.getInt("gtfs.max_transfer_interpolation_walk_time_seconds", 120);
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
-        Weighting transferWeighting = createWeighting(getProfile("foot"), new PMap());
+        Weighting transferWeighting = createWeighting(getProfile("foot_shortest"), new PMap());
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
         final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, transferWeighting, ptEncodedValues, getGtfsStorage(), RealtimeFeed.empty(getGtfsStorage()), true, true, false, 5.0, false, 0);
         getGtfsStorage().getStationNodes().values().stream().distinct().forEach(stationNode -> {
@@ -191,7 +200,7 @@ public class GraphHopperGtfs extends GraphHopper {
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         RealtimeFeed realtimeFeed = RealtimeFeed.empty(getGtfsStorage());
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
-        Weighting transferWeighting = createWeighting(getProfile("foot"), new PMap());
+        Weighting transferWeighting = createWeighting(getProfile("foot_shortest"), new PMap());
         return gtfsFeed.transfers.entrySet()
                 .parallelStream()
                 .filter(e -> e.getValue().transfer_type == 0)
