@@ -55,7 +55,7 @@ public class CHStorage {
     private static final double MAX_DISTANCE = MAX_STORED_INTEGER / DISTANCE_FACTOR;
     private static final double MIN_DISTANCE = 1 / DISTANCE_FACTOR;
 
-    private static final long MAX_TIME = MAX_STORED_INTEGER;
+    private static final int MAX_TIME = Integer.MAX_VALUE;
     private static final long MIN_TIME = 0L;
 
     // shortcuts
@@ -503,7 +503,7 @@ public class CHStorage {
         if (time < MIN_TIME)
             time = MIN_TIME;
         if (time >= MAX_TIME) {
-            return (int) MAX_STORED_INTEGER; // negative
+            return MAX_TIME;
         } else
             return Math.toIntExact(time);
     }
