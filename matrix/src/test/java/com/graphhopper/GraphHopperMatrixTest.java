@@ -45,6 +45,7 @@ public class GraphHopperMatrixTest {
 
     // map locations
     private static final String ANDORRA = DIR + "/andorra.osm.gz";
+    private static final String MONACO = DIR + "/monaco.osm.gz";
 
     // when creating GH instances make sure to use this as the GH location such that it will be cleaned between tests
     private static final String GH_LOCATION = "target/graphhopper-test-gh";
@@ -96,6 +97,16 @@ public class GraphHopperMatrixTest {
     @ParameterizedTest(name = "Andorra Matrix Test {index} => matrix {1}")
     @CsvFileSource(resources = "/com/graphhopper/routing/matrix/andorra_matrix.csv", delimiter = ';')
     public void testAndorraDistanceMatrixResultsConsistencyAgainstRoutePoint2Point(String country, String matrix) {
+        testDistanceMatrixResultsConsistency(matrix, ANDORRA);
+    }
+
+    @ParameterizedTest(name = "Montecarlo Matrix Test {index} => matrix {1}")
+    @CsvFileSource(resources = "/com/graphhopper/routing/matrix/monaco_matrix.csv", delimiter = ';')
+    public void testMonacoDistanceMatrixResultsConsistencyAgainstRoutePoint2Point(String country, String matrix) {
+        testDistanceMatrixResultsConsistency(matrix, MONACO);
+    }
+
+    private void testDistanceMatrixResultsConsistency(String matrix, String osmLocation) {
         final MatrixText matrixText = parseRawMatrix(matrix);
 
         Profile carProfile = new Profile("car");
@@ -115,9 +126,9 @@ public class GraphHopperMatrixTest {
 
         GraphHopperMatrix hopper = new GraphHopperMatrix()
                 .setGraphHopperLocation(GH_LOCATION)
-                .setOSMFile(ANDORRA)
+                .setOSMFile(osmLocation)
                 .init(config)
-                .setOSMFile(ANDORRA)
+                .setOSMFile(osmLocation)
                 .setGraphHopperLocation(GH_LOCATION);
 
         hopper.importOrLoad();
