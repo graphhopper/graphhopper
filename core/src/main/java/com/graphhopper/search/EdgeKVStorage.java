@@ -326,6 +326,12 @@ public class EdgeKVStorage {
         byte[] bytes;
         if (clazz.equals(String.class)) {
             bytes = ((String) value).getBytes(Helper.UTF_CS);
+            if (bytes.length > MAX_LENGTH)
+                throw new IllegalArgumentException("bytes.length cannot be > " + MAX_LENGTH + " but was " + bytes.length + ". String:" + value);
+        } else if (clazz.equals(byte[].class)) {
+            bytes = (byte[]) value;
+            if (bytes.length > MAX_LENGTH)
+                throw new IllegalArgumentException("bytes.length cannot be > " + MAX_LENGTH + " but was " + bytes.length);
         } else if (clazz.equals(Integer.class)) {
             return bitUtil.fromInt((int) value);
         } else if (clazz.equals(Long.class)) {
@@ -334,12 +340,8 @@ public class EdgeKVStorage {
             return bitUtil.fromFloat((float) value);
         } else if (clazz.equals(Double.class)) {
             return bitUtil.fromDouble((double) value);
-        } else if (clazz.equals(byte[].class)) {
-            bytes = (byte[]) value;
         } else
             throw new IllegalArgumentException("The Class of a value was " + clazz.getSimpleName() + ", currently supported: byte[], String, int, long, float and double");
-        if (bytes.length > MAX_LENGTH)
-            throw new IllegalArgumentException("bytes.length cannot be > " + MAX_LENGTH + " but was " + bytes.length);
         return bytes;
     }
 

@@ -110,8 +110,8 @@ public class PrepareRoutingSubnetworksTest {
 
         // first we only block the middle edge for cars. this way a subnetwork should be created but only for car
         EdgeIteratorState edge = GHUtility.getEdge(g, 3, 4);
-        GHUtility.setSpeed(10, false, false, carEncoder, edge);
-        GHUtility.setSpeed(5, true, true, bikeEncoder, edge);
+        GHUtility.setSpeed(10, false, false, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), edge);
+        GHUtility.setSpeed(5, true, true, bikeEncoder.getAccessEnc(), bikeEncoder.getAverageSpeedEnc(), edge);
         List<PrepareRoutingSubnetworks.PrepareJob> prepareJobs = Arrays.asList(
                 createJob(em, carEncoder, NO_TURN_COST_PROVIDER),
                 createJob(em, bikeEncoder, NO_TURN_COST_PROVIDER)
@@ -125,8 +125,8 @@ public class PrepareRoutingSubnetworksTest {
         // now we block the edge for both vehicles -> there should be a subnetwork for both vehicles
         g = createSubnetworkTestStorage(em);
         edge = GHUtility.getEdge(g, 3, 4);
-        GHUtility.setSpeed(10, false, false, carEncoder, edge);
-        GHUtility.setSpeed(5, false, false, bikeEncoder, edge);
+        GHUtility.setSpeed(10, false, false, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), edge);
+        GHUtility.setSpeed(5, false, false, bikeEncoder.getAccessEnc(), bikeEncoder.getAverageSpeedEnc(), edge);
         instance = new PrepareRoutingSubnetworks(g, prepareJobs);
         instance.setMinNetworkSize(5);
         assertEquals(6, instance.doWork());
@@ -142,7 +142,7 @@ public class PrepareRoutingSubnetworksTest {
         // since the middle edge is blocked the upper component is a subnetwork (regardless of turn costs)
         BaseGraph g = createSubnetworkTestStorage(em);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(
-                createJob(em, encoder, new DefaultTurnCostProvider(encoder, g.getTurnCostStorage(), 0))));
+                createJob(em, encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), g.getTurnCostStorage(), 0))));
         instance.setMinNetworkSize(4);
         assertEquals(3, instance.doWork());
         assertEquals(IntArrayList.from(7, 8, 9), getSubnetworkEdges(g, encoder));
@@ -150,9 +150,9 @@ public class PrepareRoutingSubnetworksTest {
         // if we open the edge it won't be a subnetwork anymore
         g = createSubnetworkTestStorage(em);
         EdgeIteratorState edge = GHUtility.getEdge(g, 3, 4);
-        GHUtility.setSpeed(10, true, true, encoder, edge);
+        GHUtility.setSpeed(10, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), edge);
         instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(
-                createJob(em, encoder, new DefaultTurnCostProvider(encoder, g.getTurnCostStorage(), 0))));
+                createJob(em, encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), g.getTurnCostStorage(), 0))));
         instance.setMinNetworkSize(4);
         assertEquals(0, instance.doWork());
         assertEquals(IntArrayList.from(), getSubnetworkEdges(g, encoder));
@@ -161,12 +161,12 @@ public class PrepareRoutingSubnetworksTest {
         // subnetwork again
         g = createSubnetworkTestStorage(em);
         edge = GHUtility.getEdge(g, 3, 4);
-        GHUtility.setSpeed(10, true, true, encoder, edge);
+        GHUtility.setSpeed(10, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), edge);
         DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
         g.getTurnCostStorage().set(turnCostEnc, 0, 4, 7, 1);
         g.getTurnCostStorage().set(turnCostEnc, 0, 4, 9, 1);
         instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(
-                createJob(em, encoder, new DefaultTurnCostProvider(encoder, g.getTurnCostStorage(), 0))));
+                createJob(em, encoder, new DefaultTurnCostProvider(turnCostEnc, g.getTurnCostStorage(), 0))));
         instance.setMinNetworkSize(4);
         assertEquals(3, instance.doWork());
         assertEquals(IntArrayList.from(7, 8, 9), getSubnetworkEdges(g, encoder));
@@ -179,17 +179,19 @@ public class PrepareRoutingSubnetworksTest {
             fail("Warning: This method only sets access/speed for a single encoder, but the given encoding manager has multiple encoders");
         BaseGraph g = new BaseGraph.Builder(em).create();
         // 0 - 1 - 2 - 3 - 4 <- 5 - 6
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(5, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(5, 6).setDistance(1));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(5, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(5, 6).setDistance(1));
 
         // 7 -> 8 - 9 - 10
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(7, 8).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(8, 9).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(9, 10).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(7, 8).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(8, 9).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(9, 10).setDistance(1));
         return g;
     }
 
@@ -230,11 +232,13 @@ public class PrepareRoutingSubnetworksTest {
         EncodingManager em = createEncodingManager("car");
         BaseGraph g = new BaseGraph.Builder(em).create();
         FlagEncoder encoder = em.fetchEdgeEncoders().iterator().next();
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 0).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(0, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 5).setDistance(1));
+        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
+        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(2, 0).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(4, 5).setDistance(1));
 
         PrepareRoutingSubnetworks.PrepareJob job = createJob(em, encoder, NO_TURN_COST_PROVIDER);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(job)).

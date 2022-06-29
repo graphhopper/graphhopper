@@ -43,7 +43,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.function.Supplier;
@@ -97,12 +96,10 @@ public class RandomizedRoutingTest {
         private final TraversalMode traversalMode;
         private final Directory dir;
         private final BaseGraph graph;
-        private final List<CHConfig> chConfigs;
-        private final LMConfig lmConfig;
         private final FlagEncoder encoder;
         private final TurnCostStorage turnCostStorage;
         private final int maxTurnCosts;
-        private final Weighting weighting;
+        private Weighting weighting;
         private final EncodingManager encodingManager;
         private RoutingCHGraph routingCHGraph;
         private LandmarkStorage lm;
@@ -123,13 +120,6 @@ public class RandomizedRoutingTest {
                     .setDir(dir)
                     .create();
             turnCostStorage = graph.getTurnCostStorage();
-            chConfigs = Arrays.asList(
-                    CHConfig.nodeBased("p1", new FastestWeighting(encoder)),
-                    CHConfig.edgeBased("p2", new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())))
-            );
-            // important: for LM preparation we need to use a weighting without turn costs #1960
-            lmConfig = new LMConfig("car", chConfigs.get(0).getWeighting());
-            weighting = traversalMode.isEdgeBased() ? chConfigs.get(1).getWeighting() : chConfigs.get(0).getWeighting();
         }
 
         @Override
@@ -139,13 +129,18 @@ public class RandomizedRoutingTest {
 
         private void preProcessGraph() {
             graph.freeze();
+            weighting = traversalMode.isEdgeBased()
+                    ? new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage()))
+                    : new FastestWeighting(encoder);
             if (prepareCH) {
-                CHConfig chConfig = !traversalMode.isEdgeBased() ? chConfigs.get(0) : chConfigs.get(1);
+                CHConfig chConfig = traversalMode.isEdgeBased() ? CHConfig.edgeBased("p", weighting) : CHConfig.nodeBased("p", weighting);
                 PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
                 PrepareContractionHierarchies.Result res = pch.doWork();
                 routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             }
             if (prepareLM) {
+                // important: for LM preparation we need to use a weighting without turn costs #1960
+                LMConfig lmConfig = new LMConfig("car", new FastestWeighting(encoder));
                 PrepareLandmarks prepare = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 16);
                 prepare.setMaximumWeight(10000);
                 prepare.doWork();

@@ -270,7 +270,7 @@ public class GraphHopperTest {
                     new Coordinate(7.4207, 43.7344),
                     new Coordinate(7.4174, 43.7345)}));
             CustomModel customModel = new CustomModel().setDistanceInfluence(0);
-            customModel.getPriority().add(Statement.If("in_area51", Statement.Op.MULTIPLY, 0.1));
+            customModel.getPriority().add(Statement.If("in_area51", Statement.Op.MULTIPLY, "0.1"));
             customModel.getAreas().put("area51", area51Feature);
             profile = new CustomProfile(profileName).setCustomModel(customModel).setVehicle(vehicle);
         }
@@ -636,7 +636,7 @@ public class GraphHopperTest {
         final String customCar = "custom_car";
         final String emptyCar = "empty_car";
         CustomModel customModel = new CustomModel();
-        customModel.addToSpeed(Statement.If("road_class == TERTIARY || road_class == TRACK", Statement.Op.MULTIPLY, 0.1));
+        customModel.addToSpeed(Statement.If("road_class == TERTIARY || road_class == TRACK", Statement.Op.MULTIPLY, "0.1"));
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
@@ -654,11 +654,11 @@ public class GraphHopperTest {
         assertDistance(hopper, emptyCar, new CustomModel(customModel), 13223);
         // now we prevent using unclassified roads as well and the route goes even further north
         CustomModel strictCustomModel = new CustomModel().addToSpeed(
-                Statement.If("road_class == TERTIARY || road_class == TRACK || road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, 0.1));
+                Statement.If("road_class == TERTIARY || road_class == TRACK || road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, "0.1"));
         assertDistance(hopper, emptyCar, strictCustomModel, 19289);
         // we can achieve the same by 'adding' a rule to the server-side custom model
         CustomModel customModelWithUnclassifiedRule = new CustomModel().addToSpeed(
-                Statement.If("road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, 0.1)
+                Statement.If("road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, "0.1")
         );
         assertDistance(hopper, customCar, customModelWithUnclassifiedRule, 19289);
         // now we use distance influence to avoid the detour
@@ -2572,7 +2572,7 @@ public class GraphHopperTest {
     }
 
     @Test
-    void testLoadingWithAnotherSpeedFactorFails() {
+    void testLoadingWithAnotherSpeedFactorWorks() {
         {
             GraphHopper hopper = new GraphHopper()
                     .setFlagEncodersString("car|speed_factor=7")
@@ -2582,12 +2582,16 @@ public class GraphHopperTest {
             hopper.importOrLoad();
         }
         {
+            // now we use another speed_factor, but changing the flag encoder string has no effect when we are loading
+            // a graph. This API is a bit confusing, but we have been mixing configuration options that only matter
+            // during import with those that only matter when routing for some time already. At some point we should
+            // separate the 'import' from the 'routing' config (and split the GraphHopper class).
             GraphHopper hopper = new GraphHopper()
                     .setFlagEncodersString("car|speed_factor=9")
                     .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"))
                     .setGraphHopperLocation(GH_LOCATION);
-            IllegalStateException ex = assertThrows(IllegalStateException.class, hopper::load);
-            assertTrue(ex.getMessage().contains("Flag encoders do not match"), ex.getMessage());
+            hopper.load();
+            assertEquals(1942, hopper.getBaseGraph().getNodes());
         }
     }
 

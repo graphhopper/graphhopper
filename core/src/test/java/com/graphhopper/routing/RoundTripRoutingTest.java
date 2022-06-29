@@ -135,7 +135,7 @@ public class RoundTripRoutingTest {
         //    |-1 0 1
         BaseGraph graph = new BaseGraph.Builder(em).create();
         for (int i = 0; i < 8; ++i) {
-            GHUtility.setSpeed(60, true, true, carFE, graph.edge(i, (i + 1) % 8).setDistance(1));
+            GHUtility.setSpeed(60, true, true, carFE.getAccessEnc(), carFE.getAverageSpeedEnc(), graph.edge(i, (i + 1) % 8).setDistance(1));
         }
         updateDistancesFor(graph, 0, 1, -1);
         updateDistancesFor(graph, 1, 1, 0);

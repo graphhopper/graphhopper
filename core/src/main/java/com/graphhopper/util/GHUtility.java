@@ -585,59 +585,51 @@ public class GHUtility {
         return edgeKey / 2;
     }
 
-    public static IntsRef setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, IntsRef edgeFlags) {
+    public static IntsRef setSpeed(double fwdSpeed, double bwdSpeed, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, IntsRef edgeFlags) {
         if (fwdSpeed < 0 || bwdSpeed < 0)
             throw new IllegalArgumentException("Speed must be positive but wasn't! fwdSpeed:" + fwdSpeed + ", bwdSpeed:" + bwdSpeed);
 
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue avgSpeedEnc = encoder.getAverageSpeedEnc();
-
-        avgSpeedEnc.setDecimal(false, edgeFlags, fwdSpeed);
+        speedEnc.setDecimal(false, edgeFlags, fwdSpeed);
         if (fwdSpeed > 0)
             accessEnc.setBool(false, edgeFlags, true);
 
-        if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || avgSpeedEnc.isStoreTwoDirections())) {
-            if (!avgSpeedEnc.isStoreTwoDirections())
-                throw new IllegalArgumentException("EncodedValue " + avgSpeedEnc.getName() + " supports only one direction " +
+        if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || speedEnc.isStoreTwoDirections())) {
+            if (!speedEnc.isStoreTwoDirections())
+                throw new IllegalArgumentException("EncodedValue " + speedEnc.getName() + " supports only one direction " +
                         "but two different speeds were specified " + fwdSpeed + " " + bwdSpeed);
-            avgSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
+            speedEnc.setDecimal(true, edgeFlags, bwdSpeed);
         }
         if (bwdSpeed > 0)
             accessEnc.setBool(true, edgeFlags, true);
         return edgeFlags;
     }
 
-    public static void setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, EdgeIteratorState... edges) {
-        setSpeed(fwdSpeed, bwdSpeed, encoder, Arrays.asList(edges));
+    public static void setSpeed(double fwdSpeed, double bwdSpeed, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EdgeIteratorState... edges) {
+        setSpeed(fwdSpeed, bwdSpeed, accessEnc, speedEnc, Arrays.asList(edges));
     }
 
-    public static void setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, Collection<EdgeIteratorState> edges) {
+    public static void setSpeed(double fwdSpeed, double bwdSpeed, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, Collection<EdgeIteratorState> edges) {
         if (fwdSpeed < 0 || bwdSpeed < 0)
             throw new IllegalArgumentException("Speed must be positive but wasn't! fwdSpeed:" + fwdSpeed + ", bwdSpeed:" + bwdSpeed);
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue avgSpeedEnc = encoder.getAverageSpeedEnc();
         for (EdgeIteratorState edge : edges) {
-            edge.set(avgSpeedEnc, fwdSpeed);
+            edge.set(speedEnc, fwdSpeed);
             if (fwdSpeed > 0)
                 edge.set(accessEnc, true);
 
-            if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || avgSpeedEnc.isStoreTwoDirections())) {
-                if (!avgSpeedEnc.isStoreTwoDirections())
-                    throw new IllegalArgumentException("EncodedValue " + avgSpeedEnc.getName() + " supports only one direction " +
+            if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || speedEnc.isStoreTwoDirections())) {
+                if (!speedEnc.isStoreTwoDirections())
+                    throw new IllegalArgumentException("EncodedValue " + speedEnc.getName() + " supports only one direction " +
                             "but two different speeds were specified " + fwdSpeed + " " + bwdSpeed);
-                edge.setReverse(avgSpeedEnc, bwdSpeed);
+                edge.setReverse(speedEnc, bwdSpeed);
             }
             if (bwdSpeed > 0)
                 edge.setReverse(accessEnc, true);
         }
     }
 
-    public static EdgeIteratorState setSpeed(double averageSpeed, boolean fwd, boolean bwd, FlagEncoder encoder, EdgeIteratorState edge) {
+    public static EdgeIteratorState setSpeed(double averageSpeed, boolean fwd, boolean bwd, BooleanEncodedValue accessEnc, DecimalEncodedValue avSpeedEnc, EdgeIteratorState edge) {
         if (averageSpeed < 0.0001 && (fwd || bwd))
             throw new IllegalStateException("Zero speed is only allowed if edge will get inaccessible. Otherwise Weighting can produce inconsistent results");
-
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
         edge.set(accessEnc, fwd, bwd);
         if (fwd)
             edge.set(avSpeedEnc, averageSpeed);

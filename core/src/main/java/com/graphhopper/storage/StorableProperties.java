@@ -102,12 +102,7 @@ public class StorableProperties {
     public synchronized String get(String key) {
         if (!key.equals(toLowerCase(key)))
             throw new IllegalArgumentException("Do not use upper case keys (" + key + ") for StorableProperties since 0.7");
-
-        String ret = map.get(key);
-        if (ret == null)
-            return "";
-
-        return ret;
+        return map.getOrDefault(key, "");
     }
 
     public synchronized Map<String, String> getAll() {

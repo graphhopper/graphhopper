@@ -46,6 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
@@ -666,11 +667,19 @@ public class OSMReaderTest {
     @Test
     public void testTurnFlagCombination() {
         GraphHopper hopper = new GraphHopper();
-        hopper.setFlagEncoderFactory((name, config) -> {
-            if (name.equals("truck")) {
-                return FlagEncoders.createCar(new PMap(config).putObject("name", "truck"));
-            } else {
-                return new DefaultFlagEncoderFactory().createFlagEncoder(name, config);
+        hopper.setFlagEncoderFactory(new FlagEncoderFactory() {
+            @Override
+            public FlagEncoder createFlagEncoder(String name, PMap config) {
+                if (name.equals("truck")) {
+                    return FlagEncoders.createCar(new PMap(config).putObject("name", "truck"));
+                } else {
+                    return new DefaultFlagEncoderFactory().createFlagEncoder(name, config);
+                }
+            }
+
+            @Override
+            public FlagEncoder deserializeFlagEncoder(String serializedFlagEncoder, Function<String, EncodedValue> evLookup) {
+                return null;
             }
         });
         hopper.setVehicleTagParserFactory((lookup, name, config) -> {

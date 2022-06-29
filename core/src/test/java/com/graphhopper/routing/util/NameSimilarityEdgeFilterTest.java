@@ -23,8 +23,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-
 import static java.util.Collections.singletonMap;
 import static org.junit.jupiter.api.Assertions.*;
 

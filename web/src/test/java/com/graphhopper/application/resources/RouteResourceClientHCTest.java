@@ -365,7 +365,7 @@ public class RouteResourceClientHCTest {
                 addPoint(new GHPoint(42.532022, 1.519504)).
                 setCustomModel(new CustomModel()
                         // we reduce the speed in the long tunnel
-                        .addToSpeed(Statement.If("road_environment == TUNNEL", Statement.Op.MULTIPLY, 0.1))).
+                        .addToSpeed(Statement.If("road_environment == TUNNEL", Statement.Op.MULTIPLY, "0.1"))).
                 setProfile("my_custom_car").
                 putHint("ch.disable", true);
         GHResponse rsp = gh.route(req);

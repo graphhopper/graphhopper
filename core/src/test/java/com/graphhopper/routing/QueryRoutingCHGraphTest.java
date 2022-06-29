@@ -55,15 +55,15 @@ class QueryRoutingCHGraphTest {
         encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 5).putObject("speed_two_directions", true));
         encodingManager = EncodingManager.create(encoder);
         graph = new BaseGraph.Builder(encodingManager).create();
-        weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
+        weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graph.getTurnCostStorage()));
         na = graph.getNodeAccess();
     }
 
     @Test
     public void basic() {
         // 0-1-2
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(1, 2).setDistance(10));
         graph.freeze();
         assertEquals(2, graph.getEdges());
 
@@ -100,8 +100,8 @@ class QueryRoutingCHGraphTest {
     public void withShortcuts() {
         // 0-1-2
         //  \-/
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(1, 2).setDistance(10));
         graph.freeze();
         assertEquals(2, graph.getEdges());
 
@@ -266,7 +266,7 @@ class QueryRoutingCHGraphTest {
 
     @Test
     public void getBaseGraph() {
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(0, 1).setDistance(10));
         graph.freeze();
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
@@ -695,7 +695,7 @@ class QueryRoutingCHGraphTest {
     private EdgeIteratorState addEdge(Graph graph, int from, int to) {
         NodeAccess na = graph.getNodeAccess();
         double dist = DistancePlaneProjection.DIST_PLANE.calcDist(na.getLat(from), na.getLon(from), na.getLat(to), na.getLon(to));
-        return GHUtility.setSpeed(60, true, true, encoder, graph.edge(from, to).setDistance(dist));
+        return GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(from, to).setDistance(dist));
     }
 
 }

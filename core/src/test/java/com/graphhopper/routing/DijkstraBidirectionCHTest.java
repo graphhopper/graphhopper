@@ -62,7 +62,7 @@ public class DijkstraBidirectionCHTest {
         RoutingAlgorithmTest.initDirectedAndDiffSpeed(graph, carEncoder);
 
         // do CH preparation for car
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        ShortestWeighting weighting = new ShortestWeighting(carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc());
         prepareCH(graph, CHConfig.nodeBased(weighting.getName(), weighting));
 
         // use base graph for solving normal Dijkstra
@@ -116,7 +116,7 @@ public class DijkstraBidirectionCHTest {
     @Test
     public void testStallingNodesReducesNumberOfVisitedNodes() {
         BaseGraph graph = createGHStorage();
-        GHUtility.setSpeed(60, 0, carEncoder,
+        GHUtility.setSpeed(60, 0, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(),
                 graph.edge(8, 9).setDistance(100),
                 graph.edge(8, 3).setDistance(2),
                 graph.edge(8, 5).setDistance(1),
@@ -126,13 +126,13 @@ public class DijkstraBidirectionCHTest {
                 graph.edge(1, 8).setDistance(1),
                 graph.edge(2, 3).setDistance(3));
         for (int i = 3; i < 7; ++i) {
-            GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(i, i + 1).setDistance(1));
+            GHUtility.setSpeed(60, true, false, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), graph.edge(i, i + 1).setDistance(1));
         }
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(9, 0).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(3, 9).setDistance(200));
+        GHUtility.setSpeed(60, true, false, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), graph.edge(9, 0).setDistance(1));
+        GHUtility.setSpeed(60, true, false, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), graph.edge(3, 9).setDistance(200));
         graph.freeze();
 
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        ShortestWeighting weighting = new ShortestWeighting(carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc());
         CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
 
@@ -178,11 +178,11 @@ public class DijkstraBidirectionCHTest {
 
     private void runTestWithDirectionDependentEdgeSpeed(double speed, double revSpeed, int from, int to, IntArrayList expectedPath, FlagEncoder encoder) {
         BaseGraph graph = createGHStorage();
-        EdgeIteratorState edge = GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(0, 1).setDistance(2));
+        EdgeIteratorState edge = GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(0, 1).setDistance(2));
         DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "average_speed"));
         edge.set(avSpeedEnc, speed, revSpeed);
 
-        GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(1, 2).setDistance(1));
         graph.freeze();
         FastestWeighting weighting = new FastestWeighting(encoder);
         CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);

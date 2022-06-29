@@ -73,7 +73,7 @@ public class BridgeElevationInterpolatorTest extends EdgeElevationInterpolatorTe
 
         FlagEncoder encoder = encodingManager.getEncoder("car");
         EdgeIteratorState edge01, edge12, edge23, edge34, edge56, edge67, edge78, edge89, edge17, edge27, edge37;
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
                 edge01 = graph.edge(0, 1).setDistance(10),
                 edge12 = graph.edge(1, 2).setDistance(10),
                 edge23 = graph.edge(2, 3).setDistance(10),

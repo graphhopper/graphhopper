@@ -17,10 +17,13 @@
  */
 package com.graphhopper.routing.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
+import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -36,10 +39,10 @@ import static com.graphhopper.util.Helper.toLowerCase;
  * @author Nop
  */
 public class EncodingManager implements EncodedValueLookup {
-    private final Map<String, VehicleEncodedValues> flagEncoders;
-    private final Map<String, EncodedValue> encodedValueMap;
-    private final EncodedValue.InitializerConfig turnCostConfig;
+    private final LinkedHashMap<String, EncodedValue> encodedValueMap;
+    private final LinkedHashMap<String, VehicleEncodedValues> flagEncoders;
     private final EncodedValue.InitializerConfig edgeConfig;
+    private final EncodedValue.InitializerConfig turnCostConfig;
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
@@ -83,11 +86,16 @@ public class EncodingManager implements EncodedValueLookup {
         return new Builder();
     }
 
+    public EncodingManager(LinkedHashMap<String, EncodedValue> encodedValueMap, LinkedHashMap<String, VehicleEncodedValues> flagEncoders, EncodedValue.InitializerConfig edgeConfig, EncodedValue.InitializerConfig turnCostConfig) {
+        this.flagEncoders = flagEncoders;
+        this.encodedValueMap = encodedValueMap;
+        this.turnCostConfig = turnCostConfig;
+        this.edgeConfig = edgeConfig;
+        flagEncoders.values().forEach(f -> f.setEncodedValueLookup(this));
+    }
+
     private EncodingManager() {
-        flagEncoders = new LinkedHashMap<>();
-        encodedValueMap = new LinkedHashMap<>();
-        edgeConfig = new EncodedValue.InitializerConfig();
-        turnCostConfig = new EncodedValue.InitializerConfig();
+        this(new LinkedHashMap<>(), new LinkedHashMap<>(), new EncodedValue.InitializerConfig(), new EncodedValue.InitializerConfig());
     }
 
     public static class Builder {
@@ -99,7 +107,6 @@ public class EncodingManager implements EncodedValueLookup {
                 throw new IllegalArgumentException("FlagEncoder already exists: " + encoder.getName());
             VehicleEncodedValues v = (VehicleEncodedValues) encoder;
             v.setEncodedValueLookup(em);
-
             List<EncodedValue> list = new ArrayList<>();
             v.createEncodedValues(list);
             list.forEach(this::add);
@@ -218,11 +225,24 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public String toFlagEncodersAsString() {
-        return flagEncoders.values().stream().map(fe -> fe.getName() + "|" + fe.getSharedEncodedValueString()).collect(Collectors.joining(","));
+        return flagEncoders.values().stream().map(VehicleEncodedValues::toSerializationString).collect(Collectors.joining(","));
     }
 
     public String toEncodedValuesAsString() {
-        return encodedValueMap.values().stream().map(Object::toString).collect(Collectors.joining(","));
+        List<String> serializedEVsList = encodedValueMap.values().stream().map(EncodedValueSerializer::serializeEncodedValue).collect(Collectors.toList());
+        try {
+            return Jackson.newObjectMapper().writeValueAsString(serializedEVsList);
+        } catch (JsonProcessingException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    public String toEdgeConfigAsString() {
+        return EncodedValueSerializer.serializeInitializerConfig(edgeConfig);
+    }
+
+    public String toTurnCostConfigAsString() {
+        return EncodedValueSerializer.serializeInitializerConfig(turnCostConfig);
     }
 
     @Override

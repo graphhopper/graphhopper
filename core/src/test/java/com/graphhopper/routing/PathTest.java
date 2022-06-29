@@ -48,7 +48,7 @@ public class PathTest {
     private final FlagEncoder encoder = FlagEncoders.createCar();
     private final EncodingManager carManager = EncodingManager.create(encoder);
     private final BooleanEncodedValue carAccessEnc = encoder.getAccessEnc();
-    private final DecimalEncodedValue carAvSpeedEnv = encoder.getAverageSpeedEnc();
+    private final DecimalEncodedValue carAvSpeedEnc = encoder.getAverageSpeedEnc();
     private final EncodingManager mixedEncoders = EncodingManager.create(FlagEncoders.createCar(), FlagEncoders.createFoot());
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
@@ -72,10 +72,10 @@ public class PathTest {
         na.setNode(1, 1.0, 0.1);
         na.setNode(2, 2.0, 0.1);
 
-        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 10.0);
+        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnc, 10.0);
 
         edge1.setWayGeometry(Helper.createPointList(8, 1, 9, 1));
-        EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
+        EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).set(carAccessEnc, true, true).set(carAvSpeedEnc, 50.0);
         edge2.setWayGeometry(Helper.createPointList(11, 1, 10, 1));
 
         SPTEntry e1 = new SPTEntry(edge2.getEdge(), 2, 1, new SPTEntry(edge1.getEdge(), 1, 1, new SPTEntry(0, 1)));
@@ -105,7 +105,7 @@ public class PathTest {
         // force minor change for instructions
         edge2.setKeyValues(singletonMap("name", "2"));
         na.setNode(3, 1.0, 1.0);
-        g.edge(1, 3).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 10.0);
+        g.edge(1, 3).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnc, 10.0);
 
         e1 = new SPTEntry(edge2.getEdge(), 2, 1,
                 new SPTEntry(edge1.getEdge(), 1, 1,
@@ -168,22 +168,22 @@ public class PathTest {
         na.setNode(4, 7.5, 0.25);
         na.setNode(5, 5.0, 1.0);
 
-        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
+        EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnc, 50.0);
         edge1.setWayGeometry(Helper.createPointList());
         edge1.setKeyValues(singletonMap("name", "Street 1"));
-        EdgeIteratorState edge2 = g.edge(1, 2).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
+        EdgeIteratorState edge2 = g.edge(1, 2).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnc, 50.0);
         edge2.setWayGeometry(Helper.createPointList());
         edge2.setKeyValues(singletonMap("name", "Street 2"));
-        EdgeIteratorState edge3 = g.edge(2, 3).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
+        EdgeIteratorState edge3 = g.edge(2, 3).setDistance(1000).set(carAccessEnc, true, true).set(carAvSpeedEnc, 50.0);
         edge3.setWayGeometry(Helper.createPointList());
         edge3.setKeyValues(singletonMap("name", "Street 3"));
-        EdgeIteratorState edge4 = g.edge(3, 4).setDistance(500).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
+        EdgeIteratorState edge4 = g.edge(3, 4).setDistance(500).set(carAccessEnc, true, true).set(carAvSpeedEnc, 50.0);
         edge4.setWayGeometry(Helper.createPointList());
         edge4.setKeyValues(singletonMap("name", "Street 4"));
 
-        g.edge(1, 5).setDistance(10000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
-        g.edge(2, 5).setDistance(10000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
-        g.edge(3, 5).setDistance(100000).set(carAccessEnc, true, true).set(carAvSpeedEnv, 50.0);
+        g.edge(1, 5).setDistance(10000).set(carAccessEnc, true, true).set(carAvSpeedEnc, 50.0);
+        g.edge(2, 5).setDistance(10000).set(carAccessEnc, true, true).set(carAvSpeedEnc, 50.0);
+        g.edge(3, 5).setDistance(100000).set(carAccessEnc, true, true).set(carAvSpeedEnc, 50.0);
 
         SPTEntry e1 =
                 new SPTEntry(edge4.getEdge(), 4, 1,
@@ -210,7 +210,7 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundabout() {
         for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders()) {
-            ShortestWeighting weighting = new ShortestWeighting(encoder);
+            ShortestWeighting weighting = new ShortestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
             Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                     .calcPath(1, 8);
             assertTrue(p.isFound());
@@ -245,7 +245,8 @@ public class PathTest {
 
     @Test
     public void testCalcInstructionsRoundaboutBegin() {
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder encoder = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(2, 8);
         assertTrue(p.isFound());
@@ -259,7 +260,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundaboutDirectExit() {
         roundaboutGraph.inverse3to9();
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder encoder = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(6, 8);
         assertTrue(p.isFound());
@@ -274,7 +276,7 @@ public class PathTest {
 
     @Test
     public void testCalcAverageSpeedDetails() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
@@ -298,7 +300,7 @@ public class PathTest {
 
     @Test
     public void testCalcAverageSpeedDetailsWithShortDistances_issue1848() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 6);
         assertTrue(p.isFound());
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
@@ -320,7 +322,7 @@ public class PathTest {
 
     @Test
     public void testCalcStreetNameDetails() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
@@ -346,7 +348,7 @@ public class PathTest {
 
     @Test
     public void testCalcEdgeIdDetails() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
@@ -371,7 +373,7 @@ public class PathTest {
 
     @Test
     public void testCalcEdgeKeyDetailsForward() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
@@ -388,7 +390,7 @@ public class PathTest {
 
     @Test
     public void testCalcEdgeKeyDetailsBackward() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(5, 1);
         assertTrue(p.isFound());
 
@@ -405,7 +407,7 @@ public class PathTest {
 
     @Test
     public void testCalcTimeDetails() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
@@ -429,7 +431,7 @@ public class PathTest {
 
     @Test
     public void testCalcDistanceDetails() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
@@ -450,7 +452,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundabout2() {
         roundaboutGraph.inverse3to6();
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 8);
         assertTrue(p.isFound());
@@ -495,47 +498,34 @@ public class PathTest {
         na.setNode(10, 52.5135, 13.348);
         na.setNode(11, 52.514, 13.347);
 
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 1).setDistance(5)).
-                setKeyValues(singletonMap("name", "MainStreet 2 1"));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 11).setDistance(5)).
-                setKeyValues(singletonMap("name", "MainStreet 1 11"));
+        GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(2, 1).setDistance(5)).setKeyValues(singletonMap("name", "MainStreet 2 1"));
+        GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(1, 11).setDistance(5)).setKeyValues(singletonMap("name", "MainStreet 1 11"));
 
         // roundabout
         EdgeIteratorState tmpEdge;
-        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 9).setDistance(2)).
-                setKeyValues(singletonMap("name", "3-9"));
+        tmpEdge = GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(3, 9).setDistance(2)).setKeyValues(singletonMap("name", "3-9"));
         BooleanEncodedValue carManagerRoundabout = carManager.getBooleanEncodedValue(Roundabout.KEY);
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(9, 10).setDistance(2)).
-                setKeyValues(singletonMap("name", "9-10"));
+        tmpEdge = GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(9, 10).setDistance(2)).setKeyValues(singletonMap("name", "9-10"));
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(6, 10).setDistance(2)).
-                setKeyValues(singletonMap("name", "6-10"));
+        tmpEdge = GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(6, 10).setDistance(2)).setKeyValues(singletonMap("name", "6-10"));
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(10, 1).setDistance(2)).
-                setKeyValues(singletonMap("name", "10-1"));
+        tmpEdge = GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(10, 1).setDistance(2)).setKeyValues(singletonMap("name", "10-1"));
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(3, 2).setDistance(5)).
-                setKeyValues(singletonMap("name", "2-3"));
+        tmpEdge = GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(3, 2).setDistance(5)).setKeyValues(singletonMap("name", "2-3"));
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 3).setDistance(5)).
-                setKeyValues(singletonMap("name", "3-4"));
+        tmpEdge = GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(4, 3).setDistance(5)).setKeyValues(singletonMap("name", "3-4"));
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(5, 4).setDistance(5)).
-                setKeyValues(singletonMap("name", "4-5"));
+        tmpEdge = GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(5, 4).setDistance(5)).setKeyValues(singletonMap("name", "4-5"));
         tmpEdge.set(carManagerRoundabout, true);
-        tmpEdge = GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 5).setDistance(5)).
-                setKeyValues(singletonMap("name", "5-2"));
+        tmpEdge = GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(2, 5).setDistance(5)).setKeyValues(singletonMap("name", "5-2"));
         tmpEdge.set(carManagerRoundabout, true);
 
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 7).setDistance(5)).
-                setKeyValues(singletonMap("name", "MainStreet 4 7"));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 8).setDistance(5)).
-                setKeyValues(singletonMap("name", "5-8"));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 6).setDistance(5)).
-                setKeyValues(singletonMap("name", "3-6"));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(4, 7).setDistance(5)).setKeyValues(singletonMap("name", "MainStreet 4 7"));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(5, 8).setDistance(5)).setKeyValues(singletonMap("name", "5-8"));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(3, 6).setDistance(5)).setKeyValues(singletonMap("name", "3-6"));
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
                 .calcPath(6, 11);
         assertTrue(p.isFound());
@@ -549,7 +539,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundaboutClockwise() {
         roundaboutGraph.setRoundabout(true);
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 8);
         assertTrue(p.isFound());
@@ -568,7 +559,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsIgnoreContinue() {
         // Follow a couple of straight edges, including a name change
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(4, 11);
         assertTrue(p.isFound());
@@ -581,7 +573,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsIgnoreTurnIfNoAlternative() {
         // The street turns left, but there is not turn
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(10, 12);
         assertTrue(p.isFound());
@@ -609,13 +602,11 @@ public class PathTest {
         na.setNode(3, 48.982611, 13.121012);
         na.setNode(4, 48.982336, 13.121002);
 
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(5)).
-                setKeyValues(singletonMap("name", "Regener Weg"));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4).setDistance(5)).
-                setKeyValues(singletonMap("name", "Regener Weg"));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(5));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(1, 2).setDistance(5)).setKeyValues(singletonMap("name", "Regener Weg"));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(2, 4).setDistance(5)).setKeyValues(singletonMap("name", "Regener Weg"));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(2, 3).setDistance(5));
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 4);
         assertTrue(p.isFound());
@@ -644,14 +635,11 @@ public class PathTest {
         EnumEncodedValue<RoadClass> roadClassEnc = carManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BooleanEncodedValue roadClassLinkEnc = carManager.getBooleanEncodedValue(RoadClassLink.KEY);
 
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(5)).
-                setKeyValues(singletonMap("name", "A 8")).set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4).setDistance(5)).
-                setKeyValues(singletonMap("name", "A 8")).set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(5)).
-                set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, true);
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(1, 2).setDistance(5)).setKeyValues(singletonMap("name", "A 8")).set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(2, 4).setDistance(5)).setKeyValues(singletonMap("name", "A 8")).set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, false);
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(2, 3).setDistance(5)).set(roadClassEnc, RoadClass.MOTORWAY).set(roadClassLinkEnc, true);
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 4);
         assertTrue(p.isFound());
@@ -675,14 +663,11 @@ public class PathTest {
         na.setNode(3, 48.630558, 9.459851);
         na.setNode(4, 48.63054, 9.459406);
 
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(1, 2).setDistance(5)).
-                setKeyValues(singletonMap("name", "A 8"));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(2, 3).setDistance(5)).
-                setKeyValues(singletonMap("name", "A 8"));
-        GHUtility.setSpeed(60, true, false, encoder, graph.edge(4, 2).setDistance(5)).
-                setKeyValues(singletonMap("name", "A 8"));
+        GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(1, 2).setDistance(5)).setKeyValues(singletonMap("name", "A 8"));
+        GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(2, 3).setDistance(5)).setKeyValues(singletonMap("name", "A 8"));
+        GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, graph.edge(4, 2).setDistance(5)).setKeyValues(singletonMap("name", "A 8"));
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED)
                 .calcPath(4, 3);
         assertTrue(p.isFound());
@@ -707,14 +692,11 @@ public class PathTest {
         na.setNode(3, 48.706805, 9.162995);
         na.setNode(4, 48.706705, 9.16329);
 
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(5)).
-                setKeyValues(singletonMap("name", "A 8"));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(5)).
-                setKeyValues(singletonMap("name", "A 8"));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 4).setDistance(5)).
-                setKeyValues(singletonMap("name", "A 8"));
+        GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, g.edge(1, 2).setDistance(5)).setKeyValues(singletonMap("name", "A 8"));
+        GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, g.edge(2, 3).setDistance(5)).setKeyValues(singletonMap("name", "A 8"));
+        GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, g.edge(2, 4).setDistance(5)).setKeyValues(singletonMap("name", "A 8"));
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 3);
         assertTrue(p.isFound());
@@ -740,14 +722,11 @@ public class PathTest {
         na.setNode(3, -33.824415, 151.188177);
         na.setNode(4, -33.824437, 151.187925);
 
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(1, 2).setDistance(5)).
-                setKeyValues(singletonMap("name", "Pacific Highway"));
-        GHUtility.setSpeed(60, true, false, encoder, g.edge(2, 3).setDistance(5)).
-                setKeyValues(singletonMap("name", "Pacific Highway"));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(4, 2).setDistance(5)).
-                setKeyValues(singletonMap("name", "Greenwich Road"));
+        GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, g.edge(1, 2).setDistance(5)).setKeyValues(singletonMap("name", "Pacific Highway"));
+        GHUtility.setSpeed(60, true, false, carAccessEnc, carAvSpeedEnc, g.edge(2, 3).setDistance(5)).setKeyValues(singletonMap("name", "Pacific Highway"));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(4, 2).setDistance(5)).setKeyValues(singletonMap("name", "Greenwich Road"));
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(4, 3);
         assertTrue(p.isFound());
@@ -778,14 +757,11 @@ public class PathTest {
         EnumEncodedValue<RoadClass> roadClassEnc = carManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BooleanEncodedValue roadClassLinkEnc = carManager.getBooleanEncodedValue(RoadClassLink.KEY);
 
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(5)).
-                setKeyValues(singletonMap("name", "B 156")).set(roadClassEnc, RoadClass.PRIMARY).set(roadClassLinkEnc, false);
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 4).setDistance(5)).
-                setKeyValues(singletonMap("name", "S 108")).set(roadClassEnc, RoadClass.SECONDARY).set(roadClassLinkEnc, false);
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(5)).
-                setKeyValues(singletonMap("name", "B 156")).set(roadClassEnc, RoadClass.PRIMARY).set(roadClassLinkEnc, false);
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(1, 2).setDistance(5)).setKeyValues(singletonMap("name", "B 156")).set(roadClassEnc, RoadClass.PRIMARY).set(roadClassLinkEnc, false);
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 4).setDistance(5)).setKeyValues(singletonMap("name", "S 108")).set(roadClassEnc, RoadClass.SECONDARY).set(roadClassLinkEnc, false);
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 3).setDistance(5)).setKeyValues(singletonMap("name", "B 156")).set(roadClassEnc, RoadClass.PRIMARY).set(roadClassLinkEnc, false);
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 4);
         assertTrue(p.isFound());
@@ -815,13 +791,11 @@ public class PathTest {
         na.setNode(3, 48.982611, 13.121012);
         na.setNode(4, 48.982565, 13.121002);
 
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(5)).
-                setKeyValues(singletonMap("name", "Regener Weg"));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 4).setDistance(5));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(5)).
-                setKeyValues(singletonMap("name", "Regener Weg"));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(1, 2).setDistance(5)).setKeyValues(singletonMap("name", "Regener Weg"));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 4).setDistance(5));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 3).setDistance(5)).setKeyValues(singletonMap("name", "Regener Weg"));
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 4);
         assertTrue(p.isFound());
@@ -847,13 +821,11 @@ public class PathTest {
         na.setNode(3, 48.412034, 15.599411);
         na.setNode(4, 48.411927, 15.599197);
 
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 2).setDistance(5)).
-                setKeyValues(singletonMap("name", "Stöhrgasse"));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(5));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 4).setDistance(5)).
-                setKeyValues(singletonMap("name", "Stöhrgasse"));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(1, 2).setDistance(5)).setKeyValues(singletonMap("name", "Stöhrgasse"));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 3).setDistance(5));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 4).setDistance(5)).setKeyValues(singletonMap("name", "Stöhrgasse"));
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(4, 1);
         assertTrue(p.isFound());
@@ -882,16 +854,16 @@ public class PathTest {
         na.setNode(6, 48.402422, 9.996067);
         na.setNode(7, 48.402604, 9.994962);
 
-        GHUtility.setSpeed(60, 0, encoder,
+        GHUtility.setSpeed(60, 0, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
                 g.edge(1, 2).setDistance(5).setKeyValues(singletonMap("name", "Olgastraße")),
                 g.edge(2, 3).setDistance(5).setKeyValues(singletonMap("name", "Olgastraße")),
                 g.edge(6, 5).setDistance(5).setKeyValues(singletonMap("name", "Olgastraße")),
                 g.edge(5, 4).setDistance(5).setKeyValues(singletonMap("name", "Olgastraße")));
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
                 g.edge(2, 5).setDistance(5).setKeyValues(singletonMap("name", "Neithardtstraße")),
                 g.edge(5, 7).setDistance(5).setKeyValues(singletonMap("name", "Neithardtstraße")));
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 4);
         assertTrue(p.isFound());
@@ -920,16 +892,16 @@ public class PathTest {
         na.setNode(6, -33.885692, 151.181445);
         na.setNode(7, -33.885692, 151.181445);
 
-        GHUtility.setSpeed(60, 0, encoder,
+        GHUtility.setSpeed(60, 0, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
                 g.edge(1, 2).setDistance(5).setKeyValues(singletonMap("name", "Parramatta Road")),
                 g.edge(2, 3).setDistance(5).setKeyValues(singletonMap("name", "Parramatta Road")),
                 g.edge(4, 5).setDistance(5).setKeyValues(singletonMap("name", "Parramatta Road")),
                 g.edge(5, 6).setDistance(5).setKeyValues(singletonMap("name", "Parramatta Road")));
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
                 g.edge(2, 5).setDistance(5).setKeyValues(singletonMap("name", "Larkin Street")),
                 g.edge(5, 7).setDistance(5).setKeyValues(singletonMap("name", "Larkin Street")));
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 6);
         assertTrue(p.isFound());
@@ -942,7 +914,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsForTurn() {
         // The street turns left, but there is not turn
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(11, 13);
         assertTrue(p.isFound());
@@ -957,7 +930,8 @@ public class PathTest {
     @Test
     public void testCalcInstructionsForSlightTurnWithOtherSlightTurn() {
         // Test for a fork with two slight turns. Since there are two slight turns, show the turn instruction
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(12, 16);
         assertTrue(p.isFound());
@@ -984,14 +958,11 @@ public class PathTest {
         na.setNode(3, 48.764149, 8.678926);
         na.setNode(4, 48.764085, 8.679183);
 
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(1, 3).setDistance(5)).
-                setKeyValues(singletonMap("name", "Talstraße, K 4313"));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(2, 3).setDistance(5)).
-                setKeyValues(singletonMap("name", "Calmbacher Straße"));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(3, 4).setDistance(5)).
-                setKeyValues(singletonMap("name", "Calmbacher Straße"));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(1, 3).setDistance(5)).setKeyValues(singletonMap("name", "Talstraße, K 4313"));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(2, 3).setDistance(5)).setKeyValues(singletonMap("name", "Calmbacher Straße, K 4312"));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(3, 4).setDistance(5)).setKeyValues(singletonMap("name", "Calmbacher Straße, K 4312"));
 
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(1, 2);
         assertTrue(p.isFound());
@@ -1004,7 +975,8 @@ public class PathTest {
     @Test
     public void testIgnoreInstructionsForSlightTurnWithOtherTurn() {
         // Test for a fork with one sligh turn and one actual turn. We are going along the slight turn. No turn instruction needed in this case
-        ShortestWeighting weighting = new ShortestWeighting(mixedEncoders.getEncoder("car"));
+        FlagEncoder mixedCar = mixedEncoders.getEncoder("car");
+        ShortestWeighting weighting = new ShortestWeighting(mixedCar.getAccessEnc(), mixedCar.getAverageSpeedEnc());
         Path p = new Dijkstra(roundaboutGraph.g, weighting, TraversalMode.NODE_BASED)
                 .calcPath(16, 19);
         assertTrue(p.isFound());
@@ -1033,11 +1005,11 @@ public class PathTest {
         na.setNode(5, 52.516, 13.3452);
         na.setNode(6, 52.516, 13.344);
 
-        GHUtility.setSpeed(45, true, true, encoder, graph.edge(1, 2).setDistance(5)).setKeyValues(singletonMap("name", "1-2"));
-        GHUtility.setSpeed(45, true, true, encoder, graph.edge(4, 5).setDistance(5)).setKeyValues(singletonMap("name", "4-5"));
-        GHUtility.setSpeed(90, true, true, encoder, graph.edge(2, 3).setDistance(5)).setKeyValues(singletonMap("name", "2-3"));
-        GHUtility.setSpeed(9, true, true, encoder, graph.edge(3, 4).setDistance(10)).setKeyValues(singletonMap("name", "3-4"));
-        GHUtility.setSpeed(9, true, true, encoder, graph.edge(5, 6).setDistance(0.01)).setKeyValues(singletonMap("name", "3-4"));
+        GHUtility.setSpeed(45, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(1, 2).setDistance(5)).setKeyValues(singletonMap("name", "1-2"));
+        GHUtility.setSpeed(45, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(4, 5).setDistance(5)).setKeyValues(singletonMap("name", "4-5"));
+        GHUtility.setSpeed(90, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(2, 3).setDistance(5)).setKeyValues(singletonMap("name", "2-3"));
+        GHUtility.setSpeed(9, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(3, 4).setDistance(10)).setKeyValues(singletonMap("name", "3-4"));
+        GHUtility.setSpeed(9, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(5, 6).setDistance(0.01)).setKeyValues(singletonMap("name", "3-4"));
         return graph;
     }
 
@@ -1113,8 +1085,8 @@ public class PathTest {
 
             for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
                 double speed = encoder.getMaxSpeed() / 2;
-                GHUtility.setSpeed(speed, speed, encoder, bothDir);
-                GHUtility.setSpeed(speed, 0, encoder, oneDir);
+                GHUtility.setSpeed(speed, speed, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), bothDir);
+                GHUtility.setSpeed(speed, 0, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), oneDir);
             }
 
             setRoundabout(clockwise);

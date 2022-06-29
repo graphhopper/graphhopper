@@ -31,13 +31,16 @@ import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
+import static com.graphhopper.routing.weighting.custom.CustomModelParser.parseExpressions;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CustomModelParserTest {
@@ -53,7 +56,8 @@ class CustomModelParserTest {
     void setup() {
         encoder = FlagEncoders.createCar();
         countryEnc = new StringEncodedValue("country", 10);
-        encodingManager = new EncodingManager.Builder().add(encoder).add(countryEnc).add(new EnumEncodedValue<>(Surface.KEY, Surface.class)).build();
+        encodingManager = new EncodingManager.Builder().add(encoder).add(countryEnc).
+                add(MaxSpeed.create()).add(new EnumEncodedValue<>(Surface.KEY, Surface.class)).build();
         graph = new BaseGraph.Builder(encodingManager).create();
         avgSpeedEnc = encoder.getAverageSpeedEnc();
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
@@ -62,7 +66,7 @@ class CustomModelParserTest {
     @Test
     void setPriorityForRoadClass() {
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, 0.5));
+        customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, "0.5"));
         CustomWeighting.EdgeToDoubleMapping priorityMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
                 avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToPriorityMapping();
 
@@ -84,10 +88,10 @@ class CustomModelParserTest {
                 set(roadClassEnc, TERTIARY).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
 
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, 0.5));
-        customModel.addToPriority(ElseIf("road_class == SECONDARY", MULTIPLY, 0.7));
-        customModel.addToPriority(Else(MULTIPLY, 0.9));
-        customModel.addToPriority(If("road_environment != FERRY", MULTIPLY, 0.8));
+        customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, "0.5"));
+        customModel.addToPriority(ElseIf("road_class == SECONDARY", MULTIPLY, "0.7"));
+        customModel.addToPriority(Else(MULTIPLY, "0.9"));
+        customModel.addToPriority(If("road_environment != FERRY", MULTIPLY, "0.8"));
 
         CustomWeighting.EdgeToDoubleMapping priorityMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
                 avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToPriorityMapping();
@@ -98,8 +102,8 @@ class CustomModelParserTest {
 
         // force integer value
         customModel = new CustomModel();
-        customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, 1));
-        customModel.addToPriority(If("road_class == SECONDARY", MULTIPLY, 0.9));
+        customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, "1"));
+        customModel.addToPriority(If("road_class == SECONDARY", MULTIPLY, "0.9"));
         priorityMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
                 avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToPriorityMapping();
         assertEquals(1, priorityMapping.get(primary, false), 0.01);
@@ -114,7 +118,7 @@ class CustomModelParserTest {
                 set(roadClassEnc, SECONDARY).set(avgSpeedEnc, 40);
 
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(If("(road_class == PRIMARY || car_access == true) && car_average_speed > 50", MULTIPLY, 0.9));
+        customModel.addToPriority(If("(road_class == PRIMARY || car_access == true) && car_average_speed > 50", MULTIPLY, "0.9"));
         CustomWeighting.Parameters parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager,
                 avgSpeedEnc, encoder.getMaxSpeed(), null);
         assertEquals(0.9, parameters.getEdgeToPriorityMapping().get(primary, false), 0.01);
@@ -129,8 +133,8 @@ class CustomModelParserTest {
                 set(roadClassEnc, SECONDARY).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
 
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, 0.9));
-        customModel.addToSpeed(If("road_class == PRIMARY", MULTIPLY, 0.8));
+        customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, "0.9"));
+        customModel.addToSpeed(If("road_class == PRIMARY", MULTIPLY, "0.8"));
         CustomWeighting.Parameters parameters = CustomModelParser.createWeightingParameters(customModel, encodingManager,
                 avgSpeedEnc, encoder.getMaxSpeed(), null);
         assertEquals(0.9, parameters.getEdgeToPriorityMapping().get(primary, false), 0.01);
@@ -139,7 +143,7 @@ class CustomModelParserTest {
         assertEquals(1, parameters.getEdgeToPriorityMapping().get(secondary, false), 0.01);
         assertEquals(70, parameters.getEdgeToSpeedMapping().get(secondary, false), 0.01);
 
-        customModel.addToSpeed(If("road_class != PRIMARY", LIMIT, 50));
+        customModel.addToSpeed(If("road_class != PRIMARY", LIMIT, "50"));
         CustomWeighting.EdgeToDoubleMapping speedMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
                 avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToSpeedMapping();
         assertEquals(64, speedMapping.get(primary, false), 0.01);
@@ -154,9 +158,9 @@ class CustomModelParserTest {
                 set(countryEnc, "blup").set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
 
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(If("country == \"DEU\"", MULTIPLY, 0.9));
-        customModel.addToPriority(ElseIf("country == \"blup\"", MULTIPLY, 0.7));
-        customModel.addToPriority(Else(MULTIPLY, 0.5));
+        customModel.addToPriority(If("country == \"DEU\"", MULTIPLY, "0.9"));
+        customModel.addToPriority(ElseIf("country == \"blup\"", MULTIPLY, "0.7"));
+        customModel.addToPriority(Else(MULTIPLY, "0.5"));
         CustomWeighting.EdgeToDoubleMapping priorityMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
                 avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToPriorityMapping();
         assertEquals(0.9, priorityMapping.get(deu, false), 0.01);
@@ -166,14 +170,14 @@ class CustomModelParserTest {
     @Test
     void testIllegalOrder() {
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(Else(MULTIPLY, 0.9));
-        customModel.addToPriority(If("road_environment != FERRY", MULTIPLY, 0.8));
+        customModel.addToPriority(Else(MULTIPLY, "0.9"));
+        customModel.addToPriority(If("road_environment != FERRY", MULTIPLY, "0.8"));
         assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeightingParameters(customModel, encodingManager,
                 avgSpeedEnc, encoder.getMaxSpeed(), null));
 
         CustomModel customModel2 = new CustomModel();
-        customModel2.addToPriority(ElseIf("road_environment != FERRY", MULTIPLY, 0.9));
-        customModel2.addToPriority(If("road_class != PRIMARY", MULTIPLY, 0.8));
+        customModel2.addToPriority(ElseIf("road_environment != FERRY", MULTIPLY, "0.9"));
+        customModel2.addToPriority(If("road_class != PRIMARY", MULTIPLY, "0.8"));
         assertThrows(IllegalArgumentException.class, () -> CustomModelParser.createWeightingParameters(customModel2, encodingManager,
                 avgSpeedEnc, encoder.getMaxSpeed(), null));
     }
@@ -208,9 +212,9 @@ class CustomModelParserTest {
                 new HashMap<>()));
         customModel.setAreas(areas);
 
-        customModel.addToSpeed(If("in_area_1", LIMIT, 100));
-        customModel.addToSpeed(If("!in_area_2", LIMIT, 25));
-        customModel.addToSpeed(Else(LIMIT, 15));
+        customModel.addToSpeed(If("in_area_1", LIMIT, "100"));
+        customModel.addToSpeed(If("!in_area_2", LIMIT, "25"));
+        customModel.addToSpeed(Else(LIMIT, "15"));
 
         // No exception is thrown during createWeightingParameters
         assertAll(() ->
@@ -220,13 +224,82 @@ class CustomModelParserTest {
         CustomModel customModel2 = new CustomModel();
         customModel2.setAreas(areas);
 
-        customModel2.addToSpeed(If("in_area_1", LIMIT, 100));
-        customModel2.addToSpeed(If("in_area_2", LIMIT, 25));
-        customModel2.addToSpeed(If("in_area_3", LIMIT, 150));
-        customModel2.addToSpeed(Else(LIMIT, 15));
+        customModel2.addToSpeed(If("in_area_1", LIMIT, "100"));
+        customModel2.addToSpeed(If("in_area_2", LIMIT, "25"));
+        customModel2.addToSpeed(If("in_area_3", LIMIT, "150"));
+        customModel2.addToSpeed(Else(LIMIT, "15"));
 
         assertThrows(IllegalArgumentException.class, () ->
                 CustomModelParser.createWeightingParameters(customModel2, encodingManager,
                         avgSpeedEnc, encoder.getMaxSpeed(), null));
+    }
+
+    @Test
+    public void parseValue() {
+        DecimalEncodedValue maxSpeed = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
+        EdgeIteratorState maxLower = graph.edge(0, 1).setDistance(10).
+                set(maxSpeed, 60).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
+        EdgeIteratorState maxSame = graph.edge(1, 2).setDistance(10).
+                set(maxSpeed, 70).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
+
+        CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(If("true", LIMIT, "max_speed * 1.1"));
+        CustomWeighting.EdgeToDoubleMapping speedMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
+                avgSpeedEnc, encoder.getMaxSpeed(), null).getEdgeToSpeedMapping();
+        assertEquals(70.0, speedMapping.get(maxSame, false), 0.01);
+        assertEquals(66.0, speedMapping.get(maxLower, false), 0.01);
+    }
+
+    @Test
+    public void parseValueWithError() {
+        CustomModel customModel1 = new CustomModel();
+        customModel1.addToSpeed(If("true", LIMIT, "unknown"));
+
+        IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.createWeightingParameters(customModel1, encodingManager,
+                        avgSpeedEnc, encoder.getMaxSpeed(), null));
+        assertTrue(ret.getMessage().startsWith("Cannot compile expression: 'unknown' not available"), ret.getMessage());
+
+        CustomModel customModel2 = new CustomModel();
+        customModel2.addToSpeed(If("road_class == PRIMARY", MULTIPLY, "0.5"));
+        customModel2.addToSpeed(Else(MULTIPLY, "-0.5"));
+        ret = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.createWeightingParameters(customModel2, encodingManager,
+                        avgSpeedEnc, encoder.getMaxSpeed(), null));
+        assertTrue(ret.getMessage().startsWith("Cannot compile expression: speed has to be >=0 but can be negative (-0.5)"), ret.getMessage());
+
+        CustomModel customModel3 = new CustomModel();
+        customModel3.addToSpeed(If("road_class == PRIMARY", MULTIPLY, "0.5"));
+        customModel3.addToSpeed(Else(MULTIPLY, "road_class"));
+        ret = assertThrows(IllegalArgumentException.class,
+                () -> CustomModelParser.createWeightingParameters(customModel3, encodingManager,
+                        avgSpeedEnc, encoder.getMaxSpeed(), null));
+        assertTrue(ret.getMessage().contains("Binary numeric promotion not possible on types \"double\" and \"java.lang.Enum\""), ret.getMessage());
+    }
+
+    @Test
+    public void parseConditionWithError() {
+        NameValidator validVariable = s -> encodingManager.hasEncodedValue(s);
+
+        // existing encoded value but not added
+        IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
+                () -> parseExpressions(new StringBuilder(),
+                        validVariable, encodingManager, "[HERE]", new HashSet<>(),
+                        Arrays.asList(If("max_weight > 10", MULTIPLY, "0")), ""));
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"max_weight > 10\": 'max_weight' not available"), ret.getMessage());
+
+        // invalid variable or constant (NameValidator returns false)
+        ret = assertThrows(IllegalArgumentException.class,
+                () -> parseExpressions(new StringBuilder(),
+                        validVariable, encodingManager, "[HERE]", new HashSet<>(),
+                        Arrays.asList(If("country == GERMANY", MULTIPLY, "0")), ""));
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"country == GERMANY\": 'GERMANY' not available"), ret.getMessage());
+
+        // not whitelisted method
+        ret = assertThrows(IllegalArgumentException.class,
+                () -> parseExpressions(new StringBuilder(),
+                        validVariable, encodingManager, "[HERE]", new HashSet<>(),
+                        Arrays.asList(If("edge.fetchWayGeometry().size() > 2", MULTIPLY, "0")), ""));
+        assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"edge.fetchWayGeometry().size() > 2\": size is an illegal method"), ret.getMessage());
     }
 }

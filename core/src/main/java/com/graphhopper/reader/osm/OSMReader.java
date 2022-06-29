@@ -333,11 +333,11 @@ public class OSMReader {
             return;
 
         Map<String, Object> map = new HashMap<>(2);
-        // the storage does not accept too long strings -> Helper.cutString
+        // the storage does not accept too long strings -> Helper.cutStringForKV
         if (way.hasTag("way_name")) // do not store empty string if missing tag
-            map.put("name", Helper.cutString(way.getTag("way_name", ""), 255));
+            map.put("name", Helper.cutStringForKV(way.getTag("way_name", "")));
         if (way.hasTag("way_ref"))
-            map.put("ref", Helper.cutString(way.getTag("way_ref", ""), 255));
+            map.put("ref", Helper.cutStringForKV(way.getTag("way_ref", "")));
         EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags).
                 setKeyValues(map);
 

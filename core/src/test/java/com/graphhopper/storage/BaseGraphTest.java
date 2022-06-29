@@ -81,7 +81,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
         assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
         assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(123)).
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(3, 4).setDistance(123)).
                 setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
         checkGraph(graph);
     }
@@ -202,9 +202,9 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         Graph graph = storage.getBaseGraph();
         IntsRef ref = encodingManager.createEdgeFlags();
         ref.ints[0] = 12;
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(10)).setFlags(ref);
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(1, 2).setDistance(10)).setFlags(ref);
         ref.ints[0] = 13;
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(10)).setFlags(ref);
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(1, 3).setDistance(10)).setFlags(ref);
 
         EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(1);
         assertTrue(iter.next());
@@ -221,7 +221,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     @Test
     public void testEdgeKey() {
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(0, 1).setDistance(10));
         // storage direction
         assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 1, false, 0, 0);
         // reverse direction
@@ -235,7 +235,7 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
     @Test
     public void testEdgeKey_loop() {
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 0).setDistance(10));
+        GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, g.edge(0, 0).setDistance(10));
         // storage direction
         assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 0, false, 0, 0);
         // reverse direction cannot be retrieved, we get forward direction anyway

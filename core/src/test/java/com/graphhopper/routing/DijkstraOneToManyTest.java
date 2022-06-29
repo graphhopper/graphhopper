@@ -47,7 +47,7 @@ public class DijkstraOneToManyTest {
     public DijkstraOneToManyTest() {
         encodingManager = EncodingManager.create("car");
         encoder = encodingManager.getEncoder("car");
-        defaultWeighting = new ShortestWeighting(encoder);
+        defaultWeighting = new ShortestWeighting(encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
     }
 
     private static void initGraphWeightLimit(Graph graph, FlagEncoder encoder) {
@@ -59,7 +59,7 @@ public class DijkstraOneToManyTest {
         //   |   |   |
         //   4---3---2
 
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
                 graph.edge(0, 1).setDistance(1),
                 graph.edge(1, 2).setDistance(1),
                 graph.edge(3, 2).setDistance(1),
@@ -87,7 +87,7 @@ public class DijkstraOneToManyTest {
     @Test
     public void testIssue239_and362() {
         BaseGraph graph = createGHStorage();
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
                 graph.edge(0, 1).setDistance(1),
                 graph.edge(1, 2).setDistance(1),
                 graph.edge(2, 0).setDistance(1),
@@ -125,7 +125,7 @@ public class DijkstraOneToManyTest {
         // |       /
         // 7-10----
         // \-8
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
                 graph.edge(0, 1).setDistance(1),
                 graph.edge(1, 2).setDistance(1),
                 graph.edge(2, 3).setDistance(1),
