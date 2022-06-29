@@ -32,6 +32,12 @@ public interface IntEncodedValue extends EncodedValue {
     int getMinInt();
 
     /**
+     * The maximum value that was actually set for this encoded value. Or Integer.MIN_VALUE if no value has been
+     * set at all so far.
+     */
+    int getRealMaxInt();
+
+    /**
      * @return true if this EncodedValue can store a different value for its reverse direction
      */
     boolean isStoreTwoDirections();

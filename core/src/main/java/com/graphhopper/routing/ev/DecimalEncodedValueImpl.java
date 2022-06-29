@@ -29,7 +29,6 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     private final double factor;
     private final boolean defaultIsInfinity;
     private final boolean useMaximumAsInfinity;
-    private double realMax = -1;
 
     /**
      * @see #DecimalEncodedValueImpl(String, int, double, double, boolean, boolean, boolean, boolean)
@@ -76,7 +75,7 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
                             @JsonProperty("bits") int bits,
                             @JsonProperty("min_value") int minValue,
                             @JsonProperty("max_value") int maxValue,
-                            @JsonProperty("real_max") double realMax,
+                            @JsonProperty("real_max") int realMax,
                             @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
                             @JsonProperty("store_two_directions") boolean storeTwoDirections,
                             @JsonProperty("fwd_data_index") int fwdDataIndex,
@@ -89,11 +88,10 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
                             @JsonProperty("default_is_infinity") boolean defaultIsInfinity,
                             @JsonProperty("use_maximum_as_infinity") boolean useMaximumAsInfinity) {
         // we need this constructor for Jackson
-        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
+        super(name, bits, minValue, maxValue, realMax, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
         this.factor = factor;
         this.defaultIsInfinity = defaultIsInfinity;
         this.useMaximumAsInfinity = useMaximumAsInfinity;
-        this.realMax = realMax;
     }
 
     @Override
@@ -112,8 +110,6 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
         }
         if (Double.isNaN(value))
             throw new IllegalArgumentException("NaN value for " + getName() + " not allowed!");
-
-        realMax = Math.max(realMax, getNextStorableValue(value));
 
         value /= factor;
         if (value > maxValue)
@@ -160,7 +156,12 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     }
 
     @Override
-    public double getRealMax() {
-        return realMax;
+    public double getRealMaxDecimal() {
+        if (useMaximumAsInfinity || defaultIsInfinity)
+            throw new IllegalStateException("getRealMaxDecimal() does not work with useMaximumAsInfinity or defaultIsInfinity");
+        int realMaxInt = getRealMaxInt();
+        if (realMaxInt == Integer.MIN_VALUE)
+            return Double.NEGATIVE_INFINITY;
+        return realMaxInt * factor;
     }
 }
