@@ -85,14 +85,12 @@ public class DirectedRoutingTest {
         private final boolean prepareLM;
         private final Directory dir;
         private final BaseGraph graph;
-        private final CHConfig chConfig;
-        private final LMConfig lmConfig;
         private final BooleanEncodedValue accessEnc;
         private final DecimalEncodedValue speedEnc;
         private final DecimalEncodedValue turnCostEnc;
         private final TurnCostStorage turnCostStorage;
         private final int maxTurnCosts;
-        private final Weighting weighting;
+        private Weighting weighting;
         private final EncodingManager encodingManager;
         private RoutingCHGraph routingCHGraph;
         private LandmarkStorage lm;
@@ -114,10 +112,6 @@ public class DirectedRoutingTest {
             encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("c2")).build();
             graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
             turnCostStorage = graph.getTurnCostStorage();
-            weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts));
-            chConfig = CHConfig.edgeBased("p1", weighting);
-            // important: for LM preparation we need to use a weighting without turn costs #1960
-            lmConfig = new LMConfig("c2", new FastestWeighting(accessEnc, speedEnc));
         }
 
         @Override
@@ -127,15 +121,19 @@ public class DirectedRoutingTest {
 
         private void preProcessGraph() {
             graph.freeze();
+            weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts));
             if (!prepareCH && !prepareLM) {
                 return;
             }
             if (prepareCH) {
+                CHConfig chConfig = CHConfig.edgeBased("p1", weighting);
                 PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
                 PrepareContractionHierarchies.Result res = pch.doWork();
                 routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
             }
             if (prepareLM) {
+                // important: for LM preparation we need to use a weighting without turn costs #1960
+                LMConfig lmConfig = new LMConfig("c2", new FastestWeighting(accessEnc, speedEnc));
                 // we need the subnetwork EV for LM
                 PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graph,
                         Arrays.asList(new PrepareRoutingSubnetworks.PrepareJob(encodingManager.getBooleanEncodedValue(Subnetwork.key("c2")), lmConfig.getWeighting())));
