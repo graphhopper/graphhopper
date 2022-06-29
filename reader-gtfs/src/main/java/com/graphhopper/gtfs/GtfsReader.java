@@ -106,11 +106,11 @@ class GtfsReader {
         this.endDate = feed.getEndDate();
     }
 
-    void connectStopsToStreetNetwork() {
+    void connectStopsToStreetNetwork(String profileName) {
         EncodingManager em = ((GraphHopperStorage) graph).getEncodingManager();
         FlagEncoder footEncoder = em.getEncoder("foot");
         // ORS MOD
-        final EdgeFilter filter = new DefaultSnapFilter(new FastestWeighting(footEncoder), em.getBooleanEncodedValue(Subnetwork.key("foot_shortest")));
+        final EdgeFilter filter = new DefaultSnapFilter(new FastestWeighting(footEncoder), em.getBooleanEncodedValue(Subnetwork.key(profileName)));
         // ORS MOD end
         for (Stop stop : feed.stops.values()) {
             if (stop.location_type == 0) { // Only stops. Not interested in parent stations for now.

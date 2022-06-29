@@ -22,6 +22,7 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.AccessFilter;
@@ -59,8 +60,10 @@ public class GraphHopperGtfs extends GraphHopper {
     }
 
     public GraphHopper init(GraphHopperConfig ghConfig) {
-        this.ghConfig = ghConfig;
-        PtEncodedValues.createAndAddEncodedValues(getEncodingManagerBuilder());
+        if (ghConfig == null) {
+            this.ghConfig = ghConfig;
+            PtEncodedValues.createAndAddEncodedValues(getEncodingManagerBuilder());
+        }
         return super.init(ghConfig);
     }
 
@@ -118,7 +121,7 @@ public class GraphHopperGtfs extends GraphHopper {
                     Transfers transfers = new Transfers(gtfsFeed);
                     allTransfers.put(id, transfers);
                     GtfsReader gtfsReader = new GtfsReader(id, graphHopperStorage, graphHopperStorage.getEncodingManager(), getGtfsStorage(), streetNetworkIndex, transfers);
-                    gtfsReader.connectStopsToStreetNetwork();
+                    gtfsReader.connectStopsToStreetNetwork(getProfileStartingWith("foot").getName());
                     getType0TransferWithTimes(id, gtfsFeed)
                             .forEach(t -> {
                                 t.transfer.transfer_type = 2;
@@ -147,7 +150,7 @@ public class GraphHopperGtfs extends GraphHopper {
         final int maxTransferWalkTimeSeconds = ghConfig.getInt("gtfs.max_transfer_interpolation_walk_time_seconds", 120);
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         QueryGraph queryGraph = QueryGraph.create(graphHopperStorage, Collections.emptyList());
-        Weighting transferWeighting = createWeighting(getProfile("foot_shortest"), new PMap());
+        Weighting transferWeighting = createWeighting(getProfileStartingWith("foot"), new PMap());
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
         final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, transferWeighting, ptEncodedValues, getGtfsStorage(), RealtimeFeed.empty(getGtfsStorage()), true, true, false, 5.0, false, 0);
         getGtfsStorage().getStationNodes().values().stream().distinct().forEach(stationNode -> {
@@ -200,7 +203,7 @@ public class GraphHopperGtfs extends GraphHopper {
         GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
         RealtimeFeed realtimeFeed = RealtimeFeed.empty(getGtfsStorage());
         PtEncodedValues ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
-        Weighting transferWeighting = createWeighting(getProfile("foot_shortest"), new PMap());
+        Weighting transferWeighting = createWeighting(getProfileStartingWith("foot"), new PMap());
         return gtfsFeed.transfers.entrySet()
                 .parallelStream()
                 .filter(e -> e.getValue().transfer_type == 0)
@@ -238,6 +241,14 @@ public class GraphHopperGtfs extends GraphHopper {
                     transferWithTime.time = solution.currentTime;
                     return transferWithTime;
                 });
+    }
+
+    public Profile getProfileStartingWith(String profileName) {
+        for (String profile : profilesByName.keySet()) {
+            if (profile.startsWith(profileName))
+                return profilesByName.get(profile);
+        }
+        return null;
     }
 
     @Override
