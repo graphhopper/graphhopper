@@ -60,7 +60,7 @@ public class GraphHopperGtfs extends GraphHopper {
     }
 
     public GraphHopper init(GraphHopperConfig ghConfig) {
-        if (ghConfig == null) {
+        if (this.ghConfig == null) {
             this.ghConfig = ghConfig;
             PtEncodedValues.createAndAddEncodedValues(getEncodingManagerBuilder());
         }
@@ -99,7 +99,7 @@ public class GraphHopperGtfs extends GraphHopper {
     @Override
     protected void importPublicTransit() {
         gtfsStorage = new GtfsStorage(getGraphHopperStorage().getDirectory());
-        if (!getGtfsStorage().loadExisting()) {
+        if (ghConfig.has("gtfs.file") && !getGtfsStorage().loadExisting()) {
             ensureWriteAccess();
             getGtfsStorage().create();
             GraphHopperStorage graphHopperStorage = getGraphHopperStorage();
