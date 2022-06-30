@@ -55,16 +55,17 @@ public class PriorityRoutingTest {
         na.setNode(5, 48.2, 11.1);
         // 0 - 1 - 2 - 3
         //  \- 4 - 5 -/
+        double speed = encoder.getAverageSpeedEnc().getNextStorableValue(30);
         double dist1 = 0;
-        dist1 += maxSpeedEdge(em, graph, 0, 1, encoder, 1.0).getDistance();
-        dist1 += maxSpeedEdge(em, graph, 1, 2, encoder, 1.0).getDistance();
-        dist1 += maxSpeedEdge(em, graph, 2, 3, encoder, 1.0).getDistance();
+        dist1 += addEdge(em, graph, 0, 1, encoder, 1.0, speed).getDistance();
+        dist1 += addEdge(em, graph, 1, 2, encoder, 1.0, speed).getDistance();
+        dist1 += addEdge(em, graph, 2, 3, encoder, 1.0, speed).getDistance();
 
         final double maxPrio = PriorityCode.getFactor(PriorityCode.BEST.getValue());
         double dist2 = 0;
-        dist2 += maxSpeedEdge(em, graph, 0, 4, encoder, maxPrio).getDistance();
-        dist2 += maxSpeedEdge(em, graph, 4, 5, encoder, maxPrio).getDistance();
-        dist2 += maxSpeedEdge(em, graph, 5, 3, encoder, maxPrio).getDistance();
+        dist2 += addEdge(em, graph, 0, 4, encoder, maxPrio, speed).getDistance();
+        dist2 += addEdge(em, graph, 4, 5, encoder, maxPrio, speed).getDistance();
+        dist2 += addEdge(em, graph, 5, 3, encoder, maxPrio, speed).getDistance();
 
         // the routes 0-1-2-3 and 0-4-5-3 have similar distances (and use max speed everywhere)
         // ... but the shorter route 0-1-2-3 has smaller priority
@@ -101,14 +102,14 @@ public class PriorityRoutingTest {
         }
     }
 
-    private EdgeIteratorState maxSpeedEdge(EncodingManager em, BaseGraph graph, int p, int q, FlagEncoder encoder, double prio) {
+    private EdgeIteratorState addEdge(EncodingManager em, BaseGraph graph, int p, int q, FlagEncoder encoder, double prio, double speed) {
         BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         DecimalEncodedValue priorityEnc = em.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
         EnumEncodedValue<RoadClass> roadClassEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         return graph.edge(p, q)
                 .set(accessEnc, true)
-                .set(speedEnc, encoder.getMaxSpeed())
+                .set(speedEnc, speed)
                 .set(priorityEnc, prio)
                 .set(roadClassEnc, RoadClass.MOTORWAY)
                 .setDistance(calcDist(graph, p, q));

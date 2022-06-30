@@ -242,16 +242,16 @@ class CustomWeightingTest {
 
     @Test
     public void testMaxSpeed() {
-        assertEquals(140, carFE.getMaxSpeed(), 0.1);
+        assertEquals(155, avSpeedEnc.getMaxOrMaxStorableDecimal(), 0.1);
 
         assertEquals(1000.0 / 72 * 3.6, createWeighting(new CustomModel().
                 addToSpeed(If("true", LIMIT, "72")).setDistanceInfluence(0)).getMinWeight(1000));
 
-        // ignore too big limit to let custom model compatibility not break when max speed of encoder later decreases
+        // ignore too big limit to let custom model compatibility not break when max speed of encoded value later decreases
         assertEquals(1000.0 / 155 * 3.6, createWeighting(new CustomModel().
                 addToSpeed(If("true", LIMIT, "180")).setDistanceInfluence(0)).getMinWeight(1000));
 
-        // a speed bigger than the allowed stored speed is fine, see discussion in #2335
+        // reduce speed only a bit
         assertEquals(1000.0 / 150 * 3.6, createWeighting(new CustomModel().
                 addToSpeed(If("road_class == SERVICE", MULTIPLY, "1.5")).
                 addToSpeed(If("true", LIMIT, "150")).setDistanceInfluence(0)).getMinWeight(1000));
