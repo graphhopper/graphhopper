@@ -60,7 +60,7 @@ public class DecimalEncodedValueImplTest {
         Exception e = assertThrows(IllegalArgumentException.class, () -> {
             new DecimalEncodedValueImpl("test", 3, -6, 0.11, false, false, false, true);
         });
-        assertTrue(e.getMessage().contains("minValue -6.0 is not a multiple of the specified factor"), e.getMessage());
+        assertTrue(e.getMessage().contains("minStorableValue -6.0 is not a multiple of the specified factor"), e.getMessage());
     }
 
     @Test
@@ -164,17 +164,17 @@ public class DecimalEncodedValueImplTest {
     public void lowestUpperBound_with_negateReverseDirection() {
         DecimalEncodedValueImpl enc = new DecimalEncodedValueImpl("test", 4, 0, 3, false, true, false, false);
         enc.init(new EncodedValue.InitializerConfig());
-        assertEquals(15 * 3, enc.getMaxSetValueOrMaxDecimal());
+        assertEquals(15 * 3, enc.getMaxOrMaxStorableDecimal());
         IntsRef ints = new IntsRef(1);
         enc.setDecimal(false, ints, 3);
         assertEquals(3, enc.getDecimal(false, ints));
-        assertEquals(3, enc.getMaxSetValueOrMaxDecimal());
+        assertEquals(3, enc.getMaxOrMaxStorableDecimal());
         enc.setDecimal(true, ints, -6);
         assertEquals(6, enc.getDecimal(false, ints));
-        assertEquals(6, enc.getMaxSetValueOrMaxDecimal());
+        assertEquals(6, enc.getMaxOrMaxStorableDecimal());
         // note that the maximum is never lowered, even when we lower the value for the 'same' edge flags
         enc.setDecimal(false, ints, 0);
         assertEquals(0, enc.getDecimal(false, ints));
-        assertEquals(6, enc.getMaxSetValueOrMaxDecimal());
+        assertEquals(6, enc.getMaxOrMaxStorableDecimal());
     }
 }

@@ -76,7 +76,7 @@ public class CustomModelParser {
         final String pKey = EncodingManager.getKey(baseFlagEncoder.toString(), "priority");
         DecimalEncodedValue priorityEnc = lookup.hasEncodedValue(pKey) ? lookup.getDecimalEncodedValue(pKey) : null;
 
-        double maxSpeed = avgSpeedEnc.getMaxSetValueOrMaxDecimal();
+        double maxSpeed = avgSpeedEnc.getMaxOrMaxStorableDecimal();
         CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup,
                 avgSpeedEnc, maxSpeed, priorityEnc);
         return new CustomWeighting(baseFlagEncoder.getAccessEnc(), baseFlagEncoder.getAverageSpeedEnc(), turnCostProvider, parameters);
@@ -92,7 +92,7 @@ public class CustomModelParser {
                                                                 DecimalEncodedValue avgSpeedEnc, double globalMaxSpeed,
                                                                 DecimalEncodedValue priorityEnc) {
 
-        double globalMaxPriority = priorityEnc == null ? 1 : priorityEnc.getMaxDecimal();
+        double globalMaxPriority = priorityEnc == null ? 1 : priorityEnc.getMaxStorableDecimal();
         // if the same custom model is used with a different base profile we cannot use the cached version
         String key = customModel + ",speed:" + avgSpeedEnc.getName() + ",global_max_speed:" + globalMaxSpeed
                 + (priorityEnc == null ? "" : "prio:" + priorityEnc.getName() + ",global_max_priority:" + globalMaxPriority);

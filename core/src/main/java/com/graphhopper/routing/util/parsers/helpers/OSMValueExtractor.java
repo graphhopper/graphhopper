@@ -1,10 +1,5 @@
 package com.graphhopper.routing.util.parsers.helpers;
 
-import static com.graphhopper.util.Helper.toLowerCase;
-
-import java.util.List;
-import java.util.regex.Pattern;
-
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.MaxSpeed;
@@ -12,14 +7,19 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.Helper;
 
+import java.util.List;
+import java.util.regex.Pattern;
+
+import static com.graphhopper.util.Helper.toLowerCase;
+
 public class OSMValueExtractor {
-    
-    private static final Pattern TON_PATTERN    = Pattern.compile("tons?");
-    private static final Pattern MGW_PATTERN    = Pattern.compile("mgw");
+
+    private static final Pattern TON_PATTERN = Pattern.compile("tons?");
+    private static final Pattern MGW_PATTERN = Pattern.compile("mgw");
     private static final Pattern WSPACE_PATTERN = Pattern.compile("\\s");
-    private static final Pattern METER_PATTERN  = Pattern.compile("meters?|mtrs?|mt|m\\.");
-    private static final Pattern INCH_PATTERN   = Pattern.compile("\"|\'\'");
-    private static final Pattern FEET_PATTERN   = Pattern.compile("\'|feet");
+    private static final Pattern METER_PATTERN = Pattern.compile("meters?|mtrs?|mt|m\\.");
+    private static final Pattern INCH_PATTERN = Pattern.compile("\"|\'\'");
+    private static final Pattern FEET_PATTERN = Pattern.compile("\'|feet");
     private static final Pattern APPROX_PATTERN = Pattern.compile("~|approx");
 
     private OSMValueExtractor() {
@@ -29,13 +29,13 @@ public class OSMValueExtractor {
     public static void extractTons(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
         final String rawValue = way.getFirstPriorityTag(keys);
         double value = stringToTons(rawValue);
-        
+
         if (Double.isNaN(value)) {
             return;
         }
-        
-        if (value > valueEncoder.getMaxDecimal())
-            value = valueEncoder.getMaxDecimal();
+
+        if (value > valueEncoder.getMaxStorableDecimal())
+            value = valueEncoder.getMaxStorableDecimal();
         valueEncoder.setDecimal(false, edgeFlags, value);
     }
 
@@ -69,13 +69,13 @@ public class OSMValueExtractor {
     public static void extractMeter(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
         final String rawValue = way.getFirstPriorityTag(keys);
         double value = stringToMeter(rawValue);
-        
+
         if (Double.isNaN(value)) {
             return;
         }
 
-        if (value > valueEncoder.getMaxDecimal())
-            value = valueEncoder.getMaxDecimal();
+        if (value > valueEncoder.getMaxStorableDecimal())
+            value = valueEncoder.getMaxStorableDecimal();
         valueEncoder.setDecimal(false, edgeFlags, value);
     }
 
