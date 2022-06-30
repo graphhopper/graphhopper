@@ -56,17 +56,17 @@ public class PriorityRoutingTest {
         na.setNode(5, 48.2, 11.1);
         // 0 - 1 - 2 - 3
         //  \- 4 - 5 -/
-        final double maxSpeed = speedEnc.getNextStorableValue(30);
+        double speed = speedEnc.getNextStorableValue(30);
         double dist1 = 0;
-        dist1 += addEdge(em, graph, 0, 1, 1.0, accessEnc, speedEnc, priorityEnc, maxSpeed).getDistance();
-        dist1 += addEdge(em, graph, 1, 2, 1.0, accessEnc, speedEnc, priorityEnc, maxSpeed).getDistance();
-        dist1 += addEdge(em, graph, 2, 3, 1.0, accessEnc, speedEnc, priorityEnc, maxSpeed).getDistance();
+        dist1 += addEdge(em, graph, 0, 1, 1.0, accessEnc, speedEnc, priorityEnc, speed).getDistance();
+        dist1 += addEdge(em, graph, 1, 2, 1.0, accessEnc, speedEnc, priorityEnc, speed).getDistance();
+        dist1 += addEdge(em, graph, 2, 3, 1.0, accessEnc, speedEnc, priorityEnc, speed).getDistance();
 
         final double maxPrio = PriorityCode.getFactor(PriorityCode.BEST.getValue());
         double dist2 = 0;
-        dist2 += addEdge(em, graph, 0, 4, maxPrio, accessEnc, speedEnc, priorityEnc, maxSpeed).getDistance();
-        dist2 += addEdge(em, graph, 4, 5, maxPrio, accessEnc, speedEnc, priorityEnc, maxSpeed).getDistance();
-        dist2 += addEdge(em, graph, 5, 3, maxPrio, accessEnc, speedEnc, priorityEnc, maxSpeed).getDistance();
+        dist2 += addEdge(em, graph, 0, 4, maxPrio, accessEnc, speedEnc, priorityEnc, speed).getDistance();
+        dist2 += addEdge(em, graph, 4, 5, maxPrio, accessEnc, speedEnc, priorityEnc, speed).getDistance();
+        dist2 += addEdge(em, graph, 5, 3, maxPrio, accessEnc, speedEnc, priorityEnc, speed).getDistance();
 
         // the routes 0-1-2-3 and 0-4-5-3 have similar distances (and use max speed everywhere)
         // ... but the shorter route 0-1-2-3 has smaller priority
@@ -85,7 +85,7 @@ public class PriorityRoutingTest {
         {
             CustomModel customModel = new CustomModel();
             CustomWeighting weighting = CustomModelParser.createWeighting(accessEnc,
-                    speedEnc, priorityEnc, maxSpeed, em,
+                    speedEnc, priorityEnc, em,
                     TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
             Path pathDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
             Path pathAStar = new AStar(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
@@ -98,7 +98,7 @@ public class PriorityRoutingTest {
             // now we even increase the priority in the custom model, which also needs to be accounted for in weighting.getMinWeight
             customModel.addToPriority(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "3"));
             CustomWeighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
-                    priorityEnc, maxSpeed, em, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+                    priorityEnc, em, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
             Path pathDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
             Path pathAStar = new AStar(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
             assertEquals(pathDijkstra.calcNodes(), pathAStar.calcNodes());
@@ -106,11 +106,11 @@ public class PriorityRoutingTest {
         }
     }
 
-    private EdgeIteratorState addEdge(EncodingManager em, BaseGraph graph, int p, int q, double prio, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc, double maxSpeed) {
+    private EdgeIteratorState addEdge(EncodingManager em, BaseGraph graph, int p, int q, double prio, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc, double speed) {
         EnumEncodedValue<RoadClass> roadClassEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         return graph.edge(p, q)
                 .set(accessEnc, true)
-                .set(speedEnc, maxSpeed)
+                .set(speedEnc, speed)
                 .set(priorityEnc, prio)
                 .set(roadClassEnc, RoadClass.MOTORWAY)
                 .setDistance(calcDist(graph, p, q));

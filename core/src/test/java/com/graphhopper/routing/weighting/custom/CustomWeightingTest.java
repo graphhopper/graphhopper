@@ -29,7 +29,6 @@ class CustomWeightingTest {
     DecimalEncodedValue maxSpeedEnc;
     EnumEncodedValue<RoadClass> roadClassEnc;
     EncodingManager encodingManager;
-    double maxSpeed;
 
     @BeforeEach
     public void setup() {
@@ -43,7 +42,6 @@ class CustomWeightingTest {
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
         graph = new BaseGraph.Builder(encodingManager).create();
-        maxSpeed = 140;
     }
 
     @Test
@@ -128,11 +126,11 @@ class CustomWeightingTest {
                 set(avSpeedEnc, 15).set(specialEnc, false).setReverse(specialEnc, true).setDistance(10);
 
         CustomModel vehicleModel = new CustomModel();
-        Weighting weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, maxSpeed, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        Weighting weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(3.1, weighting.calcEdgeWeight(edge, false), 0.01);
         vehicleModel.addToPriority(If("special == true", MULTIPLY, "0.8"));
         vehicleModel.addToPriority(If("special == false", MULTIPLY, "0.4"));
-        weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, maxSpeed, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(6.7, weighting.calcEdgeWeight(edge, false), 0.01);
         assertEquals(3.7, weighting.calcEdgeWeight(edge, true), 0.01);
     }
@@ -245,16 +243,16 @@ class CustomWeightingTest {
 
     @Test
     public void testMaxSpeed() {
-        assertEquals(140, maxSpeed, 0.1);
+        assertEquals(155, avSpeedEnc.getMaxOrMaxStorableDecimal(), 0.1);
 
         assertEquals(1000.0 / 72 * 3.6, createWeighting(new CustomModel().
                 addToSpeed(If("true", LIMIT, "72")).setDistanceInfluence(0)).getMinWeight(1000));
 
         // ignore too big limit to let custom model compatibility not break when max speed of encoded value later decreases
-        assertEquals(1000.0 / maxSpeed * 3.6, createWeighting(new CustomModel().
+        assertEquals(1000.0 / 155 * 3.6, createWeighting(new CustomModel().
                 addToSpeed(If("true", LIMIT, "180")).setDistanceInfluence(0)).getMinWeight(1000));
 
-        // a speed bigger than the allowed stored speed is fine, see discussion in #2335
+        // reduce speed only a bit
         assertEquals(1000.0 / 150 * 3.6, createWeighting(new CustomModel().
                 addToSpeed(If("road_class == SERVICE", MULTIPLY, "1.5")).
                 addToSpeed(If("true", LIMIT, "150")).setDistanceInfluence(0)).getMinWeight(1000));
@@ -262,8 +260,8 @@ class CustomWeightingTest {
 
     @Test
     public void testMaxPriority() {
-        assertEquals(140, maxSpeed);
-
+        assertEquals(155, avSpeedEnc.getMaxOrMaxStorableDecimal(), 0.1);
+        double maxSpeed = 155;
         assertEquals(1000.0 / maxSpeed / 0.5 * 3.6, createWeighting(new CustomModel().
                 addToPriority(If("true", MULTIPLY, "0.5")).setDistanceInfluence(0)).getMinWeight(1000), 1.e-6);
 
@@ -310,6 +308,6 @@ class CustomWeightingTest {
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {
-        return CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, maxSpeed, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        return CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
     }
 }
