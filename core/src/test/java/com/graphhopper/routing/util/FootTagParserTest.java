@@ -468,6 +468,7 @@ public class FootTagParserTest {
 
         // ... because of this we have to make sure the max speed is set to a value that cannot be exceeded even when
         // such conversion occurs. in our case it must be 16 not 15!
-        assertEquals(16, encoder.getMaxSpeed());
+        // note that this test made more sense when we used encoders that defined a max speed.
+        assertEquals(16, encoder.getAverageSpeedEnc().getNextStorableValue(15));
     }
 }

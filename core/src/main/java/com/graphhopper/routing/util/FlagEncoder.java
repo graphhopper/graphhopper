@@ -36,11 +36,6 @@ public interface FlagEncoder extends EncodedValueLookup {
     boolean isHGV();
 
     /**
-     * @return the maximum speed in km/h
-     */
-    double getMaxSpeed();
-
-    /**
      * This method returns the EncodedValue used for the direction-dependent access properties of this encoder.
      */
     BooleanEncodedValue getAccessEnc();
