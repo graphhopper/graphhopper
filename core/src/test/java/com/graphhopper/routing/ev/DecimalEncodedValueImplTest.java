@@ -164,7 +164,7 @@ public class DecimalEncodedValueImplTest {
     public void lowestUpperBound_with_negateReverseDirection() {
         DecimalEncodedValueImpl enc = new DecimalEncodedValueImpl("test", 4, 0, 3, false, true, false, false);
         enc.init(new EncodedValue.InitializerConfig());
-        assertEquals(Double.NEGATIVE_INFINITY, enc.getLowestUpperBoundDecimal());
+        assertEquals(15 * 3, enc.getLowestUpperBoundDecimal());
         IntsRef ints = new IntsRef(1);
         enc.setDecimal(false, ints, 3);
         assertEquals(3, enc.getDecimal(false, ints));
