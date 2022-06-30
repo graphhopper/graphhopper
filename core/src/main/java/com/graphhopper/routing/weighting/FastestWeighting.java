@@ -62,7 +62,7 @@ public class FastestWeighting extends AbstractWeighting {
         super(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), turnCostProvider);
         headingPenalty = map.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);
-        maxSpeed = (speedEnc.getRealMaxDecimal() == Double.NEGATIVE_INFINITY ? speedEnc.getMaxDecimal() : speedEnc.getRealMaxDecimal()) / SPEED_CONV;
+        maxSpeed = Weighting.getUpperSpeedBound(speedEnc) / SPEED_CONV;
 
         if (!encoder.hasEncodedValue(RoadAccess.KEY))
             throw new IllegalArgumentException("road_access is not available but expected for FastestWeighting");

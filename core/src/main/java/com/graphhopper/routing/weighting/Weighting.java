@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -78,6 +79,10 @@ public interface Weighting {
         if (edgeHasNoAccess(edgeState, reverse))
             return Double.POSITIVE_INFINITY;
         return calcEdgeWeight(edgeState, reverse);
+    }
+
+    static double getUpperSpeedBound(DecimalEncodedValue speedEnc) {
+        return speedEnc.getRealMaxDecimal() == Double.NEGATIVE_INFINITY ? speedEnc.getMaxDecimal() : speedEnc.getRealMaxDecimal();
     }
 
 }

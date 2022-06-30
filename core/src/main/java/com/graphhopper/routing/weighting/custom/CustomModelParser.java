@@ -23,6 +23,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
@@ -76,7 +77,7 @@ public class CustomModelParser {
         final String pKey = EncodingManager.getKey(baseFlagEncoder.toString(), "priority");
         DecimalEncodedValue priorityEnc = lookup.hasEncodedValue(pKey) ? lookup.getDecimalEncodedValue(pKey) : null;
 
-        double maxSpeed = avgSpeedEnc.getRealMaxDecimal() == Double.NEGATIVE_INFINITY ? avgSpeedEnc.getMaxDecimal() : avgSpeedEnc.getRealMaxDecimal();
+        double maxSpeed = Weighting.getUpperSpeedBound(avgSpeedEnc);
         CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup,
                 avgSpeedEnc, maxSpeed, priorityEnc);
         return new CustomWeighting(baseFlagEncoder.getAccessEnc(), baseFlagEncoder.getAverageSpeedEnc(), turnCostProvider, parameters);
