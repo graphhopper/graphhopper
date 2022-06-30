@@ -75,7 +75,6 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMHorseRatingParser(lookup.getIntEncodedValue(HorseRating.KEY));
         else if (name.equals(Country.KEY))
             return new CountryParser(lookup.getEnumEncodedValue(Country.KEY, Country.class));
-
-        throw new IllegalArgumentException("DefaultTagParserFactory cannot find: " + name);
+        return null;
     }
 }
