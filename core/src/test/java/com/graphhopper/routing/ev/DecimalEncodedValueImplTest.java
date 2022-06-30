@@ -60,7 +60,7 @@ public class DecimalEncodedValueImplTest {
         Exception e = assertThrows(IllegalArgumentException.class, () -> {
             new DecimalEncodedValueImpl("test", 3, -6, 0.11, false, false, false, true);
         });
-        assertTrue(e.getMessage().contains("minValue -6.0 is not a multiple of the specified factor"), e.getMessage());
+        assertTrue(e.getMessage().contains("minStorableValue -6.0 is not a multiple of the specified factor"), e.getMessage());
     }
 
     @Test
