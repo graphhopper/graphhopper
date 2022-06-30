@@ -160,4 +160,17 @@ public class DecimalEncodedValueImplTest {
         assertEquals(Double.POSITIVE_INFINITY, enc.getDecimal(false, intsRef));
     }
 
+    @Test
+    public void realMax_with_negateReverseDirection() {
+        DecimalEncodedValueImpl enc = new DecimalEncodedValueImpl("test", 4, 0, 3, false, true, false, false);
+        enc.init(new EncodedValue.InitializerConfig());
+        assertEquals(Double.NEGATIVE_INFINITY, enc.getRealMaxDecimal());
+        IntsRef ints = new IntsRef(1);
+        enc.setDecimal(false, ints, 3);
+        assertEquals(3, enc.getDecimal(false, ints));
+        assertEquals(3, enc.getRealMaxDecimal());
+        enc.setDecimal(true, ints, -6);
+        assertEquals(6, enc.getDecimal(false, ints));
+        assertEquals(6, enc.getRealMaxDecimal());
+    }
 }
