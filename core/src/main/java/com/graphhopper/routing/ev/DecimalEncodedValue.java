@@ -32,9 +32,9 @@ public interface DecimalEncodedValue extends EncodedValue {
     double getMinDecimal();
 
     /**
-     * @see IntEncodedValue#getLowestUpperBoundInt()
+     * @see IntEncodedValue#getMaxSetValueOrMaxInt()
      */
-    double getLowestUpperBoundDecimal();
+    double getMaxSetValueOrMaxDecimal();
 
     /**
      * @return the smallest decimal value that is larger or equal to the given value and that can be stored exactly,

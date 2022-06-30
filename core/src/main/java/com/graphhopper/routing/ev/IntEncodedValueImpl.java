@@ -213,7 +213,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     }
 
     @Override
-    public int getLowestUpperBoundInt() {
+    public int getMaxSetValueOrMaxInt() {
         return maxSetValue == Integer.MIN_VALUE ? getMaxInt() : maxSetValue;
     }
 
