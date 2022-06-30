@@ -25,7 +25,6 @@ import com.graphhopper.routing.weighting.*;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
-import com.graphhopper.routing.weighting.custom.FindMinMax;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
@@ -95,8 +94,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
             CustomProfile customProfile = (CustomProfile) profile;
 
             queryCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
-            // todonow: this used to be encoder.getMaxSpeed()!
-            double maxSpeed = speedEnc.getMaxDecimal();
+            double maxSpeed = speedEnc.getMaxOrMaxStorableDecimal();
             weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
                     priorityEnc, maxSpeed, encodingManager, turnCostProvider, queryCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
