@@ -52,7 +52,7 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
             @JsonProperty("bits") int bits,
             @JsonProperty("min_value") int minValue,
             @JsonProperty("max_value") int maxValue,
-            @JsonProperty("real_max") int realMax,
+            @JsonProperty("max_set_value") int maxSetValue,
             @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
             @JsonProperty("store_two_directions") boolean storeTwoDirections,
             @JsonProperty("fwd_data_index") int fwdDataIndex,
@@ -65,7 +65,7 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
             @JsonProperty("values") List<String> values,
             @JsonProperty("index_map") HashMap<String, Integer> indexMap) {
         // we need this constructor for Jackson
-        super(name, bits, minValue, maxValue, realMax, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
+        super(name, bits, minValue, maxValue, maxSetValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
         if (values.size() > maxValues)
             throw new IllegalArgumentException("Number of values is higher than the maximum value count: "
                     + values.size() + " > " + maxValues);

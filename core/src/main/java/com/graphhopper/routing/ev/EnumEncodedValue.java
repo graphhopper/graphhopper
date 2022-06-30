@@ -46,7 +46,7 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
                      @JsonProperty("bits") int bits,
                      @JsonProperty("min_value") int minValue,
                      @JsonProperty("max_value") int maxValue,
-                     @JsonProperty("real_max") int realMax,
+                     @JsonProperty("max_set_value") int maxSetValue,
                      @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
                      @JsonProperty("store_two_directions") boolean storeTwoDirections,
                      @JsonProperty("fwd_data_index") int fwdDataIndex,
@@ -57,7 +57,7 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
                      @JsonProperty("bwd_mask") int bwdMask,
                      @JsonProperty("enum_type") Class<E> enumType) {
         // we need this constructor for Jackson
-        super(name, bits, minValue, maxValue, realMax, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
+        super(name, bits, minValue, maxValue, maxSetValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
         this.enumType = enumType;
         arr = enumType.getEnumConstants();
     }
