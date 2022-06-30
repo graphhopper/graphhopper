@@ -220,9 +220,9 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testPriority_avoidanceOfHighMaxSpeed() {
         // here we test the priority that would be calculated if the way was accessible (even when it is not)
         // therefore we need a modified parser that always yields access=WAY
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("racingbike_access", true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("racingbike_average_speed", 4, 2, false);
-        DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl("racingbike_priority", 4, PriorityCode.getValue(1), false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("racingbike");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("racingbike", 4, 2, false);
+        DecimalEncodedValue priorityEnc = VehiclePriority.create("racingbike", 4, PriorityCode.getValue(1), false);
         EncodingManager encodingManager = EncodingManager.start()
                 .add(accessEnc).add(speedEnc).add(priorityEnc)
                 .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))

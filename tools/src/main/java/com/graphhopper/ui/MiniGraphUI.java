@@ -28,13 +28,14 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -120,8 +121,8 @@ public class MiniGraphUI {
         this.graph = hopper.getBaseGraph();
         this.na = graph.getNodeAccess();
         String vehicle = hopper.getProfiles().get(0).getVehicle();
-        avSpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(EncodingManager.getKey(vehicle, "average_speed"));
-        accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(EncodingManager.getKey(vehicle, "access"));
+        accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(VehicleAccess.key(vehicle));
+        avSpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key(vehicle));
         this.useCH = useCH;
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug);

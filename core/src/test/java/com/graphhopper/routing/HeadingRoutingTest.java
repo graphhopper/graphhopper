@@ -54,8 +54,8 @@ class HeadingRoutingTest {
     @Test
     public void headingTest1() {
         // Test enforce start direction
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
         EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
@@ -78,8 +78,8 @@ class HeadingRoutingTest {
     @Test
     public void headingTest2() {
         // Test enforce south start direction and east end direction
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
         EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
@@ -106,8 +106,8 @@ class HeadingRoutingTest {
 
     @Test
     public void headingTest3() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
         EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
@@ -132,8 +132,8 @@ class HeadingRoutingTest {
     @Test
     public void headingTest4() {
         // Test straight via routing
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
         EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
@@ -158,8 +158,8 @@ class HeadingRoutingTest {
     @Test
     public void headingTest5() {
         // Test independence of previous enforcement for subsequent paths
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
         EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
@@ -183,8 +183,8 @@ class HeadingRoutingTest {
 
     @Test
     public void testHeadingWithSnapFilter() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
         EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraphWithTunnel(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
@@ -246,8 +246,8 @@ class HeadingRoutingTest {
 
     @Test
     public void testHeadingWithSnapFilter2() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
         EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraphWithTunnel(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
@@ -280,8 +280,8 @@ class HeadingRoutingTest {
     @Test
     public void headingTest6() {
         // Test if snaps at tower nodes are ignored
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
         EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);

@@ -32,8 +32,8 @@ class CustomWeightingTest {
 
     @BeforeEach
     public void setup() {
-        accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-        avSpeedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, true);
+        accessEnc = VehicleAccess.create("car");
+        avSpeedEnc = VehicleSpeed.create("car", 5, 5, true);
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avSpeedEnc)
                 .add(new EnumEncodedValue<>(Toll.KEY, Toll.class))
                 .add(new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class))
@@ -116,8 +116,8 @@ class CustomWeightingTest {
 
     @Test
     public void testBoolean() {
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-        DecimalEncodedValue avSpeedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue avSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
         BooleanEncodedValue specialEnc = new SimpleBooleanEncodedValue("special", true);
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avSpeedEnc).add(specialEnc).build();
         graph = new BaseGraph.Builder(encodingManager).create();

@@ -85,10 +85,10 @@ public class DefaultWeightingFactory implements WeightingFactory {
             throw new IllegalArgumentException("You have to specify a weighting");
 
         Weighting weighting = null;
-        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(EncodingManager.getKey(vehicle, "access"));
-        DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(vehicle, "average_speed"));
-        DecimalEncodedValue priorityEnc = encodingManager.hasEncodedValue(EncodingManager.getKey(vehicle, "priority"))
-                ? encodingManager.getDecimalEncodedValue(EncodingManager.getKey(vehicle, "priority"))
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key(vehicle));
+        DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(VehicleSpeed.key(vehicle));
+        DecimalEncodedValue priorityEnc = encodingManager.hasEncodedValue(VehiclePriority.key(vehicle))
+                ? encodingManager.getDecimalEncodedValue(VehiclePriority.key(vehicle))
                 : null;
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
             if (!(profile instanceof CustomProfile))

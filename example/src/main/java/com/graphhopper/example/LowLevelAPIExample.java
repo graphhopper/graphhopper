@@ -7,8 +7,8 @@ import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -37,8 +37,8 @@ public class LowLevelAPIExample {
 
     public static void createAndSaveGraph() {
         {
-            BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-            DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+            BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
             EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
             BaseGraph graph = new BaseGraph.Builder(em).setDir(new RAMDirectory(graphLocation, true)).create();
             // Make a weighted edge between two nodes and set average speed to 50km/h
@@ -62,8 +62,8 @@ public class LowLevelAPIExample {
         {
             // Load the graph ... can be also in a different code location
             // note that the EncodingManager must be the same
-            BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-            DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+            BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
             EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
             BaseGraph graph = new BaseGraph.Builder(em).setDir(new RAMDirectory(graphLocation, true)).build();
             graph.loadExisting();
@@ -89,8 +89,8 @@ public class LowLevelAPIExample {
 
     public static void useContractionHierarchiesToMakeQueriesFaster() {
         // Creating and saving the graph
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
         EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("my_profile", weighting);

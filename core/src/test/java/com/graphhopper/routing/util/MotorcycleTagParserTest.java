@@ -19,10 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
@@ -40,12 +37,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class MotorcycleTagParserTest {
-    private final BooleanEncodedValue motorcycleAccessEnc = new SimpleBooleanEncodedValue("motorcycle_access", true);
-    private final DecimalEncodedValue motorcycleSpeedEnc = new DecimalEncodedValueImpl("motorcycle_average_speed", 5, 5, true);
-    private final DecimalEncodedValue motorcyclePriorityEnc = new DecimalEncodedValueImpl("motorcycle_priority", 4, PriorityCode.getFactor(1), false);
+    private final BooleanEncodedValue motorcycleAccessEnc = VehicleAccess.create("motorcycle");
+    private final DecimalEncodedValue motorcycleSpeedEnc = VehicleSpeed.create("motorcycle", 5, 5, true);
+    private final DecimalEncodedValue motorcyclePriorityEnc = VehiclePriority.create("motorcycle", 4, PriorityCode.getFactor(1), false);
     private final DecimalEncodedValue motorcycleCurvatureEnc = new DecimalEncodedValueImpl("motorcycle_curvature", 4, 0.1, false);
-    private final BooleanEncodedValue footAccessEnc = new SimpleBooleanEncodedValue("foot_access", true);
-    private final DecimalEncodedValue footSpeedEnc = new DecimalEncodedValueImpl("foot_speed", 4, 1, false);
+    private final BooleanEncodedValue footAccessEnc = VehicleAccess.create("foot");
+    private final DecimalEncodedValue footSpeedEnc = VehicleSpeed.create("foot", 4, 1, false);
     private final EncodingManager em = EncodingManager.start()
             .add(motorcycleAccessEnc).add(motorcycleSpeedEnc).add(motorcyclePriorityEnc).add(motorcycleCurvatureEnc)
             .add(footAccessEnc).add(footSpeedEnc)

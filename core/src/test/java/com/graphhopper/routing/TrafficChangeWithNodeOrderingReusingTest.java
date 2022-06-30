@@ -6,8 +6,8 @@ import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.CarTagParser;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
@@ -58,8 +58,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
         public Fixture(int maxDeviationPercentage) {
             this.maxDeviationPercentage = maxDeviationPercentage;
-            BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("car_access", true);
-            DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+            BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
             em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
             CarTagParser carParser = new CarTagParser(em, new PMap());
             carParser.init(new DateRangeParser());

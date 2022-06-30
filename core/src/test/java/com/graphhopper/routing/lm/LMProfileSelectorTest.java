@@ -24,8 +24,8 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -52,10 +52,10 @@ public class LMProfileSelectorTest {
 
     @BeforeEach
     public void setup() {
-        BooleanEncodedValue carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
-        DecimalEncodedValue carSpeedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
-        BooleanEncodedValue bikeAccessEnc = new SimpleBooleanEncodedValue("bike_access", true);
-        DecimalEncodedValue bikeSpeedEnc = new DecimalEncodedValueImpl("bike_average_speed", 4, 2, false);
+        BooleanEncodedValue carAccessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue carSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
+        BooleanEncodedValue bikeAccessEnc = VehicleAccess.create("bike");
+        DecimalEncodedValue bikeSpeedEnc = VehicleSpeed.create("bike", 4, 2, false);
         encodingManager = EncodingManager.start()
                 .add(carAccessEnc).add(carSpeedEnc)
                 .add(bikeAccessEnc).add(bikeSpeedEnc)

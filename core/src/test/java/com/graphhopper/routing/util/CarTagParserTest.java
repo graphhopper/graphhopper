@@ -47,12 +47,12 @@ public class CarTagParserTest {
 
     private EncodingManager createEncodingManager(String carName) {
         return new EncodingManager.Builder()
-                .add(new SimpleBooleanEncodedValue(carName + "_access", true))
-                .add(new DecimalEncodedValueImpl(carName + "_average_speed", 5, 5, true))
+                .add(VehicleAccess.create(carName))
+                .add(VehicleSpeed.create(carName, 5, 5, true))
                 .addTurnCostEncodedValue(TurnCost.create(carName, 1))
-                .add(new SimpleBooleanEncodedValue("bike_access", true))
-                .add(new DecimalEncodedValueImpl("bike_average_speed", 4, 2, false))
-                .add(new DecimalEncodedValueImpl("bike_priority", 4, PriorityCode.getFactor(1), false))
+                .add(VehicleAccess.create("bike"))
+                .add(VehicleSpeed.create("bike", 4, 2, false))
+                .add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
                 .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
                 .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
                 .build();

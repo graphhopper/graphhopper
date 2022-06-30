@@ -3,9 +3,7 @@ package com.graphhopper.example;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -21,8 +19,8 @@ public class IsochroneExample {
         GraphHopper hopper = createGraphHopperInstance(relDir + "core/files/andorra.osm.pbf");
         // get encoder from GraphHopper instance
         EncodingManager encodingManager = hopper.getEncodingManager();
-        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(EncodingManager.getKey("car", "access"));
-        DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey("car", "average_speed"));
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key("car"));
+        DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(VehicleSpeed.key("car"));
 
         // snap some GPS coordinates to the routing graph and build a query graph
         FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);

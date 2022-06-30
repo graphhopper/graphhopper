@@ -35,13 +35,13 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class FootTagParserTest {
-    private final BooleanEncodedValue footAccessEnc = new SimpleBooleanEncodedValue("foot_access", true);
-    private final DecimalEncodedValue footAvgSpeedEnc = new DecimalEncodedValueImpl("foot_average_speed", 4, 1, false);
-    private final DecimalEncodedValue footPriorityEnc = new DecimalEncodedValueImpl("foot_priority", 4, PriorityCode.getFactor(1), false);
-    private final BooleanEncodedValue bikeAccessEnc = new SimpleBooleanEncodedValue("bike_access", true);
-    private final DecimalEncodedValue bikeAvgSpeedEnc = new DecimalEncodedValueImpl("bike_average_speed", 4, 2, false);
-    private final BooleanEncodedValue carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
-    private final DecimalEncodedValue carAvSpeedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+    private final BooleanEncodedValue footAccessEnc = VehicleAccess.create("foot");
+    private final DecimalEncodedValue footAvgSpeedEnc = VehicleSpeed.create("foot", 4, 1, false);
+    private final DecimalEncodedValue footPriorityEnc = VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false);
+    private final BooleanEncodedValue bikeAccessEnc = VehicleAccess.create("bike");
+    private final DecimalEncodedValue bikeAvgSpeedEnc = VehicleSpeed.create("bike", 4, 2, false);
+    private final BooleanEncodedValue carAccessEnc = VehicleAccess.create("car");
+    private final DecimalEncodedValue carAvSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
     private final EncodingManager encodingManager = EncodingManager.start()
             .add(footAccessEnc).add(footAvgSpeedEnc).add(footPriorityEnc).add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
             .add(bikeAccessEnc).add(bikeAvgSpeedEnc).add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))

@@ -45,11 +45,11 @@ public class WheelchairTagParserTest {
     private final WheelchairTagParser wheelchairParser;
 
     public WheelchairTagParserTest() {
-        wheelchairAccessEnc = new SimpleBooleanEncodedValue("wheelchair_access", true);
-        wheelchairAvSpeedEnc = new DecimalEncodedValueImpl("wheelchair_average_speed", 4, 1, true);
-        wheelchairPriorityEnc = new DecimalEncodedValueImpl("wheelchair_priority", 4, PriorityCode.getFactor(1), false);
-        carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
-        carAvSpeedEnc = new DecimalEncodedValueImpl("car_average_speed", 5, 5, false);
+        wheelchairAccessEnc = VehicleAccess.create("wheelchair");
+        wheelchairAvSpeedEnc = VehicleSpeed.create("wheelchair", 4, 1, true);
+        wheelchairPriorityEnc = VehiclePriority.create("wheelchair", 4, PriorityCode.getFactor(1), false);
+        carAccessEnc = VehicleAccess.create("car");
+        carAvSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
         encodingManager = EncodingManager.start()
                 .add(wheelchairAccessEnc).add(wheelchairAvSpeedEnc).add(wheelchairPriorityEnc).add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
                 .add(carAccessEnc).add(carAvSpeedEnc)
