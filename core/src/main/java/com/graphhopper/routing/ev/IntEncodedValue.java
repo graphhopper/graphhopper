@@ -33,7 +33,9 @@ public interface IntEncodedValue extends EncodedValue {
 
     /**
      * The maximum value that was actually set for this encoded value. Or Integer.MIN_VALUE if no value has been
-     * set at all so far.
+     * set at all so far. Note that this not necessarily represents the maximum value that is still stored in the graph
+     * in case the maximum was lowered again. It is guaranteed to be larger or equal than all values stored in the graph
+     * though (unless no value has been set at all).
      */
     int getRealMaxInt();
 

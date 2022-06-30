@@ -172,5 +172,9 @@ public class DecimalEncodedValueImplTest {
         enc.setDecimal(true, ints, -6);
         assertEquals(6, enc.getDecimal(false, ints));
         assertEquals(6, enc.getRealMaxDecimal());
+        // note that the maximum is never lowered, even when we lower the value for the 'same' edge flags
+        enc.setDecimal(false, ints, 0);
+        assertEquals(0, enc.getDecimal(false, ints));
+        assertEquals(6, enc.getRealMaxDecimal());
     }
 }
