@@ -676,8 +676,8 @@ public class OSMReaderTest {
         hopper.setVehicleTagParserFactory((lookup, name, config) -> {
             if (name.equals("truck")) {
                 return new CarTagParser(
-                        lookup.getBooleanEncodedValue(EncodingManager.getKey("truck", "access")),
-                        lookup.getDecimalEncodedValue(EncodingManager.getKey("truck", "average_speed")),
+                        lookup.getBooleanEncodedValue(VehicleAccess.key("truck")),
+                        lookup.getDecimalEncodedValue(VehicleSpeed.key("truck")),
                         lookup.hasEncodedValue(TurnCost.key("truck")) ? lookup.getDecimalEncodedValue(TurnCost.key("truck")) : null,
                         lookup.getBooleanEncodedValue(Roundabout.KEY),
                         config,

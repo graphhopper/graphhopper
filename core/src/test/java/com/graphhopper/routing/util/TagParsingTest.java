@@ -33,7 +33,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -151,11 +150,11 @@ class TagParsingTest {
 
         flags = footParser.handleWayTags(manager.createEdgeFlags(), osmWay);
         flags = bikeParser.handleWayTags(flags, osmWay);
-        DecimalEncodedValue bikeSpeedEnc = manager.getDecimalEncodedValue(getKey("bike2", "average_speed"));
+        DecimalEncodedValue bikeSpeedEnc = manager.getDecimalEncodedValue(VehicleSpeed.key("bike2"));
         assertEquals(singleSpeed, bikeSpeedEnc.getDecimal(false, flags), 1e-2);
         assertEquals(singleSpeed, bikeSpeedEnc.getDecimal(true, flags), 1e-2);
 
-        DecimalEncodedValue footSpeedEnc = manager.getDecimalEncodedValue(getKey("foot", "average_speed"));
+        DecimalEncodedValue footSpeedEnc = manager.getDecimalEncodedValue(VehicleSpeed.key("foot"));
         assertEquals(5, footSpeedEnc.getDecimal(false, flags), 1e-2);
         assertEquals(5, footSpeedEnc.getDecimal(true, flags), 1e-2);
     }

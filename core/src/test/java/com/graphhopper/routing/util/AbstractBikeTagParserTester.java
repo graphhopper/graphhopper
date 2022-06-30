@@ -51,7 +51,7 @@ public abstract class AbstractBikeTagParserTester {
         parser = createBikeTagParser(encodingManager, new PMap("block_fords=true"));
         osmParsers = createOSMParsers(parser, encodingManager);
         roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
-        priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(parser.getName(), "priority"));
+        priorityEnc = encodingManager.getDecimalEncodedValue(VehiclePriority.key(parser.getName()));
         avgSpeedEnc = parser.getAverageSpeedEnc();
     }
 
@@ -76,7 +76,7 @@ public abstract class AbstractBikeTagParserTester {
         IntsRef relFlags = osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags());
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
         edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relFlags);
-        DecimalEncodedValue enc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(parser.toString(), "priority"));
+        DecimalEncodedValue enc = encodingManager.getDecimalEncodedValue(VehiclePriority.key(parser.toString()));
         assertEquals(PriorityCode.getValue(expectedPrio), enc.getDecimal(false, edgeFlags), 0.01);
         assertEquals(expectedSpeed, parser.getAverageSpeedEnc().getDecimal(false, edgeFlags), 0.1);
         assertEquals(expectedSpeed, parser.getAverageSpeedEnc().getDecimal(true, edgeFlags), 0.1);
@@ -365,7 +365,7 @@ public abstract class AbstractBikeTagParserTester {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");
         IntsRef edgeFlags = parser.handleWayTags(encodingManager.createEdgeFlags(), osmWay);
-        DecimalEncodedValue priorityEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(parser.getName(), "priority"));
+        DecimalEncodedValue priorityEnc = encodingManager.getDecimalEncodedValue(VehiclePriority.key(parser.getName()));
         assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeFlags), 1e-3);
     }
 
