@@ -125,13 +125,10 @@ public class GraphHopperMatrixTest {
 
 
         GraphHopperMatrix hopper = new GraphHopperMatrix()
-                .setGraphHopperLocation(GH_LOCATION)
                 .setOSMFile(osmLocation)
                 .init(config)
-                .setOSMFile(osmLocation)
-                .setGraphHopperLocation(GH_LOCATION);
-
-        hopper.importOrLoad();
+                .setGraphHopperLocation(GH_LOCATION)
+                .importOrLoad();
 
         List<GHPoint> origins = matrixText.getOrigins();
         List<GHPoint> destinations = matrixText.getDestinations();
