@@ -250,8 +250,8 @@ class CustomWeightingTest {
         assertEquals(1000.0 / 72 * 3.6, createWeighting(new CustomModel().
                 addToSpeed(If("true", LIMIT, "72")).setDistanceInfluence(0)).getMinWeight(1000));
 
-        // ignore too big limit to let custom model compatibility not break when max speed of encoder later decreases
-        assertEquals(1000.0 / 155 * 3.6, createWeighting(new CustomModel().
+        // ignore too big limit to let custom model compatibility not break when max speed of encoded value later decreases
+        assertEquals(1000.0 / maxSpeed * 3.6, createWeighting(new CustomModel().
                 addToSpeed(If("true", LIMIT, "180")).setDistanceInfluence(0)).getMinWeight(1000));
 
         // a speed bigger than the allowed stored speed is fine, see discussion in #2335
@@ -262,7 +262,8 @@ class CustomWeightingTest {
 
     @Test
     public void testMaxPriority() {
-        double maxSpeed = 155;
+        assertEquals(140, maxSpeed);
+
         assertEquals(1000.0 / maxSpeed / 0.5 * 3.6, createWeighting(new CustomModel().
                 addToPriority(If("true", MULTIPLY, "0.5")).setDistanceInfluence(0)).getMinWeight(1000), 1.e-6);
 

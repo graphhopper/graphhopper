@@ -28,6 +28,8 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FACTOR;
+import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
 import static com.graphhopper.util.GHUtility.createMockedEdgeIteratorState;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -146,14 +148,16 @@ public class FastestWeightingTest {
         edge.set(bikeSpeedEnc, 18);
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
 
-        FastestWeighting weighting = new FastestWeighting(carAccessEnc, carSpeedEnc);
-        FastestWeighting bikeWeighting = new FastestWeighting(bikeAccessEnc, bikeSpeedEnc);
+        FastestWeighting weighting = new FastestWeighting(carAccessEnc, carSpeedEnc, roadAccessEnc,
+                new PMap().putObject(DESTINATION_FACTOR, 10), TurnCostProvider.NO_TURN_COST_PROVIDER);
+        FastestWeighting bikeWeighting = new FastestWeighting(bikeAccessEnc, bikeSpeedEnc, roadAccessEnc,
+                new PMap().putObject(DESTINATION_FACTOR, 1), TurnCostProvider.NO_TURN_COST_PROVIDER);
 
         edge.set(roadAccessEnc, RoadAccess.YES);
         assertEquals(60, weighting.calcEdgeWeight(edge, false), 1.e-6);
         assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 1.e-6);
 
-        // the destination tag does not change the weight for bikes!
+        // the destination tag does not change the weight for the bike weighting
         edge.set(roadAccessEnc, RoadAccess.DESTINATION);
         assertEquals(600, weighting.calcEdgeWeight(edge, false), 0.1);
         assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 0.1);
@@ -174,8 +178,10 @@ public class FastestWeightingTest {
         edge.set(bikeSpeedEnc, 18);
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
 
-        FastestWeighting weighting = new FastestWeighting(carAccessEnc, carSpeedEnc);
-        FastestWeighting bikeWeighting = new FastestWeighting(bikeAccessEnc, bikeSpeedEnc);
+        FastestWeighting weighting = new FastestWeighting(carAccessEnc, carSpeedEnc, roadAccessEnc,
+                new PMap().putObject(PRIVATE_FACTOR, 10), TurnCostProvider.NO_TURN_COST_PROVIDER);
+        FastestWeighting bikeWeighting = new FastestWeighting(bikeAccessEnc, bikeSpeedEnc, roadAccessEnc,
+                new PMap().putObject(PRIVATE_FACTOR, 1.2), TurnCostProvider.NO_TURN_COST_PROVIDER);
 
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
