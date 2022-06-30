@@ -76,8 +76,9 @@ public class CustomModelParser {
         final String pKey = EncodingManager.getKey(baseFlagEncoder.toString(), "priority");
         DecimalEncodedValue priorityEnc = lookup.hasEncodedValue(pKey) ? lookup.getDecimalEncodedValue(pKey) : null;
 
+        double maxSpeed = avgSpeedEnc.getMaxSetValueOrMaxDecimal();
         CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup,
-                avgSpeedEnc, baseFlagEncoder.getMaxSpeed(), priorityEnc);
+                avgSpeedEnc, maxSpeed, priorityEnc);
         return new CustomWeighting(baseFlagEncoder.getAccessEnc(), baseFlagEncoder.getAverageSpeedEnc(), turnCostProvider, parameters);
     }
 

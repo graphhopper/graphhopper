@@ -32,6 +32,11 @@ public interface DecimalEncodedValue extends EncodedValue {
     double getMinDecimal();
 
     /**
+     * @see IntEncodedValue#getMaxSetValueOrMaxInt()
+     */
+    double getMaxSetValueOrMaxDecimal();
+
+    /**
      * @return the smallest decimal value that is larger or equal to the given value and that can be stored exactly,
      * i.e. for which {@link #getDecimal} returns the same value that we put in using {@link #setDecimal}.
      * For example if the internal scaling factor is 3 calling getDecimal after setDecimal(reverse, ref, 5) will return
@@ -40,4 +45,5 @@ public interface DecimalEncodedValue extends EncodedValue {
     double getNextStorableValue(double value);
 
     double getSmallestNonZeroValue();
+
 }

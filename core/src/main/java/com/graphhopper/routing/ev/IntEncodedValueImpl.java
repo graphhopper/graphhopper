@@ -38,6 +38,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     final boolean negateReverseDirection;
     final int minValue;
     final int maxValue;
+    int maxSetValue;
 
     /**
      * There are multiple int values possible per edge. Here we specify the index into this integer array.
@@ -78,13 +79,16 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         if (negateReverseDirection && (minValue != 0 || storeTwoDirections))
             throw new IllegalArgumentException(name + ": negating value for reverse direction only works for minValue == 0 " +
                     "and !storeTwoDirections but was minValue=" + minValue + ", storeTwoDirections=" + storeTwoDirections);
-
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
         int max = (1 << bits) - 1;
         // negateReverseDirection: store the negative value only once, but for that we need the same range as maxValue for negative values
         this.minValue = negateReverseDirection ? -max : minValue;
         this.maxValue = max + minValue;
+        if (minValue == Integer.MIN_VALUE)
+            // we do not allow this because we use this value to represent maxSetValue = untouched, i.e. no value has been set yet
+            throw new IllegalArgumentException(Integer.MIN_VALUE + " is not allowed for minValue");
+        this.maxSetValue = Integer.MIN_VALUE;
         // negateReverseDirection: we need twice the integer range, i.e. 1 more bit
         this.bits = negateReverseDirection ? bits + 1 : bits;
         this.negateReverseDirection = negateReverseDirection;
@@ -95,6 +99,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
                         @JsonProperty("bits") int bits,
                         @JsonProperty("min_value") int minValue,
                         @JsonProperty("max_value") int maxValue,
+                        @JsonProperty("max_set_value") int maxSetValue,
                         @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
                         @JsonProperty("store_two_directions") boolean storeTwoDirections,
                         @JsonProperty("fwd_data_index") int fwdDataIndex,
@@ -111,6 +116,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         this.negateReverseDirection = negateReverseDirection;
         this.minValue = minValue;
         this.maxValue = maxValue;
+        this.maxSetValue = maxSetValue;
         this.fwdDataIndex = fwdDataIndex;
         this.bwdDataIndex = bwdDataIndex;
         this.fwdShift = fwdShift;
@@ -166,6 +172,8 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         } else if (reverse && !storeTwoDirections)
             throw new IllegalArgumentException(getName() + ": value for reverse direction would overwrite forward direction. Enable storeTwoDirections for this EncodedValue or don't use setReverse");
 
+        maxSetValue = Math.max(maxSetValue, value);
+
         value -= minValue;
         if (reverse) {
             int flags = ref.ints[bwdDataIndex + ref.offset];
@@ -202,6 +210,11 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     @Override
     public int getMinInt() {
         return minValue;
+    }
+
+    @Override
+    public int getMaxSetValueOrMaxInt() {
+        return maxSetValue == Integer.MIN_VALUE ? getMaxInt() : maxSetValue;
     }
 
     @Override

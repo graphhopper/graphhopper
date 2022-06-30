@@ -75,6 +75,7 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
                             @JsonProperty("bits") int bits,
                             @JsonProperty("min_value") int minValue,
                             @JsonProperty("max_value") int maxValue,
+                            @JsonProperty("max_set_value") int maxSetValue,
                             @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
                             @JsonProperty("store_two_directions") boolean storeTwoDirections,
                             @JsonProperty("fwd_data_index") int fwdDataIndex,
@@ -87,7 +88,7 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
                             @JsonProperty("default_is_infinity") boolean defaultIsInfinity,
                             @JsonProperty("use_maximum_as_infinity") boolean useMaximumAsInfinity) {
         // we need this constructor for Jackson
-        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
+        super(name, bits, minValue, maxValue, maxSetValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
         this.factor = factor;
         this.defaultIsInfinity = defaultIsInfinity;
         this.useMaximumAsInfinity = useMaximumAsInfinity;
@@ -152,5 +153,12 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     @Override
     public double getMinDecimal() {
         return minValue * factor;
+    }
+
+    @Override
+    public double getMaxSetValueOrMaxDecimal() {
+        if (useMaximumAsInfinity || defaultIsInfinity)
+            throw new IllegalStateException("getMaxSetValueOrMaxDecimal() is not implemented for useMaximumAsInfinity or defaultIsInfinity");
+        return getMaxSetValueOrMaxInt() * factor;
     }
 }
