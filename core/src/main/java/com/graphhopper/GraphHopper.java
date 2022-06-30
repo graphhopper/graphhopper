@@ -586,7 +586,11 @@ public class GraphHopper {
         encodingManager = emBuilder.build();
 
         osmParsers = new OSMParsers();
-        encodedValueStrings.forEach(s -> osmParsers.addWayTagParser(tagParserFactory.create(encodingManager, s)));
+        for (String s : encodedValueStrings) {
+            TagParser tagParser = tagParserFactory.create(encodingManager, s);
+            if (tagParser != null)
+                osmParsers.addWayTagParser(tagParser);
+        }
 
         // this needs to be in sync with the default EVs added in EncodingManager.Builder#build. ideally I would like to remove
         // all these defaults and just use the config as the single source of truth
