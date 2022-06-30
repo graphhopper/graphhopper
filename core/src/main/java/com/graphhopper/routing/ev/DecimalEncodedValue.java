@@ -15,7 +15,7 @@ public interface DecimalEncodedValue extends EncodedValue {
     /**
      * This method stores the specified double value (rounding with a previously defined factor) into the IntsRef.
      *
-     * @see #getMaxDecimal()
+     * @see #getMaxStorableDecimal()
      */
     void setDecimal(boolean reverse, IntsRef ref, double value);
 
@@ -24,17 +24,17 @@ public interface DecimalEncodedValue extends EncodedValue {
     /**
      * The maximum double value this EncodedValue accepts for setDecimal without throwing an exception.
      */
-    double getMaxDecimal();
+    double getMaxStorableDecimal();
 
     /**
      * The minimum double value this EncodedValue accepts for setDecimal without throwing an exception.
      */
-    double getMinDecimal();
+    double getMinStorableDecimal();
 
     /**
-     * @see IntEncodedValue#getMaxSetValueOrMaxInt()
+     * @see IntEncodedValue#getMaxOrMaxStorableInt()
      */
-    double getMaxSetValueOrMaxDecimal();
+    double getMaxOrMaxStorableDecimal();
 
     /**
      * @return the smallest decimal value that is larger or equal to the given value and that can be stored exactly,
