@@ -30,6 +30,10 @@ import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
+import java.util.Arrays;
+import java.util.List;
+
+import static com.graphhopper.routing.util.VehicleEncodedValuesFactory.*;
 import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FACTOR;
 import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
@@ -37,6 +41,8 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
+    private static final List<String> OUTDOOR_VEHICLES = Arrays.asList(BIKE, BIKE2, RACINGBIKE, MOUNTAINBIKE, FOOT, HIKE, WHEELCHAIR);
+
     private final BaseGraph graph;
     private final EncodingManager encodingManager;
 
@@ -57,14 +63,11 @@ public class DefaultWeightingFactory implements WeightingFactory {
         hints.putAll(requestHints);
 
         final String vehicle = profile.getVehicle();
-        // todonow: we used to take this information from the 'encoder', but now it is gone. We probably need to take
-        // it from the profile now somehow.
-        final boolean isMotorVehicle = true;
-        if (isMotorVehicle) {
+        if (isOutdoorVehicle(vehicle)) {
+            hints.putObject(PRIVATE_FACTOR, hints.getDouble(PRIVATE_FACTOR, 1.2));
+        } else {
             hints.putObject(DESTINATION_FACTOR, hints.getDouble(DESTINATION_FACTOR, 10));
             hints.putObject(PRIVATE_FACTOR, hints.getDouble(PRIVATE_FACTOR, 10));
-        } else {
-            hints.putObject(PRIVATE_FACTOR, hints.getDouble(PRIVATE_FACTOR, 1.2));
         }
         TurnCostProvider turnCostProvider;
         if (profile.isTurnCosts() && !disableTurnCosts) {
@@ -128,5 +131,9 @@ public class DefaultWeightingFactory implements WeightingFactory {
             throw new IllegalArgumentException("Weighting '" + weightingStr + "' not supported");
 
         return weighting;
+    }
+
+    public boolean isOutdoorVehicle(String name) {
+        return OUTDOOR_VEHICLES.contains(name);
     }
 }
