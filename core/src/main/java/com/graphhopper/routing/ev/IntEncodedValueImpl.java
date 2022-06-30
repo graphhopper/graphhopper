@@ -212,7 +212,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     }
 
     @Override
-    public int getRealMaxInt() {
+    public int getLowestUpperBoundInt() {
         return realMax == Integer.MIN_VALUE ? getMaxInt() : realMax;
     }
 

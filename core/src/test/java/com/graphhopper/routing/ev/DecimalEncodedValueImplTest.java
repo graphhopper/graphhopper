@@ -161,20 +161,20 @@ public class DecimalEncodedValueImplTest {
     }
 
     @Test
-    public void realMax_with_negateReverseDirection() {
+    public void lowestUpperBound_with_negateReverseDirection() {
         DecimalEncodedValueImpl enc = new DecimalEncodedValueImpl("test", 4, 0, 3, false, true, false, false);
         enc.init(new EncodedValue.InitializerConfig());
-        assertEquals(Double.NEGATIVE_INFINITY, enc.getRealMaxDecimal());
+        assertEquals(Double.NEGATIVE_INFINITY, enc.getLowestUpperBoundDecimal());
         IntsRef ints = new IntsRef(1);
         enc.setDecimal(false, ints, 3);
         assertEquals(3, enc.getDecimal(false, ints));
-        assertEquals(3, enc.getRealMaxDecimal());
+        assertEquals(3, enc.getLowestUpperBoundDecimal());
         enc.setDecimal(true, ints, -6);
         assertEquals(6, enc.getDecimal(false, ints));
-        assertEquals(6, enc.getRealMaxDecimal());
+        assertEquals(6, enc.getLowestUpperBoundDecimal());
         // note that the maximum is never lowered, even when we lower the value for the 'same' edge flags
         enc.setDecimal(false, ints, 0);
         assertEquals(0, enc.getDecimal(false, ints));
-        assertEquals(6, enc.getRealMaxDecimal());
+        assertEquals(6, enc.getLowestUpperBoundDecimal());
     }
 }

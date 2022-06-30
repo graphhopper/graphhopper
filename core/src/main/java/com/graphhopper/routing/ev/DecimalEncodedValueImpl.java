@@ -156,9 +156,9 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     }
 
     @Override
-    public double getRealMaxDecimal() {
+    public double getLowestUpperBoundDecimal() {
         if (useMaximumAsInfinity || defaultIsInfinity)
             throw new IllegalStateException("getRealMaxDecimal() does not work with useMaximumAsInfinity or defaultIsInfinity");
-        return getRealMaxInt() * factor;
+        return getLowestUpperBoundInt() * factor;
     }
 }

@@ -32,12 +32,12 @@ public interface IntEncodedValue extends EncodedValue {
     int getMinInt();
 
     /**
-     * Returns an upper bound for all values of this encoded value. Initially this is just the physical storage limit,
-     * and afterwards it is the maximum value set using this encoded value. Note that this is not equal to the global
-     * maximum if values are set multiple times for the same edge, but the returned value will always be equal or larger
-     * than the global maximum.
+     * Returns the lowest known upper bound for all values of this encoded value. Initially this is just the physical
+     * storage limit, and afterwards it is the maximum value set using this encoded value. Note that this is not equal
+     * to the global maximum if values are set multiple times for the same edge and they are decreasing.
+     * However, the returned value will always be equal to or larger than the global maximum.
      */
-    int getRealMaxInt();
+    int getLowestUpperBoundInt();
 
     /**
      * @return true if this EncodedValue can store a different value for its reverse direction
