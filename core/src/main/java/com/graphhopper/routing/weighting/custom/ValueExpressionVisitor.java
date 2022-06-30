@@ -167,14 +167,14 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     static double getMin(EncodedValue enc) {
-        if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMinDecimal();
-        else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMinInt();
+        if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMinStorableDecimal();
+        else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMinStorableInt();
         throw new IllegalArgumentException("Cannot use non-number data '" + enc.getName() + "' in value expression");
     }
 
     static double getMax(EncodedValue enc) {
-        if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMaxDecimal();
-        else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMaxInt();
+        if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMaxStorableDecimal();
+        else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMaxStorableInt();
         throw new IllegalArgumentException("Cannot use non-number data '" + enc.getName() + "' in value expression");
     }
 }

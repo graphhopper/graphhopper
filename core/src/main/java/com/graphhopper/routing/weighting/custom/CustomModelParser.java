@@ -86,7 +86,7 @@ public class CustomModelParser {
                                                                 DecimalEncodedValue avgSpeedEnc, double globalMaxSpeed,
                                                                 DecimalEncodedValue priorityEnc) {
 
-        double globalMaxPriority = priorityEnc == null ? 1 : priorityEnc.getMaxDecimal();
+        double globalMaxPriority = priorityEnc == null ? 1 : priorityEnc.getMaxStorableDecimal();
         // if the same custom model is used with a different base profile we cannot use the cached version
         String key = customModel + ",speed:" + avgSpeedEnc.getName() + ",global_max_speed:" + globalMaxSpeed
                 + (priorityEnc == null ? "" : "prio:" + priorityEnc.getName() + ",global_max_priority:" + globalMaxPriority);

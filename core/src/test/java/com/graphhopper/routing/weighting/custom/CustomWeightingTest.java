@@ -251,8 +251,8 @@ class CustomWeightingTest {
                 addToSpeed(If("true", LIMIT, "72")).setDistanceInfluence(0)).getMinWeight(1000));
 
         // ignore too big limit to let custom model compatibility not break when max speed of encoder later decreases
-        assertEquals(1000.0 / 140 * 3.6, createWeighting(new CustomModel().
-                addToSpeed(If("true", LIMIT, "150")).setDistanceInfluence(0)).getMinWeight(1000));
+        assertEquals(1000.0 / 155 * 3.6, createWeighting(new CustomModel().
+                addToSpeed(If("true", LIMIT, "180")).setDistanceInfluence(0)).getMinWeight(1000));
 
         // a speed bigger than the allowed stored speed is fine, see discussion in #2335
         assertEquals(1000.0 / 150 * 3.6, createWeighting(new CustomModel().
@@ -262,27 +262,28 @@ class CustomWeightingTest {
 
     @Test
     public void testMaxPriority() {
-        assertEquals(1000.0 / 140 / 0.5 * 3.6, createWeighting(new CustomModel().
-                addToPriority(If("true", MULTIPLY, "0.5")).setDistanceInfluence(0)).getMinWeight(1000));
+        double maxSpeed = 155;
+        assertEquals(1000.0 / maxSpeed / 0.5 * 3.6, createWeighting(new CustomModel().
+                addToPriority(If("true", MULTIPLY, "0.5")).setDistanceInfluence(0)).getMinWeight(1000), 1.e-6);
 
         // ignore too big limit
-        assertEquals(1000.0 / 140 / 1.0 * 3.6, createWeighting(new CustomModel().
-                addToPriority(If("true", LIMIT, "2.0")).setDistanceInfluence(0)).getMinWeight(1000));
+        assertEquals(1000.0 / maxSpeed / 1.0 * 3.6, createWeighting(new CustomModel().
+                addToPriority(If("true", LIMIT, "2.0")).setDistanceInfluence(0)).getMinWeight(1000), 1.e-6);
 
         // priority bigger 1 is fine (if CustomModel not in query)
-        assertEquals(1000.0 / 140 / 2.0 * 3.6, createWeighting(new CustomModel().
+        assertEquals(1000.0 / maxSpeed / 2.0 * 3.6, createWeighting(new CustomModel().
                 addToPriority(If("true", MULTIPLY, "3.0")).
-                addToPriority(If("true", LIMIT, "2.0")).setDistanceInfluence(0)).getMinWeight(1000));
-        assertEquals(1000.0 / 140 / 1.5 * 3.6, createWeighting(new CustomModel().
-                addToPriority(If("true", MULTIPLY, "1.5")).setDistanceInfluence(0)).getMinWeight(1000));
+                addToPriority(If("true", LIMIT, "2.0")).setDistanceInfluence(0)).getMinWeight(1000), 1.e-6);
+        assertEquals(1000.0 / maxSpeed / 1.5 * 3.6, createWeighting(new CustomModel().
+                addToPriority(If("true", MULTIPLY, "1.5")).setDistanceInfluence(0)).getMinWeight(1000), 1.e-6);
 
         // pick maximum priority from value even if this is for a special case
-        assertEquals(1000.0 / 140 / 3.0 * 3.6, createWeighting(new CustomModel().
-                addToPriority(If("road_class == SERVICE", MULTIPLY, "3.0")).setDistanceInfluence(0)).getMinWeight(1000));
+        assertEquals(1000.0 / maxSpeed / 3.0 * 3.6, createWeighting(new CustomModel().
+                addToPriority(If("road_class == SERVICE", MULTIPLY, "3.0")).setDistanceInfluence(0)).getMinWeight(1000), 1.e-6);
 
         // do NOT pick maximum priority when it is for a special case
-        assertEquals(1000.0 / 140 / 1.0 * 3.6, createWeighting(new CustomModel().
-                addToPriority(If("road_class == SERVICE", MULTIPLY, "0.5")).setDistanceInfluence(0)).getMinWeight(1000));
+        assertEquals(1000.0 / maxSpeed / 1.0 * 3.6, createWeighting(new CustomModel().
+                addToPriority(If("road_class == SERVICE", MULTIPLY, "0.5")).setDistanceInfluence(0)).getMinWeight(1000), 1.e-6);
     }
 
     @Test

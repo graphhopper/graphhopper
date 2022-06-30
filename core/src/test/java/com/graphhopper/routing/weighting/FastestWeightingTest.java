@@ -43,8 +43,8 @@ public class FastestWeightingTest {
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
-        Weighting instance = new FastestWeighting(accessEnc, speedEnc);
         IntsRef flags = GHUtility.setSpeed(140, 0, accessEnc, speedEnc, encodingManager.createEdgeFlags());
+        Weighting instance = new FastestWeighting(accessEnc, speedEnc);
         assertEquals(instance.getMinWeight(10), instance.calcEdgeWeight(createMockedEdgeIteratorState(10, flags), false), 1e-8);
     }
 

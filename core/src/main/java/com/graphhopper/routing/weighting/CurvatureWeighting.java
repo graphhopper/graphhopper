@@ -39,9 +39,7 @@ public class CurvatureWeighting extends PriorityWeighting {
         super(accessEnc, speedEnc, priorityEnc, roadAccessEnc, pMap, turnCostProvider);
         this.curvatureEnc = curvatureEnc;
         double minBendiness = 1; // see correctErrors
-        // todonow: take max speed from speed EV
-//        double maxSpeed = flagEncoder.getMaxSpeed();
-        double maxSpeed = 300;
+        double maxSpeed = speedEnc.getMaxOrMaxStorableDecimal();
         minFactor = minBendiness / Math.log(maxSpeed) / PriorityCode.getValue(BEST.getValue());
     }
 

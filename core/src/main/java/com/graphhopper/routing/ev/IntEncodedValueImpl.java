@@ -36,8 +36,9 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     private final boolean storeTwoDirections;
     final int bits;
     final boolean negateReverseDirection;
-    final int minValue;
-    final int maxValue;
+    final int minStorableValue;
+    final int maxStorableValue;
+    int maxValue;
 
     /**
      * There are multiple int values possible per edge. Here we specify the index into this integer array.
@@ -62,29 +63,32 @@ public class IntEncodedValueImpl implements IntEncodedValue {
      * @param name                   the key to identify this EncodedValue
      * @param bits                   the bits that should be reserved for storing the value. This determines the
      *                               maximum value.
-     * @param minValue               the minimum value. Use e.g. 0 if no negative values are needed.
+     * @param minStorableValue       the minimum value. Use e.g. 0 if no negative values are needed.
      * @param negateReverseDirection true if the reverse direction should be always negative of the forward direction.
      *                               This is used to reduce space and store the value only once. If this option is used
      *                               you cannot use storeTwoDirections or a minValue different to 0.
      * @param storeTwoDirections     true if forward and backward direction of the edge should get two independent values.
      */
-    public IntEncodedValueImpl(String name, int bits, int minValue, boolean negateReverseDirection, boolean storeTwoDirections) {
+    public IntEncodedValueImpl(String name, int bits, int minStorableValue, boolean negateReverseDirection, boolean storeTwoDirections) {
         if (!EncodingManager.isValidEncodedValue(name))
             throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
         if (bits <= 0)
             throw new IllegalArgumentException(name + ": bits cannot be zero or negative");
         if (bits > 31)
             throw new IllegalArgumentException(name + ": at the moment the number of reserved bits cannot be more than 31");
-        if (negateReverseDirection && (minValue != 0 || storeTwoDirections))
+        if (negateReverseDirection && (minStorableValue != 0 || storeTwoDirections))
             throw new IllegalArgumentException(name + ": negating value for reverse direction only works for minValue == 0 " +
-                    "and !storeTwoDirections but was minValue=" + minValue + ", storeTwoDirections=" + storeTwoDirections);
-
+                    "and !storeTwoDirections but was minValue=" + minStorableValue + ", storeTwoDirections=" + storeTwoDirections);
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
         int max = (1 << bits) - 1;
         // negateReverseDirection: store the negative value only once, but for that we need the same range as maxValue for negative values
-        this.minValue = negateReverseDirection ? -max : minValue;
-        this.maxValue = max + minValue;
+        this.minStorableValue = negateReverseDirection ? -max : minStorableValue;
+        this.maxStorableValue = max + minStorableValue;
+        if (minStorableValue == Integer.MIN_VALUE)
+            // we do not allow this because we use this value to represent maxValue = untouched, i.e. no value has been set yet
+            throw new IllegalArgumentException(Integer.MIN_VALUE + " is not allowed for minValue");
+        this.maxValue = Integer.MIN_VALUE;
         // negateReverseDirection: we need twice the integer range, i.e. 1 more bit
         this.bits = negateReverseDirection ? bits + 1 : bits;
         this.negateReverseDirection = negateReverseDirection;
@@ -93,7 +97,8 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     IntEncodedValueImpl(@JsonProperty("name") String name,
                         @JsonProperty("bits") int bits,
-                        @JsonProperty("min_value") int minValue,
+                        @JsonProperty("min_storable_value") int minStorableValue,
+                        @JsonProperty("max_storable_value") int maxStorableValue,
                         @JsonProperty("max_value") int maxValue,
                         @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
                         @JsonProperty("store_two_directions") boolean storeTwoDirections,
@@ -109,7 +114,8 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         this.storeTwoDirections = storeTwoDirections;
         this.bits = bits;
         this.negateReverseDirection = negateReverseDirection;
-        this.minValue = minValue;
+        this.minStorableValue = minStorableValue;
+        this.maxStorableValue = maxStorableValue;
         this.maxValue = maxValue;
         this.fwdDataIndex = fwdDataIndex;
         this.bwdDataIndex = bwdDataIndex;
@@ -151,10 +157,10 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     private void checkValue(int value) {
         if (!isInitialized())
             throw new IllegalStateException("EncodedValue " + getName() + " not initialized");
-        if (value > maxValue)
-            throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
-        if (value < minValue)
-            throw new IllegalArgumentException(name + " value too small for encoding " + value + ", minValue:" + minValue);
+        if (value > maxStorableValue)
+            throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxStorableValue);
+        if (value < minStorableValue)
+            throw new IllegalArgumentException(name + " value too small for encoding " + value + ", minValue:" + minStorableValue);
     }
 
     final void uncheckedSet(boolean reverse, IntsRef ref, int value) {
@@ -166,7 +172,9 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         } else if (reverse && !storeTwoDirections)
             throw new IllegalArgumentException(getName() + ": value for reverse direction would overwrite forward direction. Enable storeTwoDirections for this EncodedValue or don't use setReverse");
 
-        value -= minValue;
+        maxValue = Math.max(maxValue, value);
+
+        value -= minStorableValue;
         if (reverse) {
             int flags = ref.ints[bwdDataIndex + ref.offset];
             // clear value bits
@@ -185,23 +193,28 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         // if we do not store both directions ignore reverse == true for convenient reading
         if (storeTwoDirections && reverse) {
             flags = ref.ints[bwdDataIndex + ref.offset];
-            return minValue + (flags & bwdMask) >>> bwdShift;
+            return minStorableValue + (flags & bwdMask) >>> bwdShift;
         } else {
             flags = ref.ints[fwdDataIndex + ref.offset];
             if (negateReverseDirection && reverse)
-                return -(minValue + (flags & fwdMask) >>> fwdShift);
-            return minValue + (flags & fwdMask) >>> fwdShift;
+                return -(minStorableValue + (flags & fwdMask) >>> fwdShift);
+            return minStorableValue + (flags & fwdMask) >>> fwdShift;
         }
     }
 
     @Override
-    public int getMaxInt() {
-        return maxValue;
+    public int getMaxStorableInt() {
+        return maxStorableValue;
     }
 
     @Override
-    public int getMinInt() {
-        return minValue;
+    public int getMinStorableInt() {
+        return minStorableValue;
+    }
+
+    @Override
+    public int getMaxOrMaxStorableInt() {
+        return maxValue == Integer.MIN_VALUE ? getMaxStorableInt() : maxValue;
     }
 
     @Override

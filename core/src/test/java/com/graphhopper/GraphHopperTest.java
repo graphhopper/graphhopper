@@ -97,10 +97,10 @@ public class GraphHopperTest {
     @ParameterizedTest
     @CsvSource({
             DIJKSTRA + ",false,511",
-            ASTAR + ",false,444",
+            ASTAR + ",false,256",
             DIJKSTRA_BI + ",false,228",
-            ASTAR_BI + ",false,184",
-            ASTAR_BI + ",true,49",
+            ASTAR_BI + ",false,142",
+            ASTAR_BI + ",true,41",
             DIJKSTRA_BI + ",true,48"
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
@@ -1576,9 +1576,9 @@ public class GraphHopperTest {
         hopper.importOrLoad();
 
         // flex
-        testCrossQueryAssert(profile1, hopper, 528.3, 166, true);
-        testCrossQueryAssert(profile2, hopper, 635.8, 160, true);
-        testCrossQueryAssert(profile3, hopper, 815.2, 158, true);
+        testCrossQueryAssert(profile1, hopper, 528.3, 138, true);
+        testCrossQueryAssert(profile2, hopper, 635.8, 138, true);
+        testCrossQueryAssert(profile3, hopper, 815.2, 140, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
         testCrossQueryAssert(profile1, hopper, 528.3, 74, false);
@@ -1743,7 +1743,7 @@ public class GraphHopperTest {
 
         req.putHint(Landmark.DISABLE, true);
         res = hopper.route(req);
-        assertTrue(res.getHints().getInt("visited_nodes.sum", 0) > 200);
+        assertTrue(res.getHints().getInt("visited_nodes.sum", 0) > 170);
     }
 
     @ParameterizedTest

@@ -61,9 +61,7 @@ public class FastestWeighting extends AbstractWeighting {
         super(accessEnc, speedEnc, turnCostProvider);
         headingPenalty = map.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);
-        // todonow: take max speed from speedEnc
-//        maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
-        maxSpeed = 140 / SPEED_CONV;
+        maxSpeed = speedEnc.getMaxOrMaxStorableDecimal() / SPEED_CONV;
 
         destinationPenalty = map.getDouble(DESTINATION_FACTOR, 1);
         privatePenalty = map.getDouble(PRIVATE_FACTOR, 1);
