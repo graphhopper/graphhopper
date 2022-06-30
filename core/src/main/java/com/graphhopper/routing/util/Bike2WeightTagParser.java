@@ -25,7 +25,6 @@ import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.Helper.keepIn;
 
 /**
@@ -37,9 +36,9 @@ public class Bike2WeightTagParser extends BikeTagParser {
 
     public Bike2WeightTagParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(getKey(properties.getString("name", "bike2"), "access")),
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "bike2"), "average_speed")),
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "bike2"), "priority")),
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "bike2"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "bike2"))),
+                lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "bike2"))),
                 lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),

@@ -25,7 +25,6 @@ import com.graphhopper.util.PMap;
 import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
@@ -55,9 +54,9 @@ public class FootTagParser extends VehicleTagParser {
 
     public FootTagParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(getKey(properties.getString("name", "foot"), "access")),
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "foot"), "average_speed")),
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "foot"), "priority")),
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "foot"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "foot"))),
+                lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "foot"))),
                 lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class),
                 "foot"
         );

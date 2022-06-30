@@ -190,7 +190,7 @@ public class EncodingManager implements EncodedValueLookup {
         return getEncodedValues().stream()
                 .filter(ev -> ev.getName().endsWith("_access"))
                 .map(ev -> ev.getName().replaceAll("_access", ""))
-                .filter(v -> hasEncodedValue(EncodingManager.getKey(v, "average_speed")))
+                .filter(v -> hasEncodedValue(VehicleSpeed.key(v)))
                 .collect(Collectors.toList());
     }
 
