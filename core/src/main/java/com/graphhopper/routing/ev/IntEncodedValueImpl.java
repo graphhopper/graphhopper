@@ -79,15 +79,15 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         if (negateReverseDirection && (minValue != 0 || storeTwoDirections))
             throw new IllegalArgumentException(name + ": negating value for reverse direction only works for minValue == 0 " +
                     "and !storeTwoDirections but was minValue=" + minValue + ", storeTwoDirections=" + storeTwoDirections);
-        if (minValue == Integer.MIN_VALUE)
-            // we do not allow this because we use this value to represent maxSetValue = untouched, i.e. no value has been set yet
-            throw new IllegalArgumentException(Integer.MIN_VALUE + " is not allowed for minValue");
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
         int max = (1 << bits) - 1;
         // negateReverseDirection: store the negative value only once, but for that we need the same range as maxValue for negative values
         this.minValue = negateReverseDirection ? -max : minValue;
         this.maxValue = max + minValue;
+        if (minValue == Integer.MIN_VALUE)
+            // we do not allow this because we use this value to represent maxSetValue = untouched, i.e. no value has been set yet
+            throw new IllegalArgumentException(Integer.MIN_VALUE + " is not allowed for minValue");
         this.maxSetValue = Integer.MIN_VALUE;
         // negateReverseDirection: we need twice the integer range, i.e. 1 more bit
         this.bits = negateReverseDirection ? bits + 1 : bits;
