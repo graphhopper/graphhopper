@@ -32,10 +32,10 @@ public interface IntEncodedValue extends EncodedValue {
     int getMinInt();
 
     /**
-     * The maximum value that was actually set for this encoded value. Or Integer.MIN_VALUE if no value has been
-     * set at all so far. Note that this not necessarily represents the maximum value that is still stored in the graph
-     * in case the maximum was lowered again. It is guaranteed to be larger or equal than all values stored in the graph
-     * though (unless no value has been set at all).
+     * Returns an upper bound for all values of this encoded value. Initially this is just the physical storage limit,
+     * and afterwards it is the maximum value set using this encoded value. Note that this is not equal to the global
+     * maximum if values are set multiple times for the same edge, but the returned value will always be equal or larger
+     * than the global maximum.
      */
     int getRealMaxInt();
 

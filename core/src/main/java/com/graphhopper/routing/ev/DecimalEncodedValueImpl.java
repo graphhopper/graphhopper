@@ -159,9 +159,6 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     public double getRealMaxDecimal() {
         if (useMaximumAsInfinity || defaultIsInfinity)
             throw new IllegalStateException("getRealMaxDecimal() does not work with useMaximumAsInfinity or defaultIsInfinity");
-        int realMaxInt = getRealMaxInt();
-        if (realMaxInt == Integer.MIN_VALUE)
-            return Double.NEGATIVE_INFINITY;
-        return realMaxInt * factor;
+        return getRealMaxInt() * factor;
     }
 }
