@@ -47,8 +47,8 @@ public class PathDetailDeserializer extends JsonDeserializer<PathDetail> {
             pd = new PathDetail(val.asLong());
         else if (val.isTextual())
             pd = new PathDetail(val.asText());
-		else if (val.isNull())
-			pd = new PathDetail(null);
+        else if (val.isNull())
+            pd = new PathDetail(null);
         else
             throw new JsonParseException(jp, "Unsupported type of PathDetail value " + pathDetail.getNodeType().name());
 
