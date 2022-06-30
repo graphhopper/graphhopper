@@ -79,11 +79,10 @@ public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
         DecimalEncodedValue priorityEnc = strings[3].equals("null") ? null : (DecimalEncodedValue) evLookup.apply(strings[3]);
         DecimalEncodedValue curvatureEnc = strings[4].equals("null") ? null : (DecimalEncodedValue) evLookup.apply(strings[4]);
         DecimalEncodedValue turnCostEnc = strings[5].equals("null") ? null : (DecimalEncodedValue) evLookup.apply(strings[5]);
-        double maxPossibleSpeed = Double.parseDouble(strings[6]);
-        boolean isMotorVehicle = Boolean.parseBoolean(strings[7]);
-        boolean isHGV = Boolean.parseBoolean(strings[8]);
+        boolean isMotorVehicle = Boolean.parseBoolean(strings[6]);
+        boolean isHGV = Boolean.parseBoolean(strings[7]);
         return new VehicleEncodedValues(
-                name, accessEnc, avgSpeedEnc, priorityEnc, curvatureEnc, turnCostEnc, maxPossibleSpeed, isMotorVehicle, isHGV
+                name, accessEnc, avgSpeedEnc, priorityEnc, curvatureEnc, turnCostEnc, isMotorVehicle, isHGV
         );
     }
 }

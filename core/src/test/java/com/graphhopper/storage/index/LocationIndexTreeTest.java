@@ -40,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class LocationIndexTreeTest {
     protected final EncodingManager encodingManager = EncodingManager.create("car");
 
-    public static void initSimpleGraph(Graph g, EncodingManager em) {
+    public static void initSimpleGraph(Graph g) {
         //  6 |        4
         //  5 |
         //    |     6
@@ -70,10 +70,6 @@ public class LocationIndexTreeTest {
                 g.edge(3, 5),
                 // make sure 6 is connected
                 g.edge(6, 4));
-        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
-            double speed = encoder.getMaxSpeed() / 2;
-            GHUtility.setSpeed(speed, speed, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), list);
-        }
     }
 
     private LocationIndexTree createIndexNoPrepare(Graph g, int resolution) {
@@ -449,8 +445,10 @@ public class LocationIndexTreeTest {
     public void testSimpleGraph() {
         EncodingManager em = EncodingManager.create("car");
         BaseGraph g = new BaseGraph.Builder(em).create();
-        initSimpleGraph(g, em);
-
+        initSimpleGraph(g);
+        AllEdgesIterator edge = g.getAllEdges();
+        while (edge.next())
+            GHUtility.setSpeed(60, 60, em.getEncoder("car").getAccessEnc(), em.getEncoder("car").getAverageSpeedEnc(), edge);
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
         assertEquals(3, findClosestEdge(idx, 5, 2));
         assertEquals(3, findClosestEdge(idx, 1.5, 2));
@@ -463,7 +461,10 @@ public class LocationIndexTreeTest {
     public void testSimpleGraph2() {
         EncodingManager em = EncodingManager.create("car");
         BaseGraph g = new BaseGraph.Builder(em).create();
-        initSimpleGraph(g, em);
+        initSimpleGraph(g);
+        AllEdgesIterator edge = g.getAllEdges();
+        while (edge.next())
+            GHUtility.setSpeed(60, 60, em.getEncoder("car").getAccessEnc(), em.getEncoder("car").getAverageSpeedEnc(), edge);
 
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
         assertEquals(3, findClosestEdge(idx, 5, 2));
@@ -604,7 +605,12 @@ public class LocationIndexTreeTest {
     public void testDifferentVehicles() {
         final EncodingManager encodingManager = EncodingManager.create("car,foot");
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();
-        initSimpleGraph(g, encodingManager);
+        initSimpleGraph(g);
+        AllEdgesIterator edge = g.getAllEdges();
+        while (edge.next()) {
+            GHUtility.setSpeed(60, 60, encodingManager.getEncoder("car").getAccessEnc(), encodingManager.getEncoder("car").getAverageSpeedEnc(), edge);
+            GHUtility.setSpeed(10, 10, encodingManager.getEncoder("foot").getAccessEnc(), encodingManager.getEncoder("foot").getAverageSpeedEnc(), edge);
+        }
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
         assertEquals(0, findClosestEdge(idx, 1, -1));
 
