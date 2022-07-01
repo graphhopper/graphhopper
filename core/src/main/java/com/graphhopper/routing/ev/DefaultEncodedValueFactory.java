@@ -32,10 +32,6 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
 
         if (Roundabout.KEY.equals(name)) {
             enc = Roundabout.create();
-        } else if ("car_access".equals(name)) {
-            enc = VehicleAccess.create("car");
-        } else if ("bike_access".equals(name)) {
-            enc = VehicleAccess.create("bike");
         } else if (GetOffBike.KEY.equals(name)) {
             enc = GetOffBike.create();
         } else if (RoadClass.KEY.equals(name)) {
