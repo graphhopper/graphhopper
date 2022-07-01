@@ -164,7 +164,7 @@ public class CustomModelParser {
                 throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + minMaxSpeed.min + ")");
             if (minMaxSpeed.max <= 0)
                 throw new IllegalArgumentException("maximum speed has to be >0 but was " + minMaxSpeed.max);
-            List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup, minMaxSpeed.max);
+            List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
             // Create different class name, which is required only for debugging.
             // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
             //  have the same name and it mixes performance stats. See https://github.com/janino-compiler/janino/issues/137
@@ -188,11 +188,10 @@ public class CustomModelParser {
      * @return the created statements (parsed expressions)
      */
     private static List<Java.BlockStatement> createGetSpeedStatements(Set<String> speedVariables,
-                                                                      CustomModel customModel, EncodedValueLookup lookup,
-                                                                      double maxSpeed) throws Exception {
+                                                                      CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> speedStatements = new ArrayList<>();
         speedStatements.addAll(verifyExpressions(new StringBuilder(), "speed entry", speedVariables,
-                customModel.getSpeed(), lookup, "return Math.min(value, " + maxSpeed + ");\n"));
+                customModel.getSpeed(), lookup));
         String speedMethodStartBlock = "double value = super.getRawSpeed(edge, reverse);\n";
         // a bit inefficient to possibly define variables twice, but for now we have two separate methods
         for (String arg : speedVariables) {
@@ -212,7 +211,7 @@ public class CustomModelParser {
                                                                          CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> priorityStatements = new ArrayList<>();
         priorityStatements.addAll(verifyExpressions(new StringBuilder(), "priority entry, ",
-                priorityVariables, customModel.getPriority(), lookup, "return value;"));
+                priorityVariables, customModel.getPriority(), lookup));
         String priorityMethodStartBlock = "double value = super.getRawPriority(edge, reverse);\n";
         for (String arg : priorityVariables) {
             priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
@@ -364,19 +363,18 @@ public class CustomModelParser {
      * @return the created if-then, else and elseif statements
      */
     private static List<Java.BlockStatement> verifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
-                                                               List<Statement> list, EncodedValueLookup lookup,
-                                                               String lastStmt) throws Exception {
+                                                               List<Statement> list, EncodedValueLookup lookup) throws Exception {
         // allow variables, all encoded values, constants
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
 
-        parseExpressions(expressions, nameInConditionValidator, lookup, info, createObjects, list, lastStmt);
+        parseExpressions(expressions, nameInConditionValidator, lookup, info, createObjects, list);
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, EncodedValueLookup lookup,
-                                 String exceptionInfo, Set<String> createObjects, List<Statement> list, String lastStmt) {
+                                 String exceptionInfo, Set<String> createObjects, List<Statement> list) {
 
         for (Statement statement : list) {
             // avoid parsing the RHS value expression again as we just did it to get the maximum values in createClazz
@@ -398,7 +396,7 @@ public class CustomModelParser {
                 throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");
             }
         }
-        expressions.append(lastStmt);
+        expressions.append("return value;\n");
     }
 
     /**
