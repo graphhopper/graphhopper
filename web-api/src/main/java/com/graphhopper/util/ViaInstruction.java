@@ -55,6 +55,6 @@ public class ViaInstruction extends Instruction {
         if (rawName)
             return getName();
 
-        return tr.tr("stopover", viaPosition);
+        return tr.tr("stopover", getViaCount());
     }
 }

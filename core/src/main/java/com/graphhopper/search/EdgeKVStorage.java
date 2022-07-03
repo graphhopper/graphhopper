@@ -208,7 +208,8 @@ public class EdgeKVStorage {
             boolean hasDynLength = hasDynLength(clazz);
             if (hasDynLength) {
                 // optimization for empty string or empty byte array
-                if (clazz.equals(String.class) && ((String) value).isEmpty() || clazz.equals(byte[].class) && ((byte[]) value).length == 0) {
+                if (clazz.equals(String.class) && ((String) value).isEmpty()
+                        || clazz.equals(byte[].class) && ((byte[]) value).length == 0) {
                     vals.ensureCapacity(currentPointer + 3);
                     vals.setShort(currentPointer, keyIndex.shortValue());
                     // ensure that also in case of MMap value is set to 0
@@ -249,8 +250,9 @@ public class EdgeKVStorage {
             vals.setBytes(currentPointer, valueBytes, valueBytes.length);
             currentPointer += valueBytes.length;
         }
-        // System.out.println(lastEntryPointer + " " + entryMap);
         bytePointer = currentPointer;
+        if (bytePointer < 0)
+            throw new IllegalStateException("Negative bytePointer in EdgeKVStorage");
         return lastEntryPointer;
     }
 

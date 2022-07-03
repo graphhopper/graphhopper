@@ -45,7 +45,7 @@ public class Instruction {
     protected PointList points;
     protected boolean rawName;
     protected int sign;
-    protected String name;
+    protected String name = "";
     protected double distance;
     protected long time;
     protected Map<String, Object> extraInfo = new HashMap<>(3);
@@ -56,7 +56,7 @@ public class Instruction {
      */
     public Instruction(int sign, String name, PointList pl) {
         this.sign = sign;
-        this.name = name;
+        if (name != null) this.name = name;
         this.points = pl;
     }
 
@@ -84,7 +84,11 @@ public class Instruction {
     }
 
     public void setName(String name) {
-        this.name = name;
+        if (name != null) this.name = name;
+    }
+
+    String getStreetName() {
+        return getName().isEmpty() && extraInfo.get("ref") instanceof String ? (String) extraInfo.get("ref") : getName();
     }
 
     public Map<String, Object> getExtraInfoJSON() {
@@ -161,7 +165,7 @@ public class Instruction {
             return getName();
 
         String str;
-        String streetName = getName();
+        String streetName = getStreetName();
         int indi = getSign();
         if (indi == Instruction.CONTINUE_ON_STREET) {
             str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
@@ -211,7 +215,7 @@ public class Instruction {
             if (dir == null)
                 str = tr.tr("unknown", indi);
             else
-                str = Helper.isEmpty(streetName) ? dir : tr.tr("turn_onto", dir, streetName);
+                str = streetName.isEmpty() ? dir : tr.tr("turn_onto", dir, streetName);
         }
         return str;
     }

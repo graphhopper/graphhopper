@@ -113,7 +113,7 @@ public class SPTResourceTest {
         assertEquals(20, Double.parseDouble(row[2]), .1);
 
         row = lines[249].split(",");
-        assertEquals("Carretera d'Engolasters CS-200", row[0]);
+        assertEquals("Carretera d'Engolasters", row[0]);
         assertEquals("secondary", row[1]);
         assertTrue(Double.isInfinite(Double.parseDouble(row[2])));
     }

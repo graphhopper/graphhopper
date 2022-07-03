@@ -26,6 +26,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.Random;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -72,8 +73,8 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
         setTurnCost(iter2.getEdge(), 0, iter1.getEdge(), 666);
         setTurnCost(iter1.getEdge(), 1, iter2.getEdge(), 815);
 
-        iter1.setName("named street1");
-        iter2.setName("named street2");
+        iter1.setKeyValues(Collections.singletonMap("name", "named street1"));
+        iter2.setKeyValues(Collections.singletonMap("name", "named street2"));
 
         checkGraph(graph);
         graph.flush();
