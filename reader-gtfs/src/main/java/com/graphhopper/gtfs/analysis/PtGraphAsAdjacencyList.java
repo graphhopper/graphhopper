@@ -10,6 +10,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.Iterator;
+import java.util.Map;
 
 class PtGraphAsAdjacencyList implements Graph {
     private final PtGraph ptGraph;
@@ -302,7 +303,17 @@ class PtGraphAsAdjacencyList implements Graph {
             }
 
             @Override
-            public EdgeIteratorState setName(String name) {
+            public EdgeIteratorState setKeyValues(Map<String, Object> map) {
+                throw new RuntimeException();
+            }
+
+            @Override
+            public Map<String, Object> getKeyValues() {
+                throw new RuntimeException();
+            }
+
+            @Override
+            public Object getValue(String key) {
                 throw new RuntimeException();
             }
 

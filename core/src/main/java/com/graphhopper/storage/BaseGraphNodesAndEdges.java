@@ -48,7 +48,7 @@ class BaseGraphNodesAndEdges {
 
     // edges
     private final DataAccess edges;
-    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS, E_DIST, E_GEO, E_NAME;
+    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS, E_DIST, E_GEO, E_KV;
     private final int intsForFlags;
     private int edgeEntryBytes;
     private int edgeCount;
@@ -86,8 +86,8 @@ class BaseGraphNodesAndEdges {
         E_FLAGS = 16;
         E_DIST = E_FLAGS + intsForFlags * 4;
         E_GEO = E_DIST + 4;
-        E_NAME = E_GEO + 4;
-        edgeEntryBytes = E_NAME + 4;
+        E_KV = E_GEO + 4;
+        edgeEntryBytes = E_KV + 4;
     }
 
     public void create(long initSize) {
@@ -276,8 +276,8 @@ class BaseGraphNodesAndEdges {
         edges.setInt(edgePointer + E_GEO, geoRef);
     }
 
-    public void setNameRef(long edgePointer, int nameRef) {
-        edges.setInt(edgePointer + E_NAME, nameRef);
+    public void setKeyValuesRef(long edgePointer, int nameRef) {
+        edges.setInt(edgePointer + E_KV, nameRef);
     }
 
     public int getNodeA(long edgePointer) {
@@ -306,8 +306,8 @@ class BaseGraphNodesAndEdges {
         return edges.getInt(edgePointer + E_GEO);
     }
 
-    public int getNameRef(long edgePointer) {
-        return edges.getInt(edgePointer + E_NAME);
+    public int getKeyValuesRef(long edgePointer) {
+        return edges.getInt(edgePointer + E_KV);
     }
 
     public void setEdgeRef(long nodePointer, int edgeRef) {

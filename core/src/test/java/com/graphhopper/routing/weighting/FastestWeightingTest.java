@@ -30,6 +30,8 @@ import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FACTOR;
 import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
+import java.util.Collections;
+
 import static com.graphhopper.util.GHUtility.createMockedEdgeIteratorState;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -55,7 +57,7 @@ public class FastestWeightingTest {
         Weighting instance = new FastestWeighting(accessEnc, speedEnc, null, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, 100), TurnCostProvider.NO_TURN_COST_PROVIDER);
 
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, GHUtility.createEdgeKey(1, false, false), 1, 2, 10,
-                GHUtility.setSpeed(10, 0, accessEnc, speedEnc, encodingManager.createEdgeFlags()), "test", Helper.createPointList(51, 0, 51, 1), false);
+                GHUtility.setSpeed(10, 0, accessEnc, speedEnc, encodingManager.createEdgeFlags()), Collections.singletonMap("name", "test"), Helper.createPointList(51, 0, 51, 1), false);
         double time = instance.calcEdgeWeight(virtEdge, false);
 
         virtEdge.setUnfavored(true);

@@ -35,11 +35,13 @@ public class PathDetailsBuilderFactory {
     public List<PathDetailsBuilder> createPathDetailsBuilders(List<String> requestedPathDetails, EncodedValueLookup evl, Weighting weighting) {
         List<PathDetailsBuilder> builders = new ArrayList<>();
 
+        if (requestedPathDetails.contains(STREET_NAME))
+            builders.add(new KVStringDetails(STREET_NAME, "name"));
+        if (requestedPathDetails.contains(STREET_REF))
+            builders.add(new KVStringDetails(STREET_REF, "ref"));
+
         if (requestedPathDetails.contains(AVERAGE_SPEED))
             builders.add(new AverageSpeedDetails(weighting));
-
-        if (requestedPathDetails.contains(STREET_NAME))
-            builders.add(new StreetNameDetails());
 
         if (requestedPathDetails.contains(EDGE_ID))
             builders.add(new EdgeIdDetails());

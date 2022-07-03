@@ -100,7 +100,7 @@ public class MvtResourceTest {
         assertEquals(21, layer.getGeometries().size());
 
         Geometry geometry = layer.getGeometries().stream().
-                filter(g -> attributes(g).get("name").equals("Avinguda de Tarragona, CG-1"))
+                filter(g -> attributes(g).get("name").equals("Avinguda de Tarragona"))
                 .findFirst().get();
         assertEquals("road", attributes(geometry).get("road_environment"));
         assertEquals(50.0, attributes(geometry).get("max_speed"));
