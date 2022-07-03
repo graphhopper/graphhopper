@@ -890,12 +890,12 @@ public class PathTest {
         na.setNode(6, -33.885692, 151.181445);
         na.setNode(7, -33.885692, 151.181445);
 
-        GHUtility.setSpeed(60, 0, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
+        GHUtility.setSpeed(60, 0, carAccessEnc, carAvSpeedEnc,
                 g.edge(1, 2).setDistance(5).setKeyValues(singletonMap("name", "Parramatta Road")),
                 g.edge(2, 3).setDistance(5).setKeyValues(singletonMap("name", "Parramatta Road")),
                 g.edge(4, 5).setDistance(5).setKeyValues(singletonMap("name", "Parramatta Road")),
                 g.edge(5, 6).setDistance(5).setKeyValues(singletonMap("name", "Parramatta Road")));
-        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
+        GHUtility.setSpeed(60, 60, carAccessEnc, carAvSpeedEnc,
                 g.edge(2, 5).setDistance(5).setKeyValues(singletonMap("name", "Larkin Street")),
                 g.edge(5, 7).setDistance(5).setKeyValues(singletonMap("name", "Larkin Street")));
 
