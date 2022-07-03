@@ -233,8 +233,8 @@ public class CustomModelParser {
         if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             return getReturnType(enc) + " " + arg + " = reverse ? " +
-                    "edge.getReverse((" + getInterface(enc) + ") this." + arg + "_enc) : " +
-                    "edge.get((" + getInterface(enc) + ") this." + arg + "_enc);\n";
+                    "edge.getReverse(this." + arg + "_enc) : " +
+                    "edge.get(this." + arg + "_enc);\n";
         } else if (isValidVariableName(arg)) {
             return "";
         } else {

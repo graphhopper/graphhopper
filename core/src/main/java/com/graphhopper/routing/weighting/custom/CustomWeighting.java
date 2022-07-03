@@ -124,8 +124,8 @@ public final class CustomWeighting extends AbstractWeighting {
             reverse = false;
 
         // TODO see #1835
-        if (reverse ? !edgeState.getReverse(baseVehicleAccessEnc) : !edgeState.get(baseVehicleAccessEnc))
-            return Double.POSITIVE_INFINITY;
+//        if (reverse ? !edgeState.getReverse(baseVehicleAccessEnc) : !edgeState.get(baseVehicleAccessEnc))
+//            return Double.POSITIVE_INFINITY;
 
         double speed = edgeToSpeedMapping.get(edgeState, reverse);
         if (speed > maxSpeed * SPEED_CONV)
@@ -185,16 +185,16 @@ public final class CustomWeighting extends AbstractWeighting {
             return maxSpeed;
         }
 
+        public double getMaxPriority() {
+            return maxPriority;
+        }
+
         public double getDistanceInfluence() {
             return distanceInfluence;
         }
 
         public double getHeadingPenaltySeconds() {
             return headingPenaltySeconds;
-        }
-
-        public double getMaxPriority() {
-            return maxPriority;
         }
     }
 }
