@@ -18,12 +18,8 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -49,7 +45,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class EdgeBasedNodeContractorTest {
     private final int maxCost = 10;
-    private FlagEncoder encoder;
     private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue speedEnc;
     private DecimalEncodedValue turnCostEnc;
@@ -66,12 +61,11 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private void initialize() {
-        encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxCost));
-        EncodingManager encodingManager = EncodingManager.create(encoder);
-        accessEnc = encoder.getAccessEnc();
-        speedEnc = encoder.getAverageSpeedEnc();
-        turnCostEnc = encoder.getTurnCostEnc();
-        graph = new BaseGraph.Builder(encodingManager).create();
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        turnCostEnc = TurnCost.create("car", maxCost);
+        EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+        graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         chConfigs = Arrays.asList(
                 CHConfig.edgeBased("p1", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()))),
                 CHConfig.edgeBased("p2", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 60))),
@@ -1483,7 +1477,7 @@ public class EdgeBasedNodeContractorTest {
 
     private void setTurnCost(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, double cost) {
         double cost1 = cost >= maxCost ? Double.POSITIVE_INFINITY : cost;
-        graph.getTurnCostStorage().set(encoder.getDecimalEncodedValue(TurnCost.key("car")), inEdge.getEdge(), viaNode, outEdge.getEdge(), cost1);
+        graph.getTurnCostStorage().set(turnCostEnc, inEdge.getEdge(), viaNode, outEdge.getEdge(), cost1);
     }
 
     private EdgeIteratorState getEdge(int from, int to) {

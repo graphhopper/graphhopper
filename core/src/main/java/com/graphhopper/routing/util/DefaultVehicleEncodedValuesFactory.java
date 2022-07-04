@@ -15,39 +15,51 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.PMap;
 
-import static com.graphhopper.routing.util.VehicleEncodedValuesFactory.*;
-
-public class DefaultVehicleTagParserFactory implements VehicleTagParserFactory {
-    public VehicleTagParser createParser(EncodedValueLookup lookup, String name, PMap configuration) {
+/**
+ * This class creates vehicle encoded values that are already included in the GraphHopper distribution.
+ *
+ * @author Peter Karich
+ */
+public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesFactory {
+    @Override
+    public VehicleEncodedValues createVehicleEncodedValues(String name, PMap configuration) {
         if (name.equals(ROADS))
-            return new RoadsTagParser(lookup);
-        if (name.equals(CAR))
-            return new CarTagParser(lookup, configuration);
-        if (name.equals(CAR4WD))
-            return new Car4WDTagParser(lookup, configuration);
-        if (name.equals(BIKE))
-            return new BikeTagParser(lookup, configuration);
-        if (name.equals(BIKE2))
-            return new Bike2WeightTagParser(lookup, configuration);
-        if (name.equals(RACINGBIKE))
-            return new RacingBikeTagParser(lookup, configuration);
-        if (name.equals(MOUNTAINBIKE))
-            return new MountainBikeTagParser(lookup, configuration);
-        if (name.equals(FOOT))
-            return new FootTagParser(lookup, configuration);
-        if (name.equals(HIKE))
-            return new HikeTagParser(lookup, configuration);
-        if (name.equals(MOTORCYCLE))
-            return new MotorcycleTagParser(lookup, configuration);
-        if (name.equals(WHEELCHAIR))
-            return new WheelchairTagParser(lookup, configuration);
+            return VehicleEncodedValues.roads();
 
-        throw new IllegalArgumentException("Unknown name for vehicle tag parser: " + name);
+        if (name.equals(CAR))
+            return VehicleEncodedValues.car(configuration);
+
+        if (name.equals(CAR4WD))
+            return VehicleEncodedValues.car4wd(configuration);
+
+        if (name.equals(BIKE))
+            return VehicleEncodedValues.bike(configuration);
+
+        if (name.equals(BIKE2))
+            return VehicleEncodedValues.bike2(configuration);
+
+        if (name.equals(RACINGBIKE))
+            return VehicleEncodedValues.racingbike(configuration);
+
+        if (name.equals(MOUNTAINBIKE))
+            return VehicleEncodedValues.mountainbike(configuration);
+
+        if (name.equals(FOOT))
+            return VehicleEncodedValues.foot(configuration);
+
+        if (name.equals(HIKE))
+            return VehicleEncodedValues.hike(configuration);
+
+        if (name.equals(MOTORCYCLE))
+            return VehicleEncodedValues.motorcycle(configuration);
+
+        if (name.equals(WHEELCHAIR))
+            return VehicleEncodedValues.wheelchair(configuration);
+
+        throw new IllegalArgumentException("entry in vehicle list not supported: " + name);
     }
 }

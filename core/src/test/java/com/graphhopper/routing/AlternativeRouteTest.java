@@ -18,9 +18,8 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -48,17 +47,22 @@ public class AlternativeRouteTest {
         final Weighting weighting;
         final TraversalMode traversalMode;
         final BaseGraph graph;
-        final FlagEncoder carFE;
+        final BooleanEncodedValue accessEnc;
+        final DecimalEncodedValue speedEnc;
+        final DecimalEncodedValue turnCostEnc;
 
         public Fixture(TraversalMode tMode) {
             this.traversalMode = tMode;
-            carFE = FlagEncoders.createCar();
-            EncodingManager em = EncodingManager.create(carFE);
+            accessEnc = new SimpleBooleanEncodedValue("access", true);
+            speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+            turnCostEnc = TurnCost.create("car", 1);
+
+            EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).add(turnCostEnc).build();
             graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
             TurnCostProvider turnCostProvider = tMode.isEdgeBased()
-                    ? new DefaultTurnCostProvider(carFE.getTurnCostEnc(), graph.getTurnCostStorage())
+                    ? new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage())
                     : TurnCostProvider.NO_TURN_COST_PROVIDER;
-            weighting = new FastestWeighting(carFE, turnCostProvider);
+            weighting = new FastestWeighting(accessEnc, speedEnc, turnCostProvider);
         }
 
         @Override
@@ -77,7 +81,7 @@ public class AlternativeRouteTest {
         }
     }
 
-    public static void initTestGraph(Graph graph, FlagEncoder encoder) {
+    public static void initTestGraph(Graph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         /* 9
          _/\
          1  2-3-4-10
@@ -85,7 +89,7 @@ public class AlternativeRouteTest {
          5--6-7---8
         
          */
-        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
                 graph.edge(1, 9).setDistance(1),
                 graph.edge(9, 2).setDistance(1),
                 graph.edge(2, 3).setDistance(1),
@@ -114,7 +118,7 @@ public class AlternativeRouteTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcAlternatives(Fixture f) {
-        initTestGraph(f.graph, f.carFE);
+        initTestGraph(f.graph, f.accessEnc, f.speedEnc);
         PMap hints = new PMap().
                 putObject("alternative_route.max_share_factor", 0.5).
                 putObject("alternative_route.max_weight_factor", 2).
@@ -145,7 +149,7 @@ public class AlternativeRouteTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcAlternatives2(Fixture f) {
-        initTestGraph(f.graph, f.carFE);
+        initTestGraph(f.graph, f.accessEnc, f.speedEnc);
         PMap hints = new PMap().putObject("alternative_route.max_paths", 3).
                 putObject("alternative_route.max_share_factor", 0.7).
                 putObject("alternative_route.min_plateau_factor", 0.15).
@@ -179,14 +183,14 @@ public class AlternativeRouteTest {
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
-    public void testDisconnectedAreas(Fixture p) {
-        initTestGraph(p.graph, p.carFE);
+    public void testDisconnectedAreas(Fixture f) {
+        initTestGraph(f.graph, f.accessEnc, f.speedEnc);
 
         // one single disconnected node
-        updateDistancesFor(p.graph, 20, 0.00, -0.01);
+        updateDistancesFor(f.graph, 20, 0.00, -0.01);
 
         PMap hints = new PMap().putObject("alternative_route.max_exploration_factor", 1);
-        AlternativeRoute altDijkstra = new AlternativeRoute(p.graph, p.weighting, p.traversalMode, hints);
+        AlternativeRoute altDijkstra = new AlternativeRoute(f.graph, f.weighting, f.traversalMode, hints);
         Path path = altDijkstra.calcPath(1, 20);
         assertFalse(path.isFound());
 

@@ -28,7 +28,10 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
@@ -177,10 +180,8 @@ public class Measurement {
 
         BaseGraph g = hopper.getBaseGraph();
         EncodingManager encodingManager = hopper.getEncodingManager();
-        if (encodingManager.fetchEdgeEncoders().size() != 1) {
-            throw new IllegalArgumentException("There has to be exactly one encoder for each measurement");
-        }
-        FlagEncoder encoder = encodingManager.fetchEdgeEncoders().get(0);
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key(vehicle));
+        boolean withTurnCosts = encodingManager.hasEncodedValue(TurnCost.key(vehicle));
 
         StopWatch sw = new StopWatch().start();
         try {
@@ -188,7 +189,7 @@ public class Measurement {
 
             final boolean runSlow = args.getBool("measurement.run_slow_routing", true);
             printGraphDetails(g, vehicle);
-            measureGraphTraversal(g, encoder, count * 100);
+            measureGraphTraversal(g, accessEnc, count * 100);
             measureLocationIndex(g, hopper.getLocationIndex(), count);
 
             if (runSlow) {
@@ -198,7 +199,7 @@ public class Measurement {
                         withInstructions());
                 measureRouting(hopper, new QuerySettings("routing_alt", count / 500, isCH, isLM).
                         alternative());
-                if (encoder.supportsTurnCosts()) {
+                if (withTurnCosts) {
                     measureRouting(hopper, new QuerySettings("routing_edge", count / 20, isCH, isLM).
                             withInstructions().edgeBased());
                     // unfortunately alt routes are so slow that we cannot really afford many iterations
@@ -221,7 +222,7 @@ public class Measurement {
                                     withInstructions().activeLandmarks(activeLMCount));
                             measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_alt", count / 500, isCH, isLM).
                                     activeLandmarks(activeLMCount).alternative());
-                            if (args.getBool("measurement.lm.edge_based", encoder.supportsTurnCosts())) {
+                            if (args.getBool("measurement.lm.edge_based", withTurnCosts)) {
                                 measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 20, isCH, isLM).
                                         withInstructions().activeLandmarks(activeLMCount).edgeBased());
                                 measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_alt_edge", count / 500, isCH, isLM).
@@ -307,13 +308,8 @@ public class Measurement {
 
     private GraphHopperConfig createConfigFromArgs(PMap args) {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
-        String encodingManagerString = args.getString("graph.flag_encoders", "car");
-        List<FlagEncoder> tmpEncoders = EncodingManager.create(encodingManagerString).fetchEdgeEncoders();
-        if (tmpEncoders.size() != 1) {
-            logger.warn("You configured multiple encoders, only the first one is used for the measurements");
-        }
-        vehicle = tmpEncoders.get(0).toString();
-        boolean turnCosts = tmpEncoders.get(0).supportsTurnCosts();
+        vehicle = args.getString("measurement.vehicle", "car");
+        boolean turnCosts = args.getBool("measurement.turn_costs", false);
         int uTurnCosts = args.getInt("measurement.u_turn_costs", 40);
         String weighting = args.getString("measurement.weighting", "fastest");
         boolean useCHEdge = args.getBool("measurement.ch.edge", true);
@@ -447,10 +443,10 @@ public class Measurement {
         print("location_index", miniPerf);
     }
 
-    private void measureGraphTraversal(final Graph graph, final FlagEncoder encoder, int count) {
+    private void measureGraphTraversal(final Graph graph, BooleanEncodedValue accessEnc, int count) {
         final Random rand = new Random(seed);
 
-        EdgeFilter outFilter = AccessFilter.outEdges(encoder.getAccessEnc());
+        EdgeFilter outFilter = AccessFilter.outEdges(accessEnc);
         final EdgeExplorer outExplorer = graph.createEdgeExplorer(outFilter);
         MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             int nodeId = rand.nextInt(maxNode);

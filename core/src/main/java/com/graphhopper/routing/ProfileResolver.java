@@ -79,11 +79,14 @@ public class ProfileResolver {
         boolean disableLM = hints.getBool(Parameters.Landmark.DISABLE, false);
 
         String vehicle = hints.getString("vehicle", "").toLowerCase();
-        if (!vehicle.isEmpty() && !encodingManager.hasEncoder(vehicle))
-            throw new IllegalArgumentException("Vehicle not supported: `" + vehicle + "`. Supported are: `" + encodingManager.toString() +
-                    "`\nYou should consider using the `profile` parameter instead of specifying a vehicle." +
-                    "\nAvailable profiles: " + getProfileNames() +
-                    "\nTo learn more about profiles, see: docs/core/profiles.md");
+        if (!vehicle.isEmpty()) {
+            List<String> availableVehicles = encodingManager.getVehicles();
+            if (!availableVehicles.contains(vehicle))
+                throw new IllegalArgumentException("Vehicle not supported: `" + vehicle + "`. Supported are: `" + availableVehicles +
+                        "`\nYou should consider using the `profile` parameter instead of specifying a vehicle." +
+                        "\nAvailable profiles: " + getProfileNames() +
+                        "\nTo learn more about profiles, see: docs/core/profiles.md");
+        }
 
         // we select the profile based on the given request hints and the available profiles
         if (!chProfiles.isEmpty() && !disableCH) {

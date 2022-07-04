@@ -22,9 +22,11 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ProfileResolver;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,9 +52,14 @@ public class LMProfileSelectorTest {
 
     @BeforeEach
     public void setup() {
-        FlagEncoder carEncoder = FlagEncoders.createCar();
-        FlagEncoder bikeEncoder = FlagEncoders.createBike();
-        encodingManager = EncodingManager.create(carEncoder, bikeEncoder);
+        BooleanEncodedValue carAccessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue carSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
+        BooleanEncodedValue bikeAccessEnc = VehicleAccess.create("bike");
+        DecimalEncodedValue bikeSpeedEnc = VehicleSpeed.create("bike", 4, 2, false);
+        encodingManager = EncodingManager.start()
+                .add(carAccessEnc).add(carSpeedEnc)
+                .add(bikeAccessEnc).add(bikeSpeedEnc)
+                .build();
         fastCar = new Profile("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(false);
         fastCarEdge = new Profile("fast_car_edge").setVehicle("car").setWeighting("fastest").setTurnCosts(true);
         fastBike = new Profile("fast_bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(false);

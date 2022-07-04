@@ -20,8 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
@@ -37,18 +36,26 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author don-philipe
  */
 public class WheelchairTagParserTest {
-    private final EncodingManager encodingManager = EncodingManager.create("car,wheelchair");
-    private final WheelchairTagParser wheelchairParser;
-    private final DecimalEncodedValue wheelchairAvSpeedEnc;
     private final BooleanEncodedValue wheelchairAccessEnc;
-    private final DecimalEncodedValue carAvSpeedEnc = encodingManager.getEncoder("car").getAverageSpeedEnc();
-    private final BooleanEncodedValue carAccessEnc = encodingManager.getEncoder("car").getAccessEnc();
+    private final DecimalEncodedValue wheelchairAvSpeedEnc;
+    private final DecimalEncodedValue wheelchairPriorityEnc;
+    private final BooleanEncodedValue carAccessEnc;
+    private final DecimalEncodedValue carAvSpeedEnc;
+    private final EncodingManager encodingManager;
+    private final WheelchairTagParser wheelchairParser;
 
     public WheelchairTagParserTest() {
+        wheelchairAccessEnc = VehicleAccess.create("wheelchair");
+        wheelchairAvSpeedEnc = VehicleSpeed.create("wheelchair", 4, 1, true);
+        wheelchairPriorityEnc = VehiclePriority.create("wheelchair", 4, PriorityCode.getFactor(1), false);
+        carAccessEnc = VehicleAccess.create("car");
+        carAvSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
+        encodingManager = EncodingManager.start()
+                .add(wheelchairAccessEnc).add(wheelchairAvSpeedEnc).add(wheelchairPriorityEnc).add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
+                .add(carAccessEnc).add(carAvSpeedEnc)
+                .build();
         wheelchairParser = new WheelchairTagParser(encodingManager, new PMap());
         wheelchairParser.init(new DateRangeParser());
-        wheelchairAvSpeedEnc = wheelchairParser.getAverageSpeedEnc();
-        wheelchairAccessEnc = wheelchairParser.getAccessEnc();
     }
 
     @Test
@@ -63,7 +70,6 @@ public class WheelchairTagParserTest {
     @Test
     public void testCombined() {
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();
-        FlagEncoder carEncoder = encodingManager.getEncoder("car");
         EdgeIteratorState edge = g.edge(0, 1);
         edge.set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true, true);
         edge.set(carAvSpeedEnc, 100.0).set(carAccessEnc, true, false);
@@ -504,24 +510,21 @@ public class WheelchairTagParserTest {
         na.setNode(1, 51.1, 12.0015, 55);
         EdgeIteratorState edge01 = graph.edge(0, 1).setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
         edge01.setDistance(100);
-        FlagEncoder encoder2 = encodingManager.getEncoder("wheelchair");
-        GHUtility.setSpeed(5, 5, encoder2.getAccessEnc(), encoder2.getAverageSpeedEnc(), edge01);
+        GHUtility.setSpeed(5, 5, wheelchairAccessEnc, wheelchairAvSpeedEnc, edge01);
 
         // incline of 10% & shorter edge
         na.setNode(2, 51.2, 12.1010, 50);
         na.setNode(3, 51.2, 12.1015, 60);
         EdgeIteratorState edge23 = graph.edge(2, 3).setWayGeometry(Helper.createPointList3D(51.2, 12.1011, 49, 51.2, 12.1015, 55));
         edge23.setDistance(30);
-        FlagEncoder encoder1 = encodingManager.getEncoder("wheelchair");
-        GHUtility.setSpeed(5, 5, encoder1.getAccessEnc(), encoder1.getAverageSpeedEnc(), edge23);
+        GHUtility.setSpeed(5, 5, wheelchairAccessEnc, wheelchairAvSpeedEnc, edge23);
 
         // incline of 10% & longer edge
         na.setNode(4, 51.2, 12.101, 50);
         na.setNode(5, 51.2, 12.102, 60);
         EdgeIteratorState edge45 = graph.edge(2, 3).setWayGeometry(Helper.createPointList3D(51.2, 12.1011, 49, 51.2, 12.1015, 55));
         edge45.setDistance(100);
-        FlagEncoder encoder = encodingManager.getEncoder("wheelchair");
-        GHUtility.setSpeed(5, 5, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), edge45);
+        GHUtility.setSpeed(5, 5, wheelchairAccessEnc, wheelchairAvSpeedEnc, edge45);
 
 
         wheelchairParser.applyWayTags(new ReaderWay(1), edge01);

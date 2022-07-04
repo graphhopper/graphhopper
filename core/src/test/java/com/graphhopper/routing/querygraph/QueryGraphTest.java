@@ -20,10 +20,10 @@ package com.graphhopper.routing.querygraph;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.HeadingResolver;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -51,17 +51,15 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class QueryGraphTest {
     private EncodingManager encodingManager;
-    private FlagEncoder encoder;
     private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue speedEnc;
     private BaseGraph g;
 
     @BeforeEach
     public void setUp() {
-        encoder = FlagEncoders.createCar();
-        encodingManager = EncodingManager.create(encoder);
-        accessEnc = encoder.getAccessEnc();
-        speedEnc = encoder.getAverageSpeedEnc();
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         g = new BaseGraph.Builder(encodingManager).create();
     }
 
@@ -439,8 +437,8 @@ public class QueryGraphTest {
 
     @Test
     public void testIteration_Issue163() {
-        EdgeFilter outEdgeFilter = AccessFilter.outEdges(encodingManager.getEncoder("car").getAccessEnc());
-        EdgeFilter inEdgeFilter = AccessFilter.inEdges(encodingManager.getEncoder("car").getAccessEnc());
+        EdgeFilter outEdgeFilter = AccessFilter.outEdges(accessEnc);
+        EdgeFilter inEdgeFilter = AccessFilter.inEdges(accessEnc);
         EdgeExplorer inExplorer = g.createEdgeExplorer(inEdgeFilter);
         EdgeExplorer outExplorer = g.createEdgeExplorer(outEdgeFilter);
 
@@ -499,20 +497,21 @@ public class QueryGraphTest {
 
     @Test
     public void testTurnCostsProperlyPropagated_Issue282() {
-        FlagEncoder encoder = FlagEncoders.createCar(new PMap("max_turn_costs=15"));
-        EncodingManager em = EncodingManager.create(encoder);
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        DecimalEncodedValue turnCostEnc = TurnCost.create("car", 15);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
         BaseGraph graphWithTurnCosts = new BaseGraph.Builder(em).withTurnCosts(true).create();
         TurnCostStorage turnExt = graphWithTurnCosts.getTurnCostStorage();
-        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
         na.setNode(0, .00, .00);
         na.setNode(1, .00, .01);
         na.setNode(2, .01, .01);
 
-        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graphWithTurnCosts.edge(0, 1).setDistance(10));
-        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graphWithTurnCosts.edge(2, 1).setDistance(10));
+        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graphWithTurnCosts.edge(0, 1).setDistance(10));
+        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graphWithTurnCosts.edge(2, 1).setDistance(10));
 
-        Weighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder.getTurnCostEnc(), graphWithTurnCosts.getTurnCostStorage()));
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graphWithTurnCosts.getTurnCostStorage()));
 
         // no turn costs initially
         assertEquals(0, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
@@ -827,15 +826,15 @@ public class QueryGraphTest {
         // virtual nodes:     2
         //                0 - x - 1
         // virtual edges:   1   2
-        FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("speed_two_directions", true));
-        EncodingManager encodingManager = EncodingManager.create(encoder);
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 50.00, 10.10);
         na.setNode(1, 50.00, 10.20);
         double dist = DistanceCalcEarth.DIST_EARTH.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1));
-        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), g.edge(0, 1).setDistance(dist));
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(dist));
         edge.set(speedEnc, 50);
         edge.setReverse(speedEnc, 100);
 
@@ -901,16 +900,16 @@ public class QueryGraphTest {
         // virtual nodes:     2
         //                0 - x - 1
         // virtual edges:   1   2
-        FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("speed_two_directions", true));
-        EncodingManager encodingManager = EncodingManager.create(encoder);
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
-        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        BaseGraph g = new BaseGraph.Builder(em).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 50.00, 10.10);
         na.setNode(1, 50.00, 10.20);
         double dist = DistanceCalcEarth.DIST_EARTH.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1));
         // this time we store the edge the other way
-        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), g.edge(1, 0).setDistance(dist));
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 0).setDistance(dist));
         edge.set(speedEnc, 100, 50);
 
         // query graph

@@ -492,7 +492,7 @@ public class RouteResourceTest {
         ex = rsp.getErrors().get(0);
         assertTrue(ex instanceof IllegalArgumentException, "Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.");
-        assertTrue(ex.getMessage().contains("Vehicle not supported: `space-shuttle`. Supported are: `car`" +
+        assertTrue(ex.getMessage().contains("Vehicle not supported: `space-shuttle`. Supported are: `[car]`" +
                 "\nYou should consider using the `profile` parameter instead of specifying a vehicle." +
                 "\nAvailable profiles: [my_car]"), ex.getMessage());
 

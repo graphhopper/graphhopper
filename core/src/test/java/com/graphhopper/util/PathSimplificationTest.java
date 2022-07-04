@@ -23,9 +23,9 @@ import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -53,8 +53,9 @@ public class PathSimplificationTest {
 
     @Test
     public void testScenario() {
-        FlagEncoder carEncoder = FlagEncoders.createCar();
-        EncodingManager carManager = EncodingManager.create(carEncoder);
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager carManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph g = new BaseGraph.Builder(carManager).create();
         // 0-1-2
         // | | |
@@ -75,8 +76,6 @@ public class PathSimplificationTest {
         na.setNode(7, 1.0, 1.1);
         na.setNode(8, 1.0, 1.2);
 
-        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
         GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(10000)).setKeyValues(singletonMap("name", "0-1"));
         GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(11000)).setKeyValues(singletonMap("name", "1-2"));
 

@@ -23,9 +23,9 @@ import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -51,14 +51,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class GpxConversionsTest {
 
+    private BooleanEncodedValue accessEnc;
+    private DecimalEncodedValue speedEnc;
     private EncodingManager carManager;
-    private FlagEncoder carEncoder;
     private TranslationMap trMap;
 
     @BeforeEach
     public void setUp() {
-        carEncoder = FlagEncoders.createCar();
-        carManager = EncodingManager.create(carEncoder);
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        carManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         trMap = new TranslationMap().doImport();
     }
 
@@ -79,8 +81,6 @@ public class GpxConversionsTest {
         na.setNode(6, 15.1, 10.1);
         na.setNode(7, 15.1, 9.8);
 
-        BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
         GHUtility.setSpeed(63, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(7000).setKeyValues(singletonMap("name", "1-2")));
         GHUtility.setSpeed(72, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(8000).setKeyValues(singletonMap("name", "2-3")));
         GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(2, 6).setDistance(10000).setKeyValues(singletonMap("name", "2-6")));

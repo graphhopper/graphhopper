@@ -4,7 +4,14 @@ import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.VehicleSpeed;
+import com.graphhopper.routing.util.CarTagParser;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.OSMParsers;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -51,14 +58,15 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
         public Fixture(int maxDeviationPercentage) {
             this.maxDeviationPercentage = maxDeviationPercentage;
-            FlagEncoder encoder = FlagEncoders.createCar();
-            em = EncodingManager.create(encoder);
+            BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+            em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
             CarTagParser carParser = new CarTagParser(em, new PMap());
             carParser.init(new DateRangeParser());
             osmParsers = new OSMParsers()
                     .addVehicleTagParser(carParser);
-            baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(encoder));
-            trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), encoder, maxDeviationPercentage));
+            baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(accessEnc, speedEnc));
+            trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), accessEnc, speedEnc, maxDeviationPercentage));
             graph = new BaseGraph.Builder(em).create();
         }
 
@@ -193,8 +201,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         private final Weighting baseWeighting;
         private final double maxDeviationPercentage;
 
-        public RandomDeviationWeighting(Weighting baseWeighting, FlagEncoder encoder, double maxDeviationPercentage) {
-            super(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), TurnCostProvider.NO_TURN_COST_PROVIDER);
+        public RandomDeviationWeighting(Weighting baseWeighting, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, double maxDeviationPercentage) {
+            super(accessEnc, speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
             this.baseWeighting = baseWeighting;
             this.maxDeviationPercentage = maxDeviationPercentage;
         }

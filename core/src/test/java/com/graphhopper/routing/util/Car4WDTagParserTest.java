@@ -36,8 +36,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class Car4WDTagParserTest extends CarTagParserTest {
 
     @Override
-    FlagEncoder createEncoder(PMap properties) {
-        return FlagEncoders.createCar4wd(properties);
+    protected String getCarName() {
+        return "car4wd";
     }
 
     @Override

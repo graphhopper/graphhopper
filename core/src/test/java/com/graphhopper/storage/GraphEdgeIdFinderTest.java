@@ -19,7 +19,11 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.GHUtility;
@@ -39,14 +43,13 @@ public class GraphEdgeIdFinderTest {
 
     @Test
     public void testParseStringHints() {
-        FlagEncoder encoder = FlagEncoders.createCar();
-        EncodingManager em = EncodingManager.create(encoder);
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         // 0-1-2
         // | |
         // 3-4
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
@@ -73,8 +76,9 @@ public class GraphEdgeIdFinderTest {
 
     @Test
     public void testBlockAreasWithPolygon() {
-        FlagEncoder encoder = FlagEncoders.createCar();
-        EncodingManager em = EncodingManager.create(encoder);
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
 
         // 00-01-02-03
@@ -82,8 +86,6 @@ public class GraphEdgeIdFinderTest {
         // 04-05-06-07
         // |  |
         // 08-09-10-11
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1)); // 0
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1)); // 1
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1)); // 2

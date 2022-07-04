@@ -19,12 +19,8 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -34,7 +30,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -58,7 +53,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class EdgeBasedRoutingAlgorithmTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedRoutingAlgorithmTest.class);
-    private FlagEncoder carEncoder;
     private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue speedEnc;
     private DecimalEncodedValue turnCostEnc;
@@ -98,12 +92,10 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private EncodingManager createEncodingManager(boolean restrictedOnly) {
-        carEncoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", restrictedOnly ? 1 : 3));
-        EncodingManager em = EncodingManager.create(carEncoder);
-        accessEnc = carEncoder.getAccessEnc();
-        speedEnc = carEncoder.getAverageSpeedEnc();
-        turnCostEnc = getTurnCostEnc(carEncoder);
-        return em;
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        turnCostEnc = TurnCost.create("car", restrictedOnly ? 1 : 3);
+        return EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
     }
 
     public Path calcPath(Graph g, int from, int to, String algoStr) {
@@ -118,13 +110,9 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private BaseGraph createStorage(EncodingManager em) {
-        BaseGraph graph = new BaseGraph.Builder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
         tcs = graph.getTurnCostStorage();
         return graph;
-    }
-
-    private DecimalEncodedValue getTurnCostEnc(FlagEncoder encoder) {
-        return encoder.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
     }
 
     private void initTurnRestrictions(BaseGraph g) {
@@ -157,7 +145,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private Weighting createWeighting(int uTurnCosts) {
-        return new FastestWeighting(carEncoder, new DefaultTurnCostProvider(turnCostEnc, tcs, uTurnCosts));
+        return new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, tcs, uTurnCosts));
     }
 
     @ParameterizedTest
@@ -170,7 +158,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         BaseGraph g = createStorage(em);
         GHUtility.buildRandomGraph(g, rnd, 50, 2.2, true, true,
                 accessEnc, speedEnc, null, 0.8, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(g, seed, em, carEncoder, 3, tcs);
+        GHUtility.addRandomTurnCosts(g, seed, accessEnc, turnCostEnc, 3, tcs);
         g.freeze();
         int numPathsNotFound = 0;
         // todo: reduce redundancy with RandomCHRoutingTest
@@ -418,7 +406,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         setTurnCost(g, 2, 5, 6, 3);
         setTurnCost(g, 1, 6, 7, 4);
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder, new DefaultTurnCostProvider(turnCostEnc, tcs) {
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, tcs) {
             @Override
             public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
                 if (edgeFrom >= 0)

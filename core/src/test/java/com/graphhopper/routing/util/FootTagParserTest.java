@@ -20,8 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
@@ -36,13 +35,19 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class FootTagParserTest {
-    private final EncodingManager encodingManager = EncodingManager.create("car,bike,foot");
-    private final FlagEncoder encoder = encodingManager.getEncoder("foot");
+    private final BooleanEncodedValue footAccessEnc = VehicleAccess.create("foot");
+    private final DecimalEncodedValue footAvgSpeedEnc = VehicleSpeed.create("foot", 4, 1, false);
+    private final DecimalEncodedValue footPriorityEnc = VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false);
+    private final BooleanEncodedValue bikeAccessEnc = VehicleAccess.create("bike");
+    private final DecimalEncodedValue bikeAvgSpeedEnc = VehicleSpeed.create("bike", 4, 2, false);
+    private final BooleanEncodedValue carAccessEnc = VehicleAccess.create("car");
+    private final DecimalEncodedValue carAvSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
+    private final EncodingManager encodingManager = EncodingManager.start()
+            .add(footAccessEnc).add(footAvgSpeedEnc).add(footPriorityEnc).add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
+            .add(bikeAccessEnc).add(bikeAvgSpeedEnc).add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
+            .add(carAccessEnc).add(carAvSpeedEnc)
+            .build();
     private final FootTagParser footParser = new FootTagParser(encodingManager, new PMap());
-    private final DecimalEncodedValue footAvgSpeedEnc = encoder.getAverageSpeedEnc();
-    private final BooleanEncodedValue footAccessEnc = encoder.getAccessEnc();
-    private final DecimalEncodedValue carAvSpeedEnc = encodingManager.getEncoder("car").getAverageSpeedEnc();
-    private final BooleanEncodedValue carAccessEnc = encodingManager.getEncoder("car").getAccessEnc();
 
     public FootTagParserTest() {
         footParser.init(new DateRangeParser());
@@ -457,18 +462,18 @@ public class FootTagParserTest {
 
     @Test
     public void maxSpeed() {
-        FlagEncoder encoder = FlagEncoders.createFoot(new PMap().putObject("speed_bits", 4).putObject("speed_factor", 2));
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("foot_speed", 4, 2, true);
         // The foot max speed is supposed to be 15km/h, but for speed_bits=4,speed_factor=2 as we use here 15 cannot
         // be stored. In fact, when we set the speed of an edge to 15 and call the getter afterwards we get a value of 16
         // because of the internal (scaled) integer representation:
-        EncodingManager em = EncodingManager.create(encoder);
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        EdgeIteratorState edge = graph.edge(0, 1).setDistance(100).set(encoder.getAverageSpeedEnc(), 15);
-        assertEquals(16, edge.get(encoder.getAverageSpeedEnc()));
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(100).set(speedEnc, 15);
+        assertEquals(16, edge.get(speedEnc));
 
         // ... because of this we have to make sure the max speed is set to a value that cannot be exceeded even when
         // such conversion occurs. in our case it must be 16 not 15!
         // note that this test made more sense when we used encoders that defined a max speed.
-        assertEquals(16, encoder.getAverageSpeedEnc().getNextStorableValue(15));
+        assertEquals(16, speedEnc.getNextStorableValue(15));
     }
 }

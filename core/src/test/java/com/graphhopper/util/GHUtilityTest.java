@@ -20,10 +20,10 @@ package com.graphhopper.util;
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -35,8 +35,9 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class GHUtilityTest {
-    private final FlagEncoder carEncoder = FlagEncoders.createCar();
-    private final EncodingManager encodingManager = EncodingManager.create(carEncoder);
+    private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+    private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+    private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
 
     BaseGraph createGraph() {
         return new BaseGraph.Builder(encodingManager).create();
@@ -49,7 +50,7 @@ public class GHUtilityTest {
     //   6     \1
     //   ______/
     // 0/
-    Graph initUnsorted(Graph g, FlagEncoder encoder) {
+    Graph initUnsorted(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 1);
         na.setNode(1, 2.5, 4.5);
@@ -60,8 +61,6 @@ public class GHUtilityTest {
         na.setNode(6, 2.3, 2.2);
         na.setNode(7, 5, 1.5);
         na.setNode(8, 4.6, 4);
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(8, 2).setDistance(0.5));
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(7, 3).setDistance(2.1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 0).setDistance(3.9));
@@ -86,7 +85,7 @@ public class GHUtilityTest {
 
     @Test
     public void testSort() {
-        Graph g = initUnsorted(createGraph(), carEncoder);
+        Graph g = initUnsorted(createGraph(), accessEnc, speedEnc);
         Graph newG = GHUtility.sortDFS(g, createGraph());
         assertEquals(g.getNodes(), newG.getNodes());
         assertEquals(g.getEdges(), newG.getEdges());
@@ -120,8 +119,8 @@ public class GHUtilityTest {
         na.setNode(0, 0, 1);
         na.setNode(1, 2.5, 2);
         na.setNode(2, 3.5, 3);
-        GHUtility.setSpeed(60, true, false, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), g.edge(0, 1).setDistance(1.1));
-        GHUtility.setSpeed(60, true, false, carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), g.edge(2, 1).setDistance(1.1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(0, 1).setDistance(1.1));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(2, 1).setDistance(1.1));
         GHUtility.sortDFS(g, createGraph());
     }
 
