@@ -1,23 +1,25 @@
-package com.graphhopper;
+package com.graphhopper.routing.matrix;
 
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
+import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.matrix.GHMatrixRequest;
-import com.graphhopper.routing.matrix.GHMatrixResponse;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
-public class TestMatrix{
+public class TestMatrix {
 
-    public static GHPoint generateRandomLocation(GHPoint origin)  {
+    public static GHPoint generateRandomLocation(GHPoint origin) {
 
         double lat = ThreadLocalRandom.current().nextDouble(origin.lat, origin.lat + 0.01);
-        double lon  = ThreadLocalRandom.current().nextDouble(origin.lon, origin.lon + 0.01);
+        double lon = ThreadLocalRandom.current().nextDouble(origin.lon, origin.lon + 0.01);
 
-        return new GHPoint(lat,lon);
+        return new GHPoint(lat, lon);
     }
 
     public static void main(String[] args) {
@@ -38,14 +40,14 @@ public class TestMatrix{
         //GHPoint from = new GHPoint(42.51563823109501, 1.520477128586076);
         //GHPoint to = new GHPoint(42.509281169850254, 1.5409253398454361);
 
-        GHPoint from = new GHPoint(42.52268155770159,1.5270400223312923);
-        GHPoint to = new GHPoint(42.51809310570478,1.5321160685824744);
+        GHPoint from = new GHPoint(42.52268155770159, 1.5270400223312923);
+        GHPoint to = new GHPoint(42.51809310570478, 1.5321160685824744);
 
-        GHPoint from2 = new GHPoint(42.52268155770159,1.5270400223312923);
-        GHPoint to2 = new GHPoint(42.49878652482251,1.5630379943925652);
+        GHPoint from2 = new GHPoint(42.52268155770159, 1.5270400223312923);
+        GHPoint to2 = new GHPoint(42.49878652482251, 1.5630379943925652);
 
-        GHPoint from3 = new GHPoint(42.52268155770159,1.5270400223312923);
-        GHPoint to3 = new GHPoint(42.5031050925358,1.5726280934108343);
+        GHPoint from3 = new GHPoint(42.52268155770159, 1.5270400223312923);
+        GHPoint to3 = new GHPoint(42.5031050925358, 1.5726280934108343);
 
 
         List<GHPoint> origins = new ArrayList<>();
@@ -79,7 +81,7 @@ public class TestMatrix{
         config.setProfiles(profiles);
         config.setCHProfiles(chProfiles);
 
-        GraphHopperMatrix gh = new GraphHopperMatrix()
+        GraphHopper gh = new GraphHopper()
                 .setGraphHopperLocation("/home/jp.lopez/maps/matrix/andorra/")
                 .setOSMFile("/home/jp.lopez/maps/osm/andorra.osm.pbf")
                 .init(config)
@@ -88,14 +90,14 @@ public class TestMatrix{
 
         //GHResponse response2 = gh.route(request2);
 
-            GHMatrixResponse matrix = gh.matrix(matrixRequest);
-            //System.out.println(matrix.getMatrix());
+        GHMatrixResponse matrix = gh.matrix(matrixRequest);
+        //System.out.println(matrix.getMatrix());
 
         int sourceIdx = 0;
 
-        for( GHPoint source : origins){
+        for (GHPoint source : origins) {
             int targetIdx = 0;
-            for(GHPoint destiny: targets){
+            for (GHPoint destiny : targets) {
 
 
                 List<GHPoint> points = new ArrayList<>();
@@ -106,22 +108,15 @@ public class TestMatrix{
 
                 GHResponse response = gh.route(request);
 
-                double diffDistance = Math.round(response.getBest().getDistance() - matrix.getMatrix().getDistance(sourceIdx,targetIdx));
-                double diffTime = Math.round(response.getBest().getTime() - matrix.getMatrix().getTime(sourceIdx,targetIdx));
+                double diffDistance = Math.round(response.getBest().getDistance() - matrix.getMatrix().getDistance(sourceIdx, targetIdx));
+                double diffTime = Math.round(response.getBest().getTime() - matrix.getMatrix().getTime(sourceIdx, targetIdx));
 
-                System.out.println( diffDistance + "-" + response.getBest().getDistance()  + " - " + matrix.getMatrix().getDistance(sourceIdx,targetIdx));
-                System.out.println( diffTime + "-" + response.getBest().getTime()  + " - " + matrix.getMatrix().getTime(sourceIdx,targetIdx));
+                System.out.println(diffDistance + "-" + response.getBest().getDistance() + " - " + matrix.getMatrix().getDistance(sourceIdx, targetIdx));
+                System.out.println(diffTime + "-" + response.getBest().getTime() + " - " + matrix.getMatrix().getTime(sourceIdx, targetIdx));
                 targetIdx++;
             }
             sourceIdx++;
 
         }
-
-
-
-       // System.out.println(response2.getBest().getDistance());
-        //System.out.println(response2.getBest().getTime());
-
-        //System.out.println(matrix.getMatrix() + "-");
     }
 }

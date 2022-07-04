@@ -64,7 +64,6 @@
         <module>client-hc</module>
         <module>navigation</module>
         <module>example</module>
-        <module>matrix</module>
     </modules>
     <dependencyManagement>
         <dependencies>

@@ -33,6 +33,9 @@ import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMPreparationHandler;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
+import com.graphhopper.routing.matrix.GHMatrixRequest;
+import com.graphhopper.routing.matrix.GHMatrixResponse;
+import com.graphhopper.routing.matrix.RouterMatrix;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.*;
@@ -1211,5 +1214,29 @@ public class GraphHopper {
 
     public OSMReaderConfig getReaderConfig() {
         return osmReaderConfig;
+    }
+
+    public GHMatrixResponse matrix(GHMatrixRequest request) {
+        return createMatrixRouter().matrix(request);
+    }
+
+    private RouterMatrix createMatrixRouter() {
+        if (ghStorage == null || !fullyLoaded)
+            throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
+        if (ghStorage.isClosed())
+            throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
+        if (locationIndex == null)
+            throw new IllegalStateException("Location index not initialized");
+
+        return doCreateMatrixRouter(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
+                trMap, routerConfig, createWeightingFactory(), chGraphs, landmarks);
+    }
+
+    private RouterMatrix doCreateMatrixRouter(GraphHopperStorage ghStorage, LocationIndex locationIndex, Map<String, Profile> profilesByName,
+                                              PathDetailsBuilderFactory pathBuilderFactory, TranslationMap trMap, RouterConfig routerConfig,
+                                              WeightingFactory weightingFactory, Map<String, RoutingCHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
+        return new RouterMatrix(ghStorage.getBaseGraph(), ghStorage.getEncodingManager(), locationIndex, profilesByName, pathBuilderFactory,
+                trMap, routerConfig, weightingFactory, chGraphs, landmarks
+        );
     }
 }

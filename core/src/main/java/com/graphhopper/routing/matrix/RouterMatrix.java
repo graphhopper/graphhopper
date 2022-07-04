@@ -1,6 +1,10 @@
-package com.graphhopper.routing;
+package com.graphhopper.routing.matrix;
 
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.Router;
+import com.graphhopper.routing.RouterConfig;
+import com.graphhopper.routing.ViaRouting;
+import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.matrix.DistanceMatrix;
 import com.graphhopper.routing.matrix.GHMatrixRequest;

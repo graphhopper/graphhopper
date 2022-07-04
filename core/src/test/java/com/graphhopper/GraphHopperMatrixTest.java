@@ -124,7 +124,7 @@ public class GraphHopperMatrixTest {
         config.setCHProfiles(chProfiles);
 
 
-        GraphHopperMatrix hopper = new GraphHopperMatrix()
+        GraphHopper hopper = new GraphHopper()
                 .setOSMFile(osmLocation)
                 .init(config)
                 .setGraphHopperLocation(GH_LOCATION)
