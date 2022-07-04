@@ -13,6 +13,7 @@ turn_slight_right=Плавно поверните направо
 turn_sharp_left=Резко поверните налево
 turn_sharp_right=Резко поверните направо
 u_turn=Развернитесь
+toward_destination=
 unknown=Неизвестная инструкция '%1$s'
 via=через
 hour_abbr=ч

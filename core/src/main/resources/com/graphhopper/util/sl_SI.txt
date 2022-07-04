@@ -13,6 +13,7 @@ turn_slight_right=zavijte rahlo desno
 turn_sharp_left=zavijte ostro levo
 turn_sharp_right=zavijte ostro desno
 u_turn=zavijte za 180°
+toward_destination=
 unknown=neznano navodilo '%1$s'
 via=preko
 hour_abbr=ur

@@ -13,6 +13,7 @@ turn_slight_right=sağa hafif dön
 turn_sharp_left=sola keskin dön
 turn_sharp_right=sağa keskin dön
 u_turn=u dönüşü yap
+toward_destination=
 unknown=bilinmeyen yön işareti '%1$s'
 via=yoluyla
 hour_abbr=s

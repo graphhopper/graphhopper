@@ -13,6 +13,7 @@ turn_slight_right=إستدر لليمين قليلا
 turn_sharp_left=اتجه قليلاً لليسار
 turn_sharp_right=اتجه قليلاً لليمين
 u_turn=الدوران للإتجاه المعاكس
+toward_destination=
 unknown=علامة غير معرفة  '%1$s' 
 via=من خلال
 hour_abbr=ساعة

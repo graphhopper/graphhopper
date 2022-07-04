@@ -13,6 +13,7 @@ turn_slight_right=gira leggermente a destra
 turn_sharp_left=gira nettamente a sinistra
 turn_sharp_right=gira nettamente a destra
 u_turn=fai una inversione a U
+toward_destination=
 unknown=sconosciuto %1$s
 via=via
 hour_abbr=hh

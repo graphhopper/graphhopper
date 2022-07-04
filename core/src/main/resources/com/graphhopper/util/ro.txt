@@ -13,6 +13,7 @@ turn_slight_right=schimbați direcția la ușor la dreapta
 turn_sharp_left=schimbați direcția la brusc la stânga
 turn_sharp_right=schimbați direcția la brusc la dreapta
 u_turn=
+toward_destination=
 unknown=
 via=prin
 hour_abbr=h

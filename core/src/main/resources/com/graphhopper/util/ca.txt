@@ -13,6 +13,7 @@ turn_slight_right=gira lleugerament a la dreta
 turn_sharp_left=gira just a l'esquerra
 turn_sharp_right=gira just a la dreta
 u_turn=fes la volta
+toward_destination=
 unknown=instrucció desconeguda «%1$s»
 via=passant per
 hour_abbr=h

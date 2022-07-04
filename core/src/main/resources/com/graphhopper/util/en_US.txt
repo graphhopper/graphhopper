@@ -13,6 +13,7 @@ turn_slight_right=turn slight right
 turn_sharp_left=turn sharp left
 turn_sharp_right=turn sharp right
 u_turn=make a U-turn
+toward_destination=%1$s and drive toward %2$s
 unknown=unknown instruction sign '%1$s'
 via=via
 hour_abbr=h

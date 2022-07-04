@@ -13,6 +13,7 @@ turn_slight_right=curva suave à direita
 turn_sharp_left=curva acentuada à esquerda
 turn_sharp_right=curva acentuada à direita
 u_turn=faça um retorno
+toward_destination=
 unknown=sinalização desconhecida '%1$s'
 via=via
 hour_abbr=h
