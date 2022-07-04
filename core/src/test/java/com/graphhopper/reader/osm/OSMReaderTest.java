@@ -413,7 +413,7 @@ public class OSMReaderTest {
         Graph graph = hopper.getBaseGraph();
         // our way is split into five edges, because there are two ford nodes
         assertEquals(5, graph.getEdges());
-        BooleanEncodedValue accessEnc = hopper.getEncodingManager().getBooleanEncodedValue("car_access");
+        BooleanEncodedValue accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(VehicleAccess.key("car"));
         int blocked = 0;
         int notBlocked = 0;
         AllEdgesIterator edge = graph.getAllEdges();
@@ -1008,11 +1008,11 @@ public class OSMReaderTest {
             BaseGraph baseGraph = new BaseGraph.Builder(getEncodingManager()).set3D(hasElevation()).withTurnCosts(getEncodingManager().needsTurnCostsSupport()).build();
             setBaseGraph(baseGraph);
             super.importOSM();
-            carAccessEnc = getEncodingManager().getBooleanEncodedValue("car_access");
-            carSpeedEnc = getEncodingManager().getDecimalEncodedValue("car_average_speed");
+            carAccessEnc = getEncodingManager().getBooleanEncodedValue(VehicleAccess.key("car"));
+            carSpeedEnc = getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key("car"));
             carOutExplorer = getBaseGraph().createEdgeExplorer(AccessFilter.outEdges(carAccessEnc));
             carAllExplorer = getBaseGraph().createEdgeExplorer(AccessFilter.allEdges(carAccessEnc));
-            footAccessEnc = getEncodingManager().getBooleanEncodedValue("foot_access");
+            footAccessEnc = getEncodingManager().getBooleanEncodedValue(VehicleAccess.key("foot"));
         }
 
         @Override

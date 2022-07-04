@@ -83,14 +83,14 @@ public class EncodingManager implements EncodedValueLookup {
     public static class Builder {
         private EncodingManager em = new EncodingManager();
 
-        public Builder add(VehicleEncodedValues vehicleEncodedValues) {
+        public Builder add(VehicleEncodedValues v) {
             checkNotBuiltAlready();
             List<EncodedValue> list = new ArrayList<>();
-            vehicleEncodedValues.createEncodedValues(list);
+            v.createEncodedValues(list);
             list.forEach(this::add);
 
             list = new ArrayList<>();
-            vehicleEncodedValues.createTurnCostEncodedValues(list);
+            v.createTurnCostEncodedValues(list);
             list.forEach(this::addTurnCostEncodedValue);
             return this;
         }
