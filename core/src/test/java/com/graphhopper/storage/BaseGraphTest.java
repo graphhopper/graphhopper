@@ -19,11 +19,13 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.search.EdgeKVStorage.KeyValue;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static com.graphhopper.util.FetchMode.*;
@@ -61,13 +63,20 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         EdgeIteratorState iter2 = graph.edge(0, 1).setDistance(100).set(carAccessEnc, true, true);
         iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0));
         EdgeIteratorState iter1 = graph.edge(0, 2).setDistance(200).set(carAccessEnc, true, true);
+        EdgeIteratorState iter3 = graph.edge(3, 4);
         iter1.setWayGeometry(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0));
         graph.edge(9, 10).setDistance(200).set(carAccessEnc, true, true);
         graph.edge(9, 11).setDistance(200).set(carAccessEnc, true, true);
         graph.edge(1, 2).setDistance(120).set(carAccessEnc, true, false);
 
-        iter1.setKeyValues(Collections.singletonMap("name", "named street1"));
-        iter2.setKeyValues(Collections.singletonMap("name", "named street2"));
+        iter1.setKeyValues(KeyValue.createKV("name", "named street1"));
+        iter2.setKeyValues(KeyValue.createKV("name", "named street2"));
+
+        List<KeyValue> list = new ArrayList<>();
+        list.add(new KeyValue("keyA", "FORWARD", true, false));
+        list.add(new KeyValue("keyB", "BACKWARD", false, true));
+        list.add(new KeyValue("keyC", "BOTH", true, true));
+        iter3.setKeyValues(list);
 
         checkGraph(graph);
         graph.flush();
@@ -81,6 +90,17 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
 
         assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
         assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
+        iter3 = graph.getEdgeIteratorState(iter3.getEdge(), iter3.getAdjNode());
+        assertEquals(list, iter3.getKeyValues());
+        assertEquals(list, iter3.detach(true).getKeyValues());
+
+        assertEquals("FORWARD", iter3.getValue("keyA"));
+        assertNull(iter3.getValue("keyB"));
+        assertEquals("BOTH", iter3.getValue("keyC"));
+        assertNull(iter3.detach(true).getValue("keyA"));
+        assertEquals("BACKWARD", iter3.detach(true).getValue("keyB"));
+        assertEquals("BOTH", iter3.detach(true).getValue("keyC"));
+
         GHUtility.setSpeed(60, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(3, 4).setDistance(123)).
                 setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
         checkGraph(graph);

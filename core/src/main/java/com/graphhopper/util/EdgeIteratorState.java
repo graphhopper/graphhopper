@@ -18,10 +18,11 @@
 package com.graphhopper.util;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Map;
+import java.util.List;
 
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
@@ -194,30 +195,33 @@ public interface EdgeIteratorState {
     EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd);
 
     /**
-     * Identical to calling getKeyValues().get("name"). I.e. if you need other properties you should prefer to call
-     * getKeyValues directly instead of getName. Please note that for backward compatibility getName returns an empty
-     * String instead of null if there was no name set.
+     * Identical to calling getKeyValues().get("name") if name is stored for both directions. Note that for backward
+     * compatibility this method returns an empty String instead of null if there was no KeyPair with key==name stored.
      *
-     * @return the stored value for the key "name" in the key-values space of this edge
+     * @return the stored value for the key "name" in the KeyValue list of this EdgeIteratorState.
      */
     String getName();
 
     /**
-     * This stores the specified key-value pairs in the storage of the current edge. This is more flexible compared to
-     * the mechanism of flags and EncodedValue and allows to store sparse key value pairs much more efficient.
-     * But it is slower and more inefficient on retrieval and this setKeyValues method
-     * should be called only once per edge as it allocates new space everytime this method is called. I.e. for many
-     * usages like in a custom_model currently the EncodedValue-approach should be preferred.
+     * This stores the specified key-value pairs in the storage of this EdgeIteratorState. This is more flexible
+     * compared to the mechanism of flags and EncodedValue and allows storing sparse key value pairs more efficient.
+     * But it might be slow and more inefficient on retrieval. Call this setKeyValues method only once per
+     * EdgeIteratorState as it allocates new space everytime this method is called.
      */
-    EdgeIteratorState setKeyValues(Map<String, Object> map);
-
-    Map<String, Object> getKeyValues();
+    EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> map);
 
     /**
-     * This method returns the value of the specified key. If you need more than one value you should likely better use
-     * getKeyValues().
+     * This method returns KeyValue pairs for both directions in contrast to {@link #getValue(String)}.
      *
-     * @see #setKeyValues(Map)
+     * @see #setKeyValues(List)
+     */
+    List<EdgeKVStorage.KeyValue> getKeyValues();
+
+    /**
+     * This method returns the *first* value for the specified key and only if stored for the direction of this
+     * EdgeIteratorState. If you need more than one value see also {@link #getKeyValues()}. Avoid storing KeyPairs with
+     * duplicate keys as only the first will be reachable with this method. Currently, there is no support to use this
+     * method in a custom_model, and you should use EncodedValues instead.
      */
     Object getValue(String key);
 

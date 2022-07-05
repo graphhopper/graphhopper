@@ -23,14 +23,13 @@ import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoders;
+import com.graphhopper.search.EdgeKVStorage.KeyValue;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
 import org.junit.jupiter.api.Test;
-
-import java.util.Collections;
 
 import static com.graphhopper.util.GHUtility.createMockedEdgeIteratorState;
 import static com.graphhopper.util.GHUtility.getEdge;
@@ -57,7 +56,8 @@ public class FastestWeightingTest {
         Weighting instance = new FastestWeighting(encoder, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, 100));
 
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, GHUtility.createEdgeKey(1, false, false), 1, 2, 10,
-                GHUtility.setSpeed(10, 0, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), encodingManager.createEdgeFlags()), Collections.singletonMap("name", "test"), Helper.createPointList(51, 0, 51, 1), false);
+                GHUtility.setSpeed(10, 0, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
+                        encodingManager.createEdgeFlags()), KeyValue.createKV("name", "test"), Helper.createPointList(51, 0, 51, 1), false);
         double time = instance.calcEdgeWeight(virtEdge, false);
 
         virtEdge.setUnfavored(true);

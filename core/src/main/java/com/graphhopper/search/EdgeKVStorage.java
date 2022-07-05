@@ -72,6 +72,7 @@ public class EdgeKVStorage {
     // 1. The key strings are limited to 16384 unique values (see MAX_UNIQUE_KEYS). A dynamic value has a maximum byte length of 255.
     // 2. Every key can store values only of the same type
     // 3. We need to loop through X entries to get the start val_x.
+    // 4. The key index (14 bits) is stored along with the availability (2 bits), i.e. whether they KeyValue is available in forward and/or backward directions
     private final DataAccess vals;
     private final Map<String, Integer> keyToIndex = new HashMap<>();
     private final List<Class<?>> indexToClass = new ArrayList<>();
@@ -79,7 +80,7 @@ public class EdgeKVStorage {
     private final BitUtil bitUtil = BitUtil.LITTLE;
     private long bytePointer = START_POINTER;
     private long lastEntryPointer = -1;
-    private Map<String, Object> lastEntryMap;
+    private List<KeyValue> lastEntries;
 
     public EdgeKVStorage(Directory dir) {
         this(dir, 1000);
@@ -148,33 +149,33 @@ public class EdgeKVStorage {
      *
      * @return entryPointer with which you can later fetch the entryMap via the get or getAll method
      */
-    public long add(final Map<String, Object> entryMap) {
-        if (entryMap == null) throw new IllegalArgumentException("specified Map must not be null");
-        if (entryMap.isEmpty()) return EMPTY_POINTER;
-        else if (entryMap.size() > 200)
+    public long add(final List<KeyValue> entries) {
+        if (entries == null) throw new IllegalArgumentException("specified List must not be null");
+        if (entries.isEmpty()) return EMPTY_POINTER;
+        else if (entries.size() > 200)
             throw new IllegalArgumentException("Cannot store more than 200 entries per entry");
 
         // This is a very important "compression" mechanism because one OSM way is split into multiple edges and so we
         // can often re-use the serialized key-value pairs of the previous edge.
-        if (isEquals(entryMap, lastEntryMap)) return lastEntryPointer;
+        if (isEquals(entries, lastEntries)) return lastEntryPointer;
 
         // If the Class of a value is unknown it should already fail here, before we modify internal data. (see #2597#discussion_r896469840)
-        for (Map.Entry<String, Object> entry : entryMap.entrySet())
-            if (keyToIndex.get(entry.getKey()) != null)
-                getBytesForValue(indexToClass.get(keyToIndex.get(entry.getKey())), entry.getValue());
+        for (KeyValue kv : entries)
+            if (keyToIndex.get(kv.key) != null)
+                getBytesForValue(indexToClass.get(keyToIndex.get(kv.key)), kv.value);
 
-        lastEntryMap = entryMap;
+        lastEntries = entries;
         lastEntryPointer = bytePointer;
         // while adding there could be exceptions and we need to avoid that the bytePointer is modified
         long currentPointer = bytePointer;
 
         vals.ensureCapacity(currentPointer + 1);
-        vals.setByte(currentPointer, (byte) entryMap.size());
+        vals.setByte(currentPointer, (byte) entries.size());
         currentPointer += 1;
-        for (Map.Entry<String, Object> entry : entryMap.entrySet()) {
-            String key = entry.getKey();
+        for (KeyValue entry : entries) {
+            String key = entry.key;
             if (key == null) throw new IllegalArgumentException("key cannot be null");
-            Object value = entry.getValue();
+            Object value = entry.value;
             if (value == null) throw new IllegalArgumentException("value for key " + key + " cannot be null");
             Integer keyIndex = keyToIndex.get(key);
             Class<?> clazz;
@@ -207,7 +208,7 @@ public class EdgeKVStorage {
 
             final byte[] valueBytes = getBytesForValue(clazz, value);
             vals.ensureCapacity(currentPointer + 2 + 1 + valueBytes.length);
-            vals.setShort(currentPointer, keyIndex.shortValue());
+            vals.setShort(currentPointer, (short) (keyIndex << 2 | (entry.fwd ? 2 : 0) | (entry.bwd ? 1 : 0)));
             currentPointer += 2;
             if (hasDynLength) {
                 vals.setByte(currentPointer, (byte) valueBytes.length);
@@ -222,45 +223,46 @@ public class EdgeKVStorage {
         return lastEntryPointer;
     }
 
-    private boolean isEquals(Map<String, Object> entryMap, Map<String, Object> lastEntryMap) {
-        if (lastEntryMap != null && entryMap.size() == lastEntryMap.size()) {
-            for (Map.Entry<String, Object> entry : entryMap.entrySet()) {
-                Object val = entry.getValue();
-                if (val == null)
-                    throw new IllegalArgumentException("value for key " + entry.getKey() + " cannot be null");
-                Object lastVal = lastEntryMap.get(entry.getKey());
-                if (val instanceof byte[] && lastVal instanceof byte[] && Arrays.equals((byte[]) lastVal, (byte[]) val)
-                        || val.equals(lastVal)) continue;
-                return false;
+    // compared to entries.equals(lastEntries) this method avoids a NPE if a value is null and throws an IAE instead
+    private boolean isEquals(List<KeyValue> entries, List<KeyValue> lastEntries) {
+        if (lastEntries != null && entries.size() == lastEntries.size()) {
+            for (int i = 0; i < entries.size(); i++) {
+                KeyValue kv = entries.get(i);
+                if (kv.value == null)
+                    throw new IllegalArgumentException("value for key " + kv.key + " cannot be null");
+                if (!kv.equals(lastEntries.get(i))) return false;
             }
             return true;
         }
         return false;
     }
 
-    public Map<String, Object> getAll(final long entryPointer) {
+    public List<EdgeKVStorage.KeyValue> getAll(final long entryPointer) {
         if (entryPointer < 0)
             throw new IllegalStateException("Pointer to access EdgeKVStorage cannot be negative:" + entryPointer);
 
-        if (entryPointer == EMPTY_POINTER) return Collections.emptyMap();
+        if (entryPointer == EMPTY_POINTER) return Collections.emptyList();
 
         int keyCount = vals.getByte(entryPointer) & 0xFF;
-        if (keyCount == 0) return Collections.emptyMap();
+        if (keyCount == 0) return Collections.emptyList();
 
-        Map<String, Object> map = new HashMap<>(keyCount);
+        List<EdgeKVStorage.KeyValue> list = new ArrayList<>(keyCount);
         long tmpPointer = entryPointer + 1;
         AtomicInteger sizeOfObject = new AtomicInteger();
         for (int i = 0; i < keyCount; i++) {
-            int currentKeyIndex = vals.getShort(tmpPointer);
+            int currentKeyIndexRaw = vals.getShort(tmpPointer);
+            boolean bwd = (currentKeyIndexRaw & 1) == 1;
+            boolean fwd = (currentKeyIndexRaw & 2) == 2;
+            int currentKeyIndex = currentKeyIndexRaw >>> 2;
             tmpPointer += 2;
 
             Object object = deserializeObj(sizeOfObject, tmpPointer, indexToClass.get(currentKeyIndex));
             tmpPointer += sizeOfObject.get();
             String key = indexToKey.get(currentKeyIndex);
-            map.put(key, object);
+            list.add(new KeyValue(key, object, fwd, bwd));
         }
 
-        return map;
+        return list;
     }
 
     private boolean hasDynLength(Class<?> clazz) {
@@ -366,14 +368,17 @@ public class EdgeKVStorage {
         long tmpPointer = entryPointer + 1;
         for (int i = 0; i < keyCount; i++) {
             int currentKeyIndexRaw = vals.getShort(tmpPointer);
-            int keyIndexPositive = Math.abs(currentKeyIndexRaw);
-            assert keyIndexPositive < indexToKey.size() : "invalid key index " + keyIndexPositive + ">=" + indexToKey.size() + ", entryPointer=" + entryPointer + ", max=" + bytePointer;
+            boolean bwd = (currentKeyIndexRaw & 1) == 1;
+            boolean fwd = (currentKeyIndexRaw & 2) == 2;
+            int currentKeyIndex = currentKeyIndexRaw >>> 2;
+
+            assert currentKeyIndex < indexToKey.size() : "invalid key index " + currentKeyIndex + ">=" + indexToKey.size() + ", entryPointer=" + entryPointer + ", max=" + bytePointer;
             tmpPointer += 2;
-            if (keyIndexPositive == keyIndex)
+            if ((!reverse && fwd || reverse && bwd) && currentKeyIndex == keyIndex)
                 return deserializeObj(null, tmpPointer, indexToClass.get(keyIndex));
 
             // skip to next entry of same edge via skipping the real value
-            Class<?> clazz = indexToClass.get(keyIndexPositive);
+            Class<?> clazz = indexToClass.get(currentKeyIndex);
             int valueLength = hasDynLength(clazz) ? 1 + vals.getByte(tmpPointer) & 0xFF : getFixLength(clazz);
             tmpPointer += valueLength;
         }
@@ -424,5 +429,51 @@ public class EdgeKVStorage {
 
     public long getCapacity() {
         return vals.getCapacity() + keys.getCapacity();
+    }
+
+    public static class KeyValue {
+        public String key;
+        public Object value;
+        public boolean fwd, bwd;
+
+        public KeyValue(String key, Object value) {
+            this.key = key;
+            this.value = value;
+            this.fwd = true;
+            this.bwd = true;
+        }
+
+        public KeyValue(String key, Object value, boolean fwd, boolean bwd) {
+            this.key = key;
+            this.value = value;
+            this.fwd = fwd;
+            this.bwd = bwd;
+        }
+
+        public static List<KeyValue> createKV(String key, Object value) {
+            return Collections.singletonList(new KeyValue(key, value));
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            KeyValue keyValue = (KeyValue) o;
+            return key.equals(keyValue.key)
+                    && fwd == keyValue.fwd
+                    && bwd == keyValue.bwd
+                    && (value instanceof byte[] && keyValue.value instanceof byte[] &&
+                    Arrays.equals((byte[]) value, (byte[]) keyValue.value) || value.equals(keyValue.value));
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(key, value, fwd, bwd);
+        }
+
+        @Override
+        public String toString() {
+            return key + '=' + value + " (" + fwd + "|" + bwd + ")";
+        }
     }
 }
