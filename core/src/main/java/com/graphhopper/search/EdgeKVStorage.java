@@ -35,8 +35,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class EdgeKVStorage {
 
     private static final long EMPTY_POINTER = 0, START_POINTER = 1;
-    // Store the key index in 2 bytes. Use negative values for marking the value as duplicate.
-    static final int MAX_UNIQUE_KEYS = (1 << 15);
+    // Store the key index in 2 bytes. Use first 2 bits for marking fwd+bwd existence.
+    static final int MAX_UNIQUE_KEYS = (1 << 14);
     // Store string value as byte array and store the length into 1 byte
     private static final int MAX_LENGTH = (1 << 8) - 1;
 
@@ -61,28 +61,21 @@ public class EdgeKVStorage {
     // So more generic: the values could be of dynamic length, fixed length like int or be duplicates:
     // vals count      (1 byte)
     // --- 1. key-value pair (store String or byte[] with dynamic length)
-    // key_idx_0       (2 byte)
+    // key_idx_0       (2 byte, of which the first 2bits are to know if this is valid for fwd and/or bwd direction)
     // val_length_0    (1 byte)
     // val_0 (x bytes)
     // --- 2. key-value pair (store int with fixed length)
     // key_idx_1       (2 byte)
     // int             (4 byte)
-    // --- 3. key-value pair (store duplicate, then key is negative and the value is a pointer to the actual value (relative to the current pointer)
-    // -key_idx_2      (2 byte)
-    // delta_pointer_2 (4 byte)
     //
-    // Note:
-    // 1. The key strings are limited to 32767 unique values (see MAX_UNIQUE_KEYS). A dynamic value has a maximum byte length of 255.
+    // Notes:
+    // 1. The key strings are limited to 16384 unique values (see MAX_UNIQUE_KEYS). A dynamic value has a maximum byte length of 255.
     // 2. Every key can store values only of the same type
     // 3. We need to loop through X entries to get the start val_x.
-    // 4. We detect duplicate values for byte[] and String values via smallCache and then use the negative key index as
-    //    'duplicate' marker. We then store only the delta (signed int) instead of the absolute unsigned long value to
-    //    reduce memory usage when there are duplicate values.
     private final DataAccess vals;
     private final Map<String, Integer> keyToIndex = new HashMap<>();
     private final List<Class<?>> indexToClass = new ArrayList<>();
     private final List<String> indexToKey = new ArrayList<>();
-    private final Map<Object, Long> smallCache;
     private final BitUtil bitUtil = BitUtil.LITTLE;
     private long bytePointer = START_POINTER;
     private long lastEntryPointer = -1;
@@ -98,13 +91,6 @@ public class EdgeKVStorage {
     public EdgeKVStorage(Directory dir, final int cacheSize) {
         keys = dir.create("edgekv_keys", 10 * 1024);
         vals = dir.create("edgekv_vals");
-
-        smallCache = new LinkedHashMap<Object, Long>(cacheSize, 0.75f, true) {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry<Object, Long> entry) {
-                return size() > cacheSize;
-            }
-        };
     }
 
     public EdgeKVStorage create(long initBytes) {
@@ -217,29 +203,9 @@ public class EdgeKVStorage {
                     currentPointer += 3;
                     continue;
                 }
-
-                Long existingRef = smallCache.get(value);
-                if (existingRef != null) {
-                    long delta = lastEntryPointer - existingRef;
-                    if (delta < Integer.MAX_VALUE && delta > Integer.MIN_VALUE) {
-                        vals.ensureCapacity(currentPointer + 2 + 4);
-                        vals.setShort(currentPointer, (short) -keyIndex);
-                        currentPointer += 2;
-                        // do not store valueBytes.length as we know it already: it is 4!
-                        byte[] valueBytes = new byte[4];
-                        bitUtil.fromInt(valueBytes, (int) delta);
-                        vals.setBytes(currentPointer, valueBytes, valueBytes.length);
-                        currentPointer += valueBytes.length;
-                        continue;
-                    } else {
-                        smallCache.remove(value);
-                    }
-                }
             }
 
             final byte[] valueBytes = getBytesForValue(clazz, value);
-            // only cache value if storing via duplicate marker is valuable (the delta costs 4 bytes minus 1 due to omitted valueBytes.length storage)
-            if (hasDynLength && valueBytes.length > 3) smallCache.put(value, currentPointer);
             vals.ensureCapacity(currentPointer + 2 + 1 + valueBytes.length);
             vals.setShort(currentPointer, keyIndex.shortValue());
             currentPointer += 2;
@@ -288,23 +254,8 @@ public class EdgeKVStorage {
             int currentKeyIndex = vals.getShort(tmpPointer);
             tmpPointer += 2;
 
-            Object object;
-            if (currentKeyIndex < 0) {
-                // deserialize duplicate
-                currentKeyIndex = -currentKeyIndex;
-                byte[] valueBytes = new byte[4];
-                vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
-                tmpPointer += 4;
-
-                long dupPointer = entryPointer - bitUtil.toInt(valueBytes);
-                dupPointer += 2;
-                if (dupPointer > bytePointer)
-                    throw new IllegalStateException("dup marker should exist but points into not yet allocated area " + dupPointer + " > " + bytePointer);
-                object = deserializeObj(null, dupPointer, indexToClass.get(currentKeyIndex));
-            } else {
-                object = deserializeObj(sizeOfObject, tmpPointer, indexToClass.get(currentKeyIndex));
-                tmpPointer += sizeOfObject.get();
-            }
+            Object object = deserializeObj(sizeOfObject, tmpPointer, indexToClass.get(currentKeyIndex));
+            tmpPointer += sizeOfObject.get();
             String key = indexToKey.get(currentKeyIndex);
             map.put(key, object);
         }
@@ -400,7 +351,7 @@ public class EdgeKVStorage {
         }
     }
 
-    public Object get(final long entryPointer, String key) {
+    public Object get(final long entryPointer, String key, boolean reverse) {
         if (entryPointer < 0)
             throw new IllegalStateException("Pointer to access EdgeKVStorage cannot be negative:" + entryPointer);
 
@@ -418,27 +369,13 @@ public class EdgeKVStorage {
             int keyIndexPositive = Math.abs(currentKeyIndexRaw);
             assert keyIndexPositive < indexToKey.size() : "invalid key index " + keyIndexPositive + ">=" + indexToKey.size() + ", entryPointer=" + entryPointer + ", max=" + bytePointer;
             tmpPointer += 2;
-            if (keyIndexPositive == keyIndex) {
-                if (currentKeyIndexRaw < 0) {
-                    byte[] valueBytes = new byte[4];
-                    vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
-                    tmpPointer = entryPointer - bitUtil.toInt(valueBytes);
-                    tmpPointer += 2;
-                    if (tmpPointer > bytePointer)
-                        throw new IllegalStateException("dup marker " + bytePointer + " should exist but points into not yet allocated area " + tmpPointer);
-                }
-
+            if (keyIndexPositive == keyIndex)
                 return deserializeObj(null, tmpPointer, indexToClass.get(keyIndex));
-            }
 
-            // skip to next entry of same edge either via skipping the pointer (raw<0) or the real value
-            if (currentKeyIndexRaw < 0) {
-                tmpPointer += 4;
-            } else {
-                Class<?> clazz = indexToClass.get(keyIndexPositive);
-                int valueLength = hasDynLength(clazz) ? 1 + vals.getByte(tmpPointer) & 0xFF : getFixLength(clazz);
-                tmpPointer += valueLength;
-            }
+            // skip to next entry of same edge via skipping the real value
+            Class<?> clazz = indexToClass.get(keyIndexPositive);
+            int valueLength = hasDynLength(clazz) ? 1 + vals.getByte(tmpPointer) & 0xFF : getFixLength(clazz);
+            tmpPointer += valueLength;
         }
 
         // value for specified key does not exist for the specified pointer

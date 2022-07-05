@@ -74,7 +74,7 @@ public class Constants {
     public static final int VERSION_NODE_CH = 0;
     public static final int VERSION_GEOMETRY = 6;
     public static final int VERSION_LOCATION_IDX = 5;
-    public static final int VERSION_EDGEKV_STORAGE = 1;
+    public static final int VERSION_EDGEKV_STORAGE = 2;
     /**
      * The version without the snapshot string
      */
