@@ -21,6 +21,13 @@ public final class DistanceMatrix {
 
     private final long[][] times;
 
+    public double[][] getDistances() {
+        return distances;
+    }
+
+    public long[][] getTimes() {
+        return times;
+    }
 
     /**
      * Creates a new GHMatrixResponse with the given dimensions
