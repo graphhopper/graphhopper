@@ -20,8 +20,6 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
@@ -44,23 +42,22 @@ import static com.graphhopper.routing.weighting.custom.CustomModelParser.parseEx
 import static org.junit.jupiter.api.Assertions.*;
 
 class CustomModelParserTest {
-
-    FlagEncoder encoder;
     BaseGraph graph;
     EncodingManager encodingManager;
     EnumEncodedValue<RoadClass> roadClassEnc;
+    BooleanEncodedValue accessEnc;
     DecimalEncodedValue avgSpeedEnc;
     StringEncodedValue countryEnc;
     double maxSpeed;
 
     @BeforeEach
     void setup() {
-        encoder = FlagEncoders.createCar();
+        accessEnc = VehicleAccess.create("car");
+        avgSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
         countryEnc = new StringEncodedValue("country", 10);
-        encodingManager = new EncodingManager.Builder().add(encoder).add(countryEnc).
-                add(MaxSpeed.create()).add(new EnumEncodedValue<>(Surface.KEY, Surface.class)).build();
+        encodingManager = new EncodingManager.Builder().add(accessEnc).add(avgSpeedEnc)
+                .add(countryEnc).add(MaxSpeed.create()).add(new EnumEncodedValue<>(Surface.KEY, Surface.class)).build();
         graph = new BaseGraph.Builder(encodingManager).create();
-        avgSpeedEnc = encoder.getAverageSpeedEnc();
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         maxSpeed = 140;
     }
@@ -83,11 +80,11 @@ class CustomModelParserTest {
     @Test
     void testPriority() {
         EdgeIteratorState primary = graph.edge(0, 1).setDistance(10).
-                set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 80).set(encoder.getAccessEnc(), true, true);
+                set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 80).set(accessEnc, true, true);
         EdgeIteratorState secondary = graph.edge(1, 2).setDistance(10).
-                set(roadClassEnc, SECONDARY).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
+                set(roadClassEnc, SECONDARY).set(avgSpeedEnc, 70).set(accessEnc, true, true);
         EdgeIteratorState tertiary = graph.edge(1, 2).setDistance(10).
-                set(roadClassEnc, TERTIARY).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
+                set(roadClassEnc, TERTIARY).set(avgSpeedEnc, 70).set(accessEnc, true, true);
 
         CustomModel customModel = new CustomModel();
         customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, "0.5"));
@@ -114,9 +111,9 @@ class CustomModelParserTest {
 
     @Test
     public void testBrackets() {
-        EdgeIteratorState primary = graph.edge(0, 1).setDistance(10).set(encoder.getAccessEnc(), true, true).
+        EdgeIteratorState primary = graph.edge(0, 1).setDistance(10).set(accessEnc, true, true).
                 set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 80);
-        EdgeIteratorState secondary = graph.edge(0, 1).setDistance(10).set(encoder.getAccessEnc(), true, true).
+        EdgeIteratorState secondary = graph.edge(0, 1).setDistance(10).set(accessEnc, true, true).
                 set(roadClassEnc, SECONDARY).set(avgSpeedEnc, 40);
 
         CustomModel customModel = new CustomModel();
@@ -130,9 +127,9 @@ class CustomModelParserTest {
     @Test
     public void testSpeedFactorAndPriorityAndMaxSpeed() {
         EdgeIteratorState primary = graph.edge(0, 1).setDistance(10).
-                set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 80).set(encoder.getAccessEnc(), true, true);
+                set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 80).set(accessEnc, true, true);
         EdgeIteratorState secondary = graph.edge(1, 2).setDistance(10).
-                set(roadClassEnc, SECONDARY).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
+                set(roadClassEnc, SECONDARY).set(avgSpeedEnc, 70).set(accessEnc, true, true);
 
         CustomModel customModel = new CustomModel();
         customModel.addToPriority(If("road_class == PRIMARY", MULTIPLY, "0.9"));
@@ -155,9 +152,9 @@ class CustomModelParserTest {
     @Test
     public void testString() {
         EdgeIteratorState deu = graph.edge(0, 1).setDistance(10).
-                set(countryEnc, "DEU").set(avgSpeedEnc, 80).set(encoder.getAccessEnc(), true, true);
+                set(countryEnc, "DEU").set(avgSpeedEnc, 80).set(accessEnc, true, true);
         EdgeIteratorState blup = graph.edge(1, 2).setDistance(10).
-                set(countryEnc, "blup").set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
+                set(countryEnc, "blup").set(avgSpeedEnc, 70).set(accessEnc, true, true);
 
         CustomModel customModel = new CustomModel();
         customModel.addToPriority(If("country == \"DEU\"", MULTIPLY, "0.9"));
@@ -240,9 +237,9 @@ class CustomModelParserTest {
     public void parseValue() {
         DecimalEncodedValue maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         EdgeIteratorState maxLower = graph.edge(0, 1).setDistance(10).
-                set(maxSpeedEnc, 60).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
+                set(maxSpeedEnc, 60).set(avgSpeedEnc, 70).set(accessEnc, true, true);
         EdgeIteratorState maxSame = graph.edge(1, 2).setDistance(10).
-                set(maxSpeedEnc, 70).set(avgSpeedEnc, 70).set(encoder.getAccessEnc(), true, true);
+                set(maxSpeedEnc, 70).set(avgSpeedEnc, 70).set(accessEnc, true, true);
 
         CustomModel customModel = new CustomModel();
         customModel.addToSpeed(If("true", LIMIT, "max_speed * 1.1"));

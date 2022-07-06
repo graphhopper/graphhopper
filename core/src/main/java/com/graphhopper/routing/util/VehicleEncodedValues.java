@@ -22,21 +22,16 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 
-public class VehicleEncodedValues implements FlagEncoder {
+public class VehicleEncodedValues {
     private final String name;
-    private final boolean isMotorVehicle;
-    private final boolean isHGV;
     private final BooleanEncodedValue accessEnc;
     private final DecimalEncodedValue avgSpeedEnc;
     private final DecimalEncodedValue priorityEnc;
     private final DecimalEncodedValue curvatureEnc;
     private final DecimalEncodedValue turnCostEnc;
-    private EncodedValueLookup encodedValueLookup;
 
     public static VehicleEncodedValues foot(PMap properties) {
         String name = properties.getString("name", "foot");
@@ -44,11 +39,11 @@ public class VehicleEncodedValues implements FlagEncoder {
         double speedFactor = properties.getDouble("speed_factor", 1);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
         int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
-        DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
+        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
+        DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
         DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, null, turnCostEnc, false, false);
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, null, turnCostEnc);
     }
 
     public static VehicleEncodedValues hike(PMap properties) {
@@ -57,7 +52,7 @@ public class VehicleEncodedValues implements FlagEncoder {
 
     public static VehicleEncodedValues wheelchair(PMap properties) {
         if (properties.has("speed_two_directions"))
-            throw new IllegalArgumentException("bike2 always uses two directions");
+            throw new IllegalArgumentException("wheelchair always uses two directions");
         return foot(new PMap(properties)
                 .putObject("name", properties.getString("name", "wheelchair"))
                 .putObject("speed_two_directions", true)
@@ -70,11 +65,11 @@ public class VehicleEncodedValues implements FlagEncoder {
         double speedFactor = properties.getDouble("speed_factor", 2);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
         int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
-        DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
+        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
+        DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
         DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, null, turnCostEnc, false, false);
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, null, turnCostEnc);
     }
 
     public static VehicleEncodedValues bike2(PMap properties) {
@@ -100,10 +95,10 @@ public class VehicleEncodedValues implements FlagEncoder {
         double speedFactor = properties.getDouble("speed_factor", 5);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
         int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
+        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
+        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, null, turnCostEnc, true, false);
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, null, turnCostEnc);
     }
 
     public static VehicleEncodedValues car4wd(PMap properties) {
@@ -116,48 +111,35 @@ public class VehicleEncodedValues implements FlagEncoder {
         double speedFactor = properties.getDouble("speed_factor", 5);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", true);
         int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
-        DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), false);
+        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
+        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
+        DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
         DecimalEncodedValue curvatureEnc = new DecimalEncodedValueImpl(getKey(name, "curvature"), 4, 0.1, false);
         DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, curvatureEnc, turnCostEnc, true, false);
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, curvatureEnc, turnCostEnc);
     }
 
-    public static VehicleEncodedValues roads(PMap properties) {
+    public static VehicleEncodedValues roads() {
         String name = "roads";
         int speedBits = 7;
         double speedFactor = 2;
         boolean speedTwoDirections = true;
         int maxTurnCosts = 3;
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue(getKey(name, "access"), true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl(getKey(name, "average_speed"), speedBits, speedFactor, speedTwoDirections);
+        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
+        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
-        boolean isMotorVehicle = properties.getBool("is_motor_vehicle", true);
-        boolean isHGV = properties.getBool("is_hgv", false);
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, null, turnCostEnc, isMotorVehicle, isHGV);
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, null, turnCostEnc);
     }
 
     public VehicleEncodedValues(String name, BooleanEncodedValue accessEnc, DecimalEncodedValue avgSpeedEnc,
                                 DecimalEncodedValue priorityEnc, DecimalEncodedValue curvatureEnc,
-                                DecimalEncodedValue turnCostEnc, boolean isMotorVehicle, boolean isHGV) {
+                                DecimalEncodedValue turnCostEnc) {
         this.name = name;
         this.accessEnc = accessEnc;
         this.avgSpeedEnc = avgSpeedEnc;
         this.priorityEnc = priorityEnc;
         this.curvatureEnc = curvatureEnc;
         this.turnCostEnc = turnCostEnc;
-        this.isMotorVehicle = isMotorVehicle;
-        this.isHGV = isHGV;
-    }
-
-    public void setEncodedValueLookup(EncodedValueLookup encodedValueLookup) {
-        this.encodedValueLookup = encodedValueLookup;
-    }
-
-    @Override
-    public boolean isRegistered() {
-        return encodedValueLookup != null;
     }
 
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
@@ -176,97 +158,26 @@ public class VehicleEncodedValues implements FlagEncoder {
             registerNewTurnCostEncodedValues.add(turnCostEnc);
     }
 
-    @Override
     public BooleanEncodedValue getAccessEnc() {
         return accessEnc;
     }
 
-    @Override
     public DecimalEncodedValue getAverageSpeedEnc() {
         return avgSpeedEnc;
     }
 
-    @Override
     public DecimalEncodedValue getPriorityEnc() {
         return priorityEnc;
     }
 
-    @Override
     public DecimalEncodedValue getCurvatureEnc() {
         return curvatureEnc;
     }
 
-    @Override
     public DecimalEncodedValue getTurnCostEnc() {
         return turnCostEnc;
     }
 
-    public String toSerializationString() {
-        return
-                String.join("|",
-                        name,
-                        Stream.of(accessEnc, avgSpeedEnc, priorityEnc, curvatureEnc, turnCostEnc)
-                                .map(ev -> ev == null ? "null" : ev.getName())
-                                .collect(Collectors.joining("|")),
-                        String.valueOf(isMotorVehicle), String.valueOf(isHGV));
-    }
-
-    @Override
-    public List<EncodedValue> getEncodedValues() {
-        return encodedValueLookup.getEncodedValues();
-    }
-
-    @Override
-    public <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType) {
-        return encodedValueLookup.getEncodedValue(key, encodedValueType);
-    }
-
-    @Override
-    public BooleanEncodedValue getBooleanEncodedValue(String key) {
-        return encodedValueLookup.getBooleanEncodedValue(key);
-    }
-
-    @Override
-    public IntEncodedValue getIntEncodedValue(String key) {
-        return encodedValueLookup.getIntEncodedValue(key);
-    }
-
-    @Override
-    public DecimalEncodedValue getDecimalEncodedValue(String key) {
-        return encodedValueLookup.getDecimalEncodedValue(key);
-    }
-
-    @Override
-    public <T extends Enum<?>> EnumEncodedValue<T> getEnumEncodedValue(String key, Class<T> enumType) {
-        return encodedValueLookup.getEnumEncodedValue(key, enumType);
-    }
-
-    @Override
-    public StringEncodedValue getStringEncodedValue(String key) {
-        return encodedValueLookup.getStringEncodedValue(key);
-    }
-
-    @Override
-    public boolean isMotorVehicle() {
-        return isMotorVehicle;
-    }
-
-    @Override
-    public boolean isHGV() {
-        return isHGV;
-    }
-
-    @Override
-    public boolean supportsTurnCosts() {
-        return turnCostEnc != null;
-    }
-
-    @Override
-    public boolean hasEncodedValue(String key) {
-        return encodedValueLookup.hasEncodedValue(key);
-    }
-
-    @Override
     public String getName() {
         return name;
     }

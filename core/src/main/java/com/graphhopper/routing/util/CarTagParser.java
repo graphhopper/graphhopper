@@ -28,7 +28,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
@@ -52,13 +51,13 @@ public class CarTagParser extends VehicleTagParser {
 
     public CarTagParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(getKey(properties.getString("name", "car"), "access")),
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "car"), "average_speed")),
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "car"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))),
                 lookup.hasEncodedValue(TurnCost.key(properties.getString("name", "car"))) ? lookup.getDecimalEncodedValue(TurnCost.key(properties.getString("name", "car"))) : null,
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 properties,
                 TransportationMode.CAR,
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "car"), "average_speed")).getNextStorableValue(CAR_MAX_SPEED)
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))).getNextStorableValue(CAR_MAX_SPEED)
         );
     }
 

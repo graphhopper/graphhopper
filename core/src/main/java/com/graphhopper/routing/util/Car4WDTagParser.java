@@ -20,7 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 /**
  * Defines bit layout for cars with four wheel drive
@@ -31,8 +30,8 @@ public class Car4WDTagParser extends CarTagParser {
 
     public Car4WDTagParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(getKey(properties.getString("name", "car4wd"), "access")),
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "car4wd"), "average_speed")),
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "car4wd"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car4wd"))),
                 lookup.hasEncodedValue(TurnCost.key(properties.getString("name", "car4wd"))) ? lookup.getDecimalEncodedValue(TurnCost.key(properties.getString("name", "car4wd"))) : null,
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 new PMap(properties).putObject("name", "car4wd"),

@@ -21,7 +21,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.routing.ev.Smoothness.*;
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 /**
  * Specifies the settings for cycletouring/trekking
@@ -33,9 +32,9 @@ public class BikeTagParser extends BikeCommonTagParser {
 
     public BikeTagParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(getKey(properties.getString("name", "bike"), "access")),
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "bike"), "average_speed")),
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "bike"), "priority")),
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "bike"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "bike"))),
+                lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "bike"))),
                 lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class),
                 lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
                 properties.getString("name", "bike"),

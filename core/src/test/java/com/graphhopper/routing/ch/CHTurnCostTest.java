@@ -22,13 +22,13 @@ import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraBidirectionEdgeCHNoSOD;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -68,7 +68,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CHTurnCostTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHTurnCostTest.class);
     private int maxCost;
-    private FlagEncoder encoder;
     private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue speedEnc;
     private DecimalEncodedValue turnCostEnc;
@@ -83,12 +82,11 @@ public class CHTurnCostTest {
     @BeforeEach
     public void init() {
         maxCost = 10;
-        encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxCost));
-        accessEnc = encoder.getAccessEnc();
-        speedEnc = encoder.getAverageSpeedEnc();
-        turnCostEnc = encoder.getTurnCostEnc();
-        encodingManager = EncodingManager.create(encoder);
-        graph = new BaseGraph.Builder(encodingManager).build();
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        turnCostEnc = TurnCost.create("car", maxCost);
+        encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+        graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).build();
         turnCostStorage = graph.getTurnCostStorage();
         chConfigs = createCHConfigs();
         // the default CH profile with infinite u-turn costs, can be reset in tests that should run with finite u-turn
@@ -1209,7 +1207,7 @@ public class CHTurnCostTest {
         // for larger graphs preparation takes much longer the higher the degree is!
         GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, true,
                 accessEnc, speedEnc, null, 0.7, 0.9, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
+        GHUtility.addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
         IntArrayList contractionOrder = getRandomIntegerSequence(graph.getNodes(), rnd);
@@ -1237,7 +1235,7 @@ public class CHTurnCostTest {
     private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
         GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, true,
                 accessEnc, speedEnc, null, 0.7, 0.9, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxCost, turnCostStorage);
+        GHUtility.addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
         automaticCompareCHWithDijkstra(100);
@@ -1351,7 +1349,7 @@ public class CHTurnCostTest {
         }
         if (algosDisagree) {
             System.out.println("Graph that produced error:");
-            GHUtility.printGraphForUnitTest(graph, encoder);
+            GHUtility.printGraphForUnitTest(graph, accessEnc, speedEnc);
             fail("Dijkstra and CH did not find equal shortest paths for route from " + from + " to " + to + "\n" +
                     " dijkstra: weight: " + dijkstraPath.getWeight() + ", distance: " + dijkstraPath.getDistance() +
                     ", time: " + dijkstraPath.getTime() + ", nodes: " + dijkstraPath.calcNodes() + "\n" +

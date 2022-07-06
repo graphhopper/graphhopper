@@ -24,7 +24,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.CustomArea;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.*;
@@ -150,17 +153,9 @@ public class GHUtility {
         return list;
     }
 
-    public static void printGraphForUnitTest(Graph g, FlagEncoder encoder) {
-        printGraphForUnitTest(g, encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
-    }
-
     public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         printGraphForUnitTest(g, accessEnc, speedEnc, new BBox(
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
-    }
-
-    public static void printGraphForUnitTest(Graph g, FlagEncoder encoder, BBox bBox) {
-        printGraphForUnitTest(g, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), bBox);
     }
 
     public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, BBox bBox) {
@@ -266,12 +261,6 @@ public class GHUtility {
         double toLat = nodeAccess.getLat(to);
         double toLon = nodeAccess.getLon(to);
         return DistancePlaneProjection.DIST_PLANE.calcDist(fromLat, fromLon, toLat, toLon);
-    }
-
-    public static void addRandomTurnCosts(Graph graph, long seed, EncodingManager em, FlagEncoder encoder, int maxTurnCost, TurnCostStorage turnCostStorage) {
-        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxTurnCost, turnCostStorage);
     }
 
     public static void addRandomTurnCosts(Graph graph, long seed, BooleanEncodedValue accessEnc, DecimalEncodedValue turnCostEnc, int maxTurnCost, TurnCostStorage turnCostStorage) {

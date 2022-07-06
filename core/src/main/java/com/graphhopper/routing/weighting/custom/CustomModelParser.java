@@ -21,7 +21,6 @@ import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -68,18 +67,13 @@ public class CustomModelParser {
         // utility class
     }
 
-    public static CustomWeighting createWeighting(FlagEncoder baseFlagEncoder, EncodedValueLookup lookup,
-                                                  TurnCostProvider turnCostProvider, CustomModel customModel) {
+    public static CustomWeighting createWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                                                  EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-        DecimalEncodedValue avgSpeedEnc = lookup.getDecimalEncodedValue(EncodingManager.getKey(baseFlagEncoder.toString(), "average_speed"));
-        final String pKey = EncodingManager.getKey(baseFlagEncoder.toString(), "priority");
-        DecimalEncodedValue priorityEnc = lookup.hasEncodedValue(pKey) ? lookup.getDecimalEncodedValue(pKey) : null;
-
-        double maxSpeed = avgSpeedEnc.getMaxOrMaxStorableDecimal();
-        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup,
-                avgSpeedEnc, maxSpeed, priorityEnc);
-        return new CustomWeighting(baseFlagEncoder.getAccessEnc(), baseFlagEncoder.getAverageSpeedEnc(), turnCostProvider, parameters);
+        double maxSpeed = speedEnc.getMaxOrMaxStorableDecimal();
+        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, speedEnc, maxSpeed, priorityEnc);
+        return new CustomWeighting(accessEnc, speedEnc, turnCostProvider, parameters);
     }
 
     /**

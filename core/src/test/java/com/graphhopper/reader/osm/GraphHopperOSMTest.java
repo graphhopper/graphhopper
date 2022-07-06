@@ -26,7 +26,6 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -515,7 +514,6 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc);
         instance.load();
         assertEquals(5, instance.getBaseGraph().getNodes());
-        assertEquals("foot,car", instance.getEncodingManager().fetchEdgeEncoders().stream().map(FlagEncoder::getName).collect(Collectors.joining(",")));
         assertEquals("foot_access,foot_average_speed,foot_priority,car_access,car_average_speed,foot_subnetwork,car_subnetwork,roundabout,road_class,road_class_link,road_environment,max_speed,road_access,foot_network",
                 instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
     }
@@ -554,7 +552,6 @@ public class GraphHopperOSMTest {
                 setOSMFile(testOsm3);
         instance.load();
         assertEquals(5, instance.getBaseGraph().getNodes());
-        assertEquals("foot,car", instance.getEncodingManager().fetchEdgeEncoders().stream().map(FlagEncoder::getName).collect(Collectors.joining(",")));
         assertEquals("foot_access,foot_average_speed,foot_priority,car_access,car_average_speed,foot_subnetwork,car_subnetwork,roundabout,road_class,road_class_link,road_environment,max_speed,road_access,foot_network", instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
     }
 

@@ -2,16 +2,16 @@ package com.graphhopper.isochrone.algorithm;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -60,10 +60,9 @@ public class ShortestPathTreeTest {
 
     };
 
-    private final EncodingManager encodingManager = EncodingManager.create("car");
-    private final FlagEncoder carEncoder = encodingManager.getEncoder("car");
-    private final BooleanEncodedValue accessEnc = carEncoder.getAccessEnc();
-    private final DecimalEncodedValue speedEnc = carEncoder.getAverageSpeedEnc();
+    private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+    private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+    private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
     private BaseGraph graph;
 
 
@@ -120,7 +119,7 @@ public class ShortestPathTreeTest {
     @Test
     public void testSPTAndIsochrone25Seconds() {
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
-        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false, TraversalMode.NODE_BASED);
+        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(accessEnc, speedEnc), false, TraversalMode.NODE_BASED);
         instance.setTimeLimit(25_000);
         instance.search(0, result::add);
         assertEquals(3, result.size());
@@ -136,7 +135,7 @@ public class ShortestPathTreeTest {
     @Test
     public void testSPT26Seconds() {
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
-        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false, TraversalMode.NODE_BASED);
+        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(accessEnc, speedEnc), false, TraversalMode.NODE_BASED);
         instance.setTimeLimit(26_000);
         instance.search(0, result::add);
         assertEquals(4, result.size());
@@ -151,7 +150,7 @@ public class ShortestPathTreeTest {
     @Test
     public void testNoTimeLimit() {
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
-        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false, TraversalMode.NODE_BASED);
+        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(accessEnc, speedEnc), false, TraversalMode.NODE_BASED);
         instance.setTimeLimit(Double.MAX_VALUE);
         instance.search(0, result::add);
         assertEquals(9, result.size());
@@ -171,7 +170,7 @@ public class ShortestPathTreeTest {
     @Test
     public void testEdgeBasedWithFreeUTurns() {
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
-        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false, TraversalMode.EDGE_BASED);
+        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(accessEnc, speedEnc), false, TraversalMode.EDGE_BASED);
         instance.setTimeLimit(Double.MAX_VALUE);
         instance.search(0, result::add);
         // The origin, and every end of every directed edge, are traversed.
@@ -203,7 +202,7 @@ public class ShortestPathTreeTest {
 
     @Test
     public void testEdgeBasedWithForbiddenUTurns() {
-        FastestWeighting fastestWeighting = new FastestWeighting(carEncoder, new PMap(), FORBIDDEN_UTURNS);
+        FastestWeighting fastestWeighting = new FastestWeighting(accessEnc, speedEnc, FORBIDDEN_UTURNS);
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
         ShortestPathTree instance = new ShortestPathTree(graph, fastestWeighting, false, TraversalMode.EDGE_BASED);
         instance.setTimeLimit(Double.MAX_VALUE);
@@ -237,7 +236,7 @@ public class ShortestPathTreeTest {
     @Test
     public void testEdgeBasedWithFinitePositiveUTurnCost() {
         TimeBasedUTurnCost turnCost = new TimeBasedUTurnCost(80000);
-        FastestWeighting fastestWeighting = new FastestWeighting(carEncoder, new PMap(), turnCost);
+        FastestWeighting fastestWeighting = new FastestWeighting(accessEnc, speedEnc, turnCost);
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
         ShortestPathTree instance = new ShortestPathTree(graph, fastestWeighting, false, TraversalMode.EDGE_BASED);
         instance.setTimeLimit(Double.MAX_VALUE);
@@ -272,7 +271,7 @@ public class ShortestPathTreeTest {
     @Test
     public void testEdgeBasedWithSmallerUTurnCost() {
         TimeBasedUTurnCost turnCost = new TimeBasedUTurnCost(20000);
-        FastestWeighting fastestWeighting = new FastestWeighting(carEncoder, new PMap(), turnCost);
+        FastestWeighting fastestWeighting = new FastestWeighting(accessEnc, speedEnc, turnCost);
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
         ShortestPathTree instance = new ShortestPathTree(graph, fastestWeighting, false, TraversalMode.EDGE_BASED);
         instance.setTimeLimit(Double.MAX_VALUE);
@@ -307,7 +306,7 @@ public class ShortestPathTreeTest {
     @Test
     public void testSearchByDistance() {
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
-        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(carEncoder, new PMap()), false, TraversalMode.NODE_BASED);
+        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(accessEnc, speedEnc), false, TraversalMode.NODE_BASED);
         instance.setDistanceLimit(110.0);
         instance.search(5, result::add);
         assertEquals(6, result.size());

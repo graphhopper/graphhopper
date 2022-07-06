@@ -22,7 +22,11 @@ import com.graphhopper.routing.DijkstraBidirectionCH;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -42,10 +46,9 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class NodeBasedNodeContractorTest {
-    private final FlagEncoder encoder = FlagEncoders.createCar();
-    private final EncodingManager encodingManager = EncodingManager.create(encoder);
-    private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-    private final DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
+    private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+    private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+    private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
     private final Weighting weighting = new ShortestWeighting(accessEnc, speedEnc);
     private final BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
     private final CHConfig chConfig = CHConfig.nodeBased("profile", weighting);
@@ -266,8 +269,9 @@ public class NodeBasedNodeContractorTest {
      */
     @Test
     public void testNodeContraction_shortcutWeightRounding() {
-        FlagEncoder encoder = FlagEncoders.createCar();
-        EncodingManager encodingManager = EncodingManager.create(encoder);
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         // 0 ------------> 4
         //  \             /
@@ -280,7 +284,7 @@ public class NodeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(distances[3]));
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(distances[4]));
         graph.freeze();
-        Weighting weighting = new FastestWeighting(encoder);
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         setMaxLevelOnAllNodes(chStore);
@@ -305,8 +309,9 @@ public class NodeBasedNodeContractorTest {
     public void testNodeContraction_preventUnnecessaryShortcutWithLoop() {
         // there should not be shortcuts where one of the skipped edges is a loop at the node to be contracted,
         // see also #1583
-        FlagEncoder encoder = FlagEncoders.createCar();
-        EncodingManager encodingManager = EncodingManager.create(encoder);
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         // 0 - 1 - 2 - 3
         // o           o
@@ -317,7 +322,7 @@ public class NodeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 3).setDistance(1));
 
         graph.freeze();
-        Weighting weighting = new FastestWeighting(encoder);
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         setMaxLevelOnAllNodes(chStore);

@@ -2,10 +2,11 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntHashSet;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -18,7 +19,6 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -41,28 +41,25 @@ public class DirectedBidirectionalDijkstraTest {
     private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
     private BaseGraph graph;
-    private FlagEncoder encoder;
     private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue speedEnc;
-    private EncodingManager encodingManager;
     private Weighting weighting;
     private DecimalEncodedValue turnCostEnc;
 
     @BeforeEach
     public void setup() {
         maxTurnCosts = 10;
-        encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxTurnCosts));
-        encodingManager = EncodingManager.create(encoder);
-        accessEnc = encoder.getAccessEnc();
-        speedEnc = encoder.getAverageSpeedEnc();
-        turnCostEnc = encoder.getTurnCostEnc();
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        turnCostEnc = TurnCost.create("car", maxTurnCosts);
+        EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
         graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         turnCostStorage = graph.getTurnCostStorage();
         weighting = createWeighting(Weighting.INFINITE_U_TURN_COSTS);
     }
 
     private Weighting createWeighting(int uTurnCosts) {
-        return new FastestWeighting(encoder, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts));
+        return new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts));
     }
 
     @Test
@@ -238,7 +235,7 @@ public class DirectedBidirectionalDijkstraTest {
         //   |    / \    |
         //   8 = 7   6 = 5
         EdgeIteratorState rightNorth, rightSouth, leftSouth, leftNorth;
-        GHUtility.setSpeed(60, 60, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(),
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
                 graph.edge(0, 1).setDistance(1),
                 graph.edge(1, 2).setDistance(1),
                 graph.edge(2, 3).setDistance(1),
@@ -396,7 +393,7 @@ public class DirectedBidirectionalDijkstraTest {
         int numNodes = 100;
         GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.2, true, true,
                 accessEnc, speedEnc, null, 0.7, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encodingManager, encoder, maxTurnCosts, turnCostStorage);
+        GHUtility.addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxTurnCosts, turnCostStorage);
 
         long numStrictViolations = 0;
         for (int i = 0; i < numQueries; i++) {

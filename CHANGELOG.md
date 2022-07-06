@@ -1,4 +1,6 @@
 ### 6.0 [not yet released]
+- removed the FlagEncoder interface. for example encoder.getAccessEnc() is now encodingManager.getBooleanEncodedValue(
+  VehicleAccess.key("car")), #2611
 - backward incompatible change as instructions and the street_name path detail do no longer contain the ref #2598
 - StringIndex is now EdgeKVStorage and can store e.g. byte arrays. String values needs to be limited to 255 bytes before
   storing them. See #2597
