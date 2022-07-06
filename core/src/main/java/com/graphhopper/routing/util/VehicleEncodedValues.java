@@ -21,11 +21,15 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
+import static com.graphhopper.routing.util.VehicleEncodedValuesFactory.*;
 
 public class VehicleEncodedValues {
+    public static final List<String> OUTDOOR_VEHICLES = Arrays.asList(BIKE, BIKE2, RACINGBIKE, MOUNTAINBIKE, FOOT, HIKE, WHEELCHAIR);
+
     private final String name;
     private final BooleanEncodedValue accessEnc;
     private final DecimalEncodedValue avgSpeedEnc;

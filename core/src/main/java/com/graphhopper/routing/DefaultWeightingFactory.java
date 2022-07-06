@@ -21,6 +21,7 @@ package com.graphhopper.routing;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
@@ -30,10 +31,6 @@ import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
-import java.util.Arrays;
-import java.util.List;
-
-import static com.graphhopper.routing.util.VehicleEncodedValuesFactory.*;
 import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FACTOR;
 import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
@@ -41,7 +38,6 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
-    private static final List<String> OUTDOOR_VEHICLES = Arrays.asList(BIKE, BIKE2, RACINGBIKE, MOUNTAINBIKE, FOOT, HIKE, WHEELCHAIR);
 
     private final BaseGraph graph;
     private final EncodingManager encodingManager;
@@ -133,6 +129,6 @@ public class DefaultWeightingFactory implements WeightingFactory {
     }
 
     public boolean isOutdoorVehicle(String name) {
-        return OUTDOOR_VEHICLES.contains(name);
+        return VehicleEncodedValues.OUTDOOR_VEHICLES.contains(name);
     }
 }
