@@ -161,4 +161,8 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
             throw new IllegalStateException("getMaxOrMaxStorableDecimal() is not implemented for useMaximumAsInfinity or defaultIsInfinity");
         return getMaxOrMaxStorableInt() * factor;
     }
+
+    public boolean isDefaultIsInfinity() {
+        return defaultIsInfinity;
+    }
 }

@@ -1,10 +1,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.IntEncodedValue;
+import com.graphhopper.routing.ev.*;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.*;
 
@@ -173,7 +170,8 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     static double getMax(EncodedValue enc) {
-        if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMaxStorableDecimal();
+        if (enc instanceof DecimalEncodedValue)
+            return ((DecimalEncodedValueImpl) enc).isDefaultIsInfinity() ? Double.POSITIVE_INFINITY : ((DecimalEncodedValue) enc).getMaxStorableDecimal();
         else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMaxStorableInt();
         throw new IllegalArgumentException("Cannot use non-number data '" + enc.getName() + "' in value expression");
     }

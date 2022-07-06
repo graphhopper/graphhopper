@@ -306,6 +306,17 @@ public class RouteResourceCustomModelTest {
     }
 
     @Test
+    public void testMaxSpeedBug() {
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"roads\", \"ch.disable\": true, " +
+                "\"custom_model\": {" +
+                "  \"speed\": [{\"if\": \"true\", \"limit_to\": \"max_speed\"}]" +
+                "}}";
+        JsonNode path = getPath(body);
+        assertEquals(660, path.get("distance").asDouble(), 10);
+        assertEquals(11445, path.get("time").asLong(), 1_000);
+    }
+
+    @Test
     public void customBikeWithHighSpeed() {
         // encoder.getMaxSpeed is 30km/h and limit_to statement is 40km/h in server-side custom model
         // since #2335 do no longer throw exception in case too high limit_to is used

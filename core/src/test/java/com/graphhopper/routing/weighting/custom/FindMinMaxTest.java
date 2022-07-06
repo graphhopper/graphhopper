@@ -57,6 +57,10 @@ class FindMinMaxTest {
         statements.add(If("true", MULTIPLY, "2"));
         statements.add(If("true", LIMIT, "35"));
         assertEquals(35, findMinMax(new HashSet<>(), new MinMax(0, 30), statements, lookup).max);
+
+        statements = new ArrayList<>();
+        statements.add(If("true", LIMIT, "max_speed"));
+        assertEquals(200, findMinMax(new HashSet<>(), new MinMax(0, 200), statements, lookup).max);
     }
 
     @Test
