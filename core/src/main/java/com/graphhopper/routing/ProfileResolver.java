@@ -82,7 +82,7 @@ public class ProfileResolver {
         if (!vehicle.isEmpty()) {
             List<String> availableVehicles = encodingManager.getVehicles();
             if (!availableVehicles.contains(vehicle))
-                throw new IllegalArgumentException("Vehicle not supported: `" + vehicle + "`. Supported are: `" + availableVehicles +
+                throw new IllegalArgumentException("Vehicle not supported: `" + vehicle + "`. Supported are: `" + String.join(",", availableVehicles) +
                         "`\nYou should consider using the `profile` parameter instead of specifying a vehicle." +
                         "\nAvailable profiles: " + getProfileNames() +
                         "\nTo learn more about profiles, see: docs/core/profiles.md");

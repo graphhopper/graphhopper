@@ -976,11 +976,9 @@ public class GraphHopper {
             throw new IllegalArgumentException("There has to be at least one profile");
         EncodingManager encodingManager = getEncodingManager();
         for (Profile profile : profilesByName.values()) {
-            String accessEncName = VehicleAccess.key(profile.getVehicle());
-            String speedEncName = VehicleSpeed.key(profile.getVehicle());
-            if (!encodingManager.hasEncodedValue(accessEncName) || !encodingManager.hasEncodedValue(speedEncName))
+            if (!encodingManager.getVehicles().contains(profile.getVehicle()))
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". " +
-                        "Encoded values " + accessEncName + " and " + speedEncName + " are required");
+                        "Available vehicles: " + String.join(",", encodingManager.getVehicles()));
             DecimalEncodedValue turnCostEnc = encodingManager.hasEncodedValue(TurnCost.key(profile.getVehicle()))
                     ? encodingManager.getDecimalEncodedValue(TurnCost.key(profile.getVehicle()))
                     : null;
