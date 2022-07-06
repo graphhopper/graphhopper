@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -78,6 +78,19 @@ public class EncodingManagerTest {
         DecimalEncodedValueImpl speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
         EncodingManager.start().add(speedEnc).build();
         assertThrows(IllegalStateException.class, () -> EncodingManager.start().add(speedEnc).build());
+    }
+
+    @Test
+    public void testGetVehicles() {
+        EncodingManager em = EncodingManager.start()
+                .add(VehicleAccess.create("car"))
+                .add(VehicleAccess.create("bike")).add(VehicleSpeed.create("bike", 4, 2, true))
+                .add(VehicleSpeed.create("roads", 5, 5, false))
+                .add(VehicleAccess.create("hike")).add(new DecimalEncodedValueImpl("whatever_hike_average_speed_2022", 5, 5, true))
+                .add(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class))
+                .build();
+        // only for bike+hike there is access+'speed'
+        assertEquals(Arrays.asList("bike", "hike"), em.getVehicles());
     }
 
 }
