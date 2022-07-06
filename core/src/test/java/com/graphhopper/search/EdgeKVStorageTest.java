@@ -68,9 +68,6 @@ public class EdgeKVStorageTest {
 
         assertNull(index.get(aPointer, "", false));
         List<KeyValue> deserializedList = index.getAll(aPointer);
-        assertEquals(list.get(0), deserializedList.get(0));
-        assertEquals(list.get(1), deserializedList.get(1));
-        assertEquals(list.get(2), deserializedList.get(2));
         assertEquals(list, deserializedList);
 
         assertEquals("FORWARD", index.get(aPointer, "keyA", false));

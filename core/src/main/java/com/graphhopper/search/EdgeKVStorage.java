@@ -69,7 +69,7 @@ public class EdgeKVStorage {
     // int             (4 byte)
     //
     // Notes:
-    // 1. The key strings are limited to 16384 unique values (see MAX_UNIQUE_KEYS). A dynamic value has a maximum byte length of 255.
+    // 1. The key strings are limited MAX_UNIQUE_KEYS. A dynamic value has a maximum byte length of 255.
     // 2. Every key can store values only of the same type
     // 3. We need to loop through X entries to get the start val_x.
     // 4. The key index (14 bits) is stored along with the availability (2 bits), i.e. whether they KeyValue is available in forward and/or backward directions
