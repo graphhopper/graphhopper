@@ -963,13 +963,13 @@ public class BaseGraph implements Graph, Closeable {
         @Override
         public Object getValue(String key) {
             int kvEntryRef = store.getKeyValuesRef(edgePointer);
-            return baseGraph.edgeKVStorage.get(kvEntryRef, key, reverse);
+            return baseGraph.edgeKVStorage.get(kvEntryRef, key);
         }
 
         @Override
         public String getName() {
             int kvEntryRef = store.getKeyValuesRef(edgePointer);
-            String name = (String) baseGraph.edgeKVStorage.get(kvEntryRef, "name", reverse);
+            String name = (String) baseGraph.edgeKVStorage.get(kvEntryRef, "name");
             // preserve backward compatibility (returns empty string if name tag missing)
             return name == null ? "" : name;
         }

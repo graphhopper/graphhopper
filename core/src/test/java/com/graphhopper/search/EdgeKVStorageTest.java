@@ -35,14 +35,14 @@ public class EdgeKVStorageTest {
         EdgeKVStorage index = create();
         long aPointer = index.add(createMap("a", "same name", "b", "same name"));
 
-        assertNull(index.get(aPointer, "", false));
-        assertEquals("same name", index.get(aPointer, "a", false));
-        assertEquals("same name", index.get(aPointer, "b", false));
-        assertNull(index.get(aPointer, "c", false));
+        assertNull(index.get(aPointer, ""));
+        assertEquals("same name", index.get(aPointer, "a"));
+        assertEquals("same name", index.get(aPointer, "b"));
+        assertNull(index.get(aPointer, "c"));
 
         index = create();
         aPointer = index.add(createMap("a", "a name", "b", "same name"));
-        assertEquals("a name", index.get(aPointer, "a", false));
+        assertEquals("a name", index.get(aPointer, "a"));
     }
 
     @Test
@@ -50,32 +50,10 @@ public class EdgeKVStorageTest {
         EdgeKVStorage index = create();
         long aPointer = index.add(createMap("a", "a name", "b", "b name"));
 
-        assertNull(index.get(aPointer, "", false));
-        assertEquals("a name", index.get(aPointer, "a", false));
-        assertEquals("b name", index.get(aPointer, "b", false));
+        assertNull(index.get(aPointer, ""));
+        assertEquals("a name", index.get(aPointer, "a"));
+        assertEquals("b name", index.get(aPointer, "b"));
     }
-
-//    @Test
-//    public void getForwardBackward() {
-//        EdgeKVStorage index = create();
-//        // special keys like :forward and :backward have a meaning
-//        // TODO NOW use first two bits of short value (key) and check if deduplication with negative bit is really necessary
-//        long aPointer = index.add(createMap("keyA:forward", "FORWARD", "keyB:backward", "BACKWARD", "keyC", "BOTH"));
-//
-//        assertNull(index.get(aPointer, "", false));
-//
-//        assertEquals("FORWARD", index.get(aPointer, "keyA", false));
-//        assertNull(index.get(aPointer, "keyA", true));
-//
-//        assertNull(index.get(aPointer, "keyB", false));
-//        assertEquals("BACKWARD", index.get(aPointer, "keyB", true));
-//
-//        assertEquals("BOTH", index.get(aPointer, "keyC", false));
-//        assertEquals("BOTH", index.get(aPointer, "keyC", true));
-//
-//        assertEquals(createMap("keyA:forward", "FORWARD", "keyB:backward", "BACKWARD", "keyC", "BOTH"),
-//                index.getAll(aPointer));
-//    }
 
     @Test
     public void putEmpty() {
@@ -86,7 +64,7 @@ public class EdgeKVStorageTest {
         assertThrows(IllegalArgumentException.class, () -> index.add(createMap("blup", null)));
         assertThrows(IllegalArgumentException.class, () -> index.add(createMap(null, null)));
 
-        assertNull(index.get(0, "", false));
+        assertNull(index.get(0, ""));
 
         assertEquals(5, index.add(createMap("else", "else")));
     }
@@ -102,12 +80,12 @@ public class EdgeKVStorageTest {
                 tmpPointer = aPointer;
         }
 
-        assertEquals("b name 9999", index.get(aPointer, "b", false));
-        assertEquals("c name 9999", index.get(aPointer, "c", false));
+        assertEquals("b name 9999", index.get(aPointer, "b"));
+        assertEquals("c name 9999", index.get(aPointer, "c"));
 
-        assertEquals("a name 567", index.get(tmpPointer, "a", false));
-        assertEquals("b name 567", index.get(tmpPointer, "b", false));
-        assertEquals("c name 567", index.get(tmpPointer, "c", false));
+        assertEquals("a name 567", index.get(tmpPointer, "a"));
+        assertEquals("b name 567", index.get(tmpPointer, "b"));
+        assertEquals("c name 567", index.get(tmpPointer, "c"));
     }
 
     @Test
@@ -125,6 +103,31 @@ public class EdgeKVStorageTest {
     }
 
     @Test
+    public void putDuplicate() {
+        EdgeKVStorage index = create();
+        long aPointer = index.add(createMap("a", "longer name", "b", "longer name"));
+        long bPointer = index.add(createMap("c", "longer other name"));
+        // value storage: 1 byte for count, 2 bytes for keyIndex and 4 bytes for delta of dup_marker and 3 bytes (keyIndex + length for "longer name")
+        assertEquals(aPointer + 1 + (2 + 4) + 3 + "longer name".getBytes(Helper.UTF_CS).length, bPointer);
+        // no de-duplication as too short:
+        long cPointer = index.add(createMap("temp", "temp"));
+        assertEquals(bPointer + 1 + 3 + "longer other name".getBytes(Helper.UTF_CS).length, cPointer);
+        assertEquals("longer name", index.get(aPointer, "a"));
+        assertEquals("longer name", index.get(aPointer, "b"));
+        assertEquals("longer other name", index.get(bPointer, "c"));
+        assertEquals("temp", index.get(cPointer, "temp"));
+
+        index = create();
+        index.add(createMap("a", "longer name", "b", "longer name"));
+        bPointer = index.add(createMap("a", "longer name", "b", "longer name"));
+        cPointer = index.add(createMap("a", "longer name", "b", "longer name"));
+        assertEquals(bPointer, cPointer);
+
+        assertEquals("{a=longer name, b=longer name}", index.getAll(aPointer).toString());
+        assertEquals("{a=longer name, b=longer name}", index.getAll(cPointer).toString());
+    }
+
+    @Test
     public void testNoErrorOnLargeStringValue() {
         EdgeKVStorage index = create();
         String str = "";
@@ -133,7 +136,7 @@ public class EdgeKVStorageTest {
         }
         assertEquals(254, str.getBytes(Helper.UTF_CS).length);
         long result = index.add(createMap("", str));
-        assertEquals(127, ((String) index.get(result, "", false)).length());
+        assertEquals(127, ((String) index.get(result, "")).length());
     }
 
     @Test
@@ -160,7 +163,7 @@ public class EdgeKVStorageTest {
             copy[i] = bytes[i];
         }
         long result = index.add(Collections.singletonMap("myval", bytes));
-        bytes = (byte[]) index.get(result, "myval", false);
+        bytes = (byte[]) index.get(result, "myval");
         assertArrayEquals(copy, bytes);
 
         final byte[] biggerByteArray = Arrays.copyOf(bytes, 256);
@@ -180,10 +183,10 @@ public class EdgeKVStorageTest {
         // initial point is 1, then twice plus 1 + (2+4) and twice plus 1 + (2+8)
         assertEquals(1 + 36, after4Inserts);
 
-        assertEquals(4f, index.get(floatres, "floatres", false));
-        assertEquals(4L, index.get(longres, "longres", false));
-        assertEquals(4d, index.get(doubleres, "doubleres", false));
-        assertEquals(4, index.get(intres, "intres", false));
+        assertEquals(4f, index.get(floatres, "floatres"));
+        assertEquals(4L, index.get(longres, "longres"));
+        assertEquals(4d, index.get(doubleres, "doubleres"));
+        assertEquals(4, index.get(intres, "intres"));
     }
 
     @Test
@@ -219,7 +222,7 @@ public class EdgeKVStorageTest {
 
         index = new EdgeKVStorage(new RAMDirectory(location, true), 1000);
         assertTrue(index.loadExisting());
-        assertEquals("test", index.get(pointer, "", false));
+        assertEquals("test", index.get(pointer, ""));
         // make sure bytePointer is correctly set after loadExisting
         long newPointer = index.add(createMap("", "testing"));
         assertEquals(pointer + 1 + 3 + "test".getBytes().length, newPointer, newPointer + ">" + pointer);
@@ -244,12 +247,12 @@ public class EdgeKVStorageTest {
         index = new EdgeKVStorage(new RAMDirectory(location, true), 1000);
         assertTrue(index.loadExisting());
         assertEquals("[, c, a, b]", index.getKeys().toString());
-        assertEquals("test value", index.get(pointerA, "c", false));
-        assertNull(index.get(pointerA, "b", false));
+        assertEquals("test value", index.get(pointerA, "c"));
+        assertNull(index.get(pointerA, "b"));
 
-        assertNull(index.get(pointerB, "", false));
-        assertEquals("value", index.get(pointerB, "a", false));
-        assertEquals("another value", index.get(pointerB, "b", false));
+        assertNull(index.get(pointerB, ""));
+        assertEquals("value", index.get(pointerB, "a"));
+        assertEquals("another value", index.get(pointerB, "b"));
         assertEquals("{a=value, b=another value}", index.getAll(pointerB).toString());
         index.close();
 
@@ -262,11 +265,11 @@ public class EdgeKVStorageTest {
         long pointerA = index.add(createMap("", "test value"));
         long pointerB = index.add(createMap("a", "value", "b", "another value"));
 
-        assertEquals("test value", index.get(pointerA, "", false));
-        assertNull(index.get(pointerA, "a", false));
+        assertEquals("test value", index.get(pointerA, ""));
+        assertNull(index.get(pointerA, "a"));
 
-        assertEquals("value", index.get(pointerB, "a", false));
-        assertNull(index.get(pointerB, "", false));
+        assertEquals("value", index.get(pointerB, "a"));
+        assertNull(index.get(pointerB, ""));
     }
 
     @Test
@@ -316,7 +319,7 @@ public class EdgeKVStorageTest {
                 Map<String, Object> map = index.getAll(pointers.get(i));
                 assertTrue(map.size() > 0, i + " " + map);
                 for (Map.Entry<String, Object> entry : map.entrySet()) {
-                    Object value = index.get(pointers.get(i), entry.getKey(), false);
+                    Object value = index.get(pointers.get(i), entry.getKey());
                     assertEquals(entry.getValue(), value, i + " " + map);
                 }
             }
@@ -329,7 +332,7 @@ public class EdgeKVStorageTest {
                 Map<String, Object> map = index.getAll(pointers.get(i));
                 assertTrue(map.size() > 0, i + " " + map);
                 for (Map.Entry<String, Object> entry : map.entrySet()) {
-                    Object value = index.get(pointers.get(i), entry.getKey(), false);
+                    Object value = index.get(pointers.get(i), entry.getKey());
                     assertEquals(entry.getValue(), value, i + " " + map);
                 }
             }
