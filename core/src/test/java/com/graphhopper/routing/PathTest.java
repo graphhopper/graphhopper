@@ -1005,7 +1005,7 @@ public class PathTest {
         GHUtility.setSpeed(45, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(4, 5).setDistance(5)).setKeyValues(createKV("name", "4-5"));
         GHUtility.setSpeed(90, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(2, 3).setDistance(5)).setKeyValues(createKV("name", "2-3"));
         GHUtility.setSpeed(9, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(3, 4).setDistance(10)).setKeyValues(createKV("name", "3-4"));
-        GHUtility.setSpeed(9, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(5, 6).setDistance(0.01)).setKeyValues(createKV("name", "3-4"));
+        GHUtility.setSpeed(9, true, true, carAccessEnc, carAvSpeedEnc, graph.edge(5, 6).setDistance(0.001)).setKeyValues(createKV("name", "3-4"));
         return graph;
     }
 
