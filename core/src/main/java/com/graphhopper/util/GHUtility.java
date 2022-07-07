@@ -29,6 +29,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -789,12 +790,12 @@ public class GHUtility {
         }
 
         @Override
-        public EdgeIteratorState setKeyValues(Map<String, Object> keyValues) {
+        public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> keyValues) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public Map<String, Object> getKeyValues() {
+        public List<EdgeKVStorage.KeyValue> getKeyValues() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
