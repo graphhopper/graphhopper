@@ -152,7 +152,16 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
                     Map.Entry<String, JsonNode> detailEntry = detailIterator.next();
                     List<PathDetail> pathDetailList = new ArrayList<>();
                     for (JsonNode pathDetail : detailEntry.getValue()) {
-                        PathDetail pd = objectMapper.convertValue(pathDetail, PathDetail.class);
+                        PathDetail pd;
+                        JsonNode pathDetailValue = pathDetail.get(2);
+                        if (pathDetailValue.isValueNode()) {
+                            pd = objectMapper.convertValue(pathDetail, PathDetail.class);
+                        } else {
+                            // ObjectMapper can't automatically deserialize the whole PathDetails if the value is a map
+                            pd = new PathDetail(objectMapper.convertValue(pathDetailValue, Map.class));
+                            pd.setFirst(pathDetail.get(0).asInt());
+                            pd.setLast(pathDetail.get(1).asInt());
+                        }
                         pathDetailList.add(pd);
                     }
                     pathDetails.put(detailEntry.getKey(), pathDetailList);
