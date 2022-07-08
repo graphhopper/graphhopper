@@ -73,6 +73,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private double prevInstructionPrevOrientation = Double.NaN;
     private Instruction prevInstruction;
     private boolean prevInRoundabout;
+    private String prevDestination;
     private String prevName;
     private String prevInstructionName;
 
@@ -138,17 +139,21 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         }
 
         final String name = (String) edge.getValue("name");
+        final String destination = (String) edge.getValue("destination"); // getValue is fast if it does not exist in edge
+        final String ref = (String) edge.getValue("ref");
         if ((prevInstruction == null) && (!isRoundabout)) // very first instruction (if not in Roundabout)
         {
             int sign = Instruction.CONTINUE_ON_STREET;
             prevInstruction = new Instruction(sign, name, new PointList(10, nodeAccess.is3D()));
-            prevInstruction.setExtraInfo("ref", edge.getValue("ref"));
+            prevInstruction.setExtraInfo("ref", ref);
+            prevInstruction.setExtraInfo("destination", destination);
             double startLat = nodeAccess.getLat(baseNode);
             double startLon = nodeAccess.getLon(baseNode);
             double heading = AngleCalc.ANGLE_CALC.calcAzimuth(startLat, startLon, latitude, longitude);
             prevInstruction.setExtraInfo("heading", Helper.round(heading, 2));
             ways.add(prevInstruction);
             prevName = name;
+            prevDestination = destination;
 
         } else if (isRoundabout) {
             // remark: names and annotations within roundabout are ignored
@@ -182,6 +187,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 {
                     prevOrientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
                     prevName = name;
+                    prevDestination = destination;
                 }
                 prevInstruction = roundaboutInstruction;
                 ways.add(prevInstruction);
@@ -200,7 +206,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         } else if (prevInRoundabout) //previously in roundabout but not anymore
         {
             prevInstruction.setName(name);
-            prevInstruction.setExtraInfo("ref", edge.getValue("ref"));
+            prevInstruction.setExtraInfo("ref", ref);
+            prevInstruction.setExtraInfo("destination", destination);
 
             // calc angle between roundabout entrance and exit
             double orientation = AngleCalc.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
@@ -220,10 +227,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
             prevInstructionName = prevName;
             prevName = name;
+            prevDestination = destination;
 
         } else {
-            int sign = getTurn(edge, baseNode, prevNode, adjNode, name);
-
+            int sign = getTurn(edge, baseNode, prevNode, adjNode, name, destination);
             if (sign != Instruction.IGNORE) {
                 /*
                     Check if the next instruction is likely to only be a short connector to execute a u-turn
@@ -245,7 +252,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         && (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT)
                         && (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT)
                         && Double.isFinite(weighting.calcEdgeWeightWithAccess(edge, false)) != Double.isFinite(weighting.calcEdgeWeightWithAccess(edge, true))
-                        && InstructionsHelper.isNameSimilar(prevInstructionName, name)) {
+                        && InstructionsHelper.isNameSimilar(prevInstructionName, name)){
                     // Chances are good that this is a u-turn, we only need to check if the orientation matches
                     GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
                     double lat = point.getLat();
@@ -274,11 +281,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     prevInstructionName = prevName;
                     ways.add(prevInstruction);
                 }
-                prevInstruction.setExtraInfo("ref", edge.getValue("ref"));
+                prevInstruction.setExtraInfo("ref", ref);
+                prevInstruction.setExtraInfo("destination", destination);
             }
             // Update the prevName, since we don't always create an instruction on name changes the previous
             // name can be an old name. This leads to incorrect turn instructions due to name changes
             prevName = name;
+            prevDestination = destination;
         }
 
         updatePointsAndInstruction(edge, wayGeo);
@@ -316,7 +325,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         ways.add(finishInstruction);
     }
 
-    private int getTurn(EdgeIteratorState edge, int baseNode, int prevNode, int adjNode, String name) {
+    private int getTurn(EdgeIteratorState edge, int baseNode, int prevNode, int adjNode, String name, String destination) {
         GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
         double lat = point.getLat();
         double lon = point.getLon();
@@ -377,6 +386,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         if (otherContinue != null) {
             // We are at a fork
             if (!InstructionsHelper.isNameSimilar(name, prevName)
+                    || !InstructionsHelper.isNameSimilar(destination, prevDestination)
                     || InstructionsHelper.isNameSimilar(otherContinue.getName(), prevName)
                     || !outgoingEdgesAreSlower) {
 
@@ -410,13 +420,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             }
         }
 
-        if (!outgoingEdgesAreSlower) {
-            if (Math.abs(delta) > .6
-                    || outgoingEdges.isLeavingCurrentStreet(prevName, name)) {
-                // Leave the current road -> create instruction
-                return sign;
-
-            }
+        if (!outgoingEdgesAreSlower && (Math.abs(delta) > .6 || outgoingEdges.isLeavingCurrentStreet(prevName, name))) {
+            // Leave the current road -> create instruction
+            return sign;
         }
 
         return Instruction.IGNORE;

@@ -96,7 +96,8 @@ public class Instruction {
     }
 
     public void setExtraInfo(String key, Object value) {
-        extraInfo.put(key, value);
+        if (value != null && key != null)
+            extraInfo.put(key, value);
     }
 
     /**
@@ -217,6 +218,8 @@ public class Instruction {
             else
                 str = streetName.isEmpty() ? dir : tr.tr("turn_onto", dir, streetName);
         }
+        if (extraInfo.containsKey("destination"))
+            return tr.tr("toward_destination", str, extraInfo.get("destination"));
         return str;
     }
 }
