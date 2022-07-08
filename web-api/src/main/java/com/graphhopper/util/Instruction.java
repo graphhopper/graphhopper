@@ -218,8 +218,14 @@ public class Instruction {
             else
                 str = streetName.isEmpty() ? dir : tr.tr("turn_onto", dir, streetName);
         }
-        if (extraInfo.containsKey("destination"))
-            return tr.tr("toward_destination", str, extraInfo.get("destination"));
+        String dest = (String) extraInfo.get("destination");
+        String destRef = (String) extraInfo.get("destination_ref");
+        if (dest != null) {
+            if (destRef != null)
+                return tr.tr("toward_destination_with_ref", str, destRef, dest);
+            return tr.tr("toward_destination", str, dest);
+        } else if (destRef != null)
+            return tr.tr("toward_destination_ref_only", str, destRef);
         return str;
     }
 }

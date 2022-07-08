@@ -397,16 +397,21 @@ public class OSMReader {
             if (!refName.isEmpty())
                 list.add(new EdgeKVStorage.KeyValue("ref", refName));
 
-            String destination = fixWayName(way.getTag("destination"));
-            if (!destination.isEmpty())
-                list.add(new EdgeKVStorage.KeyValue("destination", destination));
-            else {
-                destination = fixWayName(way.getTag("destination:forward"));
-                if (!destination.isEmpty())
-                    list.add(new EdgeKVStorage.KeyValue("destination", destination, true, false));
-                destination = fixWayName(way.getTag("destination:backward"));
-                if (!destination.isEmpty())
-                    list.add(new EdgeKVStorage.KeyValue("destination", destination, false, true));
+            if (way.hasTag("destination:ref")) {
+                list.add(new EdgeKVStorage.KeyValue("destination_ref", fixWayName(way.getTag("destination:ref"))));
+            } else {
+                if (way.hasTag("destination:ref:forward"))
+                    list.add(new EdgeKVStorage.KeyValue("destination_ref", fixWayName(way.getTag("destination:ref:forward")), true, false));
+                if (way.hasTag("destination:ref:backward"))
+                    list.add(new EdgeKVStorage.KeyValue("destination_ref", fixWayName(way.getTag("destination:ref:backward")), false, true));
+            }
+            if (way.hasTag("destination")) {
+                list.add(new EdgeKVStorage.KeyValue("destination", fixWayName(way.getTag("destination"))));
+            } else {
+                if (way.hasTag("destination:forward"))
+                    list.add(new EdgeKVStorage.KeyValue("destination", fixWayName(way.getTag("destination:forward")), true, false));
+                if (way.hasTag("destination:backward"))
+                    list.add(new EdgeKVStorage.KeyValue("destination", fixWayName(way.getTag("destination:backward")), false, true));
             }
         }
         way.setTag("key_values", list);
@@ -460,7 +465,7 @@ public class OSMReader {
     static String fixWayName(String str) {
         if (str == null)
             return "";
-        // the storage does not accept too long strings -> Helper.cutStringForKV
+        // the EdgeKVStorage does not accept too long strings -> Helper.cutStringForKV
         return Helper.cutStringForKV(WAY_NAME_PATTERN.matcher(str).replaceAll(", "));
     }
 
