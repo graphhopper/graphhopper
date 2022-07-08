@@ -79,12 +79,6 @@ public class IntersectionDetails extends AbstractPathDetailsBuilder {
             while (edgeIter.next()) {
                 tmpEdge = edgeIter.detach(false);
 
-                // Special case for the first intersection. Mapbox expects only the start edge to be present, so we skip
-                // every edge that is not our edge (same base&adj node)
-                if (fromEdge == -1 && tmpEdge.getAdjNode() != edge.getAdjNode()) {
-                    continue;
-                }
-
                 IntersectionValues intersectionValues = new IntersectionValues();
                 intersectionValues.bearing = calculateBearing(startLat, startLon, tmpEdge);
                 intersectionValues.in = edgeId(tmpEdge) == fromEdge;

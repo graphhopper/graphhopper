@@ -264,7 +264,7 @@ public class NavigateResponseConverterTest {
         JsonNode intersection = step.get("intersections").get(0);
 
         assertFalse(intersection.has("in"));
-        assertEquals(0, intersection.get("out").asInt());
+        assertEquals(1, intersection.get("out").asInt());
 
         JsonNode location = intersection.get("location");
         // The first intersection to be equal to the first snapped waypoint
