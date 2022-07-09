@@ -143,11 +143,16 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         String ref = null;
         String destination = null;
         String destinationRef = null;
+        boolean reverse = edge.get(EdgeIteratorState.REVERSE_STATE);
         for (EdgeKVStorage.KeyValue kv : edge.getKeyValues()) {
-            if (kv.fwd && kv.key.equals("name")) name = (String) kv.value;
-            if (kv.fwd && kv.key.equals("ref")) ref = (String) kv.value;
-            if (kv.fwd && kv.key.equals("destination")) destination = (String) kv.value;
-            if (kv.fwd && kv.key.equals("destination_ref")) destinationRef = (String) kv.value;
+            if ((!reverse && kv.fwd || reverse && kv.bwd) && kv.key.equals("name"))
+                name = (String) kv.value;
+            if ((!reverse && kv.fwd || reverse && kv.bwd) && kv.key.equals("ref"))
+                ref = (String) kv.value;
+            if ((!reverse && kv.fwd || reverse && kv.bwd) && kv.key.equals("destination"))
+                destination = (String) kv.value;
+            if ((!reverse && kv.fwd || reverse && kv.bwd) && kv.key.equals("destination_ref"))
+                destinationRef = (String) kv.value;
         }
         if ((prevInstruction == null) && (!isRoundabout)) // very first instruction (if not in Roundabout)
         {

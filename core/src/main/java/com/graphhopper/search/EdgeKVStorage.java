@@ -177,6 +177,8 @@ public class EdgeKVStorage {
             if (key == null) throw new IllegalArgumentException("key cannot be null");
             Object value = entry.value;
             if (value == null) throw new IllegalArgumentException("value for key " + key + " cannot be null");
+            if (!entry.fwd && !entry.bwd)
+                throw new IllegalArgumentException("Do not add KeyValue pair where fwd and bwd is false");
             Integer keyIndex = keyToIndex.get(key);
             Class<?> clazz;
             if (keyIndex == null) {
