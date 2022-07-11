@@ -19,7 +19,6 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
@@ -139,21 +138,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             assert Double.compare(prevLon, nodeAccess.getLon(baseNode)) == 0;
         }
 
-        String name = null;
-        String ref = null;
-        String destination = null;
-        String destinationRef = null;
-        boolean reverse = edge.get(EdgeIteratorState.REVERSE_STATE);
-        for (EdgeKVStorage.KeyValue kv : edge.getKeyValues()) {
-            if ((!reverse && kv.fwd || reverse && kv.bwd) && kv.key.equals("name"))
-                name = (String) kv.value;
-            if ((!reverse && kv.fwd || reverse && kv.bwd) && kv.key.equals("ref"))
-                ref = (String) kv.value;
-            if ((!reverse && kv.fwd || reverse && kv.bwd) && kv.key.equals("destination"))
-                destination = (String) kv.value;
-            if ((!reverse && kv.fwd || reverse && kv.bwd) && kv.key.equals("destination_ref"))
-                destinationRef = (String) kv.value;
-        }
+        final String name = (String) edge.getValue("name");
+        final String ref = (String) edge.getValue("ref");
+        final String destination = (String) edge.getValue("destination"); // getValue is fast if it does not exist in edge
+        final String destinationRef = (String) edge.getValue("destination_ref");
         if ((prevInstruction == null) && (!isRoundabout)) // very first instruction (if not in Roundabout)
         {
             int sign = Instruction.CONTINUE_ON_STREET;
