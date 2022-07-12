@@ -17,8 +17,8 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.IntLongMap;
-import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.coll.GHLongHashSet;
 import com.graphhopper.coll.GHLongLongHashMap;
@@ -43,6 +43,9 @@ import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
+import org.locationtech.jts.geom.prep.PreparedPolygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +55,9 @@ import java.util.*;
 import java.util.function.LongToIntFunction;
 import java.util.regex.Pattern;
 
+import static com.graphhopper.reader.osm.OSMNodeData.END_NODE;
+import static com.graphhopper.reader.osm.OSMNodeData.INTERMEDIATE_NODE;
+import static com.graphhopper.reader.osm.WaySegmentParser.FACTORY;
 import static com.graphhopper.util.Helper.nf;
 import static java.util.Collections.emptyList;
 
@@ -87,9 +93,11 @@ public class OSMReader {
     private long zeroCounter = 0;
 
     private GHLongLongHashMap osmWayIdToRelationFlagsMap = new GHLongLongHashMap(200, .5f);
-    // stores osm way ids used by relations to identify which edge ids needs to be mapped later
-    private GHLongHashSet osmWayIdSet = new GHLongHashSet();
+    // stores osm way ids used by turn restriction
+    private GHLongHashSet osmWayIdSetForTurnRestriction = new GHLongHashSet();
+    private LongObjectMap<LongArrayList> waysForRelations = new LongObjectHashMap<>();
     private IntLongMap edgeIdToOsmWayIdMap;
+    private final static LongArrayList EMPTY_LIST = new LongArrayList();
 
     public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
@@ -158,9 +166,11 @@ public class OSMReader {
                 .setElevationProvider(eleProvider)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
+                .setWayProvider(this::provideWay)
                 .setWayPreprocessor(this::preprocessWay)
                 .setRelationPreprocessor(this::preprocessRelations)
                 .setRelationProcessor(this::processRelation)
+                .setRelationPostProcessor(this::postProcessRelations)
                 .setEdgeHandler(this::addEdge)
                 .setWorkerThreads(config.getWorkerThreads())
                 .build();
@@ -353,9 +363,8 @@ public class OSMReader {
         osmParsers.applyWayTags(way, edge);
 
         checkDistance(edge);
-        if (osmWayIdSet.contains(way.getId())) {
+        if (osmWayIdSetForTurnRestriction.contains(way.getId()))
             getEdgeIdToOsmWayIdMap().put(edge.getEdge(), way.getId());
-        }
     }
 
     private void checkCoordinates(int nodeIndex, GHPoint point) {
@@ -383,7 +392,13 @@ public class OSMReader {
      * the duration tag when it is present. The latter cannot be done on a per-edge basis, because the duration tag
      * refers to the duration of the entire way.
      */
-    protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
+    protected void preprocessWay(ReaderWay way, LongToIntFunction getInternalIdForOSMNodeId,
+                                 WaySegmentParser.CoordinateSupplier coordinateSupplier) {
+        // TODO NOW we filter the way before this - might not be what we want!! -> move to provideWay too?
+        // create routable areas from ways (PART X of 4 makes areas routable from multipolygons)
+        if (way.getNodes().size() > 3 && way.hasTag("area", "yes") && (way.hasTag("highway", "pedestrian") || way.hasTag("highway", "footway")))
+            createEdgesFromArea(way, getInternalIdForOSMNodeId, coordinateSupplier);
+
         // storing the road name does not yet depend on the flagEncoder so manage it directly
         if (config.isParseWayNames()) {
             // http://wiki.openstreetmap.org/wiki/Key:name
@@ -405,7 +420,7 @@ public class OSMReader {
         if (!isCalculateWayDistance(way))
             return;
 
-        double distance = calcDistance(way, coordinateSupplier);
+        double distance = calcDistance(way, getInternalIdForOSMNodeId, coordinateSupplier);
         if (Double.isNaN(distance)) {
             // Some nodes were missing, and we cannot determine the distance. This can happen when ways are only
             // included partially in an OSM extract. In this case we cannot calculate the speed either, so we return.
@@ -457,16 +472,17 @@ public class OSMReader {
     /**
      * @return the distance of the given way or NaN if some nodes were missing
      */
-    private double calcDistance(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
+    private double calcDistance(ReaderWay way, LongToIntFunction getInternalIdForOSMNodeId,
+                                WaySegmentParser.CoordinateSupplier coordinateSupplier) {
         LongArrayList nodes = way.getNodes();
         // every way has at least two nodes according to our acceptWay function
-        GHPoint3D prevPoint = coordinateSupplier.getCoordinate(nodes.get(0));
+        GHPoint3D prevPoint = coordinateSupplier.getCoordinate(getInternalIdForOSMNodeId.applyAsInt(nodes.get(0)));
         if (prevPoint == null)
             return Double.NaN;
         boolean is3D = !Double.isNaN(prevPoint.ele);
         double distance = 0;
         for (int i = 1; i < nodes.size(); i++) {
-            GHPoint3D point = coordinateSupplier.getCoordinate(nodes.get(i));
+            GHPoint3D point = coordinateSupplier.getCoordinate(getInternalIdForOSMNodeId.applyAsInt(nodes.get(i)));
             if (point == null)
                 return Double.NaN;
             if (Double.isNaN(point.ele) == is3D)
@@ -480,10 +496,57 @@ public class OSMReader {
     }
 
     /**
+     * create edges from areas described by OSM ways (the multipolygons are done in the relation processor).
+     */
+    void createEdgesFromArea(ReaderWay way, LongToIntFunction getInternalIdForOSMNodeId,
+                             WaySegmentParser.CoordinateSupplier coordinateSupplier) {
+        // TODO make it additionally configurable e.g. enable for selected profiles only?
+
+        // TODO a bit ugly that we create a PointList but need the coordinates only later (similar with the internalNodeIds)
+        PointList pointList = new PointList(way.getNodes().size() + 1, false);
+        IntArrayList internalNodeIds = new IntArrayList(way.getNodes().size() + 1);
+        for (LongCursor lc : way.getNodes()) {
+            int internalId = getInternalIdForOSMNodeId.applyAsInt(lc.value);
+            internalNodeIds.add(internalId);
+            pointList.add(coordinateSupplier.getCoordinate(internalId));
+        }
+
+        if (way.getNodes().get(0) != way.getNodes().get(way.getNodes().size() - 1)) {
+            LOGGER.warn("Fixed problem that area does not form a closed ring. Way ID: " + way.getId());
+            int internalId = getInternalIdForOSMNodeId.applyAsInt(way.getNodes().get(0));
+            internalNodeIds.add(internalId);
+            pointList.add(coordinateSupplier.getCoordinate(internalId));
+        }
+
+        try {
+            Coordinate[] coordinates = new Coordinate[pointList.size()];
+            for (int i = 0; i < pointList.size(); i++) {
+                coordinates[i] = new Coordinate(pointList.getLon(i), pointList.getLat(i));
+            }
+            PreparedPolygon prepPolygon = new PreparedPolygon(FACTORY.createPolygon(new PackedCoordinateSequence.Double(coordinates, 2)));
+            WaySegmentParser.createEdgesFromArea(internalNodeIds, pointList, prepPolygon, this::addEdge);
+        } catch (Exception ex) {
+            LOGGER.warn("Problem with area. Way ID: " + way.getId());
+        }
+    }
+
+    /**
      * This method is called for each relation during the first pass of {@link WaySegmentParser}
      */
     protected void preprocessRelations(ReaderRelation relation) {
-        if (!relation.isMetaRelation() && relation.hasTag("type", "route")) {
+        if (relation.isMetaRelation()) return;
+
+        if (isMultipolygon(relation)) {
+            // PART 1 of 4 for multipolygon creation
+            for (ReaderRelation.Member member : relation.getMembers()) {
+                if (member.getType() != ReaderRelation.Member.WAY)
+                    continue;
+
+                waysForRelations.put(member.getRef(), EMPTY_LIST);
+            }
+        }
+
+        if (relation.hasTag("type", "route")) {
             // we keep track of all route relations, so they are available when we create edges later
             for (ReaderRelation.Member member : relation.getMembers()) {
                 if (member.getType() != ReaderRelation.Member.WAY)
@@ -501,22 +564,26 @@ public class OSMReader {
             // id.
             List<OSMTurnRelation> turnRelations = createTurnRelations(relation);
             for (OSMTurnRelation turnRelation : turnRelations) {
-                osmWayIdSet.add(turnRelation.getOsmIdFrom());
-                osmWayIdSet.add(turnRelation.getOsmIdTo());
+                osmWayIdSetForTurnRestriction.add(turnRelation.getOsmIdFrom());
+                osmWayIdSetForTurnRestriction.add(turnRelation.getOsmIdTo());
             }
         }
+    }
+
+    static boolean isMultipolygon(ReaderRelation relation) {
+        return relation.hasTag("highway", "pedestrian") && relation.hasTag("type", "multipolygon");
     }
 
     /**
      * This method is called for each relation during the second pass of {@link WaySegmentParser}
      * We use it to set turn restrictions.
      */
-    protected void processRelation(ReaderRelation relation, LongToIntFunction getIdForOSMNodeId) {
+    protected void processRelation(ReaderRelation relation, LongToIntFunction getTowerNodeIdForOSMNodeId) {
         if (turnCostStorage != null && relation.hasTag("type", "restriction")) {
             TurnCostParser.ExternalInternalMap map = new TurnCostParser.ExternalInternalMap() {
                 @Override
                 public int getInternalNodeIdOfOsmNode(long nodeOsmId) {
-                    return getIdForOSMNodeId.applyAsInt(nodeOsmId);
+                    return getTowerNodeIdForOSMNodeId.applyAsInt(nodeOsmId);
                 }
 
                 @Override
@@ -533,10 +600,62 @@ public class OSMReader {
         }
     }
 
+    protected void provideWay(ReaderWay way, WaySegmentParser.RememberNode rememberNode) {
+        // PART 2 of 4 for multipolygon creation
+        LongArrayList list = waysForRelations.get(way.getId());
+        if (list == EMPTY_LIST) {
+            waysForRelations.put(way.getId(), way.getNodes());
+            for (int i = 0; i < way.getNodes().size() - 1; i++) {
+                long osmNodeId = way.getNodes().get(i);
+                rememberNode.setOrUpdateNodeType(osmNodeId, INTERMEDIATE_NODE, prev -> prev == END_NODE ? INTERMEDIATE_NODE : prev);
+            }
+        } else if (list != null) {
+            throw new IllegalStateException("Cannot store way multiple times. WAY ID=" + way.getId());
+        }
+    }
+
+    // PART 3 of 4 for multipolygon creation TODO currently in Pass3Handler.handleNode
+
+    protected void postProcessRelations(ReaderRelation relation, LongToIntFunction getInternalIdForOSMNodeId,
+                                        WaySegmentParser.CoordinateSupplier coordinateSupplier) {
+        if (!isMultipolygon(relation)) return;
+        // PART 4 of 4 for multipolygon creation
+        for (ReaderRelation.Member member : relation.getMembers()) {
+            if (member.getType() != ReaderRelation.Member.WAY)
+                continue;
+
+            // TODO NOW merge "outer" ways into a single way via node Id matching
+            LongArrayList osmNodeIds = waysForRelations.get(member.getRef());
+            if (osmNodeIds == null || osmNodeIds.isEmpty())
+                throw new IllegalStateException("No or empty node list for way with ID " + member.getRef()
+                        + " for relation with ID " + relation.getId());
+
+            PointList outerPointList = new PointList(osmNodeIds.size(), false);
+            Coordinate[] coordinates = new Coordinate[osmNodeIds.size()];
+            IntArrayList ghIds = new IntArrayList(osmNodeIds.size());
+
+            for (LongCursor lc : osmNodeIds) {
+                long osmNodeId = lc.value;
+                int pillarOrTowerNodeId = getInternalIdForOSMNodeId.applyAsInt(osmNodeId);
+                // TODO NOW replace constants with methods of OSMNodeData somehow
+                if (!(pillarOrTowerNodeId < -2 || pillarOrTowerNodeId > 2))
+                    throw new IllegalStateException("Cannot find GH node for OSM node ID " + osmNodeId + " in way " + member.getRef() + " in relation " + relation.getId());
+
+                ghIds.add(pillarOrTowerNodeId);
+                GHPoint3D point = coordinateSupplier.getCoordinate(pillarOrTowerNodeId);
+                coordinates[lc.index] = new Coordinate(point.lon, point.lat);
+                outerPointList.add(point);
+            }
+            // TODO NOW WaySegmentParser.FACTORY.createMultiPolygon(polygons);
+            PreparedPolygon prepPolygon = new PreparedPolygon(FACTORY.createPolygon(new PackedCoordinateSequence.Double(coordinates, 2)));
+            WaySegmentParser.createEdgesFromArea(ghIds, outerPointList, prepPolygon, this::addEdge);
+        }
+    }
+
     private IntLongMap getEdgeIdToOsmWayIdMap() {
         // todo: is this lazy initialization really advantageous?
         if (edgeIdToOsmWayIdMap == null)
-            edgeIdToOsmWayIdMap = new GHIntLongHashMap(osmWayIdSet.size(), 0.5f);
+            edgeIdToOsmWayIdMap = new GHIntLongHashMap(osmWayIdSetForTurnRestriction.size(), 0.5f);
 
         return edgeIdToOsmWayIdMap;
     }
@@ -609,12 +728,13 @@ public class OSMReader {
     private void finishedReading() {
         eleProvider.release();
         osmWayIdToRelationFlagsMap = null;
-        osmWayIdSet = null;
+        osmWayIdSetForTurnRestriction = null;
+        waysForRelations = null;
         edgeIdToOsmWayIdMap = null;
     }
 
-    IntsRef getRelFlagsMap(long osmId) {
-        long relFlagsAsLong = osmWayIdToRelationFlagsMap.get(osmId);
+    IntsRef getRelFlagsMap(long osmWayId) {
+        long relFlagsAsLong = osmWayIdToRelationFlagsMap.get(osmWayId);
         tempRelFlags.ints[0] = (int) relFlagsAsLong;
         tempRelFlags.ints[1] = (int) (relFlagsAsLong >> 32);
         return tempRelFlags;
@@ -629,5 +749,4 @@ public class OSMReader {
     public String toString() {
         return getClass().getSimpleName();
     }
-
 }

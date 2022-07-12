@@ -117,6 +117,10 @@ class OSMNodeData {
         return id > CONNECTION_NODE || id < JUNCTION_NODE;
     }
 
+    public static boolean isIntermediateNode(int id) {
+        return id == INTERMEDIATE_NODE;
+    }
+
     public void setOrUpdateNodeType(long osmNodeId, int newNodeType, IntUnaryOperator nodeTypeUpdate) {
         int curr = idsByOsmNodeIds.get(osmNodeId);
         if (curr == EMPTY_NODE)
@@ -166,7 +170,7 @@ class OSMNodeData {
         return id;
     }
 
-    private int addPillarNode(long osmId, double lat, double lon, double ele) {
+    int addPillarNode(long osmId, double lat, double lon, double ele) {
         pillarNodes.setNode(nextPillarId, lat, lon, ele);
         int id = pillarNodeToId(nextPillarId);
         idsByOsmNodeIds.put(osmId, id);
@@ -271,7 +275,7 @@ class OSMNodeData {
         return -towerId - 3;
     }
 
-    public int idToTowerNode(int id) {
+    public static int idToTowerNode(int id) {
         return -id - 3;
     }
 
