@@ -1,7 +1,7 @@
 graphhopper:
-  datareader.file: brandenburg-latest.osm.pbf
-  gtfs.file: gtfs-vbb.zip
-  graph.location: graphs/brandenburg-with-transit
+  datareader.file: ../openrouteservice/openrouteservice-api-tests/data/heidelberg.osm.gz
+  gtfs.file: ../openrouteservice/openrouteservice-api-tests/data/vrn_gtfs.zip
+  graph.location: graphs/hdvrn
 
   profiles:
     - name: foot
