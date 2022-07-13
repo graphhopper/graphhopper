@@ -254,35 +254,13 @@ public class ResponsePath {
             throw new IllegalStateException("Details have to be the same size");
         }
         for (Map.Entry<String, List<PathDetail>> detailEntry : details.entrySet()) {
-            if (this.pathDetails.containsKey(detailEntry.getKey())) {
-                List<PathDetail> pd = this.pathDetails.get(detailEntry.getKey());
-                merge(pd, detailEntry.getValue());
+            String key = detailEntry.getKey();
+            if (this.pathDetails.containsKey(key)) {
+                this.pathDetails.get(key).addAll(detailEntry.getValue());
             } else {
-                this.pathDetails.put(detailEntry.getKey(), detailEntry.getValue());
+                this.pathDetails.put(key, detailEntry.getValue());
             }
         }
-    }
-
-    /**
-     * Merges <code>otherDetails</code> into the <code>pathDetails</code>.
-     * <p>
-     * This method makes sure that Entry list around via points are merged correctly.
-     * See #1091 and the misplaced PathDetail after waypoints.
-     */
-    public static void merge(List<PathDetail> pathDetails, List<PathDetail> otherDetails) {
-        // Make sure that the PathDetail list is merged correctly at via points
-        if (!pathDetails.isEmpty() && !otherDetails.isEmpty()) {
-            PathDetail lastDetail = pathDetails.get(pathDetails.size() - 1);
-            boolean extend = lastDetail.getValue() != null
-                    ? lastDetail.getValue().equals(otherDetails.get(0).getValue())
-                    : otherDetails.get(0).getValue() != null;
-            if (extend) {
-                lastDetail.setLast(otherDetails.get(0).getLast());
-                otherDetails.remove(0);
-            }
-        }
-
-        pathDetails.addAll(otherDetails);
     }
 
     public Map<String, List<PathDetail>> getPathDetails() {

@@ -126,7 +126,7 @@ class HeadingRoutingTest {
                 setPathDetails(Collections.singletonList("edge_key"));
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{4, 5, 6, 7, 8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+        assertArrayEquals(new int[]{4, 5, 6, 7, 7, 8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
     }
 
     @Test
@@ -152,7 +152,7 @@ class HeadingRoutingTest {
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
         assertEquals(1, response.getAll().size());
-        assertArrayEquals(new int[]{5, 4, 3, 8, 1, 2, 3}, calcNodes(graph, response.getAll().get(0)));
+        assertArrayEquals(new int[]{5, 4, 3, 3, 8, 1, 2, 3}, calcNodes(graph, response.getAll().get(0)));
     }
 
     @Test
@@ -178,7 +178,7 @@ class HeadingRoutingTest {
         req.putHint(Parameters.Routing.PASS_THROUGH, true);
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{5, 4, 3, 8, 7, 6, 5, 4, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+        assertArrayEquals(new int[]{5, 4, 3, 8, 7, 7, 6, 5, 4, 3, 2}, calcNodes(graph, response.getAll().get(0)));
     }
 
     @Test
