@@ -66,9 +66,9 @@ public class LMPreparationHandler {
     private AreaIndex<SplitArea> areaIndex;
 
 // ORS-GH MOD START facilitate overriding in subclasses
-    protected static String PREPARE = Landmark.PREPARE;
-    protected static String DISABLE = Landmark.DISABLE;
-    protected static String COUNT = Landmark.COUNT;
+    protected String PREPARE = Landmark.PREPARE;
+    protected String DISABLE = Landmark.DISABLE;
+    protected String COUNT = Landmark.COUNT;
 // ORS-GH MOD END
 
     public LMPreparationHandler() {
