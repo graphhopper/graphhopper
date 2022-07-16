@@ -13,14 +13,14 @@ See the demo in action (black is GPS track, green is matched result):
 
 To install GraphHopper and start the GraphHopper server see [these instructions](../README.md#installation). After the import process finished you can access a simple map matching UI via `http://localhost:8989/maps/map-matching/` (including the trailing slash) where you can upload GPX files.
 
-Note, that this can fail for various reasons. Make sure that the imported area has sufficient geographical coverage for the GPX file otherwise you'll can get an error like "Sequence is broken for submitted track at time step 0".
+Make sure that the imported area has sufficient geographical coverage for the GPX file otherwise you'll can get an error like "Sequence is broken for submitted track at time step 0".
 
 You can also post GPX files via web API and get back snapped results as GPX or as JSON. An example curl request is:
 ```bash
 curl -XPOST -H "Content-Type: application/gpx+xml" -d @web/src/test/resources/test1.gpx "localhost:8989/match?profile=car&type=json"
 ```
 
-Note again that for this test1.gpx file a PBF file for that geographical area ([this](./files/leipzig_germany.osm.pbf) or larger) is required to be used for the import.
+Note again that for this file test1.gpx a PBF file with a big enough geographical coverage ([this file](./files/leipzig_germany.osm.pbf) or larger) is required to be used for the import.
 
 ### CLI usage
 
