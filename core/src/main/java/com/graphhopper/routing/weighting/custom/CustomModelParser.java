@@ -183,9 +183,8 @@ public class CustomModelParser {
      */
     private static List<Java.BlockStatement> createGetSpeedStatements(Set<String> speedVariables,
                                                                       CustomModel customModel, EncodedValueLookup lookup) throws Exception {
-        List<Java.BlockStatement> speedStatements = new ArrayList<>();
-        speedStatements.addAll(verifyExpressions(new StringBuilder(), "speed entry", speedVariables,
-                customModel.getSpeed(), lookup));
+        List<Java.BlockStatement> speedStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
+                "speed entry", speedVariables, customModel.getSpeed(), lookup));
         String speedMethodStartBlock = "double value = super.getRawSpeed(edge, reverse);\n";
         // a bit inefficient to possibly define variables twice, but for now we have two separate methods
         for (String arg : speedVariables) {
@@ -203,9 +202,8 @@ public class CustomModelParser {
      */
     private static List<Java.BlockStatement> createGetPriorityStatements(Set<String> priorityVariables,
                                                                          CustomModel customModel, EncodedValueLookup lookup) throws Exception {
-        List<Java.BlockStatement> priorityStatements = new ArrayList<>();
-        priorityStatements.addAll(verifyExpressions(new StringBuilder(), "priority entry, ",
-                priorityVariables, customModel.getPriority(), lookup));
+        List<Java.BlockStatement> priorityStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
+                "priority entry", priorityVariables, customModel.getPriority(), lookup));
         String priorityMethodStartBlock = "double value = super.getRawPriority(edge, reverse);\n";
         for (String arg : priorityVariables) {
             priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
@@ -316,7 +314,7 @@ public class CustomModelParser {
         }
 
         return ""
-                + "package com.graphhopper.routing.weighting.custom;"
+                + "package com.graphhopper.routing.weighting.custom;\n"
                 + "import " + CustomWeightingHelper.class.getName() + ";\n"
                 + "import " + EncodedValueLookup.class.getName() + ";\n"
                 + "import " + EdgeIteratorState.class.getName() + ";\n"
@@ -376,7 +374,7 @@ public class CustomModelParser {
                 if (!Helper.isEmpty(statement.getCondition()))
                     throw new IllegalArgumentException("condition must be empty but was " + statement.getCondition());
 
-                expressions.append("else {" + statement.getOperation().build(statement.getValue()) + "; }\n");
+                expressions.append("else {").append(statement.getOperation().build(statement.getValue())).append("; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
                 ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator, lookup);
                 if (!parseResult.ok)
@@ -385,7 +383,7 @@ public class CustomModelParser {
                 createObjects.addAll(parseResult.guessedVariables);
                 if (statement.getKeyword() == Statement.Keyword.ELSEIF)
                     expressions.append("else ");
-                expressions.append("if (" + parseResult.converted + ") {" + statement.getOperation().build(statement.getValue()) + "; }\n");
+                expressions.append("if (").append(parseResult.converted).append(") {").append(statement.getOperation().build(statement.getValue())).append("; }\n");
             } else {
                 throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");
             }
@@ -394,7 +392,7 @@ public class CustomModelParser {
     }
 
     /**
-     * Injects the already parsed expressions (converted to BlockStatement) via janinos DeepCopier to the provided
+     * Injects the already parsed expressions (converted to BlockStatement) via Janino's DeepCopier to the provided
      * CompilationUnit cu (a class file).
      */
     private static Java.CompilationUnit injectStatements(List<Java.BlockStatement> priorityStatements,
