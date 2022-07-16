@@ -120,8 +120,8 @@ public final class CustomWeighting extends AbstractWeighting {
 
     double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
         // special case for loop edges: since they do not have a meaningful direction we always need to read them in forward direction
-        if (edgeState.getBaseNode() == edgeState.getAdjNode())
-            reverse = false;
+//        if (edgeState.getBaseNode() == edgeState.getAdjNode())
+//            reverse = false;
 
         // TODO see #1835
 //        if (reverse ? !edgeState.getReverse(baseVehicleAccessEnc) : !edgeState.get(baseVehicleAccessEnc))
