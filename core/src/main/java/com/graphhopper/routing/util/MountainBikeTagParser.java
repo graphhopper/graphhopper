@@ -79,7 +79,7 @@ public class MountainBikeTagParser extends BikeCommonTagParser {
         setSurfaceSpeed("grass_paver", 14);
         setSurfaceSpeed("gravel", 16);
         setSurfaceSpeed("ground", 16);
-        setSurfaceSpeed("ice", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("ice", MIN_SPEED);
         setSurfaceSpeed("metal", 10);
         setSurfaceSpeed("mud", 12);
         setSurfaceSpeed("pebblestone", 12);
@@ -87,13 +87,13 @@ public class MountainBikeTagParser extends BikeCommonTagParser {
         setSurfaceSpeed("sand", 10);
         setSurfaceSpeed("wood", 10);
 
-        setHighwaySpeed("living_street", 6);
+        setHighwaySpeed("living_street", PUSHING_SECTION_SPEED);
         setHighwaySpeed("steps", PUSHING_SECTION_SPEED);
 
         setHighwaySpeed("cycleway", 18);
         setHighwaySpeed("path", 18);
-        setHighwaySpeed("footway", 6);
-        setHighwaySpeed("pedestrian", 6);
+        setHighwaySpeed("footway", PUSHING_SECTION_SPEED);
+        setHighwaySpeed("pedestrian", PUSHING_SECTION_SPEED);
         setHighwaySpeed("road", 12);
         setHighwaySpeed("track", 18);
         setHighwaySpeed("service", 14);

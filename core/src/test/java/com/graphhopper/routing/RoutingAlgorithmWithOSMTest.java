@@ -323,13 +323,13 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoBike3D_twoSpeedsPerEdge() {
         List<Query> queries = new ArrayList<>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2689, 118));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2693, 123));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 3735, 194));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 3724, 192));
         // 3.
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
         // 4.
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1544, 84));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1567, 84));
 
         // try reverse direction
         // 1.
@@ -387,8 +387,9 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoMountainBike() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2593, 110));
-        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3655, 176));
+        // for mtb it is fine to go over steps (43.7318,7.423) to avoid ~600m detour (in latest OSM data all bikes are forbidden and steps aren't taken)
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 1948, 94));
+        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3613, 178));
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2331, 121));
         // hard to select between secondary and primary (both are AVOID for mtb)
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1459, 88));

@@ -75,29 +75,29 @@ public class RacingBikeTagParser extends BikeCommonTagParser {
         setSurfaceSpeed("concrete:plates", 16);
         setSurfaceSpeed("paving_stones", 10);
         setSurfaceSpeed("paving_stones:30", 10);
-        setSurfaceSpeed("unpaved", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("compacted", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("dirt", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("earth", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("unpaved", MIN_SPEED);
+        setSurfaceSpeed("compacted", MIN_SPEED);
+        setSurfaceSpeed("dirt", MIN_SPEED);
+        setSurfaceSpeed("earth", MIN_SPEED);
         setSurfaceSpeed("fine_gravel", PUSHING_SECTION_SPEED);
-        setSurfaceSpeed("grass", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("grass_paver", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("gravel", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("ground", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("ice", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("metal", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("mud", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("grass", MIN_SPEED);
+        setSurfaceSpeed("grass_paver", MIN_SPEED);
+        setSurfaceSpeed("gravel", MIN_SPEED);
+        setSurfaceSpeed("ground", MIN_SPEED);
+        setSurfaceSpeed("ice", MIN_SPEED);
+        setSurfaceSpeed("metal", MIN_SPEED);
+        setSurfaceSpeed("mud", MIN_SPEED);
         setSurfaceSpeed("pebblestone", PUSHING_SECTION_SPEED);
-        setSurfaceSpeed("salt", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("sand", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("wood", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("salt", MIN_SPEED);
+        setSurfaceSpeed("sand", MIN_SPEED);
+        setSurfaceSpeed("wood", MIN_SPEED);
 
         setHighwaySpeed("cycleway", 18);
         setHighwaySpeed("path", 8);
-        setHighwaySpeed("footway", 6);
-        setHighwaySpeed("pedestrian", 6);
+        setHighwaySpeed("footway", PUSHING_SECTION_SPEED);
+        setHighwaySpeed("pedestrian", PUSHING_SECTION_SPEED);
         setHighwaySpeed("road", 12);
-        setHighwaySpeed("track", PUSHING_SECTION_SPEED / 2); // assume unpaved
+        setHighwaySpeed("track", MIN_SPEED); // assume unpaved
         setHighwaySpeed("service", 12);
         setHighwaySpeed("unclassified", 16);
         setHighwaySpeed("residential", 16);
