@@ -96,7 +96,8 @@ public class Instruction {
     }
 
     public void setExtraInfo(String key, Object value) {
-        extraInfo.put(key, value);
+        if (value != null && key != null)
+            extraInfo.put(key, value);
     }
 
     /**
@@ -217,6 +218,14 @@ public class Instruction {
             else
                 str = streetName.isEmpty() ? dir : tr.tr("turn_onto", dir, streetName);
         }
+        String dest = (String) extraInfo.get("destination");
+        String destRef = (String) extraInfo.get("destination_ref");
+        if (dest != null) {
+            if (destRef != null)
+                return tr.tr("toward_destination_with_ref", str, destRef, dest);
+            return tr.tr("toward_destination", str, dest);
+        } else if (destRef != null)
+            return tr.tr("toward_destination_ref_only", str, destRef);
         return str;
     }
 }

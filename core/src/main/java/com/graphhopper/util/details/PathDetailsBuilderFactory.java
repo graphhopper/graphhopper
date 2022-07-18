@@ -39,6 +39,8 @@ public class PathDetailsBuilderFactory {
             builders.add(new KVStringDetails(STREET_NAME, "name"));
         if (requestedPathDetails.contains(STREET_REF))
             builders.add(new KVStringDetails(STREET_REF, "ref"));
+        if (requestedPathDetails.contains(STREET_DESTINATION))
+            builders.add(new KVStringDetails(STREET_DESTINATION, "destination"));
 
         if (requestedPathDetails.contains(AVERAGE_SPEED))
             builders.add(new AverageSpeedDetails(weighting));
