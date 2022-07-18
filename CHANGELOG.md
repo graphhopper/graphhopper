@@ -1,4 +1,5 @@
 ### 6.0 [not yet released]
+- For DecimalEncodedValues with useMaximumAsInfinity=true and a single bit of space make sure you always use Double.POSITIVE_INFINITY to set the value, see #2623
 - removed the FlagEncoder interface. for example encoder.getAccessEnc() is now encodingManager.getBooleanEncodedValue(
   VehicleAccess.key("car")), #2611
 - backward incompatible change as instructions and the street_name path detail do no longer contain the ref #2598
