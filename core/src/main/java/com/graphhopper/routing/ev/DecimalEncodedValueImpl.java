@@ -98,16 +98,26 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     public void setDecimal(boolean reverse, IntsRef ref, double value) {
         if (!isInitialized())
             throw new IllegalStateException("Call init before using EncodedValue " + getName());
-        if (Double.isInfinite(value)) {
-            if (useMaximumAsInfinity) {
+        if (useMaximumAsInfinity) {
+            if (Double.isInfinite(value)) {
                 super.setInt(reverse, ref, maxStorableValue);
                 return;
-            } else if (defaultIsInfinity) {
-                super.setInt(reverse, ref, 0);
+            } else if (value >= maxStorableValue * factor) {
+                // equals is important as maxStorableValue is reserved for infinity
+                super.uncheckedSet(reverse, ref, maxStorableValue - 1);
                 return;
             }
+        } else if (defaultIsInfinity) {
+            if (Double.isInfinite(value)) {
+                super.setInt(reverse, ref, 0);
+                return;
+            } else if (value > maxStorableValue * factor) {
+                super.uncheckedSet(reverse, ref, maxStorableValue);
+                return;
+            }
+        } else if (Double.isInfinite(value))
             throw new IllegalArgumentException("Value cannot be infinite if useMaximumAsInfinity is false");
-        }
+
         if (Double.isNaN(value))
             throw new IllegalArgumentException("NaN value for " + getName() + " not allowed!");
 
@@ -132,7 +142,7 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     public double getNextStorableValue(double value) {
         if (!useMaximumAsInfinity && value > getMaxStorableDecimal())
             throw new IllegalArgumentException(getName() + ": There is no next storable value for " + value + ". max:" + getMaxStorableDecimal());
-        else if (useMaximumAsInfinity && value > getMaxStorableDecimal())
+        else if (useMaximumAsInfinity && value > (maxStorableValue - 1) * factor)
             return Double.POSITIVE_INFINITY;
         else
             return (factor * (int) Math.ceil(value / factor));
@@ -147,6 +157,8 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
 
     @Override
     public double getMaxStorableDecimal() {
+        if (useMaximumAsInfinity || defaultIsInfinity)
+            return Double.POSITIVE_INFINITY;
         return maxStorableValue * factor;
     }
 
@@ -160,9 +172,5 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
         if (useMaximumAsInfinity || defaultIsInfinity)
             throw new IllegalStateException("getMaxOrMaxStorableDecimal() is not implemented for useMaximumAsInfinity or defaultIsInfinity");
         return getMaxOrMaxStorableInt() * factor;
-    }
-
-    public boolean isDefaultIsInfinity() {
-        return defaultIsInfinity;
     }
 }

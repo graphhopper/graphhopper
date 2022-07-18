@@ -30,12 +30,9 @@ public class OSMValueExtractor {
         final String rawValue = way.getFirstPriorityTag(keys);
         double value = stringToTons(rawValue);
 
-        if (Double.isNaN(value)) {
+        if (Double.isNaN(value))
             return;
-        }
 
-        if (value > valueEncoder.getMaxStorableDecimal())
-            value = valueEncoder.getMaxStorableDecimal();
         valueEncoder.setDecimal(false, edgeFlags, value);
     }
 
@@ -74,8 +71,6 @@ public class OSMValueExtractor {
             return;
         }
 
-        if (value > valueEncoder.getMaxStorableDecimal())
-            value = valueEncoder.getMaxStorableDecimal();
         valueEncoder.setDecimal(false, edgeFlags, value);
     }
 

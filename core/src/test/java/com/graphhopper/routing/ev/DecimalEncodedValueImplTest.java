@@ -149,13 +149,15 @@ public class DecimalEncodedValueImplTest {
         DecimalEncodedValueImpl enc = new DecimalEncodedValueImpl("test", 4, 0, 3, false, false, false, true);
         enc.init(new EncodedValue.InitializerConfig());
         assertEquals(12, enc.getNextStorableValue(11.2));
-        assertEquals(45, enc.getNextStorableValue(44.3));
-        assertEquals(45, enc.getNextStorableValue(45));
+        assertEquals(42, enc.getNextStorableValue(41.3));
+        assertEquals(42, enc.getNextStorableValue(42));
+        assertEquals(Double.POSITIVE_INFINITY, enc.getNextStorableValue(42.1));
+        assertEquals(Double.POSITIVE_INFINITY, enc.getNextStorableValue(45));
         assertEquals(Double.POSITIVE_INFINITY, enc.getNextStorableValue(45.1));
-        assertEquals(Double.POSITIVE_INFINITY, enc.getNextStorableValue(48));
-        assertEquals(Double.POSITIVE_INFINITY, enc.getNextStorableValue(48.1));
         IntsRef intsRef = new IntsRef(1);
-        assertThrows(IllegalArgumentException.class, () -> enc.setDecimal(false, intsRef, 48));
+        enc.setDecimal(false, intsRef, 45);
+        assertEquals(42, enc.getDecimal(false, intsRef));
+
         enc.setDecimal(false, intsRef, Double.POSITIVE_INFINITY);
         assertEquals(Double.POSITIVE_INFINITY, enc.getDecimal(false, intsRef));
     }
