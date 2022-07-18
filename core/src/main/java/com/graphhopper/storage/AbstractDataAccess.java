@@ -105,7 +105,7 @@ public abstract class AbstractDataAccess implements DataAccess {
 
         String versionHint = raFile.readUTF();
         if (!"GH".equals(versionHint))
-            throw new IllegalArgumentException("Not a GraphHopper file! Expected 'GH' as file marker but was " + versionHint);
+            throw new IllegalArgumentException("Not a GraphHopper file " + getFullName() + "! Expected 'GH' as file marker but was " + versionHint);
 
         long bytes = raFile.readLong();
         setSegmentSize(raFile.readInt());

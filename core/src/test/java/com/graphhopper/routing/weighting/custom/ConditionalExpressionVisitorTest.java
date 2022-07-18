@@ -1,6 +1,5 @@
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
@@ -10,9 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.HashSet;
 
-import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.routing.weighting.custom.ConditionalExpressionVisitor.parse;
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.isValidVariableName;
 import static org.junit.jupiter.api.Assertions.*;
@@ -131,5 +128,15 @@ public class ConditionalExpressionVisitorTest {
         result = parse("(toll == NO || road_class == PRIMARY) && toll == NO", validVariable, lookup);
         assertTrue(result.ok);
         assertEquals("[toll, road_class]", result.guessedVariables.toString());
+    }
+
+    @Test
+    public void testNegativeConstant() {
+        ParseResult result = parse("average_slope < -0.5", "average_slope"::equals, lookup);
+        assertTrue(result.ok);
+        assertEquals("[average_slope]", result.guessedVariables.toString());
+        result = parse("-average_slope > -0.5", "average_slope"::equals, lookup);
+        assertTrue(result.ok);
+        assertEquals("[average_slope]", result.guessedVariables.toString());
     }
 }

@@ -85,6 +85,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
         } else if (rv instanceof Java.UnaryOperation) {
             Java.UnaryOperation uo = (Java.UnaryOperation) rv;
             if (uo.operator.equals("!")) return uo.operand.accept(this);
+            if (uo.operator.equals("-")) return uo.operand.accept(this);
             return false;
         } else if (rv instanceof Java.MethodInvocation) {
             Java.MethodInvocation mi = (Java.MethodInvocation) rv;
