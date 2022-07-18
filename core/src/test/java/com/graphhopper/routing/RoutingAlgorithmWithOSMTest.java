@@ -584,7 +584,6 @@ public class RoutingAlgorithmWithOSMTest {
 
         GraphHopper hopper = createHopper(DIR + "/krautsand.osm.gz",
                 new Profile("car").setVehicle("car").setWeighting("fastest"));
-        hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
 
         for (Function<Query, GHRequest> requestFactory : createRequestFactories()) {

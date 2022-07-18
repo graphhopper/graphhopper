@@ -19,6 +19,7 @@ package com.graphhopper.routing.querygraph;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -26,7 +27,6 @@ import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Peter Karich
@@ -262,13 +262,13 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
-    public Map<String, Object> getKeyValues() {
+    public List<EdgeKVStorage.KeyValue> getKeyValues() {
         return getCurrentEdge().getKeyValues();
     }
 
     @Override
-    public EdgeIteratorState setKeyValues(Map<String, Object> map) {
-        return getCurrentEdge().setKeyValues(map);
+    public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> list) {
+        return getCurrentEdge().setKeyValues(list);
     }
 
     @Override

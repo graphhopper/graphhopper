@@ -38,12 +38,8 @@ public class EdgeIdDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        int thisEdgeId = edgeId(edge);
-        if (thisEdgeId != edgeId) {
-            edgeId = thisEdgeId;
-            return true;
-        }
-        return false;
+        edgeId = edgeId(edge);
+        return true;
     }
 
     private int edgeId(EdgeIteratorState edge) {

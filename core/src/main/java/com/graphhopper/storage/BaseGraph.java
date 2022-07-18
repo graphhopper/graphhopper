@@ -27,6 +27,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.util.Helper.nf;
@@ -946,8 +947,8 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public EdgeIteratorState setKeyValues(Map<String, Object> map) {
-            long pointer = baseGraph.edgeKVStorage.add(map);
+        public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> entries) {
+            long pointer = baseGraph.edgeKVStorage.add(entries);
             if (pointer > Integer.MAX_VALUE)
                 throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + Integer.MAX_VALUE + " was " + pointer);
             store.setKeyValuesRef(edgePointer, (int) pointer);
@@ -955,7 +956,7 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public Map<String, Object> getKeyValues() {
+        public List<EdgeKVStorage.KeyValue> getKeyValues() {
             int kvEntryRef = store.getKeyValuesRef(edgePointer);
             return baseGraph.edgeKVStorage.getAll(kvEntryRef);
         }

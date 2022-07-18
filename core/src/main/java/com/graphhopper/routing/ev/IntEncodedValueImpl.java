@@ -197,8 +197,8 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         } else {
             flags = ref.ints[fwdDataIndex + ref.offset];
             if (negateReverseDirection && reverse)
-                return -(minStorableValue + (flags & fwdMask) >>> fwdShift);
-            return minStorableValue + (flags & fwdMask) >>> fwdShift;
+                return -(minStorableValue + ((flags & fwdMask) >>> fwdShift));
+            return minStorableValue + ((flags & fwdMask) >>> fwdShift);
         }
     }
 

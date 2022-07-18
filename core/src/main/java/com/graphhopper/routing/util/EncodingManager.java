@@ -186,11 +186,12 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public List<String> getVehicles() {
-        // the supported vehicles are all those prefixes for which there is an access and speed EV
+        // we define the 'vehicles' as all the prefixes for which there is an access and speed EV
+        // any EVs that contain prefix_average_speed are accepted
         return getEncodedValues().stream()
                 .filter(ev -> ev.getName().endsWith("_access"))
                 .map(ev -> ev.getName().replaceAll("_access", ""))
-                .filter(v -> hasEncodedValue(VehicleSpeed.key(v)))
+                .filter(v -> getEncodedValues().stream().anyMatch(ev -> ev.getName().contains(VehicleSpeed.key(v))))
                 .collect(Collectors.toList());
     }
 

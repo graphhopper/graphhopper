@@ -170,7 +170,7 @@ public class ProfileResolverTest {
 
     private void assertUnsupportedVehicle(ProfileResolver profileResolver, String vehicle, List<String> supported) {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> profileResolver.resolveProfile(new PMap().putObject("vehicle", vehicle)));
-        assertTrue(e.getMessage().contains("Vehicle not supported: `" + vehicle + "`. Supported are: `" + supported + "`"), e.getMessage());
+        assertTrue(e.getMessage().contains("Vehicle not supported: `" + vehicle + "`. Supported are: `" + String.join(",", supported) + "`"), e.getMessage());
     }
 
 }
