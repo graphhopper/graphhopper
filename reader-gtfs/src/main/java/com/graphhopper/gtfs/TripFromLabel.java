@@ -97,7 +97,7 @@ class TripFromLabel {
         path.getLegs().addAll(legs);
 
         final InstructionList instructions = new InstructionList(tr);
-        final PointList pointsList = new PointList();
+        final PointList pointsList = new PointList(10,true);
         Map<String, List<PathDetail>> pathDetails = new HashMap<>();
         for (int i = 0; i < path.getLegs().size(); ++i) {
             Trip.Leg leg = path.getLegs().get(i);
@@ -124,15 +124,15 @@ class TripFromLabel {
                     pl = instructions.get(instructions.size() - 2).getPoints();
                 }
                 pl.add(ptLeg.stops.get(0).geometry.getY(), ptLeg.stops.get(0).geometry.getX());
-                pointsList.add(ptLeg.stops.get(0).geometry.getY(), ptLeg.stops.get(0).geometry.getX());
+                pointsList.add(ptLeg.stops.get(0).geometry.getY(), ptLeg.stops.get(0).geometry.getX(), 0);
                 for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size() - 1)) {
                     pl.add(stop.geometry.getY(), stop.geometry.getX());
-                    pointsList.add(stop.geometry.getY(), stop.geometry.getX());
+                    pointsList.add(stop.geometry.getY(), stop.geometry.getX(), 0);
                 }
                 final PointList arrivalPointList = new PointList();
                 final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size() - 1);
                 arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
-                pointsList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
+                pointsList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX(), 0);
                 Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, arrivalPointList);
                 if (ptLeg.isInSameVehicleAsPrevious) {
                     instructions.set(instructions.size() - 1, arrivalInstruction);
@@ -430,9 +430,9 @@ class TripFromLabel {
     private static List<Coordinate> toCoordinateArray(PointList pointList) {
         List<Coordinate> coordinates = new ArrayList<>(pointList.size());
         for (int i = 0; i < pointList.size(); i++) {
-            coordinates.add(pointList.getDimension() == 3 ?
-                    new Coordinate(pointList.getLon(i), pointList.getLat(i)) :
-                    new Coordinate(pointList.getLon(i), pointList.getLat(i), pointList.getEle(i)));
+            coordinates.add(pointList.is3D() ?
+                    new Coordinate(pointList.getLon(i), pointList.getLat(i), pointList.getEle(i)) :
+                    new Coordinate(pointList.getLon(i), pointList.getLat(i)));
         }
         return coordinates;
     }
