@@ -40,6 +40,7 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
  * Note that this class is meant to be only used for the top-most web layer, while the GH engine should only deal with
  * the profile parameter.
  */
+// todonow: remove from core
 public class ProfileResolver {
     private final EncodingManager encodingManager;
     private final List<Profile> profiles;

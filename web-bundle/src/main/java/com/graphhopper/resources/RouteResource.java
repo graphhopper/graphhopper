@@ -22,9 +22,9 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.GHPointParam;
+import com.graphhopper.http.NewProfileResolver;
 import com.graphhopper.jackson.MultiException;
 import com.graphhopper.jackson.ResponsePathSerializer;
-import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.AbstractParam;
@@ -57,11 +57,11 @@ public class RouteResource {
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
     private final GraphHopper graphHopper;
-    private final ProfileResolver profileResolver;
+    private final NewProfileResolver profileResolver;
     private final Boolean hasElevation;
 
     @Inject
-    public RouteResource(GraphHopper graphHopper, ProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopper graphHopper, NewProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
         this.hasElevation = hasElevation;
@@ -103,12 +103,13 @@ public class RouteResource {
         GHRequest request = new GHRequest();
         initHints(request.getHints(), uriInfo.getQueryParameters());
         String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "") + ", vehicle: " + request.getHints().getString("vehicle", "");
-        if (Helper.isEmpty(profileName)) {
-            enableEdgeBasedIfThereAreCurbsides(curbsides, request);
-            profileName = profileResolver.resolveProfile(request.getHints()).getName();
-            removeLegacyParameters(request.getHints());
-        }
-        errorIfLegacyParameters(request.getHints());
+
+        PMap profileResolverHints = new PMap(request.getHints());
+        profileResolverHints.putObject("profile", profileName);
+        enableEdgeBasedIfThereAreCurbsides(curbsides, profileResolverHints);
+        profileName = profileResolver.resolveProfile(profileResolverHints).getName();
+        removeLegacyParameters(request.getHints());
+
         request.setPoints(points).
                 setProfile(profileName).
                 setAlgorithm(algoStr).
@@ -161,19 +162,16 @@ public class RouteResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
         StopWatch sw = new StopWatch().start();
-        if (request.getCustomModel() == null) {
-            if (Helper.isEmpty(request.getProfile())) {
-                // legacy parameter resolution (only used when there is no custom model)
-                enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
-                request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
-                removeLegacyParameters(request.getHints());
-            }
-        } else {
-            if (Helper.isEmpty(request.getProfile()))
-                // throw a dedicated exception here, otherwise a missing profile is still caught in Router
-                throw new IllegalArgumentException("The 'profile' parameter is required when you use the `custom_model` parameter");
-        }
-        errorIfLegacyParameters(request.getHints());
+        if (Helper.isEmpty(request.getProfile()) && request.getCustomModel() != null)
+            // throw a dedicated exception here, otherwise a missing profile is still caught in Router
+            throw new IllegalArgumentException("The 'profile' parameter is required when you use the `custom_model` parameter");
+
+        PMap profileResolverHints = new PMap(request.getHints());
+        profileResolverHints.putObject("profile", request.getProfile());
+        enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), profileResolverHints);
+        request.setProfile(profileResolver.resolveProfile(profileResolverHints).getName());
+        removeLegacyParameters(request.getHints());
+
         GHResponse ghResponse = graphHopper.route(request);
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
         boolean enableElevation = request.getHints().getBool("elevation", false);
@@ -208,13 +206,13 @@ public class RouteResource {
         }
     }
 
-    private void enableEdgeBasedIfThereAreCurbsides(List<String> curbsides, GHRequest request) {
+    public static void enableEdgeBasedIfThereAreCurbsides(List<String> curbsides, PMap hints) {
         if (!curbsides.isEmpty()) {
-            if (!request.getHints().getBool(TURN_COSTS, true))
+            if (!hints.getBool(TURN_COSTS, true))
                 throw new IllegalArgumentException("Disabling '" + TURN_COSTS + "' when using '" + CURBSIDE + "' is not allowed");
-            if (!request.getHints().getBool(EDGE_BASED, true))
+            if (!hints.getBool(EDGE_BASED, true))
                 throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURBSIDE + "' is not allowed");
-            request.getHints().putObject(EDGE_BASED, true);
+            hints.putObject(EDGE_BASED, true);
         }
     }
 

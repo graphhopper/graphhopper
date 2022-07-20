@@ -145,6 +145,24 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
+    static class NewProfileResolverFactory implements Factory<NewProfileResolver> {
+        @Inject
+        GraphHopper graphHopper;
+
+        @Inject
+        ProfileResolver legacyParameterResolver;
+
+        @Override
+        public NewProfileResolver provide() {
+            return new NewProfileResolver(graphHopper.getProfiles(), legacyParameterResolver);
+        }
+
+        @Override
+        public void dispose(NewProfileResolver instance) {
+
+        }
+    }
+
     static class PathDetailsBuilderFactoryFactory implements Factory<PathDetailsBuilderFactory> {
 
         @Inject
@@ -238,6 +256,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(new JTSTriangulator(graphHopper.getRouterConfig())).to(Triangulator.class);
                 bindFactory(PathDetailsBuilderFactoryFactory.class).to(PathDetailsBuilderFactory.class);
                 bindFactory(ProfileResolverFactory.class).to(ProfileResolver.class);
+                bindFactory(NewProfileResolverFactory.class).to(NewProfileResolver.class);
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
