@@ -106,7 +106,7 @@ public class RouteResource {
 
         PMap profileResolverHints = new PMap(request.getHints());
         profileResolverHints.putObject("profile", profileName);
-        enableEdgeBasedIfThereAreCurbsides(curbsides, profileResolverHints);
+        profileResolverHints.putObject("has_curbsides", !curbsides.isEmpty());
         profileName = profileResolver.resolveProfile(profileResolverHints).getName();
         removeLegacyParameters(request.getHints());
 
@@ -168,7 +168,7 @@ public class RouteResource {
 
         PMap profileResolverHints = new PMap(request.getHints());
         profileResolverHints.putObject("profile", request.getProfile());
-        enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), profileResolverHints);
+        profileResolverHints.putObject("has_curbsides", !request.getCurbsides().isEmpty());
         request.setProfile(profileResolver.resolveProfile(profileResolverHints).getName());
         removeLegacyParameters(request.getHints());
 
@@ -206,8 +206,9 @@ public class RouteResource {
         }
     }
 
-    public static void enableEdgeBasedIfThereAreCurbsides(List<String> curbsides, PMap hints) {
-        if (!curbsides.isEmpty()) {
+    // todonow: move to legacy parameter resolver
+    public static void enableEdgeBasedIfThereAreCurbsides(boolean hasCurbsides, PMap hints) {
+        if (hasCurbsides) {
             if (!hints.getBool(TURN_COSTS, true))
                 throw new IllegalArgumentException("Disabling '" + TURN_COSTS + "' when using '" + CURBSIDE + "' is not allowed");
             if (!hints.getBool(EDGE_BASED, true))

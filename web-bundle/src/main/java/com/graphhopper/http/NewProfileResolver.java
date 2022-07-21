@@ -27,6 +27,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.graphhopper.resources.RouteResource.enableEdgeBasedIfThereAreCurbsides;
 import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
 
 public class NewProfileResolver {
@@ -44,9 +45,12 @@ public class NewProfileResolver {
 
     public Profile resolveProfile(PMap hints) {
         String profileName = hints.getString("profile", "");
-        if (Helper.isEmpty(profileName))
+        if (Helper.isEmpty(profileName)) {
+            boolean hasCurbsides = hints.getBool("has_curbsides", false);
+            enableEdgeBasedIfThereAreCurbsides(hasCurbsides, hints);
             return legacyParameterResolver.resolveProfile(hints);
-        errorIfLegacyParameters(hints);
+        } else
+            errorIfLegacyParameters(hints);
         Profile profile = profilesByName.get(profileName);
         if (profile == null)
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist.\nAvailable profiles: " + profilesByName.keySet());
