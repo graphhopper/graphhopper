@@ -117,14 +117,11 @@ public class RacingBikeTagParser extends BikeCommonTagParser {
         addPushingSection("pedestrian");
         addPushingSection("steps");
 
+        // overwite map from BikeCommon
         setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.EXCELLENT, 1.2d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.GOOD, 1.0d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.INTERMEDIATE, 0.9d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.BAD, 0.7d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_BAD, smoothnessFactorPushingSectionThreshold);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.HORRIBLE, smoothnessFactorPushingSectionThreshold);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_HORRIBLE, smoothnessFactorPushingSectionThreshold);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.IMPASSABLE, smoothnessFactorPushingSectionThreshold);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_BAD, 0.1);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.HORRIBLE, 0.1);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_HORRIBLE, 0.1);
 
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());

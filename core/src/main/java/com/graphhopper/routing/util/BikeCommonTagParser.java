@@ -47,7 +47,6 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
     protected final Set<String> unpavedSurfaceTags = new HashSet<>();
     private final Map<String, Integer> trackTypeSpeeds = new HashMap<>();
     private final Map<String, Integer> surfaceSpeeds = new HashMap<>();
-    protected static final double smoothnessFactorPushingSectionThreshold = 0.3d;
     private final Map<Smoothness, Double> smoothnessFactor = new HashMap<>();
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     protected final DecimalEncodedValue priorityEnc;
@@ -177,9 +176,17 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         routeMap.put(REGIONAL, VERY_NICE.getValue());
         routeMap.put(LOCAL, PREFER.getValue());
 
+        // note that this factor reduces the speed but only until MIN_SPEED
         setSmoothnessSpeedFactor(Smoothness.MISSING, 1.0d);
         setSmoothnessSpeedFactor(Smoothness.OTHER, 0.7d);
-        setSmoothnessSpeedFactor(Smoothness.IMPASSABLE, 0.1d);
+        setSmoothnessSpeedFactor(Smoothness.EXCELLENT, 1.1d);
+        setSmoothnessSpeedFactor(Smoothness.GOOD, 1.0d);
+        setSmoothnessSpeedFactor(Smoothness.INTERMEDIATE, 0.9d);
+        setSmoothnessSpeedFactor(Smoothness.BAD, 0.7d);
+        setSmoothnessSpeedFactor(Smoothness.VERY_BAD, 0.4d);
+        setSmoothnessSpeedFactor(Smoothness.HORRIBLE, 0.3d);
+        setSmoothnessSpeedFactor(Smoothness.VERY_HORRIBLE, 0.1d);
+        setSmoothnessSpeedFactor(Smoothness.IMPASSABLE, 0);
 
         setAvoidSpeedLimit(71);
     }
@@ -281,12 +288,8 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         if (!access.isFerry()) {
             wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
             Smoothness smoothness = smoothnessEnc.getEnum(false, edgeFlags);
-            if (smoothness != Smoothness.MISSING) {
-                // smoothness handling: Multiply speed with smoothnessFactor
-                double smoothnessSpeedFactor = smoothnessFactor.get(smoothness);
-                wayTypeSpeed = (smoothnessSpeedFactor <= smoothnessFactorPushingSectionThreshold) ?
-                        MIN_SPEED : Math.round(smoothnessSpeedFactor * wayTypeSpeed);
-            }
+            wayTypeSpeed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * wayTypeSpeed);
+
             avgSpeedEnc.setDecimal(false, edgeFlags, wayTypeSpeed);
             if (avgSpeedEnc.isStoreTwoDirections())
                 avgSpeedEnc.setDecimal(true, edgeFlags, wayTypeSpeed);
