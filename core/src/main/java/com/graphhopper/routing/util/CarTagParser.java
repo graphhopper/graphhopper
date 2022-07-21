@@ -93,6 +93,7 @@ public class CarTagParser extends VehicleTagParser {
         barriers.add("block");
         barriers.add("bus_trap");
         barriers.add("sump_buster");
+        barriers.add("jersey_barrier");
 
         badSurfaceSpeedMap.add("cobblestone");
         badSurfaceSpeedMap.add("grass_paver");
