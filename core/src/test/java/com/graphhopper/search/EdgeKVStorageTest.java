@@ -21,7 +21,7 @@ public class EdgeKVStorageTest {
     private final static String location = "./target/edge-kv-storage";
 
     private EdgeKVStorage create() {
-        return new EdgeKVStorage(new RAMDirectory(), 1000).create(1000);
+        return new EdgeKVStorage(new RAMDirectory()).create(1000);
     }
 
     List<KeyValue> createList(Object... keyValues) {
@@ -217,12 +217,12 @@ public class EdgeKVStorageTest {
     public void testFlush() {
         Helper.removeDir(new File(location));
 
-        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create(), 1000);
+        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create());
         long pointer = index.add(createList("", "test"));
         index.flush();
         index.close();
 
-        index = new EdgeKVStorage(new RAMDirectory(location, true), 1000);
+        index = new EdgeKVStorage(new RAMDirectory(location, true));
         assertTrue(index.loadExisting());
         assertEquals("test", index.get(pointer, "", false));
         // make sure bytePointer is correctly set after loadExisting
@@ -237,7 +237,7 @@ public class EdgeKVStorageTest {
     public void testLoadKeys() {
         Helper.removeDir(new File(location));
 
-        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create(), 1000).create(1000);
+        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create()).create(1000);
         long pointerA = index.add(createList("c", "test value"));
         assertEquals(2, index.getKeys().size());
         long pointerB = index.add(createList("a", "value", "b", "another value"));
@@ -246,7 +246,7 @@ public class EdgeKVStorageTest {
         index.flush();
         index.close();
 
-        index = new EdgeKVStorage(new RAMDirectory(location, true), 1000);
+        index = new EdgeKVStorage(new RAMDirectory(location, true));
         assertTrue(index.loadExisting());
         assertEquals("[, c, a, b]", index.getKeys().toString());
         assertEquals("test value", index.get(pointerA, "c", false));

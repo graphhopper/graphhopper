@@ -82,14 +82,10 @@ public class EdgeKVStorage {
     private long lastEntryPointer = -1;
     private List<KeyValue> lastEntries;
 
-    public EdgeKVStorage(Directory dir) {
-        this(dir, 1000);
-    }
-
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
-    public EdgeKVStorage(Directory dir, final int cacheSize) {
+    public EdgeKVStorage(Directory dir) {
         keys = dir.create("edgekv_keys", 10 * 1024);
         vals = dir.create("edgekv_vals");
     }
