@@ -26,20 +26,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.graphhopper.resources.RouteResource.enableEdgeBasedIfThereAreCurbsides;
-import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
+import static com.graphhopper.util.Parameters.Routing.*;
 
 public class ProfileResolver {
     private final Map<String, Profile> profilesByName;
-    private final LegacyProfileResolver legacyParameterResolver;
+    private final LegacyProfileResolver legacyProfileResolver;
 
-    public ProfileResolver(List<Profile> profiles, LegacyProfileResolver legacyParameterResolver) {
+    public ProfileResolver(List<Profile> profiles, LegacyProfileResolver legacyProfileResolver) {
         profilesByName = new LinkedHashMap<>(profiles.size());
         profiles.forEach(p -> {
             if (profilesByName.put(p.getName(), p) != null)
                 throw new IllegalArgumentException("Profiles must have distinct names");
         });
-        this.legacyParameterResolver = legacyParameterResolver;
+        this.legacyProfileResolver = legacyProfileResolver;
     }
 
     public Profile resolveProfile(PMap hints) {
@@ -47,7 +46,7 @@ public class ProfileResolver {
         if (Helper.isEmpty(profileName)) {
             boolean hasCurbsides = hints.getBool("has_curbsides", false);
             enableEdgeBasedIfThereAreCurbsides(hasCurbsides, hints);
-            return legacyParameterResolver.resolveProfile(hints);
+            return legacyProfileResolver.resolveProfile(hints);
         } else
             errorIfLegacyParameters(hints);
         Profile profile = profilesByName.get(profileName);
@@ -55,4 +54,30 @@ public class ProfileResolver {
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist.\nAvailable profiles: " + profilesByName.keySet());
         return profile;
     }
+
+    public static void enableEdgeBasedIfThereAreCurbsides(boolean hasCurbsides, PMap hints) {
+        if (hasCurbsides) {
+            if (!hints.getBool(TURN_COSTS, true))
+                throw new IllegalArgumentException("Disabling '" + TURN_COSTS + "' when using '" + CURBSIDE + "' is not allowed");
+            if (!hints.getBool(EDGE_BASED, true))
+                throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURBSIDE + "' is not allowed");
+            hints.putObject(EDGE_BASED, true);
+        }
+    }
+
+    public static void errorIfLegacyParameters(PMap hints) {
+        if (hints.has("weighting"))
+            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'weighting' parameter." +
+                    " You used 'weighting=" + hints.getString("weighting", "") + "'");
+        if (hints.has("vehicle"))
+            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'vehicle' parameter." +
+                    " You used 'vehicle=" + hints.getString("vehicle", "") + "'");
+        if (hints.has("edge_based"))
+            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'edge_based' parameter." +
+                    " You used 'edge_based=" + hints.getBool("edge_based", false) + "'");
+        if (hints.has("turn_costs"))
+            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'turn_costs' parameter." +
+                    " You used 'turn_costs=" + hints.getBool("turn_costs", false) + "'");
+    }
+
 }

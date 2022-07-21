@@ -206,32 +206,6 @@ public class RouteResource {
         }
     }
 
-    // todonow: move to legacy parameter resolver
-    public static void enableEdgeBasedIfThereAreCurbsides(boolean hasCurbsides, PMap hints) {
-        if (hasCurbsides) {
-            if (!hints.getBool(TURN_COSTS, true))
-                throw new IllegalArgumentException("Disabling '" + TURN_COSTS + "' when using '" + CURBSIDE + "' is not allowed");
-            if (!hints.getBool(EDGE_BASED, true))
-                throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURBSIDE + "' is not allowed");
-            hints.putObject(EDGE_BASED, true);
-        }
-    }
-
-    public static void errorIfLegacyParameters(PMap hints) {
-        if (hints.has("weighting"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'weighting' parameter." +
-                    " You used 'weighting=" + hints.getString("weighting", "") + "'");
-        if (hints.has("vehicle"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'vehicle' parameter." +
-                    " You used 'vehicle=" + hints.getString("vehicle", "") + "'");
-        if (hints.has("edge_based"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'edge_based' parameter." +
-                    " You used 'edge_based=" + hints.getBool("edge_based", false) + "'");
-        if (hints.has("turn_costs"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'turn_costs' parameter." +
-                    " You used 'turn_costs=" + hints.getBool("turn_costs", false) + "'");
-    }
-
     public static void removeLegacyParameters(PMap hints) {
         // these parameters should only be used to resolve the profile, but should not be passed to GraphHopper
         hints.remove("weighting");

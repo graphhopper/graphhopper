@@ -149,11 +149,11 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         GraphHopper graphHopper;
 
         @Inject
-        LegacyProfileResolver legacyParameterResolver;
+        LegacyProfileResolver legacyProfileResolver;
 
         @Override
         public ProfileResolver provide() {
-            return new ProfileResolver(graphHopper.getProfiles(), legacyParameterResolver);
+            return new ProfileResolver(graphHopper.getProfiles(), legacyProfileResolver);
         }
 
         @Override
