@@ -54,7 +54,7 @@ public class ProfileResolver {
     }
 
     protected Profile doResolveProfile(PMap hints) {
-        return profilesByName.get(hints);
+        return profilesByName.get(hints.getString("profile", ""));
     }
 
     public static void enableEdgeBasedIfThereAreCurbsides(boolean hasCurbsides, PMap hints) {
