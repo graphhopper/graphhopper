@@ -1,4 +1,5 @@
 ### 6.0 [not yet released]
+- path details at via-points are no longer merged, see #2626
 - removed the FlagEncoder interface. for example encoder.getAccessEnc() is now encodingManager.getBooleanEncodedValue(
   VehicleAccess.key("car")), #2611
 - backward incompatible change as instructions and the street_name path detail do no longer contain the ref #2598

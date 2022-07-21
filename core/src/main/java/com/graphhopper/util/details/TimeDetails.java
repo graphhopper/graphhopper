@@ -42,12 +42,9 @@ public class TimeDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        if (edge.getEdge() != prevEdgeId) {
-            time = GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdgeId);
-            prevEdgeId = edge.getEdge();
-            return true;
-        }
-        return false;
+        time = GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdgeId);
+        prevEdgeId = edge.getEdge();
+        return true;
     }
 
     @Override

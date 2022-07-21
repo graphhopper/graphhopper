@@ -126,7 +126,7 @@ class HeadingRoutingTest {
                 setPathDetails(Collections.singletonList("edge_key"));
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{4, 5, 6, 7, 8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+        assertArrayEquals(new int[]{4, 5, 6, 7, 7, 8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
     }
 
     @Test
@@ -152,7 +152,7 @@ class HeadingRoutingTest {
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
         assertEquals(1, response.getAll().size());
-        assertArrayEquals(new int[]{5, 4, 3, 8, 1, 2, 3}, calcNodes(graph, response.getAll().get(0)));
+        assertArrayEquals(new int[]{5, 4, 3, 3, 8, 1, 2, 3}, calcNodes(graph, response.getAll().get(0)));
     }
 
     @Test
@@ -166,10 +166,10 @@ class HeadingRoutingTest {
 
         // Start in middle of edge 4-5
         GHPoint start = new GHPoint(0.0015, 0.002);
+        // First go south and then come from west to via-point at 7-6. Then go back over previously punished (11)-4 edge
+        GHPoint via = new GHPoint(0.000, 0.0015);
         // End at middle of edge 2-3
         GHPoint end = new GHPoint(0.002, 0.0005);
-        // First go south and than come from west to via-point at 7-6. Then go back over previously punished (11)-4 edge
-        GHPoint via = new GHPoint(0.000, 0.0015);
         GHRequest req = new GHRequest().
                 setPoints(Arrays.asList(start, via, end)).
                 setHeadings(Arrays.asList(0., 90., Double.NaN)).
@@ -178,7 +178,7 @@ class HeadingRoutingTest {
         req.putHint(Parameters.Routing.PASS_THROUGH, true);
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{5, 4, 3, 8, 7, 6, 5, 4, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+        assertArrayEquals(new int[]{5, 4, 3, 8, 7, 7, 6, 5, 4, 3, 2}, calcNodes(graph, response.getBest()));
     }
 
     @Test
@@ -383,12 +383,10 @@ class HeadingRoutingTest {
         List<PathDetail> edgeKeys = responsePath.getPathDetails().get("edge_key");
         int[] result = new int[edgeKeys.size() + 1];
         for (int i = 0; i < edgeKeys.size(); i++) {
-            int edgeKey = (int) edgeKeys.get(i).getValue();
-            int edgeId = edgeKey / 2;
-            EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
-            result[i] = edgeKey % 2 == 0 ? edgeIteratorState.getBaseNode() : edgeIteratorState.getAdjNode();
-            if (i == edgeKeys.size() - 1)
-                result[edgeKeys.size()] = edgeKey % 2 == 0 ? edgeIteratorState.getAdjNode() : edgeIteratorState.getBaseNode();
+            EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey((int) edgeKeys.get(i).getValue());
+            result[i] = edgeIteratorState.getBaseNode();
+            // last entry needs an additional node:
+            if (i == edgeKeys.size() - 1) result[edgeKeys.size()] = edgeIteratorState.getAdjNode();
         }
         return result;
     }
