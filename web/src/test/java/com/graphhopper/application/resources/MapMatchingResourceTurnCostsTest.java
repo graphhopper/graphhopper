@@ -112,7 +112,7 @@ public class MapMatchingResourceTurnCostsTest {
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("message"), json.toString());
         assertEquals(400, response.getStatus());
-        assertTrue(json.toString().contains("Could not find profile 'xyz', choose one of: [car, car_no_tc, bike]"));
+        assertTrue(json.toString().contains("The requested profile 'xyz' does not exist.\\nAvailable profiles: [car, car_no_tc, bike]"), json.toString());
     }
 
     private void runCar(String urlParams) {

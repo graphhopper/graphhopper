@@ -92,7 +92,7 @@ public class RouteResourceProfileSelectionTest {
     @ValueSource(strings = {"CH", "LM", "flex"})
     public void withoutProfile(String mode) {
         // for legacy reasons we can skip the profile parameter and use the vehicle/weighting parameters instead,
-        // see ProfileResolver
+        // see LegacyProfileResolver
         assertDistance(null, "car", "fastest", mode, 3563);
         assertDistance(null, "foot", "shortest", mode, 2935);
         assertDistance(null, "bike", "short_fastest", mode, 3085);

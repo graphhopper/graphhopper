@@ -16,13 +16,11 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing;
+package com.graphhopper.http;
 
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.ch.CHProfileSelectorTest;
-import com.graphhopper.routing.lm.LMProfileSelectorTest;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
@@ -37,13 +35,13 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * So far this test is only testing the profile selection in the absence of CH/LM profiles. For CH/LM profile selection
  *
- * @see CHProfileSelectorTest
- * @see LMProfileSelectorTest
+ * @see CHLegacyProfileSelectorTest
+ * @see LMLegacyProfileSelectorTest
  */
-public class ProfileResolverTest {
+public class LegacyProfileResolverTest {
     @Test
     public void defaultVehicle() {
-        ProfileResolver profileResolver = new ProfileResolver(
+        LegacyProfileResolver profileResolver = new LegacyProfileResolver(
                 EncodingManager.create("car,foot,bike"),
                 Arrays.asList(
                         new Profile("my_bike").setVehicle("bike"),
@@ -59,7 +57,7 @@ public class ProfileResolverTest {
 
     @Test
     public void defaultWeighting() {
-        ProfileResolver profileResolver = new ProfileResolver(
+        LegacyProfileResolver profileResolver = new LegacyProfileResolver(
                 EncodingManager.create("bike,car,foot"),
                 Arrays.asList(
                         new Profile("fast_bike").setVehicle("bike").setWeighting("fastest"),
@@ -75,7 +73,7 @@ public class ProfileResolverTest {
 
     @Test
     public void missingProfiles() {
-        ProfileResolver profileResolver = new ProfileResolver(
+        LegacyProfileResolver profileResolver = new LegacyProfileResolver(
                 EncodingManager.create("car,bike"),
                 Arrays.asList(
                         new Profile("fast_bike").setVehicle("bike").setWeighting("fastest"),
@@ -99,7 +97,7 @@ public class ProfileResolverTest {
 
     @Test
     public void edgeBasedAndTurnCosts() {
-        ProfileResolver profileResolver = new ProfileResolver(
+        LegacyProfileResolver profileResolver = new LegacyProfileResolver(
                 EncodingManager.create("foot"),
                 Collections.singletonList(new Profile("profile").setVehicle("foot").setWeighting("fastest")),
                 Collections.emptyList(), Collections.emptyList());
@@ -117,7 +115,7 @@ public class ProfileResolverTest {
         final String vehicle2 = "car";
         final String weighting = "shortest";
 
-        ProfileResolver profileResolver = new ProfileResolver(
+        LegacyProfileResolver profileResolver = new LegacyProfileResolver(
                 EncodingManager.create(vehicle1 + "," + vehicle2),
                 Arrays.asList(
                         new Profile(profile1).setVehicle(vehicle1).setWeighting(weighting),
@@ -145,7 +143,7 @@ public class ProfileResolverTest {
         assertEquals(profile1, profileResolver.resolveProfile(hints.putObject(Parameters.Landmark.DISABLE, true)).getName());
     }
 
-    private void assertMultiMatchError(ProfileResolver profileResolver, PMap hints, String... expectedErrors) {
+    private void assertMultiMatchError(LegacyProfileResolver profileResolver, PMap hints, String... expectedErrors) {
         if (expectedErrors.length == 0) {
             throw new IllegalArgumentException("there must be at least one expected error");
         }
@@ -159,7 +157,7 @@ public class ProfileResolverTest {
         }
     }
 
-    private void assertProfileNotFound(ProfileResolver profileResolver, PMap hints) {
+    private void assertProfileNotFound(LegacyProfileResolver profileResolver, PMap hints) {
         try {
             profileResolver.resolveProfile(hints);
             fail();
@@ -168,7 +166,7 @@ public class ProfileResolverTest {
         }
     }
 
-    private void assertUnsupportedVehicle(ProfileResolver profileResolver, String vehicle, List<String> supported) {
+    private void assertUnsupportedVehicle(LegacyProfileResolver profileResolver, String vehicle, List<String> supported) {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class, () -> profileResolver.resolveProfile(new PMap().putObject("vehicle", vehicle)));
         assertTrue(e.getMessage().contains("Vehicle not supported: `" + vehicle + "`. Supported are: `" + String.join(",", supported) + "`"), e.getMessage());
     }
