@@ -466,7 +466,7 @@ public class OSMReader {
         if (str == null)
             return "";
         // the EdgeKVStorage does not accept too long strings -> Helper.cutStringForKV
-        return Helper.cutStringForKV(WAY_NAME_PATTERN.matcher(str).replaceAll(", "));
+        return EdgeKVStorage.cutString(WAY_NAME_PATTERN.matcher(str).replaceAll(", "));
     }
 
     /**

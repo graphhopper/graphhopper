@@ -12,6 +12,8 @@ import java.util.*;
 
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
 import static com.graphhopper.search.EdgeKVStorage.MAX_UNIQUE_KEYS;
+import static com.graphhopper.search.EdgeKVStorage.cutString;
+import static com.graphhopper.util.Helper.UTF_CS;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class EdgeKVStorageTest {
@@ -370,5 +372,25 @@ public class EdgeKVStorageTest {
             list.add(new KeyValue(key, key.endsWith("_s") ? o + "_s" : o));
         }
         return list;
+    }
+
+    // @RepeatedTest(1000)
+    public void ignoreRandomString() {
+        String s = "";
+        long seed = new Random().nextLong();
+        Random rand = new Random(seed);
+        for (int i = 0; i < 255; i++) {
+            s += (char) rand.nextInt();
+        }
+
+        s = cutString(s);
+        assertTrue(s.getBytes(UTF_CS).length <= 255, s.getBytes(UTF_CS).length + " -> seed " + seed);
+    }
+
+    @Test
+    public void testCutString() {
+        String s = cutString("Бухарестская улица (http://ru.wikipedia.org/wiki/" +
+                "%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))");
+        assertEquals(250, s.getBytes(UTF_CS).length);
     }
 }
