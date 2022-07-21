@@ -124,14 +124,14 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
-    static class ProfileResolverFactory implements Factory<ProfileResolver> {
+    static class LegacyProfileResolverFactory implements Factory<LegacyProfileResolver> {
 
         @Inject
         GraphHopper graphHopper;
 
         @Override
-        public ProfileResolver provide() {
-            return new ProfileResolver(graphHopper.getEncodingManager(),
+        public LegacyProfileResolver provide() {
+            return new LegacyProfileResolver(graphHopper.getEncodingManager(),
                     graphHopper.getProfiles(),
                     graphHopper.getCHPreparationHandler().getCHProfiles(),
                     graphHopper.getLMPreparationHandler().getLMProfiles()
@@ -139,7 +139,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
 
         @Override
-        public void dispose(ProfileResolver profileResolver) {
+        public void dispose(LegacyProfileResolver profileResolver) {
 
         }
     }
@@ -149,7 +149,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         GraphHopper graphHopper;
 
         @Inject
-        ProfileResolver legacyParameterResolver;
+        LegacyProfileResolver legacyParameterResolver;
 
         @Override
         public NewProfileResolver provide() {
@@ -254,7 +254,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
                 bind(new JTSTriangulator(graphHopper.getRouterConfig())).to(Triangulator.class);
                 bindFactory(PathDetailsBuilderFactoryFactory.class).to(PathDetailsBuilderFactory.class);
-                bindFactory(ProfileResolverFactory.class).to(ProfileResolver.class);
+                bindFactory(LegacyProfileResolverFactory.class).to(LegacyProfileResolver.class);
                 bindFactory(NewProfileResolverFactory.class).to(NewProfileResolver.class);
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);

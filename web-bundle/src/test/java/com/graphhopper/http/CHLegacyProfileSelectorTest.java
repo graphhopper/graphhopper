@@ -38,7 +38,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-public class CHProfileSelectorTest {
+public class CHLegacyProfileSelectorTest {
 
     private static final String MULTIPLE_MATCHES_ERROR = "There are multiple CH profiles matching your request. Use the `weighting`,`vehicle`,`turn_costs` and/or `u_turn_costs` parameters to be more specific";
     private static final String NO_MATCH_ERROR = "Cannot find matching profile that supports CH for your request";
@@ -268,7 +268,7 @@ public class CHProfileSelectorTest {
     private void assertProfileFound(Profile expectedProfile, List<Profile> profiles, List<CHProfile> chProfiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         PMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
-            Profile selectedProfile = new ProfileResolver(encodingManager, profiles, chProfiles, Collections.<LMProfile>emptyList()).selectProfileCH(hintsMap);
+            Profile selectedProfile = new LegacyProfileResolver(encodingManager, profiles, chProfiles, Collections.<LMProfile>emptyList()).selectProfileCH(hintsMap);
             assertEquals(expectedProfile, selectedProfile);
         } catch (IllegalArgumentException e) {
             fail("no profile found\nexpected: " + expectedProfile + "\nerror: " + e.getMessage());
@@ -282,7 +282,7 @@ public class CHProfileSelectorTest {
     private String assertCHProfileSelectionError(String expectedError, List<Profile> profiles, List<CHProfile> chProfiles, String vehicle, String weighting, Boolean edgeBased, Integer uTurnCosts) {
         PMap hintsMap = createHintsMap(vehicle, weighting, edgeBased, uTurnCosts);
         try {
-            new ProfileResolver(encodingManager, profiles, chProfiles, Collections.<LMProfile>emptyList()).selectProfileCH(hintsMap);
+            new LegacyProfileResolver(encodingManager, profiles, chProfiles, Collections.<LMProfile>emptyList()).selectProfileCH(hintsMap);
             fail("There should have been an error");
             return "";
         } catch (IllegalArgumentException e) {

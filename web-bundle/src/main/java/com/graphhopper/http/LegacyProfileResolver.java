@@ -40,13 +40,13 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
  * Note that this class is meant to be only used for the top-most web layer, while the GH engine should only deal with
  * the profile parameter.
  */
-public class ProfileResolver {
+public class LegacyProfileResolver {
     private final EncodingManager encodingManager;
     private final List<Profile> profiles;
     private final List<Profile> chProfiles;
     private final List<Profile> lmProfiles;
 
-    public ProfileResolver(EncodingManager encodingManager, List<Profile> profiles, List<CHProfile> chProfiles, List<LMProfile> lmProfiles) {
+    public LegacyProfileResolver(EncodingManager encodingManager, List<Profile> profiles, List<CHProfile> chProfiles, List<LMProfile> lmProfiles) {
         this.encodingManager = encodingManager;
         this.profiles = profiles;
         Map<String, Profile> profilesByName = new HashMap<>(profiles.size());
