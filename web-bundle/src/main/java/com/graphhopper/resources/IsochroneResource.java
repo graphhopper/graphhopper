@@ -83,10 +83,12 @@ public class IsochroneResource {
 
         PMap profileResolverHints = new PMap(hintsMap);
         profileResolverHints.putObject("profile", profileName);
-        Profile profile = profileResolver.resolveProfile(profileResolverHints);
-        profileName = profile.getName();
+        profileName = profileResolver.resolveProfile(profileResolverHints);
         removeLegacyParameters(hintsMap);
 
+        Profile profile = graphHopper.getProfile(profileName);
+        if (profile == null)
+            throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
         LocationIndex locationIndex = graphHopper.getLocationIndex();
         BaseGraph graph = graphHopper.getBaseGraph();
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);

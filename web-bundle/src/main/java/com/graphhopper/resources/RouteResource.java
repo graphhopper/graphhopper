@@ -107,7 +107,7 @@ public class RouteResource {
         PMap profileResolverHints = new PMap(request.getHints());
         profileResolverHints.putObject("profile", profileName);
         profileResolverHints.putObject("has_curbsides", !curbsides.isEmpty());
-        profileName = profileResolver.resolveProfile(profileResolverHints).getName();
+        profileName = profileResolver.resolveProfile(profileResolverHints);
         removeLegacyParameters(request.getHints());
 
         request.setPoints(points).
@@ -169,7 +169,7 @@ public class RouteResource {
         PMap profileResolverHints = new PMap(request.getHints());
         profileResolverHints.putObject("profile", request.getProfile());
         profileResolverHints.putObject("has_curbsides", !request.getCurbsides().isEmpty());
-        request.setProfile(profileResolver.resolveProfile(profileResolverHints).getName());
+        request.setProfile(profileResolver.resolveProfile(profileResolverHints));
         removeLegacyParameters(request.getHints());
 
         GHResponse ghResponse = graphHopper.route(request);

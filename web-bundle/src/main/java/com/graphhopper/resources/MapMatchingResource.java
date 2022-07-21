@@ -113,7 +113,7 @@ public class MapMatchingResource {
         PMap profileResolverHints = new PMap(hints);
         profileResolverHints.putObject("profile", profile);
         profileResolverHints.putObject(Parameters.CH.DISABLE, true);
-        profile = profileResolver.resolveProfile(profileResolverHints).getName();
+        profile = profileResolver.resolveProfile(profileResolverHints);
         hints.putObject("profile", profile);
         removeLegacyParameters(hints);
 

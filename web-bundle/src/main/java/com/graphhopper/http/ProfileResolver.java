@@ -28,7 +28,7 @@ import java.util.Map;
 import static com.graphhopper.util.Parameters.Routing.*;
 
 public class ProfileResolver {
-    private final Map<String, Profile> profilesByName;
+    protected final Map<String, Profile> profilesByName;
     private final LegacyProfileResolver legacyProfileResolver;
 
     public ProfileResolver(List<Profile> profiles, LegacyProfileResolver legacyProfileResolver) {
@@ -40,21 +40,23 @@ public class ProfileResolver {
         this.legacyProfileResolver = legacyProfileResolver;
     }
 
-    public Profile resolveProfile(PMap hints) {
-        if (hints.getString("profile", "").isEmpty()) {
+    public String resolveProfile(PMap hints) {
+        String profileName = hints.getString("profile", "");
+        if (profileName.isEmpty()) {
             boolean hasCurbsides = hints.getBool("has_curbsides", false);
             enableEdgeBasedIfThereAreCurbsides(hasCurbsides, hints);
-            return legacyProfileResolver.resolveProfile(hints);
+            return legacyProfileResolver.resolveProfile(hints).getName();
         }
         errorIfLegacyParameters(hints);
-        Profile profile = doResolveProfile(hints);
+        String profile = doResolveProfile(profileName, hints);
         if (profile == null)
-            throw new IllegalArgumentException("The requested profile '" + hints.getString("profile", "") + "' does not exist.\nAvailable profiles: " + profilesByName.keySet());
+            throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist.\nAvailable profiles: " + profilesByName.keySet());
         return profile;
     }
 
-    protected Profile doResolveProfile(PMap hints) {
-        return profilesByName.get(hints.getString("profile", ""));
+    protected String doResolveProfile(String profileName, PMap hints) {
+        Profile profile = profilesByName.get(profileName);
+        return profile == null ? null : profile.getName();
     }
 
     public static void enableEdgeBasedIfThereAreCurbsides(boolean hasCurbsides, PMap hints) {
