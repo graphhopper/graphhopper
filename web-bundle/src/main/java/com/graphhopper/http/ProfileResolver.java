@@ -19,7 +19,6 @@
 package com.graphhopper.http;
 
 import com.graphhopper.config.Profile;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 import java.util.LinkedHashMap;
@@ -42,17 +41,20 @@ public class ProfileResolver {
     }
 
     public Profile resolveProfile(PMap hints) {
-        String profileName = hints.getString("profile", "");
-        if (Helper.isEmpty(profileName)) {
+        if (hints.getString("profile", "").isEmpty()) {
             boolean hasCurbsides = hints.getBool("has_curbsides", false);
             enableEdgeBasedIfThereAreCurbsides(hasCurbsides, hints);
             return legacyProfileResolver.resolveProfile(hints);
-        } else
-            errorIfLegacyParameters(hints);
-        Profile profile = profilesByName.get(profileName);
+        }
+        errorIfLegacyParameters(hints);
+        Profile profile = doResolveProfile(hints);
         if (profile == null)
-            throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist.\nAvailable profiles: " + profilesByName.keySet());
+            throw new IllegalArgumentException("The requested profile '" + hints.getString("profile", "") + "' does not exist.\nAvailable profiles: " + profilesByName.keySet());
         return profile;
+    }
+
+    protected Profile doResolveProfile(PMap hints) {
+        return profilesByName.get(hints);
     }
 
     public static void enableEdgeBasedIfThereAreCurbsides(boolean hasCurbsides, PMap hints) {
