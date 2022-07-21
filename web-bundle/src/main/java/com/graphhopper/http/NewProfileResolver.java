@@ -19,7 +19,6 @@
 package com.graphhopper.http;
 
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 

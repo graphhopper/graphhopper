@@ -16,12 +16,11 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.lm;
+package com.graphhopper.http;
 
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.VehicleAccess;
