@@ -22,7 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.GHPointParam;
-import com.graphhopper.http.NewProfileResolver;
+import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.jackson.MultiException;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.util.*;
@@ -57,11 +57,11 @@ public class RouteResource {
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
     private final GraphHopper graphHopper;
-    private final NewProfileResolver profileResolver;
+    private final ProfileResolver profileResolver;
     private final Boolean hasElevation;
 
     @Inject
-    public RouteResource(GraphHopper graphHopper, NewProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopper graphHopper, ProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
         this.hasElevation = hasElevation;

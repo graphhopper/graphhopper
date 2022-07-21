@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
-import com.graphhopper.http.NewProfileResolver;
+import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.isochrone.algorithm.Triangulator;
@@ -50,10 +50,10 @@ public class IsochroneResource {
 
     private final GraphHopper graphHopper;
     private final Triangulator triangulator;
-    private final NewProfileResolver profileResolver;
+    private final ProfileResolver profileResolver;
 
     @Inject
-    public IsochroneResource(GraphHopper graphHopper, Triangulator triangulator, NewProfileResolver profileResolver) {
+    public IsochroneResource(GraphHopper graphHopper, Triangulator triangulator, ProfileResolver profileResolver) {
         this.graphHopper = graphHopper;
         this.triangulator = triangulator;
         this.profileResolver = profileResolver;

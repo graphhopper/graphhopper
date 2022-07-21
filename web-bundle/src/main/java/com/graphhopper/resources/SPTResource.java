@@ -3,7 +3,7 @@ package com.graphhopper.resources;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
-import com.graphhopper.http.NewProfileResolver;
+import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -57,11 +57,11 @@ public class SPTResource {
     }
 
     private final GraphHopper graphHopper;
-    private final NewProfileResolver profileResolver;
+    private final ProfileResolver profileResolver;
     private final EncodingManager encodingManager;
 
     @Inject
-    public SPTResource(GraphHopper graphHopper, NewProfileResolver profileResolver, EncodingManager encodingManager) {
+    public SPTResource(GraphHopper graphHopper, ProfileResolver profileResolver, EncodingManager encodingManager) {
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
         this.encodingManager = encodingManager;

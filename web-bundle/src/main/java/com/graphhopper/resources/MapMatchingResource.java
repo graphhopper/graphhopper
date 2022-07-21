@@ -25,7 +25,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.gpx.GpxConversions;
-import com.graphhopper.http.NewProfileResolver;
+import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.jackson.Gpx;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
@@ -57,11 +57,11 @@ public class MapMatchingResource {
     private static final Logger logger = LoggerFactory.getLogger(MapMatchingResource.class);
 
     private final GraphHopper graphHopper;
-    private final NewProfileResolver profileResolver;
+    private final ProfileResolver profileResolver;
     private final TranslationMap trMap;
 
     @Inject
-    public MapMatchingResource(GraphHopper graphHopper, NewProfileResolver profileResolver, TranslationMap trMap) {
+    public MapMatchingResource(GraphHopper graphHopper, ProfileResolver profileResolver, TranslationMap trMap) {
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
         this.trMap = trMap;

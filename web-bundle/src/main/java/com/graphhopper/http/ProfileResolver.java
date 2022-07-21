@@ -29,11 +29,11 @@ import java.util.Map;
 import static com.graphhopper.resources.RouteResource.enableEdgeBasedIfThereAreCurbsides;
 import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
 
-public class NewProfileResolver {
+public class ProfileResolver {
     private final Map<String, Profile> profilesByName;
     private final LegacyProfileResolver legacyParameterResolver;
 
-    public NewProfileResolver(List<Profile> profiles, LegacyProfileResolver legacyParameterResolver) {
+    public ProfileResolver(List<Profile> profiles, LegacyProfileResolver legacyParameterResolver) {
         profilesByName = new LinkedHashMap<>(profiles.size());
         profiles.forEach(p -> {
             if (profilesByName.put(p.getName(), p) != null)
