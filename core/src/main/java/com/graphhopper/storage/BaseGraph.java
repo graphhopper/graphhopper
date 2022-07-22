@@ -28,7 +28,6 @@ import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
 import java.util.List;
-import java.util.Map;
 
 import static com.graphhopper.util.Helper.nf;
 
@@ -44,6 +43,7 @@ import static com.graphhopper.util.Helper.nf;
  * loadExisting, (4) usage, (5) flush, (6) close
  */
 public class BaseGraph implements Graph, Closeable {
+    final static long MAX_UNSIGNED_INT = 1L << 32;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final EdgeKVStorage edgeKVStorage;
@@ -339,6 +339,8 @@ public class BaseGraph implements Graph, Closeable {
                 throw new IllegalArgumentException("Cannot use pointlist which is " + pillarNodes.getDimension()
                         + "D for graph which is " + nodeAccess.getDimension() + "D");
 
+            if (edgePointer > MAX_UNSIGNED_INT)
+                throw new RuntimeException("wayGeometry storage not large enough for pointer " + edgePointer + " > " + MAX_UNSIGNED_INT);
             long existingGeoRef = Helper.toUnsignedLong(store.getGeoRef(edgePointer));
 
             int len = pillarNodes.size();
@@ -949,27 +951,27 @@ public class BaseGraph implements Graph, Closeable {
         @Override
         public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> entries) {
             long pointer = baseGraph.edgeKVStorage.add(entries);
-            if (pointer > Integer.MAX_VALUE)
-                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + Integer.MAX_VALUE + " was " + pointer);
+            if (pointer > MAX_UNSIGNED_INT)
+                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + MAX_UNSIGNED_INT + " was " + pointer);
             store.setKeyValuesRef(edgePointer, (int) pointer);
             return this;
         }
 
         @Override
         public List<EdgeKVStorage.KeyValue> getKeyValues() {
-            int kvEntryRef = store.getKeyValuesRef(edgePointer);
+            long kvEntryRef = Helper.toUnsignedLong(store.getKeyValuesRef(edgePointer));
             return baseGraph.edgeKVStorage.getAll(kvEntryRef);
         }
 
         @Override
         public Object getValue(String key) {
-            int kvEntryRef = store.getKeyValuesRef(edgePointer);
+            long kvEntryRef = Helper.toUnsignedLong(store.getKeyValuesRef(edgePointer));
             return baseGraph.edgeKVStorage.get(kvEntryRef, key, reverse);
         }
 
         @Override
         public String getName() {
-            int kvEntryRef = store.getKeyValuesRef(edgePointer);
+            long kvEntryRef = Helper.toUnsignedLong(store.getKeyValuesRef(edgePointer));
             String name = (String) baseGraph.edgeKVStorage.get(kvEntryRef, "name", reverse);
             // preserve backward compatibility (returns empty string if name tag missing)
             return name == null ? "" : name;

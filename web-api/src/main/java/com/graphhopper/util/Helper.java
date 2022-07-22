@@ -357,7 +357,7 @@ public class Helper {
      * and returns the positive converted long.
      */
     public static long toUnsignedLong(int x) {
-        return ((long) x) & 0xFFFFffffL;
+        return ((long) x) & 0xFFFF_FFFFL;
     }
 
     /**
