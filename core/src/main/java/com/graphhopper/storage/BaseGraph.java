@@ -43,7 +43,7 @@ import static com.graphhopper.util.Helper.nf;
  * loadExisting, (4) usage, (5) flush, (6) close
  */
 public class BaseGraph implements Graph, Closeable {
-    final static long MAX_UNSIGNED_INT = 1L << 32;
+    final static long MAX_UNSIGNED_INT = 0xFFFF_FFFFL;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final EdgeKVStorage edgeKVStorage;
@@ -339,8 +339,6 @@ public class BaseGraph implements Graph, Closeable {
                 throw new IllegalArgumentException("Cannot use pointlist which is " + pillarNodes.getDimension()
                         + "D for graph which is " + nodeAccess.getDimension() + "D");
 
-            if (edgePointer > MAX_UNSIGNED_INT)
-                throw new RuntimeException("wayGeometry storage not large enough for pointer " + edgePointer + " > " + MAX_UNSIGNED_INT);
             long existingGeoRef = Helper.toUnsignedLong(store.getGeoRef(edgePointer));
 
             int len = pillarNodes.size();
@@ -472,7 +470,7 @@ public class BaseGraph implements Graph, Closeable {
     private long nextGeoRef(int arrayLength) {
         long tmp = maxGeoRef;
         maxGeoRef += arrayLength + 1L;
-        if (maxGeoRef >= 0xFFFFffffL)
+        if (maxGeoRef >= MAX_UNSIGNED_INT)
             throw new IllegalStateException("Geometry too large, does not fit in 32 bits " + maxGeoRef);
 
         return tmp;
@@ -953,7 +951,7 @@ public class BaseGraph implements Graph, Closeable {
             long pointer = baseGraph.edgeKVStorage.add(entries);
             if (pointer > MAX_UNSIGNED_INT)
                 throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + MAX_UNSIGNED_INT + " was " + pointer);
-            store.setKeyValuesRef(edgePointer, (int) pointer);
+            store.setKeyValuesRef(edgePointer, Helper.toSignedInt(pointer));
             return this;
         }
 
