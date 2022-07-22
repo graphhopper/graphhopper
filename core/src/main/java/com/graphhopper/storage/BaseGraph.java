@@ -470,7 +470,7 @@ public class BaseGraph implements Graph, Closeable {
     private long nextGeoRef(int arrayLength) {
         long tmp = maxGeoRef;
         maxGeoRef += arrayLength + 1L;
-        if (maxGeoRef >= MAX_UNSIGNED_INT)
+        if (maxGeoRef > MAX_UNSIGNED_INT)
             throw new IllegalStateException("Geometry too large, does not fit in 32 bits " + maxGeoRef);
 
         return tmp;
