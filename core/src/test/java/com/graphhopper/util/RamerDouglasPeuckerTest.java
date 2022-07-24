@@ -29,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 /**
  * @author Peter Karich
  */
-public class DouglasPeuckerTest {
+public class RamerDouglasPeuckerTest {
 
     // get some real life points from graphhopper API
     // http://217.92.216.224:8080/?point=49.945642,11.571436&point=49.946001,11.580706
@@ -57,7 +57,7 @@ public class DouglasPeuckerTest {
         PointList pointList = new PointList();
         pointList.parse2DJSON(points1);
         assertEquals(32, pointList.size());
-        new DouglasPeucker().setMaxDistance(.5).simplify(pointList);
+        new RamerDouglasPeucker().setMaxDistance(.5).simplify(pointList);
         // Arrays.asList(2, 4, 6, 7, 8, 9, 12, 14, 15, 17, 18, 19, 20, 22, 24, 27, 28, 29, 31, 33),
         assertEquals(20, pointList.size());
     }
@@ -66,7 +66,7 @@ public class DouglasPeuckerTest {
     public void testSimplifyCheckPointCount() {
         PointList pointList = new PointList();
         pointList.parse2DJSON(points1);
-        DouglasPeucker dp = new DouglasPeucker().setMaxDistance(.5);
+        RamerDouglasPeucker dp = new RamerDouglasPeucker().setMaxDistance(.5);
         assertEquals(32, pointList.size());
         dp.simplify(pointList);
         assertEquals(20, pointList.size());
@@ -93,7 +93,7 @@ public class DouglasPeuckerTest {
         PointList pointList = new PointList();
         pointList.parse2DJSON(points2);
         assertEquals(13, pointList.size());
-        new DouglasPeucker().setMaxDistance(.5).simplify(pointList);
+        new RamerDouglasPeucker().setMaxDistance(.5).simplify(pointList);
         assertEquals(11, pointList.size());
         assertFalse(pointList.toString().contains("NaN"), pointList.toString());
         assertEquals("(50.203764443183644,9.961074440801317), (50.20318963087774,9.960999562464645), (50.202952888673984,9.96094144793469), (50.20267889356641,9.96223002587773), (50.201853928011374,9.961859918278305), "
@@ -123,10 +123,10 @@ public class DouglasPeuckerTest {
         pl.add(14, 14, 14);
         pl.add(Double.NaN, Double.NaN, Double.NaN);
 
-        DouglasPeucker.removeNaN(pl);
+        RamerDouglasPeucker.removeNaN(pl);
         // doing it again should be no problem
-        DouglasPeucker.removeNaN(pl);
-        DouglasPeucker.removeNaN(pl);
+        RamerDouglasPeucker.removeNaN(pl);
+        RamerDouglasPeucker.removeNaN(pl);
         assertEquals(8, pl.size());
         List<Integer> expected = Arrays.asList(1, 5, 6, 7, 8, 9, 10, 14);
         List<Integer> given = new ArrayList<>();
@@ -146,7 +146,7 @@ public class DouglasPeuckerTest {
         pointList.add(0.02, 0, 20); // can be removed
         pointList.add(0.03, 0, 30); // can't be removed
         pointList.add(0.04, 0, 50);
-        new DouglasPeucker().setMaxDistance(1).setElevationMaxDistance(1).simplify(pointList);
+        new RamerDouglasPeucker().setMaxDistance(1).setElevationMaxDistance(1).simplify(pointList);
         assertEquals("(0.0,0.0,0.0), (0.03,0.0,30.0), (0.04,0.0,50.0)", pointList.toString());
     }
 
@@ -156,7 +156,7 @@ public class DouglasPeuckerTest {
         pointList.add(0, 0, 0);
         pointList.add(0.03, 0, 30); // would be kept, if we cared about elevation
         pointList.add(0.04, 0, 50);
-        new DouglasPeucker().setMaxDistance(1).setElevationMaxDistance(Double.MAX_VALUE).simplify(pointList);
+        new RamerDouglasPeucker().setMaxDistance(1).setElevationMaxDistance(Double.MAX_VALUE).simplify(pointList);
         assertEquals("(0.0,0.0,0.0), (0.04,0.0,50.0)", pointList.toString());
     }
 
@@ -168,7 +168,7 @@ public class DouglasPeuckerTest {
         pointList.add(0.02, 0, 20); // on straight line, remove
         pointList.add(0.03, 0, 30); // >5m from straight line, keep
         pointList.add(0.04, 0, 50);
-        new DouglasPeucker().setMaxDistance(1).setElevationMaxDistance(5).simplify(pointList);
+        new RamerDouglasPeucker().setMaxDistance(1).setElevationMaxDistance(5).simplify(pointList);
         assertEquals("(0.0,0.0,0.0), (0.03,0.0,30.0), (0.04,0.0,50.0)", pointList.toString());
     }
 
@@ -179,7 +179,7 @@ public class DouglasPeuckerTest {
         pointList.add(0, 0.5, Double.NaN); // on straight line in 2d space, ignore elevation
         pointList.add(0, 1, 14); // <5m from straight line (10), remove
         pointList.add(1, 1, 20);
-        new DouglasPeucker().setMaxDistance(1).setElevationMaxDistance(1).simplify(pointList);
+        new RamerDouglasPeucker().setMaxDistance(1).setElevationMaxDistance(1).simplify(pointList);
         assertEquals("(0.0,0.0,0.0), (0.0,1.0,14.0), (1.0,1.0,20.0)", pointList.toString());
     }
 
@@ -189,7 +189,7 @@ public class DouglasPeuckerTest {
         pointList.add(0, 0, 0);
         pointList.add(0.03, 0, 30);
         pointList.add(0, 0, 0);
-        new DouglasPeucker().setMaxDistance(1).setElevationMaxDistance(1).simplify(pointList);
+        new RamerDouglasPeucker().setMaxDistance(1).setElevationMaxDistance(1).simplify(pointList);
         assertEquals("(0.0,0.0,0.0), (0.03,0.0,30.0), (0.0,0.0,0.0)", pointList.toString());
     }
 
@@ -199,7 +199,7 @@ public class DouglasPeuckerTest {
         pointList.add(0, 0);
         pointList.add(0.03, 0);
         pointList.add(0, 0);
-        new DouglasPeucker().setMaxDistance(1).setElevationMaxDistance(1).simplify(pointList);
+        new RamerDouglasPeucker().setMaxDistance(1).setElevationMaxDistance(1).simplify(pointList);
         assertEquals("(0.0,0.0), (0.03,0.0), (0.0,0.0)", pointList.toString());
     }
 }

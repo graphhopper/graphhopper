@@ -45,13 +45,13 @@ import java.util.List;
  * @author Robin Boldt
  */
 public class PathMerger {
-    private static final DouglasPeucker DP = new DouglasPeucker();
+    private static final RamerDouglasPeucker RDP = new RamerDouglasPeucker();
     private final Graph graph;
     private final Weighting weighting;
 
     private boolean enableInstructions = true;
     private boolean simplifyResponse = true;
-    private DouglasPeucker douglasPeucker = DP;
+    private RamerDouglasPeucker ramerDouglasPeucker = RDP;
     private boolean calcPoints = true;
     private PathDetailsBuilderFactory pathBuilderFactory;
     private List<String> requestedPathDetails = Collections.emptyList();
@@ -67,8 +67,8 @@ public class PathMerger {
         return this;
     }
 
-    public PathMerger setDouglasPeucker(DouglasPeucker douglasPeucker) {
-        this.douglasPeucker = douglasPeucker;
+    public PathMerger setRamerDouglasPeucker(RamerDouglasPeucker ramerDouglasPeucker) {
+        this.ramerDouglasPeucker = ramerDouglasPeucker;
         return this;
     }
 
@@ -165,7 +165,7 @@ public class PathMerger {
                 setWaypoints(waypoints);
 
         if (allFound && simplifyResponse && (calcPoints || enableInstructions)) {
-            PathSimplification.simplify(responsePath, douglasPeucker, enableInstructions);
+            PathSimplification.simplify(responsePath, ramerDouglasPeucker, enableInstructions);
         }
         return responsePath;
     }

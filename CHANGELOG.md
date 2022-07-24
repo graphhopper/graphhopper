@@ -1,4 +1,5 @@
 ### 6.0 [not yet released]
+- renamed DouglasPeucker to RamerDouglasPeucker
 - path details at via-points are no longer merged, see #2626
 - removed the FlagEncoder interface. for example encoder.getAccessEnc() is now encodingManager.getBooleanEncodedValue(
   VehicleAccess.key("car")), #2611
@@ -114,7 +115,7 @@
 - removed android demo, #1940
 - added edge key path detail, #2073
 - fixed bug for turn restrictions on bridges/tunnels, #2070
-- improved resolution of elevation profiles, 3D Douglas-Peucker and long edge sampling, #1953
+- improved resolution of elevation profiles, 3D Ramer-Douglas-Peucker and long edge sampling, #1953
 
 ### 1.0 [22 May 2020]
 

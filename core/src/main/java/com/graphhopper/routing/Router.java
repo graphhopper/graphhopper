@@ -282,12 +282,12 @@ public class Router {
         double wayPointMaxDistance = request.getHints().getDouble(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 1d);
         double elevationWayPointMaxDistance = request.getHints().getDouble(ELEVATION_WAY_POINT_MAX_DISTANCE, routerConfig.getElevationWayPointMaxDistance());
 
-        DouglasPeucker peucker = new DouglasPeucker().
+        RamerDouglasPeucker peucker = new RamerDouglasPeucker().
                 setMaxDistance(wayPointMaxDistance).
                 setElevationMaxDistance(elevationWayPointMaxDistance);
         PathMerger pathMerger = new PathMerger(graph, weighting).
                 setCalcPoints(calcPoints).
-                setDouglasPeucker(peucker).
+                setRamerDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).
                 setPathDetailsBuilders(pathDetailsBuilderFactory, request.getPathDetails()).
                 setSimplifyResponse(routerConfig.isSimplifyResponse() && wayPointMaxDistance > 0);

@@ -136,11 +136,11 @@ public class MapMatchingResource {
                     build();
         } else {
             Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
-            DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
+            RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker().setMaxDistance(minPathPrecision);
             PathMerger pathMerger = new PathMerger(matchResult.getGraph(), matchResult.getWeighting()).
                     setEnableInstructions(instructions).
                     setPathDetailsBuilders(graphHopper.getPathDetailsBuilderFactory(), pathDetails).
-                    setDouglasPeucker(peucker).
+                    setRamerDouglasPeucker(simplifyAlgo).
                     setSimplifyResponse(minPathPrecision > 0);
             ResponsePath responsePath = pathMerger.doWork(PointList.EMPTY, Collections.singletonList(matchResult.getMergedPath()),
                     graphHopper.getEncodingManager(), tr);

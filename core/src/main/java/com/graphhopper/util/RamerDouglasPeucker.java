@@ -26,14 +26,14 @@ package com.graphhopper.util;
  *
  * @author Peter Karich
  */
-public class DouglasPeucker {
+public class RamerDouglasPeucker {
     private double normedMaxDist;
     private double elevationMaxDistance;
     private double maxDistance;
     private DistanceCalc calc;
     private boolean approx;
 
-    public DouglasPeucker() {
+    public RamerDouglasPeucker() {
         setApproximation(true);
         // 1m
         setMaxDistance(1);
@@ -52,7 +52,7 @@ public class DouglasPeucker {
     /**
      * maximum distance of discrepancy (from the normal way) in meter
      */
-    public DouglasPeucker setMaxDistance(double dist) {
+    public RamerDouglasPeucker setMaxDistance(double dist) {
         this.normedMaxDist = calc.calcNormalizedDist(dist);
         this.maxDistance = dist;
         return this;
@@ -61,7 +61,7 @@ public class DouglasPeucker {
     /**
      * maximum elevation distance of discrepancy (from the normal way) in meters
      */
-    public DouglasPeucker setElevationMaxDistance(double dist) {
+    public RamerDouglasPeucker setElevationMaxDistance(double dist) {
         this.elevationMaxDistance = dist;
         return this;
     }
@@ -69,7 +69,7 @@ public class DouglasPeucker {
     /**
      * Simplifies the <code>points</code>, from index 0 to size-1.
      * <p>
-     * It is a wrapper method for {@link DouglasPeucker#simplify(PointList, int, int)}.
+     * It is a wrapper method for {@link RamerDouglasPeucker#simplify(PointList, int, int)}.
      *
      * @return The number removed points
      */

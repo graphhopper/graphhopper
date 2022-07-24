@@ -83,7 +83,7 @@ public class RouterConfig {
     }
 
     /**
-     * This method specifies if the returned path should be simplified or not, via douglas-peucker
+     * This method specifies if the returned path should be simplified or not, via Ramer-Douglas-Peucker
      * or similar algorithm.
      */
     public void setSimplifyResponse(boolean simplifyResponse) {

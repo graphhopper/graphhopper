@@ -120,11 +120,11 @@ public class PathSimplificationTest {
 
         int numberOfPoints = p.calcPoints().size();
 
-        DouglasPeucker douglasPeucker = new DouglasPeucker();
+        RamerDouglasPeucker ramerDouglasPeucker = new RamerDouglasPeucker();
         // Do not simplify anything
-        douglasPeucker.setMaxDistance(0);
+        ramerDouglasPeucker.setMaxDistance(0);
 
-        PathSimplification.simplify(responsePath, douglasPeucker, true);
+        PathSimplification.simplify(responsePath, ramerDouglasPeucker, true);
 
         assertEquals(numberOfPoints, responsePath.getPoints().size());
 
@@ -133,8 +133,8 @@ public class PathSimplificationTest {
         responsePath.addPathDetails(details);
         responsePath.setPoints(p.calcPoints());
 
-        douglasPeucker.setMaxDistance(100000000);
-        PathSimplification.simplify(responsePath, douglasPeucker, true);
+        ramerDouglasPeucker.setMaxDistance(100000000);
+        PathSimplification.simplify(responsePath, ramerDouglasPeucker, true);
 
         assertTrue(numberOfPoints > responsePath.getPoints().size());
     }
@@ -142,7 +142,7 @@ public class PathSimplificationTest {
     @Test
     public void testSinglePartition() {
         // points are chosen such that DP will remove those marked with an x
-        // todo: we could go further and replace DouglasPeucker with some abstract thing that makes this easier to test
+        // todo: we could go further and replace Ramer-Douglas-Peucker with some abstract thing that makes this easier to test
         PointList points = new PointList();
         points.add(48.89107, 9.33161); // 0   -> 0
         points.add(48.89104, 9.33102); // 1 x
@@ -163,14 +163,14 @@ public class PathSimplificationTest {
                 .add(7, 7); // end
         List<PathSimplification.Partition> partitions = new ArrayList<>();
         partitions.add(partition);
-        PathSimplification.simplify(points, partitions, new DouglasPeucker());
+        PathSimplification.simplify(points, partitions, new RamerDouglasPeucker());
 
         // check points were modified correctly
         assertEquals(5, points.size());
         origPoints.set(1, Double.NaN, Double.NaN, Double.NaN);
         origPoints.set(2, Double.NaN, Double.NaN, Double.NaN);
         origPoints.set(5, Double.NaN, Double.NaN, Double.NaN);
-        DouglasPeucker.removeNaN(origPoints);
+        RamerDouglasPeucker.removeNaN(origPoints);
         assertEquals(origPoints, points);
 
         // check partition was modified correctly
@@ -237,7 +237,7 @@ public class PathSimplificationTest {
         partitions.add(partition1);
         partitions.add(partition2);
         partitions.add(partition3);
-        PathSimplification.simplify(points, partitions, new DouglasPeucker());
+        PathSimplification.simplify(points, partitions, new RamerDouglasPeucker());
 
         // check points were modified correctly
         assertEquals(12, points.size());
@@ -245,7 +245,7 @@ public class PathSimplificationTest {
         origPoints.set(2, Double.NaN, Double.NaN, Double.NaN);
         origPoints.set(5, Double.NaN, Double.NaN, Double.NaN);
         origPoints.set(13, Double.NaN, Double.NaN, Double.NaN);
-        DouglasPeucker.removeNaN(origPoints);
+        RamerDouglasPeucker.removeNaN(origPoints);
         assertEquals(origPoints, points);
 
         // check partitions were modified correctly

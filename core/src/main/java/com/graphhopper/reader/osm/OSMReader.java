@@ -80,7 +80,7 @@ public class OSMReader {
     private AreaIndex<CustomArea> areaIndex;
     private CountryRuleFactory countryRuleFactory = null;
     private File osmFile;
-    private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
+    private final RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker();
 
     private final IntsRef tempRelFlags;
     private Date osmDataDate;
