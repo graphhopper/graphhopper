@@ -75,6 +75,10 @@ public class Examples {
         InstructionList il = res.getInstructions();
         for (Instruction i : il) {
             // System.out.println(i.getName());
+            
+            // to get the translated turn instructions you call:
+            // System.out.println(i.getTurnDescription(null));
+            // Note, that you can control the language only in via the request setLocale method and cannot change it only the client side
         }
         // get path details
         List<PathDetail> pathDetails = res.getPathDetails().get(Parameters.Details.STREET_NAME);
