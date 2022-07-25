@@ -65,9 +65,9 @@ public class EdgeElevationSmoothing {
      * The disadvantage is that the appearance might be still more spiky as a result when a bigger positive slope
      * changes to a bigger negative slope.
      * <p>
-     * The underlying algorithm is the DouglasPeucker with elevationMaxDistance but additionally
+     * The underlying algorithm is an adapted Ramer-Douglas-Peucker algorithm (see #2634) with a maximum elevation change and:
      * 1. here we try to remove the elevation fluctuation and ignore any lat,lon difference
-     * 2. instead of removing the point the elevation will be calculated from the average slope
+     * 2. instead of removing the point the elevation will be calculated from the average slope of the first and last point
      */
     public static void smoothRamer(PointList points, double maxElevationDelta) {
         internSmoothRamer(points, 0, points.size() - 1, maxElevationDelta);
@@ -103,7 +103,8 @@ public class EdgeElevationSmoothing {
         if (indexWithMaxDelta < 0)
             throw new IllegalStateException("maximum not found in [" + fromIndex + "," + lastIndex + "] " + points);
 
-        // TODO NOW use maxElevationDelta proportional to distance, i.e. maxSlope! or is it fine as we only want to filter the shorter distance fluctuations!?
+        // the maximum elevation change limit filters away especially the smaller high frequent elevation changes,
+        // which is likely the "noise" that we want to remove.
         if (maxElevationDelta > maxEleDelta) {
             prevLat = points.getLat(fromIndex);
             prevLon = points.getLon(fromIndex);
