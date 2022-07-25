@@ -25,10 +25,10 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.gpx.GpxConversions;
+import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.jackson.Gpx;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
-import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,9 +36,13 @@ import org.slf4j.LoggerFactory;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
+import static com.graphhopper.resources.RouteResource.removeLegacyParameters;
 import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
 import static com.graphhopper.util.Parameters.Routing.*;
 
@@ -97,19 +101,21 @@ public class MapMatchingResource {
 
         StopWatch sw = new StopWatch().start();
 
-        PMap hints = createHintsMap(uriInfo.getQueryParameters());
+        PMap hints = new PMap();
+        RouteResource.initHints(hints, uriInfo.getQueryParameters());
+
         // add values that are not in hints because they were explicitly listed in query params
         hints.putObject(MAX_VISITED_NODES, maxVisitedNodes);
         String weightingVehicleLogStr = "weighting: " + hints.getString("weighting", "") + ", vehicle: " + hints.getString("vehicle", "");
-        if (Helper.isEmpty(profile)) {
-            // resolve profile and remove legacy vehicle/weighting parameters
-            // we need to explicitly disable CH here because map matching does not use it
-            PMap pMap = new PMap(hints).putObject(Parameters.CH.DISABLE, true);
-            profile = profileResolver.resolveProfile(pMap).getName();
-            removeLegacyParameters(hints);
-        }
+
+        // resolve profile and remove legacy vehicle/weighting parameters
+        // we need to explicitly disable CH here because map matching does not use it
+        PMap profileResolverHints = new PMap(hints);
+        profileResolverHints.putObject("profile", profile);
+        profileResolverHints.putObject(Parameters.CH.DISABLE, true);
+        profile = profileResolver.resolveProfile(profileResolverHints);
         hints.putObject("profile", profile);
-        errorIfLegacyParameters(hints);
+        removeLegacyParameters(hints);
 
         MapMatching matching = new MapMatching(graphHopper, hints);
         matching.setMeasurementErrorSigma(gpsAccuracy);
@@ -130,11 +136,11 @@ public class MapMatchingResource {
                     build();
         } else {
             Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
-            DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(minPathPrecision);
+            RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker().setMaxDistance(minPathPrecision);
             PathMerger pathMerger = new PathMerger(matchResult.getGraph(), matchResult.getWeighting()).
                     setEnableInstructions(instructions).
                     setPathDetailsBuilders(graphHopper.getPathDetailsBuilderFactory(), pathDetails).
-                    setDouglasPeucker(peucker).
+                    setRamerDouglasPeucker(simplifyAlgo).
                     setSimplifyResponse(minPathPrecision > 0);
             ResponsePath responsePath = pathMerger.doWork(PointList.EMPTY, Collections.singletonList(matchResult.getMergedPath()),
                     graphHopper.getEncodingManager(), tr);
@@ -175,32 +181,6 @@ public class MapMatchingResource {
                         build();
             }
         }
-    }
-
-    private void removeLegacyParameters(PMap hints) {
-        hints.remove("vehicle");
-        hints.remove("weighting");
-    }
-
-    private static void errorIfLegacyParameters(PMap hints) {
-        if (hints.has("weighting"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'weighting' parameter." +
-                    " You used 'weighting=" + hints.getString("weighting", "") + "'");
-        if (hints.has("vehicle"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'vehicle' parameter." +
-                    " You used 'vehicle=" + hints.getString("vehicle", "") + "'");
-    }
-
-    private PMap createHintsMap(MultivaluedMap<String, String> queryParameters) {
-        PMap m = new PMap();
-        for (Map.Entry<String, List<String>> e : queryParameters.entrySet()) {
-            if (e.getValue().size() == 1) {
-                m.putObject(Helper.camelCaseToUnderScore(e.getKey()), Helper.toObject(e.getValue().get(0)));
-            } else {
-                // TODO ugly: ignore multi parameters like point to avoid exception. See RouteResource.initHints
-            }
-        }
-        return m;
     }
 
     public static JsonNode convertToTree(MatchResult result, boolean elevation, boolean pointsEncoded) {

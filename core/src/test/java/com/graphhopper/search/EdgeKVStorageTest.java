@@ -12,6 +12,8 @@ import java.util.*;
 
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
 import static com.graphhopper.search.EdgeKVStorage.MAX_UNIQUE_KEYS;
+import static com.graphhopper.search.EdgeKVStorage.cutString;
+import static com.graphhopper.util.Helper.UTF_CS;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class EdgeKVStorageTest {
@@ -19,7 +21,7 @@ public class EdgeKVStorageTest {
     private final static String location = "./target/edge-kv-storage";
 
     private EdgeKVStorage create() {
-        return new EdgeKVStorage(new RAMDirectory(), 1000).create(1000);
+        return new EdgeKVStorage(new RAMDirectory()).create(1000);
     }
 
     List<KeyValue> createList(Object... keyValues) {
@@ -215,12 +217,12 @@ public class EdgeKVStorageTest {
     public void testFlush() {
         Helper.removeDir(new File(location));
 
-        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create(), 1000);
+        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create());
         long pointer = index.add(createList("", "test"));
         index.flush();
         index.close();
 
-        index = new EdgeKVStorage(new RAMDirectory(location, true), 1000);
+        index = new EdgeKVStorage(new RAMDirectory(location, true));
         assertTrue(index.loadExisting());
         assertEquals("test", index.get(pointer, "", false));
         // make sure bytePointer is correctly set after loadExisting
@@ -235,7 +237,7 @@ public class EdgeKVStorageTest {
     public void testLoadKeys() {
         Helper.removeDir(new File(location));
 
-        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create(), 1000).create(1000);
+        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create()).create(1000);
         long pointerA = index.add(createList("c", "test value"));
         assertEquals(2, index.getKeys().size());
         long pointerB = index.add(createList("a", "value", "b", "another value"));
@@ -244,7 +246,7 @@ public class EdgeKVStorageTest {
         index.flush();
         index.close();
 
-        index = new EdgeKVStorage(new RAMDirectory(location, true), 1000);
+        index = new EdgeKVStorage(new RAMDirectory(location, true));
         assertTrue(index.loadExisting());
         assertEquals("[, c, a, b]", index.getKeys().toString());
         assertEquals("test value", index.get(pointerA, "c", false));
@@ -370,5 +372,25 @@ public class EdgeKVStorageTest {
             list.add(new KeyValue(key, key.endsWith("_s") ? o + "_s" : o));
         }
         return list;
+    }
+
+    // @RepeatedTest(1000)
+    public void ignoreRandomString() {
+        String s = "";
+        long seed = new Random().nextLong();
+        Random rand = new Random(seed);
+        for (int i = 0; i < 255; i++) {
+            s += (char) rand.nextInt();
+        }
+
+        s = cutString(s);
+        assertTrue(s.getBytes(UTF_CS).length <= 255, s.getBytes(UTF_CS).length + " -> seed " + seed);
+    }
+
+    @Test
+    public void testCutString() {
+        String s = cutString("Бухарестская улица (http://ru.wikipedia.org/wiki/" +
+                "%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))");
+        assertEquals(250, s.getBytes(UTF_CS).length);
     }
 }

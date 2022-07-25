@@ -476,13 +476,4 @@ public class Helper {
         }
         return val;
     }
-
-    /**
-     * This method limits the specified String value to the length currently accepted for values in the EdgeKVStorage.
-     */
-    public static String cutStringForKV(String value) {
-        byte[] bytes = value.getBytes(UTF_CS);
-        // See #2609 and test why we use a value < 255
-        return bytes.length > 250 ? new String(bytes, 0, 250, UTF_CS) : value;
-    }
 }

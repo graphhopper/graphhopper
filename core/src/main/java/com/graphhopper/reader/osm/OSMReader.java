@@ -80,7 +80,7 @@ public class OSMReader {
     private AreaIndex<CustomArea> areaIndex;
     private CountryRuleFactory countryRuleFactory = null;
     private File osmFile;
-    private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
+    private final RamerDouglasPeucker simplifyAlgo = new RamerDouglasPeucker();
 
     private final IntsRef tempRelFlags;
     private Date osmDataDate;
@@ -333,14 +333,10 @@ public class OSMReader {
         if (edgeFlags.isEmpty())
             return;
 
-        List<EdgeKVStorage.KeyValue> list = new ArrayList<>(2);
-        // the storage does not accept too long strings -> Helper.cutStringForKV
-        if (way.hasTag("way_name")) // do not store empty string if missing tag
-            list.add(new EdgeKVStorage.KeyValue("name", Helper.cutStringForKV(way.getTag("way_name", ""))));
-        if (way.hasTag("way_ref"))
-            list.add(new EdgeKVStorage.KeyValue("ref", Helper.cutStringForKV(way.getTag("way_ref", ""))));
-        EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags).
-                setKeyValues(list);
+        EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags);
+        List<EdgeKVStorage.KeyValue> list = way.getTag("key_values", Collections.emptyList());
+        if (!list.isEmpty())
+            edge.setKeyValues(list);
 
         // If the entire way is just the first and last point, do not waste space storing an empty way geometry
         if (pointList.size() > 2) {
@@ -385,6 +381,7 @@ public class OSMReader {
      */
     protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
         // storing the road name does not yet depend on the flagEncoder so manage it directly
+        List<EdgeKVStorage.KeyValue> list = new ArrayList<>();
         if (config.isParseWayNames()) {
             // http://wiki.openstreetmap.org/wiki/Key:name
             String name = "";
@@ -392,15 +389,32 @@ public class OSMReader {
                 name = fixWayName(way.getTag("name:" + config.getPreferredLanguage()));
             if (name.isEmpty())
                 name = fixWayName(way.getTag("name"));
-
             if (!name.isEmpty())
-                way.setTag("way_name", name);
+                list.add(new EdgeKVStorage.KeyValue("name", name));
 
             // http://wiki.openstreetmap.org/wiki/Key:ref
             String refName = fixWayName(way.getTag("ref"));
             if (!refName.isEmpty())
-                way.setTag("way_ref", refName);
+                list.add(new EdgeKVStorage.KeyValue("ref", refName));
+
+            if (way.hasTag("destination:ref")) {
+                list.add(new EdgeKVStorage.KeyValue("destination_ref", fixWayName(way.getTag("destination:ref"))));
+            } else {
+                if (way.hasTag("destination:ref:forward"))
+                    list.add(new EdgeKVStorage.KeyValue("destination_ref", fixWayName(way.getTag("destination:ref:forward")), true, false));
+                if (way.hasTag("destination:ref:backward"))
+                    list.add(new EdgeKVStorage.KeyValue("destination_ref", fixWayName(way.getTag("destination:ref:backward")), false, true));
+            }
+            if (way.hasTag("destination")) {
+                list.add(new EdgeKVStorage.KeyValue("destination", fixWayName(way.getTag("destination"))));
+            } else {
+                if (way.hasTag("destination:forward"))
+                    list.add(new EdgeKVStorage.KeyValue("destination", fixWayName(way.getTag("destination:forward")), true, false));
+                if (way.hasTag("destination:backward"))
+                    list.add(new EdgeKVStorage.KeyValue("destination", fixWayName(way.getTag("destination:backward")), false, true));
+            }
         }
+        way.setTag("key_values", list);
 
         if (!isCalculateWayDistance(way))
             return;
@@ -451,7 +465,8 @@ public class OSMReader {
     static String fixWayName(String str) {
         if (str == null)
             return "";
-        return WAY_NAME_PATTERN.matcher(str).replaceAll(", ");
+        // the EdgeKVStorage does not accept too long strings -> Helper.cutStringForKV
+        return EdgeKVStorage.cutString(WAY_NAME_PATTERN.matcher(str).replaceAll(", "));
     }
 
     /**

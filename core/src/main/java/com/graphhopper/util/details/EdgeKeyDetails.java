@@ -24,11 +24,10 @@ import static com.graphhopper.util.Parameters.Details.EDGE_KEY;
 
 public class EdgeKeyDetails extends AbstractPathDetailsBuilder {
 
-    private int edgeKey;
+    private int edgeKey = -1;
 
     public EdgeKeyDetails() {
         super(EDGE_KEY);
-        edgeKey = -1;
     }
 
     @Override

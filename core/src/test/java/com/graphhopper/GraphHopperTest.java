@@ -78,6 +78,7 @@ public class GraphHopperTest {
 
     // map locations
     private static final String BAYREUTH = DIR + "/north-bayreuth.osm.gz";
+    private static final String BAUTZEN = DIR + "/bautzen.osm";
     private static final String BERLIN = DIR + "/berlin-siegessaeule.osm.gz";
     private static final String KREMS = DIR + "/krems.osm.gz";
     private static final String LAUF = DIR + "/Laufamholzstrasse.osm.xml";
@@ -515,7 +516,31 @@ public class GraphHopperTest {
     }
 
     @Test
-    public void testNorthBayreuthDestination() {
+    public void testForwardBackwardDestination() {
+        final String profile = "profile";
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(BAUTZEN).
+                setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest"));
+        hopper.setMinNetworkSize(0);
+        hopper.importOrLoad();
+
+        Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
+
+        GHResponse rsp = hopper.route(new GHRequest(51.1915, 14.416, 51.192, 14.412).setProfile(profile));
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertEquals("keep right and take B 96 toward Bautzen-West, Hoyerswerda",
+                rsp.getBest().getInstructions().get(1).getTurnDescription(tr));
+        assertEquals("turn left onto Hoyerswerdaer Straße and drive toward Hoyerswerda, Kleinwelka",
+                rsp.getBest().getInstructions().get(2).getTurnDescription(tr));
+
+        rsp = hopper.route(new GHRequest(51.191, 14.414, 51.1884, 14.41).setProfile(profile));
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertEquals("turn left and take A 4 toward Dresden", rsp.getBest().getInstructions().get(1).getTurnDescription(tr));
+    }
+
+    @Test
+    public void testNorthBayreuthAccessDestination() {
         final String profile = "profile";
         final String vehicle = "car";
         final String weighting = "fastest";

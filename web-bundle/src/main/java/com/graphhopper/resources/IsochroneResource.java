@@ -5,11 +5,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
+import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.isochrone.algorithm.Triangulator;
 import com.graphhopper.jackson.ResponsePathSerializer;
-import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -39,7 +39,6 @@ import java.util.*;
 import java.util.function.ToDoubleFunction;
 
 import static com.graphhopper.resources.IsochroneResource.ResponseType.geojson;
-import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
 import static com.graphhopper.resources.RouteResource.removeLegacyParameters;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
@@ -81,11 +80,11 @@ public class IsochroneResource {
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
-        if (Helper.isEmpty(profileName)) {
-            profileName = profileResolver.resolveProfile(hintsMap).getName();
-            removeLegacyParameters(hintsMap);
-        }
-        errorIfLegacyParameters(hintsMap);
+
+        PMap profileResolverHints = new PMap(hintsMap);
+        profileResolverHints.putObject("profile", profileName);
+        profileName = profileResolver.resolveProfile(profileResolverHints);
+        removeLegacyParameters(hintsMap);
 
         Profile profile = graphHopper.getProfile(profileName);
         if (profile == null)

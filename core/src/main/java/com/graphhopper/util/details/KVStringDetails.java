@@ -26,8 +26,8 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class KVStringDetails extends AbstractPathDetailsBuilder {
 
-    private String curString = null;
-    private String key;
+    private final String key;
+    private String curString;
 
     public KVStringDetails(String name, String key) {
         super(name);
@@ -37,7 +37,6 @@ public class KVStringDetails extends AbstractPathDetailsBuilder {
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         if (curString == null) {
-            // TODO it would be a bit more efficient if we fetch the Map only once per edge when more than one KVStringDetails are requested
             curString = (String) edge.getValue(key);
             return true;
         }

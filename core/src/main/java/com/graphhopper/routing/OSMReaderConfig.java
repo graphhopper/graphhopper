@@ -58,7 +58,7 @@ public class OSMReaderConfig {
     }
 
     /**
-     * This parameter affects the routine used to simplify the edge geometries (Douglas-Peucker). Higher values mean
+     * This parameter affects the routine used to simplify the edge geometries (Ramer-Douglas-Peucker). Higher values mean
      * more details are preserved. The default is 1 (meter). Simplification can be disabled by setting it to 0.
      */
     public OSMReaderConfig setMaxWayPointDistance(double maxWayPointDistance) {
