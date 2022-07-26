@@ -102,7 +102,7 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
             if (Double.isInfinite(value)) {
                 super.setInt(reverse, ref, maxStorableValue);
                 return;
-            } else if (value >= maxStorableValue * factor) { // equals is important as maxStorableValue is reserved for infinity
+            } else if (value >= maxStorableValue * factor) { // equality is important as maxStorableValue is reserved for infinity
                 super.uncheckedSet(reverse, ref, maxStorableValue - 1);
                 return;
             }
