@@ -20,7 +20,7 @@ public class EdgeElevationSmoothing {
      * This method smooths the elevation data of a PointList by calculating the average elevation over
      * multiple points of that PointList.
      */
-    public static PointList smoothWindow(PointList geometry) {
+    public static void smoothWindow(PointList geometry) {
         for (int i = 1; i < geometry.size() - 1; i++) {
 
             int start = i;
@@ -56,7 +56,6 @@ public class EdgeElevationSmoothing {
             double smoothed = sum / (end - start);
             geometry.setElevation(i, smoothed);
         }
-        return geometry;
     }
 
     /**

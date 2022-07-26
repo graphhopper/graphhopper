@@ -23,9 +23,9 @@ import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.coll.GHLongHashSet;
 import com.graphhopper.coll.GHLongLongHashMap;
 import com.graphhopper.reader.*;
+import com.graphhopper.reader.dem.EdgeElevationSmoothing;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.reader.dem.EdgeElevationSmoothing;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.AreaIndex;
@@ -293,15 +293,15 @@ public class OSMReader {
         // go together
 
         if (pointList.is3D()) {
-            // Smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
+            // sample points along long edges
+            if (config.getLongEdgeSamplingDistance() < Double.MAX_VALUE)
+                pointList = EdgeSampling.sample(pointList, config.getLongEdgeSamplingDistance(), distCalc, eleProvider);
+
+            // smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
             if (config.getElevationSmoothing().equals("ramer"))
                 EdgeElevationSmoothing.smoothRamer(pointList, config.getElevationSmoothingRamerMax());
             else if (config.getElevationSmoothing().equals("window"))
                 EdgeElevationSmoothing.smoothWindow(pointList);
-
-            // sample points along long edges
-            if (config.getLongEdgeSamplingDistance() < Double.MAX_VALUE)
-                pointList = EdgeSampling.sample(pointList, config.getLongEdgeSamplingDistance(), distCalc, eleProvider);
         }
 
         if (config.getMaxWayPointDistance() > 0 && pointList.size() > 2)
