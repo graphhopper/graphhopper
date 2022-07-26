@@ -28,7 +28,7 @@ import java.util.Date;
  */
 public class OSMReaderUtility {
     // use a day somewhere within July 1970 which then makes two identical long months ala 31 days, see #588
-    private final static Date STATIC_DATE = new Date((31 * 6) * 24 * 3600 * 1000);
+    private final static Date STATIC_DATE = new Date((31L * 6) * 24 * 3600 * 1000);
 
     /**
      * Parser according to http://wiki.openstreetmap.org/wiki/Key:duration The value consists of a
@@ -39,22 +39,19 @@ public class OSMReaderUtility {
      * @return duration value in seconds
      */
     public static long parseDuration(String str) throws IllegalArgumentException {
-        long seconds = 0;
         if (str == null)
             return 0;
 
         // Check for ISO_8601 format
         if (str.startsWith("P")) {
             // A common mistake is when the minutes format is intended but the month format is specified 
-            // e.g. one month "P1M" is set, but on minute "PT1M" is meant.
-            Duration dur;
+            // e.g. one month "P1M" is set, but one minute "PT1M" is meant.
             try {
-                dur = DatatypeFactory.newInstance().newDuration(str);
-                seconds = dur.getTimeInMillis(STATIC_DATE) / 1000;
+                Duration dur = DatatypeFactory.newInstance().newDuration(str);
+                return dur.getTimeInMillis(STATIC_DATE) / 1000;
             } catch (Exception ex) {
                 throw new IllegalArgumentException("Cannot parse duration tag value: " + str, ex);
             }
-            return seconds;
         }
 
         try {
@@ -69,18 +66,17 @@ public class OSMReaderUtility {
                     minStr = minStr.substring(0, index);
                 }
 
-                seconds += Integer.parseInt(hourStr) * 60L * 60;
+                long seconds = Integer.parseInt(hourStr) * 60L * 60;
                 seconds += Integer.parseInt(minStr) * 60L;
                 seconds += Integer.parseInt(secondsStr);
                 return seconds;
             } else {
                 // value contains minutes
-                seconds = Integer.parseInt(str) * 60;
+                return Integer.parseInt(str) * 60L;
             }
         } catch (Exception ex) {
             throw new IllegalArgumentException("Cannot parse duration tag value: " + str, ex);
         }
-        return seconds;
     }
 
 }

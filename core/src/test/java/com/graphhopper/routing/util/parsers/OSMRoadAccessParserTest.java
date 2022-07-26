@@ -19,17 +19,12 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadAccess;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,15 +33,11 @@ class OSMRoadAccessParserTest {
 
     @Test
     void countryRule() {
-        EncodingManager em = EncodingManager.create("car");
-        EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-        Graph graph = new GraphBuilder(em).create();
-        FlagEncoder encoder = em.getEncoder("car");
-        EdgeIteratorState e1 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(100));
-        EdgeIteratorState e2 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(100));
+        EnumEncodedValue<RoadAccess> roadAccessEnc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
+        roadAccessEnc.init(new EncodedValue.InitializerConfig());
 
         OSMRoadAccessParser parser = new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
-        IntsRef relFlags = em.createRelationFlags();
+        IntsRef relFlags = new IntsRef(2);
         ReaderWay way = new ReaderWay(27L);
         way.setTag("highway", "track");
         way.setTag("country_rule", new CountryRule() {
@@ -55,13 +46,15 @@ class OSMRoadAccessParserTest {
                 return RoadAccess.DESTINATION;
             }
         });
-        parser.handleWayTags(e1.getFlags(), way, relFlags);
-        assertEquals(RoadAccess.DESTINATION, e1.get(roadAccessEnc));
+        IntsRef edgeFlags = new IntsRef(1);
+        parser.handleWayTags(edgeFlags, way, relFlags);
+        assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeFlags));
 
         // if there is no country rule we get the default value
+        edgeFlags = new IntsRef(1);
         way.removeTag("country_rule");
-        parser.handleWayTags(e2.getFlags(), way, relFlags);
-        assertEquals(RoadAccess.YES, e2.get(roadAccessEnc));
+        parser.handleWayTags(edgeFlags, way, relFlags);
+        assertEquals(RoadAccess.YES, roadAccessEnc.getEnum(false, edgeFlags));
     }
 
 }

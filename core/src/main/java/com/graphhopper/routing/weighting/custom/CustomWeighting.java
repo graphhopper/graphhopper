@@ -18,7 +18,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.CustomModel;
@@ -77,7 +77,6 @@ public final class CustomWeighting extends AbstractWeighting {
      * costs or traffic light costs etc)
      */
     private final static double SPEED_CONV = 3.6;
-    private final BooleanEncodedValue baseVehicleAccessEnc;
     private final double maxSpeed;
     private final double maxPriority;
     private final double distanceInfluence;
@@ -85,11 +84,10 @@ public final class CustomWeighting extends AbstractWeighting {
     private final EdgeToDoubleMapping edgeToSpeedMapping;
     private final EdgeToDoubleMapping edgeToPriorityMapping;
 
-    public CustomWeighting(FlagEncoder baseFlagEncoder, TurnCostProvider turnCostProvider, Parameters parameters) {
-        super(baseFlagEncoder, turnCostProvider);
+    public CustomWeighting(BooleanEncodedValue baseAccessEnc, DecimalEncodedValue baseSpeedEnc, TurnCostProvider turnCostProvider, Parameters parameters) {
+        super(baseAccessEnc, baseSpeedEnc, turnCostProvider);
         this.edgeToSpeedMapping = parameters.getEdgeToSpeedMapping();
         this.edgeToPriorityMapping = parameters.getEdgeToPriorityMapping();
-        this.baseVehicleAccessEnc = baseFlagEncoder.getAccessEnc();
         this.headingPenaltySeconds = parameters.getHeadingPenaltySeconds();
         this.maxSpeed = parameters.getMaxSpeed() / SPEED_CONV;
         this.maxPriority = parameters.getMaxPriority();
@@ -124,7 +122,7 @@ public final class CustomWeighting extends AbstractWeighting {
             reverse = false;
 
         // TODO see #1835
-        if (reverse ? !edgeState.getReverse(baseVehicleAccessEnc) : !edgeState.get(baseVehicleAccessEnc))
+        if (reverse ? !edgeState.getReverse(accessEnc) : !edgeState.get(accessEnc))
             return Double.POSITIVE_INFINITY;
 
         double speed = edgeToSpeedMapping.get(edgeState, reverse);

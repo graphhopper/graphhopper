@@ -130,6 +130,14 @@ public class GtfsStorage {
 		public int hashCode() {
 			return Objects.hash(feedId, stopId);
 		}
+
+		@Override
+		public String toString() {
+			return "FeedIdWithStopId{" +
+					"feedId='" + feedId + '\'' +
+					", stopId='" + stopId + '\'' +
+					'}';
+		}
 	}
 
 	private boolean isClosed = false;

@@ -20,8 +20,6 @@ package com.graphhopper.gtfs;
 
 import com.google.common.collect.Iterators;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
@@ -31,7 +29,10 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Spliterators;
 import java.util.function.Consumer;
 
 public final class GraphExplorer {
@@ -41,7 +42,6 @@ public final class GraphExplorer {
     private final RealtimeFeed realtimeFeed;
     private final boolean reverse;
     private final Weighting accessEgressWeighting;
-    private final BooleanEncodedValue accessEnc;
     private final boolean walkOnly;
     private final boolean ptOnly;
     private final double walkSpeedKmH;
@@ -54,12 +54,9 @@ public final class GraphExplorer {
         this.graph = graph;
         this.ptGraph = ptGraph;
         this.accessEgressWeighting = accessEgressWeighting;
-        this.accessEnc = accessEgressWeighting.getFlagEncoder().getAccessEnc();
         this.ignoreValidities = ignoreValidities;
         this.blockedRouteTypes = blockedRouteTypes;
-        AccessFilter accessEgressIn = AccessFilter.inEdges(accessEgressWeighting.getFlagEncoder().getAccessEnc());
-        AccessFilter accessEgressOut = AccessFilter.outEdges(accessEgressWeighting.getFlagEncoder().getAccessEnc());
-        this.edgeExplorer = graph.createEdgeExplorer(reverse ? accessEgressIn : accessEgressOut);
+        this.edgeExplorer = graph.createEdgeExplorer();
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
         this.reverse = reverse;
@@ -163,7 +160,7 @@ public final class GraphExplorer {
             @Override
             public boolean tryAdvance(Consumer<? super MultiModalEdge> action) {
                 while (e.next()) {
-                    if (reverse ? e.getReverse(accessEnc) : e.get(accessEnc)) {
+                    if (!accessEgressWeighting.edgeHasNoAccess(e, reverse)) {
                         action.accept(new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse) * (5.0 / walkSpeedKmH)), e.getDistance()));
                         return true;
                     }

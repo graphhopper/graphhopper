@@ -17,9 +17,10 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -35,11 +36,12 @@ public class PriorityWeighting extends FastestWeighting {
 
     private final double minFactor;
     private final double maxPrio;
-    private final DecimalEncodedValue priorityEnc;
+    protected final DecimalEncodedValue priorityEnc;
 
-    public PriorityWeighting(FlagEncoder encoder, PMap pMap, TurnCostProvider turnCostProvider) {
-        super(encoder, pMap, turnCostProvider);
-        priorityEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "priority"));
+    public PriorityWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                             EnumEncodedValue<RoadAccess> roadAccessEnc, PMap pMap, TurnCostProvider turnCostProvider) {
+        super(accessEnc, speedEnc, roadAccessEnc, pMap, turnCostProvider);
+        this.priorityEnc = priorityEnc;
         minFactor = 1 / PriorityCode.getValue(BEST.getValue());
         maxPrio = PriorityCode.getFactor(BEST.getValue());
     }

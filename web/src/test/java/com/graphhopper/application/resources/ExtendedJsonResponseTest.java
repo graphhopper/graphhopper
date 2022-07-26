@@ -25,6 +25,7 @@ import com.graphhopper.matching.Observation;
 import com.graphhopper.matching.State;
 import com.graphhopper.resources.MapMatchingResource;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
@@ -34,6 +35,7 @@ import com.graphhopper.util.shapes.GHPoint3D;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -86,7 +88,8 @@ public class ExtendedJsonResponseTest {
         PointList pointList = new PointList();
         pointList.add(-3.4445, -38.9990);
         pointList.add(-3.5550, -38.7990);
-        return new VirtualEdgeIteratorState(0, 0, 0, 1, 10, new IntsRef(1), "test of iterator", pointList, false);
+        return new VirtualEdgeIteratorState(0, 0, 0, 1, 10, new IntsRef(1),
+                EdgeKVStorage.KeyValue.createKV("name", "test of iterator"), pointList, false);
     }
 
 }

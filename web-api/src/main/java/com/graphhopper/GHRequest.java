@@ -38,8 +38,6 @@ public class GHRequest {
     private List<GHPoint> points;
     private String profile = "";
     private final PMap hints = new PMap();
-    // List of favored start (1st element) and arrival heading (all other).
-    // Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
     private List<Double> headings = new ArrayList<>();
     private List<String> pointHints = new ArrayList<>();
     private List<String> curbsides = new ArrayList<>();
@@ -58,31 +56,10 @@ public class GHRequest {
     }
 
     /**
-     * Set routing request from specified startPlace (fromLat, fromLon) to endPlace (toLat, toLon)
-     * with a preferred start and end heading. Headings are north based azimuth (clockwise) in (0,
-     * 360) or NaN for equal preference.
-     */
-    public GHRequest(double fromLat, double fromLon, double toLat, double toLon,
-                     double startHeading, double endHeading) {
-        this(new GHPoint(fromLat, fromLon), new GHPoint(toLat, toLon), startHeading, endHeading);
-    }
-
-    /**
-     * Set routing request from specified startPlace (fromLat, fromLon) to endPlace (toLat, toLon)
+     * Creates a routing request from one point (fromLat, fromLon) to another (toLat, toLon)
      */
     public GHRequest(double fromLat, double fromLon, double toLat, double toLon) {
         this(new GHPoint(fromLat, fromLon), new GHPoint(toLat, toLon));
-    }
-
-    /**
-     * Set routing request from specified startPlace to endPlace with a preferred start and end
-     * heading. Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
-     */
-    public GHRequest(GHPoint startPlace, GHPoint endPlace, double startHeading, double endHeading) {
-        this(startPlace, endPlace);
-        headings = new ArrayList<>(2);
-        headings.add(startHeading);
-        headings.add(endHeading);
     }
 
     public GHRequest(GHPoint startPlace, GHPoint endPlace) {
@@ -98,24 +75,6 @@ public class GHRequest {
     }
 
     /**
-     * Set routing request
-     *
-     * @param points   List of stopover points in order: start, 1st stop, 2nd stop, ..., end
-     * @param headings List of favored headings for starting (start point) and arrival (via
-     *                 and end points) Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal
-     *                 preference
-     */
-    public GHRequest(List<GHPoint> points, List<Double> headings) {
-        this(points);
-        if (points.size() != headings.size())
-            throw new IllegalArgumentException("Size of headings (" + headings.size()
-                    + ") must match size of points (" + points.size() + ")");
-        this.headings = headings;
-    }
-
-    /**
-     * Set routing request
-     *
      * @param points List of stopover points in order: start, 1st stop, 2nd stop, ..., end
      */
     public GHRequest(List<GHPoint> points) {
@@ -144,8 +103,12 @@ public class GHRequest {
     }
 
     /**
-     * The starting directions at the various points as north based azimuth (clockwise) in [0, 360)
-     * or NaN for equal preference
+     * Sets the headings, i.e. the direction the route should leave the starting point and the directions the route
+     * should arrive from at the via-points and the end point. Each heading is given as north based azimuth (clockwise)
+     * in [0, 360) or NaN if no direction shall be specified.
+     * <p>
+     * The number of headings must be zero (default), one (for the start point) or equal to the number of points
+     * when sending the request.
      */
     public GHRequest setHeadings(List<Double> headings) {
         this.headings = headings;

@@ -33,7 +33,7 @@ public class WeightDetails extends AbstractPathDetailsBuilder {
 
     private final Weighting weighting;
     private int edgeId = EdgeIterator.NO_EDGE;
-    private double weight = Double.NaN;
+    private Double weight;
 
     public WeightDetails(Weighting weighting) {
         super(WEIGHT);

@@ -23,7 +23,7 @@ import com.graphhopper.util.EdgeIteratorState;
 public class StringDetails extends AbstractPathDetailsBuilder {
 
     private final StringEncodedValue ev;
-    private String currentVal = null;
+    private String currentVal;
 
     public StringDetails(String name, StringEncodedValue ev) {
         super(name);
@@ -39,7 +39,7 @@ public class StringDetails extends AbstractPathDetailsBuilder {
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         String val = edge.get(ev);
         // we can use the reference equality here
-        if (val != currentVal) {
+        if (!val.equals(currentVal)) {
             this.currentVal = val;
             return true;
         }

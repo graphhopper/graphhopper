@@ -26,12 +26,16 @@ import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.SPTEntry;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjanSCC;
 import com.graphhopper.routing.subnetwork.TarjanSCC.ConnectedComponents;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.AreaIndex;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.AbstractAdjustedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
@@ -77,9 +81,9 @@ public class LandmarkStorage {
     private final List<int[]> landmarkIDs;
     private double factor = -1;
     private final static double DOUBLE_MLTPL = 1e6;
-    private final GraphHopperStorage graph;
+    private final BaseGraph graph;
     private final NodeAccess na;
-    private final FlagEncoder encoder;
+    private final EncodedValueLookup encodedValueLookup;
     private final Weighting weighting;
     private final LMConfig lmConfig;
     private Weighting lmSelectionWeighting;
@@ -95,8 +99,9 @@ public class LandmarkStorage {
      */
     static final long PRECISION = 1 << 16;
 
-    public LandmarkStorage(GraphHopperStorage graph, Directory dir, final LMConfig lmConfig, int landmarks) {
+    public LandmarkStorage(BaseGraph graph, EncodedValueLookup encodedValueLookup, Directory dir, final LMConfig lmConfig, int landmarks) {
         this.graph = graph;
+        this.encodedValueLookup = encodedValueLookup;
         this.na = graph.getNodeAccess();
         this.minimumNodes = Math.min(graph.getNodes() / 2, 500_000);
         this.lmConfig = lmConfig;
@@ -104,9 +109,8 @@ public class LandmarkStorage {
         if (weighting.hasTurnCosts()) {
             throw new IllegalArgumentException("Landmark preparation cannot be used with weightings returning turn costs, because this can lead to wrong results during the (node-based) landmark calculation, see #1960");
         }
-        this.encoder = weighting.getFlagEncoder();
         // allowing arbitrary weighting is too dangerous
-        this.lmSelectionWeighting = new ShortestWeighting(encoder) {
+        this.lmSelectionWeighting = new AbstractAdjustedWeighting(weighting) {
             @Override
             public double calcEdgeWeight(EdgeIteratorState edge, boolean reverse) {
                 // make accessibility of shortest identical to the provided weighting to avoid problems like shown in testWeightingConsistence
@@ -119,8 +123,8 @@ public class LandmarkStorage {
             }
 
             @Override
-            public String toString() {
-                return "LM_BFS|" + encoder;
+            public String getName() {
+                return "LM_BFS|" + weighting.getName();
             }
         };
 
@@ -220,7 +224,7 @@ public class LandmarkStorage {
     }
 
     /**
-     * This method calculates the landmarks and initial weightings to & from them.
+     * This method calculates the landmarks and initial weightings to &amp; from them.
      */
     public void createLandmarks() {
         if (isInitialized())
@@ -245,12 +249,12 @@ public class LandmarkStorage {
         String snKey = Subnetwork.key(lmConfig.getName());
         // TODO We could use EdgeBasedTarjanSCC instead of node-based TarjanSCC here to get the small networks directly,
         //  instead of using the subnetworkEnc from PrepareRoutingSubnetworks.
-        if (!graph.getEncodingManager().hasEncodedValue(snKey))
+        if (!encodedValueLookup.hasEncodedValue(snKey))
             throw new IllegalArgumentException("EncodedValue '" + snKey + "' does not exist. For Landmarks this is " +
                     "currently required (also used in PrepareRoutingSubnetworks). See #2256");
 
         // Exclude edges that we previously marked in PrepareRoutingSubnetworks to avoid problems like "connection not found".
-        final BooleanEncodedValue edgeInSubnetworkEnc = graph.getEncodingManager().getBooleanEncodedValue(snKey);
+        final BooleanEncodedValue edgeInSubnetworkEnc = encodedValueLookup.getBooleanEncodedValue(snKey);
         final IntHashSet blockedEdges;
         // We use the areaIndex to split certain areas from each other but do not permanently change the base graph
         // so that other algorithms still can route through these regions. This is done to increase the density of

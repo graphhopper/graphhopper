@@ -35,7 +35,7 @@ public interface Graph {
      * @return a graph which behaves like an unprepared graph and e.g. the normal unidirectional
      * Dijkstra or any graph traversal algorithm can be executed.
      */
-    Graph getBaseGraph();
+    BaseGraph getBaseGraph();
 
     /**
      * @return the number of created locations - via setNode() or edge()

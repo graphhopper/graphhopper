@@ -19,22 +19,22 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
-
-import java.util.List;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 public class OSMBikeNetworkTagParser implements RelationTagParser {
-    private EnumEncodedValue<RouteNetwork> bikeRouteEnc;
+    private final EnumEncodedValue<RouteNetwork> bikeRouteEnc;
     // used only for internal transformation from relations into edge flags
-    private EnumEncodedValue<RouteNetwork> transformerRouteRelEnc;
+    private final EnumEncodedValue<RouteNetwork> transformerRouteRelEnc = new EnumEncodedValue<>(getKey("bike", "route_relation"), RouteNetwork.class);
 
-    @Override
-    public void createRelationEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(transformerRouteRelEnc = new EnumEncodedValue<>(getKey("bike", "route_relation"), RouteNetwork.class));
+    public OSMBikeNetworkTagParser(EnumEncodedValue<RouteNetwork> bikeRouteEnc, EncodedValue.InitializerConfig relConfig) {
+        this.bikeRouteEnc = bikeRouteEnc;
+        this.transformerRouteRelEnc.init(relConfig);
     }
 
     @Override
@@ -57,11 +57,6 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
         }
 
         return relFlags;
-    }
-
-    @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(bikeRouteEnc = new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class));
     }
 
     @Override

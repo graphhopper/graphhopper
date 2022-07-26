@@ -22,10 +22,12 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -52,8 +54,11 @@ class HeadingRoutingTest {
     @Test
     public void headingTest1() {
         // Test enforce start direction
-        GraphHopperStorage graph = createSquareGraph();
-        Router router = createRouter(graph);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
+        Router router = createRouter(graph, encodingManager);
 
         // Start in middle of edge 4-5
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -73,8 +78,11 @@ class HeadingRoutingTest {
     @Test
     public void headingTest2() {
         // Test enforce south start direction and east end direction
-        GraphHopperStorage graph = createSquareGraph();
-        Router router = createRouter(graph);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
+        Router router = createRouter(graph, encodingManager);
 
         // Start in middle of edge 4-5
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -98,8 +106,11 @@ class HeadingRoutingTest {
 
     @Test
     public void headingTest3() {
-        GraphHopperStorage graph = createSquareGraph();
-        Router router = createRouter(graph);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
+        Router router = createRouter(graph, encodingManager);
 
         // Start in middle of edge 4-5
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -115,14 +126,17 @@ class HeadingRoutingTest {
                 setPathDetails(Collections.singletonList("edge_key"));
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{4, 5, 6, 7, 8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+        assertArrayEquals(new int[]{4, 5, 6, 7, 7, 8, 3, 2}, calcNodes(graph, response.getAll().get(0)));
     }
 
     @Test
     public void headingTest4() {
         // Test straight via routing
-        GraphHopperStorage graph = createSquareGraph();
-        Router router = createRouter(graph);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
+        Router router = createRouter(graph, encodingManager);
 
         // Start in middle of edge 4-5
         GHPoint start = new GHPoint(0.0015, 0.002);
@@ -138,21 +152,24 @@ class HeadingRoutingTest {
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
         assertEquals(1, response.getAll().size());
-        assertArrayEquals(new int[]{5, 4, 3, 8, 1, 2, 3}, calcNodes(graph, response.getAll().get(0)));
+        assertArrayEquals(new int[]{5, 4, 3, 3, 8, 1, 2, 3}, calcNodes(graph, response.getAll().get(0)));
     }
 
     @Test
     public void headingTest5() {
         // Test independence of previous enforcement for subsequent paths
-        GraphHopperStorage graph = createSquareGraph();
-        Router router = createRouter(graph);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
+        Router router = createRouter(graph, encodingManager);
 
         // Start in middle of edge 4-5
         GHPoint start = new GHPoint(0.0015, 0.002);
+        // First go south and then come from west to via-point at 7-6. Then go back over previously punished (11)-4 edge
+        GHPoint via = new GHPoint(0.000, 0.0015);
         // End at middle of edge 2-3
         GHPoint end = new GHPoint(0.002, 0.0005);
-        // First go south and than come from west to via-point at 7-6. Then go back over previously punished (11)-4 edge
-        GHPoint via = new GHPoint(0.000, 0.0015);
         GHRequest req = new GHRequest().
                 setPoints(Arrays.asList(start, via, end)).
                 setHeadings(Arrays.asList(0., 90., Double.NaN)).
@@ -161,13 +178,16 @@ class HeadingRoutingTest {
         req.putHint(Parameters.Routing.PASS_THROUGH, true);
         GHResponse response = router.route(req);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{5, 4, 3, 8, 7, 6, 5, 4, 3, 2}, calcNodes(graph, response.getAll().get(0)));
+        assertArrayEquals(new int[]{5, 4, 3, 8, 7, 7, 6, 5, 4, 3, 2}, calcNodes(graph, response.getBest()));
     }
 
     @Test
     public void testHeadingWithSnapFilter() {
-        GraphHopperStorage graph = createSquareGraphWithTunnel();
-        Router router = createRouter(graph);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraphWithTunnel(encodingManager, accessEnc, speedEnc);
+        Router router = createRouter(graph, encodingManager);
         // Start at 8 (slightly north to make it independent on some edge ordering and always use 8-3 or 3-8 as fallback)
         GHPoint start = new GHPoint(0.0011, 0.001);
         // End at middle of edge 2-3
@@ -226,8 +246,11 @@ class HeadingRoutingTest {
 
     @Test
     public void testHeadingWithSnapFilter2() {
-        GraphHopperStorage graph = createSquareGraphWithTunnel();
-        Router router = createRouter(graph);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraphWithTunnel(encodingManager, accessEnc, speedEnc);
+        Router router = createRouter(graph, encodingManager);
         // Start at 8 (slightly east to snap to edge 1->5 per default)
         GHPoint start = new GHPoint(0.001, 0.0011);
         // End at middle of edge 2-3
@@ -257,8 +280,11 @@ class HeadingRoutingTest {
     @Test
     public void headingTest6() {
         // Test if snaps at tower nodes are ignored
-        GraphHopperStorage graph = createSquareGraph();
-        Router router = createRouter(graph);
+        BooleanEncodedValue accessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
+        Router router = createRouter(graph, encodingManager);
 
         // QueryPoints directly on TowerNodes
         GHPoint start = new GHPoint(0, 0);
@@ -275,20 +301,17 @@ class HeadingRoutingTest {
         assertArrayEquals(new int[]{0, 1, 2, 3, 4}, calcNodes(graph, response.getAll().get(0)));
     }
 
-    private Router createRouter(GraphHopperStorage graph) {
+    private Router createRouter(BaseGraph graph, EncodingManager encodingManager) {
         LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
         locationIndex.prepareIndex();
         Map<String, Profile> profilesByName = new HashMap<>();
         profilesByName.put("profile", new Profile("profile").setVehicle("car").setWeighting("fastest"));
-        return new Router(graph, locationIndex, profilesByName, new PathDetailsBuilderFactory(), new TranslationMap().doImport(), new RouterConfig(),
-                new DefaultWeightingFactory(graph, graph.getEncodingManager()), Collections.emptyMap(), Collections.emptyMap());
+        return new Router(graph.getBaseGraph(), encodingManager, locationIndex, profilesByName, new PathDetailsBuilderFactory(), new TranslationMap().doImport(), new RouterConfig(),
+                new DefaultWeightingFactory(graph.getBaseGraph(), encodingManager), Collections.emptyMap(), Collections.emptyMap());
     }
 
-    private GraphHopperStorage createSquareGraph() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
-
+    private BaseGraph createSquareGraph(EncodingManager encodingManager, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         // 2---3---4
         // |   |   |
         // 1---8---5
@@ -305,28 +328,25 @@ class HeadingRoutingTest {
         na.setNode(7, 0.000, 0.001);
         na.setNode(8, 0.001, 0.001);
 
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(1, 2).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 3).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 4).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(4, 5).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 6).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(6, 7).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(7, 0).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 4).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(4, 5).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(5, 6).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(6, 7).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(7, 0).setDistance(100));
 
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(1, 8).setDistance(110));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 8).setDistance(110));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 8).setDistance(110));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(7, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(5, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(7, 8).setDistance(110));
 
         return g;
     }
 
-    private GraphHopperStorage createSquareGraphWithTunnel() {
-        CarFlagEncoder carEncoder = new CarFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(Subnetwork.create("profile")).build();
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
-
+    private BaseGraph createSquareGraphWithTunnel(EncodingManager encodingManager, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         // 2----3---4
         // |    |   |
         // 1->- 8 >-5 (edge 1->5 is not connected to 8)
@@ -343,18 +363,18 @@ class HeadingRoutingTest {
         na.setNode(7, 0.000, 0.001);
         na.setNode(8, 0.001, 0.001);
 
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(0, 1).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(1, 2).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 3).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 4).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(4, 5).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(5, 6).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(6, 7).setDistance(100));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(7, 0).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 4).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(4, 5).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(5, 6).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(6, 7).setDistance(100));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(7, 0).setDistance(100));
 
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(1, 5).setDistance(110));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(3, 8).setDistance(110));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(7, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(1, 5).setDistance(110));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(3, 8).setDistance(110));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(7, 8).setDistance(110));
 
         return g;
     }
@@ -363,12 +383,10 @@ class HeadingRoutingTest {
         List<PathDetail> edgeKeys = responsePath.getPathDetails().get("edge_key");
         int[] result = new int[edgeKeys.size() + 1];
         for (int i = 0; i < edgeKeys.size(); i++) {
-            int edgeKey = (int) edgeKeys.get(i).getValue();
-            int edgeId = edgeKey / 2;
-            EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
-            result[i] = edgeKey % 2 == 0 ? edgeIteratorState.getBaseNode() : edgeIteratorState.getAdjNode();
-            if (i == edgeKeys.size() - 1)
-                result[edgeKeys.size()] = edgeKey % 2 == 0 ? edgeIteratorState.getAdjNode() : edgeIteratorState.getBaseNode();
+            EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorStateForKey((int) edgeKeys.get(i).getValue());
+            result[i] = edgeIteratorState.getBaseNode();
+            // last entry needs an additional node:
+            if (i == edgeKeys.size() - 1) result[edgeKeys.size()] = edgeIteratorState.getAdjNode();
         }
         return result;
     }

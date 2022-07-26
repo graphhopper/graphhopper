@@ -29,9 +29,8 @@ import com.graphhopper.isochrone.algorithm.JTSTriangulator;
 import com.graphhopper.isochrone.algorithm.Triangulator;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.resources.*;
-import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
@@ -61,18 +60,18 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
-    static class GraphHopperStorageFactory implements Factory<GraphHopperStorage> {
+    static class BaseGraphFactory implements Factory<BaseGraph> {
 
         @Inject
         GraphHopper graphHopper;
 
         @Override
-        public GraphHopperStorage provide() {
-            return graphHopper.getGraphHopperStorage();
+        public BaseGraph provide() {
+            return graphHopper.getBaseGraph();
         }
 
         @Override
-        public void dispose(GraphHopperStorage instance) {
+        public void dispose(BaseGraph instance) {
 
         }
     }
@@ -125,14 +124,14 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
-    static class ProfileResolverFactory implements Factory<ProfileResolver> {
+    static class LegacyProfileResolverFactory implements Factory<LegacyProfileResolver> {
 
         @Inject
         GraphHopper graphHopper;
 
         @Override
-        public ProfileResolver provide() {
-            return new ProfileResolver(graphHopper.getEncodingManager(),
+        public LegacyProfileResolver provide() {
+            return new LegacyProfileResolver(graphHopper.getEncodingManager(),
                     graphHopper.getProfiles(),
                     graphHopper.getCHPreparationHandler().getCHProfiles(),
                     graphHopper.getLMPreparationHandler().getLMProfiles()
@@ -140,7 +139,25 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
 
         @Override
-        public void dispose(ProfileResolver profileResolver) {
+        public void dispose(LegacyProfileResolver profileResolver) {
+
+        }
+    }
+
+    static class ProfileResolverFactory implements Factory<ProfileResolver> {
+        @Inject
+        GraphHopper graphHopper;
+
+        @Inject
+        LegacyProfileResolver legacyProfileResolver;
+
+        @Override
+        public ProfileResolver provide() {
+            return new ProfileResolver(graphHopper.getProfiles(), legacyProfileResolver);
+        }
+
+        @Override
+        public void dispose(ProfileResolver instance) {
 
         }
     }
@@ -237,12 +254,13 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
 
                 bind(new JTSTriangulator(graphHopper.getRouterConfig())).to(Triangulator.class);
                 bindFactory(PathDetailsBuilderFactoryFactory.class).to(PathDetailsBuilderFactory.class);
+                bindFactory(LegacyProfileResolverFactory.class).to(LegacyProfileResolver.class);
                 bindFactory(ProfileResolverFactory.class).to(ProfileResolver.class);
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
                 bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
-                bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
+                bindFactory(BaseGraphFactory.class).to(BaseGraph.class);
                 bindFactory(GtfsStorageFactory.class).to(GtfsStorage.class);
             }
         });

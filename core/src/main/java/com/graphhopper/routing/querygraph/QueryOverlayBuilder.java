@@ -20,6 +20,7 @@ package com.graphhopper.routing.querygraph;
 
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntObjectHashMap;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.Snap;
@@ -27,10 +28,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 class QueryOverlayBuilder {
     private final int firstVirtualNodeId;
@@ -147,7 +145,7 @@ class QueryOverlayBuilder {
                 GHPoint3D prevPoint = fullPL.get(0);
                 int adjNode = closestEdge.getAdjNode();
                 int origEdgeKey = closestEdge.getEdgeKey();
-                int origRevEdgeKey = GHUtility.reverseEdgeKey(origEdgeKey);
+                int origRevEdgeKey = closestEdge.getReverseEdgeKey();
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
                 int virtNodeId = queryOverlay.getVirtualNodes().size() + firstVirtualNodeId;
@@ -225,10 +223,11 @@ class QueryOverlayBuilder {
 
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);
         // edges between base and snapped point
-        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origEdgeKey, GHUtility.createEdgeKey(virtEdgeId, false),
-                prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints, reverse);
-        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevEdgeKey, GHUtility.createEdgeKey(virtEdgeId, true),
-                nodeId, prevNodeId, baseDistance, IntsRef.deepCopyOf(closestEdge.getFlags()), closestEdge.getName(), baseReversePoints, !reverse);
+        List<EdgeKVStorage.KeyValue> keyValues = closestEdge.getKeyValues();
+        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origEdgeKey, GHUtility.createEdgeKey(virtEdgeId, prevNodeId == nodeId, false),
+                prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), keyValues, basePoints, reverse);
+        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevEdgeKey, GHUtility.createEdgeKey(virtEdgeId, prevNodeId == nodeId, true),
+                nodeId, prevNodeId, baseDistance, IntsRef.deepCopyOf(closestEdge.getFlags()), keyValues, baseReversePoints, !reverse);
 
         baseEdge.setReverseEdge(baseReverseEdge);
         baseReverseEdge.setReverseEdge(baseEdge);

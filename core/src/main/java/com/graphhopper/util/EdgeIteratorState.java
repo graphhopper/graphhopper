@@ -18,8 +18,11 @@
 package com.graphhopper.util;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
+
+import java.util.List;
 
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
@@ -50,11 +53,6 @@ public interface EdgeIteratorState {
         @Override
         public String getName() {
             return "reverse";
-        }
-
-        @Override
-        public int getVersion() {
-            return 1;
         }
 
         @Override
@@ -90,15 +88,9 @@ public interface EdgeIteratorState {
     int getEdgeKey();
 
     /**
-     * @return the edge id of the first original edge of the current edge. This is needed for shortcuts
-     * in edge-based contraction hierarchies and otherwise simply returns the id of the current edge.
+     * Like #getEdgeKey, but returns the reverse key. For loops the reverse key is the same as the key.
      */
-    int getOrigEdgeFirst();
-
-    /**
-     * @see #getOrigEdgeFirst()
-     */
-    int getOrigEdgeLast();
+    int getReverseEdgeKey();
 
     /**
      * Returns the node used to instantiate the EdgeIterator. Often only used for convenience reasons.
@@ -191,20 +183,47 @@ public interface EdgeIteratorState {
     <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value);
 
     <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd);
-    
+
     String get(StringEncodedValue property);
-    
+
     EdgeIteratorState set(StringEncodedValue property, String value);
-    
+
     String getReverse(StringEncodedValue property);
-    
+
     EdgeIteratorState setReverse(StringEncodedValue property, String value);
-    
+
     EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd);
 
+    /**
+     * Identical to calling getKeyValues().get("name") if name is stored for both directions. Note that for backward
+     * compatibility this method returns an empty String instead of null if there was no KeyPair with key==name stored.
+     *
+     * @return the stored value for the key "name" in the KeyValue list of this EdgeIteratorState.
+     */
     String getName();
 
-    EdgeIteratorState setName(String name);
+    /**
+     * This stores the specified key-value pairs in the storage of this EdgeIteratorState. This is more flexible
+     * compared to the mechanism of flags and EncodedValue and allows storing sparse key value pairs more efficient.
+     * But it might be slow and more inefficient on retrieval. Call this setKeyValues method only once per
+     * EdgeIteratorState as it allocates new space everytime this method is called.
+     */
+    EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> map);
+
+    /**
+     * This method returns KeyValue pairs for both directions in contrast to {@link #getValue(String)}.
+     *
+     * @see #setKeyValues(List)
+     */
+    List<EdgeKVStorage.KeyValue> getKeyValues();
+
+    /**
+     * This method returns the *first* value for the specified key and only if stored for the direction of this
+     * EdgeIteratorState. If you need more than one value see also {@link #getKeyValues()}. Avoid storing KeyPairs with
+     * duplicate keys as only the first will be reachable with this method. Currently, there is no support to use this
+     * method in a custom_model, and you should use EncodedValues instead.
+     */
+    Object getValue(String key);
 
     /**
      * Clones this EdgeIteratorState.

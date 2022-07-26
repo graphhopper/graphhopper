@@ -18,11 +18,14 @@
 package com.graphhopper.routing.querygraph;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PointList;
+
+import java.util.List;
 
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
@@ -38,21 +41,21 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private final int originalEdgeKey;
     private double distance;
     private IntsRef edgeFlags;
-    private String name;
+    private List<EdgeKVStorage.KeyValue> keyValues;
     // true if edge should be avoided as start/stop
     private boolean unfavored;
     private EdgeIteratorState reverseEdge;
     private final boolean reverse;
 
     public VirtualEdgeIteratorState(int originalEdgeKey, int edgeKey, int baseNode, int adjNode, double distance,
-                                    IntsRef edgeFlags, String name, PointList pointList, boolean reverse) {
+                                    IntsRef edgeFlags, List<EdgeKVStorage.KeyValue> keyValues, PointList pointList, boolean reverse) {
         this.originalEdgeKey = originalEdgeKey;
         this.edgeKey = edgeKey;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
         this.distance = distance;
         this.edgeFlags = edgeFlags;
-        this.name = name;
+        this.keyValues = keyValues;
         this.pointList = pointList;
         this.reverse = reverse;
     }
@@ -75,6 +78,11 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     @Override
     public int getEdgeKey() {
         return edgeKey;
+    }
+
+    @Override
+    public int getReverseEdgeKey() {
+        return baseNode == adjNode ? edgeKey : GHUtility.reverseEdgeKey(edgeKey);
     }
 
     @Override
@@ -302,13 +310,28 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public String getName() {
-        return name;
+        String name = (String) getValue("name");
+        // preserve backward compatibility (returns empty string if name tag missing)
+        return name == null ? "" : name;
     }
 
     @Override
-    public EdgeIteratorState setName(String name) {
-        this.name = name;
+    public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> list) {
+        this.keyValues = list;
         return this;
+    }
+
+    @Override
+    public List<EdgeKVStorage.KeyValue> getKeyValues() {
+        return keyValues;
+    }
+
+    @Override
+    public Object getValue(String key) {
+        for (EdgeKVStorage.KeyValue keyValue : keyValues) {
+            if (keyValue.key.equals(key)) return keyValue.value;
+        }
+        return null;
     }
 
     /**
@@ -324,22 +347,12 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     }
 
     @Override
-    public int getOrigEdgeFirst() {
-        return getEdge();
-    }
-
-    @Override
-    public int getOrigEdgeLast() {
-        return getEdge();
-    }
-
-    @Override
     public EdgeIteratorState detach(boolean reverse) {
         if (reverse) {
             // update properties of reverse edge
             // TODO copy pointList (geometry) too
             reverseEdge.setFlags(getFlags());
-            reverseEdge.setName(getName());
+            reverseEdge.setKeyValues(getKeyValues());
             reverseEdge.setDistance(getDistance());
             return reverseEdge;
         } else {

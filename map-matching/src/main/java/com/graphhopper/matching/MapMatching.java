@@ -37,6 +37,7 @@ import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -73,7 +74,7 @@ public class MapMatching {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    private final Graph graph;
+    private final BaseGraph graph;
     private final LandmarkStorage landmarks;
     private final LocationIndexTree locationIndex;
     private double measurementErrorSigma = 50.0;
@@ -128,7 +129,7 @@ public class MapMatching {
         } else {
             landmarks = null;
         }
-        graph = graphHopper.getGraphHopperStorage();
+        graph = graphHopper.getBaseGraph();
         unwrappedWeighting = graphHopper.createWeighting(profile, hints);
         inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileStr));
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
@@ -186,19 +187,38 @@ public class MapMatching {
      * Filters observations to only those which will be used for map matching (i.e. those which
      * are separated by at least 2 * measurementErrorSigman
      */
-    private List<Observation> filterObservations(List<Observation> observations) {
+    public List<Observation> filterObservations(List<Observation> observations) {
         List<Observation> filtered = new ArrayList<>();
         Observation prevEntry = null;
+        double acc = 0.0;
         int last = observations.size() - 1;
         for (int i = 0; i <= last; i++) {
             Observation observation = observations.get(i);
             if (i == 0 || i == last || distanceCalc.calcDist(
                     prevEntry.getPoint().getLat(), prevEntry.getPoint().getLon(),
                     observation.getPoint().getLat(), observation.getPoint().getLon()) > 2 * measurementErrorSigma) {
+                if (i > 0) {
+                    Observation prevObservation = observations.get(i - 1);
+                    acc += distanceCalc.calcDist(
+                            prevObservation.getPoint().getLat(), prevObservation.getPoint().getLon(),
+                            observation.getPoint().getLat(), observation.getPoint().getLon());
+                    acc -= distanceCalc.calcDist(
+                            prevEntry.getPoint().getLat(), prevEntry.getPoint().getLon(),
+                            observation.getPoint().getLat(), observation.getPoint().getLon());
+                }
+                // Here we store the meters of distance that we are missing because of the filtering,
+                // so that when we add these terms to the distances between the filtered points,
+                // the original total distance between the unfiltered points is conserved.
+                // (See test for kind of a specification.)
+                observation.setAccumulatedLinearDistanceToPrevious(acc);
                 filtered.add(observation);
                 prevEntry = observation;
+                acc = 0.0;
             } else {
-                logger.debug("Filter out observation: {}", i + 1);
+                Observation prevObservation = observations.get(i - 1);
+                acc += distanceCalc.calcDist(
+                        prevObservation.getPoint().getLat(), prevObservation.getPoint().getLon(),
+                        observation.getPoint().getLat(), observation.getPoint().getLon());
             }
         }
         return filtered;
@@ -321,8 +341,9 @@ public class MapMatching {
             if (prevTimeStep == null) {
                 viterbi.startWithInitialObservation(timeStep.observation, timeStep.candidates, emissionLogProbabilities);
             } else {
-                final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat,
-                        prevTimeStep.observation.getPoint().lon, timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon);
+                final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat, prevTimeStep.observation.getPoint().lon,
+                        timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon)
+                        + timeStep.observation.getAccumulatedLinearDistanceToPrevious();
 
                 for (State from : prevTimeStep.candidates) {
                     for (State to : timeStep.candidates) {
@@ -378,7 +399,8 @@ public class MapMatching {
                 }
             };
             int activeLM = Math.min(8, landmarks.getLandmarkCount());
-            algo.setApproximation(LMApproximator.forLandmarks(queryGraph, landmarks, activeLM));
+            LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, landmarks, activeLM);
+            algo.setApproximation(lmApproximator);
             algo.setMaxVisitedNodes(maxVisitedNodes);
             router = algo;
         } else {

@@ -26,10 +26,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.QueryGraphWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.ExtendedNodeAccess;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -44,7 +41,7 @@ import java.util.*;
  * introducing virtual nodes and edges. It is lightweight in order to be created every time a new
  * query comes in, which makes the behaviour thread safe.
  * <p>
- * Calling any <tt>create</tt> method creates virtual edges between the tower nodes of the existing
+ * Calling any <code>create</code> method creates virtual edges between the tower nodes of the existing
  * graph and new virtual tower nodes. Every virtual node has two adjacent nodes and is connected
  * to each adjacent nodes via 2 virtual edges with opposite base node / adjacent node encoding.
  * However, the edge explorer returned by {@link #createEdgeExplorer()} only returns two
@@ -54,7 +51,7 @@ import java.util.*;
  */
 public class QueryGraph implements Graph {
     static final int BASE_SNAP = 0, SNAP_BASE = 1, SNAP_ADJ = 2, ADJ_SNAP = 3;
-    private final Graph baseGraph;
+    private final BaseGraph baseGraph;
     private final int baseNodes;
     private final int baseEdges;
     private final TurnCostStorage turnCostStorage;
@@ -66,19 +63,19 @@ public class QueryGraph implements Graph {
     private final IntObjectMap<List<EdgeIteratorState>> virtualEdgesAtRealNodes;
     private final List<List<EdgeIteratorState>> virtualEdgesAtVirtualNodes;
 
-    public static QueryGraph create(Graph graph, Snap snap) {
+    public static QueryGraph create(BaseGraph graph, Snap snap) {
         return QueryGraph.create(graph, Collections.singletonList(snap));
     }
 
-    public static QueryGraph create(Graph graph, Snap fromSnap, Snap toSnap) {
-        return QueryGraph.create(graph, Arrays.asList(fromSnap, toSnap));
+    public static QueryGraph create(BaseGraph graph, Snap fromSnap, Snap toSnap) {
+        return QueryGraph.create(graph.getBaseGraph(), Arrays.asList(fromSnap, toSnap));
     }
 
-    public static QueryGraph create(Graph graph, List<Snap> snaps) {
+    public static QueryGraph create(BaseGraph graph, List<Snap> snaps) {
         return new QueryGraph(graph, snaps);
     }
 
-    private QueryGraph(Graph graph, List<Snap> snaps) {
+    private QueryGraph(BaseGraph graph, List<Snap> snaps) {
         baseGraph = graph;
         baseNodes = graph.getNodes();
         baseEdges = graph.getEdges();
@@ -99,7 +96,7 @@ public class QueryGraph implements Graph {
     }
 
     @Override
-    public Graph getBaseGraph() {
+    public BaseGraph getBaseGraph() {
         return baseGraph;
     }
 

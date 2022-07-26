@@ -74,7 +74,7 @@ public class RoutingAlgorithmWithOSMTest {
         GraphHopper hopper = createHopper(MONACO, new Profile("car").setVehicle("car").setWeighting("shortest"));
         hopper.importOrLoad();
         checkQueries(hopper, createMonacoCarQueries());
-        Graph g = hopper.getGraphHopperStorage();
+        Graph g = hopper.getBaseGraph();
 
         // When OSM file stays unchanged make static edge and node IDs a requirement
         assertEquals(GHUtility.asSet(9, 111, 182), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
@@ -268,7 +268,7 @@ public class RoutingAlgorithmWithOSMTest {
                 new Profile("foot").setVehicle("foot").setWeighting("shortest"));
         hopper.importOrLoad();
         checkQueries(hopper, createMonacoFoot());
-        Graph g = hopper.getGraphHopperStorage();
+        Graph g = hopper.getBaseGraph();
 
         // see testMonaco for a similar ID test
         assertEquals(GHUtility.asSet(2, 909, 571), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
@@ -440,7 +440,7 @@ public class RoutingAlgorithmWithOSMTest {
                 new Profile("bike").setVehicle("bike").setWeighting("fastest"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
-        hopper.getGraphHopperStorage();
+        hopper.getBaseGraph();
 
         Helper.removeDir(new File(GH_LOCATION));
 
@@ -584,7 +584,6 @@ public class RoutingAlgorithmWithOSMTest {
 
         GraphHopper hopper = createHopper(DIR + "/krautsand.osm.gz",
                 new Profile("car").setVehicle("car").setWeighting("fastest"));
-        hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
 
         for (Function<Query, GHRequest> requestFactory : createRequestFactories()) {

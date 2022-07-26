@@ -19,7 +19,6 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 
@@ -29,25 +28,21 @@ import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PR
  * @author Peter Karich
  */
 public abstract class AbstractWeighting implements Weighting {
-    protected final FlagEncoder flagEncoder;
-    protected final DecimalEncodedValue avSpeedEnc;
     protected final BooleanEncodedValue accessEnc;
+    protected final DecimalEncodedValue speedEnc;
     private final TurnCostProvider turnCostProvider;
 
-    protected AbstractWeighting(FlagEncoder encoder) {
-        this(encoder, NO_TURN_COST_PROVIDER);
-    }
-
-    protected AbstractWeighting(FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        this.flagEncoder = encoder;
-        if (!flagEncoder.isRegistered())
-            throw new IllegalStateException("Make sure you add the FlagEncoder " + flagEncoder + " to an EncodingManager before using it elsewhere");
+    protected AbstractWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, TurnCostProvider turnCostProvider) {
         if (!isValidName(getName()))
             throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
-
-        avSpeedEnc = encoder.getAverageSpeedEnc();
-        accessEnc = encoder.getAccessEnc();
+        this.accessEnc = accessEnc;
+        this.speedEnc = speedEnc;
         this.turnCostProvider = turnCostProvider;
+    }
+
+    @Override
+    public boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse) {
+        return reverse ? !edgeState.getReverse(accessEnc) : !edgeState.get(accessEnc);
     }
 
     /**
@@ -68,9 +63,9 @@ public abstract class AbstractWeighting implements Weighting {
             throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. " +
                     "(" + edgeState.getBaseNode() + " - " + edgeState.getAdjNode() + ") "
                     + edgeState.fetchWayGeometry(FetchMode.ALL) + ", dist: " + edgeState.getDistance() + " "
-                    + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc) + ", fwd-speed: " + edgeState.get(avSpeedEnc) + ", bwd-speed: " + edgeState.getReverse(avSpeedEnc));
+                    + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc) + ", fwd-speed: " + edgeState.get(speedEnc) + ", bwd-speed: " + edgeState.getReverse(speedEnc));
 
-        double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
+        double speed = reverse ? edgeState.getReverse(speedEnc) : edgeState.get(speedEnc);
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid speed stored in edge! " + speed);
         if (speed == 0)
@@ -94,26 +89,8 @@ public abstract class AbstractWeighting implements Weighting {
         return turnCostProvider != NO_TURN_COST_PROVIDER;
     }
 
-    @Override
-    public FlagEncoder getFlagEncoder() {
-        return flagEncoder;
-    }
-
-    @Override
-    public int hashCode() {
-        int hash = 7;
-        hash = 71 * hash + toString().hashCode();
-        return hash;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        final Weighting other = (Weighting) obj;
-        return toString().equals(other.toString());
+    public TurnCostProvider getTurnCostProvider() {
+        return turnCostProvider;
     }
 
     static boolean isValidName(String name) {
@@ -125,6 +102,7 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public String toString() {
-        return getName() + "|" + flagEncoder;
+        return getName() + "|" + speedEnc.getName().split("$")[0];
     }
+
 }

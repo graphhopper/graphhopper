@@ -18,13 +18,18 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FiniteWeightFilter;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -48,9 +53,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * @author Peter Karich
  */
 public class RoundTripRoutingTest {
-    private final FlagEncoder carFE = new CarFlagEncoder();
-    private final EncodingManager em = EncodingManager.create(carFE);
-    private final Weighting fastestWeighting = new FastestWeighting(carFE);
+    private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+    private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+    private final EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+    private final Weighting fastestWeighting = new FastestWeighting(accessEnc, speedEnc);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private final GHPoint ghPoint1 = new GHPoint(0, 0);
@@ -64,7 +70,7 @@ public class RoundTripRoutingTest {
 
     @Test
     public void testLookupAndCalcPaths_simpleSquareGraph() {
-        Graph g = createSquareGraph();
+        BaseGraph g = createSquareGraph();
         // start at node 0 and head south, make sure the round trip is long enough to reach most southern node 6
         GHPoint start = new GHPoint(1, -1);
         double heading = 180.0;
@@ -94,7 +100,7 @@ public class RoundTripRoutingTest {
 
     @Test
     public void testCalcRoundTrip() {
-        Graph g = createTestGraph();
+        BaseGraph g = createTestGraph();
 
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
         Snap snap4 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);
@@ -122,22 +128,22 @@ public class RoundTripRoutingTest {
         assertEquals(IntArrayList.from(3, 4, 8, 7, 6), paths.get(1).calcNodes());
     }
 
-    private Graph createTestGraph() {
-        Graph graph = new GraphBuilder(em).withTurnCosts(true).create();
-        AlternativeRouteTest.initTestGraph(graph, carFE);
+    private BaseGraph createTestGraph() {
+        BaseGraph graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
+        AlternativeRouteTest.initTestGraph(graph, accessEnc, speedEnc);
         return graph;
     }
 
-    private Graph createSquareGraph() {
+    private BaseGraph createSquareGraph() {
         // simple square
         //  1 | 0 1 2      
         //  0 | 7   3
         // -1 | 6 5 4 
         // ---|------
         //    |-1 0 1
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).create();
         for (int i = 0; i < 8; ++i) {
-            GHUtility.setSpeed(60, true, true, carFE, graph.edge(i, (i + 1) % 8).setDistance(1));
+            GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(i, (i + 1) % 8).setDistance(1));
         }
         updateDistancesFor(graph, 0, 1, -1);
         updateDistancesFor(graph, 1, 1, 0);

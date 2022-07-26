@@ -17,7 +17,8 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
@@ -30,12 +31,12 @@ import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PR
  * @author Peter Karich
  */
 public class ShortestWeighting extends AbstractWeighting {
-    public ShortestWeighting(FlagEncoder flagEncoder) {
-        this(flagEncoder, NO_TURN_COST_PROVIDER);
+    public ShortestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+        this(accessEnc, speedEnc, NO_TURN_COST_PROVIDER);
     }
 
-    public ShortestWeighting(FlagEncoder flagEncoder, TurnCostProvider turnCostProvider) {
-        super(flagEncoder, turnCostProvider);
+    public ShortestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, TurnCostProvider turnCostProvider) {
+        super(accessEnc, speedEnc, turnCostProvider);
     }
 
     @Override

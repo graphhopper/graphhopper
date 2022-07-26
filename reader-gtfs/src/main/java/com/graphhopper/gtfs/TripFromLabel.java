@@ -31,9 +31,9 @@ import com.graphhopper.Trip;
 import com.graphhopper.gtfs.fare.Fares;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
@@ -59,14 +59,16 @@ class TripFromLabel {
     private static final Logger logger = LoggerFactory.getLogger(TripFromLabel.class);
 
     private final Graph graph;
+    private final EncodedValueLookup encodedValueLookup;
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
     private final GeometryFactory geometryFactory = new GeometryFactory();
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final double walkSpeedKmH;
 
-    TripFromLabel(Graph graph, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory, double walkSpeedKmH) {
+    TripFromLabel(Graph graph, EncodedValueLookup encodedValueLookup, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory, double walkSpeedKmH) {
         this.graph = graph;
+        this.encodedValueLookup = encodedValueLookup;
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
@@ -78,7 +80,7 @@ class TripFromLabel {
 
         final List<Trip.Leg> legs = new ArrayList<>();
         for (int i = 0; i < partitions.size(); i++) {
-            legs.addAll(parsePartitionToLegs(partitions.get(i), queryGraph, i == partitions.size() - 1 ? egressWeighting : accessWeighting, tr, requestedPathDetails));
+            legs.addAll(parsePartitionToLegs(partitions.get(i), queryGraph, encodedValueLookup, i == partitions.size() - 1 ? egressWeighting : accessWeighting, tr, requestedPathDetails));
         }
 
         if (legs.size() > 1 && legs.get(0) instanceof Trip.WalkLeg) {
@@ -111,7 +113,7 @@ class TripFromLabel {
                 }
                 instructions.addAll(theseInstructions);
                 Map<String, List<PathDetail>> shiftedLegPathDetails = shift(((Trip.WalkLeg) leg).details, previousPointsCount);
-                shiftedLegPathDetails.forEach((k, v) -> pathDetails.merge(k, shiftedLegPathDetails.get(k), (a,b) -> Lists.newArrayList(Iterables.concat(a, b))));
+                shiftedLegPathDetails.forEach((k, v) -> pathDetails.merge(k, shiftedLegPathDetails.get(k), (a, b) -> Lists.newArrayList(Iterables.concat(a, b))));
             } else if (leg instanceof Trip.PtLeg) {
                 final Trip.PtLeg ptLeg = ((Trip.PtLeg) leg);
                 final PointList pl;
@@ -328,7 +330,7 @@ class TripFromLabel {
     // One could argue that one should never write a parser
     // by hand, because it is always ugly, but use a parser library.
     // The code would then read like a specification of what paths through the graph mean.
-    private List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, Graph graph, Weighting weighting, Translation tr, List<String> requestedPathDetails) {
+    private List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, Graph graph, EncodedValueLookup encodedValueLookup, Weighting weighting, Translation tr, List<String> requestedPathDetails) {
         if (path.size() <= 1) {
             return Collections.emptyList();
         }
@@ -376,7 +378,7 @@ class TripFromLabel {
                         feedId = edge.getPlatformDescriptor().feed_id;
                         int[] skippedEdgesForTransfer = gtfsStorage.getSkippedEdgesForTransfer().get(edge.getId());
                         if (skippedEdgesForTransfer != null) {
-                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting, path.get(i - 1).label.currentTime), graph, weighting, tr, requestedPathDetails);
+                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting, path.get(i - 1).label.currentTime), graph, encodedValueLookup, weighting, tr, requestedPathDetails);
                             result.add(legs.get(0));
                         }
                     }
@@ -386,7 +388,7 @@ class TripFromLabel {
         } else {
             InstructionList instructions = new InstructionList(tr);
             InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(graph,
-                    weighting, weighting.getFlagEncoder(), instructions);
+                    weighting, encodedValueLookup, instructions);
             int prevEdgeId = -1;
             for (int i = 1; i < path.size(); i++) {
                 if (path.get(i).edge.getType() != GtfsStorage.EdgeType.HIGHWAY) {
@@ -404,9 +406,9 @@ class TripFromLabel {
                     pathh.addEdge(transition.edge.getId());
             }
             pathh.setFromNode(path.get(0).label.node.streetNode);
-            pathh.setEndNode(path.get(path.size()-1).label.node.streetNode);
+            pathh.setEndNode(path.get(path.size() - 1).label.node.streetNode);
             pathh.setFound(true);
-            Map<String, List<PathDetail>> pathDetails = PathDetailsFromEdges.calcDetails(pathh, ((GraphHopperStorage) this.graph.getBaseGraph()).getEncodingManager(), weighting, requestedPathDetails, pathDetailsBuilderFactory, 0);
+            Map<String, List<PathDetail>> pathDetails = PathDetailsFromEdges.calcDetails(pathh, encodedValueLookup, weighting, requestedPathDetails, pathDetailsBuilderFactory, 0);
 
             final Instant departureTime = Instant.ofEpochMilli(path.get(0).label.currentTime);
             final Instant arrivalTime = Instant.ofEpochMilli(path.get(path.size() - 1).label.currentTime);

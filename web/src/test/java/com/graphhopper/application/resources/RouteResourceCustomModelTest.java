@@ -59,7 +59,7 @@ public class RouteResourceCustomModelTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "bike,car,foot,wheelchair").
+                putObject("graph.flag_encoders", "bike,car,foot,wheelchair,roads").
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
@@ -67,6 +67,7 @@ public class RouteResourceCustomModelTest {
                 putObject("custom_model_folder", "./src/test/resources/com/graphhopper/application/resources").
                 setProfiles(Arrays.asList(
                         new Profile("wheelchair"),
+                        new CustomProfile("roads").setCustomModel(new CustomModel()).setVehicle("roads"),
                         new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
                         new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0)).setVehicle("bike"),
                         new Profile("bike_fastest").setWeighting("fastest").setVehicle("bike"),
@@ -79,21 +80,21 @@ public class RouteResourceCustomModelTest {
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile("car_no_unclassified").setCustomModel(
                                         new CustomModel(new CustomModel().
-                                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, 0)))).
+                                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0")))).
                                 setVehicle("car"),
                         new CustomProfile("custom_bike").
                                 setCustomModel(new CustomModel().
-                                        addToSpeed(If("road_class == PRIMARY", LIMIT, 28)).
-                                        addToPriority(If("max_width < 1.2", MULTIPLY, 0))).
+                                        addToSpeed(If("road_class == PRIMARY", LIMIT, "28")).
+                                        addToPriority(If("max_width < 1.2", MULTIPLY, "0"))).
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike2").setCustomModel(
                                         new CustomModel(new CustomModel().
-                                                addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, 0)))).
+                                                addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0")))).
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike3").setCustomModel(
                                         new CustomModel(new CustomModel().
-                                                addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, 10)).
-                                                addToSpeed(If("true", LIMIT, 40)))).
+                                                addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "10")).
+                                                addToSpeed(If("true", LIMIT, "40")))).
                                 setVehicle("bike"))).
                 setCHProfiles(Arrays.asList(new CHProfile("truck"), new CHProfile("car_no_unclassified")));
         return config;
@@ -140,6 +141,19 @@ public class RouteResourceCustomModelTest {
         JsonNode path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 1500, 10);
         assertEquals(path.get("time").asLong(), 151_000, 1_000);
+    }
+
+    @Test
+    public void testRoadsFlagEncoder() {
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"roads\", \"ch.disable\": true, " +
+                "\"custom_model\": {" +
+                "  \"speed\": [{\"if\": \"road_class == PRIMARY\", \"multiply_by\": 0.9}, " +
+                "            {\"if\": \"true\", \"limit_to\": 120}" +
+                "           ]" +
+                "}}";
+        JsonNode path = getPath(body);
+        assertEquals(path.get("distance").asDouble(), 660, 10);
+        assertEquals(path.get("time").asLong(), 20_000, 1_000);
     }
 
     @Test

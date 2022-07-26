@@ -1,23 +1,53 @@
-### 5.0 [not yet released]
+### 6.0 [not yet released]
+- renamed DouglasPeucker to RamerDouglasPeucker
+- path details at via-points are no longer merged, see #2626
+- removed the FlagEncoder interface. for example encoder.getAccessEnc() is now encodingManager.getBooleanEncodedValue(
+  VehicleAccess.key("car")), #2611
+- backward incompatible change as instructions and the street_name path detail do no longer contain the ref #2598
+- StringIndex is now EdgeKVStorage and can store e.g. byte arrays. String values needs to be limited to 255 bytes before
+  storing them. See EdgeKVStorage.cutString and #2597.
+- the Matrix client changed and users have to adapt the usage, see #2587
+- replaced car$access with car_access (and same for <vehicle>$average_speed and <vehicle>$priority)
+- don't allow cars or motorcycles to use ways tagged with service=emergency_access (#2484)
+- faster flexible routing, especially in conjunction with turn costs (#2571)
 
+### 5.0 [23 Mar 2022]
+
+- Use routing.instructions to disable instructions on the server side. datareader.instructions is used to disable the
+  name parsing (#2537)
+- no more explicit passByDefaultBarriers in FlagEncoders, blockByDefaultBarriers was renamed to just barriers, no more
+  handling of highway=ford (#2538)
+- OSMReader no longer sets the artificial estimated_distance tag, but sets the edge_distance and point_list tags for all
+  edges, the way_distance for selected ways and additionally the duration:seconds and speed_from_duration tags when the
+  duration tag is present (#2528)
+- fixed speed calculation for ferry routes with duration tags (#2528)
+- request gzipping for matrix and route clients (#2511)
+- bugfix: client-hc now considers headings and custom models (#2009, #2535)
+- the artificial tag duration:seconds is now a long, no longer a string, commit 6d81d8ae8de52987522991edd835e42c8d2046cf
+- added FlagEncoder#getName (use just like toString() before), commit 86f6a8b5209ad8ef47c24d935f5746e7694eb11c
+- faster edge-based CH preparation, especially with large u-turn costs and GermanyCountryRule (many large weight edges
+  due to access=destination on tracks) (#2522)
+- consider subnetworks when evaluating curbside constraints (#2502)
 - improved node-based CH performance (faster preparation and less shortcuts(=memory usage)) (#2491)
 - the GraphHopperApplication class was moved from com.graphhopper.http to com.graphhopper.application (#2487)
 - it is now possible to add CH preparations to an existing graph folder, CH graphs no longer need to be added before
   GraphHopperStorage#freeze (#2481)
-- the two EncodedValue implementations accept now negative values too. The default value can now only be 0 or Double.Infinity, but this option will be removed later too, see discussion in #2473
+- the two EncodedValue implementations accept now negative values too. The default value can now only be 0 or
+  Double.Infinity, but this option will be removed later too, see discussion in #2473
+- throw MaximumNodesExceededException instead of a generic IllegalArgumentException (#2464)
 - removed graphhopper.sh script. Use java command directly instead. (#2431)
 - removed the ferry argument of TagParser#handleWayTags. ferry ways can be recognized using the reader way (#2467)
 - removed RoadEnvironment.SHUTTLE_TRAIN. this is covered by `FERRY` (#2466)
 - create edge flags per edge, not per way. increases custom_area precision. areas are recognized by points along the
   edges now -> (#2457, #2472)
 - fixed handling of too large mtb:scale tags (#2458)
+- added Toll.MISSING; custom models must be adapted to check for explicit toll values e.g `toll != NO`
+  -> `toll == HGV || toll == ALL` (#2164)
 - use GraphHopper#setGraphHopperLocation before calling load() instead of GraphHopper#load(graphHopperLocation) (#2437)
 - barrier nodes at junctions are now ignored (#2433)
 - AbstractFlagEncoder#handleNodeTags was replaced by AbstractFlagEncoder#isBarrier (#2434)
 - consider heading when snapping coordinates to the road network, this is especially important for navigation (#2411)
 - OSMReader no longer sets the artificial 'estimated_center' tag and processNode also receives EMPTY_NODEs (971d686)
-- added Toll.MISSING; custom models must be adapted to check for explicit toll values e.g `toll != NO` -> `toll == HGV || toll == ALL` (#2164)
-- throw MaximumNodesExceededException instead of a generic IllegalArgumentException (#2464)
 
 ### 4.0 [29 Sep 2021]
 
@@ -85,7 +115,7 @@
 - removed android demo, #1940
 - added edge key path detail, #2073
 - fixed bug for turn restrictions on bridges/tunnels, #2070
-- improved resolution of elevation profiles, 3D Douglas-Peucker and long edge sampling, #1953
+- improved resolution of elevation profiles, 3D Ramer-Douglas-Peucker and long edge sampling, #1953
 
 ### 1.0 [22 May 2020]
 

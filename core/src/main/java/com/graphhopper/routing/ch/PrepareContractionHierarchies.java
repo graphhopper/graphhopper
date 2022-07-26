@@ -60,7 +60,7 @@ public class PrepareContractionHierarchies {
     private final StopWatch neighborUpdateSW = new StopWatch();
     private final StopWatch contractionSW = new StopWatch();
     private final Params params;
-    private final GraphHopperStorage graph;
+    private final BaseGraph graph;
     private NodeContractor nodeContractor;
     private final int nodes;
     private NodeOrderingProvider nodeOrderingProvider;
@@ -71,21 +71,21 @@ public class PrepareContractionHierarchies {
     private int checkCounter;
     private boolean prepared = false;
 
-    public static PrepareContractionHierarchies fromGraphHopperStorage(GraphHopperStorage ghStorage, CHConfig chConfig) {
-        return new PrepareContractionHierarchies(ghStorage, chConfig);
+    public static PrepareContractionHierarchies fromGraph(BaseGraph graph, CHConfig chConfig) {
+        return new PrepareContractionHierarchies(graph.getBaseGraph(), chConfig);
     }
 
-    private PrepareContractionHierarchies(GraphHopperStorage ghStorage, CHConfig chConfig) {
-        graph = ghStorage;
+    private PrepareContractionHierarchies(BaseGraph graph, CHConfig chConfig) {
         if (!graph.isFrozen())
             throw new IllegalStateException("BaseGraph must be frozen before creating CHs");
-        chStore = ghStorage.createCHStorage(chConfig);
+        this.graph = graph;
+        chStore = CHStorage.fromGraph(graph, chConfig);
         chBuilder = new CHStorageBuilder(chStore);
         this.chConfig = chConfig;
         params = Params.forTraversalMode(chConfig.getTraversalMode());
-        nodes = ghStorage.getNodes();
+        nodes = graph.getNodes();
         if (chConfig.getTraversalMode().isEdgeBased()) {
-            TurnCostStorage turnCostStorage = ghStorage.getTurnCostStorage();
+            TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
             if (turnCostStorage == null) {
                 throw new IllegalArgumentException("For edge-based CH you need a turn cost storage");
             }
@@ -123,7 +123,7 @@ public class PrepareContractionHierarchies {
             throw new IllegalStateException("Call doWork only once!");
         prepared = true;
         if (!graph.isFrozen()) {
-            throw new IllegalStateException("Given GraphHopperStorage has not been frozen yet");
+            throw new IllegalStateException("Given BaseGraph has not been frozen yet");
         }
         if (chStore.getShortcuts() > 0) {
             throw new IllegalStateException("Given CHStore already contains shortcuts");
@@ -522,9 +522,10 @@ public class PrepareContractionHierarchies {
         private int logMessagesPercentage;
 
         static Params forTraversalMode(TraversalMode traversalMode) {
+            // Lower values for the neighbor update percentage (and/or max neighbor updates) yield a slower
+            // preparation but possibly fewer shortcuts and a slightly better query time.
             if (traversalMode.isEdgeBased()) {
-                // todo: optimize
-                return new Params(0, 100, 0, -1, 100, 5);
+                return new Params(0, 100, 50, 3, 100, 5);
             } else {
                 return new Params(0, 100, 100, 2, 100, 20);
             }

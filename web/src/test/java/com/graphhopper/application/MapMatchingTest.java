@@ -29,9 +29,7 @@ import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -110,7 +108,7 @@ public class MapMatchingTest {
         MatchResult mr = mapMatching.match(inputGPXEntries);
 
         // make sure no virtual edges are returned
-        int edgeCount = graphHopper.getGraphHopperStorage().getAllEdges().length();
+        int edgeCount = graphHopper.getBaseGraph().getAllEdges().length();
         for (EdgeMatch em : mr.getEdgeMatches()) {
             assertTrue(em.getEdgeState().getEdge() < edgeCount, "result contains virtual edges:" + em.getEdgeState().toString());
         }
@@ -146,19 +144,9 @@ public class MapMatchingTest {
         assertEquals(142, mr.getEdgeMatches().size());
     }
 
-    /**
-     * This test is to check behavior over large separated routes: it should
-     * work if the user sets the maxVisitedNodes large enough. Input path:
-     * https://graphhopper.com/maps/?point=51.23%2C12.18&point=51.45%2C12.59&layer=Lyrk
-     * <p>
-     * Update: Seems to me that this test only tests a long route, not one with
-     * distant input points. createRandomGPXEntries currently creates very close input points.
-     * The length of the route doesn't seem to matter.
-     */
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
-    public void testDistantPoints(PMap hints) {
-        // OK with 1000 visited nodes:
+    public void testLongTrackWithLotsOfPoints(PMap hints) {
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
         ResponsePath route = graphHopper.route(new GHRequest(
                 new GHPoint(51.23, 12.18),
@@ -170,22 +158,19 @@ public class MapMatchingTest {
         assertEquals(route.getDistance(), mr.getMatchLength(), 2);
         // GraphHopper travel times aren't exactly additive
         assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
-
-        // not OK when we only allow a small number of visited nodes:
-        PMap opts = new PMap(hints).putObject(Parameters.Routing.MAX_VISITED_NODES, 1);
-        mapMatching = new MapMatching(graphHopper, opts);
-        try {
-            mr = mapMatching.match(inputGPXEntries);
-            fail("Expected sequence to be broken due to maxVisitedNodes being too small");
-        } catch (RuntimeException e) {
-            assertTrue(e.getMessage().startsWith("Sequence is broken for submitted track"));
-        }
     }
 
-    /**
-     * This test is to check behavior over short tracks. GPX input:
-     * https://graphhopper.com/maps/?point=51.342422%2C12.3613358&point=51.3423281%2C12.3613358&layer=Lyrk
-     */
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testLongTrackWithTwoPoints(PMap hints) {
+        MapMatching mapMatching = new MapMatching(graphHopper, hints);
+        List<Observation> inputGPXEntries = Arrays.asList(
+                new Observation(new GHPoint(51.23, 12.18)),
+                new Observation(new GHPoint(51.45, 12.59)));
+        MatchResult mr = mapMatching.match(inputGPXEntries);
+        assertEquals(57553.0, mr.getMatchLength(), 1.0);
+    }
+
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testClosePoints(PMap hints) {
@@ -203,21 +188,50 @@ public class MapMatchingTest {
         assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
     }
 
-    /**
-     * This test is to check what happens when two GPX entries are on one edge
-     * which is longer than 'separatedSearchDistance' - which is always 66m. GPX
-     * input:
-     * https://graphhopper.com/maps/?point=51.359723%2C12.360108&point=51.358748%2C12.358798&point=51.358001%2C12.357597&point=51.358709%2C12.356511&layer=Lyrk
-     */
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
-    public void testSmallSeparatedSearchDistance(PMap hints) throws IOException {
+    public void testTour3WithLongEdge(PMap hints) throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour3-with-long-edge.gpx"), Gpx.class);
         MapMatching mapMatching = new MapMatching(graphHopper, hints);
         mapMatching.setMeasurementErrorSigma(20);
         MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
-        assertEquals(Arrays.asList("Weinligstraße", "Fechnerstraße"), fetchStreets(mr.getEdgeMatches()));
+        assertEquals(Arrays.asList("Marbachstraße", "Weinligstraße", "Fechnerstraße"), fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 11); // TODO: this should be around 300m according to Google ... need to check
+    }
+
+    @ParameterizedTest
+    @ArgumentsSource(FixtureProvider.class)
+    public void testSimplification(PMap hints) throws IOException {
+        Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour3-with-long-edge.gpx"), Gpx.class);
+        MapMatching mapMatching = new MapMatching(graphHopper, hints);
+        mapMatching.setMeasurementErrorSigma(20);
+        List<Observation> observations = GpxConversions.getEntries(gpx.trk.get(0));
+        // Warning, this has to be calculated before filtering, because (of course) observations
+        // are mutable and are mutated.
+        double expectedLinearDistance = linearDistance(observations);
+
+        // This is the testee
+        List<Observation> filteredObservations = mapMatching.filterObservations(observations);
+
+        // Make sure something is actually filtered, i.e. filtered size is smaller, otherwise we are not
+        // testing anything.
+        assertEquals(7, observations.size());
+        assertEquals(5, filteredObservations.size());
+        assertEquals(expectedLinearDistance, linearDistance(filteredObservations));
+    }
+
+    private double linearDistance(List<Observation> observations) {
+        DistanceCalc distanceCalc = new DistancePlaneProjection();
+        double result = 0.0;
+        for (int i = 1; i < observations.size(); i++) {
+            Observation observation = observations.get(i);
+            Observation prevObservation = observations.get(i - 1);
+            result += distanceCalc.calcDist(
+                    prevObservation.getPoint().getLat(), prevObservation.getPoint().getLon(),
+                    observation.getPoint().getLat(), observation.getPoint().getLon());
+            result += observation.getAccumulatedLinearDistanceToPrevious();
+        }
+        return result;
     }
 
     /**
@@ -252,8 +266,8 @@ public class MapMatchingTest {
         mapMatching.setMeasurementErrorSigma(50);
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour-with-loop.gpx"), Gpx.class);
         MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
-        assertEquals(Arrays.asList("Jahnallee, B 87, B 181", "Funkenburgstraße",
-                "Gustav-Adolf-Straße", "Tschaikowskistraße", "Jahnallee, B 87, B 181",
+        assertEquals(Arrays.asList("Jahnallee", "Funkenburgstraße",
+                "Gustav-Adolf-Straße", "Tschaikowskistraße", "Jahnallee",
                 "Lessingstraße"), fetchStreets(mr.getEdgeMatches()));
     }
 

@@ -18,22 +18,15 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
-
-import java.util.List;
 
 public class OSMRoadClassLinkParser implements TagParser {
     private final BooleanEncodedValue linkEnc;
 
-    public OSMRoadClassLinkParser() {
-        this.linkEnc = new SimpleBooleanEncodedValue(RoadClassLink.KEY);
-    }
-
-    @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(linkEnc);
+    public OSMRoadClassLinkParser(BooleanEncodedValue linkEnc) {
+        this.linkEnc = linkEnc;
     }
 
     @Override

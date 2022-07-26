@@ -1,6 +1,7 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
@@ -12,7 +13,7 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
     private final double precision;
     private Double decimalValue;
     // will include the turn time penalty
-    private int prevEdgeId = -1;
+    private int prevEdgeId = EdgeIterator.NO_EDGE;
 
     public AverageSpeedDetails(Weighting weighting) {
         this(weighting, 0.1);
@@ -36,14 +37,11 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         // for very short edges we might not be able to calculate a proper value for speed. dividing by calcMillis can
-        // even lead to speed=Infinity -> just ignore these cases here, see #1848
+        // even lead to speed=Infinity -> just ignore these cases here, see #1848 and #2620
         final double distance = edge.getDistance();
-        if (distance < 0.1) {
-            if (decimalValue != null)
-                return false;
-
-            // in case this is the first edge we have to return some value
-            decimalValue = null;
+        if (distance < 0.01) {
+            if (decimalValue != null) return false;
+            // in case this is the first edge we return decimalValue=null
             return true;
         }
 

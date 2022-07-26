@@ -1,9 +1,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Surface;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,23 +12,21 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class OSMSurfaceParserTest {
-    private EncodingManager em;
     private EnumEncodedValue<Surface> surfaceEnc;
     private OSMSurfaceParser parser;
 
     @BeforeEach
     public void setUp() {
-        parser = new OSMSurfaceParser();
-        em = new EncodingManager.Builder().add(parser).build();
-        surfaceEnc = em.getEnumEncodedValue(Surface.KEY, Surface.class);
+        surfaceEnc = new EnumEncodedValue<>(Surface.KEY, Surface.class);
+        surfaceEnc.init(new EncodedValue.InitializerConfig());
+        parser = new OSMSurfaceParser(surfaceEnc);
     }
 
     @Test
     public void testSimpleTags() {
-        IntsRef relFlags = em.createRelationFlags();
-
+        IntsRef relFlags = new IntsRef(2);
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = em.createEdgeFlags();
+        IntsRef intsRef = new IntsRef(1);
         readerWay.setTag("highway", "primary");
         parser.handleWayTags(intsRef, readerWay, relFlags);
         assertEquals(Surface.MISSING, surfaceEnc.getEnum(false, intsRef));

@@ -278,7 +278,7 @@ public class NavigateResponseConverter {
 
     private static void putSingleBannerInstruction(Instruction instruction, Locale locale, TranslationMap translationMap, ObjectNode singleBannerInstruction) {
         String bannerInstructionName = instruction.getName();
-        if (bannerInstructionName == null || bannerInstructionName.isEmpty()) {
+        if (bannerInstructionName.isEmpty()) {
             // Fix for final instruction and for instructions without name
             bannerInstructionName = instruction.getTurnDescription(translationMap.getWithFallBack(locale));
 

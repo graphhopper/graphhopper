@@ -19,9 +19,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.MaxWeight;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
@@ -30,19 +27,10 @@ import java.util.List;
 
 public class OSMMaxWeightParser implements TagParser {
 
-    private DecimalEncodedValue weightEncoder;
-
-    public OSMMaxWeightParser() {
-        this(MaxWeight.create());
-    }
+    private final DecimalEncodedValue weightEncoder;
 
     public OSMMaxWeightParser(DecimalEncodedValue weightEncoder) {
         this.weightEncoder = weightEncoder;
-    }
-
-    @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(weightEncoder);
     }
 
     @Override

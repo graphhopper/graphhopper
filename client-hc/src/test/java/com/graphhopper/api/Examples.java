@@ -36,9 +36,9 @@ public class Examples {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.6724, 11.3494)).
                 addPoint(new GHPoint(49.6550, 11.4180));
-        // Set vehicle like car, bike, foot, ...
-        req.putHint("vehicle", "bike");
-        // Optionally enable/disable elevation in output PointList, currently bike and foot support elevation, default is false
+        // Set profile like car, bike, foot, ...
+        req.setProfile("bike");
+        // Optionally enable/disable elevation in output PointList, default is false
         req.putHint("elevation", false);
         // Optionally enable/disable turn instruction information, defaults is true
         req.putHint("instructions", true);
@@ -75,6 +75,10 @@ public class Examples {
         InstructionList il = res.getInstructions();
         for (Instruction i : il) {
             // System.out.println(i.getName());
+            
+            // to get the translated turn instructions you call:
+            // System.out.println(i.getTurnDescription(null));
+            // Note, that you can control the language only in via the request setLocale method and cannot change it only the client side
         }
         // get path details
         List<PathDetail> pathDetails = res.getPathDetails().get(Parameters.Details.STREET_NAME);
@@ -92,23 +96,29 @@ public class Examples {
         matrixClient.setKey(apiKey);
 
         GHMRequest ghmRequest = new GHMRequest();
-        ghmRequest.addOutArray("distances");
-        ghmRequest.addOutArray("times");
-        ghmRequest.putHint("vehicle", "car");
+        ghmRequest.setOutArrays(Arrays.asList("distances", "times"));
+        ghmRequest.setProfile("car");
 
-        // init points for a symmetric matrix
-        // List<GHPoint> allPoints = Arrays.asList(new GHPoint(49.6724, 11.3494), new GHPoint(49.6550, 11.4180));
-        // ghmRequest.addAllPoints(allPoints);
+        // Option 1: init points for a symmetric matrix
+        List<GHPoint> allPoints = Arrays.asList(new GHPoint(49.6724, 11.3494), new GHPoint(49.6550, 11.4180));
+        ghmRequest.setPoints(allPoints);
+        MatrixResponse responseSymm = matrixClient.route(ghmRequest);
+        if (responseSymm.hasErrors())
+            throw new RuntimeException(responseSymm.getErrors().toString());
+        // get time from first to second point:
+        // System.out.println(response.getTime(0, 1));
 
+        // Option 2: for an asymmetric matrix do:
+        ghmRequest = new GHMRequest();
+        ghmRequest.setOutArrays(Arrays.asList("distances", "times"));
+        ghmRequest.setProfile("car");
+        ghmRequest.setFromPoints(Arrays.asList(new GHPoint(49.6724, 11.3494)));
         // or init e.g. a one-to-many matrix:
-        ghmRequest.addFromPoint(new GHPoint(49.6724, 11.3494));
-        for (GHPoint to : Arrays.asList(new GHPoint(49.6724, 11.3494), new GHPoint(49.6550, 11.4180))) {
-            ghmRequest.addToPoint(to);
-        }
+        ghmRequest.setToPoints(Arrays.asList(new GHPoint(49.6724, 11.3494), new GHPoint(49.6550, 11.4180)));
 
-        MatrixResponse response = matrixClient.route(ghmRequest);
-        if (response.hasErrors())
-            throw new RuntimeException(response.getErrors().toString());
+        MatrixResponse responseAsymm = matrixClient.route(ghmRequest);
+        if (responseAsymm.hasErrors())
+            throw new RuntimeException(responseAsymm.getErrors().toString());
 
         // get time from first to second point:
         // System.out.println(response.getTime(0, 1));

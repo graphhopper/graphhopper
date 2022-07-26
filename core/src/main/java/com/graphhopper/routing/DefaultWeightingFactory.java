@@ -19,27 +19,31 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
+import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FACTOR;
+import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
-    private final GraphHopperStorage ghStorage;
+
+    private final BaseGraph graph;
     private final EncodingManager encodingManager;
 
-    public DefaultWeightingFactory(GraphHopperStorage ghStorage, EncodingManager encodingManager) {
-        this.ghStorage = ghStorage;
+    public DefaultWeightingFactory(BaseGraph graph, EncodingManager encodingManager) {
+        this.graph = graph;
         this.encodingManager = encodingManager;
     }
 
@@ -54,13 +58,20 @@ public class DefaultWeightingFactory implements WeightingFactory {
         hints.putAll(profile.getHints());
         hints.putAll(requestHints);
 
-        FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
+        final String vehicle = profile.getVehicle();
+        if (isOutdoorVehicle(vehicle)) {
+            hints.putObject(PRIVATE_FACTOR, hints.getDouble(PRIVATE_FACTOR, 1.2));
+        } else {
+            hints.putObject(DESTINATION_FACTOR, hints.getDouble(DESTINATION_FACTOR, 10));
+            hints.putObject(PRIVATE_FACTOR, hints.getDouble(PRIVATE_FACTOR, 10));
+        }
         TurnCostProvider turnCostProvider;
         if (profile.isTurnCosts() && !disableTurnCosts) {
-            if (!encoder.supportsTurnCosts())
-                throw new IllegalArgumentException("Encoder " + encoder + " does not support turn costs");
+            DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(vehicle));
+            if (turnCostEnc == null)
+                throw new IllegalArgumentException("Vehicle " + vehicle + " does not support turn costs");
             int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-            turnCostProvider = new DefaultTurnCostProvider(encoder, ghStorage.getTurnCostStorage(), uTurnCosts);
+            turnCostProvider = new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), uTurnCosts);
         } else {
             turnCostProvider = NO_TURN_COST_PROVIDER;
         }
@@ -70,34 +81,54 @@ public class DefaultWeightingFactory implements WeightingFactory {
             throw new IllegalArgumentException("You have to specify a weighting");
 
         Weighting weighting = null;
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key(vehicle));
+        DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(VehicleSpeed.key(vehicle));
+        DecimalEncodedValue priorityEnc = encodingManager.hasEncodedValue(VehiclePriority.key(vehicle))
+                ? encodingManager.getDecimalEncodedValue(VehiclePriority.key(vehicle))
+                : null;
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
             if (!(profile instanceof CustomProfile))
                 throw new IllegalArgumentException("custom weighting requires a CustomProfile but was profile=" + profile.getName());
             CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             CustomProfile customProfile = (CustomProfile) profile;
-            if (queryCustomModel != null)
-                queryCustomModel.checkLMConstraints(customProfile.getCustomModel());
 
             queryCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
-            weighting = CustomModelParser.createWeighting(encoder, encodingManager, turnCostProvider, queryCustomModel);
+            weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
+                    priorityEnc, encodingManager, turnCostProvider, queryCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
-            weighting = new ShortestWeighting(encoder, turnCostProvider);
+            weighting = new ShortestWeighting(accessEnc, speedEnc, turnCostProvider);
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {
-            if (encoder.supports(PriorityWeighting.class))
-                weighting = new PriorityWeighting(encoder, hints, turnCostProvider);
+            if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
+                throw new IllegalArgumentException("fastest weighting requires road_access");
+            EnumEncodedValue<RoadAccess> roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+            if (priorityEnc != null)
+                weighting = new PriorityWeighting(accessEnc, speedEnc, priorityEnc, roadAccessEnc, hints, turnCostProvider);
             else
-                weighting = new FastestWeighting(encoder, hints, turnCostProvider);
+                weighting = new FastestWeighting(accessEnc, speedEnc, roadAccessEnc, hints, turnCostProvider);
         } else if ("curvature".equalsIgnoreCase(weightingStr)) {
-            if (encoder.supports(CurvatureWeighting.class))
-                weighting = new CurvatureWeighting(encoder, hints, turnCostProvider);
-
+            DecimalEncodedValue curvatureEnc = encodingManager.hasEncodedValue(EncodingManager.getKey(vehicle, "curvature"))
+                    ? encodingManager.getDecimalEncodedValue(EncodingManager.getKey(vehicle, "curvature"))
+                    : null;
+            if (curvatureEnc == null || priorityEnc == null)
+                throw new IllegalArgumentException("curvature weighting requires curvature and priority, but not found for " + vehicle);
+            if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
+                throw new IllegalArgumentException("curvature weighting requires road_access");
+            EnumEncodedValue<RoadAccess> roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+            weighting = new CurvatureWeighting(accessEnc, speedEnc, priorityEnc, curvatureEnc, roadAccessEnc, hints, turnCostProvider);
         } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
-            weighting = new ShortFastestWeighting(encoder, hints, turnCostProvider);
+            if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
+                throw new IllegalArgumentException("curvature weighting requires road_access");
+            EnumEncodedValue<RoadAccess> roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+            weighting = new ShortFastestWeighting(accessEnc, speedEnc, roadAccessEnc, hints, turnCostProvider);
         }
 
         if (weighting == null)
             throw new IllegalArgumentException("Weighting '" + weightingStr + "' not supported");
 
         return weighting;
+    }
+
+    public boolean isOutdoorVehicle(String name) {
+        return VehicleEncodedValues.OUTDOOR_VEHICLES.contains(name);
     }
 }

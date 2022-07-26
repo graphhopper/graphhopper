@@ -20,15 +20,13 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AccessFilter;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.*;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
@@ -48,17 +46,18 @@ public class LMApproximatorTest {
 
     private void run(long seed) {
         Directory dir = new RAMDirectory();
-        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
-        EncodingManager encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setDir(dir).withTurnCosts(true).create();
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        DecimalEncodedValue turnCostEnc = TurnCost.create("car", 1);
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("car")).build();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
 
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true,
-                encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), null, 0.7, 0.8, 0.8);
+        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, accessEnc, speedEnc, null, 0.7, 0.8, 0.8);
 
-        Weighting weighting = new FastestWeighting(encoder);
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
 
-        PrepareLandmarks lm = new PrepareLandmarks(dir, graph, new LMConfig("car", weighting), 16);
+        PrepareLandmarks lm = new PrepareLandmarks(dir, graph, encodingManager, new LMConfig("car", weighting), 16);
         lm.setMaximumWeight(10000);
         lm.doWork();
         LandmarkStorage landmarkStorage = lm.getLandmarkStorage();
@@ -109,7 +108,7 @@ public class LMApproximatorTest {
                     // That's a requirement for normal A*-implementations, because if it is violated,
                     // the heap-weight of settled nodes can decrease, and that would mean our
                     // stopping criterion is not sufficient.
-                    EdgeIterator neighbors = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc())).setBaseNode(v);
+                    EdgeIterator neighbors = graph.createEdgeExplorer(AccessFilter.outEdges(accessEnc)).setBaseNode(v);
                     while (neighbors.next()) {
                         int w = neighbors.getAdjNode();
                         double vw = weighting.calcEdgeWeight(neighbors, false);
@@ -120,7 +119,7 @@ public class LMApproximatorTest {
                         }
                     }
 
-                    neighbors = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc())).setBaseNode(v);
+                    neighbors = graph.createEdgeExplorer(AccessFilter.outEdges(accessEnc)).setBaseNode(v);
                     while (neighbors.next()) {
                         int w = neighbors.getAdjNode();
                         double vw = weighting.calcEdgeWeight(neighbors, false);

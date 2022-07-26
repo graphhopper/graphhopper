@@ -17,37 +17,30 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.routing.util.PriorityCode.BEST;
-import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
 /**
  * This Class uses bendiness parameter to prefer curvy routes.
  */
 public class CurvatureWeighting extends PriorityWeighting {
     private final double minFactor;
-    private final DecimalEncodedValue priorityEnc;
     private final DecimalEncodedValue curvatureEnc;
-    private final DecimalEncodedValue avSpeedEnc;
 
-    public CurvatureWeighting(FlagEncoder flagEncoder, PMap pMap) {
-        this(flagEncoder, pMap, NO_TURN_COST_PROVIDER);
-    }
-
-    public CurvatureWeighting(FlagEncoder flagEncoder, PMap pMap, TurnCostProvider turnCostProvider) {
-        super(flagEncoder, pMap, turnCostProvider);
-
-        priorityEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "priority"));
-        curvatureEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "curvature"));
-        avSpeedEnc = flagEncoder.getDecimalEncodedValue(EncodingManager.getKey(flagEncoder, "average_speed"));
+    public CurvatureWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                              DecimalEncodedValue curvatureEnc, EnumEncodedValue<RoadAccess> roadAccessEnc, PMap pMap, TurnCostProvider turnCostProvider) {
+        super(accessEnc, speedEnc, priorityEnc, roadAccessEnc, pMap, turnCostProvider);
+        this.curvatureEnc = curvatureEnc;
         double minBendiness = 1; // see correctErrors
-        minFactor = minBendiness / Math.log(flagEncoder.getMaxSpeed()) / PriorityCode.getValue(BEST.getValue());
+        double maxSpeed = speedEnc.getMaxOrMaxStorableDecimal();
+        minFactor = minBendiness / Math.log(maxSpeed) / PriorityCode.getValue(BEST.getValue());
     }
 
     @Override
@@ -68,7 +61,7 @@ public class CurvatureWeighting extends PriorityWeighting {
     }
 
     protected double getRoadSpeed(EdgeIteratorState edge, boolean reverse) {
-        return reverse ? edge.getReverse(avSpeedEnc) : edge.get(avSpeedEnc);
+        return reverse ? edge.getReverse(speedEnc) : edge.get(speedEnc);
     }
 
     @Override
