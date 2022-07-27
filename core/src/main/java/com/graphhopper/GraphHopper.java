@@ -335,7 +335,7 @@ public class GraphHopper {
     }
 
     //ORS-GH MOD START
-    @Deprecated // TODO ORS (minor): use RouterConfig instead
+    @Deprecated // TODO ORS Refactoring : use RouterConfig instead
     public GraphHopper setSimplifyResponse(boolean doSimplify) {
         this.getRouterConfig().setSimplifyResponse(doSimplify);
         return this;
@@ -956,7 +956,6 @@ public class GraphHopper {
         return chPreparationHandler;
     }
 
-    // TODO ORS (info): this was renamed from initCHAlgoFactoryDecorator and we had changed access to public
     private void initCHPreparationHandler() {
         if (chPreparationHandler.hasCHConfigs()) {
             return;
@@ -976,7 +975,6 @@ public class GraphHopper {
         return lmPreparationHandler;
     }
 
-    // TODO ORS (info): this was renamed from initLMAlgoFactoryDecorator and we had changed access to public
     private void initLMPreparationHandler() {
         if (lmPreparationHandler.hasLMProfiles())
             return;

@@ -24,7 +24,7 @@ import static com.graphhopper.storage.ConditionalEdges.ACCESS;
  *
  * @author Andrzej Oles
  */
-// TODO ORS: Check whether the right EncodedValue is used instead of the flagEncoder in AccessFilter.*
+// TODO Refactoring ORS: Check whether the right EncodedValue is used instead of the flagEncoder in AccessFilter.*
 public class AccessEdgeFilter {
     public static EdgeFilter outEdges(FlagEncoder flagEncoder) {
         if (hasConditionalAccess(flagEncoder))
