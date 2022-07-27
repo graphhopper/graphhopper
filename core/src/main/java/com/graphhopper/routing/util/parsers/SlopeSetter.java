@@ -59,7 +59,14 @@ public class SlopeSetter implements TagParser {
                 prevLat = pointList.getLat(i);
                 prevLon = pointList.getLon(i);
             }
-            maxSlope = Math.max(Math.abs(towerNodeSlope), maxSlope);
+
+            // For tunnels and bridges we cannot trust the pillar node elevation and ignore all changes.
+            // Probably we should somehow recalculate even the average_slope after elevation interpolation? See EdgeElevationInterpolator
+            if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
+                maxSlope = Math.abs(towerNodeSlope);
+            else
+                maxSlope = Math.max(Math.abs(towerNodeSlope), maxSlope);
+
             if (Double.isNaN(maxSlope))
                 throw new IllegalArgumentException("max_slope was NaN for OSM way ID " + way.getId());
 
