@@ -53,6 +53,9 @@ public class DecimalEncodedValueImplTest {
         DecimalEncodedValueImpl testEnc = new DecimalEncodedValueImpl("test", 3, -6, 0.1, false, false, false, true);
         testEnc.init(new EncodedValue.InitializerConfig());
         IntsRef intsRef = new IntsRef(1);
+        // a bit ugly: the default is the minimum not 0
+        assertEquals(-6, testEnc.getDecimal(false, intsRef), .1);
+
         testEnc.setDecimal(false, intsRef, -5.5);
         assertEquals(-5.5, testEnc.getDecimal(false, intsRef), .1);
         assertEquals(-5.5, testEnc.getDecimal(true, intsRef), .1);
