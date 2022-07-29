@@ -205,7 +205,8 @@ public class GraphHopper {
      * @param residentialAreaSensitivity Use this to find a trade-off between too many roads being classified as residential (too high
      *                                   values) and not enough roads being classified as residential (too small values)
      * @param cityAreaRadius             in meters. The higher this value the longer the calculation will take and the bigger the area for
-     *                                   which the road density used to identify city areas is calculated.
+     *                                   which the road density used to identify city areas is calculated. Set this to zero
+     *                                   to skip the city classification.
      * @param cityAreaSensitivity        Use this to find a trade-off between too many roads being classified as city (too high values)
      *                                   and not enough roads being classified as city (too small values)
      * @param threads                    the number of threads used for the calculation. If this is zero the development

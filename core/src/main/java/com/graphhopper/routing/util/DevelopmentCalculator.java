@@ -56,10 +56,12 @@ public class DevelopmentCalculator {
         StopWatch sw = StopWatch.started();
         calcResidential(graph, developmentEnc, roadClassEnc, roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, threads);
         logger.info("Finished calculating residential areas, took: " + sw.stop().getSeconds() + "s");
-        logger.info("Calculating city areas ..., radius={}, sensitivity={}, threads={}", cityAreaRadius, cityAreaSensitivity, threads);
-        sw = StopWatch.started();
-        calcCity(graph, developmentEnc, cityAreaRadius, cityAreaSensitivity, threads);
-        logger.info("Finished calculating city areas, took: " + sw.stop().getSeconds() + "s");
+        if (cityAreaRadius > 1) {
+            logger.info("Calculating city areas ..., radius={}, sensitivity={}, threads={}", cityAreaRadius, cityAreaSensitivity, threads);
+            sw = StopWatch.started();
+            calcCity(graph, developmentEnc, cityAreaRadius, cityAreaSensitivity, threads);
+            logger.info("Finished calculating city areas, took: " + sw.stop().getSeconds() + "s");
+        }
     }
 
     private static void calcResidential(Graph graph, EnumEncodedValue<Development> developmentEnc,
