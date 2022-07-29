@@ -108,8 +108,14 @@ public class GraphHopper {
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
     private int maxRegionSearch = 4;
-    // for prepare
+    // subnetworks
     private int minNetworkSize = 200;
+    // residential areas
+    private double residentialAreaRadius = 300;
+    private double residentialAreaSensitivity = 60;
+    private double cityAreaRadius = 2000;
+    private double cityAreaSensitivity = 30;
+    private int developmentCalculationThreads = 0;
 
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
@@ -188,6 +194,31 @@ public class GraphHopper {
     public GraphHopper setMinNetworkSize(int minNetworkSize) {
         ensureNotLoaded();
         this.minNetworkSize = minNetworkSize;
+        return this;
+    }
+
+    /**
+     * Configures the development classification. Edge can be classified as 'country','residential' or 'city', {@link Development}
+     *
+     * @param residentialAreaRadius      in meters. The higher this value the longer the calculation will take and the bigger the area for
+     *                                   which the road density used to identify residential areas is calculated.
+     * @param residentialAreaSensitivity Use this to find a trade-off between too many roads being classified as residential (too high
+     *                                   values) and not enough roads being classified as residential (too small values)
+     * @param cityAreaRadius             in meters. The higher this value the longer the calculation will take and the bigger the area for
+     *                                   which the road density used to identify city areas is calculated.
+     * @param cityAreaSensitivity        Use this to find a trade-off between too many roads being classified as city (too high values)
+     *                                   and not enough roads being classified as city (too small values)
+     * @param threads                    the number of threads used for the calculation. If this is zero the development
+     *                                   classification is skipped entirely
+     */
+    public GraphHopper setDevelopmentClassification(double residentialAreaRadius, double residentialAreaSensitivity,
+                                                    double cityAreaRadius, double cityAreaSensitivity, int threads) {
+        ensureNotLoaded();
+        this.residentialAreaRadius = residentialAreaRadius;
+        this.residentialAreaSensitivity = residentialAreaSensitivity;
+        this.cityAreaRadius = cityAreaRadius;
+        this.cityAreaSensitivity = cityAreaSensitivity;
+        this.developmentCalculationThreads = threads;
         return this;
     }
 
@@ -539,6 +570,13 @@ public class GraphHopper {
         preciseIndexResolution = ghConfig.getInt("index.high_resolution", preciseIndexResolution);
         maxRegionSearch = ghConfig.getInt("index.max_region_search", maxRegionSearch);
 
+        // development calculation
+        residentialAreaRadius = ghConfig.getDouble("graph.development.residential_radius", residentialAreaRadius);
+        residentialAreaSensitivity = ghConfig.getDouble("graph.development.residential_sensitivity", residentialAreaSensitivity);
+        cityAreaRadius = ghConfig.getDouble("graph.development.city_radius", cityAreaRadius);
+        cityAreaSensitivity = ghConfig.getDouble("graph.development.city_sensitivity", cityAreaSensitivity);
+        developmentCalculationThreads = ghConfig.getInt("graph.development.threads", developmentCalculationThreads);
+
         // routing
         routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
         routerConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routerConfig.getMaxRoundTripRetries()));
@@ -553,7 +591,7 @@ public class GraphHopper {
         return this;
     }
 
-    private void buildEncodingManagerAndOSMParsers(String flagEncodersStr, String encodedValuesStr, String dateRangeParserString, Collection<Profile> profiles) {
+    private void buildEncodingManagerAndOSMParsers(String flagEncodersStr, String encodedValuesStr, String dateRangeParserString, boolean withDevelopment, Collection<Profile> profiles) {
         Map<String, String> flagEncodersMap = new LinkedHashMap<>();
         for (String encoderStr : flagEncodersStr.split(",")) {
             String name = encoderStr.split("\\|")[0].trim();
@@ -581,6 +619,8 @@ public class GraphHopper {
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         flagEncodersMap.forEach((name, encoderStr) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, new PMap(encoderStr))));
         profiles.forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
+        if (withDevelopment)
+            emBuilder.add(Development.create());
         encodedValueStrings.forEach(s -> emBuilder.add(encodedValueFactory.create(s)));
         encodingManager = emBuilder.build();
 
@@ -735,7 +775,8 @@ public class GraphHopper {
     private void process(boolean closeEarly) {
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
-        buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
+        boolean withDevelopment = developmentCalculationThreads > 0;
+        buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, withDevelopment, profilesByName.values());
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())
@@ -775,6 +816,17 @@ public class GraphHopper {
 
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
+
+        if (encodingManager.hasEncodedValue(Development.KEY)) {
+            EnumEncodedValue<Development> developmentEnc = encodingManager.getEnumEncodedValue(Development.KEY, Development.class);
+            if (!encodingManager.hasEncodedValue(RoadClass.KEY))
+                throw new IllegalArgumentException("Development calculation requires " + RoadClass.KEY);
+            if (!encodingManager.hasEncodedValue(RoadClassLink.KEY))
+                throw new IllegalArgumentException("Development calculation requires " + RoadClassLink.KEY);
+            EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+            BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
+            DevelopmentCalculator.calcDevelopment(baseGraph, developmentEnc, roadClassEnc, roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, developmentCalculationThreads);
+        }
     }
 
     protected void importOSM() {
