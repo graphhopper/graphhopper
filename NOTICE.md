@@ -25,7 +25,7 @@ The core module includes the following software:
 reader-gtfs:
  
  * some files from com.conveyal:gtfs-lib (BSD 2-clause license)
- * com.google.transit:gtfs-realtime-bindings (Apache license)
+ * org.mobilitydata:gtfs-realtime-bindings (Apache license)
 
 reader-shp:
  
