@@ -73,7 +73,8 @@ public class GraphHopperManaged implements Managed {
                     newProfiles.add(new CustomProfile(profile).setCustomModel(customModel));
                     continue;
                 } catch (Exception ex) {
-                    throw new RuntimeException("Cannot load custom_model from " + cm + " for profile " + profile.getName(), ex);
+                      throw new RuntimeException("Cannot load custom_model from " + cm + " for profile " + profile.getName()
+                          + ". If you are trying to load from a file, use 'custom_model_file' instead.", ex);
                 }
             }
             String customModelFileName = profile.getHints().getString("custom_model_file", "");
