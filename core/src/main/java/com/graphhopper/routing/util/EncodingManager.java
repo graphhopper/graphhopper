@@ -66,6 +66,13 @@ public class EncodingManager implements EncodedValueLookup {
         return builder;
     }
 
+    public static void putEncodingManagerIntoProperties(EncodingManager encodingManager, StorableProperties properties) {
+        properties.put("graph.em.version", Constants.VERSION_EM);
+        properties.put("graph.em.edge_config", encodingManager.toEdgeConfigAsString());
+        properties.put("graph.em.turn_cost_config", encodingManager.toTurnCostConfigAsString());
+        properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
+    }
+
     public static EncodingManager fromProperties(StorableProperties properties) {
         if (properties.containsVersion())
             throw new IllegalStateException("The GraphHopper file format is not compatible with the data you are " +

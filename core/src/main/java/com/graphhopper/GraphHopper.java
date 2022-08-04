@@ -823,10 +823,7 @@ public class GraphHopper {
     }
 
     protected void writeEncodingManagerToProperties() {
-        properties.put("graph.em.version", Constants.VERSION_EM);
-        properties.put("graph.em.edge_config", encodingManager.toEdgeConfigAsString());
-        properties.put("graph.em.turn_cost_config", encodingManager.toTurnCostConfigAsString());
-        properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
+        EncodingManager.putEncodingManagerIntoProperties(encodingManager, properties);
     }
 
     private List<CustomArea> readCustomAreas() {
