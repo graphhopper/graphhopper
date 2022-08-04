@@ -905,6 +905,7 @@ public class RoutingAlgorithmTest {
     }
 
     @Disabled // TODO ORS: fails for unknown reason, investigate
+              //           Dijkstra & A* return the same wrong path
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testTwoWeightsPerEdge2(Fixture f) {

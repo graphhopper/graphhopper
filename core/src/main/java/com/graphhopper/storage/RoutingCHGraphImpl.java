@@ -26,7 +26,7 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     private final Weighting weighting;
 
     // ORS-GH MOD START - CALT
-    // ORS TODO: provide a reason for removal of 'final'
+    // TODO ORS: provide a reason for removal of 'final'
     // TODO ORS: shortcuts got moved somewhere, probably chStorage?
     //final DataAccess shortcuts;
     //    DataAccess shortcuts;

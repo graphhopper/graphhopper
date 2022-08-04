@@ -43,7 +43,7 @@ public class Path {
     private final NodeAccess nodeAccess;
     private double weight = Double.MAX_VALUE;
     // ORS-GH MOD START: private -> protected
-    // TODO ORS: how to avoid this change?
+    // TODO ORS (cleanup): how to avoid this change?
     protected double distance;
     // ORS-GH MOD END
     private long time;

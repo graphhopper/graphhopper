@@ -24,7 +24,7 @@ import com.graphhopper.util.*;
 
 public class PathExtractor {
     // ORS-GH MOD START: private -> protected
-    // TODO ORS: how to avoid this modification?
+    // TODO ORS (cleanup): how to avoid this modification?
     protected final Graph graph;
     // ORS-GH MOD END
     private final Weighting weighting;
