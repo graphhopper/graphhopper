@@ -18,9 +18,12 @@
 package com.graphhopper.routing.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.storage.StorableProperties;
+import com.graphhopper.util.Constants;
 import com.graphhopper.util.PMap;
 
 import java.io.UncheckedIOException;
@@ -61,6 +64,37 @@ public class EncodingManager implements EncodedValueLookup {
         for (VehicleEncodedValues v : vehicleEncodedValues)
             builder.add(v);
         return builder;
+    }
+
+    public static EncodingManager fromProperties(StorableProperties properties) {
+        if (properties.containsVersion())
+            throw new IllegalStateException("The GraphHopper file format is not compatible with the data you are " +
+                    "trying to load. You either need to use an older version of GraphHopper or run a new import");
+
+        String versionStr = properties.get("graph.em.version");
+        if (versionStr.isEmpty() || !String.valueOf(Constants.VERSION_EM).equals(versionStr))
+            throw new IllegalStateException("Incompatible encoding version. You need to use the same GraphHopper version you used to import the graph, or run a new import. "
+                    + " Stored encoding version: " + (versionStr.isEmpty() ? "missing" : versionStr) + ", used encoding version: " + Constants.VERSION_EM);
+        String encodedValueStr = properties.get("graph.encoded_values");
+        ArrayNode evList = deserializeEncodedValueList(encodedValueStr);
+        LinkedHashMap<String, EncodedValue> encodedValues = new LinkedHashMap<>();
+        evList.forEach(serializedEV -> {
+            EncodedValue encodedValue = EncodedValueSerializer.deserializeEncodedValue(serializedEV.textValue());
+            if (encodedValues.put(encodedValue.getName(), encodedValue) != null)
+                throw new IllegalStateException("Duplicate encoded value name: " + encodedValue.getName() + " in: graph.encoded_values=" + encodedValueStr);
+        });
+
+        EncodedValue.InitializerConfig edgeConfig = EncodedValueSerializer.deserializeInitializerConfig(properties.get("graph.em.edge_config"));
+        EncodedValue.InitializerConfig turnCostConfig = EncodedValueSerializer.deserializeInitializerConfig(properties.get("graph.em.turn_cost_config"));
+        return new EncodingManager(encodedValues, edgeConfig, turnCostConfig);
+    }
+
+    private static ArrayNode deserializeEncodedValueList(String encodedValueStr) {
+        try {
+            return Jackson.newObjectMapper().readValue(encodedValueStr, ArrayNode.class);
+        } catch (JsonProcessingException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /**
