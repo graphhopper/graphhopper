@@ -99,7 +99,7 @@ class TripFromLabel {
         path.getLegs().addAll(legs);
 
         final InstructionList instructions = new InstructionList(tr);
-        final PointList pointsList = new PointList();
+        final PointList pointsList = new PointList(PointList.CAP_DEFAULT, includeElevation);
         Map<String, List<PathDetail>> pathDetails = new HashMap<>();
         for (int i = 0; i < path.getLegs().size(); ++i) {
             Trip.Leg leg = path.getLegs().get(i);
@@ -117,7 +117,7 @@ class TripFromLabel {
                 final Trip.PtLeg ptLeg = ((Trip.PtLeg) leg);
                 final PointList pl;
                 if (!ptLeg.isInSameVehicleAsPrevious) {
-                    pl = new PointList();
+                    pl = new PointList(PointList.CAP_DEFAULT, includeElevation);
                     final Instruction departureInstruction = new Instruction(Instruction.PT_START_TRIP, ptLeg.trip_headsign, pl);
                     departureInstruction.setDistance(leg.getDistance());
                     departureInstruction.setTime(ptLeg.travelTime);
@@ -125,16 +125,16 @@ class TripFromLabel {
                 } else {
                     pl = instructions.get(instructions.size() - 2).getPoints();
                 }
-                pl.add(ptLeg.stops.get(0).geometry.getY(), ptLeg.stops.get(0).geometry.getX());
-                pointsList.add(ptLeg.stops.get(0).geometry.getY(), ptLeg.stops.get(0).geometry.getX());
+                pl.add(ptLeg.stops.get(0).geometry.getY(), ptLeg.stops.get(0).geometry.getX(), Double.NaN);
+                pointsList.add(ptLeg.stops.get(0).geometry.getY(), ptLeg.stops.get(0).geometry.getX(), Double.NaN);
                 for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size() - 1)) {
-                    pl.add(stop.geometry.getY(), stop.geometry.getX());
-                    pointsList.add(stop.geometry.getY(), stop.geometry.getX());
+                    pl.add(stop.geometry.getY(), stop.geometry.getX(), Double.NaN);
+                    pointsList.add(stop.geometry.getY(), stop.geometry.getX(), Double.NaN);
                 }
-                final PointList arrivalPointList = new PointList();
+                final PointList arrivalPointList = new PointList(PointList.CAP_DEFAULT, includeElevation);
                 final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size() - 1);
-                arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
-                pointsList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
+                arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX(), Double.NaN);
+                pointsList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX(), Double.NaN);
                 Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, arrivalPointList);
                 if (ptLeg.isInSameVehicleAsPrevious) {
                     instructions.set(instructions.size() - 1, arrivalInstruction);
@@ -440,7 +440,7 @@ class TripFromLabel {
     }
   
     private Geometry lineStringFromInstructions(InstructionList instructions, boolean includeElevation) {
-        final PointList pointsList = new PointList();
+        final PointList pointsList = new PointList(PointList.CAP_DEFAULT, includeElevation);
         for (Instruction instruction : instructions) {
             pointsList.add(instruction.getPoints());
         }
