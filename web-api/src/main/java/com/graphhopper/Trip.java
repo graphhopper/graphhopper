@@ -81,13 +81,19 @@ public class Trip {
         public final Map<String, List<PathDetail>> details;
         private final Date departureTime;
         private final Date arrivalTime;
+        public final double ascend;
+        public final double descend;
 
-        public ConnectingLeg(String type, String departureLocation, Date departureTime, Geometry geometry, double distance, double weight, InstructionList instructions, Map<String, List<PathDetail>> details, Date arrivalTime) {
+        public ConnectingLeg(String type, String departureLocation, Date departureTime, Geometry geometry,
+                double distance, double weight, InstructionList instructions, Map<String, List<PathDetail>> details,
+                Date arrivalTime, double ascend, double descend) {
             super(type, departureLocation, geometry, distance, weight);
             this.instructions = instructions;
             this.departureTime = departureTime;
             this.details = details;
             this.arrivalTime = arrivalTime;
+            this.ascend = ascend;
+            this.descend = descend;
         }
 
         @Override

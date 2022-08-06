@@ -89,13 +89,16 @@ class TripFromLabel {
         if (legs.size() > 1 && legs.get(0) instanceof Trip.ConnectingLeg) {
             final Trip.ConnectingLeg accessLeg = (Trip.ConnectingLeg) legs.get(0);
             legs.set(0, new Trip.ConnectingLeg(accessLeg.type, accessLeg.departureLocation, new Date(legs.get(1).getDepartureTime().getTime() - (accessLeg.getArrivalTime().getTime() - accessLeg.getDepartureTime().getTime())),
-                    accessLeg.geometry, accessLeg.distance, accessLeg.weight, accessLeg.instructions, accessLeg.details, legs.get(1).getDepartureTime()));
+                    accessLeg.geometry, accessLeg.distance, accessLeg.weight, accessLeg.instructions, accessLeg.details,
+                    legs.get(1).getDepartureTime(), accessLeg.ascend, accessLeg.descend));
         }
         if (legs.size() > 1 && legs.get(legs.size() - 1) instanceof Trip.ConnectingLeg) {
             final Trip.ConnectingLeg egressLeg = (Trip.ConnectingLeg) legs.get(legs.size() - 1);
             legs.set(legs.size() - 1, new Trip.ConnectingLeg(egressLeg.type, egressLeg.departureLocation, legs.get(legs.size() - 2).getArrivalTime(),
                     egressLeg.geometry, egressLeg.distance, egressLeg.weight, egressLeg.instructions,
-                    egressLeg.details, new Date(legs.get(legs.size() - 2).getArrivalTime().getTime() + (egressLeg.getArrivalTime().getTime() - egressLeg.getDepartureTime().getTime()))));
+                    egressLeg.details, new Date(legs.get(legs.size() - 2).getArrivalTime().getTime()
+                            + (egressLeg.getArrivalTime().getTime() - egressLeg.getDepartureTime().getTime())),
+                    egressLeg.ascend, egressLeg.descend));
         }
 
         ResponsePath path = new ResponsePath();
@@ -150,6 +153,7 @@ class TripFromLabel {
         }
         path.setInstructions(instructions);
         path.setPoints(pointsList);
+        calcAscendDescend(path, pointsList);
         path.addPathDetails(pathDetails);
         path.setDistance(path.getLegs().stream().mapToDouble(Trip.Leg::getDistance).sum());
         path.setTime((legs.get(legs.size() - 1).getArrivalTime().toInstant().toEpochMilli() - legs.get(0).getDepartureTime().toInstant().toEpochMilli()));
@@ -432,16 +436,21 @@ class TripFromLabel {
 
             final Instant departureTime = Instant.ofEpochMilli(path.get(0).label.currentTime);
             final Instant arrivalTime = Instant.ofEpochMilli(path.get(path.size() - 1).label.currentTime);
+            final Geometry geometry = lineStringFromInstructions(instructions, includeElevation);
+            final double ascend = calcAscend(geometry);
+            final double descend = calcDescend(geometry);
             return Collections.singletonList(new Trip.ConnectingLeg(
                     connectingVehicle,
                     connectingVehicle,
                     Date.from(departureTime),
-                    lineStringFromInstructions(instructions, includeElevation),
+                    geometry,
                     edges(path).mapToDouble(edgeLabel -> edgeLabel.getDistance()).sum(),
                     router.weight(path.get(path.size()-1).label) - router.weight(path.get(0).label),
                     instructions,
                     pathDetails,
-                    Date.from(arrivalTime)));
+                    Date.from(arrivalTime),
+                    ascend,
+                    descend));
         }
     }
 
@@ -460,6 +469,74 @@ class TripFromLabel {
             pointsList.add(instruction.getPoints());
         }
         return pointsList.toLineString(includeElevation);
+    }
+
+    private double calcAscend(final Geometry geometry) {
+        double ascendMeters = 0;
+
+        final List<Coordinate> coordinates = Arrays.asList(geometry.getCoordinates());
+
+        double lastZ = coordinates.get(0).z;
+        for (int i = 1; i < coordinates.size(); i++) {
+            double z = coordinates.get(i).z;
+            if (Double.isNaN(z))
+                continue;
+            double diff = Math.abs(z - lastZ);
+
+            if (z > lastZ)
+                ascendMeters += diff;
+
+            lastZ = z;
+        }
+
+        return ascendMeters;
+    }
+
+    private double calcDescend(final Geometry geometry) {
+        double descendMeters = 0;
+
+        final List<Coordinate> coordinates = Arrays.asList(geometry.getCoordinates());
+
+        double lastZ = coordinates.get(0).z;
+        for (int i = 1; i < coordinates.size(); i++) {
+            double z = coordinates.get(i).z;
+            if (Double.isNaN(z))
+                continue;
+            double diff = Math.abs(z - lastZ);
+
+            if (z < lastZ)
+                descendMeters += diff;
+
+            lastZ = z;
+        }
+
+        return descendMeters;
+    }
+
+    private void calcAscendDescend(final ResponsePath responsePath, final PointList pointList) {
+        if (!pointList.is3D())
+            return;
+        double ascendMeters = 0;
+        double descendMeters = 0;
+        double lastEle = pointList.getEle(0);
+        for (int i = 1; i < pointList.size(); ++i) {
+            double ele = pointList.getEle(i);
+            if (Double.isNaN(ele))
+                continue;
+            double diff = Math.abs(ele - lastEle);
+
+            if (ele > lastEle)
+                ascendMeters += diff;
+            else
+                descendMeters += diff;
+
+            lastEle = ele;
+
+        }
+        if (!Double.isNaN(ascendMeters))
+            responsePath.setAscend(ascendMeters);
+        if (!Double.isNaN(descendMeters))
+            responsePath.setDescend(descendMeters);
     }
 
 }
