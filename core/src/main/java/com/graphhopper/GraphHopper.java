@@ -633,7 +633,9 @@ public class GraphHopper {
             throw new IllegalArgumentException("use graph.elevation.cache_dir not cachedir in configuration");
 
         ElevationProvider elevationProvider = ElevationProvider.NOOP;
-        if (eleProviderStr.equalsIgnoreCase("srtm")) {
+        if (eleProviderStr.equalsIgnoreCase("hgt")) {
+            elevationProvider = new HGTProvider(cacheDirStr);
+        } else if (eleProviderStr.equalsIgnoreCase("srtm")) {
             elevationProvider = new SRTMProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("cgiar")) {
             elevationProvider = new CGIARProvider(cacheDirStr);
