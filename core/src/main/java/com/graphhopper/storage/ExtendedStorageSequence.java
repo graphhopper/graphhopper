@@ -51,6 +51,14 @@ public class ExtendedStorageSequence  implements GraphExtension {
     }
 
     @Override
+    public long getCapacity() {
+        long ret = 0;
+        for (int i = 0; i < numExtensions; i++) {
+            ret += extensions[i].getCapacity();
+        }
+        return ret;
+    }
+    @Override
     public void close() {
         for (int i = 0; i < numExtensions; i++) {
             try {

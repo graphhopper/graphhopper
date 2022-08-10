@@ -442,6 +442,17 @@ public class GraphHopperStorage implements Graph, Closeable {
     public long getCapacity() {
         long cnt = baseGraph.getCapacity() + properties.getCapacity();
         long cgs = chEntries.stream().mapToLong(ch -> ch.chStore.getCapacity()).sum();
+        // ORS-GH MOD START - additional code
+        if (graphExtensions != null) {
+            cnt += graphExtensions.getCapacity();
+        }
+        if (conditionalAccess != null) {
+            cnt += conditionalAccess.getCapacity();
+        }
+        if (conditionalSpeed != null) {
+            cnt += conditionalSpeed.getCapacity();
+        }
+        // ORS-GH MOD END
         return cnt + cgs;
     }
 

@@ -10,5 +10,7 @@ public interface GraphExtension extends Storable<GraphExtension> {
     boolean loadExisting();
 
     void flush();
+
+    long getCapacity();
 }
 // ORS-GH MOD
