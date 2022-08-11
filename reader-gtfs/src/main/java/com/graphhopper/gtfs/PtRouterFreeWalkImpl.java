@@ -29,19 +29,16 @@ import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import com.graphhopper.util.exceptions.PointNotFoundException;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.exceptions.ConnectionNotFoundException;
+import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 
 import javax.inject.Inject;
 import java.time.Instant;
@@ -53,19 +50,18 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
 
     private final GraphHopperConfig config;
     private final TranslationMap translationMap;
-    private final PtEncodedValues ptEncodedValues;
     private final Weighting accessEgressWeighting;
     private final GraphHopperStorage graphHopperStorage;
     private final LocationIndex locationIndex;
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
-    private final TripFromLabel tripFromLabel;
+    private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final WeightingFactory weightingFactory;
+    private final PtGraph ptGraph;
 
     @Inject
     public PtRouterFreeWalkImpl(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
         this.config = config;
-        this.ptEncodedValues = PtEncodedValues.fromEncodingManager(graphHopperStorage.getEncodingManager());
         this.weightingFactory = new DefaultWeightingFactory(graphHopperStorage, graphHopperStorage.getEncodingManager());
         this.accessEgressWeighting = new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder("foot"));
         this.translationMap = translationMap;
@@ -73,11 +69,8 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         this.locationIndex = locationIndex;
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
-        this.tripFromLabel = new TripFromLabel(this.graphHopperStorage, this.gtfsStorage, this.realtimeFeed, pathDetailsBuilderFactory);
-    }
-
-    public static Factory createFactory(GraphHopperConfig config, TranslationMap translationMap, GraphHopper graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-        return new Factory(config, translationMap, graphHopperStorage.getGraphHopperStorage(), locationIndex, gtfsStorage);
+        this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
+        this.ptGraph = gtfsStorage.getPtGraph();
     }
 
     @Override
@@ -93,7 +86,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private final GtfsStorage gtfsStorage;
         private final Map<String, Transfers> transfers;
 
-        private Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        public Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
             this.config = config;
             this.translationMap = translationMap;
             this.graphHopperStorage = graphHopperStorage;
@@ -112,7 +105,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         }
 
         public PtRouter createWithoutRealtimeFeed() {
-            return new PtRouterFreeWalkImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(gtfsStorage), new PathDetailsBuilderFactory());
+            return new PtRouterFreeWalkImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty(), new PathDetailsBuilderFactory());
         }
     }
 
@@ -128,14 +121,13 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private final double betaStreetTime;
         private final double walkSpeedKmH;
         private final int blockedRouteTypes;
+        private final Map<Integer, Long> boardingPenaltiesByRouteType;
         private final GHLocation enter;
         private final GHLocation exit;
         private final Translation translation;
         private final List<String> requestedPathDetails;
-        private final List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>(realtimeFeed.getAdditionalEdges());
 
         private final GHResponse response = new GHResponse();
-        private final Graph graphWithExtraEdges = new WrapperGraph(graphHopperStorage, extraEdges);
         private final long limitTripTime;
         private final long limitStreetTime;
         private QueryGraph queryGraph;
@@ -161,6 +153,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             arriveBy = request.isArriveBy();
             walkSpeedKmH = request.getWalkSpeedKmH();
             blockedRouteTypes = request.getBlockedRouteTypes();
+            boardingPenaltiesByRouteType = request.getBoardingPenaltiesByRouteType();
             translation = translationMap.getWithFallBack(request.getLocale());
             enter = request.getPoints().get(0);
             exit = request.getPoints().get(1);
@@ -177,64 +170,26 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
 
         GHResponse route() {
             StopWatch stopWatch = new StopWatch().start();
-            ArrayList<Snap> pointSnaps = new ArrayList<>();
-            ArrayList<Snap> allSnaps = new ArrayList<>();
-            PointList points = new PointList(2, false);
-            List<GHLocation> locations = Arrays.asList(enter, exit);
-            for (int i = 0; i < locations.size(); i++) {
-                GHLocation location = locations.get(i);
-                if (location instanceof GHPointLocation) {
-                    final Snap closest = findByPoint(((GHPointLocation) location).ghPoint, i, i == 0 ? this.accessSnapFilter : this.egressSnapFilter);
-                    pointSnaps.add(closest);
-                    allSnaps.add(closest);
-                    points.add(closest.getSnappedPoint());
-                } else if (location instanceof GHStationLocation) {
-                    final Snap station = findByStationId((GHStationLocation) location, i);
-                    allSnaps.add(station);
-                    points.add(graphHopperStorage.getNodeAccess().getLat(station.getClosestNode()), graphHopperStorage.getNodeAccess().getLon(station.getClosestNode()));
-                }
-            }
-            queryGraph = QueryGraph.create(graphWithExtraEdges, pointSnaps); // modifies pointSnaps!
+            PtLocationSnapper.Result result = new PtLocationSnapper(graphHopperStorage, locationIndex, gtfsStorage).snapAll(Arrays.asList(enter, exit), Arrays.asList(accessSnapFilter, egressSnapFilter));
+            queryGraph = result.queryGraph;
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
-            int startNode;
-            int destNode;
+            Label.NodeId startNode;
+            Label.NodeId destNode;
             if (arriveBy) {
-                startNode = allSnaps.get(1).getClosestNode();
-                destNode = allSnaps.get(0).getClosestNode();
+                startNode = result.nodes.get(1);
+                destNode = result.nodes.get(0);
             } else {
-                startNode = allSnaps.get(0).getClosestNode();
-                destNode = allSnaps.get(1).getClosestNode();
+                startNode = result.nodes.get(0);
+                destNode = result.nodes.get(1);
             }
             List<List<Label.Transition>> solutions = findPaths(startNode, destNode);
-            parseSolutionsAndAddToResponse(solutions, points);
+            parseSolutionsAndAddToResponse(solutions, result.points);
             return response;
         }
 
-        private Snap findByPoint(GHPoint point, int indexForErrorMessage, EdgeFilter snapFilter) {
-            Snap source = locationIndex.findClosest(point.lat, point.lon, snapFilter);
-            if (!source.isValid()) {
-                throw new PointNotFoundException("Cannot find point: " + point, indexForErrorMessage);
-            }
-            if (source.getClosestEdge().get(ptEncodedValues.getTypeEnc()) != GtfsStorage.EdgeType.HIGHWAY) {
-                throw new RuntimeException(source.getClosestEdge().get(ptEncodedValues.getTypeEnc()).name());
-            }
-            return source;
-        }
-
-        private Snap findByStationId(GHStationLocation exit, int indexForErrorMessage) {
-            for (Map.Entry<String, GTFSFeed> entry : gtfsStorage.getGtfsFeeds().entrySet()) {
-                final Integer node = gtfsStorage.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(entry.getKey(), exit.stop_id));
-                if (node != null) {
-                    final Snap station = new Snap(graphHopperStorage.getNodeAccess().getLat(node), graphHopperStorage.getNodeAccess().getLon(node));
-                    station.setClosestNode(node);
-                    return station;
-                }
-            }
-            throw new PointNotFoundException("Cannot find station: " + exit.stop_id, indexForErrorMessage);
-        }
-
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
+            TripFromLabel tripFromLabel = new TripFromLabel(queryGraph, gtfsStorage, realtimeFeed, pathDetailsBuilderFactory, walkSpeedKmH);
             for (List<Label.Transition> solution : solutions) {
                 final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, queryGraph, accessWeighting, egressWeighting, solution, requestedPathDetails);
                 responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
@@ -247,45 +202,44 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             response.getAll().sort(c.thenComparing(d));
         }
 
-        private List<List<Label.Transition>> findPaths(int startNode, int destNode) {
+        private List<List<Label.Transition>> findPaths(Label.NodeId startNode, Label.NodeId destNode) {
             StopWatch stopWatch = new StopWatch().start();
 
-            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, false, walkSpeedKmH, false, blockedRouteTypes);
+            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, accessEgressWeighting, gtfsStorage, realtimeFeed, arriveBy, false, false, walkSpeedKmH, false, blockedRouteTypes);
             List<Label> discoveredSolutions = new ArrayList<>();
-            router = new MultiCriteriaLabelSetting(graphExplorer, ptEncodedValues, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
+            router = new MultiCriteriaLabelSetting(graphExplorer, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);
             router.setBetaStreetTime(betaStreetTime);
             router.setLimitStreetTime(limitStreetTime);
-            Iterator<Label> iterator = router.calcLabels(startNode, initialTime).iterator();
-            while (iterator.hasNext()) {
-                Label label = iterator.next();
+            router.setBoardingPenaltyByRouteType(routeType -> boardingPenaltiesByRouteType.getOrDefault(routeType, 0L));
+            for (Label label : router.calcLabels(startNode, initialTime)) {
                 visitedNodes++;
                 if (visitedNodes >= maxVisitedNodesForRequest) {
                     break;
                 }
-                if (label.adjNode == destNode) {
-                        discoveredSolutions.add(label);
-                        if (discoveredSolutions.size() >= limitSolutions) {
-                            break;
-                        }
+                if (label.node.equals(destNode)) {
+                    discoveredSolutions.add(label);
+                    if (discoveredSolutions.size() >= limitSolutions) {
+                        break;
+                    }
                 }
             }
             discoveredSolutions.sort(comparingLong(s -> Optional.ofNullable(s.departureTime).orElse(0L)));
 
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {
-                List<Label.Transition> path = Label.getTransitions(discoveredSolution, arriveBy, ptEncodedValues, queryGraph, realtimeFeed);
+                List<Label.Transition> path = Label.getTransitions(discoveredSolution, arriveBy);
                 paths.add(path);
             }
 
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
             if (discoveredSolutions.isEmpty() && visitedNodes >= maxVisitedNodesForRequest) {
-                response.addError(new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest));
+                response.addError(new MaximumNodesExceededException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest, maxVisitedNodesForRequest));
             }
             response.getHints().putObject("visited_nodes.sum", visitedNodes);
             response.getHints().putObject("visited_nodes.average", visitedNodes);
             if (discoveredSolutions.isEmpty()) {
-                response.addError(new RuntimeException("No route found"));
+                response.addError(new ConnectionNotFoundException("No route found", Collections.emptyMap()));
             }
             return paths;
         }

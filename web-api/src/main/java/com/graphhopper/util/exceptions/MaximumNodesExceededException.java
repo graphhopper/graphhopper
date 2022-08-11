@@ -19,23 +19,14 @@ package com.graphhopper.util.exceptions;
 
 import java.util.Collections;
 
-/**
- * Represents an instance of the "Cannot find Point" Exception, whereas the Point that cannot be
- * found is at pointIndex.
- *
- * @author Robin Boldt
- */
-public class PointNotFoundException extends DetailedIllegalArgumentException {
+public class MaximumNodesExceededException extends DetailedIllegalArgumentException {
 
     private static final long serialVersionUID = 1L;
-    
-    public static final String INDEX_KEY = "point_index";
 
-    public PointNotFoundException(String message, int pointIndex) {
-        super(message, Collections.singletonMap(INDEX_KEY, pointIndex));
+    public static final String NODES_KEY = "max_visited_nodes";
+
+    public MaximumNodesExceededException(String message, int maxVisitedNodes) {
+        super(message, Collections.singletonMap(NODES_KEY, maxVisitedNodes));
     }
 
-    public int getPointIndex() {
-        return (int) getDetails().get(INDEX_KEY);
-    }
 }
