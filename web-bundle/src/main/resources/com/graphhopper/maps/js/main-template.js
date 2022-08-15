@@ -95,6 +95,9 @@ $(document).ready(function (e) {
     };
     $("#custom-model-button").click(function() {
         toggleCustomModelBox(true);
+        // we only show the gpx button when the custom model box is closed, because the gpx export does not work for custom model routes (#2635)
+        $("#gpxExportButton").toggle();
+        $("#gpx_dialog").dialog('close');
     });
     function showCustomModelExample() {
         cmEditor.value =

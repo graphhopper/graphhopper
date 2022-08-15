@@ -20,7 +20,7 @@ public class EdgeElevationSmoothing {
      * This method smooths the elevation data of a PointList by calculating the average elevation over
      * multiple points of that PointList.
      */
-    public static void smoothWindow(PointList geometry) {
+    public static void smoothMovingAverage(PointList geometry) {
         for (int i = 1; i < geometry.size() - 1; i++) {
 
             int start = i;
@@ -59,34 +59,35 @@ public class EdgeElevationSmoothing {
     }
 
     /**
-     * This method removes elevation fluctuations up to maxElevationDelta. Compared to the smoothWindow function this
-     * method has the big advantage that the maximum slope of a PointList never increases (max(abs(slope_i))).
-     * The disadvantage is that the appearance might be still more spiky as a result when a bigger positive slope
-     * changes to a bigger negative slope.
+     * This method removes elevation fluctuations up to maxElevationDelta. Compared to the smoothMovingAverage function
+     * this method has the advantage that the maximum slope of a PointList never increases (max(abs(slope_i))).
+     * The disadvantage is that the appearance might be still more spiky (at tower nodes) as a result when a bigger
+     * positive slope changes to a bigger negative slope.
      * <p>
      * The underlying algorithm is an adapted Ramer-Douglas-Peucker algorithm (see #2634) with a maximum elevation change and:
-     * 1. here we try to remove the elevation fluctuation and ignore any lat,lon difference
-     * 2. instead of removing the point the elevation will be calculated from the average slope of the first and last point
+     * 1. only elevation changes are considered and any lat,lon difference is ignored
+     * 2. instead of removing the point the elevation will be calculated from the average slope of the first and last
+     * point of the specified pointList
      */
-    public static void smoothRamer(PointList points, double maxElevationDelta) {
-        internSmoothRamer(points, 0, points.size() - 1, maxElevationDelta);
+    public static void smoothRamer(PointList pointList, double maxElevationDelta) {
+        internSmoothRamer(pointList, 0, pointList.size() - 1, maxElevationDelta);
     }
 
-    static void internSmoothRamer(PointList points, int fromIndex, int lastIndex, double maxElevationDelta) {
+    static void internSmoothRamer(PointList pointList, int fromIndex, int lastIndex, double maxElevationDelta) {
         if (lastIndex - fromIndex < 2)
             return;
 
-        double prevLat = points.getLat(fromIndex);
-        double prevLon = points.getLon(fromIndex);
-        double dist2D = DistanceCalcEarth.DIST_EARTH.calcDist(prevLat, prevLon, points.getLat(lastIndex), points.getLon(lastIndex));
-        double averageSlope = (points.getEle(lastIndex) - points.getEle(fromIndex)) / dist2D;
-        double prevAverageSlopeEle = points.getEle(fromIndex);
+        double prevLat = pointList.getLat(fromIndex);
+        double prevLon = pointList.getLon(fromIndex);
+        double dist2D = DistanceCalcEarth.DIST_EARTH.calcDist(prevLat, prevLon, pointList.getLat(lastIndex), pointList.getLon(lastIndex));
+        double averageSlope = (pointList.getEle(lastIndex) - pointList.getEle(fromIndex)) / dist2D;
+        double prevAverageSlopeEle = pointList.getEle(fromIndex);
         double maxEleDelta = -1;
         int indexWithMaxDelta = -1;
         for (int i = fromIndex + 1; i < lastIndex; i++) {
-            double lat = points.getLat(i);
-            double lon = points.getLon(i);
-            double ele = points.getEle(i);
+            double lat = pointList.getLat(i);
+            double lon = pointList.getLon(i);
+            double ele = pointList.getEle(i);
             double tmpDist2D = DistanceCalcEarth.DIST_EARTH.calcDist(prevLat, prevLon, lat, lon);
             double eleFromAverageSlope = averageSlope * tmpDist2D + prevAverageSlopeEle;
             double tmpEleDelta = Math.abs(ele - eleFromAverageSlope);
@@ -100,27 +101,27 @@ public class EdgeElevationSmoothing {
         }
 
         if (indexWithMaxDelta < 0)
-            throw new IllegalStateException("maximum not found in [" + fromIndex + "," + lastIndex + "] " + points);
+            throw new IllegalStateException("maximum not found in [" + fromIndex + "," + lastIndex + "] " + pointList);
 
         // the maximum elevation change limit filters away especially the smaller high frequent elevation changes,
         // which is likely the "noise" that we want to remove.
         if (maxElevationDelta > maxEleDelta) {
-            prevLat = points.getLat(fromIndex);
-            prevLon = points.getLon(fromIndex);
-            prevAverageSlopeEle = points.getEle(fromIndex);
+            prevLat = pointList.getLat(fromIndex);
+            prevLon = pointList.getLon(fromIndex);
+            prevAverageSlopeEle = pointList.getEle(fromIndex);
             for (int i = fromIndex + 1; i < lastIndex; i++) {
-                double lat = points.getLat(i);
-                double lon = points.getLon(i);
+                double lat = pointList.getLat(i);
+                double lon = pointList.getLon(i);
                 double tmpDist2D = DistanceCalcEarth.DIST_EARTH.calcDist(prevLat, prevLon, lat, lon);
                 double eleFromAverageSlope = averageSlope * tmpDist2D + prevAverageSlopeEle;
-                points.setElevation(i, eleFromAverageSlope);
+                pointList.setElevation(i, eleFromAverageSlope);
                 prevAverageSlopeEle = eleFromAverageSlope;
                 prevLat = lat;
                 prevLon = lon;
             }
         } else {
-            internSmoothRamer(points, fromIndex, indexWithMaxDelta, maxElevationDelta);
-            internSmoothRamer(points, indexWithMaxDelta, lastIndex, maxElevationDelta);
+            internSmoothRamer(pointList, fromIndex, indexWithMaxDelta, maxElevationDelta);
+            internSmoothRamer(pointList, indexWithMaxDelta, lastIndex, maxElevationDelta);
         }
     }
 }

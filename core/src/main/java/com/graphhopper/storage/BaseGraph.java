@@ -84,6 +84,10 @@ public class BaseGraph implements Graph, Closeable {
         return enableIfAssert;
     }
 
+    public void debugPrint() {
+        store.debugPrint();
+    }
+
     @Override
     public BaseGraph getBaseGraph() {
         return this;
@@ -228,23 +232,24 @@ public class BaseGraph implements Graph, Closeable {
         return maxGeoRef;
     }
 
-    public void loadExisting() {
+    public boolean loadExisting() {
         checkNotInitialized();
 
         if (!store.loadExisting())
-            throw new IllegalStateException("Cannot load edges or nodes. corrupt file or directory? " + dir);
+            return false;
 
         if (!wayGeometry.loadExisting())
-            throw new IllegalStateException("Cannot load geometry. corrupt file or directory? " + dir);
+            return false;
 
         if (!edgeKVStorage.loadExisting())
-            throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
+            return false;
 
         if (supportsTurnCosts() && !turnCostStorage.loadExisting())
-            throw new IllegalStateException("Cannot load turn cost storage. corrupt file or directory? " + dir);
+            return false;
 
         setInitialized();
         loadWayGeometryHeader();
+        return true;
     }
 
     /**

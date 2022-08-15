@@ -95,9 +95,10 @@ graphhopper:
 
   # Reduce ascend/descend per edge without changing the maximum slope:
   # graph.elevation.edge_smoothing: ramer
-  # graph.elevation.edge_smoothing.ramer.max_elevation: 10
-  # Further reduction of ascend/descend is possible, but maximum slope will often increase (do not use when average_slope or maximum_slope shall be used in a custom_model)
-  # graph.elevation.edge_smoothing: window
+  # removes elevation fluctuations up to max_elevation (in meter) and replaces the elevation with a value based on the average slope
+  # graph.elevation.edge_smoothing.ramer.max_elevation: 5
+  # A potentially bigger reduction of ascend/descend is possible, but maximum slope will often increase (do not use when average_slope or maximum_slope shall be used in a custom_model)
+  # graph.elevation.edge_smoothing: moving_average
 
   # To increase elevation profile resolution, use the following two parameters to tune the extra resolution you need
   # against the additional storage space used for edge geometries. You should enable bilinear interpolation when using

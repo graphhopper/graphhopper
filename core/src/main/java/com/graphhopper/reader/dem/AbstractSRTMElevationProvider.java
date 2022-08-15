@@ -21,11 +21,11 @@ import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Downloader;
+import com.graphhopper.util.Helper;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.SocketTimeoutException;
 
 /**
@@ -97,7 +97,7 @@ public abstract class AbstractSRTMElevationProvider extends TileBasedElevationPr
             int minLon = down(lon);
 
             String fileName = getFileName(lat, lon);
-            if (fileName == null)
+            if (fileName == null || (Helper.isEmpty(baseUrl) && !new File(fileName).exists()))
                 return 0;
 
             DataAccess heights = getDirectory().create("dem" + intKey);
@@ -165,7 +165,6 @@ public abstract class AbstractSRTMElevationProvider extends TileBasedElevationPr
     private byte[] getByteArrayFromFile(double lat, double lon) throws InterruptedException, IOException {
         String zippedURL = baseUrl + getDownloadURL(lat, lon);
         File file = new File(cacheDir, new File(zippedURL).getName());
-        InputStream is;
         // get zip file if not already in cacheDir
         if (!file.exists())
             for (int i = 0; i < 3; i++) {

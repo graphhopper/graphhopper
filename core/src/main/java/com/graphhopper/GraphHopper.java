@@ -18,13 +18,10 @@
 package com.graphhopper;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
@@ -513,7 +510,7 @@ public class GraphHopper {
 
         // elevation
         if (ghConfig.has("graph.elevation.smoothing"))
-            throw new IllegalArgumentException("Use 'graph.elevation.edge_smoothing: window' instead or the new 'graph.elevation.edge_smoothing: ramer' that does not increase the maximum slope");
+            throw new IllegalArgumentException("Use 'graph.elevation.edge_smoothing: moving_average' or the new 'graph.elevation.edge_smoothing: ramer'. See #2634.");
         osmReaderConfig.setElevationSmoothing(ghConfig.getString("graph.elevation.edge_smoothing", osmReaderConfig.getElevationSmoothing()));
         osmReaderConfig.setElevationSmoothingRamerMax(ghConfig.getInt("graph.elevation.edge_smoothing.ramer.max_elevation", osmReaderConfig.getElevationSmoothingRamerMax()));
         osmReaderConfig.setLongEdgeSamplingDistance(ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", osmReaderConfig.getLongEdgeSamplingDistance()));
@@ -641,7 +638,9 @@ public class GraphHopper {
             throw new IllegalArgumentException("use graph.elevation.cache_dir not cachedir in configuration");
 
         ElevationProvider elevationProvider = ElevationProvider.NOOP;
-        if (eleProviderStr.equalsIgnoreCase("srtm")) {
+        if (eleProviderStr.equalsIgnoreCase("hgt")) {
+            elevationProvider = new HGTProvider(cacheDirStr);
+        } else if (eleProviderStr.equalsIgnoreCase("srtm")) {
             elevationProvider = new SRTMProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("cgiar")) {
             elevationProvider = new CGIARProvider(cacheDirStr);
@@ -831,10 +830,7 @@ public class GraphHopper {
     }
 
     protected void writeEncodingManagerToProperties() {
-        properties.put("graph.em.version", Constants.VERSION_EM);
-        properties.put("graph.em.edge_config", encodingManager.toEdgeConfigAsString());
-        properties.put("graph.em.turn_cost_config", encodingManager.toTurnCostConfigAsString());
-        properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
+        EncodingManager.putEncodingManagerIntoProperties(encodingManager, properties);
     }
 
     private List<CustomArea> readCustomAreas() {
@@ -914,8 +910,8 @@ public class GraphHopper {
                 // the -gh folder exists, but there is no properties file. it might be just empty, so let's act as if
                 // the import did not run yet or is not complete for some reason
                 return false;
-            loadEncodingManagerFromProperties(properties);
-            baseGraph = new BaseGraph.Builder(getEncodingManager())
+            encodingManager = EncodingManager.fromProperties(properties);
+            baseGraph = new BaseGraph.Builder(encodingManager)
                     .setDir(directory)
                     .set3D(hasElevation())
                     .withTurnCosts(encodingManager.needsTurnCostsSupport())
@@ -938,37 +934,6 @@ public class GraphHopper {
         } finally {
             if (lock != null)
                 lock.release();
-        }
-    }
-
-    private void loadEncodingManagerFromProperties(StorableProperties properties) {
-        if (properties.containsVersion())
-            throw new IllegalStateException("The GraphHopper file format is not compatible with the data you are " +
-                    "trying to load. You either need to use an older version of GraphHopper or run a new import");
-
-        String versionStr = properties.get("graph.em.version");
-        if (versionStr.isEmpty() || !String.valueOf(Constants.VERSION_EM).equals(versionStr))
-            throw new IllegalStateException("Incompatible encoding version. You need to use the same GraphHopper version you used to import the graph, or run a new import. "
-                    + " Stored encoding version: " + (versionStr.isEmpty() ? "missing" : versionStr) + ", used encoding version: " + Constants.VERSION_EM);
-        String encodedValueStr = properties.get("graph.encoded_values");
-        ArrayNode evList = deserializeEncodedValueList(encodedValueStr);
-        LinkedHashMap<String, EncodedValue> encodedValues = new LinkedHashMap<>();
-        evList.forEach(serializedEV -> {
-            EncodedValue encodedValue = EncodedValueSerializer.deserializeEncodedValue(serializedEV.textValue());
-            if (encodedValues.put(encodedValue.getName(), encodedValue) != null)
-                throw new IllegalStateException("Duplicate encoded value name: " + encodedValue.getName() + " in: graph.encoded_values=" + encodedValueStr);
-        });
-
-        EncodedValue.InitializerConfig edgeConfig = EncodedValueSerializer.deserializeInitializerConfig(properties.get("graph.em.edge_config"));
-        EncodedValue.InitializerConfig turnCostConfig = EncodedValueSerializer.deserializeInitializerConfig(properties.get("graph.em.turn_cost_config"));
-        encodingManager = new EncodingManager(encodedValues, edgeConfig, turnCostConfig);
-    }
-
-    private ArrayNode deserializeEncodedValueList(String encodedValueStr) {
-        try {
-            return Jackson.newObjectMapper().readValue(encodedValueStr, ArrayNode.class);
-        } catch (JsonProcessingException e) {
-            throw new UncheckedIOException(e);
         }
     }
 
