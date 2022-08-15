@@ -6,13 +6,13 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 
-public class SlopeSetter implements TagParser {
+public class SlopeCalculator implements TagParser {
     private final DecimalEncodedValue maxSlopeEnc;
     private final DecimalEncodedValue averageSlopeEnc;
     // the elevation data fluctuates a lot and so the slope is not that precise for short edges.
     private static final double MIN_LENGTH = 8;
 
-    public SlopeSetter(DecimalEncodedValue max, DecimalEncodedValue averageEnc) {
+    public SlopeCalculator(DecimalEncodedValue max, DecimalEncodedValue averageEnc) {
         this.maxSlopeEnc = max;
         this.averageSlopeEnc = averageEnc;
     }
@@ -25,8 +25,6 @@ public class SlopeSetter implements TagParser {
             // This calculation is a bit expensive and edge_distance is available already, but this would be in 3D
             double distance2D = DistanceCalcEarth.calcDistance(pointList, false);
 
-            // TODO instead of rejecting, accept a certain maximum slope and make this dependent on the distance2D e.g. reject slope>=40?
-            //  but what about hiking tours with steep slope due to ladders? https://graphhopper.com/maps/?point=50.910975%2C14.20713&point=50.912075%2C14.206331&profile=hike
             if (distance2D < MIN_LENGTH) {
                 // default is minimum of average_slope is negative so we have to explicitly set it to 0
                 if (averageSlopeEnc != null)

@@ -9,18 +9,16 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
 
-import java.io.Reader;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class SlopeSetterTest {
+class SlopeCalculatorTest {
 
     @Test
     void simpleElevation() {
         DecimalEncodedValue averageEnc = AverageSlope.create();
         DecimalEncodedValue maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
-        SlopeSetter creator = new SlopeSetter(maxEnc, averageEnc);
+        SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
         IntsRef edgeRef = new IntsRef(1);
         ReaderWay way = new ReaderWay(1L);
         PointList pointList = new PointList(5, true);
@@ -44,7 +42,7 @@ class SlopeSetterTest {
         DecimalEncodedValue averageEnc = AverageSlope.create();
         DecimalEncodedValue maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
-        SlopeSetter creator = new SlopeSetter(maxEnc, averageEnc);
+        SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
         IntsRef edgeRef = new IntsRef(1);
         ReaderWay way = new ReaderWay(1L);
         PointList pointList = new PointList(5, true);
@@ -72,7 +70,7 @@ class SlopeSetterTest {
         DecimalEncodedValue averageEnc = AverageSlope.create();
         DecimalEncodedValue maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
-        SlopeSetter creator = new SlopeSetter(maxEnc, averageEnc);
+        SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
         creator.handleWayTags(edgeRef, way, IntsRef.EMPTY);
         assertEquals(31, maxEnc.getDecimal(false, edgeRef), 1e-3);
         assertEquals(31, averageEnc.getDecimal(false, edgeRef), 1e-3);
