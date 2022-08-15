@@ -83,7 +83,6 @@ public final class PtRouterImpl implements PtRouter {
         private final GraphHopperStorage graphHopperStorage;
         private final LocationIndex locationIndex;
         private final GtfsStorage gtfsStorage;
-        private final Map<String, Transfers> transfers;
 
         public Factory(GraphHopperConfig config, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
             this.config = config;
@@ -91,16 +90,17 @@ public final class PtRouterImpl implements PtRouter {
             this.graphHopperStorage = graphHopperStorage;
             this.locationIndex = locationIndex;
             this.gtfsStorage = gtfsStorage;
-            this.transfers = new HashMap<>();
-            for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
-                this.transfers.put(entry.getKey(), new Transfers(entry.getValue()));
-            }
         }
 
         public PtRouter createWith(GtfsRealtime.FeedMessage realtimeFeed) {
             Map<String, GtfsRealtime.FeedMessage> realtimeFeeds = new HashMap<>();
             realtimeFeeds.put("gtfs_0", realtimeFeed);
-            return new PtRouterImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
+            // ORS note: if at some point we start using realtime feeds the following 4 lines should probably be moved to GtfsStorage to avoid running them for every request
+            Map<String, Transfers> transfers = new HashMap<>();
+            for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
+                transfers.put(entry.getKey(), new Transfers(entry.getValue()));
+            }
+            return new PtRouterImpl(config, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, transfers, realtimeFeeds), new PathDetailsBuilderFactory());
         }
 
         public PtRouter createWithoutRealtimeFeed() {
@@ -183,7 +183,9 @@ public final class PtRouterImpl implements PtRouter {
                 destNode = result.nodes.get(1);
             }
             List<List<Label.Transition>> solutions = findPaths(startNode, destNode);
+            stopWatch = new StopWatch().start();
             parseSolutionsAndAddToResponse(solutions, result.points);
+            response.addDebugInfo("parseSolutions:" + stopWatch.stop().getSeconds() + "s");
             return response;
         }
 
