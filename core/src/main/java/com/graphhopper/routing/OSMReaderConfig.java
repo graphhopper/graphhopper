@@ -24,7 +24,7 @@ public class OSMReaderConfig {
     private double maxWayPointDistance = 1;
     private double elevationMaxWayPointDistance = Double.MAX_VALUE;
     private String smoothElevation = "";
-    private int ramerElevationSmoothingMax = 10;
+    private int ramerElevationSmoothingMax = 5;
     private double longEdgeSamplingDistance = Double.MAX_VALUE;
     private int workerThreads = 2;
 
