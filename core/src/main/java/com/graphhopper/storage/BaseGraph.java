@@ -84,6 +84,10 @@ public class BaseGraph implements Graph, Closeable {
         return enableIfAssert;
     }
 
+    public void debugPrint() {
+        store.debugPrint();
+    }
+
     @Override
     public BaseGraph getBaseGraph() {
         return this;
