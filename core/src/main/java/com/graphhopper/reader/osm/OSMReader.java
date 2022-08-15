@@ -300,7 +300,7 @@ public class OSMReader {
             // smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
             if (config.getElevationSmoothing().equals("ramer"))
                 EdgeElevationSmoothing.smoothRamer(pointList, config.getElevationSmoothingRamerMax());
-            else if (config.getElevationSmoothing().equals("window"))
+            else if (config.getElevationSmoothing().equals("moving_average"))
                 EdgeElevationSmoothing.smoothMovingAverage(pointList);
         }
 
