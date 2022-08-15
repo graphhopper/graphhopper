@@ -23,7 +23,8 @@ public class OSMReaderConfig {
     private String preferredLanguage = "";
     private double maxWayPointDistance = 1;
     private double elevationMaxWayPointDistance = Double.MAX_VALUE;
-    private boolean smoothElevation = false;
+    private String smoothElevation = "";
+    private int ramerElevationSmoothingMax = 5;
     private double longEdgeSamplingDistance = Double.MAX_VALUE;
     private int workerThreads = 2;
 
@@ -78,15 +79,24 @@ public class OSMReaderConfig {
         return this;
     }
 
-    public boolean isSmoothElevation() {
+    public String getElevationSmoothing() {
         return smoothElevation;
     }
 
     /**
      * Enables/disables elevation smoothing
      */
-    public OSMReaderConfig setSmoothElevation(boolean smoothElevation) {
+    public OSMReaderConfig setElevationSmoothing(String smoothElevation) {
         this.smoothElevation = smoothElevation;
+        return this;
+    }
+
+    public int getElevationSmoothingRamerMax() {
+        return ramerElevationSmoothingMax;
+    }
+
+    public OSMReaderConfig setElevationSmoothingRamerMax(int max) {
+        this.ramerElevationSmoothingMax = max;
         return this;
     }
 
