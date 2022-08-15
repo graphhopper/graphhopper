@@ -30,12 +30,8 @@ public class OSMValueExtractor {
         final String rawValue = way.getFirstPriorityTag(keys);
         double value = stringToTons(rawValue);
 
-        if (Double.isNaN(value)) {
-            return;
-        }
+        if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
 
-        if (value > valueEncoder.getMaxStorableDecimal())
-            value = valueEncoder.getMaxStorableDecimal();
         valueEncoder.setDecimal(false, edgeFlags, value);
     }
 
@@ -70,12 +66,8 @@ public class OSMValueExtractor {
         final String rawValue = way.getFirstPriorityTag(keys);
         double value = stringToMeter(rawValue);
 
-        if (Double.isNaN(value)) {
-            return;
-        }
+        if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
 
-        if (value > valueEncoder.getMaxStorableDecimal())
-            value = valueEncoder.getMaxStorableDecimal();
         valueEncoder.setDecimal(false, edgeFlags, value);
     }
 
@@ -124,7 +116,7 @@ public class OSMValueExtractor {
         if (value.isEmpty()) {
             return offset;
         }
-        
+
         try {
             return Double.parseDouble(value) * factor + offset;
         } catch (NumberFormatException e) {
@@ -149,20 +141,20 @@ public class OSMValueExtractor {
     public static double stringToKmh(String str) {
         if (Helper.isEmpty(str))
             return Double.NaN;
-    
+
         // on some German autobahns and a very few other places
         if ("none".equals(str))
             return MaxSpeed.UNLIMITED_SIGN_SPEED;
-    
+
         if (str.endsWith(":rural") || str.endsWith(":trunk"))
             return 80;
-    
+
         if (str.endsWith(":urban"))
             return 50;
-    
+
         if (str.equals("walk") || str.endsWith(":living_street"))
             return 6;
-    
+
         int mpInteger = str.indexOf("mp");
         int knotInteger = str.indexOf("knots");
         int kmInteger = str.indexOf("km");
@@ -183,18 +175,18 @@ public class OSMValueExtractor {
             }
             factor = 1;
         }
-            
+
         double value;
         try {
             value = Integer.parseInt(str) * factor;
         } catch (Exception ex) {
             return Double.NaN;
         }
-        
+
         if (value <= 0) {
             return Double.NaN;
         }
-        
+
         return value;
     }
 }
