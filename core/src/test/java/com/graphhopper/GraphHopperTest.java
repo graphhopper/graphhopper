@@ -1371,8 +1371,8 @@ public class GraphHopperTest {
                 .setProfile(bikeProfile));
         res = rsp.getBest();
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(475, res.getTime() / 1000f, 1);
-        assertEquals(2170, res.getDistance(), 1);
+        assertEquals(511, res.getTime() / 1000f, 1);
+        assertEquals(2481, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile3"));

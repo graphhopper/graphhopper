@@ -84,7 +84,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(UNCHANGED.getValue(), 12, way);
 
         way.setTag("service", "parking_aisle");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 6, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 4, way);
     }
 
     @Test
@@ -168,10 +168,10 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade5");
-        assertEquals(6, getSpeedFromFlags(way), 0.01);
+        assertEquals(4, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        assertEquals(4, getSpeedFromFlags(way), 0.01);
+        assertEquals(2, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
         assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);

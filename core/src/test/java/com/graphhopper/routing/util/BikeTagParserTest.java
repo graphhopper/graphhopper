@@ -157,7 +157,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(PREFER.getValue(), cyclewaySpeed, way);
 
         way.setTag("surface", "unpaved");
-        assertPriorityAndSpeed(PREFER.getValue(), 14, way);
+        assertPriorityAndSpeed(PREFER.getValue(), 12, way);
 
         way.setTag("surface", "paved");
         assertPriorityAndSpeed(PREFER.getValue(), 18, way);

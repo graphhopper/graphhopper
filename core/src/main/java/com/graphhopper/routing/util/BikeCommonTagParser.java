@@ -37,7 +37,7 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 abstract public class BikeCommonTagParser extends VehicleTagParser {
 
     public static double MAX_SPEED = 30;
-    protected static final int PUSHING_SECTION_SPEED = 6;
+    protected static final int PUSHING_SECTION_SPEED = 4;
     protected static final int MIN_SPEED = 2;
     // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
     protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
@@ -116,10 +116,10 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         setSurfaceSpeed("concrete", 18);
         setSurfaceSpeed("concrete:lanes", 16);
         setSurfaceSpeed("concrete:plates", 16);
-        setSurfaceSpeed("paving_stones", 16);
-        setSurfaceSpeed("paving_stones:30", 16);
-        setSurfaceSpeed("unpaved", 14);
-        setSurfaceSpeed("compacted", 16);
+        setSurfaceSpeed("paving_stones", 14);
+        setSurfaceSpeed("paving_stones:30", 14);
+        setSurfaceSpeed("unpaved", 12);
+        setSurfaceSpeed("compacted", 14);
         setSurfaceSpeed("dirt", 10);
         setSurfaceSpeed("earth", 12);
         setSurfaceSpeed("fine_gravel", 18);
@@ -130,7 +130,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         setSurfaceSpeed("ice", MIN_SPEED);
         setSurfaceSpeed("metal", 10);
         setSurfaceSpeed("mud", 10);
-        setSurfaceSpeed("pebblestone", 16);
+        setSurfaceSpeed("pebblestone", 14);
         setSurfaceSpeed("salt", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("sand", PUSHING_SECTION_SPEED);
         setSurfaceSpeed("wood", PUSHING_SECTION_SPEED);
@@ -142,7 +142,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         final int CYCLEWAY_SPEED = 18;  // Make sure cycleway and path use same speed value, see #634
         setHighwaySpeed("cycleway", CYCLEWAY_SPEED);
         setHighwaySpeed("path", 10);
-        setHighwaySpeed("footway", PUSHING_SECTION_SPEED);
+        setHighwaySpeed("footway", 6);
         setHighwaySpeed("platform", PUSHING_SECTION_SPEED);
         setHighwaySpeed("pedestrian", PUSHING_SECTION_SPEED);
         setHighwaySpeed("track", 12);

@@ -331,7 +331,7 @@ public abstract class AbstractBikeTagParserTester {
         assertPriorityAndSpeed(PREFER.getValue(), 14, way);
 
         way.setTag("service", "parking_aisle");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 6, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 4, way);
     }
 
     @Test
