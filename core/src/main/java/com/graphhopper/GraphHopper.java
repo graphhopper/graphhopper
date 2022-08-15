@@ -510,7 +510,7 @@ public class GraphHopper {
 
         // elevation
         if (ghConfig.has("graph.elevation.smoothing"))
-            throw new IllegalArgumentException("Use 'graph.elevation.edge_smoothing: window' instead or the new 'graph.elevation.edge_smoothing: ramer' that does not increase the maximum slope");
+            throw new IllegalArgumentException("Use 'graph.elevation.edge_smoothing: moving_average' or the new 'graph.elevation.edge_smoothing: ramer'. See #2634.");
         osmReaderConfig.setElevationSmoothing(ghConfig.getString("graph.elevation.edge_smoothing", osmReaderConfig.getElevationSmoothing()));
         osmReaderConfig.setElevationSmoothingRamerMax(ghConfig.getInt("graph.elevation.edge_smoothing.ramer.max_elevation", osmReaderConfig.getElevationSmoothingRamerMax()));
         osmReaderConfig.setLongEdgeSamplingDistance(ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", osmReaderConfig.getLongEdgeSamplingDistance()));
