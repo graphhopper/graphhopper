@@ -60,18 +60,9 @@ public class MountainBikeTagParser extends BikeCommonTagParser {
         setTrackTypeSpeed("grade4", 8);
         setTrackTypeSpeed("grade5", 6); // like sand/grass     
 
-        setSurfaceSpeed("paved", 18);
-        setSurfaceSpeed("asphalt", 18);
-        setSurfaceSpeed("cobblestone", 10);
-        setSurfaceSpeed("cobblestone:flattened", 10);
-        setSurfaceSpeed("sett", 10);
         setSurfaceSpeed("concrete", 14);
         setSurfaceSpeed("concrete:lanes", 16);
         setSurfaceSpeed("concrete:plates", 16);
-        setSurfaceSpeed("paving_stones", 16);
-        setSurfaceSpeed("paving_stones:30", 16);
-        setSurfaceSpeed("unpaved", 14);
-        setSurfaceSpeed("compacted", 14);
         setSurfaceSpeed("dirt", 14);
         setSurfaceSpeed("earth", 14);
         setSurfaceSpeed("fine_gravel", 18);
@@ -82,7 +73,6 @@ public class MountainBikeTagParser extends BikeCommonTagParser {
         setSurfaceSpeed("ice", MIN_SPEED);
         setSurfaceSpeed("metal", 10);
         setSurfaceSpeed("mud", 12);
-        setSurfaceSpeed("pebblestone", 12);
         setSurfaceSpeed("salt", 12);
         setSurfaceSpeed("sand", 10);
         setSurfaceSpeed("wood", 10);
@@ -90,24 +80,11 @@ public class MountainBikeTagParser extends BikeCommonTagParser {
         setHighwaySpeed("living_street", PUSHING_SECTION_SPEED);
         setHighwaySpeed("steps", PUSHING_SECTION_SPEED);
 
-        setHighwaySpeed("cycleway", 18);
         setHighwaySpeed("path", 18);
         setHighwaySpeed("footway", PUSHING_SECTION_SPEED);
         setHighwaySpeed("pedestrian", PUSHING_SECTION_SPEED);
-        setHighwaySpeed("road", 12);
         setHighwaySpeed("track", 18);
-        setHighwaySpeed("service", 14);
-        setHighwaySpeed("unclassified", 16);
         setHighwaySpeed("residential", 16);
-
-        setHighwaySpeed("trunk", 18);
-        setHighwaySpeed("trunk_link", 18);
-        setHighwaySpeed("primary", 18);
-        setHighwaySpeed("primary_link", 18);
-        setHighwaySpeed("secondary", 18);
-        setHighwaySpeed("secondary_link", 18);
-        setHighwaySpeed("tertiary", 18);
-        setHighwaySpeed("tertiary_link", 18);
 
         addPushingSection("footway");
         addPushingSection("platform");

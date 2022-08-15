@@ -67,14 +67,9 @@ public class RacingBikeTagParser extends BikeCommonTagParser {
 
         setSurfaceSpeed("paved", 20);
         setSurfaceSpeed("asphalt", 20);
-        setSurfaceSpeed("cobblestone", 10);
-        setSurfaceSpeed("cobblestone:flattened", 10);
-        setSurfaceSpeed("sett", 10);
         setSurfaceSpeed("concrete", 20);
         setSurfaceSpeed("concrete:lanes", 16);
         setSurfaceSpeed("concrete:plates", 16);
-        setSurfaceSpeed("paving_stones", 10);
-        setSurfaceSpeed("paving_stones:30", 10);
         setSurfaceSpeed("unpaved", MIN_SPEED);
         setSurfaceSpeed("compacted", MIN_SPEED);
         setSurfaceSpeed("dirt", MIN_SPEED);
@@ -92,11 +87,9 @@ public class RacingBikeTagParser extends BikeCommonTagParser {
         setSurfaceSpeed("sand", MIN_SPEED);
         setSurfaceSpeed("wood", MIN_SPEED);
 
-        setHighwaySpeed("cycleway", 18);
         setHighwaySpeed("path", 8);
         setHighwaySpeed("footway", PUSHING_SECTION_SPEED);
         setHighwaySpeed("pedestrian", PUSHING_SECTION_SPEED);
-        setHighwaySpeed("road", 12);
         setHighwaySpeed("track", MIN_SPEED); // assume unpaved
         setHighwaySpeed("service", 12);
         setHighwaySpeed("unclassified", 16);
