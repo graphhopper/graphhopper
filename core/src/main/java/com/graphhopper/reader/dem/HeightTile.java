@@ -111,6 +111,7 @@ public class HeightTile {
             double distSum = 0;
             for (int i = x - 1; i <= x + 1; i++) {
                 for (int j = y - 1; j <= y + 1; j++) {
+                    // todo: this currently only works if x and y are not at the tile border
                     double cellLon = minLon + i * pixelWidth;
                     double cellLat = minLat + (height - j - 1) * pixelHeight;
                     double dist = DistancePlaneProjection.DIST_PLANE.calcDist(cellLat, cellLon, lat, lon);
