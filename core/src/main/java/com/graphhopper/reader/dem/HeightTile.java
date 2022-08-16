@@ -18,13 +18,13 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DataAccess;
+import com.graphhopper.util.DistancePlaneProjection;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * One rectangle of height data from Shuttle Radar Topography Mission.
@@ -103,21 +103,22 @@ public class HeightTile {
 
         double elevation;
         if (interpolate) {
-            double x = (width - 1) * deltaLon / horizontalDegree;
-            double y = (height - 1) * (1 - deltaLat / verticalDegree);
-            int left = (int) x;
-            int top = (int) y;
-            int right = left + 1;
-            int bottom = top + 1;
-
-            double w00 = getHeightSample(left, top);
-            double w01 = getHeightSample(left, bottom);
-            double w10 = getHeightSample(right, top);
-            double w11 = getHeightSample(right, bottom);
-
-            double topEle = linearInterpolate(w00, w10, x - left);
-            double bottomEle = linearInterpolate(w01, w11, x - left);
-            elevation = linearInterpolate(topEle, bottomEle, y - top);
+            double pixelWidth = (double) horizontalDegree / width; // e.g. 5 degree divided by 6000 pixels
+            double pixelHeight = (double) verticalDegree / height;
+            int x = (int) (deltaLon / pixelWidth);
+            int y = height - (int) (deltaLat / pixelHeight) - 1;
+            double eleSum = 0;
+            double distSum = 0;
+            for (int i = x - 1; i <= x + 1; i++) {
+                for (int j = y - 1; j <= y + 1; j++) {
+                    double cellLon = minLon + i * pixelWidth;
+                    double cellLat = minLat + (height - j - 1) * pixelHeight;
+                    double dist = DistancePlaneProjection.DIST_PLANE.calcDist(cellLat, cellLon, lat, lon);
+                    eleSum += getHeightSample(i, j) / (dist * dist);
+                    distSum += 1.0 / (dist * dist);
+                }
+            }
+            elevation = eleSum / distSum;
         } else {
             // first row in the file is the northernmost one
             // http://gis.stackexchange.com/a/43756/9006
