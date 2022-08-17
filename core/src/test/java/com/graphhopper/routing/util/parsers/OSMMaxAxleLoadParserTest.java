@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class OSMMaxAxleLoadParserTest {
     private DecimalEncodedValue malEnc;
@@ -26,16 +27,15 @@ public class OSMMaxAxleLoadParserTest {
     @Test
     public void testSimpleTags() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = new IntsRef(1);
+        final IntsRef intsRef = new IntsRef(1);
         readerWay.setTag("maxaxleload", "11.5");
         parser.handleWayTags(intsRef, readerWay, relFlags);
         assertEquals(11.5, malEnc.getDecimal(false, intsRef), .01);
 
-        // if value is beyond the maximum then do not use infinity instead fallback to more restrictive maximum
-        intsRef = new IntsRef(1);
+        // if value is beyond the maximum then throw an error
         readerWay.setTag("maxaxleload", "80");
         parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(63.0, malEnc.getDecimal(false, intsRef), .01);
+        assertEquals(Double.POSITIVE_INFINITY, malEnc.getDecimal(false, intsRef), .01);
     }
 
     @Test

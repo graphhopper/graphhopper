@@ -164,8 +164,7 @@ public class DecimalEncodedValueImplTest {
         assertEquals(Double.POSITIVE_INFINITY, enc.getNextStorableValue(45));
         assertEquals(Double.POSITIVE_INFINITY, enc.getNextStorableValue(45.1));
         IntsRef intsRef = new IntsRef(1);
-        enc.setDecimal(false, intsRef, 45);
-        assertEquals(42, enc.getDecimal(false, intsRef));
+        assertThrows(IllegalArgumentException.class, () -> enc.setDecimal(false, intsRef, 45));
 
         enc.setDecimal(false, intsRef, Double.POSITIVE_INFINITY);
         assertEquals(Double.POSITIVE_INFINITY, enc.getDecimal(false, intsRef));
