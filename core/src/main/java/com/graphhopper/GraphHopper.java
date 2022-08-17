@@ -509,7 +509,10 @@ public class GraphHopper {
             lockFactory = new NativeFSLockFactory();
 
         // elevation
-        osmReaderConfig.setSmoothElevation(ghConfig.getBool("graph.elevation.smoothing", osmReaderConfig.isSmoothElevation()));
+        if (ghConfig.has("graph.elevation.smoothing"))
+            throw new IllegalArgumentException("Use 'graph.elevation.edge_smoothing: moving_average' or the new 'graph.elevation.edge_smoothing: ramer'. See #2634.");
+        osmReaderConfig.setElevationSmoothing(ghConfig.getString("graph.elevation.edge_smoothing", osmReaderConfig.getElevationSmoothing()));
+        osmReaderConfig.setElevationSmoothingRamerMax(ghConfig.getInt("graph.elevation.edge_smoothing.ramer.max_elevation", osmReaderConfig.getElevationSmoothingRamerMax()));
         osmReaderConfig.setLongEdgeSamplingDistance(ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", osmReaderConfig.getLongEdgeSamplingDistance()));
         osmReaderConfig.setElevationMaxWayPointDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", osmReaderConfig.getElevationMaxWayPointDistance()));
         routerConfig.setElevationWayPointMaxDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", routerConfig.getElevationWayPointMaxDistance()));
@@ -602,6 +605,8 @@ public class GraphHopper {
             osmParsers.addWayTagParser(new OSMMaxSpeedParser(encodingManager.getDecimalEncodedValue(MaxSpeed.KEY)));
         if (!encodedValueStrings.contains(RoadAccess.KEY))
             osmParsers.addWayTagParser(new OSMRoadAccessParser(encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
+        if (encodingManager.hasEncodedValue(AverageSlope.KEY) || encodingManager.hasEncodedValue(MaxSlope.KEY))
+            osmParsers.addWayTagParser(new SlopeCalculator(encodingManager.getDecimalEncodedValue(MaxSlope.KEY), encodingManager.getDecimalEncodedValue(AverageSlope.KEY)));
 
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         flagEncodersMap.forEach((name, encoderStr) -> {

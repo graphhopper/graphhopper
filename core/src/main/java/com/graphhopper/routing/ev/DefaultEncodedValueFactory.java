@@ -82,6 +82,10 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = Country.create();
         } else if (name.endsWith(Subnetwork.key(""))) {
             enc = new SimpleBooleanEncodedValue(name);
+        } else if (MaxSlope.KEY.equals(name)) {
+            enc = MaxSlope.create();
+        } else if (AverageSlope.KEY.equals(name)) {
+            enc = AverageSlope.create();
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }

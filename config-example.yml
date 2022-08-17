@@ -5,8 +5,8 @@ graphhopper:
   # Local folder used by graphhopper to store its data
   graph.location: graph-cache
 
-  ##### Vehicles #####
 
+  ##### Vehicles #####
 
   # More options: foot,hike,bike,bike2,mtb,racingbike,motorcycle,car4wd,wheelchair (comma separated)
   # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below.
@@ -81,22 +81,24 @@ graphhopper:
 
   ##### Elevation #####
 
-
   # To populate your graph with elevation data use SRTM, default is noop (no elevation). Read more about it in docs/core/elevation.md
   # graph.elevation.provider: srtm
-
 
   # default location for cache is /tmp/srtm
   # graph.elevation.cache_dir: ./srtmprovider/
 
-
   # If you have a slow disk or plenty of RAM change the default MMAP to:
   # graph.elevation.dataaccess: RAM_STORE
-
 
   # To enable bilinear interpolation when sampling elevation at points (default uses nearest neighbor):
   # graph.elevation.interpolate: bilinear
 
+  # Reduce ascend/descend per edge without changing the maximum slope:
+  # graph.elevation.edge_smoothing: ramer
+  # removes elevation fluctuations up to max_elevation (in meter) and replaces the elevation with a value based on the average slope
+  # graph.elevation.edge_smoothing.ramer.max_elevation: 5
+  # A potentially bigger reduction of ascend/descend is possible, but maximum slope will often increase (do not use when average_slope or maximum_slope shall be used in a custom_model)
+  # graph.elevation.edge_smoothing: moving_average
 
   # To increase elevation profile resolution, use the following two parameters to tune the extra resolution you need
   # against the additional storage space used for edge geometries. You should enable bilinear interpolation when using
@@ -109,7 +111,6 @@ graphhopper:
 
 
   #### Speed, hybrid and flexible mode ####
-
 
   # To make CH preparation faster for multiple profiles you can increase the default threads if you have enough RAM.
   # Change this setting only if you know what you are doing and if the default worked for you.
@@ -131,7 +132,6 @@ graphhopper:
 
   ##### Routing #####
 
-
   # You can define the maximum visited nodes when routing. This may result in not found connections if there is no
   # connection between two points within the given visited nodes. The default is Integer.MAX_VALUE. Useful for flexibility mode
   # routing.max_visited_nodes: 1000000
@@ -145,7 +145,6 @@ graphhopper:
 
 
   ##### Storage #####
-
 
   # configure the memory access, use RAM_STORE for well equipped servers (default and recommended)
   graph.dataaccess.default_type: RAM_STORE
