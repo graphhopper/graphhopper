@@ -15,23 +15,22 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ev;
 
-/**
- * One of the four logistic attributes that can be stored per edge.
- *
- * @see MaxHeight
- * @see MaxWeight
- * @see MaxWidth
- */
-public class MaxLength {
-    public static final String KEY = "max_length";
+package com.graphhopper.reader.dem;
 
-    /**
-     * Currently enables to store 0.1 to max=0.1*2⁷m and infinity. If a value is
-     * between the maximum and infinity it is assumed to use the maximum value.
-     */
-    public static DecimalEncodedValue create() {
-        return new DecimalEncodedValueImpl(KEY, 7, 0, 0.1, false, false, true);
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class HGTProviderTest {
+
+    @Disabled
+    @Test
+    void getEle() {
+        HGTProvider hgt = new HGTProvider("/your/path/to/hgt/");
+        assertEquals(511, hgt.getEle(49.1, 11.7), 1);
+        assertEquals(0, hgt.getEle(0.6, 0.6), 1);
     }
+
 }
