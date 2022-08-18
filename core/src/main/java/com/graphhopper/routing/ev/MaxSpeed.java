@@ -35,6 +35,6 @@ public class MaxSpeed {
     public static final double UNSET_SPEED = Double.POSITIVE_INFINITY;
 
     public static DecimalEncodedValue create() {
-        return new DecimalEncodedValueImpl(KEY, 5, 5, true, true);
+        return new DecimalEncodedValueImpl(KEY, 5, 0, 5, false, true, true);
     }
 }
