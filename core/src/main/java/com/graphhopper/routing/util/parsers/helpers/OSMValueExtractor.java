@@ -6,8 +6,6 @@ import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.Helper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.regex.Pattern;
@@ -23,7 +21,6 @@ public class OSMValueExtractor {
     private static final Pattern INCH_PATTERN = Pattern.compile("\"|\'\'");
     private static final Pattern FEET_PATTERN = Pattern.compile("\'|feet");
     private static final Pattern APPROX_PATTERN = Pattern.compile("~|approx");
-    private static final Logger logger = LoggerFactory.getLogger(OSMValueExtractor.class);
 
     private OSMValueExtractor() {
         // utility class
@@ -35,12 +32,7 @@ public class OSMValueExtractor {
 
         if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
 
-        try {
-            valueEncoder.setDecimal(false, edgeFlags, value);
-        } catch (IllegalArgumentException ex) {
-            logger.warn("Ignored value for " + valueEncoder.getName() + " as too large: " + value);
-            valueEncoder.setDecimal(false, edgeFlags, Double.POSITIVE_INFINITY);
-        }
+        valueEncoder.setDecimal(false, edgeFlags, value);
     }
 
     public static double stringToTons(String value) {
@@ -76,12 +68,7 @@ public class OSMValueExtractor {
 
         if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
 
-        try {
-            valueEncoder.setDecimal(false, edgeFlags, value);
-        } catch (IllegalArgumentException ex) {
-            logger.warn("Ignored value for " + valueEncoder.getName() + " as too large: " + value);
-            valueEncoder.setDecimal(false, edgeFlags, Double.POSITIVE_INFINITY);
-        }
+        valueEncoder.setDecimal(false, edgeFlags, value);
     }
 
     public static double stringToMeter(String value) {

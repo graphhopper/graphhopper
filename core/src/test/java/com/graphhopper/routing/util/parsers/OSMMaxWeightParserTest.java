@@ -9,7 +9,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class OSMMaxWeightParserTest {
     private DecimalEncodedValue mwEnc;
@@ -37,6 +36,6 @@ public class OSMMaxWeightParserTest {
         intsRef = new IntsRef(1);
         readerWay.setTag("maxweight", "50");
         parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Double.POSITIVE_INFINITY, mwEnc.getDecimal(false, intsRef), .01);
+        assertEquals(25.4, mwEnc.getDecimal(false, intsRef), .01);
     }
 }

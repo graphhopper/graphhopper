@@ -87,7 +87,8 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
                 super.setInt(reverse, ref, maxStorableValue);
                 return;
             } else if (value >= maxStorableValue * factor) { // equality is important as maxStorableValue is reserved for infinity
-                throw new IllegalArgumentException("Cannot store value " + value + " for " + getName() + " as too large (>= " + maxStorableValue * factor + ") and not infinity");
+                super.uncheckedSet(reverse, ref, maxStorableValue - 1);
+                return;
             }
         } else if (Double.isInfinite(value))
             throw new IllegalArgumentException("Value cannot be infinite if useMaximumAsInfinity is false");
