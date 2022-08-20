@@ -80,7 +80,9 @@ public class EdgeElevationSmoothing {
         double prevLat = pointList.getLat(fromIndex);
         double prevLon = pointList.getLon(fromIndex);
         double dist2D = DistanceCalcEarth.DIST_EARTH.calcDist(prevLat, prevLon, pointList.getLat(lastIndex), pointList.getLon(lastIndex));
-        double averageSlope = (pointList.getEle(lastIndex) - pointList.getEle(fromIndex)) / dist2D;
+
+        // in rare cases the first point can be identical to the last for e.g. areas (or for things like man_made=pier which are not explicitly excluded from adding edges)
+        double averageSlope = dist2D == 0 ? 0 : (pointList.getEle(lastIndex) - pointList.getEle(fromIndex)) / dist2D;
         double prevAverageSlopeEle = pointList.getEle(fromIndex);
         double maxEleDelta = -1;
         int indexWithMaxDelta = -1;
@@ -100,12 +102,9 @@ public class EdgeElevationSmoothing {
             prevLon = lon;
         }
 
-        if (indexWithMaxDelta < 0)
-            throw new IllegalStateException("maximum not found in [" + fromIndex + "," + lastIndex + "] " + pointList);
-
         // the maximum elevation change limit filters away especially the smaller high frequent elevation changes,
         // which is likely the "noise" that we want to remove.
-        if (maxElevationDelta > maxEleDelta) {
+        if (indexWithMaxDelta < 0 || maxElevationDelta > maxEleDelta) {
             prevLat = pointList.getLat(fromIndex);
             prevLon = pointList.getLon(fromIndex);
             prevAverageSlopeEle = pointList.getEle(fromIndex);
