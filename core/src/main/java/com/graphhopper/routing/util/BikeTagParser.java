@@ -69,16 +69,6 @@ public class BikeTagParser extends BikeCommonTagParser {
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
 
-        setSmoothnessSpeedFactor(EXCELLENT, 1.1d);
-        setSmoothnessSpeedFactor(GOOD, 1.0d);
-        setSmoothnessSpeedFactor(INTERMEDIATE, 0.9d);
-        setSmoothnessSpeedFactor(BAD, 0.7d);
-        setSmoothnessSpeedFactor(VERY_BAD, 0.6d);
-        setSmoothnessSpeedFactor(HORRIBLE, 0.5d);
-        setSmoothnessSpeedFactor(VERY_HORRIBLE, 0.4d);
-        // SmoothnessSpeed <= smoothnessFactorPushingSectionThreshold gets mapped to speed PUSHING_SECTION_SPEED
-        setSmoothnessSpeedFactor(IMPASSABLE, smoothnessFactorPushingSectionThreshold);
-
         barriers.add("kissing_gate");
         barriers.add("stile");
         barriers.add("turnstile");
