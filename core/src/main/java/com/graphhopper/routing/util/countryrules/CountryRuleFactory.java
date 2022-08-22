@@ -19,20 +19,34 @@
 package com.graphhopper.routing.util.countryrules;
 
 
-import static com.graphhopper.routing.ev.Country.*;
-
-import java.util.EnumMap;
-import java.util.Map;
-
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.countryrules.europe.*;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.util.EnumMap;
+import java.util.Map;
+
+import static com.graphhopper.routing.ev.Country.*;
+
 public class CountryRuleFactory {
-    
+
     private final Map<Country, CountryRule> rules = new EnumMap<>(Country.class);
-    
+
+    public static void main(String[] args) {
+        try {
+            JsonNode jsonNode = new ObjectMapper().readTree(CountryRuleFactory.class.getResource("/com/graphhopper/reader/legal_default_speeds.json"));
+            System.out.println(jsonNode);
+            // todo: how to create LegalDefaultSpeeds from kotlin lib?
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
     public CountryRuleFactory() {
-        
+
         // Europe
         rules.put(ALB, new AlbaniaCountryRule());
         rules.put(AND, new AndorraCountryRule());
@@ -88,7 +102,7 @@ public class CountryRuleFactory {
     public CountryRule getCountryRule(Country country) {
         return rules.get(country);
     }
-    
+
     public Map<Country, CountryRule> getCountryToRuleMap() {
         return rules;
     }
