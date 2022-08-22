@@ -19,14 +19,18 @@
 package com.graphhopper.routing.util.countryrules;
 
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.countryrules.europe.*;
+import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
+import de.westnordost.osm_legal_default_speeds.RoadType;
+import de.westnordost.osm_legal_default_speeds.RoadTypeFilter;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Collections;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.routing.ev.Country.*;
@@ -37,9 +41,11 @@ public class CountryRuleFactory {
 
     public static void main(String[] args) {
         try {
-            JsonNode jsonNode = new ObjectMapper().readTree(CountryRuleFactory.class.getResource("/com/graphhopper/reader/legal_default_speeds.json"));
-            System.out.println(jsonNode);
-            // todo: how to create LegalDefaultSpeeds from kotlin lib?
+            LegalDefaultSpeedsJson legalDefaultSpeedsJson = new ObjectMapper()
+                    .readValue(CountryRuleFactory.class.getResource("/com/graphhopper/reader/legal_default_speeds.json"), LegalDefaultSpeedsJson.class);
+            LegalDefaultSpeeds legalDefaultSpeeds = new LegalDefaultSpeeds(legalDefaultSpeedsJson.getRoadTypesByName(), legalDefaultSpeedsJson.getSpeedLimitsByCountryCode());
+            LegalDefaultSpeeds.Result result = legalDefaultSpeeds.getSpeedLimits("DE", Collections.emptyMap(), Collections.emptyList(), (s, b) -> true);
+            System.out.println(result);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -105,5 +111,67 @@ public class CountryRuleFactory {
 
     public Map<Country, CountryRule> getCountryToRuleMap() {
         return rules;
+    }
+
+    public static class LegalDefaultSpeedsJson {
+        private Map<String, String> meta;
+        private Map<String, RoadTypeFilterImpl> roadTypesByName;
+        private Map<String, List<RoadTypeImpl>> speedLimitsByCountryCode;
+        private List<String> warnings;
+
+        public LegalDefaultSpeedsJson() {
+        }
+
+        public Map<String, String> getMeta() {
+            return meta;
+        }
+
+        public Map<String, RoadTypeFilterImpl> getRoadTypesByName() {
+            return roadTypesByName;
+        }
+
+        public Map<String, List<RoadTypeImpl>> getSpeedLimitsByCountryCode() {
+            return speedLimitsByCountryCode;
+        }
+
+        public List<String> getWarnings() {
+            return warnings;
+        }
+    }
+
+    public static class RoadTypeImpl implements RoadType {
+        private String name;
+        private Map<String, String> tags;
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public Map<String, String> getTags() {
+            return tags;
+        }
+    }
+
+    public static class RoadTypeFilterImpl implements RoadTypeFilter {
+        private String filter;
+        private String fuzzyFilter;
+        private String relationFilter;
+
+        @Override
+        public String getFilter() {
+            return filter;
+        }
+
+        @Override
+        public String getFuzzyFilter() {
+            return fuzzyFilter;
+        }
+
+        @Override
+        public String getRelationFilter() {
+            return relationFilter;
+        }
     }
 }

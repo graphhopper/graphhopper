@@ -51,7 +51,8 @@
         </dependency>
         <dependency>
             <groupId>de.westnordost</groupId>
-            <artifactId>osm-legal-default-speeds</artifactId>
+            <!-- so far we need to build this locally, see https://github.com/westnordost/osm-legal-default-speeds/issues/2 -->
+            <artifactId>osm-legal-default-speeds-jvm</artifactId>
             <version>1.1</version>
         </dependency>
         <dependency>
