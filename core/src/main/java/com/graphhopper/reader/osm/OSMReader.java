@@ -576,10 +576,8 @@ public class OSMReader {
             }
         }
         if (relation.hasTag("restriction")) {
-            OSMTurnRelation osmTurnRelation = createTurnRelation(relation, relation.getTag("restriction"), vehicleTypeRestricted, vehicleTypesExcept);
-            if (osmTurnRelation != null) {
-                osmTurnRelations.add(osmTurnRelation);
-            }
+            osmTurnRelations.addAll(createTurnRelations(relation, relation.getTag("restriction"),
+                    vehicleTypeRestricted, vehicleTypesExcept));
             return osmTurnRelations;
         }
         if (relation.hasTagWithKeyPrefix("restriction:")) {
@@ -587,42 +585,40 @@ public class OSMReader {
             for (String vehicleType : vehicleTypesRestricted) {
                 String restrictionType = relation.getTag(vehicleType);
                 vehicleTypeRestricted = vehicleType.replace("restriction:", "").trim();
-                OSMTurnRelation osmTurnRelation = createTurnRelation(relation, restrictionType, vehicleTypeRestricted, vehicleTypesExcept);
-                if (osmTurnRelation != null) {
-                    osmTurnRelations.add(osmTurnRelation);
-                }
+                osmTurnRelations.addAll(createTurnRelations(relation, restrictionType, vehicleTypeRestricted,
+                        vehicleTypesExcept));
             }
         }
         return osmTurnRelations;
     }
 
-    static OSMTurnRelation createTurnRelation(ReaderRelation relation, String restrictionType, String
-            vehicleTypeRestricted, List<String> vehicleTypesExcept) {
+    static List<OSMTurnRelation> createTurnRelations(ReaderRelation relation, String restrictionType,
+                                                     String vehicleTypeRestricted, List<String> vehicleTypesExcept) {
         OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(restrictionType);
         if (type != OSMTurnRelation.Type.UNSUPPORTED) {
-            long fromWayID = -1;
             long viaNodeID = -1;
             long toWayID = -1;
 
             for (ReaderRelation.Member member : relation.getMembers()) {
-                if (ReaderElement.WAY == member.getType()) {
-                    if ("from".equals(member.getRole())) {
-                        fromWayID = member.getRef();
-                    } else if ("to".equals(member.getRole())) {
-                        toWayID = member.getRef();
-                    }
-                } else if (ReaderElement.NODE == member.getType() && "via".equals(member.getRole())) {
+                if (ReaderElement.WAY == member.getType() && "to".equals(member.getRole()))
+                    toWayID = member.getRef();
+                else if (ReaderElement.NODE == member.getType() && "via".equals(member.getRole()))
                     viaNodeID = member.getRef();
-                }
             }
-            if (fromWayID >= 0 && toWayID >= 0 && viaNodeID >= 0) {
-                OSMTurnRelation osmTurnRelation = new OSMTurnRelation(fromWayID, viaNodeID, toWayID, type);
-                osmTurnRelation.setVehicleTypeRestricted(vehicleTypeRestricted);
-                osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
-                return osmTurnRelation;
+            if (toWayID >= 0 && viaNodeID >= 0) {
+                List<OSMTurnRelation> res = new ArrayList<>(2);
+                for (ReaderRelation.Member member : relation.getMembers()) {
+                    if (ReaderElement.WAY == member.getType() && "from".equals(member.getRole())) {
+                        OSMTurnRelation osmTurnRelation = new OSMTurnRelation(member.getRef(), viaNodeID, toWayID, type);
+                        osmTurnRelation.setVehicleTypeRestricted(vehicleTypeRestricted);
+                        osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
+                        res.add(osmTurnRelation);
+                    }
+                }
+                return res;
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 
     private void finishedReading() {

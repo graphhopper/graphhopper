@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
+import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
@@ -590,6 +591,28 @@ public class OSMReaderTest {
 
         assertTrue(tcStorage.get(carTCEnc, edge10_11, n11, edge11_14) == 0);
         assertTrue(tcStorage.get(bikeTCEnc, edge10_11, n11, edge11_14) > 0);
+    }
+
+    @Test
+    public void testMultipleFromForNoEntry() {
+        ReaderRelation rel = new ReaderRelation(1L);
+
+        rel.setTag("restriction", "no_entry");
+        rel.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 1L, "from"));
+        rel.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 2L, "from"));
+        rel.add(new ReaderRelation.Member(ReaderRelation.Member.NODE, 3L, "via"));
+        rel.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 4L, "to"));
+
+        List<OSMTurnRelation> osmRel = OSMReader.createTurnRelations(rel);
+        assertEquals(2, osmRel.size());
+
+        assertEquals(1, osmRel.get(0).getOsmIdFrom());
+        assertEquals(4, osmRel.get(0).getOsmIdTo());
+        assertEquals(OSMTurnRelation.Type.NOT, osmRel.get(0).getRestriction());
+
+        assertEquals(2, osmRel.get(1).getOsmIdFrom());
+        assertEquals(4, osmRel.get(1).getOsmIdTo());
+        assertEquals(OSMTurnRelation.Type.NOT, osmRel.get(1).getRestriction());
     }
 
     @Test
