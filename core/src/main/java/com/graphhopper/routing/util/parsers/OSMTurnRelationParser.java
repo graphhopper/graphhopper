@@ -48,11 +48,6 @@ public class OSMTurnRelationParser implements TurnCostParser {
     }
 
     @Override
-    public void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(turnCostEnc);
-    }
-
-    @Override
     public void handleTurnRelationTags(OSMTurnRelation turnRelation, ExternalInternalMap map, Graph graph) {
         if (!turnRelation.isVehicleTypeConcernedByTurnRestriction(restrictions))
             return;
