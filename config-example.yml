@@ -8,7 +8,7 @@ graphhopper:
 
   ##### Vehicles #####
 
-  # More options: foot,hike,bike,bike2,mtb,racingbike,motorcycle,car4wd,wheelchair (comma separated)
+  # More options: foot,hike,bike,bike2,mtb,racingbike,motorcycle,wheelchair (comma separated)
   # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below.
   # graph.flag_encoders: car
 
