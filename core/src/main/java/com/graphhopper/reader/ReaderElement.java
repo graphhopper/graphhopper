@@ -41,11 +41,18 @@ public abstract class ReaderElement {
     }
 
     protected ReaderElement(long id, int type, Map<String, Object> properties) {
+    	validateId(id);
         this.id = id;
         this.type = type;
         this.properties = properties;
     }
 
+    private void validateId(long id) {
+    	if (id < 1) {
+    		throw new InvalidIdException("Invalid Id: " + id + "; Ids must be bigger or equal to 1");
+    	}
+    }
+    
     public long getId() {
         return id;
     }
