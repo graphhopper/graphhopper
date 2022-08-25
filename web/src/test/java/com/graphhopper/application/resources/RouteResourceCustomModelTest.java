@@ -63,7 +63,7 @@ public class RouteResourceCustomModelTest {
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
-                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
+                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv").
                 putObject("custom_model_folder", "./src/test/resources/com/graphhopper/application/resources").
                 setProfiles(Arrays.asList(
                         new Profile("wheelchair"),
@@ -349,6 +349,17 @@ public class RouteResourceCustomModelTest {
                 "}";
         JsonNode path = getPath(jsonQuery);
         assertEquals(1500, path.get("distance").asDouble(), 10);
+    }
+
+    @Test
+    public void testHgv() {
+        String body = "{\"points\": [[11.603998, 50.014554], [11.594095, 50.023334]], \"profile\": \"roads\", \"ch.disable\":true," +
+                "\"custom_model\": {" +
+                "   \"speed\": [{\"if\":\"true\", \"limit_to\":\"car_average_speed * 0.9\"}], \n" +
+                "   \"priority\": [{\"if\": \"car_access == false || hgv == NO || max_width < 3 || max_height < 4\", \"multiply_by\": \"0\"}]}}";
+        JsonNode path = getPath(body);
+        assertEquals(7314, path.get("distance").asDouble(), 10);
+        assertEquals(957 * 1000, path.get("time").asLong(), 1_000);
     }
 
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {
