@@ -36,8 +36,9 @@ public class OSMValueExtractor {
         if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
 
         valueEncoder.setDecimal(false, edgeFlags, value);
-        if (value - valueEncoder.getDecimal(false, edgeFlags) > 2)
-            logger.warn("Value " + value + " for " + valueEncoder.getName() + " was too large and truncated to " + valueEncoder.getDecimal(false, edgeFlags));
+        // too many
+//        if (value - valueEncoder.getDecimal(false, edgeFlags) > 2)
+//            logger.warn("Value " + value + " for " + valueEncoder.getName() + " was too large and truncated to " + valueEncoder.getDecimal(false, edgeFlags));
     }
 
     public static double stringToTons(String value) {
@@ -74,8 +75,9 @@ public class OSMValueExtractor {
         if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
 
         valueEncoder.setDecimal(false, edgeFlags, value);
-        if (value - valueEncoder.getDecimal(false, edgeFlags) > 2)
-            logger.warn("Value " + value + " for " + valueEncoder.getName() + " was too large and truncated to " + valueEncoder.getDecimal(false, edgeFlags));
+        // too many
+//        if (value - valueEncoder.getDecimal(false, edgeFlags) > 2)
+//            logger.warn("Value " + value + " for " + valueEncoder.getName() + " was too large and truncated to " + valueEncoder.getDecimal(false, edgeFlags));
     }
 
     public static double stringToMeter(String value) {
