@@ -306,11 +306,9 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
         options.mappings[detailKey] = getColorMapping(details[detailKey]);
 
     }
-    if (selectedDetailIdx >= 0)
-        options.selectedAttributeIdx = selectedDetailIdx;
 
-    if(GHFeatureCollection.length === 0) {
-        // No Path Details => Show only elevation
+    // always show elevation and slope
+    {
         geoJsonFeature.properties.attributeType = "elevation";
         var elevationCollection = {
             "type": "FeatureCollection",
@@ -321,10 +319,60 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
                 "summary": "Elevation"
             }
         };
+        detailIdx++;
+        if (selectedDetail === 'Elevation')
+            selectedDetailIdx = detailIdx;
         GHFeatureCollection.push(elevationCollection);
         // Use a fixed color for elevation
-        options.mappings = { Elevation: {'elevation': {text: 'Elevation [m]', color: '#27ce49'}}};
+        options.mappings = {Elevation: {'elevation': {text: 'Elevation [m]', color: '#27ce49'}}};
+
+        var slopeFeatures = [];
+        for (var i = 0; i < geoJsonFeature.geometry.coordinates.length - 1; i++) {
+            var from = geoJsonFeature.geometry.coordinates[i];
+            var to = geoJsonFeature.geometry.coordinates[i + 1];
+            var distance = L.latLng(from[1], from[0]).distanceTo(L.latLng(to[1], to[0]));
+            var slope = 100.0 * (to[2] - from[2]) / distance;
+            slopeFeatures.push({
+                "type": "Feature",
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": [from, to]
+                },
+                "properties": {
+                    "attributeType": slope
+                }
+            })
+        }
+        var slopeCollection = {
+            "type": "FeatureCollection",
+            "features": slopeFeatures,
+            "properties": {
+                "records": slopeFeatures.length,
+                "summary": "Slope"
+            }
+        };
+        detailIdx++;
+        if (selectedDetail === 'Slope')
+            selectedDetailIdx = detailIdx;
+        GHFeatureCollection.push(slopeCollection);
+        options.mappings["Slope"] = slope => {
+            var colorMin = [0, 153, 247];
+            var colorMax = [241, 23, 18];
+            var absSlope = Math.abs(slope);
+            absSlope = Math.min(25, absSlope);
+            var factor = absSlope / 25;
+            var color = [];
+            for (var i = 0; i < 3; i++)
+                color.push(colorMin[i] + factor * (colorMax[i] - colorMin[i]));
+            return {
+                text: slope.toFixed(2),
+                color: 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')'
+            }
+        };
     }
+
+    if (selectedDetailIdx >= 0)
+        options.selectedAttributeIdx = selectedDetailIdx;
 
     if (elevationControl === null) {
         elevationControl = L.control.heightgraph(options);
