@@ -20,15 +20,18 @@ public class SlopeCalculator implements TagParser {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         PointList pointList = way.getTag("point_list", null);
-        if (pointList != null && pointList.size() > 1) {
+        if (pointList != null) {
+            if (pointList.isEmpty() || !pointList.is3D()) {
+                if (averageSlopeEnc != null) averageSlopeEnc.setDecimal(false, edgeFlags, 0);
+                return edgeFlags;
+            }
             // Calculate 2d distance, although pointList might be 3D.
             // This calculation is a bit expensive and edge_distance is available already, but this would be in 3D
             double distance2D = DistanceCalcEarth.calcDistance(pointList, false);
 
             if (distance2D < MIN_LENGTH) {
                 // default is minimum of average_slope is negative so we have to explicitly set it to 0
-                if (averageSlopeEnc != null)
-                    averageSlopeEnc.setDecimal(false, edgeFlags, 0);
+                if (averageSlopeEnc != null) averageSlopeEnc.setDecimal(false, edgeFlags, 0);
                 return edgeFlags;
             }
 
