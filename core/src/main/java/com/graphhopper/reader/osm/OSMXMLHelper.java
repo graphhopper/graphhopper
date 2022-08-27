@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.graphhopper.reader.ReaderElement;
+import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderRelation.Member;
@@ -26,46 +26,48 @@ import com.graphhopper.reader.ReaderWay;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Peter Karich
  */
 public class OSMXMLHelper {
     private static final String TYPE_DECODE = "nwr";
+    private static final LongArrayList EMPTY_LONG_ARRAY_LIST = new LongArrayList(0);
 
     public static ReaderNode createNode(long id, XMLStreamReader parser) throws XMLStreamException {
-        ReaderNode node = new ReaderNode(id,
-                Double.parseDouble(parser.getAttributeValue(null, "lat")),
-                Double.parseDouble(parser.getAttributeValue(null, "lon")));
-
+        double lat = Double.parseDouble(parser.getAttributeValue(null, "lat"));
+        double lon = Double.parseDouble(parser.getAttributeValue(null, "lon"));
         parser.nextTag();
-        readTags(node, parser);
-        return node;
+        return new ReaderNode(id, lat, lon, readTags(parser));
     }
 
     public static ReaderWay createWay(long id, XMLStreamReader parser) throws XMLStreamException {
-        ReaderWay way = new ReaderWay(id);
         parser.nextTag();
-        readNodes(way, parser);
-        readTags(way, parser);
-        return way;
+        LongArrayList nodes = readNodes(parser);
+        Map<String, Object> tags = readTags(parser);
+        return new ReaderWay(id, nodes, tags);
     }
 
-    private static void readNodes(ReaderWay way, XMLStreamReader parser) throws XMLStreamException {
+    private static LongArrayList readNodes(XMLStreamReader parser) throws XMLStreamException {
+        LongArrayList nodes = EMPTY_LONG_ARRAY_LIST;
         int event = parser.getEventType();
         while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("nd")) {
             if (event == XMLStreamConstants.START_ELEMENT) {
                 // read node reference
                 String ref = parser.getAttributeValue(null, "ref");
-                way.getNodes().add(Long.parseLong(ref));
+                if (nodes.isEmpty())
+                    nodes = new LongArrayList(5);
+                nodes.add(Long.parseLong(ref));
             }
 
             event = parser.nextTag();
         }
+        return nodes;
     }
 
-    private static void readTags(ReaderElement re, XMLStreamReader parser) throws XMLStreamException {
+    private static Map<String, Object> readTags(XMLStreamReader parser) throws XMLStreamException {
+        Map<String, Object> tags = Collections.emptyMap();
         int event = parser.getEventType();
         while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("tag")) {
             if (event == XMLStreamConstants.START_ELEMENT) {
@@ -73,34 +75,37 @@ public class OSMXMLHelper {
                 String key = parser.getAttributeValue(null, "k");
                 String value = parser.getAttributeValue(null, "v");
                 // ignore tags with empty values
-                if (value != null && value.length() > 0)
-                    re.setTag(key, value);
+                if (value != null && value.length() > 0) {
+                    if (tags.isEmpty())
+                        tags = new HashMap<>(4);
+                    tags.put(key, value);
+                }
             }
-
             event = parser.nextTag();
         }
+        return tags;
     }
 
     public static ReaderRelation createRelation(long id, XMLStreamReader parser) throws XMLStreamException {
-        ReaderRelation rel = new ReaderRelation(id);
-
         parser.nextTag();
-        readMembers(rel, parser);
-        readTags(rel, parser);
-        return rel;
+        List<Member> members = readMembers(parser);
+        Map<String, Object> tags = readTags(parser);
+        return new ReaderRelation(id, members, tags);
     }
 
-    private static void readMembers(ReaderRelation rel, XMLStreamReader parser) throws XMLStreamException {
+    private static List<Member> readMembers(XMLStreamReader parser) throws XMLStreamException {
+        List<Member> members = Collections.emptyList();
         int event = parser.getEventType();
         while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equalsIgnoreCase("member")) {
             if (event == XMLStreamConstants.START_ELEMENT) {
                 // read member
-                rel.add(createMember(parser));
+                if (members.isEmpty())
+                    members = new ArrayList<>(5);
+                members.add(createMember(parser));
             }
-
             event = parser.nextTag();
         }
-
+        return members;
     }
 
     public static Member createMember(XMLStreamReader parser) {

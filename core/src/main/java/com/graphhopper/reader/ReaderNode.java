@@ -17,6 +17,7 @@
  */
 package com.graphhopper.reader;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -30,9 +31,7 @@ public class ReaderNode extends ReaderElement {
     private final double lon;
 
     public ReaderNode(long id, double lat, double lon) {
-        super(id, NODE);
-        this.lat = lat;
-        this.lon = lon;
+        this(id, lat, lon, new HashMap<>(0));
     }
 
     public ReaderNode(long id, double lat, double lon, Map<String, Object> tags) {

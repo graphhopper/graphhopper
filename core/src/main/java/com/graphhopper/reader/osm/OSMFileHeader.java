@@ -22,6 +22,7 @@ import com.graphhopper.reader.ReaderElement;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import java.util.HashMap;
 
 /**
  * Represents an OSM file header
@@ -31,7 +32,7 @@ import javax.xml.stream.XMLStreamReader;
  */
 public class OSMFileHeader extends ReaderElement {
     public OSMFileHeader() {
-        super(0, FILEHEADER);
+        super(0, FILEHEADER, new HashMap<>(0));
     }
 
     /**

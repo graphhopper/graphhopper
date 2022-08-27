@@ -40,12 +40,9 @@ public class OSMElementTest {
     @Test
     public void testSetTags() {
         ReaderElement instance = new ReaderWay(1);
-        Map<String, String> map = new HashMap<>();
+        Map<String, Object> map = new HashMap<>();
         map.put("test", "xy");
         instance.setTags(map);
         assertTrue(instance.hasTag("test", "xy"));
-
-        instance.setTags(null);
-        assertFalse(instance.hasTag("test", "xy"));
     }
 }

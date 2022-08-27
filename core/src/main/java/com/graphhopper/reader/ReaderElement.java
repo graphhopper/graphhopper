@@ -17,8 +17,10 @@
  */
 package com.graphhopper.reader;
 
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Base class for all network objects
@@ -34,11 +36,7 @@ public abstract class ReaderElement {
     public static final int FILEHEADER = 3;
     private final int type;
     private final long id;
-    private final Map<String, Object> properties;
-
-    protected ReaderElement(long id, int type) {
-        this(id, type, new HashMap<>(4));
-    }
+    private Map<String, Object> properties;
 
     protected ReaderElement(long id, int type, Map<String, Object> properties) {
         this.id = id;
@@ -68,12 +66,8 @@ public abstract class ReaderElement {
         return properties;
     }
 
-    public void setTags(Map<String, String> newTags) {
-        properties.clear();
-        if (newTags != null)
-            for (Entry<String, String> e : newTags.entrySet()) {
-                setTag(e.getKey(), e.getValue());
-            }
+    public void setTags(Map<String, Object> newTags) {
+        properties = newTags;
     }
 
     public boolean hasTags() {

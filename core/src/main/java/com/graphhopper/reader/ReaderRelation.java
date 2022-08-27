@@ -18,9 +18,9 @@
 package com.graphhopper.reader;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a relation received from the reader.
@@ -29,37 +29,36 @@ import java.util.List;
  * @author Nop
  */
 public class ReaderRelation extends ReaderElement {
-    protected List<Member> members;
+    protected final List<Member> members;
 
     public ReaderRelation(long id) {
-        super(id, RELATION, new HashMap<>(2));
+        this(id, new ArrayList<>(), new HashMap<>());
+    }
+
+    public ReaderRelation(long id, List<Member> members, Map<String, Object> tags) {
+        super(id, RELATION, tags);
+        this.members = members;
     }
 
     @Override
     public String toString() {
-        return "Relation (" + getId() + ", " + ((members == null) ? 0 : members.size()) + " members)";
+        return "Relation (" + getId() + ", " + members.size() + " members)";
     }
 
     public List<Member> getMembers() {
-        if (members == null)
-            return Collections.emptyList();
-
         return members;
     }
 
     public boolean isMetaRelation() {
-        if (members != null)
-            for (Member member : members) {
-                if (member.getType() == RELATION) {
-                    return true;
-                }
+        for (Member member : members) {
+            if (member.getType() == RELATION) {
+                return true;
             }
+        }
         return false;
     }
 
     public void add(Member member) {
-        if (members == null)
-            members = new ArrayList<>(3);
         members.add(member);
     }
 

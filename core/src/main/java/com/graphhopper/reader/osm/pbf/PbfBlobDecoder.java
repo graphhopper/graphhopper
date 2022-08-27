@@ -1,7 +1,7 @@
 // This software is released into the Public Domain.  See copying.txt for details.
 package com.graphhopper.reader.osm.pbf;
 
-import com.carrotsearch.hppc.LongIndexedContainer;
+import com.carrotsearch.hppc.LongArrayList;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
@@ -116,7 +116,7 @@ public class PbfBlobDecoder implements Runnable {
          */
     }
 
-    private Map<String, String> buildTags(List<Integer> keys, List<Integer> values, PbfFieldDecoder fieldDecoder) {
+    private Map<String, Object> buildTags(List<Integer> keys, List<Integer> values, PbfFieldDecoder fieldDecoder) {
 
         // Ensure parallel lists are of equal size.
         if (checkData) {
@@ -129,7 +129,7 @@ public class PbfBlobDecoder implements Runnable {
         Iterator<Integer> keyIterator = keys.iterator();
         Iterator<Integer> valueIterator = values.iterator();
         if (keyIterator.hasNext()) {
-            Map<String, String> tags = new HashMap<>(keys.size());
+            Map<String, Object> tags = new HashMap<>(keys.size());
             while (keyIterator.hasNext()) {
                 String key = fieldDecoder.decodeString(keyIterator.next());
                 String value = fieldDecoder.decodeString(valueIterator.next());
@@ -137,16 +137,17 @@ public class PbfBlobDecoder implements Runnable {
             }
             return tags;
         }
-        return null;
+        return Collections.emptyMap();
     }
 
     private void processNodes(List<Osmformat.Node> nodes, PbfFieldDecoder fieldDecoder) {
         for (Osmformat.Node node : nodes) {
-            Map<String, String> tags = buildTags(node.getKeysList(), node.getValsList(), fieldDecoder);
+            Map<String, Object> tags = buildTags(node.getKeysList(), node.getValsList(), fieldDecoder);
 
-            ReaderNode osmNode = new ReaderNode(node.getId(), fieldDecoder.decodeLatitude(node
-                    .getLat()), fieldDecoder.decodeLatitude(node.getLon()));
-            osmNode.setTags(tags);
+            ReaderNode osmNode = new ReaderNode(node.getId(),
+                    fieldDecoder.decodeLatitude(node.getLat()),
+                    fieldDecoder.decodeLatitude(node.getLon()),
+                    tags);
 
             // Add the bound object to the results.
             decodedEntities.add(osmNode);
@@ -215,7 +216,7 @@ public class PbfBlobDecoder implements Runnable {
             // Build the tags. The key and value string indexes are sequential
             // in the same PBF array. Each set of tags is delimited by an index
             // with a value of 0.
-            Map<String, String> tags = null;
+            Map<String, Object> tags = Collections.emptyMap();
             while (keysValuesIterator.hasNext()) {
                 int keyIndex = keysValuesIterator.next();
                 if (keyIndex == 0) {
@@ -229,16 +230,15 @@ public class PbfBlobDecoder implements Runnable {
                 }
                 int valueIndex = keysValuesIterator.next();
 
-                if (tags == null) {
-                    // divide by 2 as key&value, multiple by 2 because of the better approximation
+                if (tags.isEmpty()) {
+                    // divide by 2 as key&value, multiply by 2 because of the better approximation
                     tags = new HashMap<>(Math.max(3, 2 * (nodes.getKeysValsList().size() / 2) / idList.size()));
                 }
 
                 tags.put(fieldDecoder.decodeString(keyIndex), fieldDecoder.decodeString(valueIndex));
             }
 
-            ReaderNode node = new ReaderNode(nodeId, fieldDecoder.decodeLatitude(latitude), fieldDecoder.decodeLongitude(longitude));
-            node.setTags(tags);
+            ReaderNode node = new ReaderNode(nodeId, fieldDecoder.decodeLatitude(latitude), fieldDecoder.decodeLongitude(longitude), tags);
 
             // Add the bound object to the results.
             decodedEntities.add(node);
@@ -247,27 +247,24 @@ public class PbfBlobDecoder implements Runnable {
 
     private void processWays(List<Osmformat.Way> ways, PbfFieldDecoder fieldDecoder) {
         for (Osmformat.Way way : ways) {
-            Map<String, String> tags = buildTags(way.getKeysList(), way.getValsList(), fieldDecoder);
-            ReaderWay osmWay = new ReaderWay(way.getId());
-            osmWay.setTags(tags);
-
+            Map<String, Object> tags = buildTags(way.getKeysList(), way.getValsList(), fieldDecoder);
             // Build up the list of way nodes for the way. The node ids are
             // delta encoded meaning that each id is stored as a delta against
             // the previous one.
             long nodeId = 0;
-            LongIndexedContainer wayNodes = osmWay.getNodes();
+            LongArrayList wayNodes = new LongArrayList(5);
             for (long nodeIdOffset : way.getRefsList()) {
                 nodeId += nodeIdOffset;
                 wayNodes.add(nodeId);
             }
-
+            ReaderWay osmWay = new ReaderWay(way.getId(), wayNodes, tags);
             decodedEntities.add(osmWay);
         }
     }
 
-    private void buildRelationMembers(ReaderRelation relation,
-                                      List<Long> memberIds, List<Integer> memberRoles, List<Osmformat.Relation.MemberType> memberTypes,
-                                      PbfFieldDecoder fieldDecoder) {
+    private List<ReaderRelation.Member> buildRelationMembers(
+            List<Long> memberIds, List<Integer> memberRoles, List<Osmformat.Relation.MemberType> memberTypes,
+            PbfFieldDecoder fieldDecoder) {
 
         // Ensure parallel lists are of equal size.
         if (checkData) {
@@ -281,6 +278,7 @@ public class PbfBlobDecoder implements Runnable {
         Iterator<Integer> memberRoleIterator = memberRoles.iterator();
         Iterator<Osmformat.Relation.MemberType> memberTypeIterator = memberTypes.iterator();
 
+        List<ReaderRelation.Member> members = new ArrayList<>(memberIds.size());
         // Build up the list of relation members for the way. The member ids are
         // delta encoded meaning that each id is stored as a delta against
         // the previous one.
@@ -300,24 +298,19 @@ public class PbfBlobDecoder implements Runnable {
                     throw new RuntimeException("Member type of " + memberType + " is not supported.");
                 }
             }
-
             ReaderRelation.Member member = new ReaderRelation.Member(entityType, refId, fieldDecoder.decodeString(memberRoleIterator.next()));
-            relation.add(member);
+            members.add(member);
         }
+        return members;
     }
 
     private void processRelations(List<Osmformat.Relation> relations, PbfFieldDecoder fieldDecoder) {
         for (Osmformat.Relation relation : relations) {
-            Map<String, String> tags = buildTags(relation.getKeysList(), relation.getValsList(), fieldDecoder);
-
-            ReaderRelation osmRelation = new ReaderRelation(relation.getId());
-            osmRelation.setTags(tags);
-
-            buildRelationMembers(osmRelation, relation.getMemidsList(), relation.getRolesSidList(),
+            Map<String, Object> tags = buildTags(relation.getKeysList(), relation.getValsList(), fieldDecoder);
+            List<ReaderRelation.Member> members = buildRelationMembers(relation.getMemidsList(), relation.getRolesSidList(),
                     relation.getTypesList(), fieldDecoder);
-
             // Add the bound object to the results.
-            decodedEntities.add(osmRelation);
+            decodedEntities.add(new ReaderRelation(relation.getId(), members, tags));
         }
     }
 
