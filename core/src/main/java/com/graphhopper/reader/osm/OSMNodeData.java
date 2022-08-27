@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.DoubleSupplier;
 import java.util.function.IntUnaryOperator;
 
 import static java.util.Collections.emptyMap;
@@ -145,14 +146,14 @@ class OSMNodeData {
      *
      * @return the node type this OSM node was associated with before this method was called
      */
-    public int addCoordinatesIfMapped(long osmNodeId, double lat, double lon, double ele) {
+    public int addCoordinatesIfMapped(long osmNodeId, double lat, double lon, DoubleSupplier getEle) {
         int nodeType = idsByOsmNodeIds.get(osmNodeId);
         if (nodeType == EMPTY_NODE)
             return nodeType;
         else if (nodeType == JUNCTION_NODE || nodeType == CONNECTION_NODE)
-            addTowerNode(osmNodeId, lat, lon, ele);
+            addTowerNode(osmNodeId, lat, lon, getEle.getAsDouble());
         else if (nodeType == INTERMEDIATE_NODE || nodeType == END_NODE)
-            addPillarNode(osmNodeId, lat, lon, ele);
+            addPillarNode(osmNodeId, lat, lon, getEle.getAsDouble());
         else
             throw new IllegalStateException("Unknown node type: " + nodeType + ", or coordinates already set. Possibly duplicate OSM node ID: " + osmNodeId);
         return nodeType;
