@@ -59,6 +59,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMTollParser(lookup.getEnumEncodedValue(Toll.KEY, Toll.class));
         else if (name.equals(TrackType.KEY))
             return new OSMTrackTypeParser(lookup.getEnumEncodedValue(TrackType.KEY, TrackType.class));
+        else if (name.equals(Hgv.KEY))
+            return new OSMHgvParser(lookup.getEnumEncodedValue(Hgv.KEY, Hgv.class));
         else if (name.equals(Hazmat.KEY))
             return new OSMHazmatParser(lookup.getEnumEncodedValue(Hazmat.KEY, Hazmat.class));
         else if (name.equals(HazmatTunnel.KEY))

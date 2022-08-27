@@ -218,7 +218,7 @@ public class WaySegmentParser {
                 LOGGER.info("pass2 - processed nodes: " + nf(nodeCounter) + ", accepted nodes: " + nf(acceptedNodes) +
                         ", " + Helper.getMemInfo());
 
-            int nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), eleProvider.getEle(node));
+            int nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), () -> eleProvider.getEle(node));
             if (nodeType == EMPTY_NODE)
                 return;
 
