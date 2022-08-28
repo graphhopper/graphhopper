@@ -1783,15 +1783,14 @@ public class GraphHopperTest {
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile(profile));
         hopper.importOrLoad();
 
-        long seed = System.nanoTime();
-        Random rnd = new Random(seed);
-        for (int i = 0; i < 100; i++) {
-            BBox bounds = hopper.getBaseGraph().getBounds();
-            double lat1 = bounds.minLat + rnd.nextDouble() * (bounds.maxLat - bounds.minLat);
-            double lat2 = bounds.minLat + rnd.nextDouble() * (bounds.maxLat - bounds.minLat);
-            double lon1 = bounds.minLon + rnd.nextDouble() * (bounds.maxLon - bounds.minLon);
-            double lon2 = bounds.minLon + rnd.nextDouble() * (bounds.maxLon - bounds.minLon);
-            GHRequest req = new GHRequest(lat1, lon1, lat2, lon2);
+//        Random rnd = new Random(106938485401L);
+//        for (int i = 0; i < 100; i++) {
+//            BBox bounds = hopper.getBaseGraph().getBounds();
+//            double lat1 = bounds.minLat + rnd.nextDouble() * (bounds.maxLat - bounds.minLat);
+//            double lat2 = bounds.minLat + rnd.nextDouble() * (bounds.maxLat - bounds.minLat);
+//            double lon1 = bounds.minLon + rnd.nextDouble() * (bounds.maxLon - bounds.minLon);
+//            double lon2 = bounds.minLon + rnd.nextDouble() * (bounds.maxLon - bounds.minLon);
+            GHRequest req = new GHRequest(55.8082797336201,37.62105173756754, 55.816160108256724,37.597483022408724);
             req.setProfile(profile);
             req.getHints().putObject(CH.DISABLE, false).putObject(Landmark.DISABLE, true);
             ResponsePath pathCH = hopper.route(req).getBest();
@@ -1800,7 +1799,7 @@ public class GraphHopperTest {
             req.getHints().putObject(CH.DISABLE, true).putObject(Landmark.DISABLE, true);
             ResponsePath path = hopper.route(req).getBest();
 
-            String failMessage = "seed: " + seed + ", i=" + i;
+            String failMessage = "55.8082797336201,37.62105173756754; 55.816160108256724,37.597483022408724";// "seed: " + seed + ", i=" + i;
             assertEquals(path.hasErrors(), pathCH.hasErrors(), failMessage);
             assertEquals(path.hasErrors(), pathLM.hasErrors(), failMessage);
 
@@ -1811,7 +1810,7 @@ public class GraphHopperTest {
                 assertEquals(path.getTime(), pathCH.getTime(), failMessage);
                 assertEquals(path.getTime(), pathLM.getTime(), failMessage);
             }
-        }
+//        }
     }
 
     @ParameterizedTest
