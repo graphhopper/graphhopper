@@ -15,6 +15,8 @@ import com.graphhopper.util.JsonFeature;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Random;
+
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
@@ -316,6 +318,23 @@ class CustomWeightingTest {
         Weighting weighting = createWeighting(customModel);
         assertFalse(Double.isNaN(weighting.calcEdgeWeight(motorway, false)));
         assertTrue(Double.isInfinite(weighting.calcEdgeWeight(motorway, false)));
+    }
+
+    @Test
+    void sameTimeAsFastestWeighting() {
+        // we make sure the returned times are the same, so we can check for regressions more easily when we migrate from fastest to custom
+        FastestWeighting fastestWeighting = new FastestWeighting(accessEnc, avSpeedEnc);
+        Weighting customWeighting = createWeighting(new CustomModel().setDistanceInfluence(0));
+        Random rnd = new Random();
+        for (int i = 0; i < 100; i++) {
+            double speed = 5 + rnd.nextDouble() * 100;
+            double distance = rnd.nextDouble() * 1000;
+            EdgeIteratorState edge = graph.edge(0, 1).setDistance(distance);
+            GHUtility.setSpeed(speed, speed, accessEnc, avSpeedEnc, edge);
+            long fastestMillis = fastestWeighting.calcEdgeMillis(edge, false);
+            long customMillis = customWeighting.calcEdgeMillis(edge, false);
+            assertEquals(fastestMillis, customMillis);
+        }
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {

@@ -1078,7 +1078,7 @@ public class CHTurnCostTest {
         assertEquals(IntArrayList.from(4, 3, 2, 1, 7, 0, 7, 1, 5, 6), dijkstraPath.calcNodes());
         assertEquals(dijkstraPath.getWeight(), path.getWeight(), 1.e-2);
         assertEquals(dijkstraPath.getDistance(), path.getDistance(), 1.e-2);
-        assertEquals(dijkstraPath.getTime(), path.getTime());
+        assertEquals(dijkstraPath.getTime(), path.getTime(), 5);
     }
 
     @ParameterizedTest

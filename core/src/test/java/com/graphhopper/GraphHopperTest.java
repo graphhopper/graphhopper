@@ -126,7 +126,7 @@ public class GraphHopperTest {
 
         ResponsePath res = rsp.getBest();
         assertEquals(3586.9, res.getDistance(), .1);
-        assertEquals(277112, res.getTime(), 10);
+        assertEquals(277115, res.getTime(), 10);
         assertEquals(91, res.getPoints().size());
 
         assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
@@ -1867,9 +1867,9 @@ public class GraphHopperTest {
         assertEquals(1995.38, pathLM.getDistance(), 0.1);
         assertEquals(1995.38, path.getDistance(), 0.1);
 
-        assertEquals(149497, pathCH.getTime());
-        assertEquals(149497, pathLM.getTime());
-        assertEquals(149497, path.getTime());
+        assertEquals(149504, pathCH.getTime());
+        assertEquals(149504, pathLM.getTime());
+        assertEquals(149504, path.getTime());
     }
 
     @Test
