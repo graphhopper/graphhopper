@@ -322,7 +322,7 @@ public class OSMReaderTest {
         Exception exception = assertThrows(RuntimeException.class, () -> {
 	    	new GraphHopperFacade(fileNegIds).importOrLoad();
 	    });
-        assertTrue(exception.getCause().getMessage().contains("Invalid OSM Id: -10;"));
+        assertTrue(exception.getCause().getMessage().contains("Invalid OSM NODE Id: -10;"));
     }
 
     @Test
