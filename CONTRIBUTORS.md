@@ -48,6 +48,7 @@ Here is an overview:
  * kodonnell, adding support for CH and other algorithms (#60) and penalizing inner-link U-turns (#88)
  * legraina, improved docker for dockerhub
  * lmar, improved instructions
+ * lukasalexanderweber, fixes like #2652
  * matkoniecz, tweaking documentation
  * manueltimita, fixes like #1651
  * mathstpierre, fixes like #1753
@@ -81,7 +82,6 @@ Here is an overview:
  * thehereward, code cleanups like #620
  * vvikas, ideas for many to many improvements and #616
  * zstadler, multiple fixes and car4wd
- * lukasalexanderweber, fixes
 
 ## Translations
 
