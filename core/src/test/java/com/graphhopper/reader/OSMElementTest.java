@@ -55,7 +55,7 @@ public class OSMElementTest {
 	    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
 	    	new ReaderWay(-1);
 	    });
-	    assertTrue(exception.getMessage().contains("Invalid OSM Id: -1;"), exception.getMessage());
+	    assertTrue(exception.getMessage().contains("Invalid OSM Id: -1;"));
     }
     
 }

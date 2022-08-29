@@ -318,9 +318,10 @@ public class OSMReaderTest {
     @Test
     public void testNegativeIds() {
         String fileNegIds = "test-osm-negative-ids.xml";
-	    assertThrows(RuntimeException.class, () -> {
+        Exception exception = assertThrows(RuntimeException.class, () -> {
 	    	new GraphHopperFacade(fileNegIds).importOrLoad();
 	    });
+        assertTrue(exception.getCause().getMessage().contains("Invalid OSM Id: -10;"));
     }
 
     @Test
