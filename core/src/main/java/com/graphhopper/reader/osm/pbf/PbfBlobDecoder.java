@@ -289,14 +289,14 @@ public class PbfBlobDecoder implements Runnable {
             Osmformat.Relation.MemberType memberType = memberTypeIterator.next();
             refId += memberIdIterator.next();
 
-            int entityType = ReaderRelation.Member.NODE;
+            ReaderElement.Type entityType = ReaderElement.Type.NODE;
             if (memberType == Osmformat.Relation.MemberType.WAY) {
-                entityType = ReaderRelation.Member.WAY;
+                entityType = ReaderElement.Type.WAY;
             } else if (memberType == Osmformat.Relation.MemberType.RELATION) {
-                entityType = ReaderRelation.Member.RELATION;
+                entityType = ReaderElement.Type.RELATION;
             }
             if (checkData) {
-                if (entityType == ReaderRelation.Member.NODE && memberType != Osmformat.Relation.MemberType.NODE) {
+                if (entityType == ReaderElement.Type.NODE && memberType != Osmformat.Relation.MemberType.NODE) {
                     throw new RuntimeException("Member type of " + memberType + " is not supported.");
                 }
             }

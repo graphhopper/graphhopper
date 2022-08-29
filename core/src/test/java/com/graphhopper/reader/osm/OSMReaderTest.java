@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
+import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.dem.ElevationProvider;
@@ -486,8 +487,8 @@ public class OSMReaderTest {
         OSMParsers osmParsers = new OSMParsers()
                 .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConf));
         ReaderRelation osmRel = new ReaderRelation(1);
-        osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
-        osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
+        osmRel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1, ""));
+        osmRel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 2, ""));
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
@@ -582,10 +583,10 @@ public class OSMReaderTest {
         ReaderRelation rel = new ReaderRelation(1L);
 
         rel.setTag("restriction", "no_entry");
-        rel.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 1L, "from"));
-        rel.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 2L, "from"));
-        rel.add(new ReaderRelation.Member(ReaderRelation.Member.NODE, 3L, "via"));
-        rel.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 4L, "to"));
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1L, "from"));
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 2L, "from"));
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.NODE, 3L, "via"));
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 4L, "to"));
 
         List<OSMTurnRelation> osmRel = OSMReader.createTurnRelations(rel);
         assertEquals(2, osmRel.size());

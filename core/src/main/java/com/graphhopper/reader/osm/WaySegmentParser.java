@@ -513,16 +513,16 @@ public class WaySegmentParser {
     private interface ReaderElementHandler {
         default void handleElement(ReaderElement elem) throws ParseException {
             switch (elem.getType()) {
-                case ReaderElement.NODE:
+                case NODE:
                     handleNode((ReaderNode) elem);
                     break;
-                case ReaderElement.WAY:
+                case WAY:
                     handleWay((ReaderWay) elem);
                     break;
-                case ReaderElement.RELATION:
+                case RELATION:
                     handleRelation((ReaderRelation) elem);
                     break;
-                case ReaderElement.FILEHEADER:
+                case FILEHEADER:
                     handleFileHeader((OSMFileHeader) elem);
                     break;
                 default:
