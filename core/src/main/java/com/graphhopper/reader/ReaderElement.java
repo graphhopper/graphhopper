@@ -44,7 +44,7 @@ public abstract class ReaderElement {
 
     protected ReaderElement(long id, Type type, Map<String, Object> properties) {
     	if (id < 0) {
-    		throw new IllegalArgumentException("Invalid OSM Id: " + id + "; Ids must not be negative");
+    		throw new IllegalArgumentException("Invalid OSM " + type + " Id: " + id + "; Ids must not be negative");
     	}
         this.id = id;
         this.type = type;
