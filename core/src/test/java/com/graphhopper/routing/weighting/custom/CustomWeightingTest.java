@@ -307,6 +307,17 @@ class CustomWeightingTest {
         assertEquals(10 / (80 * 0.7 / 3.6) * 1000, weighting.calcEdgeMillis(motorway, false), 1);
     }
 
+    @Test
+    public void bugWithNaNForBarrierEdges() {
+        EdgeIteratorState motorway = graph.edge(0, 1).setDistance(0).
+                set(roadClassEnc, MOTORWAY).set(avSpeedEnc, 80).set(accessEnc, true, true);
+        CustomModel customModel = new CustomModel()
+                .addToPriority(Statement.If("road_class == MOTORWAY", Statement.Op.MULTIPLY, "0"));
+        Weighting weighting = createWeighting(customModel);
+        assertFalse(Double.isNaN(weighting.calcEdgeWeight(motorway, false)));
+        assertTrue(Double.isInfinite(weighting.calcEdgeWeight(motorway, false)));
+    }
+
     private Weighting createWeighting(CustomModel vehicleModel) {
         return CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
     }
