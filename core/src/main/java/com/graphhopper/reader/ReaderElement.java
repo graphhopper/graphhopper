@@ -41,16 +41,12 @@ public abstract class ReaderElement {
     }
 
     protected ReaderElement(long id, int type, Map<String, Object> properties) {
-    	validateId(id);
+    	if (id < 0) {
+    		throw new IllegalArgumentException("Invalid OSM Id: " + id + "; Ids must not be negative");
+    	}
         this.id = id;
         this.type = type;
         this.properties = properties;
-    }
-
-    private void validateId(long id) {
-    	if (id < 1) {
-    		throw new InvalidIdException("Invalid Id: " + id + "; Ids must be bigger or equal to 1");
-    	}
     }
     
     public long getId() {

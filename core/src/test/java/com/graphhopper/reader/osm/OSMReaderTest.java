@@ -24,6 +24,7 @@ import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
@@ -318,26 +319,9 @@ public class OSMReaderTest {
     @Test
     public void testNegativeIds() {
         String fileNegIds = "test-osm-negative-ids.xml";
-        GraphHopper hopper = new GraphHopperFacade(fileNegIds).importOrLoad();
-        Graph graph = hopper.getBaseGraph();
-        assertEquals(4, graph.getNodes());
-        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
-        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
-        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
-        assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
-        assertEquals(3, GHUtility.count(carOutExplorer.setBaseNode(n20)));
-        assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
-
-        EdgeIterator iter = carOutExplorer.setBaseNode(n20);
-        assertTrue(iter.next());
-
-        assertTrue(iter.next());
-        assertEquals(n30, iter.getAdjNode());
-        assertEquals(93147, iter.getDistance(), 1);
-
-        assertTrue(iter.next());
-        assertEquals(n10, iter.getAdjNode());
-        assertEquals(88643, iter.getDistance(), 1);
+	    assertThrows(RuntimeException.class, () -> {
+	    	new GraphHopperFacade(fileNegIds).importOrLoad();
+	    });
     }
 
     @Test

@@ -52,10 +52,10 @@ public class OSMElementTest {
     
     @Test
     public void testInvalidIDs() {
-	    Exception exception = assertThrows(InvalidIdException.class, () -> {
+	    Exception exception = assertThrows(IllegalArgumentException.class, () -> {
 	    	new ReaderWay(-1);
 	    });
-	    assertTrue(exception.getMessage().contains("Invalid Id: -1;"), exception.getMessage());
+	    assertTrue(exception.getMessage().contains("Invalid OSM Id: -1;"), exception.getMessage());
     }
     
 }
