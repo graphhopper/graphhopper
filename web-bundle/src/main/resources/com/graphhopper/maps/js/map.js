@@ -304,13 +304,10 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
             selectedDetailIdx = detailIdx;
         GHFeatureCollection.push(sliceFeatureCollection(details[detailKey], detailKey, geoJsonFeature));
         options.mappings[detailKey] = getColorMapping(details[detailKey]);
-
     }
-    if (selectedDetailIdx >= 0)
-        options.selectedAttributeIdx = selectedDetailIdx;
 
-    if(GHFeatureCollection.length === 0) {
-        // No Path Details => Show only elevation
+    // always show elevation and slope
+    {
         geoJsonFeature.properties.attributeType = "elevation";
         var elevationCollection = {
             "type": "FeatureCollection",
@@ -321,10 +318,98 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
                 "summary": "Elevation"
             }
         };
+        detailIdx++;
+        if (selectedDetail === 'Elevation')
+            selectedDetailIdx = detailIdx;
         GHFeatureCollection.push(elevationCollection);
         // Use a fixed color for elevation
-        options.mappings = { Elevation: {'elevation': {text: 'Elevation [m]', color: '#27ce49'}}};
+        options.mappings['Elevation'] = {'elevation': {text: 'Elevation [m]', color: '#27ce49'}};
+
+        var slopeFeatures = [];
+        for (var i = 0; i < geoJsonFeature.geometry.coordinates.length - 1; i++) {
+            var from = geoJsonFeature.geometry.coordinates[i];
+            var to = geoJsonFeature.geometry.coordinates[i + 1];
+            var distance = getDist(from, to);
+            var slope = 100.0 * (to[2] - from[2]) / distance;
+            slopeFeatures.push({
+                "type": "Feature",
+                "geometry": {
+                    "type": "LineString",
+                    "coordinates": [from, to]
+                },
+                "properties": {
+                    "attributeType": slope
+                }
+            })
+        }
+        var slopeCollection = {
+            "type": "FeatureCollection",
+            "features": slopeFeatures,
+            "properties": {
+                "records": slopeFeatures.length,
+                "summary": "Slope"
+            }
+        };
+        detailIdx++;
+        if (selectedDetail === 'Slope')
+            selectedDetailIdx = detailIdx;
+        GHFeatureCollection.push(slopeCollection);
+        options.mappings["Slope"] = slope2color;
+
+        // tower slope: slope between tower nodes: use edge_id detail to find tower nodes
+        if (details['edge_id']) {
+            var detail = details['edge_id'];
+            var towerSlopeFeatures = [];
+            var points = geoJsonFeature.geometry.coordinates;
+            for (var i = 0; i < detail.length; i++) {
+                var featurePoints = points.slice(detail[i][0], detail[i][1] + 1);
+                var from = featurePoints[0];
+                var to = featurePoints[featurePoints.length - 1];
+                var distance = getDist(from, to);
+                var slope = 100.0 * (to[2] - from[2]) / distance;
+                // for the elevations in tower slope diagram we do linear interpolation between the tower nodes. note that
+                // we cannot simply leave out the pillar nodes, because otherwise the total distance would change
+                var tmpDistance = 0;
+                for (var j = 0; j < featurePoints.length; j++) {
+                    var factor = tmpDistance / distance;
+                    var ele = from[2] + factor * (to[2] - from[2]);
+                    if (j === featurePoints.length - 1)
+                        // there seem to be some small rounding errors which lead to ugly little spikes in the diagram,
+                        // so for the last point use the elevation of the to point directly
+                        ele = to[2];
+                    featurePoints[j] = [featurePoints[j][0], featurePoints[j][1], ele];
+                    if (j < featurePoints.length - 1)
+                        tmpDistance += getDist(featurePoints[j], featurePoints[j + 1]);
+                }
+                towerSlopeFeatures.push({
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": featurePoints
+                    },
+                    "properties": {
+                        "attributeType": slope
+                    }
+                });
+            }
+            var towerSlopeCollection = {
+                "type": "FeatureCollection",
+                "features": towerSlopeFeatures,
+                "properties": {
+                    "records": towerSlopeFeatures.length,
+                    "summary": "Towerslope"
+                }
+            };
+            detailIdx++;
+            if (selectedDetail === 'Towerslope')
+                selectedDetailIdx = detailIdx;
+            GHFeatureCollection.push(towerSlopeCollection);
+            options.mappings["Towerslope"] = slope2color;
+        }
     }
+
+    if (selectedDetailIdx >= 0)
+        options.selectedAttributeIdx = selectedDetailIdx;
 
     if (elevationControl === null) {
         elevationControl = L.control.heightgraph(options);
@@ -333,6 +418,25 @@ module.exports.addElevation = function (geoJsonFeature, details, selectedDetail,
 
     elevationControl.addData(GHFeatureCollection);
 };
+
+function getDist(p, q) {
+    return L.latLng(p[1], p[0]).distanceTo(L.latLng(q[1], q[0]));
+}
+
+function slope2color(slope) {
+    var colorMin = [0, 153, 247];
+    var colorMax = [241, 23, 18];
+    var absSlope = Math.abs(slope);
+    absSlope = Math.min(25, absSlope);
+    var factor = absSlope / 25;
+    var color = [];
+    for (var i = 0; i < 3; i++)
+        color.push(colorMin[i] + factor * (colorMax[i] - colorMin[i]));
+    return {
+        text: slope.toFixed(2),
+        color: 'rgb(' + color[0] + ', ' + color[1] + ', ' + color[2] + ')'
+    }
+}
 
 function getColorMapping(detail) {
     var detailInfo = analyzeDetail(detail);
