@@ -44,8 +44,6 @@ import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.locationtech.jts.geom.Envelope;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -71,24 +69,15 @@ import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
  * @author kodonnell
  */
 public class MapMatching {
-
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
     private final BaseGraph graph;
-    private final LandmarkStorage landmarks;
+    private final Router router;
     private final LocationIndexTree locationIndex;
     private double measurementErrorSigma = 50.0;
     private double transitionProbabilityBeta = 2.0;
-    private final int maxVisitedNodes;
     private final DistanceCalc distanceCalc = new DistancePlaneProjection();
-    private final Weighting unwrappedWeighting;
-    private Weighting weighting;
-    private final BooleanEncodedValue inSubnetworkEnc;
     private QueryGraph queryGraph;
 
-    public MapMatching(GraphHopper graphHopper, PMap hints) {
-        this.locationIndex = (LocationIndexTree) graphHopper.getLocationIndex();
-
+    public static MapMatching fromGraphHopper(GraphHopper graphHopper, PMap hints) {
         if (hints.has("vehicle"))
             throw new IllegalArgumentException("MapMatching hints may no longer contain a vehicle, use the profile parameter instead, see core/#1958");
         if (hints.has("weighting"))
@@ -118,6 +107,7 @@ public class MapMatching {
         // (=faster) choice when the observations are close to each other
         boolean useDijkstra = disableLM || disableCH;
 
+        LandmarkStorage landmarks;
         if (graphHopper.getLMPreparationHandler().isEnabled() && !useDijkstra) {
             // using LM because u-turn prevention does not work properly with (node-based) CH
             landmarks = graphHopper.getLandmarks().get(profile.getName());
@@ -129,10 +119,35 @@ public class MapMatching {
         } else {
             landmarks = null;
         }
-        graph = graphHopper.getBaseGraph();
-        unwrappedWeighting = graphHopper.createWeighting(profile, hints);
-        inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileStr));
-        this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
+        Weighting weighting = graphHopper.createWeighting(profile, hints);
+        BooleanEncodedValue inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileStr));
+        DefaultSnapFilter snapFilter = new DefaultSnapFilter(weighting, inSubnetworkEnc);
+        int maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
+
+        Router router = new Router() {
+            @Override
+            public EdgeFilter getSnapFilter() {
+                return snapFilter;
+            }
+
+            @Override
+            public BidirRoutingAlgorithm createAlgo(QueryGraph queryGraph) {
+                return createRouter(queryGraph, queryGraph.wrapWeighting(weighting), landmarks, maxVisitedNodes);
+            }
+
+            @Override
+            public Weighting getWeighting() {
+                return weighting;
+            }
+        };
+
+        return new MapMatching(graphHopper.getBaseGraph(), (LocationIndexTree) graphHopper.getLocationIndex(), router);
+    }
+
+    public MapMatching(BaseGraph graph, LocationIndexTree locationIndex, Router router) {
+        this.graph = graph;
+        this.locationIndex = locationIndex;
+        this.router = router;
     }
 
     /**
@@ -162,7 +177,6 @@ public class MapMatching {
         // Create the query graph, containing split edges so that all the places where an observation might have happened
         // are a node. This modifies the Snap objects and puts the new node numbers into them.
         queryGraph = QueryGraph.create(graph, snapsPerObservation.stream().flatMap(Collection::stream).collect(Collectors.toList()));
-        weighting = queryGraph.wrapWeighting(unwrappedWeighting);
 
         // Creates candidates from the Snaps of all observations (a candidate is basically a
         // Snap + direction).
@@ -174,12 +188,13 @@ public class MapMatching {
         List<EdgeIteratorState> path = seq.stream().filter(s1 -> s1.transitionDescriptor != null).flatMap(s1 -> s1.transitionDescriptor.calcEdges().stream()).collect(Collectors.toList());
 
         MatchResult result = new MatchResult(prepareEdgeMatches(seq));
-        result.setMergedPath(new MapMatchedPath(queryGraph, weighting, path));
+        Weighting queryGraphWeighting = queryGraph.wrapWeighting(router.getWeighting());
+        result.setMergedPath(new MapMatchedPath(queryGraph, queryGraphWeighting, path));
         result.setMatchMillis(seq.stream().filter(s -> s.transitionDescriptor != null).mapToLong(s -> s.transitionDescriptor.getTime()).sum());
         result.setMatchLength(seq.stream().filter(s -> s.transitionDescriptor != null).mapToDouble(s -> s.transitionDescriptor.getDistance()).sum());
         result.setGPXEntriesLength(gpxLength(observations));
         result.setGraph(queryGraph);
-        result.setWeighting(weighting);
+        result.setWeighting(queryGraphWeighting);
         return result;
     }
 
@@ -239,7 +254,7 @@ public class MapMatching {
     }
 
     private List<Snap> findCandidateSnapsInBBox(double queryLat, double queryLon, BBox queryShape) {
-        EdgeFilter edgeFilter = new DefaultSnapFilter(unwrappedWeighting, inSubnetworkEnc);
+        EdgeFilter edgeFilter = router.getSnapFilter();
         List<Snap> snaps = new ArrayList<>();
         IntHashSet seenEdges = new IntHashSet();
         IntHashSet seenNodes = new IntHashSet();
@@ -347,7 +362,7 @@ public class MapMatching {
 
                 for (State from : prevTimeStep.candidates) {
                     for (State to : timeStep.candidates) {
-                        final Path path = createRouter().calcPath(from.getSnap().getClosestNode(), to.getSnap().getClosestNode(), from.isOnDirectedEdge() ? from.getOutgoingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE, to.isOnDirectedEdge() ? to.getIncomingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE);
+                        final Path path = router.createAlgo(queryGraph).calcPath(from.getSnap().getClosestNode(), to.getSnap().getClosestNode(), from.isOnDirectedEdge() ? from.getOutgoingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE, to.isOnDirectedEdge() ? to.getIncomingVirtualEdge().getEdge() : EdgeIterator.ANY_EDGE);
                         if (path.isFound()) {
                             double transitionLogProbability = probabilities.transitionLogProbability(path.getDistance(), linearDistance);
                             Transition<State> transition = new Transition<>(from, to);
@@ -389,7 +404,7 @@ public class MapMatching {
                 + ". If a match is expected consider increasing max_visited_nodes.");
     }
 
-    private BidirRoutingAlgorithm createRouter() {
+    private static BidirRoutingAlgorithm createRouter(QueryGraph queryGraph, Weighting weighting, LandmarkStorage landmarks, int maxVisitedNodes) {
         BidirRoutingAlgorithm router;
         if (landmarks != null) {
             AStarBidirection algo = new AStarBidirection(queryGraph, weighting, TraversalMode.EDGE_BASED) {
@@ -530,6 +545,14 @@ public class MapMatching {
                 setFound(true);
             }
         }
+    }
+
+    public interface Router {
+        EdgeFilter getSnapFilter();
+
+        BidirRoutingAlgorithm createAlgo(QueryGraph graph);
+
+        Weighting getWeighting();
     }
 
 }

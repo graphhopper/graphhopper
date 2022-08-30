@@ -117,7 +117,7 @@ public class MapMatchingResource {
         hints.putObject("profile", profile);
         removeLegacyParameters(hints);
 
-        MapMatching matching = new MapMatching(graphHopper, hints);
+        MapMatching matching = MapMatching.fromGraphHopper(graphHopper, hints);
         matching.setMeasurementErrorSigma(gpsAccuracy);
 
         List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
