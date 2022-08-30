@@ -505,7 +505,7 @@ public class OSMReader {
         if (!relation.isMetaRelation() && relation.hasTag("type", "route")) {
             // we keep track of all route relations, so they are available when we create edges later
             for (ReaderRelation.Member member : relation.getMembers()) {
-                if (member.getType() != ReaderRelation.Member.WAY)
+                if (member.getType() != ReaderElement.Type.WAY)
                     continue;
                 IntsRef oldRelationFlags = getRelFlagsMap(member.getRef());
                 IntsRef newRelationFlags = osmParsers.handleRelationTags(relation, oldRelationFlags);
@@ -600,15 +600,15 @@ public class OSMReader {
             long toWayID = -1;
 
             for (ReaderRelation.Member member : relation.getMembers()) {
-                if (ReaderElement.WAY == member.getType() && "to".equals(member.getRole()))
+                if (ReaderElement.Type.WAY == member.getType() && "to".equals(member.getRole()))
                     toWayID = member.getRef();
-                else if (ReaderElement.NODE == member.getType() && "via".equals(member.getRole()))
+                else if (ReaderElement.Type.NODE == member.getType() && "via".equals(member.getRole()))
                     viaNodeID = member.getRef();
             }
             if (toWayID >= 0 && viaNodeID >= 0) {
                 List<OSMTurnRelation> res = new ArrayList<>(2);
                 for (ReaderRelation.Member member : relation.getMembers()) {
-                    if (ReaderElement.WAY == member.getType() && "from".equals(member.getRole())) {
+                    if (ReaderElement.Type.WAY == member.getType() && "from".equals(member.getRole())) {
                         OSMTurnRelation osmTurnRelation = new OSMTurnRelation(member.getRef(), viaNodeID, toWayID, type);
                         osmTurnRelation.setVehicleTypeRestricted(vehicleTypeRestricted);
                         osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
