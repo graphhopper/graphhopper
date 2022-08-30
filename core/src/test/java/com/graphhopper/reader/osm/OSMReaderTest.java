@@ -22,8 +22,8 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
@@ -320,8 +320,8 @@ public class OSMReaderTest {
     public void testNegativeIds() {
         String fileNegIds = "test-osm-negative-ids.xml";
         Exception exception = assertThrows(RuntimeException.class, () -> {
-	    	new GraphHopperFacade(fileNegIds).importOrLoad();
-	    });
+            new GraphHopperFacade(fileNegIds).importOrLoad();
+        });
         assertTrue(exception.getCause().getMessage().contains("Invalid OSM NODE Id: -10;"));
     }
 

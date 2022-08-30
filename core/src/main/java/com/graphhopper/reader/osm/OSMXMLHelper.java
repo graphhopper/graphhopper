@@ -26,7 +26,6 @@ import com.graphhopper.reader.ReaderWay;
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
-import java.util.List;
 
 /**
  * @author Peter Karich
@@ -106,10 +105,9 @@ public class OSMXMLHelper {
         String typeName = parser.getAttributeValue(null, "type");
         ReaderElement.Type type = ReaderElement.Type.NODE;
         if (typeName.startsWith("w")) {
-        	type = ReaderElement.Type.WAY;
-        }
-        else if (typeName.startsWith("r")) {
-        	type = ReaderElement.Type.RELATION;
+            type = ReaderElement.Type.WAY;
+        } else if (typeName.startsWith("r")) {
+            type = ReaderElement.Type.RELATION;
         }
         long ref = Long.parseLong(parser.getAttributeValue(null, "ref"));
         String role = parser.getAttributeValue(null, "role");
