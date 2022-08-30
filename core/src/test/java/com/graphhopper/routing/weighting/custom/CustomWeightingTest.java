@@ -13,7 +13,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.JsonFeature;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Random;
@@ -321,7 +320,6 @@ class CustomWeightingTest {
         assertTrue(Double.isInfinite(weighting.calcEdgeWeight(motorway, false)));
     }
 
-    @Disabled("this can still fail in some very rare cases, so this is disabled")
     @Test
     void sameTimeAsFastestWeighting() {
         // we make sure the returned times are the same, so we can check for regressions more easily when we migrate from fastest to custom
