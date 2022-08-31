@@ -51,8 +51,9 @@ public class RoadDensityCalculator {
     }
 
     /**
-     * Loops over all edges of the graph and calls the given edgeHandler for each edge, in parallel using the given number
-     * of threads. For every call we can calculate the road density using the provided thread local road density calculator.
+     * Loops over all edges of the graph and calls the given edgeHandler for each edge. This is done in parallel using
+     * the given number of threads. For every call we can calculate the road density using the provided thread local
+     * road density calculator.
      */
     public static void calcRoadDensities(Graph graph, BiConsumer<RoadDensityCalculator, EdgeIteratorState> edgeHandler, int threads) {
         ThreadLocal<RoadDensityCalculator> calculator = ThreadLocal.withInitial(() -> new RoadDensityCalculator(graph));
@@ -68,8 +69,7 @@ public class RoadDensityCalculator {
     /**
      * @param radius         in meters
      * @param calcRoadFactor weighting function. use this to define how different kinds of roads shall contribute to the calculated road density
-     * @return the road density in the vicinity of the given edge, i.e. the weighted road length divided by the squared
-     * radius
+     * @return the road density in the vicinity of the given edge, i.e. the weighted road length divided by the squared radius
      */
     public double calcRoadDensity(EdgeIteratorState edge, double radius, ToDoubleFunction<EdgeIteratorState> calcRoadFactor) {
         visited.clear();
@@ -84,6 +84,7 @@ public class RoadDensityCalculator {
         visited.add(baseNode);
         visited.add(adjNode);
         // we just do a BFS search and sum up all the road lengths
+        final double radiusNormalized = DIST_PLANE.calcNormalizedDist(radius);
         while (!deque.isEmpty()) {
             int node = deque.removeFirst();
             EdgeIterator iter = edgeExplorer.setBaseNode(node);
@@ -92,7 +93,7 @@ public class RoadDensityCalculator {
                     continue;
                 visited.add(iter.getAdjNode());
                 double distance = DIST_PLANE.calcNormalizedDist(center.lat, center.lon, getLat(na, iter.getBaseNode(), iter.getAdjNode()), getLon(na, iter.getBaseNode(), iter.getAdjNode()));
-                if (distance > DIST_PLANE.calcNormalizedDist(radius))
+                if (distance > radiusNormalized)
                     continue;
                 double roadLength = Math.min(2 * radius, iter.getDistance());
                 totalRoadWeight += roadLength * calcRoadFactor.applyAsDouble(iter);

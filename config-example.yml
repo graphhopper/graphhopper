@@ -112,7 +112,7 @@ graphhopper:
   #### Development (built-up areas) ####
 
 
-  # This feature allows classifying roads into 'country', 'residential' and 'city' areas (encoded value 'development')
+  # This feature allows classifying roads into 'rural', 'residential' and 'city' areas (encoded value 'development')
   # Use 1 or more threads to enable the feature
   # graph.development.threads: 8
   # Use higher/lower sensitivities if too little/many roads fall into the according categories.

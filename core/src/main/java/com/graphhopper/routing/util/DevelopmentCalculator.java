@@ -18,8 +18,6 @@
 
 package com.graphhopper.routing.util;
 
-import com.carrotsearch.hppc.BitSet;
-import com.carrotsearch.hppc.BitSetIterator;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Development;
 import com.graphhopper.routing.ev.EnumEncodedValue;
@@ -36,7 +34,7 @@ public class DevelopmentCalculator {
     private static final Logger logger = LoggerFactory.getLogger(RoadDensityCalculator.class);
 
     /**
-     * Calculates the development (country/residential/city) for all edges of the graph.
+     * Calculates the development (rural/residential/city) for all edges of the graph.
      * First a weighted road density is calculated for every edge to determine whether it belongs to a residential area.
      * In a second step very dense residential areas are classified as 'city'.
      *
@@ -93,32 +91,36 @@ public class DevelopmentCalculator {
                     return 0;
             }
         };
+        // temporarily write results to an external array for thread-safety
+        boolean[] isResidential = new boolean[graph.getEdges()];
         RoadDensityCalculator.calcRoadDensities(graph, (calculator, edge) -> {
             RoadClass roadClass = edge.get(roadClassEnc);
             if (roadClass == RoadClass.RESIDENTIAL || roadClass == RoadClass.LIVING_STREET) {
-                edge.set(developmentEnc, Development.RESIDENTIAL);
+                isResidential[edge.getEdge()] = true;
                 return;
             }
             double roadDensity = calculator.calcRoadDensity(edge, radius, calcRoadFactor);
-            edge.set(developmentEnc, roadDensity * sensitivity >= 1.0 ? Development.RESIDENTIAL : Development.COUNTRY);
+            isResidential[edge.getEdge()] = roadDensity * sensitivity >= 1.0;
         }, threads);
+        for (int edge = 0; edge < isResidential.length; edge++)
+            graph.getEdgeIteratorState(edge, Integer.MIN_VALUE).set(developmentEnc, isResidential[edge] ? Development.RESIDENTIAL : Development.RURAL);
     }
 
     private static void calcCity(Graph graph, EnumEncodedValue<Development> developmentEnc,
                                  double radius, double sensitivity, int threads) {
-        // do not modify the development values as long as we are still reading them -> store city flags in this bitset first
-        BitSet isCity = new BitSet(graph.getEdges());
+        // do not modify the development values as long as we are still reading them -> store city flags in this array first
+        boolean[] isCity = new boolean[graph.getEdges()];
         final ToDoubleFunction<EdgeIteratorState> calcRoadFactor = edge -> edge.get(developmentEnc) == Development.RESIDENTIAL ? 1 : 0;
         RoadDensityCalculator.calcRoadDensities(graph, (calculator, edge) -> {
             Development development = edge.get(developmentEnc);
-            if (development == Development.COUNTRY)
+            if (development == Development.RURAL)
                 return;
             double roadDensity = calculator.calcRoadDensity(edge, radius, calcRoadFactor);
             if (roadDensity * sensitivity >= 1.0)
-                isCity.set(edge.getEdge());
+                isCity[edge.getEdge()] = true;
         }, threads);
-        BitSetIterator iter = isCity.iterator();
-        for (int edge = iter.nextSetBit(); edge >= 0; edge = iter.nextSetBit())
-            graph.getEdgeIteratorState(edge, Integer.MIN_VALUE).set(developmentEnc, Development.CITY);
+        for (int edge = 0; edge < isCity.length; edge++)
+            if (isCity[edge])
+                graph.getEdgeIteratorState(edge, Integer.MIN_VALUE).set(developmentEnc, Development.CITY);
     }
 }

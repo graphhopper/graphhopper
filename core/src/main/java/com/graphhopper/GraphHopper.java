@@ -195,7 +195,7 @@ public class GraphHopper {
     }
 
     /**
-     * Configures the development classification. Edge can be classified as 'country','residential' or 'city', {@link Development}
+     * Configures the development classification. Each edge will be classified as 'rural','residential' or 'city', {@link Development}
      *
      * @param residentialAreaRadius      in meters. The higher this value the longer the calculation will take and the bigger the area for
      *                                   which the road density used to identify residential areas is calculated.

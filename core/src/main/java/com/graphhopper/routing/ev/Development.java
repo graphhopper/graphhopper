@@ -19,7 +19,7 @@
 package com.graphhopper.routing.ev;
 
 public enum Development {
-    COUNTRY("country"), RESIDENTIAL("residential"), CITY("city");
+    RURAL("rural"), RESIDENTIAL("residential"), CITY("city");
 
     public static EnumEncodedValue<Development> create() {
         return new EnumEncodedValue<>(KEY, Development.class);
