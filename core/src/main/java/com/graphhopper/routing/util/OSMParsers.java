@@ -53,7 +53,6 @@ public class OSMParsers {
     }
 
     public OSMParsers addWayTagParser(TagParser tagParser) {
-        if (tagParser == null) throw new IllegalArgumentException("TagParser must not be null");
         wayTagParsers.add(tagParser);
         return this;
     }
