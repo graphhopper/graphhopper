@@ -13,7 +13,7 @@
 - don't allow cars or motorcycles to use ways tagged with service=emergency_access (#2484)
 - faster flexible routing, especially in conjunction with turn costs (#2571)
 - negative OSM Ids are not supported any longer (#2652)
-- new development encoded value based on road density (#2637)
+- new urban_density encoded value based on road density calculation (#2637)
 
 ### 5.0 [23 Mar 2022]
 

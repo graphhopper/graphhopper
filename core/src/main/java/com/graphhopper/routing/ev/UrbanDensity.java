@@ -18,18 +18,18 @@
 
 package com.graphhopper.routing.ev;
 
-public enum Development {
+public enum UrbanDensity {
     RURAL("rural"), RESIDENTIAL("residential"), CITY("city");
 
-    public static EnumEncodedValue<Development> create() {
-        return new EnumEncodedValue<>(KEY, Development.class);
+    public static EnumEncodedValue<UrbanDensity> create() {
+        return new EnumEncodedValue<>(KEY, UrbanDensity.class);
     }
 
-    public static final String KEY = "development";
+    public static final String KEY = "urban_density";
 
     private final String name;
 
-    Development(String name) {
+    UrbanDensity(String name) {
         this.name = name;
     }
 

@@ -136,15 +136,15 @@ module.exports.enableVectorTiles = function () {
         },
       },
     })
-    var developmentLayer = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment&details=development", {
+    var urbanDensityLayer = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment&details=urban_density", {
         rendererFactory: L.canvas.tile,
         maxZoom: 20,
         minZoom: 10,
         interactive: true,
         vectorTileLayerStyles: {
             'roads': function (properties, zoom) {
-                var rd = properties.development;
-                let c = getDevelopmentColor(rd);
+                var ud = properties.urban_density;
+                let c = getUrbanDensityColor(ud);
                 return {
                     weight: 1 + c.weight,
                     color: c.color,
@@ -153,7 +153,7 @@ module.exports.enableVectorTiles = function () {
             },
         },
     });
-    var vtLayers = [vtLayer, developmentLayer];
+    var vtLayers = [vtLayer, urbanDensityLayer];
     for (var i = 0; i < vtLayers.length; ++i) {
         vtLayers[i]
             .on('click', function (e) {
@@ -178,14 +178,14 @@ module.exports.enableVectorTiles = function () {
     }
     overlays = {
         "Local MVT": vtLayer,
-        "Show Development": developmentLayer
+        "Show Urban Density": urbanDensityLayer
     };
 }
 
-function getDevelopmentColor(development) {
+function getUrbanDensityColor(urbanDensity) {
     var color = '#0aaff1';
-    if (development === "residential") color = '#fd084a';
-    else if (development === "city") color = '#edf259';
+    if (urbanDensity === "residential") color = '#fd084a';
+    else if (urbanDensity === "city") color = '#edf259';
     return {
         weight: 1,
         color: color

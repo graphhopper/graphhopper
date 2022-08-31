@@ -94,7 +94,7 @@ public class MVTResource {
         locationIndex.query(bbox, edgeId -> {
             EdgeIteratorState edge = graphHopper.getBaseGraph().getEdgeIteratorStateForKey(edgeId * 2);
             LineString lineString;
-            if (pathDetails.contains(Development.KEY)) {
+            if (pathDetails.contains(UrbanDensity.KEY)) {
                 if (zInfo >= 9) {
                     PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
                     lineString = pl.toLineString(false);

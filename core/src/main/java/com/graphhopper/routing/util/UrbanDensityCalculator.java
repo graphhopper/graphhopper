@@ -19,9 +19,9 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.Development;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.UrbanDensity;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.StopWatch;
@@ -30,11 +30,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.function.ToDoubleFunction;
 
-public class DevelopmentCalculator {
-    private static final Logger logger = LoggerFactory.getLogger(RoadDensityCalculator.class);
+public class UrbanDensityCalculator {
+    private static final Logger logger = LoggerFactory.getLogger(UrbanDensityCalculator.class);
 
     /**
-     * Calculates the development (rural/residential/city) for all edges of the graph.
+     * Calculates the urban density (rural/residential/city) for all edges of the graph.
      * First a weighted road density is calculated for every edge to determine whether it belongs to a residential area.
      * In a second step very dense residential areas are classified as 'city'.
      *
@@ -45,24 +45,24 @@ public class DevelopmentCalculator {
      * @param cityAreaSensitivity        similar to residentialAreaSensitivity, but for the city classification
      * @param threads                    number of threads used to calculate the road densities
      */
-    public static void calcDevelopment(Graph graph, EnumEncodedValue<Development> developmentEnc,
-                                       EnumEncodedValue<RoadClass> roadClassEnc, BooleanEncodedValue roadClassLinkEnc,
-                                       double residentialAreaRadius, double residentialAreaSensitivity,
-                                       double cityAreaRadius, double cityAreaSensitivity,
-                                       int threads) {
+    public static void calcUrbanDensity(Graph graph, EnumEncodedValue<UrbanDensity> urbanDensityEnc,
+                                        EnumEncodedValue<RoadClass> roadClassEnc, BooleanEncodedValue roadClassLinkEnc,
+                                        double residentialAreaRadius, double residentialAreaSensitivity,
+                                        double cityAreaRadius, double cityAreaSensitivity,
+                                        int threads) {
         logger.info("Calculating residential areas ..., radius={}, sensitivity={}, threads={}", residentialAreaRadius, residentialAreaSensitivity, threads);
         StopWatch sw = StopWatch.started();
-        calcResidential(graph, developmentEnc, roadClassEnc, roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, threads);
+        calcResidential(graph, urbanDensityEnc, roadClassEnc, roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, threads);
         logger.info("Finished calculating residential areas, took: " + sw.stop().getSeconds() + "s");
         if (cityAreaRadius > 1) {
             logger.info("Calculating city areas ..., radius={}, sensitivity={}, threads={}", cityAreaRadius, cityAreaSensitivity, threads);
             sw = StopWatch.started();
-            calcCity(graph, developmentEnc, cityAreaRadius, cityAreaSensitivity, threads);
+            calcCity(graph, urbanDensityEnc, cityAreaRadius, cityAreaSensitivity, threads);
             logger.info("Finished calculating city areas, took: " + sw.stop().getSeconds() + "s");
         }
     }
 
-    private static void calcResidential(Graph graph, EnumEncodedValue<Development> developmentEnc,
+    private static void calcResidential(Graph graph, EnumEncodedValue<UrbanDensity> urbanDensityEnc,
                                         EnumEncodedValue<RoadClass> roadClassEnc, BooleanEncodedValue roadClassLinkEnc,
                                         double radius, double sensitivity, int threads) {
         final ToDoubleFunction<EdgeIteratorState> calcRoadFactor = edge -> {
@@ -103,17 +103,17 @@ public class DevelopmentCalculator {
             isResidential[edge.getEdge()] = roadDensity * sensitivity >= 1.0;
         }, threads);
         for (int edge = 0; edge < isResidential.length; edge++)
-            graph.getEdgeIteratorState(edge, Integer.MIN_VALUE).set(developmentEnc, isResidential[edge] ? Development.RESIDENTIAL : Development.RURAL);
+            graph.getEdgeIteratorState(edge, Integer.MIN_VALUE).set(urbanDensityEnc, isResidential[edge] ? UrbanDensity.RESIDENTIAL : UrbanDensity.RURAL);
     }
 
-    private static void calcCity(Graph graph, EnumEncodedValue<Development> developmentEnc,
+    private static void calcCity(Graph graph, EnumEncodedValue<UrbanDensity> urbanDensityEnc,
                                  double radius, double sensitivity, int threads) {
-        // do not modify the development values as long as we are still reading them -> store city flags in this array first
+        // do not modify the urban density values as long as we are still reading them -> store city flags in this array first
         boolean[] isCity = new boolean[graph.getEdges()];
-        final ToDoubleFunction<EdgeIteratorState> calcRoadFactor = edge -> edge.get(developmentEnc) == Development.RESIDENTIAL ? 1 : 0;
+        final ToDoubleFunction<EdgeIteratorState> calcRoadFactor = edge -> edge.get(urbanDensityEnc) == UrbanDensity.RESIDENTIAL ? 1 : 0;
         RoadDensityCalculator.calcRoadDensities(graph, (calculator, edge) -> {
-            Development development = edge.get(developmentEnc);
-            if (development == Development.RURAL)
+            UrbanDensity urbanDensity = edge.get(urbanDensityEnc);
+            if (urbanDensity == UrbanDensity.RURAL)
                 return;
             double roadDensity = calculator.calcRoadDensity(edge, radius, calcRoadFactor);
             if (roadDensity * sensitivity >= 1.0)
@@ -121,6 +121,6 @@ public class DevelopmentCalculator {
         }, threads);
         for (int edge = 0; edge < isCity.length; edge++)
             if (isCity[edge])
-                graph.getEdgeIteratorState(edge, Integer.MIN_VALUE).set(developmentEnc, Development.CITY);
+                graph.getEdgeIteratorState(edge, Integer.MIN_VALUE).set(urbanDensityEnc, UrbanDensity.CITY);
     }
 }

@@ -109,19 +109,19 @@ graphhopper:
   #   elevation and will remove the extra points that long edge sampling added
   # graph.elevation.way_point_max_distance: 10
 
-  #### Development (built-up areas) ####
+  #### Urban density (built-up areas) ####
 
 
-  # This feature allows classifying roads into 'rural', 'residential' and 'city' areas (encoded value 'development')
+  # This feature allows classifying roads into 'rural', 'residential' and 'city' areas (encoded value 'urban_density')
   # Use 1 or more threads to enable the feature
-  # graph.development.threads: 8
+  # graph.urban_density.threads: 8
   # Use higher/lower sensitivities if too little/many roads fall into the according categories.
   # Using smaller radii will speed up the classification, but only change these values if you know what you are doing.
   # If you do not need the (rather slow) city classification set city_radius to zero.
-  # graph.development.residential_radius: 300
-  # graph.development.residential_sensitivity: 60
-  # graph.development.city_radius: 2000
-  # graph.development.city_sensitivity: 30
+  # graph.urban_density.residential_radius: 300
+  # graph.urban_density.residential_sensitivity: 60
+  # graph.urban_density.city_radius: 2000
+  # graph.urban_density.city_sensitivity: 30
 
 
   #### Speed, hybrid and flexible mode ####
