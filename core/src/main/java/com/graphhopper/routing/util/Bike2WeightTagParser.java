@@ -105,7 +105,7 @@ public class Bike2WeightTagParser extends BikeTagParser {
             double fwdSlower = 1 - 5 * keepIn(fwdIncline, 0, 0.2);
             fwdSlower = fwdSlower * fwdSlower;
             speed = speed * (fwdSlower * incDist2DSum + fwdFaster * decDist2DSum + 1 * restDist2D) / fullDist2D;
-            setSpeed(false, intsRef, keepIn(speed, PUSHING_SECTION_SPEED / 2.0, maxSpeed));
+            setSpeed(false, intsRef, keepIn(speed, MIN_SPEED, maxSpeed));
         }
 
         if (accessEnc.getBool(true, intsRef)) {
@@ -115,7 +115,7 @@ public class Bike2WeightTagParser extends BikeTagParser {
             double bwSlower = 1 - 5 * keepIn(fwdDecline, 0, 0.2);
             bwSlower = bwSlower * bwSlower;
             speedReverse = speedReverse * (bwFaster * incDist2DSum + bwSlower * decDist2DSum + 1 * restDist2D) / fullDist2D;
-            setSpeed(true, intsRef, keepIn(speedReverse, PUSHING_SECTION_SPEED / 2.0, maxSpeed));
+            setSpeed(true, intsRef, keepIn(speedReverse, MIN_SPEED, maxSpeed));
         }
         edge.setFlags(intsRef);
     }

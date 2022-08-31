@@ -28,19 +28,25 @@ import java.util.Map.Entry;
  * @author Peter
  */
 public abstract class ReaderElement {
-    public static final int NODE = 0;
-    public static final int WAY = 1;
-    public static final int RELATION = 2;
-    public static final int FILEHEADER = 3;
-    private final int type;
+    public static enum Type {
+        NODE,
+        WAY,
+        RELATION,
+        FILEHEADER;
+    }
+
     private final long id;
+    private final Type type;
     private final Map<String, Object> properties;
 
-    protected ReaderElement(long id, int type) {
+    protected ReaderElement(long id, Type type) {
         this(id, type, new HashMap<>(4));
     }
 
-    protected ReaderElement(long id, int type, Map<String, Object> properties) {
+    protected ReaderElement(long id, Type type, Map<String, Object> properties) {
+        if (id < 0) {
+            throw new IllegalArgumentException("Invalid OSM " + type + " Id: " + id + "; Ids must not be negative");
+        }
         this.id = id;
         this.type = type;
         this.properties = properties;
@@ -180,11 +186,11 @@ public abstract class ReaderElement {
         properties.clear();
     }
 
-    public int getType() {
+    public Type getType() {
         return type;
     }
 
-    public boolean isType(int type) {
+    public boolean isType(Type type) {
         return this.type == type;
     }
 

@@ -23,9 +23,9 @@ import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.coll.GHLongHashSet;
 import com.graphhopper.coll.GHLongLongHashMap;
 import com.graphhopper.reader.*;
+import com.graphhopper.reader.dem.EdgeElevationSmoothing;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.AreaIndex;
@@ -292,13 +292,17 @@ public class OSMReader {
         // to do some kind of elevation processing (bridge+tunnel interpolation in GraphHopper class, maybe this can
         // go together
 
-        // Smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
-        if (config.isSmoothElevation())
-            GraphElevationSmoothing.smoothElevation(pointList);
+        if (pointList.is3D()) {
+            // sample points along long edges
+            if (config.getLongEdgeSamplingDistance() < Double.MAX_VALUE)
+                pointList = EdgeSampling.sample(pointList, config.getLongEdgeSamplingDistance(), distCalc, eleProvider);
 
-        // sample points along long edges
-        if (config.getLongEdgeSamplingDistance() < Double.MAX_VALUE && pointList.is3D())
-            pointList = EdgeSampling.sample(pointList, config.getLongEdgeSamplingDistance(), distCalc, eleProvider);
+            // smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
+            if (config.getElevationSmoothing().equals("ramer"))
+                EdgeElevationSmoothing.smoothRamer(pointList, config.getElevationSmoothingRamerMax());
+            else if (config.getElevationSmoothing().equals("moving_average"))
+                EdgeElevationSmoothing.smoothMovingAverage(pointList);
+        }
 
         if (config.getMaxWayPointDistance() > 0 && pointList.size() > 2)
             simplifyAlgo.simplify(pointList);
@@ -501,7 +505,7 @@ public class OSMReader {
         if (!relation.isMetaRelation() && relation.hasTag("type", "route")) {
             // we keep track of all route relations, so they are available when we create edges later
             for (ReaderRelation.Member member : relation.getMembers()) {
-                if (member.getType() != ReaderRelation.Member.WAY)
+                if (member.getType() != ReaderElement.Type.WAY)
                     continue;
                 IntsRef oldRelationFlags = getRelFlagsMap(member.getRef());
                 IntsRef newRelationFlags = osmParsers.handleRelationTags(relation, oldRelationFlags);
@@ -572,10 +576,8 @@ public class OSMReader {
             }
         }
         if (relation.hasTag("restriction")) {
-            OSMTurnRelation osmTurnRelation = createTurnRelation(relation, relation.getTag("restriction"), vehicleTypeRestricted, vehicleTypesExcept);
-            if (osmTurnRelation != null) {
-                osmTurnRelations.add(osmTurnRelation);
-            }
+            osmTurnRelations.addAll(createTurnRelations(relation, relation.getTag("restriction"),
+                    vehicleTypeRestricted, vehicleTypesExcept));
             return osmTurnRelations;
         }
         if (relation.hasTagWithKeyPrefix("restriction:")) {
@@ -583,42 +585,41 @@ public class OSMReader {
             for (String vehicleType : vehicleTypesRestricted) {
                 String restrictionType = relation.getTag(vehicleType);
                 vehicleTypeRestricted = vehicleType.replace("restriction:", "").trim();
-                OSMTurnRelation osmTurnRelation = createTurnRelation(relation, restrictionType, vehicleTypeRestricted, vehicleTypesExcept);
-                if (osmTurnRelation != null) {
-                    osmTurnRelations.add(osmTurnRelation);
-                }
+                osmTurnRelations.addAll(createTurnRelations(relation, restrictionType, vehicleTypeRestricted,
+                        vehicleTypesExcept));
             }
         }
         return osmTurnRelations;
     }
 
-    static OSMTurnRelation createTurnRelation(ReaderRelation relation, String restrictionType, String
-            vehicleTypeRestricted, List<String> vehicleTypesExcept) {
+    static List<OSMTurnRelation> createTurnRelations(ReaderRelation relation, String restrictionType,
+                                                     String vehicleTypeRestricted, List<String> vehicleTypesExcept) {
         OSMTurnRelation.Type type = OSMTurnRelation.Type.getRestrictionType(restrictionType);
         if (type != OSMTurnRelation.Type.UNSUPPORTED) {
-            long fromWayID = -1;
+            // we use -1 to indicate 'missing', which is fine because we exclude negative OSM IDs (see #2652)
             long viaNodeID = -1;
             long toWayID = -1;
 
             for (ReaderRelation.Member member : relation.getMembers()) {
-                if (ReaderElement.WAY == member.getType()) {
-                    if ("from".equals(member.getRole())) {
-                        fromWayID = member.getRef();
-                    } else if ("to".equals(member.getRole())) {
-                        toWayID = member.getRef();
-                    }
-                } else if (ReaderElement.NODE == member.getType() && "via".equals(member.getRole())) {
+                if (ReaderElement.Type.WAY == member.getType() && "to".equals(member.getRole()))
+                    toWayID = member.getRef();
+                else if (ReaderElement.Type.NODE == member.getType() && "via".equals(member.getRole()))
                     viaNodeID = member.getRef();
-                }
             }
-            if (fromWayID >= 0 && toWayID >= 0 && viaNodeID >= 0) {
-                OSMTurnRelation osmTurnRelation = new OSMTurnRelation(fromWayID, viaNodeID, toWayID, type);
-                osmTurnRelation.setVehicleTypeRestricted(vehicleTypeRestricted);
-                osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
-                return osmTurnRelation;
+            if (toWayID >= 0 && viaNodeID >= 0) {
+                List<OSMTurnRelation> res = new ArrayList<>(2);
+                for (ReaderRelation.Member member : relation.getMembers()) {
+                    if (ReaderElement.Type.WAY == member.getType() && "from".equals(member.getRole())) {
+                        OSMTurnRelation osmTurnRelation = new OSMTurnRelation(member.getRef(), viaNodeID, toWayID, type);
+                        osmTurnRelation.setVehicleTypeRestricted(vehicleTypeRestricted);
+                        osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
+                        res.add(osmTurnRelation);
+                    }
+                }
+                return res;
             }
         }
-        return null;
+        return Collections.emptyList();
     }
 
     private void finishedReading() {

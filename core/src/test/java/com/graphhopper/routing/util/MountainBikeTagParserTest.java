@@ -30,6 +30,7 @@ import com.graphhopper.routing.util.parsers.OSMSmoothnessParser;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.routing.util.BikeCommonTagParser.MIN_SPEED;
 import static com.graphhopper.routing.util.BikeCommonTagParser.PUSHING_SECTION_SPEED;
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -66,13 +67,13 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
         // Test pushing section speeds
         way.setTag("highway", "footway");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 4, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
 
         way.setTag("highway", "track");
         assertPriorityAndSpeed(PREFER.getValue(), 18, way);
 
         way.setTag("highway", "steps");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 4, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
         way.clearTags();
 
         // test speed for allowed pushing section types
@@ -105,7 +106,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         assertEquals(12, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "unknown");
         assertEquals(12, getSpeedFromFlags(way), 0.01);
@@ -124,10 +125,10 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         assertEquals(6, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
+        assertEquals(4, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
     }
 
     @Test

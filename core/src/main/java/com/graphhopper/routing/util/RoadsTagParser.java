@@ -3,16 +3,22 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 
 
 public class RoadsTagParser extends VehicleTagParser {
     public static final double ROADS_MAX_SPEED = 254;
 
-    public RoadsTagParser(EncodedValueLookup lookup) {
-        this(
+    public RoadsTagParser(EncodedValueLookup lookup, PMap properties) {
+        super(
                 lookup.getBooleanEncodedValue(VehicleAccess.key("roads")),
                 lookup.getDecimalEncodedValue(VehicleSpeed.key("roads")),
-                lookup.getDecimalEncodedValue(TurnCost.key("roads"))
+                "roads",
+                lookup.getBooleanEncodedValue(Roundabout.KEY),
+                lookup.hasEncodedValue(TurnCost.key("roads")) ? lookup.getDecimalEncodedValue(TurnCost.key("roads")) : null,
+                TransportationMode.valueOf(properties.getString("transportation_mode", "VEHICLE")),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key("roads")).getNextStorableValue(ROADS_MAX_SPEED)
         );
     }
 

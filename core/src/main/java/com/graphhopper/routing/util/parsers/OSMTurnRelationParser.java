@@ -20,8 +20,6 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
@@ -48,11 +46,6 @@ public class OSMTurnRelationParser implements TurnCostParser {
     }
 
     @Override
-    public void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(turnCostEnc);
-    }
-
-    @Override
     public void handleTurnRelationTags(OSMTurnRelation turnRelation, ExternalInternalMap map, Graph graph) {
         if (!turnRelation.isVehicleTypeConcernedByTurnRestriction(restrictions))
             return;
@@ -71,8 +64,7 @@ public class OSMTurnRelationParser implements TurnCostParser {
     /**
      * Add the specified relation to the TurnCostStorage
      */
-    void addRelationToTCStorage(OSMTurnRelation osmTurnRelation,
-                                ExternalInternalMap map, Graph graph) {
+    void addRelationToTCStorage(OSMTurnRelation osmTurnRelation, ExternalInternalMap map, Graph graph) {
         TurnCostStorage tcs = graph.getTurnCostStorage();
         int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRelation.getViaOsmNodeId());
         EdgeExplorer edgeOutExplorer = getOutExplorer(graph), edgeInExplorer = getInExplorer(graph);

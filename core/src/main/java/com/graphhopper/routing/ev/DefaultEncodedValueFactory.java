@@ -54,6 +54,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = MaxAxleLoad.create();
         } else if (MaxLength.KEY.equals(name)) {
             enc = MaxLength.create();
+        } else if (Hgv.KEY.equals(name)) {
+            enc = new EnumEncodedValue<>(Hgv.KEY, Hgv.class);
         } else if (Surface.KEY.equals(name)) {
             enc = new EnumEncodedValue<>(Surface.KEY, Surface.class);
         } else if (Smoothness.KEY.equals(name)) {
@@ -82,6 +84,10 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = Country.create();
         } else if (name.endsWith(Subnetwork.key(""))) {
             enc = new SimpleBooleanEncodedValue(name);
+        } else if (MaxSlope.KEY.equals(name)) {
+            enc = MaxSlope.create();
+        } else if (AverageSlope.KEY.equals(name)) {
+            enc = AverageSlope.create();
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }

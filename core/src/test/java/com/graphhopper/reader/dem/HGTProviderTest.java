@@ -15,25 +15,22 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
 
-import com.graphhopper.util.PMap;
+package com.graphhopper.reader.dem;
 
-/**
- * @author Peter Karich
- */
-public interface VehicleEncodedValuesFactory {
-    String ROADS = "roads";
-    String CAR = "car";
-    String BIKE = "bike";
-    String BIKE2 = "bike2";
-    String RACINGBIKE = "racingbike";
-    String MOUNTAINBIKE = "mtb";
-    String FOOT = "foot";
-    String HIKE = "hike";
-    String MOTORCYCLE = "motorcycle";
-    String WHEELCHAIR = "wheelchair";
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-    VehicleEncodedValues createVehicleEncodedValues(String name, PMap configuration);
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
+class HGTProviderTest {
+
+    @Disabled
+    @Test
+    void getEle() {
+        HGTProvider hgt = new HGTProvider("/your/path/to/hgt/");
+        assertEquals(511, hgt.getEle(49.1, 11.7), 1);
+        assertEquals(0, hgt.getEle(0.6, 0.6), 1);
+    }
 
 }

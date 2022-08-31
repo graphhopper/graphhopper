@@ -78,7 +78,7 @@ class EncodedValueSerializerTest {
         assertEquals("{\"className\":\"com.graphhopper.routing.ev.DecimalEncodedValueImpl\",\"name\":\"max_width\",\"bits\":7," +
                 "\"min_storable_value\":0,\"max_storable_value\":127,\"max_value\":-2147483648,\"negate_reverse_direction\":false,\"store_two_directions\":false," +
                 "\"fwd_data_index\":0,\"bwd_data_index\":0,\"fwd_shift\":3,\"bwd_shift\":-1,\"fwd_mask\":1016,\"bwd_mask\":0," +
-                "\"factor\":0.1,\"default_is_infinity\":true,\"use_maximum_as_infinity\":false}", serialized.get(1));
+                "\"factor\":0.1,\"use_maximum_as_infinity\":true}", serialized.get(1));
         assertEquals("{\"className\":\"com.graphhopper.routing.ev.SimpleBooleanEncodedValue\",\"name\":\"get_off_bike\",\"bits\":1," +
                 "\"min_storable_value\":0,\"max_storable_value\":1,\"max_value\":-2147483648,\"negate_reverse_direction\":false,\"store_two_directions\":false,\"fwd_data_index\":0," +
                 "\"bwd_data_index\":0,\"fwd_shift\":10,\"bwd_shift\":-1,\"fwd_mask\":1024,\"bwd_mask\":0}", serialized.get(2));

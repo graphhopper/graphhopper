@@ -22,8 +22,7 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -48,4 +47,13 @@ public class OSMElementTest {
         instance.setTags(null);
         assertFalse(instance.hasTag("test", "xy"));
     }
+
+    @Test
+    public void testInvalidIDs() {
+        Exception exception = assertThrows(IllegalArgumentException.class, () -> {
+            new ReaderWay(-1);
+        });
+        assertTrue(exception.getMessage().contains("Invalid OSM WAY Id: -1;"));
+    }
+
 }
