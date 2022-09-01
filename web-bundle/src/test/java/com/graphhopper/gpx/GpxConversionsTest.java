@@ -97,7 +97,7 @@ public class GpxConversionsTest {
         assertEquals(34000, p.getDistance(), 1e-1);
         assertEquals(34000, sumDistances(wayList), 1e-1);
         assertEquals(5, points.size());
-        assertEquals(1604120, p.getTime());
+        assertEquals(1604121, p.getTime());
 
         assertEquals(Instruction.CONTINUE_ON_STREET, wayList.get(0).getSign());
         assertEquals(15, wayList.get(0).getPoints().getLat(0), 1e-3);

@@ -54,7 +54,7 @@ public class EdgeElevationSmoothingTest {
     }
 
     @Test
-    public void interpolateViaDouglasPeucker() {
+    public void smoothRamer() {
         PointList pl1 = new PointList(3, true);
         pl1.add(0, 0, 0);
         pl1.add(0.0005, 0.0005, 100);
@@ -68,7 +68,7 @@ public class EdgeElevationSmoothingTest {
     }
 
     @Test
-    public void interpolateViaDouglasPeucker2() {
+    public void smoothRamer2() {
         PointList pl2 = new PointList(3, true);
         pl2.add(0.001, 0.001, 50);
         pl2.add(0.0015, 0.0015, 160);
@@ -80,5 +80,18 @@ public class EdgeElevationSmoothingTest {
         assertEquals(190, pl2.getEle(1), 1); // modify as too small in interval [0,4]
         assertEquals(210, pl2.getEle(2), 1); // modify as too small in interval [0,4]
         assertEquals(220, pl2.getEle(3), .1); // keep as it is bigger than maxElevationDelta in interval [0,4]
+    }
+
+    @Test
+    public void smoothRamerNoMaximumFound() {
+        PointList pl2 = new PointList(3, true);
+        pl2.add(60.03307, 20.82262, 5.35);
+        pl2.add(60.03309, 20.82269, 5.42);
+        pl2.add(60.03307, 20.82262, 5.35);
+        EdgeElevationSmoothing.smoothRamer(pl2, 10);
+        assertEquals(3, pl2.size());
+        assertEquals(5.35, pl2.getEle(0), 0.01);
+        assertEquals(5.35, pl2.getEle(1), 0.01);
+        assertEquals(5.35, pl2.getEle(2), 0.01);
     }
 }

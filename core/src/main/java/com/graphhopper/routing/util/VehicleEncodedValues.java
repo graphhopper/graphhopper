@@ -105,10 +105,6 @@ public class VehicleEncodedValues {
         return new VehicleEncodedValues(name, accessEnc, speedEnc, null, null, turnCostEnc);
     }
 
-    public static VehicleEncodedValues car4wd(PMap properties) {
-        return car(new PMap(properties).putObject("name", properties.getString("name", "car4wd")));
-    }
-
     public static VehicleEncodedValues motorcycle(PMap properties) {
         String name = properties.getString("name", "motorcycle");
         int speedBits = properties.getInt("speed_bits", 5);

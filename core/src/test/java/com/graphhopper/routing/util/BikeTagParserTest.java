@@ -31,6 +31,7 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.routing.util.BikeCommonTagParser.MIN_SPEED;
 import static com.graphhopper.routing.util.BikeCommonTagParser.PUSHING_SECTION_SPEED;
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -87,6 +88,11 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "secondary");
         way.setTag("bicycle", "dismount");
         assertPriorityAndSpeed(AVOID.getValue(), PUSHING_SECTION_SPEED, way);
+
+        way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("hazmat", "designated");
+        assertPriorityAndSpeed(BAD.getValue(), 18, way);
 
         way.clearTags();
         way.setTag("highway", "footway");
@@ -151,7 +157,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(PREFER.getValue(), cyclewaySpeed, way);
 
         way.setTag("surface", "unpaved");
-        assertPriorityAndSpeed(PREFER.getValue(), 14, way);
+        assertPriorityAndSpeed(PREFER.getValue(), 12, way);
 
         way.setTag("surface", "paved");
         assertPriorityAndSpeed(PREFER.getValue(), 18, way);
@@ -216,9 +222,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "steps");
         way.setTag("surface", "wood");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED / 2.0, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), MIN_SPEED, way);
         way.setTag("maxspeed", "20");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED / 2.0, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), MIN_SPEED, way);
 
         way.clearTags();
         way.setTag("highway", "track");
@@ -278,13 +284,13 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertEquals(20, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        assertEquals(14, getSpeedFromFlags(way), 0.01);
+        assertEquals(12, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "unknown");
-        assertEquals(14, getSpeedFromFlags(way), 0.01);
+        assertEquals(12, getSpeedFromFlags(way), 0.01);
 
         way.clearTags();
         way.setTag("highway", "residential");
@@ -297,13 +303,13 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade5");
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
+        assertEquals(4, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
+        assertEquals(2, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
     }
 
     @Test

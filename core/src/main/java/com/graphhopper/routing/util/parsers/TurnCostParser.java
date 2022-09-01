@@ -31,8 +31,6 @@ import java.util.List;
 public interface TurnCostParser {
     String getName();
 
-    void createTurnCostEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
-
     void handleTurnRelationTags(OSMTurnRelation turnRelation, ExternalInternalMap map, Graph graph);
 
     /**

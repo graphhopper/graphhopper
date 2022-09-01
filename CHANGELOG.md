@@ -1,4 +1,6 @@
 ### 6.0 [not yet released]
+- When using a DecimalEncodedValue with useMaximumAsInfinity=true and a single bit of space make sure you always use 
+  Double.POSITIVE_INFINITY to set the value, see #2646
 - renamed DouglasPeucker to RamerDouglasPeucker
 - path details at via-points are no longer merged, see #2626
 - removed the FlagEncoder interface. for example encoder.getAccessEnc() is now encodingManager.getBooleanEncodedValue(
@@ -10,6 +12,8 @@
 - replaced car$access with car_access (and same for <vehicle>$average_speed and <vehicle>$priority)
 - don't allow cars or motorcycles to use ways tagged with service=emergency_access (#2484)
 - faster flexible routing, especially in conjunction with turn costs (#2571)
+- negative OSM Ids are not supported any longer (#2652)
+- new urban_density encoded value based on road density calculation (#2637)
 
 ### 5.0 [23 Mar 2022]
 

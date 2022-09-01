@@ -109,24 +109,24 @@ module.exports.enableVectorTiles = function () {
             // weight == line width
             var color, opacity = 1, weight = 1, rc = properties.road_class;
             // if(properties.speed < 30) console.log(properties)
-            if(rc == "motorway") {
+            if (rc == "motorway") {
                 color = '#dd504b'; // red
                 weight = 3;
-            } else if(rc == "primary" || rc == "trunk") {
+            } else if (rc == "primary" || rc == "trunk") {
                 color = '#e2a012'; // orange
                 weight = 2;
-            } else if(rc == "secondary") {
+            } else if (rc == "secondary") {
                 weight = 2;
                 color = '#f7c913'; // yellow
             } else {
                 color = "#aaa5a7"; // grey
             }
-            if(zoom > 16)
-               weight += 3;
-            else if(zoom > 15)
-               weight += 2;
-            else if(zoom > 13)
-               weight += 1;
+            if (zoom > 16)
+                weight += 3;
+            else if (zoom > 15)
+                weight += 2;
+            else if (zoom > 13)
+                weight += 1;
 
             return {
                 weight: weight,
@@ -136,25 +136,60 @@ module.exports.enableVectorTiles = function () {
         },
       },
     })
-    .on('click', function(e) {
-    })
-    .on('mouseover', function(e) {
-        console.log(e.layer.properties);
-        // remove route info
-        $("#info").children("div").remove();
-        // remove last vector tile info
-        $("#info").children("ul").remove();
-
-        var list = "";
-        $.each(e.layer.properties, function (key, value) {
-            list += "<li>" + key + ": " + value + "</li>";
-        });
-        $("#info").append("<ul>"+list+"</ul>");
-        $("#info").show();
-    }).on('mouseout', function (e) {
-//        $("#info").html("");
+    var urbanDensityLayer = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment&details=urban_density", {
+        rendererFactory: L.canvas.tile,
+        maxZoom: 20,
+        minZoom: 10,
+        interactive: true,
+        vectorTileLayerStyles: {
+            'roads': function (properties, zoom) {
+                var ud = properties.urban_density;
+                let c = getUrbanDensityColor(ud);
+                return {
+                    weight: 1 + c.weight,
+                    color: c.color,
+                    opacity: 1
+                }
+            },
+        },
     });
-    overlays = { "Local MVT": vtLayer };
+    var vtLayers = [vtLayer, urbanDensityLayer];
+    for (var i = 0; i < vtLayers.length; ++i) {
+        vtLayers[i]
+            .on('click', function (e) {
+            })
+            .on('mouseover', function (e) {
+                console.log(e.layer.properties);
+                // remove route info
+                $("#info").children("div").remove();
+                // remove last vector tile info
+                $("#info").children("ul").remove();
+
+                var list = "";
+                $.each(e.layer.properties, function (key, value) {
+                    list += "<li>" + key + ": " + value + "</li>";
+                });
+                $("#info").append("<ul>" + list + "</ul>");
+                $("#info").show();
+            }).on('mouseout', function (e) {
+                // $("#info").html("");
+            }
+        );
+    }
+    overlays = {
+        "Local MVT": vtLayer,
+        "Show Urban Density": urbanDensityLayer
+    };
+}
+
+function getUrbanDensityColor(urbanDensity) {
+    var color = '#0aaff1';
+    if (urbanDensity === "residential") color = '#fd084a';
+    else if (urbanDensity === "city") color = '#edf259';
+    return {
+        weight: 1,
+        color: color
+    }
 }
 
 module.exports.activeLayerName = "Omniscale";

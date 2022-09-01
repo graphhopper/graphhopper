@@ -139,7 +139,7 @@ class TagParsingTest {
         parser.init(new DateRangeParser());
         IntsRef flags = parser.handleWayTags(manager2.createEdgeFlags(), osmWay);
         double singleSpeed = parser.avgSpeedEnc.getDecimal(false, flags);
-        assertEquals(4, singleSpeed, 1e-3);
+        assertEquals(BikeCommonTagParser.PUSHING_SECTION_SPEED, singleSpeed, 1e-3);
         assertEquals(singleSpeed, parser.avgSpeedEnc.getDecimal(true, flags), 1e-3);
 
         EncodingManager manager = EncodingManager.create("bike2,bike,foot");
