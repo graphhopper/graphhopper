@@ -145,10 +145,14 @@ public class MotorcycleTagParser extends CarTagParser {
             return WayAccess.CAN_SKIP;
 
         if (!firstValue.isEmpty()) {
-            if (restrictedValues.contains(firstValue) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-                return WayAccess.CAN_SKIP;
-            if (intendedValues.contains(firstValue))
-                return WayAccess.WAY;
+            String[] restrict = firstValue.split(";");
+            boolean notConditionalyPermitted = !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
+            for (String value: restrict) {
+                if (restrictedValues.contains(value) && notConditionalyPermitted)
+                    return WayAccess.CAN_SKIP;
+                if (intendedValues.contains(value))
+                    return WayAccess.WAY;
+            }
         }
 
         // do not drive street cars into fords

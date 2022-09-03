@@ -114,6 +114,8 @@ public class MotorcycleTagParserTest {
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
         assertTrue(parser.getAccess(way).canSkip());
+        way.setTag("motor_vehicle", "agricultural;forestry");
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "service");
