@@ -43,12 +43,15 @@ public class OSMRoadAccessParser implements TagParser {
         RoadAccess accessValue = YES;
         RoadAccess tmpAccessValue;
         for (String restriction : restrictions) {
-            String[] complex = restriction.split(";");
-            for ( String simple: complex) {
-               tmpAccessValue = RoadAccess.find(readerWay.getTag(simple, "yes"));
-               if (tmpAccessValue != null && tmpAccessValue.ordinal() > accessValue.ordinal()) {
-                   accessValue = tmpAccessValue;
-               }
+            String tagValue = readerWay.getTag(restriction);
+            if (tagValue != null) {
+                String[] complex = tagValue.split(";");
+                for ( String simple: complex) {
+                   tmpAccessValue = RoadAccess.find(simple);
+                   if (tmpAccessValue != null && tmpAccessValue.ordinal() > accessValue.ordinal()) {
+                       accessValue = tmpAccessValue;
+                   }
+                }
             }
         }
 
