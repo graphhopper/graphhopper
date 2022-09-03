@@ -47,11 +47,7 @@ public enum RoadAccess {
             return YES;
         try {
             // public and permissive will be converted into "yes"
-            String[] complex = name.split(";");
-            for(String value: complex) {
-                return RoadAccess.valueOf(Helper.toUpperCase(value));
-            }
-            return YES;
+            return RoadAccess.valueOf(Helper.toUpperCase(name));
         } catch (IllegalArgumentException ex) {
             return YES;
         }
