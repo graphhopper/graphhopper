@@ -334,14 +334,6 @@ public class GraphHopper {
         return this;
     }
 
-    //ORS-GH MOD START
-    @Deprecated // TODO ORS Refactoring : use RouterConfig instead
-    public GraphHopper setSimplifyResponse(boolean doSimplify) {
-        this.getRouterConfig().setSimplifyResponse(doSimplify);
-        return this;
-    }
-    //ORS-GH MOD END
-
     public String getGraphHopperLocation() {
         return ghLocation;
     }
