@@ -423,6 +423,13 @@ public class Router {
             weighting = createWeighting();
         }
 
+        // ORS GH-MOD START: inject edgeFilterFactory
+        public Solver setEdgeFilterFactory(EdgeFilterFactory edgeFilterFactory) {
+            this.edgeFilterFactory = edgeFilterFactory;
+            return this;
+        }
+        // ORS GH-MOD END
+
         protected Profile getProfile() {
             Profile profile = profilesByName.get(request.getProfile());
             if (profile == null)
@@ -539,13 +546,6 @@ public class Router {
             this.ghStorage = ghStorage;
             this.locationIndex = locationIndex;
         }
-
-        // ORS GH-MOD START: inject edgeFilterFactory
-        public Solver setEdgeFilterFactory(EdgeFilterFactory edgeFilterFactory) {
-            this.edgeFilterFactory = edgeFilterFactory;
-            return this;
-        }
-        // ORS GH-MOD END
 
         @Override
         protected void checkRequest() {
