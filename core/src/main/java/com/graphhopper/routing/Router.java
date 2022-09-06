@@ -65,7 +65,7 @@ public class Router {
     private EdgeFilterFactory edgeFilterFactory;
     protected PathProcessorFactory pathProcessorFactory = PathProcessorFactory.DEFAULT;
     // ORS GH-MOD END
-    // todo: these should not be necessary anymore as soon as GraphHopperStorage (or something that replaces) it acts
+    // todo refactoring: these should not be necessary anymore as soon as GraphHopperStorage (or something that replaces) it acts
     // like a 'graph database'
     private final Map<String, RoutingCHGraph> chGraphs;
     private final Map<String, LandmarkStorage> landmarks;
@@ -107,9 +107,8 @@ public class Router {
             checkCurbsides(request);
             checkNoBlockAreaWithCustomModel(request);
 
-            Solver solver = createSolver(request);
             // ORS GH-MOD START: way to inject additional edgeFilters to router
-            solver.setEdgeFilterFactory(edgeFilterFactory);
+            Solver solver = createSolver(request, edgeFilterFactory);
             // ORS GH-MOD END
             solver.checkRequest();
             solver.init();
@@ -190,15 +189,15 @@ public class Router {
             throw new IllegalArgumentException("When using `custom_model` do not use `block_area`. Use `areas` in the custom model instead");
     }
 
-    protected Solver createSolver(GHRequest request) {
+    protected Solver createSolver(GHRequest request, EdgeFilterFactory edgeFilterFactory) {
         final boolean disableCH = getDisableCH(request.getHints());
         final boolean disableLM = getDisableLM(request.getHints());
         if (chEnabled && !disableCH) {
             return new CHSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
         } else if (lmEnabled && !disableLM) {
-            return new LMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex, landmarks);
+            return new LMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex, landmarks).setEdgeFilterFactory(edgeFilterFactory);
         } else {
-            return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex);
+            return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, ghStorage, locationIndex).setEdgeFilterFactory(edgeFilterFactory);
         }
     }
 
@@ -392,7 +391,7 @@ public class Router {
         protected Profile profile;
         protected Weighting weighting;
         protected final EncodedValueLookup lookup;
-        // ORS GH-MOD START: way to inject additional edgeFilters to router
+        // ORS GH-MOD START: inject additional edgeFilters
         protected EdgeFilterFactory edgeFilterFactory;
         // ORS GH-MOD END
 
@@ -468,12 +467,6 @@ public class Router {
         // ORS GH-MOD END
             return hints.getInt(Parameters.Routing.MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes());
         }
-
-        // ORS GH-MOD START: way to inject additional edgeFilters to router
-        public void setEdgeFilterFactory(EdgeFilterFactory edgeFilterFactory) {
-            this.edgeFilterFactory = edgeFilterFactory;
-        }
-        // ORS GH-MOD END
     }
 
     private static class CHSolver extends Solver {
@@ -547,6 +540,13 @@ public class Router {
             this.locationIndex = locationIndex;
         }
 
+        // ORS GH-MOD START: inject edgeFilterFactory
+        public Solver setEdgeFilterFactory(EdgeFilterFactory edgeFilterFactory) {
+            this.edgeFilterFactory = edgeFilterFactory;
+            return this;
+        }
+        // ORS GH-MOD END
+
         @Override
         protected void checkRequest() {
             super.checkRequest();
@@ -572,6 +572,16 @@ public class Router {
             return new FlexiblePathCalculator(queryGraph, algorithmFactory, weighting, getAlgoOpts());
         }
 
+// ORS-GH MOD START: pass edgeFilter
+        @Override
+        protected EdgeFilter getSnapFilter() {
+            EdgeFilter defaultSnapFilter = new DefaultSnapFilter(weighting, lookup.getBooleanEncodedValue(Subnetwork.key(profile.getName())));
+            if (edgeFilterFactory != null)
+                return edgeFilterFactory.createEdgeFilter(request.getAdditionalHints(), weighting.getFlagEncoder(), ghStorage, defaultSnapFilter);
+            return defaultSnapFilter;
+        }
+// ORS MOD END
+
         AlgorithmOptions getAlgoOpts() {
             AlgorithmOptions algoOpts = new AlgorithmOptions().
                     setAlgorithm(request.getAlgorithm()).
@@ -584,7 +594,7 @@ public class Router {
                 algoOpts.setAlgorithm(Parameters.Algorithms.ASTAR_BI);
                 algoOpts.getHints().putObject(Parameters.Algorithms.AStarBi.EPSILON, 2);
             }
-// ORS-GH MOD START: initialize edgeFilter
+// ORS-GH MOD START: pass edgeFilter
             if (edgeFilterFactory != null)
                 algoOpts.setEdgeFilter(edgeFilterFactory.createEdgeFilter(request.getAdditionalHints(), weighting.getFlagEncoder(), ghStorage));
 // ORS MOD END

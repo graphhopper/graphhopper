@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.PMap;
 
@@ -27,11 +26,12 @@ import com.graphhopper.util.PMap;
  *
  * @author Peter Karich
  */
-@Deprecated // TODO ORS: this class isn't part of GH anymore
+@Deprecated // TODO ORS refactoring: find a more elgant way to inject additional edge filtering
 public class DefaultEdgeFilterFactory implements EdgeFilterFactory {
-    @Override
     public EdgeFilter createEdgeFilter(PMap opts, FlagEncoder flagEncoder, GraphHopperStorage gs) {
-        // ORS orig: return DefaultEdgeFilter.allEdges(flagEncoder);
-        return EdgeFilter.ALL_EDGES; // TODO ORS: this is only a quick hack to make it compile
+        return EdgeFilter.ALL_EDGES;
+    }
+    public EdgeFilter createEdgeFilter(PMap opts, FlagEncoder flagEncoder, GraphHopperStorage gs, EdgeFilter prependFilter) {
+        return EdgeFilter.ALL_EDGES;
     }
 }

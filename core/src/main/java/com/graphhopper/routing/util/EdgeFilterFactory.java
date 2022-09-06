@@ -23,4 +23,5 @@ import com.graphhopper.util.PMap;
 // ORS GH-MOD: way to inject additional edgeFilters to router
 public interface EdgeFilterFactory {
     EdgeFilter createEdgeFilter(PMap opts, FlagEncoder flagEncoder, GraphHopperStorage gs);
+    EdgeFilter createEdgeFilter(PMap opts, FlagEncoder flagEncoder, GraphHopperStorage gs, EdgeFilter prependFilter);
 }

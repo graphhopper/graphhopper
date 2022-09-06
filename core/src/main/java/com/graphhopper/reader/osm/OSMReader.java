@@ -1184,36 +1184,15 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     protected NodeAccess getNodeAccess() {
         return this.nodeAccess;
     }
-    // ORS-GH MOD END
 
-    // ORS-GH MOD START - additional method
+    // additional method used in OrsOsmReader()
     // See https://github.com/GIScience/openrouteservice/issues/725
     public void enforce2D() {
         distCalc.enforce2D();
     }
 
-    /**
-     * @deprecated use enforce2D instead.
-     */
-    @Deprecated // TODO ORS (minor): remove after upgrade
-    public void setCalcDistance3D(boolean use3D) {
-        if (!use3D) {
-            enforce2D();
-        }
-    }
-    // ORS-GH MOD END
-
-    // ORS-GH MOD START - additional method used in OrsOsmReader()
     protected DistanceCalc getDistanceCalc() {
        return distCalc;
-    }
-
-    /**
-     * @deprecated use getDistanceCalc() instead
-     */
-    @Deprecated // TODO ORS (minor): remove this after upgrade
-    protected DistanceCalc getDistanceCalc(boolean use3D) {
-        return getDistanceCalc();
     }
     // ORS-GH MOD END
 
