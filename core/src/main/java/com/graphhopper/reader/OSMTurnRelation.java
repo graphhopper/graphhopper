@@ -26,21 +26,27 @@ import java.util.*;
  */
 public class OSMTurnRelation {
     private final long fromOsmWayId;
-    private final long viaOsmNodeId;
+    private final ArrayList<Long> viaOSMIds;
     private final long toOsmWayId;
     private final RestrictionType restriction;
+    private final ViaType viaType;
     // vehicleTypeRestricted contains the dedicated vehicle type
     // example: restriction:bus = no_left_turn => vehicleTypeRestricted = "bus";
     private String vehicleTypeRestricted;
     private List<String> vehicleTypesExcept;
 
-    public OSMTurnRelation(long fromWayID, long viaNodeID, long toWayID, RestrictionType restrictionType) {
+    public OSMTurnRelation(long fromWayID, ArrayList<Long> viaOSMIds, long toWayID, RestrictionType restrictionType, ViaType viaType) {
         this.fromOsmWayId = fromWayID;
-        this.viaOsmNodeId = viaNodeID;
+        this.viaOSMIds = viaOSMIds;
         this.toOsmWayId = toWayID;
         this.restriction = restrictionType;
+        this.viaType = viaType;
         this.vehicleTypeRestricted = "";
         this.vehicleTypesExcept = new ArrayList<>();
+    }
+
+    public OSMTurnRelation(long fromWayID, long viaId, long toWayID, RestrictionType restrictionType, ViaType viaType) {
+        this(fromWayID, new ArrayList<>(Arrays.asList(viaId)), toWayID, restrictionType, viaType);
     }
 
     public long getOsmIdFrom() {
@@ -51,12 +57,16 @@ public class OSMTurnRelation {
         return toOsmWayId;
     }
 
-    public long getViaOsmNodeId() {
-        return viaOsmNodeId;
+    public ArrayList<Long> getViaOSMIds() {
+        return viaOSMIds;
     }
 
     public RestrictionType getRestriction() {
         return restriction;
+    }
+
+    public ViaType getViaType() {
+        return viaType;
     }
 
     public String getVehicleTypeRestricted() {
@@ -89,7 +99,7 @@ public class OSMTurnRelation {
 
     @Override
     public String toString() {
-        return "*-(" + fromOsmWayId + ")->" + viaOsmNodeId + "-(" + toOsmWayId + ")->*";
+        return "*-(" + fromOsmWayId + ")->" + viaOSMIds + "-(" + toOsmWayId + ")->*";
     }
 
     public enum RestrictionType {
@@ -109,7 +119,7 @@ public class OSMTurnRelation {
         }
 
         public static RestrictionType get(String tag) {
-        	RestrictionType result = null;
+            RestrictionType result = null;
             if (tag != null) {
                 result = tags.get(tag);
             }
@@ -118,6 +128,6 @@ public class OSMTurnRelation {
     }
 
     public enum ViaType {
-        VIA_NODE, VIA_WAY, MULTI_VIA_WAY;
+        UNSUPPORTED, NODE, WAY, MULTI_WAY;
     }
 }
