@@ -51,7 +51,7 @@ public class OSMTurnRelationParserTest {
         };
 
         // TYPE == ONLY
-        OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.ONLY);
+        OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.RestrictionType.ONLY);
         parser.addRelationToTCStorage(instance, map, graph);
 
         TurnCostStorage tcs = graph.getTurnCostStorage();
@@ -60,7 +60,7 @@ public class OSMTurnRelationParserTest {
         assertTrue(Double.isInfinite(tcs.get(turnCostEnc, 4, 3, 2)));
 
         // TYPE == NOT
-        instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
+        instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.RestrictionType.NOT);
         parser.addRelationToTCStorage(instance, map, graph);
         assertTrue(Double.isInfinite(tcs.get(turnCostEnc, 4, 3, 3)));
     }
