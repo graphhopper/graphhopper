@@ -587,16 +587,16 @@ public class OSMReaderTest {
         rel.add(new ReaderRelation.Member(ReaderElement.Type.NODE, 3L, "via"));
         rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 4L, "to"));
 
-        List<OSMTurnRelation> osmRel = OSMReader.createTurnRelations(rel);
+        List<OSMTurnRestriction> osmRel = OSMReader.createTurnRelations(rel);
         assertEquals(2, osmRel.size());
 
         assertEquals(1, osmRel.get(0).getOsmIdFrom());
         assertEquals(4, osmRel.get(0).getOsmIdTo());
-        assertEquals(OSMTurnRelation.Type.NOT, osmRel.get(0).getRestriction());
+        assertEquals(OSMTurnRestriction.Type.NOT, osmRel.get(0).getRestriction());
 
         assertEquals(2, osmRel.get(1).getOsmIdFrom());
         assertEquals(4, osmRel.get(1).getOsmIdTo());
-        assertEquals(OSMTurnRelation.Type.NOT, osmRel.get(1).getRestriction());
+        assertEquals(OSMTurnRestriction.Type.NOT, osmRel.get(1).getRestriction());
     }
 
     @Test

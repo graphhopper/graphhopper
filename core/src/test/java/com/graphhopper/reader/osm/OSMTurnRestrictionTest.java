@@ -29,12 +29,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author Peter Karich
  */
-public class OSMTurnRelationTest {
+public class OSMTurnRestrictionTest {
     @Test
     public void testAcceptsTurnRelation() {
         List<String> vehicleTypes = new ArrayList<>(Arrays.asList("motorcar", "motor_vehicle", "vehicle"));
         List<String> vehicleTypesExcept = new ArrayList<>();
-        OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT);
+        OSMTurnRestriction osmTurnRelation = new OSMTurnRestriction(1, 1, 1, OSMTurnRestriction.Type.NOT);
         assertTrue(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
 
         vehicleTypesExcept.add("bus");

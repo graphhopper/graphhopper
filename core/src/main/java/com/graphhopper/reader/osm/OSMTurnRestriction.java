@@ -24,7 +24,7 @@ import java.util.*;
  *
  * @author Karl Hübner
  */
-public class OSMTurnRelation {
+public class OSMTurnRestriction {
     private final long fromOsmWayId;
     private final long viaOsmNodeId;
     private final long toOsmWayId;
@@ -34,7 +34,7 @@ public class OSMTurnRelation {
     private String vehicleTypeRestricted;
     private List<String> vehicleTypesExcept;
 
-    public OSMTurnRelation(long fromWayID, long viaNodeID, long toWayID, Type restrictionType) {
+    public OSMTurnRestriction(long fromWayID, long viaNodeID, long toWayID, Type restrictionType) {
         this.fromOsmWayId = fromWayID;
         this.viaOsmNodeId = viaNodeID;
         this.toOsmWayId = toWayID;
