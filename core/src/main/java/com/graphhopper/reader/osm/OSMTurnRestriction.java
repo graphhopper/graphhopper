@@ -108,8 +108,8 @@ public class OSMTurnRestriction {
             tags.put("only_straight_on", ONLY);
         }
 
-        public static RestrictionType getRestrictionType(String tag) {
-            RestrictionType result = null;
+        public static RestrictionType get(String tag) {
+        	RestrictionType result = null;
             if (tag != null) {
                 result = tags.get(tag);
             }
@@ -117,4 +117,7 @@ public class OSMTurnRestriction {
         }
     }
 
+    public enum ViaType {
+        VIA_NODE, VIA_WAY, MULTI_VIA_WAY;
+    }
 }
