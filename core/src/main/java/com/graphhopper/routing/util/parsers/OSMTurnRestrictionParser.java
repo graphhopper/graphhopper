@@ -66,7 +66,8 @@ public class OSMTurnRestrictionParser implements TurnCostParser {
      */
     void addRelationToTCStorage(OSMTurnRestriction osmTurnRestriction, ExternalInternalMap map, Graph graph) {
         TurnCostStorage tcs = graph.getTurnCostStorage();
-        int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRestriction.getViaOsmNodeId());
+        int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRestriction.getViaOSMIds().get(0));
+
         EdgeExplorer edgeOutExplorer = getOutExplorer(graph), edgeInExplorer = getInExplorer(graph);
 
         try {
@@ -100,7 +101,7 @@ public class OSMTurnRestrictionParser implements TurnCostParser {
                 }
             }
         } catch (Exception e) {
-            throw new IllegalStateException("Could not built turn table entry for relation of node with osmId:" + osmTurnRestriction.getViaOsmNodeId(), e);
+            throw new IllegalStateException("Could not built turn table entry for relation of node with osmId:" + viaNode, e);
         }
     }
 

@@ -51,7 +51,7 @@ public class OSMTurnRestrictionParserTest {
         };
 
         // TYPE == ONLY
-        OSMTurnRestriction instance = new OSMTurnRestriction(4, 3, 3, OSMTurnRestriction.RestrictionType.ONLY);
+        OSMTurnRestriction instance = new OSMTurnRestriction(4, 3, 3, OSMTurnRestriction.RestrictionType.ONLY, OSMTurnRestriction.ViaType.NODE);
         parser.addRelationToTCStorage(instance, map, graph);
 
         TurnCostStorage tcs = graph.getTurnCostStorage();
@@ -60,7 +60,7 @@ public class OSMTurnRestrictionParserTest {
         assertTrue(Double.isInfinite(tcs.get(turnCostEnc, 4, 3, 2)));
 
         // TYPE == NOT
-        instance = new OSMTurnRestriction(4, 3, 3, OSMTurnRestriction.RestrictionType.NOT);
+        instance = new OSMTurnRestriction(4, 3, 3, OSMTurnRestriction.RestrictionType.NOT, OSMTurnRestriction.ViaType.NODE);
         parser.addRelationToTCStorage(instance, map, graph);
         assertTrue(Double.isInfinite(tcs.get(turnCostEnc, 4, 3, 3)));
     }
