@@ -92,10 +92,10 @@ public class OSMTurnRestrictionParser implements TurnCostParser {
             while (iter.next()) {
                 int edgeId = iter.getEdge();
                 long wayId = map.getOsmIdOfInternalEdge(edgeId);
-                if (edgeId != edgeIdFrom && osmTurnRelation.getRestriction() == OSMTurnRestriction.Type.ONLY && wayId != osmTurnRelation.getOsmIdTo()
-                        || osmTurnRelation.getRestriction() == OSMTurnRestriction.Type.NOT && wayId == osmTurnRelation.getOsmIdTo() && wayId >= 0) {
+                if (edgeId != edgeIdFrom && osmTurnRelation.getRestriction() == OSMTurnRestriction.RestrictionType.ONLY && wayId != osmTurnRelation.getOsmIdTo()
+                        || osmTurnRelation.getRestriction() == OSMTurnRestriction.RestrictionType.NOT && wayId == osmTurnRelation.getOsmIdTo() && wayId >= 0) {
                     tcs.set(turnCostEnc, edgeIdFrom, viaNode, iter.getEdge(), Double.POSITIVE_INFINITY);
-                    if (osmTurnRelation.getRestriction() == OSMTurnRestriction.Type.NOT)
+                    if (osmTurnRelation.getRestriction() == OSMTurnRestriction.RestrictionType.NOT)
                         break;
                 }
             }

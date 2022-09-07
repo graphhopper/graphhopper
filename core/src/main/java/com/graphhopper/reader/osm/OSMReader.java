@@ -594,8 +594,8 @@ public class OSMReader {
 
     static List<OSMTurnRestriction> createTurnRelations(ReaderRelation relation, String restrictionType,
                                                      String vehicleTypeRestricted, List<String> vehicleTypesExcept) {
-        OSMTurnRestriction.Type type = OSMTurnRestriction.Type.getRestrictionType(restrictionType);
-        if (type != OSMTurnRestriction.Type.UNSUPPORTED) {
+        OSMTurnRestriction.RestrictionType type = OSMTurnRestriction.RestrictionType.get(restrictionType);
+        if (type != OSMTurnRestriction.RestrictionType.UNSUPPORTED) {
             // we use -1 to indicate 'missing', which is fine because we exclude negative OSM IDs (see #2652)
             long viaNodeID = -1;
             long toWayID = -1;

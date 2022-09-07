@@ -28,13 +28,13 @@ public class OSMTurnRestriction {
     private final long fromOsmWayId;
     private final long viaOsmNodeId;
     private final long toOsmWayId;
-    private final Type restriction;
+    private final RestrictionType restriction;
     // vehicleTypeRestricted contains the dedicated vehicle type
     // example: restriction:bus = no_left_turn => vehicleTypeRestricted = "bus";
     private String vehicleTypeRestricted;
     private List<String> vehicleTypesExcept;
 
-    public OSMTurnRestriction(long fromWayID, long viaNodeID, long toWayID, Type restrictionType) {
+    public OSMTurnRestriction(long fromWayID, long viaNodeID, long toWayID, RestrictionType restrictionType) {
         this.fromOsmWayId = fromWayID;
         this.viaOsmNodeId = viaNodeID;
         this.toOsmWayId = toWayID;
@@ -55,7 +55,7 @@ public class OSMTurnRestriction {
         return viaOsmNodeId;
     }
 
-    public Type getRestriction() {
+    public RestrictionType getRestriction() {
         return restriction;
     }
 
@@ -92,10 +92,10 @@ public class OSMTurnRestriction {
         return "*-(" + fromOsmWayId + ")->" + viaOsmNodeId + "-(" + toOsmWayId + ")->*";
     }
 
-    public enum Type {
+    public enum RestrictionType {
         UNSUPPORTED, NOT, ONLY;
 
-        private static final Map<String, Type> tags = new HashMap<>();
+        private static final Map<String, RestrictionType> tags = new HashMap<>();
 
         static {
             tags.put("no_left_turn", NOT);
@@ -108,8 +108,8 @@ public class OSMTurnRestriction {
             tags.put("only_straight_on", ONLY);
         }
 
-        public static Type getRestrictionType(String tag) {
-            Type result = null;
+        public static RestrictionType get(String tag) {
+        	RestrictionType result = null;
             if (tag != null) {
                 result = tags.get(tag);
             }
@@ -117,4 +117,7 @@ public class OSMTurnRestriction {
         }
     }
 
+    public enum ViaType {
+        VIA_NODE, VIA_WAY, MULTI_VIA_WAY;
+    }
 }

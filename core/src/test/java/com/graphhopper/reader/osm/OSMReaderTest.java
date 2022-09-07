@@ -592,11 +592,11 @@ public class OSMReaderTest {
 
         assertEquals(1, osmRel.get(0).getOsmIdFrom());
         assertEquals(4, osmRel.get(0).getOsmIdTo());
-        assertEquals(OSMTurnRestriction.Type.NOT, osmRel.get(0).getRestriction());
+        assertEquals(OSMTurnRestriction.RestrictionType.NOT, osmRel.get(0).getRestriction());
 
         assertEquals(2, osmRel.get(1).getOsmIdFrom());
         assertEquals(4, osmRel.get(1).getOsmIdTo());
-        assertEquals(OSMTurnRestriction.Type.NOT, osmRel.get(1).getRestriction());
+        assertEquals(OSMTurnRestriction.RestrictionType.NOT, osmRel.get(1).getRestriction());
     }
 
     @Test
