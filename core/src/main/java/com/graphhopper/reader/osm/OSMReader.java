@@ -544,10 +544,13 @@ public class OSMReader {
                 }
             };
             for (OSMTurnRestriction turnRelation : createTurnRelations(relation)) {
-                int viaNode = map.getInternalNodeIdOfOsmNode(turnRelation.getViaOsmNodeId());
-                // street with restriction was not included (access or tag limits etc)
-                if (viaNode >= 0)
-                    osmParsers.handleTurnRelationTags(turnRelation, map, baseGraph);
+                // till now only Via-Node Restrictions are considered 
+                if (turnRelation.getViaType() == OSMTurnRestriction.ViaType.NODE) {
+                    int viaNode = map.getInternalNodeIdOfOsmNode(turnRelation.getViaOSMIds().get(0));
+                    // street with restriction was not included (access or tag limits etc)
+                    if (viaNode >= 0)
+                        osmParsers.handleTurnRelationTags(turnRelation, map, baseGraph);
+                }
             }
         }
     }
@@ -593,24 +596,47 @@ public class OSMReader {
     }
 
     static List<OSMTurnRestriction> createTurnRelations(ReaderRelation relation, String restrictionType,
-                                                     String vehicleTypeRestricted, List<String> vehicleTypesExcept) {
+                                                        String vehicleTypeRestricted, List<String> vehicleTypesExcept) {
         OSMTurnRestriction.RestrictionType type = OSMTurnRestriction.RestrictionType.get(restrictionType);
         if (type != OSMTurnRestriction.RestrictionType.UNSUPPORTED) {
+            ArrayList<Long> viaIDs = new ArrayList<>();
+            OSMTurnRestriction.ViaType viaType = OSMTurnRestriction.ViaType.UNSUPPORTED;
             // we use -1 to indicate 'missing', which is fine because we exclude negative OSM IDs (see #2652)
-            long viaNodeID = -1;
             long toWayID = -1;
 
+            // A Turn Restriction (https://wiki.openstreetmap.org/wiki/Relation:restriction) can consist of...
+
             for (ReaderRelation.Member member : relation.getMembers()) {
-                if (ReaderElement.Type.WAY == member.getType() && "to".equals(member.getRole()))
+                // ONE TO Way (a "no_exit" restriction can have ONE OR MORE TO ways)
+                if (ReaderElement.Type.WAY == member.getType() && "to".equals(member.getRole())) {
                     toWayID = member.getRef();
-                else if (ReaderElement.Type.NODE == member.getType() && "via".equals(member.getRole()))
-                    viaNodeID = member.getRef();
+                }
+
+                // ONE VIA NODE or
+                else if (ReaderElement.Type.NODE == member.getType() && "via".equals(member.getRole())) {
+                    if (viaType == OSMTurnRestriction.ViaType.UNSUPPORTED) {
+                        viaIDs.add(member.getRef());
+                        viaType = OSMTurnRestriction.ViaType.NODE;
+                    }
+                }
+                // ONE OR MORE VIA WAYS
+                else if (ReaderElement.Type.WAY == member.getType() && "via".equals(member.getRole())) {
+                    if (viaType == OSMTurnRestriction.ViaType.UNSUPPORTED) {
+                        viaIDs.add(member.getRef());
+                        viaType = OSMTurnRestriction.ViaType.WAY;
+                    } else if (viaType == OSMTurnRestriction.ViaType.WAY || viaType == OSMTurnRestriction.ViaType.MULTI_WAY) {
+                        viaIDs.add(member.getRef());
+                        viaType = OSMTurnRestriction.ViaType.MULTI_WAY;
+                    }
+                }
             }
-            if (toWayID >= 0 && viaNodeID >= 0) {
+
+            // ONE FROM Way (a "no_entry" restriction can have ONE OR MORE FROM ways)
+            if (toWayID >= 0 && viaIDs.size() > 0) {
                 List<OSMTurnRestriction> res = new ArrayList<>(2);
                 for (ReaderRelation.Member member : relation.getMembers()) {
                     if (ReaderElement.Type.WAY == member.getType() && "from".equals(member.getRole())) {
-                        OSMTurnRestriction osmTurnRelation = new OSMTurnRestriction(member.getRef(), viaNodeID, toWayID, type);
+                        OSMTurnRestriction osmTurnRelation = new OSMTurnRestriction(member.getRef(), viaIDs, toWayID, type, viaType);
                         osmTurnRelation.setVehicleTypeRestricted(vehicleTypeRestricted);
                         osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
                         res.add(osmTurnRelation);
