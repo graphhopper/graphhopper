@@ -46,6 +46,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -576,6 +577,41 @@ public class OSMReaderTest {
 
         assertTrue(tcStorage.get(carTCEnc, edge10_11, n11, edge11_14) == 0);
         assertTrue(tcStorage.get(bikeTCEnc, edge10_11, n11, edge11_14) > 0);
+    }
+
+    @Test
+    void testViaWayTurnRestrictions() {
+        ReaderRelation rel = new ReaderRelation(1L);
+
+        rel.setTag("restriction", "no_u_turn");
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1L, "from"));
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 2L, "via"));
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 3L, "to"));
+
+        List<OSMTurnRelation> osmRel = OSMReader.createTurnRelations(rel);
+        assertEquals(osmRel.get(0).getViaType(), OSMTurnRelation.ViaType.WAY);
+        assertEquals(osmRel.get(0).getViaOSMIds().get(0), 2);
+    }
+
+    @Test
+    void testMultiViaWayTurnRestrictions() {
+        ReaderRelation rel = new ReaderRelation(1L);
+
+        rel.setTag("restriction", "no_u_turn");
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1L, "from"));
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 2L, "via"));
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 3L, "via"));
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 4L, "via"));
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 5L, "to"));
+
+        ArrayList<Long> viaOSMIds = new ArrayList<>();
+        viaOSMIds.add(2L);
+        viaOSMIds.add(3L);
+        viaOSMIds.add(4L);
+
+        List<OSMTurnRelation> osmRel = OSMReader.createTurnRelations(rel);
+        assertEquals(osmRel.get(0).getViaType(), OSMTurnRelation.ViaType.MULTI_WAY);
+        assertEquals(osmRel.get(0).getViaOSMIds(), viaOSMIds);
     }
 
     @Test

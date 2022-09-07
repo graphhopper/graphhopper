@@ -35,7 +35,8 @@ public class OSMTurnRelationTest {
     public void testAcceptsTurnRelation() {
         List<String> vehicleTypes = new ArrayList<>(Arrays.asList("motorcar", "motor_vehicle", "vehicle"));
         List<String> vehicleTypesExcept = new ArrayList<>();
-        OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.RestrictionType.NOT, OSMTurnRelation.ViaType.WAY);
+        OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.RestrictionType.NOT, OSMTurnRelation.ViaType.NODE);
+
         assertTrue(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
 
         vehicleTypesExcept.add("bus");
