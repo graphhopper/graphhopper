@@ -17,7 +17,6 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.graphhopper.reader.OSMTurnRelation;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

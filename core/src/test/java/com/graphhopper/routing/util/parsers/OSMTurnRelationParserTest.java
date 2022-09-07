@@ -1,6 +1,6 @@
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.osm.OSMTurnRelation;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TransportationMode;

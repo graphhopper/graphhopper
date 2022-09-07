@@ -18,9 +18,9 @@
 
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.OSMTurnRelation;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.util.parsers.OSMTurnRelationParser;
 import com.graphhopper.routing.util.parsers.RelationTagParser;
