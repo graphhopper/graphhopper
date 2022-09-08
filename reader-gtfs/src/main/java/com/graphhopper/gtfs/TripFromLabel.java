@@ -21,6 +21,7 @@ package com.graphhopper.gtfs;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
+import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -40,6 +41,7 @@ import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -99,6 +101,7 @@ class TripFromLabel {
         final InstructionList instructions = new InstructionList(tr);
         final PointList pointsList = new PointList();
         Map<String, List<PathDetail>> pathDetails = new HashMap<>();
+        String previousExitStopId = "";
         for (int i = 0; i < path.getLegs().size(); ++i) {
             Trip.Leg leg = path.getLegs().get(i);
             if (leg instanceof Trip.WalkLeg) {
@@ -113,24 +116,28 @@ class TripFromLabel {
                 shiftedLegPathDetails.forEach((k, v) -> pathDetails.merge(k, shiftedLegPathDetails.get(k), (a,b) -> Lists.newArrayList(Iterables.concat(a, b))));
             } else if (leg instanceof Trip.PtLeg) {
                 final Trip.PtLeg ptLeg = ((Trip.PtLeg) leg);
+                final Trip.Stop departureStop = ptLeg.stops.get(0);
                 final PointList pl;
                 if (!ptLeg.isInSameVehicleAsPrevious) {
                     pl = new PointList();
-                    final Instruction departureInstruction = new Instruction(Instruction.PT_START_TRIP, ptLeg.trip_headsign, pl);
+                    String ptname = Strings.isNullOrEmpty(ptLeg.trip_headsign) || Strings.isNullOrEmpty(ptLeg.route_short_name) ?  ptLeg.route_long_name : ptLeg.route_short_name;
+                    int instrType = !Strings.isNullOrEmpty(previousExitStopId) && previousExitStopId.equals(departureStop.stop_id) ? Instruction.PT_TRANSFER : Instruction.PT_START_TRIP;
+                    final Instruction departureInstruction = new Instruction(instrType, ptname, ptLeg.trip_headsign, pl);
                     departureInstruction.setDistance(leg.getDistance());
                     departureInstruction.setTime(ptLeg.travelTime);
                     instructions.add(departureInstruction);
                 } else {
                     pl = instructions.get(instructions.size() - 2).getPoints();
                 }
-                pl.add(ptLeg.stops.get(0).geometry.getY(), ptLeg.stops.get(0).geometry.getX());
-                pointsList.add(ptLeg.stops.get(0).geometry.getY(), ptLeg.stops.get(0).geometry.getX());
+                pl.add(departureStop.geometry.getY(), departureStop.geometry.getX());
+                pointsList.add(departureStop.geometry.getY(), departureStop.geometry.getX());
                 for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size() - 1)) {
                     pl.add(stop.geometry.getY(), stop.geometry.getX());
                     pointsList.add(stop.geometry.getY(), stop.geometry.getX());
                 }
                 final PointList arrivalPointList = new PointList();
                 final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size() - 1);
+                previousExitStopId = arrivalStop.stop_id;
                 arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
                 pointsList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
                 Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, arrivalPointList);
@@ -354,18 +361,21 @@ class TripFromLabel {
                             .forEach(stopsFromBoardHopDwellEdges::next);
                     stopsFromBoardHopDwellEdges.finish();
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
-
+                    GTFSFeed currentFeed = gtfsStorage.getGtfsFeeds().get(feedId);
                     result.add(new Trip.PtLeg(
                             feedId, partition.get(0).edge.getTransfers() == 0,
                             tripDescriptor.getTripId(),
                             tripDescriptor.getRouteId(),
-                            Optional.ofNullable(gtfsStorage.getGtfsFeeds().get(feedId).trips.get(tripDescriptor.getTripId())).map(t -> t.trip_headsign).orElse(
-                                    Optional.ofNullable(gtfsStorage.getGtfsFeeds().get(feedId).routes.get(tripDescriptor.getRouteId())).map(t -> t.route_long_name).orElse("extra")
+                            Optional.ofNullable(currentFeed.trips.get(tripDescriptor.getTripId())).map(t -> t.trip_headsign).orElse(
+                                    Optional.ofNullable(currentFeed.routes.get(tripDescriptor.getRouteId())).map(t -> t.route_long_name).orElse("extra")
                             ),
+                            Optional.ofNullable(currentFeed.routes.get(tripDescriptor.getRouteId())).map(r -> r.route_long_name).orElse("public transport"),
+                            Optional.ofNullable(currentFeed.routes.get(tripDescriptor.getRouteId())).map(r -> r.route_short_name).orElse("pt"),
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
                             path.get(i - 1).label.currentTime - boardTime,
-                            geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
+//                            constructPtLegGeometry(stops, tripDescriptor, currentFeed)
+                            currentFeed.getTripGeometry(tripDescriptor.getTripId())));
                     partition = null;
                     if (edge.getType() == GtfsStorage.EdgeType.TRANSFER) {
                         feedId = edge.getPlatformDescriptor().feed_id;
@@ -414,6 +424,11 @@ class TripFromLabel {
                     pathDetails,
                     Date.from(arrivalTime)));
         }
+    }
+
+    private LineString constructPtLegGeometry(List<Trip.Stop> stops, GtfsRealtime.TripDescriptor tripDescriptor, GTFSFeed currentFeed) {
+
+        return geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new));
     }
 
     private List<Label.Transition> transferPath(int[] skippedEdgesForTransfer, Weighting accessEgressWeighting, long currentTime) {
