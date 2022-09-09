@@ -49,6 +49,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 
@@ -700,13 +701,17 @@ public class GHUtility {
         }
     }
 
-    public static void runConcurrently(List<Callable<String>> callables, int threads) {
+    public static void runConcurrently(Stream<Callable<String>> callables, int threads) {
         ExecutorService executorService = Executors.newFixedThreadPool(threads);
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
-        callables.forEach(completionService::submit);
+        AtomicInteger count = new AtomicInteger();
+        callables.forEach(c -> {
+            count.incrementAndGet();
+            completionService.submit(c);
+        });
         executorService.shutdown();
         try {
-            for (int i = 0; i < callables.size(); i++)
+            for (int i = 0; i < count.get(); i++)
                 completionService.take().get();
         } catch (Exception e) {
             executorService.shutdownNow();

@@ -8,7 +8,7 @@ graphhopper:
 
   ##### Vehicles #####
 
-  # More options: foot,hike,bike,bike2,mtb,racingbike,motorcycle,car4wd,wheelchair (comma separated)
+  # More options: foot,hike,bike,bike2,mtb,racingbike,motorcycle,wheelchair (comma separated)
   # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below.
   # graph.flag_encoders: car
 
@@ -108,6 +108,20 @@ graphhopper:
   # - second, set the elevation tolerance (in meters) to use when simplifying polylines since the default ignores
   #   elevation and will remove the extra points that long edge sampling added
   # graph.elevation.way_point_max_distance: 10
+
+  #### Urban density (built-up areas) ####
+
+
+  # This feature allows classifying roads into 'rural', 'residential' and 'city' areas (encoded value 'urban_density')
+  # Use 1 or more threads to enable the feature
+  # graph.urban_density.threads: 8
+  # Use higher/lower sensitivities if too little/many roads fall into the according categories.
+  # Using smaller radii will speed up the classification, but only change these values if you know what you are doing.
+  # If you do not need the (rather slow) city classification set city_radius to zero.
+  # graph.urban_density.residential_radius: 300
+  # graph.urban_density.residential_sensitivity: 60
+  # graph.urban_density.city_radius: 2000
+  # graph.urban_density.city_sensitivity: 30
 
 
   #### Speed, hybrid and flexible mode ####

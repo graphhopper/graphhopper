@@ -38,7 +38,6 @@ The vehicle field must correspond to one of GraphHopper's built-in vehicle types
 - bike2
 - mtb
 - car
-- car4wd
 - motorcycle
 
 By choosing a vehicle GraphHopper determines the accessibility and a default travel speed for the different road types.

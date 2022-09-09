@@ -94,22 +94,32 @@ public class MVTResource {
         locationIndex.query(bbox, edgeId -> {
             EdgeIteratorState edge = graphHopper.getBaseGraph().getEdgeIteratorStateForKey(edgeId * 2);
             LineString lineString;
-            RoadClass rc = edge.get(roadClassEnc);
-            if (zInfo >= 14) {
-                PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
-                lineString = pl.toLineString(false);
-            } else if (rc == RoadClass.MOTORWAY
-                    || zInfo > 10 && (rc == RoadClass.PRIMARY || rc == RoadClass.TRUNK)
-                    || zInfo > 11 && (rc == RoadClass.SECONDARY)
-                    || zInfo > 12) {
-                double lat = na.getLat(edge.getBaseNode());
-                double lon = na.getLon(edge.getBaseNode());
-                double toLat = na.getLat(edge.getAdjNode());
-                double toLon = na.getLon(edge.getAdjNode());
-                lineString = geometryFactory.createLineString(new Coordinate[]{new Coordinate(lon, lat), new Coordinate(toLon, toLat)});
+            if (pathDetails.contains(UrbanDensity.KEY)) {
+                if (zInfo >= 9) {
+                    PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+                    lineString = pl.toLineString(false);
+                } else {
+                    // skip edge for certain zoom
+                    return;
+                }
             } else {
-                // skip edge for certain zoom
-                return;
+                RoadClass rc = edge.get(roadClassEnc);
+                if (zInfo >= 14) {
+                    PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+                    lineString = pl.toLineString(false);
+                } else if (rc == RoadClass.MOTORWAY
+                        || zInfo > 10 && (rc == RoadClass.PRIMARY || rc == RoadClass.TRUNK)
+                        || zInfo > 11 && (rc == RoadClass.SECONDARY)
+                        || zInfo > 12) {
+                    double lat = na.getLat(edge.getBaseNode());
+                    double lon = na.getLon(edge.getBaseNode());
+                    double toLat = na.getLat(edge.getAdjNode());
+                    double toLon = na.getLon(edge.getAdjNode());
+                    lineString = geometryFactory.createLineString(new Coordinate[]{new Coordinate(lon, lat), new Coordinate(toLon, toLat)});
+                } else {
+                    // skip edge for certain zoom
+                    return;
+                }
             }
 
             edgeCounter.incrementAndGet();

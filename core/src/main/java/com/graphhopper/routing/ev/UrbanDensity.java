@@ -15,25 +15,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
 
-import com.graphhopper.util.PMap;
+package com.graphhopper.routing.ev;
 
-/**
- * @author Peter Karich
- */
-public interface VehicleEncodedValuesFactory {
-    String ROADS = "roads";
-    String CAR = "car";
-    String BIKE = "bike";
-    String BIKE2 = "bike2";
-    String RACINGBIKE = "racingbike";
-    String MOUNTAINBIKE = "mtb";
-    String FOOT = "foot";
-    String HIKE = "hike";
-    String MOTORCYCLE = "motorcycle";
-    String WHEELCHAIR = "wheelchair";
+public enum UrbanDensity {
+    RURAL("rural"), RESIDENTIAL("residential"), CITY("city");
 
-    VehicleEncodedValues createVehicleEncodedValues(String name, PMap configuration);
+    public static EnumEncodedValue<UrbanDensity> create() {
+        return new EnumEncodedValue<>(KEY, UrbanDensity.class);
+    }
 
+    public static final String KEY = "urban_density";
+
+    private final String name;
+
+    UrbanDensity(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return name;
+    }
 }
