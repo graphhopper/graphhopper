@@ -20,6 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
@@ -240,6 +241,14 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             if (is3D)
                 elevations[tmp] = points.getEle(i);
         }
+        size = newSize;
+    }
+
+    public void add(Geometry geometry) {
+        ensureMutability();
+        int newSize = size + geometry.getNumPoints();
+        incCap(newSize);
+        Arrays.stream(geometry.getCoordinates()).forEach(c -> {add(c.y, c.x);});
         size = newSize;
     }
 

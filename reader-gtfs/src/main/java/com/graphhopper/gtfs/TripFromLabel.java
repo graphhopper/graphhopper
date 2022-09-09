@@ -21,6 +21,7 @@ package com.graphhopper.gtfs;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
+import com.google.common.base.Predicates;
 import com.google.common.base.Strings;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
@@ -42,6 +43,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
+import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -131,10 +133,8 @@ class TripFromLabel {
                 }
                 pl.add(departureStop.geometry.getY(), departureStop.geometry.getX());
                 pointsList.add(departureStop.geometry.getY(), departureStop.geometry.getX());
-                for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size() - 1)) {
-                    pl.add(stop.geometry.getY(), stop.geometry.getX());
-                    pointsList.add(stop.geometry.getY(), stop.geometry.getX());
-                }
+                pl.add(ptLeg.geometry);
+                pointsList.add(ptLeg.geometry);
                 final PointList arrivalPointList = new PointList();
                 final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size() - 1);
                 previousExitStopId = arrivalStop.stop_id;
@@ -361,6 +361,7 @@ class TripFromLabel {
                             .forEach(stopsFromBoardHopDwellEdges::next);
                     stopsFromBoardHopDwellEdges.finish();
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
+                    List<String> stopIds = stops.stream().map(s -> s.stop_id).collect(Collectors.toList());
                     GTFSFeed currentFeed = gtfsStorage.getGtfsFeeds().get(feedId);
                     result.add(new Trip.PtLeg(
                             feedId, partition.get(0).edge.getTransfers() == 0,
@@ -374,8 +375,8 @@ class TripFromLabel {
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
                             path.get(i - 1).label.currentTime - boardTime,
-//                            constructPtLegGeometry(stops, tripDescriptor, currentFeed)
-                            currentFeed.getTripGeometry(tripDescriptor.getTripId())));
+                            currentFeed.getTripGeometry(tripDescriptor.getTripId(), StreamSupport.stream(currentFeed.getOrderedStopTimesForTrip(tripDescriptor.getTripId()).spliterator(), false)
+                                    .filter(st -> stopIds.contains(st.stop_id)).collect(Collectors.toList()))));
                     partition = null;
                     if (edge.getType() == GtfsStorage.EdgeType.TRANSFER) {
                         feedId = edge.getPlatformDescriptor().feed_id;
@@ -424,11 +425,6 @@ class TripFromLabel {
                     pathDetails,
                     Date.from(arrivalTime)));
         }
-    }
-
-    private LineString constructPtLegGeometry(List<Trip.Stop> stops, GtfsRealtime.TripDescriptor tripDescriptor, GTFSFeed currentFeed) {
-
-        return geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new));
     }
 
     private List<Label.Transition> transferPath(int[] skippedEdgesForTransfer, Weighting accessEgressWeighting, long currentTime) {

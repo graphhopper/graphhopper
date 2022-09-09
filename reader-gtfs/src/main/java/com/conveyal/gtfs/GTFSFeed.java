@@ -325,24 +325,20 @@ public class GTFSFeed implements Cloneable, Closeable {
      * @return          the LineString representing the trip geometry.
      * @see             LineString
      */
-    public LineString getTripGeometry(String trip_id){
-
-        CoordinateList coordinates = new CoordinateList();
-        LineString ls = null;
+    public LineString getTripGeometry(String trip_id, List<StopTime> tripStopTimes){
         Trip trip = trips.get(trip_id);
-
-        // If trip has shape_id, use it to generate geometry.
-        if (trip.shape_id != null) {
+        // If trip has shape_id and we know the relevant stops / stoptimes, use those to generate geometry.
+        if (trip.shape_id != null && tripStopTimes != null && tripStopTimes.size() >= 2) {
             Shape shape = getShape(trip.shape_id);
-            if (shape != null) ls = shape.geometry;
+            if (shape != null) {
+                return shape.getGeometryStartToEnd(
+                    tripStopTimes.get(0).shape_dist_traveled,
+                    tripStopTimes.get(tripStopTimes.size() - 1).shape_dist_traveled
+                );
+            }
         }
-
-        // Use the ordered stoptimes.
-        if (ls == null) {
-            ls = getStraightLineForStops(trip_id);
-        }
-
-        return ls;
+        // Else Use the ordered stoptimes
+        return getStraightLineForStops(trip_id);
     }
 
     /**
