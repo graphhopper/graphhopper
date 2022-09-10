@@ -61,7 +61,6 @@
         <module>core</module>
         <module>reader-gtfs</module>
         <module>tools</module>
-        <module>hmm-lib</module>
         <module>map-matching</module>
         <module>web-bundle</module>
         <module>web-api</module>

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.bmw.hmm;
+package com.graphhopper.matching;
 
 import java.util.Objects;
 
