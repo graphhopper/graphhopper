@@ -27,6 +27,7 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
+import org.locationtech.jts.geom.Coordinate;
 
 import java.io.IOException;
 import java.net.URL;
@@ -83,6 +84,10 @@ public class Stop extends Entity {
             feed.stops.put(s.stop_id, s);
         }
 
+    }
+
+    public Coordinate getCoordinates() {
+        return new Coordinate(stop_lon, stop_lat);
     }
 
     @Override

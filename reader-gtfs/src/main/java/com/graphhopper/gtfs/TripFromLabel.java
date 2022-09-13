@@ -131,16 +131,11 @@ class TripFromLabel {
                 } else {
                     pl = instructions.get(instructions.size() - 2).getPoints();
                 }
-                pl.add(departureStop.geometry.getY(), departureStop.geometry.getX());
-                pointsList.add(departureStop.geometry.getY(), departureStop.geometry.getX());
                 pl.add(ptLeg.geometry);
                 pointsList.add(ptLeg.geometry);
-                final PointList arrivalPointList = new PointList();
                 final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size() - 1);
                 previousExitStopId = arrivalStop.stop_id;
-                arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
-                pointsList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
-                Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, arrivalPointList);
+                Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, new PointList());
                 if (ptLeg.isInSameVehicleAsPrevious) {
                     instructions.set(instructions.size() - 1, arrivalInstruction);
                 } else {

@@ -293,29 +293,6 @@ public class GTFSFeed implements Cloneable, Closeable {
                 .collect(Collectors.toList());
     }
 
-    public LineString getStraightLineForStops(String trip_id) {
-        CoordinateList coordinates = new CoordinateList();
-        LineString ls = null;
-        Trip trip = trips.get(trip_id);
-
-        Iterable<StopTime> stopTimes;
-        stopTimes = getOrderedStopTimesForTrip(trip.trip_id);
-        if (Iterables.size(stopTimes) > 1) {
-            for (StopTime stopTime : stopTimes) {
-                Stop stop = stops.get(stopTime.stop_id);
-                Double lat = stop.stop_lat;
-                Double lon = stop.stop_lon;
-                coordinates.add(new Coordinate(lon, lat));
-            }
-            ls = gf.createLineString(coordinates.toCoordinateArray());
-        }
-        // set ls equal to null if there is only one stopTime to avoid an exception when creating linestring
-        else{
-            ls = null;
-        }
-        return ls;
-    }
-
     /**
      * Returns a trip geometry object (LineString) for a given trip id.
      * If the trip has a shape reference, this will be used for the geometry.
@@ -333,12 +310,18 @@ public class GTFSFeed implements Cloneable, Closeable {
             if (shape != null) {
                 return shape.getGeometryStartToEnd(
                     tripStopTimes.get(0).shape_dist_traveled,
-                    tripStopTimes.get(tripStopTimes.size() - 1).shape_dist_traveled
+                    tripStopTimes.get(tripStopTimes.size() - 1).shape_dist_traveled,
+                    stops.get(tripStopTimes.get(0).stop_id).getCoordinates(),
+                    stops.get(tripStopTimes.get(tripStopTimes.size() - 1).stop_id).getCoordinates()
                 );
             }
         }
-        // Else Use the ordered stoptimes
-        return getStraightLineForStops(trip_id);
+        // Else Use the stoptimes
+        if (tripStopTimes != null) {
+            return gf.createLineString(tripStopTimes.stream().map(st -> stops.get(st.stop_id).getCoordinates())
+                    .collect(Collectors.toList()).toArray(new Coordinate[tripStopTimes.size()]));
+        }
+        return null;
     }
 
     /**

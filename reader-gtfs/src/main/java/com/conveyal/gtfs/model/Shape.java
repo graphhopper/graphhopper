@@ -57,9 +57,10 @@ public class Shape {
         shape_dist_traveled = points.values().stream().mapToDouble(point -> point.shape_dist_traveled).toArray();
     }
 
-    public LineString getGeometryStartToEnd(double distTravelledStart, double distTravelledEnd) {
+    public LineString getGeometryStartToEnd(double distTravelledStart, double distTravelledEnd, Coordinate departureStopCoordinates, Coordinate arrivalStopCoordinates) {
         CoordinateList coordinates = new CoordinateList();
         Coordinate[] shapePoints = geometry.getCoordinates();
+        coordinates.add(departureStopCoordinates);
         boolean startProcessed = false;
         for (int i = 0; i < shape_dist_traveled.length; i++) {
             if (shape_dist_traveled[i] >= distTravelledStart) { // Point i is on the route
@@ -77,6 +78,7 @@ public class Shape {
                 }
             }
         }
+        coordinates.add(arrivalStopCoordinates);
         return geometryFactory.createLineString(coordinates.toCoordinateArray());
     }
 
