@@ -257,7 +257,7 @@ public class OSMReader {
                 continue;
             if (country != Country.MISSING)
                 LOGGER.warn("Multiple countries found for way {}: {}, {}", way.getId(), country, countryCode);
-            country = Country.valueOf(countryCode.toString());
+            country = Country.valueOfAlpha2(countryCode.toString());
         }
         way.setTag("country", country);
 
