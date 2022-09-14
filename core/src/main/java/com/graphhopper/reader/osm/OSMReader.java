@@ -252,7 +252,7 @@ public class OSMReader {
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the EncodingManager
         Country country = Country.MISSING;
         for (CustomArea customArea : customAreas) {
-            Object countryCode = customArea.getProperties().get("ISO3166-1:alpha3");
+            Object countryCode = customArea.getProperties().get(Country.ALPHA2);
             if (countryCode == null)
                 continue;
             if (country != Country.MISSING)

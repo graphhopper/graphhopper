@@ -17,11 +17,14 @@
  */
 package com.graphhopper.routing.ev;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * The enum constants correspond to the the ISO3166-1:alpha3 code of the corresponding country
  */
 public enum Country {
-    // values were taken from `countries.geojson`:
+
     // ISO3166-1:alpha3(name:en, ISO3166-1:alpha2)
     MISSING("missing", "--"),
     AFG("Afghanistan", "AF"),
@@ -242,7 +245,7 @@ public enum Country {
     ZMB("Zambia", "ZM"),
     ZWE("Zimbabwe", "ZW");
 
-    public static final String KEY = "country";
+    public static final String KEY = "country", ALPHA2 = "ISO3166-1:alpha2";
 
     private final String name;
     private final String twoLetterCode;
@@ -268,5 +271,15 @@ public enum Country {
 
     public static EnumEncodedValue<Country> create() {
         return new EnumEncodedValue<>(Country.KEY, Country.class);
+    }
+
+    private static final Map<String, Country> map = new ConcurrentHashMap<>();
+
+    static {
+        for (Country c : Country.values()) map.put(c.getTwoLetterCode(), c);
+    }
+
+    public static Country valueOfAlpha2(String alpha2) {
+        return alpha2 == null ? null : map.get(alpha2);
     }
 }

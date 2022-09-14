@@ -21,6 +21,7 @@ import com.graphhopper.util.PointList;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedPolygon;
@@ -35,7 +36,7 @@ import java.util.Arrays;
  */
 public class Polygon implements Shape {
 
-    private final GeometryFactory factory = new GeometryFactory();
+    private static final GeometryFactory factory = new GeometryFactory();
     public final PreparedGeometry prepPolygon;
     public final boolean rectangle;
     public final Envelope envelope;
@@ -102,7 +103,7 @@ public class Polygon implements Shape {
     public double getMaxLon() {
         return envelope.getMaxX();
     }
-    
+
     public boolean isRectangle() {
         return rectangle;
     }

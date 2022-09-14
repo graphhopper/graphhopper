@@ -695,10 +695,24 @@ public class GHUtility {
             JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
             return jsonFeatureCollection.getFeatures().stream()
                     .map(CustomArea::fromJsonFeature)
+                    // exclude areas not in the list of Country enums like FX => Metropolitan France
+                    .filter(customArea -> Country.valueOfAlpha2((String) customArea.getProperties().get(Country.ALPHA2)) != null)
                     .collect(Collectors.toList());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    public static CustomArea getFirstDuplicateArea(List<CustomArea> areas, String id) {
+        Set<String> result = new HashSet<>(areas.size());
+        for (CustomArea area : areas) {
+            String countryCode = (String) area.getProperties().get(id);
+            // in our country file there are not only countries but "subareas" (with ISO3166-2) or other unnamed areas
+            // like Metropolitan Netherlands
+            if (countryCode != null && !result.add(countryCode))
+                return area;
+        }
+        return null;
     }
 
     public static void runConcurrently(Stream<Callable<String>> callables, int threads) {

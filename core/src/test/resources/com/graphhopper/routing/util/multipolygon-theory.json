@@ -1,0 +1,21 @@
+{
+  "type": "FeatureCollection",
+  "generator": "JOSM",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "ISO3166-1:alpha2": "US",
+        "name:en": "Only Part of US",
+        "type": "multipolygon"
+      },
+      "geometry": {
+        "type": "MultiPolygon",
+        "coordinates": [
+            [[[-65.27974,17.56928], [-68.20301,17.83927], [-67.99519,18.97186], [-65.02435, 18.73231], [-65.27974, 17.56928]]],
+            [[[143.82485,13.92273], [144.18594,21.03576], [146.67550,21.00809], [146.25931, 13.85876], [143.82485, 13.92273]]]
+        ]
+      }
+    }
+  ]
+}
