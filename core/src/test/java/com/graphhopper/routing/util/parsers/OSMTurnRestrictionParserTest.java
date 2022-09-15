@@ -48,11 +48,15 @@ public class OSMTurnRestrictionParserTest {
         return graph;
     }
 
-    // 0---1
-    // |   /
-    // 2--3--4
-    // |  |  |
-    // 5--6--7
+    //  0--[0]--1
+    //  |       |
+    // [1]     [2] 
+    //  |       |
+    //  2--[3]--3--[4]--4
+    //  |       |       |
+    // [5]     [6]     [7]
+    //  |       |       |
+    //  5--[8]--6--[9]--7
     private static void initGraph(BaseGraph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(3));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2).setDistance(1));
