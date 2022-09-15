@@ -848,9 +848,8 @@ public class GraphHopper {
         }
         CustomArea area = GHUtility.getFirstDuplicateArea(customAreas, Country.JSON_ID);
         if (area != null)
-            throw new IllegalArgumentException("area used duplicate id " + Country.JSON_ID + ", properties: " + area.getProperties());
+            throw new IllegalArgumentException("area used duplicate '" + Country.JSON_ID + "' see properties: " + area.getProperties());
         AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
-
         if (countryRuleFactory == null || countryRuleFactory.getCountryToRuleMap().isEmpty()) {
             logger.info("No country rules available");
         } else {
