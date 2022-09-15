@@ -151,32 +151,6 @@ class AreaIndexTest {
         assertEquals("Austria", countryIndex.query(48.204484, 16.107888).get(0).getProperties().get("name:en"));
     }
 
-    @Test
-    public void readJOSMMultiPolygon() throws IOException {
-        InputStream is = AreaIndex.class.getResourceAsStream("multipolygon-josm.json");
-        JsonFeatureCollection collection = new ObjectMapper().registerModule(new JtsModule()).
-                readValue(is, JsonFeatureCollection.class);
-
-        JsonFeature feature = collection.getFeatures().get(0);
-        // TODO NOW AreaIndex relies on border.getEnvelopeInternal but JOSM exports MultiPolygons incorrectly (only a single Polygon!?)
-        assertEquals(1, feature.getGeometry().getNumGeometries());
-        // TODO NOW this is a problem e.g. for the US which has area spread over the whole but the entire Envelope is a tiny Island:
-        assertEquals("Env[-68.20301 : -65.02435, 17.56928 : 18.97186]", feature.getGeometry().getEnvelopeInternal().toString());
-    }
-
-    @Test
-    public void readMultiPolygon() throws IOException {
-        InputStream is = AreaIndex.class.getResourceAsStream("multipolygon-theory.json");
-        JsonFeatureCollection collection = new ObjectMapper().registerModule(new JtsModule()).
-                readValue(is, JsonFeatureCollection.class);
-
-        JsonFeature feature = collection.getFeatures().get(0);
-        assertEquals(2, feature.getGeometry().getNumGeometries());
-        // Yes!
-        assertEquals("Env[-68.20301 : -65.02435, 17.56928 : 18.97186]", feature.getGeometry().getGeometryN(0).getEnvelopeInternal().toString());
-        assertEquals("Env[143.82485 : 146.6755, 13.85876 : 21.03576]", feature.getGeometry().getGeometryN(1).getEnvelopeInternal().toString());
-    }
-
     private AreaIndex<CustomArea> createCountryIndex() {
         return new AreaIndex<>(readCountries());
     }

@@ -846,9 +846,9 @@ public class GraphHopper {
             logger.info("Creating custom area index, reading custom areas from: '" + customAreasDirectory + "'");
             customAreas.addAll(readCustomAreas());
         }
-        CustomArea area = GHUtility.getFirstDuplicateArea(customAreas, Country.ALPHA2);
+        CustomArea area = GHUtility.getFirstDuplicateArea(customAreas, Country.JSON_ID);
         if (area != null)
-            throw new IllegalArgumentException("area used duplicate " + Country.ALPHA2 + " code: " + area.getProperties());
+            throw new IllegalArgumentException("area used duplicate id " + Country.JSON_ID + ", properties: " + area.getProperties());
         AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
 
         if (countryRuleFactory == null || countryRuleFactory.getCountryToRuleMap().isEmpty()) {

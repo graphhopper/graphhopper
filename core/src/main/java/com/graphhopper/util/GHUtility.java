@@ -696,7 +696,7 @@ public class GHUtility {
             return jsonFeatureCollection.getFeatures().stream()
                     .map(CustomArea::fromJsonFeature)
                     // exclude areas not in the list of Country enums like FX => Metropolitan France
-                    .filter(customArea -> Country.valueOfAlpha2((String) customArea.getProperties().get(Country.ALPHA2)) != null)
+                    .filter(customArea -> Country.valueOfAlpha2((String) customArea.getProperties().get(Country.JSON_ID)) != null)
                     .collect(Collectors.toList());
         } catch (IOException e) {
             throw new UncheckedIOException(e);

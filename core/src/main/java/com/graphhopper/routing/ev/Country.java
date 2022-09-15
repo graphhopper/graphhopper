@@ -245,7 +245,7 @@ public enum Country {
     ZMB("Zambia", "ZM"),
     ZWE("Zimbabwe", "ZW");
 
-    public static final String KEY = "country", ALPHA2 = "ISO3166-1:alpha2";
+    public static final String KEY = "country", JSON_ID = "id";
 
     private final String name;
     private final String twoLetterCode;
