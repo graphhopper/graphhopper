@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing.ev;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The enum constants correspond to the the ISO3166-1:alpha3 code of the corresponding country
@@ -273,7 +273,7 @@ public enum Country {
         return new EnumEncodedValue<>(Country.KEY, Country.class);
     }
 
-    private static final Map<String, Country> map = new ConcurrentHashMap<>();
+    private static final Map<String, Country> map = new HashMap<>(Country.values().length);
 
     static {
         for (Country c : Country.values()) map.put(c.getTwoLetterCode(), c);
