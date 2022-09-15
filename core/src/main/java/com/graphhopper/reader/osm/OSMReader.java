@@ -26,6 +26,7 @@ import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.EdgeElevationSmoothing;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.reader.osm.OSMTurnRestriction.ViaType;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.AreaIndex;
@@ -518,10 +519,15 @@ public class OSMReader {
             // we need to remember the associated osm way id. this is just an optimization that is supposed to save
             // memory compared to simply storing the osm way ids in a long array where the array index is the GH edge
             // id.
-            List<OSMTurnRestriction> turnRelations = createTurnRelations(relation);
-            for (OSMTurnRestriction turnRelation : turnRelations) {
-                osmWayIdSet.add(turnRelation.getOsmIdFrom());
-                osmWayIdSet.add(turnRelation.getOsmIdTo());
+            List<OSMTurnRestriction> turnRestrictions = createTurnRestrictions(relation);
+            for (OSMTurnRestriction turnRestriction : turnRestrictions) {
+                osmWayIdSet.add(turnRestriction.getOsmIdFrom());
+                osmWayIdSet.add(turnRestriction.getOsmIdTo());
+                if (turnRestriction.getViaType() == ViaType.WAY || turnRestriction.getViaType() == ViaType.MULTI_WAY) {
+                    for (Long via_id : turnRestriction.getViaOSMIds()) {
+                        osmWayIdSet.add(via_id);
+                    }
+                }
             }
         }
     }
@@ -543,7 +549,7 @@ public class OSMReader {
                     return getEdgeIdToOsmWayIdMap().get(edgeId);
                 }
             };
-            for (OSMTurnRestriction turnRestriction : createTurnRelations(relation)) {
+            for (OSMTurnRestriction turnRestriction : createTurnRestrictions(relation)) {
                 osmParsers.handleTurnRelationTags(turnRestriction, map, baseGraph);
             }
         }
@@ -560,7 +566,7 @@ public class OSMReader {
     /**
      * Creates turn relations out of an unspecified OSM relation
      */
-    static List<OSMTurnRestriction> createTurnRelations(ReaderRelation relation) {
+    static List<OSMTurnRestriction> createTurnRestrictions(ReaderRelation relation) {
         List<OSMTurnRestriction> osmTurnRelations = new ArrayList<>();
         String vehicleTypeRestricted = "";
         List<String> vehicleTypesExcept = new ArrayList<>();

@@ -587,7 +587,7 @@ public class OSMReaderTest {
         rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 2L, "via"));
         rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 3L, "to"));
 
-        List<OSMTurnRestriction> osmRel = OSMReader.createTurnRelations(rel);
+        List<OSMTurnRestriction> osmRel = OSMReader.createTurnRestrictions(rel);
         assertEquals(osmRel.get(0).getViaType(), OSMTurnRestriction.ViaType.WAY);
         assertEquals(osmRel.get(0).getViaOSMIds().get(0), 2);
     }
@@ -608,7 +608,7 @@ public class OSMReaderTest {
         viaOSMIds.add(3L);
         viaOSMIds.add(4L);
 
-        List<OSMTurnRestriction> osmRel = OSMReader.createTurnRelations(rel);
+        List<OSMTurnRestriction> osmRel = OSMReader.createTurnRestrictions(rel);
         assertEquals(osmRel.get(0).getViaType(), OSMTurnRestriction.ViaType.MULTI_WAY);
         assertEquals(osmRel.get(0).getViaOSMIds(), viaOSMIds);
     }
@@ -623,7 +623,7 @@ public class OSMReaderTest {
         rel.add(new ReaderRelation.Member(ReaderElement.Type.NODE, 3L, "via"));
         rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 4L, "to"));
 
-        List<OSMTurnRestriction> osmRel = OSMReader.createTurnRelations(rel);
+        List<OSMTurnRestriction> osmRel = OSMReader.createTurnRestrictions(rel);
         assertEquals(2, osmRel.size());
 
         assertEquals(1, osmRel.get(0).getOsmIdFrom());
