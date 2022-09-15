@@ -145,7 +145,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
         if (currEdge == null || !finished())
             return createEmptyPath();
 
-        return PathExtractor.extractPath(graph, weighting, currEdge);
+        return PathExtractor.extractPath(graph, weighting, currEdge, reverseDirection);
     }
 
     @Override

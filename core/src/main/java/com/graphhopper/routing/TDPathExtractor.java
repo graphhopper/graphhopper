@@ -20,7 +20,9 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.ArrayUtil;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Extract path from a time-dependent Dijkstra or A*
@@ -32,7 +34,7 @@ public class TDPathExtractor extends PathExtractor {
     private boolean reverse;
 
     public static Path extractPath(Graph graph, Weighting weighting, SPTEntry sptEntry, boolean reverseDirection) {
-        return new TDPathExtractor(graph, weighting, reverseDirection).extract(sptEntry);
+        return new TDPathExtractor(graph, weighting, reverseDirection).extract(sptEntry, false);
     }
 
     protected TDPathExtractor(Graph graph, Weighting weighting, boolean reverseDirection) {
@@ -41,7 +43,7 @@ public class TDPathExtractor extends PathExtractor {
     }
 
     @Override
-    protected void extractPath(SPTEntry sptEntry) {
+    protected void extractPath(SPTEntry sptEntry, boolean reverseDirection) {
         SPTEntry currEntry = sptEntry;
         while (EdgeIterator.Edge.isValid(currEntry.edge)) {
             processEdge(currEntry);
