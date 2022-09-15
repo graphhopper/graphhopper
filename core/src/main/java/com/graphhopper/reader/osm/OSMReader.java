@@ -543,14 +543,8 @@ public class OSMReader {
                     return getEdgeIdToOsmWayIdMap().get(edgeId);
                 }
             };
-            for (OSMTurnRestriction turnRelation : createTurnRelations(relation)) {
-                // till now only Via-Node Restrictions are considered 
-                if (turnRelation.getViaType() == OSMTurnRestriction.ViaType.NODE) {
-                    int viaNode = map.getInternalNodeIdOfOsmNode(turnRelation.getViaOSMIds().get(0));
-                    // street with restriction was not included (access or tag limits etc)
-                    if (viaNode >= 0)
-                        osmParsers.handleTurnRelationTags(turnRelation, map, baseGraph);
-                }
+            for (OSMTurnRestriction turnRestriction : createTurnRelations(relation)) {
+                osmParsers.handleTurnRelationTags(turnRestriction, map, baseGraph);
             }
         }
     }
