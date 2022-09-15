@@ -25,12 +25,7 @@ import java.util.List;
  */
 public class JsonFeatureCollection {
     String type = "FeatureCollection";
-    String generator = "unknown";
     List<JsonFeature> features = new ArrayList<>();
-
-    public String getGenerator() {
-        return generator;
-    }
 
     public String getType() {
         return type;

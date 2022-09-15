@@ -35,8 +35,6 @@ public class CustomArea implements AreaIndex.Area {
             Geometry geometry = j.getGeometry().getGeometryN(i);
             if (geometry instanceof Polygon) {
                 borders.add((Polygon) geometry);
-            } else if (geometry instanceof LineString) {
-                borders.add(factory.createPolygon(geometry.getCoordinates())); // e.g. Austria is a LineString in countries.geojson
             } else {
                 throw new IllegalArgumentException("Custom area features must be of type 'Polygon', but was: " + geometry.getClass().getSimpleName());
             }
