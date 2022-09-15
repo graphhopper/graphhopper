@@ -279,7 +279,11 @@ public enum Country {
         for (Country c : Country.values()) map.put(c.getTwoLetterCode(), c);
     }
 
+    /**
+     * This method returns a Country enum for the specified ISO3166-1:alpha2 code.
+     */
     public static Country valueOfAlpha2(String alpha2) {
-        return alpha2 == null ? null : map.get(alpha2);
+        if (alpha2 == null || alpha2.length() != 2) return null;
+        return map.get(alpha2);
     }
 }
