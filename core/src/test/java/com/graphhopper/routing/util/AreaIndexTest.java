@@ -18,19 +18,12 @@
 
 package com.graphhopper.routing.util;
 
-import com.bedatadriven.jackson.datatype.jts.JtsModule;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.util.JsonFeature;
-import com.graphhopper.util.JsonFeatureCollection;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.StringWriter;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -142,13 +135,13 @@ class AreaIndexTest {
     public void testCountries() {
         AreaIndex<CustomArea> countryIndex = createCountryIndex();
         // Berlin
-        assertEquals("Germany", countryIndex.query(52.5243700, 13.4105300).get(0).getProperties().get("name:en"));
+        assertEquals(Locale.GERMANY.getDisplayCountry(), countryIndex.query(52.5243700, 13.4105300).get(0).getProperties().get("name"));
         // Paris
-        assertEquals("France", countryIndex.query(48.864716, 2.349014).get(0).getProperties().get("name:en"));
+        assertEquals(Locale.FRANCE.getDisplayCountry(), countryIndex.query(48.864716, 2.349014).get(0).getProperties().get("name"));
         // US
-        assertEquals("United States of America", countryIndex.query(35.67514, -105.94665).get(0).getProperties().get("name:en"));
+        assertEquals(Locale.US.getDisplayCountry(), countryIndex.query(35.67514, -105.94665).get(0).getProperties().get("name"));
         // Austria
-        assertEquals("Austria", countryIndex.query(48.204484, 16.107888).get(0).getProperties().get("name:en"));
+        assertEquals("Austria", countryIndex.query(48.204484, 16.107888).get(0).getProperties().get("name"));
     }
 
     private AreaIndex<CustomArea> createCountryIndex() {
