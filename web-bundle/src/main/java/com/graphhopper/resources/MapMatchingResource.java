@@ -29,6 +29,7 @@ import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.jackson.Gpx;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,17 +55,23 @@ import static com.graphhopper.util.Parameters.Routing.*;
 @javax.ws.rs.Path("match")
 public class MapMatchingResource {
 
+    public interface MapMatchingRouterFactory {
+        public MapMatching.Router createMapMatchingRouter(PMap hints);
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(MapMatchingResource.class);
 
     private final GraphHopper graphHopper;
     private final ProfileResolver profileResolver;
     private final TranslationMap trMap;
+    private final MapMatchingRouterFactory mapMatchingRouterFactory;
 
     @Inject
-    public MapMatchingResource(GraphHopper graphHopper, ProfileResolver profileResolver, TranslationMap trMap) {
+    public MapMatchingResource(GraphHopper graphHopper, ProfileResolver profileResolver, TranslationMap trMap, MapMatchingRouterFactory mapMatchingRouterFactory) {
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
         this.trMap = trMap;
+        this.mapMatchingRouterFactory = mapMatchingRouterFactory;
     }
 
     @POST
@@ -117,7 +124,7 @@ public class MapMatchingResource {
         hints.putObject("profile", profile);
         removeLegacyParameters(hints);
 
-        MapMatching matching = MapMatching.fromGraphHopper(graphHopper, hints);
+        MapMatching matching = new MapMatching(graphHopper.getBaseGraph(), (LocationIndexTree) graphHopper.getLocationIndex(), mapMatchingRouterFactory.createMapMatchingRouter(hints));
         matching.setMeasurementErrorSigma(gpsAccuracy);
 
         List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
