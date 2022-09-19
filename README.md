@@ -24,7 +24,7 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
 
 * 6.x: [documentation](https://github.com/graphhopper/graphhopper/blob/6.x/docs/index.md)
   , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/6.0/graphhopper-web-6.0.jar)
-  , [announcement](https://www.graphhopper.com/blog/2022/09/20/graphhopper-routing-engine-6-0-released/)
+  , [announcement](https://www.graphhopper.com/blog/2022/09/19/graphhopper-routing-engine-6-0-released/)
 * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 
 <details><summary>Click to see older releases</summary>
