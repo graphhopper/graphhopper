@@ -358,6 +358,19 @@ class TripFromLabel {
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
                     List<String> stopIds = stops.stream().map(s -> s.stop_id).collect(Collectors.toList());
                     GTFSFeed currentFeed = gtfsStorage.getGtfsFeeds().get(feedId);
+                    List<StopTime> stopTimes = StreamSupport.stream(currentFeed.getOrderedStopTimesForTrip(tripDescriptor.getTripId()).spliterator(), false)
+                            .filter(st -> stopIds.contains(st.stop_id)).collect(Collectors.toList());
+                    LineString ptGeometry = currentFeed.getTripGeometry(tripDescriptor.getTripId(), stopTimes);
+                    double ptDistance = stopTimes.get(stopTimes.size() - 1).shape_dist_traveled - stopTimes.get(0).shape_dist_traveled;
+                    if (Double.isNaN(ptDistance)) {
+                        // if distance can't be read from the stoptimes data, try looking at the partition edges
+                        ptDistance = partition.stream().mapToDouble(t -> t.edge.getDistance()).sum();
+                        if (Double.isNaN(ptDistance) || ptDistance <= 0) {
+                            // if distance is still not available, use the geometry which should at that point contain
+                            // at least the stop coordinates (results in beeline between all stops)
+                            ptDistance = DistanceCalcEarth.DIST_EARTH.calcDistance(PointList.fromLineString(ptGeometry));
+                        }
+                    }
                     result.add(new Trip.PtLeg(
                             feedId, partition.get(0).edge.getTransfers() == 0,
                             tripDescriptor.getTripId(),
@@ -368,10 +381,10 @@ class TripFromLabel {
                             Optional.ofNullable(currentFeed.routes.get(tripDescriptor.getRouteId())).map(r -> r.route_long_name).orElse("public transport"),
                             Optional.ofNullable(currentFeed.routes.get(tripDescriptor.getRouteId())).map(r -> r.route_short_name).orElse("pt"),
                             stops,
-                            partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
+                            ptDistance,
                             path.get(i - 1).label.currentTime - boardTime,
-                            currentFeed.getTripGeometry(tripDescriptor.getTripId(), StreamSupport.stream(currentFeed.getOrderedStopTimesForTrip(tripDescriptor.getTripId()).spliterator(), false)
-                                    .filter(st -> stopIds.contains(st.stop_id)).collect(Collectors.toList()))));
+                            ptGeometry
+                    ));
                     partition = null;
                     if (edge.getType() == GtfsStorage.EdgeType.TRANSFER) {
                         feedId = edge.getPlatformDescriptor().feed_id;
