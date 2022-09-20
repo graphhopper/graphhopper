@@ -131,6 +131,18 @@ public class VehicleEncodedValues {
         return new VehicleEncodedValues(name, accessEnc, speedEnc, null, null, turnCostEnc);
     }
 
+    public static VehicleEncodedValues bus(PMap properties) {
+        String name = properties.getString("name", "bus");
+        int speedBits = properties.getInt("speed_bits", 5);
+        double speedFactor = properties.getDouble("speed_factor", 5);
+        boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
+        int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
+        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
+        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
+        DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, null, turnCostEnc);
+    }
+
     public VehicleEncodedValues(String name, BooleanEncodedValue accessEnc, DecimalEncodedValue avgSpeedEnc,
                                 DecimalEncodedValue priorityEnc, DecimalEncodedValue curvatureEnc,
                                 DecimalEncodedValue turnCostEnc) {

@@ -33,6 +33,7 @@ public interface VehicleEncodedValuesFactory {
     String HIKE = "hike";
     String MOTORCYCLE = "motorcycle";
     String WHEELCHAIR = "wheelchair";
+    String BUS = "bus";
 
     VehicleEncodedValues createVehicleEncodedValues(String name, PMap configuration);
 
