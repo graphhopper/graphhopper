@@ -29,10 +29,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.graphhopper.util.Parameters.Details.*;
 
 @Path("mvt")
 public class MVTResource {
@@ -123,8 +125,15 @@ public class MVTResource {
             }
 
             edgeCounter.incrementAndGet();
-            Map<String, Object> map = new HashMap<>(2);
-            map.put("name", edge.getName());
+            Map<String, Object> map = new LinkedHashMap<>();
+            map.put("name", edge.getValue(STREET_NAME));
+            map.put("ref", edge.getValue(STREET_REF));
+            map.put("destination", edge.getValue(STREET_DESTINATION));
+            map.put("edge_id", edge.getEdge());
+            map.put("edge_key", edge.getEdgeKey());
+            map.put("base_node", edge.getBaseNode());
+            map.put("adj_node", edge.getAdjNode());
+            map.put("distance", edge.getDistance());
             for (String str : pathDetails) {
                 // how to indicate an erroneous parameter?
                 if (str.contains(",") || !encodingManager.hasEncodedValue(str))
