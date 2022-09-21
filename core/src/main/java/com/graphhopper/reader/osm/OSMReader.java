@@ -93,6 +93,9 @@ public class OSMReader {
     // same but for via ways we need to store the start and end nodes as well
     private HashMap<Long, Long[]> osmWayNodesMap = new HashMap<>();
     private ArrayList<ReaderRestriction> restrictions = new ArrayList<>();
+    private ArrayList<Long> osmNodesToDuplicate = new ArrayList<>();
+    private ArrayList<Long> osmWaysToSplit = new ArrayList<>();
+    private ArrayList<Long> osmWaysToDuplicate = new ArrayList<>();
     private IntLongMap edgeIdToOsmWayIdMap;
 
     public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
@@ -211,8 +214,15 @@ public class OSMReader {
     protected void buildRestrictions() {
         for (ReaderRestriction restriction : restrictions) {
             restriction.buildRestriction(osmWayNodesMap);
-        }
+            // at the moment we only work with single via ways
+            if (restriction.getWays().size() == 3) {
+                ReaderRestriction.Restriction r = restriction.getRestrictions().get(0);
+                osmNodesToDuplicate.add(r.getVia());
+                osmWaysToSplit.add(r.getFrom());
+                osmWaysToDuplicate.add(r.getTo());
+            }
 
+        }
     }
 
     /**

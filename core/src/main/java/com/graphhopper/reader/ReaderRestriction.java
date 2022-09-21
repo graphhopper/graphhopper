@@ -17,7 +17,7 @@ public class ReaderRestriction {
         this.ways = ways;
     }
 
-    static class Restriction {
+    public static class Restriction {
         private final Long from;
         private final Long via;
         private final Long to;
