@@ -90,6 +90,8 @@ public class OSMReader {
     private GHLongLongHashMap osmWayIdToRelationFlagsMap = new GHLongLongHashMap(200, .5f);
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
     private GHLongHashSet osmWayIdSet = new GHLongHashSet();
+    // same but for via ways we need to store the start and end nodes as well
+    private HashMap<Long, Long[]> OSMViaWayNodesMap = new HashMap<>();
     private IntLongMap edgeIdToOsmWayIdMap;
 
     public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
@@ -158,6 +160,7 @@ public class OSMReader {
                 .setDirectory(baseGraph.getDirectory())
                 .setElevationProvider(eleProvider)
                 .setWayFilter(this::acceptWay)
+                .setNodeStorage(this::mapNodesIfPartOfTurnRestriction)
                 .setSplitNodeFilter(this::isBarrierNode)
                 .setWayPreprocessor(this::preprocessWay)
                 .setRelationPreprocessor(this::preprocessRelations)
@@ -195,6 +198,12 @@ public class OSMReader {
             return false;
 
         return osmParsers.acceptWay(way);
+    }
+
+    protected void mapNodesIfPartOfTurnRestriction(ReaderWay way) {
+        if (OSMViaWayNodesMap.containsKey(way.getId())) {
+            OSMViaWayNodesMap.put(way.getId(), way.getEndNodes());
+        }
     }
 
     /**
@@ -526,6 +535,7 @@ public class OSMReader {
                 if (turnRestriction.getViaType() == ViaType.WAY || turnRestriction.getViaType() == ViaType.MULTI_WAY) {
                     for (Long via_id : turnRestriction.getViaOSMIds()) {
                         osmWayIdSet.add(via_id);
+                        OSMViaWayNodesMap.put(via_id, null);
                     }
                 }
             }

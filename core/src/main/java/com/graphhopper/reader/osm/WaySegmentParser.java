@@ -71,6 +71,7 @@ public class WaySegmentParser {
 
     private final ElevationProvider eleProvider;
     private final Predicate<ReaderWay> wayFilter;
+    private final NodeStorage nodeStorage;
     private final Predicate<ReaderNode> splitNodeFilter;
     private final WayPreprocessor wayPreprocessor;
     private final Consumer<ReaderRelation> relationPreprocessor;
@@ -82,11 +83,12 @@ public class WaySegmentParser {
     private Date timestamp;
 
     private WaySegmentParser(PointAccess nodeAccess, Directory directory, ElevationProvider eleProvider,
-                             Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
-                             Consumer<ReaderRelation> relationPreprocessor, RelationProcessor relationProcessor,
-                             EdgeHandler edgeHandler, int workerThreads) {
+                             Predicate<ReaderWay> wayFilter, NodeStorage nodeStorage, Predicate<ReaderNode> splitNodeFilter,
+                             WayPreprocessor wayPreprocessor, Consumer<ReaderRelation> relationPreprocessor,
+                             RelationProcessor relationProcessor, EdgeHandler edgeHandler, int workerThreads) {
         this.eleProvider = eleProvider;
         this.wayFilter = wayFilter;
+        this.nodeStorage = nodeStorage;
         this.splitNodeFilter = splitNodeFilter;
         this.wayPreprocessor = wayPreprocessor;
         this.relationPreprocessor = relationPreprocessor;
@@ -105,6 +107,11 @@ public class WaySegmentParser {
             throw new IllegalStateException("You can only run way segment parser once");
 
         LOGGER.info("Start reading OSM file: '" + osmFile + "'");
+        LOGGER.info("pass0 - start");
+        StopWatch sw0 = StopWatch.started();
+        readOSM(osmFile, new Pass0Handler());
+        LOGGER.info("pass0 - finished, took: {}", sw0.stop().getTimeString());
+
         LOGGER.info("pass1 - start");
         StopWatch sw1 = StopWatch.started();
         readOSM(osmFile, new Pass1Handler());
@@ -122,6 +129,7 @@ public class WaySegmentParser {
         nodeData.release();
 
         LOGGER.info("Finished reading OSM file." +
+                " pass0: " + (int) sw0.getSeconds() + "s, " +
                 " pass1: " + (int) sw1.getSeconds() + "s, " +
                 " pass2: " + (int) sw2.getSeconds() + "s, " +
                 " total: " + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
@@ -134,12 +142,39 @@ public class WaySegmentParser {
         return timestamp;
     }
 
+    private class Pass0Handler implements ReaderElementHandler {
+        private boolean handledRelations;
+        private long relationsCounter = -1;
+
+        @Override
+        public void handleRelation(ReaderRelation relation) {
+            if (!handledRelations) {
+                LOGGER.info("pass0 - start reading OSM relations");
+                handledRelations = true;
+            }
+
+            if (++relationsCounter % 1_000_000 == 0)
+                LOGGER.info("pass0 - processed relations: " + nf(relationsCounter) + ", " + Helper.getMemInfo());
+
+            relationPreprocessor.accept(relation);
+        }
+
+        @Override
+        public void handleFileHeader(OSMFileHeader fileHeader) throws ParseException {
+            timestamp = Helper.createFormatter().parse(fileHeader.getTag("timestamp"));
+        }
+
+        @Override
+        public void onFinish() {
+            LOGGER.info("pass0 - finished, processed relations: " + nf(relationsCounter) + ", " + Helper.getMemInfo());
+        }
+    }
+
+
     private class Pass1Handler implements ReaderElementHandler {
         private boolean handledWays;
-        private boolean handledRelations;
         private long wayCounter = 1;
         private long acceptedWays = 0;
-        private long relationsCounter = -1;
 
         @Override
         public void handleWay(ReaderWay way) {
@@ -147,8 +182,6 @@ public class WaySegmentParser {
                 LOGGER.info("pass1 - start reading OSM ways");
                 handledWays = true;
             }
-            if (handledRelations)
-                throw new IllegalStateException("OSM way elements must be located before relation elements in OSM file");
 
             if (++wayCounter % 10_000_000 == 0)
                 LOGGER.info("pass1 - processed ways: " + nf(wayCounter) + ", accepted ways: " + nf(acceptedWays) +
@@ -157,6 +190,8 @@ public class WaySegmentParser {
             if (!wayFilter.test(way))
                 return;
             acceptedWays++;
+
+            nodeStorage.mapNodesIfPartOfTurnRestriction(way);
 
             for (LongCursor node : way.getNodes()) {
                 final boolean isEnd = node.index == 0 || node.index == way.getNodes().size() - 1;
@@ -169,28 +204,9 @@ public class WaySegmentParser {
         }
 
         @Override
-        public void handleRelation(ReaderRelation relation) {
-            if (!handledRelations) {
-                LOGGER.info("pass1 - start reading OSM relations");
-                handledRelations = true;
-            }
-
-            if (++relationsCounter % 1_000_000 == 0)
-                LOGGER.info("pass1 - processed relations: " + nf(relationsCounter) + ", " + Helper.getMemInfo());
-
-            relationPreprocessor.accept(relation);
-        }
-
-        @Override
-        public void handleFileHeader(OSMFileHeader fileHeader) throws ParseException {
-            timestamp = Helper.createFormatter().parse(fileHeader.getTag("timestamp"));
-        }
-
-        @Override
         public void onFinish() {
             LOGGER.info("pass1 - finished, processed ways: " + nf(wayCounter) + ", accepted ways: " +
-                    nf(acceptedWays) + ", way nodes: " + nf(nodeData.getNodeCount()) + ", relations: " +
-                    nf(relationsCounter) + ", " + Helper.getMemInfo());
+                    nf(acceptedWays) + ", way nodes: " + nf(nodeData.getNodeCount()) + ", " + Helper.getMemInfo());
         }
     }
 
@@ -421,6 +437,7 @@ public class WaySegmentParser {
         private EdgeHandler edgeHandler = (from, to, pointList, way, nodeTags) ->
                 System.out.println("edge " + from + "->" + to + " (" + pointList.size() + " points)");
         private int workerThreads = 2;
+        private NodeStorage nodeStorage;
 
         /**
          * @param nodeAccess used to store tower node coordinates while parsing the ways
@@ -451,6 +468,11 @@ public class WaySegmentParser {
          */
         public Builder setWayFilter(Predicate<ReaderWay> wayFilter) {
             this.wayFilter = wayFilter;
+            return this;
+        }
+
+        public Builder setNodeStorage(NodeStorage nodeStorage) {
+            this.nodeStorage = nodeStorage;
             return this;
         }
 
@@ -504,8 +526,8 @@ public class WaySegmentParser {
 
         public WaySegmentParser build() {
             return new WaySegmentParser(
-                    nodeAccess, directory, elevationProvider, wayFilter, splitNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
-                    edgeHandler, workerThreads
+                    nodeAccess, directory, elevationProvider, wayFilter, nodeStorage, splitNodeFilter,
+                    wayPreprocessor, relationPreprocessor, relationProcessor, edgeHandler, workerThreads
             );
         }
     }
@@ -565,5 +587,9 @@ public class WaySegmentParser {
 
     public interface CoordinateSupplier {
         GHPoint3D getCoordinate(long osmNodeId);
+    }
+
+    public interface NodeStorage {
+        void mapNodesIfPartOfTurnRestriction(ReaderWay way);
     }
 }

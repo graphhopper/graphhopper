@@ -17,6 +17,9 @@
  */
 package com.graphhopper.reader;
 
+import java.util.Arrays;
+import java.util.List;
+
 import com.carrotsearch.hppc.LongArrayList;
 
 /**
@@ -34,6 +37,13 @@ public class ReaderWay extends ReaderElement {
 
     public LongArrayList getNodes() {
         return nodes;
+    }
+
+    public Long[] getEndNodes() {
+        Long[] endNodes = new Long[2];
+        endNodes[0] = nodes.get(0);
+        endNodes[1] = nodes.get(nodes.size() - 1);
+        return endNodes;
     }
 
     @Override
