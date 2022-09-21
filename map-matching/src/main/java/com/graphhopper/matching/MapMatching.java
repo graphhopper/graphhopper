@@ -109,14 +109,9 @@ public class MapMatching {
         boolean useDijkstra = disableLM || disableCH;
 
         LandmarkStorage landmarks;
-        if (graphHopper.getLMPreparationHandler().isEnabled() && !useDijkstra) {
+        if (!useDijkstra && graphHopper.getLandmarks().get(profile.getName()) != null) {
             // using LM because u-turn prevention does not work properly with (node-based) CH
             landmarks = graphHopper.getLandmarks().get(profile.getName());
-            if (landmarks == null) {
-                throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile.getName() + "'" +
-                        "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
-                        "\navailable LM profiles: " + graphHopper.getLandmarks().keySet());
-            }
         } else {
             landmarks = null;
         }
