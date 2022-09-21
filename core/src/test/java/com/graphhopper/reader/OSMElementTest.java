@@ -19,7 +19,11 @@ package com.graphhopper.reader;
 
 import org.junit.jupiter.api.Test;
 
+import com.graphhopper.reader.ReaderRestriction.Restriction;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -54,6 +58,28 @@ public class OSMElementTest {
             new ReaderWay(-1);
         });
         assertTrue(exception.getMessage().contains("Invalid OSM WAY Id: -1;"));
+    }
+
+    @Test
+    public void testRestriction() {
+        List<Long> ways = new ArrayList<Long>();
+        ways.add(12L);
+        ways.add(23L);
+        ways.add(34L);
+
+        HashMap<Long, Long[]> wayNodesMap = new HashMap<>();
+        wayNodesMap.put(12L, new Long[]{1L, 2L});
+        wayNodesMap.put(23L, new Long[]{2L, 3L});
+        wayNodesMap.put(34L, new Long[]{3L, 4L});
+
+        ReaderRestriction restriction = new ReaderRestriction(ways);
+        restriction.buildRestriction(wayNodesMap);
+
+        ReaderRestriction.Restriction r1 = restriction.getRestrictions().get(0);
+        ReaderRestriction.Restriction r2 = restriction.getRestrictions().get(1);
+
+        assertEquals(r1.toString(), new ReaderRestriction.Restriction(12L, 2L, 23L).toString());
+        assertEquals(r2.toString(), new ReaderRestriction.Restriction(23L, 3L, 34L).toString());
     }
 
 }

@@ -78,6 +78,7 @@ public class WaySegmentParser {
     private final RelationProcessor relationProcessor;
     private final EdgeHandler edgeHandler;
     private final int workerThreads;
+    private final RestrictionBuilder restrictionBuilder;
 
     private final OSMNodeData nodeData;
     private Date timestamp;
@@ -85,7 +86,8 @@ public class WaySegmentParser {
     private WaySegmentParser(PointAccess nodeAccess, Directory directory, ElevationProvider eleProvider,
                              Predicate<ReaderWay> wayFilter, NodeStorage nodeStorage, Predicate<ReaderNode> splitNodeFilter,
                              WayPreprocessor wayPreprocessor, Consumer<ReaderRelation> relationPreprocessor,
-                             RelationProcessor relationProcessor, EdgeHandler edgeHandler, int workerThreads) {
+                             RelationProcessor relationProcessor, EdgeHandler edgeHandler, int workerThreads,
+                             RestrictionBuilder restrictionBuilder) {
         this.eleProvider = eleProvider;
         this.wayFilter = wayFilter;
         this.nodeStorage = nodeStorage;
@@ -95,6 +97,7 @@ public class WaySegmentParser {
         this.relationProcessor = relationProcessor;
         this.edgeHandler = edgeHandler;
         this.workerThreads = workerThreads;
+        this.restrictionBuilder = restrictionBuilder;
 
         this.nodeData = new OSMNodeData(nodeAccess, directory);
     }
@@ -116,6 +119,9 @@ public class WaySegmentParser {
         StopWatch sw1 = StopWatch.started();
         readOSM(osmFile, new Pass1Handler());
         LOGGER.info("pass1 - finished, took: {}", sw1.stop().getTimeString());
+
+        LOGGER.info("Building restriction graph...");
+        restrictionBuilder.buildRestrictions();
 
         long nodes = nodeData.getNodeCount();
 
@@ -438,6 +444,7 @@ public class WaySegmentParser {
                 System.out.println("edge " + from + "->" + to + " (" + pointList.size() + " points)");
         private int workerThreads = 2;
         private NodeStorage nodeStorage;
+        private RestrictionBuilder restrictionBuilder;
 
         /**
          * @param nodeAccess used to store tower node coordinates while parsing the ways
@@ -524,10 +531,16 @@ public class WaySegmentParser {
             return this;
         }
 
+        public Builder setRestrictionBuilder(RestrictionBuilder restrictionBuilder) {
+            this.restrictionBuilder = restrictionBuilder;
+            return this;
+        }
+
         public WaySegmentParser build() {
             return new WaySegmentParser(
                     nodeAccess, directory, elevationProvider, wayFilter, nodeStorage, splitNodeFilter,
-                    wayPreprocessor, relationPreprocessor, relationProcessor, edgeHandler, workerThreads
+                    wayPreprocessor, relationPreprocessor, relationProcessor, edgeHandler, workerThreads,
+                    restrictionBuilder
             );
         }
     }
@@ -591,5 +604,9 @@ public class WaySegmentParser {
 
     public interface NodeStorage {
         void mapNodesIfPartOfTurnRestriction(ReaderWay way);
+    }
+
+    public interface RestrictionBuilder {
+        void buildRestrictions();
     }
 }

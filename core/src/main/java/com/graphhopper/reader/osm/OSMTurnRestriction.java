@@ -61,6 +61,16 @@ public class OSMTurnRestriction {
         return viaOSMIds;
     }
 
+    public ArrayList<Long> getWays() {
+        ArrayList<Long> ways = new ArrayList<>();
+        ways.add(fromOsmWayId);
+        if (viaType == ViaType.WAY || viaType == ViaType.MULTI_WAY) {
+            ways.addAll(viaOSMIds);
+        }
+        ways.add(toOsmWayId);
+        return ways;
+    }
+
     public RestrictionType getRestriction() {
         return restriction;
     }
