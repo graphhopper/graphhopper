@@ -93,7 +93,7 @@ public class OSMReader {
     // same but for via ways we need to store the start and end nodes as well
     private HashMap<Long, Long[]> osmWayNodesMap = new HashMap<>();
     private ArrayList<ReaderRestriction> restrictions = new ArrayList<>();
-    private ArrayList<Long> osmNodesToDuplicate = new ArrayList<>();
+    private HashMap<Long, Long> artificialViaNodes = new HashMap<>();
     private ArrayList<Long> osmWaysToSplit = new ArrayList<>();
     private ArrayList<Long> osmWaysToDuplicate = new ArrayList<>();
     private IntLongMap edgeIdToOsmWayIdMap;
@@ -164,7 +164,7 @@ public class OSMReader {
                 .setDirectory(baseGraph.getDirectory())
                 .setElevationProvider(eleProvider)
                 .setWayFilter(this::acceptWay)
-                .setNodeStorage(this::mapNodesIfPartOfTurnRestriction)
+                .setViaNodeStorage(this::mapNodesIfPartOfTurnRestriction)
                 .setSplitNodeFilter(this::isBarrierNode)
                 .setWayPreprocessor(this::preprocessWay)
                 .setRelationPreprocessor(this::preprocessRelations)
@@ -217,11 +217,10 @@ public class OSMReader {
             // at the moment we only work with single via ways
             if (restriction.getWays().size() == 3) {
                 ReaderRestriction.Restriction r = restriction.getRestrictions().get(0);
-                osmNodesToDuplicate.add(r.getVia());
+                artificialViaNodes.put(r.getVia(), null);
                 osmWaysToSplit.add(r.getFrom());
                 osmWaysToDuplicate.add(r.getTo());
             }
-
         }
     }
 

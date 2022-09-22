@@ -71,7 +71,7 @@ public class WaySegmentParser {
 
     private final ElevationProvider eleProvider;
     private final Predicate<ReaderWay> wayFilter;
-    private final NodeStorage nodeStorage;
+    private final ViaNodeStorage viaNodeStorage;
     private final Predicate<ReaderNode> splitNodeFilter;
     private final WayPreprocessor wayPreprocessor;
     private final Consumer<ReaderRelation> relationPreprocessor;
@@ -84,13 +84,13 @@ public class WaySegmentParser {
     private Date timestamp;
 
     private WaySegmentParser(PointAccess nodeAccess, Directory directory, ElevationProvider eleProvider,
-                             Predicate<ReaderWay> wayFilter, NodeStorage nodeStorage, Predicate<ReaderNode> splitNodeFilter,
+                             Predicate<ReaderWay> wayFilter, ViaNodeStorage viaNodeStorage, Predicate<ReaderNode> splitNodeFilter,
                              WayPreprocessor wayPreprocessor, Consumer<ReaderRelation> relationPreprocessor,
                              RelationProcessor relationProcessor, EdgeHandler edgeHandler, int workerThreads,
                              RestrictionBuilder restrictionBuilder) {
         this.eleProvider = eleProvider;
         this.wayFilter = wayFilter;
-        this.nodeStorage = nodeStorage;
+        this.viaNodeStorage = viaNodeStorage;
         this.splitNodeFilter = splitNodeFilter;
         this.wayPreprocessor = wayPreprocessor;
         this.relationPreprocessor = relationPreprocessor;
@@ -120,7 +120,7 @@ public class WaySegmentParser {
         readOSM(osmFile, new Pass1Handler());
         LOGGER.info("pass1 - finished, took: {}", sw1.stop().getTimeString());
 
-        LOGGER.info("Building restriction graph...");
+        LOGGER.info("Building restrictions...");
         restrictionBuilder.buildRestrictions();
 
         long nodes = nodeData.getNodeCount();
@@ -197,7 +197,7 @@ public class WaySegmentParser {
                 return;
             acceptedWays++;
 
-            nodeStorage.mapNodesIfPartOfTurnRestriction(way);
+            viaNodeStorage.mapNodesIfPartOfTurnRestriction(way);
 
             for (LongCursor node : way.getNodes()) {
                 final boolean isEnd = node.index == 0 || node.index == way.getNodes().size() - 1;
@@ -443,7 +443,7 @@ public class WaySegmentParser {
         private EdgeHandler edgeHandler = (from, to, pointList, way, nodeTags) ->
                 System.out.println("edge " + from + "->" + to + " (" + pointList.size() + " points)");
         private int workerThreads = 2;
-        private NodeStorage nodeStorage;
+        private ViaNodeStorage viaNodeStorage;
         private RestrictionBuilder restrictionBuilder;
 
         /**
@@ -478,8 +478,11 @@ public class WaySegmentParser {
             return this;
         }
 
-        public Builder setNodeStorage(NodeStorage nodeStorage) {
-            this.nodeStorage = nodeStorage;
+        /**
+         * @param viaNodeStorage stores via-node candidates for via-way restrictions
+         */
+        public Builder setViaNodeStorage(ViaNodeStorage viaNodeStorage) {
+            this.viaNodeStorage = viaNodeStorage;
             return this;
         }
 
@@ -531,6 +534,9 @@ public class WaySegmentParser {
             return this;
         }
 
+        /**
+         * @param restrictionBuilder prepare the topology of (via-way) restrictions
+         */
         public Builder setRestrictionBuilder(RestrictionBuilder restrictionBuilder) {
             this.restrictionBuilder = restrictionBuilder;
             return this;
@@ -538,7 +544,7 @@ public class WaySegmentParser {
 
         public WaySegmentParser build() {
             return new WaySegmentParser(
-                    nodeAccess, directory, elevationProvider, wayFilter, nodeStorage, splitNodeFilter,
+                    nodeAccess, directory, elevationProvider, wayFilter, viaNodeStorage, splitNodeFilter,
                     wayPreprocessor, relationPreprocessor, relationProcessor, edgeHandler, workerThreads,
                     restrictionBuilder
             );
@@ -602,7 +608,7 @@ public class WaySegmentParser {
         GHPoint3D getCoordinate(long osmNodeId);
     }
 
-    public interface NodeStorage {
+    public interface ViaNodeStorage {
         void mapNodesIfPartOfTurnRestriction(ReaderWay way);
     }
 
