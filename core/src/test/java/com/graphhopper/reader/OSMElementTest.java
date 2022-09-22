@@ -19,8 +19,6 @@ package com.graphhopper.reader;
 
 import org.junit.jupiter.api.Test;
 
-import com.graphhopper.reader.ReaderRestriction.Restriction;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -61,7 +59,7 @@ public class OSMElementTest {
     }
 
     @Test
-    public void testRestriction() {
+    public void testWayRestrictionBuild() {
         List<Long> ways = new ArrayList<Long>();
         ways.add(12L);
         ways.add(23L);
@@ -72,14 +70,14 @@ public class OSMElementTest {
         wayNodesMap.put(23L, new Long[]{2L, 3L});
         wayNodesMap.put(34L, new Long[]{3L, 4L});
 
-        ReaderRestriction restriction = new ReaderRestriction(ways);
+        WayRestriction restriction = new WayRestriction(ways);
         restriction.buildRestriction(wayNodesMap);
 
-        ReaderRestriction.Restriction r1 = restriction.getRestrictions().get(0);
-        ReaderRestriction.Restriction r2 = restriction.getRestrictions().get(1);
+        NodeRestriction r1 = restriction.getRestrictions().get(0);
+        NodeRestriction r2 = restriction.getRestrictions().get(1);
 
-        assertEquals(r1.toString(), new ReaderRestriction.Restriction(12L, 2L, 23L).toString());
-        assertEquals(r2.toString(), new ReaderRestriction.Restriction(23L, 3L, 34L).toString());
+        assertEquals(r1.toString(), new NodeRestriction(12L, 2L, 23L).toString());
+        assertEquals(r2.toString(), new NodeRestriction(23L, 3L, 34L).toString());
     }
 
 }

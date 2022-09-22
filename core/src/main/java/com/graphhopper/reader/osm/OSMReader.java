@@ -92,10 +92,8 @@ public class OSMReader {
     private GHLongHashSet osmWayIdSet = new GHLongHashSet();
     // same but for via ways we need to store the start and end nodes as well
     private HashMap<Long, Long[]> osmWayNodesMap = new HashMap<>();
-    private ArrayList<ReaderRestriction> restrictions = new ArrayList<>();
+    private ArrayList<WayRestriction> way_restrictions = new ArrayList<>();
     private HashMap<Long, Long> artificialViaNodes = new HashMap<>();
-    private ArrayList<Long> osmWaysToSplit = new ArrayList<>();
-    private ArrayList<Long> osmWaysToDuplicate = new ArrayList<>();
     private IntLongMap edgeIdToOsmWayIdMap;
 
     public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
@@ -172,7 +170,6 @@ public class OSMReader {
                 .setEdgeHandler(this::addEdge)
                 .setWorkerThreads(config.getWorkerThreads())
                 .setRestrictionBuilder(this::buildRestrictions)
-                .setViaNodeCreator(this::createArtificialViaNodes)
                 .build();
         waySegmentParser.readOSM(osmFile);
         osmDataDate = waySegmentParser.getTimeStamp();
@@ -212,24 +209,22 @@ public class OSMReader {
         }
     }
 
-    protected void buildRestrictions() {
-        for (ReaderRestriction restriction : restrictions) {
-            restriction.buildRestriction(osmWayNodesMap);
-            // at the moment we only work with single via ways
+    protected void buildRestrictions(OSMNodeData nodeData) {
+        for (WayRestriction restriction : way_restrictions) {
+            // for now we only work with single via-way restrictions 
             if (restriction.getWays().size() == 3) {
-                ReaderRestriction.Restriction r = restriction.getRestrictions().get(0);
-                artificialViaNodes.put(r.getVia(), null);
-                osmWaysToSplit.add(r.getFrom());
-                osmWaysToDuplicate.add(r.getTo());
+                restriction.buildRestriction(osmWayNodesMap);
+                NodeRestriction r = restriction.getRestrictions().get(0);
+                createArtificialViaNode(r.getVia(), nodeData);
+                r.getFrom();
+                r.getTo();
             }
         }
     }
 
-    protected void createArtificialViaNodes(OSMNodeData nodeData) {
-        for (Long node_id : artificialViaNodes.keySet()) {
-            SegmentNode artificalNode = nodeData.addCopyOfNode(new SegmentNode(node_id, nodeData.getId(node_id)));
-            artificialViaNodes.put(node_id, artificalNode.osmNodeId);
-        }
+    protected void createArtificialViaNode(Long via, OSMNodeData nodeData) {
+        SegmentNode artificalNode = nodeData.addCopyOfNode(new SegmentNode(via, nodeData.getId(via)));
+        artificialViaNodes.put(via, artificalNode.osmNodeId);
     }
 
     /**
@@ -558,7 +553,7 @@ public class OSMReader {
             for (OSMTurnRestriction turnRestriction : turnRestrictions) {
                 ArrayList<Long> ways = turnRestriction.getWays();
                 if (turnRestriction.getViaType() == ViaType.WAY) {
-                    restrictions.add(new ReaderRestriction(ways));
+                    way_restrictions.add(new WayRestriction(ways));
                 }
                 for (Long way_id : ways) {
                     osmWayIdSet.add(way_id);

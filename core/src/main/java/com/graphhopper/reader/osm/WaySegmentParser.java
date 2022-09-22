@@ -79,7 +79,6 @@ public class WaySegmentParser {
     private final EdgeHandler edgeHandler;
     private final int workerThreads;
     private final RestrictionBuilder restrictionBuilder;
-    private ViaNodeCreator viaNodeCreator;
 
     private final OSMNodeData nodeData;
     private Date timestamp;
@@ -88,7 +87,7 @@ public class WaySegmentParser {
                              Predicate<ReaderWay> wayFilter, ViaNodeStorage viaNodeStorage, Predicate<ReaderNode> splitNodeFilter,
                              WayPreprocessor wayPreprocessor, Consumer<ReaderRelation> relationPreprocessor,
                              RelationProcessor relationProcessor, EdgeHandler edgeHandler, int workerThreads,
-                             RestrictionBuilder restrictionBuilder, ViaNodeCreator viaNodeCreator) {
+                             RestrictionBuilder restrictionBuilder) {
         this.eleProvider = eleProvider;
         this.wayFilter = wayFilter;
         this.viaNodeStorage = viaNodeStorage;
@@ -99,7 +98,6 @@ public class WaySegmentParser {
         this.edgeHandler = edgeHandler;
         this.workerThreads = workerThreads;
         this.restrictionBuilder = restrictionBuilder;
-        this.viaNodeCreator = viaNodeCreator;
 
         this.nodeData = new OSMNodeData(nodeAccess, directory);
     }
@@ -121,9 +119,6 @@ public class WaySegmentParser {
         StopWatch sw1 = StopWatch.started();
         readOSM(osmFile, new Pass1Handler());
         LOGGER.info("pass1 - finished, took: {}", sw1.stop().getTimeString());
-
-        LOGGER.info("Building restrictions...");
-        restrictionBuilder.buildRestrictions();
 
         long nodes = nodeData.getNodeCount();
 
@@ -262,7 +257,6 @@ public class WaySegmentParser {
         @Override
         public void handleWay(ReaderWay way) {
             if (!handledWays) {
-                viaNodeCreator.createArtificialViaNodes(nodeData);
                 LOGGER.info("pass2 - start reading OSM ways");
                 handledWays = true;
             }
@@ -395,6 +389,9 @@ public class WaySegmentParser {
             if (!handledRelations) {
                 LOGGER.info("pass2 - start reading OSM relations");
                 handledRelations = true;
+
+                LOGGER.info("building restrictions...");
+                restrictionBuilder.buildRestrictions(nodeData);
             }
 
             relationProcessor.processRelation(relation, this::getInternalNodeIdOfOSMNode);
@@ -448,7 +445,6 @@ public class WaySegmentParser {
         private int workerThreads = 2;
         private ViaNodeStorage viaNodeStorage;
         private RestrictionBuilder restrictionBuilder;
-        private ViaNodeCreator viaNodeCreator;
 
         /**
          * @param nodeAccess used to store tower node coordinates while parsing the ways
@@ -546,19 +542,11 @@ public class WaySegmentParser {
             return this;
         }
 
-        /**
-         * @param viaNodeCreator creates artificial via-nodes for via-way restrictions
-         */
-        public Builder setViaNodeCreator(ViaNodeCreator viaNodeCreator) {
-            this.viaNodeCreator = viaNodeCreator;
-            return this;
-        }
-
         public WaySegmentParser build() {
             return new WaySegmentParser(
                     nodeAccess, directory, elevationProvider, wayFilter, viaNodeStorage, splitNodeFilter,
                     wayPreprocessor, relationPreprocessor, relationProcessor, edgeHandler, workerThreads,
-                    restrictionBuilder, viaNodeCreator
+                    restrictionBuilder
             );
         }
     }
@@ -625,10 +613,6 @@ public class WaySegmentParser {
     }
 
     public interface RestrictionBuilder {
-        void buildRestrictions();
-    }
-
-    public interface ViaNodeCreator {
-        void createArtificialViaNodes(OSMNodeData nodeData);
+        void buildRestrictions(OSMNodeData nodeData);
     }
 }
