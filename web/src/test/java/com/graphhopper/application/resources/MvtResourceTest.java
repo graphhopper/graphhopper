@@ -85,13 +85,12 @@ public class MvtResourceTest {
         JtsLayer layer = layerValues.values().iterator().next();
         MultiLineString multiLineString = (MultiLineString) layer.getGeometries().iterator().next();
         assertEquals(42, multiLineString.getCoordinates().length);
-        Map map = attributes(multiLineString);
-        assertEquals("Camì de les Pardines", map.get("name"));
+        assertEquals("Camì de les Pardines", getUserData(multiLineString).get("name"));
     }
 
     @Test
-    public void testWithDetailsInResponse() throws IOException {
-        final Response response = clientTarget(app, "/mvt/15/16522/12102.mvt?details=max_speed&details=road_class&details=road_environment").request().buildGet().invoke();
+    public void testDetailsInResponse() throws IOException {
+        final Response response = clientTarget(app, "/mvt/15/16522/12102.mvt").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InputStream is = response.readEntity(InputStream.class);
         JtsMvt result = MvtReader.loadMvt(is, new GeometryFactory(), new TagKeyValueMapConverter());
@@ -100,14 +99,14 @@ public class MvtResourceTest {
         assertEquals(21, layer.getGeometries().size());
 
         Geometry geometry = layer.getGeometries().stream().
-                filter(g -> attributes(g).get("name").equals("Avinguda de Tarragona"))
+                filter(g -> getUserData(g).get("name").equals("Avinguda de Tarragona"))
                 .findFirst().get();
-        assertEquals("road", attributes(geometry).get("road_environment"));
-        assertEquals(50.0, attributes(geometry).get("max_speed"));
-        assertEquals("primary", attributes(geometry).get("road_class"));
+        assertEquals("road", getUserData(geometry).get("road_environment"));
+        assertEquals(50.0, getUserData(geometry).get("max_speed"));
+        assertEquals("primary", getUserData(geometry).get("road_class"));
     }
 
-    private Map<String, Object> attributes(Geometry g) {
+    private Map<String, Object> getUserData(Geometry g) {
         return (Map<String, Object>) g.getUserData();
     }
 }

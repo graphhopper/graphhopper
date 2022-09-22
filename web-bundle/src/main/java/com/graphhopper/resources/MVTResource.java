@@ -5,7 +5,10 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import com.wdtinc.mapbox_vector_tile.VectorTile;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.IGeometryFilter;
@@ -59,7 +62,7 @@ public class MVTResource {
             @PathParam("z") int zInfo,
             @PathParam("x") int xInfo,
             @PathParam("y") int yInfo,
-            @QueryParam(Parameters.Details.PATH_DETAILS) List<String> pathDetails) {
+            @QueryParam("render_all") @DefaultValue("false") Boolean renderAll) {
 
         if (zInfo <= 9) {
             VectorTile.Tile.Builder mvtBuilder = VectorTile.Tile.newBuilder();
@@ -96,14 +99,9 @@ public class MVTResource {
         locationIndex.query(bbox, edgeId -> {
             EdgeIteratorState edge = graphHopper.getBaseGraph().getEdgeIteratorStateForKey(edgeId * 2);
             LineString lineString;
-            if (pathDetails.contains(UrbanDensity.KEY)) {
-                if (zInfo >= 9) {
-                    PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
-                    lineString = pl.toLineString(false);
-                } else {
-                    // skip edge for certain zoom
-                    return;
-                }
+            if (renderAll) {
+                PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+                lineString = pl.toLineString(false);
             } else {
                 RoadClass rc = edge.get(roadClassEnc);
                 if (zInfo >= 14) {
@@ -134,12 +132,7 @@ public class MVTResource {
             map.put("base_node", edge.getBaseNode());
             map.put("adj_node", edge.getAdjNode());
             map.put("distance", edge.getDistance());
-            for (String str : pathDetails) {
-                // how to indicate an erroneous parameter?
-                if (str.contains(",") || !encodingManager.hasEncodedValue(str))
-                    continue;
-
-                EncodedValue ev = encodingManager.getEncodedValue(str, EncodedValue.class);
+            encodingManager.getEncodedValues().forEach(ev -> {
                 if (ev instanceof EnumEncodedValue)
                     map.put(ev.getName(), edge.get((EnumEncodedValue) ev).toString());
                 else if (ev instanceof DecimalEncodedValue)
@@ -148,7 +141,7 @@ public class MVTResource {
                     map.put(ev.getName(), edge.get((BooleanEncodedValue) ev));
                 else if (ev instanceof IntEncodedValue)
                     map.put(ev.getName(), edge.get((IntEncodedValue) ev));
-            }
+            });
 
             lineString.setUserData(map);
 
