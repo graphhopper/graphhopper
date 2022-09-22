@@ -974,7 +974,7 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public String getName() {
-            String name = (String) getValue("name");
+            String name = (String) getValue(EdgeKVStorage.Details.STREET_NAME);
             // preserve backward compatibility (returns empty string if name tag missing)
             return name == null ? "" : name;
         }

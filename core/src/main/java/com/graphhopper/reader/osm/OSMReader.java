@@ -52,6 +52,7 @@ import java.util.*;
 import java.util.function.LongToIntFunction;
 import java.util.regex.Pattern;
 
+import static com.graphhopper.search.EdgeKVStorage.Details.*;
 import static com.graphhopper.util.Helper.nf;
 import static java.util.Collections.emptyList;
 
@@ -394,28 +395,28 @@ public class OSMReader {
             if (name.isEmpty())
                 name = fixWayName(way.getTag("name"));
             if (!name.isEmpty())
-                list.add(new EdgeKVStorage.KeyValue("name", name));
+                list.add(new EdgeKVStorage.KeyValue(STREET_NAME, name));
 
             // http://wiki.openstreetmap.org/wiki/Key:ref
             String refName = fixWayName(way.getTag("ref"));
             if (!refName.isEmpty())
-                list.add(new EdgeKVStorage.KeyValue("ref", refName));
+                list.add(new EdgeKVStorage.KeyValue(STREET_REF, refName));
 
             if (way.hasTag("destination:ref")) {
-                list.add(new EdgeKVStorage.KeyValue("destination_ref", fixWayName(way.getTag("destination:ref"))));
+                list.add(new EdgeKVStorage.KeyValue(STREET_DESTINATION_REF, fixWayName(way.getTag("destination:ref"))));
             } else {
                 if (way.hasTag("destination:ref:forward"))
-                    list.add(new EdgeKVStorage.KeyValue("destination_ref", fixWayName(way.getTag("destination:ref:forward")), true, false));
+                    list.add(new EdgeKVStorage.KeyValue(STREET_DESTINATION_REF, fixWayName(way.getTag("destination:ref:forward")), true, false));
                 if (way.hasTag("destination:ref:backward"))
-                    list.add(new EdgeKVStorage.KeyValue("destination_ref", fixWayName(way.getTag("destination:ref:backward")), false, true));
+                    list.add(new EdgeKVStorage.KeyValue(STREET_DESTINATION_REF, fixWayName(way.getTag("destination:ref:backward")), false, true));
             }
             if (way.hasTag("destination")) {
-                list.add(new EdgeKVStorage.KeyValue("destination", fixWayName(way.getTag("destination"))));
+                list.add(new EdgeKVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination"))));
             } else {
                 if (way.hasTag("destination:forward"))
-                    list.add(new EdgeKVStorage.KeyValue("destination", fixWayName(way.getTag("destination:forward")), true, false));
+                    list.add(new EdgeKVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:forward")), true, false));
                 if (way.hasTag("destination:backward"))
-                    list.add(new EdgeKVStorage.KeyValue("destination", fixWayName(way.getTag("destination:backward")), false, true));
+                    list.add(new EdgeKVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:backward")), false, true));
             }
         }
         way.setTag("key_values", list);

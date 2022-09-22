@@ -13,6 +13,7 @@ import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.NodeAccess;
@@ -197,7 +198,7 @@ public class SPTResource {
                         if (edge == null)
                             continue;
 
-                        if (col.equals(Parameters.Details.STREET_NAME)) {
+                        if (col.equals(EdgeKVStorage.Details.STREET_NAME)) {
                             sb.append(edge.getName().replaceAll(",", ""));
                             continue;
                         }

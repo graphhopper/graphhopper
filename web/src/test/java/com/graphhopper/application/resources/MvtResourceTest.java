@@ -22,6 +22,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.MvtReader;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.TagKeyValueMapConverter;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.model.JtsLayer;
@@ -44,6 +45,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -85,7 +87,7 @@ public class MvtResourceTest {
         JtsLayer layer = layerValues.values().iterator().next();
         MultiLineString multiLineString = (MultiLineString) layer.getGeometries().iterator().next();
         assertEquals(42, multiLineString.getCoordinates().length);
-        assertEquals("Camì de les Pardines", getUserData(multiLineString).get("name"));
+        assertEquals("Camì de les Pardines", getUserData(multiLineString).get(STREET_NAME));
     }
 
     @Test
@@ -99,7 +101,7 @@ public class MvtResourceTest {
         assertEquals(21, layer.getGeometries().size());
 
         Geometry geometry = layer.getGeometries().stream().
-                filter(g -> getUserData(g).get("name").equals("Avinguda de Tarragona"))
+                filter(g -> "Avinguda de Tarragona".equals(getUserData(g).get(STREET_NAME)))
                 .findFirst().get();
         assertEquals("road", getUserData(geometry).get("road_environment"));
         assertEquals(50.0, getUserData(geometry).get("max_speed"));

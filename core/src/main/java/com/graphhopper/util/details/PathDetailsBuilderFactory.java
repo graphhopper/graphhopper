@@ -36,11 +36,11 @@ public class PathDetailsBuilderFactory {
         List<PathDetailsBuilder> builders = new ArrayList<>();
 
         if (requestedPathDetails.contains(STREET_NAME))
-            builders.add(new KVStringDetails(STREET_NAME, "name"));
+            builders.add(new KVStringDetails(STREET_NAME));
         if (requestedPathDetails.contains(STREET_REF))
-            builders.add(new KVStringDetails(STREET_REF, "ref"));
+            builders.add(new KVStringDetails(STREET_REF));
         if (requestedPathDetails.contains(STREET_DESTINATION))
-            builders.add(new KVStringDetails(STREET_DESTINATION, "destination"));
+            builders.add(new KVStringDetails(STREET_DESTINATION));
 
         if (requestedPathDetails.contains(AVERAGE_SPEED))
             builders.add(new AverageSpeedDetails(weighting));
