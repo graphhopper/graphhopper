@@ -191,6 +191,18 @@ class OSMNodeData {
         return new SegmentNode(newOsmId, id);
     }
 
+    SegmentNode addCopyOfNode2(SegmentNode node) {
+        GHPoint3D point = getCoordinates(node.id);
+        if (point == null)
+            throw new IllegalStateException("Cannot copy node : " + node.osmNodeId + ", because it is missing");
+        final long newOsmId = nextArtificialOSMNodeId++;
+        if (idsByOsmNodeIds.put(newOsmId, INTERMEDIATE_NODE) != EMPTY_NODE)
+            throw new IllegalStateException("Artificial osm node id already exists: " + newOsmId);
+        int id = addTowerNode(newOsmId, point.getLat(), point.getLon(), point.getEle());
+        return new SegmentNode(newOsmId, id);
+    }
+
+
     int convertPillarToTowerNode(int id, long osmNodeId) {
         if (!isPillarNode(id))
             throw new IllegalArgumentException("Not a pillar node: " + id);

@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+import com.carrotsearch.hppc.LongArrayList;
+
 public class WayRestriction {
     private List<Long> ways;
     private List<NodeRestriction> restrictions;
@@ -19,21 +21,23 @@ public class WayRestriction {
         this.startNode = -1L;
     }
 
-    public void buildRestriction(HashMap<Long, Long[]> wayNodesMap) {
+    public void buildRestriction(HashMap<Long, ReaderWay> wayNodesMap) {
         for (int i = 0; i < ways.size() - 1; i++) {
             Long from = ways.get(i);
             Long to = ways.get(i + 1);
             Long via = getViaNode(wayNodesMap.get(from), wayNodesMap.get(to));
             restrictions.add(new NodeRestriction(from, via, to));
         }
+        setStartNode(wayNodesMap);
     }
 
-    public Long getViaNode(Long[] fromNodes, Long[] toNodes) {
+    public Long getViaNode(ReaderWay from, ReaderWay to) {
+        Long[] fromNodes = from.getEndNodes();
+        Long[] toNodes = to.getEndNodes();
+
         if (Arrays.asList(toNodes).contains(fromNodes[0])) {
-            startNode = fromNodes[1];
             return fromNodes[0];
         } else if (Arrays.asList(toNodes).contains(fromNodes[1])) {
-            startNode = fromNodes[0];
             return fromNodes[1];
         } else {
             throw new IllegalStateException("No Via Node found!");
@@ -48,6 +52,16 @@ public class WayRestriction {
 
     public List<Long> getWays() {
         return ways;
+    }
+
+    private void setStartNode(HashMap<Long, ReaderWay> wayNodesMap) {
+        Long via = restrictions.get(0).getVia();
+        Long[] fromEndnodes = wayNodesMap.get(ways.get(0)).getEndNodes();
+        if (fromEndnodes[0] == via) {
+            startNode = fromEndnodes[1];
+        } else {
+            startNode = fromEndnodes[0];
+        }
     }
 
     public Long getStartNode() {

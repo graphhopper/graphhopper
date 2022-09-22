@@ -19,6 +19,7 @@ package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.IntLongMap;
 import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.coll.GHLongHashSet;
 import com.graphhopper.coll.GHLongLongHashMap;
@@ -55,6 +56,7 @@ import java.util.regex.Pattern;
 
 import static com.graphhopper.util.Helper.nf;
 import static java.util.Collections.emptyList;
+import static java.util.Collections.emptyMap;
 
 /**
  * Parses an OSM file (xml, zipped xml or pbf) and creates a graph from it. The OSM file is actually read twice.
@@ -91,7 +93,7 @@ public class OSMReader {
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
     private GHLongHashSet osmWayIdSet = new GHLongHashSet();
     // same but for via ways we need to store the start and end nodes as well
-    private HashMap<Long, Long[]> osmWayNodesMap = new HashMap<>();
+    private HashMap<Long, ReaderWay> osmWayNodesMap = new HashMap<>();
     private ArrayList<WayRestriction> way_restrictions = new ArrayList<>();
     private HashMap<Long, Long> artificialViaNodes = new HashMap<>();
     private IntLongMap edgeIdToOsmWayIdMap;
@@ -205,7 +207,7 @@ public class OSMReader {
 
     protected void mapNodesIfPartOfTurnRestriction(ReaderWay way) {
         if (osmWayNodesMap.containsKey(way.getId())) {
-            osmWayNodesMap.put(way.getId(), way.getEndNodes());
+            osmWayNodesMap.put(way.getId(), way);
         }
     }
 
@@ -215,14 +217,30 @@ public class OSMReader {
             if (restriction.getWays().size() == 3) {
                 restriction.buildRestriction(osmWayNodesMap);
                 NodeRestriction r = restriction.getRestrictions().get(0);
+
                 createArtificialViaNode(r.getVia(), nodeData);
-                r.getFrom();
-                r.getTo();
+
+                // manipulate the first edge
+                int from = nodeData.idToTowerNode(nodeData.getId(restriction.getStartNode()));
+                int to = nodeData.idToTowerNode(nodeData.getId(artificialViaNodes.get(r.getVia())));
+                ReaderWay way = osmWayNodesMap.get(r.getFrom());
+                LongArrayList nodes = way.getNodes();
+                PointList pointList = new PointList(nodes.size(), nodeData.is3D());
+                for (LongCursor point : nodes) {
+                    nodeData.addCoordinatesToPointList(nodeData.getId(point.value), pointList);
+                }
+
+                addEdge(from, to, pointList, way, emptyMap());
             }
         }
     }
 
     protected void createArtificialViaNode(Long via, OSMNodeData nodeData) {
+        SegmentNode artificalNode = nodeData.addCopyOfNode2(new SegmentNode(via, nodeData.getId(via)));
+        artificialViaNodes.put(via, artificalNode.osmNodeId);
+    }
+
+    protected void splitFromWay(Long via, OSMNodeData nodeData) {
         SegmentNode artificalNode = nodeData.addCopyOfNode(new SegmentNode(via, nodeData.getId(via)));
         artificialViaNodes.put(via, artificalNode.osmNodeId);
     }

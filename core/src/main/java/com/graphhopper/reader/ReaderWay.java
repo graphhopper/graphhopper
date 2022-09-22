@@ -17,9 +17,6 @@
  */
 package com.graphhopper.reader;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.carrotsearch.hppc.LongArrayList;
 
 /**
