@@ -5,17 +5,17 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-import com.carrotsearch.hppc.LongArrayList;
-
 public class WayRestriction {
+    private final Long id;
     private List<Long> ways;
     private List<NodeRestriction> restrictions;
     private Long startNode;
 
-    public WayRestriction(List<Long> ways) {
+    public WayRestriction(Long id, List<Long> ways) {
         if (ways.size() < 2) {
             throw new IllegalArgumentException("Restriction needs 2 or more ways");
         }
+        this.id = id;
         this.ways = ways;
         this.restrictions = new ArrayList<NodeRestriction>(2);
         this.startNode = -1L;
@@ -68,5 +68,9 @@ public class WayRestriction {
         if (startNode < 0)
             throw new IllegalStateException("Restriction has not yet been build");
         return startNode;
+    }
+
+    public Long getId() {
+        return id;
     }
 }

@@ -22,7 +22,7 @@ public class OSMTurnRestrictionParserTest {
 
     @Test
     public void testOnlyRestriction() {
-        OSMTurnRestriction restriction = new OSMTurnRestriction(4, 3, 3, OSMTurnRestriction.RestrictionType.ONLY, OSMTurnRestriction.ViaType.NODE);
+        OSMTurnRestriction restriction = new OSMTurnRestriction(1, 4, 3, 3, OSMTurnRestriction.RestrictionType.ONLY, OSMTurnRestriction.ViaType.NODE);
         BaseGraph graph = parseRestrictionOnTestGraph(restriction);
 
         assertTrue(Double.isInfinite(graph.getTurnCostStorage().get(turnCostEnc, 4, 3, 6)));
@@ -32,7 +32,7 @@ public class OSMTurnRestrictionParserTest {
 
     @Test
     public void testNotRestriction() {
-        OSMTurnRestriction restriction = new OSMTurnRestriction(4, 3, 3, OSMTurnRestriction.RestrictionType.NOT, OSMTurnRestriction.ViaType.NODE);
+        OSMTurnRestriction restriction = new OSMTurnRestriction(1, 4, 3, 3, OSMTurnRestriction.RestrictionType.NOT, OSMTurnRestriction.ViaType.NODE);
         BaseGraph graph = parseRestrictionOnTestGraph(restriction);
 
         assertTrue(Double.isInfinite(graph.getTurnCostStorage().get(turnCostEnc, 4, 3, 3)));
