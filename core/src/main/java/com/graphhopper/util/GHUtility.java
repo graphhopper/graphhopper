@@ -691,14 +691,19 @@ public class GHUtility {
     public static List<CustomArea> readCountries() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
+
+        Map<String, Country> map = new HashMap<>(Country.values().length);
+        for (Country c : Country.values()) map.put(c.getAlpha2(), c);
+
         try (Reader reader = new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {
             JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
             return jsonFeatureCollection.getFeatures().stream()
                     // exclude areas not in the list of Country enums like FX => Metropolitan France
-                    .filter(customArea -> Country.valueOfAlpha2((String) customArea.getProperties().get(Country.JSON_ID)) != null)
+                    .filter(customArea -> map.get((String) customArea.getProperties().get("id")) != null)
                     .map((f) -> {
                         CustomArea ca = CustomArea.fromJsonFeature(f);
-                        ca.getProperties().put("name", Country.valueOfAlpha2((String) f.getProperties().get(Country.JSON_ID)).getName());
+                        Country country = map.get((String) f.getProperties().get("id"));
+                        ca.getProperties().put(Country.JSON_AREA3, country.name());
                         return ca;
                     })
                     .collect(Collectors.toList());

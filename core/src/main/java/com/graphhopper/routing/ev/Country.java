@@ -17,9 +17,6 @@
  */
 package com.graphhopper.routing.ev;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * The enum constants correspond to the the ISO3166-1:alpha3 code of the corresponding country
  */
@@ -245,45 +242,31 @@ public enum Country {
     ZMB("Zambia", "ZM"),
     ZWE("Zimbabwe", "ZW");
 
-    public static final String KEY = "country", JSON_ID = "id";
+    public static final String KEY = "country", JSON_AREA3 = "ISO3166-1:alpha3";
 
-    private final String name;
-    private final String twoLetterCode;
+    private final String displayName;
+    private final String alpha2;
 
-    Country(String name, String twoLetterCode) {
-        this.name = name;
-        this.twoLetterCode = twoLetterCode;
+    Country(String displayName, String alpha2) {
+        this.displayName = displayName;
+        this.alpha2 = alpha2;
     }
 
     /**
      * @return the name:en field of this country
      */
-    public String getName() {
-        return name;
+    public String getDisplayName() {
+        return displayName;
     }
 
     /**
      * @return the ISO3166-1:alpha2 code of this country
      */
-    public String getTwoLetterCode() {
-        return twoLetterCode;
+    public String getAlpha2() {
+        return alpha2;
     }
 
     public static EnumEncodedValue<Country> create() {
         return new EnumEncodedValue<>(Country.KEY, Country.class);
-    }
-
-    private static final Map<String, Country> map = new HashMap<>(Country.values().length);
-
-    static {
-        for (Country c : Country.values()) map.put(c.getTwoLetterCode(), c);
-    }
-
-    /**
-     * This method returns a Country enum for the specified ISO3166-1:alpha2 code.
-     */
-    public static Country valueOfAlpha2(String alpha2) {
-        if (alpha2 == null || alpha2.length() != 2) return null;
-        return map.get(alpha2);
     }
 }

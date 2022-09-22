@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 public class CustomArea implements AreaIndex.Area {
-    private final static GeometryFactory factory = new GeometryFactory();
     private final Map<String, Object> properties;
     private final List<Polygon> borders;
 
