@@ -135,10 +135,10 @@ class AreaIndexTest {
     @Test
     public void testCountries() {
         AreaIndex<CustomArea> countryIndex = createCountryIndex();
-        assertEquals("DEU", countryIndex.query(52.52437, 13.41053).get(0).getProperties().get(Country.JSON_AREA3));
-        assertEquals("FRA", countryIndex.query(48.86471, 2.349014).get(0).getProperties().get(Country.JSON_AREA3));
-        assertEquals("USA", countryIndex.query(35.67514, -105.94665).get(0).getProperties().get(Country.JSON_AREA3));
-        assertEquals("AUT", countryIndex.query(48.20448, 16.10788).get(0).getProperties().get(Country.JSON_AREA3));
+        assertEquals("DEU", countryIndex.query(52.52437, 13.41053).get(0).getProperties().get(Country.ISO_ALPHA3));
+        assertEquals("FRA", countryIndex.query(48.86471, 2.349014).get(0).getProperties().get(Country.ISO_ALPHA3));
+        assertEquals("USA", countryIndex.query(35.67514, -105.94665).get(0).getProperties().get(Country.ISO_ALPHA3));
+        assertEquals("AUT", countryIndex.query(48.20448, 16.10788).get(0).getProperties().get(Country.ISO_ALPHA3));
     }
 
     private AreaIndex<CustomArea> createCountryIndex() {

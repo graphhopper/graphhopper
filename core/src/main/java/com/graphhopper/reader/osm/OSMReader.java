@@ -252,12 +252,12 @@ public class OSMReader {
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the EncodingManager
         Country country = Country.MISSING;
         for (CustomArea customArea : customAreas) {
-            Object area3 = customArea.getProperties().get(Country.JSON_AREA3);
-            if (area3 == null)
+            Object alpha3 = customArea.getProperties().get(Country.ISO_ALPHA3);
+            if (alpha3 == null)
                 continue;
             if (country != Country.MISSING)
-                LOGGER.warn("Multiple countries found for way {}: {}, {}", way.getId(), country, area3);
-            country = Country.valueOf((String) area3);
+                LOGGER.warn("Multiple countries found for way {}: {}, {}", way.getId(), country, alpha3);
+            country = Country.valueOf((String) alpha3);
         }
         way.setTag("country", country);
 

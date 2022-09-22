@@ -703,7 +703,7 @@ public class GHUtility {
                     .map((f) -> {
                         CustomArea ca = CustomArea.fromJsonFeature(f);
                         Country country = map.get((String) f.getProperties().get("id"));
-                        ca.getProperties().put(Country.JSON_AREA3, country.name());
+                        ca.getProperties().put(Country.ISO_ALPHA3, country.name());
                         return ca;
                     })
                     .collect(Collectors.toList());
