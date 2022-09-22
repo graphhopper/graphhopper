@@ -217,10 +217,12 @@ public class OSMReader {
             if (restriction.getWays().size() == 3) {
                 restriction.buildRestriction(osmWayNodesMap);
                 NodeRestriction r = restriction.getRestrictions().get(0);
+                NodeRestriction r2 = restriction.getRestrictions().get(1);
 
                 createArtificialViaNode(r.getVia(), nodeData);
 
                 // manipulate the first edge
+                // 1.
                 int from = nodeData.idToTowerNode(nodeData.getId(restriction.getStartNode()));
                 int to = nodeData.idToTowerNode(nodeData.getId(artificialViaNodes.get(r.getVia())));
                 ReaderWay way = osmWayNodesMap.get(r.getFrom());
@@ -231,6 +233,26 @@ public class OSMReader {
                 }
 
                 addEdge(from, to, pointList, way, emptyMap());
+
+                // 2.
+                int from2 = nodeData.idToTowerNode(nodeData.getId(artificialViaNodes.get(r.getVia())));
+                int to2 = nodeData.idToTowerNode(nodeData.getId(r.getVia()));
+                PointList pointList2 = new PointList(2, nodeData.is3D());
+                nodeData.addCoordinatesToPointList(nodeData.towerNodeToId(from2), pointList2);
+                nodeData.addCoordinatesToPointList(nodeData.towerNodeToId(to2), pointList2);
+
+                addEdge(from2, to2, pointList2, way, emptyMap());
+
+                // second edge
+                int to3 = nodeData.idToTowerNode(nodeData.getId(r2.getVia()));
+                ReaderWay way2 = osmWayNodesMap.get(r.getTo());
+                LongArrayList nodes2 = way2.getNodes();
+                PointList pointList3 = new PointList(nodes.size(), nodeData.is3D());
+                for (LongCursor point2 : nodes2) {
+                    nodeData.addCoordinatesToPointList(nodeData.getId(point2.value), pointList3);
+                }
+
+                addEdge(to, to3, pointList3, way2, emptyMap());
             }
         }
     }
