@@ -172,6 +172,7 @@ public class OSMReader {
                 .setEdgeHandler(this::addEdge)
                 .setWorkerThreads(config.getWorkerThreads())
                 .setRestrictionBuilder(this::buildRestrictions)
+                .setViaNodeCreator(this::createArtificialViaNodes)
                 .build();
         waySegmentParser.readOSM(osmFile);
         osmDataDate = waySegmentParser.getTimeStamp();
@@ -221,6 +222,13 @@ public class OSMReader {
                 osmWaysToSplit.add(r.getFrom());
                 osmWaysToDuplicate.add(r.getTo());
             }
+        }
+    }
+
+    protected void createArtificialViaNodes(OSMNodeData nodeData) {
+        for (Long node_id : artificialViaNodes.keySet()) {
+            SegmentNode artificalNode = nodeData.addCopyOfNode(new SegmentNode(node_id, nodeData.getId(node_id)));
+            artificialViaNodes.put(node_id, artificalNode.osmNodeId);
         }
     }
 

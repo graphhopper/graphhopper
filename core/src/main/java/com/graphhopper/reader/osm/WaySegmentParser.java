@@ -79,6 +79,7 @@ public class WaySegmentParser {
     private final EdgeHandler edgeHandler;
     private final int workerThreads;
     private final RestrictionBuilder restrictionBuilder;
+    private ViaNodeCreator viaNodeCreator;
 
     private final OSMNodeData nodeData;
     private Date timestamp;
@@ -87,7 +88,7 @@ public class WaySegmentParser {
                              Predicate<ReaderWay> wayFilter, ViaNodeStorage viaNodeStorage, Predicate<ReaderNode> splitNodeFilter,
                              WayPreprocessor wayPreprocessor, Consumer<ReaderRelation> relationPreprocessor,
                              RelationProcessor relationProcessor, EdgeHandler edgeHandler, int workerThreads,
-                             RestrictionBuilder restrictionBuilder) {
+                             RestrictionBuilder restrictionBuilder, ViaNodeCreator viaNodeCreator) {
         this.eleProvider = eleProvider;
         this.wayFilter = wayFilter;
         this.viaNodeStorage = viaNodeStorage;
@@ -98,6 +99,7 @@ public class WaySegmentParser {
         this.edgeHandler = edgeHandler;
         this.workerThreads = workerThreads;
         this.restrictionBuilder = restrictionBuilder;
+        this.viaNodeCreator = viaNodeCreator;
 
         this.nodeData = new OSMNodeData(nodeAccess, directory);
     }
@@ -260,6 +262,7 @@ public class WaySegmentParser {
         @Override
         public void handleWay(ReaderWay way) {
             if (!handledWays) {
+                viaNodeCreator.createArtificialViaNodes(nodeData);
                 LOGGER.info("pass2 - start reading OSM ways");
                 handledWays = true;
             }
@@ -445,6 +448,7 @@ public class WaySegmentParser {
         private int workerThreads = 2;
         private ViaNodeStorage viaNodeStorage;
         private RestrictionBuilder restrictionBuilder;
+        private ViaNodeCreator viaNodeCreator;
 
         /**
          * @param nodeAccess used to store tower node coordinates while parsing the ways
@@ -535,10 +539,18 @@ public class WaySegmentParser {
         }
 
         /**
-         * @param restrictionBuilder prepare the topology of (via-way) restrictions
+         * @param restrictionBuilder prepare the topology of via-way restrictions
          */
         public Builder setRestrictionBuilder(RestrictionBuilder restrictionBuilder) {
             this.restrictionBuilder = restrictionBuilder;
+            return this;
+        }
+
+        /**
+         * @param viaNodeCreator creates artificial via-nodes for via-way restrictions
+         */
+        public Builder setViaNodeCreator(ViaNodeCreator viaNodeCreator) {
+            this.viaNodeCreator = viaNodeCreator;
             return this;
         }
 
@@ -546,7 +558,7 @@ public class WaySegmentParser {
             return new WaySegmentParser(
                     nodeAccess, directory, elevationProvider, wayFilter, viaNodeStorage, splitNodeFilter,
                     wayPreprocessor, relationPreprocessor, relationProcessor, edgeHandler, workerThreads,
-                    restrictionBuilder
+                    restrictionBuilder, viaNodeCreator
             );
         }
     }
@@ -614,5 +626,9 @@ public class WaySegmentParser {
 
     public interface RestrictionBuilder {
         void buildRestrictions();
+    }
+
+    public interface ViaNodeCreator {
+        void createArtificialViaNodes(OSMNodeData nodeData);
     }
 }
