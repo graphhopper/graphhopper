@@ -244,19 +244,19 @@ public enum Country {
 
     public static final String KEY = "country", ISO_ALPHA3 = "ISO3166-1:alpha3";
 
-    private final String displayName;
+    private final String countryName;
     private final String alpha2;
 
-    Country(String displayName, String alpha2) {
-        this.displayName = displayName;
+    Country(String countryName, String alpha2) {
+        this.countryName = countryName;
         this.alpha2 = alpha2;
     }
 
     /**
-     * @return the name:en field of this country
+     * @return the name of this country. Avoids clash with name() method of this enum.
      */
-    public String getDisplayName() {
-        return displayName;
+    public String getCountryName() {
+        return countryName;
     }
 
     /**
