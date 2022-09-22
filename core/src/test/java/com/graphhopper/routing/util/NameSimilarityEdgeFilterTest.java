@@ -29,7 +29,7 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.search.EdgeKVStorage.Details.STREET_NAME;
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
 import static org.junit.jupiter.api.Assertions.*;
 

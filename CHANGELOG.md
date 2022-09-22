@@ -1,5 +1,5 @@
 ### 7.0 [not yet released]
-- internal keys for EdgeKVStorage changed to contain the street_ prefix like the path details too. Similarly, the extra_info in the instructions of the API response.
+- internal keys for EdgeKVStorage changed to contain the street_ prefix like the path details too. Similarly, the extra_info in the instructions of the API response, see #2661
 
 ### 6.0 [13 Sep 2022]
 - When using a DecimalEncodedValue with useMaximumAsInfinity=true and a single bit of space make sure you always use 

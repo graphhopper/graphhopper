@@ -37,7 +37,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static com.graphhopper.search.EdgeKVStorage.Details.STREET_NAME;
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
 import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
 import static org.junit.jupiter.api.Assertions.assertEquals;

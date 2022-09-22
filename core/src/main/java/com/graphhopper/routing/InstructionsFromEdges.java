@@ -24,7 +24,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
-import static com.graphhopper.search.EdgeKVStorage.Details.*;
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.*;
 
 /**
  * This class calculates instructions from the edges in a Path.

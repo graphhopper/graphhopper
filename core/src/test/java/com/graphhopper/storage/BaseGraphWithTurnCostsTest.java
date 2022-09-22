@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
-import static com.graphhopper.search.EdgeKVStorage.Details.STREET_NAME;
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

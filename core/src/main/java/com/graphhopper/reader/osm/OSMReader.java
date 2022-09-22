@@ -52,7 +52,7 @@ import java.util.*;
 import java.util.function.LongToIntFunction;
 import java.util.regex.Pattern;
 
-import static com.graphhopper.search.EdgeKVStorage.Details.*;
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.*;
 import static com.graphhopper.util.Helper.nf;
 import static java.util.Collections.emptyList;
 

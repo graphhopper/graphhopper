@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.graphhopper.search.EdgeKVStorage.Details.STREET_NAME;
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
 import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
 import static com.graphhopper.util.FetchMode.*;
 import static org.junit.jupiter.api.Assertions.*;
