@@ -32,9 +32,9 @@ import javax.ws.rs.core.UriInfo;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.graphhopper.util.Parameters.Details.*;
+import java.util.stream.Stream;
 
 @Path("mvt")
 public class MVTResource {
@@ -126,9 +126,9 @@ public class MVTResource {
 
             edgeCounter.incrementAndGet();
             Map<String, Object> map = new LinkedHashMap<>();
-            map.put("name", edge.getValue(STREET_NAME));
-            map.put("ref", edge.getValue(STREET_REF));
-            map.put("destination", edge.getValue(STREET_DESTINATION));
+            Stream.of("name", "ref", "destination", "destination_ref").forEach(
+                    key -> map.put(key, Optional.ofNullable(edge.getValue(key)).orElse(""))
+            );
             map.put("edge_id", edge.getEdge());
             map.put("edge_key", edge.getEdgeKey());
             map.put("base_node", edge.getBaseNode());
