@@ -18,6 +18,7 @@
 package com.graphhopper.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -27,6 +28,7 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.jackson.Gpx;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -35,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -65,6 +66,7 @@ public class MapMatchingResource {
     private final ProfileResolver profileResolver;
     private final TranslationMap trMap;
     private final MapMatchingRouterFactory mapMatchingRouterFactory;
+    private final ObjectMapper objectMapper = Jackson.newObjectMapper();
 
     @Inject
     public MapMatchingResource(GraphHopper graphHopper, ProfileResolver profileResolver, TranslationMap trMap, MapMatchingRouterFactory mapMatchingRouterFactory) {
@@ -79,7 +81,6 @@ public class MapMatchingResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
     public Response match(
             Gpx gpx,
-            @Context HttpServletRequest request,
             @Context UriInfo uriInfo,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
             @QueryParam("type") @DefaultValue("json") String outType,
@@ -113,7 +114,6 @@ public class MapMatchingResource {
 
         // add values that are not in hints because they were explicitly listed in query params
         hints.putObject(MAX_VISITED_NODES, maxVisitedNodes);
-        String weightingVehicleLogStr = "weighting: " + hints.getString("weighting", "") + ", vehicle: " + hints.getString("vehicle", "");
 
         // resolve profile and remove legacy vehicle/weighting parameters
         // we need to explicitly disable CH here because map matching does not use it
@@ -130,12 +130,12 @@ public class MapMatchingResource {
         List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
         MatchResult matchResult = matching.match(measurements);
 
-        // TODO: Request logging and timing should perhaps be done somewhere outside
         double took = sw.stop().getMillisDouble();
-        String infoStr = request.getRemoteAddr() + " " + request.getLocale() + " " + request.getHeader("User-Agent");
-        String logStr = request.getQueryString() + ", " + infoStr + ", took:" + String.format("%.1f", took) + "ms, entries:" + measurements.size() +
-                ", profile: " + profile + ", " + weightingVehicleLogStr;
-        logger.info(logStr);
+        logger.info(objectMapper.createObjectNode()
+                .put("duration", took)
+                .put("profile", profile)
+                .put("observations", measurements.size())
+                .putPOJO("mapmatching", matching.getStatistics()).toString());
 
         if ("extended_json".equals(outType)) {
             return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded)).

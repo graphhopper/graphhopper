@@ -102,7 +102,6 @@ public class RouteResource {
         StopWatch sw = new StopWatch().start();
         GHRequest request = new GHRequest();
         initHints(request.getHints(), uriInfo.getQueryParameters());
-        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "") + ", vehicle: " + request.getHints().getString("vehicle", "");
 
         PMap profileResolverHints = new PMap(request.getHints());
         profileResolverHints.putObject("profile", profileName);
@@ -131,13 +130,12 @@ public class RouteResource {
         GHResponse ghResponse = graphHopper.route(request);
 
         double took = sw.stop().getMillisDouble();
-        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
-        String logStr = httpReq.getQueryString() + " " + infoStr + " " + points + ", took: "
-                + String.format("%.1f", took) + "ms, algo: " + algoStr + ", profile: " + profileName + ", " + weightingVehicleLogStr;
+        String logStr = (httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent")) + " " + points + ", took: " + String.format("%.1f", took) + "ms, algo: " + algoStr + ", profile: " + profileName;
 
         if (ghResponse.hasErrors()) {
-            logger.error(logStr + ", errors:" + ghResponse.getErrors());
-            throw new MultiException(ghResponse.getErrors());
+            MultiException ex = new MultiException(ghResponse.getErrors());
+            logger.error(logStr, ex);
+            throw ex;
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
                     + ", distance0: " + ghResponse.getBest().getDistance()
@@ -180,18 +178,14 @@ public class RouteResource {
 
         double took = sw.stop().getMillisDouble();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
-        String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
-        // todo: vehicle/weighting will always be empty at this point...
-        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
-                + ", vehicle: " + request.getHints().getString("vehicle", "");
-        String logStr = queryString + infoStr + " " + request.getPoints().size() + ", took: "
+        String logStr = infoStr + " " + request.getPoints().size() + ", took: "
                 + String.format("%.1f", took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
-                + ", " + weightingVehicleLogStr
                 + ", custom_model: " + request.getCustomModel();
 
         if (ghResponse.hasErrors()) {
-            logger.error(logStr + ", errors:" + ghResponse.getErrors());
-            throw new MultiException(ghResponse.getErrors());
+            MultiException ex = new MultiException(ghResponse.getErrors());
+            logger.error(logStr, ex);
+            throw ex;
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
                     + ", distance0: " + ghResponse.getBest().getDistance()

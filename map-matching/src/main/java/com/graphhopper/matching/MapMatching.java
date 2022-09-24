@@ -73,6 +73,8 @@ public class MapMatching {
     private final DistanceCalc distanceCalc = new DistancePlaneProjection();
     private QueryGraph queryGraph;
 
+    private Map<String, Object> statistics = new HashMap<>();
+
     public static MapMatching fromGraphHopper(GraphHopper graphHopper, PMap hints) {
         Router router = routerFromGraphHopper(graphHopper, hints);
         return new MapMatching(graphHopper.getBaseGraph(), (LocationIndexTree) graphHopper.getLocationIndex(), router);
@@ -193,11 +195,13 @@ public class MapMatching {
 
     public MatchResult match(List<Observation> observations) {
         List<Observation> filteredObservations = filterObservations(observations);
+        statistics.put("filteredObservations", filteredObservations.size());
 
         // Snap observations to links. Generates multiple candidate snaps per observation.
         List<Collection<Snap>> snapsPerObservation = filteredObservations.stream()
                 .map(o -> findCandidateSnaps(o.getPoint().lat, o.getPoint().lon))
                 .collect(Collectors.toList());
+        statistics.put("snapsPerObservation", snapsPerObservation.stream().mapToInt(Collection::size).toArray());
 
         // Create the query graph, containing split edges so that all the places where an observation might have happened
         // are a node. This modifies the Snap objects and puts the new node numbers into them.
@@ -209,6 +213,7 @@ public class MapMatching {
 
         // Compute the most likely sequence of map matching candidates:
         List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps);
+        statistics.put("transitionDistances", seq.stream().filter(s -> s.transitionDescriptor != null).mapToLong(s -> Math.round(s.transitionDescriptor.getDistance())).toArray());
 
         List<EdgeIteratorState> path = seq.stream().filter(s1 -> s1.transitionDescriptor != null).flatMap(s1 -> s1.transitionDescriptor.calcEdges().stream()).collect(Collectors.toList());
 
@@ -516,6 +521,10 @@ public class MapMatching {
         } else {
             return edgeIteratorState;
         }
+    }
+
+    public Map<String, Object> getStatistics() {
+        return statistics;
     }
 
     private static class MapMatchedPath extends Path {
