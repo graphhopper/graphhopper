@@ -19,6 +19,8 @@ package com.graphhopper.reader;
 
 import org.junit.jupiter.api.Test;
 
+import com.carrotsearch.hppc.LongArrayList;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,26 +60,42 @@ public class OSMElementTest {
         assertTrue(exception.getMessage().contains("Invalid OSM WAY Id: -1;"));
     }
 
-//    @Test
-//    public void testWayRestrictionBuild() {
-//        List<Long> ways = new ArrayList<Long>();
-//        ways.add(12L);
-//        ways.add(23L);
-//        ways.add(34L);
-//
-//        HashMap<Long, ReaderWay> wayNodesMap = new HashMap<>();
-//        wayNodesMap.put(12L, new ReaderWay(12L));
-//        wayNodesMap.put(23L, new ReaderWay(23L));
-//        wayNodesMap.put(34L, new ReaderWay(34L));
-//
-//        WayRestriction restriction = new WayRestriction(ways);
-//        restriction.buildRestriction(wayNodesMap);
-//
-//        NodeRestriction r1 = restriction.getRestrictions().get(0);
-//        NodeRestriction r2 = restriction.getRestrictions().get(1);
-//
-//        assertEquals(r1.toString(), new NodeRestriction(12L, 2L, 23L).toString());
-//        assertEquals(r2.toString(), new NodeRestriction(23L, 3L, 34L).toString());
-//    }
+    @Test
+    public void testWayRestrictionBuild() {
+    	// the ways listed inside a via way restriction
+        List<Long> ways = new ArrayList<Long>();
+        ways.add(12L); // from
+        ways.add(23L); // via
+        ways.add(34L); // to
+
+    	// mocking these ways
+    	LongArrayList nodes12 = new LongArrayList();
+    	nodes12.add(1L);
+    	nodes12.add(2L);
+    	ReaderWay way12 = new ReaderWay(12L, nodes12);
+    	LongArrayList nodes23 = new LongArrayList();
+    	nodes23.add(2L);
+    	nodes23.add(3L);
+    	ReaderWay way23 = new ReaderWay(23L, nodes23);
+    	LongArrayList nodes34 = new LongArrayList();
+    	nodes34.add(3L);
+    	nodes34.add(4L);
+    	ReaderWay way34 = new ReaderWay(34L, nodes34);
+    	
+    	// mocking the wayNodesMap created during first parse
+        HashMap<Long, ReaderWay> wayNodesMap = new HashMap<>();
+        wayNodesMap.put(12L, way12);
+        wayNodesMap.put(23L, way23);
+        wayNodesMap.put(34L, way34);
+
+        WayRestriction restriction = new WayRestriction(1L, ways);
+        restriction.buildRestriction(wayNodesMap);
+
+        NodeRestriction r1 = restriction.getRestrictions().get(0);
+        NodeRestriction r2 = restriction.getRestrictions().get(1);
+
+        assertEquals(r1.toString(), new NodeRestriction(12L, 2L, 23L).toString());
+        assertEquals(r2.toString(), new NodeRestriction(23L, 3L, 34L).toString());
+    }
 
 }
