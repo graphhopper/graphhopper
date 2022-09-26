@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import com.carrotsearch.hppc.LongArrayList;
 
@@ -34,8 +34,8 @@ public class ReaderWay extends ReaderElement {
         super(id, Type.WAY);
     }
 
-    public ReaderWay(long id, LongArrayList nodes) {
-        super(id, Type.WAY, new HashMap<>(4), true);
+    public ReaderWay(long id, Map<String, Object> properties, LongArrayList nodes) {
+        super(id, Type.WAY, properties, true);
         this.nodes = nodes;
     }
 

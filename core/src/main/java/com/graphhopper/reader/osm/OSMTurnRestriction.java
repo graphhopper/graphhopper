@@ -26,9 +26,9 @@ import java.util.*;
  */
 public class OSMTurnRestriction {
     private final long id;
-    private final long fromOsmWayId;
-    private final ArrayList<Long> viaOSMIds;
-    private final long toOsmWayId;
+    public long fromOsmWayId;
+    public ArrayList<Long> viaOSMIds;
+    public long toOsmWayId;
     private final RestrictionType restriction;
     private final ViaType viaType;
     // vehicleTypeRestricted contains the dedicated vehicle type

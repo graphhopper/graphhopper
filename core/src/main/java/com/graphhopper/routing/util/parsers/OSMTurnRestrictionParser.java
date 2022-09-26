@@ -65,12 +65,6 @@ public class OSMTurnRestrictionParser implements TurnCostParser {
      * Add the specified relation to the TurnCostStorage
      */
     void addRestrictionToTCStorage(OSMTurnRestriction osmTurnRestriction, ExternalInternalMap map, Graph graph) {
-        if (osmTurnRestriction.getViaType() == OSMTurnRestriction.ViaType.NODE) {
-            addNodeRestrictionToTCStorage(osmTurnRestriction, map, graph);
-        }
-    }
-
-    void addNodeRestrictionToTCStorage(OSMTurnRestriction osmTurnRestriction, ExternalInternalMap map, Graph graph) {
         TurnCostStorage tcs = graph.getTurnCostStorage();
         int viaNode = map.getInternalNodeIdOfOsmNode(osmTurnRestriction.getViaOSMIds().get(0));
 

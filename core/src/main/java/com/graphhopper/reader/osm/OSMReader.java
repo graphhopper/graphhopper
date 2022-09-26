@@ -97,12 +97,13 @@ public class OSMReader {
     private ArrayList<WayRestriction> way_restrictions = new ArrayList<>();
     private HashMap<Long, Long> artificialViaNodes = new HashMap<>();
     private HashMap<Long, ArrayList<NodeRestriction>> viaWayRestrictions = new HashMap<>();
+    private ArrayList<Long> edgeIdsToIgnore = new ArrayList<>();
     // we use negative ids to create artificial OSM way ids
     private long nextArtificialOSMWayId = -Long.MAX_VALUE;
     private IntLongMap edgeIdToOsmWayIdMap;
 
     public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
-        this.baseGraph = baseGraph;
+    	this.baseGraph = baseGraph;
         this.encodingManager = encodingManager;
         this.config = config;
         this.nodeAccess = baseGraph.getNodeAccess();
@@ -219,58 +220,69 @@ public class OSMReader {
             // for now we only work with single via-way restrictions 
             if (restriction.getWays().size() == 3) {
                 restriction.buildRestriction(osmWayNodesMap);
-                NodeRestriction r = restriction.getRestrictions().get(0);
-                NodeRestriction r2 = restriction.getRestrictions().get(1);
-
-                createArtificialViaNode(r.getVia(), nodeData);
-
-                // manipulate the first edge
-                // 1.
-                int from = nodeData.idToTowerNode(nodeData.getId(restriction.getStartNode()));
-                int to = nodeData.idToTowerNode(nodeData.getId(artificialViaNodes.get(r.getVia())));
-                ReaderWay way = osmWayNodesMap.get(r.getFrom());
-                long newOsmId = nextArtificialOSMWayId++;
-                ReaderWay artificial_way = new ReaderWay(newOsmId, way.getNodes());
-                LongArrayList nodes = way.getNodes();
-                PointList pointList = new PointList(nodes.size(), nodeData.is3D());
-                for (LongCursor point : nodes) {
-                    nodeData.addCoordinatesToPointList(nodeData.getId(point.value), pointList);
+                if (!restriction.isValid()) {
+                	continue;
                 }
-
-                addEdge(from, to, pointList, artificial_way, emptyMap());
-
-                // 2.
-                int from2 = nodeData.idToTowerNode(nodeData.getId(artificialViaNodes.get(r.getVia())));
-                int to2 = nodeData.idToTowerNode(nodeData.getId(r.getVia()));
-                PointList pointList2 = new PointList(2, nodeData.is3D());
-                long newOsmId2 = nextArtificialOSMWayId++;
-                LongArrayList longalist = new LongArrayList();
-                longalist.add(artificialViaNodes.get(r.getVia()));
-                longalist.add(r.getVia());
-                ReaderWay artificial_way2 = new ReaderWay(newOsmId2, longalist);
-                nodeData.addCoordinatesToPointList(nodeData.towerNodeToId(from2), pointList2);
-                nodeData.addCoordinatesToPointList(nodeData.towerNodeToId(to2), pointList2);
-
-                addEdge(from2, to2, pointList2, artificial_way2, emptyMap());
-
-                // second edge
-                int to3 = nodeData.idToTowerNode(nodeData.getId(r2.getVia()));
-                ReaderWay way3 = osmWayNodesMap.get(r.getTo());
-                long newOsmId3 = nextArtificialOSMWayId++;
-                ReaderWay artificial_way3 = new ReaderWay(newOsmId3, way3.getNodes());
-                LongArrayList nodes3 = way3.getNodes();
-                PointList pointList3 = new PointList(nodes3.size(), nodeData.is3D());
-                for (LongCursor point : nodes3) {
-                    nodeData.addCoordinatesToPointList(nodeData.getId(point.value), pointList3);
+                try {
+                    NodeRestriction r = restriction.getRestrictions().get(0);
+                    NodeRestriction r2 = restriction.getRestrictions().get(1);
+    
+                    createArtificialViaNode(r.getVia(), nodeData);
+    
+                    // manipulate the first edge
+                    // 1.
+                    int from = nodeData.idToTowerNode(nodeData.getId(restriction.getStartNode()));
+                    int to = nodeData.idToTowerNode(nodeData.getId(artificialViaNodes.get(r.getVia())));
+                    ReaderWay way = osmWayNodesMap.get(r.getFrom());
+                    long newOsmId = nextArtificialOSMWayId++;
+                    osmWayIdSet.add(newOsmId);
+                    ReaderWay artificial_way = new ReaderWay(newOsmId, way.getTags(), way.getNodes());
+                    LongArrayList nodes = way.getNodes();
+                    PointList pointList = new PointList(nodes.size(), nodeData.is3D());
+                    for (LongCursor point : nodes) {
+                        nodeData.addCoordinatesToPointList(nodeData.getId(point.value), pointList);
+                    }
+                    
+                    addEdge(from, to, pointList, artificial_way, emptyMap());
+    
+                    // 2.
+                    int from2 = nodeData.idToTowerNode(nodeData.getId(artificialViaNodes.get(r.getVia())));
+                    int to2 = nodeData.idToTowerNode(nodeData.getId(r.getVia()));
+                    PointList pointList2 = new PointList(2, nodeData.is3D());
+                    long newOsmId2 = nextArtificialOSMWayId++;
+                    osmWayIdSet.add(newOsmId2);
+                    LongArrayList longalist = new LongArrayList();
+                    longalist.add(artificialViaNodes.get(r.getVia()));
+                    longalist.add(r.getVia());
+                    ReaderWay artificial_way2 = new ReaderWay(newOsmId2, way.getTags(), longalist);
+                    nodeData.addCoordinatesToPointList(nodeData.towerNodeToId(from2), pointList2);
+                    nodeData.addCoordinatesToPointList(nodeData.towerNodeToId(to2), pointList2);
+    
+                    addEdge(from2, to2, pointList2, artificial_way2, emptyMap());
+    
+                    // second edge
+                    int from3 = nodeData.idToTowerNode(nodeData.getId(r.getVia()));
+                    int to3 = nodeData.idToTowerNode(nodeData.getId(r2.getVia()));
+                    ReaderWay way3 = osmWayNodesMap.get(r.getTo());
+                    long newOsmId3 = nextArtificialOSMWayId++;
+                    osmWayIdSet.add(newOsmId3);
+                    ReaderWay artificial_way3 = new ReaderWay(newOsmId3, way3.getTags(), way3.getNodes());
+                    LongArrayList nodes3 = way3.getNodes();
+                    PointList pointList3 = new PointList(nodes3.size(), nodeData.is3D());
+                    for (LongCursor point : nodes3) {
+                        nodeData.addCoordinatesToPointList(nodeData.getId(point.value), pointList3);
+                    }
+    
+                    addEdge(from3, to3, pointList3, artificial_way3, emptyMap());
+    
+                    ArrayList<NodeRestriction> restrictions = new ArrayList<>();
+                    restrictions.add(new NodeRestriction(newOsmId2, r.getVia(), r.getTo()));
+                    restrictions.add(new NodeRestriction(newOsmId3, r2.getVia(), r2.getTo()));
+                    restrictions.add(new NodeRestriction(newOsmId2, artificialViaNodes.get(r.getVia()), newOsmId3));
+                    viaWayRestrictions.put(restriction.getId(), restrictions);
+                } catch (Exception e) {
+                    
                 }
-
-                addEdge(to, to3, pointList3, artificial_way3, emptyMap());
-
-                ArrayList<NodeRestriction> restrictions = new ArrayList<>();
-                restrictions.add(r);
-                restrictions.add(new NodeRestriction(newOsmId3, r2.getVia(), r2.getTo()));
-                restrictions.add(new NodeRestriction(newOsmId2, artificialViaNodes.get(r.getVia()), newOsmId3));
-                viaWayRestrictions.put(restriction.getId(), restrictions);
             }
         }
     }
@@ -370,7 +382,11 @@ public class OSMReader {
      * @param nodeTags  node tags of this segment if it is an artificial edge, empty otherwise
      */
     protected void addEdge(int fromIndex, int toIndex, PointList pointList, ReaderWay way, Map<String, Object> nodeTags) {
-        // sanity checks
+    	if (edgeIdsToIgnore.contains(way.getId())){
+        	return;
+        }
+    	
+    	// sanity checks
         if (fromIndex < 0 || toIndex < 0)
             throw new AssertionError("to or from index is invalid for this edge " + fromIndex + "->" + toIndex + ", points:" + pointList);
         if (pointList.getDimension() != nodeAccess.getDimension())
@@ -612,6 +628,8 @@ public class OSMReader {
                 ArrayList<Long> ways = turnRestriction.getWays();
                 if (turnRestriction.getViaType() == ViaType.WAY) {
                     way_restrictions.add(new WayRestriction(relation.getId(), ways));
+                    // TODO: if something fails, this edge must be created
+                    edgeIdsToIgnore.add(ways.get(0));
                 }
                 for (Long way_id : ways) {
                     osmWayIdSet.add(way_id);
@@ -641,7 +659,22 @@ public class OSMReader {
                 }
             };
             for (OSMTurnRestriction turnRestriction : createTurnRestrictions(relation)) {
-                osmParsers.handleTurnRelationTags(turnRestriction, map, baseGraph);
+            	if (turnRestriction.getViaType() == OSMTurnRestriction.ViaType.NODE) {
+                    osmParsers.handleTurnRelationTags(turnRestriction, map, baseGraph);
+            	}
+            	if (turnRestriction.getViaType() == OSMTurnRestriction.ViaType.WAY) {
+            		try {
+                		for (NodeRestriction nodeRestriction : viaWayRestrictions.get(turnRestriction.getId())){
+                			turnRestriction.fromOsmWayId = nodeRestriction.getFrom();
+                			turnRestriction.viaOSMIds = new ArrayList<>(Arrays.asList(nodeRestriction.getVia()));
+                			turnRestriction.toOsmWayId = nodeRestriction.getTo();
+                            osmParsers.handleTurnRelationTags(turnRestriction, map, baseGraph);
+                		}
+                		LOGGER.info("success:" + turnRestriction.getId() + " " + turnRestriction.getRestriction());
+            		} catch (Exception e) {
+            		    LOGGER.info("failed:" + turnRestriction.getId() + " " + turnRestriction.getRestriction());
+					}
+            	}
             }
         }
     }

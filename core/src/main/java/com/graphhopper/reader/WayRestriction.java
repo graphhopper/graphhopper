@@ -10,6 +10,7 @@ public class WayRestriction {
     private List<Long> ways;
     private List<NodeRestriction> restrictions;
     private Long startNode;
+    private boolean valid;
 
     public WayRestriction(Long id, List<Long> ways) {
         if (ways.size() < 2) {
@@ -19,16 +20,21 @@ public class WayRestriction {
         this.ways = ways;
         this.restrictions = new ArrayList<NodeRestriction>(2);
         this.startNode = -1L;
+        this.valid = false;
     }
 
     public void buildRestriction(HashMap<Long, ReaderWay> wayNodesMap) {
-        for (int i = 0; i < ways.size() - 1; i++) {
-            Long from = ways.get(i);
-            Long to = ways.get(i + 1);
-            Long via = getViaNode(wayNodesMap.get(from), wayNodesMap.get(to));
-            restrictions.add(new NodeRestriction(from, via, to));
-        }
-        setStartNode(wayNodesMap);
+    	try {
+            for (int i = 0; i < ways.size() - 1; i++) {
+                Long from = ways.get(i);
+                Long to = ways.get(i + 1);
+                Long via = getViaNode(wayNodesMap.get(from), wayNodesMap.get(to));
+                restrictions.add(new NodeRestriction(from, via, to));
+            }
+            setStartNode(wayNodesMap);
+            valid = true;
+    	} catch (Exception e) {
+		}
     }
 
     public Long getViaNode(ReaderWay from, ReaderWay to) {
@@ -73,4 +79,8 @@ public class WayRestriction {
     public Long getId() {
         return id;
     }
+
+	public boolean isValid() {
+		return valid;
+	}
 }

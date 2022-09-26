@@ -1,39 +1,26 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <osm version="0.6" generator="pbf2osm">
     <!-- 
-	
-	    10
-	    |
+
     1~~~2~~~3~~~4
         |   |   |
         |   5~~~6 
         |   |
     7~~~8~~~9
-        |
-		11
 
     (1,2)->(2,8)->(8,7): no_u_turn
     (2,3)->(3,5)->(5,9)->(9,8): no_u_turn
     -->
 
-    <node id="1" lat="0.050" lon="0.010" version="1"></node>
-    <node id="2" lat="0.052" lon="0.010" version="1"></node>
-    <node id="3" lat="0.054" lon="0.010" version="1"></node>
-    <node id="4" lat="0.056" lon="0.010" version="1"></node>
-    <node id="5" lat="0.054" lon="0.012" version="1"></node>
-    <node id="6" lat="0.056" lon="0.012" version="1"></node>
-    <node id="7" lat="0.050" lon="0.014" version="1"></node>
-    <node id="8" lat="0.052" lon="0.014" version="1"></node>
-    <node id="9" lat="0.054" lon="0.014" version="1"></node>
-    <node id="10" lat="0.052" lon="0.008" version="1"></node>
-    <node id="11" lat="0.052" lon="0.016" version="1"></node>
-
-    <!-- 10-2 -->
-    <way id="102" version="1">
-        <nd ref="10"/>
-        <nd ref="2"/>
-        <tag k="highway" v="motorway"/>
-    </way>
+    <node id="1" lat="0.050" lon="0.010" version="1"></node> <!-- 7 -->
+    <node id="2" lat="0.052" lon="0.010" version="1"></node> <!-- 0 -->
+    <node id="3" lat="0.054" lon="0.010" version="1"></node> <!-- 1 -->
+    <node id="4" lat="0.056" lon="0.010" version="1"></node> <!-- 2 -->
+    <node id="5" lat="0.054" lon="0.012" version="1"></node> <!-- 3 -->
+    <node id="6" lat="0.056" lon="0.012" version="1"></node> <!-- 4 -->
+    <node id="7" lat="0.050" lon="0.014" version="1"></node> <!-- 8 -->
+    <node id="8" lat="0.052" lon="0.014" version="1"></node> <!-- 5 -->
+    <node id="9" lat="0.054" lon="0.014" version="1"></node> <!-- 6 -->
 
     <!-- 1-2 -->
     <way id="12" version="1">
@@ -105,14 +92,15 @@
         <tag k="highway" v="motorway"/>
     </way>
 
-    <!-- 8-11 -->
-    <way id="811" version="1">
-        <nd ref="8"/>
-        <nd ref="11"/>
-        <tag k="highway" v="motorway"/>
-    </way>
+    <relation id="1" version="1">
+        <member type="way" ref="56" role="from"/>
+        <member type="node" ref="6" role="via"/>
+        <member type="way" ref="46" role="to"/>
+        <tag k="restriction" v="no_u_turn"/>
+        <tag k="type" v="restriction"/>
+    </relation>
 
-    <relation id="1001" version="1">
+    <relation id="2" version="1">
         <member type="way" ref="12" role="from"/>
         <member type="way" ref="28" role="via"/>
         <member type="way" ref="78" role="to"/>
@@ -120,7 +108,7 @@
         <tag k="type" v="restriction"/>
     </relation>
 
-    <relation id="1002" version="1">
+    <relation id="3" version="1">
         <member type="way" ref="23" role="from"/>
         <member type="way" ref="35" role="via"/>
         <member type="way" ref="59" role="via"/>

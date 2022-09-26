@@ -1,16 +1,25 @@
 package com.graphhopper.reader.osm;
 
+import static com.graphhopper.util.Parameters.Algorithms.ASTAR;
+
 import java.io.File;
 
 import org.junit.jupiter.api.Test;
 
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.EdgeExplorer;
 
@@ -21,7 +30,10 @@ public class OSMWayRestrictionWIPTest {
     private BooleanEncodedValue footAccessEnc;
     private EdgeExplorer carOutExplorer;
     private EdgeExplorer carAllExplorer;
-
+    static BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+    static DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+    static DecimalEncodedValue turnCostEnc = TurnCost.create("car", 1);
+    static EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
 
     class TmpGraphHopperFacade extends GraphHopper {
         public TmpGraphHopperFacade(String osmFile) {
@@ -64,6 +76,17 @@ public class OSMWayRestrictionWIPTest {
         String fileTurnRestrictions = "test-way-restrictions.xml";
         GraphHopper hopper = new TmpGraphHopperFacade(fileTurnRestrictions, true, "").
                 importOrLoad();
+        BaseGraph graph = hopper.getBaseGraph();
+        graph.debugPrint();
+        graph.getTurnCostStorage();
+        System.out.println(graph.getTurnCostStorage().get(turnCostEnc, 5, 4, 4));
+        System.out.println(graph.getTurnCostStorage().get(turnCostEnc, 10, 0, 2));
+        System.out.println(graph.getTurnCostStorage().get(turnCostEnc, 11, 5, 7));
+        
+        GHResponse rsp = hopper.route(new GHRequest(0.0506, 0.01, 0.0506, 0.014).
+                setAlgorithm(ASTAR).setProfile("car"));
+        
+        System.out.println(rsp.getBest().getDistance());
     }
 
 }

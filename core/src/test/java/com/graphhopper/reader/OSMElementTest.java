@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Collections.emptyMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -72,15 +73,15 @@ public class OSMElementTest {
     	LongArrayList nodes12 = new LongArrayList();
     	nodes12.add(1L);
     	nodes12.add(2L);
-    	ReaderWay way12 = new ReaderWay(12L, nodes12);
+    	ReaderWay way12 = new ReaderWay(12L, emptyMap(), nodes12);
     	LongArrayList nodes23 = new LongArrayList();
     	nodes23.add(2L);
     	nodes23.add(3L);
-    	ReaderWay way23 = new ReaderWay(23L, nodes23);
+    	ReaderWay way23 = new ReaderWay(23L, emptyMap(), nodes23);
     	LongArrayList nodes34 = new LongArrayList();
     	nodes34.add(3L);
     	nodes34.add(4L);
-    	ReaderWay way34 = new ReaderWay(34L, nodes34);
+    	ReaderWay way34 = new ReaderWay(34L, emptyMap(), nodes34);
     	
     	// mocking the wayNodesMap created during first parse
         HashMap<Long, ReaderWay> wayNodesMap = new HashMap<>();
