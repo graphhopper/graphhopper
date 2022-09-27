@@ -435,7 +435,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                         if (lastBarrier < 0)
                             lastBarrier = 0;
 
-                        // add way up to barrier shadow node                        
+                        // add way up to barrier shadow node
                         int length = i - lastBarrier + 1;
                         LongArrayList partNodeIds = new LongArrayList();
                         partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
@@ -595,7 +595,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
 
     // TODO remove this ugly stuff via better preprocessing phase! E.g. putting every tags etc into a helper file!
     // ORS-GH MOD - expose method for inheritance in ORS
-    protected double getTmpLatitude(int id) {
+    public double getTmpLatitude(int id) {
         if (id == EMPTY_NODE)
             return Double.NaN;
         if (id < TOWER_NODE) {
@@ -612,7 +612,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     }
 
     // ORS-GH MOD - expose method for inheritance in ORS
-    protected double getTmpLongitude(int id) {
+    public double getTmpLongitude(int id) {
         if (id == EMPTY_NODE)
             return Double.NaN;
         if (id < TOWER_NODE) {
@@ -744,7 +744,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     /**
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
-    Collection<EdgeIteratorState> addOSMWay(final LongIndexedContainer osmNodeIds, final IntsRef flags, final long wayOsmId) {
+    public Collection<EdgeIteratorState> addOSMWay(final LongIndexedContainer osmNodeIds, final IntsRef flags, final long wayOsmId) {
         final PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
         final List<EdgeIteratorState> newEdges = new ArrayList<>(5);
         int firstNode = -1;
@@ -873,7 +873,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         double towerNodeDistance = distCalc.calcDistance(pointList);
 
         if (towerNodeDistance < 0.001) {
-            // As investigation shows often two paths should have crossed via one identical point 
+            // As investigation shows often two paths should have crossed via one identical point
             // but end up in two very close points.
             zeroCounter++;
             towerNodeDistance = 0.001;
@@ -886,7 +886,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
         }
 
         if (Double.isInfinite(towerNodeDistance) || towerNodeDistance > maxDistance) {
-            // Too large is very rare and often the wrong tagging. See #435 
+            // Too large is very rare and often the wrong tagging. See #435
             // so we can avoid the complexity of splitting the way for now (new towernodes would be required, splitting up geometry etc)
             LOGGER.warn("Bug in OSM or GraphHopper. Too big tower node distance " + towerNodeDistance + " reset to large value, osm way " + wayOsmId);
             towerNodeDistance = maxDistance;

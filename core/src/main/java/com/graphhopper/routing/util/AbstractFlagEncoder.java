@@ -31,6 +31,7 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 
 import java.util.*;
 
@@ -61,6 +62,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
     protected BooleanEncodedValue accessEnc;
     protected BooleanEncodedValue roundaboutEnc;
     protected DecimalEncodedValue avgSpeedEnc;
+    protected PMap properties;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected int maxPossibleSpeed;
@@ -437,8 +439,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return getConditionalAccess(way, accept, true);
     }
 
+
     public EncodingManager.Access isPermittedWayConditionallyRestricted(ReaderWay way) {
-        return getConditionalAccess(way, EncodingManager.Access.WAY, false);
+        return isPermittedWayConditionallyRestricted(way, EncodingManager.Access.WAY);
+    }
+
+    public EncodingManager.Access isPermittedWayConditionallyRestricted(ReaderWay way, EncodingManager.Access accept) {
+        return getConditionalAccess(way, accept, false);
     }
 
     private EncodingManager.Access getConditionalAccess(ReaderWay way, EncodingManager.Access accept, boolean permissive) {

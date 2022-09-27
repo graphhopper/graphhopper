@@ -609,18 +609,18 @@ public class OSMReaderTest {
             // mock data access
             @Override
             // ORS-GH MOD - change access level due to change in superclass
-            protected double getTmpLatitude(int id) {
+            public double getTmpLatitude(int id) {
                 return latMap.get(id);
             }
 
             @Override
             // ORS-GH MOD - change access level due to change in superclass
-            protected double getTmpLongitude(int id) {
+            public double getTmpLongitude(int id) {
                 return lonMap.get(id);
             }
 
             @Override
-            Collection<EdgeIteratorState> addOSMWay(LongIndexedContainer osmNodeIds, IntsRef wayFlags, long osmId) {
+            public Collection<EdgeIteratorState> addOSMWay(LongIndexedContainer osmNodeIds, IntsRef wayFlags, long osmId) {
                 return Collections.emptyList();
             }
         };
