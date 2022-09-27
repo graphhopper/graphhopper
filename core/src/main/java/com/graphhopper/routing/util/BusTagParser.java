@@ -17,7 +17,7 @@ public class BusTagParser extends CarTagParser {
 
     public BusTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc,
                         BooleanEncodedValue roundaboutEnc, PMap properties, TransportationMode transportationMode) {
-        super(accessEnc, speedEnc, turnCostEnc, roundaboutEnc, new PMap(properties).putObject("name", "bus"), transportationMode, speedEnc.getNextStorableValue(100));
+        super(accessEnc, speedEnc, turnCostEnc, roundaboutEnc, new PMap(properties).putObject("name", "bus"), transportationMode, speedEnc.getNextStorableValue(60));
 
         restrictedValues.remove("no");
         restrictedValues.remove("private");
