@@ -5,8 +5,12 @@ graphhopper:
     - name: bus
       vehicle: bus
       weighting: fastest
+    - name: car
+      vehicle: car
+      weighting: fastest
   profiles_ch:
     - profile: bus
+    - profile: car
   profiles_lm: []
   prepare.min_network_size: 200
   routing.non_ch.max_waypoint_distance: 1000000
