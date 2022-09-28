@@ -8,4 +8,4 @@ jobs:
     steps:
       - name: test
         run: |
-          echo ciao
+          echo miao
