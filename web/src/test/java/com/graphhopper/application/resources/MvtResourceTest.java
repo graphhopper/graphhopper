@@ -102,7 +102,7 @@ public class MvtResourceTest {
                 filter(g -> getUserData(g).get("name").equals("Avinguda de Tarragona"))
                 .findFirst().get();
         assertEquals("road", getUserData(geometry).get("road_environment"));
-        assertEquals(50.0, getUserData(geometry).get("max_speed"));
+        assertEquals("50.0 | 50.0", getUserData(geometry).get("max_speed"));
         assertEquals("primary", getUserData(geometry).get("road_class"));
     }
 
