@@ -892,23 +892,6 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testRoutingRequestFails_issue665() {
-        GraphHopper hopper = new GraphHopper()
-                .setOSMFile(getClass().getResource(file7).getFile())
-                .setProfiles(
-                        new Profile("profile1").setVehicle("car").setWeighting("fastest"),
-                        new Profile("profile2").setVehicle("motorcycle").setWeighting("curvature")
-                )
-                .setGraphHopperLocation(dir);
-        hopper.importOrLoad();
-        GHRequest req = new GHRequest(48.977277, 8.256896, 48.978876, 8.254884).
-                setProfile("profile2");
-
-        GHResponse ghRsp = hopper.route(req);
-        assertFalse(ghRsp.hasErrors(), ghRsp.getErrors().toString());
-    }
-
-    @Test
     public void testRoadClassInfo() {
         GraphHopper gh = new GraphHopper() {
             @Override
