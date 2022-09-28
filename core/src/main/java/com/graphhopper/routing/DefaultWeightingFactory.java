@@ -29,6 +29,7 @@ import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.ConditionalEdges;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
@@ -37,8 +38,8 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
-    private final GraphHopperStorage ghStorage;
-    private final EncodingManager encodingManager;
+    protected final GraphHopperStorage ghStorage;
+    protected final EncodingManager encodingManager;
 
     public DefaultWeightingFactory(GraphHopperStorage ghStorage, EncodingManager encodingManager) {
         this.ghStorage = ghStorage;
@@ -67,7 +68,11 @@ public class DefaultWeightingFactory implements WeightingFactory {
             turnCostProvider = NO_TURN_COST_PROVIDER;
         }
 
-        String weightingStr = toLowerCase(profile.getWeighting());
+        // ORS-GH MOD START - use weighting method determined by ORS
+        String weightingStr = hints.getString("weighting_method", "").toLowerCase();
+        if (Helper.isEmpty(weightingStr))
+            weightingStr = toLowerCase(profile.getWeighting());
+        // ORS-GH MOD END
         if (weightingStr.isEmpty())
             throw new IllegalArgumentException("You have to specify a weighting");
 
