@@ -1,6 +1,6 @@
 name: test12
 
-on: push
+on: pull_request
 
 jobs:
   run_test:
@@ -8,4 +8,4 @@ jobs:
     steps:
       - name: test
         run: |
-          echo hello
+          echo ciao
