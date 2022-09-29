@@ -42,7 +42,6 @@ public class MotorcycleTagParser extends CarTagParser {
     private final HashSet<String> avoidSet = new HashSet<>();
     private final HashSet<String> preferSet = new HashSet<>();
     private final DecimalEncodedValue priorityWayEncoder;
-    private final DecimalEncodedValue curvatureEncoder;
 
     public MotorcycleTagParser(EncodedValueLookup lookup, PMap properties) {
         this(
@@ -51,7 +50,6 @@ public class MotorcycleTagParser extends CarTagParser {
                 lookup.hasEncodedValue(TurnCost.key("motorcycle")) ? lookup.getDecimalEncodedValue(TurnCost.key("motorcycle")) : null,
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 lookup.getDecimalEncodedValue(VehiclePriority.key("motorcycle")),
-                lookup.getDecimalEncodedValue(getKey("motorcycle", "curvature")),
                 new PMap(properties).putObject("name", "motorcycle"),
                 TransportationMode.MOTORCYCLE
         );
@@ -59,10 +57,10 @@ public class MotorcycleTagParser extends CarTagParser {
 
     public MotorcycleTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc,
                                BooleanEncodedValue roundaboutEnc,
-                               DecimalEncodedValue priorityWayEncoder, DecimalEncodedValue curvatureEnc, PMap properties, TransportationMode transportationMode) {
-        super(accessEnc, speedEnc, turnCostEnc, roundaboutEnc, new PMap(properties).putObject("name", "motorcycle"), transportationMode, speedEnc.getNextStorableValue(MOTOR_CYCLE_MAX_SPEED));
+                               DecimalEncodedValue priorityWayEncoder, PMap properties, TransportationMode transportationMode) {
+        super(accessEnc, speedEnc, turnCostEnc, roundaboutEnc, new PMap(properties).putObject("name", "motorcycle"),
+                transportationMode, speedEnc.getNextStorableValue(MOTOR_CYCLE_MAX_SPEED));
         this.priorityWayEncoder = priorityWayEncoder;
-        this.curvatureEncoder = curvatureEnc;
 
         barriers.remove("bus_trap");
         barriers.remove("sump_buster");
@@ -209,7 +207,6 @@ public class MotorcycleTagParser extends CarTagParser {
         }
 
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way)));
-        curvatureEncoder.setDecimal(false, edgeFlags, 10.0 / 7.0);
         return edgeFlags;
     }
 
@@ -223,59 +220,4 @@ public class MotorcycleTagParser extends CarTagParser {
 
         return PriorityCode.UNCHANGED.getValue();
     }
-
-    @Override
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        double speed = edge.get(avgSpeedEnc);
-        double roadDistance = edge.getDistance();
-        double beelineDistance = getBeelineDistance(way);
-        double bendiness = beelineDistance / roadDistance;
-
-        bendiness = discriminateSlowStreets(bendiness, speed);
-        bendiness = increaseBendinessImpact(bendiness);
-        bendiness = correctErrors(bendiness);
-
-        edge.set(curvatureEncoder, bendiness);
-    }
-
-    private double getBeelineDistance(ReaderWay way) {
-        PointList pointList = way.getTag("point_list", null);
-        if (pointList == null)
-            throw new IllegalStateException("The artificial 'point_list' tag is missing for way: " + way.getId());
-        if (pointList.size() < 2)
-            throw new IllegalStateException("The artificial 'point_list' tag contained less than two points for way: " + way.getId());
-        return DistanceCalcEarth.DIST_EARTH.calcDist(pointList.getLat(0), pointList.getLon(0), pointList.getLat(pointList.size() - 1), pointList.getLon(pointList.size() - 1));
-    }
-
-    /**
-     * Streets that slow are not fun and probably in a town.
-     */
-    protected double discriminateSlowStreets(double bendiness, double speed) {
-        if (speed < 51) {
-            return 1;
-        }
-        return bendiness;
-    }
-
-    /**
-     * A really small bendiness or a bendiness greater than 1 indicates an error in the calculation.
-     * Just ignore them. We use bendiness greater 1.2 since the beelineDistance is only
-     * approximated, therefore it can happen on straight roads, that the beeline is longer than the
-     * road.
-     */
-    protected double correctErrors(double bendiness) {
-        if (bendiness < 0.01 || bendiness > 1) {
-            return 1;
-        }
-        return bendiness;
-    }
-
-    /**
-     * A good bendiness should become a greater impact. A bendiness close to 1 should not be
-     * changed.
-     */
-    protected double increaseBendinessImpact(double bendiness) {
-        return (Math.pow(bendiness, 2));
-    }
-
 }

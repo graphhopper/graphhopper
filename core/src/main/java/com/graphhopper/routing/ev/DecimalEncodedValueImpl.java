@@ -51,7 +51,8 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
                                    boolean negateReverseDirection, boolean storeTwoDirections, boolean useMaximumAsInfinity) {
         super(name, bits, (int) Math.round(minStorableValue / factor), negateReverseDirection, storeTwoDirections);
         if (!negateReverseDirection && super.minStorableValue * factor != minStorableValue)
-            throw new IllegalArgumentException("minStorableValue " + minStorableValue + " is not a multiple of the specified factor " + factor);
+            throw new IllegalArgumentException("minStorableValue " + minStorableValue + " is not a multiple of the specified factor "
+                    + factor + " (" + super.minStorableValue * factor + ")");
         this.factor = factor;
         this.useMaximumAsInfinity = useMaximumAsInfinity;
     }

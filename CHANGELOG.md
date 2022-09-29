@@ -1,7 +1,10 @@
 ### 7.0 [not yet released]
+
+- CurvatureWeighting was removed. Use a custom model with 'curvature' instead. (#2665)
 - internal keys for EdgeKVStorage changed to contain the street_ prefix like the path details too. Similarly, the extra_info in the instructions of the API response, see #2661
 
 ### 6.0 [13 Sep 2022]
+
 - When using a DecimalEncodedValue with useMaximumAsInfinity=true and a single bit of space make sure you always use 
   Double.POSITIVE_INFINITY to set the value, see #2646
 - renamed DouglasPeucker to RamerDouglasPeucker
