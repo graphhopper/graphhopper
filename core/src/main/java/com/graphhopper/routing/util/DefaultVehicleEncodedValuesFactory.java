@@ -28,7 +28,7 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
     @Override
     public VehicleEncodedValues createVehicleEncodedValues(String name, PMap configuration) {
         if (name.equals(ROADS))
-            return VehicleEncodedValues.roads();
+            return VehicleEncodedValues.roads(configuration);
 
         if (name.equals(CAR))
             return VehicleEncodedValues.car(configuration);

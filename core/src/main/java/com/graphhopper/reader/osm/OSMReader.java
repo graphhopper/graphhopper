@@ -43,6 +43,7 @@ import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.locationtech.jts.geom.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -251,12 +252,17 @@ public class OSMReader {
 
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the EncodingManager
         Country country = Country.MISSING;
+        CustomArea prevCustomArea = null;
         for (CustomArea customArea : customAreas) {
             Object alpha3 = customArea.getProperties().get(Country.ISO_ALPHA3);
             if (alpha3 == null)
                 continue;
-            if (country != Country.MISSING)
-                LOGGER.warn("Multiple countries found for way {}: {}, {}", way.getId(), country, alpha3);
+
+            // multiple countries are available -> pick the smaller one, see #2663
+            if (prevCustomArea != null && prevCustomArea.getArea() < customArea.getArea())
+                break;
+
+            prevCustomArea = customArea;
             country = Country.valueOf((String) alpha3);
         }
         way.setTag("country", country);

@@ -27,6 +27,7 @@ import java.util.Map;
 public class CustomArea implements AreaIndex.Area {
     private final Map<String, Object> properties;
     private final List<Polygon> borders;
+    private final double area;
 
     public static CustomArea fromJsonFeature(JsonFeature j) {
         List<Polygon> borders = new ArrayList<>();
@@ -44,6 +45,7 @@ public class CustomArea implements AreaIndex.Area {
     public CustomArea(Map<String, Object> properties, List<Polygon> borders) {
         this.properties = properties;
         this.borders = borders;
+        this.area = borders.stream().map(Polygon::getArea).reduce(0d, Double::sum);
     }
 
     public Map<String, Object> getProperties() {
@@ -53,5 +55,9 @@ public class CustomArea implements AreaIndex.Area {
     @Override
     public List<Polygon> getBorders() {
         return borders;
+    }
+
+    public double getArea() {
+        return area;
     }
 }
