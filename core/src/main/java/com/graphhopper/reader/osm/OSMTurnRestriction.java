@@ -47,6 +47,7 @@ public class OSMTurnRestriction {
         this.vehicleTypesExcept = new ArrayList<>();
     }
 
+    // convenient constructor for single via node/way restrictions.
     public OSMTurnRestriction(long id, long fromWayID, long viaId, long toWayID, RestrictionType restrictionType, ViaType viaType) {
         this(id, fromWayID, new ArrayList<>(Arrays.asList(viaId)), toWayID, restrictionType, viaType);
     }

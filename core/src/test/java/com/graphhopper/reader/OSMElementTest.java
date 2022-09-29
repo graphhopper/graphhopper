@@ -83,14 +83,14 @@ public class OSMElementTest {
     	nodes34.add(4L);
     	ReaderWay way34 = new ReaderWay(34L, emptyMap(), nodes34);
     	
-    	// mocking the wayNodesMap created during first parse
-        HashMap<Long, ReaderWay> wayNodesMap = new HashMap<>();
-        wayNodesMap.put(12L, way12);
-        wayNodesMap.put(23L, way23);
-        wayNodesMap.put(34L, way34);
+    	// mocking the wayMap created during first parse
+        HashMap<Long, ReaderWay> wayMap = new HashMap<>();
+        wayMap.put(12L, way12);
+        wayMap.put(23L, way23);
+        wayMap.put(34L, way34);
 
         WayRestriction restriction = new WayRestriction(1L, ways);
-        restriction.buildRestriction(wayNodesMap);
+        restriction.buildRestriction(wayMap);
 
         NodeRestriction r1 = restriction.getRestrictions().get(0);
         NodeRestriction r2 = restriction.getRestrictions().get(1);

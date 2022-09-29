@@ -180,28 +180,33 @@ class OSMNodeData {
      *
      * @return the (artificial) OSM node ID created for the copied node and the associated ID
      */
-    SegmentNode addCopyOfNode(SegmentNode node) {
-        GHPoint3D point = getCoordinates(node.id);
-        if (point == null)
-            throw new IllegalStateException("Cannot copy node : " + node.osmNodeId + ", because it is missing");
-        final long newOsmId = nextArtificialOSMNodeId++;
-        if (idsByOsmNodeIds.put(newOsmId, INTERMEDIATE_NODE) != EMPTY_NODE)
-            throw new IllegalStateException("Artificial osm node id already exists: " + newOsmId);
+    SegmentNode addCopyOfNodeAsPillarNode(SegmentNode node) {
+        GHPoint3D point = getPoint(node);
+        long newOsmId = getNewOsmId();
         int id = addPillarNode(newOsmId, point.getLat(), point.getLon(), point.getEle());
         return new SegmentNode(newOsmId, id);
     }
 
-    SegmentNode addCopyOfNode2(SegmentNode node) {
-        GHPoint3D point = getCoordinates(node.id);
-        if (point == null)
-            throw new IllegalStateException("Cannot copy node : " + node.osmNodeId + ", because it is missing");
-        final long newOsmId = nextArtificialOSMNodeId++;
-        if (idsByOsmNodeIds.put(newOsmId, INTERMEDIATE_NODE) != EMPTY_NODE)
-            throw new IllegalStateException("Artificial osm node id already exists: " + newOsmId);
+    SegmentNode addCopyOfNodeAsTowerNode(SegmentNode node) {
+        GHPoint3D point = getPoint(node);
+        long newOsmId = getNewOsmId();
         int id = addTowerNode(newOsmId, point.getLat(), point.getLon(), point.getEle());
         return new SegmentNode(newOsmId, id);
     }
-
+    
+    GHPoint3D getPoint(SegmentNode node) {
+        GHPoint3D point = getCoordinates(node.id);
+        if (point == null)
+            throw new IllegalStateException("Cannot copy node : " + node.osmNodeId + ", because it is missing");
+        return point;
+    }
+    
+    long getNewOsmId() {
+        long newOsmId = nextArtificialOSMNodeId++;
+        if (idsByOsmNodeIds.put(newOsmId, INTERMEDIATE_NODE) != EMPTY_NODE)
+            throw new IllegalStateException("Artificial osm node id already exists: " + newOsmId);
+        return newOsmId;
+    }
 
     int convertPillarToTowerNode(int id, long osmNodeId) {
         if (!isPillarNode(id))

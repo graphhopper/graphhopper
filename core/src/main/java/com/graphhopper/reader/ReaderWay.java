@@ -44,6 +44,9 @@ public class ReaderWay extends ReaderElement {
     }
 
     public Long[] getEndNodes() {
+        if (nodes.size() < 2) {
+            throw new IllegalStateException("Way " + this.getId() + ": Not enough Nodes");
+        }
         Long[] endNodes = new Long[2];
         endNodes[0] = nodes.get(0);
         endNodes[1] = nodes.get(nodes.size() - 1);

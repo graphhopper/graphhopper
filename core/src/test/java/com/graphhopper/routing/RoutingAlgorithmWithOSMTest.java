@@ -205,6 +205,16 @@ public class RoutingAlgorithmWithOSMTest {
         hopper.importOrLoad();
         checkQueries(hopper, list);
     }
+    
+    @Test
+    public void testViaWayTurnRestriction() {
+        List<Query> list = new ArrayList<>();
+        list.add(new Query(0.0506, 0.01, 0.0506, 0.014, 1200.907, 8));
+        GraphHopper hopper = createHopper(DIR + "/test_way_restrictions.osm.xml",
+                new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true));
+        hopper.importOrLoad();
+        checkQueries(hopper, list);
+    }
 
     @Test
     public void testSimplePTurn() {

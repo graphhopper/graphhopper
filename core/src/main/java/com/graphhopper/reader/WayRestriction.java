@@ -13,9 +13,8 @@ public class WayRestriction {
     private boolean valid;
 
     public WayRestriction(Long id, List<Long> ways) {
-        if (ways.size() < 2) {
-            throw new IllegalArgumentException("Restriction needs 2 or more ways");
-        }
+        if (ways.size() < 3)
+            throw new IllegalArgumentException("Relation " + id + ": Via Way Restriction needs 3 or more ways");
         this.id = id;
         this.ways = ways;
         this.restrictions = new ArrayList<NodeRestriction>(2);
@@ -23,64 +22,65 @@ public class WayRestriction {
         this.valid = false;
     }
 
-    public void buildRestriction(HashMap<Long, ReaderWay> wayNodesMap) {
-    	try {
-            for (int i = 0; i < ways.size() - 1; i++) {
-                Long from = ways.get(i);
-                Long to = ways.get(i + 1);
-                Long via = getViaNode(wayNodesMap.get(from), wayNodesMap.get(to));
-                restrictions.add(new NodeRestriction(from, via, to));
-            }
-            setStartNode(wayNodesMap);
-            valid = true;
-    	} catch (Exception e) {
-		}
+    public void buildRestriction(HashMap<Long, ReaderWay> wayMap) {
+        for (int i = 0; i < ways.size() - 1; i++) {
+            Long fromId = ways.get(i);
+            Long toId = ways.get(i + 1);
+            ReaderWay from = wayMap.get(fromId);
+            ReaderWay to = wayMap.get(toId);
+            if (from == null || to == null) 
+                return;
+            Long via = getViaNode(from, to);
+            restrictions.add(new NodeRestriction(fromId, via, toId));
+        }
+        Long startId = ways.get(0);
+        setStartNode(wayMap.get(startId));
+        valid = true;
     }
 
     public Long getViaNode(ReaderWay from, ReaderWay to) {
-        Long[] fromNodes = from.getEndNodes();
-        Long[] toNodes = to.getEndNodes();
-
-        if (Arrays.asList(toNodes).contains(fromNodes[0])) {
-            return fromNodes[0];
-        } else if (Arrays.asList(toNodes).contains(fromNodes[1])) {
-            return fromNodes[1];
-        } else {
+        Long[] fromEndNodes = from.getEndNodes();
+        Long[] toEndNodes = to.getEndNodes();
+        
+        if (Arrays.asList(toEndNodes).contains(fromEndNodes[0]))
+            return fromEndNodes[0];
+        else if (Arrays.asList(toEndNodes).contains(fromEndNodes[1]))
+            return fromEndNodes[1];
+        else 
             throw new IllegalStateException("No Via Node found!");
-        }
     }
 
-    public List<NodeRestriction> getRestrictions() {
-        if (restrictions.size() == 0)
-            throw new IllegalStateException("Restriction has not yet been build");
-        return restrictions;
-    }
-
-    public List<Long> getWays() {
-        return ways;
-    }
-
-    private void setStartNode(HashMap<Long, ReaderWay> wayNodesMap) {
-        Long via = restrictions.get(0).getVia();
-        Long[] fromEndnodes = wayNodesMap.get(ways.get(0)).getEndNodes();
-        if (fromEndnodes[0] == via) {
-            startNode = fromEndnodes[1];
-        } else {
-            startNode = fromEndnodes[0];
-        }
-    }
-
-    public Long getStartNode() {
-        if (startNode < 0)
-            throw new IllegalStateException("Restriction has not yet been build");
-        return startNode;
+    private void setStartNode(ReaderWay startWay) {
+        Long startVia = restrictions.get(0).getVia();
+        Long[] startEndnodes = startWay.getEndNodes();
+        
+        if (startEndnodes[0] == startVia)
+            startNode = startEndnodes[1];
+        else 
+            startNode = startEndnodes[0];
     }
 
     public Long getId() {
         return id;
     }
+    
+    public List<Long> getWays() {
+        return ways;
+    }
 
 	public boolean isValid() {
 		return valid;
 	}
+	
+    public Long getStartNode() {
+        if (startNode < 0)
+            throw new IllegalStateException("Restriction has not yet been build");
+        return startNode;
+    }
+    
+    public List<NodeRestriction> getRestrictions() {
+        if (restrictions.size() == 0)
+            throw new IllegalStateException("Restriction has not yet been build");
+        return restrictions;
+    }
 }

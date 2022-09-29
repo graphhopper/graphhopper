@@ -12,15 +12,15 @@
     (2,3)->(3,5)->(5,9)->(9,8): no_u_turn
     -->
 
-    <node id="1" lat="0.050" lon="0.010" version="1"></node> <!-- 7 -->
-    <node id="2" lat="0.052" lon="0.010" version="1"></node> <!-- 0 -->
-    <node id="3" lat="0.054" lon="0.010" version="1"></node> <!-- 1 -->
-    <node id="4" lat="0.056" lon="0.010" version="1"></node> <!-- 2 -->
-    <node id="5" lat="0.054" lon="0.012" version="1"></node> <!-- 3 -->
-    <node id="6" lat="0.056" lon="0.012" version="1"></node> <!-- 4 -->
-    <node id="7" lat="0.050" lon="0.014" version="1"></node> <!-- 8 -->
-    <node id="8" lat="0.052" lon="0.014" version="1"></node> <!-- 5 -->
-    <node id="9" lat="0.054" lon="0.014" version="1"></node> <!-- 6 -->
+    <node id="1" lat="0.050" lon="0.010" version="1"></node>
+    <node id="2" lat="0.052" lon="0.010" version="1"></node>
+    <node id="3" lat="0.054" lon="0.010" version="1"></node>
+    <node id="4" lat="0.056" lon="0.010" version="1"></node>
+    <node id="5" lat="0.054" lon="0.012" version="1"></node>
+    <node id="6" lat="0.056" lon="0.012" version="1"></node>
+    <node id="7" lat="0.050" lon="0.014" version="1"></node>
+    <node id="8" lat="0.052" lon="0.014" version="1"></node>
+    <node id="9" lat="0.054" lon="0.014" version="1"></node>
 
     <!-- 1-2 -->
     <way id="12" version="1">
