@@ -1,4 +1,4 @@
-package com.graphhopper.routing.util.parsers;
+package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.AverageSlope;
