@@ -106,7 +106,8 @@ public class DefaultWeightingFactory implements WeightingFactory {
             else
                 weighting = new FastestWeighting(accessEnc, speedEnc, roadAccessEnc, hints, turnCostProvider);
         } else if ("curvature".equalsIgnoreCase(weightingStr)) {
-            throw new IllegalArgumentException("The curvature weighting is no longer supported since 7.0. Use a custom model with the EncodedValue 'curvature' [0,1] instead");
+            throw new IllegalArgumentException("The curvature weighting is no longer supported since 7.0. Use a custom " +
+                    "model with the EncodedValue 'curvature' instead");
         } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
             if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
                 throw new IllegalArgumentException("The short_fastest weighting requires road_access");
