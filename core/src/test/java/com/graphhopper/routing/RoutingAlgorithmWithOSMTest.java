@@ -122,7 +122,7 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoMotorcycleCurvature() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2681, 118));
+        queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2681, 119));
         queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3727, 170));
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 3157, 165));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
