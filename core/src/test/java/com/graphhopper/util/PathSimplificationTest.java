@@ -37,6 +37,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
 import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -76,24 +77,24 @@ public class PathSimplificationTest {
         na.setNode(7, 1.0, 1.1);
         na.setNode(8, 1.0, 1.2);
 
-        GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(10000)).setKeyValues(createKV("name", "0-1"));
-        GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(11000)).setKeyValues(createKV("name", "1-2"));
+        GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(10000)).setKeyValues(createKV(STREET_NAME, "0-1"));
+        GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(11000)).setKeyValues(createKV(STREET_NAME, "1-2"));
 
         GHUtility.setSpeed(18, true, true, accessEnc, speedEnc, g.edge(0, 3).setDistance(11000));
-        GHUtility.setSpeed(18, true, true, accessEnc, speedEnc, g.edge(1, 4).setDistance(10000)).setKeyValues(createKV("name", "1-4"));
-        GHUtility.setSpeed(18, true, true, accessEnc, speedEnc, g.edge(2, 5).setDistance(11000)).setKeyValues(createKV("name", "5-2"));
+        GHUtility.setSpeed(18, true, true, accessEnc, speedEnc, g.edge(1, 4).setDistance(10000)).setKeyValues(createKV(STREET_NAME, "1-4"));
+        GHUtility.setSpeed(18, true, true, accessEnc, speedEnc, g.edge(2, 5).setDistance(11000)).setKeyValues(createKV(STREET_NAME, "5-2"));
 
-        GHUtility.setSpeed(27, true, true, accessEnc, speedEnc, g.edge(3, 6).setDistance(11000)).setKeyValues(createKV("name", "3-6"));
-        GHUtility.setSpeed(27, true, true, accessEnc, speedEnc, g.edge(4, 7).setDistance(10000)).setKeyValues(createKV("name", "4-7"));
-        GHUtility.setSpeed(27, true, true, accessEnc, speedEnc, g.edge(5, 8).setDistance(10000)).setKeyValues(createKV("name", "5-8"));
+        GHUtility.setSpeed(27, true, true, accessEnc, speedEnc, g.edge(3, 6).setDistance(11000)).setKeyValues(createKV(STREET_NAME, "3-6"));
+        GHUtility.setSpeed(27, true, true, accessEnc, speedEnc, g.edge(4, 7).setDistance(10000)).setKeyValues(createKV(STREET_NAME, "4-7"));
+        GHUtility.setSpeed(27, true, true, accessEnc, speedEnc, g.edge(5, 8).setDistance(10000)).setKeyValues(createKV(STREET_NAME, "5-8"));
 
-        GHUtility.setSpeed(36, true, true, accessEnc, speedEnc, g.edge(6, 7).setDistance(11000)).setKeyValues(createKV("name", "6-7"));
+        GHUtility.setSpeed(36, true, true, accessEnc, speedEnc, g.edge(6, 7).setDistance(11000)).setKeyValues(createKV(STREET_NAME, "6-7"));
         EdgeIteratorState tmpEdge = GHUtility.setSpeed(36, true, true, accessEnc, speedEnc, g.edge(7, 8).setDistance(10000));
         PointList list = new PointList();
         list.add(1.0, 1.15);
         list.add(1.0, 1.16);
         tmpEdge.setWayGeometry(list);
-        tmpEdge.setKeyValues(createKV("name", "7-8"));
+        tmpEdge.setKeyValues(createKV(STREET_NAME, "7-8"));
 
         // missing edge name
         GHUtility.setSpeed(45, true, true, accessEnc, speedEnc, g.edge(9, 10).setDistance(10000));
@@ -103,7 +104,7 @@ public class PathSimplificationTest {
         list.add(1.0, 1.3001);
         list.add(1.0, 1.3002);
         list.add(1.0, 1.3003);
-        tmpEdge.setKeyValues(createKV("name", "8-9"));
+        tmpEdge.setKeyValues(createKV(STREET_NAME, "8-9"));
         tmpEdge.setWayGeometry(list);
 
         // Path is: [0 0-1, 3 1-4, 6 4-7, 9 7-8, 11 8-9, 10 9-10]

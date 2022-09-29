@@ -13,6 +13,7 @@ import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.NodeAccess;
@@ -39,6 +40,7 @@ import java.util.*;
 import static com.graphhopper.resources.RouteResource.removeLegacyParameters;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 
 /**
  * This resource provides the entire shortest path tree as response. In a simple CSV format discussed at #1577.
@@ -197,7 +199,7 @@ public class SPTResource {
                         if (edge == null)
                             continue;
 
-                        if (col.equals(Parameters.Details.STREET_NAME)) {
+                        if (col.equals(STREET_NAME)) {
                             sb.append(edge.getName().replaceAll(",", ""));
                             continue;
                         }
