@@ -197,10 +197,13 @@ public class Parameters {
 
         public static final String PATH_DETAILS = "details";
 
-        public static final String AVERAGE_SPEED = "average_speed";
+        // these details are directly accessing the EdgeKVStorage and the names have to be identical
         public static final String STREET_NAME = "street_name";
         public static final String STREET_REF = "street_ref";
         public static final String STREET_DESTINATION = "street_destination";
+        public static final String STREET_DESTINATION_REF = "street_destination_ref";
+
+        public static final String AVERAGE_SPEED = "average_speed";
         public static final String EDGE_ID = "edge_id";
         public static final String EDGE_KEY = "edge_key";
         public static final String TIME = "time";
