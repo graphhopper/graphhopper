@@ -1,0 +1,11 @@
+name: test12
+
+on: push
+
+jobs:
+  run_test:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: test
+        run: |
+          echo hello
