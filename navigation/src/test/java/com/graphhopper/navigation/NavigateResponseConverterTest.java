@@ -227,7 +227,6 @@ public class NavigateResponseConverterTest {
         steps = json.get("routes").get(0).get("legs").get(0).get("steps");
         voiceInstruction = steps.get(14).get("voiceInstructions").get(0);
         assertEquals("In 2 Kilometern rechts halten", voiceInstruction.get("announcement").asText());
-
     }
 
     @Test
@@ -245,6 +244,7 @@ public class NavigateResponseConverterTest {
         JsonNode primary = bannerInstructions.get(0).get("primary");
 
         assertEquals("roundabout", primary.get("type").asText());
+        assertEquals("At roundabout, take exit 2 onto CG-3", primary.get("text").asText());
         assertEquals("right", primary.get("modifier").asText());
         assertEquals(222, primary.get("degrees").asDouble(), 1);
 

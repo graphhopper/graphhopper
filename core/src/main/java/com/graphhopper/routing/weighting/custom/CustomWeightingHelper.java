@@ -67,6 +67,14 @@ public class CustomWeightingHelper {
         return priority;
     }
 
+    protected double getMaxPriority() {
+        return 1;
+    }
+
+    protected double getMaxSpeed() {
+        return 1;
+    }
+
     public static boolean in(Polygon p, EdgeIteratorState edge) {
         BBox bbox = GHUtility.createBBox(edge);
         if (!p.getBounds().intersects(bbox))

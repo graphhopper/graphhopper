@@ -23,7 +23,7 @@ import com.graphhopper.util.EdgeIteratorState;
 public class DecimalDetails extends AbstractPathDetailsBuilder {
 
     private final DecimalEncodedValue ev;
-    private double decimalValue = -1;
+    private Double decimalValue;
     private final String infinityJsonValue;
     private final double precision;
 
@@ -55,7 +55,7 @@ public class DecimalDetails extends AbstractPathDetailsBuilder {
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         double tmpVal = edge.get(ev);
-        if (Math.abs(tmpVal - decimalValue) >= precision) {
+        if (decimalValue == null || Math.abs(tmpVal - decimalValue) >= precision) {
             this.decimalValue = Double.isInfinite(tmpVal) ? tmpVal : Math.round(tmpVal / precision) * precision;
             return true;
         }

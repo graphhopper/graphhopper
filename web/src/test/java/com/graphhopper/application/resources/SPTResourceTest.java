@@ -98,7 +98,7 @@ public class SPTResourceTest {
         assertEquals("prev_node_id,edge_id,node_id,time,distance", lines[0]);
         assertEquals("-1,-1,1948,0,0", lines[1]);
         assertEquals("1948,2277,1324,3817,74", lines[2]);
-        assertEquals("1948,2276,263,13495,262", lines[3]);
+        assertEquals("1948,2276,263,13496,262", lines[3]);
     }
 
     @Test
@@ -113,7 +113,7 @@ public class SPTResourceTest {
         assertEquals(20, Double.parseDouble(row[2]), .1);
 
         row = lines[249].split(",");
-        assertEquals("Carretera d'Engolasters CS-200", row[0]);
+        assertEquals("Carretera d'Engolasters", row[0]);
         assertEquals("secondary", row[1]);
         assertTrue(Double.isInfinite(Double.parseDouble(row[2])));
     }

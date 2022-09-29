@@ -42,13 +42,6 @@ public interface EncodedValue {
     String getName();
 
     /**
-     * The return value represents the state of this EncodedValue and it can be assumed that two JVMs return the
-     * same version when the EncodedValue has the same state unlike the hashCode method. Same version ensures
-     * compatibility when reading values.
-     */
-    int getVersion();
-
-    /**
      * @return true if this EncodedValue can store a different value for its reverse direction
      */
     boolean isStoreTwoDirections();
@@ -61,8 +54,6 @@ public interface EncodedValue {
 
         /**
          * This method determines a space of the specified bits and sets shift and dataIndex accordingly
-         *
-         * @param usedBits
          */
         void next(int usedBits) {
             shift = nextShift;

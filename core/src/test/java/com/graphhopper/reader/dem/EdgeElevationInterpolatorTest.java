@@ -19,11 +19,8 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
@@ -41,15 +38,17 @@ public abstract class EdgeElevationInterpolatorTest {
 
     protected BaseGraph graph;
     protected EnumEncodedValue<RoadEnvironment> roadEnvEnc;
-    protected FlagEncoder encoder;
+    protected BooleanEncodedValue accessEnc;
+    protected DecimalEncodedValue speedEnc;
     protected EncodingManager encodingManager;
     protected EdgeElevationInterpolator edgeElevationInterpolator;
 
     @SuppressWarnings("resource")
     @BeforeEach
     public void setUp() {
-        encoder = FlagEncoders.createCar();
-        encodingManager = EncodingManager.create(encoder);
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         graph = new BaseGraph.Builder(encodingManager).set3D(true).create();
         roadEnvEnc = encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         edgeElevationInterpolator = createEdgeElevationInterpolator();

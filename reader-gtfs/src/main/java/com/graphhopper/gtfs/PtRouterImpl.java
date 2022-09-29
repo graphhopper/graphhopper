@@ -27,6 +27,8 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -166,10 +168,16 @@ public final class PtRouterImpl implements PtRouter {
             requestedPathDetails = request.getPathDetails();
             accessProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getAccessProfile())).findFirst().get();
             accessWeighting = weightingFactory.createWeighting(accessProfile, new PMap(), false);
-            accessSnapFilter = new DefaultSnapFilter(new FastestWeighting(encodingManager.getEncoder(accessProfile.getVehicle())), encodingManager.getBooleanEncodedValue(Subnetwork.key(accessProfile.getVehicle())));
+            accessSnapFilter = new DefaultSnapFilter(new FastestWeighting(
+                    encodingManager.getBooleanEncodedValue(VehicleAccess.key(accessProfile.getVehicle())),
+                    encodingManager.getDecimalEncodedValue(VehicleSpeed.key(accessProfile.getVehicle()))
+            ), encodingManager.getBooleanEncodedValue(Subnetwork.key(accessProfile.getVehicle())));
             egressProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getEgressProfile())).findFirst().get();
             egressWeighting = weightingFactory.createWeighting(egressProfile, new PMap(), false);
-            egressSnapFilter = new DefaultSnapFilter(new FastestWeighting(encodingManager.getEncoder(egressProfile.getVehicle())), encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
+            egressSnapFilter = new DefaultSnapFilter(new FastestWeighting(
+                    encodingManager.getBooleanEncodedValue(VehicleAccess.key(egressProfile.getVehicle())),
+                    encodingManager.getDecimalEncodedValue(VehicleSpeed.key(egressProfile.getVehicle()))
+            ), encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
         }
 
         GHResponse route() {

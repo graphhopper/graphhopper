@@ -19,7 +19,13 @@ package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -37,9 +43,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Peter Karich
  */
 public class LocationIndexTreeTest {
-    protected final EncodingManager encodingManager = EncodingManager.create("car");
+    private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+    private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+    protected final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
 
-    public static void initSimpleGraph(Graph g, EncodingManager em) {
+    public static void initSimpleGraph(Graph g) {
         //  6 |        4
         //  5 |
         //    |     6
@@ -69,10 +77,6 @@ public class LocationIndexTreeTest {
                 g.edge(3, 5),
                 // make sure 6 is connected
                 g.edge(6, 4));
-        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
-            double speed = encoder.getMaxSpeed() / 2;
-            GHUtility.setSpeed(speed, speed, encoder, list);
-        }
     }
 
     private LocationIndexTree createIndexNoPrepare(Graph g, int resolution) {
@@ -87,8 +91,7 @@ public class LocationIndexTreeTest {
     // |1----3-\|
     // |____/   4
     // 2-------/
-    Graph createTestGraph(EncodingManager em) {
-        FlagEncoder encoder = em.getEncoder("car");
+    Graph createTestGraph(EncodingManager em, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.5, -0.5);
@@ -96,19 +99,19 @@ public class LocationIndexTreeTest {
         na.setNode(2, -1, -1);
         na.setNode(3, -0.4, 0.9);
         na.setNode(4, -0.6, 1.6);
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 4));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 4));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4));
         return graph;
     }
 
     @Test
     public void testSnappedPointAndGeometry() {
-        Graph graph = createTestGraph(encodingManager);
+        Graph graph = createTestGraph(encodingManager, accessEnc, speedEnc);
         LocationIndex index = createIndexNoPrepare(graph, 500000).prepareIndex();
         // query directly the tower node
         Snap res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);
@@ -148,17 +151,16 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testMoreReal() {
-        FlagEncoder encoder = FlagEncoders.createCar();
-        BaseGraph graph = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(1, 51.2492152, 9.4317166);
         na.setNode(0, 52, 9);
         na.setNode(2, 51.2, 9.4);
         na.setNode(3, 49, 10);
 
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 0));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 3)).setWayGeometry(Helper.createPointList(51.21, 9.43));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 0));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 3)).setWayGeometry(Helper.createPointList(51.21, 9.43));
         LocationIndex index = createIndexNoPrepare(graph, 500000).prepareIndex();
         assertEquals(1, findClosestEdge(index, 51.2, 9.4));
     }
@@ -174,21 +176,20 @@ public class LocationIndexTreeTest {
     //  |
     private Graph createTestGraphWithWayGeometry() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
-        FlagEncoder encoder = encodingManager.getEncoder("car");
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.5, -0.5);
         na.setNode(1, -0.5, -0.5);
         na.setNode(2, -1, -1);
         na.setNode(3, -0.4, 0.9);
         na.setNode(4, -0.6, 1.6);
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2));
         // insert A and B, without this we would get 0 for 0,0
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 4)).setWayGeometry(Helper.createPointList(1, 1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 3)).setWayGeometry(Helper.createPointList(0, 0));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 4));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 4)).setWayGeometry(Helper.createPointList(1, 1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3)).setWayGeometry(Helper.createPointList(0, 0));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 4));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4));
         return graph;
     }
 
@@ -205,15 +206,14 @@ public class LocationIndexTreeTest {
     @Test
     public void testFindingWayGeometry() {
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();
-        FlagEncoder encoder = encodingManager.getEncoder("car");
         NodeAccess na = g.getNodeAccess();
         na.setNode(10, 51.2492152, 9.4317166);
         na.setNode(20, 52, 9);
         na.setNode(30, 51.2, 9.4);
         na.setNode(50, 49, 10);
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(20, 50)).setWayGeometry(Helper.createPointList(51.25, 9.43));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(10, 20));
-        GHUtility.setSpeed(60, true, true, encoder, g.edge(20, 30));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(20, 50)).setWayGeometry(Helper.createPointList(51.25, 9.43));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(10, 20));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(20, 30));
 
         LocationIndex index = createIndexNoPrepare(g, 2000).prepareIndex();
         assertEquals(0, findClosestEdge(index, 51.25, 9.43));
@@ -221,7 +221,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testEdgeFilter() {
-        Graph graph = createTestGraph(encodingManager);
+        Graph graph = createTestGraph(encodingManager, accessEnc, speedEnc);
         LocationIndexTree index = (LocationIndexTree) createIndexNoPrepare(graph, 500000).prepareIndex();
 
         assertEquals(1, index.findClosest(-.6, -.6, EdgeFilter.ALL_EDGES).getClosestNode());
@@ -230,7 +230,6 @@ public class LocationIndexTreeTest {
 
     // see testgraph2.jpg
     Graph createTestGraph2() {
-        FlagEncoder encoder = encodingManager.getEncoder("car");
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
 
@@ -282,7 +281,7 @@ public class LocationIndexTreeTest {
         // top right
         na.setNode(101, 49.96053, 11.58814);
 
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
                 graph.edge(0, 1),
                 graph.edge(1, 2),
                 graph.edge(2, 3),
@@ -326,7 +325,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testRMin() {
-        Graph graph = createTestGraph(encodingManager);
+        Graph graph = createTestGraph(encodingManager, accessEnc, speedEnc);
         LocationIndexTree index = (LocationIndexTree) createIndexNoPrepare(graph, 50000).prepareIndex();
         DistanceCalc distCalc = new DistancePlaneProjection();
         double rmin2 = index.calculateRMin(0.05, -0.3, 1);
@@ -336,10 +335,12 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testSearchWithFilter_issue318() {
-        FlagEncoder carEncoder = FlagEncoders.createCar();
-        FlagEncoder bikeEncoder = FlagEncoders.createBike();
+        BooleanEncodedValue carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+        DecimalEncodedValue carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
+        BooleanEncodedValue bikeAccessEnc = new SimpleBooleanEncodedValue("bike_access", true);
+        DecimalEncodedValue bikeSpeedEnc = new DecimalEncodedValueImpl("bike_speed", 4, 2, false);
 
-        EncodingManager tmpEM = EncodingManager.create(carEncoder, bikeEncoder);
+        EncodingManager tmpEM = EncodingManager.start().add(carAccessEnc).add(carSpeedEnc).add(bikeAccessEnc).add(bikeSpeedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(tmpEM).create();
         NodeAccess na = graph.getNodeAccess();
 
@@ -350,33 +351,32 @@ public class LocationIndexTreeTest {
                 int index = lonIdx * 10 + latIdx;
                 na.setNode(index, 0.01 * latIdx, 0.01 * lonIdx);
                 if (latIdx < MAX - 1)
-                    GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(index, index + 1));
+                    GHUtility.setSpeed(60, true, true, carAccessEnc, carSpeedEnc, graph.edge(index, index + 1));
 
                 if (lonIdx < MAX - 1)
-                    GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(index, index + 10));
+                    GHUtility.setSpeed(60, true, true, carAccessEnc, carSpeedEnc, graph.edge(index, index + 10));
             }
         }
 
         // reduce access for bike to two edges only
         AllEdgesIterator iter = graph.getAllEdges();
-        BooleanEncodedValue accessEnc = bikeEncoder.getAccessEnc();
         while (iter.next()) {
-            iter.set(accessEnc, false, false);
+            iter.set(bikeAccessEnc, false, false);
         }
         for (EdgeIteratorState edge : Arrays.asList(GHUtility.getEdge(graph, 0, 1), GHUtility.getEdge(graph, 1, 2))) {
-            edge.set(accessEnc, true, true);
+            edge.set(bikeAccessEnc, true, true);
         }
 
         LocationIndexTree index = createIndexNoPrepare(graph, 500);
         index.prepareIndex();
         index.setMaxRegionSearch(8);
 
-        EdgeFilter carFilter = AccessFilter.allEdges(carEncoder.getAccessEnc());
+        EdgeFilter carFilter = AccessFilter.allEdges(carAccessEnc);
         Snap snap = index.findClosest(0.03, 0.03, carFilter);
         assertTrue(snap.isValid());
         assertEquals(33, snap.getClosestNode());
 
-        EdgeFilter bikeFilter = AccessFilter.allEdges(bikeEncoder.getAccessEnc());
+        EdgeFilter bikeFilter = AccessFilter.allEdges(bikeAccessEnc);
         snap = index.findClosest(0.03, 0.03, bikeFilter);
         assertTrue(snap.isValid());
         assertEquals(2, snap.getClosestNode());
@@ -387,7 +387,6 @@ public class LocationIndexTreeTest {
     // 4--5--6--7
     @Test
     public void testCrossBoundaryNetwork_issue667() {
-        FlagEncoder encoder = encodingManager.getEncoder("car");
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.1, 179.5);
@@ -400,7 +399,7 @@ public class LocationIndexTreeTest {
         na.setNode(7, 0, -179.5);
 
         // just use 1 as distance which is incorrect but does not matter in this unit case
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
                 graph.edge(0, 1),
                 graph.edge(0, 4),
                 graph.edge(1, 5),
@@ -414,9 +413,9 @@ public class LocationIndexTreeTest {
         // as last edges: create cross boundary edges
         // See #667 where the recommendation is to adjust the import and introduce two pillar nodes 
         // where the connection is cross boundary and would be okay if ignored as real length is 0
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2)).setWayGeometry(Helper.createPointList(0, 180, 0, -180));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2)).setWayGeometry(Helper.createPointList(0, 180, 0, -180));
         // but this unit test succeeds even without this adjusted import:
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 6));
 
         LocationIndexTree index = createIndexNoPrepare(graph, 500);
         index.prepareIndex();
@@ -440,10 +439,14 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testSimpleGraph() {
-        EncodingManager em = EncodingManager.create("car");
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph g = new BaseGraph.Builder(em).create();
-        initSimpleGraph(g, em);
-
+        initSimpleGraph(g);
+        AllEdgesIterator edge = g.getAllEdges();
+        while (edge.next())
+            GHUtility.setSpeed(60, 60, accessEnc, speedEnc, edge);
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
         assertEquals(3, findClosestEdge(idx, 5, 2));
         assertEquals(3, findClosestEdge(idx, 1.5, 2));
@@ -454,9 +457,14 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testSimpleGraph2() {
-        EncodingManager em = EncodingManager.create("car");
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph g = new BaseGraph.Builder(em).create();
-        initSimpleGraph(g, em);
+        initSimpleGraph(g);
+        AllEdgesIterator edge = g.getAllEdges();
+        while (edge.next())
+            GHUtility.setSpeed(60, 60, accessEnc, speedEnc, edge);
 
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
         assertEquals(3, findClosestEdge(idx, 5, 2));
@@ -472,7 +480,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testSinglePoints120() {
-        BaseGraph g = createSampleGraph(EncodingManager.create("car"));
+        BaseGraph g = createSampleGraph(encodingManager, accessEnc, speedEnc);
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
 
         assertEquals(3, findClosestEdge(idx, 1.637, 2.23));
@@ -487,7 +495,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testSinglePoints32() {
-        BaseGraph g = createSampleGraph(EncodingManager.create("car"));
+        BaseGraph g = createSampleGraph(encodingManager, accessEnc, speedEnc);
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
 
         assertEquals(10, findClosestEdge(idx, 3.649, 1.375));
@@ -511,7 +519,7 @@ public class LocationIndexTreeTest {
         g.close();
     }
 
-    public BaseGraph createSampleGraph(EncodingManager encodingManager) {
+    public BaseGraph createSampleGraph(EncodingManager encodingManager, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         // length does not matter here but lat,lon and outgoing edges do!
 
@@ -567,49 +575,53 @@ public class LocationIndexTreeTest {
         na.setNode(16, 5, 5);
         // => 17 locations
 
-        FlagEncoder encoder = encodingManager.getEncoder("car");
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(a0, b1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(c2, b1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(c2, d3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, b1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(e4, f5));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(m12, d3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(e4, k10));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, d3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, i8));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(f5, j9));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(k10, g6));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(j9, l11));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(i8, l11));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(i8, h7));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(k10, n13));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(k10, o14));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(l11, p15));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(m12, p15));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(q16, p15));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(q16, m12));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(a0, b1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(c2, b1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(c2, d3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(f5, b1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(e4, f5));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(m12, d3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(e4, k10));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(f5, d3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(f5, i8));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(f5, j9));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(k10, g6));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(j9, l11));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(i8, l11));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(i8, h7));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(k10, n13));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(k10, o14));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(l11, p15));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(m12, p15));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(q16, p15));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(q16, m12));
         return graph;
     }
 
     @Test
     public void testDifferentVehicles() {
-        final EncodingManager encodingManager = EncodingManager.create("car,foot");
-        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
-        initSimpleGraph(g, encodingManager);
+        BooleanEncodedValue carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+        DecimalEncodedValue carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
+        BooleanEncodedValue footAccessEnc = new SimpleBooleanEncodedValue("foot_access", true);
+        DecimalEncodedValue footSpeedEnc = new DecimalEncodedValueImpl("foot_speed", 4, 1, false);
+        EncodingManager em = EncodingManager.start().add(carAccessEnc).add(carSpeedEnc).add(footAccessEnc).add(footSpeedEnc).build();
+        BaseGraph g = new BaseGraph.Builder(em).create();
+        initSimpleGraph(g);
+        AllEdgesIterator edge = g.getAllEdges();
+        while (edge.next()) {
+            GHUtility.setSpeed(60, 60, carAccessEnc, carSpeedEnc, edge);
+            GHUtility.setSpeed(10, 10, footAccessEnc, footSpeedEnc, edge);
+        }
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
         assertEquals(0, findClosestEdge(idx, 1, -1));
 
         // now make all edges from node 1 accessible for CAR only
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
-        FlagEncoder encoder = encodingManager.getEncoder("foot");
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        while (iter.next()) {
-            iter.set(accessEnc, false, false);
-        }
+        while (iter.next())
+            iter.set(footAccessEnc, false, false);
 
         idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
-        FlagEncoder footEncoder = encodingManager.getEncoder("foot");
-        assertEquals(2, idx.findClosest(1, -1, AccessFilter.allEdges(footEncoder.getAccessEnc())).getClosestNode());
+        assertEquals(2, idx.findClosest(1, -1, AccessFilter.allEdges(footAccessEnc)).getClosestNode());
         g.close();
     }
 

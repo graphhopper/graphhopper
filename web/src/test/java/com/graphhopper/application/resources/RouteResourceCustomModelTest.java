@@ -63,7 +63,7 @@ public class RouteResourceCustomModelTest {
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
-                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
+                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv").
                 putObject("custom_model_folder", "./src/test/resources/com/graphhopper/application/resources").
                 setProfiles(Arrays.asList(
                         new Profile("wheelchair"),
@@ -80,21 +80,21 @@ public class RouteResourceCustomModelTest {
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile("car_no_unclassified").setCustomModel(
                                         new CustomModel(new CustomModel().
-                                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, 0)))).
+                                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0")))).
                                 setVehicle("car"),
                         new CustomProfile("custom_bike").
                                 setCustomModel(new CustomModel().
-                                        addToSpeed(If("road_class == PRIMARY", LIMIT, 28)).
-                                        addToPriority(If("max_width < 1.2", MULTIPLY, 0))).
+                                        addToSpeed(If("road_class == PRIMARY", LIMIT, "28")).
+                                        addToPriority(If("max_width < 1.2", MULTIPLY, "0"))).
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike2").setCustomModel(
                                         new CustomModel(new CustomModel().
-                                                addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, 0)))).
+                                                addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0")))).
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike3").setCustomModel(
                                         new CustomModel(new CustomModel().
-                                                addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, 10)).
-                                                addToSpeed(If("true", LIMIT, 40)))).
+                                                addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "10")).
+                                                addToSpeed(If("true", LIMIT, "40")))).
                                 setVehicle("bike"))).
                 setCHProfiles(Arrays.asList(new CHProfile("truck"), new CHProfile("car_no_unclassified")));
         return config;
@@ -349,6 +349,17 @@ public class RouteResourceCustomModelTest {
                 "}";
         JsonNode path = getPath(jsonQuery);
         assertEquals(1500, path.get("distance").asDouble(), 10);
+    }
+
+    @Test
+    public void testHgv() {
+        String body = "{\"points\": [[11.603998, 50.014554], [11.594095, 50.023334]], \"profile\": \"roads\", \"ch.disable\":true," +
+                "\"custom_model\": {" +
+                "   \"speed\": [{\"if\":\"true\", \"limit_to\":\"car_average_speed * 0.9\"}], \n" +
+                "   \"priority\": [{\"if\": \"car_access == false || hgv == NO || max_width < 3 || max_height < 4\", \"multiply_by\": \"0\"}]}}";
+        JsonNode path = getPath(body);
+        assertEquals(7314, path.get("distance").asDouble(), 10);
+        assertEquals(957 * 1000, path.get("time").asLong(), 1_000);
     }
 
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {

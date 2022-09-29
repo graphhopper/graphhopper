@@ -4,11 +4,11 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
 
 Here is an overview:
 
+ * agouge, discussion and API refactoring
  * AnahitaS, docs for Android, Android, Tomcat
  * andreaswolf, flag encoder versioning and more
  * andreylh, polygon for blocked area #1306
- * Anvoker, fixes like #1614 and helped with JUnit 5 migration #1632
- * agouge, discussion and API refactoring
+ * Anvoker, fixes like #1614 and helped with JUnit 5 migration #1632 
  * b3nn0, Android improvements
  * baumboi, path detail and landmark improvements
  * boldtrn, one of the core developers with motorcycle knowledge :)
@@ -29,7 +29,7 @@ Here is an overview:
  * elibar, fix for alternative route calculation
  * fbonzon, several UI improvements like #615
  * florent-morel, improvements regarding fords, #320
- * fredao, translations
+ * fredao, translations 
  * gberaudo, improvements regarding elevation
  * GProbo, fixes like #2241
  * HarelM, improvements regarding elevation
@@ -48,6 +48,7 @@ Here is an overview:
  * kodonnell, adding support for CH and other algorithms (#60) and penalizing inner-link U-turns (#88)
  * legraina, improved docker for dockerhub
  * lmar, improved instructions
+ * lukasalexanderweber, fixes like #2652
  * matkoniecz, tweaking documentation
  * manueltimita, fixes like #1651
  * mathstpierre, fixes like #1753
@@ -63,23 +64,24 @@ Here is an overview:
  * oschlueter, fixes like #1185
  * otbutz, added multiple EncodedValues
  * PGWelch, shapefile reader #874
+ * rafaelstelles, fix deserializer web-api
  * rajanski, script to do routing via PostGIS
  * ratrun, route relations, GPX information, bike handling etc
  * rodneyodonnell, improved dead end removal (PrepareRoutingSubnetworks) and fords
  * rodo, more descriptions
  * rory, support milisecond gpx timestamps, see #4 
+ * samruston, improved point hint matching
  * seeebiii, motorcycle improvements
  * sguill, fixes like #1683
+ * shunfan-shao, fix potential flaky tests
  * skienzl, imperial units for /navigate, related to #2071
  * stefanholder, Stefan Holder, BMW AG, creating and integrating the hmm-lib (#49, #66, #69) and penalizing inner-link U-turns (#88, #91), refactored unfavoring of virtual edges #885
- * stevensnoeijen, fixes like #1568
+ * stevensnoeijen, fixes like #1568 
  * Svantulden, improved documentation and nearest API
  * taulinger, hopefully more to come 
  * thehereward, code cleanups like #620
  * vvikas, ideas for many to many improvements and #616
  * zstadler, multiple fixes and car4wd
- * samruston, improved point hint matching
- * shunfan-shao, fix potential flaky tests
 
 ## Translations
 

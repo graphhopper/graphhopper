@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -32,24 +33,6 @@ public class EncodingManagerTest {
     @Test
     public void duplicateNamesNotAllowed() {
         assertThrows(IllegalArgumentException.class, () -> EncodingManager.create("car,car"));
-    }
-
-    @Test
-    public void testEncoderAcceptNoException() {
-        EncodingManager manager = EncodingManager.create("car");
-        assertTrue(manager.hasEncoder("car"));
-        assertFalse(manager.hasEncoder("foot"));
-    }
-
-    @Test
-    public void testWrongEncoders() {
-        try {
-            FlagEncoder foot = FlagEncoders.createFoot();
-            EncodingManager.create(foot, foot);
-            fail("There should have been an exception");
-        } catch (Exception ex) {
-            assertEquals("FlagEncoder already exists: foot", ex.getMessage());
-        }
     }
 
     @Test
@@ -89,4 +72,25 @@ public class EncodingManagerTest {
             assertFalse(EncodingManager.isValidEncodedValue(str), str);
         }
     }
+
+    @Test
+    public void testRegisterOnlyOnceAllowed() {
+        DecimalEncodedValueImpl speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager.start().add(speedEnc).build();
+        assertThrows(IllegalStateException.class, () -> EncodingManager.start().add(speedEnc).build());
+    }
+
+    @Test
+    public void testGetVehicles() {
+        EncodingManager em = EncodingManager.start()
+                .add(VehicleAccess.create("car"))
+                .add(VehicleAccess.create("bike")).add(VehicleSpeed.create("bike", 4, 2, true))
+                .add(VehicleSpeed.create("roads", 5, 5, false))
+                .add(VehicleAccess.create("hike")).add(new DecimalEncodedValueImpl("whatever_hike_average_speed_2022", 5, 5, true))
+                .add(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class))
+                .build();
+        // only for bike+hike there is access+'speed'
+        assertEquals(Arrays.asList("bike", "hike"), em.getVehicles());
+    }
+
 }

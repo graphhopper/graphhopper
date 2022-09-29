@@ -1,9 +1,22 @@
-### 6.0 [not yet released]
-- StringIndex is now EdgeKVStorage and can store e.g. byte arrays. String values needs to be limited to 255 bytes before storing them. See #2597
+### 7.0 [not yet released]
+- internal keys for EdgeKVStorage changed to contain the street_ prefix like the path details too. Similarly, the extra_info in the instructions of the API response, see #2661
+
+### 6.0 [13 Sep 2022]
+- When using a DecimalEncodedValue with useMaximumAsInfinity=true and a single bit of space make sure you always use 
+  Double.POSITIVE_INFINITY to set the value, see #2646
+- renamed DouglasPeucker to RamerDouglasPeucker
+- path details at via-points are no longer merged, see #2626
+- removed the FlagEncoder interface. for example encoder.getAccessEnc() is now encodingManager.getBooleanEncodedValue(
+  VehicleAccess.key("car")), #2611
+- backward incompatible change as instructions and the street_name path detail do no longer contain the ref #2598
+- StringIndex is now EdgeKVStorage and can store e.g. byte arrays. String values needs to be limited to 255 bytes before
+  storing them. See EdgeKVStorage.cutString and #2597.
 - the Matrix client changed and users have to adapt the usage, see #2587
 - replaced car$access with car_access (and same for <vehicle>$average_speed and <vehicle>$priority)
 - don't allow cars or motorcycles to use ways tagged with service=emergency_access (#2484)
 - faster flexible routing, especially in conjunction with turn costs (#2571)
+- negative OSM Ids are not supported any longer (#2652)
+- new urban_density encoded value based on road density calculation (#2637)
 
 ### 5.0 [23 Mar 2022]
 
@@ -109,7 +122,7 @@
 - removed android demo, #1940
 - added edge key path detail, #2073
 - fixed bug for turn restrictions on bridges/tunnels, #2070
-- improved resolution of elevation profiles, 3D Douglas-Peucker and long edge sampling, #1953
+- improved resolution of elevation profiles, 3D Ramer-Douglas-Peucker and long edge sampling, #1953
 
 ### 1.0 [22 May 2020]
 

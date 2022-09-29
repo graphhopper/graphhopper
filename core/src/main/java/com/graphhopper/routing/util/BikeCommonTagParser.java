@@ -36,9 +36,9 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  */
 abstract public class BikeCommonTagParser extends VehicleTagParser {
 
-    public static double BIKE_MAX_SPEED = 30;
-
+    public static double MAX_SPEED = 30;
     protected static final int PUSHING_SECTION_SPEED = 4;
+    protected static final int MIN_SPEED = 2;
     // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
     protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
     protected final HashSet<String> oppositeLanes = new HashSet<>();
@@ -47,7 +47,6 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
     protected final Set<String> unpavedSurfaceTags = new HashSet<>();
     private final Map<String, Integer> trackTypeSpeeds = new HashMap<>();
     private final Map<String, Integer> surfaceSpeeds = new HashMap<>();
-    protected static final double smoothnessFactorPushingSectionThreshold = 0.3d;
     private final Map<Smoothness, Double> smoothnessFactor = new HashMap<>();
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     protected final DecimalEncodedValue priorityEnc;
@@ -63,7 +62,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
     protected BikeCommonTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
                                   EnumEncodedValue<RouteNetwork> bikeRouteEnc, EnumEncodedValue<Smoothness> smoothnessEnc,
                                   String name, BooleanEncodedValue roundaboutEnc, DecimalEncodedValue turnCostEnc) {
-        super(accessEnc, speedEnc, name, roundaboutEnc, turnCostEnc, TransportationMode.BIKE, speedEnc.getNextStorableValue(BIKE_MAX_SPEED));
+        super(accessEnc, speedEnc, name, roundaboutEnc, turnCostEnc, TransportationMode.BIKE, speedEnc.getNextStorableValue(MAX_SPEED));
         this.bikeRouteEnc = bikeRouteEnc;
         this.smoothnessEnc = smoothnessEnc;
         this.priorityEnc = priorityEnc;
@@ -117,10 +116,10 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         setSurfaceSpeed("concrete", 18);
         setSurfaceSpeed("concrete:lanes", 16);
         setSurfaceSpeed("concrete:plates", 16);
-        setSurfaceSpeed("paving_stones", 12);
-        setSurfaceSpeed("paving_stones:30", 12);
-        setSurfaceSpeed("unpaved", 14);
-        setSurfaceSpeed("compacted", 16);
+        setSurfaceSpeed("paving_stones", 14);
+        setSurfaceSpeed("paving_stones:30", 14);
+        setSurfaceSpeed("unpaved", 12);
+        setSurfaceSpeed("compacted", 14);
         setSurfaceSpeed("dirt", 10);
         setSurfaceSpeed("earth", 12);
         setSurfaceSpeed("fine_gravel", 18);
@@ -128,24 +127,24 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         setSurfaceSpeed("grass_paver", 8);
         setSurfaceSpeed("gravel", 12);
         setSurfaceSpeed("ground", 12);
-        setSurfaceSpeed("ice", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("ice", MIN_SPEED);
         setSurfaceSpeed("metal", 10);
         setSurfaceSpeed("mud", 10);
-        setSurfaceSpeed("pebblestone", 16);
-        setSurfaceSpeed("salt", 6);
-        setSurfaceSpeed("sand", 6);
-        setSurfaceSpeed("wood", 6);
+        setSurfaceSpeed("pebblestone", 14);
+        setSurfaceSpeed("salt", PUSHING_SECTION_SPEED);
+        setSurfaceSpeed("sand", PUSHING_SECTION_SPEED);
+        setSurfaceSpeed("wood", PUSHING_SECTION_SPEED);
 
-        setHighwaySpeed("living_street", 6);
-        setHighwaySpeed("steps", PUSHING_SECTION_SPEED / 2);
+        setHighwaySpeed("living_street", PUSHING_SECTION_SPEED);
+        setHighwaySpeed("steps", MIN_SPEED);
         avoidHighwayTags.add("steps");
 
         final int CYCLEWAY_SPEED = 18;  // Make sure cycleway and path use same speed value, see #634
         setHighwaySpeed("cycleway", CYCLEWAY_SPEED);
         setHighwaySpeed("path", 10);
         setHighwaySpeed("footway", 6);
-        setHighwaySpeed("platform", 6);
-        setHighwaySpeed("pedestrian", 6);
+        setHighwaySpeed("platform", PUSHING_SECTION_SPEED);
+        setHighwaySpeed("pedestrian", PUSHING_SECTION_SPEED);
         setHighwaySpeed("track", 12);
         setHighwaySpeed("service", 14);
         setHighwaySpeed("residential", 18);
@@ -169,7 +168,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         avoidHighwayTags.add("motorway");
         avoidHighwayTags.add("motorway_link");
 
-        setHighwaySpeed("bridleway", 6);
+        setHighwaySpeed("bridleway", PUSHING_SECTION_SPEED);
         avoidHighwayTags.add("bridleway");
 
         routeMap.put(INTERNATIONAL, BEST.getValue());
@@ -177,8 +176,17 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         routeMap.put(REGIONAL, VERY_NICE.getValue());
         routeMap.put(LOCAL, PREFER.getValue());
 
+        // note that this factor reduces the speed but only until MIN_SPEED
         setSmoothnessSpeedFactor(Smoothness.MISSING, 1.0d);
         setSmoothnessSpeedFactor(Smoothness.OTHER, 0.7d);
+        setSmoothnessSpeedFactor(Smoothness.EXCELLENT, 1.1d);
+        setSmoothnessSpeedFactor(Smoothness.GOOD, 1.0d);
+        setSmoothnessSpeedFactor(Smoothness.INTERMEDIATE, 0.9d);
+        setSmoothnessSpeedFactor(Smoothness.BAD, 0.7d);
+        setSmoothnessSpeedFactor(Smoothness.VERY_BAD, 0.4d);
+        setSmoothnessSpeedFactor(Smoothness.HORRIBLE, 0.3d);
+        setSmoothnessSpeedFactor(Smoothness.VERY_HORRIBLE, 0.1d);
+        setSmoothnessSpeedFactor(Smoothness.IMPASSABLE, 0);
 
         setAvoidSpeedLimit(71);
     }
@@ -280,12 +288,8 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         if (!access.isFerry()) {
             wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
             Smoothness smoothness = smoothnessEnc.getEnum(false, edgeFlags);
-            if (smoothness != Smoothness.MISSING) {
-                // smoothness handling: Multiply speed with smoothnessFactor
-                double smoothnessSpeedFactor = smoothnessFactor.get(smoothness);
-                wayTypeSpeed = (smoothnessSpeedFactor <= smoothnessFactorPushingSectionThreshold) ?
-                        PUSHING_SECTION_SPEED : Math.round(smoothnessSpeedFactor * wayTypeSpeed);
-            }
+            wayTypeSpeed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * wayTypeSpeed);
+
             avgSpeedEnc.setDecimal(false, edgeFlags, wayTypeSpeed);
             if (avgSpeedEnc.isStoreTwoDirections())
                 avgSpeedEnc.setDecimal(true, edgeFlags, wayTypeSpeed);
@@ -349,7 +353,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
                 && (way.hasTag("highway", pushingSectionsHighways) || way.hasTag("bicycle", "dismount"))) {
             if (!way.hasTag("bicycle", intendedValues)) {
                 // Here we set the speed for pushing sections and set speed for steps as even lower:
-                speed = way.hasTag("highway", "steps") ? PUSHING_SECTION_SPEED / 2 : PUSHING_SECTION_SPEED;
+                speed = way.hasTag("highway", "steps") ? MIN_SPEED : PUSHING_SECTION_SPEED;
             } else if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official") ||
                     way.hasTag("segregated", "yes") || way.hasTag("bicycle", "yes")) {
                 // Here we handle the cases where the OSM tagging results in something similar to "highway=cycleway"
@@ -358,9 +362,9 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
                 else
                     speed = way.hasTag("bicycle", "yes") ? 10 : highwaySpeeds.get("cycleway");
 
-                // overwrite our speed again in case we have a valid surface speed and if it is smaller as computed so far
-                if ((surfaceSpeed > 0) && (surfaceSpeed < speed))
-                    speed = surfaceSpeed;
+                // valid surface speed?
+                if (surfaceSpeed > 0)
+                    speed = Math.min(speed, surfaceSpeed);
             }
         }
         return speed;
@@ -445,8 +449,8 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         } else if (avoidHighwayTags.contains(highway)
                 || isValidSpeed(maxSpeed) && maxSpeed >= avoidSpeedLimit && !"track".equals(highway)) {
             weightToPrioMap.put(50d, AVOID.getValue());
-            if (way.hasTag("tunnel", intendedValues))
-                weightToPrioMap.put(50d, AVOID_MORE.getValue());
+            if (way.hasTag("tunnel", intendedValues) || way.hasTag("hazmat", intendedValues))
+                weightToPrioMap.put(50d, BAD.getValue());
         }
 
         String cycleway = way.getFirstPriorityTag(Arrays.asList("cycleway", "cycleway:left", "cycleway:right"));

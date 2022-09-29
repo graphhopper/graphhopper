@@ -33,7 +33,10 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Peter Karich
@@ -93,8 +96,7 @@ public class InfoResource {
             info.profiles.add(new Info.ProfileData("pt", "pt"));
 
         info.elevation = hasElevation;
-        List<String> encoderNames = Arrays.asList(encodingManager.toString().split(","));
-        info.supported_vehicles = new ArrayList<>(encoderNames);
+        info.supported_vehicles = encodingManager.getVehicles();
         if (config.has("gtfs.file")) {
             info.supported_vehicles.add("pt");
         }

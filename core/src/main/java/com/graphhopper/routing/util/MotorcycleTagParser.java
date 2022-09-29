@@ -46,11 +46,11 @@ public class MotorcycleTagParser extends CarTagParser {
 
     public MotorcycleTagParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(getKey("motorcycle", "access")),
-                lookup.getDecimalEncodedValue(getKey("motorcycle", "average_speed")),
+                lookup.getBooleanEncodedValue(VehicleAccess.key("motorcycle")),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key("motorcycle")),
                 lookup.hasEncodedValue(TurnCost.key("motorcycle")) ? lookup.getDecimalEncodedValue(TurnCost.key("motorcycle")) : null,
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
-                lookup.getDecimalEncodedValue(getKey("motorcycle", "priority")),
+                lookup.getDecimalEncodedValue(VehiclePriority.key("motorcycle")),
                 lookup.getDecimalEncodedValue(getKey("motorcycle", "curvature")),
                 new PMap(properties).putObject("name", "motorcycle"),
                 TransportationMode.MOTORCYCLE
@@ -145,10 +145,14 @@ public class MotorcycleTagParser extends CarTagParser {
             return WayAccess.CAN_SKIP;
 
         if (!firstValue.isEmpty()) {
-            if (restrictedValues.contains(firstValue) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-                return WayAccess.CAN_SKIP;
-            if (intendedValues.contains(firstValue))
-                return WayAccess.WAY;
+            String[] restrict = firstValue.split(";");
+            boolean notConditionalyPermitted = !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
+            for (String value: restrict) {
+                if (restrictedValues.contains(value) && notConditionalyPermitted)
+                    return WayAccess.CAN_SKIP;
+                if (intendedValues.contains(value))
+                    return WayAccess.WAY;
+            }
         }
 
         // do not drive street cars into fords

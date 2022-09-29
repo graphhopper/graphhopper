@@ -35,8 +35,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class EdgeKVStorage {
 
     private static final long EMPTY_POINTER = 0, START_POINTER = 1;
-    // Store the key index in 2 bytes. Use negative values for marking the value as duplicate.
-    static final int MAX_UNIQUE_KEYS = (1 << 15);
+    // Store the key index in 2 bytes. Use first 2 bits for marking fwd+bwd existence.
+    static final int MAX_UNIQUE_KEYS = (1 << 14);
     // Store string value as byte array and store the length into 1 byte
     private static final int MAX_LENGTH = (1 << 8) - 1;
 
@@ -61,50 +61,33 @@ public class EdgeKVStorage {
     // So more generic: the values could be of dynamic length, fixed length like int or be duplicates:
     // vals count      (1 byte)
     // --- 1. key-value pair (store String or byte[] with dynamic length)
-    // key_idx_0       (2 byte)
+    // key_idx_0       (2 byte, of which the first 2bits are to know if this is valid for fwd and/or bwd direction)
     // val_length_0    (1 byte)
     // val_0 (x bytes)
     // --- 2. key-value pair (store int with fixed length)
     // key_idx_1       (2 byte)
     // int             (4 byte)
-    // --- 3. key-value pair (store duplicate, then key is negative and the value is a pointer to the actual value (relative to the current pointer)
-    // -key_idx_2      (2 byte)
-    // delta_pointer_2 (4 byte)
     //
-    // Note:
-    // 1. The key strings are limited to 32767 unique values (see MAX_UNIQUE_KEYS). A dynamic value has a maximum byte length of 255.
+    // Notes:
+    // 1. The key strings are limited MAX_UNIQUE_KEYS. A dynamic value has a maximum byte length of 255.
     // 2. Every key can store values only of the same type
     // 3. We need to loop through X entries to get the start val_x.
-    // 4. We detect duplicate values for byte[] and String values via smallCache and then use the negative key index as
-    //    'duplicate' marker. We then store only the delta (signed int) instead of the absolute unsigned long value to
-    //    reduce memory usage when there are duplicate values.
+    // 4. The key index (14 bits) is stored along with the availability (2 bits), i.e. whether they KeyValue is available in forward and/or backward directions
     private final DataAccess vals;
     private final Map<String, Integer> keyToIndex = new HashMap<>();
     private final List<Class<?>> indexToClass = new ArrayList<>();
     private final List<String> indexToKey = new ArrayList<>();
-    private final Map<Object, Long> smallCache;
     private final BitUtil bitUtil = BitUtil.LITTLE;
     private long bytePointer = START_POINTER;
     private long lastEntryPointer = -1;
-    private Map<String, Object> lastEntryMap;
-
-    public EdgeKVStorage(Directory dir) {
-        this(dir, 1000);
-    }
+    private List<KeyValue> lastEntries;
 
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
-    public EdgeKVStorage(Directory dir, final int cacheSize) {
+    public EdgeKVStorage(Directory dir) {
         keys = dir.create("edgekv_keys", 10 * 1024);
         vals = dir.create("edgekv_vals");
-
-        smallCache = new LinkedHashMap<Object, Long>(cacheSize, 0.75f, true) {
-            @Override
-            protected boolean removeEldestEntry(Map.Entry<Object, Long> entry) {
-                return size() > cacheSize;
-            }
-        };
     }
 
     public EdgeKVStorage create(long initBytes) {
@@ -162,34 +145,36 @@ public class EdgeKVStorage {
      *
      * @return entryPointer with which you can later fetch the entryMap via the get or getAll method
      */
-    public long add(final Map<String, Object> entryMap) {
-        if (entryMap == null) throw new IllegalArgumentException("specified Map must not be null");
-        if (entryMap.isEmpty()) return EMPTY_POINTER;
-        else if (entryMap.size() > 200)
+    public long add(final List<KeyValue> entries) {
+        if (entries == null) throw new IllegalArgumentException("specified List must not be null");
+        if (entries.isEmpty()) return EMPTY_POINTER;
+        else if (entries.size() > 200)
             throw new IllegalArgumentException("Cannot store more than 200 entries per entry");
 
         // This is a very important "compression" mechanism because one OSM way is split into multiple edges and so we
         // can often re-use the serialized key-value pairs of the previous edge.
-        if (isEquals(entryMap, lastEntryMap)) return lastEntryPointer;
+        if (isEquals(entries, lastEntries)) return lastEntryPointer;
 
         // If the Class of a value is unknown it should already fail here, before we modify internal data. (see #2597#discussion_r896469840)
-        for (Map.Entry<String, Object> entry : entryMap.entrySet())
-            if (keyToIndex.get(entry.getKey()) != null)
-                getBytesForValue(indexToClass.get(keyToIndex.get(entry.getKey())), entry.getValue());
+        for (KeyValue kv : entries)
+            if (keyToIndex.get(kv.key) != null)
+                getBytesForValue(indexToClass.get(keyToIndex.get(kv.key)), kv.value);
 
-        lastEntryMap = entryMap;
+        lastEntries = entries;
         lastEntryPointer = bytePointer;
         // while adding there could be exceptions and we need to avoid that the bytePointer is modified
         long currentPointer = bytePointer;
 
         vals.ensureCapacity(currentPointer + 1);
-        vals.setByte(currentPointer, (byte) entryMap.size());
+        vals.setByte(currentPointer, (byte) entries.size());
         currentPointer += 1;
-        for (Map.Entry<String, Object> entry : entryMap.entrySet()) {
-            String key = entry.getKey();
+        for (KeyValue entry : entries) {
+            String key = entry.key;
             if (key == null) throw new IllegalArgumentException("key cannot be null");
-            Object value = entry.getValue();
+            Object value = entry.value;
             if (value == null) throw new IllegalArgumentException("value for key " + key + " cannot be null");
+            if (!entry.fwd && !entry.bwd)
+                throw new IllegalArgumentException("Do not add KeyValue pair where fwd and bwd is false");
             Integer keyIndex = keyToIndex.get(key);
             Class<?> clazz;
             if (keyIndex == null) {
@@ -208,7 +193,8 @@ public class EdgeKVStorage {
             boolean hasDynLength = hasDynLength(clazz);
             if (hasDynLength) {
                 // optimization for empty string or empty byte array
-                if (clazz.equals(String.class) && ((String) value).isEmpty() || clazz.equals(byte[].class) && ((byte[]) value).length == 0) {
+                if (clazz.equals(String.class) && ((String) value).isEmpty()
+                        || clazz.equals(byte[].class) && ((byte[]) value).length == 0) {
                     vals.ensureCapacity(currentPointer + 3);
                     vals.setShort(currentPointer, keyIndex.shortValue());
                     // ensure that also in case of MMap value is set to 0
@@ -216,31 +202,11 @@ public class EdgeKVStorage {
                     currentPointer += 3;
                     continue;
                 }
-
-                Long existingRef = smallCache.get(value);
-                if (existingRef != null) {
-                    long delta = lastEntryPointer - existingRef;
-                    if (delta < Integer.MAX_VALUE && delta > Integer.MIN_VALUE) {
-                        vals.ensureCapacity(currentPointer + 2 + 4);
-                        vals.setShort(currentPointer, (short) -keyIndex);
-                        currentPointer += 2;
-                        // do not store valueBytes.length as we know it already: it is 4!
-                        byte[] valueBytes = new byte[4];
-                        bitUtil.fromInt(valueBytes, (int) delta);
-                        vals.setBytes(currentPointer, valueBytes, valueBytes.length);
-                        currentPointer += valueBytes.length;
-                        continue;
-                    } else {
-                        smallCache.remove(value);
-                    }
-                }
             }
 
             final byte[] valueBytes = getBytesForValue(clazz, value);
-            // only cache value if storing via duplicate marker is valuable (the delta costs 4 bytes minus 1 due to omitted valueBytes.length storage)
-            if (hasDynLength && valueBytes.length > 3) smallCache.put(value, currentPointer);
             vals.ensureCapacity(currentPointer + 2 + 1 + valueBytes.length);
-            vals.setShort(currentPointer, keyIndex.shortValue());
+            vals.setShort(currentPointer, (short) (keyIndex << 2 | (entry.fwd ? 2 : 0) | (entry.bwd ? 1 : 0)));
             currentPointer += 2;
             if (hasDynLength) {
                 vals.setByte(currentPointer, (byte) valueBytes.length);
@@ -249,65 +215,52 @@ public class EdgeKVStorage {
             vals.setBytes(currentPointer, valueBytes, valueBytes.length);
             currentPointer += valueBytes.length;
         }
-        // System.out.println(lastEntryPointer + " " + entryMap);
         bytePointer = currentPointer;
+        if (bytePointer < 0)
+            throw new IllegalStateException("Negative bytePointer in EdgeKVStorage");
         return lastEntryPointer;
     }
 
-    private boolean isEquals(Map<String, Object> entryMap, Map<String, Object> lastEntryMap) {
-        if (lastEntryMap != null && entryMap.size() == lastEntryMap.size()) {
-            for (Map.Entry<String, Object> entry : entryMap.entrySet()) {
-                Object val = entry.getValue();
-                if (val == null)
-                    throw new IllegalArgumentException("value for key " + entry.getKey() + " cannot be null");
-                Object lastVal = lastEntryMap.get(entry.getKey());
-                if (val instanceof byte[] && lastVal instanceof byte[] && Arrays.equals((byte[]) lastVal, (byte[]) val)
-                        || val.equals(lastVal)) continue;
-                return false;
+    // compared to entries.equals(lastEntries) this method avoids a NPE if a value is null and throws an IAE instead
+    private boolean isEquals(List<KeyValue> entries, List<KeyValue> lastEntries) {
+        if (lastEntries != null && entries.size() == lastEntries.size()) {
+            for (int i = 0; i < entries.size(); i++) {
+                KeyValue kv = entries.get(i);
+                if (kv.value == null)
+                    throw new IllegalArgumentException("value for key " + kv.key + " cannot be null");
+                if (!kv.equals(lastEntries.get(i))) return false;
             }
             return true;
         }
         return false;
     }
 
-    public Map<String, Object> getAll(final long entryPointer) {
+    public List<EdgeKVStorage.KeyValue> getAll(final long entryPointer) {
         if (entryPointer < 0)
             throw new IllegalStateException("Pointer to access EdgeKVStorage cannot be negative:" + entryPointer);
 
-        if (entryPointer == EMPTY_POINTER) return Collections.emptyMap();
+        if (entryPointer == EMPTY_POINTER) return Collections.emptyList();
 
         int keyCount = vals.getByte(entryPointer) & 0xFF;
-        if (keyCount == 0) return Collections.emptyMap();
+        if (keyCount == 0) return Collections.emptyList();
 
-        Map<String, Object> map = new HashMap<>(keyCount);
+        List<EdgeKVStorage.KeyValue> list = new ArrayList<>(keyCount);
         long tmpPointer = entryPointer + 1;
         AtomicInteger sizeOfObject = new AtomicInteger();
         for (int i = 0; i < keyCount; i++) {
-            int currentKeyIndex = vals.getShort(tmpPointer);
+            int currentKeyIndexRaw = vals.getShort(tmpPointer);
+            boolean bwd = (currentKeyIndexRaw & 1) == 1;
+            boolean fwd = (currentKeyIndexRaw & 2) == 2;
+            int currentKeyIndex = currentKeyIndexRaw >>> 2;
             tmpPointer += 2;
 
-            Object object;
-            if (currentKeyIndex < 0) {
-                // deserialize duplicate
-                currentKeyIndex = -currentKeyIndex;
-                byte[] valueBytes = new byte[4];
-                vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
-                tmpPointer += 4;
-
-                long dupPointer = entryPointer - bitUtil.toInt(valueBytes);
-                dupPointer += 2;
-                if (dupPointer > bytePointer)
-                    throw new IllegalStateException("dup marker should exist but points into not yet allocated area " + dupPointer + " > " + bytePointer);
-                object = deserializeObj(null, dupPointer, indexToClass.get(currentKeyIndex));
-            } else {
-                object = deserializeObj(sizeOfObject, tmpPointer, indexToClass.get(currentKeyIndex));
-                tmpPointer += sizeOfObject.get();
-            }
+            Object object = deserializeObj(sizeOfObject, tmpPointer, indexToClass.get(currentKeyIndex));
+            tmpPointer += sizeOfObject.get();
             String key = indexToKey.get(currentKeyIndex);
-            map.put(key, object);
+            list.add(new KeyValue(key, object, fwd, bwd));
         }
 
-        return map;
+        return list;
     }
 
     private boolean hasDynLength(Class<?> clazz) {
@@ -324,6 +277,12 @@ public class EdgeKVStorage {
         byte[] bytes;
         if (clazz.equals(String.class)) {
             bytes = ((String) value).getBytes(Helper.UTF_CS);
+            if (bytes.length > MAX_LENGTH)
+                throw new IllegalArgumentException("bytes.length cannot be > " + MAX_LENGTH + " but was " + bytes.length + ". String:" + value);
+        } else if (clazz.equals(byte[].class)) {
+            bytes = (byte[]) value;
+            if (bytes.length > MAX_LENGTH)
+                throw new IllegalArgumentException("bytes.length cannot be > " + MAX_LENGTH + " but was " + bytes.length);
         } else if (clazz.equals(Integer.class)) {
             return bitUtil.fromInt((int) value);
         } else if (clazz.equals(Long.class)) {
@@ -332,12 +291,8 @@ public class EdgeKVStorage {
             return bitUtil.fromFloat((float) value);
         } else if (clazz.equals(Double.class)) {
             return bitUtil.fromDouble((double) value);
-        } else if (clazz.equals(byte[].class)) {
-            bytes = (byte[]) value;
         } else
             throw new IllegalArgumentException("The Class of a value was " + clazz.getSimpleName() + ", currently supported: byte[], String, int, long, float and double");
-        if (bytes.length > MAX_LENGTH)
-            throw new IllegalArgumentException("bytes.length cannot be > " + MAX_LENGTH + " but was " + bytes.length);
         return bytes;
     }
 
@@ -396,7 +351,7 @@ public class EdgeKVStorage {
         }
     }
 
-    public Object get(final long entryPointer, String key) {
+    public Object get(final long entryPointer, String key, boolean reverse) {
         if (entryPointer < 0)
             throw new IllegalStateException("Pointer to access EdgeKVStorage cannot be negative:" + entryPointer);
 
@@ -411,30 +366,19 @@ public class EdgeKVStorage {
         long tmpPointer = entryPointer + 1;
         for (int i = 0; i < keyCount; i++) {
             int currentKeyIndexRaw = vals.getShort(tmpPointer);
-            int keyIndexPositive = Math.abs(currentKeyIndexRaw);
-            assert keyIndexPositive < indexToKey.size() : "invalid key index " + keyIndexPositive + ">=" + indexToKey.size() + ", entryPointer=" + entryPointer + ", max=" + bytePointer;
+            boolean bwd = (currentKeyIndexRaw & 1) == 1;
+            boolean fwd = (currentKeyIndexRaw & 2) == 2;
+            int currentKeyIndex = currentKeyIndexRaw >>> 2;
+
+            assert currentKeyIndex < indexToKey.size() : "invalid key index " + currentKeyIndex + ">=" + indexToKey.size() + ", entryPointer=" + entryPointer + ", max=" + bytePointer;
             tmpPointer += 2;
-            if (keyIndexPositive == keyIndex) {
-                if (currentKeyIndexRaw < 0) {
-                    byte[] valueBytes = new byte[4];
-                    vals.getBytes(tmpPointer, valueBytes, valueBytes.length);
-                    tmpPointer = entryPointer - bitUtil.toInt(valueBytes);
-                    tmpPointer += 2;
-                    if (tmpPointer > bytePointer)
-                        throw new IllegalStateException("dup marker " + bytePointer + " should exist but points into not yet allocated area " + tmpPointer);
-                }
-
+            if ((!reverse && fwd || reverse && bwd) && currentKeyIndex == keyIndex)
                 return deserializeObj(null, tmpPointer, indexToClass.get(keyIndex));
-            }
 
-            // skip to next entry of same edge either via skipping the pointer (raw<0) or the real value
-            if (currentKeyIndexRaw < 0) {
-                tmpPointer += 4;
-            } else {
-                Class<?> clazz = indexToClass.get(keyIndexPositive);
-                int valueLength = hasDynLength(clazz) ? 1 + vals.getByte(tmpPointer) & 0xFF : getFixLength(clazz);
-                tmpPointer += valueLength;
-            }
+            // skip to next entry of same edge via skipping the real value
+            Class<?> clazz = indexToClass.get(currentKeyIndex);
+            int valueLength = hasDynLength(clazz) ? 1 + vals.getByte(tmpPointer) & 0xFF : getFixLength(clazz);
+            tmpPointer += valueLength;
         }
 
         // value for specified key does not exist for the specified pointer
@@ -483,5 +427,65 @@ public class EdgeKVStorage {
 
     public long getCapacity() {
         return vals.getCapacity() + keys.getCapacity();
+    }
+
+    public static class KeyValue {
+        public static final String STREET_NAME = "street_name";
+        public static final String STREET_REF = "street_ref";
+        public static final String STREET_DESTINATION = "street_destination";
+        public static final String STREET_DESTINATION_REF = "street_destination_ref";
+
+        public String key;
+        public Object value;
+        public boolean fwd, bwd;
+
+        public KeyValue(String key, Object value) {
+            this.key = key;
+            this.value = value;
+            this.fwd = true;
+            this.bwd = true;
+        }
+
+        public KeyValue(String key, Object value, boolean fwd, boolean bwd) {
+            this.key = key;
+            this.value = value;
+            this.fwd = fwd;
+            this.bwd = bwd;
+        }
+
+        public static List<KeyValue> createKV(String key, Object value) {
+            return Collections.singletonList(new KeyValue(key, value));
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            KeyValue keyValue = (KeyValue) o;
+            return key.equals(keyValue.key)
+                    && fwd == keyValue.fwd
+                    && bwd == keyValue.bwd
+                    && (value instanceof byte[] && keyValue.value instanceof byte[] &&
+                    Arrays.equals((byte[]) value, (byte[]) keyValue.value) || value.equals(keyValue.value));
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(key, value, fwd, bwd);
+        }
+
+        @Override
+        public String toString() {
+            return key + '=' + value + " (" + fwd + "|" + bwd + ")";
+        }
+    }
+
+    /**
+     * This method limits the specified String value to the length currently accepted for values in the EdgeKVStorage.
+     */
+    public static String cutString(String value) {
+        byte[] bytes = value.getBytes(Helper.UTF_CS);
+        // See #2609 and test why we use a value < 255
+        return bytes.length > 250 ? new String(bytes, 0, 250, Helper.UTF_CS) : value;
     }
 }

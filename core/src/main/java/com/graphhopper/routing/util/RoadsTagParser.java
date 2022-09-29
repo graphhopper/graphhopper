@@ -1,22 +1,24 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 public class RoadsTagParser extends VehicleTagParser {
     public static final double ROADS_MAX_SPEED = 254;
 
-    public RoadsTagParser(EncodedValueLookup lookup) {
-        this(
-                lookup.getBooleanEncodedValue(getKey("roads", "access")),
-                lookup.getDecimalEncodedValue(getKey("roads", "average_speed")),
-                lookup.getDecimalEncodedValue(TurnCost.key("roads"))
+    public RoadsTagParser(EncodedValueLookup lookup, PMap properties) {
+        super(
+                lookup.getBooleanEncodedValue(VehicleAccess.key("roads")),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key("roads")),
+                "roads",
+                lookup.getBooleanEncodedValue(Roundabout.KEY),
+                lookup.hasEncodedValue(TurnCost.key("roads")) ? lookup.getDecimalEncodedValue(TurnCost.key("roads")) : null,
+                TransportationMode.valueOf(properties.getString("transportation_mode", "VEHICLE")),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key("roads")).getNextStorableValue(ROADS_MAX_SPEED)
         );
     }
 

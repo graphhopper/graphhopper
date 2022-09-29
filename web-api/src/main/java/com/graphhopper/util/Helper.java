@@ -21,6 +21,7 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
@@ -31,7 +32,7 @@ import java.util.Map.Entry;
  * @author Peter Karich
  */
 public class Helper {
-    public static final Charset UTF_CS = Charset.forName("UTF-8");
+    public static final Charset UTF_CS = StandardCharsets.UTF_8;
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
     // we keep the first seven decimal places of lat/lon coordinates. this corresponds to ~1cm precision ('pointing to waldo on a page')
@@ -356,7 +357,7 @@ public class Helper {
      * and returns the positive converted long.
      */
     public static long toUnsignedLong(int x) {
-        return ((long) x) & 0xFFFFffffL;
+        return ((long) x) & 0xFFFF_FFFFL;
     }
 
     /**
@@ -474,13 +475,5 @@ public class Helper {
             val = 31 * val + str.charAt(idx);
         }
         return val;
-    }
-
-    /**
-     * This method limits the specified String value to the specified maxBytes.
-     */
-    public static String cutString(String value, int maxBytes) {
-        byte[] bytes = value.getBytes(UTF_CS);
-        return bytes.length > maxBytes ? new String(bytes, 0, maxBytes, UTF_CS) : value;
     }
 }

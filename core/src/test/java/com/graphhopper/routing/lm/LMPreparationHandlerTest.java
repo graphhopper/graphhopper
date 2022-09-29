@@ -3,9 +3,11 @@ package com.graphhopper.routing.lm;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -35,11 +37,12 @@ public class LMPreparationHandlerTest {
                 new LMProfile("conf1").setMaximumLMWeight(65_000),
                 new LMProfile("conf2").setMaximumLMWeight(20_000)
         );
-        FlagEncoder car = FlagEncoders.createCar();
-        EncodingManager em = EncodingManager.create(car);
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", false);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         List<LMConfig> lmConfigs = Arrays.asList(
-                new LMConfig("conf1", new FastestWeighting(car)),
-                new LMConfig("conf2", new ShortestWeighting(car))
+                new LMConfig("conf1", new FastestWeighting(accessEnc, speedEnc)),
+                new LMConfig("conf2", new ShortestWeighting(accessEnc, speedEnc))
         );
         List<PrepareLandmarks> preparations = handler.createPreparations(lmConfigs, new BaseGraph.Builder(em).build(), em, null);
         assertEquals(1, preparations.get(0).getLandmarkStorage().getFactor(), .1);

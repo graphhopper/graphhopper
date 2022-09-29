@@ -19,11 +19,8 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -33,7 +30,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -57,7 +53,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class EdgeBasedRoutingAlgorithmTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedRoutingAlgorithmTest.class);
-    private FlagEncoder carEncoder;
+    private BooleanEncodedValue accessEnc;
+    private DecimalEncodedValue speedEnc;
     private DecimalEncodedValue turnCostEnc;
     private TurnCostStorage tcs;
 
@@ -82,23 +79,23 @@ public class EdgeBasedRoutingAlgorithmTest {
     // |  |  |
     // 5--6--7
     private void initGraph(Graph graph) {
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(3));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 5).setDistance(0.5));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(4, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(6, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 5).setDistance(0.5));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 7).setDistance(1));
     }
 
     private EncodingManager createEncodingManager(boolean restrictedOnly) {
-        carEncoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", restrictedOnly ? 1 : 3));
-        EncodingManager em = EncodingManager.create(carEncoder);
-        turnCostEnc = getTurnCostEnc(carEncoder);
-        return em;
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        turnCostEnc = TurnCost.create("car", restrictedOnly ? 1 : 3);
+        return EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
     }
 
     public Path calcPath(Graph g, int from, int to, String algoStr) {
@@ -113,13 +110,9 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private BaseGraph createStorage(EncodingManager em) {
-        BaseGraph graph = new BaseGraph.Builder(em).create();
+        BaseGraph graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
         tcs = graph.getTurnCostStorage();
         return graph;
-    }
-
-    private DecimalEncodedValue getTurnCostEnc(FlagEncoder encoder) {
-        return encoder.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
     }
 
     private void initTurnRestrictions(BaseGraph g) {
@@ -152,7 +145,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private Weighting createWeighting(int uTurnCosts) {
-        return new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, tcs, uTurnCosts));
+        return new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, tcs, uTurnCosts));
     }
 
     @ParameterizedTest
@@ -164,8 +157,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         EncodingManager em = createEncodingManager(false);
         BaseGraph g = createStorage(em);
         GHUtility.buildRandomGraph(g, rnd, 50, 2.2, true, true,
-                carEncoder.getAccessEnc(), carEncoder.getAverageSpeedEnc(), null, 0.8, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(g, seed, em, carEncoder, 3, tcs);
+                accessEnc, speedEnc, null, 0.8, 0.8, 0.8);
+        GHUtility.addRandomTurnCosts(g, seed, accessEnc, turnCostEnc, 3, tcs);
         g.freeze();
         int numPathsNotFound = 0;
         // todo: reduce redundancy with RandomCHRoutingTest
@@ -235,12 +228,12 @@ public class EdgeBasedRoutingAlgorithmTest {
         //   4-3
         //   |
         //   1o
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 6).setDistance(10));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(6, 3).setDistance(10));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(4, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(4, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 6).setDistance(10));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 3).setDistance(10));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 1).setDistance(10));
         setTurnRestriction(graph, 0, 4, 3);
 
         Path p = calcPath(graph, 0, 3, algoStr);
@@ -255,10 +248,10 @@ public class EdgeBasedRoutingAlgorithmTest {
         BaseGraph graph = createStorage(createEncodingManager(false));
         final int distance = 100;
         final int turnCosts = 2;
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(distance));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 2).setDistance(distance));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 3).setDistance(distance));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(distance));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(distance));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(distance));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(distance));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(distance));
         setTurnCost(graph, turnCosts, 1, 2, 3);
 
         {
@@ -359,11 +352,11 @@ public class EdgeBasedRoutingAlgorithmTest {
         //           |
         // 0 -> 1 -> 2 -> 4 -> 5
         BaseGraph g = createStorage(createEncodingManager(false));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(0, 1).setDistance(10));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(1, 2).setDistance(10));
-        GHUtility.setSpeed(60, true, true, carEncoder, g.edge(2, 3).setDistance(10));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(2, 4).setDistance(10));
-        GHUtility.setSpeed(60, true, false, carEncoder, g.edge(4, 5).setDistance(10));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(0, 1).setDistance(10));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(1, 2).setDistance(10));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(10));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(2, 4).setDistance(10));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(4, 5).setDistance(10));
 
         // cannot go straight at node 2
         setTurnRestriction(g, 1, 2, 4);
@@ -413,7 +406,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         setTurnCost(g, 2, 5, 6, 3);
         setTurnCost(g, 1, 6, 7, 4);
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder, new DefaultTurnCostProvider(carEncoder, tcs) {
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, tcs) {
             @Override
             public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
                 if (edgeFrom >= 0)
@@ -437,11 +430,11 @@ public class EdgeBasedRoutingAlgorithmTest {
         //  \|
         //   0
         final BaseGraph graph = createStorage(createEncodingManager(false));
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(3, 2).setDistance(188));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 0).setDistance(182));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(4, 2).setDistance(690));
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(2, 2).setDistance(121));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(2, 0).setDistance(132));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 2).setDistance(188));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 0).setDistance(182));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 2).setDistance(690));
+        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 2).setDistance(121));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 0).setDistance(132));
         setTurnRestriction(graph, 2, 2, 0);
         setTurnRestriction(graph, 3, 2, 4);
 
@@ -460,12 +453,12 @@ public class EdgeBasedRoutingAlgorithmTest {
         //    |
         //    5
         final BaseGraph graph = createStorage(createEncodingManager(false));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 4).setDistance(2));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(4, 4).setDistance(4));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(3, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(1, 4).setDistance(5));
-        GHUtility.setSpeed(60, true, true, carEncoder, graph.edge(5, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(2));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 4).setDistance(4));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 4).setDistance(5));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 4).setDistance(1));
         setTurnRestriction(graph, 1, 4, 5);
 
         Path p = calcPath(graph, 0, 5, algoStr);

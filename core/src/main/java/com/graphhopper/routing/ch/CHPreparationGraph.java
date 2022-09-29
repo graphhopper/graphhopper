@@ -853,7 +853,7 @@ public class CHPreparationGraph {
      * edge-based CH. In principle we could use base graph for this, but it turned out it is faster to use this
      * graph (because it does not need to read all the edge flags to determine the access flags).
      */
-    private static class OrigGraph {
+    static class OrigGraph {
         // we store a list of 'edges' in the format: adjNode|edgeId|accessFlags, we use two ints for each edge
         private final IntArrayList adjNodes;
         private final IntArrayList keysAndFlags;
@@ -903,10 +903,13 @@ public class CHPreparationGraph {
                 return new OrigGraph(buildFirstEdgesByNode(), toNodes, keysAndFlags);
             }
 
-            private int getKeyWithFlags(int key, boolean fwd, boolean bwd) {
+            private static int getKeyWithFlags(int key, boolean fwd, boolean bwd) {
                 // we use only 30 bits for the key and store two access flags along with the same int
-                if (key >= Integer.MAX_VALUE >> 2)
-                    throw new IllegalArgumentException("Maximum edge ID exceeded: " + Integer.MAX_VALUE);
+                // this allows for a maximum of 536mio edges in base graph which is still enough for planet-wide OSM,
+                // but if we exceed this limit we should probably move one of the fwd/bwd bits to the nodes field or
+                // store the edge instead of the key as we did before #2567 (only here)
+                if (key > Integer.MAX_VALUE >> 1)
+                    throw new IllegalArgumentException("Maximum edge key exceeded: " + key + ", max: " + (Integer.MAX_VALUE >> 1));
                 key <<= 1;
                 if (fwd)
                     key++;
@@ -983,7 +986,7 @@ public class CHPreparationGraph {
 
         @Override
         public int getOrigEdgeKeyFirst() {
-            return graph.keysAndFlags.get(index) >> 2;
+            return graph.keysAndFlags.get(index) >>> 2;
         }
 
         @Override
@@ -993,11 +996,10 @@ public class CHPreparationGraph {
 
         private boolean hasAccess() {
             int e = graph.keysAndFlags.get(index);
-            if (reverse) {
+            if (reverse)
                 return (e & 0b01) == 0b01;
-            } else {
+            else
                 return (e & 0b10) == 0b10;
-            }
         }
 
         @Override

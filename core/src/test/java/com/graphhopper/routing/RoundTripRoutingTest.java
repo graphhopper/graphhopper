@@ -18,8 +18,15 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FiniteWeightFilter;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -46,9 +53,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * @author Peter Karich
  */
 public class RoundTripRoutingTest {
-    private final FlagEncoder carFE = FlagEncoders.createCar();
-    private final EncodingManager em = EncodingManager.create(carFE);
-    private final Weighting fastestWeighting = new FastestWeighting(carFE);
+    private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+    private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+    private final EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+    private final Weighting fastestWeighting = new FastestWeighting(accessEnc, speedEnc);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private final GHPoint ghPoint1 = new GHPoint(0, 0);
@@ -122,7 +130,7 @@ public class RoundTripRoutingTest {
 
     private BaseGraph createTestGraph() {
         BaseGraph graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
-        AlternativeRouteTest.initTestGraph(graph, carFE);
+        AlternativeRouteTest.initTestGraph(graph, accessEnc, speedEnc);
         return graph;
     }
 
@@ -135,7 +143,7 @@ public class RoundTripRoutingTest {
         //    |-1 0 1
         BaseGraph graph = new BaseGraph.Builder(em).create();
         for (int i = 0; i < 8; ++i) {
-            GHUtility.setSpeed(60, true, true, carFE, graph.edge(i, (i + 1) % 8).setDistance(1));
+            GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(i, (i + 1) % 8).setDistance(1));
         }
         updateDistancesFor(graph, 0, 1, -1);
         updateDistancesFor(graph, 1, 1, 0);

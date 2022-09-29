@@ -5,6 +5,7 @@ on:
   workflow_dispatch:
 jobs:
   remove-old-artifacts:
+    if: github.repository_owner == 'graphhopper'
     name: Remove old artifacts
     runs-on: ubuntu-latest
     timeout-minutes: 10 # stop the task if it takes longer

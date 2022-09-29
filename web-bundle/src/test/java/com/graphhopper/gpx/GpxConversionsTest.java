@@ -21,9 +21,11 @@ package com.graphhopper.gpx;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -44,18 +46,22 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GpxConversionsTest {
 
+    private BooleanEncodedValue accessEnc;
+    private DecimalEncodedValue speedEnc;
     private EncodingManager carManager;
-    private FlagEncoder carEncoder;
     private TranslationMap trMap;
 
     @BeforeEach
     public void setUp() {
-        carEncoder = FlagEncoders.createCar();
-        carManager = EncodingManager.create(carEncoder);
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        carManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         trMap = new TranslationMap().doImport();
     }
 
@@ -76,14 +82,14 @@ public class GpxConversionsTest {
         na.setNode(6, 15.1, 10.1);
         na.setNode(7, 15.1, 9.8);
 
-        GHUtility.setSpeed(63, true, true, carEncoder, g.edge(1, 2).setDistance(7000).setName("1-2"));
-        GHUtility.setSpeed(72, true, true, carEncoder, g.edge(2, 3).setDistance(8000).setName("2-3"));
-        GHUtility.setSpeed(9, true, true, carEncoder, g.edge(2, 6).setDistance(10000).setName("2-6"));
-        GHUtility.setSpeed(81, true, true, carEncoder, g.edge(3, 4).setDistance(9000).setName("3-4"));
-        GHUtility.setSpeed(9, true, true, carEncoder, g.edge(3, 7).setDistance(10000).setName("3-7"));
-        GHUtility.setSpeed(90, true, true, carEncoder, g.edge(4, 5).setDistance(10000).setName("4-5"));
+        GHUtility.setSpeed(63, true, true, accessEnc, speedEnc, g.edge(1, 2).setDistance(7000).setKeyValues(createKV(STREET_NAME, "1-2")));
+        GHUtility.setSpeed(72, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(8000).setKeyValues(createKV(STREET_NAME, "2-3")));
+        GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(2, 6).setDistance(10000).setKeyValues(createKV(STREET_NAME, "2-6")));
+        GHUtility.setSpeed(81, true, true, accessEnc, speedEnc, g.edge(3, 4).setDistance(9000).setKeyValues(createKV(STREET_NAME, "3-4")));
+        GHUtility.setSpeed(9, true, true, accessEnc, speedEnc, g.edge(3, 7).setDistance(10000).setKeyValues(createKV(STREET_NAME, "3-7")));
+        GHUtility.setSpeed(90, true, true, accessEnc, speedEnc, g.edge(4, 5).setDistance(10000).setKeyValues(createKV(STREET_NAME, "4-5")));
 
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        ShortestWeighting weighting = new ShortestWeighting(accessEnc, speedEnc);
         Path p = new Dijkstra(g, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, trMap.getWithFallBack(Locale.US));
         PointList points = p.calcPoints();
@@ -92,9 +98,10 @@ public class GpxConversionsTest {
         assertEquals(34000, p.getDistance(), 1e-1);
         assertEquals(34000, sumDistances(wayList), 1e-1);
         assertEquals(5, points.size());
-        assertEquals(1604120, p.getTime());
+        assertEquals(1604121, p.getTime());
 
         assertEquals(Instruction.CONTINUE_ON_STREET, wayList.get(0).getSign());
+        assertEquals("1-2", wayList.get(0).getName());
         assertEquals(15, wayList.get(0).getPoints().getLat(0), 1e-3);
         assertEquals(10, wayList.get(0).getPoints().getLon(0), 1e-3);
 

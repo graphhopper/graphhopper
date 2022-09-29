@@ -25,7 +25,6 @@ import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.util.Helper.keepIn;
 
 /**
@@ -37,9 +36,9 @@ public class Bike2WeightTagParser extends BikeTagParser {
 
     public Bike2WeightTagParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(getKey(properties.getString("name", "bike2"), "access")),
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "bike2"), "average_speed")),
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "bike2"), "priority")),
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "bike2"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "bike2"))),
+                lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "bike2"))),
                 lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
@@ -106,7 +105,7 @@ public class Bike2WeightTagParser extends BikeTagParser {
             double fwdSlower = 1 - 5 * keepIn(fwdIncline, 0, 0.2);
             fwdSlower = fwdSlower * fwdSlower;
             speed = speed * (fwdSlower * incDist2DSum + fwdFaster * decDist2DSum + 1 * restDist2D) / fullDist2D;
-            setSpeed(false, intsRef, keepIn(speed, PUSHING_SECTION_SPEED / 2.0, maxSpeed));
+            setSpeed(false, intsRef, keepIn(speed, MIN_SPEED, maxSpeed));
         }
 
         if (accessEnc.getBool(true, intsRef)) {
@@ -116,7 +115,7 @@ public class Bike2WeightTagParser extends BikeTagParser {
             double bwSlower = 1 - 5 * keepIn(fwdDecline, 0, 0.2);
             bwSlower = bwSlower * bwSlower;
             speedReverse = speedReverse * (bwFaster * incDist2DSum + bwSlower * decDist2DSum + 1 * restDist2D) / fullDist2D;
-            setSpeed(true, intsRef, keepIn(speedReverse, PUSHING_SECTION_SPEED / 2.0, maxSpeed));
+            setSpeed(true, intsRef, keepIn(speedReverse, MIN_SPEED, maxSpeed));
         }
         edge.setFlags(intsRef);
     }

@@ -18,13 +18,9 @@
 
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -40,12 +36,20 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 public class TurnCostStorageTest {
 
     private EncodingManager manager;
+    private DecimalEncodedValue carTurnCostEnc;
+    private DecimalEncodedValue bikeTurnCostEnc;
+    private BooleanEncodedValue accessEnc;
+    private DecimalEncodedValue speedEnc;
 
     @BeforeEach
     public void setup() {
-        FlagEncoder carEncoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 3));
-        FlagEncoder bikeEncoder = FlagEncoders.createBike(new PMap().putObject("max_turn_costs", 3));
-        manager = EncodingManager.create(carEncoder, bikeEncoder);
+        accessEnc = new SimpleBooleanEncodedValue("car_access", true);
+        speedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
+        carTurnCostEnc = TurnCost.create("car", 3);
+        bikeTurnCostEnc = TurnCost.create("bike", 3);
+        manager = EncodingManager.start()
+                .add(accessEnc).add(speedEnc)
+                .addTurnCostEncodedValue(carTurnCostEnc).addTurnCostEncodedValue(bikeTurnCostEnc).build();
     }
 
     // 0---1
@@ -53,8 +57,8 @@ public class TurnCostStorageTest {
     // 2--3
     // |
     // 4
-    public static void initGraph(BaseGraph g, FlagEncoder encoder) {
-        GHUtility.setSpeed(60, 60, encoder,
+    public static void initGraph(BaseGraph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
                 g.edge(0, 1).setDistance(3),
                 g.edge(0, 2).setDistance(1),
                 g.edge(1, 3).setDistance(1),
@@ -67,12 +71,12 @@ public class TurnCostStorageTest {
      */
     @Test
     public void testMultipleTurnCosts() {
-        BaseGraph g = new BaseGraph.Builder(manager).create();
-        initGraph(g, manager.getEncoder("car"));
+        BaseGraph g = new BaseGraph.Builder(manager).withTurnCosts(true).create();
+        initGraph(g, accessEnc, speedEnc);
         TurnCostStorage turnCostStorage = g.getTurnCostStorage();
 
-        DecimalEncodedValue carEnc = manager.getDecimalEncodedValue(TurnCost.key("car"));
-        DecimalEncodedValue bikeEnc = manager.getDecimalEncodedValue(TurnCost.key("bike"));
+        DecimalEncodedValue carEnc = carTurnCostEnc;
+        DecimalEncodedValue bikeEnc = bikeTurnCostEnc;
         int edge42 = getEdge(g, 4, 2).getEdge();
         int edge23 = getEdge(g, 2, 3).getEdge();
         int edge31 = getEdge(g, 3, 1).getEdge();
@@ -124,12 +128,12 @@ public class TurnCostStorageTest {
 
     @Test
     public void testMergeFlagsBeforeAdding() {
-        BaseGraph g = new BaseGraph.Builder(manager).create();
-        initGraph(g, manager.getEncoder("car"));
+        BaseGraph g = new BaseGraph.Builder(manager).withTurnCosts(true).create();
+        initGraph(g, accessEnc, speedEnc);
         TurnCostStorage turnCostStorage = g.getTurnCostStorage();
 
-        DecimalEncodedValue carEnc = manager.getDecimalEncodedValue(TurnCost.key("car"));
-        DecimalEncodedValue bikeEnc = manager.getDecimalEncodedValue(TurnCost.key("bike"));
+        DecimalEncodedValue carEnc = carTurnCostEnc;
+        DecimalEncodedValue bikeEnc = bikeTurnCostEnc;
         int edge23 = getEdge(g, 2, 3).getEdge();
         int edge02 = getEdge(g, 0, 2).getEdge();
 
@@ -153,8 +157,8 @@ public class TurnCostStorageTest {
 
     @Test
     public void testIterateEmptyStore() {
-        BaseGraph g = new BaseGraph.Builder(manager).create();
-        initGraph(g, manager.getEncoder("car"));
+        BaseGraph g = new BaseGraph.Builder(manager).withTurnCosts(true).create();
+        initGraph(g, accessEnc, speedEnc);
         TurnCostStorage turnCostStorage = g.getTurnCostStorage();
 
         TurnCostStorage.TurnRelationIterator iterator = turnCostStorage.getAllTurnRelations();

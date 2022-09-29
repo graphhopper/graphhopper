@@ -35,7 +35,7 @@ public class OSMMaxAxleLoadParserTest {
         intsRef = new IntsRef(1);
         readerWay.setTag("maxaxleload", "80");
         parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(malEnc.getMaxDecimal(), malEnc.getDecimal(false, intsRef), .01);
+        assertEquals(63.0, malEnc.getDecimal(false, intsRef), .01);
     }
 
     @Test

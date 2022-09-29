@@ -1,16 +1,12 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -23,7 +19,10 @@ public class OSMTurnRelationParserTest {
 
     @Test
     public void testGetRestrictionAsEntries() {
-        FlagEncoder encoder = FlagEncoders.createCar(new PMap("turn_costs=true"));
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        DecimalEncodedValue turnCostEnc = TurnCost.create("car", 1);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
         final Map<Long, Integer> osmNodeToInternal = new HashMap<>();
         final Map<Integer, Long> internalToOSMEdge = new HashMap<>();
 
@@ -32,11 +31,9 @@ public class OSMTurnRelationParserTest {
         internalToOSMEdge.put(3, 3L);
         internalToOSMEdge.put(4, 4L);
 
-        EncodingManager em = EncodingManager.create(encoder);
-        DecimalEncodedValue tce = encoder.getDecimalEncodedValue(TurnCost.key("car"));
-        OSMTurnRelationParser parser = new OSMTurnRelationParser(encoder.getAccessEnc(), tce, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
+        OSMTurnRelationParser parser = new OSMTurnRelationParser(accessEnc, turnCostEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
         BaseGraph graph = new BaseGraph.Builder(em.getIntsForFlags()).withTurnCosts(true).create();
-        initGraph(graph, encoder);
+        initGraph(graph, accessEnc, speedEnc);
         TurnCostParser.ExternalInternalMap map = new TurnCostParser.ExternalInternalMap() {
 
             @Override
@@ -58,14 +55,14 @@ public class OSMTurnRelationParserTest {
         parser.addRelationToTCStorage(instance, map, graph);
 
         TurnCostStorage tcs = graph.getTurnCostStorage();
-        assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 6)));
-        assertEquals(0, tcs.get(tce, 4, 3, 3), .1);
-        assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 2)));
+        assertTrue(Double.isInfinite(tcs.get(turnCostEnc, 4, 3, 6)));
+        assertEquals(0, tcs.get(turnCostEnc, 4, 3, 3), .1);
+        assertTrue(Double.isInfinite(tcs.get(turnCostEnc, 4, 3, 2)));
 
         // TYPE == NOT
         instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
         parser.addRelationToTCStorage(instance, map, graph);
-        assertTrue(Double.isInfinite(tcs.get(tce, 4, 3, 3)));
+        assertTrue(Double.isInfinite(tcs.get(turnCostEnc, 4, 3, 3)));
     }
 
     // 0---1
@@ -73,16 +70,16 @@ public class OSMTurnRelationParserTest {
     // 2--3--4
     // |  |  |
     // 5--6--7
-    private static void initGraph(BaseGraph graph, FlagEncoder encoder) {
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(3));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 5).setDistance(0.5));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(4, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(1));
+    private static void initGraph(BaseGraph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(3));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 5).setDistance(0.5));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 7).setDistance(1));
     }
 }

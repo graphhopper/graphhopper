@@ -21,11 +21,11 @@ import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -56,17 +56,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Peter Karich
  */
 public class PrepareLandmarksTest {
-    private BaseGraph graph;
-    private FlagEncoder encoder;
-    private TraversalMode tm;
+    private BooleanEncodedValue accessEnc;
+    private DecimalEncodedValue speedEnc;
     private EncodingManager encodingManager;
+    private BaseGraph graph;
+    private TraversalMode tm;
 
     @BeforeEach
     public void setUp() {
-        encoder = FlagEncoders.createCar();
-        tm = TraversalMode.NODE_BASED;
-        encodingManager = new EncodingManager.Builder().add(encoder).add(Subnetwork.create("car")).build();
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("car")).build();
         graph = new BaseGraph.Builder(encodingManager).create();
+        tm = TraversalMode.NODE_BASED;
     }
 
     @Test
@@ -77,8 +79,6 @@ public class PrepareLandmarksTest {
         Random rand = new Random(0);
         int width = 15, height = 15;
 
-        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         for (int hIndex = 0; hIndex < height; hIndex++) {
             for (int wIndex = 0; wIndex < width; wIndex++) {
                 int node = wIndex + hIndex * width;
@@ -86,11 +86,11 @@ public class PrepareLandmarksTest {
                 // do not connect first with last column!
                 double speed = 20 + rand.nextDouble() * 30;
                 if (wIndex + 1 < width)
-                    graph.edge(node, node + 1).set(accessEnc, true, true).set(avSpeedEnc, speed);
+                    graph.edge(node, node + 1).set(accessEnc, true, true).set(speedEnc, speed);
 
                 // avoid dead ends
                 if (hIndex + 1 < height)
-                    graph.edge(node, node + width).set(accessEnc, true, true).set(avSpeedEnc, speed);
+                    graph.edge(node, node + width).set(accessEnc, true, true).set(speedEnc, speed);
 
                 updateDistancesFor(graph, node, -hIndex / 50.0, wIndex / 50.0);
             }
@@ -100,7 +100,7 @@ public class PrepareLandmarksTest {
         index.prepareIndex();
 
         int lm = 5, activeLM = 2;
-        Weighting weighting = new FastestWeighting(encoder);
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
         LMConfig lmConfig = new LMConfig("car", weighting);
         LandmarkStorage store = new LandmarkStorage(graph, encodingManager, dir, lmConfig, lm);
         store.setMinimumNodes(2);
@@ -156,7 +156,7 @@ public class PrepareLandmarksTest {
 
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 135, oneDirAlgoWithLandmarks.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 72, oneDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with bidir A*
         RoutingAlgorithm biDirAlgoWithLandmarks = new LMRoutingAlgorithmFactory(lms).createAlgo(graph, weighting,
@@ -164,7 +164,7 @@ public class PrepareLandmarksTest {
         path = biDirAlgoWithLandmarks.calcPath(41, 183);
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 162, biDirAlgoWithLandmarks.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 99, biDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with A* and a QueryGraph. We expect slightly less optimal as two more cycles needs to be traversed
         // due to the two more virtual nodes but this should not harm in practise
@@ -179,18 +179,18 @@ public class PrepareLandmarksTest {
         expectedPath = expectedAlgo.calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 135, qGraphOneDirAlgo.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 72, qGraphOneDirAlgo.getVisitedNodes());
     }
 
     @Test
     public void testStoreAndLoad() {
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(80_000));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(80_000));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(80_000));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(80_000));
         String fileStr = "./target/tmp-lm";
         Helper.removeDir(new File(fileStr));
 
         Directory dir = new RAMDirectory(fileStr, true).create();
-        Weighting weighting = new FastestWeighting(encoder);
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
         LMConfig lmConfig = new LMConfig("car", weighting);
         PrepareLandmarks plm = new PrepareLandmarks(dir, graph, encodingManager, lmConfig, 2);
         plm.setMinimumNodes(2);

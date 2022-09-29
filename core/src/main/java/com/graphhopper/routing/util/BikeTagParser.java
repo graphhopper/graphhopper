@@ -21,7 +21,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.routing.ev.Smoothness.*;
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 /**
  * Specifies the settings for cycletouring/trekking
@@ -33,9 +32,9 @@ public class BikeTagParser extends BikeCommonTagParser {
 
     public BikeTagParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(getKey(properties.getString("name", "bike"), "access")),
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "bike"), "average_speed")),
-                lookup.getDecimalEncodedValue(getKey(properties.getString("name", "bike"), "priority")),
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "bike"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "bike"))),
+                lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "bike"))),
                 lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class),
                 lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
                 properties.getString("name", "bike"),
@@ -69,16 +68,6 @@ public class BikeTagParser extends BikeCommonTagParser {
         preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
-
-        setSmoothnessSpeedFactor(EXCELLENT, 1.1d);
-        setSmoothnessSpeedFactor(GOOD, 1.0d);
-        setSmoothnessSpeedFactor(INTERMEDIATE, 0.9d);
-        setSmoothnessSpeedFactor(BAD, 0.7d);
-        setSmoothnessSpeedFactor(VERY_BAD, 0.6d);
-        setSmoothnessSpeedFactor(HORRIBLE, 0.5d);
-        setSmoothnessSpeedFactor(VERY_HORRIBLE, 0.4d);
-        // SmoothnessSpeed <= smoothnessFactorPushingSectionThreshold gets mapped to speed PUSHING_SECTION_SPEED
-        setSmoothnessSpeedFactor(IMPASSABLE, smoothnessFactorPushingSectionThreshold);
 
         barriers.add("kissing_gate");
         barriers.add("stile");

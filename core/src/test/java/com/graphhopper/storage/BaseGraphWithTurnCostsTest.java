@@ -17,17 +17,17 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.search.EdgeKVStorage.KeyValue;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -35,9 +35,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Karl Hübner
  */
 public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
+
+    private DecimalEncodedValue turnCostEnc;
+
     @Override
-    FlagEncoder createCarFlagEncoder() {
-        return FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 1400));
+    protected EncodingManager createEncodingManager() {
+        turnCostEnc = TurnCost.create("car", 1400);
+        return EncodingManager.start()
+                .add(carAccessEnc).add(carSpeedEnc).addTurnCostEncodedValue(turnCostEnc)
+                .add(footAccessEnc).add(footSpeedEnc)
+                .build();
     }
 
     @Override
@@ -72,8 +79,8 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
         setTurnCost(iter2.getEdge(), 0, iter1.getEdge(), 666);
         setTurnCost(iter1.getEdge(), 1, iter2.getEdge(), 815);
 
-        iter1.setName("named street1");
-        iter2.setName("named street2");
+        iter1.setKeyValues(KeyValue.createKV(STREET_NAME, "named street1"));
+        iter2.setKeyValues(KeyValue.createKV(STREET_NAME, "named street2"));
 
         checkGraph(graph);
         graph.flush();
@@ -156,10 +163,10 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
     }
 
     private double getTurnCost(EdgeIteratorState fromEdge, int viaNode, EdgeIteratorState toEdge) {
-        return graph.getTurnCostStorage().get(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key("car")), toEdge.getEdge(), viaNode, fromEdge.getEdge());
+        return graph.getTurnCostStorage().get(turnCostEnc, toEdge.getEdge(), viaNode, fromEdge.getEdge());
     }
 
     private void setTurnCost(int fromEdge, int viaNode, int toEdge, int cost) {
-        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key("car")), fromEdge, viaNode, toEdge, cost);
+        graph.getTurnCostStorage().set(turnCostEnc, fromEdge, viaNode, toEdge, cost);
     }
 }

@@ -33,7 +33,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -44,27 +43,36 @@ class TagParsingTest {
         osmWay.setTag("highway", "track");
         ReaderRelation osmRel = new ReaderRelation(1);
 
-        FlagEncoder defaultBike = FlagEncoders.createBike();
-        FlagEncoder lessRelationCodes = FlagEncoders.createBike(new PMap("name=less_relation_bits"));
-
-        EncodingManager em = EncodingManager.create(defaultBike, lessRelationCodes);
-        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = em.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class);
-        BikeTagParser defaultBikeParser = new BikeTagParser(em, new PMap("name=bike"));
-        defaultBikeParser.init(new DateRangeParser());
-        BikeTagParser lessRelationCodesParser = new BikeTagParser(em, new PMap("name=less_relation_bits")) {
+        BooleanEncodedValue bike1AccessEnc = VehicleAccess.create("bike1");
+        DecimalEncodedValue bike1SpeedEnc = VehicleSpeed.create("bike1", 4, 2, false);
+        DecimalEncodedValue bike1PriorityEnc = VehiclePriority.create("bike1", 4, PriorityCode.getFactor(1), false);
+        BooleanEncodedValue bike2AccessEnc = VehicleAccess.create("bike2");
+        DecimalEncodedValue bike2SpeedEnc = VehicleSpeed.create("bike2", 4, 2, false);
+        DecimalEncodedValue bike2PriorityEnc = VehiclePriority.create("bike2", 4, PriorityCode.getFactor(1), false);
+        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class);
+        EncodingManager em = EncodingManager.start()
+                .add(bike1AccessEnc).add(bike1SpeedEnc).add(bike1PriorityEnc)
+                .add(bike2AccessEnc).add(bike2SpeedEnc).add(bike2PriorityEnc)
+                .add(bikeNetworkEnc)
+                .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
+                .build();
+        BikeTagParser bike1Parser = new BikeTagParser(em, new PMap("name=bike1"));
+        bike1Parser.init(new DateRangeParser());
+        BikeTagParser bike2Parser = new BikeTagParser(em, new PMap("name=bike2")) {
             @Override
             public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+                // accept less relations
                 if (bikeRouteEnc.getEnum(false, edgeFlags) != RouteNetwork.MISSING)
                     priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(2));
                 return edgeFlags;
             }
         };
-        lessRelationCodesParser.init(new DateRangeParser());
+        bike2Parser.init(new DateRangeParser());
         OSMParsers osmParsers = new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConfig))
                 .addWayTagParser(new OSMRoadClassParser(em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)))
-                .addWayTagParser(defaultBikeParser)
-                .addWayTagParser(lessRelationCodesParser);
+                .addWayTagParser(bike1Parser)
+                .addWayTagParser(bike2Parser);
 
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
@@ -74,7 +82,7 @@ class TagParsingTest {
         IntsRef edgeFlags = em.createEdgeFlags();
         edgeFlags = osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
         assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeFlags));
-        assertTrue(defaultBike.getPriorityEnc().getDecimal(false, edgeFlags) > lessRelationCodes.getPriorityEnc().getDecimal(false, edgeFlags));
+        assertTrue(bike1PriorityEnc.getDecimal(false, edgeFlags) > bike2PriorityEnc.getDecimal(false, edgeFlags));
     }
 
     @Test
@@ -85,18 +93,26 @@ class TagParsingTest {
 
         ReaderRelation osmRel = new ReaderRelation(1);
 
-        FlagEncoder bikeEncoder = FlagEncoders.createBike();
-        FlagEncoder mtbEncoder = FlagEncoders.createMountainBike();
-        EncodingManager manager = EncodingManager.create(bikeEncoder, mtbEncoder);
-
-        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = manager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class);
-        BikeTagParser bikeTagParser = new BikeTagParser(manager, new PMap());
+        BooleanEncodedValue bikeAccessEnc = VehicleAccess.create("bike");
+        DecimalEncodedValue bikeSpeedEnc = VehicleSpeed.create("bike", 4, 2, false);
+        DecimalEncodedValue bikePriorityEnc = VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false);
+        BooleanEncodedValue mtbAccessEnc = VehicleAccess.create("mtb");
+        DecimalEncodedValue mtbSpeedEnc = VehicleSpeed.create("mtb", 4, 2, false);
+        DecimalEncodedValue mtbPriorityEnc = VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false);
+        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class);
+        EncodingManager em = EncodingManager.start()
+                .add(bikeAccessEnc).add(bikeSpeedEnc).add(bikePriorityEnc)
+                .add(mtbAccessEnc).add(mtbSpeedEnc).add(mtbPriorityEnc)
+                .add(bikeNetworkEnc)
+                .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
+                .build();
+        BikeTagParser bikeTagParser = new BikeTagParser(em, new PMap());
         bikeTagParser.init(new DateRangeParser());
-        MountainBikeTagParser mtbTagParser = new MountainBikeTagParser(manager, new PMap());
+        MountainBikeTagParser mtbTagParser = new MountainBikeTagParser(em, new PMap());
         mtbTagParser.init(new DateRangeParser());
         OSMParsers osmParsers = new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConfig))
-                .addWayTagParser(new OSMRoadClassParser(manager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)))
+                .addWayTagParser(new OSMRoadClassParser(em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)))
                 .addWayTagParser(bikeTagParser)
                 .addWayTagParser(mtbTagParser);
 
@@ -105,11 +121,11 @@ class TagParsingTest {
         osmRel.setTag("network", "rcn");
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        IntsRef edgeFlags = manager.createEdgeFlags();
+        IntsRef edgeFlags = em.createEdgeFlags();
         edgeFlags = osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
         // bike: uninfluenced speed for grade but via network => NICE
         // mtb: uninfluenced speed only PREFER
-        assertTrue(bikeEncoder.getPriorityEnc().getDecimal(false, edgeFlags) > mtbEncoder.getPriorityEnc().getDecimal(false, edgeFlags));
+        assertTrue(bikePriorityEnc.getDecimal(false, edgeFlags) > mtbPriorityEnc.getDecimal(false, edgeFlags));
     }
 
     @Test
@@ -123,7 +139,7 @@ class TagParsingTest {
         parser.init(new DateRangeParser());
         IntsRef flags = parser.handleWayTags(manager2.createEdgeFlags(), osmWay);
         double singleSpeed = parser.avgSpeedEnc.getDecimal(false, flags);
-        assertEquals(4, singleSpeed, 1e-3);
+        assertEquals(BikeCommonTagParser.PUSHING_SECTION_SPEED, singleSpeed, 1e-3);
         assertEquals(singleSpeed, parser.avgSpeedEnc.getDecimal(true, flags), 1e-3);
 
         EncodingManager manager = EncodingManager.create("bike2,bike,foot");
@@ -134,18 +150,33 @@ class TagParsingTest {
 
         flags = footParser.handleWayTags(manager.createEdgeFlags(), osmWay);
         flags = bikeParser.handleWayTags(flags, osmWay);
-        DecimalEncodedValue bikeSpeedEnc = manager.getDecimalEncodedValue(getKey("bike2", "average_speed"));
+        DecimalEncodedValue bikeSpeedEnc = manager.getDecimalEncodedValue(VehicleSpeed.key("bike2"));
         assertEquals(singleSpeed, bikeSpeedEnc.getDecimal(false, flags), 1e-2);
         assertEquals(singleSpeed, bikeSpeedEnc.getDecimal(true, flags), 1e-2);
 
-        DecimalEncodedValue footSpeedEnc = manager.getDecimalEncodedValue(getKey("foot", "average_speed"));
+        DecimalEncodedValue footSpeedEnc = manager.getDecimalEncodedValue(VehicleSpeed.key("foot"));
         assertEquals(5, footSpeedEnc.getDecimal(false, flags), 1e-2);
         assertEquals(5, footSpeedEnc.getDecimal(true, flags), 1e-2);
     }
 
     @Test
     public void testSharedEncodedValues() {
-        EncodingManager manager = EncodingManager.create("car,foot,bike,motorcycle,mtb");
+        BooleanEncodedValue carAccessEnc = VehicleAccess.create("car");
+        BooleanEncodedValue footAccessEnc = VehicleAccess.create("foot");
+        BooleanEncodedValue bikeAccessEnc = VehicleAccess.create("bike");
+        BooleanEncodedValue motorcycleAccessEnc = VehicleAccess.create("motorcycle");
+        BooleanEncodedValue mtbAccessEnc = VehicleAccess.create("mtb");
+        List<BooleanEncodedValue> accessEncs = Arrays.asList(carAccessEnc, footAccessEnc, bikeAccessEnc, motorcycleAccessEnc, mtbAccessEnc);
+        EncodingManager manager = EncodingManager.start()
+                .add(carAccessEnc).add(VehicleSpeed.create("car", 5, 5, false))
+                .add(footAccessEnc).add(VehicleSpeed.create("foot", 4, 1, true)).add(VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false))
+                .add(bikeAccessEnc).add(VehicleSpeed.create("bike", 4, 2, false)).add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
+                .add(motorcycleAccessEnc).add(VehicleSpeed.create("motorcycle", 5, 5, true)).add(VehiclePriority.create("motorcycle", 4, PriorityCode.getFactor(1), false)).add(new DecimalEncodedValueImpl("motorcycle_curvature", 5, 5, true))
+                .add(mtbAccessEnc).add(VehicleSpeed.create("mtb", 4, 2, false)).add(VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false))
+                .add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
+                .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
+                .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
+                .build();
 
         BooleanEncodedValue roundaboutEnc = manager.getBooleanEncodedValue(Roundabout.KEY);
         List<TagParser> tagParsers = Arrays.asList(
@@ -167,11 +198,9 @@ class TagParsingTest {
         way.setTag("junction", "roundabout");
         tagParsers.forEach(p -> p.handleWayTags(edgeFlags, way, relFlags));
 
-        for (FlagEncoder tmp : manager.fetchEdgeEncoders()) {
-            BooleanEncodedValue accessEnc = tmp.getAccessEnc();
+        assertTrue(roundaboutEnc.getBool(false, edgeFlags));
+        for (BooleanEncodedValue accessEnc : accessEncs)
             assertTrue(accessEnc.getBool(false, edgeFlags));
-            assertTrue(roundaboutEnc.getBool(false, edgeFlags), tmp.toString());
-        }
 
         final IntsRef edgeFlags2 = manager.createEdgeFlags();
         way.clearTags();
@@ -179,11 +208,9 @@ class TagParsingTest {
         way.setTag("junction", "circular");
         tagParsers.forEach(p -> p.handleWayTags(edgeFlags2, way, relFlags));
 
-        for (FlagEncoder tmp : manager.fetchEdgeEncoders()) {
-            BooleanEncodedValue accessEnc = tmp.getAccessEnc();
+        assertTrue(roundaboutEnc.getBool(false, edgeFlags));
+        for (BooleanEncodedValue accessEnc : accessEncs)
             assertTrue(accessEnc.getBool(false, edgeFlags));
-            assertTrue(roundaboutEnc.getBool(false, edgeFlags), tmp.toString());
-        }
     }
 
 }

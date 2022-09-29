@@ -95,6 +95,9 @@ $(document).ready(function (e) {
     };
     $("#custom-model-button").click(function() {
         toggleCustomModelBox(true);
+        // we only show the gpx button when the custom model box is closed, because the gpx export does not work for custom model routes (#2635)
+        $("#gpxExportButton").toggle();
+        $("#gpx_dialog").dialog('close');
     });
     function showCustomModelExample() {
         cmEditor.value =
@@ -102,17 +105,17 @@ $(document).ready(function (e) {
             + "\n \"speed\": ["
             + "\n  {"
             + "\n   \"if\": \"road_class == MOTORWAY\","
-            + "\n   \"multiply_by\": 0.8"
+            + "\n   \"multiply_by\": \"0.8\""
             + "\n  }"
             + "\n ],"
             + "\n \"priority\": ["
             + "\n  {"
             + "\n   \"if\": \"road_environment == TUNNEL\","
-            + "\n   \"multiply_by\": 0.5"
+            + "\n   \"multiply_by\": \"0.5\""
             + "\n  },"
             + "\n  {"
             + "\n   \"if\": \"max_weight < 3\","
-            + "\n   \"multiply_by\": 0.0"
+            + "\n   \"multiply_by\": \"0.0\""
             + "\n  }"
             + "\n ]"
             + "\n}";

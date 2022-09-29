@@ -149,7 +149,7 @@ public class ViaRouting {
             }
 
             result.visitedNodes += pathCalculator.getVisitedNodes();
-            result.debug += "visited nodes sum: " + result.visitedNodes;
+            result.debug += ", visited nodes sum: " + result.visitedNodes;
         }
 
         return result;

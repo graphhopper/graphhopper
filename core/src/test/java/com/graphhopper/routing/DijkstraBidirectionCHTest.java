@@ -20,13 +20,14 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -45,44 +46,56 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class DijkstraBidirectionCHTest {
 
     private final EncodingManager encodingManager;
-    private final FlagEncoder carEncoder;
-    private final FlagEncoder bike2Encoder;
-    private final FlagEncoder motorCycleEncoder;
+    private final BooleanEncodedValue carAccessEnc;
+    private final DecimalEncodedValue carSpeedEnc;
+    private final BooleanEncodedValue bike2AccessEnc;
+    private final DecimalEncodedValue bike2SpeedEnc;
+    private final BooleanEncodedValue motorcycleAccessEnc;
+    private final DecimalEncodedValue motorcycleSpeedEnc;
 
     public DijkstraBidirectionCHTest() {
-        encodingManager = EncodingManager.create("car,foot,bike2,motorcycle");
-        carEncoder = encodingManager.getEncoder("car");
-        bike2Encoder = encodingManager.getEncoder("bike2");
-        motorCycleEncoder = encodingManager.getEncoder("motorcycle");
+        carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+        carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
+        bike2AccessEnc = new SimpleBooleanEncodedValue("bike2_access", true);
+        bike2SpeedEnc = new DecimalEncodedValueImpl("bike2_speed", 4, 2, true);
+        motorcycleAccessEnc = new SimpleBooleanEncodedValue("motorcycle_access", true);
+        motorcycleSpeedEnc = new DecimalEncodedValueImpl("motorcycle_speed", 5, 5, true);
+        encodingManager = EncodingManager.start()
+                .add(carAccessEnc).add(carSpeedEnc)
+                .add(bike2AccessEnc).add(bike2SpeedEnc)
+                .add(motorcycleAccessEnc).add(motorcycleSpeedEnc)
+                .build();
     }
 
     @Test
     public void testBaseGraph() {
         BaseGraph graph = createGHStorage();
-        RoutingAlgorithmTest.initDirectedAndDiffSpeed(graph, carEncoder);
+        RoutingAlgorithmTest.initDirectedAndDiffSpeed(graph, carAccessEnc, carSpeedEnc);
 
         // do CH preparation for car
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carSpeedEnc);
         prepareCH(graph, CHConfig.nodeBased(weighting.getName(), weighting));
 
         // use base graph for solving normal Dijkstra
         Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(graph, weighting, new AlgorithmOptions()).calcPath(0, 3);
         assertEquals(IntArrayList.from(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(402.30, p1.getDistance(), 1e-2, p1.toString());
-        assertEquals(144829, p1.getTime(), p1.toString());
+        assertEquals(144830, p1.getTime(), p1.toString());
     }
 
     @Test
     public void testBaseGraphMultipleVehicles() {
-        EncodingManager em = EncodingManager.create("foot,car");
-        FlagEncoder footEncoder = em.getEncoder("foot");
-        FlagEncoder carEncoder = em.getEncoder("car");
-        FastestWeighting footWeighting = new FastestWeighting(footEncoder);
-        FastestWeighting carWeighting = new FastestWeighting(carEncoder);
+        SimpleBooleanEncodedValue footAccessEnc = new SimpleBooleanEncodedValue("foot_access", true);
+        DecimalEncodedValueImpl footSpeedEnc = new DecimalEncodedValueImpl("foot_speed", 4, 1, false);
+        SimpleBooleanEncodedValue carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+        DecimalEncodedValueImpl carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
+        EncodingManager em = EncodingManager.start().add(footAccessEnc).add(footSpeedEnc).add(carAccessEnc).add(carSpeedEnc).build();
+        FastestWeighting footWeighting = new FastestWeighting(footAccessEnc, footSpeedEnc);
+        FastestWeighting carWeighting = new FastestWeighting(carAccessEnc, carSpeedEnc);
 
         CHConfig carConfig = CHConfig.nodeBased("p_car", carWeighting);
         BaseGraph g = new BaseGraph.Builder(em).create();
-        RoutingAlgorithmTest.initFootVsCar(carEncoder, footEncoder, g);
+        RoutingAlgorithmTest.initFootVsCar(carAccessEnc, carSpeedEnc, footAccessEnc, footSpeedEnc, g);
 
         // do CH preparation for car
         RoutingCHGraph chGraph = prepareCH(g, carConfig);
@@ -116,7 +129,7 @@ public class DijkstraBidirectionCHTest {
     @Test
     public void testStallingNodesReducesNumberOfVisitedNodes() {
         BaseGraph graph = createGHStorage();
-        GHUtility.setSpeed(60, 0, carEncoder,
+        GHUtility.setSpeed(60, 0, carAccessEnc, carSpeedEnc,
                 graph.edge(8, 9).setDistance(100),
                 graph.edge(8, 3).setDistance(2),
                 graph.edge(8, 5).setDistance(1),
@@ -126,13 +139,13 @@ public class DijkstraBidirectionCHTest {
                 graph.edge(1, 8).setDistance(1),
                 graph.edge(2, 3).setDistance(3));
         for (int i = 3; i < 7; ++i) {
-            GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(i, i + 1).setDistance(1));
+            GHUtility.setSpeed(60, true, false, carAccessEnc, carSpeedEnc, graph.edge(i, i + 1).setDistance(1));
         }
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(9, 0).setDistance(1));
-        GHUtility.setSpeed(60, true, false, carEncoder, graph.edge(3, 9).setDistance(200));
+        GHUtility.setSpeed(60, true, false, carAccessEnc, carSpeedEnc, graph.edge(9, 0).setDistance(1));
+        GHUtility.setSpeed(60, true, false, carAccessEnc, carSpeedEnc, graph.edge(3, 9).setDistance(200));
         graph.freeze();
 
-        ShortestWeighting weighting = new ShortestWeighting(carEncoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carSpeedEnc);
         CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
 
@@ -162,8 +175,8 @@ public class DijkstraBidirectionCHTest {
     //      \--<---|
     @Test
     public void testDirectionDependentSpeedFwdSearch() {
-        runTestWithDirectionDependentEdgeSpeed(10, 20, 0, 2, IntArrayList.from(0, 1, 2), motorCycleEncoder);
-        runTestWithDirectionDependentEdgeSpeed(10, 20, 0, 2, IntArrayList.from(0, 1, 2), bike2Encoder);
+        runTestWithDirectionDependentEdgeSpeed(10, 20, 0, 2, IntArrayList.from(0, 1, 2), motorcycleAccessEnc, motorcycleSpeedEnc);
+        runTestWithDirectionDependentEdgeSpeed(10, 20, 0, 2, IntArrayList.from(0, 1, 2), bike2AccessEnc, bike2SpeedEnc);
     }
 
     // s(0)--fast->1--t(2)
@@ -172,19 +185,16 @@ public class DijkstraBidirectionCHTest {
     //      \--<---|
     @Test
     public void testDirectionDependentSpeedBwdSearch() {
-        runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, IntArrayList.from(2, 1, 0), motorCycleEncoder);
-        runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, IntArrayList.from(2, 1, 0), bike2Encoder);
+        runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, IntArrayList.from(2, 1, 0), motorcycleAccessEnc, motorcycleSpeedEnc);
+        runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, IntArrayList.from(2, 1, 0), bike2AccessEnc, bike2SpeedEnc);
     }
 
-    private void runTestWithDirectionDependentEdgeSpeed(double speed, double revSpeed, int from, int to, IntArrayList expectedPath, FlagEncoder encoder) {
+    private void runTestWithDirectionDependentEdgeSpeed(double speed, double revSpeed, int from, int to, IntArrayList expectedPath, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         BaseGraph graph = createGHStorage();
-        EdgeIteratorState edge = GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(0, 1).setDistance(2));
-        DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(EncodingManager.getKey(encoder, "average_speed"));
-        edge.set(avSpeedEnc, speed, revSpeed);
-
-        GHUtility.setSpeed(encoder.getMaxSpeed() / 2, true, true, encoder, graph.edge(1, 2).setDistance(1));
+        GHUtility.setSpeed(speed, revSpeed, accessEnc, speedEnc, graph.edge(0, 1).setDistance(2));
+        GHUtility.setSpeed(20, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
         graph.freeze();
-        FastestWeighting weighting = new FastestWeighting(encoder);
+        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
         CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         new CHStorageBuilder(chStore).setIdentityLevels();

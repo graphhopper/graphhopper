@@ -27,7 +27,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
-import java.util.Collections;
+import java.util.List;
 
 import static com.graphhopper.util.Helper.nf;
 
@@ -43,7 +43,7 @@ import static com.graphhopper.util.Helper.nf;
  * loadExisting, (4) usage, (5) flush, (6) close
  */
 public class BaseGraph implements Graph, Closeable {
-    private final static String EDGEKV_NAME_KEY = "name";
+    final static long MAX_UNSIGNED_INT = 0xFFFF_FFFFL;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final EdgeKVStorage edgeKVStorage;
@@ -62,7 +62,7 @@ public class BaseGraph implements Graph, Closeable {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
         this.wayGeometry = dir.create("geometry", segmentSize);
-        this.edgeKVStorage = new EdgeKVStorage(dir, 1000);
+        this.edgeKVStorage = new EdgeKVStorage(dir);
         this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
@@ -82,6 +82,10 @@ public class BaseGraph implements Graph, Closeable {
         boolean enableIfAssert = false;
         assert (enableIfAssert = true) : true;
         return enableIfAssert;
+    }
+
+    public void debugPrint() {
+        store.debugPrint();
     }
 
     @Override
@@ -228,23 +232,24 @@ public class BaseGraph implements Graph, Closeable {
         return maxGeoRef;
     }
 
-    public void loadExisting() {
+    public boolean loadExisting() {
         checkNotInitialized();
 
         if (!store.loadExisting())
-            throw new IllegalStateException("Cannot load edges or nodes. corrupt file or directory? " + dir);
+            return false;
 
         if (!wayGeometry.loadExisting())
-            throw new IllegalStateException("Cannot load geometry. corrupt file or directory? " + dir);
+            return false;
 
         if (!edgeKVStorage.loadExisting())
-            throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
+            return false;
 
         if (supportsTurnCosts() && !turnCostStorage.loadExisting())
-            throw new IllegalStateException("Cannot load turn cost storage. corrupt file or directory? " + dir);
+            return false;
 
         setInitialized();
         loadWayGeometryHeader();
+        return true;
     }
 
     /**
@@ -258,7 +263,7 @@ public class BaseGraph implements Graph, Closeable {
 
         // copy the rest with higher level API
         to.setDistance(from.getDistance()).
-                setName(from.getName()).
+                setKeyValues(from.getKeyValues()).
                 setWayGeometry(from.fetchWayGeometry(FetchMode.PILLAR_ONLY));
 
         return to;
@@ -463,13 +468,6 @@ public class BaseGraph implements Graph, Closeable {
         throw new IllegalArgumentException("Mode isn't handled " + mode);
     }
 
-    private void setName(long edgePointer, String name) {
-        int nameRef = (int) edgeKVStorage.add(Collections.singletonMap(EDGEKV_NAME_KEY, name));
-        if (nameRef < 0)
-            throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
-        store.setNameRef(edgePointer, nameRef);
-    }
-
     private void ensureGeometry(long bytePos, int byteLength) {
         wayGeometry.ensureCapacity(bytePos + byteLength);
     }
@@ -477,7 +475,7 @@ public class BaseGraph implements Graph, Closeable {
     private long nextGeoRef(int arrayLength) {
         long tmp = maxGeoRef;
         maxGeoRef += arrayLength + 1L;
-        if (maxGeoRef >= 0xFFFFffffL)
+        if (maxGeoRef > MAX_UNSIGNED_INT)
             throw new IllegalStateException("Geometry too large, does not fit in 32 bits " + maxGeoRef);
 
         return tmp;
@@ -557,7 +555,6 @@ public class BaseGraph implements Graph, Closeable {
 
         public EdgeIteratorImpl(BaseGraph baseGraph, EdgeFilter filter) {
             super(baseGraph);
-
             if (filter == null)
                 throw new IllegalArgumentException("Instead null filter use EdgeFilter.ALL_EDGES");
             this.filter = filter;
@@ -955,17 +952,31 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public String getName() {
-            int nameRef = store.getNameRef(edgePointer);
-            String name = (String) baseGraph.edgeKVStorage.get(nameRef, EDGEKV_NAME_KEY);
-            // preserve backward compatibility (returns null if not explicitly set)
-            return name == null ? "" : name;
+        public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> entries) {
+            long pointer = baseGraph.edgeKVStorage.add(entries);
+            if (pointer > MAX_UNSIGNED_INT)
+                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + MAX_UNSIGNED_INT + " was " + pointer);
+            store.setKeyValuesRef(edgePointer, Helper.toSignedInt(pointer));
+            return this;
         }
 
         @Override
-        public EdgeIteratorState setName(String name) {
-            baseGraph.setName(edgePointer, name);
-            return this;
+        public List<EdgeKVStorage.KeyValue> getKeyValues() {
+            long kvEntryRef = Helper.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            return baseGraph.edgeKVStorage.getAll(kvEntryRef);
+        }
+
+        @Override
+        public Object getValue(String key) {
+            long kvEntryRef = Helper.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            return baseGraph.edgeKVStorage.get(kvEntryRef, key, reverse);
+        }
+
+        @Override
+        public String getName() {
+            String name = (String) getValue(EdgeKVStorage.KeyValue.STREET_NAME);
+            // preserve backward compatibility (returns empty string if name tag missing)
+            return name == null ? "" : name;
         }
 
         @Override

@@ -20,10 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.Roundabout;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -38,20 +35,27 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class CarTagParserTest {
-    final FlagEncoder encoder = createEncoder(new PMap("turn_costs=true|speed_two_directions=true"));
-    private final EncodingManager em = new EncodingManager.Builder()
-            .add(encoder)
-            .add(FlagEncoders.createBike())
-            .add(FlagEncoders.createFoot())
-            .build();
+    private final EncodingManager em = createEncodingManager(getCarName());
     final CarTagParser parser = createParser(em, new PMap("block_fords=true"));
-
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
-    private final DecimalEncodedValue avSpeedEnc = parser.getAverageSpeedEnc();
     private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
+    private final DecimalEncodedValue avSpeedEnc = parser.getAverageSpeedEnc();
 
-    FlagEncoder createEncoder(PMap properties) {
-        return FlagEncoders.createCar(properties);
+    protected String getCarName() {
+        return "car";
+    }
+
+    private EncodingManager createEncodingManager(String carName) {
+        return new EncodingManager.Builder()
+                .add(VehicleAccess.create(carName))
+                .add(VehicleSpeed.create(carName, 5, 5, true))
+                .addTurnCostEncodedValue(TurnCost.create(carName, 1))
+                .add(VehicleAccess.create("bike"))
+                .add(VehicleSpeed.create("bike", 4, 2, false))
+                .add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
+                .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
+                .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
+                .build();
     }
 
     CarTagParser createParser(EncodedValueLookup lookup, PMap properties) {
@@ -106,6 +110,19 @@ public class CarTagParserTest {
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
         assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("motor_vehicle", "agricultural");
+        assertTrue(parser.getAccess(way).canSkip());
+        way.setTag("motor_vehicle", "agricultural;forestry");
+        assertTrue(parser.getAccess(way).canSkip());
+        way.setTag("motor_vehicle", "forestry;agricultural");
+        assertTrue(parser.getAccess(way).canSkip());
+        way.setTag("motor_vehicle", "forestry;agricultural;unknown");
+        assertTrue(parser.getAccess(way).canSkip());
+        way.setTag("motor_vehicle", "yes;forestry;agricultural");
+        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
@@ -267,6 +284,12 @@ public class CarTagParserTest {
         way.setTag("maxspeed", "none");
         edgeFlags = parser.handleWayTags(edgeFlags, way);
         assertEquals(135, avSpeedEnc.getDecimal(false, edgeFlags), .1);
+
+        way = new ReaderWay(1);
+        way.setTag("highway", "motorway_link");
+        way.setTag("maxspeed", "70 mph");
+        IntsRef flags = parser.handleWayTags(em.createEdgeFlags(), way);
+        assertEquals(100, avSpeedEnc.getDecimal(true, flags), 1e-1);
     }
 
     @Test
@@ -530,10 +553,13 @@ public class CarTagParserTest {
 
     @Test
     public void testMaxValue() {
-        FlagEncoder encoder = createEncoder(new PMap("speed_bits=10|speed_factor=0.5"));
-        EncodingManager em = EncodingManager.create(encoder);
+        DecimalEncodedValueImpl smallFactorSpeedEnc = new DecimalEncodedValueImpl(getCarName() + "_average_speed", 10, 0.5, false);
+        EncodingManager em = new EncodingManager.Builder()
+                .add(new SimpleBooleanEncodedValue(getCarName() + "_access", true))
+                .add(smallFactorSpeedEnc)
+                .addTurnCostEncodedValue(TurnCost.create(getCarName(), 1))
+                .build();
         CarTagParser parser = createParser(em, new PMap());
-        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(EncodingManager.getKey(encoder, "average_speed"));
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "60 mph");
@@ -541,22 +567,15 @@ public class CarTagParserTest {
 
         // double speed = AbstractFlagEncoder.parseSpeed("60 mph");
         // => 96.56 * 0.9 => 86.9
-        assertEquals(86.9, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
-        assertEquals(86.9, avSpeedEnc.getDecimal(true, edgeFlags), 1e-1);
+        assertEquals(86.9, smallFactorSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
+        assertEquals(86.9, smallFactorSpeedEnc.getDecimal(true, edgeFlags), 1e-1);
 
         // test that maxPossibleValue  is not exceeded
         way = new ReaderWay(2);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "70 mph");
         edgeFlags = parser.handleWayTags(em.createEdgeFlags(), way);
-        assertEquals(101.5, avSpeedEnc.getDecimal(false, edgeFlags), .1);
-    }
-
-    @Test
-    public void testRegisterOnlyOnceAllowed() {
-        FlagEncoder instance = FlagEncoders.createCar();
-        EncodingManager.create(instance);
-        assertThrows(IllegalStateException.class, () -> EncodingManager.create(instance));
+        assertEquals(101.5, smallFactorSpeedEnc.getDecimal(false, edgeFlags), .1);
     }
 
     @Test
@@ -581,7 +600,7 @@ public class CarTagParserTest {
         bikeParser.handleWayTags(edgeFlags, way);
         assertFalse(accessEnc.getBool(true, edgeFlags));
         assertFalse(accessEnc.getBool(false, edgeFlags));
-        BooleanEncodedValue bikeAccessEnc = em.getEncoder("bike").getAccessEnc();
+        BooleanEncodedValue bikeAccessEnc = bikeParser.getAccessEnc();
         assertTrue(bikeAccessEnc.getBool(true, edgeFlags));
         assertTrue(bikeAccessEnc.getBool(false, edgeFlags));
     }
@@ -606,10 +625,14 @@ public class CarTagParserTest {
         assertEquals(5, parser.getAverageSpeedEnc().getDecimal(false, edgeFlags), .1);
 
         // for a smaller speed factor the minimum speed is also smaller
-        FlagEncoder lowFactorCar = createEncoder(new PMap("speed_bits=10|speed_factor=1"));
-        EncodingManager lowFactorEm = EncodingManager.create(lowFactorCar);
+        DecimalEncodedValueImpl lowFactorSpeedEnc = new DecimalEncodedValueImpl(getCarName() + "_average_speed", 10, 1, false);
+        EncodingManager lowFactorEm = new EncodingManager.Builder()
+                .add(new SimpleBooleanEncodedValue(getCarName() + "_access", true))
+                .add(lowFactorSpeedEnc)
+                .addTurnCostEncodedValue(TurnCost.create(getCarName(), 1))
+                .build();
         edgeFlags = lowFactorEm.createEdgeFlags();
         createParser(lowFactorEm, new PMap()).handleWayTags(edgeFlags, way);
-        assertEquals(1, lowFactorCar.getAverageSpeedEnc().getDecimal(false, edgeFlags), .1);
+        assertEquals(1, lowFactorSpeedEnc.getDecimal(false, edgeFlags), .1);
     }
 }

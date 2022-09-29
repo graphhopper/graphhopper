@@ -7,7 +7,6 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.Parameters;
 
 import java.util.Arrays;
@@ -68,10 +67,8 @@ public class RoutingExampleTC {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-tc-graph-cache");
-        // by enabling turn costs for the FlagEncoder, turn restriction constraints like 'no_left_turn' will be taken
-        // from OSM
         Profile profile = new Profile("car").setVehicle("car").setWeighting("fastest")
-                // to actually use the turn restrictions when routing we have to enable turn costs for our routing profile
+                // enabling turn costs means OSM turn restriction constraints like 'no_left_turn' will be taken into account
                 .setTurnCosts(true)
                 // we can also set u_turn_costs (in seconds). by default no u-turns are allowed, but with this setting
                 // we will consider u-turns at all junctions with a 40s time penalty

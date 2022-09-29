@@ -5,10 +5,10 @@ graphhopper:
   # Local folder used by graphhopper to store its data
   graph.location: graph-cache
 
+
   ##### Vehicles #####
 
-
-  # More options: foot,hike,bike,bike2,mtb,racingbike,motorcycle,car4wd,wheelchair (comma separated)
+  # More options: foot,hike,bike,bike2,mtb,racingbike,motorcycle,wheelchair (comma separated)
   # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below.
   # graph.flag_encoders: car
 
@@ -17,7 +17,7 @@ graphhopper:
 
   # Add additional information to every edge. Used for path details (#1548), better instructions (#1844) and tunnel/bridge interpolation (#798).
   # Default values are: road_class,road_class_link,road_environment,max_speed,road_access (since #1805)
-  # More are: surface,smoothness,max_width,max_height,max_weight,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,toll,track_type,
+  # More are: surface,smoothness,max_width,max_height,max_weight,hgv,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,toll,track_type,
   #           mtb_rating, hike_rating,horse_rating,lanes
   # graph.encoded_values: surface,toll,track_type
 
@@ -81,22 +81,24 @@ graphhopper:
 
   ##### Elevation #####
 
-
   # To populate your graph with elevation data use SRTM, default is noop (no elevation). Read more about it in docs/core/elevation.md
   # graph.elevation.provider: srtm
-
 
   # default location for cache is /tmp/srtm
   # graph.elevation.cache_dir: ./srtmprovider/
 
-
   # If you have a slow disk or plenty of RAM change the default MMAP to:
   # graph.elevation.dataaccess: RAM_STORE
-
 
   # To enable bilinear interpolation when sampling elevation at points (default uses nearest neighbor):
   # graph.elevation.interpolate: bilinear
 
+  # Reduce ascend/descend per edge without changing the maximum slope:
+  # graph.elevation.edge_smoothing: ramer
+  # removes elevation fluctuations up to max_elevation (in meter) and replaces the elevation with a value based on the average slope
+  # graph.elevation.edge_smoothing.ramer.max_elevation: 5
+  # A potentially bigger reduction of ascend/descend is possible, but maximum slope will often increase (do not use when average_slope or maximum_slope shall be used in a custom_model)
+  # graph.elevation.edge_smoothing: moving_average
 
   # To increase elevation profile resolution, use the following two parameters to tune the extra resolution you need
   # against the additional storage space used for edge geometries. You should enable bilinear interpolation when using
@@ -107,9 +109,22 @@ graphhopper:
   #   elevation and will remove the extra points that long edge sampling added
   # graph.elevation.way_point_max_distance: 10
 
+  #### Urban density (built-up areas) ####
+
+
+  # This feature allows classifying roads into 'rural', 'residential' and 'city' areas (encoded value 'urban_density')
+  # Use 1 or more threads to enable the feature
+  # graph.urban_density.threads: 8
+  # Use higher/lower sensitivities if too little/many roads fall into the according categories.
+  # Using smaller radii will speed up the classification, but only change these values if you know what you are doing.
+  # If you do not need the (rather slow) city classification set city_radius to zero.
+  # graph.urban_density.residential_radius: 300
+  # graph.urban_density.residential_sensitivity: 60
+  # graph.urban_density.city_radius: 2000
+  # graph.urban_density.city_sensitivity: 30
+
 
   #### Speed, hybrid and flexible mode ####
-
 
   # To make CH preparation faster for multiple profiles you can increase the default threads if you have enough RAM.
   # Change this setting only if you know what you are doing and if the default worked for you.
@@ -131,7 +146,6 @@ graphhopper:
 
   ##### Routing #####
 
-
   # You can define the maximum visited nodes when routing. This may result in not found connections if there is no
   # connection between two points within the given visited nodes. The default is Integer.MAX_VALUE. Useful for flexibility mode
   # routing.max_visited_nodes: 1000000
@@ -145,7 +159,6 @@ graphhopper:
 
 
   ##### Storage #####
-
 
   # configure the memory access, use RAM_STORE for well equipped servers (default and recommended)
   graph.dataaccess.default_type: RAM_STORE

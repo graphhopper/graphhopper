@@ -20,17 +20,13 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -54,8 +50,9 @@ public class CHQueryWithTurnCostsTest {
 
     private static class Fixture {
         private final int maxCost = 10;
-        private final FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxCost).putObject("speed_two_directions", true));
-        private final EncodingManager encodingManager = EncodingManager.create(encoder);
+        private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+        private final DecimalEncodedValue turnCostEnc = TurnCost.create("car", maxCost);
         private final BaseGraph graph;
         private final CHConfig chConfig;
         private final String algoString;
@@ -64,8 +61,9 @@ public class CHQueryWithTurnCostsTest {
 
         public Fixture(String algoString) {
             this.algoString = algoString;
-            graph = new BaseGraph.Builder(encodingManager).create();
-            chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage())));
+            EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+            graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
+            chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage())));
         }
 
         @Override
@@ -99,7 +97,7 @@ public class CHQueryWithTurnCostsTest {
         }
 
         private void setTurnCost(EdgeIteratorState edge1, EdgeIteratorState edge2, int viaNode, double costs) {
-            graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key(encoder.toString())), edge1.getEdge(), viaNode, edge2.getEdge(), costs);
+            graph.getTurnCostStorage().set(turnCostEnc, edge1.getEdge(), viaNode, edge2.getEdge(), costs);
         }
 
         private void setRestriction(int from, int via, int to) {
@@ -152,8 +150,8 @@ public class CHQueryWithTurnCostsTest {
     public void testFindPathWithTurnCosts_bidirected_no_shortcuts_smallGraph(Fixture f) {
         // some special cases where from=to, or start and target edges are the same
         // 1 -- 0 -- 2
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(1, 0).setDistance(3));
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(0, 2).setDistance(5));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(1, 0).setDistance(3));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(0, 2).setDistance(5));
         f.setTurnCost(1, 0, 2, 3);
         f.freeze();
 
@@ -175,12 +173,12 @@ public class CHQueryWithTurnCostsTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testFindPathWithTurnCosts_bidirected_no_shortcuts(Fixture f) {
         // 0 -- 2 -- 4 -- 6 -- 5 -- 3 -- 1
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(0, 2).setDistance(3));
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(2, 4).setDistance(2));
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(4, 6).setDistance(7));
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(6, 5).setDistance(9));
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(5, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(3, 1).setDistance(4));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(0, 2).setDistance(3));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(2, 4).setDistance(2));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(4, 6).setDistance(7));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(6, 5).setDistance(9));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(5, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(3, 1).setDistance(4));
         f.setTurnCost(0, 2, 4, 3);
         f.setTurnCost(4, 6, 5, 6);
         f.setTurnCost(5, 6, 4, 2);
@@ -214,15 +212,15 @@ public class CHQueryWithTurnCostsTest {
         //           1   2
         //            \ /
         // 0 - 7 - 8 - 4 - 6 - 5
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(7, 8).setDistance(1));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(8, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(4, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(1, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(4, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(6, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(0, 7).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(7, 8).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(8, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(4, 1).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(1, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(3, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(2, 4).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(4, 6).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(6, 5).setDistance(1));
         f.setRestriction(8, 4, 6);
         f.setRestriction(8, 4, 2);
         f.setRestriction(1, 4, 6);
@@ -251,7 +249,7 @@ public class CHQueryWithTurnCostsTest {
         //       1   2
         //        \ /
         // 5 - 6 - 4 - 7 - 8 - 0
-        GHUtility.setSpeed(60, 0, f.encoder,
+        GHUtility.setSpeed(60, 0, f.accessEnc, f.speedEnc,
                 f.graph.edge(5, 6).setDistance(1),
                 f.graph.edge(6, 4).setDistance(1),
                 f.graph.edge(4, 1).setDistance(1),
@@ -286,10 +284,10 @@ public class CHQueryWithTurnCostsTest {
         //   /5\   /1\
         //  /   \2/   \
         // 1     0     4
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(1, 2).setDistance(4));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 0).setDistance(2));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 3).setDistance(3));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 4).setDistance(2));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(1, 2).setDistance(4));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(2, 0).setDistance(2));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(0, 3).setDistance(3));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(3, 4).setDistance(2));
         f.setTurnCost(1, 2, 0, 5);
         f.setTurnCost(2, 0, 3, 2);
         f.setTurnCost(0, 3, 4, 1);
@@ -315,10 +313,10 @@ public class CHQueryWithTurnCostsTest {
         //     0
         //    / \
         // 1-2-s-3-4
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(1, 2).setDistance(2));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 0).setDistance(3));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 4).setDistance(3));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(1, 2).setDistance(2));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(2, 0).setDistance(3));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(0, 3).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(3, 4).setDistance(3));
         f.freeze();
 
         f.setTurnCost(1, 2, 0, 2);
@@ -338,10 +336,10 @@ public class CHQueryWithTurnCostsTest {
         //   /5\   /1\
         //  /   \2/   \
         // 2     1     4
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 3).setDistance(4));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 1).setDistance(2));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(1, 0).setDistance(3));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 4).setDistance(2));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(2, 3).setDistance(4));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(3, 1).setDistance(2));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(1, 0).setDistance(3));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(0, 4).setDistance(2));
         f.setTurnCost(2, 3, 1, 5);
         f.setTurnCost(3, 1, 0, 2);
         f.setTurnCost(1, 0, 4, 1);
@@ -368,10 +366,10 @@ public class CHQueryWithTurnCostsTest {
         // |         |
         // v         v
         // 2 -> 3 -> 1
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 2).setDistance(3));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 3).setDistance(2));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 1).setDistance(9));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 1).setDistance(50));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(0, 2).setDistance(3));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(2, 3).setDistance(2));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(3, 1).setDistance(9));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(0, 1).setDistance(50));
         f.setTurnCost(2, 3, 1, 4);
         f.freeze();
 
@@ -389,7 +387,7 @@ public class CHQueryWithTurnCostsTest {
         //      |    |
         //      v    v
         //      3 -> 4 -> 2
-        GHUtility.setSpeed(60, 0, f.encoder,
+        GHUtility.setSpeed(60, 0, f.accessEnc, f.speedEnc,
                 f.graph.edge(0, 1).setDistance(9),
                 f.graph.edge(1, 5).setDistance(2),
                 f.graph.edge(1, 3).setDistance(2),
@@ -411,10 +409,10 @@ public class CHQueryWithTurnCostsTest {
         //  \   ^
         //   \  |
         //    <-2<-3
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(1, 0).setDistance(9));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 0).setDistance(14));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 1).setDistance(2));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 2).setDistance(9));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(1, 0).setDistance(9));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(2, 0).setDistance(14));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(2, 1).setDistance(2));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(3, 2).setDistance(9));
         f.freeze();
 
         //no shortcuts
@@ -430,9 +428,9 @@ public class CHQueryWithTurnCostsTest {
         // | __/
         // v/
         // 3 -> 2
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(0, 1).setDistance(9));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 3).setDistance(14));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 2).setDistance(9));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(0, 1).setDistance(9));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(0, 3).setDistance(14));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(3, 2).setDistance(9));
         f.freeze();
         f.setIdentityLevels();
         f.addShortcut(1, 3, 1, 2, 0, 1, 23, false);
@@ -445,9 +443,9 @@ public class CHQueryWithTurnCostsTest {
         //       3
         //       |
         // 0 --- 2 --- 1
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(2, 3).setDistance(2));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 1).setDistance(3));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(0, 2).setDistance(1));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(2, 3).setDistance(2));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(2, 1).setDistance(3));
         f.setRestriction(0, 2, 1);
         f.setTurnCost(0, 2, 3, 5);
         f.setTurnCost(2, 3, 2, 4);
@@ -489,11 +487,11 @@ public class CHQueryWithTurnCostsTest {
             nodeA = nodeB;
             nodeB = tmp;
         }
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(1, nodeA).setDistance(4));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 3).setDistance(4));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(nodeB, 2).setDistance(1));
-        final EdgeIteratorState e3toB = GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, nodeB).setDistance(2));
-        final EdgeIteratorState e3toA = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(3, nodeA).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(1, nodeA).setDistance(4));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(0, 3).setDistance(4));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(nodeB, 2).setDistance(1));
+        final EdgeIteratorState e3toB = GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(3, nodeB).setDistance(2));
+        final EdgeIteratorState e3toA = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(3, nodeA).setDistance(1));
         f.freeze();
         f.setRestriction(0, 3, nodeB);
 
@@ -515,10 +513,10 @@ public class CHQueryWithTurnCostsTest {
         //       3\
         //       |/
         // 0 --- 2 --- 1
-        final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 2).setDistance(4));
-        final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(2, 3).setDistance(1));
-        final EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 2).setDistance(7));
-        final EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 1).setDistance(3));
+        final EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(0, 2).setDistance(4));
+        final EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(2, 3).setDistance(1));
+        final EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(3, 2).setDistance(7));
+        final EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(2, 1).setDistance(3));
         // need to specify edges explicitly because there are two edges between nodes 2 and 3
         f.setRestriction(edge1, edge4, 2);
         f.setTurnCost(edge1, edge2, 2, 3);
@@ -542,7 +540,7 @@ public class CHQueryWithTurnCostsTest {
         // 0 --- 3 --- 1
         //  \         /
         //   --- 4 ---
-        GHUtility.setSpeed(60, 0, f.encoder,
+        GHUtility.setSpeed(60, 0, f.accessEnc, f.speedEnc,
                 f.graph.edge(0, 2).setDistance(1),
                 f.graph.edge(0, 3).setDistance(3),
                 f.graph.edge(0, 4).setDistance(2),
@@ -568,10 +566,10 @@ public class CHQueryWithTurnCostsTest {
         //     ---
         //     \ /
         // 0 -- 3 -- 2 -- 1
-        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(0, 3).setDistance(1));
-        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 3).setDistance(1));
-        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(3, 2).setDistance(1));
-        EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 1).setDistance(1));
+        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(0, 3).setDistance(1));
+        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(3, 3).setDistance(1));
+        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(3, 2).setDistance(1));
+        EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(2, 1).setDistance(1));
         f.setRestriction(edge0, edge2, 3);
         f.freeze();
 
@@ -591,11 +589,11 @@ public class CHQueryWithTurnCostsTest {
         //          -0-
         //          \ /
         // 3 -- 4 -- 2 -- 1
-        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(3, 4).setDistance(1));
-        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(4, 2).setDistance(1));
-        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 0).setDistance(1));
-        EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 2).setDistance(1));
-        EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(2, 1).setDistance(1));
+        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(3, 4).setDistance(1));
+        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(4, 2).setDistance(1));
+        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(2, 0).setDistance(1));
+        EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(0, 2).setDistance(1));
+        EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(2, 1).setDistance(1));
         f.setRestriction(edge1, edge4, 2);
         f.freeze();
 
@@ -622,11 +620,11 @@ public class CHQueryWithTurnCostsTest {
         //     |
         //     v  no right turn at 4 when coming from 3!
         //     2
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 4).setDistance(2));
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(4, 0).setDistance(1));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 1).setDistance(3));
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(4, 1).setDistance(5));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(4, 2).setDistance(4));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(3, 4).setDistance(2));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(4, 0).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(0, 1).setDistance(3));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(4, 1).setDistance(5));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(4, 2).setDistance(4));
         f.setRestriction(3, 4, 2);
         f.freeze();
 
@@ -667,7 +665,7 @@ public class CHQueryWithTurnCostsTest {
         //  A-5->2
         //    |
         //    B-7
-        GHUtility.setSpeed(60, 0, f.encoder,
+        GHUtility.setSpeed(60, 0, f.accessEnc, f.speedEnc,
                 f.graph.edge(4, nodeA).setDistance(1),
                 f.graph.edge(nodeA, 5).setDistance(2),
                 f.graph.edge(5, 2).setDistance(2),
@@ -699,15 +697,15 @@ public class CHQueryWithTurnCostsTest {
         //     |
         //     |  no right turn at 7 when coming from 4 and no left turn at 7 when coming from 5!
         //     5
-        final EdgeIteratorState e0to1 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(0, 1).setDistance(2));
-        final EdgeIteratorState e1to6 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(1, 6).setDistance(1));
-        final EdgeIteratorState e0to6 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(0, 6).setDistance(4));
-        final EdgeIteratorState e2to6 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(2, 6).setDistance(5));
-        final EdgeIteratorState e2to3 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(2, 3).setDistance(3));
-        final EdgeIteratorState e3to6 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(3, 6).setDistance(2));
-        final EdgeIteratorState e6to7 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(7, 6).setDistance(1));
-        final EdgeIteratorState e4to7 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(7, 4).setDistance(3));
-        final EdgeIteratorState e5to7 = GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(7, 5).setDistance(2));
+        final EdgeIteratorState e0to1 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(0, 1).setDistance(2));
+        final EdgeIteratorState e1to6 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(1, 6).setDistance(1));
+        final EdgeIteratorState e0to6 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(0, 6).setDistance(4));
+        final EdgeIteratorState e2to6 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(2, 6).setDistance(5));
+        final EdgeIteratorState e2to3 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(2, 3).setDistance(3));
+        final EdgeIteratorState e3to6 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(3, 6).setDistance(2));
+        final EdgeIteratorState e6to7 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(7, 6).setDistance(1));
+        final EdgeIteratorState e4to7 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(7, 4).setDistance(3));
+        final EdgeIteratorState e5to7 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(7, 5).setDistance(2));
 
         f.setRestriction(e6to7, e1to6, 6);
         f.setRestriction(e6to7, e2to6, 6);
@@ -750,15 +748,15 @@ public class CHQueryWithTurnCostsTest {
         //     |
         //     v  no right turn at 6 when coming from 3!
         //     2
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(0, 1).setDistance(2));
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(1, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(5, 0).setDistance(1));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(5, 4).setDistance(5));
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(5, 6).setDistance(3));
-        GHUtility.setSpeed(60, true, true, f.encoder, f.graph.edge(6, 4).setDistance(4));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(0, 1).setDistance(2));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(1, 5).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(5, 0).setDistance(1));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(5, 4).setDistance(5));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(5, 6).setDistance(3));
+        GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(6, 4).setDistance(4));
 
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(3, 6).setDistance(3));
-        GHUtility.setSpeed(60, true, false, f.encoder, f.graph.edge(6, 2).setDistance(4));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(3, 6).setDistance(3));
+        GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(6, 2).setDistance(4));
         f.setRestriction(3, 6, 2);
         f.freeze();
 

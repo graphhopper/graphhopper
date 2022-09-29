@@ -24,7 +24,6 @@ import com.graphhopper.util.PMap;
 import java.util.TreeMap;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
@@ -38,9 +37,9 @@ public class MountainBikeTagParser extends BikeCommonTagParser {
 
     public MountainBikeTagParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(getKey("mtb", "access")),
-                lookup.getDecimalEncodedValue(getKey("mtb", "average_speed")),
-                lookup.getDecimalEncodedValue(getKey("mtb", "priority")),
+                lookup.getBooleanEncodedValue(VehicleAccess.key("mtb")),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key("mtb")),
+                lookup.getDecimalEncodedValue(VehiclePriority.key("mtb")),
                 lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class),
                 lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
@@ -61,18 +60,9 @@ public class MountainBikeTagParser extends BikeCommonTagParser {
         setTrackTypeSpeed("grade4", 8);
         setTrackTypeSpeed("grade5", 6); // like sand/grass     
 
-        setSurfaceSpeed("paved", 18);
-        setSurfaceSpeed("asphalt", 18);
-        setSurfaceSpeed("cobblestone", 10);
-        setSurfaceSpeed("cobblestone:flattened", 10);
-        setSurfaceSpeed("sett", 10);
         setSurfaceSpeed("concrete", 14);
         setSurfaceSpeed("concrete:lanes", 16);
         setSurfaceSpeed("concrete:plates", 16);
-        setSurfaceSpeed("paving_stones", 16);
-        setSurfaceSpeed("paving_stones:30", 16);
-        setSurfaceSpeed("unpaved", 14);
-        setSurfaceSpeed("compacted", 14);
         setSurfaceSpeed("dirt", 14);
         setSurfaceSpeed("earth", 14);
         setSurfaceSpeed("fine_gravel", 18);
@@ -80,35 +70,21 @@ public class MountainBikeTagParser extends BikeCommonTagParser {
         setSurfaceSpeed("grass_paver", 14);
         setSurfaceSpeed("gravel", 16);
         setSurfaceSpeed("ground", 16);
-        setSurfaceSpeed("ice", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("ice", MIN_SPEED);
         setSurfaceSpeed("metal", 10);
         setSurfaceSpeed("mud", 12);
-        setSurfaceSpeed("pebblestone", 12);
         setSurfaceSpeed("salt", 12);
         setSurfaceSpeed("sand", 10);
         setSurfaceSpeed("wood", 10);
 
-        setHighwaySpeed("living_street", 6);
+        setHighwaySpeed("living_street", PUSHING_SECTION_SPEED);
         setHighwaySpeed("steps", PUSHING_SECTION_SPEED);
 
-        setHighwaySpeed("cycleway", 18);
         setHighwaySpeed("path", 18);
-        setHighwaySpeed("footway", 6);
-        setHighwaySpeed("pedestrian", 6);
-        setHighwaySpeed("road", 12);
+        setHighwaySpeed("footway", PUSHING_SECTION_SPEED);
+        setHighwaySpeed("pedestrian", PUSHING_SECTION_SPEED);
         setHighwaySpeed("track", 18);
-        setHighwaySpeed("service", 14);
-        setHighwaySpeed("unclassified", 16);
         setHighwaySpeed("residential", 16);
-
-        setHighwaySpeed("trunk", 18);
-        setHighwaySpeed("trunk_link", 18);
-        setHighwaySpeed("primary", 18);
-        setHighwaySpeed("primary_link", 18);
-        setHighwaySpeed("secondary", 18);
-        setHighwaySpeed("secondary_link", 18);
-        setHighwaySpeed("tertiary", 18);
-        setHighwaySpeed("tertiary_link", 18);
 
         addPushingSection("footway");
         addPushingSection("platform");
@@ -133,16 +109,6 @@ public class MountainBikeTagParser extends BikeCommonTagParser {
         preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
-
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.EXCELLENT, 1.1d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.GOOD, 1.0d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.INTERMEDIATE, 0.9d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.BAD, 0.7d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_BAD, 0.6d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.HORRIBLE, 0.5d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_HORRIBLE, 0.4d);
-        // SmoothnessSpeed <= smoothnessFactorPushingSectionThreshold gets mapped to speed PUSHING_SECTION_SPEED
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.IMPASSABLE, smoothnessFactorPushingSectionThreshold);
 
         setSpecificClassBicycle("mtb");
     }
