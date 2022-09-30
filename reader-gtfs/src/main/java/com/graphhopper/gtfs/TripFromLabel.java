@@ -380,6 +380,8 @@ class TripFromLabel {
                             ),
                             Optional.ofNullable(currentFeed.routes.get(tripDescriptor.getRouteId())).map(r -> r.route_long_name).orElse("public transport"),
                             Optional.ofNullable(currentFeed.routes.get(tripDescriptor.getRouteId())).map(r -> r.route_short_name).orElse("pt"),
+                            Optional.ofNullable(currentFeed.routes.get(tripDescriptor.getRouteId())).map(r -> r.route_desc).orElse(""),
+                            Optional.ofNullable(currentFeed.routes.get(tripDescriptor.getRouteId())).map(r -> r.route_type).orElse(0),
                             stops,
                             ptDistance,
                             path.get(i - 1).label.currentTime - boardTime,
