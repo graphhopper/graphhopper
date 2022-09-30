@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -128,7 +130,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
         queries.add(new Query(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
         queries.add(new Query(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
-        CustomModel model = new CustomModel().addToPriority(Statement.If("true", Statement.Op.MULTIPLY, "curvature"));
+        CustomModel model = new CustomModel().addToPriority(Statement.If("true", MULTIPLY, "curvature"));
 
         GraphHopper hopper = createHopper(MONACO, new CustomProfile("motorcycle").setCustomModel(model).
                 setVehicle("motorcycle").setWeighting("custom"));
@@ -144,8 +146,9 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(52.349969, 8.013813, 52.349713, 8.013293, 56, 7));
         // reverse route avoids the location
 //        list.add(new OneRun(52.349713, 8.013293, 52.349969, 8.013813, 293, 21));
+        CustomModel model = new CustomModel();
         GraphHopper hopper = createHopper(DIR + "/map-bug432.osm.gz",
-                new Profile("bike2").setVehicle("bike2").setWeighting("fastest"));
+                new CustomProfile("bike2").setCustomModel(model).setVehicle("bike").setWeighting("custom"));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -325,7 +328,7 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoBike3D_twoSpeedsPerEdge() {
         List<Query> queries = new ArrayList<>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2689, 118));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2702, 111));
         // 2.
         queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 3735, 194));
         // 3.
@@ -340,7 +343,14 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2805, 145));
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 2436, 112));
-        GraphHopper hopper = createHopper(MONACO, new Profile("bike2").setVehicle("bike2").setWeighting("fastest"));
+        CustomModel model = new CustomModel();
+        model.addToSpeed(Statement.If("average_slope > 20", LIMIT, "4")).
+                addToSpeed(Statement.If("average_slope > 10", MULTIPLY, "0.8")).
+                addToSpeed(Statement.If("average_slope > 5", MULTIPLY, "0.9")).
+                addToSpeed(Statement.If("average_slope < 2", MULTIPLY, "1.15")).
+                addToSpeed(Statement.If("average_slope < 6", MULTIPLY, "1.3")).
+                addToSpeed(Statement.If("average_slope < 10", MULTIPLY, "1.4"));
+        GraphHopper hopper = createHopper(MONACO, new CustomProfile("bike2").setCustomModel(model).setVehicle("bike").setWeighting("custom"));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -571,7 +581,8 @@ public class RoutingAlgorithmWithOSMTest {
 
         Helper.removeDir(new File(GH_LOCATION));
 
-        hopper = createHopper(BAYREUTH, new Profile("bike2").setVehicle("bike2").setWeighting("fastest"));
+        CustomModel model = new CustomModel();
+        hopper = createHopper(BAYREUTH, new CustomProfile("bike2").setCustomModel(model).setVehicle("bike").setWeighting("custom"));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, list);
@@ -686,6 +697,7 @@ public class RoutingAlgorithmWithOSMTest {
                 setStoreOnFlush(true).
                 setOSMFile(osmFile).
                 setProfiles(profiles).
+                setEncodedValuesString("average_slope").
                 setGraphHopperLocation(GH_LOCATION);
         hopper.getRouterConfig().setSimplifyResponse(false);
         hopper.setMinNetworkSize(0);
