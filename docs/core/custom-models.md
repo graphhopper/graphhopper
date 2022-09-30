@@ -91,11 +91,11 @@ boolean value (they are either true or false for a given road segment), like:
 
 There are also some that take on a numeric value, like:
 
-- average_slope: a decimal for "elevation change" / edge_distance for a road segment; it changes the sign in reverse direction; see also max_slope
+- average_slope: a number for 100 * "elevation change" / edge_distance for a road segment; it changes the sign in reverse direction; see also max_slope
 - curvature: "beeline distance" / edge_distance (0..1) e.g. a curvy road is smaller than 1
 - hike_rating, horse_rating, mtb_rating: a number from 0 to 6 for the `sac_scale` in OSM, e.g. 0 means "missing", 1 means "hiking", 2 means "mountain_hiking" and so on
 - lanes: number of lanes
-- max_slope: an unsigned decimal for the maximum slope ("elevation change / distance_i") of an edge with `sum(distance_i)=edge_distance`. Important for longer road segments where ups (or downs) can be much bigger than the average_slope.
+- max_slope: an unsigned decimal for the maximum slope (100 * "elevation change / distance_i") of an edge with `sum(distance_i)=edge_distance`. Important for longer road segments where ups (or downs) can be much bigger than the average_slope.
 - max_speed: the speed limit from a sign (km/h)
 - max_height (meter), max_width (meter), max_length (meter)
 - max_weight (ton), max_axle_load (in tons)
