@@ -325,31 +325,30 @@ public class RoutingAlgorithmWithOSMTest {
     }
 
     @Test
-    public void testMonacoBike3D_twoSpeedsPerEdge() {
+    public void testMonacoBike3D() {
         List<Query> queries = new ArrayList<>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2702, 111));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 1999, 101));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 3735, 194));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 3939, 187));
         // 3.
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 163));
         // 4.
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1544, 84));
 
         // try reverse direction
         // 1.
         queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2599, 115));
-        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4180, 165));
-        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2805, 145));
+        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 3902, 199));
+        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2870, 154));
         // 4. avoid tunnel(s)!
-        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 2436, 112));
+        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1795, 96));
         CustomModel model = new CustomModel();
-        model.addToSpeed(Statement.If("average_slope > 20", LIMIT, "4")).
-                addToSpeed(Statement.If("average_slope > 10", MULTIPLY, "0.8")).
-                addToSpeed(Statement.If("average_slope > 5", MULTIPLY, "0.9")).
-                addToSpeed(Statement.If("average_slope < 2", MULTIPLY, "1.15")).
-                addToSpeed(Statement.If("average_slope < 6", MULTIPLY, "1.3")).
-                addToSpeed(Statement.If("average_slope < 10", MULTIPLY, "1.4"));
+        model.addToSpeed(Statement.If("average_slope >= 10", LIMIT, "4")).
+                addToSpeed(Statement.If("average_slope >= 5", MULTIPLY, "0.45")).
+                addToSpeed(Statement.If("average_slope >= 3.5", MULTIPLY, "0.7")).
+                addToSpeed(Statement.If("average_slope >= 2", MULTIPLY, "0.9")).
+                addToSpeed(Statement.If("average_slope < -5", MULTIPLY, "1.25"));
         GraphHopper hopper = createHopper(MONACO, new CustomProfile("bike2").setCustomModel(model).setVehicle("bike").setWeighting("custom"));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
