@@ -3,18 +3,21 @@ package com.graphhopper.routing.weighting.custom;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.json.Statement;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.parsers.OrientationCalculator;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.JsonFeature;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import static com.graphhopper.json.Statement.*;
@@ -40,6 +43,7 @@ class CustomWeightingTest {
                 .add(new EnumEncodedValue<>(Toll.KEY, Toll.class))
                 .add(new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class))
                 .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
+                .add(Orientation.create())
                 .build();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
@@ -118,6 +122,7 @@ class CustomWeightingTest {
 
     @Test
     public void testBoolean() {
+        DecimalEncodedValue orientationEnc = Orientation.create();
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue avSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
         BooleanEncodedValue specialEnc = new SimpleBooleanEncodedValue("special", true);
@@ -128,11 +133,13 @@ class CustomWeightingTest {
                 set(avSpeedEnc, 15).set(specialEnc, false).setReverse(specialEnc, true).setDistance(10);
 
         CustomModel vehicleModel = new CustomModel();
-        Weighting weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        Weighting weighting = CustomModelParser.createWeighting(graph, orientationEnc, accessEnc, avSpeedEnc, null,
+                encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(3.1, weighting.calcEdgeWeight(edge, false), 0.01);
         vehicleModel.addToPriority(If("special == true", MULTIPLY, "0.8"));
         vehicleModel.addToPriority(If("special == false", MULTIPLY, "0.4"));
-        weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        weighting = CustomModelParser.createWeighting(graph, orientationEnc, accessEnc, avSpeedEnc, null,
+                encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(6.7, weighting.calcEdgeWeight(edge, false), 0.01);
         assertEquals(3.7, weighting.calcEdgeWeight(edge, true), 0.01);
     }
@@ -338,6 +345,118 @@ class CustomWeightingTest {
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {
-        return CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        return CustomModelParser.createWeighting(graph, encodingManager.getDecimalEncodedValue(Orientation.KEY),
+                accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+    }
+
+    // TODO NOW how to configure these values - currently they are hardcoded in CustomModelParser
+    private static final double LEFT = 5, RIGHT = 0.5, STRAIGHT = 0;
+
+    @Test
+    public void testRawTurnWeight() {
+        DecimalEncodedValue orientationEnc = encodingManager.getDecimalEncodedValue(Orientation.KEY);
+        OrientationCalculator calc = new OrientationCalculator(encodingManager.getDecimalEncodedValue(Orientation.KEY));
+        graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
+        graph.getNodeAccess().setNode(1, 0.030, 0.011);
+        graph.getNodeAccess().setNode(2, 0.020, 0.009);
+        graph.getNodeAccess().setNode(3, 0.010, 0.000);
+        graph.getNodeAccess().setNode(4, 0.000, 0.008);
+
+        //      1
+        //      |
+        //   /--2
+        //   3-/|
+        //      4
+        EdgeIteratorState edge12 = setPointList(calc, graph.edge(1, 2));
+        EdgeIteratorState edge24 = setPointList(calc, graph.edge(2, 4));
+        EdgeIteratorState edge23 = setPointList(calc, graph.edge(2, 3), Arrays.asList(0.020, 0.002));
+        EdgeIteratorState edge23down = setPointList(calc, graph.edge(2, 3), Arrays.asList(0.010, 0.005));
+
+        assertEquals(STRAIGHT, CustomWeighting.Parameters.calcTurnWeight(edge12.getEdge(), 2, edge24.getEdge(),
+                graph, orientationEnc, LEFT, STRAIGHT, RIGHT));
+        assertEquals(STRAIGHT, CustomWeighting.Parameters.calcTurnWeight(edge23down.getEdge(), 2, edge12.getEdge(),
+                graph, orientationEnc, LEFT, STRAIGHT, RIGHT));
+
+        assertEquals(LEFT, CustomWeighting.Parameters.calcTurnWeight(edge24.getEdge(), 2, edge23.getEdge(),
+                graph, orientationEnc, LEFT, STRAIGHT, RIGHT));
+        assertEquals(LEFT, CustomWeighting.Parameters.calcTurnWeight(edge23.getEdge(), 2, edge12.getEdge(),
+                graph, orientationEnc, LEFT, STRAIGHT, RIGHT));
+
+        assertEquals(RIGHT, CustomWeighting.Parameters.calcTurnWeight(edge23down.getEdge(), 3, edge23.getEdge(),
+                graph, orientationEnc, LEFT, STRAIGHT, RIGHT));
+        assertEquals(RIGHT, CustomWeighting.Parameters.calcTurnWeight(edge12.getEdge(), 2, edge23.getEdge(),
+                graph, orientationEnc, LEFT, STRAIGHT, RIGHT));
+    }
+
+    EdgeIteratorState setPointList(OrientationCalculator calc, EdgeIteratorState edge) {
+        return setPointList(calc, edge, Arrays.asList());
+    }
+
+    EdgeIteratorState setPointList(OrientationCalculator calc, EdgeIteratorState edge, List<Double> rawPointList) {
+        if (rawPointList.size() % 2 != 0) throw new IllegalArgumentException();
+        if (!rawPointList.isEmpty()) {
+            PointList list = new PointList();
+            for (int i = 0; i < rawPointList.size(); i += 2) {
+                list.add(rawPointList.get(0), rawPointList.get(1));
+            }
+            edge.setWayGeometry(list);
+        }
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("point_list", edge.fetchWayGeometry(FetchMode.ALL));
+        edge.setFlags(calc.handleWayTags(edge.getFlags(), way, null));
+        return edge;
+    }
+
+    @Test
+    public void testCalcTurnWeight() {
+        BooleanEncodedValue tcAccessEnc = VehicleAccess.create("car");
+        DecimalEncodedValue tcAvgSpeedEnc = VehicleSpeed.create("car", 5, 5, true);
+        DecimalEncodedValue orientEnc = Orientation.create();
+        EncodingManager em = new EncodingManager.Builder().add(tcAccessEnc).add(tcAvgSpeedEnc).add(orientEnc).build();
+        Graph turnGraph = new BaseGraph.Builder(em).withTurnCosts(true).create();
+
+        CustomModel vehicleModel = new CustomModel();
+
+        //       4   5
+        //   0 - 1 - 2
+        //       3   6
+
+        turnGraph.getNodeAccess().setNode(0, 51.0362, 13.714);
+        turnGraph.getNodeAccess().setNode(1, 51.0362, 13.720);
+        turnGraph.getNodeAccess().setNode(2, 51.0362, 13.726);
+        turnGraph.getNodeAccess().setNode(3, 51.0358, 13.720);
+        turnGraph.getNodeAccess().setNode(4, 51.0366, 13.720);
+        turnGraph.getNodeAccess().setNode(5, 51.0366, 13.726);
+        turnGraph.getNodeAccess().setNode(6, 51.0358, 13.726);
+
+        DecimalEncodedValue turnCostEnc = TurnCost.create("car", 1);
+        CustomWeighting weighting = CustomModelParser.createWeighting(turnGraph, orientEnc, tcAccessEnc, tcAvgSpeedEnc,
+                null, em, new DefaultTurnCostProvider(turnCostEnc, turnGraph.getTurnCostStorage()), vehicleModel);
+        OrientationCalculator calc = new OrientationCalculator(orientEnc);
+        EdgeIteratorState edge01 = setPointList(calc, turnGraph.edge(0, 1).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
+        EdgeIteratorState edge13 = setPointList(calc, turnGraph.edge(1, 3).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
+        EdgeIteratorState edge14 = setPointList(calc, turnGraph.edge(1, 4).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
+        EdgeIteratorState edge26 = setPointList(calc, turnGraph.edge(2, 6).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
+        EdgeIteratorState edge25 = setPointList(calc, turnGraph.edge(2, 5).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
+        EdgeIteratorState edge12 = setPointList(calc, turnGraph.edge(1, 2).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
+
+        // from top to left => right turn
+        assertEquals(0.5, weighting.calcTurnWeight(edge14.getEdge(), 1, edge01.getEdge()), 0.01);
+        // top to down => straight
+        assertEquals(0.0, weighting.calcTurnWeight(edge14.getEdge(), 1, edge13.getEdge()), 0.01);
+        // top to right => left turn
+        assertEquals(5, weighting.calcTurnWeight(edge14.getEdge(), 1, edge12.getEdge()), 0.01);
+        // left to down => right turn
+        assertEquals(0.5, weighting.calcTurnWeight(edge01.getEdge(), 1, edge13.getEdge()), 0.01);
+        // left to top => left turn
+        assertEquals(5, weighting.calcTurnWeight(edge01.getEdge(), 1, edge14.getEdge()), 0.01);
+
+        // left to top => left turn => here like 'straight'
+        assertEquals(5, weighting.calcTurnWeight(edge12.getEdge(), 2, edge25.getEdge()), 0.01);
+        // down to left => left turn => here again like 'straight'
+        assertEquals(5, weighting.calcTurnWeight(edge26.getEdge(), 2, edge12.getEdge()), 0.01);
+        // top to left => right turn
+        assertEquals(0.5, weighting.calcTurnWeight(edge25.getEdge(), 2, edge12.getEdge()), 0.01);
     }
 }

@@ -21,8 +21,11 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
+
+import static com.graphhopper.util.AngleCalc.ANGLE_CALC;
 
 /**
  * The CustomWeighting allows adjusting the edge weights relative to those we'd obtain for a given base flag encoder.
@@ -194,6 +197,28 @@ public final class CustomWeighting extends AbstractWeighting {
 
         public double getMaxPriority() {
             return maxPriority;
+        }
+
+        public static double calcTurnWeight(int inEdge, int viaNode, int outEdge,
+                                            Graph graph, DecimalEncodedValue orientationEnc,
+                                            double leftWeight, double straightWeight, double rightWeight) {
+            EdgeIteratorState prevEdge = graph.getEdgeIteratorState(inEdge, viaNode);
+            EdgeIteratorState edge = graph.getEdgeIteratorState(outEdge, viaNode);
+            double prevOrientation = prevEdge.get(orientationEnc);
+            double orientation = edge.get(orientationEnc);
+            // bring parallel to prevOrientation
+            if (orientation >= 0) orientation -= Math.PI;
+            else orientation += Math.PI;
+            prevOrientation = ANGLE_CALC.alignOrientation(orientation, prevOrientation);
+            double changeAngle = Math.toDegrees(orientation - prevOrientation);
+            if (changeAngle > 180) changeAngle -= 360;
+            if (changeAngle < -180) changeAngle += 360;
+
+            if (changeAngle > -17 && changeAngle < 17) return straightWeight;
+            else if (changeAngle >= 17 && changeAngle <= 180) return leftWeight;
+            else if (changeAngle <= -17 && changeAngle >= -180) return rightWeight;
+            else
+                throw new IllegalArgumentException("angle is not in range " + changeAngle + " (" + orientation + ", " + prevOrientation + ")");
         }
     }
 }

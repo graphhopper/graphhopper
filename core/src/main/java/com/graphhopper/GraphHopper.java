@@ -650,6 +650,8 @@ public class GraphHopper {
             osmParsers.addWayTagParser(new SlopeCalculator(encodingManager.getDecimalEncodedValue(MaxSlope.KEY), encodingManager.getDecimalEncodedValue(AverageSlope.KEY)));
         if (encodingManager.hasEncodedValue(Curvature.KEY))
             osmParsers.addWayTagParser(new CurvatureCalculator(encodingManager.getDecimalEncodedValue(Curvature.KEY)));
+        if (encodingManager.hasEncodedValue(Orientation.KEY))
+            osmParsers.addWayTagParser(new OrientationCalculator(encodingManager.getDecimalEncodedValue(Orientation.KEY)));
 
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         flagEncodersMap.forEach((name, encoderStr) -> {

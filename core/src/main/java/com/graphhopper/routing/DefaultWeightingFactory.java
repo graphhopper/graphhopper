@@ -93,7 +93,8 @@ public class DefaultWeightingFactory implements WeightingFactory {
             CustomProfile customProfile = (CustomProfile) profile;
 
             queryCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
-            weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
+            DecimalEncodedValue orientationEnc = encodingManager.getDecimalEncodedValue(Orientation.KEY);
+            weighting = CustomModelParser.createWeighting(graph, orientationEnc, accessEnc, speedEnc,
                     priorityEnc, encodingManager, turnCostProvider, queryCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(accessEnc, speedEnc, turnCostProvider);
