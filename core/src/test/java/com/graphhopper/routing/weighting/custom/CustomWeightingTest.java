@@ -349,8 +349,7 @@ class CustomWeightingTest {
                 accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
     }
 
-    // TODO NOW how to configure these values - currently they are hardcoded in CustomModelParser
-    private static final double LEFT = 5, RIGHT = 0.5, STRAIGHT = 0;
+    private static TurnCostConfig tcConfig = new TurnCostConfig();
 
     @Test
     public void testRawTurnWeight() {
@@ -372,20 +371,17 @@ class CustomWeightingTest {
         EdgeIteratorState edge23 = setPointList(calc, graph.edge(2, 3), Arrays.asList(0.020, 0.002));
         EdgeIteratorState edge23down = setPointList(calc, graph.edge(2, 3), Arrays.asList(0.010, 0.005));
 
-        assertEquals(STRAIGHT, CustomWeighting.Parameters.calcTurnWeight(edge12.getEdge(), 2, edge24.getEdge(),
-                graph, orientationEnc, LEFT, STRAIGHT, RIGHT));
-        assertEquals(STRAIGHT, CustomWeighting.Parameters.calcTurnWeight(edge23down.getEdge(), 2, edge12.getEdge(),
-                graph, orientationEnc, LEFT, STRAIGHT, RIGHT));
+        CustomWeighting.Parameters parameters = new CustomWeighting.Parameters(null, null, 0, 0, 0, 0,
+                tcConfig);
 
-        assertEquals(LEFT, CustomWeighting.Parameters.calcTurnWeight(edge24.getEdge(), 2, edge23.getEdge(),
-                graph, orientationEnc, LEFT, STRAIGHT, RIGHT));
-        assertEquals(LEFT, CustomWeighting.Parameters.calcTurnWeight(edge23.getEdge(), 2, edge12.getEdge(),
-                graph, orientationEnc, LEFT, STRAIGHT, RIGHT));
+        assertEquals(tcConfig.getStraightCost(), parameters.calcTurnWeight(edge12.getEdge(), 2, edge24.getEdge(), graph, orientationEnc));
+        assertEquals(tcConfig.getStraightCost(), parameters.calcTurnWeight(edge23down.getEdge(), 2, edge12.getEdge(), graph, orientationEnc));
 
-        assertEquals(RIGHT, CustomWeighting.Parameters.calcTurnWeight(edge23down.getEdge(), 3, edge23.getEdge(),
-                graph, orientationEnc, LEFT, STRAIGHT, RIGHT));
-        assertEquals(RIGHT, CustomWeighting.Parameters.calcTurnWeight(edge12.getEdge(), 2, edge23.getEdge(),
-                graph, orientationEnc, LEFT, STRAIGHT, RIGHT));
+        assertEquals(tcConfig.getLeftCost(), parameters.calcTurnWeight(edge24.getEdge(), 2, edge23.getEdge(), graph, orientationEnc));
+        assertEquals(tcConfig.getLeftCost(), parameters.calcTurnWeight(edge23.getEdge(), 2, edge12.getEdge(), graph, orientationEnc));
+
+        assertEquals(tcConfig.getRightCost(), parameters.calcTurnWeight(edge23down.getEdge(), 3, edge23.getEdge(), graph, orientationEnc));
+        assertEquals(tcConfig.getRightCost(), parameters.calcTurnWeight(edge12.getEdge(), 2, edge23.getEdge(), graph, orientationEnc));
     }
 
     EdgeIteratorState setPointList(OrientationCalculator calc, EdgeIteratorState edge) {
@@ -446,16 +442,16 @@ class CustomWeightingTest {
         // top to down => straight
         assertEquals(0.0, weighting.calcTurnWeight(edge14.getEdge(), 1, edge13.getEdge()), 0.01);
         // top to right => left turn
-        assertEquals(5, weighting.calcTurnWeight(edge14.getEdge(), 1, edge12.getEdge()), 0.01);
+        assertEquals(3, weighting.calcTurnWeight(edge14.getEdge(), 1, edge12.getEdge()), 0.01);
         // left to down => right turn
         assertEquals(0.5, weighting.calcTurnWeight(edge01.getEdge(), 1, edge13.getEdge()), 0.01);
         // left to top => left turn
-        assertEquals(5, weighting.calcTurnWeight(edge01.getEdge(), 1, edge14.getEdge()), 0.01);
+        assertEquals(3, weighting.calcTurnWeight(edge01.getEdge(), 1, edge14.getEdge()), 0.01);
 
         // left to top => left turn => here like 'straight'
-        assertEquals(5, weighting.calcTurnWeight(edge12.getEdge(), 2, edge25.getEdge()), 0.01);
+        assertEquals(3, weighting.calcTurnWeight(edge12.getEdge(), 2, edge25.getEdge()), 0.01);
         // down to left => left turn => here again like 'straight'
-        assertEquals(5, weighting.calcTurnWeight(edge26.getEdge(), 2, edge12.getEdge()), 0.01);
+        assertEquals(3, weighting.calcTurnWeight(edge26.getEdge(), 2, edge12.getEdge()), 0.01);
         // top to left => right turn
         assertEquals(0.5, weighting.calcTurnWeight(edge25.getEdge(), 2, edge12.getEdge()), 0.01);
     }

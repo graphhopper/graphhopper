@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.json.Statement;
 
 import java.util.*;
@@ -36,6 +37,7 @@ public class CustomModel {
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
     private Map<String, JsonFeature> areas = new HashMap<>();
+    private TurnCostConfig turnCostConfig = new TurnCostConfig();
 
     public CustomModel() {
     }
@@ -47,6 +49,7 @@ public class CustomModel {
 
         speedStatements = deepCopy(toCopy.getSpeed());
         priorityStatements = deepCopy(toCopy.getPriority());
+        turnCostConfig = new TurnCostConfig(toCopy.turnCostConfig);
 
         areas.putAll(toCopy.getAreas());
     }
@@ -112,6 +115,15 @@ public class CustomModel {
         return areas;
     }
 
+    @JsonProperty("turn_cost")
+    public void setTurnCostConfig(TurnCostConfig turnCostConfig) {
+        this.turnCostConfig = turnCostConfig;
+    }
+
+    public TurnCostConfig getTurnCostConfig() {
+        return turnCostConfig;
+    }
+
     public CustomModel setDistanceInfluence(double distanceFactor) {
         this.distanceInfluence = distanceFactor;
         return this;
@@ -142,7 +154,8 @@ public class CustomModel {
     private String createContentString() {
         // used to check against stored custom models, see #2026
         return "distanceInfluence=" + distanceInfluence + "|headingPenalty=" + headingPenalty
-                + "|speedStatements=" + speedStatements + "|priorityStatements=" + priorityStatements + "|areas=" + areas;
+                + "|speedStatements=" + speedStatements + "|priorityStatements=" + priorityStatements
+                + "|areas=" + areas + "|turnCostConfig=" + turnCostConfig;
     }
 
     /**
@@ -160,6 +173,11 @@ public class CustomModel {
 
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
+
+        // TODO NOW
+//        if (!baseModel.turnCostConfig.equals(queryModel.turnCostConfig))
+//            throw new IllegalArgumentException("TurnCostConfig must be identical but was " + queryModel.turnCostConfig + " vs " + baseModel.turnCostConfig);
+        mergedCM.setTurnCostConfig(new TurnCostConfig(queryModel.getTurnCostConfig()));
 
         for (Map.Entry<String, JsonFeature> entry : queryModel.getAreas().entrySet()) {
             if (mergedCM.areas.containsKey(entry.getKey()))

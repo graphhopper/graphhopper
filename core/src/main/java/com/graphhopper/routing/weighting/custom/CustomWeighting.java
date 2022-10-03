@@ -24,6 +24,8 @@ import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.TurnCostConfig;
 
 import static com.graphhopper.util.AngleCalc.ANGLE_CALC;
 
@@ -164,15 +166,30 @@ public final class CustomWeighting extends AbstractWeighting {
         private final double maxPriority;
         private final double distanceInfluence;
         private final double headingPenaltySeconds;
+        private final TurnCostConfig turnCostConfig;
 
         Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
-                   double maxSpeed, double maxPriority, double distanceInfluence, double headingPenaltySeconds) {
+                   double maxSpeed, double maxPriority, double distanceInfluence, double headingPenaltySeconds,
+                   TurnCostConfig turnCostConfig) {
             this.edgeToSpeedMapping = edgeToSpeedMapping;
             this.edgeToPriorityMapping = edgeToPriorityMapping;
             this.maxSpeed = maxSpeed;
             this.maxPriority = maxPriority;
             this.distanceInfluence = distanceInfluence;
             this.headingPenaltySeconds = headingPenaltySeconds;
+            this.turnCostConfig = turnCostConfig;
+
+            if (turnCostConfig.getMinRightAngle() >= 0 || turnCostConfig.getMinRightAngle() < turnCostConfig.getMaxRightAngle())
+                throw new IllegalArgumentException("Illegal min_right_angle " + turnCostConfig.getMinRightAngle());
+
+            if (turnCostConfig.getMaxRightAngle() >= 0 || turnCostConfig.getMaxRightAngle() < -180)
+                throw new IllegalArgumentException("Illegal max_right_angle " + turnCostConfig.getMaxRightAngle());
+
+            if (turnCostConfig.getMinLeftAngle() <= 0 || turnCostConfig.getMinLeftAngle() > turnCostConfig.getMaxLeftAngle())
+                throw new IllegalArgumentException("Illegal min_left_angle " + turnCostConfig.getMinLeftAngle());
+
+            if (turnCostConfig.getMaxLeftAngle() <= 0 || turnCostConfig.getMaxLeftAngle() > 180)
+                throw new IllegalArgumentException("Illegal max_left_angle " + turnCostConfig.getMaxLeftAngle());
         }
 
         public EdgeToDoubleMapping getEdgeToSpeedMapping() {
@@ -199,11 +216,17 @@ public final class CustomWeighting extends AbstractWeighting {
             return maxPriority;
         }
 
-        public static double calcTurnWeight(int inEdge, int viaNode, int outEdge,
-                                            Graph graph, DecimalEncodedValue orientationEnc,
-                                            double leftWeight, double straightWeight, double rightWeight) {
+        public double calcTurnWeight(int inEdge, int viaNode, int outEdge, Graph graph, DecimalEncodedValue orientationEnc) {
             EdgeIteratorState prevEdge = graph.getEdgeIteratorState(inEdge, viaNode);
             EdgeIteratorState edge = graph.getEdgeIteratorState(outEdge, viaNode);
+            if (prevEdge == null || edge == null) {
+                EdgeIteratorState in = graph.getEdgeIteratorState(inEdge, Integer.MIN_VALUE);
+                EdgeIteratorState out = graph.getEdgeIteratorState(outEdge, Integer.MIN_VALUE);
+                throw new IllegalStateException(inEdge + "->" + viaNode + "->" + outEdge
+                        + " || " + in + ": " + in.fetchWayGeometry(FetchMode.ALL)
+                        + " || " + out + ": " + out.fetchWayGeometry(FetchMode.ALL));
+            }
+
             double prevOrientation = prevEdge.get(orientationEnc);
             double orientation = edge.get(orientationEnc);
             // bring parallel to prevOrientation
@@ -212,13 +235,15 @@ public final class CustomWeighting extends AbstractWeighting {
             prevOrientation = ANGLE_CALC.alignOrientation(orientation, prevOrientation);
             double changeAngle = Math.toDegrees(orientation - prevOrientation);
             if (changeAngle > 180) changeAngle -= 360;
-            if (changeAngle < -180) changeAngle += 360;
+            else if (changeAngle < -180) changeAngle += 360;
 
-            if (changeAngle > -17 && changeAngle < 17) return straightWeight;
-            else if (changeAngle >= 17 && changeAngle <= 180) return leftWeight;
-            else if (changeAngle <= -17 && changeAngle >= -180) return rightWeight;
-            else
-                throw new IllegalArgumentException("angle is not in range " + changeAngle + " (" + orientation + ", " + prevOrientation + ")");
+            if (changeAngle > turnCostConfig.getMinRightAngle() && changeAngle < turnCostConfig.getMinLeftAngle())
+                return turnCostConfig.getStraightCost();
+            else if (changeAngle >= turnCostConfig.getMinLeftAngle() && changeAngle <= turnCostConfig.getMaxLeftAngle())
+                return turnCostConfig.getLeftCost();
+            else if (changeAngle <= turnCostConfig.getMinRightAngle() && changeAngle >= turnCostConfig.getMaxRightAngle())
+                return turnCostConfig.getRightCost();
+            else return Double.POSITIVE_INFINITY;
         }
     }
 }

@@ -78,15 +78,11 @@ public class CustomModelParser {
 
         TurnCostProvider tcProviderMain = new TurnCostProvider() {
 
-            final double straight = 0;
-            final double left = 5;
-            final double right = 0.5;
-
             @Override
             public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
                 double weight = turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
                 if (Double.isInfinite(weight)) return weight;
-                return CustomWeighting.Parameters.calcTurnWeight(inEdge, viaNode, outEdge, graph, orientationEnc, left, straight, right);
+                return parameters.calcTurnWeight(inEdge, viaNode, outEdge, graph, orientationEnc);
             }
 
             @Override
@@ -136,7 +132,7 @@ public class CustomModelParser {
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
             prio.init(lookup, avgSpeedEnc, priorityEnc, customModel.getAreas());
             return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority, prio.getMaxSpeed(), prio.getMaxPriority(),
-                    customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
+                    customModel.getDistanceInfluence(), customModel.getHeadingPenalty(), customModel.getTurnCostConfig());
         } catch (ReflectiveOperationException ex) {
             throw new IllegalArgumentException("Cannot compile expression " + ex.getMessage(), ex);
         }
