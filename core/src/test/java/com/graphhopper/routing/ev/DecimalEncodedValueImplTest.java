@@ -188,4 +188,15 @@ public class DecimalEncodedValueImplTest {
         assertEquals(0, enc.getDecimal(false, ints));
         assertEquals(6, enc.getMaxOrMaxStorableDecimal());
     }
+
+    @Test
+    public void minStorableBug() {
+        DecimalEncodedValue enc = new DecimalEncodedValueImpl("test", 5, -3, 0.2, false, true, false);
+        enc.init(new EncodedValue.InitializerConfig());
+        assertEquals(3.2, enc.getMaxStorableDecimal());
+
+        IntsRef flags = new IntsRef(1);
+        enc.setDecimal(true, flags, 1.6);
+        assertEquals(1.6, enc.getDecimal(true, flags));
+    }
 }
