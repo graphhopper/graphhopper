@@ -34,7 +34,7 @@ import static com.graphhopper.util.Parameters.Details.INTERSECTION;
  * The format is inspired by the format that is consumed by Maplibre Navigation SDK.
  * <p>
  * Explanation of the format:
- * - <code>entry</code> contain an array of the edges at that intersection. They are sorted by bearing, starting from 0 (which is 0° north) to 359. Every edge that we can turn onto is marked with “true” in the array.
+ * - <code>entries</code> contain an array of the edges at that intersection. They are sorted by bearing, starting from 0 (which is 0° north) to 359. Every edge that we can turn onto is marked with “true” in the array.
  * - <code>bearings</code> contain an array of the edges at that intersection. They are sorted by bearing, starting from 0 (which is 0° north) to 359.  The array contains the bearings of each edge at that intersection.
  * - <code>in</code> marks the index in the “bearings” edge we are coming from.
  * - <code>out</code> the index we are going to.
@@ -77,6 +77,7 @@ public class IntersectionDetails extends AbstractPathDetailsBuilder {
 
             EdgeIterator edgeIter = crossingExplorer.setBaseNode(baseNode);
             while (edgeIter.next()) {
+                // We need to call detach to get the edgeId, as we need to check for VirtualEdgeIteratorState in #edgeId(), see discussion in #2590
                 tmpEdge = edgeIter.detach(false);
 
                 IntersectionValues intersectionValues = new IntersectionValues();
@@ -119,7 +120,7 @@ public class IntersectionDetails extends AbstractPathDetailsBuilder {
         double latitude;
         double longitude;
         PointList wayGeo = tmpEdge.fetchWayGeometry(FetchMode.ALL);
-        if (wayGeo.size() <= 3) {
+        if (wayGeo.size() <= 2) {
             latitude = nodeAccess.getLat(tmpEdge.getAdjNode());
             longitude = nodeAccess.getLon(tmpEdge.getAdjNode());
         } else {

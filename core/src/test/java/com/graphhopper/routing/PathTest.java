@@ -452,7 +452,7 @@ public class PathTest {
 
     @Test
     public void testCalcIntersectionDetails() {
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
