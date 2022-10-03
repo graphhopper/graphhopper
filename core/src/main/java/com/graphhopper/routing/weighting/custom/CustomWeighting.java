@@ -177,7 +177,6 @@ public final class CustomWeighting extends AbstractWeighting {
             this.maxPriority = maxPriority;
             this.distanceInfluence = distanceInfluence;
             this.headingPenaltySeconds = headingPenaltySeconds;
-            this.turnCostConfig = turnCostConfig;
 
             if (turnCostConfig.getMinRightAngle() >= 0 || turnCostConfig.getMinRightAngle() < turnCostConfig.getMaxRightAngle())
                 throw new IllegalArgumentException("Illegal min_right_angle " + turnCostConfig.getMinRightAngle());
@@ -190,6 +189,7 @@ public final class CustomWeighting extends AbstractWeighting {
 
             if (turnCostConfig.getMaxLeftAngle() <= 0 || turnCostConfig.getMaxLeftAngle() > 180)
                 throw new IllegalArgumentException("Illegal max_left_angle " + turnCostConfig.getMaxLeftAngle());
+            this.turnCostConfig = turnCostConfig;
         }
 
         public EdgeToDoubleMapping getEdgeToSpeedMapping() {

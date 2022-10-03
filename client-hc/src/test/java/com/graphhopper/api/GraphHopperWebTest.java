@@ -108,11 +108,11 @@ public class GraphHopperWebTest {
         ObjectNode postRequest = client.requestToJson(req);
         JsonNode customModelJson = postRequest.get("custom_model");
         ObjectMapper objectMapper = Jackson.newObjectMapper();
-        JsonNode expected = objectMapper.readTree("{\"distance_influence\":69.0,\"heading_penalty\":22.0,\"internal\":false,\"areas\":{" +
-                "\"area_1\":{\"id\":\"area_1\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.019324184801185,11.28021240234375],[48.019324184801185,11.53564453125],[48.11843396091691,11.53564453125],[48.11843396091691,11.28021240234375],[48.019324184801185,11.28021240234375]]]},\"properties\":{}}," +
-                "\"area_2\":{\"id\":\"area_2\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.15509285476017,11.53289794921875],[48.15509285476017,11.8212890625],[48.281365151571755,11.8212890625],[48.281365151571755,11.53289794921875],[48.15509285476017,11.53289794921875]]]},\"properties\":{}}}," +
+        JsonNode expected = objectMapper.readTree("{\"distance_influence\":69.0,\"heading_penalty\":22.0,\"internal\":false," +
+                "\"areas\":{\"area_1\":{\"id\":\"area_1\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.019324184801185,11.28021240234375],[48.019324184801185,11.53564453125],[48.11843396091691,11.53564453125],[48.11843396091691,11.28021240234375],[48.019324184801185,11.28021240234375]]]},\"properties\":{}},\"area_2\":{\"id\":\"area_2\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.15509285476017,11.53289794921875],[48.15509285476017,11.8212890625],[48.281365151571755,11.8212890625],[48.281365151571755,11.53289794921875],[48.15509285476017,11.53289794921875]]]},\"properties\":{}}}," +
+                "\"priority\":[{\"if\":\"surface == DIRT\",\"multiply_by\":\"0.7\"},{\"if\":\"surface == SAND\",\"multiply_by\":\"0.6\"}]," +
                 "\"speed\":[{\"if\":\"road_class == MOTORWAY\",\"limit_to\":\"80\"}]," +
-                "\"priority\":[{\"if\":\"surface == DIRT\",\"multiply_by\":\"0.7\"},{\"if\":\"surface == SAND\",\"multiply_by\":\"0.6\"}]}");
+                "\"turn_cost\":{\"left_cost\":3.0,\"right_cost\":0.5,\"straight_cost\":0.0,\"min_left_angle\":17.0,\"max_left_angle\":180.0,\"min_right_angle\":-17.0,\"max_right_angle\":-180.0}}");
         assertEquals(expected, objectMapper.valueToTree(customModelJson));
     }
 }

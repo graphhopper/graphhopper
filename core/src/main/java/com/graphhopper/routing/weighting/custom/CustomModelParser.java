@@ -76,6 +76,9 @@ public class CustomModelParser {
         double maxSpeed = speedEnc.getMaxOrMaxStorableDecimal();
         CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, speedEnc, maxSpeed, priorityEnc);
 
+        if (turnCostProvider == TurnCostProvider.NO_TURN_COST_PROVIDER || orientationEnc == null)
+            return new CustomWeighting(accessEnc, speedEnc, turnCostProvider, parameters);
+
         TurnCostProvider tcProviderMain = new TurnCostProvider() {
 
             @Override
