@@ -54,7 +54,15 @@ public class WheelchairTagParserTest {
                 .add(wheelchairAccessEnc).add(wheelchairAvSpeedEnc).add(wheelchairPriorityEnc).add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
                 .add(carAccessEnc).add(carAvSpeedEnc)
                 .build();
-        wheelchairParser = new WheelchairTagParser(encodingManager, new PMap());
+        wheelchairParser = new WheelchairTagParser(encodingManager, new PMap()) {
+            @Override
+            public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags) {
+                if (!way.hasTag("point_list") || !way.hasTag("edge_distance"))
+                    return edgeFlags;
+                else
+                    return super.applyWayTags(way, edgeFlags);
+            }
+        };
         wheelchairParser.init(new DateRangeParser());
     }
 
