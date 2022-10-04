@@ -549,7 +549,7 @@ public class WheelchairTagParserTest {
         ReaderWay way2 = new ReaderWay(2);
         way2.setTag("point_list", edge23.fetchWayGeometry(FetchMode.ALL));
         way2.setTag("edge_distance", edge23.getDistance());
-        edge23.setFlags(wheelchairParser.applyWayTags(new ReaderWay(2), edge23.getFlags()));
+        edge23.setFlags(wheelchairParser.applyWayTags(way2, edge23.getFlags()));
 
         assertTrue(edge23.get(wheelchairAccessEnc));
         assertTrue(edge23.getReverse(wheelchairAccessEnc));
@@ -561,7 +561,7 @@ public class WheelchairTagParserTest {
         ReaderWay way3 = new ReaderWay(3);
         way3.setTag("point_list", edge45.fetchWayGeometry(FetchMode.ALL));
         way3.setTag("edge_distance", edge45.getDistance());
-        edge45.setFlags(wheelchairParser.applyWayTags(new ReaderWay(3), edge45.getFlags()));
+        edge45.setFlags(wheelchairParser.applyWayTags(way3, edge45.getFlags()));
 
         assertFalse(edge45.get(wheelchairAccessEnc));
         assertFalse(edge45.getReverse(wheelchairAccessEnc));
