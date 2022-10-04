@@ -89,28 +89,26 @@ public class HikeTagParser extends FootTagParser {
 
 
     @Override
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+    public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags, PointList pl, double distance) {
         if (!pl.is3D())
-            return;
+            return edgeFlags;
 
         if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
             // do not change speed
             // note: although tunnel can have a difference in elevation it is unlikely that the elevation data is correct for a tunnel
-            return;
+            return edgeFlags;
 
         // Decrease the speed for ele increase (incline), and slightly decrease the speed for ele decrease (decline)
         double prevEle = pl.getEle(0);
-        double fullDistance = edge.getDistance();
+        double fullDistance = distance;
 
         // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
         if (fullDistance < 2)
-            return;
+            return edgeFlags;
 
         double eleDelta = Math.abs(pl.getEle(pl.size() - 1) - prevEle);
         double slope = eleDelta / fullDistance;
 
-        IntsRef edgeFlags = edge.getFlags();
         if ((accessEnc.getBool(false, edgeFlags) || accessEnc.getBool(true, edgeFlags))
                 && slope > 0.005) {
 
@@ -119,8 +117,10 @@ public class HikeTagParser extends FootTagParser {
             // slope=h/s_2d=~h/2_3d              = sqrt(1+slope²)/(slope+1/4.5) km/h
             // maximum slope is 0.37 (Ffordd Pen Llech)
             double newSpeed = Math.sqrt(1 + slope * slope) / (slope + 1 / 5.4);
-            edge.set(avgSpeedEnc, Helper.keepIn(newSpeed, 1, 5));
+            avgSpeedEnc.setDecimal(false, edgeFlags, Helper.keepIn(newSpeed, 1, 5));
         }
+
+        return edgeFlags;
     }
 
 }

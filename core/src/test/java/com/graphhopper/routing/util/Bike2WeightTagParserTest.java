@@ -75,7 +75,7 @@ public class Bike2WeightTagParserTest extends BikeTagParserTest {
         Graph graph = initExampleGraph();
         EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
         ReaderWay way = new ReaderWay(1);
-        parser.applyWayTags(way, edge);
+        edge.setFlags(parser.applyWayTags(way, edge.getFlags(), edge.fetchWayGeometry(FetchMode.ALL), edge.getDistance()));
 
         IntsRef flags = edge.getFlags();
         // decrease speed
@@ -91,7 +91,7 @@ public class Bike2WeightTagParserTest extends BikeTagParserTest {
         IntsRef oldFlags = IntsRef.deepCopyOf(edge.getFlags());
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "steps");
-        parser.applyWayTags(way, edge);
+        edge.setFlags(parser.applyWayTags(way, edge.getFlags(), edge.fetchWayGeometry(FetchMode.ALL), edge.getDistance()));
 
         assertEquals(oldFlags, edge.getFlags());
     }

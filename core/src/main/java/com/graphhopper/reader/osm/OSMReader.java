@@ -357,7 +357,9 @@ public class OSMReader {
             checkCoordinates(toIndex, pointList.get(pointList.size() - 1));
             edge.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
         }
-        osmParsers.applyWayTags(way, edge);
+        edgeFlags = edge.getFlags();
+        osmParsers.applyWayTags(way, edgeFlags, edge.fetchWayGeometry(FetchMode.ALL), edge.getDistance());
+        edge.setFlags(edgeFlags);
 
         checkDistance(edge);
         if (osmWayIdSet.contains(way.getId())) {

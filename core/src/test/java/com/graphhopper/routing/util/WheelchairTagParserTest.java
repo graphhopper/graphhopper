@@ -527,7 +527,7 @@ public class WheelchairTagParserTest {
         GHUtility.setSpeed(5, 5, wheelchairAccessEnc, wheelchairAvSpeedEnc, edge45);
 
 
-        wheelchairParser.applyWayTags(new ReaderWay(1), edge01);
+        edge01.setFlags(wheelchairParser.applyWayTags(new ReaderWay(1), edge01.getFlags(), edge01.fetchWayGeometry(FetchMode.ALL), edge01.getDistance()));
 
         assertTrue(edge01.get(wheelchairAccessEnc));
         assertTrue(edge01.getReverse(wheelchairAccessEnc));
@@ -535,7 +535,7 @@ public class WheelchairTagParserTest {
         assertEquals(5, edge01.getReverse(wheelchairParser.getAverageSpeedEnc()), 0);
 
 
-        wheelchairParser.applyWayTags(new ReaderWay(2), edge23);
+        edge23.setFlags(wheelchairParser.applyWayTags(new ReaderWay(2), edge23.getFlags(), edge23.fetchWayGeometry(FetchMode.ALL), edge23.getDistance()));
 
         assertTrue(edge23.get(wheelchairAccessEnc));
         assertTrue(edge23.getReverse(wheelchairAccessEnc));
@@ -544,7 +544,7 @@ public class WheelchairTagParserTest {
 
 
         // only exclude longer edges with too large incline:
-        wheelchairParser.applyWayTags(new ReaderWay(3), edge45);
+        edge45.setFlags(wheelchairParser.applyWayTags(new ReaderWay(3), edge45.getFlags(), edge45.fetchWayGeometry(FetchMode.ALL), edge45.getDistance()));
 
         assertFalse(edge45.get(wheelchairAccessEnc));
         assertFalse(edge45.getReverse(wheelchairAccessEnc));

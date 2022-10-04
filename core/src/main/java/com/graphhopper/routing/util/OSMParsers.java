@@ -29,6 +29,7 @@ import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PointList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,8 +96,8 @@ public class OSMParsers {
         return edgeFlags;
     }
 
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        vehicleTagParsers.forEach(t -> t.applyWayTags(way, edge));
+    public void applyWayTags(ReaderWay way, IntsRef edgeFlags, PointList pointList, double distance) {
+        vehicleTagParsers.forEach(t -> t.applyWayTags(way, edgeFlags, pointList, distance));
     }
 
     public void handleTurnRelationTags(OSMTurnRelation turnRelation, TurnCostParser.ExternalInternalMap map, Graph graph) {

@@ -58,16 +58,14 @@ public class Bike2WeightTagParser extends BikeTagParser {
     }
 
     @Override
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+    public IntsRef applyWayTags(ReaderWay way, IntsRef intsRef, PointList pl, double distance) {
         if (!pl.is3D())
             throw new IllegalStateException(getName() + " requires elevation data to improve speed calculation based on it. Please enable it in config via e.g. graph.elevation.provider: srtm");
 
-        IntsRef intsRef = edge.getFlags();
         if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
             // do not change speed
             // note: although tunnel can have a difference in elevation it is very unlikely that the elevation data is correct for a tunnel
-            return;
+            return intsRef;
 
         // Decrease the speed for ele increase (incline), and decrease the speed for ele decrease (decline). The speed-decrease
         // has to be bigger (compared to the speed-increase) for the same elevation difference to simulate losing energy and avoiding hills.
@@ -75,11 +73,11 @@ public class Bike2WeightTagParser extends BikeTagParser {
         double incEleSum = 0, incDist2DSum = 0, decEleSum = 0, decDist2DSum = 0;
         // double prevLat = pl.getLat(0), prevLon = pl.getLon(0);
         double prevEle = pl.getEle(0);
-        double fullDist2D = edge.getDistance();
+        double fullDist2D = distance;
 
         // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
         if (fullDist2D < 2)
-            return;
+            return intsRef;
 
         double eleDelta = pl.getEle(pl.size() - 1) - prevEle;
         if (eleDelta > 0.1) {
@@ -117,7 +115,7 @@ public class Bike2WeightTagParser extends BikeTagParser {
             speedReverse = speedReverse * (bwFaster * incDist2DSum + bwSlower * decDist2DSum + 1 * restDist2D) / fullDist2D;
             setSpeed(true, intsRef, keepIn(speedReverse, MIN_SPEED, maxSpeed));
         }
-        edge.setFlags(intsRef);
+        return intsRef;
     }
 
 }
