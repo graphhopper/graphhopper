@@ -87,8 +87,12 @@ public class HikeTagParser extends FootTagParser {
             weightToPrioMap.put(44d, SLIGHT_AVOID.getValue());
     }
 
-
     @Override
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+        edgeFlags = super.handleWayTags(edgeFlags, way);
+        return applyWayTags(way, edgeFlags, way.getTag("point_list", null), way.getTag("edge_distance", 0d));
+    }
+
     public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags, PointList pl, double distance) {
         if (!pl.is3D())
             return edgeFlags;

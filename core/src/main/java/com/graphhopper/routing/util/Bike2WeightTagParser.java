@@ -58,6 +58,11 @@ public class Bike2WeightTagParser extends BikeTagParser {
     }
 
     @Override
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+        edgeFlags = super.handleWayTags(edgeFlags, way);
+        return applyWayTags(way, edgeFlags, way.getTag("point_list", null), way.getTag("edge_distance", 0d));
+    }
+
     public IntsRef applyWayTags(ReaderWay way, IntsRef intsRef, PointList pl, double distance) {
         if (!pl.is3D())
             throw new IllegalStateException(getName() + " requires elevation data to improve speed calculation based on it. Please enable it in config via e.g. graph.elevation.provider: srtm");

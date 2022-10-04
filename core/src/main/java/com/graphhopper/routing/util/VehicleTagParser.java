@@ -200,14 +200,6 @@ public abstract class VehicleTagParser implements TagParser {
         return !Double.isNaN(speed);
     }
 
-    /**
-     * Second parsing step. Invoked after splitting the edges. Currently used to offer a hook to
-     * calculate precise speed values based on elevation data stored in the specified edge.
-     */
-    public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags, PointList pointList, double distance) {
-        return edgeFlags;
-    }
-
     public final DecimalEncodedValue getAverageSpeedEnc() {
         return avgSpeedEnc;
     }

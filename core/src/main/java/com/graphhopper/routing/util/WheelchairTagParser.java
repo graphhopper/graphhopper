@@ -180,6 +180,8 @@ public class WheelchairTagParser extends FootTagParser {
 
         Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
+
+        edgeFlags = applyWayTags(way, edgeFlags, way.getTag("point_list", null), way.getTag("edge_distance", 0d));
         return edgeFlags;
     }
 
@@ -188,7 +190,6 @@ public class WheelchairTagParser extends FootTagParser {
      * and maxInclinePercent will reduce speed to SLOW_SPEED. In-/declines above maxInclinePercent will result in zero
      * speed.
      */
-    @Override
     public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags, PointList pl, double distance) {
         double fullDist2D = distance;
         if (Double.isInfinite(fullDist2D))
