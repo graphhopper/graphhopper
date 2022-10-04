@@ -2626,7 +2626,7 @@ public class GraphHopperTest {
         int nodes = hopper.getBaseGraph().getNodes();
         hopper.close();
 
-        // load without configured graph.flag_encoders
+        // load without configured graph.vehicles
         hopper = new GraphHopper();
         hopper.setProfiles(Arrays.asList(
                 new Profile("p_car").setVehicle("car").setWeighting("fastest"),
@@ -2638,9 +2638,9 @@ public class GraphHopperTest {
         assertEquals(nodes, hopper.getBaseGraph().getNodes());
         hopper.close();
 
-        // load via explicitly configured graph.flag_encoders
+        // load via explicitly configured graph.vehicles
         hopper = new GraphHopper();
-        hopper.setFlagEncodersString("car,bike");
+        hopper.setVehiclesString("car,bike");
         hopper.setProfiles(Arrays.asList(
                 new Profile("p_car").setVehicle("car").setWeighting("fastest"),
                 new Profile("p_bike").setVehicle("bike").setWeighting("fastest"))
@@ -2655,7 +2655,7 @@ public class GraphHopperTest {
     void testLoadingWithAnotherSpeedFactorWorks() {
         {
             GraphHopper hopper = new GraphHopper()
-                    .setFlagEncodersString("car|speed_factor=7")
+                    .setVehiclesString("car|speed_factor=7")
                     .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"))
                     .setGraphHopperLocation(GH_LOCATION)
                     .setOSMFile(BAYREUTH);
@@ -2667,7 +2667,7 @@ public class GraphHopperTest {
             // during import with those that only matter when routing for some time already. At some point we should
             // separate the 'import' from the 'routing' config (and split the GraphHopper class).
             GraphHopper hopper = new GraphHopper()
-                    .setFlagEncodersString("car|speed_factor=9")
+                    .setVehiclesString("car|speed_factor=9")
                     .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"))
                     .setGraphHopperLocation(GH_LOCATION);
             hopper.load();

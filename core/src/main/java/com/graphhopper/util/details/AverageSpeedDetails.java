@@ -40,6 +40,7 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
         // even lead to speed=Infinity -> just ignore these cases here, see #1848 and #2620
         final double distance = edge.getDistance();
         if (distance < 0.01) {
+            prevEdgeId = edge.getEdge();
             if (decimalValue != null) return false;
             // in case this is the first edge we return decimalValue=null
             return true;
