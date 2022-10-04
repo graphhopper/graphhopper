@@ -28,8 +28,6 @@ import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
 
 import java.util.*;
 

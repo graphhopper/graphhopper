@@ -28,8 +28,6 @@ import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
 
 import java.util.ArrayList;
 import java.util.List;
