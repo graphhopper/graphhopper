@@ -91,13 +91,11 @@ public class OSMParsers {
             relParser.handleWayTags(edgeFlags, way, relationFlags);
         for (TagParser parser : wayTagParsers)
             parser.handleWayTags(edgeFlags, way, relationFlags);
-        for (VehicleTagParser vehicleTagParser : vehicleTagParsers)
+        for (VehicleTagParser vehicleTagParser : vehicleTagParsers) {
             vehicleTagParser.handleWayTags(edgeFlags, way, relationFlags);
+            vehicleTagParser.applyWayTags(way, edgeFlags, way.getTag("point_list", null), way.getTag("edge_distance", 0d));
+        }
         return edgeFlags;
-    }
-
-    public void applyWayTags(ReaderWay way, IntsRef edgeFlags, PointList pointList, double distance) {
-        vehicleTagParsers.forEach(t -> t.applyWayTags(way, edgeFlags, pointList, distance));
     }
 
     public void handleTurnRelationTags(OSMTurnRelation turnRelation, TurnCostParser.ExternalInternalMap map, Graph graph) {

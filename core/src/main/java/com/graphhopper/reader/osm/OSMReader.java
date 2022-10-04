@@ -341,7 +341,6 @@ public class OSMReader {
         IntsRef relationFlags = getRelFlagsMap(way.getId());
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
         edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relationFlags);
-        osmParsers.applyWayTags(way, edgeFlags, way.getTag("point_list", null), way.getTag("edge_distance", 0d));
         if (edgeFlags.isEmpty())
             return;
 
