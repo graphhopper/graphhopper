@@ -527,7 +527,10 @@ public class WheelchairTagParserTest {
         GHUtility.setSpeed(5, 5, wheelchairAccessEnc, wheelchairAvSpeedEnc, edge45);
 
 
-        edge01.setFlags(wheelchairParser.applyWayTags(new ReaderWay(1), edge01.getFlags(), edge01.fetchWayGeometry(FetchMode.ALL), edge01.getDistance()));
+        ReaderWay way1 = new ReaderWay(1);
+        way1.setTag("point_list", edge01.fetchWayGeometry(FetchMode.ALL));
+        way1.setTag("edge_distance", edge01.getDistance());
+        edge01.setFlags(wheelchairParser.applyWayTags(way1, edge01.getFlags()));
 
         assertTrue(edge01.get(wheelchairAccessEnc));
         assertTrue(edge01.getReverse(wheelchairAccessEnc));
@@ -535,7 +538,10 @@ public class WheelchairTagParserTest {
         assertEquals(5, edge01.getReverse(wheelchairParser.getAverageSpeedEnc()), 0);
 
 
-        edge23.setFlags(wheelchairParser.applyWayTags(new ReaderWay(2), edge23.getFlags(), edge23.fetchWayGeometry(FetchMode.ALL), edge23.getDistance()));
+        ReaderWay way2 = new ReaderWay(2);
+        way2.setTag("point_list", edge23.fetchWayGeometry(FetchMode.ALL));
+        way2.setTag("edge_distance", edge23.getDistance());
+        edge23.setFlags(wheelchairParser.applyWayTags(new ReaderWay(2), edge23.getFlags()));
 
         assertTrue(edge23.get(wheelchairAccessEnc));
         assertTrue(edge23.getReverse(wheelchairAccessEnc));
@@ -544,7 +550,10 @@ public class WheelchairTagParserTest {
 
 
         // only exclude longer edges with too large incline:
-        edge45.setFlags(wheelchairParser.applyWayTags(new ReaderWay(3), edge45.getFlags(), edge45.fetchWayGeometry(FetchMode.ALL), edge45.getDistance()));
+        ReaderWay way3 = new ReaderWay(3);
+        way3.setTag("point_list", edge45.fetchWayGeometry(FetchMode.ALL));
+        way3.setTag("edge_distance", edge45.getDistance());
+        edge45.setFlags(wheelchairParser.applyWayTags(new ReaderWay(3), edge45.getFlags()));
 
         assertFalse(edge45.get(wheelchairAccessEnc));
         assertFalse(edge45.getReverse(wheelchairAccessEnc));

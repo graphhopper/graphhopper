@@ -181,7 +181,7 @@ public class WheelchairTagParser extends FootTagParser {
         Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
 
-        edgeFlags = applyWayTags(way, edgeFlags, way.getTag("point_list", null), way.getTag("edge_distance", 0d));
+        edgeFlags = applyWayTags(way, edgeFlags);
         return edgeFlags;
     }
 
@@ -190,8 +190,13 @@ public class WheelchairTagParser extends FootTagParser {
      * and maxInclinePercent will reduce speed to SLOW_SPEED. In-/declines above maxInclinePercent will result in zero
      * speed.
      */
-    public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags, PointList pl, double distance) {
-        double fullDist2D = distance;
+    public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags) {
+        PointList pl = way.getTag("point_list", null);
+        if (pl == null)
+            throw new IllegalArgumentException("The artificial point_list tag is missing");
+        if (!way.hasTag("edge_distance"))
+            throw new IllegalArgumentException("The artificial edge_distance tag is missing");
+        double fullDist2D = way.getTag("edge_distance", 0d);
         if (Double.isInfinite(fullDist2D))
             throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
 

@@ -90,10 +90,13 @@ public class HikeTagParser extends FootTagParser {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         edgeFlags = super.handleWayTags(edgeFlags, way);
-        return applyWayTags(way, edgeFlags, way.getTag("point_list", null), way.getTag("edge_distance", 0d));
+        return applyWayTags(way, edgeFlags);
     }
 
-    public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags, PointList pl, double distance) {
+    public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags) {
+        PointList pl = way.getTag("point_list", null);
+        if (pl == null)
+            throw new IllegalArgumentException("The artificial point_list tag is missing");
         if (!pl.is3D())
             return edgeFlags;
 
@@ -104,7 +107,9 @@ public class HikeTagParser extends FootTagParser {
 
         // Decrease the speed for ele increase (incline), and slightly decrease the speed for ele decrease (decline)
         double prevEle = pl.getEle(0);
-        double fullDistance = distance;
+        if (!way.hasTag("edge_distance"))
+            throw new IllegalArgumentException("The artificial edge_distance tag is missing");
+        double fullDistance = way.getTag("edge_distance", 0d);
 
         // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
         if (fullDistance < 2)

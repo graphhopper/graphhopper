@@ -60,10 +60,13 @@ public class Bike2WeightTagParser extends BikeTagParser {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         edgeFlags = super.handleWayTags(edgeFlags, way);
-        return applyWayTags(way, edgeFlags, way.getTag("point_list", null), way.getTag("edge_distance", 0d));
+        return applyWayTags(way, edgeFlags);
     }
 
-    public IntsRef applyWayTags(ReaderWay way, IntsRef intsRef, PointList pl, double distance) {
+    public IntsRef applyWayTags(ReaderWay way, IntsRef intsRef) {
+        PointList pl = way.getTag("point_list", null);
+        if (pl == null)
+            throw new IllegalArgumentException("The artificial point_list tag is missing");
         if (!pl.is3D())
             throw new IllegalStateException(getName() + " requires elevation data to improve speed calculation based on it. Please enable it in config via e.g. graph.elevation.provider: srtm");
 
@@ -78,7 +81,9 @@ public class Bike2WeightTagParser extends BikeTagParser {
         double incEleSum = 0, incDist2DSum = 0, decEleSum = 0, decDist2DSum = 0;
         // double prevLat = pl.getLat(0), prevLon = pl.getLon(0);
         double prevEle = pl.getEle(0);
-        double fullDist2D = distance;
+        if (!way.hasTag("edge_distance"))
+            throw new IllegalArgumentException("The artificial edge_distance tag is missing");
+        double fullDist2D = way.getTag("edge_distance", 0d);
 
         // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
         if (fullDist2D < 2)
