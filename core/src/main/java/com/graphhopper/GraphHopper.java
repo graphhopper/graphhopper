@@ -533,8 +533,11 @@ public class GraphHopper {
         setProfiles(ghConfig.getProfiles());
         vehiclesString = ghConfig.getString("graph.vehicles", vehiclesString);
         if (vehiclesString.isEmpty()) {
-            logger.warn("The option graph.flag_encoders is deprecated and will be removed. Replace with graph.vehicles");
             vehiclesString = ghConfig.getString("graph.flag_encoders", vehiclesString);
+            if (!vehiclesString.isEmpty())
+                logger.warn("The option graph.flag_encoders is deprecated and will be removed. Replace with graph.vehicles");
+        } else if (!ghConfig.getString("graph.flag_encoders", "").isEmpty()) {
+            throw new IllegalArgumentException("Remove graph.flag_encoders as it cannot be used in parallel with graph.vehicles");
         }
 
         encodedValuesString = ghConfig.getString("graph.encoded_values", encodedValuesString);
