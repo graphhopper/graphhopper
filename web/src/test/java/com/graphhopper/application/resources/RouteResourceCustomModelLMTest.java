@@ -53,7 +53,7 @@ public class RouteResourceCustomModelLMTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car,foot").
+                putObject("graph.vehicles", "car,foot").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "surface").

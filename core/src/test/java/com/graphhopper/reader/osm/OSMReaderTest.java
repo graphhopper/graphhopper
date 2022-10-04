@@ -390,7 +390,7 @@ public class OSMReaderTest {
     @Test
     public void testFords() {
         GraphHopper hopper = new GraphHopper();
-        hopper.setFlagEncodersString("car|block_fords=true");
+        hopper.setVehiclesString("car|block_fords=true");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(

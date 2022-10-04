@@ -131,15 +131,15 @@ public class GraphHopper {
 
     private String dateRangeParserString = "";
     private String encodedValuesString = "";
-    private String flagEncodersString = "";
+    private String vehiclesString = "";
 
     public GraphHopper setEncodedValuesString(String encodedValuesString) {
         this.encodedValuesString = encodedValuesString;
         return this;
     }
 
-    public GraphHopper setFlagEncodersString(String flagEncodersString) {
-        this.flagEncodersString = flagEncodersString;
+    public GraphHopper setVehiclesString(String vehiclesString) {
+        this.vehiclesString = vehiclesString;
         return this;
     }
 
@@ -531,7 +531,12 @@ public class GraphHopper {
             throw new IllegalArgumentException("spatial_rules.max_bbox has been deprecated. There is no replacement, all custom areas will be considered.");
 
         setProfiles(ghConfig.getProfiles());
-        flagEncodersString = ghConfig.getString("graph.flag_encoders", flagEncodersString);
+        vehiclesString = ghConfig.getString("graph.vehicles", vehiclesString);
+        if (vehiclesString.isEmpty()) {
+            logger.warn("The option graph.flag_encoders is deprecated and will be removed. Replace with graph.vehicles");
+            vehiclesString = ghConfig.getString("graph.flag_encoders", vehiclesString);
+        }
+
         encodedValuesString = ghConfig.getString("graph.encoded_values", encodedValuesString);
         dateRangeParserString = ghConfig.getString("datareader.date_range_parser_day", dateRangeParserString);
 
@@ -783,7 +788,7 @@ public class GraphHopper {
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
         boolean withUrbanDensity = urbanDensityCalculationThreads > 0;
-        buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, withUrbanDensity, profilesByName.values());
+        buildEncodingManagerAndOSMParsers(vehiclesString, encodedValuesString, dateRangeParserString, withUrbanDensity, profilesByName.values());
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())
@@ -1012,7 +1017,7 @@ public class GraphHopper {
             if (profile.isTurnCosts() && turnCostEnc == null) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +
                         "'turn_costs=true', but the corresponding vehicle '" + profile.getVehicle() + "' does not support turn costs." +
-                        "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
+                        "\nYou need to add `|turn_costs=true` to the vehicle in `graph.vehicles`");
             }
             try {
                 createWeighting(profile, new PMap());

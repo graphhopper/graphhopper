@@ -62,7 +62,7 @@ public class RouteResourceClientHCTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car,bike").
+                putObject("graph.vehicles", "car,bike").
                 putObject("prepare.min_network_size", 0).
                 putObject("graph.elevation.provider", "srtm").
                 putObject("graph.elevation.cache_dir", "../core/files/").

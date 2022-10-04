@@ -10,10 +10,10 @@ graphhopper:
 
   # More options: foot,hike,bike,bike2,mtb,racingbike,motorcycle,wheelchair (comma separated)
   # bike2 takes elevation data into account (like up-hill is slower than down-hill) and requires enabling graph.elevation.provider below.
-  # graph.flag_encoders: car
+  # graph.vehicles: car
 
   # Enable turn restrictions for car or motorcycle.
-  # graph.flag_encoders: car|turn_costs=true
+  # graph.vehicles: car|turn_costs=true
 
   # Add additional information to every edge. Used for path details (#1548), better instructions (#1844) and tunnel/bridge interpolation (#798).
   # Default values are: road_class,road_class_link,road_environment,max_speed,road_access (since #1805)
@@ -26,10 +26,10 @@ graphhopper:
   # Routing can be done for the following list of profiles. Note that it is required to specify all the profiles you
   # would like to use here. The fields of each profile are as follows:
   # - name (required): a unique string identifier for the profile
-  # - vehicle (required): refers to the `graph.flag_encoders` used for this profile
+  # - vehicle (required): refers to the `graph.vehicles` used for this profile
   # - weighting (required): the weighting used for this profile, e.g. fastest,shortest or short_fastest
   # - turn_costs (true/false, default: false): whether or not turn restrictions should be applied for this profile.
-  #   this will only work if the `graph.flag_encoders` for the given `vehicle` is configured with `|turn_costs=true`.
+  #   this will only work if the `graph.vehicles` for the given `vehicle` is configured with `|turn_costs=true`.
   #
   # Depending on the above fields there are other properties that can be used, e.g.
   # - distance_factor: 0.1 (can be used to fine tune the time/distance trade-off of short_fastest weighting)
@@ -173,7 +173,7 @@ graphhopper:
 
   ##### Country Rules #####
   # GraphHopper reads GeoJSON polygon files including their properties from this directory and makes them available
-  # to all tag parsers and flag encoders. Country borders (see countries.geojson) are always included automatically.
+  # to all tag parsers and vehicles. Country borders (see countries.geojson) are always included automatically.
   # custom_areas.directory: path/to/custom_areas
 
   ##### Country Rules #####

@@ -51,7 +51,7 @@ public class GraphHopperLandmarksTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car").
+                putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/belarus-east.osm.gz").
                 putObject("prepare.min_network_size", 0).
                 putObject("graph.location", DIR)
