@@ -341,6 +341,7 @@ public class OSMReader {
         IntsRef relationFlags = getRelFlagsMap(way.getId());
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
         edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relationFlags);
+        osmParsers.applyWayTags(way, edgeFlags, way.getTag("point_list", null), way.getTag("edge_distance", 0d));
         if (edgeFlags.isEmpty())
             return;
 
@@ -357,9 +358,6 @@ public class OSMReader {
             checkCoordinates(toIndex, pointList.get(pointList.size() - 1));
             edge.setWayGeometry(pointList.shallowCopy(1, pointList.size() - 1, false));
         }
-        edgeFlags = edge.getFlags();
-        osmParsers.applyWayTags(way, edgeFlags, edge.fetchWayGeometry(FetchMode.ALL), edge.getDistance());
-        edge.setFlags(edgeFlags);
 
         checkDistance(edge);
         if (osmWayIdSet.contains(way.getId())) {
