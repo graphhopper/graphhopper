@@ -461,7 +461,7 @@ public class GraphHopperOSMTest {
                         new GraphHopperConfig().
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
-                                putObject("graph.flag_encoders", "foot,car").
+                                putObject("graph.vehicles", "foot,car").
                                 setProfiles(Arrays.asList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                                         new Profile("car").setVehicle("car").setWeighting("fastest")
@@ -476,7 +476,7 @@ public class GraphHopperOSMTest {
                         new GraphHopperConfig().
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
-                                putObject("graph.flag_encoders", "foot").
+                                putObject("graph.vehicles", "foot").
                                 setProfiles(Collections.singletonList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest")
                                 ))).
@@ -485,11 +485,11 @@ public class GraphHopperOSMTest {
         IllegalStateException e = assertThrows(IllegalStateException.class, tmpGH::load);
         assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
 
-        // different order of flag_encoders is also fine, but profiles must be in same order
+        // different order of graph.vehicles is also fine, but profiles must be in same order
         tmpGH = new GraphHopper().init(new GraphHopperConfig().
                         putObject("datareader.file", testOsm3).
                         putObject("datareader.dataaccess", "RAM").
-                        putObject("graph.flag_encoders", "car,foot").
+                        putObject("graph.vehicles", "car,foot").
                         setProfiles(Arrays.asList(
                                 new Profile("car").setVehicle("car").setWeighting("fastest"),
                                 new Profile("foot").setVehicle("foot").setWeighting("fastest")
@@ -505,7 +505,7 @@ public class GraphHopperOSMTest {
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
                                 putObject("graph.encoded_values", "road_class").
-                                putObject("graph.flag_encoders", "foot,car").
+                                putObject("graph.vehicles", "foot,car").
                                 setProfiles(Arrays.asList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                                         new Profile("car").setVehicle("car").setWeighting("fastest")
@@ -524,7 +524,7 @@ public class GraphHopperOSMTest {
                         new GraphHopperConfig().
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
-                                putObject("graph.flag_encoders", "foot,car").
+                                putObject("graph.vehicles", "foot,car").
                                 setProfiles(Arrays.asList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                                         new Profile("car").setVehicle("car").setWeighting("fastest")
@@ -544,7 +544,7 @@ public class GraphHopperOSMTest {
                                 putObject("datareader.dataaccess", "RAM").
                                 putObject("graph.location", ghLoc).
                                 putObject("graph.encoded_values", "road_environment,road_class").
-                                putObject("graph.flag_encoders", "foot,car").
+                                putObject("graph.vehicles", "foot,car").
                                 setProfiles(Arrays.asList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                                         new Profile("car").setVehicle("car").setWeighting("fastest")
@@ -660,7 +660,7 @@ public class GraphHopperOSMTest {
                 init(new GraphHopperConfig().
                         putObject("datareader.file", testOsm3).
                         putObject("prepare.min_network_size", 0).
-                        putObject("graph.flag_encoders", vehicle).
+                        putObject("graph.vehicles", vehicle).
                         setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
                         setCHProfiles(Collections.singletonList(new CHProfile(profile)))
                 ).

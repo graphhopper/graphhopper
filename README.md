@@ -232,7 +232,7 @@ Here is a list of the more detailed features:
  * Memory efficient data structures, algorithms and [the low and high level API](./docs/core/low-level-api.md) is tuned towards ease of use and efficiency
  * Provides a simple [web API](./docs/web/api-doc.md) including JavaScript and Java clients
  * Multiple weightings (fastest/shortest/custom/...) and pre-built routing profiles: car, bike, racing bike, mountain bike, foot, hike, motorcycle, wheelchair, ...
- * [Customization of these profiles](./docs/core/profiles.md#custom-profiles) are possible to get truck and cargo bike support or individual improvements
+ * [Customization of these profiles](./docs/core/profiles.md#custom-profiles) are possible and e.g. get truck routing or support for cargo bikes and [many other changes](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/)
  * Does [map matching](./map-matching)
  * Supports public transit routing and [GTFS](./reader-gtfs/README.md).
  * Offers turn instructions in more than 42 languages, contribute or improve [here](./docs/core/translations.md)
