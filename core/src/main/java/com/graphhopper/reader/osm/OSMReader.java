@@ -562,7 +562,7 @@ public class OSMReader {
             osmWayMap.put(way.getId(), way);
         }
     }
-    
+        
     /**
      * This method is called before the second pass of {@link WaySegmentParser}
      */
@@ -570,15 +570,20 @@ public class OSMReader {
         for (WayRestriction restriction : wayRestrictions) {
             // for now we only work with single via-way restrictions 
             if (restriction.getWays().size() == 3) {
+            	if (!allWaysHaveTwoTowerNodes(restriction, nodeData)) {
+            		LOGGER.info("failed:" + restriction.getId() + " - too much Tower Nodes");
+            		continue;
+            	}
                 restriction.buildRestriction(osmWayMap);
                 if (!restriction.isValid()) {
-                    LOGGER.info("failed:" + restriction.getId());
+                    LOGGER.info("failed:" + restriction.getId() + " - invalid Restriction");
                     long startId = restriction.getWays().get(0);
                     if (osmWayIdsToIgnore.contains(startId)){
                         ReaderWay startWay = osmWayMap.get(startId);
                         // we need to somehow call WaySegmentParser#handleWay for this ReaderWay
                         // but I don't know if this is possible
                     }
+                    continue;
                 }
                 try {
                     NodeRestriction r = restriction.getRestrictions().get(0);
@@ -645,6 +650,29 @@ public class OSMReader {
         }
     }
 
+    private boolean allWaysHaveTwoTowerNodes(WayRestriction restriction, OSMNodeData nodeData) {
+    	boolean allWaysHaveTwoTowerNodes = true;
+    	for (Long w : restriction.getWays()) {
+    		ReaderWay way = osmWayMap.get(w);
+    		if (way == null) 
+    			break;
+    		if (getTowerNodeCount(way, nodeData) != 2)
+    			allWaysHaveTwoTowerNodes = false;
+    			break;
+    	}
+    	return allWaysHaveTwoTowerNodes;
+	}
+    
+    private int getTowerNodeCount(ReaderWay way, OSMNodeData nodeData) {
+    	int towerCount = 0;
+		for (LongCursor node : way.getNodes()) {
+			int id = nodeData.getId(node.value);
+			if (OSMNodeData.isTowerNode(id))
+				towerCount++;
+		}
+		return towerCount;
+    }
+    
     protected void createArtificialViaNode(Long via, OSMNodeData nodeData) {
         SegmentNode artificalNode = nodeData.addCopyOfNodeAsTowerNode(new SegmentNode(via, nodeData.getId(via)));
         artificialViaNodes.put(via, artificalNode.osmNodeId);
