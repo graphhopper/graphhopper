@@ -696,7 +696,7 @@ public class RoutingAlgorithmWithOSMTest {
                 setStoreOnFlush(true).
                 setOSMFile(osmFile).
                 setProfiles(profiles).
-                setEncodedValuesString("average_slope").
+                setEncodedValuesString("average_slope,max_slope").
                 setGraphHopperLocation(GH_LOCATION);
         hopper.getRouterConfig().setSimplifyResponse(false);
         hopper.setMinNetworkSize(0);
