@@ -164,6 +164,52 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.orienteer.jnpm</groupId>
+                <artifactId>jnpm-maven-plugin</artifactId>
+                <version>1.4</version>
+                <executions>
+                    <execution>
+                        <id>download graphhopper maps</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>install</goal>
+                        </goals>
+                        <configuration>
+                            <registryUrl>https://registry.npmjs.org</registryUrl>
+                            <packages>
+                                <package>graphhopper-maps@0.0.0-47b188d416409fc8af9300f1008ca7328f15e2c1</package>
+                            </packages>
+                            <!-- do not automatically attach resources, we do this explicitly using the maven resource plugin below -->
+                            <attachResources>false</attachResources>
+                            <outputDirectory>${project.basedir}/jnpm/</outputDirectory>
+                            <strategy>SIMPLE</strategy>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy graphhopper maps to resources</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <overwrite>true</overwrite>
+                            <outputDirectory>${basedir}/target/classes/com/graphhopper/maps/maps2</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/jnpm/graphhopper-maps/dist/</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
