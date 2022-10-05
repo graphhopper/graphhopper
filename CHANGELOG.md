@@ -1,6 +1,8 @@
 ### 7.0 [not yet released]
 
-- CurvatureWeighting was removed. Use a custom model with 'curvature' instead. (#2665)
+- Bike2WeightTagParser was removed. Use the bike vehicle with a custom model, see custom_models/bike2.yml
+- Car4WDTagParser was removed. Use the roads vehicle with a custom model, see custom_models/car4wd.yml
+- CurvatureWeighting was removed. Use a custom model with 'curvature' instead, see custom_models/curvature.yml (#2665)
 - internal keys for EdgeKVStorage changed to contain the street_ prefix like the path details too. Similarly, the extra_info in the instructions of the API response, see #2661
 
 ### 6.0 [13 Sep 2022]

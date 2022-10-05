@@ -39,6 +39,13 @@ graphhopper:
   #   turn_costs: true
   #   u_turn_costs: 60
 
+  # - name: bike
+  #   vehicle: bike
+  #   weighting: custom
+  #   # the custom model in bike2.yml is defined to avoid hills
+  #   custom_model_file: bike2.yml
+  custom_model_folder: custom_models
+
   # Speed mode:
   # Its possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
   # more RAM/disk space for holding the prepared graph but also means less memory usage per request. Using the following
