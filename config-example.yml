@@ -8,9 +8,8 @@ graphhopper:
 
   ##### Routing Profiles ####
 
-  # Routing can be done only for profiles listed below. A car profile is enabled per default and can be changed with
-  # tweaking the custom_model. For more information about profiles and custom profiles have a look into the
-  # documentation at docs/core/profiles.md or the examples under web/src/test/java/com/graphhopper/application/resources/
+  # Routing can be done only for profiles listed below. For more information about profiles and custom profiles have a
+  # look into the documentation at docs/core/profiles.md or the examples under web/src/test/java/com/graphhopper/application/resources/
   # or the CustomWeighting class for the raw details.
   #
   # In general a profile consists of the following

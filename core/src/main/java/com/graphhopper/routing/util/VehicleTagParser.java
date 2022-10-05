@@ -28,7 +28,6 @@ import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.*;
 
@@ -197,13 +196,6 @@ public abstract class VehicleTagParser implements TagParser {
      */
     protected static boolean isValidSpeed(double speed) {
         return !Double.isNaN(speed);
-    }
-
-    /**
-     * Second parsing step. Invoked after splitting the edges. Currently used to offer a hook to
-     * calculate precise speed values based on elevation data stored in the specified edge.
-     */
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
     }
 
     public final DecimalEncodedValue getAverageSpeedEnc() {
