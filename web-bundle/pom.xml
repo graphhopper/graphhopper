@@ -6,6 +6,9 @@
     <artifactId>graphhopper-web-bundle</artifactId>
     <packaging>jar</packaging>
     <version>7.0-SNAPSHOT</version>
+    <properties>
+        <graphhopper-maps2.version>47b188d416409fc8af9300f1008ca7328f15e2c1</graphhopper-maps2.version>
+    </properties>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
@@ -178,7 +181,7 @@
                         <configuration>
                             <registryUrl>https://registry.npmjs.org</registryUrl>
                             <packages>
-                                <package>graphhopper-maps@0.0.0-47b188d416409fc8af9300f1008ca7328f15e2c1</package>
+                                <package>graphhopper-maps@0.0.0-${graphhopper-maps2.version}</package>
                             </packages>
                             <!-- do not automatically attach resources, we do this explicitly using the maven resource plugin below -->
                             <attachResources>false</attachResources>
