@@ -22,15 +22,12 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.util.details.PathDetail;
 
 import java.io.IOException;
 import java.util.Map;
 
 public class PathDetailDeserializer extends JsonDeserializer<PathDetail> {
-
-    ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public PathDetail deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
@@ -52,7 +49,7 @@ public class PathDetailDeserializer extends JsonDeserializer<PathDetail> {
         else if (val.isTextual())
             pd = new PathDetail(val.asText());
         else if (val.isObject())
-            pd = new PathDetail(objectMapper.convertValue(val, Map.class));
+            pd = new PathDetail(jp.getCodec().treeToValue(val, Map.class));
         else if (val.isNull())
             pd = new PathDetail(null);
         else
