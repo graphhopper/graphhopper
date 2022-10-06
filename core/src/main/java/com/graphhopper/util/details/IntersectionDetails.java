@@ -117,16 +117,9 @@ public class IntersectionDetails extends AbstractPathDetailsBuilder {
     }
 
     private int calculateBearing(double startLat, double startLon, EdgeIteratorState tmpEdge) {
-        double latitude;
-        double longitude;
-        PointList wayGeo = tmpEdge.fetchWayGeometry(FetchMode.ALL);
-        if (wayGeo.size() <= 2) {
-            latitude = nodeAccess.getLat(tmpEdge.getAdjNode());
-            longitude = nodeAccess.getLon(tmpEdge.getAdjNode());
-        } else {
-            latitude = wayGeo.getLat(1);
-            longitude = wayGeo.getLon(1);
-        }
+        PointList wayGeo = tmpEdge.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ);
+        final double latitude = wayGeo.getLat(0);
+        final double longitude = wayGeo.getLon(0);
         return (int) Math.round(AngleCalc.ANGLE_CALC.calcAzimuth(startLat, startLon, latitude, longitude));
     }
 
