@@ -531,14 +531,12 @@ public class GraphHopper {
             throw new IllegalArgumentException("spatial_rules.max_bbox has been deprecated. There is no replacement, all custom areas will be considered.");
 
         setProfiles(ghConfig.getProfiles());
-        vehiclesString = ghConfig.getString("graph.vehicles", vehiclesString);
-        if (vehiclesString.isEmpty()) {
-            vehiclesString = ghConfig.getString("graph.flag_encoders", vehiclesString);
-            if (!vehiclesString.isEmpty())
-                logger.warn("The option graph.flag_encoders is deprecated and will be removed. Replace with graph.vehicles");
-        } else if (!ghConfig.getString("graph.flag_encoders", "").isEmpty()) {
+
+        if (ghConfig.has("graph.vehicles") && ghConfig.has("graph.flag_encoders"))
             throw new IllegalArgumentException("Remove graph.flag_encoders as it cannot be used in parallel with graph.vehicles");
-        }
+        if (ghConfig.has("graph.flag_encoders"))
+            logger.warn("The option graph.flag_encoders is deprecated and will be removed. Replace with graph.vehicles");
+        vehiclesString = ghConfig.getString("graph.vehicles", ghConfig.getString("graph.flag_encoders", vehiclesString));
 
         encodedValuesString = ghConfig.getString("graph.encoded_values", encodedValuesString);
         dateRangeParserString = ghConfig.getString("datareader.date_range_parser_day", dateRangeParserString);
