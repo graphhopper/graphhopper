@@ -186,7 +186,12 @@
                             <tasks>
                                 <untar compression="gzip"
                                        src="graphhopper-maps-${graphhopper-maps2.version}.tgz"
-                                       dest="${basedir}/target/classes/com/graphhopper/maps/maps2"/>
+                                       dest="${basedir}/target/classes/com/graphhopper/maps/maps2">
+                                    <patternset>
+                                        <include name="package/dist/**"/>
+                                    </patternset>
+                                    <mapper type="regexp" from="package\/dist\/(.*)" to="\1"/>
+                                </untar>
                             </tasks>
                         </configuration>
                         <goals>
