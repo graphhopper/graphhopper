@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.OSMTurnRestriction;
+import com.graphhopper.reader.osm.OSMTurnRestriction;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.AccessFilter;

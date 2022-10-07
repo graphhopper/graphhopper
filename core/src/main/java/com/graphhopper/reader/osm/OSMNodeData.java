@@ -20,7 +20,6 @@ package com.graphhopper.reader.osm;
 
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
-import com.graphhopper.reader.PillarInfo;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.PointAccess;

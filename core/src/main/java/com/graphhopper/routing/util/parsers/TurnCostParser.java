@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.OSMTurnRestriction;
+import com.graphhopper.reader.osm.OSMTurnRestriction;
 import com.graphhopper.storage.Graph;
 
 /**
