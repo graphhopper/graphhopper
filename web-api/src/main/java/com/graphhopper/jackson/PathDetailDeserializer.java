@@ -17,14 +17,15 @@
  */
 package com.graphhopper.jackson;
 
-import java.io.IOException;
-
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.util.details.PathDetail;
+
+import java.io.IOException;
+import java.util.Map;
 
 public class PathDetailDeserializer extends JsonDeserializer<PathDetail> {
 
@@ -47,6 +48,8 @@ public class PathDetailDeserializer extends JsonDeserializer<PathDetail> {
             pd = new PathDetail(val.asLong());
         else if (val.isTextual())
             pd = new PathDetail(val.asText());
+        else if (val.isObject())
+            pd = new PathDetail(jp.getCodec().treeToValue(val, Map.class));
         else if (val.isNull())
             pd = new PathDetail(null);
         else
