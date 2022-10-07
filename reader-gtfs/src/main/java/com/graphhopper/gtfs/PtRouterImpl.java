@@ -223,17 +223,6 @@ public final class PtRouterImpl implements PtRouter {
                 }
             }
 
-            List<Label> entryStationLabels = new ArrayList<>();
-            for (Label label : stationRouter.calcLabels(startNode, initialTime)) {
-                visitedNodes++;
-                if (label.node.equals(destNode)) {
-                    entryStationLabels.add(label);
-                    break;
-                } else if (label.edge != null && label.edge.getType() == edgeType) {
-                    entryStationLabels.add(label);
-                }
-            }
-
             Map<Label.NodeId, Label> reverseSettledSet = new HashMap<>();
             for (Label stationLabel : stationLabels) {
                 reverseSettledSet.put(stationLabel.node, stationLabel);
@@ -353,11 +342,24 @@ public final class PtRouterImpl implements PtRouter {
             response.getHints().putObject("visited_nodes.average", visitedNodes);
             if (discoveredSolutions.isEmpty()) {
                 Map<String, Object> details = new HashMap<>();
+                List<Label> entryStationLabels = new ArrayList<>();
+                for (Label label : stationRouter.calcLabels(startNode, initialTime)) {
+                    visitedNodes++;
+                    if (label.node.equals(destNode)) {
+                        entryStationLabels.add(label);
+                        break;
+                    } else if (label.edge != null && label.edge.getType() == edgeType) {
+                        entryStationLabels.add(label);
+                    }
+                }
                 if (entryStationLabels.isEmpty()) {
                     details.put("entry_not_reached", "PT entry point cannot be reached within given street time.");
                 }
                 if (stationLabels.isEmpty()) {
                     details.put("exit_not_reached", "PT exit point cannot be reached within given street time.");
+                }
+                if (details.isEmpty()) {
+                    details.put("combined_not_reached", "PT entry and exit points found but no connecting route. Increase walking time to explore more results.");
                 }
                 response.addError(new ConnectionNotFoundException("No route found", details));
             }
