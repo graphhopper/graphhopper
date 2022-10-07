@@ -109,21 +109,21 @@ public class TurnCostStorageTest {
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge02, 2, edge23), 0);
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bikeEnc, edge02, 2, edge23), 0);
 
-        Set<List<Integer>> allTurnRelations = new HashSet<>();
-        TurnCostStorage.TurnRelationIterator iterator = turnCostStorage.getAllTurnRelations();
+        Set<List<Integer>> turnCosts = new HashSet<>();
+        TurnCostStorage.Iterator iterator = turnCostStorage.getAllTurnCosts();
         while (iterator.next()) {
-            allTurnRelations.add(Arrays.asList(iterator.getFromEdge(), iterator.getViaNode(), iterator.getToEdge(),
+            turnCosts.add(Arrays.asList(iterator.getFromEdge(), iterator.getViaNode(), iterator.getToEdge(),
                     (int) iterator.getCost(carEnc), (int) iterator.getCost(bikeEnc)));
         }
 
-        Set<List<Integer>> expectedTurnRelations = new HashSet<>();
-        expectedTurnRelations.add(Arrays.asList(edge31, 1, edge10, 2, Integer.MAX_VALUE));
-        expectedTurnRelations.add(Arrays.asList(edge42, 2, edge23, Integer.MAX_VALUE, Integer.MAX_VALUE));
-        expectedTurnRelations.add(Arrays.asList(edge02, 2, edge24, 0, Integer.MAX_VALUE));
-        expectedTurnRelations.add(Arrays.asList(edge02, 2, edge23, Integer.MAX_VALUE, Integer.MAX_VALUE));
-        expectedTurnRelations.add(Arrays.asList(edge23, 3, edge31, Integer.MAX_VALUE, 2));
+        Set<List<Integer>> expectedTurnCosts = new HashSet<>();
+        expectedTurnCosts.add(Arrays.asList(edge31, 1, edge10, 2, Integer.MAX_VALUE));
+        expectedTurnCosts.add(Arrays.asList(edge42, 2, edge23, Integer.MAX_VALUE, Integer.MAX_VALUE));
+        expectedTurnCosts.add(Arrays.asList(edge02, 2, edge24, 0, Integer.MAX_VALUE));
+        expectedTurnCosts.add(Arrays.asList(edge02, 2, edge23, Integer.MAX_VALUE, Integer.MAX_VALUE));
+        expectedTurnCosts.add(Arrays.asList(edge23, 3, edge31, Integer.MAX_VALUE, 2));
 
-        assertEquals(expectedTurnRelations, allTurnRelations);
+        assertEquals(expectedTurnCosts, turnCosts);
     }
 
     @Test
@@ -142,17 +142,17 @@ public class TurnCostStorageTest {
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge02, 2, edge23), 0);
         assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(bikeEnc, edge02, 2, edge23), 0);
 
-        Set<List<Integer>> allTurnRelations = new HashSet<>();
-        TurnCostStorage.TurnRelationIterator iterator = turnCostStorage.getAllTurnRelations();
+        Set<List<Integer>> turnCosts = new HashSet<>();
+        TurnCostStorage.Iterator iterator = turnCostStorage.getAllTurnCosts();
         while (iterator.next()) {
-            allTurnRelations.add(Arrays.asList(iterator.getFromEdge(), iterator.getViaNode(), iterator.getToEdge(),
+            turnCosts.add(Arrays.asList(iterator.getFromEdge(), iterator.getViaNode(), iterator.getToEdge(),
                     (int) iterator.getCost(carEnc), (int) iterator.getCost(bikeEnc)));
         }
 
-        Set<List<Integer>> expectedTurnRelations = new HashSet<>();
-        expectedTurnRelations.add(Arrays.asList(edge02, 2, edge23, Integer.MAX_VALUE, Integer.MAX_VALUE));
+        Set<List<Integer>> expectedTurnCosts = new HashSet<>();
+        expectedTurnCosts.add(Arrays.asList(edge02, 2, edge23, Integer.MAX_VALUE, Integer.MAX_VALUE));
 
-        assertEquals(expectedTurnRelations, allTurnRelations);
+        assertEquals(expectedTurnCosts, turnCosts);
     }
 
     @Test
@@ -161,7 +161,7 @@ public class TurnCostStorageTest {
         initGraph(g, accessEnc, speedEnc);
         TurnCostStorage turnCostStorage = g.getTurnCostStorage();
 
-        TurnCostStorage.TurnRelationIterator iterator = turnCostStorage.getAllTurnRelations();
+        TurnCostStorage.Iterator iterator = turnCostStorage.getAllTurnCosts();
         assertFalse(iterator.next());
     }
 

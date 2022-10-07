@@ -17,21 +17,17 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.OSMTurnRelation;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.reader.OSMTurnRestriction;
 import com.graphhopper.storage.Graph;
-
-import java.util.List;
 
 /**
  * This interface serves the purpose of converting relation flags into turn cost information. Unlike RelationTagParser
- * it can be assumed that the graph topology is already intact when handleTurnRelationTags is called.
+ * it can be assumed that the graph topology is already intact when handleTurnRestrictionTags is called.
  */
 public interface TurnCostParser {
     String getName();
 
-    void handleTurnRelationTags(OSMTurnRelation turnRelation, ExternalInternalMap map, Graph graph);
+    void handleTurnRestrictionTags(OSMTurnRestriction turnRestriction, ExternalInternalMap map, Graph graph);
 
     /**
      * This map associates the internal GraphHopper nodes IDs with external IDs (OSM) and similarly for the edge IDs

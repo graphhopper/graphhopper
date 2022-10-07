@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.OSMTurnRestriction;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -30,35 +30,35 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 /**
  * @author Peter Karich
  */
-public class OSMTurnRelationTest {
+public class OSMTurnRestrictionTest {
     @Test
-    public void testAcceptsTurnRelation() {
+    public void testAcceptsTurnRestriction() {
         List<String> vehicleTypes = new ArrayList<>(Arrays.asList("motorcar", "motor_vehicle", "vehicle"));
         List<String> vehicleTypesExcept = new ArrayList<>();
-        OSMTurnRelation osmTurnRelation = new OSMTurnRelation(1, 1, 1, OSMTurnRelation.Type.NOT);
-        assertTrue(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
+        OSMTurnRestriction osmTurnRestriction = new OSMTurnRestriction(1, 1, 1, OSMTurnRestriction.RestrictionType.NOT);
+        assertTrue(osmTurnRestriction.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
 
         vehicleTypesExcept.add("bus");
-        osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
-        assertTrue(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
+        osmTurnRestriction.setVehicleTypesExcept(vehicleTypesExcept);
+        assertTrue(osmTurnRestriction.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
 
         vehicleTypesExcept.clear();
         vehicleTypesExcept.add("vehicle");
-        osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
-        assertFalse(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
+        osmTurnRestriction.setVehicleTypesExcept(vehicleTypesExcept);
+        assertFalse(osmTurnRestriction.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
 
         vehicleTypesExcept.clear();
         vehicleTypesExcept.add("motor_vehicle");
         vehicleTypesExcept.add("vehicle");
-        osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
-        assertFalse(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
+        osmTurnRestriction.setVehicleTypesExcept(vehicleTypesExcept);
+        assertFalse(osmTurnRestriction.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
 
         vehicleTypesExcept.clear();
-        osmTurnRelation.setVehicleTypeRestricted("bus");
-        osmTurnRelation.setVehicleTypesExcept(vehicleTypesExcept);
-        assertFalse(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
+        osmTurnRestriction.setVehicleTypeRestricted("bus");
+        osmTurnRestriction.setVehicleTypesExcept(vehicleTypesExcept);
+        assertFalse(osmTurnRestriction.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
 
-        osmTurnRelation.setVehicleTypeRestricted("vehicle");
-        assertTrue(osmTurnRelation.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
+        osmTurnRestriction.setVehicleTypeRestricted("vehicle");
+        assertTrue(osmTurnRestriction.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
     }
 }
