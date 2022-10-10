@@ -99,7 +99,7 @@ module.exports.enableVectorTiles = function () {
     availableTileLayers["Omniscale Dev"] = omniscaleGray;
 
     require('leaflet.vectorgrid');
-    var vtLayer = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment", {
+    var vtLayer = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt", {
       rendererFactory: L.canvas.tile,
       maxZoom: 20,
       minZoom: 10,
@@ -109,13 +109,13 @@ module.exports.enableVectorTiles = function () {
             // weight == line width
             var color, opacity = 1, weight = 1, rc = properties.road_class;
             // if(properties.speed < 30) console.log(properties)
-            if (rc == "motorway") {
+            if (rc === "motorway") {
                 color = '#dd504b'; // red
                 weight = 3;
-            } else if (rc == "primary" || rc == "trunk") {
+            } else if (rc === "primary" || rc === "trunk") {
                 color = '#e2a012'; // orange
                 weight = 2;
-            } else if (rc == "secondary") {
+            } else if (rc === "secondary") {
                 weight = 2;
                 color = '#f7c913'; // yellow
             } else {
@@ -136,7 +136,7 @@ module.exports.enableVectorTiles = function () {
         },
       },
     })
-    var urbanDensityLayer = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt?details=max_speed&details=road_class&details=road_environment&details=urban_density", {
+    var urbanDensityLayer = L.vectorGrid.protobuf("/mvt/{z}/{x}/{y}.mvt?render_all=true", {
         rendererFactory: L.canvas.tile,
         maxZoom: 20,
         minZoom: 10,

@@ -193,7 +193,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         // if we do not store both directions ignore reverse == true for convenient reading
         if (storeTwoDirections && reverse) {
             flags = ref.ints[bwdDataIndex + ref.offset];
-            return minStorableValue + (flags & bwdMask) >>> bwdShift;
+            return minStorableValue + ((flags & bwdMask) >>> bwdShift);
         } else {
             flags = ref.ints[fwdDataIndex + ref.offset];
             if (negateReverseDirection && reverse)

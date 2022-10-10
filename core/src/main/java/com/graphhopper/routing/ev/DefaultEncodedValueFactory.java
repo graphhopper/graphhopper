@@ -88,6 +88,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = MaxSlope.create();
         } else if (AverageSlope.KEY.equals(name)) {
             enc = AverageSlope.create();
+        } else if (Curvature.KEY.equals(name)) {
+            enc = Curvature.create();
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }

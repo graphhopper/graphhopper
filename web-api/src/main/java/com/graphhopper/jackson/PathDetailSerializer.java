@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.graphhopper.util.details.PathDetail;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class PathDetailSerializer extends JsonSerializer<PathDetail> {
 
@@ -44,6 +45,8 @@ public class PathDetailSerializer extends JsonSerializer<PathDetail> {
             gen.writeBoolean((Boolean) value.getValue());
         else if (value.getValue() instanceof String)
             gen.writeString((String) value.getValue());
+        else if (value.getValue() instanceof Map)
+            gen.writeObject(value.getValue());
         else if (value.getValue() == null)
             gen.writeNull();
         else

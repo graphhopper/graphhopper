@@ -38,6 +38,7 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 
+import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -53,7 +54,7 @@ public class MapMatchingResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car,bike").
+                putObject("graph.vehicles", "car,bike").
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
@@ -69,7 +70,7 @@ public class MapMatchingResourceTest {
 
     @Test
     public void testGPX() {
-        final Response response = app.client().target("http://localhost:8080/match?profile=fast_car")
+        final Response response = clientTarget(app, "/match?profile=fast_car")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("/tour2-with-loop.gpx")))
                 .invoke();
@@ -89,7 +90,7 @@ public class MapMatchingResourceTest {
     @Test
     public void testBike() throws ParseException {
         WKTReader wktReader = new WKTReader();
-        final Response response = app.client().target("http://localhost:8080/match?profile=fast_bike")
+        final Response response = clientTarget(app, "/match?profile=fast_bike")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();
@@ -107,7 +108,7 @@ public class MapMatchingResourceTest {
 
     @Test
     public void testGPX10() {
-        final Response response = app.client().target("http://localhost:8080/match?profile=fast_car")
+        final Response response = clientTarget(app, "/match?profile=fast_car")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("gpxv1_0.gpx")))
                 .invoke();
@@ -116,7 +117,7 @@ public class MapMatchingResourceTest {
 
     @Test
     public void testEmptyGPX() {
-        final Response response = app.client().target("http://localhost:8080/match?profile=fast_car")
+        final Response response = clientTarget(app, "/match?profile=fast_car")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("test-only-wpt.gpx")))
                 .invoke();

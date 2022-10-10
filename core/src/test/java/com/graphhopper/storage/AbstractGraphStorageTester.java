@@ -32,6 +32,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -266,7 +267,7 @@ public abstract class AbstractGraphStorageTester {
     public void testCopyProperties() {
         graph = createGHStorage();
         EdgeIteratorState edge = graph.edge(1, 3).setDistance(10).set(carAccessEnc, true, false).
-                setKeyValues(createKV("name", "testing")).setWayGeometry(Helper.createPointList(1, 2));
+                setKeyValues(createKV(STREET_NAME, "testing")).setWayGeometry(Helper.createPointList(1, 2));
 
         EdgeIteratorState newEdge = graph.edge(1, 3).setDistance(10).set(carAccessEnc, true, false);
         newEdge.copyPropertiesFrom(edge);
@@ -654,10 +655,10 @@ public abstract class AbstractGraphStorageTester {
     public void testEdgeKVStorage() {
         graph = createGHStorage();
         EdgeIteratorState iter1 = graph.edge(0, 1).setDistance(10).set(carAccessEnc, true, true);
-        iter1.setKeyValues(createKV("name", "named street1"));
+        iter1.setKeyValues(createKV(STREET_NAME, "named street1"));
 
         EdgeIteratorState iter2 = graph.edge(0, 1).setDistance(10).set(carAccessEnc, true, true);
-        iter2.setKeyValues(createKV("name", "named street2"));
+        iter2.setKeyValues(createKV(STREET_NAME, "named street2"));
 
         assertEquals(graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName(), "named street1");
         assertEquals(graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName(), "named street2");

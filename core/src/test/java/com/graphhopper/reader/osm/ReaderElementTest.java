@@ -15,8 +15,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader;
+package com.graphhopper.reader.osm;
 
+import com.graphhopper.reader.ReaderElement;
+import com.graphhopper.reader.ReaderWay;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
@@ -27,7 +29,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Peter Karich
  */
-public class OSMElementTest {
+public class ReaderElementTest {
     @Test
     public void testHasTag() {
         ReaderElement instance = new ReaderWay(1);

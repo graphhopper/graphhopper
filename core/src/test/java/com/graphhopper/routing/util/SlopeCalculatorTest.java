@@ -1,10 +1,9 @@
-package com.graphhopper.routing.util.parsers;
+package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.AverageSlope;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.MaxSlope;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;

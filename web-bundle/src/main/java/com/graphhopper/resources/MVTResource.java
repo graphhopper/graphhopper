@@ -3,9 +3,13 @@ package com.graphhopper.resources;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import com.wdtinc.mapbox_vector_tile.VectorTile;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.IGeometryFilter;
@@ -29,10 +33,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 @Path("mvt")
 public class MVTResource {
@@ -57,7 +63,7 @@ public class MVTResource {
             @PathParam("z") int zInfo,
             @PathParam("x") int xInfo,
             @PathParam("y") int yInfo,
-            @QueryParam(Parameters.Details.PATH_DETAILS) List<String> pathDetails) {
+            @QueryParam("render_all") @DefaultValue("false") Boolean renderAll) {
 
         if (zInfo <= 9) {
             VectorTile.Tile.Builder mvtBuilder = VectorTile.Tile.newBuilder();
@@ -94,14 +100,9 @@ public class MVTResource {
         locationIndex.query(bbox, edgeId -> {
             EdgeIteratorState edge = graphHopper.getBaseGraph().getEdgeIteratorStateForKey(edgeId * 2);
             LineString lineString;
-            if (pathDetails.contains(UrbanDensity.KEY)) {
-                if (zInfo >= 9) {
-                    PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
-                    lineString = pl.toLineString(false);
-                } else {
-                    // skip edge for certain zoom
-                    return;
-                }
+            if (renderAll) {
+                PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+                lineString = pl.toLineString(false);
             } else {
                 RoadClass rc = edge.get(roadClassEnc);
                 if (zInfo >= 14) {
@@ -123,23 +124,25 @@ public class MVTResource {
             }
 
             edgeCounter.incrementAndGet();
-            Map<String, Object> map = new HashMap<>(2);
-            map.put("name", edge.getName());
-            for (String str : pathDetails) {
-                // how to indicate an erroneous parameter?
-                if (str.contains(",") || !encodingManager.hasEncodedValue(str))
-                    continue;
-
-                EncodedValue ev = encodingManager.getEncodedValue(str, EncodedValue.class);
+            Map<String, Object> map = new LinkedHashMap<>();
+            edge.getKeyValues().forEach(
+                    entry -> map.put(entry.key, entry.value)
+            );
+            map.put("edge_id", edge.getEdge());
+            map.put("edge_key", edge.getEdgeKey());
+            map.put("base_node", edge.getBaseNode());
+            map.put("adj_node", edge.getAdjNode());
+            map.put("distance", edge.getDistance());
+            encodingManager.getEncodedValues().forEach(ev -> {
                 if (ev instanceof EnumEncodedValue)
-                    map.put(ev.getName(), edge.get((EnumEncodedValue) ev).toString());
+                    map.put(ev.getName(), edge.get((EnumEncodedValue) ev).toString() + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((EnumEncodedValue) ev).toString() : ""));
                 else if (ev instanceof DecimalEncodedValue)
-                    map.put(ev.getName(), edge.get((DecimalEncodedValue) ev));
+                    map.put(ev.getName(), edge.get((DecimalEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((DecimalEncodedValue) ev) : ""));
                 else if (ev instanceof BooleanEncodedValue)
-                    map.put(ev.getName(), edge.get((BooleanEncodedValue) ev));
+                    map.put(ev.getName(), edge.get((BooleanEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((BooleanEncodedValue) ev) : ""));
                 else if (ev instanceof IntEncodedValue)
-                    map.put(ev.getName(), edge.get((IntEncodedValue) ev));
-            }
+                    map.put(ev.getName(), edge.get((IntEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((IntEncodedValue) ev) : ""));
+            });
 
             lineString.setUserData(map);
 
