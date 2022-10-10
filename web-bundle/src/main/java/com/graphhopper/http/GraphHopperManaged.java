@@ -85,12 +85,11 @@ public class GraphHopperManaged implements Managed {
             else {
                 if (customModelFileName.contains(File.separator))
                     throw new IllegalArgumentException("Use custom_model_folder for the custom_model_file parent");
-
+                if (!customModelFileName.endsWith(".json"))
+                    throw new IllegalArgumentException("Yaml is no longer supported, see #2672. Use JSON with optional comments //");
                 try {
                     // Somehow dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
                     String string = Helper.readJSONFileWithoutComments(Paths.get(customModelFolder).resolve(customModelFileName).toFile().getAbsolutePath());
-                    if (!customModelFileName.endsWith(".json"))
-                        throw new IllegalArgumentException("Yaml is no longer supported. Use JSON with optional comments // at the start of a line");
                     CustomModel customModel = jsonOM.readValue(string, CustomModel.class);
                     newProfiles.add(new CustomProfile(profile).setCustomModel(customModel));
                 } catch (Exception ex) {
