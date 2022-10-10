@@ -189,6 +189,7 @@
                                        dest="${basedir}/target/classes/com/graphhopper/maps/maps2">
                                     <patternset>
                                         <include name="package/dist/**"/>
+                                        <exclude name="package/dist/config.js"/>
                                     </patternset>
                                     <mapper type="regexp" from="package\/dist\/(.*)" to="\1"/>
                                 </untar>
