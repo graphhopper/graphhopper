@@ -2021,9 +2021,9 @@ public class GraphHopperTest {
 
     @Test
     public void testOneWaySubnetwork_issue1807() {
-        // There is a straight-only turn relation at the junction of Franziskastraße and Gudulastraße, which restricts
+        // There is a straight-only turn restriction at the junction of Franziskastraße and Gudulastraße, which restricts
         // turning onto Gudulastraße. However, Gudulastraße can also not be accessed from the south/west, because
-        // its a one-way. This creates a subnetwork that is not accessible at all. We can only detect this if we
+        // it is a one-way. This creates a subnetwork that is not accessible at all. We can only detect this if we
         // consider the turn restrictions during the subnetwork search.
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).

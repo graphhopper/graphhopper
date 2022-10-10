@@ -285,7 +285,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0, pathDetailGraph);
         assertTrue(details.size() == 1);
 
         List<PathDetail> averageSpeedDetails = details.get(AVERAGE_SPEED);
@@ -308,7 +308,7 @@ public class PathTest {
         Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 6);
         assertTrue(p.isFound());
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0, pathDetailGraph);
         assertTrue(details.size() == 1);
         List<PathDetail> averageSpeedDetails = details.get(AVERAGE_SPEED);
         assertEquals(4, averageSpeedDetails.size());
@@ -317,7 +317,7 @@ public class PathTest {
         p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(6, 1);
         assertTrue(p.isFound());
         details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0, pathDetailGraph);
         assertTrue(details.size() == 1);
         averageSpeedDetails = details.get(AVERAGE_SPEED);
         assertEquals(5, averageSpeedDetails.size());
@@ -331,7 +331,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(STREET_NAME), new PathDetailsBuilderFactory(), 0);
+                Arrays.asList(STREET_NAME), new PathDetailsBuilderFactory(), 0, pathDetailGraph);
         assertTrue(details.size() == 1);
 
         List<PathDetail> streetNameDetails = details.get(STREET_NAME);
@@ -357,7 +357,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(EDGE_ID), new PathDetailsBuilderFactory(), 0);
+                Arrays.asList(EDGE_ID), new PathDetailsBuilderFactory(), 0, pathDetailGraph);
         assertTrue(details.size() == 1);
 
         List<PathDetail> edgeIdDetails = details.get(EDGE_ID);
@@ -382,7 +382,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(EDGE_KEY), new PathDetailsBuilderFactory(), 0);
+                Arrays.asList(EDGE_KEY), new PathDetailsBuilderFactory(), 0, pathDetailGraph);
         List<PathDetail> edgeKeyDetails = details.get(EDGE_KEY);
 
         assertEquals(4, edgeKeyDetails.size());
@@ -399,7 +399,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(EDGE_KEY), new PathDetailsBuilderFactory(), 0);
+                Arrays.asList(EDGE_KEY), new PathDetailsBuilderFactory(), 0, pathDetailGraph);
         List<PathDetail> edgeKeyDetails = details.get(EDGE_KEY);
 
         assertEquals(4, edgeKeyDetails.size());
@@ -416,7 +416,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(TIME), new PathDetailsBuilderFactory(), 0);
+                Arrays.asList(TIME), new PathDetailsBuilderFactory(), 0, pathDetailGraph);
         assertTrue(details.size() == 1);
 
         List<PathDetail> timeDetails = details.get(TIME);
@@ -440,7 +440,7 @@ public class PathTest {
         assertTrue(p.isFound());
 
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(DISTANCE), new PathDetailsBuilderFactory(), 0);
+                Arrays.asList(DISTANCE), new PathDetailsBuilderFactory(), 0, pathDetailGraph);
         assertTrue(details.size() == 1);
 
         List<PathDetail> distanceDetails = details.get(DISTANCE);
@@ -448,6 +448,35 @@ public class PathTest {
         assertEquals(5D, distanceDetails.get(1).getValue());
         assertEquals(10D, distanceDetails.get(2).getValue());
         assertEquals(5D, distanceDetails.get(3).getValue());
+    }
+
+    @Test
+    public void testCalcIntersectionDetails() {
+        ShortestWeighting weighting = new ShortestWeighting(carAccessEnc, carAvSpeedEnc);
+        Path p = new Dijkstra(pathDetailGraph, weighting, TraversalMode.NODE_BASED).calcPath(1, 5);
+        assertTrue(p.isFound());
+
+        Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
+                Arrays.asList(INTERSECTION), new PathDetailsBuilderFactory(), 0, pathDetailGraph);
+        assertTrue(details.size() == 1);
+
+        List<PathDetail> intersectionDetails = details.get(INTERSECTION);
+        assertEquals(4, intersectionDetails.size());
+
+        Map<String, Object> intersectionMap = new HashMap<>();
+        intersectionMap.put("out", 0);
+        intersectionMap.put("entries", Arrays.asList(true));
+        intersectionMap.put("bearings", Arrays.asList(90));
+
+        assertEquals(intersectionMap, intersectionDetails.get(0).getValue());
+
+        intersectionMap.clear();
+        intersectionMap.put("out", 0);
+        intersectionMap.put("in", 1);
+        intersectionMap.put("entries", Arrays.asList(true, false));
+        intersectionMap.put("bearings", Arrays.asList(90, 270));
+
+        assertEquals(intersectionMap, intersectionDetails.get(1).getValue());
     }
 
     /**

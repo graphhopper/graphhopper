@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader;
+package com.graphhopper.reader.osm;
 
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;

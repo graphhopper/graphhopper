@@ -1,6 +1,6 @@
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.osm.OSMTurnRestriction;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TransportationMode;
@@ -15,7 +15,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class OSMTurnRelationParserTest {
+public class OSMTurnRestrictionParserTest {
 
     @Test
     public void testGetRestrictionAsEntries() {
@@ -31,7 +31,7 @@ public class OSMTurnRelationParserTest {
         internalToOSMEdge.put(3, 3L);
         internalToOSMEdge.put(4, 4L);
 
-        OSMTurnRelationParser parser = new OSMTurnRelationParser(accessEnc, turnCostEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
+        OSMTurnRestrictionParser parser = new OSMTurnRestrictionParser(accessEnc, turnCostEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
         BaseGraph graph = new BaseGraph.Builder(em.getIntsForFlags()).withTurnCosts(true).create();
         initGraph(graph, accessEnc, speedEnc);
         TurnCostParser.ExternalInternalMap map = new TurnCostParser.ExternalInternalMap() {
@@ -51,7 +51,7 @@ public class OSMTurnRelationParserTest {
         };
 
         // TYPE == ONLY
-        OSMTurnRelation instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.ONLY);
+        OSMTurnRestriction instance = new OSMTurnRestriction(4, 3, 3, OSMTurnRestriction.RestrictionType.ONLY);
         parser.addRelationToTCStorage(instance, map, graph);
 
         TurnCostStorage tcs = graph.getTurnCostStorage();
@@ -60,7 +60,7 @@ public class OSMTurnRelationParserTest {
         assertTrue(Double.isInfinite(tcs.get(turnCostEnc, 4, 3, 2)));
 
         // TYPE == NOT
-        instance = new OSMTurnRelation(4, 3, 3, OSMTurnRelation.Type.NOT);
+        instance = new OSMTurnRestriction(4, 3, 3, OSMTurnRestriction.RestrictionType.NOT);
         parser.addRelationToTCStorage(instance, map, graph);
         assertTrue(Double.isInfinite(tcs.get(turnCostEnc, 4, 3, 3)));
     }

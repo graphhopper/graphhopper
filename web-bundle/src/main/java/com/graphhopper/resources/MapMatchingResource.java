@@ -130,16 +130,16 @@ public class MapMatchingResource {
         List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
         MatchResult matchResult = matching.match(measurements);
 
-        double took = sw.stop().getMillisDouble();
+        sw.stop();
         logger.info(objectMapper.createObjectNode()
-                .put("duration", took)
+                .put("duration", sw.getNanos())
                 .put("profile", profile)
                 .put("observations", measurements.size())
                 .putPOJO("mapmatching", matching.getStatistics()).toString());
 
         if ("extended_json".equals(outType)) {
             return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded)).
-                    header("X-GH-Took", "" + Math.round(took)).
+                    header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                     build();
         } else {
             Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
@@ -163,10 +163,10 @@ public class MapMatchingResource {
                         .map(Date::getTime)
                         .orElse(System.currentTimeMillis());
                 return Response.ok(GpxConversions.createGPX(rsp.getBest().getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION, tr), "application/gpx+xml").
-                        header("X-GH-Took", "" + Math.round(took)).
+                        header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                         build();
             } else {
-                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
+                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, sw.getMillisDouble());
 
                 Map<String, Object> matchStatistics = new HashMap<>();
                 matchStatistics.put("distance", matchResult.getMatchLength());
@@ -184,7 +184,7 @@ public class MapMatchingResource {
                     map.putPOJO("traversal_keys", traversalKeylist);
                 }
                 return Response.ok(map).
-                        header("X-GH-Took", "" + Math.round(took)).
+                        header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                         build();
             }
         }

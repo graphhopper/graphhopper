@@ -112,7 +112,7 @@ public class PathSimplificationTest {
         Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 10);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0, g);
 
         ResponsePath responsePath = new ResponsePath();
         responsePath.setInstructions(wayList);

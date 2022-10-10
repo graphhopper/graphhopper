@@ -17,7 +17,6 @@
  */
 package com.graphhopper.reader.osm.conditional;
 
-import com.graphhopper.reader.ConditionalTagInspector;
 import com.graphhopper.reader.ReaderWay;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

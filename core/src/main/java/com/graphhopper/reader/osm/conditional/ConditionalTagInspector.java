@@ -15,15 +15,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.osm;
+package com.graphhopper.reader.osm.conditional;
 
-import com.graphhopper.GraphHopper;
-import com.graphhopper.util.JsonFeatureCollection;
+import com.graphhopper.reader.ReaderWay;
 
 /**
- * This class only exists for backward compatibility.
- * @deprecated Use {@link GraphHopper} instead.
+ * @author Peter Karich
  */
-@Deprecated
-public class GraphHopperOSM extends GraphHopper {
+public interface ConditionalTagInspector {
+    boolean isRestrictedWayConditionallyPermitted(ReaderWay way);
+
+    boolean isPermittedWayConditionallyRestricted(ReaderWay way);
 }

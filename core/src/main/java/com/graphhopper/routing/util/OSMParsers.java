@@ -18,11 +18,11 @@
 
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.OSMTurnRestriction;
 import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.util.parsers.OSMTurnRelationParser;
+import com.graphhopper.routing.util.parsers.OSMTurnRestrictionParser;
 import com.graphhopper.routing.util.parsers.RelationTagParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.util.parsers.TurnCostParser;
@@ -59,7 +59,7 @@ public class OSMParsers {
     public OSMParsers addVehicleTagParser(VehicleTagParser vehicleTagParser) {
         vehicleTagParsers.add(vehicleTagParser);
         if (vehicleTagParser.supportsTurnCosts())
-            turnCostParsers.add(new OSMTurnRelationParser(vehicleTagParser.getAccessEnc(), vehicleTagParser.getTurnCostEnc(), vehicleTagParser.getRestrictions()));
+            turnCostParsers.add(new OSMTurnRestrictionParser(vehicleTagParser.getAccessEnc(), vehicleTagParser.getTurnCostEnc(), vehicleTagParser.getRestrictions()));
         return this;
     }
 
@@ -94,8 +94,8 @@ public class OSMParsers {
         return edgeFlags;
     }
 
-    public void handleTurnRelationTags(OSMTurnRelation turnRelation, TurnCostParser.ExternalInternalMap map, Graph graph) {
-        turnCostParsers.forEach(t -> t.handleTurnRelationTags(turnRelation, map, graph));
+    public void handleTurnRestrictionTags(OSMTurnRestriction turnRestriction, TurnCostParser.ExternalInternalMap map, Graph graph) {
+        turnCostParsers.forEach(t -> t.handleTurnRestrictionTags(turnRestriction, map, graph));
     }
 
     public IntsRef createRelationFlags() {
