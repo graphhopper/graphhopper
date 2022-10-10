@@ -23,7 +23,7 @@ graphhopper:
   # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
   #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
   #   in seconds, so for example it does not work with shortest weighting.
-  # - custom_model_file: when you specified "weighting: custom" you need to set a yaml or json file inside your custom_model_folder
+  # - custom_model_file: when you specified "weighting: custom" you need to set a json file inside your custom_model_folder
   #   or working directory that defines the custom_model. If you want an empty model you can also set "custom_model_file: empty".
   #   You can also use th e`custom_model` field instead and specify your custom model in the profile directly.
   #
@@ -42,8 +42,8 @@ graphhopper:
   # - name: bike
   #   vehicle: bike
   #   weighting: custom
-  #   # the custom model in bike2.yml is defined to avoid hills
-  #   custom_model_file: bike2.yml
+  #   # the custom model in bike2.json is defined to avoid hills
+  #   custom_model_file: bike2.json
   custom_model_folder: custom_models
 
   # Speed mode:
