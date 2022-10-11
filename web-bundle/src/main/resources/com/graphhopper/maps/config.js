@@ -1,8 +1,5 @@
 const config = {
-    // todo: get rid of host and port here, but just '/' does not seem to work unfortunately, maybe we need to get rid
-    //       of the `new URL(...)` calls in graphhopper-maps?
-    // api: '/',
-    api: 'http://localhost:8989/',
+    api: location.origin + '/',
     defaultTiles: 'OpenStreetMap',
     keys: {
         graphhopper: "",
