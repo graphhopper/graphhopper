@@ -4,7 +4,7 @@
 
 Try out our live demo called [GraphHopper Maps](https://graphhopper.com/maps/)
 
- [![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2022/10/grafik-1024x724.png)](https://graphhopper.com/maps)
+ [![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2022/10/maps2-1024x661.png)](https://graphhopper.com/maps)
 
 [The Readme](../README.md#features) lists all features.
 
