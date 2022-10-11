@@ -7,7 +7,7 @@
     <packaging>jar</packaging>
     <version>7.0-SNAPSHOT</version>
     <properties>
-        <graphhopper-maps2.version>0.0.0-128ba120cfe135afaa52ae8b22fce69602766d9d</graphhopper-maps2.version>
+        <graphhopper-maps.version>0.0.0-9366a185b139594fd4c2e9f7f1c623d07ea275eb</graphhopper-maps.version>
     </properties>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
@@ -144,35 +144,13 @@
                         </configuration>
                     </execution>
                     <execution>
-                        <id>npm install</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <configuration>
-                            <arguments>install</arguments>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>npm run bundleProduction</id>
-                        <goals>
-                            <goal>npm</goal>
-                        </goals>
-                        <phase>generate-resources</phase>
-                        <configuration>
-                            <arguments>run bundleProduction</arguments>
-                            <environmentVariables>
-                                <BROWSERIFYSWAP_ENV>development</BROWSERIFYSWAP_ENV>
-                            </environmentVariables>
-                        </configuration>
-                    </execution>
-                    <execution>
                         <id>download graphhopper maps</id>
                         <phase>generate-resources</phase>
                         <goals>
                             <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <arguments>pack graphhopper-maps@${graphhopper-maps2.version}</arguments>
+                            <arguments>pack graphhopper-maps@${graphhopper-maps.version}</arguments>
                         </configuration>
                     </execution>
                 </executions>
@@ -185,8 +163,8 @@
                         <configuration>
                             <tasks>
                                 <untar compression="gzip"
-                                       src="graphhopper-maps-${graphhopper-maps2.version}.tgz"
-                                       dest="${basedir}/target/classes/com/graphhopper/maps/maps2">
+                                       src="graphhopper-maps-${graphhopper-maps.version}.tgz"
+                                       dest="${basedir}/target/classes/com/graphhopper/maps">
                                     <patternset>
                                         <include name="package/dist/**"/>
                                         <exclude name="package/dist/config.js"/>
@@ -203,7 +181,6 @@
             </plugin>
         </plugins>
     </build>
-
 </project>
 
 
