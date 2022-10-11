@@ -150,7 +150,9 @@
                             <goal>npm</goal>
                         </goals>
                         <configuration>
-                            <arguments>pack graphhopper-maps@${graphhopper-maps.version}</arguments>
+                            <arguments>pack --pack-destination=${basedir}/target
+                                graphhopper-maps@${graphhopper-maps.version}
+                            </arguments>
                         </configuration>
                     </execution>
                 </executions>
@@ -159,11 +161,25 @@
                 <artifactId>maven-antrun-plugin</artifactId>
                 <executions>
                     <execution>
+                        <!-- this is needed because we want to download the maps bundle to the target folder -->
+                        <id>create target directory</id>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <tasks>
+                                <mkdir dir="${basedir}/target"/>
+                            </tasks>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>unzip maps bundle</id>
                         <phase>process-resources</phase>
                         <configuration>
                             <tasks>
                                 <untar compression="gzip"
-                                       src="graphhopper-maps-${graphhopper-maps.version}.tgz"
+                                       src="${basedir}/target/graphhopper-maps-${graphhopper-maps.version}.tgz"
                                        dest="${basedir}/target/classes/com/graphhopper/maps">
                                     <patternset>
                                         <include name="package/dist/**"/>
