@@ -56,7 +56,7 @@ public class CurvatureWeighting extends PriorityWeighting {
     }
 
     @Override
-    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse, long time) {
         double priority = priorityEnc.getDecimal(false, edgeState.getFlags());
         double bendiness = curvatureEnc.getDecimal(false, edgeState.getFlags());
         double speed = getRoadSpeed(edgeState, reverse);
