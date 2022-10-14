@@ -31,15 +31,14 @@ Otherwise it might require lots of RAM per request! See [#734](https://github.co
 
 ### API Tokens
 
-By default, the GraphHopper UI uses [Omniscale](http://omniscale.com/) and/or [Thunderforest](http://thunderforest.com/) as layer service.
-Either you get a plan there, then set the API key in the options.js file, or you
-have to remove Omniscale from the [JavaScript file](https://github.com/graphhopper/graphhopper/blob/master/web/src/main/resources/com/graphhopper/maps/js/map.js).
+The GraphHopper Maps UI uses the [GraphHopper Directions API](https://docs.graphhopper.com/#tag/Geocoding-API) for geocoding.
+To be able to use the autocomplete feature of the point inputs you get your API Token at
+[graphhopper.com](https://www.graphhopper.com/) and set this in the config.js file, see
+web-bundle/src/main/resources/com/graphhopper/maps/config.js
 
-GraphHopper uses the [GraphHopper Directions API](https://docs.graphhopper.com/#tag/Geocoding-API) for geocoding.
-To be able to use the autocomplete feature of the point inputs you have to:
+The Maps UI also uses [Omniscale](http://omniscale.com/) and [Thunderforest](http://thunderforest.com/) as layer service.
+You can get a plan there too and set the API keys in the config.js file.
 
- * Get your API Token at: https://www.graphhopper.com/ and set this in the options.js
- * Don't forget the Attribution when using the free package
 
 ## Worldwide Setup
 
