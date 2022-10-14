@@ -22,7 +22,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
@@ -390,7 +389,7 @@ public class OSMReaderTest {
     @Test
     public void testFords() {
         GraphHopper hopper = new GraphHopper();
-        hopper.setFlagEncodersString("car|block_fords=true");
+        hopper.setVehiclesString("car|block_fords=true");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
@@ -590,16 +589,16 @@ public class OSMReaderTest {
         rel.add(new ReaderRelation.Member(ReaderElement.Type.NODE, 3L, "via"));
         rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 4L, "to"));
 
-        List<OSMTurnRelation> osmRel = OSMReader.createTurnRelations(rel);
+        List<OSMTurnRestriction> osmRel = OSMReader.createTurnRestrictions(rel);
         assertEquals(2, osmRel.size());
 
         assertEquals(1, osmRel.get(0).getOsmIdFrom());
         assertEquals(4, osmRel.get(0).getOsmIdTo());
-        assertEquals(OSMTurnRelation.Type.NOT, osmRel.get(0).getRestriction());
+        assertEquals(OSMTurnRestriction.RestrictionType.NOT, osmRel.get(0).getRestriction());
 
         assertEquals(2, osmRel.get(1).getOsmIdFrom());
         assertEquals(4, osmRel.get(1).getOsmIdTo());
-        assertEquals(OSMTurnRelation.Type.NOT, osmRel.get(1).getRestriction());
+        assertEquals(OSMTurnRestriction.RestrictionType.NOT, osmRel.get(1).getRestriction());
     }
 
     @Test
@@ -889,23 +888,6 @@ public class OSMReaderTest {
         assertEquals(0.1, snap.getSnappedPoint().lat, 0.1);
         assertEquals(-179.6, snap.getSnappedPoint().lon, 0.1);
         assertEquals(112, snap.getClosestEdge().getDistance() / 1000, 1);
-    }
-
-    @Test
-    public void testRoutingRequestFails_issue665() {
-        GraphHopper hopper = new GraphHopper()
-                .setOSMFile(getClass().getResource(file7).getFile())
-                .setProfiles(
-                        new Profile("profile1").setVehicle("car").setWeighting("fastest"),
-                        new Profile("profile2").setVehicle("motorcycle").setWeighting("curvature")
-                )
-                .setGraphHopperLocation(dir);
-        hopper.importOrLoad();
-        GHRequest req = new GHRequest(48.977277, 8.256896, 48.978876, 8.254884).
-                setProfile("profile2");
-
-        GHResponse ghRsp = hopper.route(req);
-        assertFalse(ghRsp.hasErrors(), ghRsp.getErrors().toString());
     }
 
     @Test

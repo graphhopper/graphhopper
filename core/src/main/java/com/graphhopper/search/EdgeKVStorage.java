@@ -430,6 +430,11 @@ public class EdgeKVStorage {
     }
 
     public static class KeyValue {
+        public static final String STREET_NAME = "street_name";
+        public static final String STREET_REF = "street_ref";
+        public static final String STREET_DESTINATION = "street_destination";
+        public static final String STREET_DESTINATION_REF = "street_destination_ref";
+
         public String key;
         public Object value;
         public boolean fwd, bwd;

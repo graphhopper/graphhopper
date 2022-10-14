@@ -129,37 +129,6 @@ class TagParsingTest {
     }
 
     @Test
-    public void testCompatibilityBug() {
-        EncodingManager manager2 = EncodingManager.create("bike2");
-        ReaderWay osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "footway");
-        osmWay.setTag("name", "test");
-
-        Bike2WeightTagParser parser = new Bike2WeightTagParser(manager2, new PMap());
-        parser.init(new DateRangeParser());
-        IntsRef flags = parser.handleWayTags(manager2.createEdgeFlags(), osmWay);
-        double singleSpeed = parser.avgSpeedEnc.getDecimal(false, flags);
-        assertEquals(BikeCommonTagParser.PUSHING_SECTION_SPEED, singleSpeed, 1e-3);
-        assertEquals(singleSpeed, parser.avgSpeedEnc.getDecimal(true, flags), 1e-3);
-
-        EncodingManager manager = EncodingManager.create("bike2,bike,foot");
-        FootTagParser footParser = new FootTagParser(manager, new PMap());
-        footParser.init(new DateRangeParser());
-        Bike2WeightTagParser bikeParser = new Bike2WeightTagParser(manager, new PMap());
-        bikeParser.init(new DateRangeParser());
-
-        flags = footParser.handleWayTags(manager.createEdgeFlags(), osmWay);
-        flags = bikeParser.handleWayTags(flags, osmWay);
-        DecimalEncodedValue bikeSpeedEnc = manager.getDecimalEncodedValue(VehicleSpeed.key("bike2"));
-        assertEquals(singleSpeed, bikeSpeedEnc.getDecimal(false, flags), 1e-2);
-        assertEquals(singleSpeed, bikeSpeedEnc.getDecimal(true, flags), 1e-2);
-
-        DecimalEncodedValue footSpeedEnc = manager.getDecimalEncodedValue(VehicleSpeed.key("foot"));
-        assertEquals(5, footSpeedEnc.getDecimal(false, flags), 1e-2);
-        assertEquals(5, footSpeedEnc.getDecimal(true, flags), 1e-2);
-    }
-
-    @Test
     public void testSharedEncodedValues() {
         BooleanEncodedValue carAccessEnc = VehicleAccess.create("car");
         BooleanEncodedValue footAccessEnc = VehicleAccess.create("foot");

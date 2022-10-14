@@ -4,6 +4,8 @@ GraphHopper provides an easy-to-use way to customize its route calculations: Cus
 default routing behavior by specifying a set of rules in JSON language. Here we will first explain some theoretical
 background and then show how to use custom models in practice.
 
+Try some live examples in [this blog post](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/).
+
 ## How GraphHopper's route calculations work
 
 One of GraphHopper's most important functionality is the calculation of the 'optimal' route between two locations. To do
@@ -71,21 +73,36 @@ encoded values are the following (some of their possible values are given in bra
 - surface: (PAVED, DIRT, SAND, GRAVEL, ...)
 - smoothness: (EXCELLENT, GOOD, INTERMEDIATE, ...)
 - toll: (MISSING, NO, HGV, ALL)
+- bike_network, foot_network: (MISSING, INTERNATIONAL, NATIONAL, REGIONAL, LOCAL, OTHER)
+- country: (`MISSING` or the country as a `ISO3166-1:alpha3` code e.g. `DEU`)
+- hazmat: (YES, NO), hazmat_tunnel: (A, B, .., E), hazmat_water: (YES, PERMISSIVE, NO)
+- hgv: (MISSING, YES, DESIGNATED, ...)
+- track_type: (MISSING, GRADE1, GRADE2, ..., GRADE5)
+- urban_density: (RURAL, RESIDENTIAL, CITY)
 
-To learn about all available encoded values you can query the `/info` endpoint.
+
+To learn about all available encoded values you can query the `/info` endpoint
 
 Besides this kind of categories, which can take multiple different string values, there are also some that represent a
-boolean value (they are either true or false for a given edge), like:
+boolean value (they are either true or false for a given road segment), like:
 
 - get_off_bike
 - road_class_link
+- roundabout
+- with postfix `_access` contains the access (as boolean) for a specific vehicle
 
 There are also some that take on a numeric value, like:
 
-- max_speed
-- max_weight
-- max_height
-- max_width
+- average_slope: a number for 100 * "elevation change" / edge_distance for a road segment; it changes the sign in reverse direction; see also max_slope
+- curvature: "beeline distance" / edge_distance (0..1) e.g. a curvy road is smaller than 1
+- hike_rating, horse_rating, mtb_rating: a number from 0 to 6 for the `sac_scale` in OSM, e.g. 0 means "missing", 1 means "hiking", 2 means "mountain_hiking" and so on
+- lanes: number of lanes
+- max_slope: an unsigned decimal for the maximum slope (100 * "elevation change / distance_i") of an edge with `sum(distance_i)=edge_distance`. Important for longer road segments where ups (or downs) can be much bigger than the average_slope.
+- max_speed: the speed limit from a sign (km/h)
+- max_height (meter), max_width (meter), max_length (meter)
+- max_weight (ton), max_axle_load (in tons)
+- with postfix `_average_speed` contains the average speed (km/h) for a specific vehicle
+- with postfix `_priority` contains the road preference without changing the speed for a specific vehicle (0..1)
 
 In the next section will see how we can use these encoded values to customize GraphHopper's route calculations.
 
