@@ -74,15 +74,6 @@ public class VehicleEncodedValues {
         return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnCostEnc);
     }
 
-    public static VehicleEncodedValues bike2(PMap properties) {
-        if (properties.has("speed_two_directions"))
-            throw new IllegalArgumentException("bike2 always uses two directions");
-        return bike(new PMap(properties)
-                .putObject("name", properties.getString("name", "bike2"))
-                .putObject("speed_two_directions", true)
-        );
-    }
-
     public static VehicleEncodedValues racingbike(PMap properties) {
         return bike(new PMap(properties).putObject("name", properties.getString("name", "racingbike")));
     }
