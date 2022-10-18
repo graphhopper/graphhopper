@@ -22,7 +22,10 @@ import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.coll.GHLongHashSet;
 import com.graphhopper.coll.GHLongLongHashMap;
-import com.graphhopper.reader.*;
+import com.graphhopper.reader.ReaderElement;
+import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.EdgeElevationSmoothing;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
@@ -518,16 +521,13 @@ public class OSMReader {
             }
         }
 
-        if (relation.hasTag("type", "restriction")) {
-            // we keep the osm way ids that occur in turn restriction relations, because this way we know for which GH edges
-            // we need to remember the associated osm way id. this is just an optimization that is supposed to save
-            // memory compared to simply storing the osm way ids in a long array where the array index is the GH edge
-            // id.
-            List<OSMTurnRestriction> turnRestrictions = createTurnRestrictions(relation);
-            for (OSMTurnRestriction turnRestriction : turnRestrictions) {
-                osmWayIdSet.add(turnRestriction.getOsmIdFrom());
-                osmWayIdSet.add(turnRestriction.getOsmIdTo());
-            }
+        // we keep the osm way ids that occur in turn restriction relations, because this way we know for which GH edges
+        // we need to remember the associated osm way id. this is just an optimization that is supposed to save
+        // memory compared to simply storing the osm way ids in a long array where the array index is the GH edge
+        // id.
+        for (OSMTurnRestriction turnRestriction : OSMRestrictionRelationParser.createTurnRestrictions(relation, LOGGER::warn)) {
+            osmWayIdSet.add(turnRestriction.getOsmIdFrom());
+            osmWayIdSet.add(turnRestriction.getOsmIdTo());
         }
     }
 
@@ -536,7 +536,11 @@ public class OSMReader {
      * We use it to set turn restrictions.
      */
     protected void processRelation(ReaderRelation relation, LongToIntFunction getIdForOSMNodeId) {
-        if (turnCostStorage != null && relation.hasTag("type", "restriction")) {
+        if (turnCostStorage != null) {
+            List<OSMTurnRestriction> turnRestrictions = OSMRestrictionRelationParser.createTurnRestrictions(relation, s -> {
+            });
+            if (turnRestrictions.isEmpty())
+                return;
             TurnCostParser.ExternalInternalMap map = new TurnCostParser.ExternalInternalMap() {
                 @Override
                 public int getInternalNodeIdOfOsmNode(long nodeOsmId) {
@@ -548,7 +552,7 @@ public class OSMReader {
                     return getEdgeIdToOsmWayIdMap().get(edgeId);
                 }
             };
-            for (OSMTurnRestriction turnRestriction : createTurnRestrictions(relation)) {
+            for (OSMTurnRestriction turnRestriction : turnRestrictions) {
                 int viaNode = map.getInternalNodeIdOfOsmNode(turnRestriction.getViaOsmNodeId());
                 // street with restriction was not included (access or tag limits etc)
                 if (viaNode >= 0)
@@ -563,68 +567,6 @@ public class OSMReader {
             edgeIdToOsmWayIdMap = new GHIntLongHashMap(osmWayIdSet.size(), 0.5f);
 
         return edgeIdToOsmWayIdMap;
-    }
-
-    /**
-     * Creates turn restrictions given an OSM relation
-     */
-    static List<OSMTurnRestriction> createTurnRestrictions(ReaderRelation relation) {
-        List<OSMTurnRestriction> osmTurnRestrictions = new ArrayList<>();
-        String vehicleTypeRestricted = "";
-        List<String> vehicleTypesExcept = new ArrayList<>();
-        if (relation.hasTag("except")) {
-            String tagExcept = relation.getTag("except");
-            if (!Helper.isEmpty(tagExcept)) {
-                List<String> vehicleTypes = new ArrayList<>(Arrays.asList(tagExcept.split(";")));
-                for (String vehicleType : vehicleTypes)
-                    vehicleTypesExcept.add(vehicleType.trim());
-            }
-        }
-        if (relation.hasTag("restriction")) {
-            osmTurnRestrictions.addAll(createTurnRestrictions(relation, relation.getTag("restriction"),
-                    vehicleTypeRestricted, vehicleTypesExcept));
-            return osmTurnRestrictions;
-        }
-        if (relation.hasTagWithKeyPrefix("restriction:")) {
-            List<String> vehicleTypesRestricted = relation.getKeysWithPrefix("restriction:");
-            for (String vehicleType : vehicleTypesRestricted) {
-                String restrictionType = relation.getTag(vehicleType);
-                vehicleTypeRestricted = vehicleType.replace("restriction:", "").trim();
-                osmTurnRestrictions.addAll(createTurnRestrictions(relation, restrictionType, vehicleTypeRestricted,
-                        vehicleTypesExcept));
-            }
-        }
-        return osmTurnRestrictions;
-    }
-
-    static List<OSMTurnRestriction> createTurnRestrictions(ReaderRelation relation, String restrictionType,
-                                                           String vehicleTypeRestricted, List<String> vehicleTypesExcept) {
-        OSMTurnRestriction.RestrictionType type = OSMTurnRestriction.RestrictionType.getRestrictionType(restrictionType);
-        if (type != OSMTurnRestriction.RestrictionType.UNSUPPORTED) {
-            // we use -1 to indicate 'missing', which is fine because we exclude negative OSM IDs (see #2652)
-            long viaNodeID = -1;
-            long toWayID = -1;
-
-            for (ReaderRelation.Member member : relation.getMembers()) {
-                if (ReaderElement.Type.WAY == member.getType() && "to".equals(member.getRole()))
-                    toWayID = member.getRef();
-                else if (ReaderElement.Type.NODE == member.getType() && "via".equals(member.getRole()))
-                    viaNodeID = member.getRef();
-            }
-            if (toWayID >= 0 && viaNodeID >= 0) {
-                List<OSMTurnRestriction> res = new ArrayList<>(2);
-                for (ReaderRelation.Member member : relation.getMembers()) {
-                    if (ReaderElement.Type.WAY == member.getType() && "from".equals(member.getRole())) {
-                        OSMTurnRestriction osmTurnRestriction = new OSMTurnRestriction(member.getRef(), viaNodeID, toWayID, type);
-                        osmTurnRestriction.setVehicleTypeRestricted(vehicleTypeRestricted);
-                        osmTurnRestriction.setVehicleTypesExcept(vehicleTypesExcept);
-                        res.add(osmTurnRestriction);
-                    }
-                }
-                return res;
-            }
-        }
-        return Collections.emptyList();
     }
 
     private void finishedReading() {

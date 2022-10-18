@@ -17,7 +17,10 @@
  */
 package com.graphhopper.reader.osm;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Helper object which gives node cost entries for a given OSM-relation of type "restriction"
@@ -93,28 +96,7 @@ public class OSMTurnRestriction {
     }
 
     public enum RestrictionType {
-        UNSUPPORTED, NOT, ONLY;
-
-        private static final Map<String, RestrictionType> tags = new HashMap<>();
-
-        static {
-            tags.put("no_left_turn", NOT);
-            tags.put("no_right_turn", NOT);
-            tags.put("no_straight_on", NOT);
-            tags.put("no_u_turn", NOT);
-            tags.put("no_entry", NOT);
-            tags.put("only_right_turn", ONLY);
-            tags.put("only_left_turn", ONLY);
-            tags.put("only_straight_on", ONLY);
-        }
-
-        public static RestrictionType getRestrictionType(String tag) {
-            RestrictionType result = null;
-            if (tag != null) {
-                result = tags.get(tag);
-            }
-            return (result != null) ? result : UNSUPPORTED;
-        }
+        UNSUPPORTED, NOT, ONLY
     }
 
 }

@@ -100,7 +100,7 @@ public class OSMTurnRestrictionParser implements TurnCostParser {
                 }
             }
         } catch (Exception e) {
-            throw new IllegalStateException("Could not built turn table entry for relation of node with osmId:" + osmTurnRestriction.getViaOsmNodeId(), e);
+            throw new IllegalStateException("Could not build turn table entry for relation of node with osmId:" + osmTurnRestriction.getViaOsmNodeId(), e);
         }
     }
 
