@@ -54,16 +54,16 @@ public class ProfileResolver {
 
     public static void errorIfLegacyParameters(PMap hints) {
         if (hints.has("weighting"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'weighting' parameter." +
+            throw new IllegalArgumentException("The 'weighting' parameter is no longer supported." +
                     " You used 'weighting=" + hints.getString("weighting", "") + "'");
         if (hints.has("vehicle"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'vehicle' parameter." +
+            throw new IllegalArgumentException("The 'vehicle' parameter is no longer supported." +
                     " You used 'vehicle=" + hints.getString("vehicle", "") + "'");
         if (hints.has("edge_based"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'edge_based' parameter." +
+            throw new IllegalArgumentException("The 'edge_based' parameter is no longer supported." +
                     " You used 'edge_based=" + hints.getBool("edge_based", false) + "'");
         if (hints.has("turn_costs"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'turn_costs' parameter." +
+            throw new IllegalArgumentException("The 'turn_costs' parameter is no longer supported." +
                     " You used 'turn_costs=" + hints.getBool("turn_costs", false) + "'");
     }
 
