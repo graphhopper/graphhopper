@@ -45,6 +45,7 @@ public class OSMRestrictionRelationParser {
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
         List<String> exceptVehicles = relation.hasTag("except")
+                // todo: there are also some occurrences of except=resident(s), destination or delivery
                 ? Arrays.stream(relation.getTag("except").split(";")).map(String::trim).collect(Collectors.toList())
                 : emptyList();
         if (restriction != null) {
@@ -122,6 +123,9 @@ public class OSMRestrictionRelationParser {
                     return emptyList();
                 }
                 viaNodeID = member.getRef();
+            } else if ("location_hint".equals(member.getRole())) {
+                // location_hint is deprecated and should no longer be used according to the wiki, but we do not warn
+                // about it, or even ignore the relation in this case, because maybe not everyone is happy to remove it.
             } else {
                 warningConsumer.accept("Restriction relation " + relation.getId() + " has a member with an unknown role '"
                         + member.getRole() + "': " + relation.getTags() + ". Relation ignored.");
