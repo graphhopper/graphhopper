@@ -88,6 +88,7 @@ public class OSMRestrictionRelationParser {
         LongArrayList toWays = new LongArrayList(1);
         // we use -1 to indicate 'missing', which is fine because we exclude negative OSM IDs (see #2652)
         long viaNodeID = -1;
+        OSMTurnRestriction.ViaType viaType = null;
         for (ReaderRelation.Member member : relation.getMembers()) {
             if ("from".equals(member.getRole())) {
                 if (member.getType() != ReaderElement.Type.WAY) {
@@ -117,8 +118,14 @@ public class OSMRestrictionRelationParser {
                 if (viaNodeID >= 0)
                     // so far we only support restriction relations with a single via member
                     return emptyList();
-                if (member.getType() != ReaderElement.Type.NODE) {
-                    // so far we only support via members that are nodes
+                if (member.getType() == ReaderElement.Type.NODE) {
+                    viaType = OSMTurnRestriction.ViaType.NODE;
+                } else if (member.getType() == ReaderElement.Type.WAY) {
+                    viaType = OSMTurnRestriction.ViaType.WAY;
+                } else {
+                    warningConsumer.accept("Restriction relation " + relation.getId() + " has a member with role 'via' " +
+                            "of type '" + member.getType() + "', but only types node and way are allowed: " +
+                            relation.getTags() + ". Relation ignored");
                     return emptyList();
                 }
                 viaNodeID = member.getRef();
@@ -140,7 +147,7 @@ public class OSMRestrictionRelationParser {
         List<OSMTurnRestriction> res = new ArrayList<>(fromWays.size() * toWays.size());
         for (LongCursor from : fromWays)
             for (LongCursor to : toWays)
-                res.add(new OSMTurnRestriction(from.value, viaNodeID, to.value, type));
+                res.add(new OSMTurnRestriction(from.value, viaNodeID, to.value, type, viaType));
         return res;
     }
 

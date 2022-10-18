@@ -34,7 +34,8 @@ public class OSMTurnRestrictionTest {
     public void testAcceptsTurnRestriction() {
         List<String> vehicleTypes = new ArrayList<>(Arrays.asList("motorcar", "motor_vehicle", "vehicle"));
         List<String> vehicleTypesExcept = new ArrayList<>();
-        OSMTurnRestriction osmTurnRestriction = new OSMTurnRestriction(1, 1, 1, OSMTurnRestriction.RestrictionType.NOT);
+        OSMTurnRestriction osmTurnRestriction = new OSMTurnRestriction(1, 1, 1, OSMTurnRestriction.RestrictionType.NOT, OSMTurnRestriction.ViaType.NODE);
+
         assertTrue(osmTurnRestriction.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
 
         vehicleTypesExcept.add("bus");

@@ -526,6 +526,9 @@ public class OSMReader {
         // memory compared to simply storing the osm way ids in a long array where the array index is the GH edge
         // id.
         for (OSMTurnRestriction turnRestriction : OSMRestrictionRelationParser.createTurnRestrictions(relation, LOGGER::warn)) {
+            if (turnRestriction.getViaType() == OSMTurnRestriction.ViaType.WAY)
+                // todo: use this for #446
+                continue;
             osmWayIdSet.add(turnRestriction.getOsmIdFrom());
             osmWayIdSet.add(turnRestriction.getOsmIdTo());
         }
@@ -553,6 +556,9 @@ public class OSMReader {
                 }
             };
             for (OSMTurnRestriction turnRestriction : turnRestrictions) {
+                if (turnRestriction.getViaType() == OSMTurnRestriction.ViaType.WAY)
+                    // todo: use this for #446
+                    continue;
                 int viaNode = map.getInternalNodeIdOfOsmNode(turnRestriction.getViaOsmNodeId());
                 // street with restriction was not included (access or tag limits etc)
                 if (viaNode >= 0)

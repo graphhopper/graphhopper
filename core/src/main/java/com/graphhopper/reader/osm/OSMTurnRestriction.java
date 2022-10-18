@@ -32,16 +32,18 @@ public class OSMTurnRestriction {
     private final long viaOsmNodeId;
     private final long toOsmWayId;
     private final RestrictionType restriction;
+    private final ViaType viaType;
     // vehicleTypeRestricted contains the dedicated vehicle type
     // example: restriction:bus = no_left_turn => vehicleTypeRestricted = "bus";
     private String vehicleTypeRestricted;
     private List<String> vehicleTypesExcept;
 
-    public OSMTurnRestriction(long fromWayID, long viaNodeID, long toWayID, RestrictionType restrictionType) {
+    public OSMTurnRestriction(long fromWayID, long viaNodeID, long toWayID, RestrictionType restrictionType, ViaType viaType) {
         this.fromOsmWayId = fromWayID;
         this.viaOsmNodeId = viaNodeID;
         this.toOsmWayId = toWayID;
         this.restriction = restrictionType;
+        this.viaType = viaType;
         this.vehicleTypeRestricted = "";
         this.vehicleTypesExcept = new ArrayList<>();
     }
@@ -60,6 +62,10 @@ public class OSMTurnRestriction {
 
     public RestrictionType getRestriction() {
         return restriction;
+    }
+
+    public ViaType getViaType() {
+        return viaType;
     }
 
     public String getVehicleTypeRestricted() {
@@ -99,4 +105,7 @@ public class OSMTurnRestriction {
         UNSUPPORTED, NOT, ONLY
     }
 
+    public enum ViaType {
+        NODE, WAY
+    }
 }

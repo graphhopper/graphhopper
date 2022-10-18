@@ -159,6 +159,7 @@ class OSMRestrictionRelationParserTest {
             assertEquals(2, turnRestrictions.get(0).getViaOsmNodeId());
             assertEquals(3, turnRestrictions.get(0).getOsmIdTo());
             assertEquals(NOT, turnRestrictions.get(0).getRestriction());
+            assertEquals(OSMTurnRestriction.ViaType.NODE, turnRestrictions.get(0).getViaType());
         }
         {
             ReaderRelation rel = createRestrictionWithoutMembers("no_left_turn");
@@ -224,6 +225,20 @@ class OSMRestrictionRelationParserTest {
             assertEquals(1, warnings.size());
             assertTrue(warnings.get(0).contains("Restriction relation 0 has no member with role 'via'"), warnings.get(0));
         }
+    }
+
+    @Test
+    void turnRestrictionsViaType() {
+        ReaderRelation rel = createRestrictionWithoutMembers("no_right_turn");
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1L, "from"));
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 2L, "via"));
+        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 3L, "to"));
+
+        List<String> warnings = new ArrayList<>();
+        List<OSMTurnRestriction> osmRel = createTurnRestrictions(rel, warnings::add);
+        assertEquals(0, warnings.size());
+        assertEquals(OSMTurnRestriction.ViaType.WAY, osmRel.get(0).getViaType());
+        assertEquals(2, osmRel.get(0).getViaOsmNodeId());
     }
 
     private static ReaderRelation createRestrictionWithoutMembers(String restriction) {
