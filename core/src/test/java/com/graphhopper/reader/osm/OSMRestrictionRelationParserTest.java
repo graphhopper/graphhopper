@@ -25,6 +25,8 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.graphhopper.reader.osm.OSMRestrictionRelationParser.createTurnRestrictions;
+import static com.graphhopper.reader.osm.OSMTurnRestriction.RestrictionType.NOT;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -34,7 +36,7 @@ class OSMRestrictionRelationParserTest {
         {
             ReaderRelation rel = createRestrictionRelation();
             List<String> warnings = new ArrayList<>();
-            assertTrue(OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add).isEmpty());
+            assertTrue(createTurnRestrictions(rel, warnings::add).isEmpty());
             assertEquals(1, warnings.size());
             assertTrue(warnings.get(0).contains("Restriction relation 0 neither has a 'restriction' nor 'restriction:' tags"), warnings.get(0));
         }
@@ -43,7 +45,7 @@ class OSMRestrictionRelationParserTest {
             rel.setTag("restriction:bicycle", "no_right_turn");
             rel.setTag("except", "bus");
             List<String> warnings = new ArrayList<>();
-            assertTrue(OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add).isEmpty());
+            assertTrue(createTurnRestrictions(rel, warnings::add).isEmpty());
             assertEquals(1, warnings.size());
             assertTrue(warnings.get(0).contains("Restriction relation 0 has an 'except', but no 'restriction' or 'restriction:conditional' tag"), warnings.get(0));
         }
@@ -52,7 +54,7 @@ class OSMRestrictionRelationParserTest {
             rel.setTag("restriction:hgv:conditional", "no_right_turn @ (weight > 3.5)");
             rel.setTag("except", "bus");
             List<String> warnings = new ArrayList<>();
-            assertTrue(OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add).isEmpty());
+            assertTrue(createTurnRestrictions(rel, warnings::add).isEmpty());
             assertEquals(1, warnings.size());
             assertTrue(warnings.get(0).contains("Restriction relation 0 has an 'except', but no 'restriction' or 'restriction:conditional' tag"), warnings.get(0));
         }
@@ -62,7 +64,7 @@ class OSMRestrictionRelationParserTest {
             rel.setTag("except", "bus");
             List<String> warnings = new ArrayList<>();
             // we do not handle conditional restrictions yet, but no warning for except+restriction:conditional, because that would make sense
-            assertTrue(OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add).isEmpty());
+            assertTrue(createTurnRestrictions(rel, warnings::add).isEmpty());
             assertEquals(0, warnings.size());
         }
         {
@@ -71,7 +73,7 @@ class OSMRestrictionRelationParserTest {
             rel.setTag("restriction", "no_left_turn");
             rel.setTag("restriction:bus", "no_left_turn");
             List<String> warnings = new ArrayList<>();
-            assertTrue(OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add).isEmpty());
+            assertTrue(createTurnRestrictions(rel, warnings::add).isEmpty());
             assertEquals(1, warnings.size());
             assertTrue(warnings.get(0).contains("Restriction relation 0 has a 'restriction' tag, but also 'restriction:' tags"), warnings.get(0));
         }
@@ -82,7 +84,7 @@ class OSMRestrictionRelationParserTest {
             rel.setTag("restriction:bicycle", "give_way");
             rel.setTag("restriction", "no_left_turn");
             List<String> warnings = new ArrayList<>();
-            List<OSMTurnRestriction> turnRestrictions = OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add);
+            List<OSMTurnRestriction> turnRestrictions = createTurnRestrictions(rel, warnings::add);
             assertEquals(1, turnRestrictions.size());
             assertTrue(warnings.isEmpty());
             assertEquals("", turnRestrictions.get(0).getVehicleTypeRestricted());
@@ -94,7 +96,7 @@ class OSMRestrictionRelationParserTest {
             // be interesting. But shouldn't they simply be mapped using restriction:hgv?
             rel.setTag("restriction:conditional", "no_left_turn @ (weight > 3.5)");
             List<String> warnings = new ArrayList<>();
-            assertTrue(OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add).isEmpty());
+            assertTrue(createTurnRestrictions(rel, warnings::add).isEmpty());
             assertEquals(0, warnings.size());
         }
         {
@@ -102,7 +104,7 @@ class OSMRestrictionRelationParserTest {
             rel.setTag("restriction", "no_left_turn");
             rel.setTag("except", "bus");
             List<String> warnings = new ArrayList<>();
-            List<OSMTurnRestriction> turnRestrictions = OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add);
+            List<OSMTurnRestriction> turnRestrictions = createTurnRestrictions(rel, warnings::add);
             assertEquals(1, turnRestrictions.size());
             assertEquals("", turnRestrictions.get(0).getVehicleTypeRestricted());
             assertEquals(1, turnRestrictions.get(0).getVehicleTypesExcept().size());
@@ -113,7 +115,7 @@ class OSMRestrictionRelationParserTest {
             ReaderRelation rel = createRestrictionRelation();
             rel.setTag("restriction:motorcar", "no_left_turn");
             List<String> warnings = new ArrayList<>();
-            List<OSMTurnRestriction> turnRestrictions = OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add);
+            List<OSMTurnRestriction> turnRestrictions = createTurnRestrictions(rel, warnings::add);
             assertEquals(1, turnRestrictions.size());
             assertEquals("motorcar", turnRestrictions.get(0).getVehicleTypeRestricted());
             assertTrue(turnRestrictions.get(0).getVehicleTypesExcept().isEmpty());
@@ -124,7 +126,7 @@ class OSMRestrictionRelationParserTest {
             rel.setTag("restriction:motorcar", "no_left_turn");
             rel.setTag("restriction:bus", "no_left_turn");
             List<String> warnings = new ArrayList<>();
-            List<OSMTurnRestriction> turnRestrictions = OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add);
+            List<OSMTurnRestriction> turnRestrictions = createTurnRestrictions(rel, warnings::add);
             assertEquals(2, turnRestrictions.size());
             assertEquals("motorcar", turnRestrictions.get(0).getVehicleTypeRestricted());
             assertEquals("bus", turnRestrictions.get(1).getVehicleTypeRestricted());
@@ -150,9 +152,13 @@ class OSMRestrictionRelationParserTest {
             rel.add(new ReaderRelation.Member(ReaderElement.Type.NODE, 2, "via"));
             rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 3, "to"));
             List<String> warnings = new ArrayList<>();
-            List<OSMTurnRestriction> turnRestrictions = OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add);
+            List<OSMTurnRestriction> turnRestrictions = createTurnRestrictions(rel, warnings::add);
             assertEquals(0, warnings.size());
             assertEquals(1, turnRestrictions.size());
+            assertEquals(1, turnRestrictions.get(0).getOsmIdFrom());
+            assertEquals(2, turnRestrictions.get(0).getViaOsmNodeId());
+            assertEquals(3, turnRestrictions.get(0).getOsmIdTo());
+            assertEquals(NOT, turnRestrictions.get(0).getRestriction());
         }
         {
             ReaderRelation rel = createRestrictionWithoutMembers("no_left_turn");
@@ -161,7 +167,7 @@ class OSMRestrictionRelationParserTest {
             rel.add(new ReaderRelation.Member(ReaderElement.Type.NODE, 3, "via"));
             rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 4, "to"));
             List<String> warnings = new ArrayList<>();
-            List<OSMTurnRestriction> turnRestrictions = OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add);
+            List<OSMTurnRestriction> turnRestrictions = createTurnRestrictions(rel, warnings::add);
             assertEquals(0, turnRestrictions.size());
             assertEquals(1, warnings.size());
             assertTrue(warnings.get(0).contains("Restriction relation 0 has multiple members with role 'from' even though it is not a 'no_entry' restriction"), warnings.get(0));
@@ -173,12 +179,12 @@ class OSMRestrictionRelationParserTest {
             rel.add(new ReaderRelation.Member(ReaderElement.Type.NODE, 3, "via"));
             rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 4, "to"));
             List<String> warnings = new ArrayList<>();
-            List<OSMTurnRestriction> turnRestrictions = OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add);
+            List<OSMTurnRestriction> turnRestrictions = createTurnRestrictions(rel, warnings::add);
             assertEquals(2, turnRestrictions.size());
             assertEquals(1, turnRestrictions.get(0).getOsmIdFrom());
             assertEquals(2, turnRestrictions.get(1).getOsmIdFrom());
             turnRestrictions.forEach(t -> assertEquals(4, t.getOsmIdTo()));
-            turnRestrictions.forEach(t -> assertEquals(OSMTurnRestriction.RestrictionType.NOT, t.getRestriction()));
+            turnRestrictions.forEach(t -> assertEquals(NOT, t.getRestriction()));
             assertEquals(0, warnings.size());
         }
         {
@@ -188,7 +194,7 @@ class OSMRestrictionRelationParserTest {
             rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 3, "to"));
             rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 4, "to"));
             List<String> warnings = new ArrayList<>();
-            List<OSMTurnRestriction> turnRestrictions = OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add);
+            List<OSMTurnRestriction> turnRestrictions = createTurnRestrictions(rel, warnings::add);
             assertEquals(0, turnRestrictions.size());
             assertEquals(1, warnings.size());
             assertTrue(warnings.get(0).contains("Restriction relation 0 has multiple members with role 'to' even though it is not a 'no_exit' restriction"), warnings.get(0));
@@ -200,12 +206,12 @@ class OSMRestrictionRelationParserTest {
             rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 3, "to"));
             rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 4, "to"));
             List<String> warnings = new ArrayList<>();
-            List<OSMTurnRestriction> turnRestrictions = OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add);
+            List<OSMTurnRestriction> turnRestrictions = createTurnRestrictions(rel, warnings::add);
             assertEquals(2, turnRestrictions.size());
             assertEquals(3, turnRestrictions.get(0).getOsmIdTo());
             assertEquals(4, turnRestrictions.get(1).getOsmIdTo());
             turnRestrictions.forEach(t -> assertEquals(1, t.getOsmIdFrom()));
-            turnRestrictions.forEach(t -> assertEquals(OSMTurnRestriction.RestrictionType.NOT, t.getRestriction()));
+            turnRestrictions.forEach(t -> assertEquals(NOT, t.getRestriction()));
             assertEquals(0, warnings.size());
         }
         {
@@ -213,7 +219,7 @@ class OSMRestrictionRelationParserTest {
             rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1, "from"));
             rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 2, "to"));
             List<String> warnings = new ArrayList<>();
-            List<OSMTurnRestriction> turnRestrictions = OSMRestrictionRelationParser.createTurnRestrictions(rel, warnings::add);
+            List<OSMTurnRestriction> turnRestrictions = createTurnRestrictions(rel, warnings::add);
             assertEquals(0, turnRestrictions.size());
             assertEquals(1, warnings.size());
             assertTrue(warnings.get(0).contains("Restriction relation 0 has no member with role 'via'"), warnings.get(0));
