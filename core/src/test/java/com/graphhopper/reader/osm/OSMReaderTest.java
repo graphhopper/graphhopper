@@ -510,7 +510,7 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testTurnRestrictions() {
+    public void testTurnRestrictionsFromXML() {
         String fileTurnRestrictions = "test-restrictions.xml";
         GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
                 importOrLoad();
@@ -579,27 +579,6 @@ public class OSMReaderTest {
         assertTrue(tcStorage.get(bikeTCEnc, edge10_11, n11, edge11_14) > 0);
     }
 
-    @Test
-    public void testMultipleFromForNoEntry() {
-        ReaderRelation rel = new ReaderRelation(1L);
-
-        rel.setTag("restriction", "no_entry");
-        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1L, "from"));
-        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 2L, "from"));
-        rel.add(new ReaderRelation.Member(ReaderElement.Type.NODE, 3L, "via"));
-        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 4L, "to"));
-
-        List<OSMTurnRestriction> osmRel = OSMReader.createTurnRestrictions(rel);
-        assertEquals(2, osmRel.size());
-
-        assertEquals(1, osmRel.get(0).getOsmIdFrom());
-        assertEquals(4, osmRel.get(0).getOsmIdTo());
-        assertEquals(OSMTurnRestriction.RestrictionType.NOT, osmRel.get(0).getRestriction());
-
-        assertEquals(2, osmRel.get(1).getOsmIdFrom());
-        assertEquals(4, osmRel.get(1).getOsmIdTo());
-        assertEquals(OSMTurnRestriction.RestrictionType.NOT, osmRel.get(1).getRestriction());
-    }
 
     @Test
     public void testRoadAttributes() {
@@ -944,7 +923,7 @@ public class OSMReaderTest {
 
         ReaderWay way = new ReaderWay(0L);
         PointList list = new PointList();
-        list.add(49.214906,-2.156067);
+        list.add(49.214906, -2.156067);
         reader.setArtificialWayTags(list, way, 10, new HashMap<>());
         assertEquals("JEY", way.getTag("country", null).toString());
     }
