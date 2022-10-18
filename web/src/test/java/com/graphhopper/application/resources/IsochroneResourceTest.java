@@ -204,16 +204,6 @@ public class IsochroneResourceTest {
     }
 
     @Test
-    public void queryWithLegacyParameter() {
-        Response rsp = clientTarget(app, "/isochrone")
-                .queryParam("point", "42.508932,1.528516")
-                .queryParam("turn_costs", "false")
-                .queryParam("type", "geojson")
-                .request().buildGet().invoke();
-        assertEquals(200, rsp.getStatus());
-    }
-
-    @Test
     public void missingPoint() {
         Response rsp = clientTarget(app, "/isochrone").request().buildGet().invoke();
         assertEquals(400, rsp.getStatus());

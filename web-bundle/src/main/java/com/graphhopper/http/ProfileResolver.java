@@ -25,28 +25,21 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.graphhopper.util.Parameters.Routing.*;
-
 public class ProfileResolver {
     protected final Map<String, Profile> profilesByName;
-    private final LegacyProfileResolver legacyProfileResolver;
 
-    public ProfileResolver(List<Profile> profiles, LegacyProfileResolver legacyProfileResolver) {
+    public ProfileResolver(List<Profile> profiles) {
         profilesByName = new LinkedHashMap<>(profiles.size());
         profiles.forEach(p -> {
             if (profilesByName.put(p.getName(), p) != null)
                 throw new IllegalArgumentException("Profiles must have distinct names");
         });
-        this.legacyProfileResolver = legacyProfileResolver;
     }
 
     public String resolveProfile(PMap hints) {
         String profileName = hints.getString("profile", "");
-        if (profileName.isEmpty()) {
-            boolean hasCurbsides = hints.getBool("has_curbsides", false);
-            enableEdgeBasedIfThereAreCurbsides(hasCurbsides, hints);
-            return legacyProfileResolver.resolveProfile(hints).getName();
-        }
+        if (profileName.isEmpty())
+            throw new IllegalArgumentException("profile parameter required");
         errorIfLegacyParameters(hints);
         String profile = doResolveProfile(profileName, hints);
         if (profile == null)
@@ -57,16 +50,6 @@ public class ProfileResolver {
     protected String doResolveProfile(String profileName, PMap hints) {
         Profile profile = profilesByName.get(profileName);
         return profile == null ? null : profile.getName();
-    }
-
-    public static void enableEdgeBasedIfThereAreCurbsides(boolean hasCurbsides, PMap hints) {
-        if (hasCurbsides) {
-            if (!hints.getBool(TURN_COSTS, true))
-                throw new IllegalArgumentException("Disabling '" + TURN_COSTS + "' when using '" + CURBSIDE + "' is not allowed");
-            if (!hints.getBool(EDGE_BASED, true))
-                throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURBSIDE + "' is not allowed");
-            hints.putObject(EDGE_BASED, true);
-        }
     }
 
     public static void errorIfLegacyParameters(PMap hints) {

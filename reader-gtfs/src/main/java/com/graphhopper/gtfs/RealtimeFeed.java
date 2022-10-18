@@ -381,9 +381,9 @@ public class RealtimeFeed {
                 stopTimes.add(stopTime);
                 logger.trace("Number of stop times: {}", stopTimes.size());
             } else {
-                // http://localhost:3000/route?point=45.51043713898763%2C-122.68381118774415&point=45.522104713562825%2C-122.6455307006836&weighting=fastest&pt.earliest_departure_time=2018-08-24T16%3A56%3A17Z&arrive_by=false&pt.max_walk_distance_per_leg=1000&pt.limit_solutions=5&locale=en-US&vehicle=pt&elevation=false&use_miles=false&points_encoded=false&pt.profile=true
+                // http://localhost:3000/route?point=45.51043713898763%2C-122.68381118774415&point=45.522104713562825%2C-122.6455307006836&weighting=fastest&pt.earliest_departure_time=2018-08-24T16%3A56%3A17Z&arrive_by=false&pt.max_walk_distance_per_leg=1000&pt.limit_solutions=5&locale=en-US&profile=pt&elevation=false&use_miles=false&points_encoded=false&pt.profile=true
                 // long query:
-                // http://localhost:3000/route?point=45.518526513612244%2C-122.68612861633302&point=45.52908004573869%2C-122.6862144470215&weighting=fastest&pt.earliest_departure_time=2018-08-24T16%3A51%3A20Z&arrive_by=false&pt.max_walk_distance_per_leg=10000&pt.limit_solutions=4&locale=en-US&vehicle=pt&elevation=false&use_miles=false&points_encoded=false&pt.profile=true
+                // http://localhost:3000/route?point=45.518526513612244%2C-122.68612861633302&point=45.52908004573869%2C-122.6862144470215&weighting=fastest&pt.earliest_departure_time=2018-08-24T16%3A51%3A20Z&arrive_by=false&pt.max_walk_distance_per_leg=10000&pt.limit_solutions=4&locale=en-US&profile=pt&elevation=false&use_miles=false&points_encoded=false&pt.profile=true
                 throw new RuntimeException();
             }
         }

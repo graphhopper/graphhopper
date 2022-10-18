@@ -84,13 +84,6 @@ public class MapMatchingResourceTurnCostsTest {
     }
 
     @Test
-    public void useVehicle() {
-        // see map-matching/#178
-        runCar("vehicle=car");
-        runBike("vehicle=bike");
-    }
-
-    @Test
     public void useProfile() {
         runCar("profile=car");
         runBike("profile=bike");
@@ -99,10 +92,10 @@ public class MapMatchingResourceTurnCostsTest {
 
     @Test
     public void disableCHLM() {
-        runCar("vehicle=car&lm.disable=true");
-        runCar("vehicle=car&ch.disable=true");
-        runBike("vehicle=bike&lm.disable=true");
-        runBike("vehicle=bike&ch.disable=true");
+        runCar("profile=car&lm.disable=true");
+        runCar("profile=car&ch.disable=true");
+        runBike("profile=bike&lm.disable=true");
+        runBike("profile=bike&ch.disable=true");
     }
 
     @Test
