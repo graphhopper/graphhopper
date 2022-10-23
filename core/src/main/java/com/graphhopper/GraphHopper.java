@@ -105,8 +105,14 @@ public class GraphHopper {
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
     private int maxRegionSearch = 4;
-    // for prepare
+    // subnetworks
     private int minNetworkSize = 200;
+    // residential areas
+    private double residentialAreaRadius = 300;
+    private double residentialAreaSensitivity = 60;
+    private double cityAreaRadius = 2000;
+    private double cityAreaSensitivity = 30;
+    private int urbanDensityCalculationThreads = 0;
 
     // preparation handlers
     private final LMPreparationHandler lmPreparationHandler = new LMPreparationHandler();
@@ -125,15 +131,15 @@ public class GraphHopper {
 
     private String dateRangeParserString = "";
     private String encodedValuesString = "";
-    private String flagEncodersString = "";
+    private String vehiclesString = "";
 
     public GraphHopper setEncodedValuesString(String encodedValuesString) {
         this.encodedValuesString = encodedValuesString;
         return this;
     }
 
-    public GraphHopper setFlagEncodersString(String flagEncodersString) {
-        this.flagEncodersString = flagEncodersString;
+    public GraphHopper setVehiclesString(String vehiclesString) {
+        this.vehiclesString = vehiclesString;
         return this;
     }
 
@@ -185,6 +191,32 @@ public class GraphHopper {
     public GraphHopper setMinNetworkSize(int minNetworkSize) {
         ensureNotLoaded();
         this.minNetworkSize = minNetworkSize;
+        return this;
+    }
+
+    /**
+     * Configures the urban density classification. Each edge will be classified as 'rural','residential' or 'city', {@link UrbanDensity}
+     *
+     * @param residentialAreaRadius      in meters. The higher this value the longer the calculation will take and the bigger the area for
+     *                                   which the road density used to identify residential areas is calculated.
+     * @param residentialAreaSensitivity Use this to find a trade-off between too many roads being classified as residential (too high
+     *                                   values) and not enough roads being classified as residential (too small values)
+     * @param cityAreaRadius             in meters. The higher this value the longer the calculation will take and the bigger the area for
+     *                                   which the road density used to identify city areas is calculated. Set this to zero
+     *                                   to skip the city classification.
+     * @param cityAreaSensitivity        Use this to find a trade-off between too many roads being classified as city (too high values)
+     *                                   and not enough roads being classified as city (too small values)
+     * @param threads                    the number of threads used for the calculation. If this is zero the urban density
+     *                                   calculation is skipped entirely
+     */
+    public GraphHopper setUrbanDensityCalculation(double residentialAreaRadius, double residentialAreaSensitivity,
+                                                  double cityAreaRadius, double cityAreaSensitivity, int threads) {
+        ensureNotLoaded();
+        this.residentialAreaRadius = residentialAreaRadius;
+        this.residentialAreaSensitivity = residentialAreaSensitivity;
+        this.cityAreaRadius = cityAreaRadius;
+        this.cityAreaSensitivity = cityAreaSensitivity;
+        this.urbanDensityCalculationThreads = threads;
         return this;
     }
 
@@ -499,7 +531,13 @@ public class GraphHopper {
             throw new IllegalArgumentException("spatial_rules.max_bbox has been deprecated. There is no replacement, all custom areas will be considered.");
 
         setProfiles(ghConfig.getProfiles());
-        flagEncodersString = ghConfig.getString("graph.flag_encoders", flagEncodersString);
+
+        if (ghConfig.has("graph.vehicles") && ghConfig.has("graph.flag_encoders"))
+            throw new IllegalArgumentException("Remove graph.flag_encoders as it cannot be used in parallel with graph.vehicles");
+        if (ghConfig.has("graph.flag_encoders"))
+            logger.warn("The option graph.flag_encoders is deprecated and will be removed. Replace with graph.vehicles");
+        vehiclesString = ghConfig.getString("graph.vehicles", ghConfig.getString("graph.flag_encoders", vehiclesString));
+
         encodedValuesString = ghConfig.getString("graph.encoded_values", encodedValuesString);
         dateRangeParserString = ghConfig.getString("datareader.date_range_parser_day", dateRangeParserString);
 
@@ -539,6 +577,13 @@ public class GraphHopper {
         preciseIndexResolution = ghConfig.getInt("index.high_resolution", preciseIndexResolution);
         maxRegionSearch = ghConfig.getInt("index.max_region_search", maxRegionSearch);
 
+        // urban density calculation
+        residentialAreaRadius = ghConfig.getDouble("graph.urban_density.residential_radius", residentialAreaRadius);
+        residentialAreaSensitivity = ghConfig.getDouble("graph.urban_density.residential_sensitivity", residentialAreaSensitivity);
+        cityAreaRadius = ghConfig.getDouble("graph.urban_density.city_radius", cityAreaRadius);
+        cityAreaSensitivity = ghConfig.getDouble("graph.urban_density.city_sensitivity", cityAreaSensitivity);
+        urbanDensityCalculationThreads = ghConfig.getInt("graph.urban_density.threads", urbanDensityCalculationThreads);
+
         // routing
         routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
         routerConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routerConfig.getMaxRoundTripRetries()));
@@ -553,7 +598,7 @@ public class GraphHopper {
         return this;
     }
 
-    private void buildEncodingManagerAndOSMParsers(String flagEncodersStr, String encodedValuesStr, String dateRangeParserString, Collection<Profile> profiles) {
+    private void buildEncodingManagerAndOSMParsers(String flagEncodersStr, String encodedValuesStr, String dateRangeParserString, boolean withUrbanDensity, Collection<Profile> profiles) {
         Map<String, String> flagEncodersMap = new LinkedHashMap<>();
         for (String encoderStr : flagEncodersStr.split(",")) {
             String name = encoderStr.split("\\|")[0].trim();
@@ -581,6 +626,8 @@ public class GraphHopper {
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         flagEncodersMap.forEach((name, encoderStr) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, new PMap(encoderStr))));
         profiles.forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
+        if (withUrbanDensity)
+            emBuilder.add(UrbanDensity.create());
         encodedValueStrings.forEach(s -> emBuilder.add(encodedValueFactory.create(s)));
         encodingManager = emBuilder.build();
 
@@ -605,8 +652,14 @@ public class GraphHopper {
             osmParsers.addWayTagParser(new OSMMaxSpeedParser(encodingManager.getDecimalEncodedValue(MaxSpeed.KEY)));
         if (!encodedValueStrings.contains(RoadAccess.KEY))
             osmParsers.addWayTagParser(new OSMRoadAccessParser(encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
-        if (encodingManager.hasEncodedValue(AverageSlope.KEY) || encodingManager.hasEncodedValue(MaxSlope.KEY))
-            osmParsers.addWayTagParser(new SlopeCalculator(encodingManager.getDecimalEncodedValue(MaxSlope.KEY), encodingManager.getDecimalEncodedValue(AverageSlope.KEY)));
+        if (encodingManager.hasEncodedValue(AverageSlope.KEY) || encodingManager.hasEncodedValue(MaxSlope.KEY)) {
+            if (!encodingManager.hasEncodedValue(AverageSlope.KEY) || !encodingManager.hasEncodedValue(MaxSlope.KEY))
+                throw new IllegalArgumentException("Enable both, average_slope and max_slope");
+            osmParsers.addWayTagParser(new SlopeCalculator(encodingManager.getDecimalEncodedValue(MaxSlope.KEY),
+                    encodingManager.getDecimalEncodedValue(AverageSlope.KEY)));
+        }
+        if (encodingManager.hasEncodedValue(Curvature.KEY))
+            osmParsers.addWayTagParser(new CurvatureCalculator(encodingManager.getDecimalEncodedValue(Curvature.KEY)));
 
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         flagEncodersMap.forEach((name, encoderStr) -> {
@@ -739,7 +792,8 @@ public class GraphHopper {
     private void process(boolean closeEarly) {
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
-        buildEncodingManagerAndOSMParsers(flagEncodersString, encodedValuesString, dateRangeParserString, profilesByName.values());
+        boolean withUrbanDensity = urbanDensityCalculationThreads > 0;
+        buildEncodingManagerAndOSMParsers(vehiclesString, encodedValuesString, dateRangeParserString, withUrbanDensity, profilesByName.values());
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())
@@ -779,6 +833,17 @@ public class GraphHopper {
 
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
+
+        if (encodingManager.hasEncodedValue(UrbanDensity.KEY)) {
+            EnumEncodedValue<UrbanDensity> urbanDensityEnc = encodingManager.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
+            if (!encodingManager.hasEncodedValue(RoadClass.KEY))
+                throw new IllegalArgumentException("Urban density calculation requires " + RoadClass.KEY);
+            if (!encodingManager.hasEncodedValue(RoadClassLink.KEY))
+                throw new IllegalArgumentException("Urban density calculation requires " + RoadClassLink.KEY);
+            EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+            BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
+            UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, roadClassEnc, roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
+        }
     }
 
     protected void importOSM() {
@@ -793,8 +858,10 @@ public class GraphHopper {
             logger.info("Creating custom area index, reading custom areas from: '" + customAreasDirectory + "'");
             customAreas.addAll(readCustomAreas());
         }
+        CustomArea area = GHUtility.getFirstDuplicateArea(customAreas, Country.ISO_ALPHA3);
+        if (area != null)
+            throw new IllegalArgumentException("area used duplicate '" + Country.ISO_ALPHA3 + "' see properties: " + area.getProperties());
         AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
-
         if (countryRuleFactory == null || countryRuleFactory.getCountryToRuleMap().isEmpty()) {
             logger.info("No country rules available");
         } else {
@@ -955,7 +1022,7 @@ public class GraphHopper {
             if (profile.isTurnCosts() && turnCostEnc == null) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +
                         "'turn_costs=true', but the corresponding vehicle '" + profile.getVehicle() + "' does not support turn costs." +
-                        "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");
+                        "\nYou need to add `|turn_costs=true` to the vehicle in `graph.vehicles`");
             }
             try {
                 createWeighting(profile, new PMap());

@@ -974,8 +974,7 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public String getName() {
-            long kvEntryRef = Helper.toUnsignedLong(store.getKeyValuesRef(edgePointer));
-            String name = (String) baseGraph.edgeKVStorage.get(kvEntryRef, "name", reverse);
+            String name = (String) getValue(EdgeKVStorage.KeyValue.STREET_NAME);
             // preserve backward compatibility (returns empty string if name tag missing)
             return name == null ? "" : name;
         }

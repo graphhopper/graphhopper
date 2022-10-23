@@ -54,7 +54,15 @@ public class WheelchairTagParserTest {
                 .add(wheelchairAccessEnc).add(wheelchairAvSpeedEnc).add(wheelchairPriorityEnc).add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
                 .add(carAccessEnc).add(carAvSpeedEnc)
                 .build();
-        wheelchairParser = new WheelchairTagParser(encodingManager, new PMap());
+        wheelchairParser = new WheelchairTagParser(encodingManager, new PMap()) {
+            @Override
+            public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags) {
+                if (!way.hasTag("point_list") || !way.hasTag("edge_distance"))
+                    return edgeFlags;
+                else
+                    return super.applyWayTags(way, edgeFlags);
+            }
+        };
         wheelchairParser.init(new DateRangeParser());
     }
 
@@ -527,7 +535,10 @@ public class WheelchairTagParserTest {
         GHUtility.setSpeed(5, 5, wheelchairAccessEnc, wheelchairAvSpeedEnc, edge45);
 
 
-        wheelchairParser.applyWayTags(new ReaderWay(1), edge01);
+        ReaderWay way1 = new ReaderWay(1);
+        way1.setTag("point_list", edge01.fetchWayGeometry(FetchMode.ALL));
+        way1.setTag("edge_distance", edge01.getDistance());
+        edge01.setFlags(wheelchairParser.applyWayTags(way1, edge01.getFlags()));
 
         assertTrue(edge01.get(wheelchairAccessEnc));
         assertTrue(edge01.getReverse(wheelchairAccessEnc));
@@ -535,7 +546,10 @@ public class WheelchairTagParserTest {
         assertEquals(5, edge01.getReverse(wheelchairParser.getAverageSpeedEnc()), 0);
 
 
-        wheelchairParser.applyWayTags(new ReaderWay(2), edge23);
+        ReaderWay way2 = new ReaderWay(2);
+        way2.setTag("point_list", edge23.fetchWayGeometry(FetchMode.ALL));
+        way2.setTag("edge_distance", edge23.getDistance());
+        edge23.setFlags(wheelchairParser.applyWayTags(way2, edge23.getFlags()));
 
         assertTrue(edge23.get(wheelchairAccessEnc));
         assertTrue(edge23.getReverse(wheelchairAccessEnc));
@@ -544,7 +558,10 @@ public class WheelchairTagParserTest {
 
 
         // only exclude longer edges with too large incline:
-        wheelchairParser.applyWayTags(new ReaderWay(3), edge45);
+        ReaderWay way3 = new ReaderWay(3);
+        way3.setTag("point_list", edge45.fetchWayGeometry(FetchMode.ALL));
+        way3.setTag("edge_distance", edge45.getDistance());
+        edge45.setFlags(wheelchairParser.applyWayTags(way3, edge45.getFlags()));
 
         assertFalse(edge45.get(wheelchairAccessEnc));
         assertFalse(edge45.getReverse(wheelchairAccessEnc));

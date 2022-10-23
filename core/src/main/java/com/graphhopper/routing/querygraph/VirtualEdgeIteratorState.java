@@ -310,7 +310,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public String getName() {
-        String name = (String) getValue("name");
+        String name = (String) getValue(EdgeKVStorage.KeyValue.STREET_NAME);
         // preserve backward compatibility (returns empty string if name tag missing)
         return name == null ? "" : name;
     }

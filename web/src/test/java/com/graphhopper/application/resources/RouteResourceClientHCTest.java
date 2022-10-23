@@ -44,10 +44,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -62,7 +59,7 @@ public class RouteResourceClientHCTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car,bike").
+                putObject("graph.vehicles", "car,bike").
                 putObject("prepare.min_network_size", 0).
                 putObject("graph.elevation.provider", "srtm").
                 putObject("graph.elevation.cache_dir", "../core/files/").
@@ -307,14 +304,18 @@ public class RouteResourceClientHCTest {
                 addPoint(new GHPoint(42.510383, 1.533392)).
                 setProfile("my_car");
         req.getPathDetails().add("average_speed");
+        req.getPathDetails().add("intersection");
         GHResponse res = gh.route(req);
         assertFalse(res.hasErrors(), "errors:" + res.getErrors().toString());
         ResponsePath alt = res.getBest();
-        assertEquals(1, alt.getPathDetails().size());
+        assertEquals(2, alt.getPathDetails().size());
         List<PathDetail> details = alt.getPathDetails().get("average_speed");
         assertFalse(details.isEmpty());
         assertTrue((Double) details.get(0).getValue() > 20);
         assertTrue((Double) details.get(0).getValue() < 70);
+        details = alt.getPathDetails().get("intersection");
+        assertFalse(details.isEmpty());
+        assertTrue(((Map) details.get(0).getValue()).containsKey("bearings"));
     }
 
     @ParameterizedTest

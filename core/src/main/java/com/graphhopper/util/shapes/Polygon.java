@@ -35,7 +35,7 @@ import java.util.Arrays;
  */
 public class Polygon implements Shape {
 
-    private final GeometryFactory factory = new GeometryFactory();
+    private static final GeometryFactory factory = new GeometryFactory();
     public final PreparedGeometry prepPolygon;
     public final boolean rectangle;
     public final Envelope envelope;
@@ -102,7 +102,7 @@ public class Polygon implements Shape {
     public double getMaxLon() {
         return envelope.getMaxX();
     }
-    
+
     public boolean isRectangle() {
         return rectangle;
     }

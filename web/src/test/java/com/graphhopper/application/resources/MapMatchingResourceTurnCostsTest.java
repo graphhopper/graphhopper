@@ -20,6 +20,7 @@ package com.graphhopper.application.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
+import com.graphhopper.application.util.TestUtils;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
@@ -42,6 +43,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -56,7 +58,7 @@ public class MapMatchingResourceTurnCostsTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car|turn_costs=true,bike").
+                putObject("graph.vehicles", "car|turn_costs=true,bike").
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
@@ -105,7 +107,7 @@ public class MapMatchingResourceTurnCostsTest {
 
     @Test
     public void errorOnUnknownProfile() {
-        final Response response = app.client().target("http://localhost:8080/match?profile=xyz")
+        final Response response = clientTarget(app, "/match?profile=xyz")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();
@@ -116,7 +118,7 @@ public class MapMatchingResourceTurnCostsTest {
     }
 
     private void runCar(String urlParams) {
-        final Response response = app.client().target("http://localhost:8080/match?" + urlParams)
+        final Response response = clientTarget(app, "/match?" + urlParams)
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();
@@ -135,7 +137,7 @@ public class MapMatchingResourceTurnCostsTest {
     }
 
     private void runBike(String urlParams) {
-        final Response response = app.client().target("http://localhost:8080/match?" + urlParams)
+        final Response response = clientTarget(app, "/match?" + urlParams)
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();

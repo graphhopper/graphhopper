@@ -18,6 +18,7 @@
 package com.graphhopper.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -27,14 +28,15 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.jackson.Gpx;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
@@ -54,17 +56,24 @@ import static com.graphhopper.util.Parameters.Routing.*;
 @javax.ws.rs.Path("match")
 public class MapMatchingResource {
 
+    public interface MapMatchingRouterFactory {
+        public MapMatching.Router createMapMatchingRouter(PMap hints);
+    }
+
     private static final Logger logger = LoggerFactory.getLogger(MapMatchingResource.class);
 
     private final GraphHopper graphHopper;
     private final ProfileResolver profileResolver;
     private final TranslationMap trMap;
+    private final MapMatchingRouterFactory mapMatchingRouterFactory;
+    private final ObjectMapper objectMapper = Jackson.newObjectMapper();
 
     @Inject
-    public MapMatchingResource(GraphHopper graphHopper, ProfileResolver profileResolver, TranslationMap trMap) {
+    public MapMatchingResource(GraphHopper graphHopper, ProfileResolver profileResolver, TranslationMap trMap, MapMatchingRouterFactory mapMatchingRouterFactory) {
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
         this.trMap = trMap;
+        this.mapMatchingRouterFactory = mapMatchingRouterFactory;
     }
 
     @POST
@@ -72,7 +81,6 @@ public class MapMatchingResource {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
     public Response match(
             Gpx gpx,
-            @Context HttpServletRequest request,
             @Context UriInfo uriInfo,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
             @QueryParam("type") @DefaultValue("json") String outType,
@@ -106,7 +114,6 @@ public class MapMatchingResource {
 
         // add values that are not in hints because they were explicitly listed in query params
         hints.putObject(MAX_VISITED_NODES, maxVisitedNodes);
-        String weightingVehicleLogStr = "weighting: " + hints.getString("weighting", "") + ", vehicle: " + hints.getString("vehicle", "");
 
         // resolve profile and remove legacy vehicle/weighting parameters
         // we need to explicitly disable CH here because map matching does not use it
@@ -117,22 +124,22 @@ public class MapMatchingResource {
         hints.putObject("profile", profile);
         removeLegacyParameters(hints);
 
-        MapMatching matching = new MapMatching(graphHopper, hints);
+        MapMatching matching = new MapMatching(graphHopper.getBaseGraph(), (LocationIndexTree) graphHopper.getLocationIndex(), mapMatchingRouterFactory.createMapMatchingRouter(hints));
         matching.setMeasurementErrorSigma(gpsAccuracy);
 
         List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
         MatchResult matchResult = matching.match(measurements);
 
-        // TODO: Request logging and timing should perhaps be done somewhere outside
-        double took = sw.stop().getMillisDouble();
-        String infoStr = request.getRemoteAddr() + " " + request.getLocale() + " " + request.getHeader("User-Agent");
-        String logStr = request.getQueryString() + ", " + infoStr + ", took:" + String.format("%.1f", took) + "ms, entries:" + measurements.size() +
-                ", profile: " + profile + ", " + weightingVehicleLogStr;
-        logger.info(logStr);
+        sw.stop();
+        logger.info(objectMapper.createObjectNode()
+                .put("duration", sw.getNanos())
+                .put("profile", profile)
+                .put("observations", measurements.size())
+                .putPOJO("mapmatching", matching.getStatistics()).toString());
 
         if ("extended_json".equals(outType)) {
             return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded)).
-                    header("X-GH-Took", "" + Math.round(took)).
+                    header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                     build();
         } else {
             Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
@@ -156,10 +163,10 @@ public class MapMatchingResource {
                         .map(Date::getTime)
                         .orElse(System.currentTimeMillis());
                 return Response.ok(GpxConversions.createGPX(rsp.getBest().getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION, tr), "application/gpx+xml").
-                        header("X-GH-Took", "" + Math.round(took)).
+                        header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                         build();
             } else {
-                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
+                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, sw.getMillisDouble());
 
                 Map<String, Object> matchStatistics = new HashMap<>();
                 matchStatistics.put("distance", matchResult.getMatchLength());
@@ -177,7 +184,7 @@ public class MapMatchingResource {
                     map.putPOJO("traversal_keys", traversalKeylist);
                 }
                 return Response.ok(map).
-                        header("X-GH-Took", "" + Math.round(took)).
+                        header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                         build();
             }
         }

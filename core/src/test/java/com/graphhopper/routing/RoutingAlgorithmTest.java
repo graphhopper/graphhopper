@@ -295,12 +295,12 @@ public class RoutingAlgorithmTest {
         Path p1 = f.calcPath(graph, f.defaultWeighting, 0, 3);
         assertEquals(nodes(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(402.3, p1.getDistance(), .1, p1.toString());
-        assertEquals(144829, p1.getTime(), p1.toString());
+        assertEquals(144830, p1.getTime(), p1.toString());
 
         Path p2 = f.calcPath(graph, fastestWeighting, 0, 3);
         assertEquals(nodes(0, 4, 6, 7, 5, 3), p2.calcNodes());
         assertEquals(1261.7, p2.getDistance(), 0.1, p2.toString());
-        assertEquals(111439, p2.getTime(), p2.toString());
+        assertEquals(111441, p2.getTime(), p2.toString());
     }
 
     // 0-1-2-3
@@ -996,7 +996,7 @@ public class RoutingAlgorithmTest {
         initEleGraph(graph, 60, f.carAccessEnc, f.carSpeedEnc);
         p = f.calcPath(graph, fakeWeighting, 3, 0, 10, 9);
         assertEquals(nodes(12, 0, 1, 2, 11, 7, 10, 13), p.calcNodes());
-        assertEquals(37009621, p.getTime());
+        assertEquals(37009625, p.getTime());
         assertEquals(616827, p.getDistance(), 1);
         assertEquals(493462, p.getWeight(), 1);
     }

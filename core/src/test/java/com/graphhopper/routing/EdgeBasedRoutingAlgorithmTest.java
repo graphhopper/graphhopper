@@ -279,7 +279,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private void blockNode3(BaseGraph g) {
-        // Totally block this node (all 9 turn relations)
+        // Totally block this node (all 9 turn restrictions)
         setTurnRestriction(g, 2, 3, 1);
         setTurnRestriction(g, 2, 3, 4);
         setTurnRestriction(g, 4, 3, 1);

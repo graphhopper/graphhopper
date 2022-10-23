@@ -39,7 +39,7 @@ public class GHMatrixSyncRequester extends GHMatrixAbstractRequester {
                 withTimes, withDistances, withWeights);
 
         try {
-            String postUrl = buildURLNoHints("/", ghRequest);
+            String postUrl = buildURLNoHints("", ghRequest);
             JsonNode responseJson = fromStringToJSON(postUrl, postJson(postUrl, requestJson));
             if (responseJson.has("message")) {
                 matrixResponse.addErrors(ResponsePathDeserializer.readErrors(objectMapper, responseJson));

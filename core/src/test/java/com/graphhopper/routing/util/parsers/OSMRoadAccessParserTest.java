@@ -55,6 +55,15 @@ class OSMRoadAccessParserTest {
         way.removeTag("country_rule");
         parser.handleWayTags(edgeFlags, way, relFlags);
         assertEquals(RoadAccess.YES, roadAccessEnc.getEnum(false, edgeFlags));
+
+        way.setTag("motor_vehicle", "agricultural;forestry");
+        parser.handleWayTags(edgeFlags, way, relFlags);
+        assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeFlags));
+
+        way.setTag("motor_vehicle", "forestry;agricultural");
+        parser.handleWayTags(edgeFlags, way, relFlags);
+        assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeFlags));
+
     }
 
 }

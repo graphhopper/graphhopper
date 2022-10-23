@@ -22,8 +22,9 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.OSMTurnRelation;
+import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
@@ -46,6 +47,7 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import static com.graphhopper.util.GHUtility.readCountries;
@@ -318,26 +320,10 @@ public class OSMReaderTest {
     @Test
     public void testNegativeIds() {
         String fileNegIds = "test-osm-negative-ids.xml";
-        GraphHopper hopper = new GraphHopperFacade(fileNegIds).importOrLoad();
-        Graph graph = hopper.getBaseGraph();
-        assertEquals(4, graph.getNodes());
-        int n20 = AbstractGraphStorageTester.getIdOf(graph, 52);
-        int n10 = AbstractGraphStorageTester.getIdOf(graph, 51.2492152);
-        int n30 = AbstractGraphStorageTester.getIdOf(graph, 51.2);
-        assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
-        assertEquals(3, GHUtility.count(carOutExplorer.setBaseNode(n20)));
-        assertEquals(GHUtility.asSet(n20), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
-
-        EdgeIterator iter = carOutExplorer.setBaseNode(n20);
-        assertTrue(iter.next());
-
-        assertTrue(iter.next());
-        assertEquals(n30, iter.getAdjNode());
-        assertEquals(93147, iter.getDistance(), 1);
-
-        assertTrue(iter.next());
-        assertEquals(n10, iter.getAdjNode());
-        assertEquals(88643, iter.getDistance(), 1);
+        Exception exception = assertThrows(RuntimeException.class, () -> {
+            new GraphHopperFacade(fileNegIds).importOrLoad();
+        });
+        assertTrue(exception.getCause().getMessage().contains("Invalid OSM NODE Id: -10;"));
     }
 
     @Test
@@ -403,7 +389,7 @@ public class OSMReaderTest {
     @Test
     public void testFords() {
         GraphHopper hopper = new GraphHopper();
-        hopper.setFlagEncodersString("car|block_fords=true");
+        hopper.setVehiclesString("car|block_fords=true");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
@@ -502,8 +488,8 @@ public class OSMReaderTest {
         OSMParsers osmParsers = new OSMParsers()
                 .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConf));
         ReaderRelation osmRel = new ReaderRelation(1);
-        osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
-        osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
+        osmRel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1, ""));
+        osmRel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 2, ""));
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
@@ -524,7 +510,7 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testTurnRestrictions() {
+    public void testTurnRestrictionsFromXML() {
         String fileTurnRestrictions = "test-restrictions.xml";
         GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
                 importOrLoad();
@@ -593,27 +579,6 @@ public class OSMReaderTest {
         assertTrue(tcStorage.get(bikeTCEnc, edge10_11, n11, edge11_14) > 0);
     }
 
-    @Test
-    public void testMultipleFromForNoEntry() {
-        ReaderRelation rel = new ReaderRelation(1L);
-
-        rel.setTag("restriction", "no_entry");
-        rel.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 1L, "from"));
-        rel.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 2L, "from"));
-        rel.add(new ReaderRelation.Member(ReaderRelation.Member.NODE, 3L, "via"));
-        rel.add(new ReaderRelation.Member(ReaderRelation.Member.WAY, 4L, "to"));
-
-        List<OSMTurnRelation> osmRel = OSMReader.createTurnRelations(rel);
-        assertEquals(2, osmRel.size());
-
-        assertEquals(1, osmRel.get(0).getOsmIdFrom());
-        assertEquals(4, osmRel.get(0).getOsmIdTo());
-        assertEquals(OSMTurnRelation.Type.NOT, osmRel.get(0).getRestriction());
-
-        assertEquals(2, osmRel.get(1).getOsmIdFrom());
-        assertEquals(4, osmRel.get(1).getOsmIdTo());
-        assertEquals(OSMTurnRelation.Type.NOT, osmRel.get(1).getRestriction());
-    }
 
     @Test
     public void testRoadAttributes() {
@@ -905,23 +870,6 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testRoutingRequestFails_issue665() {
-        GraphHopper hopper = new GraphHopper()
-                .setOSMFile(getClass().getResource(file7).getFile())
-                .setProfiles(
-                        new Profile("profile1").setVehicle("car").setWeighting("fastest"),
-                        new Profile("profile2").setVehicle("motorcycle").setWeighting("curvature")
-                )
-                .setGraphHopperLocation(dir);
-        hopper.importOrLoad();
-        GHRequest req = new GHRequest(48.977277, 8.256896, 48.978876, 8.254884).
-                setProfile("profile2");
-
-        GHResponse ghRsp = hopper.route(req);
-        assertFalse(ghRsp.hasErrors(), ghRsp.getErrors().toString());
-    }
-
-    @Test
     public void testRoadClassInfo() {
         GraphHopper gh = new GraphHopper() {
             @Override
@@ -972,6 +920,12 @@ public class OSMReaderTest {
         assertEquals(RoadAccess.DESTINATION, edgeBerlin.get(roadAccessEnc));
         // for Paris there is no such rule, we just get the default RoadAccess.YES
         assertEquals(RoadAccess.YES, edgeParis.get(roadAccessEnc));
+
+        ReaderWay way = new ReaderWay(0L);
+        PointList list = new PointList();
+        list.add(49.214906, -2.156067);
+        reader.setArtificialWayTags(list, way, 10, new HashMap<>());
+        assertEquals("JEY", way.getTag("country", null).toString());
     }
 
     @Test

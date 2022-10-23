@@ -49,7 +49,7 @@ public class NearestResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car").
+                putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", dir).
                 setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setWeighting("fastest")));
