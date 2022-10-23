@@ -27,6 +27,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -78,8 +79,8 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
         setTurnCost(iter2.getEdge(), 0, iter1.getEdge(), 666);
         setTurnCost(iter1.getEdge(), 1, iter2.getEdge(), 815);
 
-        iter1.setKeyValues(KeyValue.createKV("name", "named street1"));
-        iter2.setKeyValues(KeyValue.createKV("name", "named street2"));
+        iter1.setKeyValues(KeyValue.createKV(STREET_NAME, "named street1"));
+        iter2.setKeyValues(KeyValue.createKV(STREET_NAME, "named street2"));
 
         checkGraph(graph);
         graph.flush();

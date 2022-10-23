@@ -52,7 +52,7 @@ public class RouteResourceTurnCostsTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car|turn_costs=true").
+                putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/moscow.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").

@@ -21,7 +21,7 @@ package com.graphhopper.routing.ev;
  * The enum constants correspond to the the ISO3166-1:alpha3 code of the corresponding country
  */
 public enum Country {
-    // values were taken from `countries.geojson`:
+
     // ISO3166-1:alpha3(name:en, ISO3166-1:alpha2)
     MISSING("missing", "--"),
     AFG("Afghanistan", "AF"),
@@ -242,28 +242,28 @@ public enum Country {
     ZMB("Zambia", "ZM"),
     ZWE("Zimbabwe", "ZW");
 
-    public static final String KEY = "country";
+    public static final String KEY = "country", ISO_ALPHA3 = "ISO3166-1:alpha3";
 
-    private final String name;
-    private final String twoLetterCode;
+    private final String countryName;
+    private final String alpha2;
 
-    Country(String name, String twoLetterCode) {
-        this.name = name;
-        this.twoLetterCode = twoLetterCode;
+    Country(String countryName, String alpha2) {
+        this.countryName = countryName;
+        this.alpha2 = alpha2;
     }
 
     /**
-     * @return the name:en field of this country
+     * @return the name of this country. Avoids clash with name() method of this enum.
      */
-    public String getName() {
-        return name;
+    public String getCountryName() {
+        return countryName;
     }
 
     /**
      * @return the ISO3166-1:alpha2 code of this country
      */
-    public String getTwoLetterCode() {
-        return twoLetterCode;
+    public String getAlpha2() {
+        return alpha2;
     }
 
     public static EnumEncodedValue<Country> create() {

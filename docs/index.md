@@ -2,17 +2,18 @@
 
 ## First Steps
 
-Try out our live demo called [GraphHopper Maps](https://graphhopper.com/maps)
+Try out our live demo called [GraphHopper Maps](https://graphhopper.com/maps/)
 
- [![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](https://graphhopper.com/maps)
+ [![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2022/10/maps2-1024x661.png)](https://graphhopper.com/maps)
 
-[The Readme](../README.md#features) lists all features or [this list of slides](https://graphhopper.com/public/slides/).
+[The Readme](../README.md#features) lists all features.
+
 See [users of GraphHopper](https://www.graphhopper.com/showcases/) and let us know your application!
 
 ## Community
 
 For all questions regarding the GraphHopper routing engine please use [our forum](https://discuss.graphhopper.com). 
-For bugs see our contribute section below.
+For bugs see our [contributing guide](https://github.com/graphhopper/graphhopper/blob/master/CONTRIBUTING.md).
 
 ---
 
@@ -49,14 +50,13 @@ Various topics are explained in more detail separately:
 
  * [Technical overview](./core/technical.md): Technical details about how GraphHopper its calculations are working.
  * [Custom models](./core/custom-models.md): This tutorial explains how to customize an existing vehicle profile to your needs without to know Java.
+ * [Create custom weighting](./core/weighting.md): Documentation regarding Weighting. In almost all situations a custom model should be created instead.
  * [Simple routing](./core/routing.md): Tutorial how to integrate GraphHopper in your Java application (or pick any JVM language)
- * [Create custom weighting](./core/weighting.md): Documentation about how to create a custom weighting class to influence the track calculation.
  * [Import GTFS](../reader-gtfs): Simple steps to get GTFS import and routing done.
  * [LocationIndex](../example/src/main/java/com/graphhopper/example/LocationIndexExample.java): Code about how to get the location index for getting i.e. the nearest edge. 
  * [Hybrid Mode](./core/landmarks.md): Details about speeding up the route calculation via A* and landmarks.
  * [Speed Mode](./core/ch.md): Details about speeding up the route calculations via [Contraction Hierarchies](http://en.wikipedia.org/wiki/Contraction_hierarchies).
  * [Low level API](./core/low-level-api.md): Instructions how to use GraphHopper as a Java library.
- * [Create new FlagEncoder](./core/create-new-flagencoder.md): Documentation to create new routing profiles to influence which ways to favor and how the track-time is calculated.
  * [Custom Areas and Country Rules](./core/custom-areas-and-country-rules.md): Instructions on how to on how to use and create new SpatialRules. SpatialRules are used to enforce country-specific routing rules.
  * [Turn Restrictions](./core/turn-restrictions.md): Details on how to enable and use turn restrictions.
  * [Isochrone generation in Java](./isochrone/java.md): Instruction on how to create isochrones using the low-level Java API.

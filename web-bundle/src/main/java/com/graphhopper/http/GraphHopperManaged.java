@@ -19,7 +19,6 @@
 package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
@@ -28,6 +27,7 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.Helper;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,7 +57,6 @@ public class GraphHopperManaged implements Managed {
     }
 
     public static List<Profile> resolveCustomModelFiles(String customModelFolder, List<Profile> profiles) {
-        ObjectMapper yamlOM = Jackson.initObjectMapper(new ObjectMapper(new YAMLFactory()));
         ObjectMapper jsonOM = Jackson.newObjectMapper();
         List<Profile> newProfiles = new ArrayList<>();
         for (Profile profile : profiles) {
@@ -73,8 +72,8 @@ public class GraphHopperManaged implements Managed {
                     newProfiles.add(new CustomProfile(profile).setCustomModel(customModel));
                     continue;
                 } catch (Exception ex) {
-                      throw new RuntimeException("Cannot load custom_model from " + cm + " for profile " + profile.getName()
-                          + ". If you are trying to load from a file, use 'custom_model_file' instead.", ex);
+                    throw new RuntimeException("Cannot load custom_model from " + cm + " for profile " + profile.getName()
+                            + ". If you are trying to load from a file, use 'custom_model_file' instead.", ex);
                 }
             }
             String customModelFileName = profile.getHints().getString("custom_model_file", "");
@@ -86,10 +85,12 @@ public class GraphHopperManaged implements Managed {
             else {
                 if (customModelFileName.contains(File.separator))
                     throw new IllegalArgumentException("Use custom_model_folder for the custom_model_file parent");
-                // Somehow dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
-                File file = Paths.get(customModelFolder).resolve(customModelFileName).toFile();
+                if (!customModelFileName.endsWith(".json"))
+                    throw new IllegalArgumentException("Yaml is no longer supported, see #2672. Use JSON with optional comments //");
                 try {
-                    CustomModel customModel = (customModelFileName.endsWith(".json") ? jsonOM : yamlOM).readValue(file, CustomModel.class);
+                    // Somehow dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
+                    String string = Helper.readJSONFileWithoutComments(Paths.get(customModelFolder).resolve(customModelFileName).toFile().getAbsolutePath());
+                    CustomModel customModel = jsonOM.readValue(string, CustomModel.class);
                     newProfiles.add(new CustomProfile(profile).setCustomModel(customModel));
                 } catch (Exception ex) {
                     throw new RuntimeException("Cannot load custom_model from location " + customModelFileName + " for profile " + profile.getName(), ex);

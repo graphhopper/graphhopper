@@ -17,7 +17,7 @@ mvn clean install -DskipTests
 # start GraphHopper and before download the road data
 wget http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar web/target/graphhopper-web-*.jar server config-example.yml
-# This does mainly 3 things:
+# This does the following things:
 # - it creates routable files for graphhopper in the folder graph-data (see the config.yml)
 # - it creates data for a special routing algorithm to improve query speed. (this and the previous step is skipped, if the graph-data folder is already present)
 # - it starts the web service to service the UI and endpoints like /route
@@ -86,54 +86,8 @@ as those versions are not in maven central:
 
 ### Web UI (JavaScript)
 
-Running `mvn package` from the root folder will install a local copy of node/npm and build the javascript bundle for GH
-maps. You just need to start the server and GH maps and if you use the default port GH maps will be visible at
-`http://localhost:8989/`.
-
-To develop the web UI running the whole maven build usually takes too long so here are the separate steps that you need
-to perform when you make changes to the JavaScript code:
-
-1. install the [node package manager](https://github.com/nvm-sh/nvm#install--update-script). For windows
-   use [nvm-windows](https://github.com/coreybutler/nvm-windows).
-2. Build the Web UI: `cd web-bundle && npm install && npm run bundle` which results in the `main.js` file
-3. Restart the GH server so it picks up the latest version of the UI bundle
-
-You can achieve an even faster development cycle by running `npm run watch` which will update `main.js` whenever you
-make changes to one of the .js files. To hot-reload your changes in the browser the best option is to serve GH maps from
-a separate server like live-server. You can do this by running `npm run serve` from a separate terminal and pointing the
-routing.host property in src/main/resources/com/graphhopper/maps/js/config/options.js to your GH server:
-
-```js
-...
-routing: {
-   host: 'http://localhost:8989', api_key
-:
-   ''
-}
-...
-```
-
-Re-building `main.js` on every change might cause your IDE (like IntelliJ) to re-index the file all the time. Therefore
-it is a good idea to remove `main.js` from your editor's index. For example in IntelliJ right-click the file and choose
-`Mark as plain text`.
-
-The following npm commands are available in the `web-bundle` directory:
-
-```bash
-# bundle creates the main file
-npm run bundle
-
-# create main.js for debugging
-npm run bundleDebug
-
-# create main.js for production and specify as CLI parameter `export NODE_ENV=development` which `options_*.js` file should be selected
-npm run bundleProduction
-
-# Forcing consistent code style with jshint:
-npm run lint
-
-# see the package.json where more scripts are defined
-```
+The development of the GraphHopper Maps UI happens in a [different repository](https://github.com/graphhopper/graphhopper-maps).
+The mvn life-cycle will just download one of its releases.
 
 ### Swing and Desktop Usage
 

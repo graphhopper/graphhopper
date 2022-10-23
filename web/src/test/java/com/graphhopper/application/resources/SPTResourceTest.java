@@ -47,7 +47,7 @@ public class SPTResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car|turn_costs=true").
+                putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("graph.encoded_values", "max_speed,road_class").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
@@ -98,7 +98,7 @@ public class SPTResourceTest {
         assertEquals("prev_node_id,edge_id,node_id,time,distance", lines[0]);
         assertEquals("-1,-1,1948,0,0", lines[1]);
         assertEquals("1948,2277,1324,3817,74", lines[2]);
-        assertEquals("1948,2276,263,13495,262", lines[3]);
+        assertEquals("1948,2276,263,13496,262", lines[3]);
     }
 
     @Test

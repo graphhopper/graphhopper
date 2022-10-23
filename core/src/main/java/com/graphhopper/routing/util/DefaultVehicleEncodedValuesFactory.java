@@ -28,13 +28,13 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
     @Override
     public VehicleEncodedValues createVehicleEncodedValues(String name, PMap configuration) {
         if (name.equals(ROADS))
-            return VehicleEncodedValues.roads();
+            return VehicleEncodedValues.roads(configuration);
 
         if (name.equals(CAR))
             return VehicleEncodedValues.car(configuration);
 
-        if (name.equals(CAR4WD))
-            return VehicleEncodedValues.car4wd(configuration);
+        if (name.equals("car4wd"))
+            throw new IllegalArgumentException("Instead of car4wd use the roads vehicle and a custom_model, see custom_models/car4wd.json");
 
         if (name.equals(BIKE))
             return VehicleEncodedValues.bike(configuration);

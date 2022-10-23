@@ -38,12 +38,9 @@ The vehicle field must correspond to one of GraphHopper's built-in vehicle types
 - bike2
 - mtb
 - car
-- car4wd
 - motorcycle
 
 By choosing a vehicle GraphHopper determines the accessibility and a default travel speed for the different road types.
-If you are interested in the low-level Java API note that the vehicles correspond to implementations of the
-`FlagEncoder` interface.
 
 The weighting determines the 'cost function' for the route calculation and must match one of the following built-in
 weightings:

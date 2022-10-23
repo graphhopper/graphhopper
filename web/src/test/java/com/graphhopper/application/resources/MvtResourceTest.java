@@ -22,6 +22,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.MvtReader;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.TagKeyValueMapConverter;
 import com.wdtinc.mapbox_vector_tile.adapt.jts.model.JtsLayer;
@@ -44,6 +45,7 @@ import java.util.Collections;
 import java.util.Map;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -58,7 +60,7 @@ public class MvtResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car").
+                putObject("graph.vehicles", "car").
                 putObject("graph.encoded_values", "road_class,road_environment,max_speed,surface").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
@@ -85,13 +87,12 @@ public class MvtResourceTest {
         JtsLayer layer = layerValues.values().iterator().next();
         MultiLineString multiLineString = (MultiLineString) layer.getGeometries().iterator().next();
         assertEquals(42, multiLineString.getCoordinates().length);
-        Map map = attributes(multiLineString);
-        assertEquals("Camì de les Pardines", map.get("name"));
+        assertEquals("Camì de les Pardines", getUserData(multiLineString).get(STREET_NAME));
     }
 
     @Test
-    public void testWithDetailsInResponse() throws IOException {
-        final Response response = clientTarget(app, "/mvt/15/16522/12102.mvt?details=max_speed&details=road_class&details=road_environment").request().buildGet().invoke();
+    public void testDetailsInResponse() throws IOException {
+        final Response response = clientTarget(app, "/mvt/15/16522/12102.mvt").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InputStream is = response.readEntity(InputStream.class);
         JtsMvt result = MvtReader.loadMvt(is, new GeometryFactory(), new TagKeyValueMapConverter());
@@ -100,14 +101,14 @@ public class MvtResourceTest {
         assertEquals(21, layer.getGeometries().size());
 
         Geometry geometry = layer.getGeometries().stream().
-                filter(g -> attributes(g).get("name").equals("Avinguda de Tarragona"))
+                filter(g -> "Avinguda de Tarragona".equals(getUserData(g).get(STREET_NAME)))
                 .findFirst().get();
-        assertEquals("road", attributes(geometry).get("road_environment"));
-        assertEquals(50.0, attributes(geometry).get("max_speed"));
-        assertEquals("primary", attributes(geometry).get("road_class"));
+        assertEquals("road", getUserData(geometry).get("road_environment"));
+        assertEquals("50.0 | 50.0", getUserData(geometry).get("max_speed"));
+        assertEquals("primary", getUserData(geometry).get("road_class"));
     }
 
-    private Map<String, Object> attributes(Geometry g) {
+    private Map<String, Object> getUserData(Geometry g) {
         return (Map<String, Object>) g.getUserData();
     }
 }

@@ -1,8 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <osm version="0.6" generator="pbf2osm">
     <!-- 
-       1~~~2
-       |\  |
+       1~~~2 9
+       |\  |/
        | 6 3~~8
        |/  |
        5~~~4~~7
@@ -10,7 +10,7 @@
        
       (2,3)->(3,4): only_straight_on
       (4,3)->(3,8): no_right_turn
-      (4,5)->(5,6): right_turn_only
+      (4,5)->(5,6): only_right_turn
       (6,1)->(1,6): no_u_turn
       (2,3)->(3,8): no_entry
     -->

@@ -43,7 +43,15 @@ public class Bike2WeightTagParserTest extends BikeTagParserTest {
 
     @Override
     protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup, PMap pMap) {
-        Bike2WeightTagParser parser = new Bike2WeightTagParser(lookup, pMap);
+        Bike2WeightTagParser parser = new Bike2WeightTagParser(lookup, pMap) {
+            @Override
+            public IntsRef applyWayTags(ReaderWay way, IntsRef intsRef) {
+                if (!way.hasTag("point_list") || !way.hasTag("edge_distance"))
+                    return intsRef;
+                else
+                    return super.applyWayTags(way, intsRef);
+            }
+        };
         parser.init(new DateRangeParser());
         return parser;
     }
@@ -75,7 +83,9 @@ public class Bike2WeightTagParserTest extends BikeTagParserTest {
         Graph graph = initExampleGraph();
         EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
         ReaderWay way = new ReaderWay(1);
-        parser.applyWayTags(way, edge);
+        way.setTag("point_list", edge.fetchWayGeometry(FetchMode.ALL));
+        way.setTag("edge_distance", edge.getDistance());
+        edge.setFlags(((Bike2WeightTagParser) parser).applyWayTags(way, edge.getFlags()));
 
         IntsRef flags = edge.getFlags();
         // decrease speed
@@ -91,7 +101,9 @@ public class Bike2WeightTagParserTest extends BikeTagParserTest {
         IntsRef oldFlags = IntsRef.deepCopyOf(edge.getFlags());
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "steps");
-        parser.applyWayTags(way, edge);
+        way.setTag("point_list", edge.fetchWayGeometry(FetchMode.ALL));
+        way.setTag("edge_distance", edge.getDistance());
+        edge.setFlags(((Bike2WeightTagParser) parser).applyWayTags(way, edge.getFlags()));
 
         assertEquals(oldFlags, edge.getFlags());
     }
