@@ -39,11 +39,13 @@ public class Polygon implements Shape {
     public final PreparedGeometry prepPolygon;
     public final boolean rectangle;
     public final Envelope envelope;
+    public final BBox bbox;
 
     public Polygon(PreparedPolygon prepPolygon) {
         this.prepPolygon = prepPolygon;
         this.rectangle = prepPolygon.getGeometry().isRectangle();
         this.envelope = prepPolygon.getGeometry().getEnvelopeInternal();
+        this.bbox = BBox.fromEnvelope(envelope);
     }
 
     public Polygon(double[] lats, double[] lons) {
@@ -61,6 +63,7 @@ public class Polygon implements Shape {
         this.prepPolygon = new PreparedPolygon(factory.createPolygon(new PackedCoordinateSequence.Double(coordinates, 2)));
         this.rectangle = prepPolygon.getGeometry().isRectangle();
         this.envelope = prepPolygon.getGeometry().getEnvelopeInternal();
+        this.bbox = BBox.fromEnvelope(envelope);
     }
 
     public static Polygon create(org.locationtech.jts.geom.Polygon polygon) {
@@ -84,7 +87,7 @@ public class Polygon implements Shape {
 
     @Override
     public BBox getBounds() {
-        return new BBox(envelope.getMinX(), envelope.getMaxX(), envelope.getMinY(), envelope.getMaxY());
+        return bbox;
     }
 
     public double getMinLat() {
