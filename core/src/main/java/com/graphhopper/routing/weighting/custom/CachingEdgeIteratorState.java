@@ -43,7 +43,7 @@ class CachingEdgeIteratorState extends DelegatingEdgeIteratorState {
     @Override
     public BBox getBounds() {
         if (bbox == null) {
-            bbox = getDelegate().getBounds();
+            bbox = super.getBounds();
         }
         return bbox;
     }
