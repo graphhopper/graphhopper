@@ -40,7 +40,7 @@ class CustomWeightingHelperTest {
         assertFalse(CustomWeightingHelper.in(square, edge));
 
         // (0,30) (30,30) (30,0)
-        // Edge is without the polygon; BBoxes are intersecting
+        // Edge is outside the polygon; BBoxes are intersecting
         g.getNodeAccess().setNode(6, 0, 30);
         g.getNodeAccess().setNode(7, 30, 0);
         edge = g.edge(6, 7).setWayGeometry(Helper.createPointList(30, 30));
