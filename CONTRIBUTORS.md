@@ -13,6 +13,7 @@ Here is an overview:
  * baumboi, path detail and landmark improvements
  * boldtrn, one of the core developers with motorcycle knowledge :)
  * cgarreau, increase of routing success rate via subnetwork cleanup
+ * cheehwatang, instructions improved
  * chollemans, fixes like #1482
  * ChristianSeitzer, motorcycle improvements
  * ChristophKaser, agrees to the project's CLA, improved Android compatibility #1207
