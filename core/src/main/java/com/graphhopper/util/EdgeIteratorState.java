@@ -21,6 +21,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.shapes.BBox;
 
 import java.util.List;
 
@@ -118,6 +119,13 @@ public interface EdgeIteratorState {
      * @return the pillar and/or tower nodes depending on the mode.
      */
     PointList fetchWayGeometry(FetchMode mode);
+
+    default BBox getBounds() {
+        PointList towerNodes = fetchWayGeometry(FetchMode.TOWER_ONLY);
+        int secondIndex = towerNodes.size() == 1 ? 0 : 1;
+        return BBox.fromPoints(towerNodes.getLat(0), towerNodes.getLon(0),
+                towerNodes.getLat(secondIndex), towerNodes.getLon(secondIndex));
+    }
 
     /**
      * @param list is a sorted collection of coordinates between the base node and the current adjacent node. Specify

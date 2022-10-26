@@ -76,8 +76,7 @@ public class CustomWeightingHelper {
     }
 
     public static boolean in(Polygon p, EdgeIteratorState edge) {
-        BBox bbox = GHUtility.createBBox(edge);
-        if (!p.getBounds().intersects(bbox))
+        if (!p.getBounds().intersects(edge.getBounds()))
             return false;
         if (p.isRectangle())
             return true;

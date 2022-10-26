@@ -222,7 +222,7 @@ public class GraphEdgeIdFinder {
 
                 // compromise: avoid expensive fetch of pillar nodes, which isn't yet fast for being used in Weighting.calc
                 if (bbox == null)
-                    bbox = GHUtility.createBBox(edgeState);
+                    bbox = edgeState.getBounds();
 
                 Shape shape = blockedShapes.get(shapeIdx);
                 if (shape.getBounds().intersects(bbox)) {
