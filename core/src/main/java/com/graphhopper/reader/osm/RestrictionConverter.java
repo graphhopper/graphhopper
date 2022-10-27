@@ -100,13 +100,14 @@ public class RestrictionConverter {
                 return false;
             }
         }
-        for (LongCursor viaWay : viaWays) {
-            if (!edgesByWay.apply(viaWay.value).hasNext()) {
-                // this happens for example at the map borders or when certain ways like footways are excluded
-                LOGGER.debug("Restriction relation " + relation.getId() + " uses excluded way " + viaWay.value + " as 'from' member. Relation ignored.");
-                return false;
+        if (members.isViaWay())
+            for (LongCursor viaWay : viaWays) {
+                if (!edgesByWay.apply(viaWay.value).hasNext()) {
+                    // this happens for example at the map borders or when certain ways like footways are excluded
+                    LOGGER.debug("Restriction relation " + relation.getId() + " uses excluded way " + viaWay.value + " as 'from' member. Relation ignored.");
+                    return false;
+                }
             }
-        }
         for (LongCursor toWay : toWays) {
             if (!edgesByWay.apply(toWay.value).hasNext()) {
                 // this happens for example at the map borders or when certain ways like footways are excluded
