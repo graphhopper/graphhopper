@@ -98,7 +98,7 @@ public class RestrictionSetter {
             final int fromToViaNode = p.first.getViaNodes().get(0);
             final int viaToToNode = p.first.getViaNodes().get(1);
 
-            // never turn between an edge and its corresponding real edge
+            // never turn between an artificial edge and its corresponding real edge
             restrictTurn(turnCostEnc, artificialVia, fromToViaNode, viaEdge);
             restrictTurn(turnCostEnc, viaEdge, fromToViaNode, artificialVia);
             restrictTurn(turnCostEnc, artificialVia, viaToToNode, viaEdge);

@@ -19,5 +19,5 @@
 package com.graphhopper.reader.osm;
 
 public enum RestrictionType {
-    UNSUPPORTED, NO, ONLY
+    NO, ONLY
 }
