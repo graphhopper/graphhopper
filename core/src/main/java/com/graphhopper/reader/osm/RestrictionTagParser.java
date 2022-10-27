@@ -84,14 +84,11 @@ public class RestrictionTagParser {
     }
 
     private static Result buildResult(String restriction) {
-        RestrictionType restrictionType = parseRestrictionValue(restriction);
-        if (restrictionType == RestrictionType.UNSUPPORTED)
-            throw new OSMRestrictionException("uses unsupported restriction value: '" + restriction + "'");
-        return new Result(restrictionType, restriction);
+        return new Result(parseRestrictionValue(restriction), restriction);
     }
 
-    private static RestrictionType parseRestrictionValue(String restrictionType) {
-        switch (restrictionType) {
+    private static RestrictionType parseRestrictionValue(String restriction) {
+        switch (restriction) {
             case "no_left_turn":
             case "no_right_turn":
             case "no_straight_on":
@@ -104,9 +101,11 @@ public class RestrictionTagParser {
             case "only_straight_on":
             case "only_u_turn":
                 return RestrictionType.ONLY;
+            case "no_right_turn_on_red":
+            case "no_left_turn_on_red":
+                throw OSMRestrictionException.withoutWarning();
             default:
-                // todonow: there are some we don't support but for which we don't want to print a warning either?
-                return RestrictionType.UNSUPPORTED;
+                throw new OSMRestrictionException("uses unknown restriction value: '" + restriction + "'");
         }
     }
 
