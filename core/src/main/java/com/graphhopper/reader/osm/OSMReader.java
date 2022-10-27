@@ -17,10 +17,7 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.IntLongMap;
 import com.carrotsearch.hppc.LongArrayList;
-import com.graphhopper.coll.GHIntLongHashMap;
-import com.graphhopper.coll.GHLongHashSet;
 import com.graphhopper.coll.GHLongLongHashMap;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
@@ -37,7 +34,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
-import com.graphhopper.routing.util.parsers.TurnCostParser;
+import com.graphhopper.routing.util.parsers.RestrictionSetter;
 import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
@@ -91,9 +88,8 @@ public class OSMReader {
     private long zeroCounter = 0;
 
     private GHLongLongHashMap osmWayIdToRelationFlagsMap = new GHLongLongHashMap(200, .5f);
-    // stores osm way ids used by relations to identify which edge ids needs to be mapped later
-    private GHLongHashSet osmWayIdSet = new GHLongHashSet();
-    private IntLongMap edgeIdToOsmWayIdMap;
+    private WayToEdgesMap restrictedWaysToEdgesMap = new WayToEdgesMap();
+    private List<ReaderRelation> restrictionRelations = new ArrayList<>();
 
     public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
@@ -172,9 +168,11 @@ public class OSMReader {
         osmDataDate = waySegmentParser.getTimeStamp();
         if (baseGraph.getNodes() == 0)
             throw new RuntimeException("Graph after reading OSM must not be empty");
+        releaseEverythingExceptRestrictionData();
+        addRestrictionsToGraph();
+        releaseRestrictionData();
         LOGGER.info("Finished reading OSM file: {}, nodes: {}, edges: {}, zero distance edges: {}",
                 osmFile.getAbsolutePath(), nf(baseGraph.getNodes()), nf(baseGraph.getEdges()), nf(zeroCounter));
-        finishedReading();
     }
 
     /**
@@ -361,9 +359,7 @@ public class OSMReader {
         }
 
         checkDistance(edge);
-        if (osmWayIdSet.contains(way.getId())) {
-            getEdgeIdToOsmWayIdMap().put(edge.getEdge(), way.getId());
-        }
+        restrictedWaysToEdgesMap.putIfReserved(way.getId(), edge.getEdge());
     }
 
     private void checkCoordinates(int nodeIndex, GHPoint point) {
@@ -521,59 +517,87 @@ public class OSMReader {
             }
         }
 
-        // we keep the osm way ids that occur in turn restriction relations, because this way we know for which GH edges
-        // we need to remember the associated osm way id. this is just an optimization that is supposed to save
-        // memory compared to simply storing the osm way ids in a long array where the array index is the GH edge
-        // id.
-        for (OSMTurnRestriction turnRestriction : OSMRestrictionRelationParser.createTurnRestrictions(relation, LOGGER::warn)) {
-            osmWayIdSet.add(turnRestriction.getOsmIdFrom());
-            osmWayIdSet.add(turnRestriction.getOsmIdTo());
-        }
+        Arrays.stream(RestrictionConverter.getRestrictedWayIds(relation))
+                .forEach(restrictedWaysToEdgesMap::reserve);
     }
 
     /**
      * This method is called for each relation during the second pass of {@link WaySegmentParser}
-     * We use it to set turn restrictions.
+     * We use it to save the relations and process them afterwards.
      */
     protected void processRelation(ReaderRelation relation, LongToIntFunction getIdForOSMNodeId) {
-        if (turnCostStorage != null) {
-            List<OSMTurnRestriction> turnRestrictions = OSMRestrictionRelationParser.createTurnRestrictions(relation, s -> {
-            });
-            if (turnRestrictions.isEmpty())
-                return;
-            TurnCostParser.ExternalInternalMap map = new TurnCostParser.ExternalInternalMap() {
-                @Override
-                public int getInternalNodeIdOfOsmNode(long nodeOsmId) {
-                    return getIdForOSMNodeId.applyAsInt(nodeOsmId);
-                }
-
-                @Override
-                public long getOsmIdOfInternalEdge(int edgeId) {
-                    return getEdgeIdToOsmWayIdMap().get(edgeId);
-                }
-            };
-            for (OSMTurnRestriction turnRestriction : turnRestrictions) {
-                int viaNode = map.getInternalNodeIdOfOsmNode(turnRestriction.getViaOsmNodeId());
-                // street with restriction was not included (access or tag limits etc)
-                if (viaNode >= 0)
-                    osmParsers.handleTurnRestrictionTags(turnRestriction, map, baseGraph);
+        if (turnCostStorage != null)
+            if (RestrictionConverter.isTurnRestriction(relation)) {
+                long osmViaNode = RestrictionConverter.getViaNodeIfViaNodeRestriction(relation);
+                if (osmViaNode >= 0) {
+                    int viaNode = getIdForOSMNodeId.applyAsInt(osmViaNode);
+                    // only include the restriction if the corresponding node wasn't excluded
+                    if (viaNode >= 0) {
+                        relation.setTag("graphhopper:via_node", viaNode);
+                        restrictionRelations.add(relation);
+                    }
+                } else
+                    // not a via-node restriction -> simply add it as is
+                    restrictionRelations.add(relation);
             }
+    }
+
+    private void addRestrictionsToGraph() {
+        // The OSM restriction format is explained here: https://wiki.openstreetmap.org/wiki/Relation:restriction
+        RestrictionSetter restrictionSetter = new RestrictionSetter(baseGraph);
+        List<Pair<ReaderRelation, GraphRestriction>> restrictions = new ArrayList<>(restrictionRelations.size());
+        for (ReaderRelation restrictionRelation : restrictionRelations) {
+            try {
+                // convert the OSM relation topology to the graph representation. this only needs to be once for all
+                // vehicle types (we also want to print warnings only once)
+                GraphRestriction graphRestriction = RestrictionConverter.convert(restrictionRelation, baseGraph, restrictedWaysToEdgesMap::getEdges);
+                restrictions.add(new Pair<>(restrictionRelation, graphRestriction));
+            } catch (OSMRestrictionException e) {
+                warnOfRestriction(restrictionRelation, e);
+            }
+        }
+        // The restriction type depends on the vehicle, or at least not all restrictions affect every vehicle type.
+        // We handle the restrictions for one vehicle after another.
+        for (RestrictionTagParser restrictionTagParser : osmParsers.getRestrictionTagParsers()) {
+            List<Pair<GraphRestriction, RestrictionType>> restrictionsWithType = new ArrayList<>(restrictions.size());
+            for (Pair<ReaderRelation, GraphRestriction> r : restrictions) {
+                if (r.second == null)
+                    // this relation was found to be invalid by another restriction tag parser already
+                    continue;
+                try {
+                    RestrictionTagParser.Result res = restrictionTagParser.parseRestrictionTags(r.first.getTags());
+                    if (res == null)
+                        // this relation is ignored by the current restriction tag parser
+                        continue;
+                    RestrictionConverter.checkIfCompatibleWithRestriction(r.second, res.getRestriction());
+                    restrictionsWithType.add(new Pair<>(r.second, res.getRestrictionType()));
+                } catch (OSMRestrictionException e) {
+                    warnOfRestriction(r.first, e);
+                    // we only want to print a warning once for each restriction relation, so we make sure this
+                    // restriction is ignored for the other vehicles
+                    r.second = null;
+                }
+            }
+            restrictionSetter.setRestrictions(restrictionsWithType, restrictionTagParser.getTurnCostEnc());
         }
     }
 
-    private IntLongMap getEdgeIdToOsmWayIdMap() {
-        // todo: is this lazy initialization really advantageous?
-        if (edgeIdToOsmWayIdMap == null)
-            edgeIdToOsmWayIdMap = new GHIntLongHashMap(osmWayIdSet.size(), 0.5f);
-
-        return edgeIdToOsmWayIdMap;
+    private static void warnOfRestriction(ReaderRelation restrictionRelation, OSMRestrictionException e) {
+        // we do not log exceptions with an empty message
+        if (!e.isWithoutWarning()) {
+            restrictionRelation.getTags().remove("graphhopper:via_node");
+            LOGGER.warn("Restriction relation " + restrictionRelation.getId() + " " + e.getMessage() + ": " + restrictionRelation.getTags() + ". Relation ignored.");
+        }
     }
 
-    private void finishedReading() {
+    private void releaseEverythingExceptRestrictionData() {
         eleProvider.release();
         osmWayIdToRelationFlagsMap = null;
-        osmWayIdSet = null;
-        edgeIdToOsmWayIdMap = null;
+    }
+
+    private void releaseRestrictionData() {
+        restrictedWaysToEdgesMap = null;
+        restrictionRelations = null;
     }
 
     IntsRef getRelFlagsMap(long osmId) {
