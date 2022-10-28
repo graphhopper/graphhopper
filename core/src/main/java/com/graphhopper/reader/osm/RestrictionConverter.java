@@ -143,8 +143,7 @@ public class RestrictionConverter {
             } else if ("via".equals(member.getRole())) {
                 if (member.getType() == ReaderElement.Type.NODE) {
                     if (viaOSMNode >= 0)
-                        throw new OSMRestrictionException("has multiple members with role 'via' and" +
-                                " type 'node', but multiple via-members are only allowed when they are of type: 'way'");
+                        throw new OSMRestrictionException("has multiple members with role 'via' and type 'node', but multiple via-members are only allowed when they are of type: 'way'");
                     // note that we check for combined usage of via nodes and ways later on
                     viaOSMNode = member.getRef();
                 } else if (member.getType() == ReaderElement.Type.WAY) {
@@ -156,13 +155,20 @@ public class RestrictionConverter {
             } else if ("location_hint".equals(member.getRole())) {
                 // location_hint is deprecated and should no longer be used according to the wiki, but we do not warn
                 // about it, or even ignore the relation in this case, because maybe not everyone is happy to remove it.
-            } else
+            } else if (member.getRole().trim().isEmpty())
+                throw new OSMRestrictionException("has a member with an empty role");
+            else
                 throw new OSMRestrictionException("has a member with an unknown role '" + member.getRole() + "'");
         }
-        if (fromWays.size() < 1 || toWays.size() < 1)
-            throw new OSMRestrictionException("is missing a member with role 'from' or 'to': " + relation.getTags() + ". Relation ignored");
+        if (fromWays.isEmpty() && toWays.isEmpty())
+            throw new OSMRestrictionException("has no member with role 'from' and 'to'");
+        else if (fromWays.isEmpty())
+            throw new OSMRestrictionException("has no member with role 'from'");
+        else if (toWays.isEmpty())
+            throw new OSMRestrictionException("has no member with role 'to'");
+
         if (fromWays.size() > 1 && toWays.size() > 1)
-            throw new OSMRestrictionException("has multiple members with role 'from' or 'to': " + relation.getTags() + ". Relation ignored");
+            throw new OSMRestrictionException("has multiple members with role 'from' and 'to'");
         checkTags(fromWays, toWays, relation.getTags());
         if (viaOSMNode >= 0 && !viaWays.isEmpty())
             throw new OSMRestrictionException("has members with role 'via' of type 'node' and 'way', but only one type is allowed");
