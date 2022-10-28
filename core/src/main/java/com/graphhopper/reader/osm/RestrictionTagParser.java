@@ -46,11 +46,11 @@ public class RestrictionTagParser {
         List<String> limitedRestrictions = tags.entrySet().stream()
                 .filter(t -> t.getKey().startsWith("restriction:"))
                 // restriction:bicycle=give_way seems quite common in France, but since it isn't a 'strict' turn
-                // restriction we ignore it here. We also want to prevent warnings about combined
-                // restriction+restriction: tags in this case (see below).
+                // restriction we ignore it here.
                 .filter(e -> !"give_way".equals(e.getValue()))
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
+        boolean hasGiveWay = tags.values().stream().anyMatch("give_way"::equals);
         List<String> exceptVehicles = tags.containsKey("except")
                 // todo: there are also some occurrences of except=resident(s), destination or delivery
                 ? Arrays.stream(((String) tags.get("except")).split(";")).map(String::trim).collect(Collectors.toList())
@@ -58,6 +58,7 @@ public class RestrictionTagParser {
         if (restriction != null) {
             // the 'restriction' tag limits the turns for all vehicleTypes, unless this is modified by the 'except' tag
             if (!limitedRestrictions.isEmpty())
+                // note that there is no warning if there is a restriction tag and restriction:*=give_way
                 throw new OSMRestrictionException("has a 'restriction' tag, but also 'restriction:' tags");
             if (!Collections.disjoint(vehicleTypes, exceptVehicles))
                 return null;
@@ -65,7 +66,11 @@ public class RestrictionTagParser {
         } else {
             // if there is no 'restriction' tag there still might be 'restriction:xyz' tags that only affect certain vehicleTypes
             if (limitedRestrictions.isEmpty())
-                throw new OSMRestrictionException("neither has a 'restriction' nor 'restriction:' tags");
+                if (!hasGiveWay)
+                    throw new OSMRestrictionException("neither has a 'restriction' nor 'restriction:' tags");
+                else
+                    // ignore, but no warning if there is only restriction:*=give_way
+                    throw OSMRestrictionException.withoutWarning();
             if (!exceptVehicles.isEmpty() && limitedRestrictions.stream().noneMatch(r -> r.startsWith("restriction:conditional")))
                 throw new OSMRestrictionException("has an 'except', but no 'restriction' or 'restriction:conditional' tag");
             Set<String> restrictions = limitedRestrictions.stream()

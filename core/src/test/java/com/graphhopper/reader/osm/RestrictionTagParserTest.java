@@ -94,6 +94,13 @@ class RestrictionTagParserTest {
     }
 
     @Test
+    void bicycle_giveWay() {
+        tags.put("restriction:bicycle", "give_way");
+        OSMRestrictionException e = assertThrows(OSMRestrictionException.class, () -> parseForVehicleTypes("bicycle"));
+        assertTrue(e.isWithoutWarning());
+    }
+
+    @Test
     void conditional() {
         // So far we are ignoring conditional restrictions, even though for example weight restrictions could
         // be interesting, even though some of them could probably be tagged as restriction:hgv

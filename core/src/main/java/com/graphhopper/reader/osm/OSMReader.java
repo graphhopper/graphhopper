@@ -51,6 +51,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.LongToIntFunction;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.*;
 import static com.graphhopper.util.Helper.nf;
@@ -586,7 +587,8 @@ public class OSMReader {
         // we do not log exceptions with an empty message
         if (!e.isWithoutWarning()) {
             restrictionRelation.getTags().remove("graphhopper:via_node");
-            LOGGER.warn("Restriction relation " + restrictionRelation.getId() + " " + e.getMessage() + ": " + restrictionRelation.getTags() + ". Relation ignored.");
+            List<String> members = restrictionRelation.getMembers().stream().map(m -> m.getRole() + " " + m.getType().toString().toLowerCase() + " " + m.getRef()).collect(Collectors.toList());
+            LOGGER.warn("Restriction relation " + restrictionRelation.getId() + " " + e.getMessage() + ". tags: " + restrictionRelation.getTags() + ", members: " + members + ". Relation ignored.");
         }
     }
 
