@@ -143,6 +143,7 @@ public class WayToEdgeConverter {
         // associated with the to-way.
         List<IntArrayList> candidates = new ArrayList<>();
         candidates.add(listFromIterator(edgesByWay.apply(fromWay)));
+        // todonow: no it is not as easy as this, for multiple via ways we also need to find the order of the via ways...
         viaWays.forEach((LongProcedure) c -> candidates.add(listFromIterator(edgesByWay.apply(c))));
         candidates.add(listFromIterator(edgesByWay.apply(toWay)));
 
