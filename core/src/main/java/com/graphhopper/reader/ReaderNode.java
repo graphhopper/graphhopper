@@ -43,7 +43,7 @@ public class ReaderNode extends ReaderElement {
 
     public double getEle() {
         Object ele = this.getTags().get("ele");
-        return ele == null ? Double.NaN : (Double)ele;
+        return ele == null ? Double.NaN : Double.parseDouble(((String)ele).trim().replaceAll("\\,", "."));
     }
 
     @Override
