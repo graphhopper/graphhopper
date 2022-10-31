@@ -26,11 +26,7 @@ There are already many existing :jp: :cn: :us: :fr: :es: :it: :ru: :de:
 ## Integrate into GraphHopper
 
 We'll regularly update GraphHopper with new translations or fixes so no need to do this work for you. If you still
-want to try your changes you will have to run the client and/or the server on your computer.
-
-### Server-side
-
-The turn instructions are created on the **server-side** and if you want to change and see them, you have to:
+want to try your changes you have to:
 
  * Make GraphHopper working on your computer, where you need to git clone the repository - see [here](./quickstart-from-source.md) for more information.
  * If you created a new language then add it in lexicographical order to TranslationMap.LOCALES (core/src/main/java/com/graphhopper/util) and to the script: core/files/update-translations.sh
@@ -41,11 +37,9 @@ The turn instructions are created on the **server-side** and if you want to chan
  the [GraphHopper service](./quickstart-from-source.md) and go to localhost:8989 append e.g. &locale=de if your translation does not show up automatically
  * Read the [contributing guide](../../CONTRIBUTING.md) to submit your changes
 
-### Client-side
+### Client-side Translations
 
-All other words are likely in our [GraphHopper Maps](https://github.com/graphhopper/graphhopper-maps) front end (client-side) and for this you follow the instructions in this repository to run it and:
- * Run `python3 update-translations.py`
- * Now you can see your changes via `git diff`. Make sure that is the only one with `git status`
+Only turn instructions are handled in the server-side routing engine. All other translations are on the client-side [in GraphHopper Maps](https://github.com/graphhopper/graphhopper-maps/blob/master/README.md#help-with-translations).
 
 ## License Agreement
 
