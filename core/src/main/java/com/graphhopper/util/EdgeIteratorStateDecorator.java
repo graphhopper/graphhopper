@@ -26,11 +26,11 @@ import java.util.List;
 /**
  * Implementation of the {@link EdgeIteratorState} interface which delegates all calls by default.
  */
-public class DelegatingEdgeIteratorState implements EdgeIteratorState {
+public abstract class EdgeIteratorStateDecorator implements EdgeIteratorState {
 
     private final EdgeIteratorState delegate;
 
-    public DelegatingEdgeIteratorState(EdgeIteratorState delegate) {
+    protected EdgeIteratorStateDecorator(EdgeIteratorState delegate) {
         this.delegate = delegate;
     }
 

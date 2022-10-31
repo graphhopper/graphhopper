@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.util.DelegatingEdgeIteratorState;
+import com.graphhopper.util.EdgeIteratorStateDecorator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
@@ -26,7 +26,7 @@ import com.graphhopper.util.shapes.BBox;
 import java.util.EnumMap;
 import java.util.Map;
 
-class CachingEdgeIteratorState extends DelegatingEdgeIteratorState {
+class CachingEdgeIteratorState extends EdgeIteratorStateDecorator {
 
     private final Map<FetchMode, PointList> geometries = new EnumMap<>(FetchMode.class);
     private BBox bbox;
