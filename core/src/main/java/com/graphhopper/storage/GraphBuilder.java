@@ -43,11 +43,6 @@ public class GraphBuilder {
     private int segmentSize = -1;
     private List<String> chConfigStrings = new ArrayList<>();
     private List<CHConfig> chConfigs = new ArrayList<>();
-    // ORS-GH MOD START
-    // CALT add member
-    // TODO ORS: maybe use profiles instead
-    private Weighting singleCoreWeighting;
-    // ORS-GH MOD END
 
     public static GraphBuilder start(EncodingManager encodingManager) {
         return new GraphBuilder(encodingManager);
@@ -57,18 +52,6 @@ public class GraphBuilder {
         this.encodingManager = encodingManager;
         this.turnCosts = encodingManager.needsTurnCostsSupport();
     }
-
-    // ORS-GH MOD START
-    // CALT add method
-    // ORS TODO: maybe use profiles instead
-    /**
-     * This method enables creating a CoreGraph with the specified weighting.
-     */
-    public GraphBuilder setCoreGraph(Weighting singleCoreWeighting) {
-        this.singleCoreWeighting = singleCoreWeighting;
-        return this;
-    }
-    // ORS-GH MOD END
 
     /**
      * Convenience method to set the CH profiles using a string representation. This is convenient if you want to add
@@ -140,26 +123,6 @@ public class GraphBuilder {
         ghStorage.addCHGraphs(chConfigs);
         return ghStorage;
     }
-    // TODO ORS: where does this mod have to go now?
-//    public GraphHopperStorage build() {
-//        Directory dir = mmap ?
-//                new MMapDirectory(location) :
-//                new RAMDirectory(location, store);
-//
-//        GraphExtension graphExtension = encodingManager.needsTurnCostsSupport() || turnCosts ?
-//                new TurnCostExtension() :
-//                new TurnCostExtension.NoOpExtension();
-//
-//// ORS-GH MOD START
-//// CALT
-//        if (singleCoreWeighting != null)
-//            chProfiles.add(new CHProfile(singleCoreWeighting, TraversalMode.NODE_BASED, TurnWeighting.INFINITE_U_TURN_COSTS, CHProfile.TYPE_CORE));
-//// ORS-GH MOD END
-//
-//        return chProfiles.isEmpty() ?
-//                new GraphHopperStorage(dir, encodingManager, elevation, graphExtension) :
-//                new GraphHopperStorage(chProfiles, dir, encodingManager, elevation, graphExtension);
-//    }
 
     /**
      * Default graph is a {@link GraphHopperStorage} with an in memory directory and disabled storing on flush.

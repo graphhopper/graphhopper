@@ -510,17 +510,6 @@ public class GraphHopperStorage implements Graph, Closeable {
         return baseGraph.getNodes();
     }
 
-    // ORS-GH MOD START
-    // CALT
-    public int getCoreNodes() {
-        for (CHEntry cg : chEntries) {
-            if (cg.chGraph.getCoreNodes() == -1) continue;
-            return cg.chGraph.getCoreNodes();
-        }
-        throw new IllegalStateException("No prepared core graph was found");
-    }
-    // ORS-GH MOD END
-
     @Override
     public int getEdges() {
         return baseGraph.getEdges();
