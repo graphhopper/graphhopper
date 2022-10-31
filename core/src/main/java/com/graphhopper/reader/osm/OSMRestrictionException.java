@@ -18,7 +18,7 @@
 
 package com.graphhopper.reader.osm;
 
-public class OSMRestrictionException extends RuntimeException {
+public class OSMRestrictionException extends Exception {
 
     public static OSMRestrictionException withoutWarning() {
         return new OSMRestrictionException("");

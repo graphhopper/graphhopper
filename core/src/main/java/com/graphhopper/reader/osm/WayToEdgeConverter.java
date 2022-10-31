@@ -45,7 +45,7 @@ public class WayToEdgeConverter {
      * For each way there can be multiple edge IDs and there should be exactly one that is adjacent to the via-node
      * for each way. Otherwise we throw {@link OSMRestrictionException}
      */
-    public NodeResult convertForViaNode(LongArrayList fromWays, int viaNode, LongArrayList toWays) {
+    public NodeResult convertForViaNode(LongArrayList fromWays, int viaNode, LongArrayList toWays) throws OSMRestrictionException {
         if (fromWays.isEmpty() || toWays.isEmpty())
             throw new IllegalArgumentException("There must be at least one from- and to-way");
         if (fromWays.size() > 1 && toWays.size() > 1)
@@ -104,7 +104,7 @@ public class WayToEdgeConverter {
      * Besides the edge IDs we also return the node IDs that connect the edges, so we can add turn restrictions at these
      * nodes later.
      */
-    public EdgeResult convertForViaWays(LongArrayList fromWays, LongArrayList viaWays, LongArrayList toWays) {
+    public EdgeResult convertForViaWays(LongArrayList fromWays, LongArrayList viaWays, LongArrayList toWays) throws OSMRestrictionException {
         if (fromWays.isEmpty() || toWays.isEmpty() || viaWays.isEmpty())
             throw new IllegalArgumentException("There must be at least one from-, via- and to-way");
         if (fromWays.size() > 1 && toWays.size() > 1)
@@ -210,9 +210,11 @@ public class WayToEdgeConverter {
 
         /**
          * All the intermediate nodes, i.e. for an edge chain like this:
-         * 0   1   2   3
+         * <pre>
+         *   a   b   c   d
          * 0---1---2---3---4
-         * where 0 is the from-edge and 3 is the to-edge this will be [1,2,3]
+         * </pre>
+         * where 'a' is the from-edge and 'd' is the to-edge this will be [1,2,3]
          */
         public IntArrayList getNodes() {
             return nodes;

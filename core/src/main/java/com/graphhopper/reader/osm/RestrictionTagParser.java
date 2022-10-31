@@ -41,7 +41,7 @@ public class RestrictionTagParser {
         return turnCostEnc;
     }
 
-    public Result parseRestrictionTags(Map<String, Object> tags) {
+    public Result parseRestrictionTags(Map<String, Object> tags) throws OSMRestrictionException {
         String restriction = (String) tags.get("restriction");
         List<String> limitedRestrictions = tags.entrySet().stream()
                 .filter(t -> t.getKey().startsWith("restriction:"))
@@ -88,11 +88,11 @@ public class RestrictionTagParser {
         }
     }
 
-    private static Result buildResult(String restriction) {
+    private static Result buildResult(String restriction) throws OSMRestrictionException {
         return new Result(parseRestrictionValue(restriction), restriction);
     }
 
-    private static RestrictionType parseRestrictionValue(String restriction) {
+    private static RestrictionType parseRestrictionValue(String restriction) throws OSMRestrictionException {
         switch (restriction) {
             case "no_left_turn":
             case "no_right_turn":

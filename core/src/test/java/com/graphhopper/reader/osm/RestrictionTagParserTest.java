@@ -38,7 +38,7 @@ class RestrictionTagParserTest {
         tags.put("type", "restriction");
     }
 
-    private RestrictionTagParser.Result parseForVehicleTypes(String... vehicleTypes) {
+    private RestrictionTagParser.Result parseForVehicleTypes(String... vehicleTypes) throws OSMRestrictionException {
         return new RestrictionTagParser(Arrays.asList(vehicleTypes), null).parseRestrictionTags(tags);
     }
 
@@ -65,7 +65,7 @@ class RestrictionTagParserTest {
     }
 
     @Test
-    void exceptWithConditional() {
+    void exceptWithConditional() throws OSMRestrictionException {
         tags.put("restriction:conditional", "no_right_turn @ (weight > 3.5)");
         tags.put("except", "psv");
         // we do not handle conditional restrictions yet, but no warning for except+restriction:conditional,
@@ -83,7 +83,7 @@ class RestrictionTagParserTest {
     }
 
     @Test
-    void restrictionAndLimitedRestriction_giveWay() {
+    void restrictionAndLimitedRestriction_giveWay() throws OSMRestrictionException {
         // this could happen for real, or at least it wouldn't be nonsensical. we ignore give_way so far, but do not
         // ignore or warn about the entire relation
         tags.put("restriction:bicycle", "give_way");
@@ -101,7 +101,7 @@ class RestrictionTagParserTest {
     }
 
     @Test
-    void conditional() {
+    void conditional() throws OSMRestrictionException {
         // So far we are ignoring conditional restrictions, even though for example weight restrictions could
         // be interesting, even though some of them could probably be tagged as restriction:hgv
         tags.put("restriction:conditional", "no_left_turn @ (weight > 3.5)");
@@ -109,14 +109,14 @@ class RestrictionTagParserTest {
     }
 
     @Test
-    void except() {
+    void except() throws OSMRestrictionException {
         tags.put("restriction", "no_left_turn");
         tags.put("except", "psv");
         assertNull(parseForVehicleTypes("psv"));
     }
 
     @Test
-    void exceptOther() {
+    void exceptOther() throws OSMRestrictionException {
         tags.put("restriction", "only_left_turn");
         tags.put("except", "psv");
         RestrictionTagParser.Result res = parseForVehicleTypes("motorcar");
@@ -125,7 +125,7 @@ class RestrictionTagParserTest {
     }
 
     @Test
-    void limitedToVehicle() {
+    void limitedToVehicle() throws OSMRestrictionException {
         tags.put("restriction:motorcar", "no_left_turn");
         RestrictionTagParser.Result res = parseForVehicleTypes("motorcar");
         assertEquals("no_left_turn", res.getRestriction());
@@ -133,14 +133,14 @@ class RestrictionTagParserTest {
     }
 
     @Test
-    void limitedToOtherVehicle() {
+    void limitedToOtherVehicle() throws OSMRestrictionException {
         tags.put("restriction:motorcar", "no_left_turn");
         RestrictionTagParser.Result res = parseForVehicleTypes("bicycle");
         assertNull(res);
     }
 
     @Test
-    void limitedMultiple() {
+    void limitedMultiple() throws OSMRestrictionException {
         tags.put("restriction:motorcar", "no_left_turn");
         tags.put("restriction:psv", "no_left_turn");
         RestrictionTagParser.Result res = parseForVehicleTypes("motorcar");
@@ -149,7 +149,7 @@ class RestrictionTagParserTest {
     }
 
     @Test
-    void limitedMultipleOther() {
+    void limitedMultipleOther() throws OSMRestrictionException {
         tags.put("restriction:motorcar", "no_left_turn");
         tags.put("restriction:psv", "no_left_turn");
         RestrictionTagParser.Result res = parseForVehicleTypes("bicycle");

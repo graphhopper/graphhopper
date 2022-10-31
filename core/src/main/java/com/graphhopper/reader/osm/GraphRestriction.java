@@ -26,6 +26,9 @@ import com.carrotsearch.hppc.IntArrayList;
  * (with one or more via-edges). There can also be multiple from- or to-edges to represent OSM restrictions like
  * no_entry or no_exit that use multiple from- or to-members.
  * <p>
+ * We store a list of via-nodes even for via-way restrictions. It stores the nodes connecting the via-ways,
+ * see {@link WayToEdgeConverter.EdgeResult}. For via-node restrictions the list simply contains the single via node.
+ * <p>
  * This class only contains the 'topology' of the restriction. The {@link RestrictionType} is handled separately,
  * because opposite to the type the topology does not depend on the vehicle type.
  */

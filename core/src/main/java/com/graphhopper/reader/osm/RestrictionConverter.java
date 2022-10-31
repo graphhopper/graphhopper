@@ -66,7 +66,7 @@ public class RestrictionConverter {
      * @throws OSMRestrictionException if the given relation is either not valid in some way and/or cannot be handled and
      *                                 shall be ignored
      */
-    public static GraphRestriction convert(ReaderRelation relation, BaseGraph baseGraph, LongFunction<Iterator<IntCursor>> edgesByWay) {
+    public static GraphRestriction convert(ReaderRelation relation, BaseGraph baseGraph, LongFunction<Iterator<IntCursor>> edgesByWay) throws OSMRestrictionException {
         if (!isTurnRestriction(relation))
             throw new IllegalArgumentException("expected a turn restriction: " + relation.getTags());
         RestrictionMembers restrictionMembers = extractMembers(relation);
@@ -90,42 +90,23 @@ public class RestrictionConverter {
     }
 
     private static boolean membersExist(RestrictionMembers members, LongFunction<Iterator<IntCursor>> edgesByWay, ReaderRelation relation) {
-        LongArrayList fromWays = members.getFromWays();
-        LongArrayList viaWays = members.getViaWays();
-        LongArrayList toWays = members.getToWays();
-        for (LongCursor fromWay : fromWays) {
-            if (!edgesByWay.apply(fromWay.value).hasNext()) {
+        for (LongCursor c : members.getAllWays())
+            if (!edgesByWay.apply(c.value).hasNext()) {
                 // this happens for example at the map borders or when certain ways like footways are excluded
-                LOGGER.debug("Restriction relation " + relation.getId() + " uses excluded way " + fromWay.value + " as 'from' member. Relation ignored.");
-                return false;
+                LOGGER.debug("Restriction relation " + relation.getId() + " uses excluded way " + c.value + ". Relation ignored.");
+                return true;
             }
-        }
-        if (members.isViaWay())
-            for (LongCursor viaWay : viaWays) {
-                if (!edgesByWay.apply(viaWay.value).hasNext()) {
-                    // this happens for example at the map borders or when certain ways like footways are excluded
-                    LOGGER.debug("Restriction relation " + relation.getId() + " uses excluded way " + viaWay.value + " as 'from' member. Relation ignored.");
-                    return false;
-                }
-            }
-        for (LongCursor toWay : toWays) {
-            if (!edgesByWay.apply(toWay.value).hasNext()) {
-                // this happens for example at the map borders or when certain ways like footways are excluded
-                LOGGER.debug("Restriction relation " + relation.getId() + " uses excluded way " + toWay.value + " as 'from' member. Relation ignored.");
-                return false;
-            }
-        }
-        return true;
+        return false;
     }
 
-    public static void checkIfCompatibleWithRestriction(GraphRestriction g, String restriction) {
+    public static void checkIfCompatibleWithRestriction(GraphRestriction g, String restriction) throws OSMRestrictionException {
         if (g.getFromEdges().size() > 1 && !"no_entry".equals(restriction))
             throw new OSMRestrictionException("has multiple members with role 'from' even though it is not a 'no_entry' restriction");
         if (g.getToEdges().size() > 1 && !"no_exit".equals(restriction))
             throw new OSMRestrictionException("has multiple members with role 'to' even though it is not a 'no_exit' restriction");
     }
 
-    public static RestrictionMembers extractMembers(ReaderRelation relation) {
+    public static RestrictionMembers extractMembers(ReaderRelation relation) throws OSMRestrictionException {
         // we use -1 to indicate 'missing', which is fine because we exclude negative OSM IDs (see #2652)
         long viaOSMNode = -1;
         LongArrayList fromWays = new LongArrayList();
@@ -180,7 +161,7 @@ public class RestrictionConverter {
             throw new OSMRestrictionException("has no member with role 'via'");
     }
 
-    private static void checkTags(LongArrayList fromWays, LongArrayList toWays, Map<String, Object> tags) {
+    private static void checkTags(LongArrayList fromWays, LongArrayList toWays, Map<String, Object> tags) throws OSMRestrictionException {
         // the exact restriction value depends on the vehicle type, but we can already print a warning for certain
         // cases here, so later we do not print such warnings for every single vehicle.
         boolean hasNoEntry = false;

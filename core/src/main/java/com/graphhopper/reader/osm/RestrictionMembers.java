@@ -62,4 +62,12 @@ public class RestrictionMembers {
     public LongArrayList getToWays() {
         return toWays;
     }
+
+    public LongArrayList getAllWays() {
+        LongArrayList result = new LongArrayList(fromWays.size() + toWays.size() + (isViaWay ? viaWays.size() : 0));
+        result.addAll(fromWays);
+        if (isViaWay) result.addAll(viaWays);
+        result.addAll(toWays);
+        return result;
+    }
 }
