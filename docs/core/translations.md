@@ -25,8 +25,12 @@ There are already many existing :jp: :cn: :us: :fr: :es: :it: :ru: :de:
 
 ## Integrate into GraphHopper
 
-We'll regularly update GraphHopper with new translations or fixes so no need to do this work for you. But if you still
-want to try your changes or want to speed up the integration you can do the following:
+We'll regularly update GraphHopper with new translations or fixes so no need to do this work for you. If you still
+want to try your changes you will have to run the client and/or the server on your computer.
+
+### Server-side
+
+The turn instructions are created on the **server-side** and if you want to change and see them, you have to:
 
  * Make GraphHopper working on your computer, where you need to git clone the repository - see [here](./quickstart-from-source.md) for more information.
  * If you created a new language then add it in lexicographical order to TranslationMap.LOCALES (core/src/main/java/com/graphhopper/util) and to the script: core/files/update-translations.sh
@@ -36,6 +40,12 @@ want to try your changes or want to speed up the integration you can do the foll
  * Now execute `mvn clean test` to see if you did not miss arguments in your translation (see point 2 in the questions above) and start
  the [GraphHopper service](./quickstart-from-source.md) and go to localhost:8989 append e.g. &locale=de if your translation does not show up automatically
  * Read the [contributing guide](../../CONTRIBUTING.md) to submit your changes
+
+### Client-side
+
+All other words are likely in our [GraphHopper Maps](https://github.com/graphhopper/graphhopper-maps) front end (client-side) and for this you follow the instructions in this repository to run it and:
+ * Run `python3 update-translations.py`
+ * Now you can see your changes via `git diff`. Make sure that is the only one with `git status`
 
 ## License Agreement
 
