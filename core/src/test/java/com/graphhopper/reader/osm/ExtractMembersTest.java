@@ -37,7 +37,7 @@ class ExtractMembersTest {
     }
 
     @Test
-    void simpleViaNode() {
+    void simpleViaNode() throws OSMRestrictionException {
         relation.add(new ReaderRelation.Member(WAY, 1, "from"));
         relation.add(new ReaderRelation.Member(NODE, 2, "via"));
         relation.add(new ReaderRelation.Member(WAY, 3, "to"));
@@ -77,7 +77,7 @@ class ExtractMembersTest {
     }
 
     @Test
-    void noEntry() {
+    void noEntry() throws OSMRestrictionException {
         relation.setTag("restriction", "no_entry");
         relation.add(new ReaderRelation.Member(WAY, 1, "from"));
         relation.add(new ReaderRelation.Member(WAY, 2, "from"));
@@ -101,7 +101,7 @@ class ExtractMembersTest {
     }
 
     @Test
-    void noExit() {
+    void noExit() throws OSMRestrictionException {
         relation.setTag("restriction", "no_exit");
         relation.add(new ReaderRelation.Member(WAY, 1, "from"));
         relation.add(new ReaderRelation.Member(NODE, 2, "via"));
