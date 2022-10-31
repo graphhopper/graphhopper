@@ -1366,11 +1366,15 @@ public class GraphHopper {
         return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"));
     }
 
-    private String getProfileVersion(String profile) {
+// ORS-GH MOD START change access private -> protected
+    protected String getProfileVersion(String profile) {
+// ORS-GH MOD END
         return ghStorage.getProperties().get("graph.profiles." + profile + ".version");
     }
 
-    private void setProfileVersion(String profile, int version) {
+// ORS-GH MOD START change access private -> protected
+    protected void setProfileVersion(String profile, int version) {
+// ORS-GH MOD END
         ghStorage.getProperties().put("graph.profiles." + profile + ".version", version);
     }
 
