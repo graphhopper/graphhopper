@@ -22,7 +22,6 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.cursors.LongCursor;
-import com.carrotsearch.hppc.procedures.LongProcedure;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -125,7 +124,7 @@ public class WayToEdgeConverter {
             result.fromEdges.add(edgeChain.get(0));
             if (result.nodes.isEmpty()) {
                 // the via-edges and nodes are the same for edge chain
-                for (int i = 1; i < edgeChain.size() - 3; i++) {
+                for (int i = 1; i < edgeChain.size() - 3; i += 2) {
                     result.nodes.add(edgeChain.get(i));
                     result.viaEdges.add(edgeChain.get(i + 1));
                 }
@@ -136,28 +135,30 @@ public class WayToEdgeConverter {
         return result;
     }
 
-    private void findEdgeChain(long fromWay, LongArrayList viaWays, long toWay, List<IntArrayList> solutions) {
+    private void findEdgeChain(long fromWay, LongArrayList viaWays, long toWay, List<IntArrayList> solutions) throws OSMRestrictionException {
         // For each edge chain there must be one edge associated with the from-way, one for each via-way and one
-        // associated with the to-way. For each way there is a list of possible edges (candidates) and then we simply
-        // do DFS with backtracking to find all edge chains that connect an edge associated with the from-way with one
-        // associated with the to-way.
-        List<IntArrayList> candidates = new ArrayList<>();
-        candidates.add(listFromIterator(edgesByWay.apply(fromWay)));
-        // todonow: no it is not as easy as this, for multiple via ways we also need to find the order of the via ways...
-        viaWays.forEach((LongProcedure) c -> candidates.add(listFromIterator(edgesByWay.apply(c))));
-        candidates.add(listFromIterator(edgesByWay.apply(toWay)));
-
-        // the search starts at *every* edge at level 0
-        for (IntCursor from : candidates.get(0)) {
-            EdgeIteratorState edge = baseGraph.getEdgeIteratorState(from.value, Integer.MIN_VALUE);
-            explore(candidates, edge.getBaseNode(), 1, IntArrayList.from(edge.getEdge(), edge.getBaseNode()), solutions);
-            explore(candidates, edge.getAdjNode(), 1, IntArrayList.from(edge.getEdge(), edge.getAdjNode()), solutions);
+        // associated with the to-way. We use DFS with backtracking to find all edge chains that connect an edge
+        // associated with the from-way with one associated with the to-way.
+        IntArrayList viaEdgesForViaWays = new IntArrayList(viaWays.size());
+        for (LongCursor c : viaWays) {
+            Iterator<IntCursor> iterator = edgesByWay.apply(c.value);
+            viaEdgesForViaWays.add(iterator.next().value);
+            if (iterator.hasNext())
+                throw new OSMRestrictionException("has via member way that isn't split at adjacent ways: " + c.value);
         }
+        IntArrayList toEdges = listFromIterator(edgesByWay.apply(toWay));
+
+        // the search starts at *every* from edge
+        edgesByWay.apply(fromWay).forEachRemaining(from -> {
+            EdgeIteratorState edge = baseGraph.getEdgeIteratorState(from.value, Integer.MIN_VALUE);
+            explore(viaEdgesForViaWays, toEdges, edge.getBaseNode(), 0, IntArrayList.from(edge.getEdge(), edge.getBaseNode()), solutions);
+            explore(viaEdgesForViaWays, toEdges, edge.getAdjNode(), 0, IntArrayList.from(edge.getEdge(), edge.getAdjNode()), solutions);
+        });
     }
 
-    private void explore(List<IntArrayList> candidates, int node, int level, IntArrayList curr, List<IntArrayList> solutions) {
-        if (level == candidates.size() - 1) {
-            for (IntCursor to : candidates.get(level)) {
+    private void explore(IntArrayList viaEdgesForViaWays, IntArrayList toEdges, int node, int viaCount, IntArrayList curr, List<IntArrayList> solutions) {
+        if (viaCount == viaEdgesForViaWays.size()) {
+            for (IntCursor to : toEdges) {
                 if (baseGraph.isAdjacentToNode(to.value, node)) {
                     IntArrayList solution = new IntArrayList(curr);
                     solution.add(to.value);
@@ -166,13 +167,18 @@ public class WayToEdgeConverter {
             }
             return;
         }
-        for (IntCursor c : candidates.get(level)) {
-            if (baseGraph.isAdjacentToNode(c.value, node)) {
-                int otherNode = baseGraph.getOtherNode(c.value, node);
-                curr.add(c.value, otherNode);
-                explore(candidates, otherNode, level + 1, curr, solutions);
+        for (int i = 0; i < viaEdgesForViaWays.size(); i++) {
+            int viaEdge = viaEdgesForViaWays.get(i);
+            if (viaEdge < 0) continue;
+            if (baseGraph.isAdjacentToNode(viaEdge, node)) {
+                int otherNode = baseGraph.getOtherNode(viaEdge, node);
+                curr.add(viaEdge, otherNode);
+                // every via edge must only be used once, but instead of removing it we just set it to -1
+                viaEdgesForViaWays.set(i, -1);
+                explore(viaEdgesForViaWays, toEdges, otherNode, viaCount + 1, curr, solutions);
                 // backtrack
                 curr.elementsCount -= 2;
+                viaEdgesForViaWays.set(i, viaEdge);
             }
         }
     }

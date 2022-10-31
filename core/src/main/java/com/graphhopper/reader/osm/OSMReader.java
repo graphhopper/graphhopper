@@ -549,7 +549,7 @@ public class OSMReader {
         List<Pair<ReaderRelation, GraphRestriction>> restrictions = new ArrayList<>(restrictionRelations.size());
         for (ReaderRelation restrictionRelation : restrictionRelations) {
             try {
-                // convert the OSM relation topology to the graph representation. this only needs to be once for all
+                // convert the OSM relation topology to the graph representation. this only needs to be done once for all
                 // vehicle types (we also want to print warnings only once)
                 GraphRestriction graphRestriction = RestrictionConverter.convert(restrictionRelation, baseGraph, restrictedWaysToEdgesMap::getEdges);
                 restrictions.add(new Pair<>(restrictionRelation, graphRestriction));
