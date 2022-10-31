@@ -94,8 +94,7 @@ public class MapMatchingResource {
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
-            @QueryParam("gps_accuracy") @DefaultValue("40") double gpsAccuracy,
-            @QueryParam(MAX_VISITED_NODES) @DefaultValue("3000") int maxVisitedNodes) {
+            @QueryParam("gps_accuracy") @DefaultValue("40") double gpsAccuracy) {
 
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
         if (gpx.trk.isEmpty()) {
@@ -111,9 +110,6 @@ public class MapMatchingResource {
 
         PMap hints = new PMap();
         RouteResource.initHints(hints, uriInfo.getQueryParameters());
-
-        // add values that are not in hints because they were explicitly listed in query params
-        hints.putObject(MAX_VISITED_NODES, maxVisitedNodes);
 
         // resolve profile and remove legacy vehicle/weighting parameters
         // we need to explicitly disable CH here because map matching does not use it
