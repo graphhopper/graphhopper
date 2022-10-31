@@ -41,6 +41,11 @@ public class ReaderNode extends ReaderElement {
         return lon;
     }
 
+    public double getEle() {
+        Object ele = this.getTags().get("ele");
+        return ele == null ? Double.NaN : (Double)ele;
+    }
+
     @Override
     public String toString() {
         StringBuilder txt = new StringBuilder();
