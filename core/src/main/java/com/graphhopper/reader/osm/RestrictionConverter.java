@@ -94,9 +94,9 @@ public class RestrictionConverter {
             if (!edgesByWay.apply(c.value).hasNext()) {
                 // this happens for example at the map borders or when certain ways like footways are excluded
                 LOGGER.debug("Restriction relation " + relation.getId() + " uses excluded way " + c.value + ". Relation ignored.");
-                return true;
+                return false;
             }
-        return false;
+        return true;
     }
 
     public static void checkIfCompatibleWithRestriction(GraphRestriction g, String restriction) throws OSMRestrictionException {
