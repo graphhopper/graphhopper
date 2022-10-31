@@ -372,6 +372,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder {
         return "speed_factor=" + speedFactor + "|speed_bits=" + speedBits + "|turn_costs=" + (maxTurnCosts > 0);
     }
 
+    // ORS-GH MOD START - additional method for overriding handleNodeTags()
+    protected long getEncoderBit() {
+        return this.encoderBit;
+    }
+    // ORS-GH MOD END
+
     @Override
     public List<EncodedValue> getEncodedValues() {
         return encodedValueLookup.getEncodedValues();
