@@ -326,19 +326,19 @@ public class CarTagParserTest {
 
         way.clearTags();
         way.setTag("highway", "secondary");
-        way.setTag("motorroad", "yes");
+        way.setTag("motorroad", "yes"); // motorroad should not influence speed. only access for non-motor vehicles
         edgeFlags = parser.handleWayTags(em.createEdgeFlags(), way);
-        assertEquals(90, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
+        assertEquals(60, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "motorway");
-        way.setTag("motorroad", "yes"); // this tag should be ignored
+        way.setTag("motorroad", "yes");
         edgeFlags = parser.handleWayTags(em.createEdgeFlags(), way);
         assertEquals(100, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "motorway_link");
-        way.setTag("motorroad", "yes"); // this tag should be ignored
+        way.setTag("motorroad", "yes");
         edgeFlags = parser.handleWayTags(em.createEdgeFlags(), way);
         assertEquals(70, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
 
