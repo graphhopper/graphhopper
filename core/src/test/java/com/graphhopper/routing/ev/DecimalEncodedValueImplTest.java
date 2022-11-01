@@ -81,12 +81,20 @@ public class DecimalEncodedValueImplTest {
         assertEquals(5.5, testEnc.getDecimal(false, intsRef), .1);
         assertEquals(-5.5, testEnc.getDecimal(true, intsRef), .1);
 
+        testEnc.setDecimal(false, intsRef, -5.5);
+        assertEquals(-5.5, testEnc.getDecimal(false, intsRef), .1);
+        assertEquals(5.5, testEnc.getDecimal(true, intsRef), .1);
+
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         new DecimalEncodedValueImpl("tmp1", 5, 1, false).init(config);
         testEnc = new DecimalEncodedValueImpl("tmp2", 5, 0, 1, true, false, false);
         testEnc.init(config);
         intsRef = new IntsRef(1);
-        testEnc.setDecimal(false, intsRef, 2.6);
+        testEnc.setDecimal(true, intsRef, 2.6);
+        assertEquals(-3, testEnc.getDecimal(false, intsRef), .1);
+        assertEquals(3, testEnc.getDecimal(true, intsRef), .1);
+
+        testEnc.setDecimal(true, intsRef, -2.6);
         assertEquals(3, testEnc.getDecimal(false, intsRef), .1);
         assertEquals(-3, testEnc.getDecimal(true, intsRef), .1);
     }
