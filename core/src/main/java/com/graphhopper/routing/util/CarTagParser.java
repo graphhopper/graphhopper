@@ -109,7 +109,6 @@ public class CarTagParser extends VehicleTagParser {
         // autobahn
         defaultSpeedMap.put("motorway", 100);
         defaultSpeedMap.put("motorway_link", 70);
-        defaultSpeedMap.put("motorroad", 90);
         // bundesstraße
         defaultSpeedMap.put("trunk", 70);
         defaultSpeedMap.put("trunk_link", 65);
@@ -143,10 +142,6 @@ public class CarTagParser extends VehicleTagParser {
 
     protected double getSpeed(ReaderWay way) {
         String highwayValue = way.getTag("highway");
-        if (!Helper.isEmpty(highwayValue) && way.hasTag("motorroad", "yes")
-                && !"motorway".equals(highwayValue) && !"motorway_link".equals(highwayValue)) {
-            highwayValue = "motorroad";
-        }
         Integer speed = defaultSpeedMap.get(highwayValue);
         if (speed == null)
             throw new IllegalStateException(getName() + ", no speed found for: " + highwayValue + ", tags: " + way);
