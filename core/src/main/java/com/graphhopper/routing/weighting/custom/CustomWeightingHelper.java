@@ -82,6 +82,6 @@ public class CustomWeightingHelper {
             return false;
         if (p.isRectangle() && polyBBOX.contains(edgeBBox))
             return true;
-        return p.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()); // TODO PERF: cache bbox and edge wayGeometry for multiple area
+        return p.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable());
     }
 }
