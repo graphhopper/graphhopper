@@ -35,11 +35,11 @@ class CachingEdgeIteratorState extends EdgeIteratorStateDecorator {
     @Override
     public PointList fetchWayGeometry(FetchMode mode) {
         if (mode != FetchMode.ALL) {
-            return getDelegate().fetchWayGeometry(mode);
+            return delegate.fetchWayGeometry(mode);
         }
 
         if (geometry == null) {
-            geometry = getDelegate().fetchWayGeometry(FetchMode.ALL).makeImmutable();
+            geometry = delegate.fetchWayGeometry(FetchMode.ALL).makeImmutable();
         }
         return geometry;
     }

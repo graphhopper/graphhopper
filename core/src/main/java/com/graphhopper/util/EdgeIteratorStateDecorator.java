@@ -28,14 +28,10 @@ import java.util.List;
  */
 public abstract class EdgeIteratorStateDecorator implements EdgeIteratorState {
 
-    private final EdgeIteratorState delegate;
+    protected final EdgeIteratorState delegate;
 
     protected EdgeIteratorStateDecorator(EdgeIteratorState delegate) {
         this.delegate = delegate;
-    }
-
-    protected EdgeIteratorState getDelegate() {
-        return delegate;
     }
 
     @Override
