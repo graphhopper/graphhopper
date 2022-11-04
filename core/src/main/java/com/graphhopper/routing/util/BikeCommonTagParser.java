@@ -482,6 +482,9 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         if (way.hasTag("railway", "tram"))
             weightToPrioMap.put(50d, AVOID_MORE.getValue());
 
+        if (way.hasTag("lcn", "yes"))
+            weightToPrioMap.put(100d, PREFER.getValue());
+
         String classBicycleValue = way.getTag(classBicycleKey);
         if (classBicycleValue != null) {
             // We assume that humans are better in classifying preferences compared to our algorithm above -> weight = 100
