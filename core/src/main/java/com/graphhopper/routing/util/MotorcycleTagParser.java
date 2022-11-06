@@ -76,7 +76,6 @@ public class MotorcycleTagParser extends CarTagParser {
 
         avoidSet.add("motorway");
         avoidSet.add("trunk");
-        avoidSet.add("motorroad");
         avoidSet.add("residential");
 
         preferSet.add("primary");
@@ -86,7 +85,6 @@ public class MotorcycleTagParser extends CarTagParser {
         // autobahn
         defaultSpeedMap.put("motorway", 100);
         defaultSpeedMap.put("motorway_link", 70);
-        defaultSpeedMap.put("motorroad", 90);
         // bundesstraße
         defaultSpeedMap.put("trunk", 80);
         defaultSpeedMap.put("trunk_link", 75);
@@ -212,7 +210,7 @@ public class MotorcycleTagParser extends CarTagParser {
 
     private int handlePriority(ReaderWay way) {
         String highway = way.getTag("highway", "");
-        if (avoidSet.contains(highway)) {
+        if (avoidSet.contains(highway) || way.hasTag("motorroad", "yes")) {
             return PriorityCode.BAD.getValue();
         } else if (preferSet.contains(highway)) {
             return PriorityCode.BEST.getValue();

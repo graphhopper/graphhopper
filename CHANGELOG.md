@@ -1,5 +1,6 @@
 ### 7.0 [not yet released]
 
+- removed motorroad to road_class conversion, #2329
 - removed YAML support for custom models on the server-side. Only allow JSON with // comments.
 - Bike2WeightTagParser was removed. Use the bike vehicle with a custom model, see custom_models/bike2.json
 - Car4WDTagParser was removed. Use the roads vehicle with a custom model, see custom_models/car4wd.json
