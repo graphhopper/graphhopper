@@ -162,6 +162,25 @@ public class RestrictionSetterTest {
         assertEquals(nodes(5, 4, 3, 7, 10, 11, 8, 9), calcPath(5, 9, turnCostEnc));
     }
 
+    @Test
+    void viaWay_only() {
+        //   a   c   d
+        // 0---1---2---3
+        //     |b  |e
+        // 5--/     \--4
+        int a = edge(0, 1);
+        int b = edge(5, 1);
+        int c = edge(1, 2);
+        int d = edge(2, 3);
+        int e = edge(2, 4);
+        DecimalEncodedValue turnCostEnc = createTurnCostEnc("car");
+        r.setRestrictions(Arrays.asList(
+                new Pair<>(GraphRestriction.way(a, c, d, nodes(1, 2)), RestrictionType.ONLY),
+                new Pair<>(GraphRestriction.way(b, c, e, nodes(1, 2)), RestrictionType.ONLY)
+        ), turnCostEnc);
+        assertEquals(nodes(0, 1, 2, 3), calcPath(0, 3, turnCostEnc));
+    }
+
     private static DecimalEncodedValue createTurnCostEnc(String name) {
         DecimalEncodedValue turnCostEnc = TurnCost.create(name, 1);
         turnCostEnc.init(new EncodedValue.InitializerConfig());
