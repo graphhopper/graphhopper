@@ -164,6 +164,41 @@ public class RestrictionSetterTest {
 
     @Test
     void viaWay_only() {
+        //      0
+        //  a   |b  c
+        // 1----2----3
+        //      |d
+        // 4----5----6
+        //  e   |f  g
+        //      7
+        int a = edge(1, 2);
+        int b = edge(0, 2);
+        int c = edge(2, 3);
+        int d = edge(2, 5);
+        int e = edge(4, 5);
+        int f = edge(5, 7);
+        int g = edge(5, 6);
+        DecimalEncodedValue turnCostEnc = createTurnCostEnc("car");
+        r.setRestrictions(Arrays.asList(
+                new Pair<>(GraphRestriction.way(a, d, f, nodes(2, 5)), RestrictionType.ONLY),
+                // we add a few more restrictions, because that happens a lot in real data
+                new Pair<>(GraphRestriction.way(c, d, g, nodes(2, 5)), RestrictionType.NO),
+                new Pair<>(GraphRestriction.way(g, d, c, nodes(5, 2)), RestrictionType.ONLY),
+                new Pair<>(GraphRestriction.node(e, 5, f), RestrictionType.NO)
+        ), turnCostEnc);
+        // following the restriction is allowed of course
+        assertEquals(nodes(1, 2, 5, 7), calcPath(1, 7, turnCostEnc));
+        // taking another turn at the beginning is not allowed
+        assertEquals(nodes(), calcPath(1, 3, turnCostEnc));
+        // taking another turn after the first turn is not allowed either
+        assertEquals(nodes(), calcPath(1, 4, turnCostEnc));
+        // coming from somewhere we can go anywhere
+        assertEquals(nodes(0, 2, 5, 6), calcPath(0, 6, turnCostEnc));
+        assertEquals(nodes(0, 2, 5, 7), calcPath(0, 7, turnCostEnc));
+    }
+
+    @Test
+    void viaWay_only_twoRestrictionsSharingSameVia() {
         //   a   c   d
         // 0---1---2---3
         //     |b  |e
