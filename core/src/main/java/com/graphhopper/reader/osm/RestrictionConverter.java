@@ -66,7 +66,7 @@ public class RestrictionConverter {
      * @throws OSMRestrictionException if the given relation is either not valid in some way and/or cannot be handled and
      *                                 shall be ignored
      */
-    public static GraphRestriction convert(ReaderRelation relation, BaseGraph baseGraph, LongFunction<Iterator<IntCursor>> edgesByWay) throws OSMRestrictionException {
+    public static Triple<ReaderRelation, GraphRestriction, RestrictionMembers> convert(ReaderRelation relation, BaseGraph baseGraph, LongFunction<Iterator<IntCursor>> edgesByWay) throws OSMRestrictionException {
         if (!isTurnRestriction(relation))
             throw new IllegalArgumentException("expected a turn restriction: " + relation.getTags());
         RestrictionMembers restrictionMembers = extractMembers(relation);
@@ -78,14 +78,14 @@ public class RestrictionConverter {
         if (restrictionMembers.isViaWay()) {
             WayToEdgeConverter.EdgeResult res = wayToEdgeConverter
                     .convertForViaWays(restrictionMembers.getFromWays(), restrictionMembers.getViaWays(), restrictionMembers.getToWays());
-            return GraphRestriction.way(res.getFromEdges(), res.getViaEdges(), res.getToEdges(), res.getNodes());
+            return new Triple<>(relation, GraphRestriction.way(res.getFromEdges(), res.getViaEdges(), res.getToEdges(), res.getNodes()), restrictionMembers);
         } else {
             int viaNode = relation.getTag("graphhopper:via_node", -1);
             if (viaNode < 0)
                 throw new IllegalStateException("For some reason we did not set graphhopper:via_node for this relation: " + relation.getId());
             WayToEdgeConverter.NodeResult res = wayToEdgeConverter
                     .convertForViaNode(restrictionMembers.getFromWays(), viaNode, restrictionMembers.getToWays());
-            return GraphRestriction.node(res.getFromEdges(), viaNode, res.getToEdges());
+            return new Triple<>(relation, GraphRestriction.node(res.getFromEdges(), viaNode, res.getToEdges()), restrictionMembers);
         }
     }
 

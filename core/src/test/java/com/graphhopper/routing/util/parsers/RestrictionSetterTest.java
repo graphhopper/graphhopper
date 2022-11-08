@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class RestrictionSetterTest {
     private static final IntArrayList NO_PATH = IntArrayList.from();
@@ -183,7 +184,6 @@ public class RestrictionSetterTest {
                 new Pair<>(GraphRestriction.way(a, d, f, nodes(2, 5)), RestrictionType.ONLY),
                 // we add a few more restrictions, because that happens a lot in real data
                 new Pair<>(GraphRestriction.way(c, d, g, nodes(2, 5)), RestrictionType.NO),
-                new Pair<>(GraphRestriction.way(g, d, c, nodes(5, 2)), RestrictionType.ONLY),
                 new Pair<>(GraphRestriction.node(e, 5, f), RestrictionType.NO)
         ), turnCostEnc);
         // following the restriction is allowed of course
@@ -209,17 +209,15 @@ public class RestrictionSetterTest {
         int d = edge(2, 3);
         int e = edge(2, 4);
         DecimalEncodedValue turnCostEnc = createTurnCostEnc("car");
-        r.setRestrictions(Arrays.asList(
-                // These are two 'only' via-way restrictions that share the same via way. A real-world example can
-                // be found in Rüdesheim am Rhein where vehicles either have to go straight or enter the ferry depending
-                // on the from-way, even though they use the same via way before.
-                new Pair<>(GraphRestriction.way(a, c, d, nodes(1, 2)), RestrictionType.ONLY),
-                new Pair<>(GraphRestriction.way(b, c, e, nodes(1, 2)), RestrictionType.ONLY)
-        ), turnCostEnc);
-        assertEquals(nodes(0, 1, 2, 3), calcPath(0, 3, turnCostEnc));
-        assertEquals(nodes(5, 1, 2, 4), calcPath(5, 4, turnCostEnc));
-        assertEquals(nodes(), calcPath(5, 3, turnCostEnc));
-        assertEquals(nodes(), calcPath(0, 4, turnCostEnc));
+        assertThrows(IllegalStateException.class, () -> r.setRestrictions(Arrays.asList(
+                        // These are two 'only' via-way restrictions that share the same via way. A real-world example can
+                        // be found in Rüdesheim am Rhein where vehicles either have to go straight or enter the ferry depending
+                        // on the from-way, even though they use the same via way before.
+                        // We have to make sure such cases are ignored already when we parse the OSM data.
+                        new Pair<>(GraphRestriction.way(a, c, d, nodes(1, 2)), RestrictionType.ONLY),
+                        new Pair<>(GraphRestriction.way(b, c, e, nodes(1, 2)), RestrictionType.ONLY)
+                ), turnCostEnc)
+        );
     }
 
     private static DecimalEncodedValue createTurnCostEnc(String name) {

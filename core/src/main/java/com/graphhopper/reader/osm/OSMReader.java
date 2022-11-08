@@ -18,6 +18,9 @@
 package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.LongHashSet;
+import com.carrotsearch.hppc.LongSet;
+import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.coll.GHLongLongHashMap;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
@@ -546,13 +549,12 @@ public class OSMReader {
     private void addRestrictionsToGraph() {
         // The OSM restriction format is explained here: https://wiki.openstreetmap.org/wiki/Relation:restriction
         RestrictionSetter restrictionSetter = new RestrictionSetter(baseGraph);
-        List<Pair<ReaderRelation, GraphRestriction>> restrictions = new ArrayList<>(restrictionRelations.size());
+        List<Triple<ReaderRelation, GraphRestriction, RestrictionMembers>> restrictions = new ArrayList<>(restrictionRelations.size());
         for (ReaderRelation restrictionRelation : restrictionRelations) {
             try {
                 // convert the OSM relation topology to the graph representation. this only needs to be done once for all
                 // vehicle types (we also want to print warnings only once)
-                GraphRestriction graphRestriction = RestrictionConverter.convert(restrictionRelation, baseGraph, restrictedWaysToEdgesMap::getEdges);
-                restrictions.add(new Pair<>(restrictionRelation, graphRestriction));
+                restrictions.add(RestrictionConverter.convert(restrictionRelation, baseGraph, restrictedWaysToEdgesMap::getEdges));
             } catch (OSMRestrictionException e) {
                 warnOfRestriction(restrictionRelation, e);
             }
@@ -560,8 +562,9 @@ public class OSMReader {
         // The restriction type depends on the vehicle, or at least not all restrictions affect every vehicle type.
         // We handle the restrictions for one vehicle after another.
         for (RestrictionTagParser restrictionTagParser : osmParsers.getRestrictionTagParsers()) {
+            LongSet viaWaysUsedByOnlyRestrictions = new LongHashSet();
             List<Pair<GraphRestriction, RestrictionType>> restrictionsWithType = new ArrayList<>(restrictions.size());
-            for (Pair<ReaderRelation, GraphRestriction> r : restrictions) {
+            for (Triple<ReaderRelation, GraphRestriction, RestrictionMembers> r : restrictions) {
                 if (r.second == null)
                     // this relation was found to be invalid by another restriction tag parser already
                     continue;
@@ -571,6 +574,12 @@ public class OSMReader {
                         // this relation is ignored by the current restriction tag parser
                         continue;
                     RestrictionConverter.checkIfCompatibleWithRestriction(r.second, res.getRestriction());
+                    // we ignore 'only' via-way restrictions that share the same via way, because these would require adding
+                    // multiple artificial edges, see here: https://github.com/graphhopper/graphhopper/pull/2689#issuecomment-1306769694
+                    if (r.second.isViaWayRestriction() && res.getRestrictionType() == RestrictionType.ONLY)
+                        for (LongCursor viaWay : r.third.getViaWays())
+                            if (!viaWaysUsedByOnlyRestrictions.add(viaWay.value))
+                                throw new OSMRestrictionException("has a member with role 'via' that is also used as 'via' member by another 'only' restriction. GraphHopper cannot handle this.");
                     restrictionsWithType.add(new Pair<>(r.second, res.getRestrictionType()));
                 } catch (OSMRestrictionException e) {
                     warnOfRestriction(r.first, e);

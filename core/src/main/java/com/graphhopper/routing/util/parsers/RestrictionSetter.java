@@ -18,8 +18,10 @@
 
 package com.graphhopper.routing.util.parsers;
 
+import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntIntHashMap;
 import com.carrotsearch.hppc.IntIntMap;
+import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.reader.osm.GraphRestriction;
 import com.graphhopper.reader.osm.Pair;
@@ -84,6 +86,7 @@ public class RestrictionSetter {
     }
 
     private void addViaWayRestrictions(List<Pair<GraphRestriction, RestrictionType>> restrictions, DecimalEncodedValue turnCostEnc) {
+        IntSet viaEdgesUsedByOnlyRestrictions = new IntHashSet();
         for (Pair<GraphRestriction, RestrictionType> p : restrictions) {
             if (!p.first.isViaWayRestriction()) continue;
             if (ignoreViaWayRestriction(p)) continue;
@@ -93,6 +96,8 @@ public class RestrictionSetter {
             final int artificialVia = artificialEdgesByEdges.getOrDefault(viaEdge, viaEdge);
             if (artificialVia == viaEdge)
                 throw new IllegalArgumentException("There should be an artificial edge for every via edge of a way restriction");
+            if (p.second == ONLY && !viaEdgesUsedByOnlyRestrictions.add(viaEdge))
+                throw new IllegalStateException("We cannot deal with 'only' via-way restrictions that use the same via edges");
             final int artificialFrom = artificialEdgesByEdges.getOrDefault(fromEdge, fromEdge);
             final int artificialTo = artificialEdgesByEdges.getOrDefault(toEdge, toEdge);
             final int fromToViaNode = p.first.getViaNodes().get(0);
