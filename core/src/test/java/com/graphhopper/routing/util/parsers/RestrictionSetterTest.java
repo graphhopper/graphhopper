@@ -210,10 +210,16 @@ public class RestrictionSetterTest {
         int e = edge(2, 4);
         DecimalEncodedValue turnCostEnc = createTurnCostEnc("car");
         r.setRestrictions(Arrays.asList(
+                // These are two 'only' via-way restrictions that share the same via way. A real-world example can
+                // be found in Rüdesheim am Rhein where vehicles either have to go straight or enter the ferry depending
+                // on the from-way, even though they use the same via way before.
                 new Pair<>(GraphRestriction.way(a, c, d, nodes(1, 2)), RestrictionType.ONLY),
                 new Pair<>(GraphRestriction.way(b, c, e, nodes(1, 2)), RestrictionType.ONLY)
         ), turnCostEnc);
         assertEquals(nodes(0, 1, 2, 3), calcPath(0, 3, turnCostEnc));
+        assertEquals(nodes(5, 1, 2, 4), calcPath(5, 4, turnCostEnc));
+        assertEquals(nodes(), calcPath(5, 3, turnCostEnc));
+        assertEquals(nodes(), calcPath(0, 4, turnCostEnc));
     }
 
     private static DecimalEncodedValue createTurnCostEnc(String name) {
