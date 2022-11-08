@@ -492,7 +492,12 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         // unchanged
         assertPriorityAndSpeed(UNCHANGED.getValue(), 12, osmWay);
 
-        // relation code is
+        // "lcn=yes" is in fact no relation, but shall be treated the same like a relation with "network=lcn"
+        osmWay.setTag("lcn", "yes");
+        assertPriorityAndSpeed(PREFER.getValue(), 12, osmWay);
+        osmWay.removeTag("lcn");
+
+        // relation code is PREFER
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.setTag("route", "bicycle");
         assertPriorityAndSpeed(PREFER.getValue(), 12, osmWay, osmRel);
@@ -503,7 +508,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         // relation code is NICE
         osmRel.setTag("network", "rcn");
         assertPriorityAndSpeed(VERY_NICE.getValue(), 12, osmWay, osmRel);
-
+        osmWay.setTag("lcn", "yes");
+        assertPriorityAndSpeed(VERY_NICE.getValue(), 12, osmWay, osmRel);
+        
         // relation code is BEST
         osmRel.setTag("network", "ncn");
         assertPriorityAndSpeed(BEST.getValue(), 12, osmWay, osmRel);
