@@ -158,9 +158,11 @@ public class RestrictionSetterTest {
                 new Pair<>(GraphRestriction.way(d, a, b, nodes(4, 3)), RestrictionType.NO)
         ), turnCostEnc);
 
-        // todo: add more checks
         assertEquals(nodes(0, 3, 7, 8, 9), calcPath(0, 9, turnCostEnc));
         assertEquals(nodes(5, 4, 3, 7, 10, 11, 8, 9), calcPath(5, 9, turnCostEnc));
+        assertEquals(nodes(5, 4, 3, 2), calcPath(5, 2, turnCostEnc));
+        assertEquals(nodes(0, 3, 7, 10), calcPath(0, 10, turnCostEnc));
+        assertEquals(nodes(6, 7, 8, 9), calcPath(6, 9, turnCostEnc));
     }
 
     @Test

@@ -182,8 +182,6 @@ public class RestrictionSetter {
     private void restrictTurn(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
         if (fromEdge < 0 || toEdge < 0 || viaNode < 0)
             throw new IllegalArgumentException("from/toEdge and viaNode must be >= 0");
-        // todonow: check how many turn cost entries are created overall (not how many times this method is called,
-        //          but rather how many are actually created) to see if we create too many or something
         baseGraph.getTurnCostStorage().set(turnCostEnc, fromEdge, viaNode, toEdge, Double.POSITIVE_INFINITY);
     }
 

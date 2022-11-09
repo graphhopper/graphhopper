@@ -156,37 +156,22 @@ class RestrictionTagParserTest {
         assertNull(res);
     }
 
-    // todonow: copied from previous osmturnrestrictiontest, either write a few new tests with multiple vehicle types
-    //          or adjust this
-//    @Test
-//    public void testAcceptsTurnRestriction() {
-//        List<String> vehicleTypes = new ArrayList<>(Arrays.asList("motorcar", "motor_vehicle", "vehicle"));
-//        List<String> vehicleTypesExcept = new ArrayList<>();
-//        OSMTurnRestriction osmTurnRestriction = new OSMTurnRestriction(1, 1, 1, RestrictionType.NOT);
-//        assertTrue(osmTurnRestriction.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
-//
-//        vehicleTypesExcept.add("bus");
-//        osmTurnRestriction.setVehicleTypesExcept(vehicleTypesExcept);
-//        assertTrue(osmTurnRestriction.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
-//
-//        vehicleTypesExcept.clear();
-//        vehicleTypesExcept.add("vehicle");
-//        osmTurnRestriction.setVehicleTypesExcept(vehicleTypesExcept);
-//        assertFalse(osmTurnRestriction.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
-//
-//        vehicleTypesExcept.clear();
-//        vehicleTypesExcept.add("motor_vehicle");
-//        vehicleTypesExcept.add("vehicle");
-//        osmTurnRestriction.setVehicleTypesExcept(vehicleTypesExcept);
-//        assertFalse(osmTurnRestriction.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
-//
-//        vehicleTypesExcept.clear();
-//        osmTurnRestriction.setVehicleTypeRestricted("bus");
-//        osmTurnRestriction.setVehicleTypesExcept(vehicleTypesExcept);
-//        assertFalse(osmTurnRestriction.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
-//
-//        osmTurnRestriction.setVehicleTypeRestricted("vehicle");
-//        assertTrue(osmTurnRestriction.isVehicleTypeConcernedByTurnRestriction(vehicleTypes));
-//    }
+    @Test
+    void multipleVehicleTypes() throws OSMRestrictionException {
+        tags.put("restriction", "only_right_turn");
+        RestrictionTagParser.Result res = parseForVehicleTypes("motorcar", "motor_vehicle", "vehicle");
+        assertEquals("only_right_turn", res.getRestriction());
+        assertEquals(ONLY, res.getRestrictionType());
+    }
 
+    @Test
+    void exceptBus() throws OSMRestrictionException {
+        tags.put("restriction", "only_right_turn");
+        // todo: how should we handle except=bus? should it be excluded for psv?
+        tags.put("except", "psv");
+        RestrictionTagParser.Result res = parseForVehicleTypes("motorcar", "motor_vehicle", "vehicle");
+        assertEquals("only_right_turn", res.getRestriction());
+        assertEquals(ONLY, res.getRestrictionType());
+        assertNull(parseForVehicleTypes("psv"));
+    }
 }
