@@ -427,6 +427,9 @@ public class MapMatching {
                 }
             }
         }
+        if (qe == null) {
+            throw new IllegalArgumentException("Sequence is broken for submitted track at initial time step.");
+        }
         if (qe.timeStep != timeSteps.size() - 1) {
             throw new IllegalArgumentException("Sequence is broken for submitted track at time step "
                     + qe.timeStep + ". observation:" + qe.state.getEntry());
