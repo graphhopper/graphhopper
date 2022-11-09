@@ -47,9 +47,9 @@ Here is an overview:
  * khuebner, initial turn costs support
  * kodonnell, adding support for CH and other algorithms (#60) and penalizing inner-link U-turns (#88)
  * legraina, improved docker for dockerhub
-* lmar, improved instructions
-* lukasalexanderweber, helped to implement via-way restrictions #2689 and fixes like #2652
-* matkoniecz, tweaking documentation
+ * lmar, improved instructions
+ * lukasalexanderweber, helped to implement via-way restrictions #2689 and fixes like #2652
+ * matkoniecz, tweaking documentation
  * manueltimita, fixes like #1651
  * mathstpierre, fixes like #1753
  * michalmac, fixes like #1467
