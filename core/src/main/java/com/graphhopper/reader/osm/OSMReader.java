@@ -17,6 +17,7 @@
  */
 package com.graphhopper.reader.osm;
 
+import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.LongHashSet;
 import com.carrotsearch.hppc.LongSet;
@@ -81,6 +82,7 @@ public class OSMReader {
     private final EncodingManager encodingManager;
     private final OSMParsers osmParsers;
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
+    private final RestrictionSetter restrictionSetter;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private AreaIndex<CustomArea> areaIndex;
     private CountryRuleFactory countryRuleFactory = null;
@@ -101,6 +103,7 @@ public class OSMReader {
         this.config = config;
         this.nodeAccess = baseGraph.getNodeAccess();
         this.osmParsers = osmParsers;
+        this.restrictionSetter = new RestrictionSetter(baseGraph);
 
         simplifyAlgo.setMaxDistance(config.getMaxWayPointDistance());
         simplifyAlgo.setElevationMaxDistance(config.getElevationMaxWayPointDistance());
@@ -548,7 +551,6 @@ public class OSMReader {
 
     private void addRestrictionsToGraph() {
         // The OSM restriction format is explained here: https://wiki.openstreetmap.org/wiki/Relation:restriction
-        RestrictionSetter restrictionSetter = new RestrictionSetter(baseGraph);
         List<Triple<ReaderRelation, GraphRestriction, RestrictionMembers>> restrictions = new ArrayList<>(restrictionRelations.size());
         for (ReaderRelation restrictionRelation : restrictionRelations) {
             try {
@@ -590,6 +592,10 @@ public class OSMReader {
             }
             restrictionSetter.setRestrictions(restrictionsWithType, restrictionTagParser.getTurnCostEnc());
         }
+    }
+
+    public IntIntMap getArtificialEdgesByEdges() {
+        return restrictionSetter.getArtificialEdgesByEdges();
     }
 
     private static void warnOfRestriction(ReaderRelation restrictionRelation, OSMRestrictionException e) {

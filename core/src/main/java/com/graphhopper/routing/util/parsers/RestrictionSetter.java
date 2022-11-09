@@ -18,10 +18,7 @@
 
 package com.graphhopper.routing.util.parsers;
 
-import com.carrotsearch.hppc.IntHashSet;
-import com.carrotsearch.hppc.IntIntHashMap;
-import com.carrotsearch.hppc.IntIntMap;
-import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.reader.osm.GraphRestriction;
 import com.graphhopper.reader.osm.Pair;
@@ -177,6 +174,10 @@ public class RestrictionSetter {
                 }
             }
         }
+    }
+
+    public IntIntMap getArtificialEdgesByEdges() {
+        return artificialEdgesByEdges;
     }
 
     private void restrictTurn(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
