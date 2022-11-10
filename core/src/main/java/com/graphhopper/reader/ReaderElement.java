@@ -28,7 +28,7 @@ import java.util.Map.Entry;
  * @author Peter
  */
 public abstract class ReaderElement {
-    public static enum Type {
+    public enum Type {
         NODE,
         WAY,
         RELATION,

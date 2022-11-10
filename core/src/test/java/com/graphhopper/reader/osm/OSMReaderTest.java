@@ -575,7 +575,8 @@ public class OSMReaderTest {
         assertTrue(tcStorage.get(carTCEnc, edge11_14, n11, edge10_11) == 0);
         assertTrue(tcStorage.get(bikeTCEnc, edge11_14, n11, edge10_11) == 0);
 
-        assertTrue(tcStorage.get(carTCEnc, edge10_11, n11, edge11_14) == 0);
+        // the turn is restricted for car even though it turns into a one-way, but we treat this separately now
+        assertTrue(tcStorage.get(carTCEnc, edge10_11, n11, edge11_14) > 0);
         assertTrue(tcStorage.get(bikeTCEnc, edge10_11, n11, edge11_14) > 0);
     }
 
