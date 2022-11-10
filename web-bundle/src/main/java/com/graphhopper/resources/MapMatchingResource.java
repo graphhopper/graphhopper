@@ -112,10 +112,8 @@ public class MapMatchingResource {
         RouteResource.initHints(hints, uriInfo.getQueryParameters());
 
         // resolve profile and remove legacy vehicle/weighting parameters
-        // we need to explicitly disable CH here because map matching does not use it
         PMap profileResolverHints = new PMap(hints);
         profileResolverHints.putObject("profile", profile);
-        profileResolverHints.putObject(Parameters.CH.DISABLE, true);
         profile = profileResolver.resolveProfile(profileResolverHints);
         hints.putObject("profile", profile);
         removeLegacyParameters(hints);
