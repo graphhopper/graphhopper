@@ -82,6 +82,8 @@ public abstract class GHMatrixAbstractRequester {
     protected JsonNode createPostRequest(GHMRequest ghRequest) {
         if (ghRequest.getHints().getObject("profile", null) != null)
             throw new IllegalArgumentException("use setProfile instead of hint 'profile'");
+        if (ghRequest.getProfile() == null)
+            throw new IllegalArgumentException("profile cannot be empty");
         if (ghRequest.getHints().getObject("fail_fast", null) != null)
             throw new IllegalArgumentException("use setFailFast instead of hint 'fail_fast'");
 
@@ -114,6 +116,7 @@ public abstract class GHMatrixAbstractRequester {
         putStrings(requestJson, "snap_preventions", ghRequest.getSnapPreventions());
         putStrings(requestJson, "out_arrays", ghRequest.getOutArrays());
         requestJson.put("fail_fast", ghRequest.getFailFast());
+        requestJson.put("profile", ghRequest.getProfile());
 
         Map<String, Object> hintsMap = ghRequest.getHints().toMap();
         for (String hintKey : hintsMap.keySet()) {

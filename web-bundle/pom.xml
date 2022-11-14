@@ -7,7 +7,7 @@
     <packaging>jar</packaging>
     <version>7.0-SNAPSHOT</version>
     <properties>
-        <graphhopper-maps.version>0.0.0-53606529ed5243bf01aa985f474c0e3d078be04a</graphhopper-maps.version>
+        <graphhopper-maps.version>0.0.0-a3ca149864bd29addca8045f6ff53fe9c52edf89</graphhopper-maps.version>
     </properties>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>

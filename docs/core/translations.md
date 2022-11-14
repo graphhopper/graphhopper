@@ -25,8 +25,8 @@ There are already many existing :jp: :cn: :us: :fr: :es: :it: :ru: :de:
 
 ## Integrate into GraphHopper
 
-We'll regularly update GraphHopper with new translations or fixes so no need to do this work for you. But if you still
-want to try your changes or want to speed up the integration you can do the following:
+We'll regularly update GraphHopper with new translations or fixes so no need to do this work for you. If you still
+want to try your changes you have to:
 
  * Make GraphHopper working on your computer, where you need to git clone the repository - see [here](./quickstart-from-source.md) for more information.
  * If you created a new language then add it in lexicographical order to TranslationMap.LOCALES (core/src/main/java/com/graphhopper/util) and to the script: core/files/update-translations.sh
@@ -36,6 +36,10 @@ want to try your changes or want to speed up the integration you can do the foll
  * Now execute `mvn clean test` to see if you did not miss arguments in your translation (see point 2 in the questions above) and start
  the [GraphHopper service](./quickstart-from-source.md) and go to localhost:8989 append e.g. &locale=de if your translation does not show up automatically
  * Read the [contributing guide](../../CONTRIBUTING.md) to submit your changes
+
+### Client-side Translations
+
+Only turn instructions are handled in the server-side routing engine. All other translations are on the client-side [in GraphHopper Maps](https://github.com/graphhopper/graphhopper-maps/blob/master/README.md#help-with-translations).
 
 ## License Agreement
 

@@ -29,7 +29,6 @@ public class SlopeCalculator implements TagParser {
             // Calculate 2d distance, although pointList might be 3D.
             // This calculation is a bit expensive and edge_distance is available already, but this would be in 3D
             double distance2D = DistanceCalcEarth.calcDistance(pointList, false);
-
             if (distance2D < MIN_LENGTH) {
                 // default is minimum of average_slope is negative so we have to explicitly set it to 0
                 averageSlopeEnc.setDecimal(false, edgeFlags, 0);
@@ -40,12 +39,10 @@ public class SlopeCalculator implements TagParser {
             if (Double.isNaN(towerNodeSlope))
                 throw new IllegalArgumentException("average_slope was NaN for OSM way ID " + way.getId());
 
-
             if (towerNodeSlope >= 0)
                 averageSlopeEnc.setDecimal(false, edgeFlags, Math.min(towerNodeSlope, averageSlopeEnc.getMaxStorableDecimal()));
             else
                 averageSlopeEnc.setDecimal(true, edgeFlags, Math.min(Math.abs(towerNodeSlope), averageSlopeEnc.getMaxStorableDecimal()));
-
 
             // max_slope is more error-prone as the shorter distances increase the fluctuation
             // so apply some more filtering (here we use the average elevation delta of the previous two points)

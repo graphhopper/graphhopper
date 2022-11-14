@@ -1,0 +1,22 @@
+.input {
+  min-height: 1.5rem;
+  padding: 0.2rem 0.4rem;
+  margin-top: 0.16rem;
+  border: 1px solid black;
+  border-radius: 2px;
+}
+
+.select {
+  min-height: 2rem;
+  padding: 0.2rem 0.4rem;
+  margin-top: 0.16rem;
+  border: 1px solid black;
+  border-radius: 2px;
+}
+
+.inputContainer {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.75rem;
+  margin-bottom: 0.5rem;
+}

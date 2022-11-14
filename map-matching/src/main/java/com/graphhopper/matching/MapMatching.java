@@ -427,6 +427,13 @@ public class MapMatching {
                 }
             }
         }
+        if (qe == null) {
+            throw new IllegalArgumentException("Sequence is broken for submitted track at initial time step.");
+        }
+//        if (qe.timeStep != timeSteps.size() - 1) {
+//            throw new IllegalArgumentException("Sequence is broken for submitted track at time step "
+//                    + qe.timeStep + ". observation:" + qe.state.getEntry());
+//        }
         ArrayList<SequenceState<State, Observation, Path>> result = new ArrayList<>();
         while (qe != null) {
             final SequenceState<State, Observation, Path> ss = new SequenceState<>(qe.state, qe.state.getEntry(), qe.back == null ? null : roadPaths.get(new Transition<>(qe.back.state, qe.state)));
@@ -435,6 +442,18 @@ public class MapMatching {
         }
         Collections.reverse(result);
         return result;
+    }
+
+    private void fail(int timeStepCounter, ObservationWithCandidateStates prevTimeStep, ObservationWithCandidateStates timeStep) {
+        String likelyReasonStr = "";
+        if (prevTimeStep != null) {
+            double dist = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat, prevTimeStep.observation.getPoint().lon, timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon);
+            if (dist > 2000) {
+                likelyReasonStr = "Too long distance to previous measurement? "
+                        + Math.round(dist) + "m, ";
+            }
+        }
+
     }
 
     private List<EdgeMatch> prepareEdgeMatches(List<SequenceState<State, Observation, Path>> seq) {

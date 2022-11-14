@@ -652,12 +652,8 @@ public class GraphHopper {
             osmParsers.addWayTagParser(new OSMMaxSpeedParser(encodingManager.getDecimalEncodedValue(MaxSpeed.KEY)));
         if (!encodedValueStrings.contains(RoadAccess.KEY))
             osmParsers.addWayTagParser(new OSMRoadAccessParser(encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
-        if (encodingManager.hasEncodedValue(AverageSlope.KEY) || encodingManager.hasEncodedValue(MaxSlope.KEY)) {
-            if (!encodingManager.hasEncodedValue(AverageSlope.KEY) || !encodingManager.hasEncodedValue(MaxSlope.KEY))
-                throw new IllegalArgumentException("Enable both, average_slope and max_slope");
-            osmParsers.addWayTagParser(new SlopeCalculator(encodingManager.getDecimalEncodedValue(MaxSlope.KEY),
-                    encodingManager.getDecimalEncodedValue(AverageSlope.KEY)));
-        }
+        if (encodingManager.hasEncodedValue(AverageSlope.KEY) && encodingManager.hasEncodedValue(MaxSlope.KEY))
+            osmParsers.addWayTagParser(new SlopeCalculator(encodingManager.getDecimalEncodedValue(MaxSlope.KEY), encodingManager.getDecimalEncodedValue(AverageSlope.KEY)));
         if (encodingManager.hasEncodedValue(Curvature.KEY))
             osmParsers.addWayTagParser(new CurvatureCalculator(encodingManager.getDecimalEncodedValue(Curvature.KEY)));
 
@@ -824,6 +820,10 @@ public class GraphHopper {
     }
 
     protected void postImport() {
+        // Important note: To deal with via-way turn restrictions we introduce artificial edges in OSMReader (#2689).
+        // These are simply copies of real edges. Any further modifications of the graph edges must take care of keeping
+        // the artificial edges in sync with their real counterparts. So if an edge attribute shall be changed this change
+        // must also be applied to the corresponding artificial edge.
         if (sortGraph) {
             BaseGraph newGraph = GHUtility.newGraph(baseGraph);
             GHUtility.sortDFS(baseGraph, newGraph);
