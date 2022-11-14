@@ -189,10 +189,7 @@ public class RestrictionSetter {
     }
 
     private static boolean ignoreViaWayRestriction(Pair<GraphRestriction, RestrictionType> p) {
-        // todo: how frequent are these?
-        if (p.first.getViaEdges().size() > 1)
-            // no multi-restrictions yet
-            return true;
+        // todo: how frequent are these? -> none in germany
         if (p.first.getFromEdges().size() > 1 || p.first.getToEdges().size() > 1)
             // no multi-from or -to yet
             return true;
