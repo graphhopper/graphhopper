@@ -66,17 +66,19 @@ public class RestrictionSetter {
         for (Pair<GraphRestriction, RestrictionType> p : restrictions) {
             if (p.first.isViaWayRestriction()) {
                 if (ignoreViaWayRestriction(p)) continue;
-                int viaEdge = p.first.getViaEdges().get(0);
-                int artificialEdge = artificialEdgesByEdges.getOrDefault(viaEdge, -1);
-                if (artificialEdge < 0) {
-                    EdgeIteratorState viaEdgeState = baseGraph.getEdgeIteratorState(p.first.getViaEdges().get(0), Integer.MIN_VALUE);
-                    EdgeIteratorState artificialEdgeState = baseGraph.edge(viaEdgeState.getBaseNode(), viaEdgeState.getAdjNode())
-                            .setFlags(viaEdgeState.getFlags())
-                            .setWayGeometry(viaEdgeState.fetchWayGeometry(FetchMode.PILLAR_ONLY))
-                            .setDistance(viaEdgeState.getDistance())
-                            .setKeyValues(viaEdgeState.getKeyValues());
-                    artificialEdge = artificialEdgeState.getEdge();
-                    artificialEdgesByEdges.put(viaEdge, artificialEdge);
+                for (IntCursor viaEdgeCursor : p.first.getViaEdges()) {
+                    int viaEdge = viaEdgeCursor.value;
+                    int artificialEdge = artificialEdgesByEdges.getOrDefault(viaEdge, -1);
+                    if (artificialEdge < 0) {
+                        EdgeIteratorState viaEdgeState = baseGraph.getEdgeIteratorState(viaEdge, Integer.MIN_VALUE);
+                        EdgeIteratorState artificialEdgeState = baseGraph.edge(viaEdgeState.getBaseNode(), viaEdgeState.getAdjNode())
+                                .setFlags(viaEdgeState.getFlags())
+                                .setWayGeometry(viaEdgeState.fetchWayGeometry(FetchMode.PILLAR_ONLY))
+                                .setDistance(viaEdgeState.getDistance())
+                                .setKeyValues(viaEdgeState.getKeyValues());
+                        artificialEdge = artificialEdgeState.getEdge();
+                        artificialEdgesByEdges.put(viaEdge, artificialEdge);
+                    }
                 }
             }
         }
