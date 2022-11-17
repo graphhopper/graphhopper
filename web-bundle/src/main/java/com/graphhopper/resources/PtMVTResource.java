@@ -8,14 +8,10 @@ import com.graphhopper.gtfs.PtGraph;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
-import com.wdtinc.mapbox_vector_tile.VectorTile;
-import com.wdtinc.mapbox_vector_tile.adapt.jts.JtsAdapter;
-import com.wdtinc.mapbox_vector_tile.adapt.jts.TileGeomResult;
-import com.wdtinc.mapbox_vector_tile.adapt.jts.UserDataKeyValueMapConverter;
-import com.wdtinc.mapbox_vector_tile.build.MvtLayerBuild;
-import com.wdtinc.mapbox_vector_tile.build.MvtLayerParams;
-import com.wdtinc.mapbox_vector_tile.build.MvtLayerProps;
+import com.onthegomap.planetiler.VectorTile;
+import com.onthegomap.planetiler.geo.GeoUtils;
 import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.util.AffineTransformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Path("pt-mvt")
 @Singleton
@@ -83,18 +80,20 @@ public class PtMVTResource {
                 }
             }
         });
-        VectorTile.Tile.Builder mvtBuilder = VectorTile.Tile.newBuilder();
-        mvtBuilder.addLayers(createLayer(new Envelope(se, nw), new MvtLayerParams(256, 4096), features, "stops"));
-        return Response.ok(mvtBuilder.build().toByteArray(), PBF).build();
-    }
-
-    private VectorTile.Tile.Layer createLayer(Envelope tileEnvelope, MvtLayerParams layerParams, List<Geometry> locationReferences, String layerName) {
-        final VectorTile.Tile.Layer.Builder roadsLayerBuilder = MvtLayerBuild.newLayerBuilder(layerName, layerParams);
-        TileGeomResult tileGeom = JtsAdapter.createTileGeom(locationReferences, tileEnvelope, geometryFactory, layerParams, geometry -> true);
-        final MvtLayerProps roadsLayerProps = new MvtLayerProps();
-        roadsLayerBuilder.addAllFeatures(JtsAdapter.toFeatures(tileGeom.mvtGeoms, roadsLayerProps, new UserDataKeyValueMapConverter()));
-        MvtLayerBuild.writeProps(roadsLayerBuilder, roadsLayerProps);
-        return roadsLayerBuilder.build();
+        AffineTransformation affineTransformation = new AffineTransformation()
+                .scale(1 << zInfo, 1 << zInfo)
+                .translate(-xInfo, -yInfo)
+                .scale(256, 256);
+        Map<String, Object> attrs = new HashMap<>();
+        long id = -1; // does it matter?
+        List<VectorTile.Feature> vectorTileFeatures = features.stream()
+                .map(GeoUtils::latLonToWorldCoords)
+                .map(affineTransformation::transform)
+                .map(VectorTile::encodeGeometry)
+                .map(g -> new VectorTile.Feature("stops", id, g, attrs))
+                .collect(Collectors.toList());
+        VectorTile vectorTile = new VectorTile().addLayerFeatures("stops", vectorTileFeatures);
+        return Response.ok(vectorTile.encode(), PBF).build();
     }
 
     Coordinate num2deg(int xInfo, int yInfo, int zoom) {

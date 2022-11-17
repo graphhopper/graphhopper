@@ -11,6 +11,7 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import com.onthegomap.planetiler.VectorTile;
+import com.onthegomap.planetiler.VectorTile.VectorGeometry;
 import com.onthegomap.planetiler.geo.GeoUtils;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -70,8 +71,7 @@ public class MVTResource {
         if (!bbox.isValid())
             throw new IllegalStateException("Invalid bbox " + bbox);
 
-        com.onthegomap.planetiler.VectorTile vectorTile = new com.onthegomap.planetiler.VectorTile();
-        List<com.onthegomap.planetiler.VectorTile.Feature> features = new ArrayList<>();
+        List<VectorTile.Feature> features = new ArrayList<>();
 
         final GeometryFactory geometryFactory = new GeometryFactory();
         if (!encodingManager.hasEncodedValue(RoadClass.KEY))
@@ -79,6 +79,11 @@ public class MVTResource {
 
         final EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         final AtomicInteger edgeCounter = new AtomicInteger(0);
+
+        AffineTransformation affineTransformation = new AffineTransformation()
+                .scale(1 << zInfo, 1 << zInfo)
+                .translate(-xInfo, -yInfo)
+                .scale(256, 256);
 
         locationIndex.query(bbox, edgeId -> {
             EdgeIteratorState edge = graphHopper.getBaseGraph().getEdgeIteratorStateForKey(edgeId * 2);
@@ -128,20 +133,16 @@ public class MVTResource {
             });
 
             lineString.setUserData(map);
-
             Geometry g = GeoUtils.latLonToWorldCoords(lineString);
-            AffineTransformation affineTransformation = new AffineTransformation();
-            g = affineTransformation.setToScale(1 << zInfo, 1 << zInfo).transform(g);
-            g = affineTransformation.setToTranslation(-xInfo, -yInfo).transform(g);
-            g = affineTransformation.setToScale(256, 256).transform(g);
-            com.onthegomap.planetiler.VectorTile.VectorGeometry vectorGeometry = com.onthegomap.planetiler.VectorTile.encodeGeometry(g);
-            features.add(new com.onthegomap.planetiler.VectorTile.Feature("roads", edge.getEdge(), vectorGeometry, map));
+            g = affineTransformation.transform(g);
+            VectorGeometry vectorGeometry = VectorTile.encodeGeometry(g);
+            features.add(new VectorTile.Feature("roads", edge.getEdge(), vectorGeometry, map));
         });
 
-        vectorTile.addLayerFeatures("roads", features);
+        VectorTile vectorTile = new VectorTile().addLayerFeatures("roads", features);
         byte[] bytes = vectorTile.encode();
         totalSW.stop();
-        logger.debug("took: " + totalSW.getSeconds() + ", edges:" + edgeCounter.get());
+        logger.info("took: " + totalSW.getSeconds() + ", edges:" + edgeCounter.get());
         return Response.ok(bytes, PBF).header("X-GH-Took", "" + totalSW.getSeconds() * 1000)
                 .build();
     }
