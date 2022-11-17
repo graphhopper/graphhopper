@@ -16,6 +16,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.util.AffineTransformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -128,13 +129,17 @@ public class MVTResource {
 
             lineString.setUserData(map);
 
-            com.onthegomap.planetiler.VectorTile.VectorGeometry vectorGeometry = com.onthegomap.planetiler.VectorTile.encodeGeometry(lineString);
+            Geometry g = GeoUtils.latLonToWorldCoords(lineString);
+            AffineTransformation affineTransformation = new AffineTransformation();
+            g = affineTransformation.setToScale(1 << zInfo, 1 << zInfo).transform(g);
+            g = affineTransformation.setToTranslation(-xInfo, -yInfo).transform(g);
+            g = affineTransformation.setToScale(256, 256).transform(g);
+            com.onthegomap.planetiler.VectorTile.VectorGeometry vectorGeometry = com.onthegomap.planetiler.VectorTile.encodeGeometry(g);
             features.add(new com.onthegomap.planetiler.VectorTile.Feature("roads", edge.getEdge(), vectorGeometry, map));
         });
 
         vectorTile.addLayerFeatures("roads", features);
         byte[] bytes = vectorTile.encode();
-
         totalSW.stop();
         logger.debug("took: " + totalSW.getSeconds() + ", edges:" + edgeCounter.get());
         return Response.ok(bytes, PBF).header("X-GH-Took", "" + totalSW.getSeconds() * 1000)

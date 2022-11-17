@@ -58,99 +58,6 @@ public class VectorTile {
         return encoder.result.toArray();
     }
 
-    /**
-     * Scales a geometry down by a factor of {@code 2^scale} without materializing an intermediate JTS geometry and
-     * returns the encoded result.
-     */
-    private static int[] unscale(int[] commands, int scale, GeometryType geomType) {
-        IntArrayList result = new IntArrayList();
-        int geometryCount = commands.length;
-        int length = 0;
-        int command = 0;
-        int i = 0;
-        int inX = 0, inY = 0;
-        int outX = 0, outY = 0;
-        int startX = 0, startY = 0;
-        double scaleFactor = Math.pow(2, -scale);
-        int lengthIdx = 0;
-        int moveToIdx = 0;
-        int pointsInShape = 0;
-        boolean first = true;
-        while (i < geometryCount) {
-            if (length <= 0) {
-                length = commands[i++];
-                lengthIdx = result.size();
-                result.add(length);
-                command = length & ((1 << 3) - 1);
-                length = length >> 3;
-            }
-
-            if (length > 0) {
-                if (command == Command.MOVE_TO.value) {
-                    // degenerate geometry, remove it from output entirely
-                    if (!first && pointsInShape < geomType.minPoints()) {
-                        int prevCommand = result.get(lengthIdx);
-                        result.elementsCount = moveToIdx;
-                        result.add(prevCommand);
-                        // reset deltas
-                        outX = startX;
-                        outY = startY;
-                    }
-                    // keep track of size of next shape...
-                    pointsInShape = 0;
-                    startX = outX;
-                    startY = outY;
-                    moveToIdx = result.size() - 1;
-                }
-                first = false;
-                if (command == Command.CLOSE_PATH.value) {
-                    pointsInShape++;
-                    length--;
-                    continue;
-                }
-
-                int dx = commands[i++];
-                int dy = commands[i++];
-
-                length--;
-
-                dx = zigZagDecode(dx);
-                dy = zigZagDecode(dy);
-
-                inX = inX + dx;
-                inY = inY + dy;
-
-                int nextX = (int) Math.round(inX * scaleFactor);
-                int nextY = (int) Math.round(inY * scaleFactor);
-
-                if (nextX == outX && nextY == outY && command == Command.LINE_TO.value) {
-                    int commandLength = result.get(lengthIdx) - 8;
-                    if (commandLength < 8) {
-                        // get rid of lineto section if empty
-                        result.elementsCount = lengthIdx;
-                    } else {
-                        result.set(lengthIdx, commandLength);
-                    }
-                } else {
-                    pointsInShape++;
-                    int dxOut = nextX - outX;
-                    int dyOut = nextY - outY;
-                    result.add(
-                            zigZagEncode(dxOut),
-                            zigZagEncode(dyOut)
-                    );
-                    outX = nextX;
-                    outY = nextY;
-                }
-            }
-        }
-        // degenerate geometry, remove it from output entirely
-        if (pointsInShape < geomType.minPoints()) {
-            result.elementsCount = moveToIdx;
-        }
-        return result.toArray();
-    }
-
     private static int zigZagEncode(int n) {
         // https://developers.google.com/protocol-buffers/docs/encoding#types
         return (n << 1) ^ (n >> 31);
@@ -268,34 +175,6 @@ public class VectorTile {
         return tile.build().toByteArray();
     }
 
-    /**
-     * Returns true if this tile contains only polygon fills.
-     */
-    public boolean containsOnlyFills() {
-        return containsOnlyFillsOrEdges(false);
-    }
-
-    /**
-     * Returns true if this tile contains only polygon fills or horizontal/vertical edges that are likely to be repeated
-     * across tiles.
-     */
-    public boolean containsOnlyFillsOrEdges() {
-        return containsOnlyFillsOrEdges(true);
-    }
-
-    private boolean containsOnlyFillsOrEdges(boolean allowEdges) {
-        boolean empty = true;
-        for (Layer layer : layers.values()) {
-            for (EncodedFeature feature : layer.encodedFeatures) {
-                empty = false;
-                if (!feature.geometry.isFillOrEdge(allowEdges)) {
-                    return false;
-                }
-            }
-        }
-        return !empty;
-    }
-
     private enum Command {
         MOVE_TO(1),
         LINE_TO(2),
@@ -381,13 +260,6 @@ public class VectorTile {
             } else {
                 return sides == ALL;
             }
-        }
-
-        /**
-         * Returns this encoded geometry, scaled back to 0, so it is safe to emit to mbtiles output.
-         */
-        public VectorGeometry unscale() {
-            return scale == 0 ? this : new VectorGeometry(VectorTile.unscale(commands, scale, geomType), geomType, 0);
         }
 
         @Override

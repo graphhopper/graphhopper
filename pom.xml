@@ -95,17 +95,6 @@
                 <version>1.15.1</version>
             </dependency>
             <dependency>
-                <groupId>com.wdtinc</groupId>
-                <artifactId>mapbox-vector-tile</artifactId>
-                <version>3.1.0</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.google.protobuf</groupId>
-                        <artifactId>protobuf-java</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-compress</artifactId>
                 <version>1.21</version>

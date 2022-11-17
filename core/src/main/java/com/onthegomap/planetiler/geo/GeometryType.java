@@ -18,12 +18,10 @@ public enum GeometryType {
 
   private final VectorTileProto.Tile.GeomType protobufType;
   private final int minPoints;
-  private final String matchTypeString;
 
   GeometryType(VectorTileProto.Tile.GeomType protobufType, int minPoints, String matchTypeString) {
     this.protobufType = protobufType;
     this.minPoints = minPoints;
-    this.matchTypeString = matchTypeString;
   }
 
   public static GeometryType typeOf(Geometry geom) {
