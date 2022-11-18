@@ -49,7 +49,9 @@ import static com.graphhopper.util.Helper.*;
  * @author Peter Karich
  */
 public class LMPreparationHandler {
-    private final Logger LOGGER = LoggerFactory.getLogger(LMPreparationHandler.class);
+// ORS-GH MOD START enable logging for subclasses
+    private final Logger LOGGER = LoggerFactory.getLogger(getClass());
+// ORS-GH MOD END
     private int landmarkCount = 16;
 
     private final List<PrepareLandmarks> preparations = new ArrayList<>();
