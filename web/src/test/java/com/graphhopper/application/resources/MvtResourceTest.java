@@ -88,7 +88,7 @@ public class MvtResourceTest {
         assertEquals(200, response.getStatus());
         InputStream is = response.readEntity(InputStream.class);
         List<VectorTileDecoder.Feature> features = new VectorTileDecoder().decode(readInputStream(is)).asList();
-        assertEquals(21, features.size());
+        assertEquals(28, features.size());
 
         VectorTileDecoder.Feature feature = features.stream()
                 .filter(f -> "Avinguda de Tarragona".equals(f.getAttributes().get(STREET_NAME)))
