@@ -31,6 +31,12 @@ import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
 import vector_tile.VectorTile;
 import vector_tile.VectorTile.Tile.GeomType;
 
+/**
+ * This is a copy from https://github.com/ElectronicChartCentre/java-vector-tile/commit/15e2e9b127729a00c52ced3a11fd1e9a45b462b1
+ * The main reason we keep our own copy here is that this is not published to Maven Central.
+ * There is also a more efficient version of this in planetiler (using hppc collections), but this doesn't seem critical
+ * for us currently.
+ */
 public class VectorTileEncoder {
 
     private final Map<String, Layer> layers = new LinkedHashMap<String, Layer>();

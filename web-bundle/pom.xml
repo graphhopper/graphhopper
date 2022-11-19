@@ -8,7 +8,6 @@
     <version>7.0-SNAPSHOT</version>
     <properties>
         <graphhopper-maps.version>0.0.0-a3ca149864bd29addca8045f6ff53fe9c52edf89</graphhopper-maps.version>
-        <protobuf.version>3.21.9</protobuf.version>
     </properties>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
@@ -71,11 +70,6 @@
             <artifactId>mapbox-vector-tile</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>3.21.9</version>
-        </dependency>
-        <dependency>
             <groupId>com.fasterxml.jackson.jaxrs</groupId>
             <artifactId>jackson-jaxrs-xml-provider</artifactId>
         </dependency>
@@ -133,30 +127,7 @@
     </dependencies>
 
     <build>
-        <extensions>
-            <extension>
-                <groupId>kr.motd.maven</groupId>
-                <artifactId>os-maven-plugin</artifactId>
-                <version>1.7.0</version>
-            </extension>
-        </extensions>
         <plugins>
-            <plugin>
-                <groupId>org.xolstice.maven.plugins</groupId>
-                <artifactId>protobuf-maven-plugin</artifactId>
-                <version>0.6.1</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>compile</goal>
-                            <goal>test-compile</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <protocArtifact>com.google.protobuf:protoc:${protobuf.version}:exe:${os.detected.classifier}</protocArtifact>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>com.github.eirslett</groupId>
                 <artifactId>frontend-maven-plugin</artifactId>
