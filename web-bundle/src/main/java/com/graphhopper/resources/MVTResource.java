@@ -10,7 +10,6 @@ import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
-import com.wdtinc.mapbox_vector_tile.VectorTile;
 import no.ecc.vectortile.VectorTileEncoder;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
@@ -57,8 +56,8 @@ public class MVTResource {
             @QueryParam("render_all") @DefaultValue("false") Boolean renderAll) {
 
         if (zInfo <= 9) {
-            VectorTile.Tile.Builder mvtBuilder = VectorTile.Tile.newBuilder();
-            return Response.fromResponse(Response.ok(mvtBuilder.build().toByteArray(), PBF).build())
+            byte[] bytes = new VectorTileEncoder().encode();
+            return Response.fromResponse(Response.ok(bytes, PBF).build())
                     .header("X-GH-Took", "0")
                     .build();
         }
@@ -145,7 +144,7 @@ public class MVTResource {
 
         byte[] bytes = vectorTileEncoder.encode();
         totalSW.stop();
-        logger.info("took: " + totalSW.getMillis() + "ms, edges:" + edgeCounter.get());
+        logger.debug("took: " + totalSW.getMillis() + "ms, edges:" + edgeCounter.get());
         return Response.ok(bytes, PBF).header("X-GH-Took", "" + totalSW.getSeconds() * 1000)
                 .build();
     }
