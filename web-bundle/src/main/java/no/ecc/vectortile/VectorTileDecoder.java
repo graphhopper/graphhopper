@@ -20,9 +20,8 @@ import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.LinearRing;
 import org.locationtech.jts.geom.Polygon;
 
-import vector_tile.VectorTile;
-import vector_tile.VectorTile.Tile.GeomType;
-import vector_tile.VectorTile.Tile.Layer;
+import no.ecc.vectortile.VectorTile.Tile.GeomType;
+import no.ecc.vectortile.VectorTile.Tile.Layer;
 
 public class VectorTileDecoder {
 

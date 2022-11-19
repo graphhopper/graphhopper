@@ -68,8 +68,8 @@ public class PtMVTResource {
         AffineTransformation affineTransformation = new AffineTransformation();
         affineTransformation.translate(-nw.x, -se.y);
         affineTransformation.scale(
-                256.0 / ((se.x - nw.x)),
-                -256.0 / ((nw.y - se.y))
+                256.0 / (se.x - nw.x),
+                -256.0 / (nw.y - se.y)
         );
         affineTransformation.translate(0, 256);
         gtfsStorage.getStopIndex().query(bbox, edgeId -> {
@@ -81,8 +81,8 @@ public class PtMVTResource {
                     properties.put("feed_id", fromPlatformDescriptor.feed_id);
                     properties.put("stop_id", fromPlatformDescriptor.stop_id);
                     Point feature = geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat));
-                    feature.setUserData(properties);
                     Geometry g = affineTransformation.transform(feature);
+                    g.setUserData(properties);
                     vectorTileEncoder.addFeature("stops", properties, g);
                 }
             }

@@ -82,8 +82,8 @@ public class MVTResource {
         AffineTransformation affineTransformation = new AffineTransformation();
         affineTransformation.translate(-nw.x, -se.y);
         affineTransformation.scale(
-                256.0 / ((se.x - nw.x)),
-                -256.0 / ((nw.y - se.y))
+                256.0 / (se.x - nw.x),
+                -256.0 / (nw.y - se.y)
         );
         affineTransformation.translate(0, 256);
 
@@ -135,9 +135,8 @@ public class MVTResource {
                     map.put(ev.getName(), edge.get((IntEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((IntEncodedValue) ev) : ""));
             });
 
-            lineString.setUserData(map);
-
             Geometry g = affineTransformation.transform(lineString);
+            g.setUserData(map);
             vectorTileEncoder.addFeature("roads", map, g, edge.getEdge());
         });
 

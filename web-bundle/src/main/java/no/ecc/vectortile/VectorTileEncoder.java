@@ -28,8 +28,7 @@ import org.locationtech.jts.io.WKTReader;
 import org.locationtech.jts.simplify.DouglasPeuckerSimplifier;
 import org.locationtech.jts.simplify.TopologyPreservingSimplifier;
 
-import vector_tile.VectorTile;
-import vector_tile.VectorTile.Tile.GeomType;
+import no.ecc.vectortile.VectorTile.Tile.GeomType;
 
 /**
  * This is a copy from https://github.com/ElectronicChartCentre/java-vector-tile/commit/15e2e9b127729a00c52ced3a11fd1e9a45b462b1

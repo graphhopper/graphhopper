@@ -30,17 +30,13 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.MultiLineString;
 
 import javax.ws.rs.core.Response;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static com.graphhopper.util.Parameters.Details.STREET_NAME;
@@ -78,10 +74,12 @@ public class MvtResourceTest {
         assertEquals(200, response.getStatus());
         InputStream is = response.readEntity(InputStream.class);
         VectorTileDecoder.FeatureIterable features = new VectorTileDecoder().decode(readInputStream(is));
-        assertEquals(Arrays.asList("roads"), features.getLayerNames());
-        MultiLineString multiLineString = (MultiLineString) features.iterator().next().getGeometry();
-        assertEquals(42, multiLineString.getCoordinates().length);
-        assertEquals("Camì de les Pardines", getUserData(multiLineString).get(STREET_NAME));
+        assertEquals(Arrays.asList("roads"), new ArrayList<>(features.getLayerNames()));
+        VectorTileDecoder.Feature feature = features.iterator().next();
+        Map<String, Object> attributes = feature.getAttributes();
+        Geometry geometry = feature.getGeometry();
+        assertEquals(48, geometry.getCoordinates().length);
+        assertEquals("Camì de les Pardines", attributes.get(STREET_NAME));
     }
 
     @Test
@@ -92,17 +90,12 @@ public class MvtResourceTest {
         List<VectorTileDecoder.Feature> features = new VectorTileDecoder().decode(readInputStream(is)).asList();
         assertEquals(21, features.size());
 
-        Geometry geometry = features.stream()
-                .map(VectorTileDecoder.Feature::getGeometry)
-                .filter(g -> "Avinguda de Tarragona".equals(getUserData(g).get(STREET_NAME)))
+        VectorTileDecoder.Feature feature = features.stream()
+                .filter(f -> "Avinguda de Tarragona".equals(f.getAttributes().get(STREET_NAME)))
                 .findFirst().get();
-        assertEquals("road", getUserData(geometry).get("road_environment"));
-        assertEquals("50.0 | 50.0", getUserData(geometry).get("max_speed"));
-        assertEquals("primary", getUserData(geometry).get("road_class"));
-    }
-
-    private Map<String, Object> getUserData(Geometry g) {
-        return (Map<String, Object>) g.getUserData();
+        assertEquals("road", feature.getAttributes().get("road_environment"));
+        assertEquals("50.0 | 50.0", feature.getAttributes().get("max_speed"));
+        assertEquals("primary", feature.getAttributes().get("road_class"));
     }
 
     private static byte[] readInputStream(InputStream is) throws IOException {
