@@ -3,7 +3,6 @@ package com.graphhopper.resources;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.EdgeIteratorState;
@@ -12,17 +11,9 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import com.wdtinc.mapbox_vector_tile.VectorTile;
-import com.wdtinc.mapbox_vector_tile.adapt.jts.IGeometryFilter;
-import com.wdtinc.mapbox_vector_tile.adapt.jts.JtsAdapter;
-import com.wdtinc.mapbox_vector_tile.adapt.jts.TileGeomResult;
-import com.wdtinc.mapbox_vector_tile.adapt.jts.UserDataKeyValueMapConverter;
-import com.wdtinc.mapbox_vector_tile.build.MvtLayerBuild;
-import com.wdtinc.mapbox_vector_tile.build.MvtLayerParams;
-import com.wdtinc.mapbox_vector_tile.build.MvtLayerProps;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.Envelope;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.LineString;
+import no.ecc.vectortile.VectorTileEncoder;
+import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.util.AffineTransformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,12 +24,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
+import java.util.Collections;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Stream;
 
 @Path("mvt")
 public class MVTResource {
@@ -82,21 +71,22 @@ public class MVTResource {
             throw new IllegalStateException("Invalid bbox " + bbox);
 
         final GeometryFactory geometryFactory = new GeometryFactory();
-        VectorTile.Tile.Builder mvtBuilder = VectorTile.Tile.newBuilder();
-        final IGeometryFilter acceptAllGeomFilter = geometry -> true;
-        final Envelope tileEnvelope = new Envelope(se, nw);
-        final MvtLayerParams layerParams = new MvtLayerParams(256, 4096);
-        final UserDataKeyValueMapConverter converter = new UserDataKeyValueMapConverter();
         if (!encodingManager.hasEncodedValue(RoadClass.KEY))
             throw new IllegalStateException("You need to configure GraphHopper to store road_class, e.g. graph.encoded_values: road_class,max_speed,... ");
 
         final EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         final AtomicInteger edgeCounter = new AtomicInteger(0);
-        // in toFeatures addTags of the converter is called and layerProps is filled with keys&values => those need to be stored in the layerBuilder
-        // otherwise the decoding won't be successful and "undefined":"undefined" instead of "speed": 30 is the result
-        final MvtLayerProps layerProps = new MvtLayerProps();
-        final VectorTile.Tile.Layer.Builder layerBuilder = MvtLayerBuild.newLayerBuilder("roads", layerParams);
 
+        // 256x256 pixels per MVT. here we transform from the global coordinate system to the local one of the tile.
+        AffineTransformation affineTransformation = new AffineTransformation();
+        affineTransformation.translate(-nw.x, -se.y);
+        affineTransformation.scale(
+                256.0 / ((se.x - nw.x)),
+                -256.0 / ((nw.y - se.y))
+        );
+        affineTransformation.translate(0, 256);
+
+        VectorTileEncoder vectorTileEncoder = new VectorTileEncoder(4096);
         locationIndex.query(bbox, edgeId -> {
             EdgeIteratorState edge = graphHopper.getBaseGraph().getEdgeIteratorStateForKey(edgeId * 2);
             LineString lineString;
@@ -146,22 +136,20 @@ public class MVTResource {
 
             lineString.setUserData(map);
 
-            // doing some AffineTransformation
-            TileGeomResult tileGeom = JtsAdapter.createTileGeom(lineString, tileEnvelope, geometryFactory, layerParams, acceptAllGeomFilter);
-            List<VectorTile.Tile.Feature> features = JtsAdapter.toFeatures(tileGeom.mvtGeoms, layerProps, converter);
-            layerBuilder.addAllFeatures(features);
+            Geometry g = affineTransformation.transform(lineString);
+            vectorTileEncoder.addFeature("roads", Collections.emptyMap(), g, edge.getEdge());
         });
 
-        MvtLayerBuild.writeProps(layerBuilder, layerProps);
-        mvtBuilder.addLayers(layerBuilder.build());
-        byte[] bytes = mvtBuilder.build().toByteArray();
+
+        byte[] bytes = vectorTileEncoder.encode();
         totalSW.stop();
-        logger.debug("took: " + totalSW.getSeconds() + ", edges:" + edgeCounter.get());
+        logger.info("took: " + totalSW.getSeconds() + ", edges:" + edgeCounter.get());
         return Response.ok(bytes, PBF).header("X-GH-Took", "" + totalSW.getSeconds() * 1000)
                 .build();
     }
 
     Coordinate num2deg(int xInfo, int yInfo, int zoom) {
+        // inverse web mercator projection
         double n = Math.pow(2, zoom);
         double lonDeg = xInfo / n * 360.0 - 180.0;
         // unfortunately latitude numbers goes from north to south
