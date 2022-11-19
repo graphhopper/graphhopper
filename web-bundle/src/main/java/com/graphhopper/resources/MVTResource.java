@@ -86,7 +86,7 @@ public class MVTResource {
         );
         affineTransformation.translate(0, 256);
 
-        VectorTileEncoder vectorTileEncoder = new VectorTileEncoder(4096);
+        VectorTileEncoder vectorTileEncoder = new VectorTileEncoder();
         locationIndex.query(bbox, edgeId -> {
             EdgeIteratorState edge = graphHopper.getBaseGraph().getEdgeIteratorStateForKey(edgeId * 2);
             LineString lineString;
@@ -137,13 +137,13 @@ public class MVTResource {
             lineString.setUserData(map);
 
             Geometry g = affineTransformation.transform(lineString);
-            vectorTileEncoder.addFeature("roads", Collections.emptyMap(), g, edge.getEdge());
+            vectorTileEncoder.addFeature("roads", map, g, edge.getEdge());
         });
 
 
         byte[] bytes = vectorTileEncoder.encode();
         totalSW.stop();
-        logger.info("took: " + totalSW.getSeconds() + ", edges:" + edgeCounter.get());
+        logger.info("took: " + totalSW.getMillis() + "ms, edges:" + edgeCounter.get());
         return Response.ok(bytes, PBF).header("X-GH-Took", "" + totalSW.getSeconds() * 1000)
                 .build();
     }
