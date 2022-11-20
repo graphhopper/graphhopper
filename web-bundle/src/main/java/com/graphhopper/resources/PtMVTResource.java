@@ -81,8 +81,8 @@ public class PtMVTResource {
                     properties.put("feed_id", fromPlatformDescriptor.feed_id);
                     properties.put("stop_id", fromPlatformDescriptor.stop_id);
                     Point feature = geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat));
+                    feature.setUserData(properties);
                     Geometry g = affineTransformation.transform(feature);
-                    g.setUserData(properties);
                     vectorTileEncoder.addFeature("stops", properties, g);
                 }
             }

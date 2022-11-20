@@ -134,9 +134,9 @@ public class MVTResource {
                 else if (ev instanceof IntEncodedValue)
                     map.put(ev.getName(), edge.get((IntEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((IntEncodedValue) ev) : ""));
             });
+            lineString.setUserData(map);
 
             Geometry g = affineTransformation.transform(lineString);
-            g.setUserData(map);
             vectorTileEncoder.addFeature("roads", map, g, edge.getEdge());
         });
 
