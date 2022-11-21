@@ -74,10 +74,6 @@
                     <groupId>com.google.protobuf</groupId>
                     <artifactId>protobuf-java</artifactId>
                 </exclusion>
-                <exclusion>
-                    <groupId>org.locationtech.jts</groupId>
-                    <artifactId>jts-core</artifactId>
-                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
