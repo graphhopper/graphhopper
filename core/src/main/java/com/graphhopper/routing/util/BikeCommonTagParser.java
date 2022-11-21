@@ -247,8 +247,17 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
             return WayAccess.CAN_SKIP;
 
         // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-            return WayAccess.CAN_SKIP;
+        boolean notRestrictedWayConditionallyPermitted = !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
+        for (String restriction: restrictions ) {
+            String complexAccess = way.getTag(restriction);
+            if (complexAccess != null) {
+               String[] simpleAccess = complexAccess.split(";");
+               for (String access: simpleAccess) {
+                  if (restrictedValues.contains(access) && notRestrictedWayConditionallyPermitted)
+                     return WayAccess.CAN_SKIP;
+               }
+            }
+        }
 
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
             return WayAccess.CAN_SKIP;
