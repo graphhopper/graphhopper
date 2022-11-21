@@ -58,6 +58,16 @@
     </issueManagement>
 
     <repositories>
+        <!-- taken from the default Maven Super POM to make sure Maven Central is used before all others -->
+        <repository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <layout>default</layout>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
         <repository>
             <id>ECC</id>
             <url>https://ecc-mvn.ams3.digitaloceanspaces.com/releases</url>
