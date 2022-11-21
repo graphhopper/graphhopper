@@ -38,7 +38,7 @@ public class FindMinMax {
             if (statement.getOperation() == Statement.Op.MULTIPLY) {
                 MinMax minMax = ValueExpressionVisitor.findMinMax(createdObjects, statement.getValue(), lookup);
                 if (minMax.max > 1)
-                    throw new IllegalArgumentException("maximum of value '" + statement.getValue() + "'cannot be larger than 1, but was: " + minMax.max);
+                    throw new IllegalArgumentException("maximum of value '" + statement.getValue() + "' cannot be larger than 1, but was: " + minMax.max);
                 else if (minMax.min < 0)
                     throw new IllegalArgumentException("minimum of value '" + statement.getValue() + "' cannot be smaller than 0, but was: " + minMax.min);
             }
