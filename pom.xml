@@ -57,6 +57,23 @@
         <url>https://github.com/graphhopper/graphhopper/issues</url>
     </issueManagement>
 
+    <repositories>
+        <!-- taken from the default Maven Super POM to make sure Maven Central is used before all others -->
+        <repository>
+            <id>central</id>
+            <name>Central Repository</name>
+            <url>https://repo.maven.apache.org/maven2</url>
+            <layout>default</layout>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+        <repository>
+            <id>ECC</id>
+            <url>https://ecc-mvn.ams3.digitaloceanspaces.com/releases</url>
+        </repository>
+    </repositories>
+
     <modules>
         <module>core</module>
         <module>reader-gtfs</module>
@@ -93,17 +110,6 @@
                 <groupId>org.locationtech.jts</groupId>
                 <artifactId>jts-core</artifactId>
                 <version>1.15.1</version>
-            </dependency>
-            <dependency>
-                <groupId>com.wdtinc</groupId>
-                <artifactId>mapbox-vector-tile</artifactId>
-                <version>3.1.0</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>com.google.protobuf</groupId>
-                        <artifactId>protobuf-java</artifactId>
-                    </exclusion>
-                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.commons</groupId>
