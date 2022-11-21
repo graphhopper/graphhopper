@@ -57,6 +57,13 @@
         <url>https://github.com/graphhopper/graphhopper/issues</url>
     </issueManagement>
 
+    <repositories>
+        <repository>
+            <id>ECC</id>
+            <url>https://ecc-mvn.ams3.digitaloceanspaces.com/releases</url>
+        </repository>
+    </repositories>
+
     <modules>
         <module>core</module>
         <module>reader-gtfs</module>
