@@ -43,7 +43,7 @@ web:
 
  * org.eclipse.jetty:jetty-server (Apache License)
  * Dropwizard and dependencies (Apache license)
- * com.wdtinc:mapbox-vector-tile (Apache license)
+ * no.ecc:java-vector-tile (Apache license)
  * some images from mapbox https://www.mapbox.com/maki/, BSD License, see core/files
 
 ## Data

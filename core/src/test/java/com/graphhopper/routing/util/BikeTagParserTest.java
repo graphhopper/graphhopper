@@ -370,6 +370,12 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("bicycle", "yes");
         assertTrue(parser.getAccess(way).isWay());
 
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("vehicle", "forestry");
+        assertTrue(parser.getAccess(way).canSkip());
+        way.setTag("vehicle", "agricultural;forestry");
+        assertTrue(parser.getAccess(way).canSkip());
     }
 
     @Test
@@ -389,6 +395,37 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
         assertTrue(parser.getAccessEnc().getBool(false, flags));
         assertFalse(parser.getAccessEnc().getBool(true, flags));
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("oneway:bicycle", "no");
+        flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        assertTrue(parser.getAccessEnc().getBool(false, flags));
+        assertTrue(parser.getAccessEnc().getBool(true, flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("oneway:bicycle", "-1");
+        flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        assertFalse(parser.getAccessEnc().getBool(false, flags));
+        assertTrue(parser.getAccessEnc().getBool(true, flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway:right:oneway", "no");
+        flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        assertTrue(parser.getAccessEnc().getBool(false, flags));
+        assertTrue(parser.getAccessEnc().getBool(true, flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway:right:oneway", "-1");
+        flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        assertFalse(parser.getAccessEnc().getBool(false, flags));
+        assertTrue(parser.getAccessEnc().getBool(true, flags));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
