@@ -390,6 +390,37 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertTrue(parser.getAccessEnc().getBool(false, flags));
         assertFalse(parser.getAccessEnc().getBool(true, flags));
         way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("oneway:bicycle", "no");
+        flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        assertTrue(parser.getAccessEnc().getBool(false, flags));
+        assertTrue(parser.getAccessEnc().getBool(true, flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("oneway:bicycle", "-1");
+        flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        assertFalse(parser.getAccessEnc().getBool(false, flags));
+        assertTrue(parser.getAccessEnc().getBool(true, flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway:right:oneway", "no");
+        flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        assertTrue(parser.getAccessEnc().getBool(false, flags));
+        assertTrue(parser.getAccessEnc().getBool(true, flags));
+        way.clearTags();
+
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway:right:oneway", "-1");
+        flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        assertFalse(parser.getAccessEnc().getBool(false, flags));
+        assertTrue(parser.getAccessEnc().getBool(true, flags));
+        way.clearTags();
 
         way.setTag("highway", "tertiary");
         flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
@@ -492,7 +523,12 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         // unchanged
         assertPriorityAndSpeed(UNCHANGED.getValue(), 12, osmWay);
 
-        // relation code is
+        // "lcn=yes" is in fact no relation, but shall be treated the same like a relation with "network=lcn"
+        osmWay.setTag("lcn", "yes");
+        assertPriorityAndSpeed(PREFER.getValue(), 12, osmWay);
+        osmWay.removeTag("lcn");
+
+        // relation code is PREFER
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.setTag("route", "bicycle");
         assertPriorityAndSpeed(PREFER.getValue(), 12, osmWay, osmRel);
@@ -503,7 +539,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         // relation code is NICE
         osmRel.setTag("network", "rcn");
         assertPriorityAndSpeed(VERY_NICE.getValue(), 12, osmWay, osmRel);
-
+        osmWay.setTag("lcn", "yes");
+        assertPriorityAndSpeed(VERY_NICE.getValue(), 12, osmWay, osmRel);
+        
         // relation code is BEST
         osmRel.setTag("network", "ncn");
         assertPriorityAndSpeed(BEST.getValue(), 12, osmWay, osmRel);

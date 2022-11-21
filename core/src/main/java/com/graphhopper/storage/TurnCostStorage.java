@@ -45,8 +45,8 @@ public class TurnCostStorage {
     private static final int TC_NEXT = 12;
     private static final int BYTES_PER_ENTRY = 16;
 
-    private BaseGraph baseGraph;
-    private DataAccess turnCosts;
+    private final BaseGraph baseGraph;
+    private final DataAccess turnCosts;
     private int turnCostsCount;
 
     public TurnCostStorage(BaseGraph baseGraph, DataAccess turnCosts) {
