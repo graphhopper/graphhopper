@@ -15,7 +15,7 @@ spec:
             name: minio-creds
         env:
         - name: BUCKET_NAME
-          value: graphhopper-staging
+          value: graphhopper-production
 ---
 apiVersion: batch/v1
 kind: CronJob
@@ -38,4 +38,4 @@ spec:
                 name: api-511
             env:
             - name: BUCKET_NAME
-              value: graphhopper-staging
+              value: graphhopper-production
