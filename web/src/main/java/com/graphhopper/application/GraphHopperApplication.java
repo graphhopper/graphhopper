@@ -21,6 +21,7 @@ import com.graphhopper.application.cli.ImportCommand;
 import com.graphhopper.application.cli.MatchCommand;
 import com.graphhopper.application.resources.RootResource;
 import com.graphhopper.http.CORSFilter;
+import com.graphhopper.http.CacheFilter;
 import com.graphhopper.http.GraphHopperBundle;
 import com.graphhopper.http.RealtimeBundle;
 import com.graphhopper.navigation.NavigateResource;
@@ -33,6 +34,8 @@ import javax.servlet.DispatcherType;
 import java.util.EnumSet;
 
 public final class GraphHopperApplication extends Application<GraphHopperServerConfiguration> {
+
+    private static final String[] CACHEABLE_ASSETS = new String[] { "*.css", "*.gif", "*.ico", "*.js", "*.png", "*.svg", "*.ttf" };
 
     public static void main(String[] args) throws Exception {
         new GraphHopperApplication().run(args);
@@ -54,5 +57,6 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
         environment.jersey().register(new RootResource());
         environment.jersey().register(NavigateResource.class);
         environment.servlets().addFilter("cors", CORSFilter.class).addMappingForUrlPatterns(EnumSet.allOf(DispatcherType.class), false, "*");
+        environment.servlets().addFilter("cache", CacheFilter.class).addMappingForUrlPatterns(EnumSet.of(DispatcherType.REQUEST), true, CACHEABLE_ASSETS);
     }
 }
