@@ -2,11 +2,11 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: graphhopper-deployment
+  name: graphhopper
   labels:
     app: graphhopper
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: graphhopper
@@ -15,17 +15,8 @@ spec:
       labels:
         app: graphhopper
     spec:
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-            - matchExpressions:
-              - key: "kubernetes.io/arch"
-                operator: In
-                values: ["amd64"]
       containers:
       - name: graphhopper
-        image: ghcr.io/bikehopper/graphhopper@sha256:3efedca2b2ed38468d3f994bf8865bc22892198f3ce31e2c186a9102f8db1e55
         ports:
           - containerPort: 8989
           - name: health-port
@@ -37,9 +28,6 @@ spec:
           limits:
             memory: "12Gi"
             cpu: "8000m"
-        envFrom:
-          - secretRef:
-              name: minio-graphhopper-staging
         env:
         - name: JVM_ARGS
           value: -Xms5g -Xmx10g
@@ -51,14 +39,8 @@ spec:
           value: /transit/datafeeds?api_key=02a6fde6-e10a-49ce-a96e-5ad9404f137f&operator_id=RG
         - name: API_511_FILE_NAME
           value: current-GTFSTransitData_RG.zip
-        - name: BUCKET_NAME
-          value: bikehopper-graphhopper
         - name: MINIO_HOST
-          value: minio
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
+          value: http://minio.techlabor.org:9000
         readinessProbe:
           httpGet:
             path: /health
@@ -91,3 +73,40 @@ spec:
     name: http
   selector:
     app: graphhopper
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: graphhopper-graph-cache-builder
+spec:
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+  concurrencyPolicy: Replace
+  jobTemplate:
+    spec:
+      backoffLimit: 3
+      template:
+        spec:
+          containers:
+          - name: graphhopper-graph-cache-builder
+            resources:
+              requests:
+                memory: "16Gi"
+                cpu: "6000m"
+            envFrom:
+            - secretRef:
+                name: api-511
+            env:
+            - name: GEOFABRIK_PATH
+              value: /north-america/us/california/norcal-latest.osm.pbf
+            - name: OSM_PBF_FILE_NAME
+              value: current-norcal-latest.osm.pbf
+            - name: API_511_PATH
+              value: /transit/datafeeds?operator_id=RG
+            - name: API_511_FILE_NAME
+              value: current-GTFSTransitData_RG.zip
+            - name: MINIO_HOST
+              value: http://minio.techlabor.org:9000
+          imagePullSecrets:
+          - name: dockerconfigjson-github-com
+          restartPolicy: Never

@@ -1,7 +1,6 @@
 #!/bin/sh
 set -e
-# AWS_ACCESS_KEY_ID=$ACCESS_KEY AWS_SECRET_ACCESS_KEY=$SECRET_KEY aws s3api get-object --endpoint-url http://$MINIO_HOST.$POD_NAMESPACE --bucket $BUCKET_NAME --key graphhopper/graph-cache.tar.gz graph-cache.tar.gz
-AWS_ACCESS_KEY_ID=$ACCESS_KEY AWS_SECRET_ACCESS_KEY=$SECRET_KEY aws s3api get-object --endpoint-url http://$MINIO_HOST.staging --bucket $BUCKET_NAME --key graphhopper/graph-cache.tar.gz graph-cache.tar.gz
+AWS_ACCESS_KEY_ID=$ACCESS_KEY AWS_SECRET_ACCESS_KEY=$SECRET_KEY aws s3api get-object --endpoint-url $MINIO_HOST --bucket $BUCKET_NAME --key graphhopper/graph-cache.tar.gz graph-cache.tar.gz
 
 tar -xvzf graph-cache.tar.gz
 
