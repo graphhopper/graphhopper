@@ -87,6 +87,8 @@ public class MVTResource {
         );
         affineTransformation.translate(0, 256);
 
+        // if performance of the vector tile encoding becomes an issue it might be worth to get rid of the simplification
+        // and clipping in the no.ecc code? https://github.com/graphhopper/graphhopper/commit/0f96c2deddb24efa97109e35e0c05f1c91221f59#r90830001
         VectorTileEncoder vectorTileEncoder = new VectorTileEncoder();
         locationIndex.query(bbox, edgeId -> {
             EdgeIteratorState edge = graphHopper.getBaseGraph().getEdgeIteratorStateForKey(edgeId * 2);

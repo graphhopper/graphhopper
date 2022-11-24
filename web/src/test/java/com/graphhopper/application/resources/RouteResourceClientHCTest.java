@@ -67,11 +67,11 @@ public class RouteResourceClientHCTest {
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        new Profile("my_car").setVehicle("car").setWeighting("fastest"),
-                        new Profile("my_bike").setVehicle("bike").setWeighting("fastest"),
+                        new Profile("car").setVehicle("car").setWeighting("fastest"),
+                        new Profile("bike").setVehicle("bike").setWeighting("fastest"),
                         new CustomProfile("my_custom_car").setCustomModel(new CustomModel()).setVehicle("car")
                 ))
-                .setCHProfiles(Arrays.asList(new CHProfile("my_car"), new CHProfile("my_bike")));
+                .setCHProfiles(Arrays.asList(new CHProfile("car"), new CHProfile("bike")));
         return config;
     }
 
@@ -108,7 +108,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.5093, 1.5274)).
                 addPoint(new GHPoint(42.5126, 1.5410)).
-                putHint("vehicle", "car").
+                setProfile("car").
                 putHint("elevation", false).
                 putHint("instructions", true).
                 putHint("calc_points", true);
@@ -123,7 +123,7 @@ public class RouteResourceClientHCTest {
 
         // change vehicle
         rsp = gh.route(new GHRequest(42.5093, 1.5274, 42.5126, 1.5410).
-                putHint("vehicle", "bike"));
+                setProfile("bike"));
         res = rsp.getBest();
         assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
         isBetween(2500, 2600, res.getDistance());
@@ -138,7 +138,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.505041, 1.521864)).
                 addPoint(new GHPoint(42.509074, 1.537936)).
-                setProfile("my_car").
+                setProfile("car").
                 setAlgorithm("alternative_route").
                 putHint("instructions", true).
                 putHint("calc_points", true).
@@ -166,7 +166,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.509225, 1.534728)).
                 addPoint(new GHPoint(42.512602, 1.551558)).
-                putHint("vehicle", "car");
+                setProfile("car");
 
         req.putHint("instructions", false);
         req.putHint("calc_points", false);
@@ -184,7 +184,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.509644, 1.532958)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
-                putHint("vehicle", "car");
+                setProfile("car");
 
         GHResponse res = gh.route(req);
         int counter = 0;
@@ -207,7 +207,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.507065, 1.529846)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
-                putHint("vehicle", "car");
+                setProfile("car");
 
         GHResponse res = gh.route(req);
         List<String> given = extractInstructionNames(res.getBest(), 5);
@@ -239,7 +239,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.49058, 1.602974)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
-                putHint("vehicle", "car");
+                setProfile("car");
 
         GHResponse res = gh.route(req);
         assertTrue(res.hasErrors(), "no errors found?");
@@ -253,7 +253,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(-400.214943, -130.078125)).
                 addPoint(new GHPoint(39.909736, -91.054687)).
-                putHint("vehicle", "car");
+                setProfile("car");
 
         GHResponse res = gh.route(req);
         assertTrue(res.hasErrors(), "no errors found?");
@@ -267,7 +267,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.507065, 1.529846)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
-                putHint("vehicle", "car");
+                setProfile("car");
 
         GHResponse res = gh.route(req);
         InstructionList instructions = res.getBest().getInstructions();
@@ -282,7 +282,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.507065, 1.529846)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
-                putHint("vehicle", "car").
+                setProfile("car").
                 putHint("turn_description", false);
         GHResponse res = gh.route(req);
         InstructionList instructions = res.getBest().getInstructions();
@@ -302,7 +302,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.507065, 1.529846)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
-                setProfile("my_car");
+                setProfile("car");
         req.getPathDetails().add("average_speed");
         req.getPathDetails().add("intersection");
         GHResponse res = gh.route(req);
@@ -325,7 +325,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.50856, 1.528451)).
                 addPoint(new GHPoint(42.510383, 1.533392)).
-                setProfile("my_car");
+                setProfile("car");
 
         GHResponse response = gh.route(req);
         isBetween(890, 900, response.getBest().getDistance());
@@ -343,9 +343,8 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.509331, 1.536965)).
                 addPoint(new GHPoint(42.507065, 1.532443)).
-                setProfile("my_bike").
+                setProfile("bike").
                 putHint("ch.disable", true);
-
 
         // starting in eastern direction results in a longer way
         req.setHeadings(Collections.singletonList(90.0));

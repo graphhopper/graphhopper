@@ -1,5 +1,6 @@
 const config = {
-    api: location.origin + '/',
+    routingApi: location.origin + '/',
+    geocodingApi: '',
     defaultTiles: 'OpenStreetMap',
     keys: {
         graphhopper: "",

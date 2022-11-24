@@ -19,7 +19,6 @@
 package com.graphhopper.application.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
@@ -179,15 +178,15 @@ public class RouteResourceCustomModelTest {
 
     @Test
     public void testWeightingAndVehicleNotAllowed() {
-        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\"," +
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
                 " \"custom_model\": {}, \"ch.disable\": true, \"vehicle\": \"truck\"}";
         JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertEquals("Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=truck'", jsonNode.get("message").asText());
+        assertEquals("The 'profile' parameter is required when you use the `custom_model` parameter", jsonNode.get("message").asText());
 
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\"," +
                 " \"custom_model\": {}, \"ch.disable\": true, \"weighting\": \"custom\"}";
         jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertEquals("Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=custom'", jsonNode.get("message").asText());
+        assertEquals("The 'weighting' parameter is no longer supported. You used 'weighting=custom'", jsonNode.get("message").asText());
     }
 
     @ParameterizedTest
