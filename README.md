@@ -101,8 +101,9 @@ To see the road routing feature of GraphHopper in action please go to [GraphHopp
 
 [![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2022/10/maps2-1024x661.png)](https://graphhopper.com/maps)
 
-GraphHopper Maps uses the commercial offering the [GraphHopper Directions API](https://www.graphhopper.com) under the hood, which provides the Routing API (based on this routing engine), a Route Optimization API based on [jsprit](http://jsprit.github.io/), a fast Matrix API and an address search based on [photon](https://github.com/komoot/photon). The photon project is also supported by the GraphHopper GmbH. Additionally to the GraphHopper Directions API, map tiles from various providers are used 
-where the default is [Omniscale](http://omniscale.com/). All this is available for free, via encrypted connections and from German servers for a nice and private route planning experience!
+GraphHopper Maps is an open source user interface, which you can find [here](https://github.com/graphhopper/graphhopper-maps). It can use this open source routing engine or the [GraphHopper Directions API](https://www.graphhopper.com), which provides the Routing API, a Route Optimization API (based on [jsprit](http://jsprit.github.io/)), a fast Matrix API and an address search (based on [photon](https://github.com/komoot/photon)). The photon project is also supported by the GraphHopper GmbH. Additionally to the GraphHopper Directions API, map tiles from various providers are used where the default is [Omniscale](http://omniscale.com/). 
+
+All this is available for free, via encrypted connections and from German servers for a nice and private route planning experience!
 
 ## Public Transit
 
