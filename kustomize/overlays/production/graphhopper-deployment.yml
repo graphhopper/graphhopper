@@ -22,7 +22,7 @@ kind: CronJob
 metadata:
   name: graphhopper-graph-cache-builder
 spec:
-  schedule: "0 14,2 * * *"
+  schedule: "0 6,18 * * *"
   jobTemplate:
     spec:
       backoffLimit: 1
