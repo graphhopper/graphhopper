@@ -15,6 +15,10 @@ spec:
       labels:
         app: graphhopper
     spec:
+      hostAliases:
+      - ip: "192.168.50.10"
+        hostnames:
+        - "minio.techlabor.org"
       containers:
       - name: graphhopper
         ports:
@@ -87,6 +91,10 @@ spec:
       backoffLimit: 3
       template:
         spec:
+          hostAliases:
+          - ip: "192.168.50.10"
+            hostnames:
+            - "minio.techlabor.org"
           containers:
           - name: graphhopper-graph-cache-builder
             resources:
