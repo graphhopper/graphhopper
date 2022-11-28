@@ -297,6 +297,30 @@ public class RestrictionSetterTest {
         assertEquals(nodes(0, 1, 2, 3, 6, 5, 4), calcPath(0, 4, turnCostEnc));
     }
 
+    @Test
+    void multiViaWay_conflict() {
+        //   a   b   c   d
+        // 0---1---2---3---4
+        //     |e  |f
+        //     5   6
+
+        int a = edge(0, 1);
+        int b = edge(1, 2);
+        int c = edge(2, 3);
+        int d = edge(3, 4);
+        int e = edge(5, 1);
+        int f = edge(6, 2);
+        DecimalEncodedValue turnCostEnc = createTurnCostEnc("car");
+        IntArrayList viaWays = new IntArrayList();
+        viaWays.add(b);
+        viaWays.add(c);
+        r.setRestrictions(Arrays.asList(
+                new Pair<>(GraphRestriction.way(e, b, f, nodes(1, 2)), RestrictionType.NO),
+                new Pair<>(GraphRestriction.way(a, viaWays, d, nodes(1, 2, 3)), RestrictionType.NO)
+        ), turnCostEnc);
+        assertEquals(nodes(5, 1, 2, 3, 4), calcPath(5, 4, turnCostEnc));
+    }
+
     private static DecimalEncodedValue createTurnCostEnc(String name) {
         DecimalEncodedValue turnCostEnc = TurnCost.create(name, 1);
         turnCostEnc.init(new EncodedValue.InitializerConfig());
