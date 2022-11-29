@@ -5,6 +5,32 @@ graphhopper:
   # Local folder used by graphhopper to store its data
   graph.location: graph-cache
 
+  osm.import.accepted_highways: >
+    motorway,motorway_link,
+    trunk,trunk_link,
+    primary,primary_link,
+    secondary,secondary_link,
+    tertiary,tertiary_link,
+    unclassified,
+    residential,
+    living_street,
+    service,
+    pedestrian,
+    track,
+    bus_guideway,
+    escape,
+    raceway,
+    road,
+    busway,
+    footway,
+    bridleway,
+    steps,
+    corridor,
+    path,
+    cycleway,
+    proposed,
+    construction,
+    emergency_bay
 
   ##### Routing Profiles ####
 

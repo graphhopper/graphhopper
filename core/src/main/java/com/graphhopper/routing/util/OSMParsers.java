@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public class OSMParsers {
+    private final List<String> acceptedHighways;
     private final List<TagParser> wayTagParsers;
     private final List<VehicleTagParser> vehicleTagParsers;
     private final List<RelationTagParser> relationTagParsers;
@@ -38,15 +39,21 @@ public class OSMParsers {
     private final EncodedValue.InitializerConfig relConfig = new EncodedValue.InitializerConfig();
 
     public OSMParsers() {
-        this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
-    public OSMParsers(List<TagParser> wayTagParsers, List<VehicleTagParser> vehicleTagParsers,
+    public OSMParsers(List<String> acceptedHighways, List<TagParser> wayTagParsers, List<VehicleTagParser> vehicleTagParsers,
                       List<RelationTagParser> relationTagParsers, List<RestrictionTagParser> restrictionTagParsers) {
+        this.acceptedHighways = acceptedHighways;
         this.wayTagParsers = wayTagParsers;
         this.vehicleTagParsers = vehicleTagParsers;
         this.relationTagParsers = relationTagParsers;
         this.restrictionTagParsers = restrictionTagParsers;
+    }
+
+    public OSMParsers addAcceptedHighway(String highway) {
+        acceptedHighways.add(highway);
+        return this;
     }
 
     public OSMParsers addWayTagParser(TagParser tagParser) {
@@ -73,7 +80,8 @@ public class OSMParsers {
     }
 
     public boolean acceptWay(ReaderWay way) {
-        return vehicleTagParsers.stream().anyMatch(v -> !v.getAccess(way).equals(WayAccess.CAN_SKIP));
+        String highway = way.getTag("highway");
+        return highway != null && acceptedHighways.contains(highway);
     }
 
     public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {
@@ -98,6 +106,10 @@ public class OSMParsers {
         if (requiredInts > 2)
             throw new IllegalStateException("More than two ints are needed for relation flags, but OSMReader does not allow this");
         return new IntsRef(2);
+    }
+
+    public List<String> getAcceptedHighways() {
+        return acceptedHighways;
     }
 
     public List<VehicleTagParser> getVehicleTagParsers() {
