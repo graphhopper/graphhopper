@@ -348,9 +348,6 @@ public class OSMReader {
         IntsRef relationFlags = getRelFlagsMap(way.getId());
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
         edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relationFlags);
-        if (edgeFlags.isEmpty())
-            return;
-
         EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags);
         List<EdgeKVStorage.KeyValue> list = way.getTag("key_values", Collections.emptyList());
         if (!list.isEmpty())
