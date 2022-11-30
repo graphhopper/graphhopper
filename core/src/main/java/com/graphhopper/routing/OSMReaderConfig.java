@@ -56,7 +56,8 @@ public class OSMReaderConfig {
                 "path",
                 "cycleway",
                 "proposed",
-                "construction"
+                "construction",
+                "platform"
         );
     }
 

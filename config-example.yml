@@ -17,8 +17,8 @@ graphhopper:
     service,
     pedestrian,
     track,
-    bus_guideway,
-    escape,
+    bus_guideway,busway,
+    escape,emergency_bay,
     raceway,
     road,
     busway,
@@ -30,7 +30,7 @@ graphhopper:
     cycleway,
     proposed,
     construction,
-    emergency_bay
+    platform
 
   ##### Routing Profiles ####
 
