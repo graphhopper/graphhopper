@@ -74,17 +74,20 @@ public class IntEncodedValueImpl implements IntEncodedValue {
             throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
         if (bits <= 0)
             throw new IllegalArgumentException(name + ": bits cannot be zero or negative");
-        if (bits > 31)
-            throw new IllegalArgumentException(name + ": at the moment the number of reserved bits cannot be more than 31");
+        if (bits > 32)
+            throw new IllegalArgumentException(name + ": at the moment the number of reserved bits cannot be more than 32");
         if (negateReverseDirection && (minStorableValue != 0 || storeTwoDirections))
             throw new IllegalArgumentException(name + ": negating value for reverse direction only works for minValue == 0 " +
                     "and !storeTwoDirections but was minValue=" + minStorableValue + ", storeTwoDirections=" + storeTwoDirections);
         this.name = name;
         this.storeTwoDirections = storeTwoDirections;
-        int max = (1 << bits) - 1;
+
+        if (bits > 31 && negateReverseDirection)
+            throw new IllegalArgumentException(name + ": you cannot use negateReverseDirection and more than 31 bits");
+        int max = bits == 32 ? ((1 << 31) - 1) : ((1 << bits) - 1);
         // negateReverseDirection: store the negative value only once, but for that we need the same range as maxValue for negative values
         this.minStorableValue = negateReverseDirection ? -max : minStorableValue;
-        this.maxStorableValue = max + minStorableValue;
+        this.maxStorableValue = bits == 32 ? max : max + minStorableValue;
         if (minStorableValue == Integer.MIN_VALUE)
             // we do not allow this because we use this value to represent maxValue = untouched, i.e. no value has been set yet
             throw new IllegalArgumentException(Integer.MIN_VALUE + " is not allowed for minValue");

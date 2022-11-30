@@ -30,6 +30,17 @@ public class IntEncodedValueImplTest {
     }
 
     @Test
+    public void bits32() {
+        IntEncodedValue prop = new IntEncodedValueImpl("test", 32, Integer.MIN_VALUE + 1, false, true);
+        prop.init(new EncodedValue.InitializerConfig());
+        IntsRef ref = new IntsRef(2);
+        prop.setInt(false, ref, Integer.MAX_VALUE - 1);
+        assertEquals(Integer.MAX_VALUE - 1, prop.getInt(false, ref));
+        prop.setInt(false, ref, Integer.MIN_VALUE + 1);
+        assertEquals(Integer.MIN_VALUE + 1, prop.getInt(false, ref));
+    }
+
+    @Test
     public void multiIntsUsage() {
         IntEncodedValue prop = new IntEncodedValueImpl("test", 31, true);
         prop.init(new EncodedValue.InitializerConfig());
