@@ -69,6 +69,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMHazmatWaterParser(lookup.getEnumEncodedValue(HazmatWater.KEY, HazmatWater.class));
         else if (name.equals(Lanes.KEY))
             return new OSMLanesParser(lookup.getIntEncodedValue(Lanes.KEY));
+        else if (name.equals(OSMWayID.KEY))
+            return new OSMWayIDParser(lookup.getIntEncodedValue(OSMWayID.KEY));
         else if (name.equals(MtbRating.KEY))
             return new OSMMtbRatingParser(lookup.getIntEncodedValue(MtbRating.KEY));
         else if (name.equals(HikeRating.KEY))
