@@ -1,5 +1,0 @@
-resources:
-  - ../../base
-namespace: production
-patchesStrategicMerge:
-  - graphhopper-deployment.yml
