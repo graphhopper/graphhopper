@@ -570,8 +570,6 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
                 setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
-        // todonow: get rid of this?
-        hopper.getReaderConfig().setIgnoredHighways(Arrays.asList("footway", "path"));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
@@ -646,9 +644,13 @@ public class GraphHopperTest {
 
         req.putHint(Routing.BLOCK_AREA, "49.984434,11.505212,49.985394,11.506333");
         rsp = hopper.route(req);
-        assertEquals(11.508, rsp.getBest().getWaypoints().getLon(0), 0.001);
+        // we do not snap to Grüngraben (within the blocked area), but onto Lohweg and then we need to go to Hauptstraße
+        // and turn left onto Waldhüttenstraße. Note that if we exclude footway we get an entirely different path, because
+        // the start point snaps all the way to the East onto the end of Bergstraße (because Lohweg gets no longer split
+        // into several edges...)
+        assertEquals(11.506, rsp.getBest().getWaypoints().getLon(0), 0.001);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(1185, rsp.getBest().getDistance(), 10);
+        assertEquals(510, rsp.getBest().getDistance(), 10);
 
         // first point is contained in block_area => error
         req = new GHRequest(49.979, 11.516, 49.986107, 11.507202).
