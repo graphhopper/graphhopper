@@ -32,8 +32,6 @@ graphhopper:
 
   profiles:
     - name: car
-      # note that as long as you only use motorized vehicles you can decrease the size of the graph
-      # using import.osm.ignored_highways (see below)
       vehicle: car
       weighting: custom
       custom_model:
@@ -42,6 +40,7 @@ graphhopper:
   #   u_turn_costs: 60
 
   # - name: bike
+      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
   #   vehicle: bike
   #   weighting: custom
   #   # the custom model in bike2.json is defined to avoid hills
@@ -174,7 +173,7 @@ graphhopper:
   # A typical case is excluding footway,cycleway,path and maybe pedestrian and track for motorized vehicles. This leads
   # to a smaller graph, because there are less ways (obviously), but also because there are fewer junctions.
   # Another example is excluding motorway, trunk and maybe primary highways for bicycle or pedestrian routing.
-  # osm.import.ignored_highways: footway,cycleway,path
+  import.osm.ignored_highways: footway,cycleway,path,steps
 
   # configure the memory access, use RAM_STORE for well equipped servers (default and recommended)
   graph.dataaccess.default_type: RAM_STORE

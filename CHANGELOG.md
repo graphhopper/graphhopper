@@ -1,6 +1,9 @@
 ### 7.0 [not yet released]
 
-- the parameters vehicle, weighting, edge_based and turn_costs are no longer supported, use the profile parameter instead
+- there is a new import.osm.ignored_highways parameter that needs to be set to reduce the graph size and increase
+  performance for motorized-only routing, #2702
+- the parameters vehicle, weighting, edge_based and turn_costs are no longer supported, use the profile parameter
+  instead
 - removed motorroad to road_class conversion, #2329
 - removed YAML support for custom models on the server-side. Only allow JSON with // comments.
 - Bike2WeightTagParser was removed. Use the bike vehicle with a custom model, see custom_models/bike2.json
