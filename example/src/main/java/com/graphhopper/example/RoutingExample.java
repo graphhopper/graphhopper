@@ -111,7 +111,7 @@ public class RoutingExample {
         res = hopper.route(req);
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
-        assert res.getAll().size() == 2;
+        assert res.getAll().size() == 1;
         assert Helper.round(res.getBest().getDistance(), -2) == 2300;
     }
 

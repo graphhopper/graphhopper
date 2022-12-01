@@ -182,7 +182,7 @@ public class GraphHopperOSMTest {
             }
         });
 
-        assertEquals(57, indexNodeList.size());
+        assertEquals(148, indexNodeList.size());
         for (int nodeId : indexNodeList) {
             if (!bbox.contains(na.getLat(nodeId), na.getLon(nodeId)))
                 fail("bbox " + bbox + " should contain " + nodeId);
@@ -635,6 +635,7 @@ public class GraphHopperOSMTest {
                 setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
+        instance.getReaderConfig().setIgnoredHighways(Arrays.asList("motorway"));
         instance.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         instance.importOrLoad();
 

@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
 
@@ -41,8 +42,9 @@ public class NavigateResponseConverterTest {
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFolder).
-                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting("fastest").setTurnCosts(false)).
-                importOrLoad();
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting("fastest").setTurnCosts(false));
+        hopper.getReaderConfig().setIgnoredHighways(Arrays.asList("footway", "path", "cycleway", "steps", "pedestrian"));
+        hopper.importOrLoad();
     }
 
     @AfterAll
