@@ -72,8 +72,8 @@ public class SPTResourceTest {
         List<String> headers = Arrays.asList(lines[0].split(","));
         assertEquals("[longitude, latitude, time, distance]", headers.toString());
         String[] row = lines[166].split(",");
-        assertEquals(1.574053, Double.parseDouble(row[0]), 0.0001);
-        assertEquals(42.536273, Double.parseDouble(row[1]), 0.0001);
+        assertEquals(1.5740, Double.parseDouble(row[0]), 0.0001);
+        assertEquals(42.5362, Double.parseDouble(row[1]), 0.0001);
         assertEquals(111, Integer.parseInt(row[2]) / 1000, 1);
         assertEquals(1505, Integer.parseInt(row[3]), 1);
 
@@ -115,7 +115,7 @@ public class SPTResourceTest {
         row = lines[249].split(",");
         assertEquals("", row[0]);
         assertEquals("primary", row[1]);
-        assertFalse(Double.isInfinite(Double.parseDouble(row[2])));
+        assertEquals(80, Double.parseDouble(row[2]), .1);
     }
 
     @Test

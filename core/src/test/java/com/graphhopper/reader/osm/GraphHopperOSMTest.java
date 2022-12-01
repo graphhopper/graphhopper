@@ -635,6 +635,7 @@ public class GraphHopperOSMTest {
                 setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
+        // exclude motorways which aren't accessible for foot
         instance.getReaderConfig().setIgnoredHighways(Arrays.asList("motorway"));
         instance.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         instance.importOrLoad();

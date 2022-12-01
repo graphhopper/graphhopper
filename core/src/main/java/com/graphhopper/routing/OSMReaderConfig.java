@@ -39,11 +39,11 @@ public class OSMReaderConfig {
     /**
      * Sets the values of the highway tag that shall be ignored when we read the OSM file. This can be used to speed up
      * the import and reduce the size of the resulting routing graph. For example if one is only interested in routing
-     * for motorized vehicles the routing graph size can be reduced by excluding footways, paths and or tracks
-     * (20-50% depending on your area, ~25% for planet files). Another reason to exclude footways etc. for motorized
-     * vehicle routing could be preventing undesired u-turns (#1858). Similarly, one could exclude motorway, trunk or
-     * even primary highways for bicycle or pedestrian routing. But since there aren't many such roads the graph size
-     * reduction will be very small (<4%).
+     * for motorized vehicles the routing graph size can be reduced by excluding footways, cycleways, paths and/or
+     * tracks. This can be quite significant depending on your area. Not only are there fewer ways to be processed, but
+     * there are also fewer junctions, which means fewer nodes and edges. Another reason to exclude footways etc. for
+     * motorized vehicle routing could be preventing undesired u-turns (#1858). Similarly, one could exclude motorway,
+     * trunk or even primary highways for bicycle or pedestrian routing.
      */
     public OSMReaderConfig setIgnoredHighways(List<String> ignoredHighways) {
         this.ignoredHighways = ignoredHighways;
