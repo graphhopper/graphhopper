@@ -570,6 +570,7 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
                 setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
+        // todonow: get rid of this?
         hopper.getReaderConfig().setIgnoredHighways(Arrays.asList("footway", "path"));
         hopper.importOrLoad();
 

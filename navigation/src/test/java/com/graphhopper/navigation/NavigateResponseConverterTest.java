@@ -41,8 +41,8 @@ public class NavigateResponseConverterTest {
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFolder).
-                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting("fastest").setTurnCosts(false));
-        hopper.importOrLoad();
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting("fastest").setTurnCosts(false)).
+                importOrLoad();
     }
 
     @AfterAll
@@ -273,7 +273,7 @@ public class NavigateResponseConverterTest {
 
         step = steps.get(4);
         intersection = step.get("intersections").get(3);
-        assertEquals(1, intersection.get("in").asInt());
+        assertEquals(2, intersection.get("in").asInt());
         assertEquals(0, intersection.get("out").asInt());
         location = intersection.get("location");
         assertEquals(1.534679, location.get(0).asDouble(), .000001);
