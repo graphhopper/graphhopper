@@ -568,7 +568,7 @@ public class GraphHopper {
         lmPreparationHandler.init(ghConfig);
 
         // osm import
-        osmReaderConfig.setAcceptedHighways(Arrays.stream(ghConfig.getString("import.osm.accepted_highways", String.join(",", osmReaderConfig.getAcceptedHighways()))
+        osmReaderConfig.setIgnoredHighways(Arrays.stream(ghConfig.getString("import.osm.ignored_highways", String.join(",", osmReaderConfig.getIgnoredHighways()))
                 .split(",")).map(String::trim).collect(Collectors.toList()));
         osmReaderConfig.setParseWayNames(ghConfig.getBool("datareader.instructions", osmReaderConfig.isParseWayNames()));
         osmReaderConfig.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", osmReaderConfig.getPreferredLanguage()));
@@ -600,7 +600,7 @@ public class GraphHopper {
         return this;
     }
 
-    private void buildEncodingManagerAndOSMParsers(List<String> acceptedHighways, String flagEncodersStr, String encodedValuesStr, String dateRangeParserString, boolean withUrbanDensity, Collection<Profile> profiles) {
+    private void buildEncodingManagerAndOSMParsers(List<String> ignoredHighways, String flagEncodersStr, String encodedValuesStr, String dateRangeParserString, boolean withUrbanDensity, Collection<Profile> profiles) {
         Map<String, String> flagEncodersMap = new LinkedHashMap<>();
         for (String encoderStr : flagEncodersStr.split(",")) {
             String name = encoderStr.split("\\|")[0].trim();
@@ -634,7 +634,7 @@ public class GraphHopper {
         encodingManager = emBuilder.build();
 
         osmParsers = new OSMParsers();
-        acceptedHighways.forEach(osmParsers::addAcceptedHighway);
+        ignoredHighways.forEach(osmParsers::addIgnoredHighway);
 
         for (String s : encodedValueStrings) {
             TagParser tagParser = tagParserFactory.create(encodingManager, s);
@@ -793,7 +793,7 @@ public class GraphHopper {
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
         boolean withUrbanDensity = urbanDensityCalculationThreads > 0;
-        buildEncodingManagerAndOSMParsers(osmReaderConfig.getAcceptedHighways(), vehiclesString, encodedValuesString, dateRangeParserString, withUrbanDensity, profilesByName.values());
+        buildEncodingManagerAndOSMParsers(osmReaderConfig.getIgnoredHighways(), vehiclesString, encodedValuesString, dateRangeParserString, withUrbanDensity, profilesByName.values());
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())

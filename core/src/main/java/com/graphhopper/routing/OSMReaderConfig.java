@@ -18,11 +18,11 @@
 
 package com.graphhopper.routing;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 
 public class OSMReaderConfig {
-    private List<String> acceptedHighways = createDefaultAcceptedHighways();
+    private List<String> ignoredHighways = new ArrayList<>();
     private boolean parseWayNames = true;
     private String preferredLanguage = "";
     private double maxWayPointDistance = 1;
@@ -32,52 +32,21 @@ public class OSMReaderConfig {
     private double longEdgeSamplingDistance = Double.MAX_VALUE;
     private int workerThreads = 2;
 
-    public static List<String> createDefaultAcceptedHighways() {
-        return Arrays.asList(
-                "motorway", "motorway_link",
-                "trunk", "trunk_link",
-                "primary", "primary_link",
-                "secondary", "secondary_link",
-                "tertiary", "tertiary_link",
-                "unclassified",
-                "residential",
-                "living_street",
-                "service",
-                "pedestrian",
-                "track",
-                "bus_guideway", "busway",
-                "escape", "emergency_bay",
-                "raceway",
-                "road",
-                "footway",
-                "bridleway",
-                "steps",
-                "corridor",
-                "path",
-                "cycleway",
-                "proposed",
-                "construction",
-                "platform"
-        );
-    }
-
-    public List<String> getAcceptedHighways() {
-        return acceptedHighways;
+    public List<String> getIgnoredHighways() {
+        return ignoredHighways;
     }
 
     /**
-     * Sets the values of the highway tag that shall be considered when we read the OSM file. OSM ways that do not include
-     * a highway tag with one of these values will be ignored entirely during import, but just because they are
-     * accepted does not necessarily mean they will be considered by the route calculations. This still depends on the
-     * weighting and/or the access flags for the corresponding edges. Not including some road types here is mostly a
-     * performance optimization. For example if one is only interested in routing for motorized vehicles the routing
-     * graph size can be reduced by not including tracks, footways and paths (20-50% depending on your area, ~25%
-     * for planet files). Another reason to exclude footways etc. for motorized vehicle routing could be preventing
-     * undesired u-turns (#1858). Similarly, one could exclude motorway, trunk or even primary for bicycle or pedestrian routing, but since there
-     * aren't many such roads the graph size reduction will be very small (<4%).
+     * Sets the values of the highway tag that shall be ignored when we read the OSM file. This can be used to speed up
+     * the import and reduce the size of the resulting routing graph. For example if one is only interested in routing
+     * for motorized vehicles the routing graph size can be reduced by excluding footways, paths and or tracks
+     * (20-50% depending on your area, ~25% for planet files). Another reason to exclude footways etc. for motorized
+     * vehicle routing could be preventing undesired u-turns (#1858). Similarly, one could exclude motorway, trunk or
+     * even primary highways for bicycle or pedestrian routing. But since there aren't many such roads the graph size
+     * reduction will be very small (<4%).
      */
-    public OSMReaderConfig setAcceptedHighways(List<String> acceptedHighways) {
-        this.acceptedHighways = acceptedHighways;
+    public OSMReaderConfig setIgnoredHighways(List<String> ignoredHighways) {
+        this.ignoredHighways = ignoredHighways;
         return this;
     }
 

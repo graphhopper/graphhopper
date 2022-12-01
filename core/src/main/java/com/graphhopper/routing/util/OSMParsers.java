@@ -31,7 +31,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public class OSMParsers {
-    private final List<String> acceptedHighways;
+    private final List<String> ignoredHighways;
     private final List<TagParser> wayTagParsers;
     private final List<VehicleTagParser> vehicleTagParsers;
     private final List<RelationTagParser> relationTagParsers;
@@ -42,17 +42,17 @@ public class OSMParsers {
         this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
-    public OSMParsers(List<String> acceptedHighways, List<TagParser> wayTagParsers, List<VehicleTagParser> vehicleTagParsers,
+    public OSMParsers(List<String> ignoredHighways, List<TagParser> wayTagParsers, List<VehicleTagParser> vehicleTagParsers,
                       List<RelationTagParser> relationTagParsers, List<RestrictionTagParser> restrictionTagParsers) {
-        this.acceptedHighways = acceptedHighways;
+        this.ignoredHighways = ignoredHighways;
         this.wayTagParsers = wayTagParsers;
         this.vehicleTagParsers = vehicleTagParsers;
         this.relationTagParsers = relationTagParsers;
         this.restrictionTagParsers = restrictionTagParsers;
     }
 
-    public OSMParsers addAcceptedHighway(String highway) {
-        acceptedHighways.add(highway);
+    public OSMParsers addIgnoredHighway(String highway) {
+        ignoredHighways.add(highway);
         return this;
     }
 
@@ -81,7 +81,7 @@ public class OSMParsers {
 
     public boolean acceptWay(ReaderWay way) {
         String highway = way.getTag("highway");
-        return highway != null && acceptedHighways.contains(highway);
+        return highway != null && !ignoredHighways.contains(highway);
     }
 
     public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {
@@ -108,8 +108,8 @@ public class OSMParsers {
         return new IntsRef(2);
     }
 
-    public List<String> getAcceptedHighways() {
-        return acceptedHighways;
+    public List<String> getIgnoredHighways() {
+        return ignoredHighways;
     }
 
     public List<VehicleTagParser> getVehicleTagParsers() {
