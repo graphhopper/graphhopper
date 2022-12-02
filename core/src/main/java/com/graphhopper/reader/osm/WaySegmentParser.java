@@ -18,10 +18,7 @@
 
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.ObjectIntHashMap;
-import com.carrotsearch.hppc.ObjectIntMap;
 import com.carrotsearch.hppc.cursors.LongCursor;
-import com.carrotsearch.hppc.cursors.ObjectIntCursor;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
@@ -41,7 +38,10 @@ import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.LongToIntFunction;
 import java.util.function.Predicate;
@@ -67,7 +67,6 @@ import static com.graphhopper.util.Helper.nf;
  */
 public class WaySegmentParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaySegmentParser.class);
-    private final ObjectIntMap<String> nodeTagCounts = new ObjectIntHashMap<>();
 
     private final ElevationProvider eleProvider;
     private final Predicate<ReaderWay> wayFilter;
@@ -237,10 +236,6 @@ public class WaySegmentParser {
             // we keep all the node tags, so they will be available for the edge handler
             if (node.hasTags())
                 nodeData.setTags(node);
-
-            for (String key : node.getTags().keySet()) {
-                nodeTagCounts.putOrAdd(key, 1, 1);
-            }
         }
 
         @Override
@@ -388,13 +383,6 @@ public class WaySegmentParser {
         public void onFinish() {
             LOGGER.info("pass2 - finished, processed ways: {}, way nodes: {}, with tags: {}, ignored barriers at junctions: {}",
                     nf(wayCounter), nf(acceptedNodes), nf(nodeData.getTaggedNodeCount()), nf(ignoredSplitNodes));
-
-            Map<String, Integer> map = new HashMap<>();
-            for (ObjectIntCursor<String> c : nodeTagCounts)
-                map.put(c.key, c.value);
-            map.entrySet().stream()
-                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
-                    .forEach(e -> System.out.println(e.getKey() + ": " + String.format("%.2f", 100.0 * e.getValue() / acceptedNodes) + "%, " + e.getValue()));
         }
 
         public int getInternalNodeIdOfOSMNode(long nodeOsmId) {
