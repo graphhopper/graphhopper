@@ -18,7 +18,10 @@
 
 package com.graphhopper.reader.osm;
 
+import com.carrotsearch.hppc.ObjectIntHashMap;
+import com.carrotsearch.hppc.ObjectIntMap;
 import com.carrotsearch.hppc.cursors.LongCursor;
+import com.carrotsearch.hppc.cursors.ObjectIntCursor;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
@@ -38,17 +41,13 @@ import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.LongToIntFunction;
 import java.util.function.Predicate;
 
 import static com.graphhopper.reader.osm.OSMNodeData.*;
 import static com.graphhopper.util.Helper.nf;
-import static java.util.Collections.emptyMap;
 
 /**
  * This class parses a given OSM file and splits OSM ways into 'segments' at all intersections (or 'junctions').
@@ -68,6 +67,7 @@ import static java.util.Collections.emptyMap;
  */
 public class WaySegmentParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaySegmentParser.class);
+    private final ObjectIntMap<String> nodeTagCounts = new ObjectIntHashMap<>();
 
     private final ElevationProvider eleProvider;
     private final Predicate<ReaderWay> wayFilter;
@@ -224,14 +224,22 @@ public class WaySegmentParser {
 
             acceptedNodes++;
 
-            // we keep node tags for barrier nodes
+            // set a special tag for nodes we want to split
             if (splitNodeFilter.test(node)) {
                 if (nodeType == JUNCTION_NODE) {
                     LOGGER.debug("OSM node {} at {},{} is a barrier node at a junction. The barrier will be ignored",
                             node.getId(), Helper.round(node.getLat(), 7), Helper.round(node.getLon(), 7));
                     ignoredSplitNodes++;
                 } else
-                    nodeData.setTags(node);
+                    node.setTag("gh:split_node", true);
+            }
+
+            // we keep all the node tags, so they will be available for the edge handler
+            if (node.hasTags())
+                nodeData.setTags(node);
+
+            for (String key : node.getTags().keySet()) {
+                nodeTagCounts.putOrAdd(key, 1, 1);
             }
         }
 
@@ -251,7 +259,7 @@ public class WaySegmentParser {
                 return;
             List<SegmentNode> segment = new ArrayList<>(way.getNodes().size());
             for (LongCursor node : way.getNodes())
-                segment.add(new SegmentNode(node.value, nodeData.getId(node.value)));
+                segment.add(new SegmentNode(node.value, nodeData.getId(node.value), nodeData.getTags(node.value)));
             wayPreprocessor.preprocessWay(way, osmNodeId -> nodeData.getCoordinates(nodeData.getId(osmNodeId)));
             splitWayAtJunctionsAndEmptySections(segment, way);
         }
@@ -304,9 +312,8 @@ public class WaySegmentParser {
             List<SegmentNode> segment = new ArrayList<>();
             for (int i = 0; i < parentSegment.size(); i++) {
                 SegmentNode node = parentSegment.get(i);
-                Map<String, Object> nodeTags = nodeData.getTags(node.osmNodeId);
-                // so far we only consider node tags of split nodes, so if there are node tags we split the node
-                if (!nodeTags.isEmpty()) {
+                Map<String, Object> nodeTags = node.tags;
+                if ((boolean) nodeTags.getOrDefault("gh:split_node", false)) {
                     // this node is a barrier. we will copy it and add an extra edge
                     SegmentNode barrierFrom = node;
                     SegmentNode barrierTo = nodeData.addCopyOfNode(node);
@@ -318,28 +325,29 @@ public class WaySegmentParser {
                     }
                     if (!segment.isEmpty()) {
                         segment.add(barrierFrom);
-                        handleSegment(segment, way, emptyMap());
+                        handleSegment(segment, way);
                         segment = new ArrayList<>();
                     }
                     segment.add(barrierFrom);
                     segment.add(barrierTo);
-                    handleSegment(segment, way, nodeTags);
+                    handleSegment(segment, way);
                     segment = new ArrayList<>();
                     segment.add(barrierTo);
 
-                    // ignore this barrier node from now. for example a barrier can be connecting two ways (appear in both
+                    // do not split this node again. for example a barrier can be connecting two ways (appear in both
                     // ways) and we only want to add a barrier edge once (but we want to add one).
-                    nodeData.removeTags(node.osmNodeId);
+                    nodeData.removeTag(node.osmNodeId, "gh:split_node");
                 } else {
                     segment.add(node);
                 }
             }
             if (segment.size() > 1)
-                handleSegment(segment, way, emptyMap());
+                handleSegment(segment, way);
         }
 
-        void handleSegment(List<SegmentNode> segment, ReaderWay way, Map<String, Object> nodeTags) {
+        void handleSegment(List<SegmentNode> segment, ReaderWay way) {
             final PointList pointList = new PointList(segment.size(), nodeData.is3D());
+            final List<Map<String, Object>> nodeTags = new ArrayList<>(segment.size());
             int from = -1;
             int to = -1;
             for (int i = 0; i < segment.size(); i++) {
@@ -359,6 +367,7 @@ public class WaySegmentParser {
                 else if (isTowerNode(id))
                     throw new IllegalStateException("Tower nodes should only appear at the end of segments, way: " + way.getId());
                 nodeData.addCoordinatesToPointList(id, pointList);
+                nodeTags.add(node.tags);
             }
             if (from < 0 || to < 0)
                 throw new IllegalStateException("The first and last nodes of a segment must be tower nodes, way: " + way.getId());
@@ -379,6 +388,13 @@ public class WaySegmentParser {
         public void onFinish() {
             LOGGER.info("pass2 - finished, processed ways: {}, way nodes: {}, with tags: {}, ignored barriers at junctions: {}",
                     nf(wayCounter), nf(acceptedNodes), nf(nodeData.getTaggedNodeCount()), nf(ignoredSplitNodes));
+
+            Map<String, Integer> map = new HashMap<>();
+            for (ObjectIntCursor<String> c : nodeTagCounts)
+                map.put(c.key, c.value);
+            map.entrySet().stream()
+                    .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                    .forEach(e -> System.out.println(e.getKey() + ": " + String.format("%.2f", 100.0 * e.getValue() / acceptedNodes) + "%, " + e.getValue()));
         }
 
         public int getInternalNodeIdOfOSMNode(long nodeOsmId) {
@@ -547,7 +563,7 @@ public class WaySegmentParser {
     }
 
     public interface EdgeHandler {
-        void handleEdge(int from, int to, PointList pointList, ReaderWay way, Map<String, Object> nodeTags);
+        void handleEdge(int from, int to, PointList pointList, ReaderWay way, List<Map<String, Object>> nodeTags);
     }
 
     public interface RelationProcessor {

@@ -26,14 +26,9 @@ import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint3D;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.DoubleSupplier;
 import java.util.function.IntUnaryOperator;
-
-import static java.util.Collections.emptyMap;
 
 /**
  * This class stores OSM node data while reading an OSM file in {@link WaySegmentParser}. It is not trivial to do this
@@ -187,7 +182,7 @@ class OSMNodeData {
         if (idsByOsmNodeIds.put(newOsmId, INTERMEDIATE_NODE) != EMPTY_NODE)
             throw new IllegalStateException("Artificial osm node id already exists: " + newOsmId);
         int id = addPillarNode(newOsmId, point.getLat(), point.getLon(), point.getEle());
-        return new SegmentNode(newOsmId, id);
+        return new SegmentNode(newOsmId, id, new LinkedHashMap<>(node.tags));
     }
 
     int convertPillarToTowerNode(int id, long osmNodeId) {
@@ -258,9 +253,9 @@ class OSMNodeData {
         return nodeTags.get(tagIndex);
     }
 
-    public void removeTags(long osmNodeId) {
+    public void removeTag(long osmNodeId, String key) {
         int prev = nodeTagIndicesByOsmNodeIds.put(osmNodeId, -2);
-        nodeTags.set(prev, emptyMap());
+        nodeTags.get(prev).remove(key);
     }
 
     public void release() {

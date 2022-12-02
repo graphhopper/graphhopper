@@ -228,7 +228,7 @@ public class OSMReader {
      * This method is called during the second pass of {@link WaySegmentParser} and provides an entry point to enrich
      * the given OSM way with additional tags before it is passed on to the tag parsers.
      */
-    protected void setArtificialWayTags(PointList pointList, ReaderWay way, double distance, Map<String, Object> nodeTags) {
+    protected void setArtificialWayTags(PointList pointList, ReaderWay way, double distance, List<Map<String, Object>> nodeTags) {
         way.setTag("node_tags", nodeTags);
         way.setTag("edge_distance", distance);
         way.setTag("point_list", pointList);
@@ -292,14 +292,16 @@ public class OSMReader {
      * @param toIndex   a unique integer id for the last node of this segment
      * @param pointList coordinates of this segment
      * @param way       the OSM way this segment was taken from
-     * @param nodeTags  node tags of this segment if it is an artificial edge, empty otherwise
+     * @param nodeTags  node tags of this segment. there is one map of tags for each point.
      */
-    protected void addEdge(int fromIndex, int toIndex, PointList pointList, ReaderWay way, Map<String, Object> nodeTags) {
+    protected void addEdge(int fromIndex, int toIndex, PointList pointList, ReaderWay way, List<Map<String, Object>> nodeTags) {
         // sanity checks
         if (fromIndex < 0 || toIndex < 0)
             throw new AssertionError("to or from index is invalid for this edge " + fromIndex + "->" + toIndex + ", points:" + pointList);
         if (pointList.getDimension() != nodeAccess.getDimension())
             throw new AssertionError("Dimension does not match for pointList vs. nodeAccess " + pointList.getDimension() + " <-> " + nodeAccess.getDimension());
+        if (pointList.size() != nodeTags.size())
+            throw new AssertionError("there should be as many maps of node tags as there are points. node tags: " + nodeTags.size() + ", points: " + pointList.size());
 
         // todo: in principle it should be possible to delay elevation calculation so we do not need to store
         // elevations during import (saves memory in pillar info during import). also note that we already need to

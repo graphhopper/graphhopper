@@ -31,7 +31,7 @@ import com.graphhopper.storage.IntsRef;
 
 import java.util.*;
 
-import static java.util.Collections.emptyMap;
+import static java.util.Collections.emptyList;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
@@ -118,7 +118,7 @@ public abstract class VehicleTagParser implements TagParser {
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         edgeFlags = handleWayTags(edgeFlags, way);
         if (!edgeFlags.isEmpty()) {
-            Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
+            List<Map<String, Object>> nodeTags = way.getTag("node_tags", emptyList());
             handleNodeTags(edgeFlags, nodeTags);
         }
         return edgeFlags;
@@ -133,16 +133,17 @@ public abstract class VehicleTagParser implements TagParser {
     /**
      * Updates the given edge flags based on node tags
      */
-    public IntsRef handleNodeTags(IntsRef edgeFlags, Map<String, Object> nodeTags) {
-        if (!nodeTags.isEmpty()) {
+    public IntsRef handleNodeTags(IntsRef edgeFlags, List<Map<String, Object>> nodeTags) {
+        boolean isBarrier = nodeTags.stream().anyMatch(tags -> {
             // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
-            ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
-            // block access for barriers
-            if (isBarrier(readerNode)) {
-                BooleanEncodedValue accessEnc = getAccessEnc();
-                accessEnc.setBool(false, edgeFlags, false);
-                accessEnc.setBool(true, edgeFlags, false);
-            }
+            ReaderNode readerNode = new ReaderNode(0, 0, 0, tags);
+            return isBarrier(readerNode);
+        });
+        // block access for barriers
+        if (isBarrier) {
+            BooleanEncodedValue accessEnc = getAccessEnc();
+            accessEnc.setBool(false, edgeFlags, false);
+            accessEnc.setBool(true, edgeFlags, false);
         }
         return edgeFlags;
     }
