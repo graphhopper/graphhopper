@@ -45,7 +45,7 @@ public class Request {
     private List<String> pathDetails = new ArrayList<>();
     private String connectingProfile;
     private boolean enableElevation = false;
-    private boolean includeEdges = true;
+    private boolean includeEdges = false;
 
     public Request(List<GHLocation> points, Instant departureTime) {
         this.points = points;

@@ -69,7 +69,7 @@ public class PtRouteResource {
                             @QueryParam("pt.beta_street_time") Double betaStreetTime,
                             @QueryParam("pt.beta_pt_edge_time") Double betaPtEdgeTime,
                             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
-                            @QueryParam("include_edges") @DefaultValue("true") boolean includeEdges, // TODO: make this a real request param from the frontend
+                            @QueryParam("include_edges") @DefaultValue("false") boolean includeEdges,
                             @QueryParam("details") List<String> pathDetails) {
         StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
@@ -92,7 +92,7 @@ public class PtRouteResource {
         Optional.ofNullable(pathDetails).ifPresent(request::setPathDetails);
 
         GHResponse route = ptRouter.route(request);
-        return ResponsePathSerializer.jsonObject(route, true, true, true, enableElevation, false, stopWatch.stop().getMillis());
+        return ResponsePathSerializer.jsonObject(route, true, includeEdges, true, enableElevation, false, stopWatch.stop().getMillis());
     }
 
 }
