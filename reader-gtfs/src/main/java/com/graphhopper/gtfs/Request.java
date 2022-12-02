@@ -45,6 +45,7 @@ public class Request {
     private List<String> pathDetails = new ArrayList<>();
     private String connectingProfile;
     private boolean enableElevation = false;
+    private boolean includeEdges = false;
 
     public Request(List<GHLocation> points, Instant departureTime) {
         this.points = points;
@@ -201,6 +202,14 @@ public class Request {
 
     public void setEnableElevation(boolean enableElevation) {
         this.enableElevation = enableElevation;
+    }
+
+    public boolean getIncludeEdges() {
+        return includeEdges;
+    }
+
+    public void setIncludeEdges(boolean includeEdges) {
+        this.includeEdges = includeEdges;
     }
 
 }

@@ -86,7 +86,7 @@ public class ResponsePathSerializer {
         sb.append((char) (num));
     }
 
-    public static ObjectNode jsonObject(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, float took) {
+    public static ObjectNode jsonObject(GHResponse ghRsp, boolean enableInstructions, boolean includeEdges, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, float took) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.putPOJO("hints", ghRsp.getHints().toMap());
         json.putPOJO("debug", ghRsp.getDebugInfo().toMap());
@@ -110,6 +110,9 @@ public class ResponsePathSerializer {
                 jsonPath.putPOJO("points", pointsEncoded ? encodePolyline(p.getPoints(), enableElevation, 1e5) : p.getPoints().toLineString(enableElevation));
                 if (enableInstructions) {
                     jsonPath.putPOJO("instructions", p.getInstructions());
+                }
+                if (includeEdges) {
+                    jsonPath.putPOJO("edges", p.getEdges());
                 }
                 jsonPath.putPOJO("legs", p.getLegs());
                 jsonPath.putPOJO("details", p.getPathDetails());

@@ -64,6 +64,11 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
+    public boolean isReversed() {
+        return getCurrentEdge().isReversed();
+    }
+
+    @Override
     public int getEdge() {
         return getCurrentEdge().getEdge();
     }

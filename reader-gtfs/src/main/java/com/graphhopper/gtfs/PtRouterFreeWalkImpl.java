@@ -126,6 +126,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private final Translation translation;
         private final List<String> requestedPathDetails;
         private boolean includeElevation;
+        private boolean includeEdges;
 
         private final GHResponse response = new GHResponse();
         private final long limitTripTime;
@@ -162,6 +163,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             connectingWeighting = weightingFactory.createWeighting(connectingProfile, new PMap(), false);
             connectingSnapFilter = new DefaultSnapFilter(new FastestWeighting(graphHopperStorage.getEncodingManager().getEncoder(connectingProfile.getVehicle())), graphHopperStorage.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(connectingProfile.getVehicle())));
             includeElevation = request.getEnableElevation();
+            includeEdges = request.getIncludeEdges();
         }
 
         GHResponse route() {
@@ -187,7 +189,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
             TripFromLabel tripFromLabel = new TripFromLabel(queryGraph, gtfsStorage, realtimeFeed, pathDetailsBuilderFactory, walkSpeedKmH);
             for (List<Label.Transition> solution : solutions) {
-                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, router, queryGraph, connectingWeighting, solution, requestedPathDetails, connectingProfile.getVehicle(), includeElevation);
+                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, router, queryGraph, connectingWeighting, solution, requestedPathDetails, connectingProfile.getVehicle(), includeElevation, includeEdges);
                 responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
                 responsePath.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
                 responsePath.setRouteWeight(router.weight(solution.get(solution.size() - 1).label));

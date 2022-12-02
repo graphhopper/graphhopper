@@ -153,7 +153,7 @@ public class MapMatchingResource {
                         header("X-GH-Took", "" + Math.round(took * 1000)).
                         build();
             } else {
-                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
+                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, instructions, false, calcPoints, enableElevation, pointsEncoded, took);
 
                 Map<String, Object> matchStatistics = new HashMap<>();
                 matchStatistics.put("distance", matchResult.getMatchLength());

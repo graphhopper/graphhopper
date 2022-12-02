@@ -747,6 +747,12 @@ public class GHUtility {
      * certain methods.
      */
     public static class DisabledEdgeIterator implements EdgeIterator {
+
+        @Override
+        public final boolean isReversed() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
         @Override
         public EdgeIterator detach(boolean reverse) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");

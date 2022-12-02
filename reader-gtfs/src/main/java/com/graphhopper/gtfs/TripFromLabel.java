@@ -74,12 +74,13 @@ class TripFromLabel {
         this.walkSpeedKmH = walkSpeedKmH;
     }
 
-    ResponsePath createResponsePath(Translation tr, PointList waypoints, MultiCriteriaLabelSetting router, Graph queryGraph, Weighting connectingWeighting, List<Label.Transition> solution, List<String> requestedPathDetails, String connectingVehicle, boolean includeElevation) {
+    ResponsePath createResponsePath(Translation tr, PointList waypoints, MultiCriteriaLabelSetting router, Graph queryGraph, Weighting connectingWeighting, List<Label.Transition> solution, List<String> requestedPathDetails, String connectingVehicle, boolean includeElevation, boolean includeEdges) {
         final List<List<Label.Transition>> partitions = parsePathToPartitions(solution);
 
         final List<Trip.Leg> legs = new ArrayList<>();
+        EdgeList edges = new EdgeList(tr);
         for (int i = 0; i < partitions.size(); i++) {
-            legs.addAll(parsePartitionToLegs(partitions.get(i), router, queryGraph, connectingWeighting, tr, requestedPathDetails, connectingVehicle, includeElevation));
+            legs.addAll(parsePartitionToLegs(partitions.get(i), router, queryGraph, connectingWeighting, tr, requestedPathDetails, edges, connectingVehicle, includeElevation, includeEdges));
         }
 
         if (legs.size() > 1 && legs.get(0) instanceof Trip.ConnectingLeg) {
@@ -97,6 +98,7 @@ class TripFromLabel {
         ResponsePath path = new ResponsePath();
         path.setWaypoints(waypoints);
         path.getLegs().addAll(legs);
+        path.setEdges(edges);
 
         final InstructionList instructions = new InstructionList(tr);
         final PointList pointsList = new PointList(PointList.CAP_DEFAULT, includeElevation);
@@ -329,7 +331,7 @@ class TripFromLabel {
     // One could argue that one should never write a parser
     // by hand, because it is always ugly, but use a parser library.
     // The code would then read like a specification of what paths through the graph mean.
-    private List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, MultiCriteriaLabelSetting router, Graph graph, Weighting weighting, Translation tr, List<String> requestedPathDetails, String connectingVehicle, boolean includeElevation) {
+    private List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, MultiCriteriaLabelSetting router, Graph graph, Weighting weighting, Translation tr, List<String> requestedPathDetails, EdgeList edges, String connectingVehicle, boolean includeElevation, boolean includeEdges) {
         if (path.size() <= 1) {
             return Collections.emptyList();
         }
@@ -381,7 +383,7 @@ class TripFromLabel {
                         int[] skippedEdgesForTransfer = gtfsStorage.getSkippedEdgesForTransfer().get(edge.getId());
                         if (skippedEdgesForTransfer != null) {
                             boolean isBike = connectingVehicle.contains("bike");
-                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting, path.get(i - 1).label.currentTime, isBike), router, graph, weighting, tr, requestedPathDetails, connectingVehicle, includeElevation);
+                            List<Trip.Leg> legs = parsePartitionToLegs(transferPath(skippedEdgesForTransfer, weighting, path.get(i - 1).label.currentTime, isBike), router, graph, weighting, tr, requestedPathDetails, edges, connectingVehicle, includeElevation, includeEdges);
                             Trip.Leg interpolatedLeg = legs.get(0);
                             interpolatedLeg.flagAsInterpolated();
                             result.add(interpolatedLeg);
@@ -401,6 +403,10 @@ class TripFromLabel {
                 }
                 EdgeIteratorState edge = graph.getEdgeIteratorState(path.get(i).edge.getId(), path.get(i).label.node.streetNode);
                 instructionsFromEdges.next(edge, i, prevEdgeId);
+                if (includeEdges) {
+                    Edge edgeDetail = new Edge(edge.getName(), edge.getDistance(), edge.isReversed(), weighting.calcEdgeMillis(edge, false), weighting.calcEdgeWeight(edge, false));
+                    edges.add(edgeDetail);
+                }
                 prevEdgeId = edge.getEdge();
             }
             instructionsFromEdges.finish();

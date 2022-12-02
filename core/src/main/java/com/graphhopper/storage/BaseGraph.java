@@ -716,6 +716,11 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
+        public final boolean isReversed() {
+            return reverse;
+        }
+
+        @Override
         public final int getBaseNode() {
             return baseNode;
         }
