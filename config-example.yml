@@ -171,7 +171,7 @@ graphhopper:
 
   # Excludes certain types of highways during the OSM import to speed up the import and reduce the size of the graph.
   # A typical case is excluding footway,cycleway,path and maybe pedestrian and track for motorized vehicles. This leads
-  # to a smaller graph, because there are less ways (obviously), but also because there are fewer junctions.
+  # to a smaller graph, because there are fewer ways (obviously), but also because there are fewer junctions.
   # Another example is excluding motorway, trunk and maybe primary highways for bicycle or pedestrian routing.
   import.osm.ignored_highways: footway,cycleway,path,pedestrian,steps
 

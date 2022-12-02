@@ -56,6 +56,7 @@ public class RouteResourceCustomModelLMTest {
                 putObject("graph.vehicles", "car,foot").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.encoded_values", "surface").
                 setProfiles(Arrays.asList(
                         // give strange profile names to ensure that we do not mix vehicle and profile:

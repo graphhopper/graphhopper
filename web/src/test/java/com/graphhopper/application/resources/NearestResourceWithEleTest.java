@@ -53,6 +53,7 @@ public class NearestResourceWithEleTest {
                 putObject("prepare.min_network_size", 0).
                 putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", dir).
                 setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setWeighting("fastest")));
         return config;

@@ -50,6 +50,7 @@ public class SPTResourceTest {
                 putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("graph.encoded_values", "max_speed,road_class").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
                         new Profile("car_without_turncosts").setVehicle("car").setWeighting("fastest"),
