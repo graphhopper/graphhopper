@@ -1,6 +1,6 @@
 ### 7.0 [not yet released]
 
-- there is a new import.osm.ignored_highways parameter that needs to be set to reduce the graph size and increase
+- there is a new 'import.osm.ignored_highways' parameter that needs to be set to reduce the graph size and increase
   performance for motorized-only routing, #2702
 - the parameters vehicle, weighting, edge_based and turn_costs are no longer supported, use the profile parameter
   instead

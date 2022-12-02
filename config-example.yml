@@ -173,7 +173,7 @@ graphhopper:
   # A typical case is excluding footway,cycleway,path and maybe pedestrian and track for motorized vehicles. This leads
   # to a smaller graph, because there are less ways (obviously), but also because there are fewer junctions.
   # Another example is excluding motorway, trunk and maybe primary highways for bicycle or pedestrian routing.
-  import.osm.ignored_highways: footway,cycleway,path,steps
+  import.osm.ignored_highways: footway,cycleway,path,pedestrian,steps
 
   # configure the memory access, use RAM_STORE for well equipped servers (default and recommended)
   graph.dataaccess.default_type: RAM_STORE
