@@ -54,7 +54,7 @@ public class PenaltyWeighting extends FastestWeighting {
         double weight = super.calcEdgeWeight(edgeState, reverse);
         if (Double.isInfinite(weight))
             return Double.POSITIVE_INFINITY;
-        double penalty = edgeState.get(penaltyEnc);
+        double penalty = reverse ? edgeState.getReverse(penaltyEnc) : edgeState.get(penaltyEnc);
         if (penalty > maxPenalty)
             throw new IllegalArgumentException("penalty cannot be bigger than " + maxPenalty + " but was " + penalty);
 
