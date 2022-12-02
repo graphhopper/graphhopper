@@ -25,6 +25,7 @@ import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
+import com.graphhopper.application.util.TestUtils;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.RoadClass;
@@ -78,7 +79,7 @@ public class RouteResourceTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("profiles_mapbox", mapboxResolver).
-                putObject("graph.flag_encoders", "car").
+                putObject("graph.vehicles", "car").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
@@ -134,8 +135,8 @@ public class RouteResourceTest {
         assertTrue(distance > 9000, "distance wasn't correct:" + distance);
         assertTrue(distance < 9500, "distance wasn't correct:" + distance);
 
-        // we currently just ignore URL parameters (not sure if this is a good or bad thing)
-        jsonStr = "{\"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
+        // we currently just ignore URL parameters in a POST request (not sure if this is a good or bad thing)
+        jsonStr = "{\"points\": [[1.536198,42.554851], [1.548128, 42.510071]], \"profile\": \"my_car\" }";
         response = clientTarget(app, "/route?vehicle=unknown&weighting=unknown").request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         assertFalse(response.readEntity(JsonNode.class).get("info").has("errors"));
@@ -287,7 +288,7 @@ public class RouteResourceTest {
         assertTrue(pathDetails.containsKey("edge_id"));
         assertTrue(pathDetails.containsKey("time"));
         List<PathDetail> averageSpeedList = pathDetails.get("average_speed");
-        assertEquals(13, averageSpeedList.size());
+        assertEquals(11, averageSpeedList.size());
         assertEquals(30.0, averageSpeedList.get(0).getValue());
         assertEquals(14, averageSpeedList.get(0).getLength());
         assertEquals(60.0, averageSpeedList.get(1).getValue());
@@ -487,13 +488,12 @@ public class RouteResourceTest {
         assertTrue(rsp.getErrors().toString().contains("If you pass point_hint, you need to pass exactly one hint for every point"), rsp.getErrors().toString());
 
         // unknown vehicle
-        rsp = hopper.route(new GHRequest(points).putHint("vehicle", "SPACE-SHUTTLE"));
+        rsp = hopper.route(new GHRequest(points).setProfile("SPACE-SHUTTLE"));
         assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
         ex = rsp.getErrors().get(0);
         assertTrue(ex instanceof IllegalArgumentException, "Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.");
-        assertTrue(ex.getMessage().contains("Vehicle not supported: `space-shuttle`. Supported are: `car`" +
-                "\nYou should consider using the `profile` parameter instead of specifying a vehicle." +
+        assertTrue(ex.getMessage().contains("The requested profile 'SPACE-SHUTTLE' does not exist." +
                 "\nAvailable profiles: [my_car]"), ex.getMessage());
 
         // an IllegalArgumentException from inside the core is written as JSON, unknown profile
@@ -552,6 +552,7 @@ public class RouteResourceTest {
     @Test
     public void testGPXExport() {
         GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        req.setProfile("my_car");
         req.putHint("elevation", false);
         req.putHint("instructions", true);
         req.putHint("calc_points", true);
@@ -572,13 +573,14 @@ public class RouteResourceTest {
     @Test
     public void testExportWithoutTrack() {
         GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        req.setProfile("my_car");
         req.putHint("elevation", false);
         req.putHint("instructions", true);
         req.putHint("calc_points", true);
         req.putHint("type", "gpx");
         req.putHint("gpx.track", false);
         GraphHopperWeb gh = new GraphHopperWeb(clientUrl(app, "/route"))
-                // gpx not supported for POST
+                // gpx is not supported for POST
                 .setPostRequest(false);
         String res = gh.export(req);
         assertTrue(res.contains("<gpx"));

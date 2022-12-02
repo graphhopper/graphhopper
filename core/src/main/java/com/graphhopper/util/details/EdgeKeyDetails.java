@@ -19,24 +19,23 @@ package com.graphhopper.util.details;
 
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.Parameters.Details.EDGE_KEY;
 
 public class EdgeKeyDetails extends AbstractPathDetailsBuilder {
 
-    private int edgeKey;
+    private int edgeKey = -1;
 
     public EdgeKeyDetails() {
         super(EDGE_KEY);
-        edgeKey = -1;
     }
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        int newEdgeKey = getEdgeKey(edge);
-        if (newEdgeKey != edgeKey) {
-            edgeKey = newEdgeKey;
+        int newKey = edge instanceof VirtualEdgeIteratorState
+                ? ((VirtualEdgeIteratorState) edge).getOriginalEdgeKey() : edge.getEdgeKey();
+        if (newKey != edgeKey) { // do not duplicate path detail if going over via point (two virtual edges)
+            edgeKey = newKey;
             return true;
         }
         return false;
@@ -46,13 +45,4 @@ public class EdgeKeyDetails extends AbstractPathDetailsBuilder {
     public Object getCurrentValue() {
         return this.edgeKey;
     }
-
-    static int getEdgeKey(EdgeIteratorState edge) {
-        if (edge instanceof VirtualEdgeIteratorState) {
-            return ((VirtualEdgeIteratorState) edge).getOriginalEdgeKey();
-        } else {
-            return edge.getEdge() * 2 + (edge.get(EdgeIteratorState.REVERSE_STATE) ? 1 : 0);
-        }
-    }
-
 }

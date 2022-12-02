@@ -31,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.util.Locale;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 import static com.graphhopper.util.GHUtility.reverseEdgeKey;
 import static com.graphhopper.util.Helper.nf;
 
@@ -217,7 +216,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
                     long addedShortcutKey = BitUtil.LITTLE.combineIntsToLong(root.firstEdgeKey, bridgePath.value.chEntry.incEdgeKey);
                     if (!addedShortcuts.add(addedShortcutKey))
                         continue;
-                    double initialTurnCost = prepareGraph.getTurnWeight(getEdgeFromEdgeKey(origInKey), sourceNode, getEdgeFromEdgeKey(root.firstEdgeKey));
+                    double initialTurnCost = prepareGraph.getTurnWeight(origInKey, sourceNode, root.firstEdgeKey);
                     bridgePath.value.chEntry.weight -= initialTurnCost;
                     LOGGER.trace("Adding shortcuts for target entry {}", bridgePath.value.chEntry);
                     // todo: re-implement loop-avoidance heuristic as it existed in GH 1.0? it did not work the
@@ -247,8 +246,8 @@ class EdgeBasedNodeContractor implements NodeContractor {
             int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
                     PrepareEncoder.getScFwdDir(), iter.getWeight(),
                     iter.getSkipped1(), iter.getSkipped2(),
-                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
-                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+                    iter.getOrigEdgeKeyFirst(),
+                    iter.getOrigEdgeKeyLast());
             prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), prepareGraph.getOriginalEdges() + shortcut);
             addedShortcutsCount++;
         }
@@ -265,8 +264,8 @@ class EdgeBasedNodeContractor implements NodeContractor {
             int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
                     PrepareEncoder.getScBwdDir(), iter.getWeight(),
                     iter.getSkipped1(), iter.getSkipped2(),
-                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst()),
-                    getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()));
+                    iter.getOrigEdgeKeyFirst(),
+                    iter.getOrigEdgeKeyLast());
             prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), prepareGraph.getOriginalEdges() + shortcut);
             addedShortcutsCount++;
         }

@@ -18,9 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
@@ -41,19 +40,20 @@ public class WheelchairTagParser extends FootTagParser {
     private final Set<String> excludeSmoothness = new HashSet<>();
     private final int maxInclinePercent = 6;
 
-    public WheelchairTagParser() {
-        this(4, 1);
-    }
-
-    public WheelchairTagParser(PMap properties) {
-        this(properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1));
-
+    public WheelchairTagParser(EncodedValueLookup lookup, PMap properties) {
+        this(
+                lookup.getBooleanEncodedValue(VehicleAccess.key("wheelchair")),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key("wheelchair")),
+                lookup.getDecimalEncodedValue(VehiclePriority.key("wheelchair")),
+                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class)
+        );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected WheelchairTagParser(int speedBits, double speedFactor) {
-        super("wheelchair", speedBits, speedFactor, true);
+    protected WheelchairTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                                  EnumEncodedValue<RouteNetwork> footRouteEnc) {
+        super(accessEnc, speedEnc, priorityEnc, footRouteEnc, "wheelchair");
 
         restrictions.add("wheelchair");
 
@@ -91,33 +91,31 @@ public class WheelchairTagParser extends FootTagParser {
         excludeSmoothness.add("impassable");
 
         allowedSacScale.clear();
-
-        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(FERRY_SPEED);
     }
 
     /**
      * Avoid some more ways than for pedestrian like hiking trails.
      */
     @Override
-    public EncodingManager.Access getAccess(ReaderWay way) {
+    public WayAccess getAccess(ReaderWay way) {
         if (way.hasTag("surface", excludeSurfaces)) {
             if (!way.hasTag("sidewalk", sidewalkValues)) {
-                return EncodingManager.Access.CAN_SKIP;
+                return WayAccess.CAN_SKIP;
             } else {
                 String sidewalk = way.getTag("sidewalk");
                 if (way.hasTag("sidewalk:" + sidewalk + ":surface", excludeSurfaces)) {
-                    return EncodingManager.Access.CAN_SKIP;
+                    return WayAccess.CAN_SKIP;
                 }
             }
         }
 
         if (way.hasTag("smoothness", excludeSmoothness)) {
             if (!way.hasTag("sidewalk", sidewalkValues)) {
-                return EncodingManager.Access.CAN_SKIP;
+                return WayAccess.CAN_SKIP;
             } else {
                 String sidewalk = way.getTag("sidewalk");
                 if (way.hasTag("sidewalk:" + sidewalk + ":smoothness", excludeSmoothness)) {
-                    return EncodingManager.Access.CAN_SKIP;
+                    return WayAccess.CAN_SKIP;
                 }
             }
         }
@@ -132,7 +130,7 @@ public class WheelchairTagParser extends FootTagParser {
                     }
 
                     if (-maxInclinePercent > incline || incline > maxInclinePercent) {
-                        return EncodingManager.Access.CAN_SKIP;
+                        return WayAccess.CAN_SKIP;
                     }
                 } catch (NumberFormatException ex) {
                 }
@@ -140,7 +138,7 @@ public class WheelchairTagParser extends FootTagParser {
         }
 
         if (way.hasTag("kerb", "raised"))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (way.hasTag("kerb")) {
             String tagValue = way.getTag("kerb");
@@ -153,7 +151,7 @@ public class WheelchairTagParser extends FootTagParser {
 
                     int maxKerbHeightCm = 3;
                     if (kerbHeight > maxKerbHeightCm) {
-                        return EncodingManager.Access.CAN_SKIP;
+                        return WayAccess.CAN_SKIP;
                     }
                 } catch (NumberFormatException ex) {
                 }
@@ -165,7 +163,7 @@ public class WheelchairTagParser extends FootTagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
-        EncodingManager.Access access = getAccess(way);
+        WayAccess access = getAccess(way);
         if (access.canSkip())
             return edgeFlags;
 
@@ -180,6 +178,8 @@ public class WheelchairTagParser extends FootTagParser {
 
         Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
+
+        edgeFlags = applyWayTags(way, edgeFlags);
         return edgeFlags;
     }
 
@@ -188,16 +188,19 @@ public class WheelchairTagParser extends FootTagParser {
      * and maxInclinePercent will reduce speed to SLOW_SPEED. In-/declines above maxInclinePercent will result in zero
      * speed.
      */
-    @Override
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
-        double fullDist2D = edge.getDistance();
+    public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags) {
+        PointList pl = way.getTag("point_list", null);
+        if (pl == null)
+            throw new IllegalArgumentException("The artificial point_list tag is missing");
+        if (!way.hasTag("edge_distance"))
+            throw new IllegalArgumentException("The artificial edge_distance tag is missing");
+        double fullDist2D = way.getTag("edge_distance", 0d);
         if (Double.isInfinite(fullDist2D))
             throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
 
-        // skip elevation data adjustment for too short segments, TODO improve the elevation data handling and/or use the same mechanism as in bike2
+        // skip elevation data adjustment for too short segments, TODO improve the elevation data handling and/or use the same mechanism as we used to do in bike2
         if (fullDist2D < 20 || !pl.is3D())
-            return;
+            return edgeFlags;
 
         double prevEle = pl.getEle(0);
         double eleDelta = pl.getEle(pl.size() - 1) - prevEle;
@@ -213,17 +216,22 @@ public class WheelchairTagParser extends FootTagParser {
         } else if (elePercent > maxInclinePercent || elePercent < -maxInclinePercent) {
             // it can be problematic to exclude roads due to potential bad elevation data (e.g.delta for narrow nodes could be too high)
             // so exclude only when we are certain
-            if (fullDist2D > 50) edge.set(accessEnc, false, false);
+            if (fullDist2D > 50) {
+                accessEnc.setBool(false, edgeFlags, false);
+                accessEnc.setBool(true, edgeFlags, false);
+            }
 
             fwdSpeed = SLOW_SPEED;
             bwdSpeed = SLOW_SPEED;
-            edge.set(priorityWayEncoder, PriorityCode.getValue(PriorityCode.REACH_DESTINATION.getValue()));
+            priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(PriorityCode.REACH_DESTINATION.getValue()));
         }
 
-        if (fwdSpeed > 0 && edge.get(accessEnc))
-            setSpeed(edge.getFlags(), true, false, fwdSpeed);
-        if (bwdSpeed > 0 && edge.getReverse(accessEnc))
-            setSpeed(edge.getFlags(), false, true, bwdSpeed);
+        if (fwdSpeed > 0 && accessEnc.getBool(false, edgeFlags))
+            setSpeed(edgeFlags, true, false, fwdSpeed);
+        if (bwdSpeed > 0 && accessEnc.getBool(true, edgeFlags))
+            setSpeed(edgeFlags, false, true, bwdSpeed);
+
+        return edgeFlags;
     }
 
     /**

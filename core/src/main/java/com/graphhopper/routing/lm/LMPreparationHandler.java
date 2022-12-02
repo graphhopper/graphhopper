@@ -23,8 +23,9 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.AreaIndex;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.JsonFeatureCollection;
@@ -41,6 +42,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.graphhopper.util.Helper.*;
 
@@ -145,8 +147,8 @@ public class LMPreparationHandler {
      */
     public List<LandmarkStorage> load(List<LMConfig> lmConfigs, BaseGraph baseGraph, EncodedValueLookup encodedValueLookup) {
         List<LandmarkStorage> loaded = Collections.synchronizedList(new ArrayList<>());
-        List<Callable<String>> loadingCallables = lmConfigs.stream()
-                .map(lmConfig -> (Callable<String>) () -> {
+        Stream<Callable<String>> loadingCallables = lmConfigs.stream()
+                .map(lmConfig -> () -> {
                     // todo: specifying ghStorage and landmarkCount should not be necessary, because all we want to do
                     //       is load the landmark data and these parameters are only needed to calculate the landmarks.
                     //       we should also work towards a separation of the storage and preparation related code in
@@ -163,8 +165,7 @@ public class LMPreparationHandler {
                         baseGraph.getDirectory().remove("landmarks_subnetwork_" + lmConfig.getName());
                     }
                     return lmConfig.getName();
-                })
-                .collect(Collectors.toList());
+                });
         GHUtility.runConcurrently(loadingCallables, preparationThreads);
         return loaded;
     }
@@ -172,8 +173,8 @@ public class LMPreparationHandler {
     /**
      * Prepares the landmark data for all given configs
      */
-    public List<PrepareLandmarks> prepare(List<LMConfig> lmConfigs, GraphHopperStorage ghStorage, LocationIndex locationIndex, final boolean closeEarly) {
-        List<PrepareLandmarks> preparations = createPreparations(lmConfigs, ghStorage.getBaseGraph(), ghStorage.getEncodingManager(), locationIndex);
+    public List<PrepareLandmarks> prepare(List<LMConfig> lmConfigs, BaseGraph baseGraph, EncodingManager encodingManager, StorableProperties properties, LocationIndex locationIndex, final boolean closeEarly) {
+        List<PrepareLandmarks> preparations = createPreparations(lmConfigs, baseGraph, encodingManager, locationIndex);
         List<Callable<String>> prepareCallables = new ArrayList<>();
         for (int i = 0; i < preparations.size(); i++) {
             PrepareLandmarks prepare = preparations.get(i);
@@ -186,11 +187,11 @@ public class LMPreparationHandler {
                 if (closeEarly)
                     prepare.close();
                 LOGGER.info("LM {} finished {}", name, getMemInfo());
-                ghStorage.getProperties().put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
+                properties.put(Landmark.PREPARE + "date." + name, createFormatter().format(new Date()));
                 return name;
             });
         }
-        GHUtility.runConcurrently(prepareCallables, preparationThreads);
+        GHUtility.runConcurrently(prepareCallables.stream(), preparationThreads);
         LOGGER.info("Finished LM preparation, {}", getMemInfo());
         return preparations;
     }

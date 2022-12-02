@@ -41,7 +41,7 @@ import java.util.*;
  * introducing virtual nodes and edges. It is lightweight in order to be created every time a new
  * query comes in, which makes the behaviour thread safe.
  * <p>
- * Calling any <tt>create</tt> method creates virtual edges between the tower nodes of the existing
+ * Calling any <code>create</code> method creates virtual edges between the tower nodes of the existing
  * graph and new virtual tower nodes. Every virtual node has two adjacent nodes and is connected
  * to each adjacent nodes via 2 virtual edges with opposite base node / adjacent node encoding.
  * However, the edge explorer returned by {@link #createEdgeExplorer()} only returns two
@@ -67,26 +67,8 @@ public class QueryGraph implements Graph {
         return QueryGraph.create(graph, Collections.singletonList(snap));
     }
 
-    /**
-     * @deprecated currently we use this only for easier GraphHopperStorage -> BaseGraph migration
-     * instead of just calling graph.getBaseGraph() better try to convert graph to a BaseGraph
-     */
-    @Deprecated
-    public static QueryGraph create(Graph graph, Snap snap) {
-        return create(graph.getBaseGraph(), snap);
-    }
-
     public static QueryGraph create(BaseGraph graph, Snap fromSnap, Snap toSnap) {
         return QueryGraph.create(graph.getBaseGraph(), Arrays.asList(fromSnap, toSnap));
-    }
-
-    /**
-     * @deprecated currently we use this only for easier GraphHopperStorage -> BaseGraph migration
-     * instead of just calling graph.getBaseGraph() better try to convert graph to a BaseGraph
-     */
-    @Deprecated
-    public static QueryGraph create(Graph graph, Snap fromSnap, Snap toSnap) {
-        return create(graph.getBaseGraph(), fromSnap, toSnap);
     }
 
     public static QueryGraph create(BaseGraph graph, List<Snap> snaps) {

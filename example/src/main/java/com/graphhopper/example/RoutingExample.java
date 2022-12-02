@@ -115,6 +115,10 @@ public class RoutingExample {
         assert Helper.round(res.getBest().getDistance(), -2) == 2300;
     }
 
+    /**
+     * To customize profiles in the config.yml file you can use a json or yml file or embed it directly. See this list:
+     * web/src/test/resources/com/graphhopper/application/resources and https://www.graphhopper.com/?s=customizable+routing
+     */
     public static void customizableRouting(String ghLoc) {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
@@ -140,10 +144,10 @@ public class RoutingExample {
         // 2. now avoid primary roads and reduce maximum speed, see docs/core/custom-models.md for an in-depth explanation
         // and also the blog posts https://www.graphhopper.com/?s=customizable+routing
         CustomModel model = new CustomModel();
-        model.addToPriority(If("road_class == PRIMARY", MULTIPLY, 0.5));
+        model.addToPriority(If("road_class == PRIMARY", MULTIPLY, "0.5"));
 
         // unconditional limit to 100km/h
-        model.addToPriority(If("true", LIMIT, 100));
+        model.addToPriority(If("true", LIMIT, "100"));
 
         req.setCustomModel(model);
         res = hopper.route(req);

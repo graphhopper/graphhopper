@@ -1,13 +1,29 @@
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.PMap;
+
 
 public class RoadsTagParser extends VehicleTagParser {
+    public static final double ROADS_MAX_SPEED = 254;
 
-    public RoadsTagParser() {
-        super("roads", 7, 2, true, 3);
-        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(254);
+    public RoadsTagParser(EncodedValueLookup lookup, PMap properties) {
+        super(
+                lookup.getBooleanEncodedValue(VehicleAccess.key("roads")),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key("roads")),
+                "roads",
+                lookup.getBooleanEncodedValue(Roundabout.KEY),
+                lookup.hasEncodedValue(TurnCost.key("roads")) ? lookup.getDecimalEncodedValue(TurnCost.key("roads")) : null,
+                TransportationMode.valueOf(properties.getString("transportation_mode", "VEHICLE")),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key("roads")).getNextStorableValue(ROADS_MAX_SPEED)
+        );
+    }
+
+    public RoadsTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc) {
+        super(accessEnc, speedEnc, "roads", null, turnCostEnc, TransportationMode.VEHICLE, speedEnc.getNextStorableValue(ROADS_MAX_SPEED));
     }
 
     @Override
@@ -23,15 +39,14 @@ public class RoadsTagParser extends VehicleTagParser {
     }
 
     @Override
-    public EncodingManager.Access getAccess(ReaderWay way) {
+    public WayAccess getAccess(ReaderWay way) {
         if (way.getTag("highway", "").isEmpty())
-            return EncodingManager.Access.CAN_SKIP;
-        return EncodingManager.Access.WAY;
+            return WayAccess.CAN_SKIP;
+        return WayAccess.WAY;
     }
 
     @Override
-    public TransportationMode getTransportationMode() {
-        return TransportationMode.VEHICLE;
+    public boolean isBarrier(ReaderNode node) {
+        return false;
     }
-
 }

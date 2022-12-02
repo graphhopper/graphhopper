@@ -18,9 +18,11 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.weighting.PriorityWeighting;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.*;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.PointList;
 
 import java.util.TreeMap;
 
@@ -34,27 +36,21 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  */
 public class HikeTagParser extends FootTagParser {
 
-    public HikeTagParser() {
-        this(4, 1, false);
-    }
-
-    public HikeTagParser(PMap properties) {
+    public HikeTagParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                properties.getString("name", "hike"),
-                properties.getInt("speed_bits", 4),
-                properties.getDouble("speed_factor", 1),
-                properties.getBool("speed_two_directions", false));
-
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "hike"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "hike"))),
+                lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "hike"))),
+                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class),
+                properties.getString("name", "hike")
+        );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected HikeTagParser(int speedBits, double speedFactor, boolean speedTwoDirections) {
-        this("hike", speedBits, speedFactor, speedTwoDirections);
-    }
-
-    protected HikeTagParser(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
-        super(name, speedBits, speedFactor, speedTwoDirections);
+    protected HikeTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                            EnumEncodedValue<RouteNetwork> footRouteEnc, String name) {
+        super(accessEnc, speedEnc, priorityEnc, footRouteEnc, name);
 
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());
@@ -93,30 +89,37 @@ public class HikeTagParser extends FootTagParser {
             weightToPrioMap.put(44d, SLIGHT_AVOID.getValue());
     }
 
-
     @Override
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+        edgeFlags = super.handleWayTags(edgeFlags, way);
+        return applyWayTags(way, edgeFlags);
+    }
+
+    public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags) {
+        PointList pl = way.getTag("point_list", null);
+        if (pl == null)
+            throw new IllegalArgumentException("The artificial point_list tag is missing");
         if (!pl.is3D())
-            return;
+            return edgeFlags;
 
         if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
             // do not change speed
             // note: although tunnel can have a difference in elevation it is unlikely that the elevation data is correct for a tunnel
-            return;
+            return edgeFlags;
 
         // Decrease the speed for ele increase (incline), and slightly decrease the speed for ele decrease (decline)
         double prevEle = pl.getEle(0);
-        double fullDistance = edge.getDistance();
+        if (!way.hasTag("edge_distance"))
+            throw new IllegalArgumentException("The artificial edge_distance tag is missing");
+        double fullDistance = way.getTag("edge_distance", 0d);
 
         // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
         if (fullDistance < 2)
-            return;
+            return edgeFlags;
 
         double eleDelta = Math.abs(pl.getEle(pl.size() - 1) - prevEle);
         double slope = eleDelta / fullDistance;
 
-        IntsRef edgeFlags = edge.getFlags();
         if ((accessEnc.getBool(false, edgeFlags) || accessEnc.getBool(true, edgeFlags))
                 && slope > 0.005) {
 
@@ -125,16 +128,10 @@ public class HikeTagParser extends FootTagParser {
             // slope=h/s_2d=~h/2_3d              = sqrt(1+slope²)/(slope+1/4.5) km/h
             // maximum slope is 0.37 (Ffordd Pen Llech)
             double newSpeed = Math.sqrt(1 + slope * slope) / (slope + 1 / 5.4);
-            edge.set(avgSpeedEnc, Helper.keepIn(newSpeed, 1, 5));
+            avgSpeedEnc.setDecimal(false, edgeFlags, Helper.keepIn(newSpeed, 1, 5));
         }
-    }
 
-    @Override
-    public boolean supports(Class<?> feature) {
-        if (super.supports(feature))
-            return true;
-
-        return PriorityWeighting.class.isAssignableFrom(feature);
+        return edgeFlags;
     }
 
 }

@@ -18,14 +18,9 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadAccess;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
@@ -33,6 +28,9 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FACTOR;
+import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
 import static com.graphhopper.util.GHUtility.createMockedEdgeIteratorState;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -41,22 +39,24 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Peter Karich
  */
 public class FastestWeightingTest {
-    private final FlagEncoder encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 10));
-    private final EncodingManager encodingManager = EncodingManager.create(encoder);
+    private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+    private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+    private final DecimalEncodedValue turnCostEnc = TurnCost.create("car", 10);
+    private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
-        Weighting instance = new FastestWeighting(encoder);
-        IntsRef flags = GHUtility.setSpeed(encoder.getMaxSpeed(), 0, encoder, encodingManager.createEdgeFlags());
+        IntsRef flags = GHUtility.setSpeed(140, 0, accessEnc, speedEnc, encodingManager.createEdgeFlags());
+        Weighting instance = new FastestWeighting(accessEnc, speedEnc);
         assertEquals(instance.getMinWeight(10), instance.calcEdgeWeight(createMockedEdgeIteratorState(10, flags), false), 1e-8);
     }
 
     @Test
     public void testWeightWrongHeading() {
-        Weighting instance = new FastestWeighting(encoder, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, 100));
+        Weighting instance = new FastestWeighting(accessEnc, speedEnc, null, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, 100), TurnCostProvider.NO_TURN_COST_PROVIDER);
 
-        VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, GHUtility.createEdgeKey(1, false), 1, 2, 10,
-                GHUtility.setSpeed(10, 0, encoder, encodingManager.createEdgeFlags()), "test", Helper.createPointList(51, 0, 51, 1), false);
+        VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, GHUtility.createEdgeKey(1, false, false), 1, 2, 10,
+                GHUtility.setSpeed(10, 0, accessEnc, speedEnc, encodingManager.createEdgeFlags()), createKV("name", "test"), Helper.createPointList(51, 0, 51, 1), false);
         double time = instance.calcEdgeWeight(virtEdge, false);
 
         virtEdge.setUnfavored(true);
@@ -71,15 +71,15 @@ public class FastestWeightingTest {
 
         // test default penalty
         virtEdge.setUnfavored(true);
-        instance = new FastestWeighting(encoder);
+        instance = new FastestWeighting(accessEnc, speedEnc);
         assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcEdgeWeight(virtEdge, false), 1e-8);
     }
 
     @Test
     public void testSpeed0() {
-        Weighting instance = new FastestWeighting(encoder);
+        Weighting instance = new FastestWeighting(accessEnc, speedEnc);
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        encoder.getAverageSpeedEnc().setDecimal(false, edgeFlags, 0);
+        speedEnc.setDecimal(false, edgeFlags, 0);
         assertEquals(1.0 / 0, instance.calcEdgeWeight(createMockedEdgeIteratorState(10, edgeFlags), false), 1e-8);
 
         // 0 / 0 returns NaN but calcWeight should not return NaN!
@@ -88,28 +88,23 @@ public class FastestWeightingTest {
 
     @Test
     public void testTime() {
-        FlagEncoder tmpEnc = FlagEncoders.createBike2();
-        EncodingManager em = EncodingManager.create(tmpEnc);
+        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 2, true);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph g = new BaseGraph.Builder(em).create();
-        Weighting w = new FastestWeighting(tmpEnc);
-
-        IntsRef edgeFlags = GHUtility.setSpeed(15, 15, tmpEnc, em.createEdgeFlags());
-        tmpEnc.getAverageSpeedEnc().setDecimal(true, edgeFlags, 10.0);
-
-        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(100000, edgeFlags);
-
+        Weighting w = new FastestWeighting(accessEnc, speedEnc);
+        EdgeIteratorState edge = g.edge(0, 1).setDistance(100_000);
+        GHUtility.setSpeed(15, 10, accessEnc, speedEnc, edge);
         assertEquals(375 * 60 * 1000, w.calcEdgeMillis(edge, false));
         assertEquals(600 * 60 * 1000, w.calcEdgeMillis(edge, true));
-
-        g.close();
     }
 
     @Test
     public void calcWeightAndTime_withTurnCosts() {
-        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
-        Weighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(100));
-        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(100));
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100));
         // turn costs are given in seconds
         setTurnCost(graph, 0, 1, 2, 5);
         assertEquals(6 + 5, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
@@ -118,19 +113,19 @@ public class FastestWeightingTest {
 
     @Test
     public void calcWeightAndTime_uTurnCosts() {
-        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
-        Weighting weighting = new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), 40));
-        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(100));
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 40));
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
     }
 
     @Test
     public void calcWeightAndTime_withTurnCosts_shortest() {
-        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
-        Weighting weighting = new ShortestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(100));
-        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(100));
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
+        Weighting weighting = new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()));
+        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
+        EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100));
         // turn costs are given in seconds
         setTurnCost(graph, 0, 1, 2, 5);
         // todo: for the shortest weighting turn costs cannot be interpreted as seconds? at least when they are added
@@ -141,27 +136,29 @@ public class FastestWeightingTest {
 
     @Test
     public void testDestinationTag() {
-        FlagEncoder carEncoder = FlagEncoders.createCar();
-        FlagEncoder bikeEncoder = FlagEncoders.createBike();
-        EncodingManager em = EncodingManager.create(carEncoder, bikeEncoder);
+        BooleanEncodedValue carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+        DecimalEncodedValue carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
+        BooleanEncodedValue bikeAccessEnc = new SimpleBooleanEncodedValue("bike_access", true);
+        DecimalEncodedValue bikeSpeedEnc = new DecimalEncodedValueImpl("bike_speed", 4, 2, false);
+        EncodingManager em = EncodingManager.start().add(carAccessEnc).add(carSpeedEnc).add(bikeAccessEnc).add(bikeSpeedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000);
-        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
-            edge.set(encoder.getAccessEnc(), true);
-            edge.setReverse(encoder.getAccessEnc(), true);
-        }
-        edge.set(carEncoder.getAverageSpeedEnc(), 60);
-        edge.set(bikeEncoder.getAverageSpeedEnc(), 18);
+        edge.set(carAccessEnc, true, true);
+        edge.set(bikeAccessEnc, true, true);
+        edge.set(carSpeedEnc, 60);
+        edge.set(bikeSpeedEnc, 18);
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
-        FastestWeighting bikeWeighting = new FastestWeighting(bikeEncoder);
+        FastestWeighting weighting = new FastestWeighting(carAccessEnc, carSpeedEnc, roadAccessEnc,
+                new PMap().putObject(DESTINATION_FACTOR, 10), TurnCostProvider.NO_TURN_COST_PROVIDER);
+        FastestWeighting bikeWeighting = new FastestWeighting(bikeAccessEnc, bikeSpeedEnc, roadAccessEnc,
+                new PMap().putObject(DESTINATION_FACTOR, 1), TurnCostProvider.NO_TURN_COST_PROVIDER);
 
         edge.set(roadAccessEnc, RoadAccess.YES);
         assertEquals(60, weighting.calcEdgeWeight(edge, false), 1.e-6);
         assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 1.e-6);
 
-        // the destination tag does not change the weight for bikes!
+        // the destination tag does not change the weight for the bike weighting
         edge.set(roadAccessEnc, RoadAccess.DESTINATION);
         assertEquals(600, weighting.calcEdgeWeight(edge, false), 0.1);
         assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 0.1);
@@ -169,21 +166,23 @@ public class FastestWeightingTest {
 
     @Test
     public void testPrivateTag() {
-        FlagEncoder carEncoder = FlagEncoders.createCar();
-        FlagEncoder bikeEncoder = FlagEncoders.createBike();
-        EncodingManager em = EncodingManager.create(carEncoder, bikeEncoder);
+        BooleanEncodedValue carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+        DecimalEncodedValue carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
+        BooleanEncodedValue bikeAccessEnc = new SimpleBooleanEncodedValue("bike_access", true);
+        DecimalEncodedValue bikeSpeedEnc = new DecimalEncodedValueImpl("bike_speed", 4, 2, false);
+        EncodingManager em = EncodingManager.start().add(carAccessEnc).add(carSpeedEnc).add(bikeAccessEnc).add(bikeSpeedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(1000);
-        for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
-            edge.set(encoder.getAccessEnc(), true);
-            edge.setReverse(encoder.getAccessEnc(), true);
-        }
-        edge.set(carEncoder.getAverageSpeedEnc(), 60);
-        edge.set(bikeEncoder.getAverageSpeedEnc(), 18);
+        edge.set(carAccessEnc, true, true);
+        edge.set(bikeAccessEnc, true, true);
+        edge.set(carSpeedEnc, 60);
+        edge.set(bikeSpeedEnc, 18);
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
 
-        FastestWeighting weighting = new FastestWeighting(carEncoder);
-        FastestWeighting bikeWeighting = new FastestWeighting(bikeEncoder);
+        FastestWeighting weighting = new FastestWeighting(carAccessEnc, carSpeedEnc, roadAccessEnc,
+                new PMap().putObject(PRIVATE_FACTOR, 10), TurnCostProvider.NO_TURN_COST_PROVIDER);
+        FastestWeighting bikeWeighting = new FastestWeighting(bikeAccessEnc, bikeSpeedEnc, roadAccessEnc,
+                new PMap().putObject(PRIVATE_FACTOR, 1.2), TurnCostProvider.NO_TURN_COST_PROVIDER);
 
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
@@ -199,7 +198,7 @@ public class FastestWeightingTest {
     }
 
     private void setTurnCost(Graph graph, int from, int via, int to, double turnCost) {
-        graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key(encoder.toString())), getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), turnCost);
+        graph.getTurnCostStorage().set(turnCostEnc, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), turnCost);
     }
 
 }

@@ -61,9 +61,9 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         na.setNode(3, 30, 0, 20);
         na.setNode(4, 40, 0, 0);
 
-        EdgeIteratorState edge01 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
-        EdgeIteratorState edge12 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
-        EdgeIteratorState edge34 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10));
+        EdgeIteratorState edge01 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(10));
+        EdgeIteratorState edge12 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(10));
+        EdgeIteratorState edge34 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10));
 
         edge01.setFlags(interpolatableFlags);
         edge12.setFlags(interpolatableFlags);
@@ -100,10 +100,10 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         na.setNode(3, 30, 0, 20);
         na.setNode(4, 40, 0, 00);
 
-        EdgeIteratorState edge01 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
-        EdgeIteratorState edge12 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
-        EdgeIteratorState edge23 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10));
-        EdgeIteratorState edge34 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10));
+        EdgeIteratorState edge01 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(10));
+        EdgeIteratorState edge12 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(10));
+        EdgeIteratorState edge23 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(10));
+        EdgeIteratorState edge34 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10));
 
         edge01.setFlags(interpolatableFlags);
         edge12.setFlags(interpolatableFlags);
@@ -141,10 +141,10 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         na.setNode(3, 30, 0, 30);
         na.setNode(4, 40, 0, 40);
 
-        EdgeIteratorState edge01 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
-        EdgeIteratorState edge12 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
-        EdgeIteratorState edge23 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10));
-        EdgeIteratorState edge34 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10));
+        EdgeIteratorState edge01 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(10));
+        EdgeIteratorState edge12 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(10));
+        EdgeIteratorState edge23 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(10));
+        EdgeIteratorState edge34 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10));
 
         edge01.setFlags(normalFlags);
         edge12.setFlags(interpolatableFlags);
@@ -191,13 +191,13 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         na.setNode(6, 30, 10, 30);
         na.setNode(7, 40, 10, 40);
 
-        EdgeIteratorState edge01 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(10));
-        EdgeIteratorState edge12 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(10));
-        EdgeIteratorState edge23 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 3).setDistance(10));
-        EdgeIteratorState edge34 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(3, 4).setDistance(10));
-        EdgeIteratorState edge25 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(2, 5).setDistance(10));
-        EdgeIteratorState edge56 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(5, 6).setDistance(10));
-        EdgeIteratorState edge67 = GHUtility.setSpeed(60, true, true, encoder, graph.edge(6, 7).setDistance(10));
+        EdgeIteratorState edge01 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(10));
+        EdgeIteratorState edge12 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(10));
+        EdgeIteratorState edge23 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(10));
+        EdgeIteratorState edge34 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10));
+        EdgeIteratorState edge25 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 5).setDistance(10));
+        EdgeIteratorState edge56 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 6).setDistance(10));
+        EdgeIteratorState edge67 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 7).setDistance(10));
 
         edge01.setFlags(normalFlags);
         edge12.setFlags(interpolatableFlags);
@@ -253,7 +253,7 @@ public class TunnelElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         na.setNode(9, 40, 10, 0);
 
         EdgeIteratorState edge01, edge12, edge23, edge34, edge56, edge67, edge78, edge89, edge27;
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
                 edge01 = graph.edge(0, 1).setDistance(10),
                 edge12 = graph.edge(1, 2).setDistance(10),
                 edge23 = graph.edge(2, 3).setDistance(10),

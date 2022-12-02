@@ -67,11 +67,20 @@ public class CustomWeightingHelper {
         return priority;
     }
 
+    protected double getMaxPriority() {
+        return 1;
+    }
+
+    protected double getMaxSpeed() {
+        return 1;
+    }
+
     public static boolean in(Polygon p, EdgeIteratorState edge) {
-        BBox bbox = GHUtility.createBBox(edge);
-        if (!p.getBounds().intersects(bbox))
+        BBox edgeBBox = GHUtility.createBBox(edge);
+        BBox polyBBOX = p.getBounds();
+        if (!polyBBOX.intersects(edgeBBox))
             return false;
-        if (p.isRectangle())
+        if (p.isRectangle() && polyBBOX.contains(edgeBBox))
             return true;
         return p.intersects(edge.fetchWayGeometry(FetchMode.ALL).makeImmutable()); // TODO PERF: cache bbox and edge wayGeometry for multiple area
     }

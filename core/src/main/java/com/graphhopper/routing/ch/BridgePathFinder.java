@@ -26,7 +26,6 @@ import com.carrotsearch.hppc.IntObjectScatterMap;
 import java.util.PriorityQueue;
 
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 
 /**
  * Used to find 'bridge-paths' during edge-based CH preparation. Bridge-paths are paths that start and end at neighbor
@@ -71,7 +70,7 @@ public class BridgePathFinder {
                 if (iter.getAdjNode() == centerNode) {
                     // We arrived at the center node, so we keep expanding the search
                     double weight = currEntry.weight +
-                            graph.getTurnWeight(getEdgeFromEdgeKey(currEntry.incEdgeKey), currEntry.adjNode, getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst())) +
+                            graph.getTurnWeight(currEntry.incEdgeKey, currEntry.adjNode, iter.getOrigEdgeKeyFirst()) +
                             iter.getWeight();
                     if (Double.isInfinite(weight))
                         continue;
@@ -95,14 +94,14 @@ public class BridgePathFinder {
                     // there is a target edge, so we add a bridge path entry for it. We do not continue the search from the
                     // neighbor node anymore
                     double weight = currEntry.weight +
-                            graph.getTurnWeight(getEdgeFromEdgeKey(currEntry.incEdgeKey), currEntry.adjNode, getEdgeFromEdgeKey(iter.getOrigEdgeKeyFirst())) +
+                            graph.getTurnWeight(currEntry.incEdgeKey, currEntry.adjNode, iter.getOrigEdgeKeyFirst()) +
                             iter.getWeight();
                     if (Double.isInfinite(weight))
                         continue;
                     PrepareGraphOrigEdgeIterator origOutIter = origOutExplorer.setBaseNode(iter.getAdjNode());
                     while (origOutIter.next()) {
                         double totalWeight = weight + graph.getTurnWeight(
-                                getEdgeFromEdgeKey(iter.getOrigEdgeKeyLast()), iter.getAdjNode(), getEdgeFromEdgeKey(origOutIter.getOrigEdgeKeyFirst()));
+                                iter.getOrigEdgeKeyLast(), iter.getAdjNode(), origOutIter.getOrigEdgeKeyFirst());
                         if (Double.isInfinite(totalWeight))
                             continue;
                         BridePathEntry resEntry = result.get(origOutIter.getOrigEdgeKeyFirst());
@@ -122,7 +121,7 @@ public class BridgePathFinder {
                         }
                     }
                 }
-                // We arrived at some node that is not the center node. We do not expand the search as we oare only
+                // We arrived at some node that is not the center node. We do not expand the search as we are only
                 // concerned with finding bridge paths.
             }
         }

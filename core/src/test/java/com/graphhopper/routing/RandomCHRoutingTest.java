@@ -2,10 +2,12 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -43,28 +45,29 @@ public class RandomCHRoutingTest {
         private final TraversalMode traversalMode;
         private final int maxTurnCosts;
         private final int uTurnCosts;
-        private final Directory dir;
-        private final FlagEncoder encoder;
-        private final EncodingManager encodingManager;
+        private final BooleanEncodedValue accessEnc;
+        private final DecimalEncodedValue speedEnc;
+        private final DecimalEncodedValue turnCostEnc;
         private Weighting weighting;
-        private BaseGraph graph;
+        private final BaseGraph graph;
         private CHConfig chConfig;
 
         Fixture(TraversalMode traversalMode, int uTurnCosts) {
             this.traversalMode = traversalMode;
             this.maxTurnCosts = 10;
             this.uTurnCosts = uTurnCosts;
-            dir = new RAMDirectory();
-            encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", maxTurnCosts));
-            encodingManager = EncodingManager.create(encoder);
-            graph = new BaseGraph.Builder(encodingManager).create();
+            accessEnc = new SimpleBooleanEncodedValue("access", true);
+            speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+            turnCostEnc = TurnCost.create("car", maxTurnCosts);
+            EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+            graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         }
 
         void freeze() {
             graph.freeze();
             chConfig = traversalMode.isEdgeBased()
-                    ? CHConfig.edgeBased("p", new FastestWeighting(encoder, new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage(), uTurnCosts)))
-                    : CHConfig.nodeBased("p", new FastestWeighting(encoder));
+                    ? CHConfig.edgeBased("p", new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), uTurnCosts)))
+                    : CHConfig.nodeBased("p", new FastestWeighting(accessEnc, speedEnc));
             weighting = chConfig.getWeighting();
         }
 
@@ -103,9 +106,9 @@ public class RandomCHRoutingTest {
         // the same as taking the direct edge!
         double pOffset = 0;
         GHUtility.buildRandomGraph(f.graph, rnd, numNodes, 2.5, true, true,
-                f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(), null, 0.7, 0.9, pOffset);
+                f.accessEnc, f.speedEnc, null, 0.7, 0.9, pOffset);
         if (f.traversalMode.isEdgeBased()) {
-            GHUtility.addRandomTurnCosts(f.graph, seed, f.encodingManager, f.encoder, f.maxTurnCosts, f.graph.getTurnCostStorage());
+            GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.graph.getTurnCostStorage());
         }
         runRandomTest(f, rnd, 20);
     }
@@ -115,7 +118,7 @@ public class RandomCHRoutingTest {
     public void issue1574_1(Fixture f) {
         assumeFalse(f.traversalMode.isEdgeBased());
         Random rnd = new Random(9348906923700L);
-        buildRandomGraphLegacy(f.graph, f.encoder, rnd, 50, 2.5, false, true, 0.9);
+        buildRandomGraphLegacy(f.graph, f.accessEnc, f.speedEnc, rnd, 50, 2.5, false, true, 0.9);
         runRandomTest(f, rnd, 20);
     }
 
@@ -124,7 +127,7 @@ public class RandomCHRoutingTest {
     public void issue1574_2(Fixture f) {
         assumeFalse(f.traversalMode.isEdgeBased());
         Random rnd = new Random(10093639220394L);
-        buildRandomGraphLegacy(f.graph, f.encoder, rnd, 50, 2.5, false, true, 0.9);
+        buildRandomGraphLegacy(f.graph, f.accessEnc, f.speedEnc, rnd, 50, 2.5, false, true, 0.9);
         runRandomTest(f, rnd, 20);
     }
 
@@ -133,7 +136,7 @@ public class RandomCHRoutingTest {
     public void issue1582(Fixture f) {
         assumeFalse(f.traversalMode.isEdgeBased());
         Random rnd = new Random(4111485945982L);
-        buildRandomGraphLegacy(f.graph, f.encoder, rnd, 10, 2.5, false, true, 0.9);
+        buildRandomGraphLegacy(f.graph, f.accessEnc, f.speedEnc, rnd, 10, 2.5, false, true, 0.9);
         runRandomTest(f, rnd, 100);
     }
 
@@ -142,7 +145,7 @@ public class RandomCHRoutingTest {
     public void issue1583(Fixture f) {
         assumeFalse(f.traversalMode.isEdgeBased());
         Random rnd = new Random(10785899964423L);
-        buildRandomGraphLegacy(f.graph, f.encoder, rnd, 50, 2.5, true, true, 0.9);
+        buildRandomGraphLegacy(f.graph, f.accessEnc, f.speedEnc, rnd, 50, 2.5, true, true, 0.9);
         runRandomTest(f, rnd, 20);
     }
 
@@ -153,13 +156,13 @@ public class RandomCHRoutingTest {
         long seed = 60643479675316L;
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.5, true, true,
-                f.encoder.getAccessEnc(), f.encoder.getAverageSpeedEnc(), null, 0.7, 0.9, 0.0);
-        GHUtility.addRandomTurnCosts(f.graph, seed, f.encodingManager, f.encoder, f.maxTurnCosts, f.graph.getTurnCostStorage());
+                f.accessEnc, f.speedEnc, null, 0.7, 0.9, 0.0);
+        GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.graph.getTurnCostStorage());
         runRandomTest(f, rnd, 20);
     }
 
     private void runRandomTest(Fixture f, Random rnd, int numVirtualNodes) {
-        LocationIndexTree locationIndex = new LocationIndexTree(f.graph, f.dir);
+        LocationIndexTree locationIndex = new LocationIndexTree(f.graph, f.graph.getDirectory());
         locationIndex.prepareIndex();
 
         f.freeze();
@@ -225,7 +228,7 @@ public class RandomCHRoutingTest {
      * More or less does the same as {@link GHUtility#buildRandomGraph}, but since some special seeds
      * are used in a few tests above this code is kept here. Do not use it for new tests.
      */
-    private void buildRandomGraphLegacy(Graph graph, FlagEncoder encoder, Random random, int numNodes, double meanDegree, boolean allowLoops, boolean allowZeroDistance, double pBothDir) {
+    private void buildRandomGraphLegacy(Graph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, Random random, int numNodes, double meanDegree, boolean allowLoops, boolean allowZeroDistance, double pBothDir) {
         for (int i = 0; i < numNodes; ++i) {
             double lat = 49.4 + (random.nextDouble() * 0.0001);
             double lon = 9.7 + (random.nextDouble() * 0.0001);
@@ -251,10 +254,9 @@ public class RandomCHRoutingTest {
             maxDist = Math.max(maxDist, distance);
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
-            EdgeIteratorState edge = GHUtility.setSpeed(60, true, bothDirections, encoder, graph.edge(from, to).setDistance(distance));
+            EdgeIteratorState edge = GHUtility.setSpeed(60, true, bothDirections, accessEnc, speedEnc, graph.edge(from, to).setDistance(distance));
             double fwdSpeed = 10 + random.nextDouble() * 120;
             double bwdSpeed = 10 + random.nextDouble() * 120;
-            DecimalEncodedValue speedEnc = encoder.getAverageSpeedEnc();
             edge.set(speedEnc, fwdSpeed);
             if (speedEnc.isStoreTwoDirections())
                 edge.setReverse(speedEnc, bwdSpeed);

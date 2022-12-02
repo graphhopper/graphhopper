@@ -53,7 +53,7 @@ public class IsochroneResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car|turn_costs=true").
+                putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
@@ -199,18 +199,8 @@ public class IsochroneResourceTest {
 
     @Test
     public void profileWithLegacyParametersNotAllowed() {
-        assertNotAllowed("&profile=fast_car&weighting=fastest", "Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=fastest'");
-        assertNotAllowed("&profile=fast_car&vehicle=car", "Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=car'");
-    }
-
-    @Test
-    public void queryWithLegacyParameter() {
-        Response rsp = clientTarget(app, "/isochrone")
-                .queryParam("point", "42.508932,1.528516")
-                .queryParam("turn_costs", "false")
-                .queryParam("type", "geojson")
-                .request().buildGet().invoke();
-        assertEquals(200, rsp.getStatus());
+        assertNotAllowed("&profile=fast_car&weighting=fastest", "The 'weighting' parameter is no longer supported. You used 'weighting=fastest'");
+        assertNotAllowed("&vehicle=car", "profile parameter required");
     }
 
     @Test
@@ -274,6 +264,7 @@ public class IsochroneResourceTest {
         Response response = clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=wurst")
                 .request().buildGet().invoke();
 
+        assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         String message = json.path("message").asText();
 

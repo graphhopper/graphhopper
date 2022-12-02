@@ -20,6 +20,7 @@ package com.graphhopper.util.details;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 
@@ -57,10 +58,11 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
      * @return List of PathDetails for this Path
      */
     public static Map<String, List<PathDetail>> calcDetails(Path path, EncodedValueLookup evLookup, Weighting weighting,
-                                                            List<String> requestedPathDetails, PathDetailsBuilderFactory pathBuilderFactory, int previousIndex) {
+                                                            List<String> requestedPathDetails, PathDetailsBuilderFactory pathBuilderFactory,
+                                                            int previousIndex, Graph graph) {
         if (!path.isFound() || requestedPathDetails.isEmpty())
             return Collections.emptyMap();
-        List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, evLookup, weighting);
+        List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, evLookup, weighting, graph);
         if (pathBuilders.isEmpty())
             return Collections.emptyMap();
 

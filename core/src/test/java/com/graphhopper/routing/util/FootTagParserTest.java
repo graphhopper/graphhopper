@@ -19,8 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
@@ -35,12 +35,23 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class FootTagParserTest {
-    private final EncodingManager encodingManager = EncodingManager.create("car,bike,foot");
-    private final FootTagParser footParser = (FootTagParser) encodingManager.getEncoder("foot");
-    private final DecimalEncodedValue footAvgSpeedEnc = footParser.getAverageSpeedEnc();
-    private final BooleanEncodedValue footAccessEnc = footParser.getAccessEnc();
-    private final DecimalEncodedValue carAvSpeedEnc = encodingManager.getEncoder("car").getAverageSpeedEnc();
-    private final BooleanEncodedValue carAccessEnc = encodingManager.getEncoder("car").getAccessEnc();
+    private final BooleanEncodedValue footAccessEnc = VehicleAccess.create("foot");
+    private final DecimalEncodedValue footAvgSpeedEnc = VehicleSpeed.create("foot", 4, 1, false);
+    private final DecimalEncodedValue footPriorityEnc = VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false);
+    private final BooleanEncodedValue bikeAccessEnc = VehicleAccess.create("bike");
+    private final DecimalEncodedValue bikeAvgSpeedEnc = VehicleSpeed.create("bike", 4, 2, false);
+    private final BooleanEncodedValue carAccessEnc = VehicleAccess.create("car");
+    private final DecimalEncodedValue carAvSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
+    private final EncodingManager encodingManager = EncodingManager.start()
+            .add(footAccessEnc).add(footAvgSpeedEnc).add(footPriorityEnc).add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
+            .add(bikeAccessEnc).add(bikeAvgSpeedEnc).add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
+            .add(carAccessEnc).add(carAvSpeedEnc)
+            .build();
+    private final FootTagParser footParser = new FootTagParser(encodingManager, new PMap());
+
+    public FootTagParserTest() {
+        footParser.init(new DateRangeParser());
+    }
 
     @Test
     public void testGetSpeed() {
@@ -91,7 +102,7 @@ public class FootTagParserTest {
         g.edge(0, 1).setDistance(10).set(footAvgSpeedEnc, 10.0).set(footAccessEnc, true, true);
         g.edge(0, 2).setDistance(10).set(footAvgSpeedEnc, 5.0).set(footAccessEnc, true, true);
         g.edge(1, 3).setDistance(10).set(footAvgSpeedEnc, 10.0).set(footAccessEnc, true, true);
-        EdgeExplorer out = g.createEdgeExplorer(AccessFilter.outEdges(footParser.getAccessEnc()));
+        EdgeExplorer out = g.createEdgeExplorer(AccessFilter.outEdges(footAccessEnc));
         assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(out.setBaseNode(2)));
@@ -405,15 +416,14 @@ public class FootTagParserTest {
         node.setTag("foot", "no");
         assertTrue(footParser.isBarrier(node));
 
-        FootTagParser tmpEncoder = new FootTagParser(new PMap("block_fords=true"));
-        EncodingManager.create(tmpEncoder);
+        FootTagParser blockFordsParser = new FootTagParser(encodingManager, new PMap("block_fords=true"));
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "no");
-        assertFalse(tmpEncoder.isBarrier(node));
+        assertFalse(blockFordsParser.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
-        assertTrue(tmpEncoder.isBarrier(node));
+        assertTrue(blockFordsParser.isBarrier(node));
     }
 
     @Test
@@ -452,17 +462,18 @@ public class FootTagParserTest {
 
     @Test
     public void maxSpeed() {
-        FlagEncoder encoder = FlagEncoders.createFoot(new PMap().putObject("speed_bits", 4).putObject("speed_factor", 2));
+        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("foot_speed", 4, 2, true);
         // The foot max speed is supposed to be 15km/h, but for speed_bits=4,speed_factor=2 as we use here 15 cannot
         // be stored. In fact, when we set the speed of an edge to 15 and call the getter afterwards we get a value of 16
         // because of the internal (scaled) integer representation:
-        EncodingManager em = EncodingManager.create(encoder);
+        EncodingManager em = EncodingManager.start().add(speedEnc).build();
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        EdgeIteratorState edge = graph.edge(0, 1).setDistance(100).set(encoder.getAverageSpeedEnc(), 15);
-        assertEquals(16, edge.get(encoder.getAverageSpeedEnc()));
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(100).set(speedEnc, 15);
+        assertEquals(16, edge.get(speedEnc));
 
         // ... because of this we have to make sure the max speed is set to a value that cannot be exceeded even when
         // such conversion occurs. in our case it must be 16 not 15!
-        assertEquals(16, encoder.getMaxSpeed());
+        // note that this test made more sense when we used encoders that defined a max speed.
+        assertEquals(16, speedEnc.getNextStorableValue(15));
     }
 }

@@ -22,14 +22,17 @@ We even have [good first issues](https://github.com/graphhopper/graphhopper/issu
 
 To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through our documentation and install the GraphHopper Web Service locally.
 
-* 5.x: [documentation](https://github.com/graphhopper/graphhopper/blob/5.x/docs/index.md)
-  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/5.0/graphhopper-web-5.0.jar)
-  , [announcement](https://www.graphhopper.com/blog/2022/03/23/graphhopper-routing-engine-5-0-released/)
+* 6.x: [documentation](https://github.com/graphhopper/graphhopper/blob/6.x/docs/index.md)
+  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/6.0/graphhopper-web-6.0.jar)
+  , [announcement](https://www.graphhopper.com/blog/2022/09/19/graphhopper-routing-engine-6-0-released/)
 * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 
 <details><summary>Click to see older releases</summary>
 
 * See our [changelog file](./CHANGELOG.md) for Java API Changes.
+* 5.x: [documentation](https://github.com/graphhopper/graphhopper/blob/5.x/docs/index.md)
+  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/5.3/graphhopper-web-5.3.jar)
+  , [announcement](https://www.graphhopper.com/blog/2022/03/23/graphhopper-routing-engine-5-0-released/)
 * 4.x: [documentation](https://github.com/graphhopper/graphhopper/blob/4.x/docs/index.md)
   , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/4.0/graphhopper-web-4.0.jar)
   , [announcement](https://www.graphhopper.com/blog/2021/09/29/graphhopper-routing-engine-4-0-released/)
@@ -75,17 +78,17 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
 
 ## Installation
 
-To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptopenjdk.net/) (>= Java 8) and do:
+To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptium.net) (>= Java 8) and do:
 
 ```bash
-wget https://github.com/graphhopper/graphhopper/releases/download/5.0/graphhopper-web-5.0.jar https://raw.githubusercontent.com/graphhopper/graphhopper/5.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
+wget https://github.com/graphhopper/graphhopper/releases/download/6.0/graphhopper-web-6.0.jar https://raw.githubusercontent.com/graphhopper/graphhopper/6.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
 ```
 
 After a while you see a log message with 'Server - Started', then go to http://localhost:8989/ and
 you'll see a map of Berlin. You should be able to right click on the map to create a route.
 
-For more details about the installation, see [here](./docs/web/quickstart.md).
+See the [documentation](./docs/index.md) that contains e.g. [the elevation guide](./docs/core/elevation.md) and the [deployment guide](./docs/core/deploy.md).
 
 ### Docker
 
@@ -96,10 +99,11 @@ The Docker images created by the community from the `master` branch can be found
 
 To see the road routing feature of GraphHopper in action please go to [GraphHopper Maps](https://graphhopper.com/maps).
 
-[![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](https://graphhopper.com/maps)
+[![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2022/10/maps2-1024x661.png)](https://graphhopper.com/maps)
 
-GraphHopper Maps uses the commercial offering the [GraphHopper Directions API](https://www.graphhopper.com) under the hood, which provides the Routing API (based on this routing engine), a Route Optimization API based on [jsprit](http://jsprit.github.io/), a fast Matrix API and an address search based on [photon](https://github.com/komoot/photon). The photon project is also supported by the GraphHopper GmbH. Additionally to the GraphHopper Directions API, map tiles from various providers are used 
-where the default is [Omniscale](http://omniscale.com/). All this is available for free, via encrypted connections and from German servers for a nice and private route planning experience!
+GraphHopper Maps is an open source user interface, which you can find [here](https://github.com/graphhopper/graphhopper-maps). It can use this open source routing engine or the [GraphHopper Directions API](https://www.graphhopper.com), which provides the Routing API, a Route Optimization API (based on [jsprit](http://jsprit.github.io/)), a fast Matrix API and an address search (based on [photon](https://github.com/komoot/photon)). The photon project is also supported by the GraphHopper GmbH. Additionally to the GraphHopper Directions API, map tiles from various providers are used where the default is [Omniscale](http://omniscale.com/). 
+
+All this is available for free, via encrypted connections and from German servers for a nice and private route planning experience!
 
 ## Public Transit
 
@@ -229,7 +233,7 @@ Here is a list of the more detailed features:
  * Memory efficient data structures, algorithms and [the low and high level API](./docs/core/low-level-api.md) is tuned towards ease of use and efficiency
  * Provides a simple [web API](./docs/web/api-doc.md) including JavaScript and Java clients
  * Multiple weightings (fastest/shortest/custom/...) and pre-built routing profiles: car, bike, racing bike, mountain bike, foot, hike, motorcycle, wheelchair, ...
- * [Customization of these profiles](./docs/core/profiles.md#custom-profiles) are possible to get truck and cargo bike support or individual improvements
+ * [Customization of these profiles](./docs/core/profiles.md#custom-profiles) are possible and e.g. get truck routing or support for cargo bikes and [many other changes](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/)
  * Does [map matching](./map-matching)
  * Supports public transit routing and [GTFS](./reader-gtfs/README.md).
  * Offers turn instructions in more than 42 languages, contribute or improve [here](./docs/core/translations.md)

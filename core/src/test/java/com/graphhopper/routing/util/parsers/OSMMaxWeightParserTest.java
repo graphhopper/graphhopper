@@ -36,6 +36,6 @@ public class OSMMaxWeightParserTest {
         intsRef = new IntsRef(1);
         readerWay.setTag("maxweight", "50");
         parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(mwEnc.getMaxDecimal(), mwEnc.getDecimal(false, intsRef), .01);
+        assertEquals(25.4, mwEnc.getDecimal(false, intsRef), .01);
     }
 }

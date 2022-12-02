@@ -28,7 +28,8 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.GtfsStorage;
 import com.graphhopper.gtfs.RealtimeFeed;
 import com.graphhopper.gtfs.Transfers;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.BaseGraph;
 import io.dropwizard.lifecycle.Managed;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
@@ -47,7 +48,8 @@ import java.util.concurrent.TimeUnit;
 public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed {
 
     private final HttpClient httpClient;
-    private final GraphHopperStorage graphHopperStorage;
+    private final BaseGraph baseGraph;
+    private final EncodingManager encodingManager;
     private final GtfsStorage gtfsStorage;
     private final RealtimeBundleConfiguration bundleConfiguration;
     private ExecutorService executor;
@@ -55,8 +57,9 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed 
     private Map<String, Transfers> transfers;
 
     @Inject
-    RealtimeFeedLoadingCache(GraphHopperStorage graphHopperStorage, GtfsStorage gtfsStorage, HttpClient httpClient, RealtimeBundleConfiguration bundleConfiguration) {
-        this.graphHopperStorage = graphHopperStorage;
+    RealtimeFeedLoadingCache(BaseGraph baseGraph, EncodingManager encodingManager, GtfsStorage gtfsStorage, HttpClient httpClient, RealtimeBundleConfiguration bundleConfiguration) {
+        this.baseGraph = baseGraph;
+        this.encodingManager = encodingManager;
         this.gtfsStorage = gtfsStorage;
         this.bundleConfiguration = bundleConfiguration;
         this.httpClient = httpClient;
@@ -115,7 +118,7 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed 
                 throw new RuntimeException(e);
             }
         }
-        return RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, this.transfers, feedMessageMap);
+        return RealtimeFeed.fromProtobuf(baseGraph, encodingManager, gtfsStorage, this.transfers, feedMessageMap);
     }
 
 }

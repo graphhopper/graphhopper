@@ -20,17 +20,40 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import com.graphhopper.routing.ev.BikeNetwork;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.RouteNetwork;
+import com.graphhopper.routing.ev.Smoothness;
+import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
+import com.graphhopper.routing.util.parsers.OSMSmoothnessParser;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.routing.util.BikeCommonTagParser.MIN_SPEED;
 import static com.graphhopper.routing.util.BikeCommonTagParser.PUSHING_SECTION_SPEED;
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
-    protected BikeCommonTagParser createBikeTagParser() {
-        return new MountainBikeTagParser(new PMap("block_fords=true"));
+    protected EncodingManager createEncodingManager() {
+        return EncodingManager.create("mtb");
+    }
+
+    @Override
+    protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup, PMap pMap) {
+        MountainBikeTagParser parser = new MountainBikeTagParser(lookup, pMap);
+        parser.init(new DateRangeParser());
+        return parser;
+    }
+
+    @Override
+    protected OSMParsers createOSMParsers(BikeCommonTagParser parser, EncodedValueLookup lookup) {
+        return new OSMParsers()
+                .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
+                .addWayTagParser(new OSMSmoothnessParser(lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
+                .addVehicleTagParser(parser);
     }
 
     @Test
@@ -44,13 +67,13 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
         // Test pushing section speeds
         way.setTag("highway", "footway");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 4, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
 
         way.setTag("highway", "track");
         assertPriorityAndSpeed(PREFER.getValue(), 18, way);
 
         way.setTag("highway", "steps");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 4, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
         way.clearTags();
 
         // test speed for allowed pushing section types
@@ -83,7 +106,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         assertEquals(12, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "unknown");
         assertEquals(12, getSpeedFromFlags(way), 0.01);
@@ -102,10 +125,10 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         assertEquals(6, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "bad");
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
+        assertEquals(4, getSpeedFromFlags(way), 0.01);
 
         way.setTag("smoothness", "impassable");
-        assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 0.01);
+        assertEquals(MIN_SPEED, getSpeedFromFlags(way), 0.01);
     }
 
     @Test

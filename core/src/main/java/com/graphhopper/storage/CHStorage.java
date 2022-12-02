@@ -52,7 +52,7 @@ public class CHStorage {
 
     // shortcuts
     private final DataAccess shortcuts;
-    private final int S_NODEA, S_NODEB, S_WEIGHT, S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;
+    private final int S_NODEA, S_NODEB, S_WEIGHT, S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_KEY_FIRST, S_ORIG_KEY_LAST;
     private int shortcutEntryBytes;
     private int shortcutCount = 0;
 
@@ -83,12 +83,11 @@ public class CHStorage {
                     " nodeA (" + nodeAccess.getLat(s.nodeA) + "," + nodeAccess.getLon(s.nodeA) +
                     " nodeB " + nodeAccess.getLat(s.nodeB) + "," + nodeAccess.getLon(s.nodeB));
         });
-        store.create();
         // we use a rather small value here. this might result in more allocations later, but they should
         // not matter that much. if we expect a too large value the shortcuts DataAccess will end up
         // larger than needed, because we do not do something like trimToSize in the end.
         double expectedShortcuts = 0.3 * baseGraph.getEdges();
-        store.init(baseGraph.getNodes(), (int) expectedShortcuts);
+        store.create(baseGraph.getNodes(), (int) expectedShortcuts);
         return store;
     }
 
@@ -103,9 +102,9 @@ public class CHStorage {
         S_WEIGHT = S_NODEB + 4;
         S_SKIP_EDGE1 = S_WEIGHT + 4;
         S_SKIP_EDGE2 = S_SKIP_EDGE1 + 4;
-        S_ORIG_FIRST = S_SKIP_EDGE2 + (edgeBased ? 4 : 0);
-        S_ORIG_LAST = S_ORIG_FIRST + (edgeBased ? 4 : 0);
-        shortcutEntryBytes = S_ORIG_LAST + 4;
+        S_ORIG_KEY_FIRST = S_SKIP_EDGE2 + (edgeBased ? 4 : 0);
+        S_ORIG_KEY_LAST = S_ORIG_KEY_FIRST + (edgeBased ? 4 : 0);
+        shortcutEntryBytes = S_ORIG_KEY_LAST + 4;
 
         // nodes/levels are stored consecutively using this layout:
         // LEVEL | N_LAST_SC
@@ -123,30 +122,21 @@ public class CHStorage {
 
     /**
      * Creates a new storage. Alternatively we could load an existing one using {@link #loadExisting()}}.
-     */
-    public void create() {
-        // We have to create the DataAccess here before we flush it. Otherwise we get an error when calling
-        // loadExisting() later, see #2384
-        nodesCH.create(0);
-        shortcuts.create(0);
-    }
-
-    /**
-     * Initializes the storage. The number of nodes must be given here while the expected number of shortcuts can
+     * The number of nodes must be given here while the expected number of shortcuts can
      * be given to prevent some memory allocations, but is not a requirement. When in doubt rather use a small value
      * so the resulting files/byte arrays won't be unnecessarily large.
      * todo: we could also trim down the shortcuts DataAccess when we are done adding shortcuts
      */
-    public void init(int nodes, int expectedShortcuts) {
+    public void create(int nodes, int expectedShortcuts) {
         if (nodeCount >= 0)
-            throw new IllegalStateException("CHStorage can only be initialized once");
+            throw new IllegalStateException("CHStorage can only be created once");
         if (nodes < 0)
-            throw new IllegalStateException("CHStorage must be initialized with a positive number of nodes");
-        nodesCH.ensureCapacity((long) nodes * nodeCHEntryBytes);
+            throw new IllegalStateException("CHStorage must be created with a positive number of nodes");
+        nodesCH.create((long) nodes * nodeCHEntryBytes);
         nodeCount = nodes;
-        shortcuts.ensureCapacity((long) expectedShortcuts * shortcutEntryBytes);
         for (int node = 0; node < nodes; node++)
             setLastShortcut(toNodePointer(node), -1);
+        shortcuts.create((long) expectedShortcuts * shortcutEntryBytes);
     }
 
     public void flush() {
@@ -201,11 +191,11 @@ public class CHStorage {
         return shortcut(nodeA, nodeB, accessFlags, weight, skip1, skip2);
     }
 
-    public int shortcutEdgeBased(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2, int origFirst, int origLast) {
+    public int shortcutEdgeBased(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2, int origKeyFirst, int origKeyLast) {
         if (!edgeBased)
             throw new IllegalArgumentException("Cannot add edge-based shortcuts to node-based CH");
         int shortcut = shortcut(nodeA, nodeB, accessFlags, weight, skip1, skip2);
-        setOrigEdges(toShortcutPointer(shortcut), origFirst, origLast);
+        setOrigEdgeKeys(toShortcutPointer(shortcut), origKeyFirst, origKeyLast);
         return shortcut;
     }
 
@@ -292,11 +282,11 @@ public class CHStorage {
         shortcuts.setInt(shortcutPointer + S_SKIP_EDGE2, edge2);
     }
 
-    public void setOrigEdges(long shortcutPointer, int origFirst, int origLast) {
+    public void setOrigEdgeKeys(long shortcutPointer, int origKeyFirst, int origKeyLast) {
         if (!edgeBased)
-            throw new IllegalArgumentException("Setting orig edges is only possible for edge-based CH");
-        shortcuts.setInt(shortcutPointer + S_ORIG_FIRST, origFirst);
-        shortcuts.setInt(shortcutPointer + S_ORIG_LAST, origLast);
+            throw new IllegalArgumentException("Setting orig edge keys is only possible for edge-based CH");
+        shortcuts.setInt(shortcutPointer + S_ORIG_KEY_FIRST, origKeyFirst);
+        shortcuts.setInt(shortcutPointer + S_ORIG_KEY_LAST, origKeyLast);
     }
 
     public int getNodeA(long shortcutPointer) {
@@ -327,14 +317,14 @@ public class CHStorage {
         return shortcuts.getInt(shortcutPointer + S_SKIP_EDGE2);
     }
 
-    public int getOrigEdgeFirst(long shortcutPointer) {
-        assert edgeBased : "orig edges are only available for edge-based CH";
-        return shortcuts.getInt(shortcutPointer + S_ORIG_FIRST);
+    public int getOrigEdgeKeyFirst(long shortcutPointer) {
+        assert edgeBased : "orig edge keys are only available for edge-based CH";
+        return shortcuts.getInt(shortcutPointer + S_ORIG_KEY_FIRST);
     }
 
-    public int getOrigEdgeLast(long shortcutPointer) {
-        assert edgeBased : "orig edges are only available for edge-based CH";
-        return shortcuts.getInt(shortcutPointer + S_ORIG_LAST);
+    public int getOrigEdgeKeyLast(long shortcutPointer) {
+        assert edgeBased : "orig edge keys are only available for edge-based CH";
+        return shortcuts.getInt(shortcutPointer + S_ORIG_KEY_LAST);
     }
 
     public NodeOrderingProvider getNodeOrderingProvider() {
@@ -381,8 +371,8 @@ public class CHStorage {
                     getSkippedEdge2(ptr));
             if (edgeBased) {
                 edgeString += String.format(Locale.ROOT, formatShortcutExt,
-                        getOrigEdgeFirst(ptr),
-                        getOrigEdgeLast(ptr));
+                        getOrigEdgeKeyFirst(ptr),
+                        getOrigEdgeKeyLast(ptr));
             }
             System.out.println(edgeString);
         }

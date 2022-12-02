@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -27,6 +28,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
  *
@@ -34,6 +36,7 @@ import java.util.Set;
  * @author Nop
  */
 public class CarTagParser extends VehicleTagParser {
+    public static final double CAR_MAX_SPEED = 140;
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
     // This value determines the maximal possible on roads with bad surfaces
@@ -46,34 +49,24 @@ public class CarTagParser extends VehicleTagParser {
      */
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
 
-    public CarTagParser() {
-        this(new PMap());
+    public CarTagParser(EncodedValueLookup lookup, PMap properties) {
+        this(
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "car"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))),
+                lookup.hasEncodedValue(TurnCost.key(properties.getString("name", "car"))) ? lookup.getDecimalEncodedValue(TurnCost.key(properties.getString("name", "car"))) : null,
+                lookup.getBooleanEncodedValue(Roundabout.KEY),
+                properties,
+                TransportationMode.CAR,
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))).getNextStorableValue(CAR_MAX_SPEED)
+        );
     }
 
-    public CarTagParser(int speedBits, double speedFactor, int maxTurnCosts) {
-        this("car", speedBits, speedFactor, maxTurnCosts);
-    }
-
-    public CarTagParser(String name, int speedBits, double speedFactor, int maxTurnCosts) {
-        this(name, speedBits, speedFactor, maxTurnCosts, false);
-    }
-
-    public CarTagParser(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        this("car", speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
-    }
-
-    public CarTagParser(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        this(new PMap().putObject("name", name).putObject("speed_bits", speedBits).putObject("speed_factor", speedFactor).
-                putObject("max_turn_costs", maxTurnCosts).putObject("speed_two_directions", speedTwoDirections));
-    }
-
-    public CarTagParser(PMap properties) {
-        super(properties.getString("name", "car"),
-                properties.getInt("speed_bits", 5),
-                properties.getDouble("speed_factor", 5),
-                properties.getBool("speed_two_directions", false),
-                properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0));
-
+    public CarTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc,
+                        BooleanEncodedValue roundaboutEnc, PMap properties,
+                        TransportationMode transportationMode, double maxPossibleSpeed) {
+        super(accessEnc, speedEnc,
+                properties.getString("name", "car"), roundaboutEnc,
+                turnCostEnc, transportationMode, maxPossibleSpeed);
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
@@ -100,6 +93,7 @@ public class CarTagParser extends VehicleTagParser {
         barriers.add("block");
         barriers.add("bus_trap");
         barriers.add("sump_buster");
+        barriers.add("jersey_barrier");
 
         badSurfaceSpeedMap.add("cobblestone");
         badSurfaceSpeedMap.add("grass_paver");
@@ -115,7 +109,6 @@ public class CarTagParser extends VehicleTagParser {
         // autobahn
         defaultSpeedMap.put("motorway", 100);
         defaultSpeedMap.put("motorway_link", 70);
-        defaultSpeedMap.put("motorroad", 90);
         // bundesstraße
         defaultSpeedMap.put("trunk", 70);
         defaultSpeedMap.put("trunk_link", 65);
@@ -145,20 +138,10 @@ public class CarTagParser extends VehicleTagParser {
 
         // limit speed on bad surfaces to 30 km/h
         badSurfaceSpeed = 30;
-        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(properties.getDouble("max_speed", 140));
-    }
-
-    @Override
-    public TransportationMode getTransportationMode() {
-        return TransportationMode.CAR;
     }
 
     protected double getSpeed(ReaderWay way) {
         String highwayValue = way.getTag("highway");
-        if (!Helper.isEmpty(highwayValue) && way.hasTag("motorroad", "yes")
-                && !"motorway".equals(highwayValue) && !"motorway_link".equals(highwayValue)) {
-            highwayValue = "motorroad";
-        }
         Integer speed = defaultSpeedMap.get(highwayValue);
         if (speed == null)
             throw new IllegalStateException(getName() + ", no speed found for: " + highwayValue + ", tags: " + way);
@@ -176,56 +159,60 @@ public class CarTagParser extends VehicleTagParser {
     }
 
     @Override
-    public EncodingManager.Access getAccess(ReaderWay way) {
+    public WayAccess getAccess(ReaderWay way) {
         // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 if (restrictedValues.contains(firstValue))
-                    return EncodingManager.Access.CAN_SKIP;
+                    return WayAccess.CAN_SKIP;
                 if (intendedValues.contains(firstValue) ||
                         // implied default is allowed only if foot and bicycle is not specified:
                         firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle"))
-                    return EncodingManager.Access.FERRY;
+                    return WayAccess.FERRY;
             }
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
         }
         
         if ("service".equals(highwayValue) && "emergency_access".equals(way.getTag("service"))) {
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
         }
 
         if ("track".equals(highwayValue) && trackTypeSpeedMap.get(way.getTag("tracktype")) == null)
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (!defaultSpeedMap.containsKey(highwayValue))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         // multiple restrictions needs special handling compared to foot and bike, see also motorcycle
         if (!firstValue.isEmpty()) {
-            if (restrictedValues.contains(firstValue) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-                return EncodingManager.Access.CAN_SKIP;
-            if (intendedValues.contains(firstValue))
-                return EncodingManager.Access.WAY;
+            String[] restrict = firstValue.split(";");
+            boolean notConditionalyPermitted = !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
+            for (String value: restrict) {
+                if (restrictedValues.contains(value) && notConditionalyPermitted)
+                    return WayAccess.CAN_SKIP;
+                if (intendedValues.contains(value))
+                    return WayAccess.WAY;
+            }
         }
 
         // do not drive street cars into fords
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
         else
-            return EncodingManager.Access.WAY;
+            return WayAccess.WAY;
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
-        EncodingManager.Access access = getAccess(way);
+        WayAccess access = getAccess(way);
         if (access.canSkip())
             return edgeFlags;
 

@@ -87,7 +87,7 @@ public class CHMeasurement {
         final GraphHopper graphHopper = new GraphHopper();
         String profile = "car_profile";
         if (withTurnCosts) {
-            ghConfig.putObject("graph.flag_encoders", "car|turn_costs=true");
+            ghConfig.putObject("graph.vehicles", "car|turn_costs=true");
             ghConfig.setProfiles(Collections.singletonList(
                     new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true).putHint(Parameters.Routing.U_TURN_COSTS, uTurnCosts)
             ));
@@ -101,7 +101,7 @@ public class CHMeasurement {
                 ghConfig.putObject("prepare.lm.landmarks", landmarks);
             }
         } else {
-            ghConfig.putObject("graph.flag_encoders", "car");
+            ghConfig.putObject("graph.vehicles", "car");
             ghConfig.setProfiles(Collections.singletonList(
                     new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(false)
             ));
@@ -208,7 +208,7 @@ public class CHMeasurement {
     private static void runCompareTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts, final int uTurnCosts,
                                        long seed, final int iterations, final double threshold, final PMap results) {
         LOGGER.info("Running compare test for {}, using seed {}", algo, seed);
-        Graph g = graphHopper.getGraphHopperStorage();
+        Graph g = graphHopper.getBaseGraph();
         final int numNodes = g.getNodes();
         final NodeAccess nodeAccess = g.getNodeAccess();
         final Random random = new Random(seed);
@@ -291,7 +291,7 @@ public class CHMeasurement {
 
     private static void runPerformanceTest(final String algo, final GraphHopper graphHopper, final boolean withTurnCosts,
                                            long seed, final int iterations, final PMap results) {
-        Graph g = graphHopper.getGraphHopperStorage();
+        Graph g = graphHopper.getBaseGraph();
         final int numNodes = g.getNodes();
         final NodeAccess nodeAccess = g.getNodeAccess();
         final Random random = new Random(seed);

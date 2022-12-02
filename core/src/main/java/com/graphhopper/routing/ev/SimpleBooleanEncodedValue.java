@@ -37,13 +37,20 @@ public final class SimpleBooleanEncodedValue extends IntEncodedValueImpl impleme
     SimpleBooleanEncodedValue(
             @JsonProperty("name") String name,
             @JsonProperty("bits") int bits,
-            @JsonProperty("minValue") int minValue,
-            @JsonProperty("maxValue") int maxValue,
-            @JsonProperty("negateReverseDirection") boolean negateReverseDirection,
-            @JsonProperty("storeTwoDirections") boolean storeTwoDirections
+            @JsonProperty("min_storable_value") int minStorableValue,
+            @JsonProperty("max_storable_value") int maxStorableValue,
+            @JsonProperty("max_value") int maxValue,
+            @JsonProperty("negate_reverse_direction") boolean negateReverseDirection,
+            @JsonProperty("store_two_directions") boolean storeTwoDirections,
+            @JsonProperty("fwd_data_index") int fwdDataIndex,
+            @JsonProperty("bwd_data_index") int bwdDataIndex,
+            @JsonProperty("fwd_shift") int fwdShift,
+            @JsonProperty("bwd_shift") int bwdShift,
+            @JsonProperty("fwd_mask") int fwdMask,
+            @JsonProperty("bwd_mask") int bwdMask
     ) {
         // we need this constructor for Jackson
-        super(name, bits, minValue, maxValue, negateReverseDirection, storeTwoDirections);
+        super(name, bits, minStorableValue, maxStorableValue, maxValue, negateReverseDirection, storeTwoDirections, fwdDataIndex, bwdDataIndex, fwdShift, bwdShift, fwdMask, bwdMask);
     }
 
     @Override

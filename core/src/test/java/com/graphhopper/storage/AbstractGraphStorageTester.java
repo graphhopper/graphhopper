@@ -19,7 +19,11 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.jupiter.api.AfterEach;
@@ -27,15 +31,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
-import static com.graphhopper.routing.util.EncodingManager.getKey;
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
+import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Abstract test class to be extended for implementations of the Graph interface. Graphs
- * implementing GraphStorage should extend {@link GraphHopperStorageTest} instead.
+ * implementing GraphStorage should extend {@link BaseGraphTest} instead.
  * <p>
  *
  * @author Peter Karich
@@ -44,15 +47,22 @@ public abstract class AbstractGraphStorageTester {
     private final String locationParent = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraphLoc = "./target/graphstorage/default";
-    protected FlagEncoder carEncoder = createCarFlagEncoder();
-    protected EncodingManager encodingManager = new EncodingManager.Builder().add(carEncoder).add(FlagEncoders.createFoot()).build();
-    protected BooleanEncodedValue carAccessEnc = carEncoder.getAccessEnc();
-    protected DecimalEncodedValue carAvSpeedEnc = carEncoder.getAverageSpeedEnc();
-    protected FlagEncoder footEncoder = encodingManager.getEncoder("foot");
-    protected BooleanEncodedValue footAccessEnc = footEncoder.getAccessEnc();
+    protected BooleanEncodedValue carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
+    protected DecimalEncodedValue carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
+    protected BooleanEncodedValue footAccessEnc = new SimpleBooleanEncodedValue("foot_access", true);
+    protected DecimalEncodedValue footSpeedEnc = new DecimalEncodedValueImpl("foot_speed", 4, 1, true);
+    protected EncodingManager encodingManager = createEncodingManager();
+
+    protected EncodingManager createEncodingManager() {
+        return new EncodingManager.Builder()
+                .add(carAccessEnc).add(carSpeedEnc)
+                .add(footAccessEnc).add(footSpeedEnc)
+                .build();
+    }
+
     protected BaseGraph graph;
-    EdgeFilter carOutFilter = AccessFilter.outEdges(carEncoder.getAccessEnc());
-    EdgeFilter carInFilter = AccessFilter.inEdges(carEncoder.getAccessEnc());
+    EdgeFilter carOutFilter = AccessFilter.outEdges(carAccessEnc);
+    EdgeFilter carInFilter = AccessFilter.inEdges(carAccessEnc);
     EdgeExplorer carOutExplorer;
     EdgeExplorer carInExplorer;
     EdgeExplorer carAllExplorer;
@@ -85,10 +95,6 @@ public abstract class AbstractGraphStorageTester {
             }
         }
         throw new IllegalArgumentException("did not find node with location " + (float) latitude + "," + (float) longitude);
-    }
-
-    FlagEncoder createCarFlagEncoder() {
-        return FlagEncoders.createCar();
     }
 
     protected BaseGraph createGHStorage() {
@@ -260,7 +266,8 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testCopyProperties() {
         graph = createGHStorage();
-        EdgeIteratorState edge = graph.edge(1, 3).setDistance(10).set(carAccessEnc, true, false).setName("testing").setWayGeometry(Helper.createPointList(1, 2));
+        EdgeIteratorState edge = graph.edge(1, 3).setDistance(10).set(carAccessEnc, true, false).
+                setKeyValues(createKV(STREET_NAME, "testing")).setWayGeometry(Helper.createPointList(1, 2));
 
         EdgeIteratorState newEdge = graph.edge(1, 3).setDistance(10).set(carAccessEnc, true, false);
         newEdge.copyPropertiesFrom(edge);
@@ -431,19 +438,19 @@ public abstract class AbstractGraphStorageTester {
     public void testFlags() {
         graph = createGHStorage();
         graph.edge(0, 1).set(carAccessEnc, true, true).setDistance(10)
-                .set(carAvSpeedEnc, 100);
+                .set(carSpeedEnc, 100);
         graph.edge(2, 3).set(carAccessEnc, true, false).setDistance(10)
-                .set(carAvSpeedEnc, 10);
+                .set(carSpeedEnc, 10);
 
         EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(100, iter.get(carAvSpeedEnc), 1);
+        assertEquals(100, iter.get(carSpeedEnc), 1);
         assertTrue(iter.get(carAccessEnc));
         assertTrue(iter.getReverse(carAccessEnc));
 
         iter = carAllExplorer.setBaseNode(2);
         assertTrue(iter.next());
-        assertEquals(10, iter.get(carAvSpeedEnc), 1);
+        assertEquals(10, iter.get(carSpeedEnc), 1);
         assertTrue(iter.get(carAccessEnc));
         assertFalse(iter.getReverse(carAccessEnc));
 
@@ -612,7 +619,7 @@ public abstract class AbstractGraphStorageTester {
         EdgeIteratorState edge = graph.edge(0, 3).setDistance(10);
         edge.set(footAccessEnc, true, true);
         edge.set(carAccessEnc, true, true);
-        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(footEncoder.getAccessEnc()));
+        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(footAccessEnc));
         assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(footOutExplorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(3, 2), GHUtility.getNeighbors(carOutExplorer.setBaseNode(0)));
     }
@@ -645,13 +652,13 @@ public abstract class AbstractGraphStorageTester {
     }
 
     @Test
-    public void testStringIndex() {
+    public void testEdgeKVStorage() {
         graph = createGHStorage();
         EdgeIteratorState iter1 = graph.edge(0, 1).setDistance(10).set(carAccessEnc, true, true);
-        iter1.setName("named street1");
+        iter1.setKeyValues(createKV(STREET_NAME, "named street1"));
 
         EdgeIteratorState iter2 = graph.edge(0, 1).setDistance(10).set(carAccessEnc, true, true);
-        iter2.setName("named street2");
+        iter2.setKeyValues(createKV(STREET_NAME, "named street2"));
 
         assertEquals(graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName(), "named street1");
         assertEquals(graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName(), "named street2");
@@ -659,10 +666,15 @@ public abstract class AbstractGraphStorageTester {
 
     @Test
     public void test8AndMoreBytesForEdgeFlags() {
-        List<FlagEncoder> list = new ArrayList<>();
-        list.add(FlagEncoders.createCar(new PMap("name=car0|speed_bits=29|speed_factor=0.001")));
-        list.add(FlagEncoders.createCar(new PMap("speed_bits=29|speed_factor=0.001")));
-        EncodingManager manager = EncodingManager.create(list);
+        BooleanEncodedValue access0Enc = new SimpleBooleanEncodedValue("car0_access", true);
+        DecimalEncodedValue speed0Enc = new DecimalEncodedValueImpl("car0_speed", 29, 0.001, false);
+        BooleanEncodedValue access1Enc = new SimpleBooleanEncodedValue("car1_access", true);
+        DecimalEncodedValue speed1Enc = new DecimalEncodedValueImpl("car1_speed", 29, 0.001, false);
+
+        EncodingManager manager = EncodingManager.start()
+                .add(access0Enc).add(speed0Enc)
+                .add(access1Enc).add(speed1Enc)
+                .build();
         graph = new BaseGraph.Builder(manager).create();
 
         EdgeIteratorState edge = graph.edge(0, 1);
@@ -675,33 +687,29 @@ public abstract class AbstractGraphStorageTester {
 
         graph = new BaseGraph.Builder(manager).create();
 
-        DecimalEncodedValue avSpeed0Enc = manager.getDecimalEncodedValue(getKey("car0", "average_speed"));
-        BooleanEncodedValue access0Enc = manager.getBooleanEncodedValue(getKey("car0", "access"));
-        DecimalEncodedValue avSpeed1Enc = manager.getDecimalEncodedValue(getKey("car", "average_speed"));
-        BooleanEncodedValue access1Enc = manager.getBooleanEncodedValue(getKey("car", "access"));
 
         edge = graph.edge(0, 1);
-        GHUtility.setSpeed(99.123, true, true, list.get(0), edge);
-        assertEquals(99.123, edge.get(avSpeed0Enc), 1e-3);
+        GHUtility.setSpeed(99.123, true, true, access0Enc, speed0Enc, edge);
+        assertEquals(99.123, edge.get(speed0Enc), 1e-3);
         EdgeIteratorState edgeIter = GHUtility.getEdge(graph, 1, 0);
-        assertEquals(99.123, edgeIter.get(avSpeed0Enc), 1e-3);
+        assertEquals(99.123, edgeIter.get(speed0Enc), 1e-3);
         assertTrue(edgeIter.get(access0Enc));
         assertTrue(edgeIter.getReverse(access0Enc));
         edge = graph.edge(2, 3);
-        GHUtility.setSpeed(44.123, true, false, list.get(1), edge);
-        assertEquals(44.123, edge.get(avSpeed1Enc), 1e-3);
+        GHUtility.setSpeed(44.123, true, false, access1Enc, speed1Enc, edge);
+        assertEquals(44.123, edge.get(speed1Enc), 1e-3);
 
         edgeIter = GHUtility.getEdge(graph, 3, 2);
-        assertEquals(44.123, edgeIter.get(avSpeed1Enc), 1e-3);
-        assertEquals(44.123, edgeIter.getReverse(avSpeed1Enc), 1e-3);
+        assertEquals(44.123, edgeIter.get(speed1Enc), 1e-3);
+        assertEquals(44.123, edgeIter.getReverse(speed1Enc), 1e-3);
         assertFalse(edgeIter.get(access1Enc));
         assertTrue(edgeIter.getReverse(access1Enc));
 
-        list.clear();
-        list.add(FlagEncoders.createCar(new PMap("name=car0|speed_bits=29|speed_factor=0.001")));
-        list.add(FlagEncoders.createCar(new PMap("speed_bits=29|speed_factor=0.001")));
-        list.add(FlagEncoders.createCar(new PMap("name=car2|speed_bits=30|speed_factor=0.001")));
-        manager = EncodingManager.create(list);
+        manager = EncodingManager.start()
+                .add(new SimpleBooleanEncodedValue("car0_access", true)).add(new DecimalEncodedValueImpl("car0_speed", 29, 0.001, false))
+                .add(new SimpleBooleanEncodedValue("car1_access", true)).add(new DecimalEncodedValueImpl("car1_speed", 29, 0.001, false))
+                .add(new SimpleBooleanEncodedValue("car2_access", true)).add(new DecimalEncodedValueImpl("car2_speed", 30, 0.001, false))
+                .build();
         graph = new BaseGraph.Builder(manager).create();
         edgeIter = graph.edge(0, 1).set(access0Enc, true, false);
         assertTrue(edgeIter.get(access0Enc));

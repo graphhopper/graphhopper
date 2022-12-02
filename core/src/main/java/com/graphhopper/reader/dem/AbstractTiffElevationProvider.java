@@ -140,7 +140,7 @@ public abstract class AbstractTiffElevationProvider extends TileBasedElevationPr
                 }
 
                 // short == 2 bytes
-                heights.create(2 * WIDTH * HEIGHT);
+                heights.create(2L * WIDTH * HEIGHT);
 
                 Raster raster = generateRasterFromFile(file, name + ".tif");
                 fillDataAccessWithElevationData(raster, heights, WIDTH);
@@ -190,7 +190,7 @@ public abstract class AbstractTiffElevationProvider extends TileBasedElevationPr
                     if (val < -1000 || val > 12000)
                         val = Short.MIN_VALUE;
 
-                    heights.setShort(2 * (y * dataAccessWidth + x), val);
+                    heights.setShort(2 * ((long) y * dataAccessWidth + x), val);
                 }
             }
             heights.flush();

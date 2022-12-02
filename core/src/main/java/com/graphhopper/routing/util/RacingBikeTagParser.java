@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
 import java.util.TreeMap;
@@ -32,21 +33,25 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  * @author Peter Karich
  */
 public class RacingBikeTagParser extends BikeCommonTagParser {
-    public RacingBikeTagParser() {
-        this(4, 2, 0);
-    }
 
-    public RacingBikeTagParser(PMap properties) {
-        this(properties.getInt("speed_bits", 4),
-                properties.getDouble("speed_factor", 2),
-                properties.getBool("turn_costs", false) ? 1 : 0);
-
+    public RacingBikeTagParser(EncodedValueLookup lookup, PMap properties) {
+        this(
+                lookup.getBooleanEncodedValue(VehicleAccess.key("racingbike")),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key("racingbike")),
+                lookup.getDecimalEncodedValue(VehiclePriority.key("racingbike")),
+                lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class),
+                lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
+                lookup.getBooleanEncodedValue(Roundabout.KEY),
+                lookup.hasEncodedValue(TurnCost.key("racingbike")) ? lookup.getDecimalEncodedValue(TurnCost.key("racingbike")) : null
+        );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected RacingBikeTagParser(int speedBits, double speedFactor, int maxTurnCosts) {
-        super("racingbike", speedBits, speedFactor, maxTurnCosts, false);
+    protected RacingBikeTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                                  EnumEncodedValue<RouteNetwork> bikeRouteEnc, EnumEncodedValue<Smoothness> smoothnessEnc,
+                                  BooleanEncodedValue roundaboutEnc, DecimalEncodedValue turnCostEnc) {
+        super(accessEnc, speedEnc, priorityEnc, bikeRouteEnc, smoothnessEnc, "racingbike", roundaboutEnc, turnCostEnc);
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");
         preferHighwayTags.add("secondary_link");
@@ -62,37 +67,30 @@ public class RacingBikeTagParser extends BikeCommonTagParser {
 
         setSurfaceSpeed("paved", 20);
         setSurfaceSpeed("asphalt", 20);
-        setSurfaceSpeed("cobblestone", 10);
-        setSurfaceSpeed("cobblestone:flattened", 10);
-        setSurfaceSpeed("sett", 10);
         setSurfaceSpeed("concrete", 20);
         setSurfaceSpeed("concrete:lanes", 16);
         setSurfaceSpeed("concrete:plates", 16);
-        setSurfaceSpeed("paving_stones", 10);
-        setSurfaceSpeed("paving_stones:30", 10);
-        setSurfaceSpeed("unpaved", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("compacted", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("dirt", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("earth", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("unpaved", MIN_SPEED);
+        setSurfaceSpeed("compacted", MIN_SPEED);
+        setSurfaceSpeed("dirt", MIN_SPEED);
+        setSurfaceSpeed("earth", MIN_SPEED);
         setSurfaceSpeed("fine_gravel", PUSHING_SECTION_SPEED);
-        setSurfaceSpeed("grass", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("grass_paver", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("gravel", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("ground", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("ice", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("metal", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("mud", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("grass", MIN_SPEED);
+        setSurfaceSpeed("grass_paver", MIN_SPEED);
+        setSurfaceSpeed("gravel", MIN_SPEED);
+        setSurfaceSpeed("ground", MIN_SPEED);
+        setSurfaceSpeed("ice", MIN_SPEED);
+        setSurfaceSpeed("metal", MIN_SPEED);
+        setSurfaceSpeed("mud", MIN_SPEED);
         setSurfaceSpeed("pebblestone", PUSHING_SECTION_SPEED);
-        setSurfaceSpeed("salt", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("sand", PUSHING_SECTION_SPEED / 2);
-        setSurfaceSpeed("wood", PUSHING_SECTION_SPEED / 2);
+        setSurfaceSpeed("salt", MIN_SPEED);
+        setSurfaceSpeed("sand", MIN_SPEED);
+        setSurfaceSpeed("wood", MIN_SPEED);
 
-        setHighwaySpeed("cycleway", 18);
         setHighwaySpeed("path", 8);
-        setHighwaySpeed("footway", 6);
-        setHighwaySpeed("pedestrian", 6);
-        setHighwaySpeed("road", 12);
-        setHighwaySpeed("track", PUSHING_SECTION_SPEED / 2); // assume unpaved
+        setHighwaySpeed("footway", PUSHING_SECTION_SPEED);
+        setHighwaySpeed("pedestrian", PUSHING_SECTION_SPEED);
+        setHighwaySpeed("track", MIN_SPEED); // assume unpaved
         setHighwaySpeed("service", 12);
         setHighwaySpeed("unclassified", 16);
         setHighwaySpeed("residential", 16);
@@ -112,14 +110,11 @@ public class RacingBikeTagParser extends BikeCommonTagParser {
         addPushingSection("pedestrian");
         addPushingSection("steps");
 
+        // overwite map from BikeCommon
         setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.EXCELLENT, 1.2d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.GOOD, 1.0d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.INTERMEDIATE, 0.9d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.BAD, 0.7d);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_BAD, smoothnessFactorPushingSectionThreshold);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.HORRIBLE, smoothnessFactorPushingSectionThreshold);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_HORRIBLE, smoothnessFactorPushingSectionThreshold);
-        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.IMPASSABLE, smoothnessFactorPushingSectionThreshold);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_BAD, 0.1);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.HORRIBLE, 0.1);
+        setSmoothnessSpeedFactor(com.graphhopper.routing.ev.Smoothness.VERY_HORRIBLE, 0.1);
 
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());

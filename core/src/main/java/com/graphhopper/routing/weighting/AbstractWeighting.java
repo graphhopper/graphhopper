@@ -19,7 +19,6 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 
@@ -29,24 +28,15 @@ import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PR
  * @author Peter Karich
  */
 public abstract class AbstractWeighting implements Weighting {
-    protected final DecimalEncodedValue avSpeedEnc;
     protected final BooleanEncodedValue accessEnc;
+    protected final DecimalEncodedValue speedEnc;
     private final TurnCostProvider turnCostProvider;
 
-    protected AbstractWeighting(FlagEncoder encoder) {
-        this(encoder, NO_TURN_COST_PROVIDER);
-    }
-
-    protected AbstractWeighting(FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        this(encoder.getAverageSpeedEnc(), encoder.getAccessEnc(), turnCostProvider);
-    }
-
-    protected AbstractWeighting(DecimalEncodedValue avSpeedEnc, BooleanEncodedValue accessEnc, TurnCostProvider turnCostProvider) {
+    protected AbstractWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, TurnCostProvider turnCostProvider) {
         if (!isValidName(getName()))
             throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
-
-        this.avSpeedEnc = avSpeedEnc;
         this.accessEnc = accessEnc;
+        this.speedEnc = speedEnc;
         this.turnCostProvider = turnCostProvider;
     }
 
@@ -73,15 +63,15 @@ public abstract class AbstractWeighting implements Weighting {
             throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. " +
                     "(" + edgeState.getBaseNode() + " - " + edgeState.getAdjNode() + ") "
                     + edgeState.fetchWayGeometry(FetchMode.ALL) + ", dist: " + edgeState.getDistance() + " "
-                    + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc) + ", fwd-speed: " + edgeState.get(avSpeedEnc) + ", bwd-speed: " + edgeState.getReverse(avSpeedEnc));
+                    + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc) + ", fwd-speed: " + edgeState.get(speedEnc) + ", bwd-speed: " + edgeState.getReverse(speedEnc));
 
-        double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
+        double speed = reverse ? edgeState.getReverse(speedEnc) : edgeState.get(speedEnc);
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid speed stored in edge! " + speed);
         if (speed == 0)
             throw new IllegalStateException("Speed cannot be 0 for unblocked edge, use access properties to mark edge blocked! Should only occur for shortest path calculation. See #242.");
 
-        return (long) (edgeState.getDistance() * 3600 / speed);
+        return Math.round(edgeState.getDistance() / speed * 3.6 * 1000);
     }
 
     @Override
@@ -112,7 +102,7 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public String toString() {
-        return getName() + "|" + avSpeedEnc.getName().split("$")[0];
+        return getName() + "|" + speedEnc.getName().split("$")[0];
     }
 
 }

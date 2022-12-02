@@ -24,8 +24,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.CustomArea;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -45,6 +49,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 
@@ -149,17 +154,9 @@ public class GHUtility {
         return list;
     }
 
-    public static void printGraphForUnitTest(Graph g, FlagEncoder encoder) {
-        printGraphForUnitTest(g, encoder.getAccessEnc(), encoder.getAverageSpeedEnc());
-    }
-
     public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         printGraphForUnitTest(g, accessEnc, speedEnc, new BBox(
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
-    }
-
-    public static void printGraphForUnitTest(Graph g, FlagEncoder encoder, BBox bBox) {
-        printGraphForUnitTest(g, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), bBox);
     }
 
     public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, BBox bBox) {
@@ -267,12 +264,6 @@ public class GHUtility {
         return DistancePlaneProjection.DIST_PLANE.calcDist(fromLat, fromLon, toLat, toLon);
     }
 
-    public static void addRandomTurnCosts(Graph graph, long seed, EncodingManager em, FlagEncoder encoder, int maxTurnCost, TurnCostStorage turnCostStorage) {
-        DecimalEncodedValue turnCostEnc = em.getDecimalEncodedValue(TurnCost.key(encoder.toString()));
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxTurnCost, turnCostStorage);
-    }
-
     public static void addRandomTurnCosts(Graph graph, long seed, BooleanEncodedValue accessEnc, DecimalEncodedValue turnCostEnc, int maxTurnCost, TurnCostStorage turnCostStorage) {
         Random random = new Random(seed);
         double pNodeHasTurnCosts = 0.3;
@@ -345,6 +336,11 @@ public class GHUtility {
      */
     public static Graph sortDFS(Graph g, Graph sortedGraph) {
         if (g.getTurnCostStorage() != null) {
+            // not only would we have to sort the turn cost storage when we re-sort the graph, but we'd also have to make
+            // sure that the location index always snaps to real edges and not the corresponding artificial edge that we
+            // introduced to deal with via-way restrictions. Without sorting this works automatically because the real
+            // edges use lower edge ids. Otherwise we'd probably have to use some kind of is_artificial flag for each
+            // edge.
             throw new IllegalArgumentException("Sorting the graph is currently not supported in the presence of turn costs");
         }
         int nodes = g.getNodes();
@@ -423,28 +419,25 @@ public class GHUtility {
         return toSortedGraph;
     }
 
-    static Directory guessDirectory(GraphHopperStorage store) {
-        if (store.getDirectory() instanceof MMapDirectory) {
+    static Directory guessDirectory(BaseGraph graph) {
+        if (graph.getDirectory() instanceof MMapDirectory) {
             throw new IllegalStateException("not supported yet: mmap will overwrite existing storage at the same location");
         }
-        String location = store.getDirectory().getLocation();
-        boolean isStoring = ((GHDirectory) store.getDirectory()).isStoring();
+        String location = graph.getDirectory().getLocation();
+        boolean isStoring = ((GHDirectory) graph.getDirectory()).isStoring();
         return new RAMDirectory(location, isStoring);
     }
 
     /**
      * Create a new storage from the specified one without copying the data. CHGraphs won't be copied.
      */
-    public static GraphHopperStorage newStorage(GraphHopperStorage store) {
-        Directory outdir = guessDirectory(store);
-        boolean is3D = store.getNodeAccess().is3D();
-        GraphHopperStorage copy = new GraphBuilder(store.getEncodingManager())
-                .withTurnCosts(store.getTurnCostStorage() != null)
-                .set3D(is3D)
+    public static BaseGraph newGraph(BaseGraph baseGraph) {
+        Directory outdir = guessDirectory(baseGraph);
+        return new BaseGraph.Builder(baseGraph.getIntsForFlags())
+                .withTurnCosts(baseGraph.getTurnCostStorage() != null)
+                .set3D(baseGraph.getNodeAccess().is3D())
                 .setDir(outdir)
                 .create();
-        copy.getProperties().putAll(store.getProperties().getAll());
-        return copy;
     }
 
     public static int getAdjNode(Graph g, int edge, int adjNode) {
@@ -531,15 +524,6 @@ public class GHUtility {
                 return Helper.createPointList(0, 2, 6, 4);
             }
 
-            @Override
-            public int getOrigEdgeFirst() {
-                return origFirst;
-            }
-
-            @Override
-            public int getOrigEdgeLast() {
-                return origLast;
-            }
         };
     }
 
@@ -575,35 +559,16 @@ public class GHUtility {
     }
 
     /**
-     * Creates unique positive number for specified edgeId taking into account the direction defined
-     * by nodeA, nodeB and reverse.
-     */
-    public static int createEdgeKey(int nodeA, int nodeB, int edgeId, boolean reverse) {
-        edgeId = edgeId << 1;
-        if (reverse)
-            return (nodeA >= nodeB) ? edgeId : edgeId + 1;
-        return (nodeA > nodeB) ? edgeId + 1 : edgeId;
-    }
-
-    /**
      * Creates an edge key, i.e. an integer number that encodes an edge ID and the direction of an edge
      */
-    public static int createEdgeKey(int edgeId, boolean reverse) {
+    public static int createEdgeKey(int edgeId, boolean isLoop, boolean reverse) {
         // edge state in storage direction -> edge key is even
         // edge state against storage direction -> edge key is odd
-        return (edgeId << 1) + (reverse ? 1 : 0);
+        return (edgeId << 1) + ((reverse && !isLoop) ? 1 : 0);
     }
 
     /**
-     * Returns if the specified edgeKeys (created by createEdgeKey) are identical regardless of the
-     * direction.
-     */
-    public static boolean isSameEdgeKeys(int edgeKey1, int edgeKey2) {
-        return edgeKey1 / 2 == edgeKey2 / 2;
-    }
-
-    /**
-     * Returns the edgeKey of the opposite direction
+     * Returns the edgeKey of the opposite direction, be careful not to use this for loops!
      */
     public static int reverseEdgeKey(int edgeKey) {
         return edgeKey % 2 == 0 ? edgeKey + 1 : edgeKey - 1;
@@ -616,59 +581,51 @@ public class GHUtility {
         return edgeKey / 2;
     }
 
-    public static IntsRef setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, IntsRef edgeFlags) {
+    public static IntsRef setSpeed(double fwdSpeed, double bwdSpeed, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, IntsRef edgeFlags) {
         if (fwdSpeed < 0 || bwdSpeed < 0)
             throw new IllegalArgumentException("Speed must be positive but wasn't! fwdSpeed:" + fwdSpeed + ", bwdSpeed:" + bwdSpeed);
 
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue avgSpeedEnc = encoder.getAverageSpeedEnc();
-
-        avgSpeedEnc.setDecimal(false, edgeFlags, fwdSpeed);
+        speedEnc.setDecimal(false, edgeFlags, fwdSpeed);
         if (fwdSpeed > 0)
             accessEnc.setBool(false, edgeFlags, true);
 
-        if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || avgSpeedEnc.isStoreTwoDirections())) {
-            if (!avgSpeedEnc.isStoreTwoDirections())
-                throw new IllegalArgumentException("EncodedValue " + avgSpeedEnc.getName() + " supports only one direction " +
+        if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || speedEnc.isStoreTwoDirections())) {
+            if (!speedEnc.isStoreTwoDirections())
+                throw new IllegalArgumentException("EncodedValue " + speedEnc.getName() + " supports only one direction " +
                         "but two different speeds were specified " + fwdSpeed + " " + bwdSpeed);
-            avgSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
+            speedEnc.setDecimal(true, edgeFlags, bwdSpeed);
         }
         if (bwdSpeed > 0)
             accessEnc.setBool(true, edgeFlags, true);
         return edgeFlags;
     }
 
-    public static void setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, EdgeIteratorState... edges) {
-        setSpeed(fwdSpeed, bwdSpeed, encoder, Arrays.asList(edges));
+    public static void setSpeed(double fwdSpeed, double bwdSpeed, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EdgeIteratorState... edges) {
+        setSpeed(fwdSpeed, bwdSpeed, accessEnc, speedEnc, Arrays.asList(edges));
     }
 
-    public static void setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, Collection<EdgeIteratorState> edges) {
+    public static void setSpeed(double fwdSpeed, double bwdSpeed, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, Collection<EdgeIteratorState> edges) {
         if (fwdSpeed < 0 || bwdSpeed < 0)
             throw new IllegalArgumentException("Speed must be positive but wasn't! fwdSpeed:" + fwdSpeed + ", bwdSpeed:" + bwdSpeed);
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue avgSpeedEnc = encoder.getAverageSpeedEnc();
         for (EdgeIteratorState edge : edges) {
-            edge.set(avgSpeedEnc, fwdSpeed);
+            edge.set(speedEnc, fwdSpeed);
             if (fwdSpeed > 0)
                 edge.set(accessEnc, true);
 
-            if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || avgSpeedEnc.isStoreTwoDirections())) {
-                if (!avgSpeedEnc.isStoreTwoDirections())
-                    throw new IllegalArgumentException("EncodedValue " + avgSpeedEnc.getName() + " supports only one direction " +
+            if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || speedEnc.isStoreTwoDirections())) {
+                if (!speedEnc.isStoreTwoDirections())
+                    throw new IllegalArgumentException("EncodedValue " + speedEnc.getName() + " supports only one direction " +
                             "but two different speeds were specified " + fwdSpeed + " " + bwdSpeed);
-                edge.setReverse(avgSpeedEnc, bwdSpeed);
+                edge.setReverse(speedEnc, bwdSpeed);
             }
             if (bwdSpeed > 0)
                 edge.setReverse(accessEnc, true);
         }
     }
 
-    public static EdgeIteratorState setSpeed(double averageSpeed, boolean fwd, boolean bwd, FlagEncoder encoder, EdgeIteratorState edge) {
+    public static EdgeIteratorState setSpeed(double averageSpeed, boolean fwd, boolean bwd, BooleanEncodedValue accessEnc, DecimalEncodedValue avSpeedEnc, EdgeIteratorState edge) {
         if (averageSpeed < 0.0001 && (fwd || bwd))
             throw new IllegalStateException("Zero speed is only allowed if edge will get inaccessible. Otherwise Weighting can produce inconsistent results");
-
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
         edge.set(accessEnc, fwd, bwd);
         if (fwd)
             edge.set(avSpeedEnc, averageSpeed);
@@ -709,10 +666,9 @@ public class GHUtility {
         if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
             return edgeWeight;
         }
-        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
         double turnWeight = reverse
-                ? weighting.calcTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
-                : weighting.calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+                ? weighting.calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId)
+                : weighting.calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getEdge());
         return edgeWeight + turnWeight;
     }
 
@@ -740,23 +696,50 @@ public class GHUtility {
     public static List<CustomArea> readCountries() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
+
+        Map<String, Country> map = new HashMap<>(Country.values().length);
+        for (Country c : Country.values()) map.put(c.getAlpha2(), c);
+
         try (Reader reader = new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {
             JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
             return jsonFeatureCollection.getFeatures().stream()
-                    .map(CustomArea::fromJsonFeature)
+                    // exclude areas not in the list of Country enums like FX => Metropolitan France
+                    .filter(customArea -> map.get((String) customArea.getProperties().get("id")) != null)
+                    .map((f) -> {
+                        CustomArea ca = CustomArea.fromJsonFeature(f);
+                        Country country = map.get((String) f.getProperties().get("id"));
+                        ca.getProperties().put(Country.ISO_ALPHA3, country.name());
+                        return ca;
+                    })
                     .collect(Collectors.toList());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    public static void runConcurrently(List<Callable<String>> callables, int threads) {
+    public static CustomArea getFirstDuplicateArea(List<CustomArea> areas, String id) {
+        Set<String> result = new HashSet<>(areas.size());
+        for (CustomArea area : areas) {
+            String countryCode = (String) area.getProperties().get(id);
+            // in our country file there are not only countries but "subareas" (with ISO3166-2) or other unnamed areas
+            // like Metropolitan Netherlands
+            if (countryCode != null && !result.add(countryCode))
+                return area;
+        }
+        return null;
+    }
+
+    public static void runConcurrently(Stream<Callable<String>> callables, int threads) {
         ExecutorService executorService = Executors.newFixedThreadPool(threads);
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
-        callables.forEach(completionService::submit);
+        AtomicInteger count = new AtomicInteger();
+        callables.forEach(c -> {
+            count.incrementAndGet();
+            completionService.submit(c);
+        });
         executorService.shutdown();
         try {
-            for (int i = 0; i < callables.size(); i++)
+            for (int i = 0; i < count.get(); i++)
                 completionService.take().get();
         } catch (Exception e) {
             executorService.shutdownNow();
@@ -800,6 +783,11 @@ public class GHUtility {
         }
 
         @Override
+        public int getReverseEdgeKey() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
         public int getBaseNode() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -835,7 +823,17 @@ public class GHUtility {
         }
 
         @Override
-        public EdgeIteratorState setName(String name) {
+        public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> keyValues) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public List<EdgeKVStorage.KeyValue> getKeyValues() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public Object getValue(String key) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
@@ -966,16 +964,6 @@ public class GHUtility {
 
         @Override
         public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState edge) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getOrigEdgeFirst() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getOrigEdgeLast() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.routing.ev.Smoothness.*;
@@ -28,31 +29,26 @@ import static com.graphhopper.routing.ev.Smoothness.*;
  * @author Peter Karich
  */
 public class BikeTagParser extends BikeCommonTagParser {
-    public BikeTagParser() {
-        this("bike");
-    }
 
-    public BikeTagParser(String name) {
-        this(name, 4, 2, 0, false);
-    }
-
-    public BikeTagParser(PMap properties) {
-        this(properties.getString("name", "bike"),
-                properties.getInt("speed_bits", 4),
-                properties.getInt("speed_factor", 2),
-                properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0),
-                properties.getBool("speed_two_directions", false));
-
+    public BikeTagParser(EncodedValueLookup lookup, PMap properties) {
+        this(
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "bike"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "bike"))),
+                lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "bike"))),
+                lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class),
+                lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
+                properties.getString("name", "bike"),
+                lookup.getBooleanEncodedValue(Roundabout.KEY),
+                lookup.hasEncodedValue(TurnCost.key(properties.getString("name", "bike"))) ? lookup.getDecimalEncodedValue(TurnCost.key(properties.getString("name", "bike"))) : null
+        );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    public BikeTagParser(int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        this("bike", speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
-    }
-
-    public BikeTagParser(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        super(name, speedBits, speedFactor, maxTurnCosts, speedTwoDirections);
+    public BikeTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                         EnumEncodedValue<RouteNetwork> bikeRouteEnc, EnumEncodedValue<Smoothness> smoothnessEnc,
+                         String name, BooleanEncodedValue roundaboutEnc, DecimalEncodedValue turnCostEnc) {
+        super(accessEnc, speedEnc, priorityEnc, bikeRouteEnc, smoothnessEnc, name, roundaboutEnc, turnCostEnc);
         addPushingSection("path");
         addPushingSection("footway");
         addPushingSection("pedestrian");
@@ -72,16 +68,6 @@ public class BikeTagParser extends BikeCommonTagParser {
         preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
-
-        setSmoothnessSpeedFactor(EXCELLENT, 1.1d);
-        setSmoothnessSpeedFactor(GOOD, 1.0d);
-        setSmoothnessSpeedFactor(INTERMEDIATE, 0.9d);
-        setSmoothnessSpeedFactor(BAD, 0.7d);
-        setSmoothnessSpeedFactor(VERY_BAD, 0.6d);
-        setSmoothnessSpeedFactor(HORRIBLE, 0.5d);
-        setSmoothnessSpeedFactor(VERY_HORRIBLE, 0.4d);
-        // SmoothnessSpeed <= smoothnessFactorPushingSectionThreshold gets mapped to speed PUSHING_SECTION_SPEED
-        setSmoothnessSpeedFactor(IMPASSABLE, smoothnessFactorPushingSectionThreshold);
 
         barriers.add("kissing_gate");
         barriers.add("stile");

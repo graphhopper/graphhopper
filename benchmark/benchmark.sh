@@ -1,10 +1,11 @@
 #!/bin/bash
 # usage:
-# benchmark/benchmark.sh <data_dir> <results_dir> <small_osm_map_path> <big_osm_map_path> <use_measurement_time_as_ref_time>
+# benchmark/benchmark.sh <graph_dir> <results_dir> <summary_dir> <small_osm_map_path> <big_osm_map_path> <use_measurement_time_as_ref_time>
 #
 # where:
-# <data_dir> = base directory used to store results
-# <results_dir> = name of directory where results of this run are stored (inside <data_dir>)
+# <graph_dir> = name of directory used to store graphs
+# <results_dir> = name of directory where results of this run are stored
+# <summary_dir> = name of directory where the summary file is stored
 # <small_osm_map_path> = path to osm map the measurement is run on for slow measurements
 # <big_osm_map_path> = path to osm map the measurement is run on for fast measurements
 # <use_measurement_time_as_ref_time> = true/false, false by default, meaning the git commit time will be used as reference
@@ -14,26 +15,24 @@ set -euo pipefail
 # print all commands
 set -o xtrace
 
-defaultDataDir=measurements/
-defaultSingleResultsDir=measurements/results/$(date '+%d-%m-%Y-%s%N')/
+defaultGraphDir=measurements/
+defaultResultsDir=measurements/results/$(date '+%d-%m-%Y-%s%N')/
+defaultSummaryDir=measurements/
 defaultSmallMap=core/files/andorra.osm.pbf
 defaultBigMap=core/files/andorra.osm.pbf
 defaultUseMeasurementTimeAsRefTime=false
 
-# this is the directory where we read/write data from/to
-DATA_DIR=${1:-$defaultDataDir}
-RESULTS_DIR=${DATA_DIR}results/
-TMP_DIR=${DATA_DIR}tmp/
-SINGLE_RESULTS_DIR=${2:-$defaultSingleResultsDir}
-SMALL_OSM_MAP=${3:-$defaultSmallMap}
-BIG_OSM_MAP=${4:-$defaultBigMap}
-USE_MEASUREMENT_TIME_AS_REF_TIME=${5:-$defaultUseMeasurementTimeAsRefTime}
+GRAPH_DIR=${1:-$defaultGraphDir}
+RESULTS_DIR=${2:-$defaultResultsDir}
+SUMMARY_DIR=${3:-$defaultSummaryDir}
+SMALL_OSM_MAP=${4:-$defaultSmallMap}
+BIG_OSM_MAP=${5:-$defaultBigMap}
+USE_MEASUREMENT_TIME_AS_REF_TIME=${6:-$defaultUseMeasurementTimeAsRefTime}
 
 # create directories
-mkdir -p ${DATA_DIR}
+mkdir -p ${GRAPH_DIR}
 mkdir -p ${RESULTS_DIR}
-mkdir -p ${TMP_DIR}
-mkdir -p ${SINGLE_RESULTS_DIR}
+mkdir -p ${SUMMARY_DIR}
 
 # actually run the benchmarks:
 echo "1 - small map: node- and edge-based CH + slow routing"
@@ -43,18 +42,19 @@ com.graphhopper.tools.Measurement \
 datareader.file=${SMALL_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
 measurement.name=small_map \
-measurement.folder=${SINGLE_RESULTS_DIR} \
+measurement.folder=${RESULTS_DIR} \
 measurement.clean=true \
 measurement.stop_on_error=true \
-measurement.summaryfile=${RESULTS_DIR}summary_small.dat \
+measurement.summaryfile=${SUMMARY_DIR}summary_small.dat \
 measurement.repeats=1 \
 measurement.run_slow_routing=true \
 measurement.weighting=fastest \
 measurement.ch.node=true \
 measurement.ch.edge=true \
 measurement.lm=false \
-"graph.flag_encoders=car|turn_costs=true" \
-graph.location=${TMP_DIR}measurement-small-gh \
+measurement.vehicle=car \
+measurement.turn_costs=true \
+graph.location=${GRAPH_DIR}measurement-small-gh \
 prepare.min_network_size=10000 \
 measurement.json=true \
 measurement.count=5000 \
@@ -68,20 +68,21 @@ com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
 measurement.name=big_map \
-measurement.folder=${SINGLE_RESULTS_DIR} \
+measurement.folder=${RESULTS_DIR} \
 measurement.clean=true \
 measurement.stop_on_error=true \
-measurement.summaryfile=${RESULTS_DIR}summary_big.dat \
+measurement.summaryfile=${SUMMARY_DIR}summary_big.dat \
 measurement.repeats=1 \
 measurement.run_slow_routing=false \
 measurement.weighting=fastest \
 measurement.ch.node=true \
 measurement.ch.edge=false \
 measurement.lm=true \
-"measurement.lm.active_counts=[4,8,12,16]" \
+"measurement.lm.active_counts=[4,8,12]" \
 measurement.lm.edge_based=true \
-"graph.flag_encoders=car|turn_costs=true" \
-graph.location=${TMP_DIR}measurement-big-gh \
+measurement.vehicle=car \
+measurement.turn_costs=true \
+graph.location=${GRAPH_DIR}measurement-big-gh \
 prepare.min_network_size=10000 \
 measurement.json=true \
 measurement.count=5000 \
@@ -96,22 +97,23 @@ com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
 measurement.name=big_map_little_custom \
-measurement.folder=${SINGLE_RESULTS_DIR} \
+measurement.folder=${RESULTS_DIR} \
 measurement.clean=true \
 measurement.stop_on_error=true \
-measurement.summaryfile=${RESULTS_DIR}summary_big_little_custom.dat \
+measurement.summaryfile=${SUMMARY_DIR}summary_big_little_custom.dat \
 measurement.repeats=1 \
 measurement.run_slow_routing=false \
 measurement.weighting=custom \
-measurement.custom_model_file=benchmark/little_custom.yml \
+measurement.custom_model_file=benchmark/little_custom.json \
 graph.encoded_values=max_width,max_height,toll,hazmat \
 measurement.ch.node=true \
 measurement.ch.edge=false \
 measurement.lm=true \
 "measurement.lm.active_counts=[8]" \
 measurement.lm.edge_based=false \
-"graph.flag_encoders=car|turn_costs=true" \
-graph.location=${TMP_DIR}measurement-big-little-custom-gh \
+measurement.vehicle=car \
+measurement.turn_costs=true \
+graph.location=${GRAPH_DIR}measurement-big-little-custom-gh \
 prepare.min_network_size=10000 \
 measurement.json=true \
 measurement.count=5000 \
@@ -126,22 +128,23 @@ com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
 measurement.name=big_map_very_custom \
-measurement.folder=${SINGLE_RESULTS_DIR} \
+measurement.folder=${RESULTS_DIR} \
 measurement.clean=true \
 measurement.stop_on_error=true \
-measurement.summaryfile=${RESULTS_DIR}summary_big_very_custom.dat \
+measurement.summaryfile=${SUMMARY_DIR}summary_big_very_custom.dat \
 measurement.repeats=1 \
 measurement.run_slow_routing=false \
 measurement.weighting=custom \
-measurement.custom_model_file=benchmark/very_custom.yml \
+measurement.custom_model_file=benchmark/very_custom.json \
 graph.encoded_values=max_width,max_height,toll,hazmat \
 measurement.ch.node=true \
 measurement.ch.edge=false \
 measurement.lm=true \
 "measurement.lm.active_counts=[8]" \
 measurement.lm.edge_based=false \
-"graph.flag_encoders=car|turn_costs=true" \
-graph.location=${TMP_DIR}measurement-big-very-custom-gh \
+measurement.vehicle=car \
+measurement.turn_costs=true \
+graph.location=${GRAPH_DIR}measurement-big-very-custom-gh \
 prepare.min_network_size=10000 \
 measurement.json=true \
 measurement.count=5000 \
@@ -155,20 +158,21 @@ com.graphhopper.tools.Measurement \
 datareader.file=${BIG_OSM_MAP} \
 datareader.date_range_parser_day=2019-11-01 \
 measurement.name=big_map_outdoor \
-measurement.folder=${SINGLE_RESULTS_DIR} \
+measurement.folder=${RESULTS_DIR} \
 measurement.clean=true \
 measurement.stop_on_error=true \
-measurement.summaryfile=${RESULTS_DIR}summary_big_outdoor.dat \
+measurement.summaryfile=${SUMMARY_DIR}summary_big_outdoor.dat \
 measurement.repeats=1 \
 measurement.run_slow_routing=false \
 measurement.weighting=fastest \
 measurement.ch.node=true \
 measurement.ch.edge=false \
 measurement.lm=true \
-"measurement.lm.active_counts=[4,8,12,16]" \
+"measurement.lm.active_counts=[4,8,12]" \
 measurement.lm.edge_based=false \
-"graph.flag_encoders=foot" \
-graph.location=${TMP_DIR}measurement-big-outdoor-gh \
+measurement.vehicle=foot \
+measurement.turn_costs=false \
+graph.location=${GRAPH_DIR}measurement-big-outdoor-gh \
 prepare.min_network_size=10000 \
 measurement.json=true \
 measurement.count=5000 \

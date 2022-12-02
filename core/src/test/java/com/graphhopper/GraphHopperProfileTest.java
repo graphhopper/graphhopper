@@ -63,14 +63,14 @@ public class GraphHopperProfileTest {
         final GraphHopper hopper = new GraphHopper();
         hopper.setGraphHopperLocation(GH_LOCATION).setStoreOnFlush(false).
                 setProfiles(new Profile("profile").setVehicle("your_car"));
-        assertIllegalArgument(hopper::load, "entry in encoder list not supported: your_car");
+        assertIllegalArgument(hopper::importOrLoad, "entry in vehicle list not supported: your_car");
     }
 
     @Test
     public void vehicleDoesNotExist_error2() {
         final GraphHopper hopper = new GraphHopper().setGraphHopperLocation(GH_LOCATION).setStoreOnFlush(false).
                 setProfiles(new Profile("profile").setVehicle("your_car"));
-        assertIllegalArgument(hopper::load, "entry in encoder list not supported: your_car");
+        assertIllegalArgument(hopper::importOrLoad, "entry in vehicle list not supported: your_car");
     }
 
     @Test
@@ -95,7 +95,7 @@ public class GraphHopperProfileTest {
     public void profileWithUnknownWeighting_error() {
         final GraphHopper hopper = createHopper();
         hopper.setProfiles(new Profile("profile").setVehicle("car").setWeighting("your_weighting"));
-        assertIllegalArgument(hopper::load,
+        assertIllegalArgument(hopper::importOrLoad,
                 "Could not create weighting for profile: 'profile'",
                 "Weighting 'your_weighting' not supported"
         );
@@ -106,7 +106,7 @@ public class GraphHopperProfileTest {
         final GraphHopper hopper = createHopper();
         hopper.setProfiles(new Profile("profile1").setVehicle("car"));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("other_profile"));
-        assertIllegalArgument(hopper::load, "CH profile references unknown profile 'other_profile'");
+        assertIllegalArgument(hopper::importOrLoad, "CH profile references unknown profile 'other_profile'");
     }
 
     @Test
@@ -117,7 +117,7 @@ public class GraphHopperProfileTest {
                 new CHProfile("profile"),
                 new CHProfile("profile")
         );
-        assertIllegalArgument(hopper::load, "Duplicate CH reference to profile 'profile'");
+        assertIllegalArgument(hopper::importOrLoad, "Duplicate CH reference to profile 'profile'");
     }
 
     @Test
@@ -125,7 +125,7 @@ public class GraphHopperProfileTest {
         final GraphHopper hopper = createHopper();
         hopper.setProfiles(new Profile("profile1").setVehicle("car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("other_profile"));
-        assertIllegalArgument(hopper::load, "LM profile references unknown profile 'other_profile'");
+        assertIllegalArgument(hopper::importOrLoad, "LM profile references unknown profile 'other_profile'");
     }
 
     @Test
@@ -136,7 +136,7 @@ public class GraphHopperProfileTest {
                 new LMProfile("profile"),
                 new LMProfile("profile")
         );
-        assertIllegalArgument(hopper::load, "Multiple LM profiles are using the same profile 'profile'");
+        assertIllegalArgument(hopper::importOrLoad, "Multiple LM profiles are using the same profile 'profile'");
     }
 
     @Test
@@ -146,7 +146,7 @@ public class GraphHopperProfileTest {
         hopper.getLMPreparationHandler().setLMProfiles(
                 new LMProfile("profile").setPreparationProfile("xyz")
         );
-        assertIllegalArgument(hopper::load, "LM profile references unknown preparation profile 'xyz'");
+        assertIllegalArgument(hopper::importOrLoad, "LM profile references unknown preparation profile 'xyz'");
     }
 
     @Test
@@ -162,7 +162,7 @@ public class GraphHopperProfileTest {
                 new LMProfile("profile2").setPreparationProfile("profile1"),
                 new LMProfile("profile3").setPreparationProfile("profile2")
         );
-        assertIllegalArgument(hopper::load, "Cannot use 'profile2' as preparation_profile for LM profile 'profile3', because it uses another profile for preparation itself.");
+        assertIllegalArgument(hopper::importOrLoad, "Cannot use 'profile2' as preparation_profile for LM profile 'profile3', because it uses another profile for preparation itself.");
     }
 
     @Test
@@ -176,7 +176,7 @@ public class GraphHopperProfileTest {
         hopper.getLMPreparationHandler().setLMProfiles(
                 new LMProfile("profile1").setPreparationProfile("profile2")
         );
-        assertIllegalArgument(hopper::load, "Unknown LM preparation profile 'profile2' in LM profile 'profile1' cannot be used as preparation_profile");
+        assertIllegalArgument(hopper::importOrLoad, "Unknown LM preparation profile 'profile2' in LM profile 'profile1' cannot be used as preparation_profile");
     }
 
     private GraphHopper createHopper() {

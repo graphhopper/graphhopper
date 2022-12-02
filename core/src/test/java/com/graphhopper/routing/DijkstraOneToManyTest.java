@@ -18,8 +18,11 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -40,17 +43,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class DijkstraOneToManyTest {
 
+    private final BooleanEncodedValue accessEnc;
+    private final DecimalEncodedValue speedEnc;
     private final EncodingManager encodingManager;
-    private final FlagEncoder encoder;
-    private Weighting defaultWeighting;
+    private final Weighting defaultWeighting;
 
     public DijkstraOneToManyTest() {
-        encodingManager = EncodingManager.create("car");
-        encoder = encodingManager.getEncoder("car");
-        defaultWeighting = new ShortestWeighting(encoder);
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        defaultWeighting = new ShortestWeighting(accessEnc, speedEnc);
     }
 
-    private static void initGraphWeightLimit(Graph graph, FlagEncoder encoder) {
+    private static void initGraphWeightLimit(Graph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         //      0----1
         //     /     |
         //    7--    |
@@ -59,7 +64,7 @@ public class DijkstraOneToManyTest {
         //   |   |   |
         //   4---3---2
 
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
                 graph.edge(0, 1).setDistance(1),
                 graph.edge(1, 2).setDistance(1),
                 graph.edge(3, 2).setDistance(1),
@@ -87,7 +92,7 @@ public class DijkstraOneToManyTest {
     @Test
     public void testIssue239_and362() {
         BaseGraph graph = createGHStorage();
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
                 graph.edge(0, 1).setDistance(1),
                 graph.edge(1, 2).setDistance(1),
                 graph.edge(2, 0).setDistance(1),
@@ -106,7 +111,7 @@ public class DijkstraOneToManyTest {
     @Test
     public void testUseCache() {
         BaseGraph graph = createGHStorage();
-        initTestStorage(graph, encoder);
+        initTestStorage(graph, accessEnc, speedEnc);
         RoutingAlgorithm algo = createAlgo(graph);
         Path p = algo.calcPath(0, 4);
         assertEquals(IntArrayList.from(0, 4), p.calcNodes());
@@ -125,7 +130,7 @@ public class DijkstraOneToManyTest {
         // |       /
         // 7-10----
         // \-8
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
                 graph.edge(0, 1).setDistance(1),
                 graph.edge(1, 2).setDistance(1),
                 graph.edge(2, 3).setDistance(1),
@@ -139,7 +144,7 @@ public class DijkstraOneToManyTest {
     @Test
     public void testWeightLimit_issue380() {
         BaseGraph graph = createGHStorage();
-        initGraphWeightLimit(graph, encoder);
+        initGraphWeightLimit(graph, accessEnc, speedEnc);
 
         DijkstraOneToMany algo = createAlgo(graph);
         algo.setWeightLimit(3);
@@ -156,7 +161,7 @@ public class DijkstraOneToManyTest {
     @Test
     public void testUseCacheZeroPath_issue707() {
         BaseGraph graph = createGHStorage();
-        initTestStorage(graph, encoder);
+        initTestStorage(graph, accessEnc, speedEnc);
         RoutingAlgorithm algo = createAlgo(graph);
 
         Path p = algo.calcPath(0, 0);

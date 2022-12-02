@@ -39,10 +39,6 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class));
         else if (name.equals(RoadAccess.KEY))
             return new OSMRoadAccessParser(lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
-        else if (name.equals("car_access"))
-            return new OSMAccessParser(lookup.getBooleanEncodedValue("car_access"), lookup.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR), TransportationMode.CAR);
-        else if (name.equals("bike_access"))
-            return new OSMAccessParser(lookup.getBooleanEncodedValue("bike_access"), lookup.getBooleanEncodedValue(Roundabout.KEY), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE), TransportationMode.BIKE);
         else if (name.equals(MaxSpeed.KEY))
             return new OSMMaxSpeedParser(lookup.getDecimalEncodedValue(MaxSpeed.KEY));
         else if (name.equals(MaxWeight.KEY))
@@ -63,6 +59,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMTollParser(lookup.getEnumEncodedValue(Toll.KEY, Toll.class));
         else if (name.equals(TrackType.KEY))
             return new OSMTrackTypeParser(lookup.getEnumEncodedValue(TrackType.KEY, TrackType.class));
+        else if (name.equals(Hgv.KEY))
+            return new OSMHgvParser(lookup.getEnumEncodedValue(Hgv.KEY, Hgv.class));
         else if (name.equals(Hazmat.KEY))
             return new OSMHazmatParser(lookup.getEnumEncodedValue(Hazmat.KEY, Hazmat.class));
         else if (name.equals(HazmatTunnel.KEY))
@@ -71,6 +69,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMHazmatWaterParser(lookup.getEnumEncodedValue(HazmatWater.KEY, HazmatWater.class));
         else if (name.equals(Lanes.KEY))
             return new OSMLanesParser(lookup.getIntEncodedValue(Lanes.KEY));
+        else if (name.equals(OSMWayID.KEY))
+            return new OSMWayIDParser(lookup.getIntEncodedValue(OSMWayID.KEY));
         else if (name.equals(MtbRating.KEY))
             return new OSMMtbRatingParser(lookup.getIntEncodedValue(MtbRating.KEY));
         else if (name.equals(HikeRating.KEY))
@@ -79,7 +79,6 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMHorseRatingParser(lookup.getIntEncodedValue(HorseRating.KEY));
         else if (name.equals(Country.KEY))
             return new CountryParser(lookup.getEnumEncodedValue(Country.KEY, Country.class));
-
-        throw new IllegalArgumentException("DefaultTagParserFactory cannot find: " + name);
+        return null;
     }
 }

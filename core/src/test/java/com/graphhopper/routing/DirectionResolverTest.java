@@ -18,11 +18,12 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
@@ -43,14 +44,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @see DirectionResolverOnQueryGraphTest for tests that include direction resolving for virtual nodes and edges
  */
 public class DirectionResolverTest {
-    private FlagEncoder encoder;
+    private BooleanEncodedValue accessEnc;
+    private DecimalEncodedValue speedEnc;
     private BaseGraph graph;
     private NodeAccess na;
 
     @BeforeEach
     public void setup() {
-        encoder = FlagEncoders.createCar();
-        graph = new BaseGraph.Builder(EncodingManager.create(encoder)).create();
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        graph = new BaseGraph.Builder(em).create();
         na = graph.getNodeAccess();
     }
 
@@ -70,7 +74,7 @@ public class DirectionResolverTest {
         addNode(0, 0, 0);
         addNode(1, 0.1, 0.1);
         // with edges without access flags (blocked edges)
-        graph.edge(0, 1).set(encoder.getAccessEnc(), false, false);
+        graph.edge(0, 1).set(accessEnc, false, false);
 
         checkResult(0, impossible());
         checkResult(1, impossible());
@@ -382,11 +386,10 @@ public class DirectionResolverTest {
     }
 
     private EdgeIteratorState addEdge(int from, int to, boolean bothDirections) {
-        return GHUtility.setSpeed(60, true, bothDirections, encoder, graph.edge(from, to).setDistance(1));
+        return GHUtility.setSpeed(60, true, bothDirections, accessEnc, speedEnc, graph.edge(from, to).setDistance(1));
     }
 
     private boolean isAccessible(EdgeIteratorState edge, boolean reverse) {
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         return reverse ? edge.getReverse(accessEnc) : edge.get(accessEnc);
     }
 
@@ -400,7 +403,7 @@ public class DirectionResolverTest {
     }
 
     private int edge(int from, int to) {
-        EdgeExplorer explorer = graph.createEdgeExplorer(AccessFilter.outEdges(encoder.getAccessEnc()));
+        EdgeExplorer explorer = graph.createEdgeExplorer(AccessFilter.outEdges(accessEnc));
         EdgeIterator iter = explorer.setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {

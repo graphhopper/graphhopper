@@ -30,12 +30,12 @@ import static com.graphhopper.util.Helper.*;
  */
 public class Constants {
     /**
-     * The value of <tt>System.getProperty("java.version")</tt>. *
+     * The value of <code>System.getProperty("java.version")</code>. *
      */
     public static final String JAVA_VERSION = System.getProperty("java.version");
 
     /**
-     * The value of <tt>System.getProperty("os.name")</tt>. *
+     * The value of <code>System.getProperty("os.name")</code>. *
      */
     public static final String OS_NAME = System.getProperty("os.name");
     /**
@@ -68,11 +68,13 @@ public class Constants {
 
     public static final int VERSION_NODE = 9;
     public static final int VERSION_EDGE = 21;
-    public static final int VERSION_SHORTCUT = 8;
+    // this should be increased whenever the format of the serialized EncodingManager is changed
+    public static final int VERSION_EM = 1;
+    public static final int VERSION_SHORTCUT = 9;
     public static final int VERSION_NODE_CH = 0;
     public static final int VERSION_GEOMETRY = 6;
     public static final int VERSION_LOCATION_IDX = 5;
-    public static final int VERSION_STRING_IDX = 6;
+    public static final int VERSION_EDGEKV_STORAGE = 2;
     /**
      * The version without the snapshot string
      */
@@ -145,7 +147,7 @@ public class Constants {
 
     public static String getVersions() {
         return VERSION_NODE + "," + VERSION_EDGE + "," + VERSION_GEOMETRY + "," + VERSION_LOCATION_IDX
-                + "," + VERSION_STRING_IDX + "," + VERSION_SHORTCUT;
+                + "," + VERSION_EDGEKV_STORAGE + "," + VERSION_SHORTCUT;
     }
 
     public static String getMajorVersion() {

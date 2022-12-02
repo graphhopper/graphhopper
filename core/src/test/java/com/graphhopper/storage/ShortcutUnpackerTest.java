@@ -4,17 +4,13 @@ import com.carrotsearch.hppc.DoubleArrayList;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.ch.ShortcutUnpacker;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -34,16 +30,20 @@ public class ShortcutUnpackerTest {
     private static final class Fixture {
         private final boolean edgeBased;
         private final EncodingManager encodingManager;
-        private final FlagEncoder encoder;
+        private final BooleanEncodedValue accessEnc;
+        private final DecimalEncodedValue speedEnc;
+        private final DecimalEncodedValue turnCostEnc;
         private final BaseGraph graph;
         private CHStorageBuilder chBuilder;
         private RoutingCHGraph routingCHGraph;
 
         Fixture(boolean edgeBased) {
             this.edgeBased = edgeBased;
-            encoder = FlagEncoders.createCar(new PMap().putObject("max_turn_costs", 10).putObject("speed_two_directions", true));
-            encodingManager = EncodingManager.create(encoder);
-            graph = new BaseGraph.Builder(encodingManager).create();
+            accessEnc = new SimpleBooleanEncodedValue("access", true);
+            speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+            turnCostEnc = TurnCost.create("car", 10);
+            encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+            graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         }
 
         @Override
@@ -53,8 +53,8 @@ public class ShortcutUnpackerTest {
 
         private void freeze() {
             graph.freeze();
-            TurnCostProvider turnCostProvider = edgeBased ? new DefaultTurnCostProvider(encoder, graph.getTurnCostStorage()) : NO_TURN_COST_PROVIDER;
-            CHConfig chConfig = new CHConfig("profile", new FastestWeighting(encoder, turnCostProvider), edgeBased);
+            TurnCostProvider turnCostProvider = edgeBased ? new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()) : NO_TURN_COST_PROVIDER;
+            CHConfig chConfig = new CHConfig("profile", new FastestWeighting(accessEnc, speedEnc, turnCostProvider), edgeBased);
             CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
             chBuilder = new CHStorageBuilder(chStore);
             routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);
@@ -79,15 +79,15 @@ public class ShortcutUnpackerTest {
         }
 
         private void setTurnCost(int fromEdge, int viaNode, int toEdge, double cost) {
-            graph.getTurnCostStorage().set(((EncodedValueLookup) encodingManager).getDecimalEncodedValue(TurnCost.key(encoder.toString())), fromEdge, viaNode, toEdge, cost);
+            graph.getTurnCostStorage().set(turnCostEnc, fromEdge, viaNode, toEdge, cost);
         }
 
-        private void shortcut(int baseNode, int adjNode, int skip1, int skip2, int origFirst, int origLast, boolean reverse) {
+        private void shortcut(int baseNode, int adjNode, int skip1, int skip2, int origKeyFirst, int origKeyLast, boolean reverse) {
             // shortcut weight/distance is not important for us here
             double weight = 1;
             int flags = reverse ? PrepareEncoder.getScFwdDir() : PrepareEncoder.getScBwdDir();
             if (edgeBased) {
-                chBuilder.addShortcutEdgeBased(baseNode, adjNode, flags, weight, skip1, skip2, origFirst, origLast);
+                chBuilder.addShortcutEdgeBased(baseNode, adjNode, flags, weight, skip1, skip2, origKeyFirst, origKeyLast);
             } else {
                 chBuilder.addShortcutNodeBased(baseNode, adjNode, flags, weight, skip1, skip2);
             }
@@ -108,7 +108,7 @@ public class ShortcutUnpackerTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testUnpacking(Fixture f) {
         // 0-1-2-3-4-5-6
-        GHUtility.setSpeed(60, 30, f.encoder,
+        GHUtility.setSpeed(60, 30, f.accessEnc, f.speedEnc,
                 f.graph.edge(0, 1).setDistance(1),
                 f.graph.edge(1, 2).setDistance(1),
                 f.graph.edge(2, 3).setDistance(1),
@@ -119,11 +119,11 @@ public class ShortcutUnpackerTest {
         f.freeze();
 
         f.setCHLevels(1, 3, 5, 4, 2, 0, 6);
-        f.shortcut(4, 2, 2, 3, 2, 3, true);
-        f.shortcut(4, 6, 4, 5, 4, 5, false);
-        f.shortcut(2, 0, 0, 1, 0, 1, true);
-        f.shortcut(2, 6, 6, 7, 2, 5, false);
-        f.shortcut(0, 6, 8, 9, 0, 5, false);
+        f.shortcut(4, 2, 2, 3, 4, 6, true);
+        f.shortcut(4, 6, 4, 5, 8, 10, false);
+        f.shortcut(2, 0, 0, 1, 0, 2, true);
+        f.shortcut(2, 6, 6, 7, 4, 10, false);
+        f.shortcut(0, 6, 8, 9, 0, 10, false);
 
         {
             // unpack the shortcut 0->6, traverse original edges in 'forward' order (from node 0 to 6)
@@ -197,7 +197,7 @@ public class ShortcutUnpackerTest {
         //   2   4
         //    \ /
         // 0 - 1 - 5
-        GHUtility.setSpeed(60, 30, f.encoder,
+        GHUtility.setSpeed(60, 30, f.accessEnc, f.speedEnc,
                 f.graph.edge(0, 1).setDistance(1),
                 f.graph.edge(1, 2).setDistance(1),
                 f.graph.edge(2, 3).setDistance(1),
@@ -207,11 +207,11 @@ public class ShortcutUnpackerTest {
         f.freeze();
 
         f.setCHLevels(2, 4, 3, 1, 5, 0);
-        f.shortcut(3, 1, 1, 2, 1, 2, true);
-        f.shortcut(3, 1, 3, 4, 3, 4, false);
-        f.shortcut(1, 1, 6, 7, 1, 4, false);
-        f.shortcut(1, 0, 0, 8, 0, 4, true);
-        f.shortcut(5, 0, 9, 5, 0, 5, true);
+        f.shortcut(3, 1, 1, 2, 2, 4, true);
+        f.shortcut(3, 1, 3, 4, 6, 8, false);
+        f.shortcut(1, 1, 6, 7, 2, 8, false);
+        f.shortcut(1, 0, 0, 8, 0, 8, true);
+        f.shortcut(5, 0, 9, 5, 0, 10, true);
 
         {
             // unpack the shortcut 0->5, traverse original edges in 'forward' order (from node 0 to 5)
@@ -274,7 +274,7 @@ public class ShortcutUnpackerTest {
         // prev 0-1-2-3-4-5-6 next
         //      1 0 1 4 2 3 2      turn costs <-
         EdgeIteratorState edge0, edge1, edge2, edge3, edge4, edge5;
-        GHUtility.setSpeed(60, 30, f.encoder,
+        GHUtility.setSpeed(60, 30, f.accessEnc, f.speedEnc,
                 edge0 = f.graph.edge(0, 1).setDistance(1),
                 edge1 = f.graph.edge(1, 2).setDistance(1),
                 edge2 = f.graph.edge(2, 3).setDistance(1),
@@ -301,11 +301,11 @@ public class ShortcutUnpackerTest {
         f.setTurnCost(edge0.getEdge(), 0, PREV_EDGE, 1.0);
 
         f.setCHLevels(1, 3, 5, 4, 2, 0, 6);
-        f.shortcut(4, 2, 2, 3, 2, 3, true);
-        f.shortcut(4, 6, 4, 5, 4, 5, false);
-        f.shortcut(2, 0, 0, 1, 0, 1, true);
-        f.shortcut(2, 6, 6, 7, 2, 5, false);
-        f.shortcut(0, 6, 8, 9, 0, 5, false);
+        f.shortcut(4, 2, 2, 3, 4, 6, true);
+        f.shortcut(4, 6, 4, 5, 8, 10, false);
+        f.shortcut(2, 0, 0, 1, 0, 2, true);
+        f.shortcut(2, 6, 6, 7, 4, 10, false);
+        f.shortcut(0, 6, 8, 9, 0, 10, false);
 
         {
             // unpack the shortcut 0->6, traverse original edges in 'forward' order (from node 0 to 6)

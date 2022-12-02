@@ -5,11 +5,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
+import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
 import com.graphhopper.isochrone.algorithm.Triangulator;
 import com.graphhopper.jackson.ResponsePathSerializer;
-import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -18,13 +18,11 @@ import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
-import io.dropwizard.jersey.params.IntParam;
-import io.dropwizard.jersey.params.LongParam;
 import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.*;
 import org.slf4j.Logger;
@@ -37,13 +35,10 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 import java.util.function.ToDoubleFunction;
 
 import static com.graphhopper.resources.IsochroneResource.ResponseType.geojson;
-import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
 import static com.graphhopper.resources.RouteResource.removeLegacyParameters;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
@@ -71,12 +66,12 @@ public class IsochroneResource {
     public Response doGet(
             @Context UriInfo uriInfo,
             @QueryParam("profile") String profileName,
-            @QueryParam("buckets") @Range(min = 1, max = 20) @DefaultValue("1") IntParam nBuckets,
+            @QueryParam("buckets") @Range(min = 1, max = 20) @DefaultValue("1") OptionalInt nBuckets,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("point") @NotNull GHPointParam point,
-            @QueryParam("time_limit") @DefaultValue("600") LongParam timeLimitInSeconds,
-            @QueryParam("distance_limit") @DefaultValue("-1") LongParam distanceLimitInMeter,
-            @QueryParam("weight_limit") @DefaultValue("-1") LongParam weightLimit,
+            @QueryParam("time_limit") @DefaultValue("600") OptionalLong timeLimitInSeconds,
+            @QueryParam("distance_limit") @DefaultValue("-1") OptionalLong distanceLimitInMeter,
+            @QueryParam("weight_limit") @DefaultValue("-1") OptionalLong weightLimit,
             @QueryParam("type") @DefaultValue("json") ResponseType respType,
             @QueryParam("tolerance") @DefaultValue("0") double toleranceInMeter,
             @QueryParam("full_geometry") @DefaultValue("false") boolean fullGeometry) {
@@ -85,17 +80,17 @@ public class IsochroneResource {
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
-        if (Helper.isEmpty(profileName)) {
-            profileName = profileResolver.resolveProfile(hintsMap).getName();
-            removeLegacyParameters(hintsMap);
-        }
-        errorIfLegacyParameters(hintsMap);
+
+        PMap profileResolverHints = new PMap(hintsMap);
+        profileResolverHints.putObject("profile", profileName);
+        profileName = profileResolver.resolveProfile(profileResolverHints);
+        removeLegacyParameters(hintsMap);
 
         Profile profile = graphHopper.getProfile(profileName);
         if (profile == null)
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
         LocationIndex locationIndex = graphHopper.getLocationIndex();
-        Graph graph = graphHopper.getGraphHopperStorage();
+        BaseGraph graph = graphHopper.getBaseGraph();
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         BooleanEncodedValue inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName));
         if (hintsMap.has(Parameters.Routing.BLOCK_AREA)) {
@@ -111,29 +106,24 @@ public class IsochroneResource {
         ShortestPathTree shortestPathTree = new ShortestPathTree(queryGraph, queryGraph.wrapWeighting(weighting), reverseFlow, traversalMode);
 
         double limit;
-        if (weightLimit.get() > 0) {
-            limit = weightLimit.get();
-            shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 2_000));
-        } else if (distanceLimitInMeter.get() > 0) {
-            limit = distanceLimitInMeter.get();
-            shortestPathTree.setDistanceLimit(limit + Math.max(limit * 0.14, 2_000));
-        } else {
-            limit = timeLimitInSeconds.get() * 1000;
-            shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
-        }
-        ArrayList<Double> zs = new ArrayList<>();
-        double delta = limit / nBuckets.get();
-        for (int i = 0; i < nBuckets.get(); i++) {
-            zs.add((i + 1) * delta);
-        }
-
         ToDoubleFunction<ShortestPathTree.IsoLabel> fz;
-        if (weightLimit.get() > 0) {
+        if (weightLimit.orElseThrow(() -> new IllegalArgumentException("query param weight_limit is not a number.")) > 0) {
+            limit = weightLimit.getAsLong();
+            shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 2_000));
             fz = l -> l.weight;
-        } else if (distanceLimitInMeter.get() > 0) {
+        } else if (distanceLimitInMeter.orElseThrow(() -> new IllegalArgumentException("query param distance_limit is not a number.")) > 0) {
+            limit = distanceLimitInMeter.getAsLong();
+            shortestPathTree.setDistanceLimit(limit + Math.max(limit * 0.14, 2_000));
             fz = l -> l.distance;
         } else {
+            limit = timeLimitInSeconds.orElseThrow(() -> new IllegalArgumentException("query param time_limit is not a number.")) * 1000d;
+            shortestPathTree.setTimeLimit(limit + Math.max(limit * 0.14, 200_000));
             fz = l -> l.time;
+        }
+        ArrayList<Double> zs = new ArrayList<>();
+        double delta = limit / nBuckets.orElseThrow(() -> new IllegalArgumentException("query param buckets is not a number."));
+        for (int i = 0; i < nBuckets.getAsInt(); i++) {
+            zs.add((i + 1) * delta);
         }
 
         Triangulator.Result result = triangulator.triangulate(snap, queryGraph, shortestPathTree, fz, degreesFromMeters(toleranceInMeter));

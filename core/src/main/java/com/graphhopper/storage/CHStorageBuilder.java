@@ -31,9 +31,7 @@ public class CHStorageBuilder {
     private final CHStorage storage;
 
     public CHStorageBuilder(CHStorage chStorage) {
-        // todo: currently we create a GraphHopperStorage which creates a CHStorage for us, but really we should rather
-        // be able to create a GraphHopperStorage and build a CHStorage on top. So if anything CHStorageBuilder should
-        // create CHStorage, not receive it here.
+        // todo: maybe CHStorageBuilder should create CHStorage, not receive it here
         this.storage = chStorage;
     }
 
@@ -62,15 +60,16 @@ public class CHStorageBuilder {
     }
 
     /**
-     * @param origFirst The first original edge that is skipped by this shortcut. For example for the following shortcut
-     *                  edge from x to y, which itself skips the shortcuts x->v and v->y the first original edge would
-     *                  be x->u: x->u->v->w->y
-     * @param origLast  like origFirst, but the last orig edge, i.e w->y in above example
+     * @param origKeyFirst The first original edge key that is skipped by this shortcut *in the direction of the shortcut*.
+     *                     This definition assumes that edge-based shortcuts are one-directional, and they are.
+     *                     For example for the following shortcut edge from x to y: x->u->v->w->y ,
+     *                     which skips the shortcuts x->v and v->y the first original edge key would be the one of the edge x->u
+     * @param origKeyLast  like origKeyFirst, but the last orig edge key, i.e. the key of w->y in above example
      */
     public int addShortcutEdgeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2,
-                                    int origFirst, int origLast) {
+                                    int origKeyFirst, int origKeyLast) {
         checkNewShortcut(a, b);
-        int shortcut = storage.shortcutEdgeBased(a, b, accessFlags, weight, skippedEdge1, skippedEdge2, origFirst, origLast);
+        int shortcut = storage.shortcutEdgeBased(a, b, accessFlags, weight, skippedEdge1, skippedEdge2, origKeyFirst, origKeyLast);
         setLastShortcut(a, shortcut);
         return shortcut;
     }

@@ -34,6 +34,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.routing.weighting.custom.FindMinMax;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
@@ -65,8 +66,6 @@ public class Router {
     private final TranslationMap translationMap;
     private final RouterConfig routerConfig;
     private final WeightingFactory weightingFactory;
-    // todo: these should not be necessary anymore as soon as GraphHopperStorage (or something that replaces) it acts
-    // like a 'graph database'
     private final Map<String, RoutingCHGraph> chGraphs;
     private final Map<String, LandmarkStorage> landmarks;
     private final boolean chEnabled;
@@ -283,12 +282,12 @@ public class Router {
         double wayPointMaxDistance = request.getHints().getDouble(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 1d);
         double elevationWayPointMaxDistance = request.getHints().getDouble(ELEVATION_WAY_POINT_MAX_DISTANCE, routerConfig.getElevationWayPointMaxDistance());
 
-        DouglasPeucker peucker = new DouglasPeucker().
+        RamerDouglasPeucker peucker = new RamerDouglasPeucker().
                 setMaxDistance(wayPointMaxDistance).
                 setElevationMaxDistance(elevationWayPointMaxDistance);
         PathMerger pathMerger = new PathMerger(graph, weighting).
                 setCalcPoints(calcPoints).
-                setDouglasPeucker(peucker).
+                setRamerDouglasPeucker(peucker).
                 setEnableInstructions(enableInstructions).
                 setPathDetailsBuilders(pathDetailsBuilderFactory, request.getPathDetails()).
                 setSimplifyResponse(routerConfig.isSimplifyResponse() && wayPointMaxDistance > 0);
@@ -561,6 +560,9 @@ public class Router {
                 throw new IllegalArgumentException("Cannot find LM preparation for the requested profile: '" + profile.getName() + "'" +
                         "\nYou can try disabling LM using " + Parameters.Landmark.DISABLE + "=true" +
                         "\navailable LM profiles: " + landmarks.keySet());
+            if (profile instanceof CustomProfile && request.getCustomModel() != null
+                    && !request.getHints().getBool("lm.disable", false))
+                FindMinMax.checkLMConstraints(((CustomProfile) profile).getCustomModel(), request.getCustomModel(), lookup);
             RoutingAlgorithmFactory routingAlgorithmFactory = new LMRoutingAlgorithmFactory(landmarkStorage).setDefaultActiveLandmarks(routerConfig.getActiveLandmarkCount());
             return new FlexiblePathCalculator(queryGraph, routingAlgorithmFactory, weighting, getAlgoOpts());
         }

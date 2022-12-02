@@ -63,13 +63,13 @@ public class MapMatching2Test {
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
 
-        MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
+        MapMatching mapMatching = MapMatching.fromGraphHopper(hopper, new PMap().putObject("profile", "my_profile"));
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-13.gpx"), Gpx.class);
         MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
 
         // make sure no virtual edges are returned
-        int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();
+        int edgeCount = hopper.getBaseGraph().getAllEdges().length();
         for (EdgeMatch em : mr.getEdgeMatches()) {
             assertTrue(em.getEdgeState().getEdge() < edgeCount, "result contains virtual edges:" + em.getEdgeState().toString());
             validateEdgeMatch(em);
@@ -88,7 +88,7 @@ public class MapMatching2Test {
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
 
-        MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
+        MapMatching mapMatching = MapMatching.fromGraphHopper(hopper, new PMap().putObject("profile", "my_profile"));
 
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-70.gpx"), Gpx.class);
         MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
@@ -108,14 +108,14 @@ public class MapMatching2Test {
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
 
-        MapMatching mapMatching = new MapMatching(hopper, new PMap().putObject("profile", "my_profile"));
+        MapMatching mapMatching = MapMatching.fromGraphHopper(hopper, new PMap().putObject("profile", "my_profile"));
 
         // query with two identical points
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/issue-127.gpx"), Gpx.class);
         MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
 
         // make sure no virtual edges are returned
-        int edgeCount = hopper.getGraphHopperStorage().getAllEdges().length();
+        int edgeCount = hopper.getBaseGraph().getAllEdges().length();
         for (EdgeMatch em : mr.getEdgeMatches()) {
             assertTrue(em.getEdgeState().getEdge() < edgeCount, "result contains virtual edges:" + em.getEdgeState().toString());
             validateEdgeMatch(em);

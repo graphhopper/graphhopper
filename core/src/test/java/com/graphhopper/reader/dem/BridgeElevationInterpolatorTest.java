@@ -19,7 +19,6 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.ev.RoadEnvironment;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
@@ -71,9 +70,8 @@ public class BridgeElevationInterpolatorTest extends EdgeElevationInterpolatorTe
         na.setNode(8, 30, 10, 10);
         na.setNode(9, 40, 10, 0);
 
-        FlagEncoder encoder = encodingManager.getEncoder("car");
         EdgeIteratorState edge01, edge12, edge23, edge34, edge56, edge67, edge78, edge89, edge17, edge27, edge37;
-        GHUtility.setSpeed(60, 60, encoder,
+        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
                 edge01 = graph.edge(0, 1).setDistance(10),
                 edge12 = graph.edge(1, 2).setDistance(10),
                 edge23 = graph.edge(2, 3).setDistance(10),

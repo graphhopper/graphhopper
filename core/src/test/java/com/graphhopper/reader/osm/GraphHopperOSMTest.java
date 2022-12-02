@@ -23,6 +23,7 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
@@ -40,6 +41,7 @@ import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.jupiter.api.Assertions.*;
@@ -164,13 +166,13 @@ public class GraphHopperOSMTest {
                 setOSMFile("../core/files/monaco.osm.gz");
         gh.importOrLoad();
 
-        final NodeAccess na = gh.getGraphHopperStorage().getNodeAccess();
+        final NodeAccess na = gh.getBaseGraph().getNodeAccess();
         final Collection<Integer> indexNodeList = new TreeSet<>();
         LocationIndexTree index = (LocationIndexTree) gh.getLocationIndex();
-        final EdgeExplorer edgeExplorer = gh.getGraphHopperStorage().createEdgeExplorer();
+        final EdgeExplorer edgeExplorer = gh.getBaseGraph().createEdgeExplorer();
         final BBox bbox = new BBox(7.422, 7.429, 43.729, 43.734);
         index.query(bbox, edgeId -> {
-            EdgeIteratorState edge = gh.getGraphHopperStorage().getEdgeIteratorStateForKey(edgeId * 2);
+            EdgeIteratorState edge = gh.getBaseGraph().getEdgeIteratorStateForKey(edgeId * 2);
             for (int i = 0; i < 2; i++) {
                 int nodeId = i == 0 ? edge.getBaseNode() : edge.getAdjNode();
                 double lat = na.getLat(nodeId);
@@ -190,7 +192,7 @@ public class GraphHopperOSMTest {
         new BreadthFirstSearch() {
             @Override
             protected GHBitSet createBitSet() {
-                return new GHBitSetImpl(gh.getGraphHopperStorage().getNodes());
+                return new GHBitSetImpl(gh.getBaseGraph().getNodes());
             }
 
             @Override
@@ -417,8 +419,8 @@ public class GraphHopperOSMTest {
         // Now it doesn't work like that anymore, so I set this parameter so the test doesn't fail.
         ((LocationIndexTree) instance.getLocationIndex()).setMaxRegionSearch(300);
 
-        assertEquals(5, instance.getGraphHopperStorage().getNodes());
-        assertEquals(8, instance.getGraphHopperStorage().getEdges());
+        assertEquals(5, instance.getBaseGraph().getNodes());
+        assertEquals(8, instance.getBaseGraph().getEdges());
 
         // A to D
         GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setProfile(profile1));
@@ -454,76 +456,66 @@ public class GraphHopperOSMTest {
     }
 
     @Test
-    public void testFailsForWrongConfig() {
+    public void testNothingHappensWhenFlagEncodersAreChangedForLoad() {
         instance = new GraphHopper().init(
                         new GraphHopperConfig().
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
-                                putObject("graph.flag_encoders", "foot,car").
+                                putObject("graph.vehicles", "foot,car").
                                 setProfiles(Arrays.asList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                                         new Profile("car").setVehicle("car").setWeighting("fastest")
                                 ))).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
-        assertEquals(5, instance.getGraphHopperStorage().getNodes());
+        assertEquals(5, instance.getBaseGraph().getNodes());
         instance.close();
 
-        // different config (flagEncoder list)
-        try {
-            GraphHopper tmpGH = new GraphHopper().init(
-                            new GraphHopperConfig().
-                                    putObject("datareader.file", testOsm3).
-                                    putObject("datareader.dataaccess", "RAM").
-                                    putObject("graph.flag_encoders", "foot").
-                                    setProfiles(Collections.singletonList(
-                                            new Profile("foot").setVehicle("foot").setWeighting("fastest")
-                                    ))).
-                    setOSMFile(testOsm3).
-                    setGraphHopperLocation(ghLoc);
-            tmpGH.load();
-            fail();
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage().startsWith("Encoding does not match"), ex.getMessage());
-        }
+        // different flagEncoder list has no effect when loading, so it does not matter, but the profiles must be the same
+        GraphHopper tmpGH = new GraphHopper().init(
+                        new GraphHopperConfig().
+                                putObject("datareader.file", testOsm3).
+                                putObject("datareader.dataaccess", "RAM").
+                                putObject("graph.vehicles", "foot").
+                                setProfiles(Collections.singletonList(
+                                        new Profile("foot").setVehicle("foot").setWeighting("fastest")
+                                ))).
+                setOSMFile(testOsm3).
+                setGraphHopperLocation(ghLoc);
+        IllegalStateException e = assertThrows(IllegalStateException.class, tmpGH::load);
+        assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
 
-        // different order is no longer okay, see #350
-        try {
-            GraphHopper tmpGH = new GraphHopper().init(new GraphHopperConfig().
-                            putObject("datareader.file", testOsm3).
-                            putObject("datareader.dataaccess", "RAM").
-                            putObject("graph.flag_encoders", "car,foot").
-                            setProfiles(Arrays.asList(
-                                    new Profile("car").setVehicle("car").setWeighting("fastest"),
-                                    new Profile("foot").setVehicle("foot").setWeighting("fastest")
-                            ))).
-                    setOSMFile(testOsm3)
-                    .setGraphHopperLocation(ghLoc);
-            tmpGH.load();
-            fail();
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage().startsWith("Encoding does not match"), ex.getMessage());
-        }
+        // different order of graph.vehicles is also fine, but profiles must be in same order
+        tmpGH = new GraphHopper().init(new GraphHopperConfig().
+                        putObject("datareader.file", testOsm3).
+                        putObject("datareader.dataaccess", "RAM").
+                        putObject("graph.vehicles", "car,foot").
+                        setProfiles(Arrays.asList(
+                                new Profile("car").setVehicle("car").setWeighting("fastest"),
+                                new Profile("foot").setVehicle("foot").setWeighting("fastest")
+                        ))).
+                setOSMFile(testOsm3)
+                .setGraphHopperLocation(ghLoc);
+        e = assertThrows(IllegalStateException.class, tmpGH::load);
+        assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
 
-        // different encoded values should fail to load
+        // different encoded values do not matter either
         instance = new GraphHopper().init(
                         new GraphHopperConfig().
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
                                 putObject("graph.encoded_values", "road_class").
-                                putObject("graph.flag_encoders", "foot,car").
+                                putObject("graph.vehicles", "foot,car").
                                 setProfiles(Arrays.asList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                                         new Profile("car").setVehicle("car").setWeighting("fastest")
                                 ))).
                 setOSMFile(testOsm3).
                 setGraphHopperLocation(ghLoc);
-        try {
-            instance.load();
-            fail();
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage().startsWith("Encoded values do not match"), ex.getMessage());
-        }
+        instance.load();
+        assertEquals(5, instance.getBaseGraph().getNodes());
+        assertEquals("foot_access,foot_average_speed,foot_priority,car_access,car_average_speed,foot_subnetwork,car_subnetwork,roundabout,road_class,road_class_link,road_environment,max_speed,road_access,foot_network",
+                instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
     }
 
     @Test
@@ -532,7 +524,7 @@ public class GraphHopperOSMTest {
                         new GraphHopperConfig().
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
-                                putObject("graph.flag_encoders", "foot,car").
+                                putObject("graph.vehicles", "foot,car").
                                 setProfiles(Arrays.asList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                                         new Profile("car").setVehicle("car").setWeighting("fastest")
@@ -540,26 +532,27 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         // older versions <= 0.12 did not store this property, ensure that we fail to load it
-        instance.getGraphHopperStorage().getProperties().remove("graph.encoded_values");
-        instance.getGraphHopperStorage().flush();
-        assertEquals(5, instance.getGraphHopperStorage().getNodes());
+        instance.getProperties().remove("graph.encoded_values");
+        instance.getBaseGraph().flush();
+        assertEquals(5, instance.getBaseGraph().getNodes());
         instance.close();
 
-        // different encoded values should fail to load
+        // different encoded values are ignored anyway
         instance = new GraphHopper().init(
                         new GraphHopperConfig().
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
                                 putObject("graph.location", ghLoc).
                                 putObject("graph.encoded_values", "road_environment,road_class").
-                                putObject("graph.flag_encoders", "foot,car").
+                                putObject("graph.vehicles", "foot,car").
                                 setProfiles(Arrays.asList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                                         new Profile("car").setVehicle("car").setWeighting("fastest")
                                 ))).
                 setOSMFile(testOsm3);
-        Exception ex = assertThrows(Exception.class, () -> instance.load());
-        assertTrue(ex.getMessage().startsWith("Encoded values do not match"), ex.getMessage());
+        instance.load();
+        assertEquals(5, instance.getBaseGraph().getNodes());
+        assertEquals("foot_access,foot_average_speed,foot_priority,car_access,car_average_speed,foot_subnetwork,car_subnetwork,roundabout,road_class,road_class_link,road_environment,max_speed,road_access,foot_network", instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
     }
 
     @Test
@@ -647,8 +640,8 @@ public class GraphHopperOSMTest {
 
         ((LocationIndexTree) instance.getLocationIndex()).setMaxRegionSearch(300);
 
-        assertEquals(2, instance.getGraphHopperStorage().getNodes());
-        assertEquals(2, instance.getGraphHopperStorage().getAllEdges().length());
+        assertEquals(2, instance.getBaseGraph().getNodes());
+        assertEquals(2, instance.getBaseGraph().getAllEdges().length());
 
         // A to E only for foot
         GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.19, 52).setProfile(profile));
@@ -667,7 +660,7 @@ public class GraphHopperOSMTest {
                 init(new GraphHopperConfig().
                         putObject("datareader.file", testOsm3).
                         putObject("prepare.min_network_size", 0).
-                        putObject("graph.flag_encoders", vehicle).
+                        putObject("graph.vehicles", vehicle).
                         setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
                         setCHProfiles(Collections.singletonList(new CHProfile(profile)))
                 ).
@@ -732,11 +725,11 @@ public class GraphHopperOSMTest {
                     assertEquals((long) shortcutCount, chGraph.getValue().getShortcuts());
 
                 String keyError = Parameters.CH.PREPARE + "error." + name;
-                String valueError = hopper.getGraphHopperStorage().getProperties().get(keyError);
+                String valueError = hopper.getProperties().get(keyError);
                 assertTrue(valueError.isEmpty(), "Properties for " + name + " should NOT contain error " + valueError + " [" + threadCount + "]");
 
                 String key = Parameters.CH.PREPARE + "date." + name;
-                String value = hopper.getGraphHopperStorage().getProperties().get(key);
+                String value = hopper.getProperties().get(key);
                 assertFalse(value.isEmpty(), "Properties for " + name + " did NOT contain finish date [" + threadCount + "]");
             }
             hopper.close();
@@ -781,11 +774,11 @@ public class GraphHopperOSMTest {
                     assertEquals((int) landmarksCount, landmarks.getValue().getSubnetworksWithLandmarks());
 
                 String keyError = Parameters.Landmark.PREPARE + "error." + name;
-                String valueError = hopper.getGraphHopperStorage().getProperties().get(keyError);
+                String valueError = hopper.getProperties().get(keyError);
                 assertTrue(valueError.isEmpty(), "Properties for " + name + " should NOT contain error " + valueError + " [" + threadCount + "]");
 
                 String key = Parameters.Landmark.PREPARE + "date." + name;
-                String value = hopper.getGraphHopperStorage().getProperties().get(key);
+                String value = hopper.getProperties().get(key);
                 assertFalse(value.isEmpty(), "Properties for " + name + " did NOT contain finish date [" + threadCount + "]");
             }
             hopper.close();
@@ -841,14 +834,12 @@ public class GraphHopperOSMTest {
         {
             // problem: we add another profile, which is not allowed, because there would be no subnetwork ev for it
             GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
-                    new Profile("car").setVehicle("car").setWeighting("shortest"),
+                    new Profile("car").setVehicle("car").setWeighting("fastest"),
                     new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3)).setVehicle("car"),
                     new Profile("car2").setVehicle("car").setWeighting("fastest")
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
-            // so far we get another error message in this case, because GraphHopperStorage checks the encoded values
-            // in loadExisting already
-            assertTrue(e.getMessage().contains("Encoded values do not match"), e.getMessage());
+            assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
             hopper.close();
         }
         {
@@ -858,7 +849,7 @@ public class GraphHopperOSMTest {
                     new Profile("car").setVehicle("car").setWeighting("shortest")
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
-            assertTrue(e.getMessage().contains("Encoded values do not match"), e.getMessage());
+            assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
             hopper.close();
         }
     }

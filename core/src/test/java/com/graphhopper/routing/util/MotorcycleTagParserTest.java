@@ -18,8 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
@@ -37,9 +37,22 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class MotorcycleTagParserTest {
-    private final EncodingManager em = EncodingManager.create("motorcycle,foot");
-    private final MotorcycleTagParser parser = (MotorcycleTagParser) em.getEncoder("motorcycle");
-    private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
+    private final BooleanEncodedValue motorcycleAccessEnc = VehicleAccess.create("motorcycle");
+    private final DecimalEncodedValue motorcycleSpeedEnc = VehicleSpeed.create("motorcycle", 5, 5, true);
+    private final DecimalEncodedValue motorcyclePriorityEnc = VehiclePriority.create("motorcycle", 4, PriorityCode.getFactor(1), false);
+    private final DecimalEncodedValue motorcycleCurvatureEnc = new DecimalEncodedValueImpl("motorcycle_curvature", 4, 0.1, false);
+    private final BooleanEncodedValue footAccessEnc = VehicleAccess.create("foot");
+    private final DecimalEncodedValue footSpeedEnc = VehicleSpeed.create("foot", 4, 1, false);
+    private final EncodingManager em = EncodingManager.start()
+            .add(motorcycleAccessEnc).add(motorcycleSpeedEnc).add(motorcyclePriorityEnc).add(motorcycleCurvatureEnc)
+            .add(footAccessEnc).add(footSpeedEnc)
+            .build();
+    private final MotorcycleTagParser parser;
+
+    public MotorcycleTagParserTest() {
+        parser = new MotorcycleTagParser(em, new PMap());
+        parser.init(new DateRangeParser());
+    }
 
     private Graph initExampleGraph() {
         BaseGraph gs = new BaseGraph.Builder(em).set3D(true).create();
@@ -51,7 +64,7 @@ public class MotorcycleTagParserTest {
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
         edge.setDistance(100);
 
-        edge.set(accessEnc, true, true).set(parser.getAverageSpeedEnc(), 10.0, 15.0);
+        edge.set(motorcycleAccessEnc, true, true).set(motorcycleSpeedEnc, 10.0, 15.0);
         return gs;
     }
 
@@ -101,6 +114,8 @@ public class MotorcycleTagParserTest {
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
         assertTrue(parser.getAccess(way).canSkip());
+        way.setTag("motor_vehicle", "agricultural;forestry");
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "service");
@@ -144,8 +159,8 @@ public class MotorcycleTagParserTest {
     @Test
     public void testSetSpeed0_issue367() {
         IntsRef edgeFlags = em.createEdgeFlags();
-        accessEnc.setBool(false, edgeFlags, true);
-        accessEnc.setBool(true, edgeFlags, true);
+        motorcycleAccessEnc.setBool(false, edgeFlags, true);
+        motorcycleAccessEnc.setBool(true, edgeFlags, true);
         parser.getAverageSpeedEnc().setDecimal(false, edgeFlags, 10);
         parser.getAverageSpeedEnc().setDecimal(true, edgeFlags, 10);
 
@@ -155,37 +170,7 @@ public class MotorcycleTagParserTest {
         parser.setSpeed(false, edgeFlags, 0);
         assertEquals(0, parser.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
         assertEquals(10, parser.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
-        assertFalse(accessEnc.getBool(false, edgeFlags));
-        assertTrue(accessEnc.getBool(true, edgeFlags));
-    }
-
-    @Test
-    public void testCurvature() {
-        Graph graph = initExampleGraph();
-        EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
-
-        double bendinessOfStraightWay = getBendiness(edge, 100.0);
-        double bendinessOfCurvyWay = getBendiness(edge, 10.0);
-
-        assertTrue(bendinessOfCurvyWay < bendinessOfStraightWay, "The bendiness of the straight road is smaller than the one of the curvy road");
-    }
-
-    private double getBendiness(EdgeIteratorState edge, double beelineDistance) {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        // set point_list such that it yields the requested beelineDistance
-        GHPoint point = new GHPoint(11.3, 45.2);
-        GHPoint toPoint = DistanceCalcEarth.DIST_EARTH.projectCoordinate(point.lat, point.lon, beelineDistance, 90);
-        PointList pointList = new PointList();
-        pointList.add(point);
-        pointList.add(toPoint);
-        way.setTag("point_list", pointList);
-
-        assertTrue(parser.getAccess(way).isWay());
-        IntsRef flags = parser.handleWayTags(em.createEdgeFlags(), way);
-        edge.setFlags(flags);
-        parser.applyWayTags(way, edge);
-        DecimalEncodedValue curvatureEnc = parser.getDecimalEncodedValue(EncodingManager.getKey(parser, "curvature"));
-        return edge.get(curvatureEnc);
+        assertFalse(motorcycleAccessEnc.getBool(false, edgeFlags));
+        assertTrue(motorcycleAccessEnc.getBool(true, edgeFlags));
     }
 }

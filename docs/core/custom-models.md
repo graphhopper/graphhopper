@@ -4,6 +4,8 @@ GraphHopper provides an easy-to-use way to customize its route calculations: Cus
 default routing behavior by specifying a set of rules in JSON language. Here we will first explain some theoretical
 background and then show how to use custom models in practice.
 
+Try some live examples in [this blog post](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/).
+
 ## How GraphHopper's route calculations work
 
 One of GraphHopper's most important functionality is the calculation of the 'optimal' route between two locations. To do
@@ -71,20 +73,36 @@ encoded values are the following (some of their possible values are given in bra
 - surface: (PAVED, DIRT, SAND, GRAVEL, ...)
 - smoothness: (EXCELLENT, GOOD, INTERMEDIATE, ...)
 - toll: (MISSING, NO, HGV, ALL)
+- bike_network, foot_network: (MISSING, INTERNATIONAL, NATIONAL, REGIONAL, LOCAL, OTHER)
+- country: (`MISSING` or the country as a `ISO3166-1:alpha3` code e.g. `DEU`)
+- hazmat: (YES, NO), hazmat_tunnel: (A, B, .., E), hazmat_water: (YES, PERMISSIVE, NO)
+- hgv: (MISSING, YES, DESIGNATED, ...)
+- track_type: (MISSING, GRADE1, GRADE2, ..., GRADE5)
+- urban_density: (RURAL, RESIDENTIAL, CITY)
 
-To learn about all available encoded values you can query the `/info` endpoint.
+
+To learn about all available encoded values you can query the `/info` endpoint
 
 Besides this kind of categories, which can take multiple different string values, there are also some that represent a
-boolean value (they are either true or false for a given edge), like:
+boolean value (they are either true or false for a given road segment), like:
 
 - get_off_bike
 - road_class_link
+- roundabout
+- with postfix `_access` contains the access (as boolean) for a specific vehicle
 
 There are also some that take on a numeric value, like:
 
-- max_weight
-- max_height
-- max_width
+- average_slope: a number for 100 * "elevation change" / edge_distance for a road segment; it changes the sign in reverse direction; see max_slope
+- curvature: "beeline distance" / edge_distance (0..1) e.g. a curvy road is smaller than 1
+- hike_rating, horse_rating, mtb_rating: a number from 0 to 6 for the `sac_scale` in OSM, e.g. 0 means "missing", 1 means "hiking", 2 means "mountain_hiking" and so on
+- lanes: number of lanes
+- max_slope: an unsigned decimal for the maximum slope (100 * "elevation change / distance_i") of an edge with `sum(distance_i)=edge_distance`. Important for longer road segments where ups (or downs) can be much bigger than the average_slope.
+- max_speed: the speed limit from a sign (km/h)
+- max_height (meter), max_width (meter), max_length (meter)
+- max_weight (ton), max_axle_load (in tons)
+- with postfix `_average_speed` contains the average speed (km/h) for a specific vehicle
+- with postfix `_priority` contains the road preference without changing the speed for a specific vehicle (0..1)
 
 In the next section will see how we can use these encoded values to customize GraphHopper's route calculations.
 
@@ -106,14 +124,8 @@ Here is a complete request example for a POST /route query in berlin that includ
 ```json
 {
   "points": [
-    [
-      13.31543,
-      52.509535
-    ],
-    [
-      13.29779,
-      52.512434
-    ]
+    [ 13.31543, 52.509535 ],
+    [ 13.29779, 52.512434 ]
   ],
   "profile": "car",
   "ch.disable": true,
@@ -121,13 +133,13 @@ Here is a complete request example for a POST /route query in berlin that includ
     "speed": [
       {
         "if": "true",
-        "limit_to": 100
+        "limit_to": "100"
       }
     ],
     "priority": [
       {
         "if": "road_class == MOTORWAY",
-        "multiply_by": 0
+        "multiply_by": "0"
       }
     ],
     "distance_influence": 100
@@ -138,7 +150,7 @@ Here is a complete request example for a POST /route query in berlin that includ
 Note that this only works for custom profiles and so far only for POST /route (but not GET /route or /isochrone, /spt or
 /map-matching).
 
-GraphHopper maps offers an interactive text editor that can be used to comfortably enter custom models. You can open it
+GraphHopper Maps offers an interactive text editor that can be used to comfortably enter custom models. You can open it
 by pressing the 'custom' button. It will check the syntax of your custom model and mark errors in red. You can press
 Ctrl+Space or Alt+Enter to retrieve auto-complete suggestions. Pressing Ctrl+Enter will send a routing request for the
 custom model you entered.
@@ -151,7 +163,7 @@ same way for priority as well.
 
 When using custom models you do not need to define rules that specify a speed for every edge, but rather GraphHopper
 assumes a default speed that is set on the server-side. All you need to do is adjust this default speed to your
-use-case. Typically, you will use the custom model in conjunction with a routing profile or vehicle which is used to
+use-case. Typically, you will use the custom model in conjunction with a routing profile which is used to
 determine the default speed.
 
 The custom model is a JSON object and the first property we will learn about here is the `speed` property. The `speed`
@@ -163,8 +175,8 @@ examples.
 
 Currently the custom model language supports two operators:
 
-- `multiply_by` multiplies the speed value with a given number
-- `limit_to` limits the speed value to a given number
+- `multiply_by` multiplies the speed value with a given number or expression
+- `limit_to` limits the speed value to a given number or expression
 
 #### `if` statements and the `multiply_by` operation
 
@@ -175,7 +187,7 @@ Let's start with a simple example using `multiply_by`:
   "speed": [
     {
       "if": "road_class == MOTORWAY",
-      "multiply_by": 0.5
+      "multiply_by": "0.5"
     }
   ]
 }
@@ -198,11 +210,11 @@ There can be multiple such 'if statements' in the speed section, and they are ev
   "speed": [
     {
       "if": "road_class == MOTORWAY",
-      "multiply_by": 0.5
+      "multiply_by": "0.5"
     },
     {
       "if": "road_class == PRIMARY || road_environment == TUNNEL",
-      "multiply_by": 0.7
+      "multiply_by": "0.7"
     }
   ]
 }
@@ -225,7 +237,7 @@ Other categories like `get_off_bike` are of `boolean` type. They can be used as 
   "speed": [
     {
       "if": "get_off_bike",
-      "multiply_by": 0.6
+      "multiply_by": "0.6"
     }
   ]
 }
@@ -242,7 +254,7 @@ inequality) operators, but the numerical comparison operators "bigger" `>`, "big
   "speed": [
     {
       "if": "max_width < 2.5",
-      "multiply_by": 0.8
+      "multiply_by": "0.8"
     }
   ]
 }
@@ -257,7 +269,7 @@ Categories of `string` type are used like this (note the quotes ''):
   "speed": [
     {
       "if": "country == 'DEU'",
-      "multiply_by": 0
+      "multiply_by": "0"
     }
   ]
 }
@@ -273,11 +285,11 @@ current value to the given value. Take this example:
   "speed": [
     {
       "if": "road_class == MOTORWAY",
-      "multiply_by": 0.8
+      "multiply_by": "0.8"
     },
     {
       "if": "surface == GRAVEL",
-      "limit_to": 60
+      "limit_to": "60"
     }
   ]
 }
@@ -289,17 +301,14 @@ regardless of the default speed and the previous rules. So for a road segment wi
 statement further reduces the speed from `80` to `60`. If the `road_class` was `PRIMARY` and the default speed was `50`
 the first rule would not apply and the second rule would do nothing, because limiting `50` to `60` still yields `50`.
 
-Note that all values used for `limit_to` must be in the range `[0, max_vehicle_speed]` where `max_vehicle_speed` is the
-maximum speed that is set for the base vehicle and cannot be changed.
-
 A common use-case for the `limit_to` operation is the following pattern:
 
 ```json
 {
   "speed": [
     {
-      "if": true,
-      "limit_to": 90
+      "if": "true",
+      "limit_to": "90"
     }
   ]
 }
@@ -318,11 +327,11 @@ condition. So this example:
   "speed": [
     {
       "if": "road_class == MOTORWAY",
-      "multiply_by": 0.5
+      "multiply_by": "0.5"
     },
     {
       "else": "",
-      "limit_to": 50
+      "limit_to": "50"
     }
   ]
 }
@@ -339,15 +348,15 @@ statements which are only evaluated in case the previous `if` or `else_if` state
   "speed": [
     {
       "if": "road_class == MOTORWAY",
-      "multiply_by": 0.5
+      "multiply_by": "0.5"
     },
     {
       "else_if": "road_environment == TUNNEL",
-      "limit_to": 70
+      "limit_to": "70"
     },
     {
       "else": "",
-      "multiply_by": 0.9
+      "multiply_by": "0.9"
     }
   ]
 }
@@ -369,11 +378,11 @@ gets reduced by all of them. For the following model
   "speed": [
     {
       "if": "road_class == MOTORWAY",
-      "multiply_by": 0.5
+      "multiply_by": "0.5"
     },
     {
       "else_if": "road_environment == TUNNEL",
-      "multiply_by": 0.8
+      "multiply_by": "0.8"
     }
   ]
 }
@@ -396,11 +405,11 @@ to `50km/h`. Note that each area's name needs to be prefixed with `in_`:
   "speed": [
     {
       "if": "in_custom1",
-      "multiply_by": 0.7
+      "multiply_by": "0.7"
     },
     {
       "if": "in_custom1",
-      "limit_to": 50
+      "limit_to": "50"
     }
   ],
   "areas": {
@@ -412,26 +421,11 @@ to `50km/h`. Note that each area's name needs to be prefixed with `in_`:
         "type": "Polygon",
         "coordinates": [
           [
-            [
-              1.525,
-              42.511
-            ],
-            [
-              1.510,
-              42.503
-            ],
-            [
-              1.531,
-              42.495
-            ],
-            [
-              1.542,
-              42.505
-            ],
-            [
-              1.525,
-              42.511
-            ]
+            [ 1.525, 42.511 ],
+            [ 1.510, 42.503 ],
+            [ 1.531, 42.495 ],
+            [ 1.542, 42.505 ],
+            [ 1.525, 42.511 ]
           ]
         ]
       }
@@ -465,15 +459,15 @@ Customizing the `priority` works very much like changing the `speed`, so in case
   "priority": [
     {
       "if": "road_class == MOTORWAY",
-      "multiply_by": 0.5
+      "multiply_by": "0.5"
     },
     {
       "else_if": "road_class == SECONDARY",
-      "multiply_by": 0.9
+      "multiply_by": "0.9"
     },
     {
       "if": "road_environment == TUNNEL",
-      "multiply_by": 0.1
+      "multiply_by": "0.1"
     }
   ]
 }
@@ -491,7 +485,7 @@ rather which ones shall be preferred, you need to **decrease** the priority of o
   "priority": [
     {
       "if": "road_class != CYCLEWAY",
-      "multiply_by": 0.8
+      "multiply_by": "0.8"
     }
   ]
 }
@@ -507,7 +501,7 @@ same way:
   "priority": [
     {
       "if": "in_custom1",
-      "multiply_by": 0.7
+      "multiply_by": "0.7"
     }
   ]
 }
@@ -521,7 +515,7 @@ like this:
   "priority": [
     {
       "if": "road_class == MOTORWAY && in_custom1",
-      "multiply_by": 0.1
+      "multiply_by": "0.1"
     }
   ]
 }
@@ -535,15 +529,15 @@ following:
   "priority": [
     {
       "if": "max_width < 2.5",
-      "multiply_by": 0
+      "multiply_by": "0"
     },
     {
       "if": "max_length < 10",
-      "multiply_by": 0
+      "multiply_by": "0"
     },
     {
       "if": "max_weight < 3.5",
-      "multiply_by": 0
+      "multiply_by": "0"
     }
   ]
 }
@@ -552,6 +546,41 @@ following:
 which means that the priority for all road segments that allow a maximum vehicle width of `2.5m`, a maximum vehicle
 length of `10m` or a maximum vehicle weight of `3.5tons`, or less, is zero, i.e. these "narrow" road segments are
 blocked.
+
+### The value expression
+
+The value of `limit_to` or `multiply_by` is usually only a number and can be a more complex expression like 
+`Math.sqrt(2)`. You can even specify dynamic values like `max_speed`. This can be useful if the base profile does 
+not restrict this like it is the case for the `roads` profile. See this example:
+
+```json
+{
+  "speed": [
+    {
+      "if": "true",
+      "limit_to": "max_speed * 0.9"
+    }
+  ]
+}
+```
+
+This limits the speed on all roads to 90% of the maximum speed value if it exists. It can be also useful to set a 
+start value of the priority to a value that you pre-populated based on your algorithm:
+
+```json
+{
+  "priority": [
+    {
+      "if": "true",
+      "limit_to": "my_precalculated_value"
+    }
+  ]
+}
+```
+
+Note that when using a dynamic value like `my_precalculated_value` the maximum value correlates strongly with 
+the response time of A-star routing requests (i.e. when CH and LM are disabled). This means that if you pick a
+smaller or more narrow range, or if you can avoid them entirely, then these requests might get faster.
 
 ### Customizing `distance_influence`
 

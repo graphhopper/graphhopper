@@ -114,7 +114,7 @@ public class RoundaboutInstruction extends Instruction {
             return getName();
 
         String str;
-        String streetName = getName();
+        String streetName = _getName();
         int indi = getSign();
         if (indi == Instruction.USE_ROUNDABOUT) {
             if (!exited) {

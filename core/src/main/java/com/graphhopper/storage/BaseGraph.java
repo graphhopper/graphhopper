@@ -22,12 +22,12 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.search.StringIndex;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
-import java.util.Collections;
+import java.util.List;
 
 import static com.graphhopper.util.Helper.nf;
 
@@ -39,14 +39,14 @@ import static com.graphhopper.util.Helper.nf;
  * Note: A RAM DataAccess Object is thread-safe in itself but if used in this Graph implementation
  * it is not write thread safe.
  * <p>
- * Life cycle: (1) object creation, (2) configuration via setters & getters, (3) create or
+ * Life cycle: (1) object creation, (2) configuration via setters &amp; getters, (3) create or
  * loadExisting, (4) usage, (5) flush, (6) close
  */
 public class BaseGraph implements Graph, Closeable {
-    private final static String STRING_IDX_NAME_KEY = "name";
+    final static long MAX_UNSIGNED_INT = 0xFFFF_FFFFL;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
-    final StringIndex stringIndex;
+    final EdgeKVStorage edgeKVStorage;
     // can be null if turn costs are not supported
     final TurnCostStorage turnCostStorage;
     final BitUtil bitUtil;
@@ -62,7 +62,7 @@ public class BaseGraph implements Graph, Closeable {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
         this.wayGeometry = dir.create("geometry", segmentSize);
-        this.stringIndex = new StringIndex(dir, 1000, segmentSize);
+        this.edgeKVStorage = new EdgeKVStorage(dir);
         this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
@@ -82,6 +82,10 @@ public class BaseGraph implements Graph, Closeable {
         boolean enableIfAssert = false;
         assert (enableIfAssert = true) : true;
         return enableIfAssert;
+    }
+
+    public void debugPrint() {
+        store.debugPrint();
     }
 
     @Override
@@ -159,7 +163,7 @@ public class BaseGraph implements Graph, Closeable {
 
         initSize = Math.min(initSize, 2000);
         wayGeometry.create(initSize);
-        stringIndex.create(initSize);
+        edgeKVStorage.create(initSize);
         if (supportsTurnCosts()) {
             turnCostStorage.create(initSize);
         }
@@ -169,23 +173,27 @@ public class BaseGraph implements Graph, Closeable {
         return this;
     }
 
-    String toDetailsString() {
+    public int getIntsForFlags() {
+        return store.getIntsForFlags();
+    }
+
+    public String toDetailsString() {
         return store.toDetailsString() + ", "
-                + "name:(" + stringIndex.getCapacity() / Helper.MB + "MB), "
+                + "name:(" + edgeKVStorage.getCapacity() / Helper.MB + "MB), "
                 + "geo:" + nf(maxGeoRef) + "(" + wayGeometry.getCapacity() / Helper.MB + "MB)";
     }
 
     /**
-     * Flush and free resources that are not needed for post-processing (way geometries and StringIndex).
+     * Flush and free resources that are not needed for post-processing (way geometries and EdgeKVStorage).
      */
-    void flushAndCloseGeometryAndNameStorage() {
+    public void flushAndCloseGeometryAndNameStorage() {
         setWayGeometryHeader();
 
         wayGeometry.flush();
         wayGeometry.close();
 
-        stringIndex.flush();
-        stringIndex.close();
+        edgeKVStorage.flush();
+        edgeKVStorage.close();
     }
 
     public void flush() {
@@ -194,8 +202,8 @@ public class BaseGraph implements Graph, Closeable {
             wayGeometry.flush();
         }
 
-        if (!stringIndex.isClosed())
-            stringIndex.flush();
+        if (!edgeKVStorage.isClosed())
+            edgeKVStorage.flush();
 
         store.flush();
         if (supportsTurnCosts()) {
@@ -207,8 +215,8 @@ public class BaseGraph implements Graph, Closeable {
     public void close() {
         if (!wayGeometry.isClosed())
             wayGeometry.close();
-        if (!stringIndex.isClosed())
-            stringIndex.close();
+        if (!edgeKVStorage.isClosed())
+            edgeKVStorage.close();
         store.close();
         if (supportsTurnCosts()) {
             turnCostStorage.close();
@@ -216,7 +224,7 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     public long getCapacity() {
-        return store.getCapacity() + stringIndex.getCapacity()
+        return store.getCapacity() + edgeKVStorage.getCapacity()
                 + wayGeometry.getCapacity() + (supportsTurnCosts() ? turnCostStorage.getCapacity() : 0);
     }
 
@@ -224,23 +232,24 @@ public class BaseGraph implements Graph, Closeable {
         return maxGeoRef;
     }
 
-    public void loadExisting() {
+    public boolean loadExisting() {
         checkNotInitialized();
 
         if (!store.loadExisting())
-            throw new IllegalStateException("Cannot load edges or nodes. corrupt file or directory? " + dir);
+            return false;
 
         if (!wayGeometry.loadExisting())
-            throw new IllegalStateException("Cannot load geometry. corrupt file or directory? " + dir);
+            return false;
 
-        if (!stringIndex.loadExisting())
-            throw new IllegalStateException("Cannot load name index. corrupt file or directory? " + dir);
+        if (!edgeKVStorage.loadExisting())
+            return false;
 
         if (supportsTurnCosts() && !turnCostStorage.loadExisting())
-            throw new IllegalStateException("Cannot load turn cost storage. corrupt file or directory? " + dir);
+            return false;
 
         setInitialized();
         loadWayGeometryHeader();
+        return true;
     }
 
     /**
@@ -254,7 +263,7 @@ public class BaseGraph implements Graph, Closeable {
 
         // copy the rest with higher level API
         to.setDistance(from.getDistance()).
-                setName(from.getName()).
+                setKeyValues(from.getKeyValues()).
                 setWayGeometry(from.fetchWayGeometry(FetchMode.PILLAR_ONLY));
 
         return to;
@@ -459,13 +468,6 @@ public class BaseGraph implements Graph, Closeable {
         throw new IllegalArgumentException("Mode isn't handled " + mode);
     }
 
-    private void setName(long edgePointer, String name) {
-        int stringIndexRef = (int) stringIndex.add(Collections.singletonMap(STRING_IDX_NAME_KEY, name));
-        if (stringIndexRef < 0)
-            throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
-        store.setNameRef(edgePointer, stringIndexRef);
-    }
-
     private void ensureGeometry(long bytePos, int byteLength) {
         wayGeometry.ensureCapacity(bytePos + byteLength);
     }
@@ -473,7 +475,7 @@ public class BaseGraph implements Graph, Closeable {
     private long nextGeoRef(int arrayLength) {
         long tmp = maxGeoRef;
         maxGeoRef += arrayLength + 1L;
-        if (maxGeoRef >= 0xFFFFffffL)
+        if (maxGeoRef > MAX_UNSIGNED_INT)
             throw new IllegalStateException("Geometry too large, does not fit in 32 bits " + maxGeoRef);
 
         return tmp;
@@ -499,10 +501,6 @@ public class BaseGraph implements Graph, Closeable {
         private long bytes = 100;
         private int segmentSize = -1;
 
-        /**
-         * @deprecated Used for GraphHopperStorage -> BaseGraph migration, but will be removed
-         */
-        @Deprecated
         public Builder(EncodingManager em) {
             this(em.getIntsForFlags());
             withTurnCosts(em.needsTurnCostsSupport());
@@ -557,7 +555,6 @@ public class BaseGraph implements Graph, Closeable {
 
         public EdgeIteratorImpl(BaseGraph baseGraph, EdgeFilter filter) {
             super(baseGraph);
-
             if (filter == null)
                 throw new IllegalArgumentException("Instead null filter use EdgeFilter.ALL_EDGES");
             this.filter = filter;
@@ -587,7 +584,7 @@ public class BaseGraph implements Graph, Closeable {
             boolean baseNodeIsNodeA = baseNode == nodeA;
             adjNode = baseNodeIsNodeA ? store.getNodeB(edgePointer) : nodeA;
             reverse = !baseNodeIsNodeA;
-            freshFlags = false;
+            refreshFlags = true;
 
             // position to next edge
             nextEdgeId = baseNodeIsNodeA ? store.getLinkA(edgePointer) : store.getLinkB(edgePointer);
@@ -624,7 +621,7 @@ public class BaseGraph implements Graph, Closeable {
             edgePointer = store.toEdgePointer(edgeId);
             baseNode = store.getNodeA(edgePointer);
             adjNode = store.getNodeB(edgePointer);
-            freshFlags = false;
+            refreshFlags = true;
             reverse = false;
             return true;
         }
@@ -658,7 +655,7 @@ public class BaseGraph implements Graph, Closeable {
         int adjNode;
         // we need reverse if detach is called
         boolean reverse = false;
-        boolean freshFlags;
+        boolean refreshFlags;
         int edgeId = -1;
         private final IntsRef edgeFlags;
 
@@ -678,7 +675,7 @@ public class BaseGraph implements Graph, Closeable {
             edgePointer = store.toEdgePointer(edgeId);
             baseNode = store.getNodeA(edgePointer);
             adjNode = store.getNodeB(edgePointer);
-            freshFlags = false;
+            refreshFlags = true;
 
             if (expectedAdjNode == adjNode || expectedAdjNode == Integer.MIN_VALUE) {
                 reverse = false;
@@ -703,7 +700,7 @@ public class BaseGraph implements Graph, Closeable {
             edgePointer = store.toEdgePointer(edgeId);
             baseNode = store.getNodeA(edgePointer);
             adjNode = store.getNodeB(edgePointer);
-            freshFlags = false;
+            refreshFlags = true;
 
             if (edgeKey % 2 == 0 || baseNode == adjNode) {
                 reverse = false;
@@ -738,9 +735,9 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public IntsRef getFlags() {
-            if (!freshFlags) {
+            if (refreshFlags) {
                 store.readFlags(edgePointer, edgeFlags);
-                freshFlags = true;
+                refreshFlags = false;
             }
             return edgeFlags;
         }
@@ -749,10 +746,7 @@ public class BaseGraph implements Graph, Closeable {
         public final EdgeIteratorState setFlags(IntsRef edgeFlags) {
             assert edgeId < store.getEdges() : "must be edge but was shortcut: " + edgeId + " >= " + store.getEdges() + ". Use setFlagsAndWeight";
             store.writeFlags(edgePointer, edgeFlags);
-            for (int i = 0; i < edgeFlags.ints.length; i++) {
-                this.edgeFlags.ints[i] = edgeFlags.ints[i];
-            }
-            freshFlags = true;
+            System.arraycopy(edgeFlags.ints, 0, this.edgeFlags.ints, 0, edgeFlags.ints.length);
             return this;
         }
 
@@ -949,31 +943,40 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public int getEdgeKey() {
-            return GHUtility.createEdgeKey(edgeId, reverse);
+            return GHUtility.createEdgeKey(edgeId, baseNode == adjNode, reverse);
         }
 
         @Override
-        public int getOrigEdgeFirst() {
-            return getEdge();
+        public int getReverseEdgeKey() {
+            return baseNode == adjNode ? getEdgeKey() : GHUtility.reverseEdgeKey(getEdgeKey());
         }
 
         @Override
-        public int getOrigEdgeLast() {
-            return getEdge();
+        public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> entries) {
+            long pointer = baseGraph.edgeKVStorage.add(entries);
+            if (pointer > MAX_UNSIGNED_INT)
+                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + MAX_UNSIGNED_INT + " was " + pointer);
+            store.setKeyValuesRef(edgePointer, Helper.toSignedInt(pointer));
+            return this;
+        }
+
+        @Override
+        public List<EdgeKVStorage.KeyValue> getKeyValues() {
+            long kvEntryRef = Helper.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            return baseGraph.edgeKVStorage.getAll(kvEntryRef);
+        }
+
+        @Override
+        public Object getValue(String key) {
+            long kvEntryRef = Helper.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            return baseGraph.edgeKVStorage.get(kvEntryRef, key, reverse);
         }
 
         @Override
         public String getName() {
-            int stringIndexRef = store.getNameRef(edgePointer);
-            String name = baseGraph.stringIndex.get(stringIndexRef, STRING_IDX_NAME_KEY);
-            // preserve backward compatibility (returns null if not explicitly set)
+            String name = (String) getValue(EdgeKVStorage.KeyValue.STREET_NAME);
+            // preserve backward compatibility (returns empty string if name tag missing)
             return name == null ? "" : name;
-        }
-
-        @Override
-        public EdgeIteratorState setName(String name) {
-            baseGraph.setName(edgePointer, name);
-            return this;
         }
 
         @Override

@@ -19,20 +19,18 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
  * Defines bit layout for pedestrians (speed, access, surface, ...). Here we put a penalty on unsafe
  * roads only. If you wish to also prefer routes due to beauty like hiking routes use the
- * HikeFlagEncoder instead.
+ * HikeTagParser instead.
  * <p>
  *
  * @author Peter Karich
@@ -54,27 +52,23 @@ public class FootTagParser extends VehicleTagParser {
     protected EnumEncodedValue<RouteNetwork> footRouteEnc;
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
-    public FootTagParser() {
-        this(4, 1, false);
-    }
-
-    public FootTagParser(PMap properties) {
-        this(properties.getString("name", "foot"),
-                properties.getInt("speed_bits", 4),
-                properties.getDouble("speed_factor", 1),
-                properties.getBool("speed_two_directions", false));
-
+    public FootTagParser(EncodedValueLookup lookup, PMap properties) {
+        this(
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "foot"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "foot"))),
+                lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "foot"))),
+                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class),
+                "foot"
+        );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected FootTagParser(int speedBits, double speedFactor, boolean speedTwoDirections) {
-        this("foot", speedBits, speedFactor, speedTwoDirections);
-    }
-
-    protected FootTagParser(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
-        super(name, speedBits, speedFactor, speedTwoDirections, 0);
-        priorityWayEncoder = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), false);
+    protected FootTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                            EnumEncodedValue<RouteNetwork> footRouteEnc, String name) {
+        super(accessEnc, speedEnc, name, null, null, TransportationMode.FOOT, speedEnc.getNextStorableValue(FERRY_SPEED));
+        this.footRouteEnc = footRouteEnc;
+        priorityWayEncoder = priorityEnc;
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -134,88 +128,73 @@ public class FootTagParser extends VehicleTagParser {
         allowedSacScale.add("hiking");
         allowedSacScale.add("mountain_hiking");
         allowedSacScale.add("demanding_mountain_hiking");
-
-        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(FERRY_SPEED);
-    }
-
-    @Override
-    public TransportationMode getTransportationMode() {
-        return TransportationMode.FOOT;
-    }
-
-    @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
-        super.createEncodedValues(registerNewEncodedValue);
-        registerNewEncodedValue.add(priorityWayEncoder);
-
-        footRouteEnc = getEnumEncodedValue(RouteNetwork.key("foot"), RouteNetwork.class);
     }
 
     /**
      * Some ways are okay but not separate for pedestrians.
      */
     @Override
-    public EncodingManager.Access getAccess(ReaderWay way) {
+    public WayAccess getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            EncodingManager.Access acceptPotentially = EncodingManager.Access.CAN_SKIP;
+            WayAccess acceptPotentially = WayAccess.CAN_SKIP;
 
             if (way.hasTag("route", ferries)) {
                 String footTag = way.getTag("foot");
                 if (footTag == null || intendedValues.contains(footTag))
-                    acceptPotentially = EncodingManager.Access.FERRY;
+                    acceptPotentially = WayAccess.FERRY;
             }
 
             // special case not for all acceptedRailways, only platform
             if (way.hasTag("railway", "platform"))
-                acceptPotentially = EncodingManager.Access.WAY;
+                acceptPotentially = WayAccess.WAY;
 
             if (way.hasTag("man_made", "pier"))
-                acceptPotentially = EncodingManager.Access.WAY;
+                acceptPotentially = WayAccess.WAY;
 
             if (!acceptPotentially.canSkip()) {
                 if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-                    return EncodingManager.Access.CAN_SKIP;
+                    return WayAccess.CAN_SKIP;
                 return acceptPotentially;
             }
 
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
         }
 
         // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
         if (way.getTag("sac_scale") != null && !way.hasTag("sac_scale", allowedSacScale))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         // no need to evaluate ferries or fords - already included here
         if (way.hasTag("foot", intendedValues))
-            return EncodingManager.Access.WAY;
+            return WayAccess.WAY;
 
         // check access restrictions
         if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (way.hasTag("sidewalk", sidewalkValues))
-            return EncodingManager.Access.WAY;
+            return WayAccess.WAY;
 
         if (!allowedHighwayTags.contains(highwayValue))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (way.hasTag("motorroad", "yes"))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         // do not get our feet wet, "yes" is already included above
         if (isBlockFords() && (way.hasTag("highway", "ford") || way.hasTag("ford")))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
-        return EncodingManager.Access.WAY;
+        return WayAccess.WAY;
     }
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
-        EncodingManager.Access access = getAccess(way);
+        WayAccess access = getAccess(way);
         if (access.canSkip())
             return edgeFlags;
 
@@ -286,13 +265,5 @@ public class FootTagParser extends VehicleTagParser {
 
         if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
             weightToPrioMap.put(44d, SLIGHT_AVOID.getValue());
-    }
-
-    @Override
-    public boolean supports(Class<?> feature) {
-        if (super.supports(feature))
-            return true;
-
-        return PriorityWeighting.class.isAssignableFrom(feature);
     }
 }
