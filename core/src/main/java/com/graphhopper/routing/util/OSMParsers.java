@@ -27,13 +27,11 @@ import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 
 public class OSMParsers {
     private final List<String> ignoredHighways;
-    private List<String> acceptedRoutes;
     private final List<TagParser> wayTagParsers;
     private final List<VehicleTagParser> vehicleTagParsers;
     private final List<RelationTagParser> relationTagParsers;
@@ -41,13 +39,12 @@ public class OSMParsers {
     private final EncodedValue.InitializerConfig relConfig = new EncodedValue.InitializerConfig();
 
     public OSMParsers() {
-        this(new ArrayList<>(), Arrays.asList("ferry", "shuttle_train"), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
-    public OSMParsers(List<String> ignoredHighways, List<String> acceptedRoutes, List<TagParser> wayTagParsers, List<VehicleTagParser> vehicleTagParsers,
+    public OSMParsers(List<String> ignoredHighways, List<TagParser> wayTagParsers, List<VehicleTagParser> vehicleTagParsers,
                       List<RelationTagParser> relationTagParsers, List<RestrictionTagParser> restrictionTagParsers) {
         this.ignoredHighways = ignoredHighways;
-        this.acceptedRoutes = acceptedRoutes;
         this.wayTagParsers = wayTagParsers;
         this.vehicleTagParsers = vehicleTagParsers;
         this.relationTagParsers = relationTagParsers;
@@ -56,11 +53,6 @@ public class OSMParsers {
 
     public OSMParsers addIgnoredHighway(String highway) {
         ignoredHighways.add(highway);
-        return this;
-    }
-
-    public OSMParsers setAcceptedRoutes(List<String> acceptedRoutes) {
-        this.acceptedRoutes = acceptedRoutes;
         return this;
     }
 
@@ -91,10 +83,11 @@ public class OSMParsers {
         String highway = way.getTag("highway");
         if (highway != null)
             return !ignoredHighways.contains(highway);
-        else {
-            String route = way.getTag("route");
-            return route != null && acceptedRoutes.contains(route);
-        }
+        else
+            // we accept all the ways with a 'route' tag and no 'highway' tag, because these are needed for e.g.
+            // route=ferry and there aren't many others:
+            // https://github.com/graphhopper/graphhopper/pull/2702/files#r1038093050
+            return way.getTag("route") != null;
     }
 
     public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {
