@@ -18,6 +18,7 @@
 package com.graphhopper;
 
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.EdgeList;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.details.PathDetail;
@@ -42,6 +43,7 @@ public class ResponsePath {
     private long time;
     private PMap debugInfo = new PMap();
     private InstructionList instructions;
+    private EdgeList edges;
     private PointList waypointList = PointList.EMPTY;
     private PointList pointList = PointList.EMPTY;
     private int numChanges;
@@ -239,6 +241,18 @@ public class ResponsePath {
 
     public void setInstructions(InstructionList instructions) {
         this.instructions = instructions;
+    }
+
+    public EdgeList getEdges() {
+        check("getEdges");
+        if (edges == null)
+            throw new IllegalArgumentException("To access edges you need to enable creation before routing");
+
+        return edges;
+    }
+
+    public void setEdges(EdgeList edges) {
+        this.edges = edges;
     }
 
     /**

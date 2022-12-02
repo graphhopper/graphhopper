@@ -73,6 +73,8 @@ public interface EdgeIteratorState {
         }
     };
 
+    boolean isReversed();
+
     /**
      * @return the edge id of the current edge. Do not make any assumptions about the concrete
      * values, except that for an implementation it is recommended that they'll be contiguous.

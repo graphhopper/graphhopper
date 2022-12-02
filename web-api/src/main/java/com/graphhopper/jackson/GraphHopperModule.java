@@ -23,6 +23,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.json.Statement;
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.EdgeList;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.Envelope;
@@ -41,6 +42,7 @@ public class GraphHopperModule extends SimpleModule {
         addDeserializer(PathDetail.class, new PathDetailDeserializer());
         addSerializer(PathDetail.class, new PathDetailSerializer());
         addSerializer(InstructionList.class, new InstructionListSerializer());
+        addSerializer(EdgeList.class, new EdgeListSerializer());
         addSerializer(MultiException.class, new MultiExceptionSerializer());
     }
 

@@ -57,6 +57,11 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         this.reverse = reverse;
     }
 
+    @Override
+    public boolean isReversed() {
+        return reverse;
+    }
+
     /**
      * This method returns the original (not virtual!) edge key. I.e. also the direction is
      * already correctly encoded.
