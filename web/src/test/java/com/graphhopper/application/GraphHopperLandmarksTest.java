@@ -54,6 +54,7 @@ public class GraphHopperLandmarksTest {
                 putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/belarus-east.osm.gz").
                 putObject("prepare.min_network_size", 0).
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 // force landmark creation even for tiny networks
                 .putObject("prepare.lm.min_network_size", 2)

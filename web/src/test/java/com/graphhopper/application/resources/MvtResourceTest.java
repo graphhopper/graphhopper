@@ -57,6 +57,7 @@ public class MvtResourceTest {
                 putObject("graph.encoded_values", "road_class,road_environment,max_speed,surface").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setWeighting("fastest")));
         return config;

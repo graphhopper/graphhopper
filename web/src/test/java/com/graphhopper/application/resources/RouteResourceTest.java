@@ -25,7 +25,6 @@ import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.application.util.TestUtils;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.RoadClass;
@@ -83,6 +82,7 @@ public class RouteResourceTest {
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 // adding this so the corresponding check is not just skipped...
                 .putObject(MAX_NON_CH_POINT_DISTANCE, 10e6)
@@ -295,10 +295,10 @@ public class RouteResourceTest {
         assertEquals(5, averageSpeedList.get(1).getLength());
 
         List<PathDetail> edgeIdDetails = pathDetails.get("edge_id");
-        assertEquals(77, edgeIdDetails.size());
-        assertEquals(882L, edgeIdDetails.get(0).getValue());
+        assertEquals(78, edgeIdDetails.size());
+        assertEquals(924L, edgeIdDetails.get(0).getValue());
         assertEquals(2, edgeIdDetails.get(0).getLength());
-        assertEquals(883L, edgeIdDetails.get(1).getValue());
+        assertEquals(925L, edgeIdDetails.get(1).getValue());
         assertEquals(8, edgeIdDetails.get(1).getLength());
 
         long expectedTime = rsp.getBest().getTime();
@@ -353,8 +353,8 @@ public class RouteResourceTest {
         JsonNode edgeIds = details.get("edge_id");
         int firstLink = edgeIds.get(0).get(2).asInt();
         int lastLink = edgeIds.get(edgeIds.size() - 1).get(2).asInt();
-        assertEquals(882, firstLink);
-        assertEquals(1425, lastLink);
+        assertEquals(924, firstLink);
+        assertEquals(1584, lastLink);
 
         JsonNode maxSpeed = details.get("max_speed");
         assertEquals(-1, maxSpeed.get(0).get(2).asDouble(-1), .01);
