@@ -57,7 +57,6 @@ public class GraphHopperMultimodalIT {
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("datareader.file", "files/beatty.osm");
-        ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("gtfs.file", "files/sample-feed");
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.setProfiles(Arrays.asList(
