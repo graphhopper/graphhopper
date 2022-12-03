@@ -105,14 +105,14 @@ public class RoutingExample {
 
         // calculate alternative routes between two points (supported with and without CH)
         req = new GHRequest().setProfile("car").
-                addPoint(new GHPoint(42.502904, 1.514714)).addPoint(new GHPoint(42.511953, 1.535914)).
+                addPoint(new GHPoint(42.502904, 1.514714)).addPoint(new GHPoint(42.508774, 1.537094)).
                 setAlgorithm(Parameters.Algorithms.ALT_ROUTE);
         req.getHints().putObject(Parameters.Algorithms.AltRoute.MAX_PATHS, 3);
         res = hopper.route(req);
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
         assert res.getAll().size() == 2;
-        assert Helper.round(res.getBest().getDistance(), -2) == 2300;
+        assert Helper.round(res.getBest().getDistance(), -2) == 2200;
     }
 
     /**
