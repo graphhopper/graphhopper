@@ -33,6 +33,9 @@ import com.graphhopper.Trip;
 import com.graphhopper.gtfs.fare.Fares;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
@@ -394,8 +397,10 @@ class TripFromLabel {
             return result;
         } else {
             InstructionList instructions = new InstructionList(tr);
+            FlagEncoder encoder = weighting.getFlagEncoder();
+            DecimalEncodedValue penaltyEnc = encoder.getDecimalEncodedValue(EncodingManager.getKey(encoder, "penalty"));
             InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(graph,
-                    weighting, weighting.getFlagEncoder(), instructions);
+                    weighting, encoder, instructions);
             int prevEdgeId = -1;
             for (int i = 1; i < path.size(); i++) {
                 if (path.get(i).edge.getType() != GtfsStorage.EdgeType.HIGHWAY) {
@@ -404,7 +409,9 @@ class TripFromLabel {
                 EdgeIteratorState edge = graph.getEdgeIteratorState(path.get(i).edge.getId(), path.get(i).label.node.streetNode);
                 instructionsFromEdges.next(edge, i, prevEdgeId);
                 if (includeEdges) {
-                    Edge edgeDetail = new Edge(edge.getName(), edge.getDistance(), edge.isReversed(), weighting.calcEdgeMillis(edge, false), weighting.calcEdgeWeight(edge, false));
+                    Edge edgeDetail = new Edge(edge.getName(), edge.getDistance(), edge.getGrade(), edge.isReversed(),
+                            weighting.calcEdgeMillis(edge, false), weighting.calcEdgeWeight(edge, false),
+                            edge.get(penaltyEnc));
                     edges.add(edgeDetail);
                 }
                 prevEdgeId = edge.getEdge();

@@ -338,6 +338,21 @@ public class DistanceCalcEarth implements DistanceCalc {
         return dist;
     }
 
+    public final double calcDistance2D(PointList pointList) {
+        double prevLat = Double.NaN;
+        double prevLon = Double.NaN;
+        double dist = 0;
+        for (int i = 0; i < pointList.size(); i++) {
+            if (i > 0) {
+                dist += calcDist(prevLat, prevLon, pointList.getLat(i), pointList.getLon(i));
+            }
+
+            prevLat = pointList.getLat(i);
+            prevLon = pointList.getLon(i);
+        }
+        return dist;
+    }
+
     @Override
     public boolean isCrossBoundary(double lon1, double lon2) {
         return abs(lon1 - lon2) > 300;

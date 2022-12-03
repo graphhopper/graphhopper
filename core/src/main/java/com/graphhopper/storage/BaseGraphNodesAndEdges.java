@@ -48,7 +48,7 @@ class BaseGraphNodesAndEdges {
 
     // edges
     private final DataAccess edges;
-    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS, E_DIST, E_GEO, E_NAME;
+    private final int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_FLAGS, E_DIST, E_GRADE, E_GEO, E_NAME;
     private final int intsForFlags;
     private int edgeEntryBytes;
     private int edgeCount;
@@ -85,7 +85,8 @@ class BaseGraphNodesAndEdges {
         E_LINKB = 12;
         E_FLAGS = 16;
         E_DIST = E_FLAGS + intsForFlags * 4;
-        E_GEO = E_DIST + 4;
+        E_GRADE = E_DIST + 4;
+        E_GEO = E_GRADE + 4;
         E_NAME = E_GEO + 4;
         edgeEntryBytes = E_NAME + 4;
     }
@@ -272,6 +273,10 @@ class BaseGraphNodesAndEdges {
         edges.setInt(edgePointer + E_DIST, distToInt(distance));
     }
 
+    public void setGrade(long edgePointer, int grade) {
+        edges.setInt(edgePointer + E_GRADE, grade);
+    }
+
     public void setGeoRef(long edgePointer, int geoRef) {
         edges.setInt(edgePointer + E_GEO, geoRef);
     }
@@ -300,6 +305,11 @@ class BaseGraphNodesAndEdges {
         int val = edges.getInt(pointer + E_DIST);
         // do never return infinity even if INT MAX, see #435
         return val / INT_DIST_FACTOR;
+    }
+
+    public int getGrade(long pointer) {
+        int val = edges.getInt(pointer + E_GRADE);
+        return val;
     }
 
     public int getGeoRef(long edgePointer) {

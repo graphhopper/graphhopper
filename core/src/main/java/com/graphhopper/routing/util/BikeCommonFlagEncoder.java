@@ -513,9 +513,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))
                 pushingSectionPenalty = VERY_NICE.getValue();
             if (way.hasTag("foot", "yes")) {
-                pushingSectionPenalty = Math.max(pushingSectionPenalty + 1, BAD.getValue());
+                pushingSectionPenalty = Math.max(PenaltyCode.from(pushingSectionPenalty).tickUpBy(1).getValue(),
+                        BAD.getValue());
                 if (way.hasTag("segregated", "yes"))
-                    pushingSectionPenalty = Math.min(pushingSectionPenalty - 1, BEST.getValue());
+                    pushingSectionPenalty = Math.min(PenaltyCode.from(pushingSectionPenalty).tickDownBy(1).getValue(),
+                            BEST.getValue());
             }
             penaltyMap.put(HIGHWAY_KEY, pushingSectionPenalty);
         }
@@ -548,11 +550,11 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
                 cyclewayBackwardPenalty = cyclewayMap.get(cyclewayBackward);
 
         if (withTrafficCyclewayTags.contains(cycleway))
-            cyclewayPenalty = highwayPenalty - 1;
+            cyclewayPenalty = PenaltyCode.from(highwayPenalty).tickDownBy(1).getValue();
         if (withTrafficCyclewayTags.contains(cyclewayForward))
-            cyclewayForwardPenalty = highwayPenalty - 1;
+            cyclewayForwardPenalty = PenaltyCode.from(highwayPenalty).tickDownBy(1).getValue();
         if (withTrafficCyclewayTags.contains(cyclewayBackward))
-            cyclewayBackwardPenalty = highwayPenalty - 1;
+            cyclewayBackwardPenalty = PenaltyCode.from(highwayPenalty).tickDownBy(1).getValue();
 
         if (Objects.nonNull(cyclewayPenalty)) {
             penaltyMap.put(CYCLE_INFRA_KEY, cyclewayPenalty);

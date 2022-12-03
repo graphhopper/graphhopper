@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import java.util.Arrays;
+
 /**
  * Used to store a penalty value in the way flags of an edge. Used in
  * combination with PenaltyWeighting
@@ -24,18 +26,19 @@ package com.graphhopper.routing.util;
  * @author Hazel Court
  */
 public enum PenaltyCode {
-    EXCLUDE(15),
-    REACH_DESTINATION(12),
-    VERY_BAD(9.5),
-    BAD(9.0),
-    AVOID_MORE(8.5),
-    AVOID(8.0),
-    SLIGHT_AVOID(7.5),
-    UNCHANGED(5.0),
-    SLIGHT_PREFER(2.5),
-    PREFER(2.0),
+    // Declare in ascending order
+    BEST(1.0),
     VERY_NICE(1.5),
-    BEST(1.0);
+    PREFER(2.0),
+    SLIGHT_PREFER(2.5),
+    UNCHANGED(5.0),
+    SLIGHT_AVOID(7.5),
+    AVOID(8.0),
+    AVOID_MORE(8.5),
+    BAD(9.0),
+    VERY_BAD(9.5),
+    REACH_DESTINATION(12),
+    EXCLUDE(15);
 
     private final double value;
 
@@ -53,5 +56,26 @@ public enum PenaltyCode {
 
     public static double getValue(double value) {
         return getFactor(value);
+    }
+
+    public PenaltyCode tickUpBy(int n) {
+        PenaltyCode[] codes = PenaltyCode.values();
+        int current = Arrays.asList(codes).indexOf(this);
+        return codes[Math.min(current + n, codes.length - 1)];
+    }
+
+    public PenaltyCode tickDownBy(int n) {
+        PenaltyCode[] codes = PenaltyCode.values();
+        int current = Arrays.asList(codes).indexOf(this);
+        return codes[Math.max(current - n, 0)];
+    }
+
+    public static PenaltyCode from(double value) {
+        PenaltyCode[] codes = PenaltyCode.values();
+        for (PenaltyCode c : codes) {
+            if (c.getValue() >= value)
+                return c;
+        }
+        return codes[codes.length - 1];
     }
 }

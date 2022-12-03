@@ -24,18 +24,21 @@ public class Edge {
     protected int grade;
     protected long time;
     protected double weight;
+    protected double penalty;
     protected boolean reversed;
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
      * instruction is not duplicated here and should be in the next one.
      */
-    public Edge(String name, double distance, boolean reversed, long time, double weight) {
+    public Edge(String name, double distance, int grade, boolean reversed, long time, double weight, double penalty) {
         this.name = name;
         this.distance = distance;
+        this.grade = grade;
         this.reversed = reversed;
         this.time = time;
         this.weight = weight;
+        this.penalty = penalty;
     }
 
 
@@ -56,6 +59,15 @@ public class Edge {
 
     public Edge setDistance(double distance) {
         this.distance = distance;
+        return this;
+    }
+
+    public int getGrade() {
+        return grade;
+    }
+
+    public Edge setGrade(int grade) {
+        this.grade = grade;
         return this;
     }
 
@@ -84,7 +96,7 @@ public class Edge {
     }
 
     /**
-     * Duration until the next edge, in milliseconds
+     * Weight of the edge
      */
     public double getWeight() {
         return weight;
@@ -92,6 +104,18 @@ public class Edge {
 
     public Edge setWeight(double weight) {
         this.weight = weight;
+        return this;
+    }
+
+    /**
+     * Duration until the next edge, in milliseconds
+     */
+    public double getPenalty() {
+        return penalty;
+    }
+
+    public Edge setPenalty(double penalty) {
+        this.penalty = penalty;
         return this;
     }
 

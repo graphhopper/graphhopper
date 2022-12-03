@@ -41,7 +41,9 @@ public class EdgeListSerializer extends JsonSerializer<EdgeList> {
             instrJson.put("street_name", edge.getName());
             instrJson.put("time", edge.getTime());
             instrJson.put("distance", Helper.round(edge.getDistance(), 3));
+            instrJson.put("grade", edge.getGrade());
             instrJson.put("reversed", edge.getReversed());
+            instrJson.put("penalty", edge.getPenalty());
             instrJson.put("time", edge.getTime());
             instrJson.put("weight", edge.getWeight());
             

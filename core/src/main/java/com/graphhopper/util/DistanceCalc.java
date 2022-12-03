@@ -125,6 +125,10 @@ public interface DistanceCalc {
      */
     boolean isCrossBoundary(double lon1, double lon2);
 
+    // Calcuate distance (potentially 3D)
     double calcDistance(PointList pointList);
+
+    // Calculate distance (force 2D)
+    double calcDistance2D(PointList pointList);
 
 }

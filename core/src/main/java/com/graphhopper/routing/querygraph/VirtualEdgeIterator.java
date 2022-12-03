@@ -296,4 +296,14 @@ class VirtualEdgeIterator implements EdgeIterator {
     public List<EdgeIteratorState> getEdges() {
         return edges;
     }
+
+    @Override
+    public int getGrade() {
+        return getCurrentEdge().getGrade();
+    }
+
+    @Override
+    public EdgeIteratorState setGrade(int grade) {
+        return getCurrentEdge().setGrade(grade);
+    }
 }

@@ -141,7 +141,14 @@ public interface EdgeIteratorState {
      */
     double getDistance();
 
+    /**
+     * @return the grade of the current edge in %
+     */
+    int getGrade();
+
     EdgeIteratorState setDistance(double dist);
+
+    EdgeIteratorState setGrade(int grade);
 
     /**
      * Returns edge properties stored in direction of the raw database layout. So do not use it directly, instead
