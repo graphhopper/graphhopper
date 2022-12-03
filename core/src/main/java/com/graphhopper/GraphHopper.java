@@ -655,6 +655,8 @@ public class GraphHopper {
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         vehiclesByName.forEach((name, vehicleStr) -> {
             VehicleTagParser vehicleTagParser = vehicleTagParserFactory.createParser(encodingManager, name, new PMap(vehicleStr));
+            if (vehicleTagParser == null)
+                return;
             vehicleTagParser.init(dateRangeParser);
             if (vehicleTagParser instanceof BikeCommonTagParser) {
                 if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
