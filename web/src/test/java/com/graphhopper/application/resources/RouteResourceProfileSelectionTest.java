@@ -54,6 +54,7 @@ public class RouteResourceProfileSelectionTest {
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
                         new Profile("my_car").setVehicle("car").setWeighting("fastest"),
