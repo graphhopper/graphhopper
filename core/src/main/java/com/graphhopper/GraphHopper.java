@@ -24,6 +24,7 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.OSMReader;
+import com.graphhopper.reader.osm.RestrictionTagParser;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
@@ -669,7 +670,10 @@ public class GraphHopper {
                 if (encodingManager.hasEncodedValue(FootNetwork.KEY))
                     osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
             }
-            osmParsers.addVehicleTagParser(vehicleTagParser);
+            osmParsers.addWayTagParser(vehicleTagParser);
+            String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
+            if (encodingManager.hasEncodedValue(turnCostKey))
+                osmParsers.addRestrictionTagParser(new RestrictionTagParser(vehicleTagParser.getRestrictions(), encodingManager.getDecimalEncodedValue(turnCostKey)));
         });
         return osmParsers;
     }
@@ -691,15 +695,15 @@ public class GraphHopper {
                 throw new IllegalArgumentException("Duplicate flag encoder: " + name + " in: " + encoderStr);
             vehiclesMap.put(name, encoderStr);
         }
-        Map<String, String> flagEncodersFromProfilesMap = new LinkedHashMap<>();
+        Map<String, String> vehiclesFromProfiles = new LinkedHashMap<>();
         for (Profile profile : profiles) {
-            // if a profile uses a flag encoder with turn costs make sure we add that flag encoder with turn costs
+            // if a profile uses a vehicle with turn costs make sure we add that vehicle with turn costs
             String vehicle = profile.getVehicle().trim();
-            if (!flagEncodersFromProfilesMap.containsKey(vehicle) || profile.isTurnCosts())
-                flagEncodersFromProfilesMap.put(vehicle, vehicle + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
+            if (!vehiclesFromProfiles.containsKey(vehicle) || profile.isTurnCosts())
+                vehiclesFromProfiles.put(vehicle, vehicle + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
         }
-        // flag encoders from profiles are only taken into account when they were not given explicitly
-        flagEncodersFromProfilesMap.forEach(vehiclesMap::putIfAbsent);
+        // vehicles from profiles are only taken into account when they were not given explicitly
+        vehiclesFromProfiles.forEach(vehiclesMap::putIfAbsent);
         return vehiclesMap;
     }
 

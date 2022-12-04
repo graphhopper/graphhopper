@@ -24,6 +24,7 @@ import com.graphhopper.reader.osm.conditional.ConditionalTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
@@ -42,7 +43,6 @@ import static java.util.Collections.emptyMap;
  * @see EncodingManager
  */
 public abstract class VehicleTagParser implements TagParser {
-    private final String name;
     protected final Set<String> intendedValues = new HashSet<>(5);
     // order is important
     protected final List<String> restrictions = new ArrayList<>(5);
@@ -53,7 +53,6 @@ public abstract class VehicleTagParser implements TagParser {
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
     protected final DecimalEncodedValue avgSpeedEnc;
-    private final DecimalEncodedValue turnCostEnc;
     protected final BooleanEncodedValue roundaboutEnc;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
@@ -62,15 +61,12 @@ public abstract class VehicleTagParser implements TagParser {
     private ConditionalTagInspector conditionalTagInspector;
     protected final FerrySpeedCalculator ferrySpeedCalc;
 
-    protected VehicleTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, String name,
-                               BooleanEncodedValue roundaboutEnc,
-                               DecimalEncodedValue turnCostEnc, TransportationMode transportationMode, double maxPossibleSpeed) {
-        this.name = name;
+    protected VehicleTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, BooleanEncodedValue roundaboutEnc,
+                               TransportationMode transportationMode, double maxPossibleSpeed) {
         this.maxPossibleSpeed = maxPossibleSpeed;
 
         this.accessEnc = accessEnc;
         this.avgSpeedEnc = speedEnc;
-        this.turnCostEnc = turnCostEnc;
         this.roundaboutEnc = roundaboutEnc;
 
         oneways.add("yes");
@@ -148,14 +144,6 @@ public abstract class VehicleTagParser implements TagParser {
     }
 
     /**
-     * Decide whether a way is routable for a given mode of travel. This skips some ways before
-     * handleWayTags is called.
-     *
-     * @return the encoded value to indicate if this encoder allows travel or not.
-     */
-    public abstract WayAccess getAccess(ReaderWay way);
-
-    /**
      * @return true if the given OSM node blocks access for this vehicle, false otherwise
      */
     public boolean isBarrier(ReaderNode node) {
@@ -215,19 +203,16 @@ public abstract class VehicleTagParser implements TagParser {
         }
     }
 
-    public boolean supportsTurnCosts() {
-        return turnCostEnc != null;
-    }
-
-    public DecimalEncodedValue getTurnCostEnc() {
-        return turnCostEnc;
-    }
-
     public final List<String> getRestrictions() {
         return restrictions;
     }
 
     public final String getName() {
+        String name = accessEnc.getName().replaceAll("_access", "");
+        // safety check for the time being
+        String expectedKey = VehicleAccess.key(name);
+        if (!accessEnc.getName().equals(expectedKey))
+            throw new IllegalStateException("Expected access key '" + expectedKey + "', but got: " + accessEnc.getName());
         return name;
     }
 

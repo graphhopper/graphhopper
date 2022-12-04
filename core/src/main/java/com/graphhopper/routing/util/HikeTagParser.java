@@ -41,16 +41,15 @@ public class HikeTagParser extends FootTagParser {
                 lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "hike"))),
                 lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "hike"))),
                 lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "hike"))),
-                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class),
-                properties.getString("name", "hike")
+                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class)
         );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
     protected HikeTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
-                            EnumEncodedValue<RouteNetwork> footRouteEnc, String name) {
-        super(accessEnc, speedEnc, priorityEnc, footRouteEnc, name);
+                            EnumEncodedValue<RouteNetwork> footRouteEnc) {
+        super(accessEnc, speedEnc, priorityEnc, footRouteEnc);
 
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());

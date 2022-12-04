@@ -53,7 +53,7 @@ public class WheelchairTagParser extends FootTagParser {
 
     protected WheelchairTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
                                   EnumEncodedValue<RouteNetwork> footRouteEnc) {
-        super(accessEnc, speedEnc, priorityEnc, footRouteEnc, "wheelchair");
+        super(accessEnc, speedEnc, priorityEnc, footRouteEnc);
 
         restrictions.add("wheelchair");
 

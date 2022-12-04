@@ -41,8 +41,7 @@ public class RacingBikeTagParser extends BikeCommonTagParser {
                 lookup.getDecimalEncodedValue(VehiclePriority.key("racingbike")),
                 lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class),
                 lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
-                lookup.getBooleanEncodedValue(Roundabout.KEY),
-                lookup.hasEncodedValue(TurnCost.key("racingbike")) ? lookup.getDecimalEncodedValue(TurnCost.key("racingbike")) : null
+                lookup.getBooleanEncodedValue(Roundabout.KEY)
         );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
@@ -50,8 +49,8 @@ public class RacingBikeTagParser extends BikeCommonTagParser {
 
     protected RacingBikeTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
                                   EnumEncodedValue<RouteNetwork> bikeRouteEnc, EnumEncodedValue<Smoothness> smoothnessEnc,
-                                  BooleanEncodedValue roundaboutEnc, DecimalEncodedValue turnCostEnc) {
-        super(accessEnc, speedEnc, priorityEnc, bikeRouteEnc, smoothnessEnc, "racingbike", roundaboutEnc, turnCostEnc);
+                                  BooleanEncodedValue roundaboutEnc) {
+        super(accessEnc, speedEnc, priorityEnc, bikeRouteEnc, smoothnessEnc, roundaboutEnc);
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");
         preferHighwayTags.add("secondary_link");
