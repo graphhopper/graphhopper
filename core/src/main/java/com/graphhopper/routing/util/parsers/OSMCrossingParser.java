@@ -9,6 +9,9 @@ import com.graphhopper.util.Helper;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Parses the node information regarding crossing=* and railway=*
+ */
 public class OSMCrossingParser implements TagParser {
     protected final EnumEncodedValue<Crossing> crossingEnc;
 
@@ -25,13 +28,27 @@ public class OSMCrossingParser implements TagParser {
         for (int i = 0; i < nodeTags.size(); i++) {
             Map<String, Object> tags = nodeTags.get(i);
             if ("crossing".equals(tags.get("railway")) || "level_crossing".equals(tags.get("railway"))) {
-                // use special value if with/without barriers? (contains crossing:barrier)
-                crossingEnc.setEnum(false, edgeFlags, Crossing.RAILWAY);
+                String barrierVal = (String) tags.get("crossing:barrier");
+                crossingEnc.setEnum(false, edgeFlags, (Helper.isEmpty(barrierVal) || "no".equals(barrierVal)) ? Crossing.RAILWAY : Crossing.RAILWAY_BARRIER);
                 return edgeFlags;
             }
+
+            String crossingSignals = (String) tags.get("crossing:signals");
+            if ("yes".equals(crossingSignals)) {
+                crossingEnc.setEnum(false, edgeFlags, Crossing.TRAFFIC_SIGNALS);
+                return edgeFlags;
+            }
+
+            String crossingMarkings = (String) tags.get("crossing:markings");
+            if ("yes".equals(crossingMarkings)) {
+                crossingEnc.setEnum(false, edgeFlags, Crossing.MARKED);
+                return edgeFlags;
+            }
+
             String crossingValue = (String) tags.get("crossing");
             // some crossing values like "no" do not require highway=crossing and sometimes no crossing value exists although highway=crossing
-            if (Helper.isEmpty(crossingValue) && ("crossing".equals(tags.get("highway")) || "crossing".equals(tags.get("footway")) || "crossing".equals(tags.get("cycleway")))) {
+            if (Helper.isEmpty(crossingValue) && ("no".equals(crossingSignals) || "no".equals(crossingMarkings)
+                    || "crossing".equals(tags.get("highway")) || "crossing".equals(tags.get("footway")) || "crossing".equals(tags.get("cycleway")))) {
                 crossingEnc.setEnum(false, edgeFlags, Crossing.UNMARKED);
                 // next node could have more specific Crossing value
                 continue;

@@ -3,14 +3,14 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.util.Helper;
 
 public enum Crossing {
-    MISSING,
-    TRAFFIC_SIGNAL, // regulated with light signals
-    RAILWAY,
-    ZEBRA, // marked with a striped pattern, but no traffic signals
+    MISSING, // no information
+    RAILWAY_BARRIER, // railway crossing with barrier
+    RAILWAY, // railway crossing with road
+    TRAFFIC_SIGNALS, // with light signals
+    UNCONTROLLED, // with crosswalk, without traffic lights
     MARKED, // with crosswalk, with or without traffic lights
     UNMARKED, // without markings or traffic lights
-    UNCONTROLLED, // with crosswalk, without traffic lights
-    NO; // no crossing is possible/legal
+    NO; // crossing is impossible or illegal
     public static final String KEY = "crossing";
 
     @Override
