@@ -358,16 +358,27 @@ class TripFromLabel {
                     stopsFromBoardHopDwellEdges.finish();
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
                     GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
+
+                    int routeType = -1;
+                    String routeUrl = null;
+                    String routeShortName = "";
+                    String routeLongName = "";
                     Route route = gtfsFeed.routes.get(tripDescriptor.getRouteId());
+                    if (route != null) {
+                        routeType = route.route_type;
+                        routeUrl = route.route_url == null ? "" : route.route_url.toString();
+                        routeShortName = route.route_short_name;
+                        routeLongName = route.route_long_name;
+                    }
 
                     result.add(new Trip.PtLeg(
                             feedId, partition.get(0).edge.getTransfers() == 0,
                             tripDescriptor.getTripId(),
                             tripDescriptor.getRouteId(),
-                            route.route_type,
-                            route.route_url == null ? "" : route.route_url.toString(),
-                            route.route_short_name,
-                            route.route_long_name,
+                            routeType,
+                            routeUrl,
+                            routeShortName,
+                            routeLongName,
                             Optional.ofNullable(gtfsStorage.getGtfsFeeds().get(feedId).trips.get(tripDescriptor.getTripId())).map(t -> t.trip_headsign).orElse("extra"),
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
