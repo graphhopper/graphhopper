@@ -21,6 +21,7 @@ package com.graphhopper.gtfs;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
+import com.conveyal.gtfs.model.Route;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -356,11 +357,17 @@ class TripFromLabel {
                             .forEach(stopsFromBoardHopDwellEdges::next);
                     stopsFromBoardHopDwellEdges.finish();
                     List<Trip.Stop> stops = stopsFromBoardHopDwellEdges.stops;
+                    GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
+                    Route route = gtfsFeed.routes.get(tripDescriptor.getRouteId());
 
                     result.add(new Trip.PtLeg(
                             feedId, partition.get(0).edge.getTransfers() == 0,
                             tripDescriptor.getTripId(),
                             tripDescriptor.getRouteId(),
+                            route.route_type,
+                            route.route_url == null ? "" : route.route_url.toString(),
+                            route.route_short_name,
+                            route.route_long_name,
                             Optional.ofNullable(gtfsStorage.getGtfsFeeds().get(feedId).trips.get(tripDescriptor.getTripId())).map(t -> t.trip_headsign).orElse("extra"),
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
