@@ -42,13 +42,16 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/pom.xml', '**/package.json') }}
           restore-keys: |
             ${{ runner.os}}-node_modules-
+      # TODO NOW include
+      #- name: clean install
+      #  run: |
+      #    mvn -Dkey=$API_KEY clean install -B
+
       - name: Build and publish package to maven central ${{ matrix.java-version }}
         run: |
           echo "release to maven central"
           mvn -B versions:set -DnewVersion=$GITHUB_REF_NAME -DgenerateBackupPoms=false
-          # mvn -Dkey=$API_KEY clean install -B
           mvn deploy -P release -DskipTests=true -Dpgp.secretkey=keyring:id=0E2FBADB -B
-        if: startsWith(github.ref, 'refs/tags/')
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
