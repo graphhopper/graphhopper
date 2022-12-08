@@ -130,7 +130,7 @@ public class GraphHopperTest {
         assertEquals(277115, res.getTime(), 10);
         assertEquals(91, res.getPoints().size());
 
-        assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
+        assertEquals(10000000, res.getWaypoints().getLat(0), 1e-7);
         assertEquals(43.7495432, res.getWaypoints().getLat(1), 1e-7);
     }
 
