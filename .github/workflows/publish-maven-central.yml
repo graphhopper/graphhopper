@@ -18,6 +18,7 @@ jobs:
           server-id: ossrh
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
+          # feed directly as multi line value
           gpg-private-key: ${{ secrets.GPG_PRIVATE_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
 
@@ -42,10 +43,9 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/pom.xml', '**/package.json') }}
           restore-keys: |
             ${{ runner.os}}-node_modules-
-      # TODO NOW include
-      #- name: clean install
-      #  run: |
-      #    mvn -Dkey=$API_KEY clean install -B
+      - name: clean install
+        run: |
+          mvn -Dkey=$API_KEY clean install -B
 
       - name: Build and publish package to maven central ${{ matrix.java-version }}
         run: |
