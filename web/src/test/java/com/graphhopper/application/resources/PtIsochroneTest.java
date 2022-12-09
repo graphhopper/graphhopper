@@ -58,8 +58,7 @@ public class PtIsochroneTest {
         config.getGraphHopperConfiguration()
                 .putObject("graph.vehicles", "foot")
                 .putObject("graph.location", GRAPH_LOC)
-                .putObject("gtfs.file", "../reader-gtfs/files/sample-feed")
-                .putObject("import.osm.ignored_highways", "").
+                .putObject("gtfs.file", "../reader-gtfs/files/sample-feed").
                 setProfiles(Collections.singletonList(new Profile("foot").setVehicle("foot").setWeighting("fastest")));
         Helper.removeDir(new File(GRAPH_LOC));
         return config;
