@@ -1,5 +1,11 @@
 name: Publish to GitHub Packages
-on: push
+
+# ignore tags as the untagged commit has the same GITHUB_SHA and would conflict
+on:
+  push:
+    branches:
+    - '**'
+
 jobs:
   publish:
     if: github.repository_owner == 'graphhopper'
