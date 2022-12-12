@@ -18,6 +18,7 @@ Here is an overview:
  * ChristophKaser, agrees to the project's CLA, improved Android compatibility #1207
  * chucre, add special JSON output format, see #41
  * daisy1754, fixed usage of graphhopper.sh script
+ * DanielAMCON, add bus profile
  * dardin88, instructions improved
  * dewos, web API bug fixes
  * devemux86, improvements regarding Android, GPX and more
