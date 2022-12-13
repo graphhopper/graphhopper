@@ -1,5 +1,5 @@
-// use this custom model with vehicle: roads
 {
+  "comment0": "in the config.yml use graph.vehicles: roads",
   "distance_influence": 1,
   "speed": [
     {
