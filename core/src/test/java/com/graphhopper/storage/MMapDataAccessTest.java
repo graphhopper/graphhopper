@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MMapDataAccessTest extends DataAccessTest {
     @Override
     public DataAccess createDataAccess(String name, int segmentSize) {
-        return new MMapDataAccess(name, directory, true, segmentSize);
+        return new MMapDataAccess(name, directory, segmentSize);
     }
 
     @Test
@@ -36,11 +36,13 @@ public class MMapDataAccessTest extends DataAccessTest {
         assertFalse(da.loadExisting());
         da.create(100);
         da.setInt(7 * 4, 123);
+        da.setHeader(0, 9);
         da.flush();
         da.close();
         da = createDataAccess(name);
         assertTrue(da.loadExisting());
         assertEquals(123, da.getInt(7 * 4));
+        assertEquals(9, da.getHeader(0));
         da.close();
     }
 
@@ -50,6 +52,7 @@ public class MMapDataAccessTest extends DataAccessTest {
         assertFalse(da.loadExisting());
         da.create(100);
         da.setInt(7 * 4, 123);
+        da.setHeader(0, 9);
 
         // TODO "memory mapped flush" is expensive and not required. only writing the header is required.
         da.flush();
@@ -57,6 +60,7 @@ public class MMapDataAccessTest extends DataAccessTest {
         da = new RAMDataAccess(name, directory, true, -1);
         assertTrue(da.loadExisting());
         assertEquals(123, da.getInt(7 * 4));
+        assertEquals(9, da.getHeader(0));
         da.close();
     }
 }

@@ -183,8 +183,8 @@
                         <compilerArgument>-Xlint:deprecation</compilerArgument>
                         -->
                         <fork>true</fork>
-                        <source>1.8</source>
-                        <target>1.8</target>
+                        <source>19</source>
+                        <target>19</target>
                     </configuration>
                 </plugin>
 

@@ -37,7 +37,6 @@ public class GHDirectory implements Directory {
     private final DAType typeFallback;
     // first rule matches => LinkedHashMap
     private final Map<String, DAType> defaultTypes = new LinkedHashMap<>();
-    private final Map<String, Integer> mmapPreloads = new LinkedHashMap<>();
     private final Map<String, DataAccess> map = Collections.synchronizedMap(new HashMap<>());
 
     public GHDirectory(String _location, DAType defaultType) {
@@ -55,45 +54,14 @@ public class GHDirectory implements Directory {
     }
 
     /**
-     * Configure the DAType (specified by the value) of a single DataAccess object (specified by the key). For "MMAP" you
-     * can prepend "preload." to the name and specify a percentage which preloads the DataAccess into physical memory of
-     * the specified percentage (only applied for load, not for import).
+     * Configure the DAType (specified by the value) of a single DataAccess object (specified by the key).
      * As keys can be patterns the order is important and the LinkedHashMap is forced as type.
      */
     public void configure(LinkedHashMap<String, String> config) {
         for (Map.Entry<String, String> kv : config.entrySet()) {
             String value = kv.getValue().trim();
-            if (kv.getKey().startsWith("preload."))
-                try {
-                    String pattern = kv.getKey().substring("preload.".length());
-                    mmapPreloads.put(pattern, Integer.parseInt(value));
-                } catch (NumberFormatException ex) {
-                    throw new IllegalArgumentException("DataAccess " + kv.getKey() + " has an incorrect preload value: " + value);
-                }
-            else {
-                String pattern = kv.getKey();
-                defaultTypes.put(pattern, DAType.fromString(value));
-            }
-        }
-    }
-
-    /**
-     * Returns the preload value or 0 if no patterns match.
-     * See {@link #configure(LinkedHashMap)}
-     */
-    int getPreload(String name) {
-        for (Map.Entry<String, Integer> entry : mmapPreloads.entrySet())
-            if (name.matches(entry.getKey())) return entry.getValue();
-        return 0;
-    }
-
-    public void loadMMap() {
-        for (DataAccess da : map.values()) {
-            if (!(da instanceof MMapDataAccess))
-                continue;
-            int preload = getPreload(da.getName());
-            if (preload > 0)
-                ((MMapDataAccess) da).load(preload);
+            String pattern = kv.getKey();
+            defaultTypes.put(pattern, DAType.fromString(value));
         }
     }
 
@@ -140,7 +108,7 @@ public class GHDirectory implements Directory {
             else
                 da = new RAMDataAccess(name, location, false, segmentSize);
         } else if (type.isMMap()) {
-            da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
+            da = new MMapDataAccess(name, location, segmentSize);
         } else {
             throw new IllegalArgumentException("DAType not supported " + type);
         }

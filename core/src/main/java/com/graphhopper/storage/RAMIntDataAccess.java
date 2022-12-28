@@ -263,11 +263,6 @@ class RAMIntDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    protected boolean isIntBased() {
-        return true;
-    }
-
-    @Override
     public DAType getType() {
         if (isStoring())
             return DAType.RAM_INT_STORE;

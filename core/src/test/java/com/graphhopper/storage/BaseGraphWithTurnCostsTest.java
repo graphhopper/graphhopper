@@ -106,47 +106,6 @@ public class BaseGraphWithTurnCostsTest extends BaseGraphTest {
     }
 
     @Test
-    public void testEnsureCapacity() {
-        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), false, 128);
-        graph.create(100); // 100 is the minimum size
-
-        TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
-        // assert that turnCostStorage can hold 104 turn cost entries at the beginning
-        assertEquals(128, turnCostStorage.getCapacity());
-
-        Random r = new Random();
-
-        NodeAccess na = graph.getNodeAccess();
-        for (int i = 0; i < 100; i++) {
-            double randomLat = 90 * r.nextDouble();
-            double randomLon = 180 * r.nextDouble();
-
-            na.setNode(i, randomLat, randomLon);
-        }
-
-        // Make node 50 the 'center' node
-        for (int nodeId = 51; nodeId < 100; nodeId++) {
-            graph.edge(50, nodeId).setDistance(r.nextDouble()).set(carAccessEnc, true, true);
-        }
-        for (int nodeId = 0; nodeId < 50; nodeId++) {
-            graph.edge(nodeId, 50).setDistance(r.nextDouble()).set(carAccessEnc, true, true);
-        }
-
-        // add 100 turn cost entries around node 50
-        for (int edgeId = 0; edgeId < 50; edgeId++) {
-            setTurnCost(edgeId, 50, edgeId + 50, 1337);
-            setTurnCost(edgeId + 50, 50, edgeId, 1337);
-        }
-
-        setTurnCost(0, 50, 1, 1337);
-        assertEquals(104, turnCostStorage.getCapacity() / 16); // we are still good here
-
-        setTurnCost(0, 50, 2, 1337);
-        // A new segment should be added, which will support 128 / 16 = 8 more entries.
-        assertEquals(112, turnCostStorage.getCapacity() / 16);
-    }
-
-    @Test
     public void testInitializeTurnCost() {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, false), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();

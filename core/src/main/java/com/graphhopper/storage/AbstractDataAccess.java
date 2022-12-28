@@ -115,12 +115,6 @@ public abstract class AbstractDataAccess implements DataAccess {
         return bytes;
     }
 
-    protected void copyHeader(DataAccess da) {
-        for (int h = 0; h < header.length * 4; h += 4) {
-            da.setHeader(h, getHeader(h));
-        }
-    }
-
     DataAccess setSegmentSize(int bytes) {
         if (bytes > 0) {
             // segment size should be a power of 2
@@ -146,7 +140,4 @@ public abstract class AbstractDataAccess implements DataAccess {
         return true;
     }
 
-    protected boolean isIntBased() {
-        return false;
-    }
 }

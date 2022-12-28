@@ -1045,7 +1045,6 @@ public class GraphHopper {
                         + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
 
             postProcessing(false);
-            directory.loadMMap();
             setFullyLoaded();
             return true;
         } finally {
