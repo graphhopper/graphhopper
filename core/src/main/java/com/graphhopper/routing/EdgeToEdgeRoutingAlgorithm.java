@@ -19,7 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.util.EdgeIterator;
 
-public interface BidirRoutingAlgorithm extends RoutingAlgorithm {
+public interface EdgeToEdgeRoutingAlgorithm extends RoutingAlgorithm {
     /**
      * like {@link #calcPath(int, int)}, but this method also allows to strictly restrict the edge the
      * path will begin with and the edge it will end with.
@@ -29,7 +29,5 @@ public interface BidirRoutingAlgorithm extends RoutingAlgorithm {
      * @param toInEdge    the edge id of the last edge of the path. using {@link EdgeIterator#ANY_EDGE} means
      *                    not enforcing the last edge of the path
      */
-    // todo: in principle its also possible to implement this method for unidirectional algorithms (but not sure
-    // if it is really worth it).
     Path calcPath(int from, int to, int fromOutEdge, int toInEdge);
 }

@@ -45,8 +45,8 @@ public class CHRoutingAlgorithmFactory {
         this.routingCHGraph = routingCHGraph;
     }
 
-    public BidirRoutingAlgorithm createAlgo(PMap opts) {
-        BidirRoutingAlgorithm algo = routingCHGraph.isEdgeBased()
+    public EdgeToEdgeRoutingAlgorithm createAlgo(PMap opts) {
+        EdgeToEdgeRoutingAlgorithm algo = routingCHGraph.isEdgeBased()
                 ? createAlgoEdgeBased(routingCHGraph, opts)
                 : createAlgoNodeBased(routingCHGraph, opts);
         if (opts.has(MAX_VISITED_NODES))
@@ -54,7 +54,7 @@ public class CHRoutingAlgorithmFactory {
         return algo;
     }
 
-    private BidirRoutingAlgorithm createAlgoEdgeBased(RoutingCHGraph g, PMap opts) {
+    private EdgeToEdgeRoutingAlgorithm createAlgoEdgeBased(RoutingCHGraph g, PMap opts) {
         String defaultAlgo = ASTAR_BI;
         String algo = opts.getString(ALGORITHM, defaultAlgo);
         if (Helper.isEmpty(algo))
@@ -71,7 +71,7 @@ public class CHRoutingAlgorithmFactory {
         }
     }
 
-    private BidirRoutingAlgorithm createAlgoNodeBased(RoutingCHGraph g, PMap opts) {
+    private EdgeToEdgeRoutingAlgorithm createAlgoNodeBased(RoutingCHGraph g, PMap opts) {
         // use dijkstra by default for node-based (its faster)
         String defaultAlgo = DIJKSTRA_BI;
         String algo = opts.getString(ALGORITHM, defaultAlgo);
