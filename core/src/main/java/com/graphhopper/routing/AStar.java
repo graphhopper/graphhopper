@@ -125,12 +125,10 @@ public class AStar extends AbstractRoutingAlgorithm {
         }
     }
 
-    @Override
-    protected boolean finished() {
+    private boolean finished() {
         return currEdge.adjNode == to;
     }
 
-    @Override
     protected Path extractPath() {
         if (currEdge == null || !finished())
             return createEmptyPath();
