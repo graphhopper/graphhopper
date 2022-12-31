@@ -108,6 +108,7 @@ public class Trip {
         public final String trip_headsign;
         public final String route_color;
         public final String route_name;
+        public final int route_type;
         public final int bikes_allowed;
 
         public final long travelTime;
@@ -115,7 +116,7 @@ public class Trip {
         public final String trip_id;
         public final String route_id;
 
-        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, String headsign, String color, String routeName, int bikesAllowed, String agencyName, List<Stop> stops, double distance, double weight, long travelTime, Geometry geometry) {
+        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, String headsign, String color, String routeName, int routeType, int bikesAllowed, String agencyName, List<Stop> stops, double distance, double weight, long travelTime, Geometry geometry) {
             super("pt", stops.get(0).stop_name, geometry, distance, weight);
             this.feed_id = feedId;
             this.agency_name = agencyName;
@@ -124,6 +125,7 @@ public class Trip {
             this.route_id = routeId;
             this.route_color = color;
             this.route_name = routeName;
+            this.route_type = routeType;
             this.bikes_allowed = bikesAllowed;
             this.trip_headsign = headsign;
             this.travelTime = travelTime;
