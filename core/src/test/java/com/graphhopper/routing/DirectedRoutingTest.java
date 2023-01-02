@@ -68,7 +68,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
- * This test makes sure the different bidirectional routing algorithms correctly implement restrictions of the source/
+ * This test makes sure the different routing algorithms correctly implement restrictions of the source/
  * target edges, by comparing with {@link DijkstraBidirectionRef}
  *
  * @author easbar
@@ -147,13 +147,15 @@ public class DirectedRoutingTest {
             }
         }
 
-        private BidirRoutingAlgorithm createAlgo() {
+        private EdgeToEdgeRoutingAlgorithm createAlgo() {
             return createAlgo(graph);
         }
 
-        private BidirRoutingAlgorithm createAlgo(Graph graph) {
+        private EdgeToEdgeRoutingAlgorithm createAlgo(Graph graph) {
             switch (algo) {
-                case ASTAR:
+                case ASTAR_UNI_BEELINE:
+                    return new AStar(graph, graph.wrapWeighting(weighting), TraversalMode.EDGE_BASED);
+                case ASTAR_BI_BEELINE:
                     return new AStarBidirection(graph, graph.wrapWeighting(weighting), TraversalMode.EDGE_BASED);
                 case CH_DIJKSTRA: {
                     CHRoutingAlgorithmFactory algoFactory = graph instanceof QueryGraph
@@ -168,7 +170,7 @@ public class DirectedRoutingTest {
                     return algoFactory.createAlgo(new PMap().putObject(ALGORITHM, ASTAR_BI));
                 }
                 case LM:
-                    return (BidirRoutingAlgorithm) new LMRoutingAlgorithmFactory(lm).createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(TraversalMode.EDGE_BASED));
+                    return (EdgeToEdgeRoutingAlgorithm) new LMRoutingAlgorithmFactory(lm).createAlgo(graph, weighting, new AlgorithmOptions().setAlgorithm(ASTAR_BI).setTraversalMode(TraversalMode.EDGE_BASED));
                 default:
                     throw new IllegalArgumentException("unknown algo " + algo);
             }
@@ -183,12 +185,14 @@ public class DirectedRoutingTest {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
             return Stream.of(
-                    new Fixture(Algo.ASTAR, INFINITE_U_TURN_COSTS, false, false),
+                    new Fixture(Algo.ASTAR_UNI_BEELINE, INFINITE_U_TURN_COSTS, false, false),
+                    new Fixture(Algo.ASTAR_BI_BEELINE, INFINITE_U_TURN_COSTS, false, false),
                     new Fixture(Algo.CH_ASTAR, INFINITE_U_TURN_COSTS, true, false),
                     new Fixture(Algo.CH_DIJKSTRA, INFINITE_U_TURN_COSTS, true, false),
                     // todo: LM+directed still fails sometimes, #1971,
 //                  new Fixture(Algo.LM, INFINITE_U_TURN_COSTS, false, true),
-                    new Fixture(Algo.ASTAR, 40, false, false),
+                    new Fixture(Algo.ASTAR_UNI_BEELINE, 40, false, false),
+                    new Fixture(Algo.ASTAR_BI_BEELINE, 40, false, false),
                     new Fixture(Algo.CH_ASTAR, 40, true, false),
                     new Fixture(Algo.CH_DIJKSTRA, 40, true, false)
                     // todo: LM+directed still fails sometimes, #1971,
@@ -205,7 +209,8 @@ public class DirectedRoutingTest {
     }
 
     private enum Algo {
-        ASTAR,
+        ASTAR_UNI_BEELINE,
+        ASTAR_BI_BEELINE,
         CH_ASTAR,
         CH_DIJKSTRA,
         LM

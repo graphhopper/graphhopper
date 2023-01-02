@@ -15,26 +15,34 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
 
-/**
- * Define disjunct ways of transportation that are used to create and populate our encoded values from a data source
- * like OpenStreetMap.
- *
- * @author Robin Boldt
- * @author Peter Karich
- */
-public enum TransportationMode {
-    OTHER(false), FOOT(false), VEHICLE(false), BIKE(false),
-    CAR(true), MOTORCYCLE(true), HGV(true), PSV(true), BUS(true);
+package com.graphhopper.routing.ev;
 
-    private final boolean motorVehicle;
+public enum Footway {
+    MISSING("missing"), SIDEWALK("sidewalk"), CROSSING("crossing"), ACCESS_AISLE("access_aisle"),
+    LINK("link"), TRAFFIC_ISLAND("traffic_island"), ALLEY("alley");
 
-    TransportationMode(boolean motorVehicle) {
-        this.motorVehicle = motorVehicle;
+    public static final String KEY = "footway";
+
+    private final String name;
+
+    Footway(String name) {
+        this.name = name;
     }
 
-    public boolean isMotorVehicle() {
-        return motorVehicle;
+    @Override
+    public String toString() {
+        return name;
+    }
+
+    public static Footway find(String name) {
+        if (name == null || name.isEmpty())
+            return MISSING;
+
+        for (Footway footway : values())
+            if (footway.name().equalsIgnoreCase(name))
+                return footway;
+
+        return MISSING;
     }
 }

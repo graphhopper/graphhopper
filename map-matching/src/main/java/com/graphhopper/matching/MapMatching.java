@@ -214,6 +214,7 @@ public class MapMatching {
         // Compute the most likely sequence of map matching candidates:
         List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps);
         statistics.put("transitionDistances", seq.stream().filter(s -> s.transitionDescriptor != null).mapToLong(s -> Math.round(s.transitionDescriptor.getDistance())).toArray());
+        statistics.put("visitedNodes", router.getVisitedNodes());
 
         List<EdgeIteratorState> path = seq.stream().filter(s1 -> s1.transitionDescriptor != null).flatMap(s1 -> s1.transitionDescriptor.calcEdges().stream()).collect(Collectors.toList());
 
@@ -444,18 +445,6 @@ public class MapMatching {
         return result;
     }
 
-    private void fail(int timeStepCounter, ObservationWithCandidateStates prevTimeStep, ObservationWithCandidateStates timeStep) {
-        String likelyReasonStr = "";
-        if (prevTimeStep != null) {
-            double dist = distanceCalc.calcDist(prevTimeStep.observation.getPoint().lat, prevTimeStep.observation.getPoint().lon, timeStep.observation.getPoint().lat, timeStep.observation.getPoint().lon);
-            if (dist > 2000) {
-                likelyReasonStr = "Too long distance to previous measurement? "
-                        + Math.round(dist) + "m, ";
-            }
-        }
-
-    }
-
     private List<EdgeMatch> prepareEdgeMatches(List<SequenceState<State, Observation, Path>> seq) {
         // This creates a list of directed edges (EdgeIteratorState instances turned the right way),
         // each associated with 0 or more of the observations.
@@ -571,6 +560,10 @@ public class MapMatching {
         List<Path> calcPaths(QueryGraph queryGraph, int fromNode, int fromOutEdge, int[] toNodes, int[] toInEdges, int observationIndex);
 
         Weighting getWeighting();
+
+        default long getVisitedNodes() {
+            return 0L;
+        }
     }
 
 }

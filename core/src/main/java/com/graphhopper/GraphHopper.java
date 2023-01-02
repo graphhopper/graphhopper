@@ -598,40 +598,18 @@ public class GraphHopper {
         return this;
     }
 
-    private void buildEncodingManagerAndOSMParsers(String flagEncodersStr, String encodedValuesStr, String dateRangeParserString, boolean withUrbanDensity, Collection<Profile> profiles) {
-        Map<String, String> flagEncodersMap = new LinkedHashMap<>();
-        for (String encoderStr : flagEncodersStr.split(",")) {
-            String name = encoderStr.split("\\|")[0].trim();
-            if (name.isEmpty())
-                continue;
-            if (flagEncodersMap.containsKey(name))
-                throw new IllegalArgumentException("Duplicate flag encoder: " + name + " in: " + encoderStr);
-            flagEncodersMap.put(name, encoderStr);
-        }
-        Map<String, String> flagEncodersFromProfilesMap = new LinkedHashMap<>();
-        for (Profile profile : profiles) {
-            // if a profile uses a flag encoder with turn costs make sure we add that flag encoder with turn costs
-            String vehicle = profile.getVehicle().trim();
-            if (!flagEncodersFromProfilesMap.containsKey(vehicle) || profile.isTurnCosts())
-                flagEncodersFromProfilesMap.put(vehicle, vehicle + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
-        }
-        // flag encoders from profiles are only taken into account when they were not given explicitly
-        flagEncodersFromProfilesMap.forEach(flagEncodersMap::putIfAbsent);
-
-        List<String> encodedValueStrings = Arrays.stream(encodedValuesStr.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toList());
-
+    protected EncodingManager buildEncodingManager(Map<String, String> vehiclesByName, List<String> encodedValueStrings, boolean withUrbanDensity, Collection<Profile> profiles) {
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
-        flagEncodersMap.forEach((name, encoderStr) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, new PMap(encoderStr))));
+        vehiclesByName.forEach((name, vehicleStr) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, new PMap(vehicleStr))));
         profiles.forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
         if (withUrbanDensity)
             emBuilder.add(UrbanDensity.create());
         encodedValueStrings.forEach(s -> emBuilder.add(encodedValueFactory.create(s)));
-        encodingManager = emBuilder.build();
+        return emBuilder.build();
+    }
 
-        osmParsers = new OSMParsers();
+    protected OSMParsers buildOSMParsers(Map<String, String> vehiclesByName, List<String> encodedValueStrings, String dateRangeParserString) {
+        OSMParsers osmParsers = new OSMParsers();
         for (String s : encodedValueStrings) {
             TagParser tagParser = tagParserFactory.create(encodingManager, s);
             if (tagParser != null)
@@ -652,14 +630,20 @@ public class GraphHopper {
             osmParsers.addWayTagParser(new OSMMaxSpeedParser(encodingManager.getDecimalEncodedValue(MaxSpeed.KEY)));
         if (!encodedValueStrings.contains(RoadAccess.KEY))
             osmParsers.addWayTagParser(new OSMRoadAccessParser(encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
-        if (encodingManager.hasEncodedValue(AverageSlope.KEY) && encodingManager.hasEncodedValue(MaxSlope.KEY))
-            osmParsers.addWayTagParser(new SlopeCalculator(encodingManager.getDecimalEncodedValue(MaxSlope.KEY), encodingManager.getDecimalEncodedValue(AverageSlope.KEY)));
+        if (encodingManager.hasEncodedValue(AverageSlope.KEY) || encodingManager.hasEncodedValue(MaxSlope.KEY)) {
+            if (!encodingManager.hasEncodedValue(AverageSlope.KEY) || !encodingManager.hasEncodedValue(MaxSlope.KEY))
+                throw new IllegalArgumentException("Enable both, average_slope and max_slope");
+            osmParsers.addWayTagParser(new SlopeCalculator(encodingManager.getDecimalEncodedValue(MaxSlope.KEY),
+                    encodingManager.getDecimalEncodedValue(AverageSlope.KEY)));
+        }
         if (encodingManager.hasEncodedValue(Curvature.KEY))
             osmParsers.addWayTagParser(new CurvatureCalculator(encodingManager.getDecimalEncodedValue(Curvature.KEY)));
 
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
-        flagEncodersMap.forEach((name, encoderStr) -> {
-            VehicleTagParser vehicleTagParser = vehicleTagParserFactory.createParser(encodingManager, name, new PMap(encoderStr));
+        vehiclesByName.forEach((name, vehicleStr) -> {
+            VehicleTagParser vehicleTagParser = vehicleTagParserFactory.createParser(encodingManager, name, new PMap(vehicleStr));
+            if (vehicleTagParser == null)
+                return;
             vehicleTagParser.init(dateRangeParser);
             if (vehicleTagParser instanceof BikeCommonTagParser) {
                 if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
@@ -674,6 +658,36 @@ public class GraphHopper {
             }
             osmParsers.addVehicleTagParser(vehicleTagParser);
         });
+        return osmParsers;
+    }
+
+    public static List<String> getEncodedValueStrings(String encodedValuesStr) {
+        return Arrays.stream(encodedValuesStr.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    public static Map<String, String> getVehiclesByName(String vehiclesStr, Collection<Profile> profiles) {
+        Map<String, String> vehiclesMap = new LinkedHashMap<>();
+        for (String encoderStr : vehiclesStr.split(",")) {
+            String name = encoderStr.split("\\|")[0].trim();
+            if (name.isEmpty())
+                continue;
+            if (vehiclesMap.containsKey(name))
+                throw new IllegalArgumentException("Duplicate flag encoder: " + name + " in: " + encoderStr);
+            vehiclesMap.put(name, encoderStr);
+        }
+        Map<String, String> flagEncodersFromProfilesMap = new LinkedHashMap<>();
+        for (Profile profile : profiles) {
+            // if a profile uses a flag encoder with turn costs make sure we add that flag encoder with turn costs
+            String vehicle = profile.getVehicle().trim();
+            if (!flagEncodersFromProfilesMap.containsKey(vehicle) || profile.isTurnCosts())
+                flagEncodersFromProfilesMap.put(vehicle, vehicle + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
+        }
+        // flag encoders from profiles are only taken into account when they were not given explicitly
+        flagEncodersFromProfilesMap.forEach(vehiclesMap::putIfAbsent);
+        return vehiclesMap;
     }
 
     private static ElevationProvider createElevationProvider(GraphHopperConfig ghConfig) {
@@ -785,11 +799,14 @@ public class GraphHopper {
     /**
      * Creates the graph from OSM data.
      */
-    private void process(boolean closeEarly) {
+    protected void process(boolean closeEarly) {
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
         boolean withUrbanDensity = urbanDensityCalculationThreads > 0;
-        buildEncodingManagerAndOSMParsers(vehiclesString, encodedValuesString, dateRangeParserString, withUrbanDensity, profilesByName.values());
+        Map<String, String> vehiclesByName = getVehiclesByName(vehiclesString, profilesByName.values());
+        List<String> encodedValueStrings = getEncodedValueStrings(encodedValuesString);
+        encodingManager = buildEncodingManager(vehiclesByName, encodedValueStrings, withUrbanDensity, profilesByName.values());
+        osmParsers = buildOSMParsers(vehiclesByName, encodedValueStrings, dateRangeParserString);
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())

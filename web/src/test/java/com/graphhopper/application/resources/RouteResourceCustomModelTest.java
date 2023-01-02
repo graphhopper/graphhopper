@@ -70,8 +70,7 @@ public class RouteResourceCustomModelTest {
                         new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
                         new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0)).setVehicle("bike"),
                         new Profile("bike_fastest").setWeighting("fastest").setVehicle("bike"),
-                        new CustomProfile("truck").setVehicle("car").
-                                putHint("custom_model_file", "truck.json"),
+                        new CustomProfile("bus").setVehicle("roads").putHint("custom_model_file", "bus.json"),
                         new CustomProfile("cargo_bike").setVehicle("bike").
                                 putHint("custom_model_file", "cargo_bike.json"),
                         new CustomProfile("json_bike").setVehicle("bike").
@@ -95,7 +94,7 @@ public class RouteResourceCustomModelTest {
                                                 addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "10")).
                                                 addToSpeed(If("true", LIMIT, "40")))).
                                 setVehicle("bike"))).
-                setCHProfiles(Arrays.asList(new CHProfile("truck"), new CHProfile("car_no_unclassified")));
+                setCHProfiles(Arrays.asList(new CHProfile("bus"), new CHProfile("car_no_unclassified")));
         return config;
     }
 
@@ -113,33 +112,12 @@ public class RouteResourceCustomModelTest {
     }
 
     @Test
-    public void testCHPossibleWithoutCustomModel() {
-        // the truck profile is a custom profile and we can use its CH preparation as long as we do not add a custom model
-        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\"}";
+    public void testBus() {
+        // the bus profile is a custom profile and we can use its CH preparation as long as we do not add a custom model
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bus\"}";
         JsonNode path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 1500, 10);
-        assertEquals(path.get("time").asLong(), 151_000, 1_000);
-    }
-
-    @Test
-    public void testDisableCHAndUseCustomModel() {
-        // If we specify a custom model we get an error, because it does not work with CH.
-        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\", \"custom_model\": {" +
-                "\"speed\": [{\"if\": \"road_class == PRIMARY\", \"multiply_by\": 0.9}]" +
-                "}}";
-        JsonNode json = query(body, 400).readEntity(JsonNode.class);
-        assertMessageStartsWith(json, "The 'custom_model' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`.");
-
-        // ... even when the custom model is just an empty object
-        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\", \"custom_model\": {}}";
-        json = query(body, 400).readEntity(JsonNode.class);
-        assertMessageStartsWith(json, "The 'custom_model' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`.");
-
-        // ... but when we disable CH it works of course
-        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\", \"custom_model\": {}, \"ch.disable\": true}";
-        JsonNode path = getPath(body);
-        assertEquals(path.get("distance").asDouble(), 1500, 10);
-        assertEquals(path.get("time").asLong(), 151_000, 1_000);
+        assertEquals(path.get("time").asLong(), 168_000, 1_000);
     }
 
     @Test
@@ -174,19 +152,6 @@ public class RouteResourceCustomModelTest {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"foot_profile\", \"custom_model\": {}, \"ch.disable\": true}";
         JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
         assertEquals("The requested profile 'foot_profile' cannot be used with `custom_model`, because it has weighting=fastest", jsonNode.get("message").asText());
-    }
-
-    @Test
-    public void testWeightingAndVehicleNotAllowed() {
-        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
-                " \"custom_model\": {}, \"ch.disable\": true, \"vehicle\": \"truck\"}";
-        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertEquals("The 'profile' parameter is required when you use the `custom_model` parameter", jsonNode.get("message").asText());
-
-        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\"," +
-                " \"custom_model\": {}, \"ch.disable\": true, \"weighting\": \"custom\"}";
-        jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertEquals("The 'weighting' parameter is no longer supported. You used 'weighting=custom'", jsonNode.get("message").asText());
     }
 
     @ParameterizedTest

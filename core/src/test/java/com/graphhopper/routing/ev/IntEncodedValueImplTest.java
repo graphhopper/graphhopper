@@ -52,6 +52,15 @@ public class IntEncodedValueImplTest {
     }
 
     @Test
+    public void maxValue() {
+        IntEncodedValue prop = new IntEncodedValueImpl("test", 31, false);
+        prop.init(new EncodedValue.InitializerConfig());
+        IntsRef ref = new IntsRef(2);
+        prop.setInt(false, ref, (1 << 31) - 1);
+        assertEquals(2_147_483_647L, prop.getInt(false, ref));
+    }
+
+    @Test
     public void testSignedInt() {
         IntEncodedValue prop = new IntEncodedValueImpl("test", 31, -5, false, true);
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();

@@ -198,7 +198,7 @@ public class WheelchairTagParser extends FootTagParser {
         if (Double.isInfinite(fullDist2D))
             throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
 
-        // skip elevation data adjustment for too short segments, TODO improve the elevation data handling and/or use the same mechanism as in bike2
+        // skip elevation data adjustment for too short segments, TODO improve the elevation data handling and/or use the same mechanism as we used to do in bike2
         if (fullDist2D < 20 || !pl.is3D())
             return edgeFlags;
 

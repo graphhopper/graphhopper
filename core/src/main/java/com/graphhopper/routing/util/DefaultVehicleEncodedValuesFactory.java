@@ -39,8 +39,8 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
         if (name.equals(BIKE))
             return VehicleEncodedValues.bike(configuration);
 
-        if (name.equals(BIKE2))
-            return VehicleEncodedValues.bike2(configuration);
+        if (name.equals("bike2"))
+            throw new IllegalArgumentException("Instead of bike2 use the bike vehicle and a custom model, see custom_models/bike2.json and #1234");
 
         if (name.equals(RACINGBIKE))
             return VehicleEncodedValues.racingbike(configuration);

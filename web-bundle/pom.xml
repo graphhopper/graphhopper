@@ -66,15 +66,9 @@
         </dependency>
 
         <dependency>
-            <groupId>no.ecc.vectortile</groupId>
-            <artifactId>java-vector-tile</artifactId>
-            <version>1.3.21</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>org.locationtech.jts</groupId>
+            <artifactId>jts-core</artifactId>
+            <version>1.19.0</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.jaxrs</groupId>

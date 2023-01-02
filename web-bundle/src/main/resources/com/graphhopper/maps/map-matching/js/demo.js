@@ -109,7 +109,7 @@ GraphHopperMapMatching.prototype.doRequest = function (content, callback, reqArg
     if (reqArgs)
         args = graphhopper.util.copyProperties(reqArgs, args);
 
-    var url = args.host + args.basePath + "?vehicle=" + args.vehicle
+    var url = args.host + args.basePath + "?profile=" + args.vehicle
             + "&gps_accuracy=" + args.gps_accuracy
             + "&type=" + args.data_type;
 

@@ -15,26 +15,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
 
-/**
- * Define disjunct ways of transportation that are used to create and populate our encoded values from a data source
- * like OpenStreetMap.
- *
- * @author Robin Boldt
- * @author Peter Karich
- */
-public enum TransportationMode {
-    OTHER(false), FOOT(false), VEHICLE(false), BIKE(false),
-    CAR(true), MOTORCYCLE(true), HGV(true), PSV(true), BUS(true);
+package com.graphhopper.routing.ev;
 
-    private final boolean motorVehicle;
+public class OSMWayID {
+    public static final String KEY = "osm_way_id";
 
-    TransportationMode(boolean motorVehicle) {
-        this.motorVehicle = motorVehicle;
-    }
-
-    public boolean isMotorVehicle() {
-        return motorVehicle;
+    public static IntEncodedValue create() {
+        return new IntEncodedValueImpl(KEY, 31, false);
     }
 }

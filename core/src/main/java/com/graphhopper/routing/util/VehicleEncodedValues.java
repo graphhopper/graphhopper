@@ -27,7 +27,7 @@ import java.util.List;
 import static com.graphhopper.routing.util.VehicleEncodedValuesFactory.*;
 
 public class VehicleEncodedValues {
-    public static final List<String> OUTDOOR_VEHICLES = Arrays.asList(BIKE, BIKE2, RACINGBIKE, MOUNTAINBIKE, FOOT, HIKE, WHEELCHAIR);
+    public static final List<String> OUTDOOR_VEHICLES = Arrays.asList(BIKE, RACINGBIKE, MOUNTAINBIKE, FOOT, HIKE, WHEELCHAIR);
 
     private final String name;
     private final BooleanEncodedValue accessEnc;
@@ -72,15 +72,6 @@ public class VehicleEncodedValues {
         DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
         DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
         return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnCostEnc);
-    }
-
-    public static VehicleEncodedValues bike2(PMap properties) {
-        if (properties.has("speed_two_directions"))
-            throw new IllegalArgumentException("bike2 always uses two directions");
-        return bike(new PMap(properties)
-                .putObject("name", properties.getString("name", "bike2"))
-                .putObject("speed_two_directions", true)
-        );
     }
 
     public static VehicleEncodedValues racingbike(PMap properties) {

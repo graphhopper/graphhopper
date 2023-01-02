@@ -46,8 +46,7 @@ public class PMap {
     }
 
     public PMap(String propertiesString) {
-        // five chosen as arbitrary initial capacity
-        this.map = new LinkedHashMap<>(5);
+        this.map = new LinkedHashMap<>();
 
         for (String s : propertiesString.split("\\|")) {
             s = s.trim();

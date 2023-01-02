@@ -69,11 +69,6 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     public Path calcPath(int from, int to) {
         fromNode = from;
         endNode = findEndNode(from, to);
-        return extractPath();
-    }
-
-    @Override
-    public Path extractPath() {
         if (endNode < 0 || isWeightLimitExceeded()) {
             Path path = createEmptyPath();
             path.setFromNode(fromNode);
@@ -204,8 +199,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         }
     }
 
-    @Override
-    public boolean finished() {
+    private boolean finished() {
         return currNode == to;
     }
 
