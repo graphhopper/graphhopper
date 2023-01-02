@@ -1,5 +1,6 @@
 ### 7.0 [not yet released]
 
+- there is a new, required 'import.osm.ignored_highways' configuration option that must be used to not increase the graph size and decrease performance for motorized-only routing compared to previous versions, #2702
 - new osm_way_id encoded value, #2701
 - the parameters vehicle, weighting, edge_based and turn_costs are no longer supported, use the profile parameter instead
 - removed motorroad to road_class conversion, #2329

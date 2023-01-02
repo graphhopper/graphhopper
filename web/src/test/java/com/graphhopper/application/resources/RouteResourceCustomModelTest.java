@@ -64,6 +64,7 @@ public class RouteResourceCustomModelTest {
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv").
                 putObject("custom_model_folder", "./src/test/resources/com/graphhopper/application/resources").
+                putObject("import.osm.ignored_highways", "").
                 setProfiles(Arrays.asList(
                         new Profile("wheelchair"),
                         new CustomProfile("roads").setCustomModel(new CustomModel()).setVehicle("roads"),

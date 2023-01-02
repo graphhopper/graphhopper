@@ -55,6 +55,7 @@ public class FreeWalkIT {
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
         ghConfig.putObject("gtfs.max_transfer_interpolation_walk_time_seconds", 0);
+        ghConfig.putObject("import.osm.ignored_highways", "");
         // TODO: This setting vv is currently "dead", as in production it switches to PtRouterFreeWalkImpl, but
         // TODO: here it is instantiated directly. Refactor by having only one Router but two Solvers, similar
         // TODO: to the street router.

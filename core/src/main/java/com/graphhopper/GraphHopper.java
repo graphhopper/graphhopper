@@ -568,6 +568,18 @@ public class GraphHopper {
         lmPreparationHandler.init(ghConfig);
 
         // osm import
+        // We do a few checks for import.osm.ignored_highways to prevent configuration errors when migrating from an older
+        // GH version.
+        if (!ghConfig.has("import.osm.ignored_highways"))
+            throw new IllegalArgumentException("Missing 'import.osm.ignored_highways'. Not using this parameter can decrease performance, see config-example.yml for more details");
+        String ignoredHighwaysString = ghConfig.getString("import.osm.ignored_highways", "");
+        if ((ignoredHighwaysString.contains("footway") || ignoredHighwaysString.contains("path")) && ghConfig.getProfiles().stream().map(Profile::getName).anyMatch(p -> p.contains("foot") || p.contains("hike") || p.contains("wheelchair")))
+            throw new IllegalArgumentException("You should not use import.osm.ignored_highways=footway or =path in conjunction with pedestrian profiles. This is probably an error in your configuration.");
+        if ((ignoredHighwaysString.contains("cycleway") || ignoredHighwaysString.contains("path")) && ghConfig.getProfiles().stream().map(Profile::getName).anyMatch(p -> p.contains("mtb") || p.contains("bike")))
+            throw new IllegalArgumentException("You should not use import.osm.ignored_highways=cycleway or =path in conjunction with bicycle profiles. This is probably an error in your configuration");
+
+        osmReaderConfig.setIgnoredHighways(Arrays.stream(ghConfig.getString("import.osm.ignored_highways", String.join(",", osmReaderConfig.getIgnoredHighways()))
+                .split(",")).map(String::trim).collect(Collectors.toList()));
         osmReaderConfig.setParseWayNames(ghConfig.getBool("datareader.instructions", osmReaderConfig.isParseWayNames()));
         osmReaderConfig.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", osmReaderConfig.getPreferredLanguage()));
         osmReaderConfig.setMaxWayPointDistance(ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, osmReaderConfig.getMaxWayPointDistance()));
@@ -608,8 +620,9 @@ public class GraphHopper {
         return emBuilder.build();
     }
 
-    protected OSMParsers buildOSMParsers(Map<String, String> vehiclesByName, List<String> encodedValueStrings, String dateRangeParserString) {
+    protected OSMParsers buildOSMParsers(Map<String, String> vehiclesByName, List<String> encodedValueStrings, List<String> ignoredHighways, String dateRangeParserString) {
         OSMParsers osmParsers = new OSMParsers();
+        ignoredHighways.forEach(osmParsers::addIgnoredHighway);
         for (String s : encodedValueStrings) {
             TagParser tagParser = tagParserFactory.create(encodingManager, s);
             if (tagParser != null)
@@ -806,7 +819,7 @@ public class GraphHopper {
         Map<String, String> vehiclesByName = getVehiclesByName(vehiclesString, profilesByName.values());
         List<String> encodedValueStrings = getEncodedValueStrings(encodedValuesString);
         encodingManager = buildEncodingManager(vehiclesByName, encodedValueStrings, withUrbanDensity, profilesByName.values());
-        osmParsers = buildOSMParsers(vehiclesByName, encodedValueStrings, dateRangeParserString);
+        osmParsers = buildOSMParsers(vehiclesByName, encodedValueStrings, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())

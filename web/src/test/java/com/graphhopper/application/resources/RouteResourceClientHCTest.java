@@ -65,6 +65,7 @@ public class RouteResourceClientHCTest {
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
                         new Profile("car").setVehicle("car").setWeighting("fastest"),

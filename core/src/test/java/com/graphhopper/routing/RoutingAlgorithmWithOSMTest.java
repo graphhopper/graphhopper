@@ -78,12 +78,12 @@ public class RoutingAlgorithmWithOSMTest {
         Graph g = hopper.getBaseGraph();
 
         // When OSM file stays unchanged make static edge and node IDs a requirement
-        assertEquals(GHUtility.asSet(9, 111, 182), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
-        assertEquals(GHUtility.asSet(19, 21), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(20)));
-        assertEquals(GHUtility.asSet(478, 84, 83), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(480)));
+        assertEquals(GHUtility.asSet(924, 576, 2), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
+        assertEquals(GHUtility.asSet(291, 369, 19), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(20)));
+        assertEquals(GHUtility.asSet(45, 497, 488), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(480)));
 
-        assertEquals(43.736989, g.getNodeAccess().getLat(10), 1e-6);
-        assertEquals(7.429758, g.getNodeAccess().getLon(201), 1e-6);
+        assertEquals(43.738776, g.getNodeAccess().getLat(10), 1e-6);
+        assertEquals(7.4170402, g.getNodeAccess().getLon(201), 1e-6);
     }
 
     private List<Query> createMonacoCarQueries() {
@@ -124,7 +124,7 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoMotorcycleCurvature() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2681, 119));
+        queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2675, 117));
         queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3727, 170));
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 3157, 165));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
@@ -276,12 +276,12 @@ public class RoutingAlgorithmWithOSMTest {
         Graph g = hopper.getBaseGraph();
 
         // see testMonaco for a similar ID test
-        assertEquals(GHUtility.asSet(2, 909, 571), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
-        assertEquals(GHUtility.asSet(444, 956, 740), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(441)));
-        assertEquals(GHUtility.asSet(911, 404, 122, 914), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(912)));
+        assertEquals(GHUtility.asSet(924, 576, 2), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
+        assertEquals(GHUtility.asSet(440, 442), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(441)));
+        assertEquals(GHUtility.asSet(913, 914, 911), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(912)));
 
-        assertEquals(43.743705, g.getNodeAccess().getLat(100), 1e-6);
-        assertEquals(7.426362, g.getNodeAccess().getLon(702), 1e-6);
+        assertEquals(43.7467818, g.getNodeAccess().getLat(100), 1e-6);
+        assertEquals(7.4312824, g.getNodeAccess().getLon(702), 1e-6);
     }
 
     @Test

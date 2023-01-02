@@ -54,6 +54,7 @@ public class RouteResourceIssue1574Test {
                 putObject("graph.vehicles", "car").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Collections.singletonList(
                         new Profile("car_profile").setVehicle("car").setWeighting("fastest")
