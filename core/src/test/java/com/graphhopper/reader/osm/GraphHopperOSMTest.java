@@ -182,7 +182,7 @@ public class GraphHopperOSMTest {
             }
         });
 
-        assertEquals(148, indexNodeList.size());
+        assertEquals(152, indexNodeList.size());
         for (int nodeId : indexNodeList) {
             if (!bbox.contains(na.getLat(nodeId), na.getLon(nodeId)))
                 fail("bbox " + bbox + " should contain " + nodeId);

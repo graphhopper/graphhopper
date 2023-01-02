@@ -102,8 +102,8 @@ public class GraphHopperTest {
             ASTAR + ",false,363",
             DIJKSTRA_BI + ",false,346",
             ASTAR_BI + ",false,192",
-            ASTAR_BI + ",true,42",
-            DIJKSTRA_BI + ",true,47"
+            ASTAR_BI + ",true,46",
+            DIJKSTRA_BI + ",true,51"
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
         final String vehicle = "car";
@@ -150,7 +150,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(712, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(713, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
         assertEquals(3437.1, res.getDistance(), .1);
@@ -644,7 +644,7 @@ public class GraphHopperTest {
 
         req.putHint(Routing.BLOCK_AREA, "49.984434,11.505212,49.985394,11.506333");
         rsp = hopper.route(req);
-        // we do not snap to Grüngraben (within the blocked area), but onto Lohweg and then we need to go to Hauptstraße
+        // we do not snap onto Grüngraben (within the blocked area), but onto Lohweg and then we need to go to Hauptstraße
         // and turn left onto Waldhüttenstraße. Note that if we exclude footway we get an entirely different path, because
         // the start point snaps all the way to the East onto the end of Bergstraße (because Lohweg gets no longer split
         // into several edges...)
@@ -2675,7 +2675,7 @@ public class GraphHopperTest {
                     .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"))
                     .setGraphHopperLocation(GH_LOCATION);
             hopper.load();
-            assertEquals(2961, hopper.getBaseGraph().getNodes());
+            assertEquals(2969, hopper.getBaseGraph().getNodes());
         }
     }
 

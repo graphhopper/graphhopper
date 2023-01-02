@@ -24,11 +24,15 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.text.DateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -172,5 +176,17 @@ public class MotorcycleTagParserTest {
         assertEquals(10, parser.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
         assertFalse(motorcycleAccessEnc.getBool(false, edgeFlags));
         assertTrue(motorcycleAccessEnc.getBool(true, edgeFlags));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"mofa", "moped", "motorcar", "motor_vehicle", "motorcycle"})
+    void footway_etc_not_allowed_despite_vehicle_yes(String vehicle) {
+        // these highways are blocked, even when we set one of the vehicles to yes
+        for (String highway : Arrays.asList("footway", "cycleway", "steps", "pedestrian")) {
+            ReaderWay way = new ReaderWay(1);
+            way.setTag("highway", highway);
+            way.setTag(vehicle, "yes");
+            assertEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
+        }
     }
 }

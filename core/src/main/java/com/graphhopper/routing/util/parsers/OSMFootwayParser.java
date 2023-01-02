@@ -15,26 +15,28 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+
+package com.graphhopper.routing.util.parsers;
+
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.Footway;
+import com.graphhopper.storage.IntsRef;
 
 /**
- * Define disjunct ways of transportation that are used to create and populate our encoded values from a data source
- * like OpenStreetMap.
- *
- * @author Robin Boldt
- * @author Peter Karich
+ * see: https://wiki.openstreetmap.org/wiki/Key%3Afootway
  */
-public enum TransportationMode {
-    OTHER(false), FOOT(false), VEHICLE(false), BIKE(false),
-    CAR(true), MOTORCYCLE(true), HGV(true), PSV(true), BUS(true);
+public class OSMFootwayParser implements TagParser {
+    private final EnumEncodedValue<Footway> footwayEnc;
 
-    private final boolean motorVehicle;
-
-    TransportationMode(boolean motorVehicle) {
-        this.motorVehicle = motorVehicle;
+    public OSMFootwayParser(EnumEncodedValue<Footway> footwayEnc) {
+        this.footwayEnc = footwayEnc;
     }
 
-    public boolean isMotorVehicle() {
-        return motorVehicle;
+    @Override
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+        String footway = way.getTag("footway");
+        footwayEnc.setEnum(false, edgeFlags, Footway.find(footway));
+        return edgeFlags;
     }
 }

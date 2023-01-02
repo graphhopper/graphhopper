@@ -25,8 +25,11 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.text.DateFormat;
+import java.util.Arrays;
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -634,5 +637,17 @@ public class CarTagParserTest {
         edgeFlags = lowFactorEm.createEdgeFlags();
         createParser(lowFactorEm, new PMap()).handleWayTags(edgeFlags, way);
         assertEquals(1, lowFactorSpeedEnc.getDecimal(false, edgeFlags), .1);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"mofa", "moped", "motorcar", "motor_vehicle", "motorcycle"})
+    void footway_etc_not_allowed_despite_vehicle_yes(String vehicle) {
+        // these highways are blocked, even when we set one of the vehicles to yes
+        for (String highway : Arrays.asList("footway", "cycleway", "steps", "pedestrian")) {
+            ReaderWay way = new ReaderWay(1);
+            way.setTag("highway", highway);
+            way.setTag(vehicle, "yes");
+            assertEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
+        }
     }
 }
