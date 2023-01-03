@@ -155,6 +155,17 @@ public class RouteResourceCustomModelTest {
         assertEquals("The requested profile 'foot_profile' cannot be used with `custom_model`, because it has weighting=fastest", jsonNode.get("message").asText());
     }
 
+    @Test
+    public void testVehicleAndWeightingNotAllowed() {
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\",\"custom_model\": {}, \"ch.disable\": true, \"vehicle\": \"truck\"}";
+        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
+        assertEquals("The 'vehicle' parameter is no longer supported. You used 'vehicle=truck'", jsonNode.get("message").asText());
+
+        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\",\"custom_model\": {}, \"ch.disable\": true, \"weighting\": \"custom\"}";
+        jsonNode = query(body, 400).readEntity(JsonNode.class);
+        assertEquals("The 'weighting' parameter is no longer supported. You used 'weighting=custom'", jsonNode.get("message").asText());
+    }
+
     @ParameterizedTest
     @CsvSource(value = {"0.05,3073", "0.5,1498"})
     public void testAvoidArea(double priority, double expectedDistance) {
