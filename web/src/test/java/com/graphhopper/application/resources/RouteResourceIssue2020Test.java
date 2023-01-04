@@ -52,6 +52,7 @@ public class RouteResourceIssue2020Test {
                 putObject("prepare.lm.split_area_location", "../core/files/split.geo.json").
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car").setWeighting("fastest"))).
                 setLMProfiles(Collections.singletonList(new LMProfile("my_car")));

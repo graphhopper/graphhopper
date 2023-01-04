@@ -49,6 +49,7 @@ public class I18nResourceTest {
                 putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", DIR).
+                putObject("import.osm.ignored_highways", "").
                 setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setWeighting("fastest")));
         return config;
     }

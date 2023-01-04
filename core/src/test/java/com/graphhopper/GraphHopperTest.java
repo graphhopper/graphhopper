@@ -98,12 +98,12 @@ public class GraphHopperTest {
 
     @ParameterizedTest
     @CsvSource({
-            DIJKSTRA + ",false,511",
-            ASTAR + ",false,256",
-            DIJKSTRA_BI + ",false,228",
-            ASTAR_BI + ",false,142",
-            ASTAR_BI + ",true,41",
-            DIJKSTRA_BI + ",true,48"
+            DIJKSTRA + ",false,708",
+            ASTAR + ",false,363",
+            DIJKSTRA_BI + ",false,346",
+            ASTAR_BI + ",false,192",
+            ASTAR_BI + ",true,46",
+            DIJKSTRA_BI + ",true,51"
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
         final String vehicle = "car";
@@ -150,7 +150,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(706, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(713, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
         assertEquals(3437.1, res.getDistance(), .1);
@@ -644,9 +644,13 @@ public class GraphHopperTest {
 
         req.putHint(Routing.BLOCK_AREA, "49.984434,11.505212,49.985394,11.506333");
         rsp = hopper.route(req);
-        assertEquals(11.508, rsp.getBest().getWaypoints().getLon(0), 0.001);
+        // we do not snap onto Grüngraben (within the blocked area), but onto Lohweg and then we need to go to Hauptstraße
+        // and turn left onto Waldhüttenstraße. Note that if we exclude footway we get an entirely different path, because
+        // the start point snaps all the way to the East onto the end of Bergstraße (because Lohweg gets no longer split
+        // into several edges...)
+        assertEquals(11.506, rsp.getBest().getWaypoints().getLon(0), 0.001);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(1185, rsp.getBest().getDistance(), 10);
+        assertEquals(510, rsp.getBest().getDistance(), 10);
 
         // first point is contained in block_area => error
         req = new GHRequest(49.979, 11.516, 49.986107, 11.507202).
@@ -1600,17 +1604,17 @@ public class GraphHopperTest {
         hopper.importOrLoad();
 
         // flex
-        testCrossQueryAssert(profile1, hopper, 528.3, 138, true);
-        testCrossQueryAssert(profile2, hopper, 635.8, 138, true);
-        testCrossQueryAssert(profile3, hopper, 815.2, 140, true);
+        testCrossQueryAssert(profile1, hopper, 528.3, 196, true);
+        testCrossQueryAssert(profile2, hopper, 635.8, 198, true);
+        testCrossQueryAssert(profile3, hopper, 815.2, 198, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
-        testCrossQueryAssert(profile1, hopper, 528.3, 74, false);
-        testCrossQueryAssert(profile2, hopper, 635.8, 124, false);
-        // this is actually interesting: the number of visited nodes *increases* once again (while it strictly decreases
-        // with rising distance factor for flex): cross-querying 'works', but performs *worse*, because the landmarks
-        // were not customized for the weighting in use. Creating a separate LM preparation for profile3 yields 74
-        testCrossQueryAssert(profile3, hopper, 815.2, 162, false);
+        testCrossQueryAssert(profile1, hopper, 528.3, 108, false);
+        testCrossQueryAssert(profile2, hopper, 635.8, 162, false);
+        // this is actually interesting: the number of visited nodes increases: cross-querying 'works',
+        // but can even perform *worse*, because the landmarks were not customized for the weighting in use.
+        // Creating a separate LM preparation for profile3 yields 108 (not shown)
+        testCrossQueryAssert(profile3, hopper, 815.2, 236, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {
@@ -2198,13 +2202,13 @@ public class GraphHopperTest {
         GHRequest req = new GHRequest(p, q);
         req.setProfile("my_profile");
         // we force the start/target directions such that there are u-turns right after we start and right before
-        // we reach the target
+        // we reach the target. at the start location we do a u-turn at the crossing with the *steps* ('ghost junction')
         req.setCurbsides(Arrays.asList("right", "right"));
         GHResponse res = h.route(req);
         assertFalse(res.hasErrors(), "routing should not fail");
-        assertEquals(266.8, res.getBest().getRouteWeight(), 0.1);
-        assertEquals(2116, res.getBest().getDistance(), 1);
-        assertEquals(266800, res.getBest().getTime(), 1000);
+        assertEquals(242.9, res.getBest().getRouteWeight(), 0.1);
+        assertEquals(1917, res.getBest().getDistance(), 1);
+        assertEquals(243000, res.getBest().getTime(), 1000);
     }
 
     @Test
@@ -2671,7 +2675,7 @@ public class GraphHopperTest {
                     .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"))
                     .setGraphHopperLocation(GH_LOCATION);
             hopper.load();
-            assertEquals(1942, hopper.getBaseGraph().getNodes());
+            assertEquals(2969, hopper.getBaseGraph().getNodes());
         }
     }
 
