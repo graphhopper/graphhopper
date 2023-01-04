@@ -496,7 +496,7 @@ public class DirectedBidirectionalDijkstraTest {
 
         EdgeIteratorState virtualEdge = GHUtility.getEdge(queryGraph, 6, 1);
         int outEdge = virtualEdge.getEdge();
-        BidirRoutingAlgorithm algo = createAlgo(queryGraph, weighting);
+        EdgeToEdgeRoutingAlgorithm algo = createAlgo(queryGraph, weighting);
         Path path = algo.calcPath(6, 0, outEdge, ANY_EDGE);
         assertEquals(nodes(6, 1, 2, 3, 4, 5, 0), path.calcNodes());
         assertEquals(5 + virtualEdge.getDistance(), path.getDistance(), 1.e-3);
@@ -507,11 +507,11 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     private Path calcPath(int source, int target, int sourceOutEdge, int targetInEdge, Weighting w) {
-        BidirRoutingAlgorithm algo = createAlgo(graph, w);
+        EdgeToEdgeRoutingAlgorithm algo = createAlgo(graph, w);
         return algo.calcPath(source, target, sourceOutEdge, targetInEdge);
     }
 
-    private BidirRoutingAlgorithm createAlgo(Graph graph, Weighting weighting) {
+    private EdgeToEdgeRoutingAlgorithm createAlgo(Graph graph, Weighting weighting) {
         return new DijkstraBidirectionRef(graph, weighting, TraversalMode.EDGE_BASED);
     }
 

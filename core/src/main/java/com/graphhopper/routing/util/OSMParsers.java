@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public class OSMParsers {
+    private final List<String> ignoredHighways;
     private final List<TagParser> wayTagParsers;
     private final List<VehicleTagParser> vehicleTagParsers;
     private final List<RelationTagParser> relationTagParsers;
@@ -38,15 +39,21 @@ public class OSMParsers {
     private final EncodedValue.InitializerConfig relConfig = new EncodedValue.InitializerConfig();
 
     public OSMParsers() {
-        this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
-    public OSMParsers(List<TagParser> wayTagParsers, List<VehicleTagParser> vehicleTagParsers,
+    public OSMParsers(List<String> ignoredHighways, List<TagParser> wayTagParsers, List<VehicleTagParser> vehicleTagParsers,
                       List<RelationTagParser> relationTagParsers, List<RestrictionTagParser> restrictionTagParsers) {
+        this.ignoredHighways = ignoredHighways;
         this.wayTagParsers = wayTagParsers;
         this.vehicleTagParsers = vehicleTagParsers;
         this.relationTagParsers = relationTagParsers;
         this.restrictionTagParsers = restrictionTagParsers;
+    }
+
+    public OSMParsers addIgnoredHighway(String highway) {
+        ignoredHighways.add(highway);
+        return this;
     }
 
     public OSMParsers addWayTagParser(TagParser tagParser) {
@@ -73,7 +80,20 @@ public class OSMParsers {
     }
 
     public boolean acceptWay(ReaderWay way) {
-        return vehicleTagParsers.stream().anyMatch(v -> !v.getAccess(way).equals(WayAccess.CAN_SKIP));
+        String highway = way.getTag("highway");
+        if (highway != null)
+            return !ignoredHighways.contains(highway);
+        else if (way.getTag("route") != null)
+            // we accept *all* ways with a 'route' tag and no 'highway' tag, because most of them are ferries
+            // (route=ferry), which we want, and there aren't so many such ways we do not want
+            // https://github.com/graphhopper/graphhopper/pull/2702#discussion_r1038093050
+            return true;
+        else if ("pier".equals(way.getTag("man_made")))
+            return true;
+        else if ("platform".equals(way.getTag("railway")))
+            return true;
+        else
+            return false;
     }
 
     public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {
@@ -98,6 +118,10 @@ public class OSMParsers {
         if (requiredInts > 2)
             throw new IllegalStateException("More than two ints are needed for relation flags, but OSMReader does not allow this");
         return new IntsRef(2);
+    }
+
+    public List<String> getIgnoredHighways() {
+        return ignoredHighways;
     }
 
     public List<VehicleTagParser> getVehicleTagParsers() {

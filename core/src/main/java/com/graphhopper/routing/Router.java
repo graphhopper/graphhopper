@@ -467,14 +467,14 @@ public class Router {
         }
     }
 
-    private static class FlexSolver extends Solver {
+    public static class FlexSolver extends Solver {
         protected final RouterConfig routerConfig;
         private final WeightingFactory weightingFactory;
         private final BaseGraph baseGraph;
         private final LocationIndex locationIndex;
 
-        FlexSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig,
-                   EncodedValueLookup lookup, WeightingFactory weightingFactory, BaseGraph graph, LocationIndex locationIndex) {
+        protected FlexSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig,
+                             EncodedValueLookup lookup, WeightingFactory weightingFactory, BaseGraph graph, LocationIndex locationIndex) {
             super(request, profilesByName, routerConfig, lookup);
             this.routerConfig = routerConfig;
             this.weightingFactory = weightingFactory;
@@ -507,7 +507,7 @@ public class Router {
             return new FlexiblePathCalculator(queryGraph, algorithmFactory, weighting, getAlgoOpts());
         }
 
-        AlgorithmOptions getAlgoOpts() {
+        protected AlgorithmOptions getAlgoOpts() {
             AlgorithmOptions algoOpts = new AlgorithmOptions().
                     setAlgorithm(request.getAlgorithm()).
                     setTraversalMode(profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED).

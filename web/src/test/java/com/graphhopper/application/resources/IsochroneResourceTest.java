@@ -55,6 +55,7 @@ public class IsochroneResourceTest {
         config.getGraphHopperConfiguration().
                 putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
                         new Profile("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
