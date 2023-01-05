@@ -57,10 +57,10 @@ public class GraphHopperWebTest {
     public void headings() {
         GraphHopperWeb hopper = new GraphHopperWeb("http://localhost:8080/route");
         GHRequest req = new GHRequest(new GHPoint(42.509225, 1.534728), new GHPoint(42.512602, 1.551558)).
-                setHeadings(Arrays.asList(10.0, -90.0)).
+                setHeadings(Arrays.asList(10.0, 90.0)).
                 setProfile("car");
         assertEquals("http://localhost:8080/route?profile=car&point=42.509225,1.534728&point=42.512602,1.551558&type=json&instructions=true&points_encoded=true" +
-                "&calc_points=true&algorithm=&locale=en_US&elevation=false&optimize=false&heading=10.0&heading=-90.0", hopper.createGetRequest(req).url().toString());
+                "&calc_points=true&algorithm=&locale=en_US&elevation=false&optimize=false&heading=10.0&heading=90.0", hopper.createGetRequest(req).url().toString());
     }
 
     @Test
