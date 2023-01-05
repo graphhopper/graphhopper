@@ -2,11 +2,13 @@ package com.graphhopper.api;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.runner.Request;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -62,5 +64,18 @@ public class HeadingExamples {
         if (response.hasErrors())
             throw new RuntimeException(response.getErrors().toString());
         assertEquals(201, Math.round(response.getBest().getDistance()));
+    }
+
+    @Test
+    public void with_heading_start_stop_lower_penalty() {
+        GHRequest request = new GHRequest(new GHPoint(42.566757, 1.597751), new GHPoint(42.567396, 1.597807)).
+                setHeadings(Arrays.asList(270d, 180d)).
+                putHint(Parameters.Routing.HEADING_PENALTY, 10).
+                setProfile("car");
+        GHResponse response = hopper.route(request);
+        if (response.hasErrors())
+            throw new RuntimeException(response.getErrors().toString());
+        // same distance as without_heading
+        assertEquals(84, Math.round(response.getBest().getDistance()));
     }
 }
