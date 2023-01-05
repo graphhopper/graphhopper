@@ -59,7 +59,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         return new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
                 .addWayTagParser(new OSMSmoothnessParser(lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
-                .addVehicleTagParser(parser);
+                .addWayTagParser(parser);
     }
 
     @Test

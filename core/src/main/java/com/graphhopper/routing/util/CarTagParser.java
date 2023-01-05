@@ -53,7 +53,6 @@ public class CarTagParser extends VehicleTagParser {
         this(
                 lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "car"))),
                 lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))),
-                lookup.hasEncodedValue(TurnCost.key(properties.getString("name", "car"))) ? lookup.getDecimalEncodedValue(TurnCost.key(properties.getString("name", "car"))) : null,
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 properties,
                 TransportationMode.CAR,
@@ -61,12 +60,10 @@ public class CarTagParser extends VehicleTagParser {
         );
     }
 
-    public CarTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc,
+    public CarTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc,
                         BooleanEncodedValue roundaboutEnc, PMap properties,
                         TransportationMode transportationMode, double maxPossibleSpeed) {
-        super(accessEnc, speedEnc,
-                properties.getString("name", "car"), roundaboutEnc,
-                turnCostEnc, transportationMode, maxPossibleSpeed);
+        super(accessEnc, speedEnc, roundaboutEnc, transportationMode, maxPossibleSpeed);
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
@@ -158,7 +155,6 @@ public class CarTagParser extends VehicleTagParser {
         return speed;
     }
 
-    @Override
     public WayAccess getAccess(ReaderWay way) {
         // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
@@ -174,7 +170,7 @@ public class CarTagParser extends VehicleTagParser {
             }
             return WayAccess.CAN_SKIP;
         }
-        
+
         if ("service".equals(highwayValue) && "emergency_access".equals(way.getTag("service"))) {
             return WayAccess.CAN_SKIP;
         }
@@ -192,7 +188,7 @@ public class CarTagParser extends VehicleTagParser {
         if (!firstValue.isEmpty()) {
             String[] restrict = firstValue.split(";");
             boolean notConditionalyPermitted = !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
-            for (String value: restrict) {
+            for (String value : restrict) {
                 if (restrictedValues.contains(value) && notConditionalyPermitted)
                     return WayAccess.CAN_SKIP;
                 if (intendedValues.contains(value))

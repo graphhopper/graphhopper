@@ -33,20 +33,18 @@ import java.util.function.Function;
 public class OSMParsers {
     private final List<String> ignoredHighways;
     private final List<TagParser> wayTagParsers;
-    private final List<VehicleTagParser> vehicleTagParsers;
     private final List<RelationTagParser> relationTagParsers;
     private final List<RestrictionTagParser> restrictionTagParsers;
     private final EncodedValue.InitializerConfig relConfig = new EncodedValue.InitializerConfig();
 
     public OSMParsers() {
-        this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
+        this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
-    public OSMParsers(List<String> ignoredHighways, List<TagParser> wayTagParsers, List<VehicleTagParser> vehicleTagParsers,
+    public OSMParsers(List<String> ignoredHighways, List<TagParser> wayTagParsers,
                       List<RelationTagParser> relationTagParsers, List<RestrictionTagParser> restrictionTagParsers) {
         this.ignoredHighways = ignoredHighways;
         this.wayTagParsers = wayTagParsers;
-        this.vehicleTagParsers = vehicleTagParsers;
         this.relationTagParsers = relationTagParsers;
         this.restrictionTagParsers = restrictionTagParsers;
     }
@@ -58,14 +56,6 @@ public class OSMParsers {
 
     public OSMParsers addWayTagParser(TagParser tagParser) {
         wayTagParsers.add(tagParser);
-        return this;
-    }
-
-    public OSMParsers addVehicleTagParser(VehicleTagParser vehicleTagParser) {
-        vehicleTagParsers.add(vehicleTagParser);
-        if (vehicleTagParser.supportsTurnCosts()) {
-            restrictionTagParsers.add(new RestrictionTagParser(vehicleTagParser.getRestrictions(), vehicleTagParser.getTurnCostEnc()));
-        }
         return this;
     }
 
@@ -108,8 +98,6 @@ public class OSMParsers {
             relParser.handleWayTags(edgeFlags, way, relationFlags);
         for (TagParser parser : wayTagParsers)
             parser.handleWayTags(edgeFlags, way, relationFlags);
-        for (VehicleTagParser vehicleTagParser : vehicleTagParsers)
-            vehicleTagParser.handleWayTags(edgeFlags, way, relationFlags);
         return edgeFlags;
     }
 
@@ -124,8 +112,12 @@ public class OSMParsers {
         return ignoredHighways;
     }
 
-    public List<VehicleTagParser> getVehicleTagParsers() {
-        return vehicleTagParsers;
+    public List<TagParser> getWayTagParsers() {
+        return wayTagParsers;
+    }
+
+    public List<RelationTagParser> getRelationTagParsers() {
+        return relationTagParsers;
     }
 
     public List<RestrictionTagParser> getRestrictionTagParsers() {
