@@ -105,6 +105,7 @@ public final class CustomWeighting extends AbstractWeighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        edgeState = new CachingEdgeIteratorState(edgeState);
         final double distance = edgeState.getDistance();
         double seconds = calcSeconds(distance, edgeState, reverse);
         if (Double.isInfinite(seconds)) return Double.POSITIVE_INFINITY;
@@ -140,6 +141,7 @@ public final class CustomWeighting extends AbstractWeighting {
 
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        edgeState = new CachingEdgeIteratorState(edgeState);
         // we truncate to long here instead of rounding to make it consistent with FastestWeighting, maybe change to rounding later
         return Math.round(calcSeconds(edgeState.getDistance(), edgeState, reverse) * 1000);
     }
