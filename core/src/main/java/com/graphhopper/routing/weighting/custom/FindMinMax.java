@@ -23,10 +23,9 @@ public class FindMinMax {
     public static void checkLMConstraints(CustomModel baseModel, CustomModel queryModel, EncodedValueLookup lookup) {
         if (queryModel.isInternal())
             throw new IllegalArgumentException("CustomModel of query cannot be internal");
-        if (queryModel.hasDistanceInfluence() && queryModel.getDistanceInfluence() < baseModel.getDistanceInfluence())
+        if (queryModel.getDistanceInfluence() < baseModel.getDistanceInfluence())
             throw new IllegalArgumentException("CustomModel in query can only use " +
-                    "distance_influence bigger or equal to " + baseModel.getDistanceInfluence() +
-                    ", but was: " + queryModel.getDistanceInfluence());
+                    "distance_influence bigger or equal to " + baseModel.getDistanceInfluence() + ", but was: " + queryModel.hasDistanceInfluence());
 
         checkMultiplyValue(queryModel.getPriority(), lookup);
         checkMultiplyValue(queryModel.getSpeed(), lookup);
