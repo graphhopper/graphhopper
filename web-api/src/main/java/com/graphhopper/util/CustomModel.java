@@ -120,6 +120,10 @@ public class CustomModel {
         return this;
     }
 
+    /**
+     * @return the distance influence of this CustomModel. 0 is returned if it wasn't set (i.e. it was null)
+     * @see #hasDistanceInfluence()
+     */
     public Double getDistanceInfluence() {
         return hasDistanceInfluence() ? distanceInfluence : 0;
     }
