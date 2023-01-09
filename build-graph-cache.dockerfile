@@ -8,7 +8,7 @@ RUN mvn clean install -DskipTests
 FROM openjdk:11.0-jre
 
 RUN apt-get update \
-  && apt-get install -y awscli \
+  && apt-get install -y awscli pigz \
   && mkdir -p /data
 
 WORKDIR /graphhopper
