@@ -1,6 +1,6 @@
 ### 7.0 [not yet released]
 
-- users of client-hc now have to set the distanceInfluence to 70 if a lower value is defined on the server-side and can remove it if they want to match the server-side value which is highly recommended for performance reasons, see #2716
+- there is no longer a default value for the distanceInfluence Parameter in custom models sent via client-hc. Previously it was 70. Not setting it explicitly now means the server-side value will be used. Call hasDistanceInfluence before getDistanceInfluence, see #2716
 - there is a new, required 'import.osm.ignored_highways' configuration option that must be used to not increase the graph size and decrease performance for motorized-only routing compared to previous versions, #2702
 - new osm_way_id encoded value, #2701
 - the parameters vehicle, weighting, edge_based and turn_costs are no longer supported, use the profile parameter instead

@@ -121,11 +121,10 @@ public class CustomModel {
     }
 
     /**
-     * @return the distance influence of this CustomModel. 0 is returned if it wasn't set (i.e. it was null)
-     * @see #hasDistanceInfluence()
+     * Check with #hasDistanceInfluence() to avoid null values
      */
     public Double getDistanceInfluence() {
-        return hasDistanceInfluence() ? distanceInfluence : 0;
+        return distanceInfluence;
     }
 
     public CustomModel setHeadingPenalty(double headingPenalty) {
