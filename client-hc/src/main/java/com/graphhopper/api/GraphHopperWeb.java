@@ -28,6 +28,7 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ResponsePathDeserializer;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
@@ -200,6 +201,10 @@ public class GraphHopperWeb {
                 return res;
 
             JsonNode paths = json.get("paths");
+            JsonNode b = json.get("hints");
+            PMap pmap = new PMap();
+            b.fields().forEachRemaining(f -> pmap.putObject(f.getKey(), f.getValue().asText()));
+            res.setHints(pmap);
 
             for (JsonNode path : paths) {
                 ResponsePath altRsp = ResponsePathDeserializer.createResponsePath(objectMapper, path, tmpElevation, tmpTurnDescription);
