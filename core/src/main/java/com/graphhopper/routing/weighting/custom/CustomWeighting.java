@@ -154,7 +154,7 @@ public final class CustomWeighting extends AbstractWeighting {
         double get(EdgeIteratorState edge, boolean reverse);
     }
 
-    static class Parameters {
+    public static class Parameters {
         private final EdgeToDoubleMapping edgeToSpeedMapping;
         private final EdgeToDoubleMapping edgeToPriorityMapping;
         private final double maxSpeed;
