@@ -95,7 +95,7 @@ public class GraphHopperWebTest {
                 .addToSpeed(Statement.If("road_class == MOTORWAY", Statement.Op.LIMIT, "80"))
                 .addToPriority(Statement.If("surface == DIRT", Statement.Op.MULTIPLY, "0.7"))
                 .addToPriority(Statement.If("surface == SAND", Statement.Op.MULTIPLY, "0.6"))
-                .setDistanceInfluence(69)
+                .setDistanceInfluence(69d)
                 .setHeadingPenalty(22)
                 .setAreas(areas);
         GHRequest req = new GHRequest(new GHPoint(42.509225, 1.534728), new GHPoint(42.512602, 1.551558))

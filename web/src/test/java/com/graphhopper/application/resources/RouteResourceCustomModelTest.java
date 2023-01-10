@@ -68,8 +68,8 @@ public class RouteResourceCustomModelTest {
                 setProfiles(Arrays.asList(
                         new Profile("wheelchair"),
                         new CustomProfile("roads").setCustomModel(new CustomModel()).setVehicle("roads"),
-                        new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
-                        new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0)).setVehicle("bike"),
+                        new CustomProfile("car").setCustomModel(new CustomModel().setDistanceInfluence(70d)).setVehicle("car"),
+                        new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0d)).setVehicle("bike"),
                         new Profile("bike_fastest").setWeighting("fastest").setVehicle("bike"),
                         new CustomProfile("bus").setVehicle("roads").putHint("custom_model_file", "bus.json"),
                         new CustomProfile("cargo_bike").setVehicle("bike").
@@ -87,7 +87,7 @@ public class RouteResourceCustomModelTest {
                                         addToPriority(If("max_width < 1.2", MULTIPLY, "0"))).
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike2").setCustomModel(
-                                        new CustomModel(new CustomModel().
+                                        new CustomModel(new CustomModel().setDistanceInfluence(70d).
                                                 addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0")))).
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike3").setCustomModel(
