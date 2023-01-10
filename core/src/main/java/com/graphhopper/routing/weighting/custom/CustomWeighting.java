@@ -162,7 +162,7 @@ public final class CustomWeighting extends AbstractWeighting {
         private final double distanceInfluence;
         private final double headingPenaltySeconds;
 
-        Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
+        public Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
                    double maxSpeed, double maxPriority, double distanceInfluence, double headingPenaltySeconds) {
             this.edgeToSpeedMapping = edgeToSpeedMapping;
             this.edgeToPriorityMapping = edgeToPriorityMapping;
