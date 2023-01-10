@@ -120,9 +120,6 @@ public class CustomModel {
         return this;
     }
 
-    /**
-     * Check with #hasDistanceInfluence() to avoid null values
-     */
     public Double getDistanceInfluence() {
         return distanceInfluence;
     }
