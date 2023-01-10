@@ -18,10 +18,7 @@
 package com.graphhopper.storage;
 
 import java.io.File;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.graphhopper.storage.DAType.RAM_INT;
 import static com.graphhopper.storage.DAType.RAM_INT_STORE;
@@ -216,5 +213,10 @@ public class GHDirectory implements Directory {
     @Override
     public String getLocation() {
         return location;
+    }
+
+    @Override
+    public Map<String, DataAccess> getDAs() {
+        return map;
     }
 }
