@@ -168,9 +168,9 @@
                         <id>create target directory</id>
                         <phase>initialize</phase>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <mkdir dir="${basedir}/target"/>
-                            </tasks>
+                            </target>
                         </configuration>
                         <goals>
                             <goal>run</goal>
