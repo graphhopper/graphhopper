@@ -23,8 +23,8 @@ public class FindMinMax {
     public static void checkLMConstraints(CustomModel baseModel, CustomModel queryModel, EncodedValueLookup lookup) {
         if (queryModel.isInternal())
             throw new IllegalArgumentException("CustomModel of query cannot be internal");
-        double qmDI = queryModel.hasDistanceInfluence() ? queryModel.getDistanceInfluence() : 0;
-        double bmDI = baseModel.hasDistanceInfluence() ? baseModel.getDistanceInfluence() : 0;
+        double qmDI = queryModel.getDistanceInfluence() == null ? 0 : queryModel.getDistanceInfluence();
+        double bmDI = baseModel.getDistanceInfluence() == null ? 0 : baseModel.getDistanceInfluence();
         if (qmDI < bmDI)
             throw new IllegalArgumentException("CustomModel in query can only use " +
                     "distance_influence bigger or equal to " + bmDI + ", but was: " + qmDI);

@@ -111,10 +111,6 @@ public class CustomModel {
         return areas;
     }
 
-    public boolean hasDistanceInfluence() {
-        return distanceInfluence != null;
-    }
-
     public CustomModel setDistanceInfluence(Double distanceFactor) {
         this.distanceInfluence = distanceFactor;
         return this;
@@ -154,7 +150,7 @@ public class CustomModel {
         // modified (same problem if queryModel would be used as target)
         CustomModel mergedCM = new CustomModel(baseModel);
 
-        if(queryModel.hasDistanceInfluence())
+        if (queryModel.getDistanceInfluence() != null)
             mergedCM.distanceInfluence = queryModel.distanceInfluence;
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
