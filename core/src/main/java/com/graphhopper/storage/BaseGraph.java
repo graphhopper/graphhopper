@@ -752,24 +752,24 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public boolean get(BooleanEncodedValue property) {
-            return property.getBool(reverse, getFlags());
+            return property.getBool(getEdge(), reverse, getFlags());
         }
 
         @Override
         public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
-            property.setBool(reverse, getFlags(), value);
+            property.setBool(getEdge(), reverse, getFlags(), value);
             store.writeFlags(edgePointer, getFlags());
             return this;
         }
 
         @Override
         public boolean getReverse(BooleanEncodedValue property) {
-            return property.getBool(!reverse, getFlags());
+            return property.getBool(getEdge(), !reverse, getFlags());
         }
 
         @Override
         public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
-            property.setBool(!reverse, getFlags(), value);
+            property.setBool(getEdge(), !reverse, getFlags(), value);
             store.writeFlags(edgePointer, getFlags());
             return this;
         }
@@ -778,8 +778,8 @@ public class BaseGraph implements Graph, Closeable {
         public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
             if (!property.isStoreTwoDirections())
                 throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
-            property.setBool(reverse, getFlags(), fwd);
-            property.setBool(!reverse, getFlags(), bwd);
+            property.setBool(getEdge(), reverse, getFlags(), fwd);
+            property.setBool(getEdge(), !reverse, getFlags(), bwd);
             store.writeFlags(edgePointer, getFlags());
             return this;
         }

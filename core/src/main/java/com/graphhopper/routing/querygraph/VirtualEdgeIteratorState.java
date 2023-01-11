@@ -27,6 +27,8 @@ import com.graphhopper.util.PointList;
 
 import java.util.List;
 
+import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
+
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
  * <p>
@@ -72,7 +74,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public int getEdge() {
-        return GHUtility.getEdgeFromEdgeKey(edgeKey);
+        return getEdgeFromEdgeKey(edgeKey);
     }
 
     @Override
@@ -153,12 +155,12 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
         if (property == EdgeIteratorState.UNFAVORED_EDGE)
             return unfavored;
 
-        return property.getBool(reverse, edgeFlags);
+        return property.getBool(getEdgeFromEdgeKey(getOriginalEdgeKey()), reverse, edgeFlags);
     }
 
     @Override
     public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
-        property.setBool(reverse, edgeFlags, value);
+        property.setBool(getEdgeFromEdgeKey(getOriginalEdgeKey()), reverse, edgeFlags, value);
         return this;
     }
 
@@ -166,12 +168,12 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     public boolean getReverse(BooleanEncodedValue property) {
         if (property == EdgeIteratorState.UNFAVORED_EDGE)
             return unfavored;
-        return property.getBool(!reverse, edgeFlags);
+        return property.getBool(getEdgeFromEdgeKey(getOriginalEdgeKey()), !reverse, edgeFlags);
     }
 
     @Override
     public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
-        property.setBool(!reverse, edgeFlags, value);
+        property.setBool(getEdgeFromEdgeKey(getOriginalEdgeKey()), !reverse, edgeFlags, value);
         return this;
     }
 
@@ -179,8 +181,8 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
         if (!property.isStoreTwoDirections())
             throw new IllegalArgumentException("EncodedValue " + property.getName() + " supports only one direction");
-        property.setBool(reverse, edgeFlags, fwd);
-        property.setBool(!reverse, edgeFlags, bwd);
+        property.setBool(getEdgeFromEdgeKey(getOriginalEdgeKey()), reverse, edgeFlags, fwd);
+        property.setBool(getEdgeFromEdgeKey(getOriginalEdgeKey()), !reverse, edgeFlags, bwd);
         return this;
     }
 
