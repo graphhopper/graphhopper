@@ -97,6 +97,7 @@ public class GraphHopperGtfs extends GraphHopper {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
             ptGraph.flush();
+            getGtfsStorage().flush();
             stopIndex.store(indexBuilder);
             stopIndex.flush();
         }
@@ -110,10 +111,7 @@ public class GraphHopperGtfs extends GraphHopper {
         QueryGraph queryGraph = QueryGraph.create(getBaseGraph(), Collections.emptyList());
         Weighting transferWeighting = createWeighting(getProfile("foot"), new PMap());
         final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, transferWeighting, getGtfsStorage(), RealtimeFeed.empty(), true, true, false, 5.0, false, 0);
-        getGtfsStorage().getStationNodes().values().stream().distinct().map(n -> {
-            int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(n)).orElse(-1);
-            return new Label.NodeId(streetNode, n);
-        }).forEach(stationNode -> {
+        getGtfsStorage().getStationNodes().values().stream().distinct().map(n -> new Label.NodeId(gtfsStorage.getPtToStreet().getOrDefault(n, -1), n)).forEach(stationNode -> {
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, true, false, false, 0, new ArrayList<>());
             router.setLimitStreetTime(Duration.ofSeconds(maxTransferWalkTimeSeconds).toMillis());
             for (Label label : router.calcLabels(stationNode, Instant.ofEpochMilli(0))) {

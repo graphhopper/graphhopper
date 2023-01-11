@@ -109,10 +109,10 @@ class GtfsReader {
         for (Stop stop : feed.stops.values()) {
             if (stop.location_type == 0) { // Only stops. Not interested in parent stations for now.
                 Snap locationSnap = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
-                Integer stopNode;
+                int stopNode;
                 if (locationSnap.isValid()) {
-                    stopNode = gtfsStorage.getStreetToPt().get(locationSnap.getClosestNode());
-                    if (stopNode == null) {
+                    stopNode = gtfsStorage.getStreetToPt().getOrDefault(locationSnap.getClosestNode(), -1);
+                    if (stopNode == -1) {
                         stopNode = out.createNode();
                         indexBuilder.addToAllTilesOnLine(stopNode, stop.stop_lat, stop.stop_lon, stop.stop_lat, stop.stop_lon);
                         gtfsStorage.getPtToStreet().put(stopNode, locationSnap.getClosestNode());
