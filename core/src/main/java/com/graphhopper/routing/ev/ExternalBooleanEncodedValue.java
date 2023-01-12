@@ -19,13 +19,18 @@
 package com.graphhopper.routing.ev;
 
 import com.carrotsearch.hppc.BitSet;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.storage.IntsRef;
 
 public class ExternalBooleanEncodedValue implements BooleanEncodedValue {
     private final String name;
     private final BitSet bits;
 
-    public ExternalBooleanEncodedValue(String name) {
+    @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
+    public ExternalBooleanEncodedValue(
+            @JsonProperty("name") String name
+    ) {
         this.name = name;
         this.bits = new BitSet();
     }
