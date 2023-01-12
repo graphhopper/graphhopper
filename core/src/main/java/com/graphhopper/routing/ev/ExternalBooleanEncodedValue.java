@@ -25,27 +25,34 @@ import com.graphhopper.storage.IntsRef;
 
 public class ExternalBooleanEncodedValue implements BooleanEncodedValue {
     private final String name;
+    private final boolean storeTwoDirections;
     private final BitSet bits;
 
     @JsonCreator(mode = JsonCreator.Mode.PROPERTIES)
     public ExternalBooleanEncodedValue(
-            @JsonProperty("name") String name
+            @JsonProperty("name") String name,
+            @JsonProperty("store_two_directions") boolean storeTwoDirections
     ) {
         this.name = name;
+        this.storeTwoDirections = storeTwoDirections;
         this.bits = new BitSet();
     }
 
     @Override
     public void setBool(int edgeId, boolean reverse, IntsRef ref, boolean value) {
         // it'll grow as we go
-        bits.set(edgeId);
+        bits.set(getIndex(edgeId, reverse));
     }
 
     @Override
     public boolean getBool(int edgeId, boolean reverse, IntsRef ref) {
         if (edgeId >= bits.size())
             throw new IllegalStateException("no bit reserved yet for edge id: " + edgeId + ". make sure to initialize the bitset first");
-        return bits.get(edgeId);
+        return bits.get(getIndex(edgeId, reverse));
+    }
+
+    private long getIndex(int edgeId, boolean reverse) {
+        return storeTwoDirections ? (2L * edgeId + (reverse ? 1 : 0)) : edgeId;
     }
 
     @Override
@@ -60,6 +67,6 @@ public class ExternalBooleanEncodedValue implements BooleanEncodedValue {
 
     @Override
     public boolean isStoreTwoDirections() {
-        return false;
+        return storeTwoDirections;
     }
 }

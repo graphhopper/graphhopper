@@ -1353,6 +1353,8 @@ public class GraphHopper {
         getEncodingManager().getEncodedValues().forEach(encodedValue -> {
             if (encodedValue instanceof ExternalBooleanEncodedValue) {
                 int highestEdge = getBaseGraph().getEdges() - 1;
+                if (encodedValue.isStoreTwoDirections())
+                    highestEdge *= 2;
                 ((ExternalBooleanEncodedValue) encodedValue).setBool(highestEdge, false, null, false);
             }
         });
