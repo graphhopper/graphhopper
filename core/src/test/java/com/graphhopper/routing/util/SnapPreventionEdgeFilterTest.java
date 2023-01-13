@@ -4,7 +4,7 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

@@ -1,6 +1,6 @@
 package com.graphhopper.example;
 
-import com.graphhopper.GraphHopper;
+import com.graphhopper.core.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.search.EdgeKVStorage;
@@ -8,7 +8,7 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 
 public class LocationIndexExample {
     public static void main(String[] args) {

@@ -25,8 +25,8 @@ import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

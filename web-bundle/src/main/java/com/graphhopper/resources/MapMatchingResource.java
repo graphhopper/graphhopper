@@ -17,13 +17,20 @@
  */
 package com.graphhopper.resources;
 
+import com.graphhopper.core.util.FetchMode;
+import com.graphhopper.core.util.TranslationMap;
+import com.graphhopper.core.util.RamerDouglasPeucker;
+import com.graphhopper.core.util.StopWatch;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.Constants;
+import com.graphhopper.core.util.PathMerger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
+import com.graphhopper.core.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.ProfileResolver;

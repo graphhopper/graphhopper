@@ -25,8 +25,8 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.GHUtility;
 
 import java.util.ArrayList;
 import java.util.Collection;

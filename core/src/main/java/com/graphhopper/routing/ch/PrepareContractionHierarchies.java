@@ -24,7 +24,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.core.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

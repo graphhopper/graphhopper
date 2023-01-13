@@ -1,6 +1,6 @@
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.core.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.BooleanEncodedValue;

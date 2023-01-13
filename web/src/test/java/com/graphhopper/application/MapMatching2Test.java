@@ -18,7 +18,7 @@
 package com.graphhopper.application;
 
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.graphhopper.GraphHopper;
+import com.graphhopper.core.GraphHopper;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gpx.GpxConversions;

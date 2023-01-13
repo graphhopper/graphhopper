@@ -23,7 +23,7 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.StorableProperties;
-import com.graphhopper.util.Constants;
+import com.graphhopper.core.util.Constants;
 import com.graphhopper.util.PMap;
 
 import java.io.UncheckedIOException;

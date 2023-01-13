@@ -17,9 +17,12 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.DistanceCalcEarth;
+import com.graphhopper.core.util.DistanceCalc;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
+import com.graphhopper.core.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
@@ -28,7 +31,6 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -43,6 +45,8 @@ import java.util.function.Function;
 
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
+import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.Helper;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.jupiter.api.Assertions.*;
 

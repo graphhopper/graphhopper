@@ -17,6 +17,11 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.DistancePlaneProjection;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -31,7 +36,6 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -39,7 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.graphhopper.routing.DirectionResolverResult.unrestricted;
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Helper.createPointList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;

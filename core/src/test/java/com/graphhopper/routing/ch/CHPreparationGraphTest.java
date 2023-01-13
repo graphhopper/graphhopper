@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

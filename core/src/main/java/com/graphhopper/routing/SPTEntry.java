@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIterator;
 
 /**
  * This class is used to create the shortest-path-tree from linked entities.

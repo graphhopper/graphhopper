@@ -2,12 +2,12 @@ package com.graphhopper.resources;
 
 import com.conveyal.gtfs.model.Stop;
 import com.google.protobuf.ByteString;
-import com.graphhopper.GraphHopper;
+import com.graphhopper.core.GraphHopper;
 import com.graphhopper.gtfs.GtfsStorage;
 import com.graphhopper.gtfs.PtGraph;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.util.Parameters;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 import no.ecc.vectortile.VectorTileEncoder;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.util.AffineTransformation;

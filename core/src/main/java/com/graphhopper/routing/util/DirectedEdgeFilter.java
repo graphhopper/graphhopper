@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 
 public interface DirectedEdgeFilter {
     boolean accept(EdgeIteratorState edgeState, boolean reverse);

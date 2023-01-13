@@ -19,8 +19,8 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.storage.DataAccess;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.Downloader;
+import com.graphhopper.core.util.BitUtil;
+import com.graphhopper.core.util.Downloader;
 import com.graphhopper.util.Helper;
 
 import java.io.File;

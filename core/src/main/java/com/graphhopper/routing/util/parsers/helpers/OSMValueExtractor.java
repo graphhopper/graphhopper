@@ -4,7 +4,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.core.util.DistanceCalcEarth;
 import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

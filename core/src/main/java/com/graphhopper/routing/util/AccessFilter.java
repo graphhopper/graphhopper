@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 
 /**
  * @author Peter Karich

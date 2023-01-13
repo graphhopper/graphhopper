@@ -17,6 +17,12 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.DistancePlaneProjection;
+import com.graphhopper.core.util.ArrayUtil;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraBidirectionEdgeCHNoSOD;
@@ -35,7 +41,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.RepeatedTest;
@@ -49,7 +54,8 @@ import java.util.*;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
-import static com.graphhopper.util.GHUtility.updateDistancesFor;
+import static com.graphhopper.core.util.GHUtility.updateDistancesFor;
+import com.graphhopper.util.PMap;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;

@@ -19,7 +19,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 
 /**
  * An {@link EdgeFilter} that only accepts edges with finite weight (in either direction)

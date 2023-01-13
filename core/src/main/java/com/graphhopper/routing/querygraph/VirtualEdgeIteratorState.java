@@ -20,9 +20,9 @@ package com.graphhopper.routing.querygraph;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.FetchMode;
+import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.util.PointList;
 
 import java.util.List;

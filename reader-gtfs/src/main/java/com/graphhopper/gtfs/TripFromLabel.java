@@ -18,6 +18,7 @@
 
 package com.graphhopper.gtfs;
 
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
@@ -35,8 +36,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import com.graphhopper.util.details.PathDetailsFromEdges;
+import com.graphhopper.core.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.core.util.details.PathDetailsFromEdges;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.GeometryFactory;

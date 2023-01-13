@@ -23,8 +23,8 @@ import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.util.DistancePlaneProjection;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.core.util.DistancePlaneProjection;
+import com.graphhopper.core.util.EdgeIterator;
 
 /**
  * @see AStarBidirection

@@ -23,8 +23,8 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.UrbanDensity;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

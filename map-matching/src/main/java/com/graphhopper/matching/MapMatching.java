@@ -17,8 +17,14 @@
  */
 package com.graphhopper.matching;
 
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.DistanceCalc;
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.DistancePlaneProjection;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.DistanceCalcEarth;
 import com.carrotsearch.hppc.IntHashSet;
-import com.graphhopper.GraphHopper;
+import com.graphhopper.core.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.DijkstraBidirectionRef;
@@ -38,13 +44,13 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 import org.locationtech.jts.geom.Envelope;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
+import static com.graphhopper.core.util.DistancePlaneProjection.DIST_PLANE;
 
 /**
  * This class matches real world GPX entries to the digital road network stored

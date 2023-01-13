@@ -18,7 +18,7 @@
 
 package com.graphhopper.storage;
 
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIterator;
 
 public interface RoutingCHEdgeIteratorState {
     /**

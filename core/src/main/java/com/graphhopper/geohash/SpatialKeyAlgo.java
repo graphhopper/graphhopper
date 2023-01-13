@@ -17,7 +17,7 @@
  */
 package com.graphhopper.geohash;
 
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 
 /**
  * This class implements the idea of a geohash but without a string representation - to avoid confusion, this is

@@ -17,12 +17,19 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.core.util.DistancePlaneProjection;
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.FetchMode;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.shapes.Polygon;
+import com.graphhopper.core.util.shapes.Shape;
+import com.graphhopper.core.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.Circle;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.*;
 import org.locationtech.jts.algorithm.RectangleLineIntersector;
 
 import java.util.ArrayList;
@@ -30,7 +37,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static com.graphhopper.util.shapes.BBox.toEnvelope;
+import static com.graphhopper.core.util.shapes.BBox.toEnvelope;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * This class allows to find edges (or construct shapes) from shape filter.

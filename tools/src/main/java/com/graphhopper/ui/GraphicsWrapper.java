@@ -19,7 +19,7 @@ package com.graphhopper.ui;
 
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -19,12 +19,12 @@ package com.graphhopper.navigation;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.core.GraphHopper;
+import com.graphhopper.core.GraphHopperConfig;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.core.util.StopWatch;
+import com.graphhopper.core.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -20,13 +20,13 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIterator;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
 
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.ANY_EDGE;
 
 public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
     protected final TraversalMode traversalMode;

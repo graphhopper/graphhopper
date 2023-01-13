@@ -23,7 +23,7 @@ import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 
 import java.util.ArrayList;
 import java.util.Iterator;

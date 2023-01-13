@@ -17,6 +17,10 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.DistancePlaneProjection;
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIterator;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
@@ -27,8 +31,8 @@ import com.graphhopper.util.*;
 
 import java.util.PriorityQueue;
 
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.ANY_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.NO_EDGE;
 
 /**
  * This class implements the A* algorithm according to

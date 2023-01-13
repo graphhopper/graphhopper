@@ -27,7 +27,7 @@ import com.graphhopper.routing.subnetwork.EdgeBasedTarjanSCC.ConnectedComponents
 import com.graphhopper.routing.subnetwork.TarjanSCCTest.IntWithArray;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.GHUtility;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 

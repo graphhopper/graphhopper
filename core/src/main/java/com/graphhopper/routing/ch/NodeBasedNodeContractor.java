@@ -20,7 +20,7 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntContainer;
 import com.graphhopper.storage.CHStorageBuilder;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.core.util.StopWatch;
 
 import java.util.ArrayList;
 import java.util.List;

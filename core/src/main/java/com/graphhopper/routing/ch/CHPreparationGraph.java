@@ -29,11 +29,10 @@ import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
-
-import static com.graphhopper.util.ArrayUtil.zero;
+import com.graphhopper.core.util.BitUtil;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.GHUtility;
+import static com.graphhopper.core.util.ArrayUtil.zero;
 
 /**
  * Graph data structure used for CH preparation. It allows caching weights, and edges that are not needed anymore

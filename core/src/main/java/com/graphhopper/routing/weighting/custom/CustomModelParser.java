@@ -17,14 +17,16 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.Polygon;
+import com.graphhopper.core.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.Polygon;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.commons.compiler.Location;
 import org.codehaus.commons.compiler.io.Readers;

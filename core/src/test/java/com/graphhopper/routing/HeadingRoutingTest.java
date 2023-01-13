@@ -29,12 +29,12 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.util.Parameters;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.core.util.TranslationMap;
 import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.core.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 

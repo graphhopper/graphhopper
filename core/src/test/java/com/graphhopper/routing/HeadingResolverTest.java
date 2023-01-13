@@ -28,9 +28,9 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.DistanceCalcEuclidean;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.DistanceCalcEuclidean;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.Test;
 

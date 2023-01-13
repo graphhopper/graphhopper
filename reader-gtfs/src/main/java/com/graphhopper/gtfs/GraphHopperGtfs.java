@@ -19,16 +19,16 @@
 package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.model.Transfer;
-import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.core.GraphHopper;
+import com.graphhopper.core.GraphHopperConfig;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.InMemConstructionIndex;
 import com.graphhopper.storage.index.IndexStructureInfo;
 import com.graphhopper.storage.index.LineIntIndex;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

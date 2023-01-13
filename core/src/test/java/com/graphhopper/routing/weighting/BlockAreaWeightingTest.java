@@ -13,14 +13,14 @@ import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.shapes.Circle;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.shapes.Circle;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.util.GHUtility.updateDistancesFor;
+import static com.graphhopper.core.util.GHUtility.updateDistancesFor;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class BlockAreaWeightingTest {

@@ -19,7 +19,7 @@ package com.graphhopper.matching;
 
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 
 /**
  * During map matching this represents a map matching candidate, i.e. a potential snapped

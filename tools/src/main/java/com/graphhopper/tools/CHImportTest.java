@@ -20,17 +20,17 @@ package com.graphhopper.tools;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.core.GraphHopper;
+import com.graphhopper.core.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHParameters;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
-import com.graphhopper.util.MiniPerfTest;
+import com.graphhopper.core.util.MiniPerfTest;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.exceptions.PointNotFoundException;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.Arrays;

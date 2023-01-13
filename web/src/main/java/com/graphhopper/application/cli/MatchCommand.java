@@ -18,9 +18,13 @@
 
 package com.graphhopper.application.cli;
 
+import com.graphhopper.core.util.TranslationMap;
+import com.graphhopper.core.util.Constants;
+import com.graphhopper.core.util.PathMerger;
+import com.graphhopper.core.util.StopWatch;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.core.GraphHopper;
+import com.graphhopper.core.GraphHopperConfig;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.gpx.GpxConversions;

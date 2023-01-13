@@ -17,6 +17,10 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.FetchMode;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.AngleCalc;
+import com.graphhopper.core.util.EdgeIterator;
 import com.graphhopper.routing.util.DirectedEdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;

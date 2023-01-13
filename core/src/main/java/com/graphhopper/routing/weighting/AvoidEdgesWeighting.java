@@ -19,7 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 
 /**
  * Increases the weight for a certain set of edges by a given factor and thus makes them less likely to be part of

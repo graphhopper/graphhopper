@@ -18,6 +18,10 @@
 
 package com.graphhopper.routing.querygraph;
 
+import com.graphhopper.core.util.DistancePlaneProjection;
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.FetchMode;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.search.EdgeKVStorage;

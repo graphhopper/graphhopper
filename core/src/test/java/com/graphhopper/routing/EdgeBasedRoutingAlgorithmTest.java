@@ -28,7 +28,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -44,7 +44,7 @@ import java.util.Random;
 import java.util.stream.Stream;
 
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
-import static com.graphhopper.util.GHUtility.getEdge;
+import static com.graphhopper.core.util.GHUtility.getEdge;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.jupiter.api.Assertions.*;
 

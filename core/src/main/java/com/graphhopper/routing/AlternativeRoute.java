@@ -17,6 +17,10 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.FetchMode;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIterator;
 import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntHashSet;

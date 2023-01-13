@@ -22,9 +22,9 @@ import com.google.common.collect.Iterators;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIteratorState;
 
 import java.time.Instant;
 import java.time.ZoneId;

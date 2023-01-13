@@ -19,8 +19,8 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.FetchMode;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 

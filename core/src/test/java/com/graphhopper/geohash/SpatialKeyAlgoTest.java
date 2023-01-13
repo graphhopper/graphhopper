@@ -17,8 +17,8 @@
  */
 package com.graphhopper.geohash;
 
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.BitUtil;
+import com.graphhopper.core.util.shapes.BBox;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

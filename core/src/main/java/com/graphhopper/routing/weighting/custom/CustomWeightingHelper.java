@@ -19,12 +19,12 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.FetchMode;
+import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.util.JsonFeature;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.Polygon;
+import com.graphhopper.core.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.Polygon;
 
 import java.util.Map;
 

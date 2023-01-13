@@ -17,14 +17,14 @@
  */
 package com.graphhopper.resources;
 
-import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.core.GraphHopper;
+import com.graphhopper.core.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.StorableProperties;
-import com.graphhopper.util.Constants;
+import com.graphhopper.core.util.Constants;
 import org.locationtech.jts.geom.Envelope;
 
 import javax.inject.Inject;

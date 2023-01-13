@@ -18,7 +18,7 @@
 package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 
 /**
  * Provides a way to map real world data "lat,lon" to internal ids/indices of a memory efficient graph

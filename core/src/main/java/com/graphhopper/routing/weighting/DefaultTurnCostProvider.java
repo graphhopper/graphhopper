@@ -20,7 +20,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIterator;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 

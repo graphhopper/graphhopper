@@ -20,7 +20,7 @@ package com.graphhopper.reader.dem;
 import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GHDirectory;
-import com.graphhopper.util.Downloader;
+import com.graphhopper.core.util.Downloader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.ANY_EDGE;
 
 public class EdgeRestrictions {
     private int sourceOutEdge = ANY_EDGE;

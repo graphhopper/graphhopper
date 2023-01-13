@@ -18,7 +18,7 @@
 
 package com.graphhopper.gtfs.analysis;
 
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.core.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.gtfs.GtfsStorage;

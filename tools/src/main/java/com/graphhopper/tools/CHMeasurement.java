@@ -17,10 +17,12 @@
  */
 package com.graphhopper.tools;
 
+import com.graphhopper.core.util.StopWatch;
+import com.graphhopper.core.util.MiniPerfTest;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.core.GraphHopper;
+import com.graphhopper.core.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;

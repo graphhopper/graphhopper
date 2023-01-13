@@ -2,12 +2,12 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.GHUtility;
 
 import java.util.Locale;
 
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.NO_EDGE;
 
 /**
  * Recursively unpack shortcuts.

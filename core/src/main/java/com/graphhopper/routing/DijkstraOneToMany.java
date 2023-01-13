@@ -17,6 +17,10 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.ArrayUtil;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIterator;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.apache.commons.collections.IntFloatBinaryHeap;
 import com.graphhopper.routing.util.TraversalMode;

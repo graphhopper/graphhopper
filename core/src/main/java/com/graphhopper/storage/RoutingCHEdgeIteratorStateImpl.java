@@ -19,9 +19,8 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.EdgeIteratorState;
-
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import com.graphhopper.core.util.EdgeIteratorState;
+import static com.graphhopper.core.util.EdgeIterator.NO_EDGE;
 
 public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorState {
     final CHStorage store;

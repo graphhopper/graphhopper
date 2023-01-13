@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.BitUtil;
+import com.graphhopper.core.util.BitUtil;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

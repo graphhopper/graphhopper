@@ -17,6 +17,11 @@
  */
 package com.graphhopper.reader.osm;
 
+import com.graphhopper.core.util.DistanceCalcEarth;
+import com.graphhopper.core.util.RamerDouglasPeucker;
+import com.graphhopper.core.util.FetchMode;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.DistanceCalc;
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.LongHashSet;

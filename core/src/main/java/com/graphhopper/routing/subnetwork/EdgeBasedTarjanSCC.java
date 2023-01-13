@@ -18,20 +18,23 @@
 
 package com.graphhopper.routing.subnetwork;
 
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.EdgeIterator;
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.BitUtil;
+import com.graphhopper.core.util.BitUtil;
 import com.graphhopper.util.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
+import static com.graphhopper.core.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.core.util.GHUtility.getEdgeFromEdgeKey;
 
 /**
  * Edge-based version of Tarjan's algorithm to find strongly connected components on a directed graph. Compared

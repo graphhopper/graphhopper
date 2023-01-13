@@ -17,10 +17,16 @@
  */
 package com.graphhopper.reader.osm;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.FetchMode;
+import com.graphhopper.core.util.DistanceCalcEarth;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperTest;
+import com.graphhopper.core.GraphHopper;
+import com.graphhopper.core.GraphHopperTest;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
@@ -38,7 +44,6 @@ import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +55,10 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.graphhopper.util.GHUtility.readCountries;
+import static com.graphhopper.core.util.GHUtility.readCountries;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.PointList;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

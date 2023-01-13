@@ -17,6 +17,7 @@
  */
 package com.graphhopper.navigation;
 
+import com.graphhopper.core.util.TranslationMap;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;

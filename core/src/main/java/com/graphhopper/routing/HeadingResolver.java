@@ -18,6 +18,10 @@
 
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.FetchMode;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.AngleCalc;
+import com.graphhopper.core.util.EdgeIterator;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;

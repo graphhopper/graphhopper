@@ -18,8 +18,8 @@
 package com.graphhopper.ui;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.graphhopper.GraphHopper;
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.core.GraphHopper;
+import com.graphhopper.core.GraphHopperConfig;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.config.CHProfile;
@@ -43,12 +43,12 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.FetchMode;
+import com.graphhopper.core.util.FetchMode;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.StopWatch;
+import com.graphhopper.core.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

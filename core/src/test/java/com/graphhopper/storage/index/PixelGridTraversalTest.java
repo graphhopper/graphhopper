@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.locationtech.jts.algorithm.RectangleLineIntersector;

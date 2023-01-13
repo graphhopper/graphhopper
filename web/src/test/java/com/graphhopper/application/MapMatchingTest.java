@@ -17,9 +17,11 @@
  */
 package com.graphhopper.application;
 
+import com.graphhopper.core.util.DistancePlaneProjection;
+import com.graphhopper.core.util.DistanceCalc;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GHRequest;
-import com.graphhopper.GraphHopper;
+import com.graphhopper.core.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;

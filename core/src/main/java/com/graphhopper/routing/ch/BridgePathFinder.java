@@ -25,7 +25,7 @@ import com.carrotsearch.hppc.IntObjectScatterMap;
 
 import java.util.PriorityQueue;
 
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.NO_EDGE;
 
 /**
  * Used to find 'bridge-paths' during edge-based CH preparation. Bridge-paths are paths that start and end at neighbor

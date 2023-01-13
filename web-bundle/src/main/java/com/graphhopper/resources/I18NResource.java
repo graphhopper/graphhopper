@@ -19,7 +19,7 @@ package com.graphhopper.resources;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.util.Translation;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.core.util.TranslationMap;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;

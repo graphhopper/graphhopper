@@ -18,6 +18,9 @@
 
 package com.graphhopper.gpx;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.Constants;
+import com.graphhopper.core.util.TranslationMap;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;

@@ -25,10 +25,10 @@ import com.graphhopper.reader.osm.Pair;
 import com.graphhopper.reader.osm.RestrictionType;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.FetchMode;
 
 import java.util.List;
 

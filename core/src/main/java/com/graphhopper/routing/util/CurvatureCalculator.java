@@ -4,7 +4,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.core.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 
 public class CurvatureCalculator implements TagParser {

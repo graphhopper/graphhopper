@@ -1,7 +1,7 @@
 package com.graphhopper.navigation;
 
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.core.util.TranslationMap;
 
 import java.util.Locale;
 

@@ -21,12 +21,12 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.ch.NodeBasedCHBidirPathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.GHUtility;
 
 import java.util.PriorityQueue;
 import java.util.function.Supplier;
 
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.ANY_EDGE;
 
 /**
  * Common subclass for bidirectional CH algorithms.

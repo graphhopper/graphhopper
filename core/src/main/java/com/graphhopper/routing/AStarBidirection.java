@@ -24,9 +24,9 @@ import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.DistancePlaneProjection;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.DistancePlaneProjection;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
 
 /**

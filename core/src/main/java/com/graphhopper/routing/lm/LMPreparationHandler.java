@@ -19,7 +19,7 @@ package com.graphhopper.routing.lm;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.core.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.AreaIndex;
@@ -27,7 +27,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;

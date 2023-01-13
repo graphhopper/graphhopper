@@ -29,7 +29,7 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.core.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint3D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

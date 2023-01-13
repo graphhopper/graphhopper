@@ -17,6 +17,11 @@
  */
 package com.graphhopper.reader.osm;
 
+import com.graphhopper.core.GraphHopperConfig;
+import com.graphhopper.core.GraphHopper;
+import com.graphhopper.core.util.BreadthFirstSearch;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
@@ -29,8 +34,11 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
+import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.Instruction;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

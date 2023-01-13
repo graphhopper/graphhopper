@@ -26,7 +26,7 @@ import com.graphhopper.routing.util.tour.TourStrategy;
 import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.core.util.DistanceCalcEarth;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 import com.graphhopper.util.exceptions.PointNotFoundException;

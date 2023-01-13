@@ -19,7 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.SPTEntry;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIterator;
 
 public class CHEntry extends SPTEntry {
     /**

@@ -20,8 +20,8 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIteratorState;
 
 public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeExplorer, RoutingCHEdgeIterator {
     private final BaseGraph.EdgeIteratorImpl baseIterator;

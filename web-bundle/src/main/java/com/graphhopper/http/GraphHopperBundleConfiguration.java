@@ -18,7 +18,7 @@
 
 package com.graphhopper.http;
 
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.core.GraphHopperConfig;
 
 public interface GraphHopperBundleConfiguration {
 

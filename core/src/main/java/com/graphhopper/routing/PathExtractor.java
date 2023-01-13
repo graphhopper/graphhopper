@@ -18,6 +18,11 @@
 
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.ArrayUtil;
+import com.graphhopper.core.util.StopWatch;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIterator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;

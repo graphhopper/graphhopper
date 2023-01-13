@@ -23,11 +23,10 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.CHEdgeFilter;
 import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
-
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.GHUtility;
+import static com.graphhopper.core.util.EdgeIterator.ANY_EDGE;
 
 /**
  * @author easbar

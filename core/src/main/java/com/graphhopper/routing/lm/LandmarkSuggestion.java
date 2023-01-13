@@ -4,7 +4,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.IOException;

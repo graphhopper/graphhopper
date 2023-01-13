@@ -17,6 +17,12 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.graphhopper.core.util.DistanceCalcEarth;
+import com.graphhopper.core.util.BreadthFirstSearch;
+import com.graphhopper.core.util.FetchMode;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIterator;
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;

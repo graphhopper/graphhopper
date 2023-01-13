@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIterator;
 
 public interface EdgeToEdgeRoutingAlgorithm extends RoutingAlgorithm {
     /**

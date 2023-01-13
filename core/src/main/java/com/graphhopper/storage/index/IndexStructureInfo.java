@@ -2,12 +2,12 @@ package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.geohash.SpatialKeyAlgo;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 
 import java.util.Arrays;
 
-import static com.graphhopper.util.DistanceCalcEarth.C;
-import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
+import static com.graphhopper.core.util.DistanceCalcEarth.C;
+import static com.graphhopper.core.util.DistanceCalcEarth.DIST_EARTH;
 
 public class IndexStructureInfo {
     private final int[] entries;

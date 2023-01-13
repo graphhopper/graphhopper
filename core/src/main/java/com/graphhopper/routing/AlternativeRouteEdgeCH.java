@@ -23,12 +23,12 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
 
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.ANY_EDGE;
 
 /**
  * Minimum number-of-moving-parts implementation of alternative route search with

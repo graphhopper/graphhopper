@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.util.Downloader;
+import com.graphhopper.core.util.Downloader;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;

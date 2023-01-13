@@ -22,8 +22,8 @@ import com.graphhopper.routing.DefaultBidirPathExtractor;
 import com.graphhopper.routing.SPTEntry;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.GHUtility;
 
 /**
  * @author easbar

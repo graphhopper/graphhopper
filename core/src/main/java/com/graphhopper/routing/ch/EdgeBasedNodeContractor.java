@@ -21,17 +21,17 @@ import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.graphhopper.storage.CHStorageBuilder;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.core.util.BitUtil;
+import com.graphhopper.core.util.EdgeIterator;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.core.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Locale;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.util.GHUtility.reverseEdgeKey;
+import static com.graphhopper.core.util.GHUtility.reverseEdgeKey;
 import static com.graphhopper.util.Helper.nf;
 
 /**

@@ -28,7 +28,7 @@ import org.locationtech.jts.geom.Polygon;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.graphhopper.util.GHUtility.readCountries;
+import static com.graphhopper.core.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class AreaIndexTest {

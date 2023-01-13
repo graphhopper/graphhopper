@@ -18,15 +18,15 @@
 
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.Constants;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 
 import java.util.Locale;
 
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Helper.nf;
 
 /**

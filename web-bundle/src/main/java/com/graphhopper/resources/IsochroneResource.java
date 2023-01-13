@@ -1,8 +1,10 @@
 package com.graphhopper.resources;
 
+import com.graphhopper.core.util.StopWatch;
+import com.graphhopper.core.util.DistanceCalcEarth;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.graphhopper.GraphHopper;
+import com.graphhopper.core.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.ProfileResolver;

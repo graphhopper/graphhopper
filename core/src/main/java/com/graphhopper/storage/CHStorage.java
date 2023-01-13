@@ -20,8 +20,8 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.ch.NodeOrderingProvider;
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.Constants;
+import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

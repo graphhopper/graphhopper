@@ -19,8 +19,8 @@ package com.graphhopper.routing;
 
 import java.util.Objects;
 
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.ANY_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Parameters.Curbsides.*;
 import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 

@@ -31,8 +31,8 @@ import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.DistanceCalcEarth;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 

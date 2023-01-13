@@ -17,6 +17,11 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.BitUtil;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.DistanceCalcEuclidean;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.Dijkstra;
@@ -30,13 +35,13 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Random;
 
-import static com.graphhopper.util.GHUtility.updateDistancesFor;
+import static com.graphhopper.core.util.GHUtility.updateDistancesFor;
+import com.graphhopper.util.PMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

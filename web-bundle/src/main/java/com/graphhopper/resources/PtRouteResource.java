@@ -28,7 +28,7 @@ import com.graphhopper.http.GHLocationParam;
 import com.graphhopper.http.OffsetDateTimeParam;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.core.util.StopWatch;
 import io.dropwizard.jersey.params.AbstractParam;
 
 import javax.inject.Inject;

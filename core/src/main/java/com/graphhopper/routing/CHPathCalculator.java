@@ -20,13 +20,13 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.core.util.StopWatch;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 
 import java.util.Collections;
 import java.util.List;
 
-import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
 
 public class CHPathCalculator implements PathCalculator {

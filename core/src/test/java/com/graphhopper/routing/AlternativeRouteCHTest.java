@@ -29,7 +29,7 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.RoutingCHGraphImpl;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 

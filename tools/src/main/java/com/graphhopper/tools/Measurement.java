@@ -17,6 +17,15 @@
  */
 package com.graphhopper.tools;
 
+import com.graphhopper.core.GraphHopperConfig;
+import com.graphhopper.core.GraphHopper;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.StopWatch;
+import com.graphhopper.core.util.Constants;
+import com.graphhopper.core.util.DistanceCalcEarth;
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.DistanceCalc;
+import com.graphhopper.core.util.MiniPerfTest;
 import com.carrotsearch.hppc.IntArrayList;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.*;
@@ -44,7 +53,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +71,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static com.graphhopper.util.GHUtility.readCountries;
+import static com.graphhopper.core.util.GHUtility.readCountries;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;

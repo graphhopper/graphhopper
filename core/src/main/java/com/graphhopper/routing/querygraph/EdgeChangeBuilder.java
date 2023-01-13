@@ -22,7 +22,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 
 import java.util.List;
 

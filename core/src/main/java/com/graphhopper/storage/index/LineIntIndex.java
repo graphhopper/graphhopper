@@ -23,10 +23,10 @@ import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.Constants;
+import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 
 import java.util.function.IntConsumer;
 

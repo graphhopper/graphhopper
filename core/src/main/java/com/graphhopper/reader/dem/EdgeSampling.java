@@ -17,8 +17,8 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.core.util.DistanceCalc;
+import com.graphhopper.core.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 

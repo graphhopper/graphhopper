@@ -1,5 +1,10 @@
 package com.graphhopper.routing.util;
 
+import com.graphhopper.core.util.DistanceCalcEarth;
+import com.graphhopper.core.util.FetchMode;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.AngleCalc;
+import com.graphhopper.core.util.DistanceCalc;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 

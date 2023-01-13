@@ -18,6 +18,10 @@
 
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.RamerDouglasPeucker;
+import com.graphhopper.core.util.PathMerger;
+import com.graphhopper.core.util.TranslationMap;
+import com.graphhopper.core.util.StopWatch;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
@@ -42,17 +46,17 @@ import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
-import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.core.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
-import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
+import static com.graphhopper.core.util.DistanceCalcEarth.DIST_EARTH;
 import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
 import static com.graphhopper.util.Parameters.Routing.*;

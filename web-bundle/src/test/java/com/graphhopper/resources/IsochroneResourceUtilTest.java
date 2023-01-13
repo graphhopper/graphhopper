@@ -18,7 +18,7 @@
 
 package com.graphhopper.resources;
 
-import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.core.util.DistanceCalcEarth;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 

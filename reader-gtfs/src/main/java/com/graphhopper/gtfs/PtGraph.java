@@ -21,7 +21,7 @@ package com.graphhopper.gtfs;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIterator;
 
 import java.io.*;
 import java.util.*;

@@ -1,10 +1,10 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.FetchMode;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.Polygon;
+import com.graphhopper.core.util.shapes.Polygon;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;

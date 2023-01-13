@@ -17,7 +17,7 @@
  */
 package com.graphhopper.matching;
 
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 import java.util.List;
 
 /**

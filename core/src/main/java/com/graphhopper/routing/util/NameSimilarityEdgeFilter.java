@@ -19,11 +19,11 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.apache.commons.lang3.StringUtils;
 import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.FetchMode;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.Circle;
+import com.graphhopper.core.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.Circle;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.Arrays;

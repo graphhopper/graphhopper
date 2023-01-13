@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
@@ -24,15 +26,17 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FACTOR;
 import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
-import static com.graphhopper.util.GHUtility.createMockedEdgeIteratorState;
-import static com.graphhopper.util.GHUtility.getEdge;
+import static com.graphhopper.core.util.GHUtility.createMockedEdgeIteratorState;
+import static com.graphhopper.core.util.GHUtility.getEdge;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.BitUtil;
+import com.graphhopper.core.util.BitUtil;
 import com.graphhopper.util.Helper;
 
 import java.io.IOException;

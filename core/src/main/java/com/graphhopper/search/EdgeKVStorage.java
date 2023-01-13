@@ -19,9 +19,9 @@ package com.graphhopper.search;
 
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.BitUtil;
+import com.graphhopper.core.util.Constants;
+import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.util.Helper;
 
 import java.util.*;

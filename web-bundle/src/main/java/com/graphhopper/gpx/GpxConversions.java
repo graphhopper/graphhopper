@@ -18,6 +18,7 @@
 
 package com.graphhopper.gpx;
 
+import com.graphhopper.core.util.AngleCalc;
 import com.graphhopper.jackson.Gpx;
 import com.graphhopper.matching.Observation;
 import com.graphhopper.util.*;

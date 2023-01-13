@@ -17,13 +17,17 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.*;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;

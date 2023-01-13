@@ -17,7 +17,7 @@
  */
 package com.graphhopper.coll;
 
-import com.graphhopper.util.BitUtil;
+import com.graphhopper.core.util.BitUtil;
 
 import java.util.Comparator;
 import java.util.TreeMap;

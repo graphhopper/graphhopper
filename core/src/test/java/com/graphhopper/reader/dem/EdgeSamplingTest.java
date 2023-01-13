@@ -1,6 +1,6 @@
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.core.util.DistanceCalcEarth;
 import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
 

@@ -22,7 +22,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.geohash.SpatialKeyAlgo;
 import org.locationtech.jts.geom.Coordinate;
 
-import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
+import static com.graphhopper.core.util.DistancePlaneProjection.DIST_PLANE;
 
 public class InMemConstructionIndex {
 

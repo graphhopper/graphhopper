@@ -1,6 +1,9 @@
 package com.graphhopper.resources;
 
-import com.graphhopper.GraphHopper;
+import com.graphhopper.core.util.StopWatch;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.ProfileResolver;

@@ -17,6 +17,9 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.core.util.FetchMode;
+import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.DistanceCalc;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;

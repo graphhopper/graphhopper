@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 
 /**
  * This EdgeFilter combines the weighting result and the 'subnetwork' EncodedValue to consider the subnetwork removal

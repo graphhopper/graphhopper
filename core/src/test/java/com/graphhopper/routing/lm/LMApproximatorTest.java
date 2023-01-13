@@ -28,8 +28,8 @@ import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.GHUtility;
 import org.junit.jupiter.api.RepeatedTest;
 
 import java.util.Random;

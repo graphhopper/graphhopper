@@ -23,7 +23,7 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 
 import java.util.ArrayList;
@@ -32,7 +32,7 @@ import java.util.List;
 
 import static com.graphhopper.routing.querygraph.QueryGraph.SNAP_ADJ;
 import static com.graphhopper.routing.querygraph.QueryGraph.SNAP_BASE;
-import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import static com.graphhopper.core.util.EdgeIterator.NO_EDGE;
 
 /**
  * This class is used to allow routing between virtual nodes (snapped coordinates that lie between the nodes of the

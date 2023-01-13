@@ -510,7 +510,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         return new GHPoint3D(this.getLat(index), this.getLon(index), this.getEle(index));
     }
 
-    int getCapacity() {
+    public int getCapacity() {
         return latitudes.length;
     }
 

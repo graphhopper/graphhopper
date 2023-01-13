@@ -18,10 +18,11 @@
 
 package com.graphhopper;
 
+import com.graphhopper.core.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.core.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

@@ -22,8 +22,8 @@ import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DistancePlaneProjection;
+import com.graphhopper.core.util.DistanceCalcEarth;
+import com.graphhopper.core.util.DistancePlaneProjection;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 

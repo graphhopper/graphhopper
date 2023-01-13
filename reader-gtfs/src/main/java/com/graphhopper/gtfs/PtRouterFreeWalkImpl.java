@@ -18,10 +18,12 @@
 
 package com.graphhopper.gtfs;
 
+import com.graphhopper.core.util.TranslationMap;
+import com.graphhopper.core.util.StopWatch;
 import com.conveyal.gtfs.GTFSFeed;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.core.GraphHopperConfig;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.DefaultWeightingFactory;
@@ -38,7 +40,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
-import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.core.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 

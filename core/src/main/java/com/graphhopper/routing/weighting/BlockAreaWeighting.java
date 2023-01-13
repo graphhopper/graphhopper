@@ -2,7 +2,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIteratorState;
 
 /**
  * This weighting is a wrapper for every weighting to support block_area

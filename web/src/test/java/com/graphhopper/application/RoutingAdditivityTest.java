@@ -19,7 +19,7 @@
 package com.graphhopper.application;
 
 import com.graphhopper.GHRequest;
-import com.graphhopper.GraphHopper;
+import com.graphhopper.core.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;

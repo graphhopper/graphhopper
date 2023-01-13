@@ -20,8 +20,8 @@ package com.graphhopper.routing.weighting;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.querygraph.QueryGraph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIteratorState;
 
 /**
  * Whenever a {@link QueryGraph} is used for shortest path calculations including turn costs we need to wrap the

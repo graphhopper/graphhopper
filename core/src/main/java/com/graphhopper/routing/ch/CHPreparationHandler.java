@@ -17,10 +17,10 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.core.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;

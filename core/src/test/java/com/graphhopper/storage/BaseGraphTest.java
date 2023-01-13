@@ -17,19 +17,23 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeExplorer;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.search.EdgeKVStorage.KeyValue;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
-import static com.graphhopper.util.EdgeIteratorState.REVERSE_STATE;
-import static com.graphhopper.util.FetchMode.*;
+import static com.graphhopper.core.util.EdgeIteratorState.REVERSE_STATE;
+import static com.graphhopper.core.util.FetchMode.*;
+import com.graphhopper.util.Helper;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

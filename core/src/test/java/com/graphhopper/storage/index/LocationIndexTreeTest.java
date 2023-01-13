@@ -17,6 +17,11 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.core.util.GHUtility;
+import com.graphhopper.core.util.DistancePlaneProjection;
+import com.graphhopper.core.util.DistanceCalc;
+import com.graphhopper.core.util.EdgeIterator;
+import com.graphhopper.core.util.EdgeIteratorState;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -27,8 +32,8 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.core.util.shapes.BBox;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

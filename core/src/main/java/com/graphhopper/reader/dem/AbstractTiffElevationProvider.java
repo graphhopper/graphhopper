@@ -18,7 +18,7 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DataAccess;
-import com.graphhopper.util.Downloader;
+import com.graphhopper.core.util.Downloader;
 
 import javax.net.ssl.SSLException;
 import java.awt.image.Raster;

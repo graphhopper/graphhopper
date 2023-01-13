@@ -17,9 +17,11 @@
  */
 package com.graphhopper.resources;
 
+import com.graphhopper.core.util.StopWatch;
+import com.graphhopper.core.util.Constants;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
+import com.graphhopper.core.GraphHopper;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.ProfileResolver;
