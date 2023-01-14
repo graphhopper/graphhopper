@@ -720,6 +720,7 @@ public class GHUtility {
     public static CustomArea getFirstDuplicateArea(List<CustomArea> areas, String id) {
         Set<String> result = new HashSet<>(areas.size());
         for (CustomArea area : areas) {
+            if (area.getProperties() == null) continue;
             String countryCode = (String) area.getProperties().get(id);
             // in our country file there are not only countries but "subareas" (with ISO3166-2) or other unnamed areas
             // like Metropolitan Netherlands
