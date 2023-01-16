@@ -192,8 +192,8 @@ graphhopper:
   #### Custom Areas ####
 
   # GraphHopper reads GeoJSON polygon files including their properties from this directory and makes them available
-  # to all tag parsers and vehicles and custom models.
-  # Country borders (see countries.geojson) are always included automatically.
+  # to all tag parsers, vehicles and custom models. All GeoJSON Features require to have the "id" property.
+  # Country borders are included automatically (see countries.geojson).
   # custom_areas.directory: path/to/custom_areas
 
 
