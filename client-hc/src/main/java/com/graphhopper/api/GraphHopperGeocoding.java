@@ -30,6 +30,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
 
+import static com.graphhopper.api.GraphHopperWeb.X_GH_CLIENT_VERSION;
+import static com.graphhopper.api.Version.GH_VERSION_FROM_MAVEN;
+
 /**
  * Client implementation for the GraphHopper Directions API Geocoding. For details on how to use it, please consult
  * the documentation at: https://graphhopper.com/api/1/docs/geocoding/.
@@ -76,7 +79,9 @@ public class GraphHopperGeocoding {
     public GHGeocodingResponse geocode(GHGeocodingRequest request) {
         String url = buildUrl(request);
         try {
-            Request okRequest = new Request.Builder().url(url).build();
+            Request okRequest = new Request.Builder().url(url)
+                    .header(X_GH_CLIENT_VERSION, GH_VERSION_FROM_MAVEN)
+                    .build();
             Response rsp = getClientForRequest(request).newCall(okRequest).execute();
             ResponseBody rspBody = rsp.body();
             if (!rsp.isSuccessful())
