@@ -77,7 +77,7 @@ public class Trip extends Entity {
 
             // Bikes are not allowed on MUNI Metro, LRVs, cable cars, and historic vehicles
             // TODO: no longer hardcode these
-            if (Arrays.asList("SF:J", "SF:KT", "SF:L", "SF:M", "SF:N", "SF:F", "SF:E", "SF:PH", "SF:C", "SF:PM", "SF:S")
+            if (Arrays.asList("SF:J", "SF:K", "SF:T", "SF:L", "SF:M", "SF:N", "SF:F", "SF:E", "SF:PH", "SF:C", "SF:PM", "SF:S")
                     .contains(t.route_id)) {
                 t.bikes_allowed = 2;
             }
