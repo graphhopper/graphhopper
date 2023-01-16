@@ -45,6 +45,8 @@ graphhopper:
   #   weighting: custom
   #   # the custom model in bike2.json is defined to avoid hills
   #   custom_model_file: bike2.json
+
+  # specify the folder where to find the custom model files
   custom_model_folder: custom_models
 
   # Speed mode:
@@ -190,7 +192,8 @@ graphhopper:
   #### Custom Areas ####
 
   # GraphHopper reads GeoJSON polygon files including their properties from this directory and makes them available
-  # to all tag parsers and vehicles. Country borders (see countries.geojson) are always included automatically.
+  # to all tag parsers, vehicles and custom models. All GeoJSON Features require to have the "id" property.
+  # Country borders are included automatically (see countries.geojson).
   # custom_areas.directory: path/to/custom_areas
 
 
