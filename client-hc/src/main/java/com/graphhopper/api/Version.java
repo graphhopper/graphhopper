@@ -18,16 +18,19 @@
 
 package com.graphhopper.api;
 
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
+import static com.graphhopper.util.Helper.UTF_CS;
+import static com.graphhopper.util.Helper.readFile;
 
 public class Version {
     public static final String GH_VERSION_FROM_MAVEN;
 
     static {
         try {
-            GH_VERSION_FROM_MAVEN = Files.readAllLines(Paths.get(Version.class.getResource("version").toURI())).get(0);
-        } catch (Exception e) {
+            GH_VERSION_FROM_MAVEN = readFile(new InputStreamReader(Version.class.getResourceAsStream("version"), UTF_CS)).get(0);
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
