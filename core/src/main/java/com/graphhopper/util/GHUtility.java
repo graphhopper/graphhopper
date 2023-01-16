@@ -704,10 +704,12 @@ public class GHUtility {
             JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
             return jsonFeatureCollection.getFeatures().stream()
                     // exclude areas not in the list of Country enums like FX => Metropolitan France
-                    .filter(customArea -> map.get((String) customArea.getProperties().get("id")) != null)
+                    .filter(customArea -> map.get(getIdOrPropertiesId(customArea)) != null)
                     .map((f) -> {
                         CustomArea ca = CustomArea.fromJsonFeature(f);
-                        Country country = map.get((String) f.getProperties().get("id"));
+                        // the Feature does not include "id" but we expect it
+                        if (f.getId() == null) f.setId(getIdOrPropertiesId(f));
+                        Country country = map.get(f.getId());
                         ca.getProperties().put(Country.ISO_ALPHA3, country.name());
                         return ca;
                     })
@@ -715,6 +717,12 @@ public class GHUtility {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private static String getIdOrPropertiesId(JsonFeature feature) {
+        if (feature.getId() != null) return feature.getId();
+        if (feature.getProperties() != null) return (String) feature.getProperties().get("id");
+        return null;
     }
 
     public static CustomArea getFirstDuplicateArea(List<CustomArea> areas, String id) {
