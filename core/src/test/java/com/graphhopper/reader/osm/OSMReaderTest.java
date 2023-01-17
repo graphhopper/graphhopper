@@ -667,7 +667,6 @@ public class OSMReaderTest {
                 return new CarTagParser(
                         lookup.getBooleanEncodedValue(VehicleAccess.key("truck")),
                         lookup.getDecimalEncodedValue(VehicleSpeed.key("truck")),
-                        lookup.hasEncodedValue(TurnCost.key("truck")) ? lookup.getDecimalEncodedValue(TurnCost.key("truck")) : null,
                         lookup.getBooleanEncodedValue(Roundabout.KEY),
                         config,
                         TransportationMode.HGV,
@@ -906,7 +905,7 @@ public class OSMReaderTest {
         osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
         CarTagParser parser = new CarTagParser(em, new PMap());
         parser.init(new DateRangeParser());
-        osmParsers.addVehicleTagParser(parser);
+        osmParsers.addWayTagParser(parser);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
@@ -942,7 +941,7 @@ public class OSMReaderTest {
         carParser.init(new DateRangeParser());
         OSMParsers osmParsers = new OSMParsers()
                 .addWayTagParser(new CountryParser(countryEnc))
-                .addVehicleTagParser(carParser);
+                .addWayTagParser(carParser);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());

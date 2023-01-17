@@ -262,6 +262,7 @@ public class OSMReader {
         Country country = Country.MISSING;
         CustomArea prevCustomArea = null;
         for (CustomArea customArea : customAreas) {
+            if (customArea.getProperties() == null) continue;
             Object alpha3 = customArea.getProperties().get(Country.ISO_ALPHA3);
             if (alpha3 == null)
                 continue;

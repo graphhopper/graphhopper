@@ -28,8 +28,7 @@ public class CustomModel {
 
     public static final String KEY = "custom_model";
 
-    // e.g. 70 means that the time costs are 25€/hour and for the distance 0.5€/km (for trucks this is usually larger)
-    static double DEFAULT_DISTANCE_INFLUENCE = 70;
+    // 'Double' instead of 'double' is required to know if it was 0 or not specified in the request.
     private Double distanceInfluence;
     private double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
     private boolean internal;
@@ -43,7 +42,7 @@ public class CustomModel {
     public CustomModel(CustomModel toCopy) {
         this.headingPenalty = toCopy.headingPenalty;
         this.distanceInfluence = toCopy.distanceInfluence;
-        // do not copy "internal"
+        // do not copy "internal" boolean
 
         speedStatements = deepCopy(toCopy.getSpeed());
         priorityStatements = deepCopy(toCopy.getPriority());
@@ -112,17 +111,13 @@ public class CustomModel {
         return areas;
     }
 
-    public CustomModel setDistanceInfluence(double distanceFactor) {
+    public CustomModel setDistanceInfluence(Double distanceFactor) {
         this.distanceInfluence = distanceFactor;
         return this;
     }
 
-    public boolean hasDistanceInfluence() {
-        return distanceInfluence != null;
-    }
-
-    public double getDistanceInfluence() {
-        return hasDistanceInfluence() ? distanceInfluence : DEFAULT_DISTANCE_INFLUENCE;
+    public Double getDistanceInfluence() {
+        return distanceInfluence;
     }
 
     public CustomModel setHeadingPenalty(double headingPenalty) {
@@ -154,10 +149,9 @@ public class CustomModel {
         // avoid changing the specified CustomModel via deep copy otherwise the server-side CustomModel would be
         // modified (same problem if queryModel would be used as target)
         CustomModel mergedCM = new CustomModel(baseModel);
-        // we only overwrite the distance influence if a non-default value was used
-        if (queryModel.distanceInfluence != null)
-            mergedCM.distanceInfluence = queryModel.distanceInfluence;
 
+        if (queryModel.getDistanceInfluence() != null)
+            mergedCM.distanceInfluence = queryModel.distanceInfluence;
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
 

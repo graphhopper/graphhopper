@@ -61,8 +61,8 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
 
     protected BikeCommonTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
                                   EnumEncodedValue<RouteNetwork> bikeRouteEnc, EnumEncodedValue<Smoothness> smoothnessEnc,
-                                  String name, BooleanEncodedValue roundaboutEnc, DecimalEncodedValue turnCostEnc) {
-        super(accessEnc, speedEnc, name, roundaboutEnc, turnCostEnc, TransportationMode.BIKE, speedEnc.getNextStorableValue(MAX_SPEED));
+                                  BooleanEncodedValue roundaboutEnc) {
+        super(accessEnc, speedEnc, roundaboutEnc, TransportationMode.BIKE, speedEnc.getNextStorableValue(MAX_SPEED));
         this.bikeRouteEnc = bikeRouteEnc;
         this.smoothnessEnc = smoothnessEnc;
         this.priorityEnc = priorityEnc;
@@ -191,7 +191,6 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         setAvoidSpeedLimit(71);
     }
 
-    @Override
     public WayAccess getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {

@@ -271,7 +271,7 @@ public class GraphHopperTest {
                     new Coordinate(7.4198, 43.7355),
                     new Coordinate(7.4207, 43.7344),
                     new Coordinate(7.4174, 43.7345)}));
-            CustomModel customModel = new CustomModel().setDistanceInfluence(0);
+            CustomModel customModel = new CustomModel().setDistanceInfluence(0d);
             customModel.getPriority().add(Statement.If("in_area51", Statement.Op.MULTIPLY, "0.1"));
             customModel.getAreas().put("area51", area51Feature);
             profile = new CustomProfile(profileName).setCustomModel(customModel).setVehicle(vehicle);
@@ -692,8 +692,8 @@ public class GraphHopperTest {
         );
         assertDistance(hopper, customCar, customModelWithUnclassifiedRule, 19289);
         // now we use distance influence to avoid the detour
-        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(200), 8725);
-        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(100), 14475);
+        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(200d), 8725);
+        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(100d), 14475);
     }
 
     private void assertDistance(GraphHopper hopper, String profile, CustomModel customModel, double expectedDistance) {
@@ -1631,8 +1631,8 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setProfiles(
-                        new CustomProfile("p1").setCustomModel(new CustomModel().setDistanceInfluence(100)).setVehicle("car"),
-                        new CustomProfile("p2").setCustomModel(new CustomModel().setDistanceInfluence(100)).setVehicle("car")).
+                        new CustomProfile("p1").setCustomModel(new CustomModel().setDistanceInfluence(100d)).setVehicle("car"),
+                        new CustomProfile("p2").setCustomModel(new CustomModel().setDistanceInfluence(100d)).setVehicle("car")).
                 setStoreOnFlush(true);
 
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("p1"));
@@ -1644,7 +1644,7 @@ public class GraphHopperTest {
         assertEquals(3587, response.getBest().getDistance(), 1);
 
         // use smaller distance influence to force violating the LM constraint
-        final CustomModel customModel = new CustomModel().setDistanceInfluence(0);
+        final CustomModel customModel = new CustomModel().setDistanceInfluence(0d);
         response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setCustomModel(customModel).
                 setProfile("p1").putHint("lm.disable", false));

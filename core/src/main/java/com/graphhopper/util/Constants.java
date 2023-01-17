@@ -81,7 +81,7 @@ public class Constants {
     public static final String VERSION;
     public static final String BUILD_DATE;
     /**
-     * Details about the git commit this artifact was build for, can be null (if not build using maven)
+     * Details about the git commit this artifact was built for, can be null (if not built using maven)
      */
     public static final GitInfo GIT_INFO;
     public static final boolean SNAPSHOT;

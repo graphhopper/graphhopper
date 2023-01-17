@@ -290,11 +290,9 @@ public final class GraphExplorer {
 
         public Label.NodeId getAdjNode() {
             if (ptEdge != null) {
-                Integer streetNode = gtfsStorage.getPtToStreet().get(ptEdge.getAdjNode());
-                return new Label.NodeId(streetNode != null ? streetNode : -1, ptEdge.getAdjNode());
+                return new Label.NodeId(gtfsStorage.getPtToStreet().getOrDefault(ptEdge.getAdjNode(), -1), ptEdge.getAdjNode());
             } else {
-                Integer ptNode = gtfsStorage.getStreetToPt().get(adjNode);
-                return new Label.NodeId(adjNode, ptNode != null ? ptNode : -1);
+                return new Label.NodeId(adjNode, gtfsStorage.getStreetToPt().getOrDefault(adjNode, -1));
             }
         }
 

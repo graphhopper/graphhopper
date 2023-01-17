@@ -57,16 +57,15 @@ public class FootTagParser extends VehicleTagParser {
                 lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "foot"))),
                 lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "foot"))),
                 lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "foot"))),
-                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class),
-                "foot"
+                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class)
         );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
     protected FootTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
-                            EnumEncodedValue<RouteNetwork> footRouteEnc, String name) {
-        super(accessEnc, speedEnc, name, null, null, TransportationMode.FOOT, speedEnc.getNextStorableValue(FERRY_SPEED));
+                            EnumEncodedValue<RouteNetwork> footRouteEnc) {
+        super(accessEnc, speedEnc, null, TransportationMode.FOOT, speedEnc.getNextStorableValue(FERRY_SPEED));
         this.footRouteEnc = footRouteEnc;
         priorityWayEncoder = priorityEnc;
 
@@ -133,7 +132,6 @@ public class FootTagParser extends VehicleTagParser {
     /**
      * Some ways are okay but not separate for pedestrians.
      */
-    @Override
     public WayAccess getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {

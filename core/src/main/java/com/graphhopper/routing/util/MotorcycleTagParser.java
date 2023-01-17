@@ -21,14 +21,9 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.PointList;
 
 import java.util.HashSet;
-
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 /**
  * Defines bit layout for motorbikes
@@ -47,7 +42,6 @@ public class MotorcycleTagParser extends CarTagParser {
         this(
                 lookup.getBooleanEncodedValue(VehicleAccess.key("motorcycle")),
                 lookup.getDecimalEncodedValue(VehicleSpeed.key("motorcycle")),
-                lookup.hasEncodedValue(TurnCost.key("motorcycle")) ? lookup.getDecimalEncodedValue(TurnCost.key("motorcycle")) : null,
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 lookup.getDecimalEncodedValue(VehiclePriority.key("motorcycle")),
                 new PMap(properties).putObject("name", "motorcycle"),
@@ -55,10 +49,10 @@ public class MotorcycleTagParser extends CarTagParser {
         );
     }
 
-    public MotorcycleTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc,
+    public MotorcycleTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc,
                                BooleanEncodedValue roundaboutEnc,
                                DecimalEncodedValue priorityWayEncoder, PMap properties, TransportationMode transportationMode) {
-        super(accessEnc, speedEnc, turnCostEnc, roundaboutEnc, new PMap(properties).putObject("name", "motorcycle"),
+        super(accessEnc, speedEnc, roundaboutEnc, new PMap(properties).putObject("name", "motorcycle"),
                 transportationMode, speedEnc.getNextStorableValue(MOTOR_CYCLE_MAX_SPEED));
         this.priorityWayEncoder = priorityWayEncoder;
 

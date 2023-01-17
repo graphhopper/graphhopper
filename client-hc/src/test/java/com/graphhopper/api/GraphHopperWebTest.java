@@ -20,8 +20,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This class unit tests the class. For integration tests against a real server see RouteResourceClientHCTest.
@@ -95,7 +94,7 @@ public class GraphHopperWebTest {
                 .addToSpeed(Statement.If("road_class == MOTORWAY", Statement.Op.LIMIT, "80"))
                 .addToPriority(Statement.If("surface == DIRT", Statement.Op.MULTIPLY, "0.7"))
                 .addToPriority(Statement.If("surface == SAND", Statement.Op.MULTIPLY, "0.6"))
-                .setDistanceInfluence(69)
+                .setDistanceInfluence(69d)
                 .setHeadingPenalty(22)
                 .setAreas(areas);
         GHRequest req = new GHRequest(new GHPoint(42.509225, 1.534728), new GHPoint(42.512602, 1.551558))
@@ -114,5 +113,8 @@ public class GraphHopperWebTest {
                 "\"speed\":[{\"if\":\"road_class == MOTORWAY\",\"limit_to\":\"80\"}]," +
                 "\"priority\":[{\"if\":\"surface == DIRT\",\"multiply_by\":\"0.7\"},{\"if\":\"surface == SAND\",\"multiply_by\":\"0.6\"}]}");
         assertEquals(expected, objectMapper.valueToTree(customModelJson));
+
+        CustomModel cm = objectMapper.readValue("{\"distance_influence\":null}", CustomModel.class);
+        assertNull(cm.getDistanceInfluence());
     }
 }

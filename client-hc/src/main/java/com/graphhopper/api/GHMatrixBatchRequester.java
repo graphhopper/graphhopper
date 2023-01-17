@@ -28,8 +28,10 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+
+import static com.graphhopper.api.GraphHopperWeb.X_GH_CLIENT_VERSION;
+import static com.graphhopper.api.Version.GH_VERSION_FROM_MAVEN;
 
 /**
  * @author Peter Karich
@@ -154,7 +156,9 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
     }
 
     protected String getJson(String url) throws IOException {
-        Request okRequest = new Request.Builder().url(url).build();
+        Request okRequest = new Request.Builder().url(url)
+                .header(X_GH_CLIENT_VERSION, GH_VERSION_FROM_MAVEN)
+                .build();
         ResponseBody body = null;
         try {
             body = getDownloader().newCall(okRequest).execute().body();

@@ -20,8 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
-import static com.graphhopper.routing.ev.Smoothness.*;
-
 /**
  * Specifies the settings for cycletouring/trekking
  *
@@ -37,9 +35,7 @@ public class BikeTagParser extends BikeCommonTagParser {
                 lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "bike"))),
                 lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class),
                 lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
-                properties.getString("name", "bike"),
-                lookup.getBooleanEncodedValue(Roundabout.KEY),
-                lookup.hasEncodedValue(TurnCost.key(properties.getString("name", "bike"))) ? lookup.getDecimalEncodedValue(TurnCost.key(properties.getString("name", "bike"))) : null
+                lookup.getBooleanEncodedValue(Roundabout.KEY)
         );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
@@ -47,8 +43,8 @@ public class BikeTagParser extends BikeCommonTagParser {
 
     public BikeTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
                          EnumEncodedValue<RouteNetwork> bikeRouteEnc, EnumEncodedValue<Smoothness> smoothnessEnc,
-                         String name, BooleanEncodedValue roundaboutEnc, DecimalEncodedValue turnCostEnc) {
-        super(accessEnc, speedEnc, priorityEnc, bikeRouteEnc, smoothnessEnc, name, roundaboutEnc, turnCostEnc);
+                         BooleanEncodedValue roundaboutEnc) {
+        super(accessEnc, speedEnc, priorityEnc, bikeRouteEnc, smoothnessEnc, roundaboutEnc);
         addPushingSection("path");
         addPushingSection("footway");
         addPushingSection("pedestrian");
