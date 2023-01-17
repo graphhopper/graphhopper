@@ -303,7 +303,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
                 speedBwd = applyMaxSpeed(way, speed, true);
                 avgSpeedEnc.setDecimal(true, edgeFlags, speedBwd);
             }
-            speed = Math.min(speedFwd, speedBwd);
+            speed = Math.max(speedFwd, speedBwd);
 
             handleAccess(edgeFlags, way);
         } else {
