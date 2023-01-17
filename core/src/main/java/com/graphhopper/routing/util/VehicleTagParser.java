@@ -195,6 +195,9 @@ public abstract class VehicleTagParser implements TagParser {
     }
 
     protected void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
+        // special case when speed is non-zero but would be "rounded down" to 0 due to the low precision of the EncodedValue
+        if (speed > 0.1 && speed < avgSpeedEnc.getSmallestNonZeroValue())
+            speed = avgSpeedEnc.getSmallestNonZeroValue();
         if (speed < avgSpeedEnc.getSmallestNonZeroValue()) {
             avgSpeedEnc.setDecimal(reverse, edgeFlags, 0);
             accessEnc.setBool(reverse, edgeFlags, false);
