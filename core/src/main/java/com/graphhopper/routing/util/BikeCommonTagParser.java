@@ -296,13 +296,14 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         if (!access.isFerry()) {
             Smoothness smoothness = smoothnessEnc.getEnum(false, edgeFlags);
             speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
-            speed = applyMaxSpeed(way, speed, false);
-            avgSpeedEnc.setDecimal(false, edgeFlags, speed);
+            double speedFwd = applyMaxSpeed(way, speed, false);
+            avgSpeedEnc.setDecimal(false, edgeFlags, speedFwd);
+            double speedBwd = speed;
             if (avgSpeedEnc.isStoreTwoDirections()) {
-                double speedBwd = applyMaxSpeed(way, speed, true);
+                speedBwd = applyMaxSpeed(way, speed, true);
                 avgSpeedEnc.setDecimal(true, edgeFlags, speedBwd);
-                speed = Math.min(speed, speedBwd);
             }
+            speed = Math.min(speedFwd, speedBwd);
 
             handleAccess(edgeFlags, way);
         } else {
