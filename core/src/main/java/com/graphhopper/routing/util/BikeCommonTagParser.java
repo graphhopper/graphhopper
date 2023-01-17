@@ -247,14 +247,14 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
 
         // check access restrictions
         boolean notRestrictedWayConditionallyPermitted = !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
-        for (String restriction: restrictions ) {
+        for (String restriction : restrictions) {
             String complexAccess = way.getTag(restriction);
             if (complexAccess != null) {
-               String[] simpleAccess = complexAccess.split(";");
-               for (String access: simpleAccess) {
-                  if (restrictedValues.contains(access) && notRestrictedWayConditionallyPermitted)
-                     return WayAccess.CAN_SKIP;
-               }
+                String[] simpleAccess = complexAccess.split(";");
+                for (String access : simpleAccess) {
+                    if (restrictedValues.contains(access) && notRestrictedWayConditionallyPermitted)
+                        return WayAccess.CAN_SKIP;
+                }
             }
         }
 
@@ -274,8 +274,8 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
      * @param speed speed guessed e.g. from the road type or other tags
      * @return The assumed average speed.
      */
-    protected double applyMaxSpeed(ReaderWay way, double speed) {
-        double maxSpeed = getMaxSpeed(way);
+    protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
+        double maxSpeed = getMaxSpeed(way, bwd);
         // We strictly obey speed limits, see #600
         if (isValidSpeed(maxSpeed) && speed > maxSpeed) {
             return maxSpeed;
@@ -292,15 +292,18 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
             return edgeFlags;
 
         Integer priorityFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeFlags));
-        double wayTypeSpeed = getSpeed(way);
+        double speed = getSpeed(way);
         if (!access.isFerry()) {
-            wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
             Smoothness smoothness = smoothnessEnc.getEnum(false, edgeFlags);
-            wayTypeSpeed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * wayTypeSpeed);
+            speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
+            speed = applyMaxSpeed(way, speed, false);
+            avgSpeedEnc.setDecimal(false, edgeFlags, speed);
+            if (avgSpeedEnc.isStoreTwoDirections()) {
+                double speedBwd = applyMaxSpeed(way, speed, true);
+                avgSpeedEnc.setDecimal(true, edgeFlags, speedBwd);
+                speed = Math.min(speed, speedBwd);
+            }
 
-            avgSpeedEnc.setDecimal(false, edgeFlags, wayTypeSpeed);
-            if (avgSpeedEnc.isStoreTwoDirections())
-                avgSpeedEnc.setDecimal(true, edgeFlags, wayTypeSpeed);
             handleAccess(edgeFlags, way);
         } else {
             double ferrySpeed = ferrySpeedCalc.getSpeed(way);
@@ -312,7 +315,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
             priorityFromRelation = SLIGHT_AVOID.getValue();
         }
 
-        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, wayTypeSpeed, priorityFromRelation)));
+        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, speed, priorityFromRelation)));
         return edgeFlags;
     }
 
@@ -447,7 +450,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
                 weightToPrioMap.put(100d, VERY_NICE.getValue());
         }
 
-        double maxSpeed = getMaxSpeed(way);
+        double maxSpeed = Math.max(getMaxSpeed(way, false), getMaxSpeed(way, true));
         if (preferHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 30)) {
             if (!isValidSpeed(maxSpeed) || maxSpeed < avoidSpeedLimit) {
                 weightToPrioMap.put(40d, PREFER.getValue());

@@ -137,7 +137,7 @@ public class MotorcycleTagParser extends CarTagParser {
         if (!firstValue.isEmpty()) {
             String[] restrict = firstValue.split(";");
             boolean notConditionalyPermitted = !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
-            for (String value: restrict) {
+            for (String value : restrict) {
                 if (restrictedValues.contains(value) && notConditionalyPermitted)
                     return WayAccess.CAN_SKIP;
                 if (intendedValues.contains(value))
@@ -164,30 +164,22 @@ public class MotorcycleTagParser extends CarTagParser {
         if (!access.isFerry()) {
             // get assumed speed from highway type
             double speed = getSpeed(way);
-            speed = applyMaxSpeed(way, speed);
-
-            double maxMCSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:motorcycle"));
-            if (isValidSpeed(maxMCSpeed) && maxMCSpeed < speed)
-                speed = maxMCSpeed * 0.9;
-
-            // limit speed to max 30 km/h if bad surface
-            if (isValidSpeed(speed) && speed > 30 && way.hasTag("surface", badSurfaceSpeedMap))
-                speed = 30;
 
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
             if (way.hasTag("oneway", oneways) || isRoundabout) {
                 if (way.hasTag("oneway", "-1")) {
                     accessEnc.setBool(true, edgeFlags, true);
-                    setSpeed(true, edgeFlags, speed);
+                    setSpeed(true, edgeFlags, applyMaxSpeed(way, speed, true));
                 } else {
                     accessEnc.setBool(false, edgeFlags, true);
-                    setSpeed(false, edgeFlags, speed);
+                    setSpeed(false, edgeFlags, applyMaxSpeed(way, speed, false));
                 }
             } else {
-                accessEnc.setBool(false, edgeFlags, true);
                 accessEnc.setBool(true, edgeFlags, true);
-                setSpeed(false, edgeFlags, speed);
-                setSpeed(true, edgeFlags, speed);
+                setSpeed(true, edgeFlags, applyMaxSpeed(way, speed, true));
+
+                accessEnc.setBool(false, edgeFlags, true);
+                setSpeed(false, edgeFlags, applyMaxSpeed(way, speed, false));
             }
 
         } else {
@@ -200,6 +192,18 @@ public class MotorcycleTagParser extends CarTagParser {
 
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way)));
         return edgeFlags;
+    }
+
+    protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
+        speed = super.applyMaxSpeed(way, speed, bwd);
+        double maxMCSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:motorcycle"));
+        if (isValidSpeed(maxMCSpeed))
+            speed = Math.min(maxMCSpeed * 0.9, speed);
+
+        // limit speed to max 30 km/h if bad surface
+        if (isValidSpeed(speed) && speed > 30 && way.hasTag("surface", badSurfaceSpeedMap))
+            speed = 30;
+        return speed;
     }
 
     private int handlePriority(ReaderWay way) {
