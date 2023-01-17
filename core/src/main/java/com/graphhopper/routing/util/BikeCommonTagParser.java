@@ -478,17 +478,17 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
 
         if (pushingSectionsHighways.contains(highway)
                 || "parking_aisle".equals(service)) {
-            int pushingSectionPrio = SLIGHT_AVOID.getValue();
+            PriorityCode pushingSectionPrio = SLIGHT_AVOID;
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
-                pushingSectionPrio = PREFER.getValue();
+                pushingSectionPrio = PREFER;
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))
-                pushingSectionPrio = VERY_NICE.getValue();
+                pushingSectionPrio = VERY_NICE;
             if (way.hasTag("foot", "yes")) {
-                pushingSectionPrio = Math.max(pushingSectionPrio - 1, BAD.getValue());
+                pushingSectionPrio = PriorityCode.values()[pushingSectionPrio.ordinal() - 1];
                 if (way.hasTag("segregated", "yes"))
-                    pushingSectionPrio = Math.min(pushingSectionPrio + 1, BEST.getValue());
+                    pushingSectionPrio = PriorityCode.values()[pushingSectionPrio.ordinal() + 1];
             }
-            weightToPrioMap.put(100d, pushingSectionPrio);
+            weightToPrioMap.put(100d, pushingSectionPrio.getValue());
         }
 
         if (way.hasTag("railway", "tram"))
@@ -509,9 +509,12 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
 
         // Increase the priority for scenic routes or in case that maxspeed limits our average speed as compensation. See #630
         if (way.hasTag("scenic", "yes") || maxSpeed > 0 && maxSpeed < wayTypeSpeed) {
-            if (weightToPrioMap.lastEntry().getValue() < BEST.getValue())
-                // Increase the prio by one step
-                weightToPrioMap.put(110d, weightToPrioMap.lastEntry().getValue() + 1);
+            int lastEntryValue = weightToPrioMap.lastEntry().getValue();
+            if (lastEntryValue < BEST.getValue()) {
+                int lastEntryIndex = Arrays.stream(PriorityCode.values()).filter(pc -> pc.getValue() == lastEntryValue).findFirst().orElse(UNCHANGED).ordinal();
+                // Increase the PriorityCode by one step
+                weightToPrioMap.put(110d, PriorityCode.values()[lastEntryIndex + 1].getValue());
+            }
         }
     }
 
