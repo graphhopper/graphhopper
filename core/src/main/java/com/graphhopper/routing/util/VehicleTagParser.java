@@ -113,10 +113,8 @@ public abstract class VehicleTagParser implements TagParser {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         edgeFlags = handleWayTags(edgeFlags, way);
-        if (!edgeFlags.isEmpty()) {
-            Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
-            handleNodeTags(edgeFlags, nodeTags);
-        }
+        Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
+        handleNodeTags(edgeFlags, nodeTags);
         return edgeFlags;
     }
 
