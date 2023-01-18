@@ -66,11 +66,13 @@ public class FootTagParserTest {
     public void testSteps() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        IntsRef flags = footParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        IntsRef flags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(flags, way);
         assertEquals(FootTagParser.MEAN_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.setTag("highway", "steps");
-        flags = footParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        flags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(flags, way);
         assertTrue(FootTagParser.MEAN_SPEED > footAvgSpeedEnc.getDecimal(false, flags));
     }
 
@@ -230,19 +232,22 @@ public class FootTagParserTest {
     public void testRailPlatformIssue366() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        IntsRef flags = footParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        IntsRef flags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(flags, way);
         assertFalse(flags.isEmpty());
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
-        flags = footParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        flags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(flags, way);
         assertFalse(flags.isEmpty());
 
         way.clearTags();
         // only tram, no highway => no access
         way.setTag("railway", "tram");
-        flags = footParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        flags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(flags, way);
         assertTrue(flags.isEmpty());
     }
 
@@ -250,7 +255,8 @@ public class FootTagParserTest {
     public void testPier() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("man_made", "pier");
-        IntsRef flags = footParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        IntsRef flags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(flags, way);
         assertFalse(flags.isEmpty());
     }
 
@@ -271,16 +277,18 @@ public class FootTagParserTest {
     public void testMixSpeedAndSafe() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
-        IntsRef flags = footParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        IntsRef flags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(flags, way);
         assertEquals(0, flags.ints[0]);
 
         way.setTag("sidewalk", "yes");
-        flags = footParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        flags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(flags, way);
         assertEquals(5, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "track");
-        flags = footParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        footParser.handleWayTags(flags, way);
         assertEquals(5, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
     }
 
@@ -340,12 +348,13 @@ public class FootTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("sac_scale", "hiking");
-        IntsRef flags = footParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        IntsRef flags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(flags, way);
         assertEquals(FootTagParser.MEAN_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.setTag("highway", "track");
         way.setTag("sac_scale", "mountain_hiking");
-        flags = footParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        footParser.handleWayTags(flags, way);
         assertEquals(FootTagParser.SLOW_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
     }
 

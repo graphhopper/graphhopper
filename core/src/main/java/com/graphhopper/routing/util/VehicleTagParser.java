@@ -111,23 +111,22 @@ public abstract class VehicleTagParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
-        edgeFlags = handleWayTags(edgeFlags, way);
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+        handleWayTags(edgeFlags, way);
         Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
         handleNodeTags(edgeFlags, nodeTags);
-        return edgeFlags;
     }
 
     /**
      * Analyze properties of a way and create the edge flags. This method is called in the second
      * parsing step.
      */
-    protected abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way);
+    protected abstract void handleWayTags(IntsRef edgeFlags, ReaderWay way);
 
     /**
      * Updates the given edge flags based on node tags
      */
-    public IntsRef handleNodeTags(IntsRef edgeFlags, Map<String, Object> nodeTags) {
+    public void handleNodeTags(IntsRef edgeFlags, Map<String, Object> nodeTags) {
         if (!nodeTags.isEmpty()) {
             // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
             ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
@@ -138,7 +137,6 @@ public abstract class VehicleTagParser implements TagParser {
                 accessEnc.setBool(true, edgeFlags, false);
             }
         }
-        return edgeFlags;
     }
 
     /**

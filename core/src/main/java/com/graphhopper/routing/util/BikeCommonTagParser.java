@@ -286,10 +286,10 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
-            return edgeFlags;
+            return;
 
         Integer priorityFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeFlags));
         double speed = getSpeed(way);
@@ -317,7 +317,6 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         }
 
         priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, speed, priorityFromRelation)));
-        return edgeFlags;
     }
 
     int getSpeed(ReaderWay way) {

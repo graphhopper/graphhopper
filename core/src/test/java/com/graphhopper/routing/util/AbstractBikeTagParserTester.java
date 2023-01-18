@@ -64,7 +64,7 @@ public abstract class AbstractBikeTagParserTester {
     protected void assertPriority(int expectedPrio, ReaderWay way) {
         IntsRef relFlags = osmParsers.handleRelationTags(new ReaderRelation(0), osmParsers.createRelationFlags());
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relFlags);
+        osmParsers.handleWayTags(edgeFlags, way, relFlags);
         assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeFlags), 0.01);
     }
 
@@ -75,7 +75,7 @@ public abstract class AbstractBikeTagParserTester {
     protected void assertPriorityAndSpeed(int expectedPrio, double expectedSpeed, ReaderWay way, ReaderRelation rel) {
         IntsRef relFlags = osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags());
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relFlags);
+        osmParsers.handleWayTags(edgeFlags, way, relFlags);
         DecimalEncodedValue enc = encodingManager.getDecimalEncodedValue(VehiclePriority.key(parser.toString()));
         assertEquals(PriorityCode.getValue(expectedPrio), enc.getDecimal(false, edgeFlags), 0.01);
         assertEquals(expectedSpeed, parser.getAverageSpeedEnc().getDecimal(false, edgeFlags), 0.1);
@@ -85,7 +85,7 @@ public abstract class AbstractBikeTagParserTester {
     protected double getSpeedFromFlags(ReaderWay way) {
         IntsRef relFlags = osmParsers.createRelationFlags();
         IntsRef flags = encodingManager.createEdgeFlags();
-        flags = osmParsers.handleWayTags(flags, way, relFlags);
+        osmParsers.handleWayTags(flags, way, relFlags);
         return avgSpeedEnc.getDecimal(false, flags);
     }
 
@@ -248,7 +248,7 @@ public abstract class AbstractBikeTagParserTester {
         // Example https://www.openstreetmap.org/way/213492914 => two hike 84544, 2768803 and two bike relations 3162932, 5254650
         IntsRef relFlags = osmParsers.handleRelationTags(rel2, osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags()));
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relFlags);
+        osmParsers.handleWayTags(edgeFlags, way, relFlags);
         EnumEncodedValue<RouteNetwork> enc = encodingManager.getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
         assertEquals(RouteNetwork.REGIONAL, enc.getEnum(false, edgeFlags));
     }
@@ -276,13 +276,15 @@ public abstract class AbstractBikeTagParserTester {
 
         way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        IntsRef flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        IntsRef flags = encodingManager.createEdgeFlags();
+        parser.handleWayTags(flags, way);
         assertNotEquals(true, flags.isEmpty());
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
-        flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        flags = encodingManager.createEdgeFlags();
+        parser.handleWayTags(flags, way);
         assertNotEquals(true, flags.isEmpty());
 
         way = new ReaderWay(1);
@@ -290,7 +292,8 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("railway", "platform");
         way.setTag("bicycle", "no");
 
-        flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        flags = encodingManager.createEdgeFlags();
+        parser.handleWayTags(flags, way);
         assertTrue(flags.isEmpty());
     }
 
@@ -364,7 +367,8 @@ public abstract class AbstractBikeTagParserTester {
     public void testHandleWayTagsCallsHandlePriority() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");
-        IntsRef edgeFlags = parser.handleWayTags(encodingManager.createEdgeFlags(), osmWay);
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        parser.handleWayTags(edgeFlags, osmWay);
         DecimalEncodedValue priorityEnc = encodingManager.getDecimalEncodedValue(VehiclePriority.key(parser.getName()));
         assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeFlags), 1e-3);
     }

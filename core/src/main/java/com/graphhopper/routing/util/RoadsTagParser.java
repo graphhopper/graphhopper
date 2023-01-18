@@ -25,7 +25,7 @@ public class RoadsTagParser extends VehicleTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         // let's make it high and let it be reduced in the custom model
         double speed = maxPossibleSpeed;
         accessEnc.setBool(true, edgeFlags, true);
@@ -33,7 +33,6 @@ public class RoadsTagParser extends VehicleTagParser {
         setSpeed(false, edgeFlags, speed);
         if (avgSpeedEnc.isStoreTwoDirections())
             setSpeed(true, edgeFlags, speed);
-        return edgeFlags;
     }
 
     @Override

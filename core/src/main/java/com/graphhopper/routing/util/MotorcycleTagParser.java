@@ -156,10 +156,10 @@ public class MotorcycleTagParser extends CarTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
-            return edgeFlags;
+            return;
 
         if (!access.isFerry()) {
             // get assumed speed from highway type
@@ -191,7 +191,6 @@ public class MotorcycleTagParser extends CarTagParser {
         }
 
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way)));
-        return edgeFlags;
     }
 
     protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {

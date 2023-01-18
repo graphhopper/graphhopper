@@ -162,10 +162,10 @@ public class WheelchairTagParser extends FootTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
-            return edgeFlags;
+            return;
 
         accessEnc.setBool(false, edgeFlags, true);
         accessEnc.setBool(true, edgeFlags, true);
@@ -179,8 +179,7 @@ public class WheelchairTagParser extends FootTagParser {
         Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
 
-        edgeFlags = applyWayTags(way, edgeFlags);
-        return edgeFlags;
+        applyWayTags(way, edgeFlags);
     }
 
     /**
@@ -188,7 +187,7 @@ public class WheelchairTagParser extends FootTagParser {
      * and maxInclinePercent will reduce speed to SLOW_SPEED. In-/declines above maxInclinePercent will result in zero
      * speed.
      */
-    public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags) {
+    public void applyWayTags(ReaderWay way, IntsRef edgeFlags) {
         PointList pl = way.getTag("point_list", null);
         if (pl == null)
             throw new IllegalArgumentException("The artificial point_list tag is missing");
@@ -200,7 +199,7 @@ public class WheelchairTagParser extends FootTagParser {
 
         // skip elevation data adjustment for too short segments, TODO improve the elevation data handling and/or use the same mechanism as we used to do in bike2
         if (fullDist2D < 20 || !pl.is3D())
-            return edgeFlags;
+            return;
 
         double prevEle = pl.getEle(0);
         double eleDelta = pl.getEle(pl.size() - 1) - prevEle;
@@ -230,8 +229,6 @@ public class WheelchairTagParser extends FootTagParser {
             setSpeed(edgeFlags, true, false, fwdSpeed);
         if (bwdSpeed > 0 && accessEnc.getBool(true, edgeFlags))
             setSpeed(edgeFlags, false, true, bwdSpeed);
-
-        return edgeFlags;
     }
 
     /**

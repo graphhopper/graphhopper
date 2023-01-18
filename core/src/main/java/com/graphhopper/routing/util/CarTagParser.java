@@ -207,10 +207,10 @@ public class CarTagParser extends VehicleTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
-            return edgeFlags;
+            return;
 
         if (!access.isFerry()) {
             // get assumed speed from highway type
@@ -239,8 +239,6 @@ public class CarTagParser extends VehicleTagParser {
             if (avgSpeedEnc.isStoreTwoDirections())
                 setSpeed(true, edgeFlags, ferrySpeed);
         }
-
-        return edgeFlags;
     }
 
     /**

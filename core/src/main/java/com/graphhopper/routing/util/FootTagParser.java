@@ -191,10 +191,10 @@ public class FootTagParser extends VehicleTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
-            return edgeFlags;
+            return;
 
         Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
         accessEnc.setBool(false, edgeFlags, true);
@@ -213,7 +213,6 @@ public class FootTagParser extends VehicleTagParser {
         }
 
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
-        return edgeFlags;
     }
 
     void setSpeed(IntsRef edgeFlags, boolean fwd, boolean bwd, double speed) {

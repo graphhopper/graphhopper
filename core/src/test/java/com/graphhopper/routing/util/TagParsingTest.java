@@ -60,11 +60,10 @@ class TagParsingTest {
         bike1Parser.init(new DateRangeParser());
         BikeTagParser bike2Parser = new BikeTagParser(em, new PMap("name=bike2")) {
             @Override
-            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+            public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
                 // accept less relations
                 if (bikeRouteEnc.getEnum(false, edgeFlags) != RouteNetwork.MISSING)
                     priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(2));
-                return edgeFlags;
             }
         };
         bike2Parser.init(new DateRangeParser());
@@ -80,7 +79,7 @@ class TagParsingTest {
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
         IntsRef edgeFlags = em.createEdgeFlags();
-        edgeFlags = osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
+        osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
         assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeFlags));
         assertTrue(bike1PriorityEnc.getDecimal(false, edgeFlags) > bike2PriorityEnc.getDecimal(false, edgeFlags));
     }
@@ -122,7 +121,7 @@ class TagParsingTest {
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
         IntsRef edgeFlags = em.createEdgeFlags();
-        edgeFlags = osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
+        osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
         // bike: uninfluenced speed for grade but via network => NICE
         // mtb: uninfluenced speed only PREFER
         assertTrue(bikePriorityEnc.getDecimal(false, edgeFlags) > mtbPriorityEnc.getDecimal(false, edgeFlags));
