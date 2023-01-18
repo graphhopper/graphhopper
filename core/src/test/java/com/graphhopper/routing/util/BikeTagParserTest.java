@@ -642,13 +642,13 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("maxspeed", "10");
-        assertPriorityAndSpeed(PREFER.getValue(), 10, way);
+        assertPriorityAndSpeed(VERY_NICE.getValue(), 10, way);
 
         way = new ReaderWay(1);
         way.setTag("highway", "residential");
         way.setTag("maxspeed", "15");
         // todo: speed is larger than maxspeed tag due to rounding and storable max speed is 30
-        assertPriorityAndSpeed(PREFER.getValue(), 16, way);
+        assertPriorityAndSpeed(VERY_NICE.getValue(), 16, way);
     }
 
     // Issue 407 : Always block kissing_gate except for mountainbikes
@@ -709,6 +709,6 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriority(VERY_NICE.getValue(), way);
 
         way.setTag("maxspeed", "15");
-        assertPriority(VERY_NICE.getValue(), way);
+        assertPriority(BEST.getValue(), way);
     }
 }

@@ -350,7 +350,7 @@ public abstract class AbstractBikeTagParserTester {
     public void testReduceToMaxSpeed() {
         ReaderWay way = new ReaderWay(12);
         way.setTag("maxspeed", "90");
-        assertEquals(12, parser.applyMaxSpeed(way, 12), 1e-2);
+        assertEquals(12, parser.applyMaxSpeed(way, 12, true), 1e-2);
     }
 
     @Test

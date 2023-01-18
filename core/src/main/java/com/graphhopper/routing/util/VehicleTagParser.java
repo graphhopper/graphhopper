@@ -166,16 +166,11 @@ public abstract class VehicleTagParser implements TagParser {
     /**
      * @return {@link Double#NaN} if no maxspeed found
      */
-    protected static double getMaxSpeed(ReaderWay way) {
+    protected static double getMaxSpeed(ReaderWay way, boolean bwd) {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
-        double fwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:forward"));
-        if (isValidSpeed(fwdSpeed) && (!isValidSpeed(maxSpeed) || fwdSpeed < maxSpeed))
-            maxSpeed = fwdSpeed;
-
-        double backSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:backward"));
-        if (isValidSpeed(backSpeed) && (!isValidSpeed(maxSpeed) || backSpeed < maxSpeed))
-            maxSpeed = backSpeed;
-
+        double directedMaxSpeed = OSMValueExtractor.stringToKmh(way.getTag(bwd ? "maxspeed:backward" : "maxspeed:forward"));
+        if (isValidSpeed(directedMaxSpeed) && (!isValidSpeed(maxSpeed) || directedMaxSpeed < maxSpeed))
+            maxSpeed = directedMaxSpeed;
         return maxSpeed;
     }
 

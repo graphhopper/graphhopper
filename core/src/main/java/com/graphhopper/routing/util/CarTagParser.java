@@ -215,13 +215,10 @@ public class CarTagParser extends VehicleTagParser {
         if (!access.isFerry()) {
             // get assumed speed from highway type
             double speed = getSpeed(way);
-            speed = applyMaxSpeed(way, speed);
-
             speed = applyBadSurfaceSpeed(way, speed);
 
-            setSpeed(false, edgeFlags, speed);
-            if (avgSpeedEnc.isStoreTwoDirections())
-                setSpeed(true, edgeFlags, speed);
+            setSpeed(false, edgeFlags, applyMaxSpeed(way, speed, false));
+            setSpeed(true, edgeFlags, applyMaxSpeed(way, speed, true));
 
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
             if (isOneway(way) || isRoundabout) {
@@ -251,14 +248,9 @@ public class CarTagParser extends VehicleTagParser {
      * @param speed speed guessed e.g. from the road type or other tags
      * @return The assumed speed.
      */
-    protected double applyMaxSpeed(ReaderWay way, double speed) {
-        double maxSpeed = getMaxSpeed(way);
-        // We obey speed limits
-        if (isValidSpeed(maxSpeed)) {
-            // We assume that the average speed is 90% of the allowed maximum
-            return maxSpeed * 0.9;
-        }
-        return speed;
+    protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
+        double maxSpeed = getMaxSpeed(way, bwd);
+        return isValidSpeed(maxSpeed) ? maxSpeed * 0.9 : speed;
     }
 
     /**

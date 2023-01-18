@@ -86,10 +86,9 @@ public class VehicleEncodedValues {
         String name = properties.getString("name", "car");
         int speedBits = properties.getInt("speed_bits", 5);
         double speedFactor = properties.getDouble("speed_factor", 5);
-        boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
         int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
-        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
+        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, true);
         DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
         return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnCostEnc);
     }

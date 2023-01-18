@@ -268,7 +268,8 @@ public class CarTagParserTest {
         way.setTag("maxspeed:backward", "10");
         way.setTag("maxspeed:forward", "20");
         edgeFlags = parser.handleWayTags(edgeFlags, way);
-        assertEquals(10, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
+        assertEquals(20, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
+        assertEquals(10, avSpeedEnc.getDecimal(true, edgeFlags), 1e-1);
 
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
@@ -280,7 +281,8 @@ public class CarTagParserTest {
         way.setTag("highway", "primary");
         way.setTag("maxspeed:backward", "20");
         edgeFlags = parser.handleWayTags(edgeFlags, way);
-        assertEquals(20, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
+        assertEquals(65, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
+        assertEquals(20, avSpeedEnc.getDecimal(true, edgeFlags), 1e-1);
 
         way = new ReaderWay(1);
         way.setTag("highway", "motorway");
@@ -364,18 +366,22 @@ public class CarTagParserTest {
         IntsRef edgeFlags = em.createEdgeFlags();
         accessEnc.setBool(false, edgeFlags, true);
         accessEnc.setBool(true, edgeFlags, true);
+        parser.setSpeed(false, edgeFlags, 30);
+        parser.setSpeed(true, edgeFlags, 40);
 
-        parser.setSpeed(false, edgeFlags, 0.01);
-
-        // one direction effects the other direction as one encoder for speed but this is not true for access
+        // round down only for very low speed values
+        parser.setSpeed(false, edgeFlags, 0.09);
         assertEquals(0, avSpeedEnc.getDecimal(false, edgeFlags), .1);
-        assertEquals(0, avSpeedEnc.getDecimal(true, edgeFlags), .1);
         assertFalse(accessEnc.getBool(false, edgeFlags));
+        // does not affect the reverse direction:
+        assertEquals(40, avSpeedEnc.getDecimal(true, edgeFlags), .1);
         assertTrue(accessEnc.getBool(true, edgeFlags));
 
-        // so always call this method with reverse=true too
-        parser.setSpeed(true, edgeFlags, 0.01);
-        assertFalse(accessEnc.getBool(true, edgeFlags));
+        // for low speed values (and low precision of the EncodedValue) it can happen that the speed is increased:
+        parser.setSpeed(false, edgeFlags, 1);
+        assertEquals(avSpeedEnc.getSmallestNonZeroValue(), avSpeedEnc.getDecimal(false, edgeFlags), .1);
+        // which affects access
+        assertTrue(accessEnc.getBool(true, edgeFlags));
     }
 
     @Test
@@ -556,7 +562,7 @@ public class CarTagParserTest {
 
     @Test
     public void testMaxValue() {
-        DecimalEncodedValueImpl smallFactorSpeedEnc = new DecimalEncodedValueImpl(getCarName() + "_average_speed", 10, 0.5, false);
+        DecimalEncodedValueImpl smallFactorSpeedEnc = new DecimalEncodedValueImpl(getCarName() + "_average_speed", 10, 0.5, true);
         EncodingManager em = new EncodingManager.Builder()
                 .add(new SimpleBooleanEncodedValue(getCarName() + "_access", true))
                 .add(smallFactorSpeedEnc)
@@ -585,7 +591,13 @@ public class CarTagParserTest {
     public void testSetToMaxSpeed() {
         ReaderWay way = new ReaderWay(12);
         way.setTag("maxspeed", "90");
-        assertEquals(90, VehicleTagParser.getMaxSpeed(way), 1e-2);
+        assertEquals(90, VehicleTagParser.getMaxSpeed(way, false), 1e-2);
+
+        way = new ReaderWay(12);
+        way.setTag("maxspeed", "90");
+        way.setTag("maxspeed:backward", "50");
+        assertEquals(90, VehicleTagParser.getMaxSpeed(way, false), 1e-2);
+        assertEquals(50, VehicleTagParser.getMaxSpeed(way, true), 1e-2);
     }
 
     @Test
