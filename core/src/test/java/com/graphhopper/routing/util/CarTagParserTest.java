@@ -380,7 +380,7 @@ public class CarTagParserTest {
         // for low speed values (and low precision of the EncodedValue) it can happen that the speed is increased:
         parser.setSpeed(false, edgeFlags, 1);
         assertEquals(avSpeedEnc.getSmallestNonZeroValue(), avSpeedEnc.getDecimal(false, edgeFlags), .1);
-        // reset access
+        // which affects access
         assertTrue(accessEnc.getBool(true, edgeFlags));
     }
 

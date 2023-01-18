@@ -59,8 +59,16 @@ public class GraphHopperManaged implements Managed {
             graphHopper = new GraphHopper();
         }
 
-        String customModelFolder = configuration.getString("custom_model_folder", "");
         String customAreasDirectory = configuration.getString("custom_areas.directory", "");
+        JsonFeatureCollection globalAreas = resolveCustomAreas(customAreasDirectory);
+        String customModelFolder = configuration.getString("custom_model_folder", "");
+        List<Profile> newProfiles = resolveCustomModelFiles(customModelFolder, configuration.getProfiles(), globalAreas);
+        configuration.setProfiles(newProfiles);
+
+        graphHopper.init(configuration);
+    }
+
+    public static JsonFeatureCollection resolveCustomAreas(String customAreasDirectory) {
         JsonFeatureCollection globalAreas = new JsonFeatureCollection();
         if (!customAreasDirectory.isEmpty()) {
             ObjectMapper mapper = new ObjectMapper().registerModule(new JtsModule());
@@ -75,11 +83,7 @@ public class GraphHopperManaged implements Managed {
                 throw new UncheckedIOException(e);
             }
         }
-
-        List<Profile> newProfiles = resolveCustomModelFiles(customModelFolder, configuration.getProfiles(), globalAreas);
-        configuration.setProfiles(newProfiles);
-
-        graphHopper.init(configuration);
+        return globalAreas;
     }
 
     public static List<Profile> resolveCustomModelFiles(String customModelFolder, List<Profile> profiles, JsonFeatureCollection globalAreas) {
