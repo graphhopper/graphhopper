@@ -360,12 +360,12 @@ public class CarTagParserTest {
     }
 
     @Test
-    public void testSetSpeed0_issue367() {
+    public void testSetSpeed0_issue367_issue1234() {
         IntsRef edgeFlags = em.createEdgeFlags();
         accessEnc.setBool(false, edgeFlags, true);
         accessEnc.setBool(true, edgeFlags, true);
 
-        parser.setSpeed(false, edgeFlags, parser.avgSpeedEnc.getSmallestNonZeroValue() - 0.01);
+        parser.setSpeed(false, edgeFlags, 0.01);
 
         // one direction effects the other direction as one encoder for speed but this is not true for access
         assertEquals(0, avSpeedEnc.getDecimal(false, edgeFlags), .1);
@@ -374,7 +374,7 @@ public class CarTagParserTest {
         assertTrue(accessEnc.getBool(true, edgeFlags));
 
         // so always call this method with reverse=true too
-        parser.setSpeed(true, edgeFlags, parser.avgSpeedEnc.getSmallestNonZeroValue() - 0.01);
+        parser.setSpeed(true, edgeFlags, 0.01);
         assertFalse(accessEnc.getBool(true, edgeFlags));
     }
 
