@@ -29,4 +29,8 @@ public class VehiclePriority {
     public static DecimalEncodedValue create(String name, int speedBits, double speedFactor, boolean storeTwoDirections) {
         return new DecimalEncodedValueImpl(key(name), speedBits, speedFactor, storeTwoDirections);
     }
+
+    public static DecimalEncodedValue createWithoutKey(String name, int speedBits, double speedFactor, boolean storeTwoDirections) {
+        return new DecimalEncodedValueImpl(name, speedBits, speedFactor, storeTwoDirections);
+    }
 }

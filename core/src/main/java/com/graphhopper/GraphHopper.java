@@ -614,7 +614,14 @@ public class GraphHopper {
     protected EncodingManager buildEncodingManager(Map<String, String> vehiclesByName, List<String> encodedValueStrings,
                                                    boolean withUrbanDensity, Collection<Profile> profiles) {
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
-        vehiclesByName.forEach((name, vehicleStr) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, new PMap(vehicleStr))));
+        vehiclesByName.forEach((name, vehicleStr) -> {
+            emBuilder.add(encodedValueFactory.create(VehicleAccess.key(name) + "|" + vehicleStr));
+            emBuilder.add(encodedValueFactory.create(VehicleSpeed.key(name) + "|" + vehicleStr));
+            EncodedValue tcEV = encodedValueFactory.create(TurnCost.key(name) + "|" + vehicleStr);
+            if (tcEV != null) emBuilder.addTurnCostEncodedValue(tcEV);
+            EncodedValue pev = encodedValueFactory.create(VehiclePriority.key(name) + "|" + vehicleStr);
+            if (pev != null) emBuilder.add(pev);
+        });
         profiles.forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
         if (withUrbanDensity)
             emBuilder.add(UrbanDensity.create());
@@ -657,6 +664,36 @@ public class GraphHopper {
 
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         vehiclesByName.forEach((name, vehicleStr) -> {
+            if ("car".equals(name)) {
+                CarAverageSpeedParser carAvgSpeed = new CarAverageSpeedParser(encodingManager, new PMap(vehicleStr));
+                osmParsers.addWayTagParser(carAvgSpeed);
+
+                CarAccessParser carAccess = new CarAccessParser(encodingManager, new PMap(vehicleStr));
+                osmParsers.addWayTagParser(carAccess);
+                carAccess.init(dateRangeParser);
+
+                String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
+                if (encodingManager.hasEncodedValue(turnCostKey))
+                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(carAccess.getRestrictions(), encodingManager.getDecimalEncodedValue(turnCostKey)));
+
+                return;
+            } else  if ("foot".equals(name)) {
+                FootAverageSpeedParser footAvgSpeed = new FootAverageSpeedParser(encodingManager, new PMap(vehicleStr));
+                osmParsers.addWayTagParser(footAvgSpeed);
+
+                FootPriorityParser footPriority = new FootPriorityParser(encodingManager, new PMap(vehicleStr));
+                osmParsers.addWayTagParser(footPriority);
+
+                FootAccessParser footAccess = new FootAccessParser(encodingManager, new PMap(vehicleStr));
+                osmParsers.addWayTagParser(footAccess);
+                footAccess.init(dateRangeParser);
+
+                String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
+                if (encodingManager.hasEncodedValue(turnCostKey))
+                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(footAccess.getRestrictions(), encodingManager.getDecimalEncodedValue(turnCostKey)));
+
+                return;
+            }
             VehicleTagParser vehicleTagParser = vehicleTagParserFactory.createParser(encodingManager, name, new PMap(vehicleStr));
             if (vehicleTagParser == null)
                 return;

@@ -31,7 +31,7 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
             return VehicleEncodedValues.roads(configuration);
 
         if (name.equals(CAR))
-            return VehicleEncodedValues.car(configuration);
+            throw new IllegalStateException("Use CarAccess and CarAverageSpeed EncodedValues instead");
 
         if (name.equals("car4wd"))
             throw new IllegalArgumentException("Instead of car4wd use the roads vehicle and a custom_model, see custom_models/car4wd.json");
@@ -49,7 +49,7 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
             return VehicleEncodedValues.mountainbike(configuration);
 
         if (name.equals(FOOT))
-            return VehicleEncodedValues.foot(configuration);
+            throw new IllegalStateException("Use FootAccess, FootPriority and FootAverageSpeed EncodedValues instead");
 
         if (name.equals(HIKE))
             return VehicleEncodedValues.hike(configuration);

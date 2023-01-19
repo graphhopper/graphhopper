@@ -10,7 +10,6 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.*;
@@ -22,26 +21,18 @@ public abstract class GenericAccessParser {
     // order is important
     protected final List<String> restrictions = new ArrayList<>(5);
     protected final Set<String> restrictedValues = new HashSet<>(5);
+
     protected final Set<String> ferries = new HashSet<>(5);
     protected final Set<String> oneways = new HashSet<>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
-    protected final DecimalEncodedValue avgSpeedEnc;
     protected final BooleanEncodedValue roundaboutEnc;
-    // This value determines the maximal possible speed of any road regardless of the maxspeed value
-    // lower values allow more compact representation of the routing graph
-    protected final double maxPossibleSpeed;
     private boolean blockFords = true;
     private ConditionalTagInspector conditionalTagInspector;
-    protected final FerrySpeedCalculator ferrySpeedCalc;
 
-    protected GenericAccessParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, BooleanEncodedValue roundaboutEnc,
-                                        TransportationMode transportationMode, double maxPossibleSpeed) {
-        this.maxPossibleSpeed = maxPossibleSpeed;
-
+    protected GenericAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc, TransportationMode transportationMode) {
         this.accessEnc = accessEnc;
-        this.avgSpeedEnc = speedEnc;
         this.roundaboutEnc = roundaboutEnc;
 
         oneways.add("yes");
@@ -52,7 +43,6 @@ public abstract class GenericAccessParser {
         ferries.add("shuttle_train");
         ferries.add("ferry");
 
-        ferrySpeedCalc = new FerrySpeedCalculator(speedEnc.getSmallestNonZeroValue(), maxPossibleSpeed, 5);
         restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
     }
 
@@ -85,26 +75,10 @@ public abstract class GenericAccessParser {
         return conditionalTagInspector;
     }
 
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
-        edgeFlags = handleWayTags(edgeFlags, way);
-        if (!edgeFlags.isEmpty()) {
-            Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
-            handleNodeTags(edgeFlags, nodeTags);
-        }
-        return edgeFlags;
-    }
-
-    /**
-     * Analyze properties of a way and create the edge flags. This method is called in the second
-     * parsing step.
-     */
-    protected abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way);
-
     /**
      * Updates the given edge flags based on node tags
      */
-    public IntsRef handleNodeTags(IntsRef edgeFlags, Map<String, Object> nodeTags) {
+    protected void handleNodeTags(IntsRef edgeFlags, Map<String, Object> nodeTags) {
         if (!nodeTags.isEmpty()) {
             // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
             ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
@@ -115,7 +89,6 @@ public abstract class GenericAccessParser {
                 accessEnc.setBool(true, edgeFlags, false);
             }
         }
-        return edgeFlags;
     }
 
     /**
@@ -134,46 +107,8 @@ public abstract class GenericAccessParser {
             return blockFords && node.hasTag("ford", "yes");
     }
 
-    public double getMaxSpeed() {
-        return maxPossibleSpeed;
-    }
-
-    /**
-     * @return {@link Double#NaN} if no maxspeed found
-     */
-    protected static double getMaxSpeed(ReaderWay way, boolean bwd) {
-        double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
-        double directedMaxSpeed = OSMValueExtractor.stringToKmh(way.getTag(bwd ? "maxspeed:backward" : "maxspeed:forward"));
-        if (isValidSpeed(directedMaxSpeed) && (!isValidSpeed(maxSpeed) || directedMaxSpeed < maxSpeed))
-            maxSpeed = directedMaxSpeed;
-        return maxSpeed;
-    }
-
-    /**
-     * @return <i>true</i> if the given speed is not {@link Double#NaN}
-     */
-    protected static boolean isValidSpeed(double speed) {
-        return !Double.isNaN(speed);
-    }
-
-    public final DecimalEncodedValue getAverageSpeedEnc() {
-        return avgSpeedEnc;
-    }
-
     public final BooleanEncodedValue getAccessEnc() {
         return accessEnc;
-    }
-
-    protected void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
-        // special case when speed is non-zero but would be "rounded down" to 0 due to the low precision of the EncodedValue
-        if (speed > 0.1 && speed < avgSpeedEnc.getSmallestNonZeroValue())
-            speed = avgSpeedEnc.getSmallestNonZeroValue();
-        if (speed < avgSpeedEnc.getSmallestNonZeroValue()) {
-            avgSpeedEnc.setDecimal(reverse, edgeFlags, 0);
-            accessEnc.setBool(reverse, edgeFlags, false);
-        } else {
-            avgSpeedEnc.setDecimal(reverse, edgeFlags, Math.min(speed, getMaxSpeed()));
-        }
     }
 
     public final List<String> getRestrictions() {

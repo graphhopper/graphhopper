@@ -17,86 +17,147 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 
 public class DefaultEncodedValueFactory implements EncodedValueFactory {
+
     @Override
     public EncodedValue create(String string) {
         if (Helper.isEmpty(string))
             throw new IllegalArgumentException("No string provided to load EncodedValue");
 
-        final EncodedValue enc;
-        String name = string.split("\\|")[0];
+        PMap properties = new PMap(string);
+        String name = properties.getString("name", string.split("\\|")[0]);
         if (name.isEmpty())
             throw new IllegalArgumentException("To load EncodedValue a name is required. " + string);
 
         if (Roundabout.KEY.equals(name)) {
-            enc = Roundabout.create();
+            return Roundabout.create();
         } else if (GetOffBike.KEY.equals(name)) {
-            enc = GetOffBike.create();
+            return GetOffBike.create();
         } else if (RoadClass.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
+            return new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
         } else if (RoadClassLink.KEY.equals(name)) {
-            enc = new SimpleBooleanEncodedValue(RoadClassLink.KEY);
+            return new SimpleBooleanEncodedValue(RoadClassLink.KEY);
         } else if (RoadEnvironment.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class);
+            return new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class);
         } else if (RoadAccess.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
+            return new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
         } else if (MaxSpeed.KEY.equals(name)) {
-            enc = MaxSpeed.create();
+            return MaxSpeed.create();
         } else if (MaxWeight.KEY.equals(name)) {
-            enc = MaxWeight.create();
+            return MaxWeight.create();
         } else if (MaxHeight.KEY.equals(name)) {
-            enc = MaxHeight.create();
+            return MaxHeight.create();
         } else if (MaxWidth.KEY.equals(name)) {
-            enc = MaxWidth.create();
+            return MaxWidth.create();
         } else if (MaxAxleLoad.KEY.equals(name)) {
-            enc = MaxAxleLoad.create();
+            return MaxAxleLoad.create();
         } else if (MaxLength.KEY.equals(name)) {
-            enc = MaxLength.create();
+            return MaxLength.create();
         } else if (Hgv.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(Hgv.KEY, Hgv.class);
+            return new EnumEncodedValue<>(Hgv.KEY, Hgv.class);
         } else if (Surface.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(Surface.KEY, Surface.class);
+            return new EnumEncodedValue<>(Surface.KEY, Surface.class);
         } else if (Smoothness.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class);
+            return new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class);
         } else if (Toll.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(Toll.KEY, Toll.class);
+            return new EnumEncodedValue<>(Toll.KEY, Toll.class);
         } else if (TrackType.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
+            return new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
         } else if (BikeNetwork.KEY.equals(name) || FootNetwork.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(name, RouteNetwork.class);
+            return new EnumEncodedValue<>(name, RouteNetwork.class);
         } else if (Hazmat.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class);
+            return new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class);
         } else if (HazmatTunnel.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class);
+            return new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class);
         } else if (HazmatWater.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class);
+            return new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class);
         } else if (Lanes.KEY.equals(name)) {
-            enc = Lanes.create();
+            return Lanes.create();
         } else if (Footway.KEY.equals(name)) {
-            enc = new EnumEncodedValue<>(Footway.KEY, Footway.class);
+            return new EnumEncodedValue<>(Footway.KEY, Footway.class);
         } else if (OSMWayID.KEY.equals(name)) {
-            enc = OSMWayID.create();
+            return OSMWayID.create();
         } else if (MtbRating.KEY.equals(name)) {
-            enc = MtbRating.create();
+            return MtbRating.create();
         } else if (HikeRating.KEY.equals(name)) {
-            enc = HikeRating.create();
+            return HikeRating.create();
         } else if (HorseRating.KEY.equals(name)) {
-            enc = HorseRating.create();
+            return HorseRating.create();
         } else if (Country.KEY.equals(name)) {
-            enc = Country.create();
+            return Country.create();
         } else if (name.endsWith(Subnetwork.key(""))) {
-            enc = new SimpleBooleanEncodedValue(name);
+            return new SimpleBooleanEncodedValue(name);
         } else if (MaxSlope.KEY.equals(name)) {
-            enc = MaxSlope.create();
+            return MaxSlope.create();
         } else if (AverageSlope.KEY.equals(name)) {
-            enc = AverageSlope.create();
+            return AverageSlope.create();
         } else if (Curvature.KEY.equals(name)) {
-            enc = Curvature.create();
-        } else {
-            throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
+            return Curvature.create();
+
+        } else if (VehicleAccess.key("car").equals(name)
+                || VehicleAccess.key("motorcycle").equals(name)
+                || VehicleAccess.key("foot").equals(name)
+                || VehicleAccess.key("hike").equals(name)
+                || VehicleAccess.key("wheelchair").equals(name)
+                || VehicleAccess.key("bike").equals(name)
+                || VehicleAccess.key("racingbike").equals(name)
+                || VehicleAccess.key("mtb").equals(name)) {
+            return VehicleAccess.createWithoutKey(name);
+
+        } else if (VehicleSpeed.key("car").equals(name)) {
+            return VehicleSpeed.createWithoutKey(name,
+                    properties.getInt("speed_bits", 5), properties.getDouble("speed_factor", 5),
+                    properties.getBool("speed_two_directions", true));
+        } else if (VehicleSpeed.key("motorcycle").equals(name)) {
+            return VehicleSpeed.createWithoutKey(name,
+                    properties.getInt("speed_bits", 5), properties.getDouble("speed_factor", 5),
+                    properties.getBool("speed_two_directions", true));
+        } else if (VehicleSpeed.key("roads").equals(name)) {
+            return VehicleSpeed.createWithoutKey(name,
+                    properties.getInt("speed_bits", 7), properties.getDouble("speed_factor", 2),
+                    properties.getBool("speed_two_directions", true));
+        } else if (VehicleSpeed.key("foot").equals(name)
+                || VehicleSpeed.key("hike").equals(name)) {
+            return VehicleSpeed.createWithoutKey(name, properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1),
+                    properties.getBool("speed_two_directions", false));
+        } else if (VehicleSpeed.key("wheelchair").equals(name)) {
+            return VehicleSpeed.createWithoutKey(name, properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1),
+                    properties.getBool("speed_two_directions", true));
+
+        } else if (VehicleSpeed.key("bike").equals(name)
+                || VehicleSpeed.key("racingbike").equals(name)
+                || VehicleSpeed.key("mtb").equals(name)) {
+            return VehicleSpeed.createWithoutKey(name, properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 2),
+                    properties.getBool("speed_two_directions", false));
+
+        } else if (VehiclePriority.key("car").equals(name)) {
+            return null;
+        } else if (VehiclePriority.key("motorcycle").equals(name)
+                || VehiclePriority.key("foot").equals(name)
+                || VehiclePriority.key("hike").equals(name)
+                || VehiclePriority.key("wheelchair").equals(name)
+                || VehiclePriority.key("bike").equals(name)
+                || VehiclePriority.key("racingbike").equals(name)
+                || VehiclePriority.key("mtb").equals(name)) {
+            return VehiclePriority.createWithoutKey(name, 4, PriorityCode.getFactor(1), false);
+
+        } else if (TurnCost.key("car").equals(name)
+                || TurnCost.key("motorcycle").equals(name)
+                || TurnCost.key("roads").equals(name)
+                || TurnCost.key("foot").equals(name)
+                || TurnCost.key("hike").equals(name)
+                || TurnCost.key("wheelchair").equals(name)
+                || TurnCost.key("bike").equals(name)
+                || TurnCost.key("racingbike").equals(name)
+                || TurnCost.key("mtb").equals(name)) {
+            int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
+            return maxTurnCosts > 0 ? TurnCost.createWithoutKey(name, maxTurnCosts) : null;
         }
-        return enc;
+
+        throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
     }
 }

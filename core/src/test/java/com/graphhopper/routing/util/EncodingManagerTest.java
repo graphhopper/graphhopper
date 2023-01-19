@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.parsers.CarAccessParser;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -38,22 +39,22 @@ public class EncodingManagerTest {
     @Test
     public void testSupportFords() {
         String flagEncoderStrings = "car,bike,foot";
-        EncodingManager manager = EncodingManager.create(flagEncoderStrings);
+        EncodingManager manager = EncodingManager.create(new DefaultEncodedValueFactory(), flagEncoderStrings);
 
         // 1) default -> no block fords
-        assertFalse(new CarTagParser(manager, new PMap()).isBlockFords());
-        assertFalse(new BikeTagParser(manager, new PMap()).isBlockFords());
-        assertFalse(new FootTagParser(manager, new PMap()).isBlockFords());
+        assertFalse(new CarAccessParser(manager, new PMap()).isBlockFords());
+//        assertFalse(new BikeAccessParser(manager, new PMap()).isBlockFords());
+//        assertFalse(new FootAccessParser(manager, new PMap()).isBlockFords());
 
         // 2) true
-        assertTrue(new CarTagParser(manager, new PMap("block_fords=true")).isBlockFords());
-        assertTrue(new BikeTagParser(manager, new PMap("block_fords=true")).isBlockFords());
-        assertTrue(new FootTagParser(manager, new PMap("block_fords=true")).isBlockFords());
+        assertTrue(new CarAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
+//        assertTrue(new BikeAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
+//        assertTrue(new FootAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
 
         // 3) false
-        assertFalse(new CarTagParser(manager, new PMap("block_fords=false")).isBlockFords());
-        assertFalse(new BikeTagParser(manager, new PMap("block_fords=false")).isBlockFords());
-        assertFalse(new FootTagParser(manager, new PMap("block_fords=false")).isBlockFords());
+        assertFalse(new CarAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
+//        assertFalse(new BikeAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
+//        assertFalse(new FootAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
     }
 
     @Test

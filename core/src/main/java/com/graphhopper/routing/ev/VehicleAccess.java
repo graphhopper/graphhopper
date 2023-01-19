@@ -29,4 +29,8 @@ public class VehicleAccess {
     public static BooleanEncodedValue create(String name) {
         return new SimpleBooleanEncodedValue(key(name), true);
     }
+
+    public static BooleanEncodedValue createWithoutKey(String name) {
+        return new SimpleBooleanEncodedValue(name, true);
+    }
 }

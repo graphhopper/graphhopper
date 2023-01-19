@@ -46,6 +46,24 @@ public class EncodingManager implements EncodedValueLookup {
     private final EncodedValue.InitializerConfig edgeConfig;
     private final EncodedValue.InitializerConfig turnCostConfig;
 
+//    public static EncodingManager create(EncodedValueFactory factory, String vehicles) {
+//        return create(new DefaultEncodedValueFactory(), vehicles);
+//    }
+
+    public static EncodingManager create(EncodedValueFactory factory, String vehicles) {
+        Builder builder = new Builder();
+        for (String vehicle : vehicles.split(",")) {
+            // TODO NOW append string for vehicle EncodedValues
+            builder.add(factory.create(VehicleAccess.key(vehicle)));
+            builder.add(factory.create(VehicleSpeed.key(vehicle)));
+            EncodedValue turnCosts = factory.create(VehicleSpeed.key(vehicle));
+            if (turnCosts != null) builder.add(turnCosts);
+            EncodedValue priorityEnc = factory.create(VehiclePriority.key(vehicle));
+            if (priorityEnc != null) builder.add(priorityEnc);
+        }
+        return builder.build();
+    }
+
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
      * encoders using DefaultVehicleEncodedValuesFactory.
@@ -124,6 +142,7 @@ public class EncodingManager implements EncodedValueLookup {
     public static class Builder {
         private EncodingManager em = new EncodingManager();
 
+        // TODO NOW remove method
         public Builder add(VehicleEncodedValues v) {
             checkNotBuiltAlready();
             List<EncodedValue> list = new ArrayList<>();
@@ -201,6 +220,7 @@ public class EncodingManager implements EncodedValueLookup {
         }
     }
 
+    // TODO NOW remove this
     static VehicleEncodedValues parseEncoderString(VehicleEncodedValuesFactory factory, String encoderString) {
         if (!encoderString.equals(toLowerCase(encoderString)))
             throw new IllegalArgumentException("An upper case name for the vehicle is not allowed: " + encoderString);
