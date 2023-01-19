@@ -33,10 +33,11 @@ class EncodedValueSerializerTest {
     public void serializationAndDeserialization() {
         List<EncodedValue> encodedValues = new ArrayList<>();
         // add enum, int, decimal and boolean encoded values
-        encodedValues.add(new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class));
-        encodedValues.add(Lanes.create());
-        encodedValues.add(MaxWidth.create());
-        encodedValues.add(GetOffBike.create());
+        DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
+        encodedValues.add(evFactory.create(RoadClass.KEY));
+        encodedValues.add(evFactory.create(Lanes.KEY));
+        encodedValues.add(evFactory.create(MaxWidth.KEY));
+        encodedValues.add(evFactory.create(GetOffBike.KEY));
         StringEncodedValue namesEnc = new StringEncodedValue("names", 3, Arrays.asList("jim", "joe", "kate"), false);
         encodedValues.add(namesEnc);
 
@@ -68,7 +69,12 @@ class EncodedValueSerializerTest {
     @Test
     void explicitString() {
         EncodedValue.InitializerConfig initializerConfig = new EncodedValue.InitializerConfig();
-        List<EncodedValue> evs = Arrays.asList(Lanes.create(), MaxWidth.create(), GetOffBike.create());
+        DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
+        List<EncodedValue> evs = Arrays.asList(
+                evFactory.create(Lanes.KEY),
+                evFactory.create(MaxWidth.KEY),
+                evFactory.create(GetOffBike.KEY)
+        );
         evs.forEach(ev -> ev.init(initializerConfig));
 
         List<String> serialized = evs.stream().map(EncodedValueSerializer::serializeEncodedValue).collect(Collectors.toList());

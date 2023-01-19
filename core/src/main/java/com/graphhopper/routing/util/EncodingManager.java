@@ -184,32 +184,26 @@ public class EncodingManager implements EncodedValueLookup {
 
         private void addDefaultEncodedValues() {
             // todo: I think ultimately these should all be removed and must be added explicitly
-            if (!em.hasEncodedValue(Roundabout.KEY))
-                add(Roundabout.create());
-            if (!em.hasEncodedValue(RoadClass.KEY))
-                add(new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class));
-            if (!em.hasEncodedValue(RoadClassLink.KEY))
-                add(new SimpleBooleanEncodedValue(RoadClassLink.KEY));
-            if (!em.hasEncodedValue(RoadEnvironment.KEY))
-                add(new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class));
-            if (!em.hasEncodedValue(MaxSpeed.KEY))
-                add(MaxSpeed.create());
-            if (!em.hasEncodedValue(RoadAccess.KEY))
-                add(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class));
-
-            for (String vehicle : em.getVehicles()) {
-                if (vehicle.contains("bike") || vehicle.contains("mtb")) {
-                    if (!em.hasEncodedValue(BikeNetwork.KEY))
-                        add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class));
-                    if (!em.hasEncodedValue(GetOffBike.KEY))
-                        add(GetOffBike.create());
-                    if (!em.hasEncodedValue(Smoothness.KEY))
-                        add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class));
-                } else if (vehicle.contains("foot") || vehicle.contains("hike") || vehicle.contains("wheelchair")) {
-                    if (!em.hasEncodedValue(FootNetwork.KEY))
-                        add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class));
-                }
+            List<String> keys = new ArrayList<>(Arrays.asList(
+                    Roundabout.KEY,
+                    RoadClass.KEY,
+                    RoadClassLink.KEY,
+                    RoadEnvironment.KEY,
+                    MaxSpeed.KEY,
+                    RoadAccess.KEY
+            ));
+            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("bike") || vehicle.contains("mtb"))) {
+                keys.add(BikeNetwork.KEY);
+                keys.add(GetOffBike.KEY);
+                keys.add(Smoothness.KEY);
             }
+            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("foot") || vehicle.contains("hike") || vehicle.contains("wheelchair")))
+                keys.add(FootNetwork.KEY);
+
+            DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
+            for (String key : keys)
+                if (!em.hasEncodedValue(key))
+                    add(evFactory.create(key));
         }
     }
 
