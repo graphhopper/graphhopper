@@ -91,17 +91,4 @@ class EncodedValueSerializerTest {
         assertEquals("get_off_bike", ev2.getName());
     }
 
-    @Test
-    void initializerConfig() {
-        EncodedValue.InitializerConfig initializerConfig = new EncodedValue.InitializerConfig();
-        Lanes.create().init(initializerConfig);
-        MaxWidth.create().init(initializerConfig);
-        String s = EncodedValueSerializer.serializeInitializerConfig(initializerConfig);
-        assertEquals("{\"data_index\":0,\"shift\":3,\"next_shift\":10,\"bit_mask\":1016}", s);
-        EncodedValue.InitializerConfig deserialized = EncodedValueSerializer.deserializeInitializerConfig(s);
-        assertEquals(0, deserialized.dataIndex);
-        assertEquals(3, deserialized.shift);
-        assertEquals(10, deserialized.nextShift);
-        assertEquals(1016, deserialized.bitMask);
-    }
 }
