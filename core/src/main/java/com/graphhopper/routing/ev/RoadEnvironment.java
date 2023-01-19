@@ -29,6 +29,10 @@ public enum RoadEnvironment {
 
     public static final String KEY = "road_environment";
 
+    public static EnumEncodedValue<RoadEnvironment> create() {
+        return new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class);
+    }
+
     private final String name;
 
     RoadEnvironment(String name) {

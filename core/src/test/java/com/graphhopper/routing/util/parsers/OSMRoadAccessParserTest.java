@@ -31,7 +31,7 @@ class OSMRoadAccessParserTest {
 
     @Test
     void countryRule() {
-        EnumEncodedValue<RoadAccess> roadAccessEnc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
+        EnumEncodedValue<RoadAccess> roadAccessEnc = RoadAccess.create();
         roadAccessEnc.init(new EncodedValue.InitializerConfig());
 
         OSMRoadAccessParser parser = new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));

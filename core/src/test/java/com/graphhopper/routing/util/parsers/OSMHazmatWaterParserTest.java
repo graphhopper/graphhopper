@@ -15,7 +15,7 @@ public class OSMHazmatWaterParserTest {
 
     @BeforeEach
     public void setUp() {
-        hazWaterEnc = new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class);
+        hazWaterEnc = HazmatWater.create();
         hazWaterEnc.init(new EncodedValue.InitializerConfig());
         parser = new OSMHazmatWaterParser(hazWaterEnc);
         relFlags = new IntsRef(2);

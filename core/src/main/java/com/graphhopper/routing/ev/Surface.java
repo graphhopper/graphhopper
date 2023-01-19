@@ -34,6 +34,10 @@ public enum Surface {
 
     public static final String KEY = "surface";
 
+    public static EnumEncodedValue<Surface> create() {
+        return new EnumEncodedValue<>(KEY, Surface.class);
+    }
+
     private final String name;
 
     Surface(String name) {

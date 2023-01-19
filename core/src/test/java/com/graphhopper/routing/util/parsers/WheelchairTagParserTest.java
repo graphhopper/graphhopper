@@ -55,7 +55,7 @@ public class WheelchairTagParserTest {
         carAccessEnc = VehicleAccess.create("car");
         carAvSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
         encodingManager = EncodingManager.start()
-                .add(wheelchairAccessEnc).add(wheelchairAvSpeedEnc).add(wheelchairPriorityEnc).add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
+                .add(wheelchairAccessEnc).add(wheelchairAvSpeedEnc).add(wheelchairPriorityEnc).add(RouteNetwork.create(FootNetwork.KEY))
                 .add(carAccessEnc).add(carAvSpeedEnc)
                 .build();
         accessParser = new WheelchairAccessParser(encodingManager, new PMap());

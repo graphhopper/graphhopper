@@ -29,7 +29,7 @@ class OSMRoadEnvironmentParserTest {
 
     @Test
     void ferry() {
-        EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc = new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class);
+        EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc = RoadEnvironment.create();
         roadEnvironmentEnc.init(new EncodedValue.InitializerConfig());
         OSMRoadEnvironmentParser parser = new OSMRoadEnvironmentParser(roadEnvironmentEnc);
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);

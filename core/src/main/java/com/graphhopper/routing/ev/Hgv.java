@@ -30,6 +30,10 @@ public enum Hgv {
 
     public static final String KEY = "hgv";
 
+    public static EnumEncodedValue<Hgv> create() {
+        return new EnumEncodedValue<>(Hgv.KEY, Hgv.class);
+    }
+
     private final String name;
 
     Hgv(String name) {

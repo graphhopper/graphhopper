@@ -958,7 +958,7 @@ public class OSMReaderTest {
     @Test
     public void testCurvedWayAlongBorder() throws IOException {
         // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
-        EnumEncodedValue<Country> countryEnc = new EnumEncodedValue<>(Country.KEY, Country.class);
+        EnumEncodedValue<Country> countryEnc = Country.create();
         EncodingManager em = EncodingManager.start()
                 .add(VehicleEncodedValues.car(new PMap()))
                 .add(countryEnc)

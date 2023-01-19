@@ -8,7 +8,7 @@ public class EnumEncodedValueTest {
 
     @Test
     public void testInit() {
-        EnumEncodedValue<RoadClass> prop = new EnumEncodedValue<>("road_class", RoadClass.class);
+        EnumEncodedValue<RoadClass> prop = RoadClass.create();
         EncodedValue.InitializerConfig init = new EncodedValue.InitializerConfig();
         assertEquals(5, prop.init(init));
         assertEquals(5, prop.bits);

@@ -15,7 +15,7 @@ public class OSMRoadClassParserTest {
 
     @BeforeEach
     public void setUp() {
-        rcEnc = new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
+        rcEnc = RoadClass.create();
         rcEnc.init(new EncodedValue.InitializerConfig());
         parser = new OSMRoadClassParser(rcEnc);
         relFlags = new IntsRef(2);

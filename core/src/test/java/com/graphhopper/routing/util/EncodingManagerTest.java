@@ -17,7 +17,10 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.parsers.BikeAccessParser;
 import com.graphhopper.routing.util.parsers.CarAccessParser;
 import com.graphhopper.routing.util.parsers.FootAccessParser;
@@ -71,7 +74,7 @@ public class EncodingManagerTest {
                 .add(VehicleAccess.create("bike")).add(VehicleSpeed.create("bike", 4, 2, true))
                 .add(VehicleSpeed.create("roads", 5, 5, false))
                 .add(VehicleAccess.create("hike")).add(new DecimalEncodedValueImpl("whatever_hike_average_speed_2022", 5, 5, true))
-                .add(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class))
+                .add(RoadAccess.create())
                 .build();
         // only for bike+hike there is access+'speed'
         assertEquals(Arrays.asList("bike", "hike"), em.getVehicles());

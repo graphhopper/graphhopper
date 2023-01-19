@@ -15,7 +15,7 @@ public class OSMSurfaceParserTest {
 
     @BeforeEach
     public void setUp() {
-        surfaceEnc = new EnumEncodedValue<>(Surface.KEY, Surface.class);
+        surfaceEnc = Surface.create();
         surfaceEnc.init(new EncodedValue.InitializerConfig());
         parser = new OSMSurfaceParser(surfaceEnc);
     }

@@ -55,8 +55,8 @@ public class CarTagParserTest {
                 .add(VehicleAccess.create("bike"))
                 .add(VehicleSpeed.create("bike", 4, 2, false))
                 .add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
-                .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
-                .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
+                .add(RouteNetwork.create(BikeNetwork.KEY))
+                .add(Smoothness.create())
                 .build();
     }
 

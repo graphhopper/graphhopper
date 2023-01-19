@@ -48,12 +48,12 @@ class TagParsingTest {
         BooleanEncodedValue bike2AccessEnc = VehicleAccess.create("bike2");
         DecimalEncodedValue bike2SpeedEnc = VehicleSpeed.create("bike2", 4, 2, false);
         DecimalEncodedValue bike2PriorityEnc = VehiclePriority.create("bike2", 4, PriorityCode.getFactor(1), false);
-        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class);
+        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = RouteNetwork.create(BikeNetwork.KEY);
         EncodingManager em = EncodingManager.start()
                 .add(bike1AccessEnc).add(bike1SpeedEnc).add(bike1PriorityEnc)
                 .add(bike2AccessEnc).add(bike2SpeedEnc).add(bike2PriorityEnc)
                 .add(bikeNetworkEnc)
-                .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
+                .add(Smoothness.create())
                 .build();
         BikePriorityParser bike1Parser = new BikePriorityParser(em, new PMap("name=bike1"));
         BikePriorityParser bike2Parser = new BikePriorityParser(em, new PMap("name=bike2")) {
@@ -96,12 +96,12 @@ class TagParsingTest {
         BooleanEncodedValue mtbAccessEnc = VehicleAccess.create("mtb");
         DecimalEncodedValue mtbSpeedEnc = VehicleSpeed.create("mtb", 4, 2, false);
         DecimalEncodedValue mtbPriorityEnc = VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false);
-        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class);
+        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = RouteNetwork.create(BikeNetwork.KEY);
         EncodingManager em = EncodingManager.start()
                 .add(bikeAccessEnc).add(bikeSpeedEnc).add(bikePriorityEnc)
                 .add(mtbAccessEnc).add(mtbSpeedEnc).add(mtbPriorityEnc)
                 .add(bikeNetworkEnc)
-                .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
+                .add(Smoothness.create())
                 .build();
         BikePriorityParser bikeTagParser = new BikePriorityParser(em, new PMap());
         MountainBikePriorityParser mtbTagParser = new MountainBikePriorityParser(em, new PMap());
@@ -138,9 +138,9 @@ class TagParsingTest {
                 .add(bikeAccessEnc).add(VehicleSpeed.create("bike", 4, 2, false)).add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
                 .add(motorcycleAccessEnc).add(VehicleSpeed.create("motorcycle", 5, 5, true)).add(VehiclePriority.create("motorcycle", 4, PriorityCode.getFactor(1), false)).add(new DecimalEncodedValueImpl("motorcycle_curvature", 5, 5, true))
                 .add(mtbAccessEnc).add(VehicleSpeed.create("mtb", 4, 2, false)).add(VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false))
-                .add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
-                .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
-                .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
+                .add(RouteNetwork.create(FootNetwork.KEY))
+                .add(RouteNetwork.create(BikeNetwork.KEY))
+                .add(Smoothness.create())
                 .build();
 
         BooleanEncodedValue roundaboutEnc = manager.getBooleanEncodedValue(Roundabout.KEY);
