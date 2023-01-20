@@ -36,6 +36,8 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         routeMap.put(LOCAL, UNCHANGED.getValue());
 
         setSpecificClassBicycle("roadcycling");
+
+        avoidSpeedLimit = 81;
     }
 
     @Override

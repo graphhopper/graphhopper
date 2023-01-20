@@ -598,12 +598,12 @@ public class GraphHopper {
     protected EncodingManager buildEncodingManager(Map<String, String> vehiclesByName, List<String> encodedValueStrings,
                                                    boolean withUrbanDensity, Collection<Profile> profiles) {
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
-        vehiclesByName.forEach((name, vehicleStr) -> {
-            emBuilder.add(encodedValueFactory.create(VehicleAccess.key(name) + "|" + vehicleStr));
-            emBuilder.add(encodedValueFactory.create(VehicleSpeed.key(name) + "|" + vehicleStr));
-            EncodedValue tcEV = encodedValueFactory.create(TurnCost.key(name) + "|" + vehicleStr);
+        vehiclesByName.forEach((name, propStr) -> {
+            emBuilder.add(encodedValueFactory.create(VehicleAccess.key(name) + "|" + propStr));
+            emBuilder.add(encodedValueFactory.create(VehicleSpeed.key(name) + "|" + propStr));
+            EncodedValue tcEV = encodedValueFactory.create(TurnCost.key(name) + "|" + propStr);
             if (tcEV != null) emBuilder.addTurnCostEncodedValue(tcEV);
-            EncodedValue pev = encodedValueFactory.create(VehiclePriority.key(name) + "|" + vehicleStr);
+            EncodedValue pev = encodedValueFactory.create(VehiclePriority.key(name) + "|" + propStr);
             if (pev != null) emBuilder.add(pev);
         });
         profiles.forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
@@ -691,19 +691,20 @@ public class GraphHopper {
     public static Map<String, String> getVehiclesByName(String vehiclesStr, Collection<Profile> profiles) {
         Map<String, String> vehiclesMap = new LinkedHashMap<>();
         for (String encoderStr : vehiclesStr.split(",")) {
-            String name = encoderStr.split("\\|")[0].trim();
-            if (name.isEmpty())
-                continue;
+            int index = encoderStr.indexOf('|');
+            if (index < 1) continue;
+            String name = encoderStr.substring(0, index).trim();
+            if (name.isEmpty()) continue;
             if (vehiclesMap.containsKey(name))
                 throw new IllegalArgumentException("Duplicate vehicle: " + name + " in: " + encoderStr);
-            vehiclesMap.put(name, encoderStr);
+            vehiclesMap.put(name, encoderStr.substring(index + 1).trim());
         }
         Map<String, String> vehiclesFromProfiles = new LinkedHashMap<>();
         for (Profile profile : profiles) {
             // if a profile uses a vehicle with turn costs make sure we add that vehicle with turn costs
             String vehicle = profile.getVehicle().trim();
             if (!vehiclesFromProfiles.containsKey(vehicle) || profile.isTurnCosts())
-                vehiclesFromProfiles.put(vehicle, vehicle + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
+                vehiclesFromProfiles.put(vehicle, (profile.isTurnCosts() ? "turn_costs=true" : ""));
         }
         // vehicles from profiles are only taken into account when they were not given explicitly
         vehiclesFromProfiles.forEach(vehiclesMap::putIfAbsent);

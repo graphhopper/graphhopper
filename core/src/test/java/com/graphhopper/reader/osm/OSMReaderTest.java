@@ -61,7 +61,6 @@ public class OSMReaderTest {
     private final String file2 = "test-osm2.xml";
     private final String file3 = "test-osm3.xml";
     private final String file4 = "test-osm4.xml";
-    private final String file7 = "test-osm7.xml";
     private final String fileBarriers = "test-barriers.xml";
     private final String dir = "./target/tmp/test-db";
     private BooleanEncodedValue carAccessEnc;
@@ -508,7 +507,7 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testTurnRestrictionsFromXML() {
+    public void testTurnRestrictionsCar() {
         String fileTurnRestrictions = "test-restrictions.xml";
         GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
                 importOrLoad();
@@ -578,6 +577,30 @@ public class OSMReaderTest {
         assertTrue(tcStorage.get(bikeTCEnc, edge10_11, n11, edge11_14) > 0);
     }
 
+    @Test
+    public void testTurnRestrictionsViaHgvTransportationMode() {
+        String fileTurnRestrictions = "test-restrictions.xml";
+        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
+                importOrLoad();
+
+        Graph graph = hopper.getBaseGraph();
+        assertEquals(15, graph.getNodes());
+        TurnCostStorage tcStorage = graph.getTurnCostStorage();
+        assertNotNull(tcStorage);
+
+        int n3 = AbstractGraphStorageTester.getIdOf(graph, 52, 11);
+        int n8 = AbstractGraphStorageTester.getIdOf(graph, 54, 11);
+        int n9 = AbstractGraphStorageTester.getIdOf(graph, 54, 10);
+
+        int edge9_3 = GHUtility.getEdge(graph, n9, n3).getEdge();
+        int edge3_8 = GHUtility.getEdge(graph, n3, n8).getEdge();
+
+        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
+        DecimalEncodedValue roadsTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("roads"));
+
+        assertTrue(tcStorage.get(carTCEnc, edge9_3, n3, edge3_8) == 0);
+        assertTrue(tcStorage.get(roadsTCEnc, edge9_3, n3, edge3_8) > 0);
+    }
 
     @Test
     public void testRoadAttributes() {
@@ -968,10 +991,12 @@ public class OSMReaderTest {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
+            if (turnCosts) setVehiclesString("roads|turn_costs=true|transportation_mode=HGV");
             setProfiles(
                     new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                     new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(turnCosts),
-                    new Profile("bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(turnCosts)
+                    new Profile("bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(turnCosts),
+                    new Profile("roads").setVehicle("roads").setWeighting("fastest").setTurnCosts(turnCosts)
             );
             getReaderConfig().setPreferredLanguage(prefLang);
         }

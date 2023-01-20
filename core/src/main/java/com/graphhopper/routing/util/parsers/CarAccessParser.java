@@ -82,12 +82,10 @@ public class CarAccessParser extends GenericAccessParser implements TagParser {
         barriers.add("sump_buster");
         barriers.add("jersey_barrier");
 
-        // TODO NOW copied in Access + AverageSpeed
         highwayValues.addAll(Arrays.asList("motorway", "motorway_link", "trunk", "trunk_link",
                 "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
                 "unclassified", "residential", "living_street", "service", "road", "track"));
 
-        // TODO NOW copied in Access + AverageSpeed
         trackTypeValues.addAll(Arrays.asList("grade1", "grade2", "grade3", null));
     }
 

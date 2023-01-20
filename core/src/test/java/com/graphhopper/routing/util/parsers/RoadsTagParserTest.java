@@ -29,11 +29,4 @@ class RoadsTagParserTest {
         IntsRef flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
         assertTrue(encodingManager.getDecimalEncodedValue(VehicleSpeed.key("roads")).getDecimal(false, flags) > 200);
     }
-
-    @Test
-    public void testHGV() {
-        // TODO NOW test that the correct HGV turn costs are enabled
-//        RoadsAccessParser hgvParser = new RoadsAccessParser(EncodingManager.create("roads"), new PMap("transportation_mode=HGV"));
-//        assertEquals("[hgv, motor_vehicle, vehicle, access]", hgvParser.getRestrictions().toString());
-    }
 }

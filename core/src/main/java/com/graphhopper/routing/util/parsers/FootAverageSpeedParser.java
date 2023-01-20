@@ -9,6 +9,7 @@ import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
+import static com.graphhopper.routing.util.parsers.GenericAccessParser.INTENDED;
 
 public class FootAverageSpeedParser extends GenericAverageSpeedParser implements TagParser {
     static final int SLOW_SPEED = 2;
@@ -19,7 +20,7 @@ public class FootAverageSpeedParser extends GenericAverageSpeedParser implements
     final Set<String> allowedHighwayTags = new HashSet<>();
     final Set<String> avoidHighwayTags = new HashSet<>();
     final Set<String> allowedSacScale = new HashSet<>();
-    final Set<String> intendedValues = new HashSet<>();
+    final Set<String> intendedValues = new HashSet<>(INTENDED);
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
@@ -30,12 +31,6 @@ public class FootAverageSpeedParser extends GenericAverageSpeedParser implements
 
     protected FootAverageSpeedParser(DecimalEncodedValue speedEnc) {
         super(speedEnc, speedEnc.getNextStorableValue(FERRY_SPEED));
-
-        // TODO NOW copied in Access + AverageSpeed
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("official");
-        intendedValues.add("permissive");
 
         sidewalksNoValues.add("no");
         sidewalksNoValues.add("none");

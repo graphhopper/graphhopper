@@ -11,22 +11,21 @@ import com.graphhopper.storage.IntsRef;
 import java.util.HashSet;
 import java.util.Set;
 
+import static com.graphhopper.routing.util.parsers.GenericAccessParser.FERRIES;
+
 public abstract class GenericAverageSpeedParser {
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final DecimalEncodedValue avgSpeedEnc;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected final double maxPossibleSpeed;
-    protected final Set<String> ferries = new HashSet<>(5);
+    protected final Set<String> ferries = new HashSet<>(FERRIES);
     protected final FerrySpeedCalculator ferrySpeedCalc;
 
     protected GenericAverageSpeedParser(DecimalEncodedValue speedEnc, double maxPossibleSpeed) {
         this.maxPossibleSpeed = maxPossibleSpeed;
         this.avgSpeedEnc = speedEnc;
 
-        // TODO NOW copied in Access + AverageSpeed
-        ferries.add("shuttle_train");
-        ferries.add("ferry");
         ferrySpeedCalc = new FerrySpeedCalculator(speedEnc.getSmallestNonZeroValue(), maxPossibleSpeed, 5);
     }
 

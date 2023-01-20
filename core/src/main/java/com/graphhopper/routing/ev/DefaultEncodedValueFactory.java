@@ -107,32 +107,32 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
                 || VehicleAccess.key("bike").equals(name)
                 || VehicleAccess.key("racingbike").equals(name)
                 || VehicleAccess.key("mtb").equals(name)) {
-            return VehicleAccess.createWithoutKey(name);
+            return new SimpleBooleanEncodedValue(name, true);
 
         } else if (VehicleSpeed.key("car").equals(name)) {
-            return VehicleSpeed.createWithoutKey(name,
+            return new DecimalEncodedValueImpl(name,
                     properties.getInt("speed_bits", 5), properties.getDouble("speed_factor", 5),
                     properties.getBool("speed_two_directions", true));
         } else if (VehicleSpeed.key("motorcycle").equals(name)) {
-            return VehicleSpeed.createWithoutKey(name,
+            return new DecimalEncodedValueImpl(name,
                     properties.getInt("speed_bits", 5), properties.getDouble("speed_factor", 5),
                     properties.getBool("speed_two_directions", true));
         } else if (VehicleSpeed.key("roads").equals(name)) {
-            return VehicleSpeed.createWithoutKey(name,
+            return new DecimalEncodedValueImpl(name,
                     properties.getInt("speed_bits", 7), properties.getDouble("speed_factor", 2),
                     properties.getBool("speed_two_directions", true));
         } else if (VehicleSpeed.key("foot").equals(name)
                 || VehicleSpeed.key("hike").equals(name)) {
-            return VehicleSpeed.createWithoutKey(name, properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1),
+            return new DecimalEncodedValueImpl(name, properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1),
                     properties.getBool("speed_two_directions", false));
         } else if (VehicleSpeed.key("wheelchair").equals(name)) {
-            return VehicleSpeed.createWithoutKey(name, properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1),
+            return new DecimalEncodedValueImpl(name, properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1),
                     properties.getBool("speed_two_directions", true));
 
         } else if (VehicleSpeed.key("bike").equals(name)
                 || VehicleSpeed.key("racingbike").equals(name)
                 || VehicleSpeed.key("mtb").equals(name)) {
-            return VehicleSpeed.createWithoutKey(name, properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 2),
+            return new DecimalEncodedValueImpl(name, properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 2),
                     properties.getBool("speed_two_directions", false));
 
         } else if (VehiclePriority.key("car").equals(name)

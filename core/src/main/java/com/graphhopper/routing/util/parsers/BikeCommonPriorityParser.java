@@ -11,6 +11,7 @@ import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
+import static com.graphhopper.routing.util.parsers.GenericAccessParser.*;
 import static com.graphhopper.routing.util.parsers.GenericAverageSpeedParser.getMaxSpeed;
 import static com.graphhopper.routing.util.parsers.GenericAverageSpeedParser.isValidSpeed;
 
@@ -18,18 +19,17 @@ public abstract class BikeCommonPriorityParser implements TagParser {
 
     // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
     protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
-    protected final HashSet<String> oneways = new HashSet<>();
-    protected final HashSet<String> restrictedValues = new HashSet<>();
     protected final Set<String> preferHighwayTags = new HashSet<>();
     protected final Set<String> avoidHighwayTags = new HashSet<>();
     protected final Set<String> unpavedSurfaceTags = new HashSet<>();
-    protected final Set<String> ferries = new HashSet<>();
-    protected final Set<String> intendedValues = new HashSet<>();
+    protected final Set<String> ferries = new HashSet<>(FERRIES);
+    protected final HashSet<String> oneways = new HashSet<>(ONEWAYS);
+    protected final Set<String> intendedValues = new HashSet<>(INTENDED);
 
     protected final DecimalEncodedValue avgSpeedEnc;
     protected final DecimalEncodedValue priorityEnc;
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
-    private final int avoidSpeedLimit;
+    int avoidSpeedLimit;
     EnumEncodedValue<RouteNetwork> bikeRouteEnc;
     Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
@@ -42,27 +42,11 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         this.priorityEnc = priorityEnc;
         this.avgSpeedEnc = avgSpeedEnc;
 
-        // TODO NOW duplicate also in average_speed
+        // duplicate code as also in BikeCommonAverageSpeedParser
         addPushingSection("footway");
         addPushingSection("pedestrian");
         addPushingSection("steps");
         addPushingSection("platform");
-
-        // TODO NOW duplicate
-        oneways.add("yes");
-        oneways.add("true");
-        oneways.add("1");
-        oneways.add("-1");
-
-        // TODO NOW copied in Access + AverageSpeed
-        ferries.add("shuttle_train");
-        ferries.add("ferry");
-
-        // TODO NOW copied in Access + AverageSpeed
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("official");
-        intendedValues.add("permissive");
 
         unpavedSurfaceTags.add("unpaved");
         unpavedSurfaceTags.add("gravel");

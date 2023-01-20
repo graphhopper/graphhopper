@@ -104,7 +104,7 @@ public class CarAverageSpeedParser extends GenericAverageSpeedParser implements 
         String highwayValue = way.getTag("highway");
         Integer speed = defaultSpeedMap.get(highwayValue);
 
-        // TODO NOW is this fine? the only difference is that now even inaccessible edges get a speed assigned
+        // even inaccessible edges get a speed assigned
         if (speed == null) speed = 10;
 
         if (highwayValue.equals("track")) {

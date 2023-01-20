@@ -14,12 +14,14 @@ import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.ev.RouteNetwork.LOCAL;
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static com.graphhopper.routing.util.PriorityCode.SLIGHT_AVOID;
+import static com.graphhopper.routing.util.parsers.GenericAccessParser.FERRIES;
+import static com.graphhopper.routing.util.parsers.GenericAccessParser.INTENDED;
 import static com.graphhopper.routing.util.parsers.GenericAverageSpeedParser.getMaxSpeed;
 import static com.graphhopper.routing.util.parsers.GenericAverageSpeedParser.isValidSpeed;
 
 public class FootPriorityParser implements TagParser {
-    final Set<String> ferries = new HashSet<>(5);
-    final Set<String> intendedValues = new HashSet<>();
+    final Set<String> ferries = new HashSet<>(FERRIES);
+    final Set<String> intendedValues = new HashSet<>(INTENDED);
     final Set<String> safeHighwayTags = new HashSet<>();
     final Set<String> avoidHighwayTags = new HashSet<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
@@ -37,16 +39,6 @@ public class FootPriorityParser implements TagParser {
     protected FootPriorityParser(DecimalEncodedValue priorityEnc, EnumEncodedValue<RouteNetwork> footRouteEnc) {
         this.footRouteEnc = footRouteEnc;
         priorityWayEncoder = priorityEnc;
-
-        // TODO NOW copied in Access + AverageSpeed
-        ferries.add("shuttle_train");
-        ferries.add("ferry");
-
-        // TODO NOW copied in Access + AverageSpeed
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("official");
-        intendedValues.add("permissive");
 
         sidewalksNoValues.add("no");
         sidewalksNoValues.add("none");

@@ -227,9 +227,8 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.setTag("maxspeed", "60");
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER.getValue(), 20, osmWay);
 
-        // TODO NOW
-//        osmWay.setTag("maxspeed", "80");
-//        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER.getValue(), 20, osmWay);
+        osmWay.setTag("maxspeed", "80");
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER.getValue(), 20, osmWay);
 
         osmWay.setTag("maxspeed", "90");
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED.getValue(), 20, osmWay);

@@ -30,7 +30,7 @@ public abstract class BikeCommonAverageSpeedParser extends GenericAverageSpeedPa
         super(speedEnc, speedEnc.getNextStorableValue(MAX_SPEED));
         this.smoothnessEnc = smoothnessEnc;
 
-        // TODO duplicate also in priority
+        // duplicate code as also in BikeCommonPriorityParser
         addPushingSection("footway");
         addPushingSection("pedestrian");
         addPushingSection("steps");
