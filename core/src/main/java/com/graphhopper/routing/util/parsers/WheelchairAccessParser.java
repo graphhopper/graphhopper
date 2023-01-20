@@ -3,7 +3,6 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
@@ -17,7 +16,7 @@ public class WheelchairAccessParser extends FootAccessParser {
     private final int maxInclinePercent = 6;
 
     public WheelchairAccessParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getBooleanEncodedValue(VehicleAccess.key("wheelchair")));
+        this(lookup.getBooleanEncodedValue(properties.getString("name", "")));
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }

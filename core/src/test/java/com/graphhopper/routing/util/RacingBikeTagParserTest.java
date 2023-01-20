@@ -19,9 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -39,22 +37,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Override
-    protected EncodingManager createEncodingManager() {
-        return EncodingManager.create(new DefaultEncodedValueFactory(), "racingbike");
-    }
-
-    protected BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup, PMap pMap) {
-        RacingBikeAccessParser parser = new RacingBikeAccessParser(encodingManager, pMap);
-        parser.init(new DateRangeParser());
-        return parser;
-    }
-
-    protected BikeCommonAverageSpeedParser createAverageSpeedParser(EncodedValueLookup lookup) {
-        return new RacingBikeAverageSpeedParser(encodingManager, new PMap());
-    }
-
-    protected BikeCommonPriorityParser createPriorityParser(EncodedValueLookup lookup) {
-        return new RacingBikePriorityParser(encodingManager, new PMap());
+    protected String getParserPrefix() {
+        return "racingbike";
     }
 
     @Test

@@ -24,13 +24,10 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.Constants;
-import com.graphhopper.util.PMap;
 
 import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
@@ -45,24 +42,6 @@ public class EncodingManager implements EncodedValueLookup {
     private final LinkedHashMap<String, EncodedValue> encodedValueMap;
     private final EncodedValue.InitializerConfig edgeConfig;
     private final EncodedValue.InitializerConfig turnCostConfig;
-
-    public static EncodingManager create(String vehicles) {
-        return create(new DefaultEncodedValueFactory(), vehicles);
-    }
-
-    public static EncodingManager create(EncodedValueFactory factory, String vehicles) {
-        Builder builder = new Builder();
-        for (String vehicle : vehicles.split(",")) {
-            // TODO NOW append string for vehicle EncodedValues
-            builder.add(factory.create(VehicleAccess.key(vehicle)));
-            builder.add(factory.create(VehicleSpeed.key(vehicle)));
-            EncodedValue turnCosts = factory.create(TurnCost.key(vehicle));
-            if (turnCosts != null) builder.add(turnCosts);
-            EncodedValue priorityEnc = factory.create(VehiclePriority.key(vehicle));
-            if (priorityEnc != null) builder.add(priorityEnc);
-        }
-        return builder.build();
-    }
 
     public static void putEncodingManagerIntoProperties(EncodingManager encodingManager, StorableProperties properties) {
         properties.put("graph.em.version", Constants.VERSION_EM);
@@ -117,6 +96,15 @@ public class EncodingManager implements EncodedValueLookup {
 
     private EncodingManager() {
         this(new LinkedHashMap<>(), new EncodedValue.InitializerConfig(), new EncodedValue.InitializerConfig());
+    }
+
+    public static EncodingManager create(String encodedValues) {
+        EncodedValueFactory factory = new DefaultEncodedValueFactory();
+        EncodingManager.Builder builder = new EncodingManager.Builder();
+        for (String name : encodedValues.split(",")) {
+            builder.add(factory.create(name));
+        }
+        return builder.build();
     }
 
     public static class Builder {

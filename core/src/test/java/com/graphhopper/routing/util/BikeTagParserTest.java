@@ -42,22 +42,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Override
-    protected EncodingManager createEncodingManager() {
-        return EncodingManager.create(new DefaultEncodedValueFactory(), "bike");
-    }
-
-    protected BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup, PMap pMap) {
-        BikeAccessParser parser = new BikeAccessParser(encodingManager, pMap);
-        parser.init(new DateRangeParser());
-        return parser;
-    }
-
-    protected BikeCommonAverageSpeedParser createAverageSpeedParser(EncodedValueLookup lookup) {
-        return new BikeAverageSpeedParser(encodingManager, new PMap());
-    }
-
-    protected BikeCommonPriorityParser createPriorityParser(EncodedValueLookup lookup) {
-        return new BikePriorityParser(encodingManager, new PMap());
+    protected String getParserPrefix() {
+        return "bike";
     }
 
     @Test

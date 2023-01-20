@@ -26,7 +26,7 @@ public class FootAccessParser extends GenericAccessParser implements TagParser {
 
     public FootAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "foot")))
+                lookup.getBooleanEncodedValue(properties.getString("name", ""))
         );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));

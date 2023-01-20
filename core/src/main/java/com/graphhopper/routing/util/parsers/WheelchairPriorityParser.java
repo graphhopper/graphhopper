@@ -6,20 +6,15 @@ import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.TreeMap;
 
 import static com.graphhopper.routing.util.PriorityCode.AVOID;
 import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
 
 public class WheelchairPriorityParser extends FootPriorityParser {
-    private final Set<String> excludeSurfaces = new HashSet<>();
-    private final Set<String> excludeSmoothness = new HashSet<>();
-    private final int maxInclinePercent = 6;
 
     public WheelchairPriorityParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(VehiclePriority.key("wheelchair")),
+        this(lookup.getDecimalEncodedValue(properties.getString("name", "")),
                 lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class));
     }
 
@@ -35,17 +30,6 @@ public class WheelchairPriorityParser extends FootPriorityParser {
 
         safeHighwayTags.remove("steps");
         safeHighwayTags.remove("track");
-
-
-        excludeSurfaces.add("cobblestone");
-        excludeSurfaces.add("gravel");
-        excludeSurfaces.add("sand");
-
-        excludeSmoothness.add("bad");
-        excludeSmoothness.add("very_bad");
-        excludeSmoothness.add("horrible");
-        excludeSmoothness.add("very_horrible");
-        excludeSmoothness.add("impassable");
     }
 
     @Override
@@ -62,7 +46,7 @@ public class WheelchairPriorityParser extends FootPriorityParser {
      * @return a priority for the given way
      */
     @Override
-    protected int handlePriority(ReaderWay way, Integer priorityFromRelation) {
+    public int handlePriority(ReaderWay way, Integer priorityFromRelation) {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
 
         weightToPrioMap.put(100d, super.handlePriority(way, priorityFromRelation));

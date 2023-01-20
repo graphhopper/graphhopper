@@ -504,7 +504,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testNoErrorOnEdgeCase_lastIndex() {
-        final EncodingManager encodingManager = EncodingManager.create(new DefaultEncodedValueFactory(), "car");
+        final EncodingManager encodingManager = new EncodingManager.Builder().build();
         int locs = 10000;
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = g.getNodeAccess();

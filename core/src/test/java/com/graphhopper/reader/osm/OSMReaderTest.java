@@ -32,9 +32,7 @@ import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
-import com.graphhopper.routing.util.parsers.CountryParser;
-import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
-import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
+import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -483,8 +481,8 @@ public class OSMReaderTest {
 
     @Test
     public void testRelation() {
-        EncodingManager manager = EncodingManager.create("bike");
-        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = manager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class);
+        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class);
+        EncodingManager manager = new EncodingManager.Builder().add(bikeNetworkEnc).build();
         OSMParsers osmParsers = new OSMParsers()
                 .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConf));
         ReaderRelation osmRel = new ReaderRelation(1);
@@ -662,18 +660,14 @@ public class OSMReaderTest {
                 return new DefaultVehicleEncodedValuesFactory().createVehicleEncodedValues(name, config);
             }
         });
-        hopper.setVehicleTagParserFactory((lookup, name, config) -> {
-            if (name.equals("truck")) {
-                return new CarTagParser(
-                        lookup.getBooleanEncodedValue(VehicleAccess.key("truck")),
-                        lookup.getDecimalEncodedValue(VehicleSpeed.key("truck")),
-                        lookup.getBooleanEncodedValue(Roundabout.KEY),
-                        config,
-                        TransportationMode.HGV,
-                        120
-                );
-            }
-            return new DefaultVehicleTagParserFactory().createParser(lookup, name, config);
+        hopper.setTagParserFactory((lookup, properties) -> {
+            String name = properties.getString("name", "");
+            if (name.equals(VehicleAccess.key("truck")))
+                return new CarAccessParser(lookup.getBooleanEncodedValue(name), lookup.getBooleanEncodedValue(Roundabout.KEY),
+                        new PMap(), TransportationMode.HGV);
+            if (name.equals(VehicleSpeed.key("truck")))
+                return new CarAverageSpeedParser(lookup.getDecimalEncodedValue(name), 120);
+            return new DefaultTagParserFactory().create(lookup, properties);
         });
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
@@ -899,8 +893,8 @@ public class OSMReaderTest {
 
     @Test
     public void testCountries() throws IOException {
-        EncodingManager em = EncodingManager.create("car");
-        EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+        EnumEncodedValue<RoadAccess> roadAccessEnc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
+        EncodingManager em = new EncodingManager.Builder().add(roadAccessEnc).build();
         OSMParsers osmParsers = new OSMParsers();
         osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
         CarTagParser parser = new CarTagParser(em, new PMap());

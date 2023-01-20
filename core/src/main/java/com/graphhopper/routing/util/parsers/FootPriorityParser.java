@@ -29,7 +29,7 @@ public class FootPriorityParser implements TagParser {
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     public FootPriorityParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "foot"))),
+        this(lookup.getDecimalEncodedValue(properties.getString("name", "")),
                 lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class)
         );
     }
@@ -97,7 +97,7 @@ public class FootPriorityParser implements TagParser {
         return edgeFlags;
     }
 
-    int handlePriority(ReaderWay way, Integer priorityFromRelation) {
+    public int handlePriority(ReaderWay way, Integer priorityFromRelation) {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
         if (priorityFromRelation == null)
             weightToPrioMap.put(0d, UNCHANGED.getValue());

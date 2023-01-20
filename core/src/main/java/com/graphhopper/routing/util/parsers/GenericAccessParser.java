@@ -11,7 +11,7 @@ import com.graphhopper.storage.IntsRef;
 
 import java.util.*;
 
-public abstract class GenericAccessParser {
+public abstract class GenericAccessParser implements TagParser {
     protected final Set<String> intendedValues = new HashSet<>(5);
     // order is important
     protected final List<String> restrictions = new ArrayList<>(5);
@@ -39,9 +39,10 @@ public abstract class GenericAccessParser {
         restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
     }
 
-    public void init(DateRangeParser dateRangeParser) {
+    public GenericAccessParser init(DateRangeParser dateRangeParser) {
         setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
                 restrictions, restrictedValues, intendedValues, false));
+        return this;
     }
 
     protected void setConditionalTagInspector(ConditionalTagInspector inspector) {

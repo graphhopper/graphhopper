@@ -15,16 +15,15 @@ import java.util.Arrays;
 public class MotorcycleAccessParser extends CarAccessParser {
 
     public MotorcycleAccessParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getBooleanEncodedValue(VehicleAccess.key("motorcycle")),
+        this(lookup.getBooleanEncodedValue(properties.getString("name", "")),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
-                new PMap(properties).putObject("name", "motorcycle"),
+                properties,
                 TransportationMode.MOTORCYCLE);
     }
 
     public MotorcycleAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc,
                                   PMap properties, TransportationMode transportationMode) {
-        super(accessEnc, roundaboutEnc, new PMap(properties).putObject("name", "motorcycle"),
-                transportationMode);
+        super(accessEnc, roundaboutEnc, properties, transportationMode);
 
         barriers.remove("bus_trap");
         barriers.remove("sump_buster");

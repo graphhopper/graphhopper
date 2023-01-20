@@ -9,7 +9,7 @@ import com.graphhopper.util.PMap;
 public class RacingBikeAccessParser extends BikeCommonAccessParser {
 
     public RacingBikeAccessParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getBooleanEncodedValue(VehicleAccess.key("racingbike")),
+        this(lookup.getBooleanEncodedValue(properties.getString("name", "")),
                 lookup.getBooleanEncodedValue(Roundabout.KEY));
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));

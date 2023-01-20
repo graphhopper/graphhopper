@@ -14,7 +14,7 @@ import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
 public class HikeAverageSpeedParser extends FootAverageSpeedParser {
 
     public HikeAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "hike"))));
+        this(lookup.getDecimalEncodedValue(properties.getString("name", "")));
     }
 
     protected HikeAverageSpeedParser(DecimalEncodedValue speedEnc) {

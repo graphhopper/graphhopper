@@ -8,30 +8,18 @@ import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
-import java.util.HashSet;
-
 public class MotorcycleAverageSpeedParser extends CarAverageSpeedParser {
     public static final double MOTORCYCLE_MAX_SPEED = 120;
-    private final HashSet<String> avoidSet = new HashSet<>();
-    private final HashSet<String> preferSet = new HashSet<>();
 
     public MotorcycleAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "motorcycle"))),
-                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "motorcycle"))).getNextStorableValue(MOTORCYCLE_MAX_SPEED)
+                lookup.getDecimalEncodedValue(properties.getString("name", "")),
+                lookup.getDecimalEncodedValue(properties.getString("name", "")).getNextStorableValue(MOTORCYCLE_MAX_SPEED)
         );
     }
 
     public MotorcycleAverageSpeedParser(DecimalEncodedValue speedEnc, double maxPossibleSpeed) {
         super(speedEnc, maxPossibleSpeed);
-
-        avoidSet.add("motorway");
-        avoidSet.add("trunk");
-        avoidSet.add("residential");
-
-        preferSet.add("primary");
-        preferSet.add("secondary");
-        preferSet.add("tertiary");
 
         defaultSpeedMap.clear();
 
