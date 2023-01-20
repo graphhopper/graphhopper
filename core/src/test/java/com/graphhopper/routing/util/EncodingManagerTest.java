@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.CarAccessParser;
+import com.graphhopper.routing.util.parsers.FootAccessParser;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -44,17 +45,17 @@ public class EncodingManagerTest {
         // 1) default -> no block fords
         assertFalse(new CarAccessParser(manager, new PMap()).isBlockFords());
 //        assertFalse(new BikeAccessParser(manager, new PMap()).isBlockFords());
-//        assertFalse(new FootAccessParser(manager, new PMap()).isBlockFords());
+        assertFalse(new FootAccessParser(manager, new PMap()).isBlockFords());
 
         // 2) true
         assertTrue(new CarAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
 //        assertTrue(new BikeAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
-//        assertTrue(new FootAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
+        assertTrue(new FootAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
 
         // 3) false
         assertFalse(new CarAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
 //        assertFalse(new BikeAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
-//        assertFalse(new FootAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
+        assertFalse(new FootAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
     }
 
     @Test

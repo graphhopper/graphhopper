@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -29,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Peter Karich
  */
 public class HikeTagParserTest {
-    private final EncodingManager encodingManager = EncodingManager.create("car,hike");
+    private final EncodingManager encodingManager = EncodingManager.create(new DefaultEncodedValueFactory(), "car,hike");
     private final HikeTagParser hikeParser = new HikeTagParser(encodingManager, new PMap());
 
     public HikeTagParserTest() {

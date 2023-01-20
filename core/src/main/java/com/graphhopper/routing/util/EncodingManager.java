@@ -56,7 +56,7 @@ public class EncodingManager implements EncodedValueLookup {
             // TODO NOW append string for vehicle EncodedValues
             builder.add(factory.create(VehicleAccess.key(vehicle)));
             builder.add(factory.create(VehicleSpeed.key(vehicle)));
-            EncodedValue turnCosts = factory.create(VehicleSpeed.key(vehicle));
+            EncodedValue turnCosts = factory.create(TurnCost.key(vehicle));
             if (turnCosts != null) builder.add(turnCosts);
             EncodedValue priorityEnc = factory.create(VehiclePriority.key(vehicle));
             if (priorityEnc != null) builder.add(priorityEnc);

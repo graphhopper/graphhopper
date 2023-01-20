@@ -2,8 +2,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
@@ -24,21 +22,14 @@ public class FootAverageSpeedParser extends GenericAverageSpeedParser implements
     final Set<String> intendedValues = new HashSet<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
-    protected EnumEncodedValue<RouteNetwork> footRouteEnc;
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     public FootAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(
-                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "foot"))),
-                lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "foot"))),
-                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class)
-        );
+        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "foot"))));
     }
 
-    protected FootAverageSpeedParser(DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
-                                     EnumEncodedValue<RouteNetwork> footRouteEnc) {
+    protected FootAverageSpeedParser(DecimalEncodedValue speedEnc) {
         super(speedEnc, speedEnc.getNextStorableValue(FERRY_SPEED));
-        this.footRouteEnc = footRouteEnc;
 
         // TODO NOW copied in Access + AverageSpeed
         intendedValues.add("yes");
@@ -104,7 +95,6 @@ public class FootAverageSpeedParser extends GenericAverageSpeedParser implements
             return edgeFlags;
         }
 
-        Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
         String sacScale = way.getTag("sac_scale");
         if (sacScale != null) {
             setSpeed(edgeFlags, true, true, "hiking".equals(sacScale) ? MEAN_SPEED : SLOW_SPEED);

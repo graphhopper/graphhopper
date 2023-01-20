@@ -21,8 +21,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
-import com.graphhopper.routing.util.parsers.OSMSmoothnessParser;
+import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -41,22 +40,21 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Override
     protected EncodingManager createEncodingManager() {
-        return EncodingManager.create("racingbike");
+        return EncodingManager.create(new DefaultEncodedValueFactory(), "racingbike");
     }
 
-    @Override
-    protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup, PMap pMap) {
-        RacingBikeTagParser parser = new RacingBikeTagParser(lookup, pMap);
+    protected BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup, PMap pMap) {
+        RacingBikeAccessParser parser = new RacingBikeAccessParser(encodingManager, pMap);
         parser.init(new DateRangeParser());
         return parser;
     }
 
-    @Override
-    protected OSMParsers createOSMParsers(BikeCommonTagParser parser, EncodedValueLookup lookup) {
-        return new OSMParsers()
-                .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
-                .addWayTagParser(new OSMSmoothnessParser(lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
-                .addWayTagParser(parser);
+    protected BikeCommonAverageSpeedParser createAverageSpeedParser(EncodedValueLookup lookup) {
+        return new RacingBikeAverageSpeedParser(encodingManager, new PMap());
+    }
+
+    protected BikeCommonPriorityParser createPriorityParser(EncodedValueLookup lookup) {
+        return new RacingBikePriorityParser(encodingManager, new PMap());
     }
 
     @Test
@@ -93,17 +91,17 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("sac_scale", "mountain_hiking");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertTrue(accessParser.getAccess(way).canSkip());
 
         way.setTag("highway", "path");
         way.setTag("sac_scale", "hiking");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(accessParser.getAccess(way).isWay());
 
         // This looks to be tagging error:
         way.setTag("highway", "cycleway");
         way.setTag("sac_scale", "mountain_hiking");
         // we are cautious and disallow this
-        assertTrue(parser.getAccess(way).canSkip());
+        assertTrue(accessParser.getAccess(way).canSkip());
     }
 
     @Test

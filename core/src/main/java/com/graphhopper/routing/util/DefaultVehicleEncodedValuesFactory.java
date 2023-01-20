@@ -37,28 +37,28 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
             throw new IllegalArgumentException("Instead of car4wd use the roads vehicle and a custom_model, see custom_models/car4wd.json");
 
         if (name.equals(BIKE))
-            return VehicleEncodedValues.bike(configuration);
+            throw new IllegalStateException("Use BikeAccess, BikePriority and BikeAverageSpeed EncodedValues instead");
 
         if (name.equals("bike2"))
             throw new IllegalArgumentException("Instead of bike2 use the bike vehicle and a custom model, see custom_models/bike2.json and #1234");
 
         if (name.equals(RACINGBIKE))
-            return VehicleEncodedValues.racingbike(configuration);
+            throw new IllegalStateException("Use RacingBikeAccess, RacingBikePriority and RacingBikeAverageSpeed EncodedValues instead");
 
         if (name.equals(MOUNTAINBIKE))
-            return VehicleEncodedValues.mountainbike(configuration);
+            throw new IllegalStateException("Use MountainBikeAccess, MountainBikePriority and MountainBikeAverageSpeed EncodedValues instead");
 
         if (name.equals(FOOT))
             throw new IllegalStateException("Use FootAccess, FootPriority and FootAverageSpeed EncodedValues instead");
 
         if (name.equals(HIKE))
-            return VehicleEncodedValues.hike(configuration);
+            throw new IllegalStateException("Use HikeAccess, HikePriority and HikeAverageSpeed EncodedValues instead");
 
         if (name.equals(MOTORCYCLE))
             return VehicleEncodedValues.motorcycle(configuration);
 
         if (name.equals(WHEELCHAIR))
-            return VehicleEncodedValues.wheelchair(configuration);
+            throw new IllegalStateException("Use WheelchairAccess, WheelchairPriority and WheelchairAverageSpeed EncodedValues instead");
 
         throw new IllegalArgumentException("entry in vehicle list not supported: " + name);
     }

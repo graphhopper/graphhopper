@@ -1,20 +1,15 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderNode;
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.ConditionalTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.VehicleAccess;
-import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.*;
-
-import static java.util.Collections.emptyMap;
 
 public abstract class GenericAccessParser {
     protected final Set<String> intendedValues = new HashSet<>(5);
@@ -27,13 +22,11 @@ public abstract class GenericAccessParser {
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
-    protected final BooleanEncodedValue roundaboutEnc;
     private boolean blockFords = true;
     private ConditionalTagInspector conditionalTagInspector;
 
-    protected GenericAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc, TransportationMode transportationMode) {
+    protected GenericAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
         this.accessEnc = accessEnc;
-        this.roundaboutEnc = roundaboutEnc;
 
         oneways.add("yes");
         oneways.add("true");

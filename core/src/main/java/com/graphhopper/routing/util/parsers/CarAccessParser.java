@@ -38,6 +38,7 @@ public class CarAccessParser extends GenericAccessParser implements TagParser {
 
     private final Set<String> trackTypeValues = new HashSet<>();
     private final Set<String> highwayValues = new HashSet<>();
+    private final BooleanEncodedValue roundaboutEnc;
 
     public CarAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(
@@ -51,7 +52,8 @@ public class CarAccessParser extends GenericAccessParser implements TagParser {
     public CarAccessParser(BooleanEncodedValue accessEnc,
                            BooleanEncodedValue roundaboutEnc, PMap properties,
                            TransportationMode transportationMode) {
-        super(accessEnc, roundaboutEnc, transportationMode);
+        super(accessEnc, transportationMode);
+        this.roundaboutEnc = roundaboutEnc;
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");

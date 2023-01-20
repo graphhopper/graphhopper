@@ -22,23 +22,18 @@ public class FootAccessParser extends GenericAccessParser implements TagParser {
     final Set<String> avoidHighwayTags = new HashSet<>();
     final Set<String> allowedSacScale = new HashSet<>();
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
-    protected EnumEncodedValue<RouteNetwork> footRouteEnc;
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     public FootAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "foot"))),
-                lookup.getBooleanEncodedValue(Roundabout.KEY),
-                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class)
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "foot")))
         );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected FootAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc,
-                               EnumEncodedValue<RouteNetwork> footRouteEnc) {
-        super(accessEnc, roundaboutEnc, TransportationMode.FOOT);
-        this.footRouteEnc = footRouteEnc;
+    protected FootAccessParser(BooleanEncodedValue accessEnc) {
+        super(accessEnc, TransportationMode.FOOT);
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");

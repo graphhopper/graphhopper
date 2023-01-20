@@ -18,10 +18,7 @@
 package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
-import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -507,7 +504,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testNoErrorOnEdgeCase_lastIndex() {
-        final EncodingManager encodingManager = EncodingManager.create("car");
+        final EncodingManager encodingManager = EncodingManager.create(new DefaultEncodedValueFactory(), "car");
         int locs = 10000;
         BaseGraph g = new BaseGraph.Builder(encodingManager).create();
         NodeAccess na = g.getNodeAccess();

@@ -664,9 +664,9 @@ public class GraphHopper {
 
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         vehiclesByName.forEach((name, vehicleStr) -> {
+            boolean added = false; // TODO NOW remove this hybrid solution
             if ("car".equals(name)) {
-                CarAverageSpeedParser carAvgSpeed = new CarAverageSpeedParser(encodingManager, new PMap(vehicleStr));
-                osmParsers.addWayTagParser(carAvgSpeed);
+                osmParsers.addWayTagParser(new CarAverageSpeedParser(encodingManager, new PMap(vehicleStr)));
 
                 CarAccessParser carAccess = new CarAccessParser(encodingManager, new PMap(vehicleStr));
                 osmParsers.addWayTagParser(carAccess);
@@ -676,13 +676,10 @@ public class GraphHopper {
                 if (encodingManager.hasEncodedValue(turnCostKey))
                     osmParsers.addRestrictionTagParser(new RestrictionTagParser(carAccess.getRestrictions(), encodingManager.getDecimalEncodedValue(turnCostKey)));
 
-                return;
-            } else  if ("foot".equals(name)) {
-                FootAverageSpeedParser footAvgSpeed = new FootAverageSpeedParser(encodingManager, new PMap(vehicleStr));
-                osmParsers.addWayTagParser(footAvgSpeed);
-
-                FootPriorityParser footPriority = new FootPriorityParser(encodingManager, new PMap(vehicleStr));
-                osmParsers.addWayTagParser(footPriority);
+                added = true;
+            } else if ("foot".equals(name)) {
+                osmParsers.addWayTagParser(new FootAverageSpeedParser(encodingManager, new PMap(vehicleStr)));
+                osmParsers.addWayTagParser(new FootPriorityParser(encodingManager, new PMap(vehicleStr)));
 
                 FootAccessParser footAccess = new FootAccessParser(encodingManager, new PMap(vehicleStr));
                 osmParsers.addWayTagParser(footAccess);
@@ -692,27 +689,74 @@ public class GraphHopper {
                 if (encodingManager.hasEncodedValue(turnCostKey))
                     osmParsers.addRestrictionTagParser(new RestrictionTagParser(footAccess.getRestrictions(), encodingManager.getDecimalEncodedValue(turnCostKey)));
 
-                return;
+                added = true;
+            } else if ("hike".equals(name)) {
+                osmParsers.addWayTagParser(new HikeAverageSpeedParser(encodingManager, new PMap(vehicleStr)));
+                osmParsers.addWayTagParser(new HikePriorityParser(encodingManager, new PMap(vehicleStr)));
+
+                HikeAccessParser hikeAccess = new HikeAccessParser(encodingManager, new PMap(vehicleStr));
+                osmParsers.addWayTagParser(hikeAccess);
+                hikeAccess.init(dateRangeParser);
+
+                String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
+                if (encodingManager.hasEncodedValue(turnCostKey))
+                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(hikeAccess.getRestrictions(), encodingManager.getDecimalEncodedValue(turnCostKey)));
+
+                added = true;
+            } else if ("wheelchair".equals(name)) {
+                osmParsers.addWayTagParser(new WheelchairAverageSpeedParser(encodingManager, new PMap(vehicleStr)));
+                osmParsers.addWayTagParser(new WheelchairPriorityParser(encodingManager, new PMap(vehicleStr)));
+
+                WheelchairAccessParser wheelchairAccess = new WheelchairAccessParser(encodingManager, new PMap(vehicleStr));
+                osmParsers.addWayTagParser(wheelchairAccess);
+                wheelchairAccess.init(dateRangeParser);
+
+                String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
+                if (encodingManager.hasEncodedValue(turnCostKey))
+                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(wheelchairAccess.getRestrictions(), encodingManager.getDecimalEncodedValue(turnCostKey)));
+
+                added = true;
+            } else if ("bike".equals(name)) {
+                // NOTE: we fill bike_average_speed before priority! (similar to why we fill roundabout before bike_access)
+                osmParsers.addWayTagParser(new BikeAverageSpeedParser(encodingManager, new PMap(vehicleStr)));
+                osmParsers.addWayTagParser(new BikePriorityParser(encodingManager, new PMap(vehicleStr)));
+
+                BikeAccessParser bikeAccess = new BikeAccessParser(encodingManager, new PMap(vehicleStr));
+                osmParsers.addWayTagParser(bikeAccess);
+                bikeAccess.init(dateRangeParser);
+
+                String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
+                if (encodingManager.hasEncodedValue(turnCostKey))
+                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(bikeAccess.getRestrictions(), encodingManager.getDecimalEncodedValue(turnCostKey)));
+
+                added = true;
             }
-            VehicleTagParser vehicleTagParser = vehicleTagParserFactory.createParser(encodingManager, name, new PMap(vehicleStr));
-            if (vehicleTagParser == null)
-                return;
-            vehicleTagParser.init(dateRangeParser);
-            if (vehicleTagParser instanceof BikeCommonTagParser) {
+
+            VehicleTagParser vehicleTagParser = null;
+            if(!added) {
+                vehicleTagParser = vehicleTagParserFactory.createParser(encodingManager, name, new PMap(vehicleStr));
+                if (vehicleTagParser == null)
+                    return;
+                vehicleTagParser.init(dateRangeParser);
+            }
+            if (vehicleTagParser instanceof BikeCommonTagParser || added) {
                 if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
                     osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
                 if (encodingManager.hasEncodedValue(GetOffBike.KEY))
                     osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY)));
                 if (encodingManager.hasEncodedValue(Smoothness.KEY))
                     osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
-            } else if (vehicleTagParser instanceof FootTagParser) {
+            } else if (vehicleTagParser instanceof FootTagParser  || added) {
                 if (encodingManager.hasEncodedValue(FootNetwork.KEY))
                     osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
             }
-            osmParsers.addWayTagParser(vehicleTagParser);
-            String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
-            if (encodingManager.hasEncodedValue(turnCostKey))
-                osmParsers.addRestrictionTagParser(new RestrictionTagParser(vehicleTagParser.getRestrictions(), encodingManager.getDecimalEncodedValue(turnCostKey)));
+
+            if (!added) {
+                osmParsers.addWayTagParser(vehicleTagParser);
+                String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
+                if (encodingManager.hasEncodedValue(turnCostKey))
+                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(vehicleTagParser.getRestrictions(), encodingManager.getDecimalEncodedValue(turnCostKey)));
+            }
         });
         return osmParsers;
     }

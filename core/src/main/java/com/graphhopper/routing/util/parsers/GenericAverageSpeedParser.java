@@ -3,6 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
@@ -69,7 +70,7 @@ public abstract class GenericAverageSpeedParser {
     public final String getName() {
         String name = avgSpeedEnc.getName().replaceAll("_average_speed", "");
         // safety check for the time being
-        String expectedKey = VehicleAccess.key(name);
+        String expectedKey = VehicleSpeed.key(name);
         if (!avgSpeedEnc.getName().equals(expectedKey))
             throw new IllegalStateException("Expected average_speed key '" + expectedKey + "', but got: " + avgSpeedEnc.getName());
         return name;

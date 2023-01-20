@@ -81,9 +81,10 @@ public abstract class VehicleTagParser implements TagParser {
         restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
     }
 
-    public void init(DateRangeParser dateRangeParser) {
+    public VehicleTagParser init(DateRangeParser dateRangeParser) {
         setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
                 restrictions, restrictedValues, intendedValues, false));
+        return this;
     }
 
     protected void setConditionalTagInspector(ConditionalTagInspector inspector) {

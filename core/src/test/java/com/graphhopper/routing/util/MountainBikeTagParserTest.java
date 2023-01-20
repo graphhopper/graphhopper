@@ -21,12 +21,9 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.ev.BikeNetwork;
+import com.graphhopper.routing.ev.DefaultEncodedValueFactory;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.RouteNetwork;
-import com.graphhopper.routing.ev.Smoothness;
-import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
-import com.graphhopper.routing.util.parsers.OSMSmoothnessParser;
+import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -38,22 +35,21 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
     protected EncodingManager createEncodingManager() {
-        return EncodingManager.create("mtb");
+        return EncodingManager.create(new DefaultEncodedValueFactory(), "mtb");
     }
 
-    @Override
-    protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup, PMap pMap) {
-        MountainBikeTagParser parser = new MountainBikeTagParser(lookup, pMap);
+    protected BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup, PMap pMap) {
+        MountainBikeAccessParser parser = new MountainBikeAccessParser(encodingManager, pMap);
         parser.init(new DateRangeParser());
         return parser;
     }
 
-    @Override
-    protected OSMParsers createOSMParsers(BikeCommonTagParser parser, EncodedValueLookup lookup) {
-        return new OSMParsers()
-                .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
-                .addWayTagParser(new OSMSmoothnessParser(lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
-                .addWayTagParser(parser);
+    protected BikeCommonAverageSpeedParser createAverageSpeedParser(EncodedValueLookup lookup) {
+        return new MountainBikeAverageSpeedParser(encodingManager, new PMap());
+    }
+
+    protected BikeCommonPriorityParser createPriorityParser(EncodedValueLookup lookup) {
+        return new MountainBikePriorityParser(encodingManager, new PMap());
     }
 
     @Test
@@ -137,17 +133,17 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("sac_scale", "hiking");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(accessParser.getAccess(way).isWay());
 
         way.setTag("highway", "service");
         way.setTag("sac_scale", "mountain_hiking");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(accessParser.getAccess(way).isWay());
 
         way.setTag("sac_scale", "alpine_hiking");
-        assertTrue(parser.getAccess(way).isWay());
+        assertTrue(accessParser.getAccess(way).isWay());
 
         way.setTag("sac_scale", "demanding_alpine_hiking");
-        assertTrue(parser.getAccess(way).canSkip());
+        assertTrue(accessParser.getAccess(way).canSkip());
     }
 
     @Test
@@ -190,21 +186,21 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         // No barrier!
-        assertFalse(parser.isBarrier(node));
+        assertFalse(accessParser.isBarrier(node));
 
         // kissing_gate with bicycle tag = no
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         node.setTag("bicycle", "no");
         // barrier!
-        assertTrue(parser.isBarrier(node));
+        assertTrue(accessParser.isBarrier(node));
 
         // kissing_gate with bicycle tag
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         node.setTag("bicycle", "yes");
         // No barrier!
-        assertFalse(parser.isBarrier(node));
+        assertFalse(accessParser.isBarrier(node));
     }
 
 }
