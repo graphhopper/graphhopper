@@ -176,9 +176,9 @@ class TagParsingTest {
         way.setTag("junction", "circular");
         tagParsers.forEach(p -> p.handleWayTags(edgeFlags2, way, relFlags));
 
-        assertTrue(roundaboutEnc.getBool(false, edgeFlags));
+        assertTrue(roundaboutEnc.getBool(false, edgeFlags2));
         for (BooleanEncodedValue accessEnc : accessEncs)
-            assertTrue(accessEnc.getBool(false, edgeFlags));
+            assertTrue(accessEnc.getBool(false, edgeFlags2));
     }
 
 }
