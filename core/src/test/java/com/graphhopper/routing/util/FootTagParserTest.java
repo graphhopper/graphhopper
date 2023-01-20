@@ -232,32 +232,36 @@ public class FootTagParserTest {
     public void testRailPlatformIssue366() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        IntsRef flags = encodingManager.createEdgeFlags();
-        footParser.handleWayTags(flags, way);
-        assertFalse(flags.isEmpty());
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(edgeFlags, way);
+        assertTrue(footAccessEnc.getBool(false, edgeFlags));
+        assertEquals(5, footAvgSpeedEnc.getDecimal(false, edgeFlags));
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
-        flags = encodingManager.createEdgeFlags();
-        footParser.handleWayTags(flags, way);
-        assertFalse(flags.isEmpty());
+        edgeFlags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(edgeFlags, way);
+        assertTrue(footAccessEnc.getBool(false, edgeFlags));
+        assertEquals(5, footAvgSpeedEnc.getDecimal(false, edgeFlags));
 
         way.clearTags();
         // only tram, no highway => no access
         way.setTag("railway", "tram");
-        flags = encodingManager.createEdgeFlags();
-        footParser.handleWayTags(flags, way);
-        assertTrue(flags.isEmpty());
+        edgeFlags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(edgeFlags, way);
+        assertTrue(footAccessEnc.getBool(false, edgeFlags));
+        assertEquals(60, footAvgSpeedEnc.getDecimal(false, edgeFlags));
     }
 
     @Test
     public void testPier() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("man_made", "pier");
-        IntsRef flags = encodingManager.createEdgeFlags();
-        footParser.handleWayTags(flags, way);
-        assertFalse(flags.isEmpty());
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(edgeFlags, way);
+        assertTrue(footAccessEnc.getBool(false, edgeFlags));
+        assertEquals(5, footAvgSpeedEnc.getDecimal(false, edgeFlags));
     }
 
     @Test

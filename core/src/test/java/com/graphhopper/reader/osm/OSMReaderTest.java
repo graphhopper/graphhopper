@@ -494,19 +494,23 @@ public class OSMReaderTest {
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
 
-        IntsRef flags = manager.createRelationFlags();
-        osmParsers.handleRelationTags(osmRel, flags);
-        assertFalse(flags.isEmpty());
+        BooleanEncodedValue accessEnc = manager.getBooleanEncodedValue(VehicleAccess.key("bike"));
+        DecimalEncodedValue speedEnc = manager.getDecimalEncodedValue(VehicleSpeed.key("bike"));
+        IntsRef edgeFlags = manager.createRelationFlags();
+        osmParsers.handleRelationTags(osmRel, edgeFlags);
+        assertTrue(accessEnc.getBool(false, edgeFlags));
+        assertTrue(accessEnc.getBool(true, edgeFlags));
+        assertEquals(10, speedEnc.getDecimal(false, edgeFlags));
 
         // unchanged network
-        IntsRef before = IntsRef.deepCopyOf(flags);
-        osmParsers.handleRelationTags(osmRel, flags);
-        assertEquals(before, flags);
+        IntsRef before = IntsRef.deepCopyOf(edgeFlags);
+        osmParsers.handleRelationTags(osmRel, edgeFlags);
+        assertEquals(before, edgeFlags);
 
         // overwrite network
         osmRel.setTag("network", "ncn");
-        osmParsers.handleRelationTags(osmRel, flags);
-        assertNotEquals(before, flags);
+        osmParsers.handleRelationTags(osmRel, edgeFlags);
+        assertNotEquals(before, edgeFlags);
     }
 
     @Test

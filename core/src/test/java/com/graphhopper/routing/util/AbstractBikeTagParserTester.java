@@ -44,6 +44,7 @@ public abstract class AbstractBikeTagParserTester {
     protected BooleanEncodedValue roundaboutEnc;
     protected DecimalEncodedValue priorityEnc;
     protected DecimalEncodedValue avgSpeedEnc;
+    protected BooleanEncodedValue accessEnc;
 
     @BeforeEach
     public void setUp() {
@@ -53,6 +54,7 @@ public abstract class AbstractBikeTagParserTester {
         roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
         priorityEnc = encodingManager.getDecimalEncodedValue(VehiclePriority.key(parser.getName()));
         avgSpeedEnc = parser.getAverageSpeedEnc();
+        accessEnc = parser.getAccessEnc();
     }
 
     protected abstract EncodingManager createEncodingManager();
@@ -276,25 +278,29 @@ public abstract class AbstractBikeTagParserTester {
 
         way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        IntsRef flags = encodingManager.createEdgeFlags();
-        parser.handleWayTags(flags, way);
-        assertNotEquals(true, flags.isEmpty());
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        parser.handleWayTags(edgeFlags, way);
+        assertEquals(4.0, avgSpeedEnc.getDecimal(false, edgeFlags));
+        assertTrue(accessEnc.getBool(false, edgeFlags));
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
-        flags = encodingManager.createEdgeFlags();
-        parser.handleWayTags(flags, way);
-        assertNotEquals(true, flags.isEmpty());
+        edgeFlags = encodingManager.createEdgeFlags();
+        parser.handleWayTags(edgeFlags, way);
+        // todonow: why is this 18 for MTB, 2 for racingbike and 12 for normal bike?
+        assertEquals(12.0, avgSpeedEnc.getDecimal(false, edgeFlags));
+        assertTrue(accessEnc.getBool(false, edgeFlags));
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
         way.setTag("bicycle", "no");
 
-        flags = encodingManager.createEdgeFlags();
-        parser.handleWayTags(flags, way);
-        assertTrue(flags.isEmpty());
+        edgeFlags = encodingManager.createEdgeFlags();
+        parser.handleWayTags(edgeFlags, way);
+        assertEquals(0.0, avgSpeedEnc.getDecimal(false, edgeFlags));
+        assertFalse(accessEnc.getBool(false, edgeFlags));
     }
 
     @Test
