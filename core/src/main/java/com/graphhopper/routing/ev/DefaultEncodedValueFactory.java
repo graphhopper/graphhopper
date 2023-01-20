@@ -99,6 +99,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return Curvature.create();
 
         } else if (VehicleAccess.key("car").equals(name)
+                || VehicleAccess.key("roads").equals(name)
                 || VehicleAccess.key("motorcycle").equals(name)
                 || VehicleAccess.key("foot").equals(name)
                 || VehicleAccess.key("hike").equals(name)
@@ -134,7 +135,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return VehicleSpeed.createWithoutKey(name, properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 2),
                     properties.getBool("speed_two_directions", false));
 
-        } else if (VehiclePriority.key("car").equals(name)) {
+        } else if (VehiclePriority.key("car").equals(name)
+                || VehiclePriority.key("roads").equals(name)) {
             return null;
         } else if (VehiclePriority.key("motorcycle").equals(name)
                 || VehiclePriority.key("foot").equals(name)

@@ -46,9 +46,9 @@ public class EncodingManager implements EncodedValueLookup {
     private final EncodedValue.InitializerConfig edgeConfig;
     private final EncodedValue.InitializerConfig turnCostConfig;
 
-//    public static EncodingManager create(EncodedValueFactory factory, String vehicles) {
-//        return create(new DefaultEncodedValueFactory(), vehicles);
-//    }
+    public static EncodingManager create(String vehicles) {
+        return create(new DefaultEncodedValueFactory(), vehicles);
+    }
 
     public static EncodingManager create(EncodedValueFactory factory, String vehicles) {
         Builder builder = new Builder();
@@ -62,26 +62,6 @@ public class EncodingManager implements EncodedValueLookup {
             if (priorityEnc != null) builder.add(priorityEnc);
         }
         return builder.build();
-    }
-
-    /**
-     * Instantiate manager with the given list of encoders. The manager knows several default
-     * encoders using DefaultVehicleEncodedValuesFactory.
-     */
-    public static EncodingManager create(String flagEncodersStr) {
-        return create(new DefaultVehicleEncodedValuesFactory(), flagEncodersStr);
-    }
-
-    public static EncodingManager create(VehicleEncodedValuesFactory factory, String flagEncodersStr) {
-        return createBuilder(Arrays.stream(flagEncodersStr.split(",")).filter(s -> !s.trim().isEmpty()).
-                map(s -> parseEncoderString(factory, s)).collect(Collectors.toList())).build();
-    }
-
-    private static EncodingManager.Builder createBuilder(List<? extends VehicleEncodedValues> vehicleEncodedValues) {
-        Builder builder = new Builder();
-        for (VehicleEncodedValues v : vehicleEncodedValues)
-            builder.add(v);
-        return builder;
     }
 
     public static void putEncodingManagerIntoProperties(EncodingManager encodingManager, StorableProperties properties) {
@@ -218,24 +198,6 @@ public class EncodingManager implements EncodedValueLookup {
                 }
             }
         }
-    }
-
-    // TODO NOW remove this
-    static VehicleEncodedValues parseEncoderString(VehicleEncodedValuesFactory factory, String encoderString) {
-        if (!encoderString.equals(toLowerCase(encoderString)))
-            throw new IllegalArgumentException("An upper case name for the vehicle is not allowed: " + encoderString);
-
-        encoderString = encoderString.trim();
-        if (encoderString.isEmpty())
-            throw new IllegalArgumentException("vehicle cannot be empty. " + encoderString);
-
-        String entryVal = "";
-        if (encoderString.contains("|")) {
-            entryVal = encoderString;
-            encoderString = encoderString.split("\\|")[0];
-        }
-        PMap configuration = new PMap(entryVal);
-        return factory.createVehicleEncodedValues(encoderString, configuration);
     }
 
     public int getIntsForFlags() {

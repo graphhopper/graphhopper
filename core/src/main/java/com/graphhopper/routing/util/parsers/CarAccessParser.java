@@ -36,9 +36,9 @@ import static java.util.Collections.emptyMap;
 
 public class CarAccessParser extends GenericAccessParser implements TagParser {
 
-    private final Set<String> trackTypeValues = new HashSet<>();
-    private final Set<String> highwayValues = new HashSet<>();
-    private final BooleanEncodedValue roundaboutEnc;
+    protected final Set<String> trackTypeValues = new HashSet<>();
+    protected final Set<String> highwayValues = new HashSet<>();
+    protected final BooleanEncodedValue roundaboutEnc;
 
     public CarAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(

@@ -33,8 +33,8 @@ import java.util.Set;
 public class CarAverageSpeedParser extends GenericAverageSpeedParser implements TagParser {
 
     public static final double CAR_MAX_SPEED = 140;
-    private final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
-    private final Set<String> badSurfaceSpeedMap = new HashSet<>();
+    protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
+    protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
     // This value determines the maximal possible on roads with bad surfaces
     private final int badSurfaceSpeed;
 

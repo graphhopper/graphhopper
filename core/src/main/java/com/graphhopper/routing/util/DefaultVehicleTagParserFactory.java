@@ -25,25 +25,6 @@ import static com.graphhopper.routing.util.VehicleEncodedValuesFactory.*;
 
 public class DefaultVehicleTagParserFactory implements VehicleTagParserFactory {
     public VehicleTagParser createParser(EncodedValueLookup lookup, String name, PMap configuration) {
-        if (name.equals(ROADS))
-            return new RoadsTagParser(lookup, configuration);
-        if (name.equals(CAR))
-            throw new IllegalStateException("use CarAverageSpeedParser and CarAccessParser");
-        if (name.equals(BIKE))
-            return new BikeTagParser(lookup, configuration);
-        if (name.equals(RACINGBIKE))
-            return new RacingBikeTagParser(lookup, configuration);
-        if (name.equals(MOUNTAINBIKE))
-            return new MountainBikeTagParser(lookup, configuration);
-        if (name.equals(FOOT))
-            return new FootTagParser(lookup, configuration);
-        if (name.equals(HIKE))
-            return new HikeTagParser(lookup, configuration);
-        if (name.equals(MOTORCYCLE))
-            return new MotorcycleTagParser(lookup, configuration);
-        if (name.equals(WHEELCHAIR))
-            return new WheelchairTagParser(lookup, configuration);
-
-        throw new IllegalArgumentException("Unknown name for vehicle tag parser: " + name);
+        throw new IllegalStateException("Use splitted parsers instead");
     }
 }

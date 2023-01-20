@@ -1,7 +1,9 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.RestrictionTagParser;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -28,9 +30,7 @@ class RoadsTagParserTest {
 
     @Test
     public void testHGV() {
-        RoadsTagParser hgvParser = new RoadsTagParser(EncodingManager.create("roads"), new PMap("transportation_mode=HGV"));
-        hgvParser.init(new DateRangeParser());
-
-        assertEquals("[hgv, motor_vehicle, vehicle, access]", hgvParser.getRestrictions().toString());
+        RestrictionTagParser hgvParser = (RestrictionTagParser) new DefaultTagParserFactory().create(encodingManager, "roads_turn_costs");
+        assertEquals("[hgv, motor_vehicle, vehicle, access]", hgvParser.getVehicleTypes().toString());
     }
 }
