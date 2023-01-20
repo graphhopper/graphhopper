@@ -298,29 +298,37 @@ public class WheelchairTagParserTest {
     public void testPier() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("man_made", "pier");
-        IntsRef flags = encodingManager.createEdgeFlags();
-        wheelchairParser.handleWayTags(flags, way);
-        assertFalse(flags.isEmpty());
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        wheelchairParser.handleWayTags(edgeFlags, way);
+        assertTrue(wheelchairAccessEnc.getBool(false, edgeFlags));
+        assertTrue(wheelchairAccessEnc.getBool(true, edgeFlags));
+        assertEquals(5, wheelchairAvSpeedEnc.getDecimal(false, edgeFlags));
     }
 
     @Test
     public void testMixSpeedAndSafe() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
-        IntsRef flags = encodingManager.createEdgeFlags();
-        wheelchairParser.handleWayTags(flags, way);
-        assertTrue(flags.isEmpty());
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        wheelchairParser.handleWayTags(edgeFlags, way);
+        assertFalse(wheelchairAccessEnc.getBool(false, edgeFlags));
+        assertFalse(wheelchairAccessEnc.getBool(true, edgeFlags));
+        assertEquals(0, wheelchairAvSpeedEnc.getDecimal(false, edgeFlags));
 
         way.setTag("sidewalk", "yes");
-        flags = encodingManager.createEdgeFlags();
-        wheelchairParser.handleWayTags(flags, way);
-        assertEquals(5, wheelchairAvSpeedEnc.getDecimal(false, flags), .1);
+        edgeFlags = encodingManager.createEdgeFlags();
+        wheelchairParser.handleWayTags(edgeFlags, way);
+        assertTrue(wheelchairAccessEnc.getBool(false, edgeFlags));
+        assertTrue(wheelchairAccessEnc.getBool(true, edgeFlags));
+        assertEquals(5, wheelchairAvSpeedEnc.getDecimal(false, edgeFlags), .1);
 
         way.clearTags();
         way.setTag("highway", "track");
-        flags = encodingManager.createEdgeFlags();
-        wheelchairParser.handleWayTags(flags, way);
-        assertEquals(0, wheelchairAvSpeedEnc.getDecimal(false, flags), .1);
+        edgeFlags = encodingManager.createEdgeFlags();
+        wheelchairParser.handleWayTags(edgeFlags, way);
+        assertFalse(wheelchairAccessEnc.getBool(false, edgeFlags));
+        assertFalse(wheelchairAccessEnc.getBool(true, edgeFlags));
+        assertEquals(0, wheelchairAvSpeedEnc.getDecimal(false, edgeFlags), .1);
     }
 
     @Test
