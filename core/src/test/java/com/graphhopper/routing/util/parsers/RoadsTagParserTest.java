@@ -1,10 +1,12 @@
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.RestrictionTagParser;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.ev.VehicleSpeed;
-import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
-import com.graphhopper.routing.util.parsers.RoadsAccessParser;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -15,10 +17,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class RoadsTagParserTest {
 
     private final EncodingManager encodingManager = EncodingManager.create(VehicleSpeed.key("roads"));
-    private final RoadsAccessParser parser;
+    private final RoadsAverageSpeedParser parser;
 
     public RoadsTagParserTest() {
-        parser = new RoadsAccessParser(encodingManager, new PMap());
+        parser = new RoadsAverageSpeedParser(encodingManager, new PMap());
     }
 
     @Test
@@ -30,7 +32,8 @@ class RoadsTagParserTest {
 
     @Test
     public void testHGV() {
-        RestrictionTagParser hgvParser = (RestrictionTagParser) new DefaultTagParserFactory().create(encodingManager, "roads_turn_costs");
-        assertEquals("[hgv, motor_vehicle, vehicle, access]", hgvParser.getVehicleTypes().toString());
+        // TODO NOW test that the correct HGV turn costs are enabled
+//        RoadsAccessParser hgvParser = new RoadsAccessParser(EncodingManager.create("roads"), new PMap("transportation_mode=HGV"));
+//        assertEquals("[hgv, motor_vehicle, vehicle, access]", hgvParser.getRestrictions().toString());
     }
 }

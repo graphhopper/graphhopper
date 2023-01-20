@@ -653,18 +653,20 @@ public class OSMReaderTest {
     @Test
     public void testTurnFlagCombination() {
         GraphHopper hopper = new GraphHopper();
-        hopper.setVehicleEncodedValuesFactory((name, config) -> {
-            if (name.equals("truck")) {
-                return VehicleEncodedValues.car(new PMap(config).putObject("name", "truck"));
-            } else {
-                return new DefaultVehicleEncodedValuesFactory().createVehicleEncodedValues(name, config);
-            }
+        hopper.setEncodedValueFactory(properties -> {
+            String name = properties.split("\\|")[0];
+            if (name.startsWith(VehicleAccess.key("truck"))) return new SimpleBooleanEncodedValue(name, true);
+            else if (name.equals(VehicleSpeed.key("truck"))) return new DecimalEncodedValueImpl(name, 5, 5, true);
+            else if (name.startsWith(TurnCost.key("truck"))) return TurnCost.createWithoutKey(name, 1);
+            else if (name.equals(VehiclePriority.key("truck"))) return null;
+
+            return new DefaultEncodedValueFactory().create(properties);
         });
         hopper.setTagParserFactory((lookup, properties) -> {
             String name = properties.getString("name", "");
             if (name.equals(VehicleAccess.key("truck")))
                 return new CarAccessParser(lookup.getBooleanEncodedValue(name), lookup.getBooleanEncodedValue(Roundabout.KEY),
-                        new PMap(), TransportationMode.HGV);
+                        new PMap(), TransportationMode.HGV).init(new DateRangeParser());
             if (name.equals(VehicleSpeed.key("truck")))
                 return new CarAverageSpeedParser(lookup.getDecimalEncodedValue(name), 120);
             return new DefaultTagParserFactory().create(lookup, properties);
@@ -894,11 +896,11 @@ public class OSMReaderTest {
     @Test
     public void testCountries() throws IOException {
         EnumEncodedValue<RoadAccess> roadAccessEnc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
-        EncodingManager em = new EncodingManager.Builder().add(roadAccessEnc).build();
+        EncodedValue speedEnc = new DefaultEncodedValueFactory().create(VehicleSpeed.key("car"));
+        EncodingManager em = new EncodingManager.Builder().add(roadAccessEnc).add(speedEnc).build();
         OSMParsers osmParsers = new OSMParsers();
         osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
-        CarTagParser parser = new CarTagParser(em, new PMap());
-        parser.init(new DateRangeParser());
+        CarAverageSpeedParser parser = new CarAverageSpeedParser(em, new PMap("name=" + speedEnc.getName()));
         osmParsers.addWayTagParser(parser);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
@@ -928,11 +930,10 @@ public class OSMReaderTest {
         // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
         EnumEncodedValue<Country> countryEnc = new EnumEncodedValue<>(Country.KEY, Country.class);
         EncodingManager em = EncodingManager.start()
-                .add(VehicleEncodedValues.car(new PMap()))
+                .add(new DefaultEncodedValueFactory().create("car_average_speed"))
                 .add(countryEnc)
                 .build();
-        CarTagParser carParser = new CarTagParser(em, new PMap());
-        carParser.init(new DateRangeParser());
+        CarAverageSpeedParser carParser = new CarAverageSpeedParser(em, new PMap());
         OSMParsers osmParsers = new OSMParsers()
                 .addWayTagParser(new CountryParser(countryEnc))
                 .addWayTagParser(carParser);

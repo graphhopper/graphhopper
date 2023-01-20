@@ -26,10 +26,6 @@ import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultTagParserFactory implements TagParserFactory {
 
-    public TagParser create(EncodedValueLookup lookup, String name) {
-        return create(lookup, new PMap(name).putObject("name", name));
-    }
-
     @Override
     public TagParser create(EncodedValueLookup lookup, PMap properties) {
         String name = properties.getString("name", "").trim();
@@ -95,7 +91,7 @@ public class DefaultTagParserFactory implements TagParserFactory {
         else if (VehiclePriority.key("wheelchair").equals(name))
             return new WheelchairPriorityParser(lookup, properties);
 
-        if (Roundabout.KEY.equals(name))
+        else if (Roundabout.KEY.equals(name))
             return new OSMRoundaboutParser(lookup.getBooleanEncodedValue(Roundabout.KEY));
         else if (name.equals(RoadClass.KEY))
             return new OSMRoadClassParser(lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class));

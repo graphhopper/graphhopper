@@ -20,7 +20,7 @@ package com.graphhopper.routing.ev;
 public interface EncodedValueFactory {
     /**
      * This method assumes a string value with the key of an EncodedValue like "road_class" and returns an instance
-     * of it.
+     * of it including properties separated with a pipe e.g. foot_access|block_fords=false
      */
-    EncodedValue create(String encodedValueString);
+    EncodedValue create(String encodedValueProperties);
 }

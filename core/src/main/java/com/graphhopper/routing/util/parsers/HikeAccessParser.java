@@ -13,7 +13,7 @@ import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
 public class HikeAccessParser extends FootAccessParser {
 
     public HikeAccessParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getBooleanEncodedValue(properties.getString("name", "")));
+        this(lookup.getBooleanEncodedValue(properties.getString("name", VehicleAccess.key("hike"))));
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }

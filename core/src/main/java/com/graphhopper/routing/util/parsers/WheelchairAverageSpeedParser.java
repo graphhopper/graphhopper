@@ -12,7 +12,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
     private final int maxInclinePercent = 6;
 
     public WheelchairAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(properties.getString("name", "")));
+        this(lookup.getDecimalEncodedValue(properties.getString("name", VehicleSpeed.key("wheelchair"))));
     }
 
     protected WheelchairAverageSpeedParser(DecimalEncodedValue speedEnc) {

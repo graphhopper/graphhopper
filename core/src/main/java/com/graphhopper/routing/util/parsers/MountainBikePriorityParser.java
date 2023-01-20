@@ -12,14 +12,14 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 public class MountainBikePriorityParser extends BikeCommonPriorityParser {
 
     public MountainBikePriorityParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(properties.getString("average_speed", "")),
-                lookup.getDecimalEncodedValue(properties.getString("name", "")),
+        this(lookup.getDecimalEncodedValue(properties.getString("average_speed", VehicleSpeed.key("mtb"))),
+                lookup.getDecimalEncodedValue(properties.getString("name", VehiclePriority.key("mtb"))),
                 lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class));
     }
 
     protected MountainBikePriorityParser(DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
                                          EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
-        super(speedEnc, priorityEnc, bikeRouteEnc);
+        super(priorityEnc, speedEnc, bikeRouteEnc);
 
         routeMap.put(INTERNATIONAL, PREFER.getValue());
         routeMap.put(NATIONAL, PREFER.getValue());

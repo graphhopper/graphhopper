@@ -47,8 +47,8 @@ public class CarAverageSpeedParser extends GenericAverageSpeedParser implements 
 
     public CarAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getDecimalEncodedValue(properties.getString("name", "")),
-                lookup.getDecimalEncodedValue(properties.getString("name", "")).getNextStorableValue(CAR_MAX_SPEED)
+                lookup.getDecimalEncodedValue(properties.getString("name", VehicleSpeed.key("car"))),
+                lookup.getDecimalEncodedValue(properties.getString("name", VehicleSpeed.key("car"))).getNextStorableValue(CAR_MAX_SPEED)
         );
     }
 

@@ -16,7 +16,7 @@ public class RoadsAccessParser implements TagParser {
     private final BooleanEncodedValue accessEnc;
 
     public RoadsAccessParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getBooleanEncodedValue(properties.getString("name", "")));
+        this(lookup.getBooleanEncodedValue(properties.getString("name", VehicleAccess.key("roads"))));
     }
 
     public RoadsAccessParser(BooleanEncodedValue accessEnc) {

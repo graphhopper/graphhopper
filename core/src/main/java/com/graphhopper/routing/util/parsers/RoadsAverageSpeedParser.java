@@ -7,14 +7,13 @@ import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
-import static com.graphhopper.routing.util.RoadsTagParser.ROADS_MAX_SPEED;
-
 public class RoadsAverageSpeedParser implements TagParser {
+    public static final double ROADS_MAX_SPEED = 254;
     private final DecimalEncodedValue avgSpeedEnc;
     private final double maxPossibleSpeed;
 
     public RoadsAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(properties.getString("name", "")));
+        this(lookup.getDecimalEncodedValue(properties.getString("name", VehicleSpeed.key("roads"))));
     }
 
     public RoadsAverageSpeedParser(DecimalEncodedValue avgSpeedEnc) {

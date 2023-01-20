@@ -29,7 +29,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             throw new IllegalArgumentException("No string provided to load EncodedValue");
 
         PMap properties = new PMap(string);
-        String name = properties.getString("name", string.split("\\|")[0]);
+        String name = string.split("\\|")[0];
         if (name.isEmpty())
             throw new IllegalArgumentException("To load EncodedValue a name is required. " + string);
 

@@ -14,7 +14,7 @@ import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
 public class WheelchairPriorityParser extends FootPriorityParser {
 
     public WheelchairPriorityParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(properties.getString("name", "")),
+        this(lookup.getDecimalEncodedValue(properties.getString("name", VehiclePriority.key("wheelchair"))),
                 lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class));
     }
 

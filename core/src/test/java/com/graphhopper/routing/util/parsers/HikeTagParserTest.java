@@ -15,13 +15,14 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.util.parsers.HikeAccessParser;
-import com.graphhopper.routing.util.parsers.HikePriorityParser;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.util.PMap;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -31,7 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Peter Karich
  */
 public class HikeTagParserTest {
-    private final EncodingManager encodingManager = EncodingManager.create("hike_access,car_access");
+    private final EncodingManager encodingManager = EncodingManager.create("hike_access,car_access,hike_average_speed,hike_priority");
     private final HikeAccessParser accessParser = new HikeAccessParser(encodingManager, new PMap());
     private final HikePriorityParser prioParser = new HikePriorityParser(encodingManager, new PMap());
 
@@ -53,7 +54,7 @@ public class HikeTagParserTest {
     public void testPriority() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "cycleway");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
+        Assertions.assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
 
         way.setTag("highway", "primary");
         assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));

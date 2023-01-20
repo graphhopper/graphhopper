@@ -25,7 +25,7 @@ public class FootAverageSpeedParser extends GenericAverageSpeedParser implements
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     public FootAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(properties.getString("name", "")));
+        this(lookup.getDecimalEncodedValue(properties.getString("name", VehicleSpeed.key("foot"))));
     }
 
     protected FootAverageSpeedParser(DecimalEncodedValue speedEnc) {

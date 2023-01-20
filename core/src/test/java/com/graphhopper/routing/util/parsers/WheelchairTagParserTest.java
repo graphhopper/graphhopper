@@ -15,12 +15,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
@@ -42,7 +45,9 @@ public class WheelchairTagParserTest {
     private final BooleanEncodedValue carAccessEnc;
     private final DecimalEncodedValue carAvSpeedEnc;
     private final EncodingManager encodingManager;
-    private final WheelchairTagParser wheelchairParser;
+    private final WheelchairAccessParser parser;
+    private final WheelchairAverageSpeedParser speedParser;
+    private final WheelchairPriorityParser prioParser;
 
     public WheelchairTagParserTest() {
         wheelchairAccessEnc = VehicleAccess.create("wheelchair");
@@ -54,7 +59,9 @@ public class WheelchairTagParserTest {
                 .add(wheelchairAccessEnc).add(wheelchairAvSpeedEnc).add(wheelchairPriorityEnc).add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
                 .add(carAccessEnc).add(carAvSpeedEnc)
                 .build();
-        wheelchairParser = new WheelchairTagParser(encodingManager, new PMap()) {
+        parser = new WheelchairAccessParser(encodingManager, new PMap("name=wheelchair_access"));
+        parser.init(new DateRangeParser());
+        speedParser = new WheelchairAverageSpeedParser(encodingManager, new PMap("name=wheelchair_average_speed")) {
             @Override
             public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags) {
                 if (!way.hasTag("point_list") || !way.hasTag("edge_distance"))
@@ -63,7 +70,7 @@ public class WheelchairTagParserTest {
                     return super.applyWayTags(way, edgeFlags);
             }
         };
-        wheelchairParser.init(new DateRangeParser());
+        prioParser = new WheelchairPriorityParser(encodingManager, new PMap("name=wheelchair_priority").putObject("average_speed", wheelchairAvSpeedEnc));
     }
 
     @Test
@@ -103,7 +110,7 @@ public class WheelchairTagParserTest {
         g.edge(0, 1).setDistance(10).set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true, true);
         g.edge(0, 2).setDistance(10).set(wheelchairAvSpeedEnc, 5.0).set(wheelchairAccessEnc, true, true);
         g.edge(1, 3).setDistance(10).set(wheelchairAvSpeedEnc, 10.0).set(wheelchairAccessEnc, true, true);
-        EdgeExplorer out = g.createEdgeExplorer(AccessFilter.outEdges(wheelchairParser.getAccessEnc()));
+        EdgeExplorer out = g.createEdgeExplorer(AccessFilter.outEdges(parser.getAccessEnc()));
         assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(out.setBaseNode(2)));
@@ -115,192 +122,192 @@ public class WheelchairTagParserTest {
 
         way.setTag("highway", "motorway");
         way.setTag("sidewalk", "yes");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("sidewalk", "left");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.setTag("sidewalk", "none");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("sidewalk", "left");
         way.setTag("access", "private");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.clearTags();
 
         way.setTag("highway", "pedestrian");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.setTag("highway", "footway");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.setTag("highway", "platform");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.setTag("highway", "motorway");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.setTag("bicycle", "official");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.setTag("foot", "no");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.setTag("foot", "official");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "no");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.setTag("foot", "yes");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("vehicle", "no");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("foot", "no");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("motorroad", "yes");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "cycleway");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("foot", "no");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.setTag("access", "yes");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("foot", "yes");
         way.setTag("access", "no");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("ford", "yes");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("route", "ferry");
-        assertTrue(wheelchairParser.getAccess(way).isFerry());
+        assertTrue(parser.getAccess(way).isFerry());
         way.setTag("foot", "no");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         // #1562, test if ferry route with foot
         way.clearTags();
         way.setTag("route", "ferry");
         way.setTag("foot", "yes");
-        assertTrue(wheelchairParser.getAccess(way).isFerry());
+        assertTrue(parser.getAccess(way).isFerry());
 
         way.setTag("foot", "designated");
-        assertTrue(wheelchairParser.getAccess(way).isFerry());
+        assertTrue(parser.getAccess(way).isFerry());
 
         way.setTag("foot", "official");
-        assertTrue(wheelchairParser.getAccess(way).isFerry());
+        assertTrue(parser.getAccess(way).isFerry());
 
         way.setTag("foot", "permissive");
-        assertTrue(wheelchairParser.getAccess(way).isFerry());
+        assertTrue(parser.getAccess(way).isFerry());
 
         way.setTag("foot", "no");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.setTag("foot", "designated");
         way.setTag("access", "private");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
 
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("access", "no");
         way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "steps");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         // allow paths as they are used as generic path
         way.setTag("highway", "path");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "track");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("sac_scale", "hiking");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "footway");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("incline", "up");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("incline", "3%");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("incline", "9.1%");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.setTag("incline", "1°");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("incline", "5°");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.setTag("incline", "-4%");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("incline", "-9%");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.setTag("incline", "-3°");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("incline", "-6.5°");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("wheelchair", "no");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.setTag("wheelchair", "limited");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "footway");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("kerb", "lowered");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("kerb", "raised");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.setTag("kerb", "2cm");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
         way.setTag("kerb", "4cm");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.setTag("kerb", "20mm");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         // highway tag required
         way.clearTags();
         way.setTag("wheelchair", "yes");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.setTag("highway", "footway");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
     }
 
     @Test
     public void testPier() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("man_made", "pier");
-        IntsRef flags = wheelchairParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        IntsRef flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
         assertFalse(flags.isEmpty());
     }
 
@@ -308,81 +315,81 @@ public class WheelchairTagParserTest {
     public void testMixSpeedAndSafe() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
-        IntsRef flags = wheelchairParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        IntsRef flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
         assertTrue(flags.isEmpty());
 
         way.setTag("sidewalk", "yes");
-        flags = wheelchairParser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        flags = speedParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
         assertEquals(5, wheelchairAvSpeedEnc.getDecimal(false, flags), .1);
 
         way.clearTags();
         way.setTag("highway", "track");
-        flags = wheelchairParser.handleWayTags(encodingManager.createEdgeFlags(), way);
-        assertEquals(0, wheelchairAvSpeedEnc.getDecimal(false, flags), .1);
+        flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
+        assertFalse(wheelchairAccessEnc.getBool(false, flags));
     }
 
     @Test
     public void testPriority() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "cycleway");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
         way.setTag("highway", "primary");
-        assertEquals(PriorityCode.AVOID.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
         way.setTag("highway", "secondary");
-        assertEquals(PriorityCode.AVOID.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "official");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.setTag("highway", "cycleway");
         way.setTag("bicycle", "designated");
         way.setTag("foot", "designated");
-        assertEquals(PriorityCode.PREFER.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "road");
         way.setTag("bicycle", "official");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "trunk");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.AVOID.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
         way.setTag("sidewalk", "none");
-        assertEquals(PriorityCode.AVOID.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.PREFER.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "footway");
-        assertEquals(PriorityCode.PREFER.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
         way.setTag("wheelchair", "designated");
-        assertEquals(PriorityCode.VERY_NICE.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.VERY_NICE.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "footway");
-        assertEquals(PriorityCode.PREFER.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
         way.setTag("wheelchair", "limited");
-        assertEquals(PriorityCode.AVOID.getValue(), wheelchairParser.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
     }
 
     @Test
@@ -391,19 +398,19 @@ public class WheelchairTagParserTest {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // no barrier!
-        assertFalse(wheelchairParser.isBarrier(node));
+        assertFalse(parser.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "yes");
         // no barrier!
-        assertFalse(wheelchairParser.isBarrier(node));
+        assertFalse(parser.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
         // barrier!
-        assertTrue(wheelchairParser.isBarrier(node));
+        assertTrue(parser.isBarrier(node));
 
         node.setTag("bicycle", "yes");
         // no barrier!?
@@ -414,11 +421,11 @@ public class WheelchairTagParserTest {
         node.setTag("access", "no");
         node.setTag("foot", "yes");
         // no barrier!
-        assertFalse(wheelchairParser.isBarrier(node));
+        assertFalse(parser.isBarrier(node));
 
         node.setTag("locked", "yes");
         // barrier!
-        assertTrue(wheelchairParser.isBarrier(node));
+        assertTrue(parser.isBarrier(node));
     }
 
     @Test
@@ -426,39 +433,39 @@ public class WheelchairTagParserTest {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // passByDefaultBarriers are no barrier by default
-        assertFalse(wheelchairParser.isBarrier(node));
+        assertFalse(parser.isBarrier(node));
         node.setTag("access", "no");
-        assertTrue(wheelchairParser.isBarrier(node));
+        assertTrue(parser.isBarrier(node));
 
         // these barriers block
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
-        assertTrue(wheelchairParser.isBarrier(node));
+        assertTrue(parser.isBarrier(node));
         node.setTag("barrier", "wall");
-        assertTrue(wheelchairParser.isBarrier(node));
+        assertTrue(parser.isBarrier(node));
         node.setTag("barrier", "handrail");
-        assertTrue(wheelchairParser.isBarrier(node));
+        assertTrue(parser.isBarrier(node));
         node.setTag("barrier", "turnstile");
-        assertTrue(wheelchairParser.isBarrier(node));
+        assertTrue(parser.isBarrier(node));
         // Explictly allowed access is allowed
         node.setTag("barrier", "fence");
         node.setTag("access", "yes");
-        assertFalse(wheelchairParser.isBarrier(node));
+        assertFalse(parser.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "yes");
-        assertFalse(wheelchairParser.isBarrier(node));
+        assertFalse(parser.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kerb");
-        assertFalse(wheelchairParser.isBarrier(node));
+        assertFalse(parser.isBarrier(node));
         node.setTag("wheelchair", "yes");
-        assertFalse(wheelchairParser.isBarrier(node));
+        assertFalse(parser.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
-        assertTrue(wheelchairParser.isBarrier(node));
+        assertTrue(parser.isBarrier(node));
     }
 
     @Test
@@ -466,30 +473,30 @@ public class WheelchairTagParserTest {
         ReaderWay way = new ReaderWay(1);
 
         way.setTag("highway", "footway");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.setTag("surface", "cobblestone");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.setTag("surface", "sand");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
         way.setTag("surface", "gravel");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.setTag("surface", "asphalt");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.setTag("surface", "sand");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.setTag("sidewalk", "left");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.setTag("sidewalk:left:surface", "cobblestone");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
     }
 
     @Test
@@ -497,16 +504,16 @@ public class WheelchairTagParserTest {
         ReaderWay way = new ReaderWay(1);
 
         way.setTag("highway", "residential");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.setTag("smoothness", "bad");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
 
         way.setTag("sidewalk", "both");
-        assertTrue(wheelchairParser.getAccess(way).isWay());
+        assertTrue(parser.getAccess(way).isWay());
 
         way.setTag("sidewalk:both:smoothness", "horrible");
-        assertTrue(wheelchairParser.getAccess(way).canSkip());
+        assertTrue(parser.getAccess(way).canSkip());
     }
 
     @Test
@@ -538,32 +545,23 @@ public class WheelchairTagParserTest {
         ReaderWay way1 = new ReaderWay(1);
         way1.setTag("point_list", edge01.fetchWayGeometry(FetchMode.ALL));
         way1.setTag("edge_distance", edge01.getDistance());
-        edge01.setFlags(wheelchairParser.applyWayTags(way1, edge01.getFlags()));
+        edge01.setFlags(speedParser.applyWayTags(way1, edge01.getFlags()));
 
-        assertTrue(edge01.get(wheelchairAccessEnc));
-        assertTrue(edge01.getReverse(wheelchairAccessEnc));
-        assertEquals(2, edge01.get(wheelchairParser.getAverageSpeedEnc()), 0);
-        assertEquals(5, edge01.getReverse(wheelchairParser.getAverageSpeedEnc()), 0);
-
+        assertEquals(2, edge01.get(speedParser.getAverageSpeedEnc()), 0);
+        assertEquals(5, edge01.getReverse(speedParser.getAverageSpeedEnc()), 0);
 
         ReaderWay way2 = new ReaderWay(2);
         way2.setTag("point_list", edge23.fetchWayGeometry(FetchMode.ALL));
         way2.setTag("edge_distance", edge23.getDistance());
-        edge23.setFlags(wheelchairParser.applyWayTags(way2, edge23.getFlags()));
+        edge23.setFlags(speedParser.applyWayTags(way2, edge23.getFlags()));
 
-        assertTrue(edge23.get(wheelchairAccessEnc));
-        assertTrue(edge23.getReverse(wheelchairAccessEnc));
-        assertEquals(2, edge23.get(wheelchairParser.getAverageSpeedEnc()), 0);
-        assertEquals(2, edge23.getReverse(wheelchairParser.getAverageSpeedEnc()), 0);
-
+        assertEquals(2, edge23.get(speedParser.getAverageSpeedEnc()), 0);
+        assertEquals(2, edge23.getReverse(speedParser.getAverageSpeedEnc()), 0);
 
         // only exclude longer edges with too large incline:
         ReaderWay way3 = new ReaderWay(3);
         way3.setTag("point_list", edge45.fetchWayGeometry(FetchMode.ALL));
         way3.setTag("edge_distance", edge45.getDistance());
-        edge45.setFlags(wheelchairParser.applyWayTags(way3, edge45.getFlags()));
-
-        assertFalse(edge45.get(wheelchairAccessEnc));
-        assertFalse(edge45.getReverse(wheelchairAccessEnc));
+        edge45.setFlags(speedParser.applyWayTags(way3, edge45.getFlags()));
     }
 }

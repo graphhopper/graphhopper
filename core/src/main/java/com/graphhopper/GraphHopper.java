@@ -124,8 +124,6 @@ public class GraphHopper {
     // for data reader
     private String osmFile;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
-    private VehicleEncodedValuesFactory vehicleEncodedValuesFactory = new DefaultVehicleEncodedValuesFactory();
-    private VehicleTagParserFactory vehicleTagParserFactory = new DefaultVehicleTagParserFactory();
     private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
@@ -419,26 +417,12 @@ public class GraphHopper {
         return trMap;
     }
 
-    public GraphHopper setVehicleEncodedValuesFactory(VehicleEncodedValuesFactory factory) {
-        this.vehicleEncodedValuesFactory = factory;
-        return this;
-    }
-
     public EncodedValueFactory getEncodedValueFactory() {
         return this.encodedValueFactory;
     }
 
     public GraphHopper setEncodedValueFactory(EncodedValueFactory factory) {
         this.encodedValueFactory = factory;
-        return this;
-    }
-
-    public VehicleTagParserFactory getVehicleTagParserFactory() {
-        return this.vehicleTagParserFactory;
-    }
-
-    public GraphHopper setVehicleTagParserFactory(VehicleTagParserFactory factory) {
-        this.vehicleTagParserFactory = factory;
         return this;
     }
 
@@ -633,8 +617,9 @@ public class GraphHopper {
                                          List<String> ignoredHighways, String dateRangeParserString) {
         OSMParsers osmParsers = new OSMParsers();
         ignoredHighways.forEach(osmParsers::addIgnoredHighway);
-        for (String s : encodedValueStrings) {
-            TagParser tagParser = tagParserFactory.create(encodingManager, new PMap());
+        for (String propStr : encodedValueStrings) {
+            TagParser tagParser = tagParserFactory.create(encodingManager,
+                    new PMap(propStr).putObject("name", propStr.contains("|") ? propStr.split("\\|")[0] : propStr));
             if (tagParser != null)
                 osmParsers.addWayTagParser(tagParser);
         }
@@ -710,7 +695,7 @@ public class GraphHopper {
             if (name.isEmpty())
                 continue;
             if (vehiclesMap.containsKey(name))
-                throw new IllegalArgumentException("Duplicate flag encoder: " + name + " in: " + encoderStr);
+                throw new IllegalArgumentException("Duplicate vehicle: " + name + " in: " + encoderStr);
             vehiclesMap.put(name, encoderStr);
         }
         Map<String, String> vehiclesFromProfiles = new LinkedHashMap<>();

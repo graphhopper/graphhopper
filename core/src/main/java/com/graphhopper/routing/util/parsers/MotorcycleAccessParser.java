@@ -15,7 +15,7 @@ import java.util.Arrays;
 public class MotorcycleAccessParser extends CarAccessParser {
 
     public MotorcycleAccessParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getBooleanEncodedValue(properties.getString("name", "")),
+        this(lookup.getBooleanEncodedValue(properties.getString("name", VehicleAccess.key("motorcycle"))),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 properties,
                 TransportationMode.MOTORCYCLE);

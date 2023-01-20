@@ -36,7 +36,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     // This is the specific bicycle class
     private String classBicycleKey;
 
-    protected BikeCommonPriorityParser(DecimalEncodedValue avgSpeedEnc, DecimalEncodedValue priorityEnc,
+    protected BikeCommonPriorityParser(DecimalEncodedValue priorityEnc, DecimalEncodedValue avgSpeedEnc,
                                        EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
         this.bikeRouteEnc = bikeRouteEnc;
         this.priorityEnc = priorityEnc;

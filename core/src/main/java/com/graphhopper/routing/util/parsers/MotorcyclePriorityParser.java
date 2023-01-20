@@ -3,6 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.VehiclePriority;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
@@ -16,7 +17,7 @@ public class MotorcyclePriorityParser implements TagParser {
     private final DecimalEncodedValue priorityWayEncoder;
 
     public MotorcyclePriorityParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(properties.getString("name", "")));
+        this(lookup.getDecimalEncodedValue(properties.getString("name", VehiclePriority.key("motorcycle"))));
     }
 
     public MotorcyclePriorityParser(DecimalEncodedValue priorityWayEncoder) {

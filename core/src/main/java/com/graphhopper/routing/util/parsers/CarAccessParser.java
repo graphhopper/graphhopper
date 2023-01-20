@@ -42,7 +42,7 @@ public class CarAccessParser extends GenericAccessParser implements TagParser {
 
     public CarAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(properties.getString("name", "")),
+                lookup.getBooleanEncodedValue(properties.getString("name", VehicleAccess.key("car"))),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 properties,
                 TransportationMode.CAR

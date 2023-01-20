@@ -15,7 +15,7 @@ public class HikePriorityParser extends FootPriorityParser {
 
     public HikePriorityParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getDecimalEncodedValue(properties.getString("name", "")),
+                lookup.getDecimalEncodedValue(properties.getString("name", VehiclePriority.key("hike"))),
                 lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class)
         );
     }

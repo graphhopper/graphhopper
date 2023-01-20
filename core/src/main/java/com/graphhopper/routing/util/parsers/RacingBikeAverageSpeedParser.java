@@ -6,7 +6,7 @@ import com.graphhopper.util.PMap;
 public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
 
     public RacingBikeAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(properties.getString("name", "")),
+        this(lookup.getDecimalEncodedValue(properties.getString("name", VehicleSpeed.key("racingbike"))),
                 lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class));
     }
 
