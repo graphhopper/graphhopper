@@ -17,10 +17,22 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.PMap;
+
 public interface EncodedValueFactory {
+
+    EncodedValue create(PMap properties);
+
     /**
      * This method assumes a string value with the key of an EncodedValue like "road_class" and returns an instance
      * of it including properties separated with a pipe e.g. foot_access|block_fords=false
      */
-    EncodedValue create(String encodedValueProperties);
+    static PMap createPMap(final String string) {
+        PMap properties = new PMap(string);
+        int index = string.indexOf("|");
+        if (index == 0)
+            throw new IllegalArgumentException("String cannot start with pipe as name is expected to come before " + string);
+        properties.putObject("name", index > 0 ? string.substring(0, index).trim() : string.trim());
+        return properties;
+    }
 }

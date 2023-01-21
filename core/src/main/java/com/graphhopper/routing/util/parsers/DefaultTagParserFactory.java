@@ -20,17 +20,16 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
-
-import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultTagParserFactory implements TagParserFactory {
 
     @Override
     public TagParser create(EncodedValueLookup lookup, PMap properties) {
-        String name = properties.getString("name", "").trim();
-        if (!name.equals(toLowerCase(name)))
-            throw new IllegalArgumentException("Use lower case for TagParsers: " + name);
+        String name = properties.getString("name", "");
+        if (Helper.isEmpty(name))
+            throw new IllegalArgumentException("To create TagParser a name is required in the PMap: " + properties);
 
         if (VehicleAccess.key("car").equals(name))
             return new CarAccessParser(lookup, properties).init(properties.getObject("data_range_parser", new DateRangeParser()));

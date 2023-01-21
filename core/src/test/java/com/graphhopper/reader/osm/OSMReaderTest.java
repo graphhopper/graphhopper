@@ -677,7 +677,7 @@ public class OSMReaderTest {
     public void testTurnFlagCombination() {
         GraphHopper hopper = new GraphHopper();
         hopper.setEncodedValueFactory(properties -> {
-            String name = properties.split("\\|")[0];
+            String name = properties.getString("name", "");
             if (name.startsWith(VehicleAccess.key("truck"))) return new SimpleBooleanEncodedValue(name, true);
             else if (name.equals(VehicleSpeed.key("truck"))) return new DecimalEncodedValueImpl(name, 5, 5, true);
             else if (name.startsWith(TurnCost.key("truck"))) return TurnCost.createWithoutKey(name, 1);
@@ -919,7 +919,7 @@ public class OSMReaderTest {
     @Test
     public void testCountries() throws IOException {
         EnumEncodedValue<RoadAccess> roadAccessEnc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
-        EncodedValue speedEnc = new DefaultEncodedValueFactory().create(VehicleSpeed.key("car"));
+        EncodedValue speedEnc = new DefaultEncodedValueFactory().create(new PMap().putObject("name", VehicleSpeed.key("car")));
         EncodingManager em = new EncodingManager.Builder().add(roadAccessEnc).add(speedEnc).build();
         OSMParsers osmParsers = new OSMParsers();
         osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
@@ -953,7 +953,7 @@ public class OSMReaderTest {
         // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
         EnumEncodedValue<Country> countryEnc = new EnumEncodedValue<>(Country.KEY, Country.class);
         EncodingManager em = EncodingManager.start()
-                .add(new DefaultEncodedValueFactory().create("car_average_speed"))
+                .add(new DefaultEncodedValueFactory().create(new PMap().putObject("name", "car_average_speed")))
                 .add(countryEnc)
                 .build();
         CarAverageSpeedParser carParser = new CarAverageSpeedParser(em, new PMap());

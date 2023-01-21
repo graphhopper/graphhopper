@@ -24,14 +24,10 @@ import com.graphhopper.util.PMap;
 public class DefaultEncodedValueFactory implements EncodedValueFactory {
 
     @Override
-    public EncodedValue create(String string) {
-        if (Helper.isEmpty(string))
-            throw new IllegalArgumentException("No string provided to load EncodedValue");
-
-        PMap properties = new PMap(string);
-        String name = string.split("\\|")[0];
-        if (name.isEmpty())
-            throw new IllegalArgumentException("To load EncodedValue a name is required. " + string);
+    public EncodedValue create(PMap properties) {
+        String name = properties.getString("name", "");
+        if (Helper.isEmpty(name))
+            throw new IllegalArgumentException("To create EncodedValue a name is required in the PMap: " + properties);
 
         if (Roundabout.KEY.equals(name)) {
             return Roundabout.create();

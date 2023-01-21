@@ -24,7 +24,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -33,7 +32,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
-import java.util.Arrays;
 import java.util.Date;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
@@ -54,12 +52,8 @@ public abstract class AbstractBikeTagParserTester {
 
     @BeforeEach
     public void setUp() {
-        EncodedValueFactory factory = new DefaultEncodedValueFactory();
-        EncodingManager.Builder builder = new EncodingManager.Builder();
-        for (String name : Arrays.asList(VehicleAccess.key(getParserPrefix()), VehicleSpeed.key(getParserPrefix()), VehiclePriority.key(getParserPrefix()))) {
-            builder.add(factory.create(name));
-        }
-        encodingManager = builder.build();
+        encodingManager = EncodingManager.create(VehicleAccess.key(getParserPrefix()) + "," +
+                VehicleSpeed.key(getParserPrefix()) + "," + VehiclePriority.key(getParserPrefix()));
 
         TagParserFactory parserFactory = new DefaultTagParserFactory();
         accessParser = (BikeCommonAccessParser) parserFactory.create(encodingManager,

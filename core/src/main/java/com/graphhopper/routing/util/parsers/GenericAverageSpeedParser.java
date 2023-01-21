@@ -36,7 +36,7 @@ public abstract class GenericAverageSpeedParser {
     /**
      * @return {@link Double#NaN} if no maxspeed found
      */
-    protected static double getMaxSpeed(ReaderWay way, boolean bwd) {
+    public static double getMaxSpeed(ReaderWay way, boolean bwd) {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
         double directedMaxSpeed = OSMValueExtractor.stringToKmh(way.getTag(bwd ? "maxspeed:backward" : "maxspeed:forward"));
         if (isValidSpeed(directedMaxSpeed) && (!isValidSpeed(maxSpeed) || directedMaxSpeed < maxSpeed))

@@ -101,8 +101,8 @@ public class EncodingManager implements EncodedValueLookup {
     public static EncodingManager create(String encodedValues) {
         EncodedValueFactory factory = new DefaultEncodedValueFactory();
         EncodingManager.Builder builder = new EncodingManager.Builder();
-        for (String name : encodedValues.split(",")) {
-            builder.add(factory.create(name));
+        for (String envValStr : encodedValues.split(",")) {
+            builder.add(factory.create(EncodedValueFactory.createPMap(envValStr)));
         }
         return builder.build();
     }
