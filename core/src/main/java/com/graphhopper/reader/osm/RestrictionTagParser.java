@@ -37,10 +37,6 @@ public class RestrictionTagParser {
         this.turnCostEnc = turnCostEnc;
     }
 
-    public List<String> getVehicleTypes() {
-        return vehicleTypes;
-    }
-
     public DecimalEncodedValue getTurnCostEnc() {
         return turnCostEnc;
     }

@@ -691,7 +691,7 @@ public class GraphHopper {
         Map<String, PMap> vehiclesMap = new LinkedHashMap<>();
         for (String encoderStr : vehiclesStr.split(",")) {
             PMap properties = EncodedValueFactory.createPMap(encoderStr);
-            String name = (String) properties.remove("name");
+            String name = properties.getString("name", "");
             if (Helper.isEmpty(name)) continue;
             if (vehiclesMap.containsKey(name))
                 throw new IllegalArgumentException("Duplicate vehicle: " + name + " in: " + encoderStr);
