@@ -43,8 +43,8 @@ import static com.graphhopper.util.Helper.toLowerCase;
  */
 public class EncodingManager implements EncodedValueLookup {
     private final LinkedHashMap<String, EncodedValue> encodedValueMap;
-    private final EncodedValue.InitializerConfig edgeConfig;
-    private final EncodedValue.InitializerConfig turnCostConfig;
+    private int intsForFlags;
+    private int intsForTurnCostFlags;
 
     /**
      * Instantiate manager with the given list of encoders. The manager knows several default
@@ -68,8 +68,8 @@ public class EncodingManager implements EncodedValueLookup {
 
     public static void putEncodingManagerIntoProperties(EncodingManager encodingManager, StorableProperties properties) {
         properties.put("graph.em.version", Constants.VERSION_EM);
-        properties.put("graph.em.edge_config", encodingManager.toEdgeConfigAsString());
-        properties.put("graph.em.turn_cost_config", encodingManager.toTurnCostConfigAsString());
+        properties.put("graph.em.ints_for_flags", encodingManager.intsForFlags);
+        properties.put("graph.em.ints_for_turn_cost_flags", encodingManager.intsForTurnCostFlags);
         properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
     }
 
@@ -91,9 +91,17 @@ public class EncodingManager implements EncodedValueLookup {
                 throw new IllegalStateException("Duplicate encoded value name: " + encodedValue.getName() + " in: graph.encoded_values=" + encodedValueStr);
         });
 
-        EncodedValue.InitializerConfig edgeConfig = EncodedValueSerializer.deserializeInitializerConfig(properties.get("graph.em.edge_config"));
-        EncodedValue.InitializerConfig turnCostConfig = EncodedValueSerializer.deserializeInitializerConfig(properties.get("graph.em.turn_cost_config"));
-        return new EncodingManager(encodedValues, edgeConfig, turnCostConfig);
+        return new EncodingManager(encodedValues,
+                getIntegerProperty(properties, "graph.em.ints_for_flags"),
+                getIntegerProperty(properties, "graph.em.ints_for_turn_cost_flags")
+        );
+    }
+
+    private static int getIntegerProperty(StorableProperties properties, String key) {
+        String str = properties.get(key);
+        if (str.isEmpty())
+            throw new IllegalStateException("Missing EncodingManager property: '" + key + "'");
+        return Integer.parseInt(str);
     }
 
     private static ArrayNode deserializeEncodedValueList(String encodedValueStr) {
@@ -111,17 +119,19 @@ public class EncodingManager implements EncodedValueLookup {
         return new Builder();
     }
 
-    public EncodingManager(LinkedHashMap<String, EncodedValue> encodedValueMap, EncodedValue.InitializerConfig edgeConfig, EncodedValue.InitializerConfig turnCostConfig) {
+    public EncodingManager(LinkedHashMap<String, EncodedValue> encodedValueMap, int intsForFlags, int intsForTurnCostFlags) {
         this.encodedValueMap = encodedValueMap;
-        this.turnCostConfig = turnCostConfig;
-        this.edgeConfig = edgeConfig;
+        this.intsForFlags = intsForFlags;
+        this.intsForTurnCostFlags = intsForTurnCostFlags;
     }
 
     private EncodingManager() {
-        this(new LinkedHashMap<>(), new EncodedValue.InitializerConfig(), new EncodedValue.InitializerConfig());
+        this(new LinkedHashMap<>(), 0, 0);
     }
 
     public static class Builder {
+        private final EncodedValue.InitializerConfig edgeConfig = new EncodedValue.InitializerConfig();
+        private final EncodedValue.InitializerConfig turnCostConfig = new EncodedValue.InitializerConfig();
         private EncodingManager em = new EncodingManager();
 
         public Builder add(VehicleEncodedValues v) {
@@ -140,7 +150,7 @@ public class EncodingManager implements EncodedValueLookup {
             checkNotBuiltAlready();
             if (em.hasEncodedValue(encodedValue.getName()))
                 throw new IllegalArgumentException("EncodedValue already exists: " + encodedValue.getName());
-            encodedValue.init(em.edgeConfig);
+            encodedValue.init(edgeConfig);
             em.encodedValueMap.put(encodedValue.getName(), encodedValue);
             return this;
         }
@@ -150,7 +160,7 @@ public class EncodingManager implements EncodedValueLookup {
             if (em.hasEncodedValue(turnCostEnc.getName()))
                 throw new IllegalArgumentException("Already defined: " + turnCostEnc.getName() + ". Please note that " +
                         "EncodedValues for edges and turn costs are in the same namespace.");
-            turnCostEnc.init(em.turnCostConfig);
+            turnCostEnc.init(turnCostConfig);
             em.encodedValueMap.put(turnCostEnc.getName(), turnCostEnc);
             return this;
         }
@@ -165,6 +175,8 @@ public class EncodingManager implements EncodedValueLookup {
             addDefaultEncodedValues();
             if (em.encodedValueMap.isEmpty())
                 throw new IllegalStateException("No EncodedValues were added to the EncodingManager");
+            em.intsForFlags = edgeConfig.getRequiredInts();
+            em.intsForTurnCostFlags = turnCostConfig.getRequiredInts();
             EncodingManager result = em;
             em = null;
             return result;
@@ -172,32 +184,26 @@ public class EncodingManager implements EncodedValueLookup {
 
         private void addDefaultEncodedValues() {
             // todo: I think ultimately these should all be removed and must be added explicitly
-            if (!em.hasEncodedValue(Roundabout.KEY))
-                add(Roundabout.create());
-            if (!em.hasEncodedValue(RoadClass.KEY))
-                add(new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class));
-            if (!em.hasEncodedValue(RoadClassLink.KEY))
-                add(new SimpleBooleanEncodedValue(RoadClassLink.KEY));
-            if (!em.hasEncodedValue(RoadEnvironment.KEY))
-                add(new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class));
-            if (!em.hasEncodedValue(MaxSpeed.KEY))
-                add(MaxSpeed.create());
-            if (!em.hasEncodedValue(RoadAccess.KEY))
-                add(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class));
-
-            for (String vehicle : em.getVehicles()) {
-                if (vehicle.contains("bike") || vehicle.contains("mtb")) {
-                    if (!em.hasEncodedValue(BikeNetwork.KEY))
-                        add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class));
-                    if (!em.hasEncodedValue(GetOffBike.KEY))
-                        add(GetOffBike.create());
-                    if (!em.hasEncodedValue(Smoothness.KEY))
-                        add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class));
-                } else if (vehicle.contains("foot") || vehicle.contains("hike") || vehicle.contains("wheelchair")) {
-                    if (!em.hasEncodedValue(FootNetwork.KEY))
-                        add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class));
-                }
+            List<String> keys = new ArrayList<>(Arrays.asList(
+                    Roundabout.KEY,
+                    RoadClass.KEY,
+                    RoadClassLink.KEY,
+                    RoadEnvironment.KEY,
+                    MaxSpeed.KEY,
+                    RoadAccess.KEY
+            ));
+            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("bike") || vehicle.contains("mtb"))) {
+                keys.add(BikeNetwork.KEY);
+                keys.add(GetOffBike.KEY);
+                keys.add(Smoothness.KEY);
             }
+            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("foot") || vehicle.contains("hike") || vehicle.contains("wheelchair")))
+                keys.add(FootNetwork.KEY);
+
+            DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
+            for (String key : keys)
+                if (!em.hasEncodedValue(key))
+                    add(evFactory.create(key));
         }
     }
 
@@ -219,7 +225,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public int getIntsForFlags() {
-        return edgeConfig.getRequiredInts();
+        return intsForFlags;
     }
 
     public boolean hasEncodedValue(String key) {
@@ -245,14 +251,6 @@ public class EncodingManager implements EncodedValueLookup {
         }
     }
 
-    public String toEdgeConfigAsString() {
-        return EncodedValueSerializer.serializeInitializerConfig(edgeConfig);
-    }
-
-    public String toTurnCostConfigAsString() {
-        return EncodedValueSerializer.serializeInitializerConfig(turnCostConfig);
-    }
-
     @Override
     public String toString() {
         return String.join(",", getVehicles());
@@ -269,7 +267,7 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     public boolean needsTurnCostsSupport() {
-        return turnCostConfig.getRequiredBits() > 0;
+        return intsForTurnCostFlags > 0;
     }
 
     @Override

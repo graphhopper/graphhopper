@@ -283,7 +283,8 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     private void assertPriorityAndSpeed(EncodingManager encodingManager, DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc, VehicleTagParser parser, int expectedPrio, double expectedSpeed, ReaderWay way) {
-        IntsRef edgeFlags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        parser.handleWayTags(edgeFlags, way);
         assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeFlags), 0.01);
         assertEquals(expectedSpeed, speedEnc.getDecimal(false, edgeFlags), 0.1);
     }

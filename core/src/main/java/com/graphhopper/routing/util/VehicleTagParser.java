@@ -111,25 +111,22 @@ public abstract class VehicleTagParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
-        edgeFlags = handleWayTags(edgeFlags, way);
-        if (!edgeFlags.isEmpty()) {
-            Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
-            handleNodeTags(edgeFlags, nodeTags);
-        }
-        return edgeFlags;
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+        handleWayTags(edgeFlags, way);
+        Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
+        handleNodeTags(edgeFlags, nodeTags);
     }
 
     /**
      * Analyze properties of a way and create the edge flags. This method is called in the second
      * parsing step.
      */
-    protected abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way);
+    protected abstract void handleWayTags(IntsRef edgeFlags, ReaderWay way);
 
     /**
      * Updates the given edge flags based on node tags
      */
-    public IntsRef handleNodeTags(IntsRef edgeFlags, Map<String, Object> nodeTags) {
+    public void handleNodeTags(IntsRef edgeFlags, Map<String, Object> nodeTags) {
         if (!nodeTags.isEmpty()) {
             // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
             ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
@@ -140,7 +137,6 @@ public abstract class VehicleTagParser implements TagParser {
                 accessEnc.setBool(true, edgeFlags, false);
             }
         }
-        return edgeFlags;
     }
 
     /**
@@ -166,16 +162,11 @@ public abstract class VehicleTagParser implements TagParser {
     /**
      * @return {@link Double#NaN} if no maxspeed found
      */
-    protected static double getMaxSpeed(ReaderWay way) {
+    protected static double getMaxSpeed(ReaderWay way, boolean bwd) {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
-        double fwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:forward"));
-        if (isValidSpeed(fwdSpeed) && (!isValidSpeed(maxSpeed) || fwdSpeed < maxSpeed))
-            maxSpeed = fwdSpeed;
-
-        double backSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:backward"));
-        if (isValidSpeed(backSpeed) && (!isValidSpeed(maxSpeed) || backSpeed < maxSpeed))
-            maxSpeed = backSpeed;
-
+        double directedMaxSpeed = OSMValueExtractor.stringToKmh(way.getTag(bwd ? "maxspeed:backward" : "maxspeed:forward"));
+        if (isValidSpeed(directedMaxSpeed) && (!isValidSpeed(maxSpeed) || directedMaxSpeed < maxSpeed))
+            maxSpeed = directedMaxSpeed;
         return maxSpeed;
     }
 
@@ -195,6 +186,9 @@ public abstract class VehicleTagParser implements TagParser {
     }
 
     protected void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
+        // special case when speed is non-zero but would be "rounded down" to 0 due to the low precision of the EncodedValue
+        if (speed > 0.1 && speed < avgSpeedEnc.getSmallestNonZeroValue())
+            speed = avgSpeedEnc.getSmallestNonZeroValue();
         if (speed < avgSpeedEnc.getSmallestNonZeroValue()) {
             avgSpeedEnc.setDecimal(reverse, edgeFlags, 0);
             accessEnc.setBool(reverse, edgeFlags, false);

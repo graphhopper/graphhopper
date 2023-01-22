@@ -155,7 +155,8 @@ public class MotorcycleTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         assertTrue(parser.getAccess(way).isWay());
-        IntsRef edgeFlags = parser.handleWayTags(em.createEdgeFlags(), way);
+        IntsRef edgeFlags = em.createEdgeFlags();
+        parser.handleWayTags(edgeFlags, way);
         assertEquals(20, parser.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
         assertEquals(20, parser.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
     }

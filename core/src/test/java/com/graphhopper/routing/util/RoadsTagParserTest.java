@@ -22,7 +22,8 @@ class RoadsTagParserTest {
     @Test
     public void testSpeed() {
         ReaderWay way = new ReaderWay(1);
-        IntsRef flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        IntsRef flags = encodingManager.createEdgeFlags();
+        parser.handleWayTags(flags, way);
         assertTrue(parser.getAverageSpeedEnc().getDecimal(false, flags) > 200);
     }
 

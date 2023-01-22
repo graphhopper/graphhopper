@@ -1091,9 +1091,8 @@ public class GraphHopperTest {
                     if (name.equals("road_environment"))
                         parser = new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
                             @Override
-                            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+                            public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
                                 // do not change RoadEnvironment to avoid triggering tunnel interpolation
-                                return edgeFlags;
                             }
                         };
                     return parser;

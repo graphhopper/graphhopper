@@ -191,10 +191,10 @@ public class FootTagParser extends VehicleTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
-            return edgeFlags;
+            return;
 
         Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
         accessEnc.setBool(false, edgeFlags, true);
@@ -213,7 +213,6 @@ public class FootTagParser extends VehicleTagParser {
         }
 
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
-        return edgeFlags;
     }
 
     void setSpeed(IntsRef edgeFlags, boolean fwd, boolean bwd, double speed) {
@@ -247,7 +246,7 @@ public class FootTagParser extends VehicleTagParser {
         if (way.hasTag("foot", "designated"))
             weightToPrioMap.put(100d, PREFER.getValue());
 
-        double maxSpeed = getMaxSpeed(way);
+        double maxSpeed = Math.max(getMaxSpeed(way, false), getMaxSpeed(way, true));
         if (safeHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 20)) {
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues)) {

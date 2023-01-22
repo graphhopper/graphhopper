@@ -60,11 +60,10 @@ class TagParsingTest {
         bike1Parser.init(new DateRangeParser());
         BikeTagParser bike2Parser = new BikeTagParser(em, new PMap("name=bike2")) {
             @Override
-            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+            public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
                 // accept less relations
                 if (bikeRouteEnc.getEnum(false, edgeFlags) != RouteNetwork.MISSING)
                     priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(2));
-                return edgeFlags;
             }
         };
         bike2Parser.init(new DateRangeParser());
@@ -80,7 +79,7 @@ class TagParsingTest {
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
         IntsRef edgeFlags = em.createEdgeFlags();
-        edgeFlags = osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
+        osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
         assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeFlags));
         assertTrue(bike1PriorityEnc.getDecimal(false, edgeFlags) > bike2PriorityEnc.getDecimal(false, edgeFlags));
     }
@@ -122,7 +121,7 @@ class TagParsingTest {
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
         IntsRef edgeFlags = em.createEdgeFlags();
-        edgeFlags = osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
+        osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
         // bike: uninfluenced speed for grade but via network => NICE
         // mtb: uninfluenced speed only PREFER
         assertTrue(bikePriorityEnc.getDecimal(false, edgeFlags) > mtbPriorityEnc.getDecimal(false, edgeFlags));
@@ -137,7 +136,7 @@ class TagParsingTest {
         BooleanEncodedValue mtbAccessEnc = VehicleAccess.create("mtb");
         List<BooleanEncodedValue> accessEncs = Arrays.asList(carAccessEnc, footAccessEnc, bikeAccessEnc, motorcycleAccessEnc, mtbAccessEnc);
         EncodingManager manager = EncodingManager.start()
-                .add(carAccessEnc).add(VehicleSpeed.create("car", 5, 5, false))
+                .add(carAccessEnc).add(VehicleSpeed.create("car", 5, 5, true))
                 .add(footAccessEnc).add(VehicleSpeed.create("foot", 4, 1, true)).add(VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false))
                 .add(bikeAccessEnc).add(VehicleSpeed.create("bike", 4, 2, false)).add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
                 .add(motorcycleAccessEnc).add(VehicleSpeed.create("motorcycle", 5, 5, true)).add(VehiclePriority.create("motorcycle", 4, PriorityCode.getFactor(1), false)).add(new DecimalEncodedValueImpl("motorcycle_curvature", 5, 5, true))
@@ -177,9 +176,9 @@ class TagParsingTest {
         way.setTag("junction", "circular");
         tagParsers.forEach(p -> p.handleWayTags(edgeFlags2, way, relFlags));
 
-        assertTrue(roundaboutEnc.getBool(false, edgeFlags));
+        assertTrue(roundaboutEnc.getBool(false, edgeFlags2));
         for (BooleanEncodedValue accessEnc : accessEncs)
-            assertTrue(accessEnc.getBool(false, edgeFlags));
+            assertTrue(accessEnc.getBool(false, edgeFlags2));
     }
 
 }

@@ -68,7 +68,7 @@ public class HikeTagParser extends FootTagParser {
         if (way.hasTag("foot", "designated"))
             weightToPrioMap.put(100d, PREFER.getValue());
 
-        double maxSpeed = getMaxSpeed(way);
+        double maxSpeed = Math.max(getMaxSpeed(way, false), getMaxSpeed(way, true));
         if (safeHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 20)) {
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues)) {
@@ -89,22 +89,22 @@ public class HikeTagParser extends FootTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
-        edgeFlags = super.handleWayTags(edgeFlags, way);
-        return applyWayTags(way, edgeFlags);
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+        super.handleWayTags(edgeFlags, way);
+        applyWayTags(way, edgeFlags);
     }
 
-    public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags) {
+    public void applyWayTags(ReaderWay way, IntsRef edgeFlags) {
         PointList pl = way.getTag("point_list", null);
         if (pl == null)
             throw new IllegalArgumentException("The artificial point_list tag is missing");
         if (!pl.is3D())
-            return edgeFlags;
+            return;
 
         if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
             // do not change speed
             // note: although tunnel can have a difference in elevation it is unlikely that the elevation data is correct for a tunnel
-            return edgeFlags;
+            return;
 
         // Decrease the speed for ele increase (incline), and slightly decrease the speed for ele decrease (decline)
         double prevEle = pl.getEle(0);
@@ -114,7 +114,7 @@ public class HikeTagParser extends FootTagParser {
 
         // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
         if (fullDistance < 2)
-            return edgeFlags;
+            return;
 
         double eleDelta = Math.abs(pl.getEle(pl.size() - 1) - prevEle);
         double slope = eleDelta / fullDistance;
@@ -129,8 +129,6 @@ public class HikeTagParser extends FootTagParser {
             double newSpeed = Math.sqrt(1 + slope * slope) / (slope + 1 / 5.4);
             avgSpeedEnc.setDecimal(false, edgeFlags, Helper.keepIn(newSpeed, 1, 5));
         }
-
-        return edgeFlags;
     }
 
 }

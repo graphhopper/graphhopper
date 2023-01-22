@@ -491,22 +491,29 @@ public class OSMReaderTest {
         osmRel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1, ""));
         osmRel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 2, ""));
 
+        // this is pretty ugly: the bike network parser writes to the edge flags we pass into it, but at a location we
+        // don't know, so we need to get the internal enc to read the flags below
+        EnumEncodedValue<RouteNetwork> transformEnc = ((OSMBikeNetworkTagParser) osmParsers.getRelationTagParsers().get(0)).getTransformerRouteRelEnc();
+
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
 
-        IntsRef flags = manager.createRelationFlags();
-        osmParsers.handleRelationTags(osmRel, flags);
-        assertFalse(flags.isEmpty());
+        IntsRef edgeFlags = manager.createRelationFlags();
+        osmParsers.handleRelationTags(osmRel, edgeFlags);
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeFlags));
 
         // unchanged network
-        IntsRef before = IntsRef.deepCopyOf(flags);
-        osmParsers.handleRelationTags(osmRel, flags);
-        assertEquals(before, flags);
+        IntsRef before = IntsRef.deepCopyOf(edgeFlags);
+        osmParsers.handleRelationTags(osmRel, edgeFlags);
+        assertEquals(before, edgeFlags);
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, before));
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeFlags));
 
         // overwrite network
         osmRel.setTag("network", "ncn");
-        osmParsers.handleRelationTags(osmRel, flags);
-        assertNotEquals(before, flags);
+        osmParsers.handleRelationTags(osmRel, edgeFlags);
+        assertEquals(RouteNetwork.NATIONAL, transformEnc.getEnum(false, edgeFlags));
+        assertNotEquals(before, edgeFlags);
     }
 
     @Test
