@@ -19,6 +19,7 @@ public class TurnCost {
         return new DecimalEncodedValueImpl(key(name), turnBits, 0, 1, false, false, true);
     }
 
+    // TODO NOW remove or replace?
     public static DecimalEncodedValue createWithoutKey(String name, int maxTurnCosts) {
         int turnBits = Helper.countBitValue(maxTurnCosts);
         return new DecimalEncodedValueImpl(name, turnBits, 0, 1, false, false, true);

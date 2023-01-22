@@ -141,7 +141,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
                 || VehiclePriority.key("bike").equals(name)
                 || VehiclePriority.key("racingbike").equals(name)
                 || VehiclePriority.key("mtb").equals(name)) {
-            return VehiclePriority.createWithoutKey(name, 4, PriorityCode.getFactor(1), false);
+            return new DecimalEncodedValueImpl(name, 4, PriorityCode.getFactor(1), false);
 
         } else if (TurnCost.key("car").equals(name)
                 || TurnCost.key("motorcycle").equals(name)
