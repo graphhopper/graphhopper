@@ -64,7 +64,7 @@ public abstract class AbstractBikeTagParserTester {
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
                 .addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
                 .addWayTagParser(accessParser).addWayTagParser(avgSpeedParser).addWayTagParser(priorityParser);
-        priorityEnc = encodingManager.getDecimalEncodedValue(VehiclePriority.key(avgSpeedParser.getName()));
+        priorityEnc = encodingManager.getDecimalEncodedValue(VehiclePriority.key(getParserPrefix()));
         avgSpeedEnc = avgSpeedParser.getAverageSpeedEnc();
     }
 
