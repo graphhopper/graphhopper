@@ -67,12 +67,7 @@ public abstract class GenericAverageSpeedParser {
     }
 
     public final String getName() {
-        String name = avgSpeedEnc.getName().replaceAll("_average_speed", "");
-        // safety check for the time being
-        String expectedKey = VehicleSpeed.key(name);
-        if (!avgSpeedEnc.getName().equals(expectedKey))
-            throw new IllegalStateException("Expected average_speed key '" + expectedKey + "', but got: " + avgSpeedEnc.getName());
-        return name;
+        return avgSpeedEnc.getName();
     }
 
     @Override

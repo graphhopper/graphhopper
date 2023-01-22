@@ -106,12 +106,7 @@ public abstract class GenericAccessParser implements TagParser {
     }
 
     public final String getName() {
-        String name = accessEnc.getName().replaceAll("_access", "");
-        // safety check for the time being
-        String expectedKey = VehicleAccess.key(name);
-        if (!accessEnc.getName().equals(expectedKey))
-            throw new IllegalStateException("Expected access key '" + expectedKey + "', but got: " + accessEnc.getName());
-        return name;
+        return accessEnc.getName();
     }
 
     @Override

@@ -110,6 +110,10 @@ public class EncodingManager implements EncodedValueLookup {
     public static class Builder {
         private EncodingManager em = new EncodingManager();
 
+        public Builder addAll(Collection<EncodedValue> encodedValues) {
+            for(EncodedValue ev : encodedValues) add(ev);
+            return this;
+        }
         public Builder add(EncodedValue encodedValue) {
             checkNotBuiltAlready();
             if (em.hasEncodedValue(encodedValue.getName()))
