@@ -664,6 +664,9 @@ public class GraphHopper {
                 if (tagParser == null) return;
                 if (tagParser instanceof AbstractAccessParser)
                     ((AbstractAccessParser) tagParser).init(dateRangeParser);
+                osmParsers.addWayTagParser(tagParser);
+            });
+            vehicleTagParsers.getTagParsers().forEach(tagParser -> {
                 if (tagParser instanceof BikeCommonAccessParser) {
                     if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
                         osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
@@ -675,7 +678,6 @@ public class GraphHopper {
                     if (encodingManager.hasEncodedValue(FootNetwork.KEY))
                         osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
                 }
-                osmParsers.addWayTagParser(tagParser);
                 String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
                 if (encodingManager.hasEncodedValue(turnCostKey)
                         // need to make sure we do not add the same restriction parsers multiple times
