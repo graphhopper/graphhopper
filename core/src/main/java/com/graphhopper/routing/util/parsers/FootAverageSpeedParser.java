@@ -87,7 +87,8 @@ public class FootAverageSpeedParser extends GenericAverageSpeedParser implements
                 double ferrySpeed = ferrySpeedCalc.getSpeed(way);
                 setSpeed(edgeFlags, true, true, ferrySpeed);
             }
-            return;
+            if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
+                return;
         }
 
         String sacScale = way.getTag("sac_scale");

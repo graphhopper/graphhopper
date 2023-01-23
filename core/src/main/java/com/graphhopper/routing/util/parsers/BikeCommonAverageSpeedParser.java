@@ -145,7 +145,8 @@ public abstract class BikeCommonAverageSpeedParser extends GenericAverageSpeedPa
                 if (avgSpeedEnc.isStoreTwoDirections())
                     avgSpeedEnc.setDecimal(true, edgeFlags, ferrySpeed);
             }
-            return;
+            if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
+                return;
         }
 
         double speed = getSpeed(way);

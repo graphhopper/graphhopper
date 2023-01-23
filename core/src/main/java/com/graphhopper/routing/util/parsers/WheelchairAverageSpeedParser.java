@@ -46,7 +46,8 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
                 double ferrySpeed = ferrySpeedCalc.getSpeed(way);
                 setSpeed(edgeFlags, true, true, ferrySpeed);
             }
-            return;
+            if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
+                return;
         }
 
         setSpeed(edgeFlags, true, true, MEAN_SPEED);

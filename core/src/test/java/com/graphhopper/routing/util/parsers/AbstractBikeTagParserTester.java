@@ -67,6 +67,7 @@ public abstract class AbstractBikeTagParserTester {
                 .addWayTagParser(accessParser).addWayTagParser(speedParser).addWayTagParser(priorityParser);
         priorityEnc = encodingManager.getDecimalEncodedValue(VehiclePriority.key(getParserPrefix()));
         avgSpeedEnc = speedParser.getAverageSpeedEnc();
+        accessEnc = accessParser.getAccessEnc();
     }
 
     protected abstract String getParserPrefix();
@@ -295,7 +296,7 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
         accessParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
-        assertEquals(12.0, avgSpeedEnc.getDecimal(false, edgeFlags));
+        assertEquals(4, avgSpeedEnc.getDecimal(false, edgeFlags));
         assertTrue(accessEnc.getBool(false, edgeFlags));
 
         way = new ReaderWay(1);

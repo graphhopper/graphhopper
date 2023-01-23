@@ -305,7 +305,9 @@ public class WheelchairTagParserTest {
     public void testPier() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("man_made", "pier");
-        IntsRef flags = encodingManager.createEdgeFlags(); parser.handleWayTags(flags, way, null);
+        IntsRef flags = encodingManager.createEdgeFlags();
+        parser.handleWayTags(flags, way, null);
+        speedParser.handleWayTags(flags, way, null);
         assertTrue(wheelchairAccessEnc.getBool(false, flags));
         assertTrue(wheelchairAccessEnc.getBool(true, flags));
         assertEquals(5, wheelchairAvSpeedEnc.getDecimal(false, flags));
@@ -319,7 +321,6 @@ public class WheelchairTagParserTest {
         parser.handleWayTags(edgeFlags, way, null);
         assertFalse(wheelchairAccessEnc.getBool(false, edgeFlags));
         assertFalse(wheelchairAccessEnc.getBool(true, edgeFlags));
-        assertEquals(0, wheelchairAvSpeedEnc.getDecimal(false, edgeFlags));
 
         way.setTag("sidewalk", "yes");
         edgeFlags = encodingManager.createEdgeFlags();
@@ -332,11 +333,9 @@ public class WheelchairTagParserTest {
         way.clearTags();
         way.setTag("highway", "track");
         edgeFlags = encodingManager.createEdgeFlags();
-        speedParser.handleWayTags(edgeFlags, way, null);
         parser.handleWayTags(edgeFlags, way, null);
         assertFalse(wheelchairAccessEnc.getBool(false, edgeFlags));
         assertFalse(wheelchairAccessEnc.getBool(true, edgeFlags));
-        assertEquals(0, wheelchairAvSpeedEnc.getDecimal(false, edgeFlags), .1);
     }
 
     @Test
@@ -583,11 +582,11 @@ public class WheelchairTagParserTest {
         way3.setTag("point_list", edge45.fetchWayGeometry(FetchMode.ALL));
         way3.setTag("edge_distance", edge45.getDistance());
         flags = edge45.getFlags();
-        speedParser.applyWayTags(way3, flags);
         speedParser.handleWayTags(flags, way3, null);
+        speedParser.applyWayTags(way3, flags);
         edge45.setFlags(flags);
 
-        assertFalse(edge45.get(wheelchairAccessEnc));
-        assertFalse(edge45.getReverse(wheelchairAccessEnc));
+        assertEquals(0, edge45.get(wheelchairAvSpeedEnc), 0.1);
+        assertEquals(0, edge45.getReverse(wheelchairAvSpeedEnc), 0.1);
     }
 }
