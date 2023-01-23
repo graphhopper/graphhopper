@@ -664,7 +664,7 @@ public class GraphHopper {
                 if (tagParser == null) return;
                 if (tagParser instanceof AbstractAccessParser)
                     ((AbstractAccessParser) tagParser).init(dateRangeParser);
-                if (tagParser instanceof BikeAccessParser) {
+                if (tagParser instanceof BikeCommonAccessParser) {
                     if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
                         osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
                     if (encodingManager.hasEncodedValue(GetOffBike.KEY))
