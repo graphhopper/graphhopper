@@ -15,10 +15,24 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ev;
+package com.graphhopper.routing.util;
 
 import com.graphhopper.util.PMap;
 
-public interface EncodedValueFactory {
-    EncodedValue create(String name, PMap properties);
+/**
+ * @author Peter Karich
+ */
+public interface VehicleEncodedValuesFactory {
+    String ROADS = "roads";
+    String CAR = "car";
+    String BIKE = "bike";
+    String RACINGBIKE = "racingbike";
+    String MOUNTAINBIKE = "mtb";
+    String FOOT = "foot";
+    String HIKE = "hike";
+    String MOTORCYCLE = "motorcycle";
+    String WHEELCHAIR = "wheelchair";
+
+    VehicleEncodedValues createVehicleEncodedValues(String name, PMap configuration);
+
 }

@@ -38,7 +38,8 @@ import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.Date;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -58,9 +59,9 @@ public class MotorcycleTagParserTest {
     private final MotorcycleAverageSpeedParser speedParser;
 
     public MotorcycleTagParserTest() {
-        parser = new MotorcycleAccessParser(em, new PMap("name=motorcycle_access"));
+        parser = new MotorcycleAccessParser(em, new PMap());
         parser.init(new DateRangeParser());
-        speedParser = new MotorcycleAverageSpeedParser(em, new PMap("name=motorcycle_average_speed"));
+        speedParser = new MotorcycleAverageSpeedParser(em, new PMap());
     }
 
     private Graph initExampleGraph() {

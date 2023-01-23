@@ -17,18 +17,12 @@
  */
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 public class DefaultEncodedValueFactory implements EncodedValueFactory {
 
     @Override
-    public EncodedValue create(PMap properties) {
-        String name = properties.getString("name", "");
-        if (Helper.isEmpty(name))
-            throw new IllegalArgumentException("To create EncodedValue a name is required in the PMap: " + properties);
-
+    public EncodedValue create(String name, PMap properties) {
         if (Roundabout.KEY.equals(name)) {
             return Roundabout.create();
         } else if (GetOffBike.KEY.equals(name)) {
@@ -93,69 +87,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return AverageSlope.create();
         } else if (Curvature.KEY.equals(name)) {
             return Curvature.create();
-
-        } else if (VehicleAccess.key("car").equals(name)
-                || VehicleAccess.key("roads").equals(name)
-                || VehicleAccess.key("motorcycle").equals(name)
-                || VehicleAccess.key("foot").equals(name)
-                || VehicleAccess.key("hike").equals(name)
-                || VehicleAccess.key("wheelchair").equals(name)
-                || VehicleAccess.key("bike").equals(name)
-                || VehicleAccess.key("racingbike").equals(name)
-                || VehicleAccess.key("mtb").equals(name)) {
-            return new SimpleBooleanEncodedValue(name, true);
-
-        } else if (VehicleSpeed.key("car").equals(name)) {
-            return new DecimalEncodedValueImpl(name,
-                    properties.getInt("speed_bits", 5), properties.getDouble("speed_factor", 5),
-                    properties.getBool("speed_two_directions", true));
-        } else if (VehicleSpeed.key("motorcycle").equals(name)) {
-            return new DecimalEncodedValueImpl(name,
-                    properties.getInt("speed_bits", 5), properties.getDouble("speed_factor", 5),
-                    properties.getBool("speed_two_directions", true));
-        } else if (VehicleSpeed.key("roads").equals(name)) {
-            return new DecimalEncodedValueImpl(name,
-                    properties.getInt("speed_bits", 7), properties.getDouble("speed_factor", 2),
-                    properties.getBool("speed_two_directions", true));
-        } else if (VehicleSpeed.key("foot").equals(name)
-                || VehicleSpeed.key("hike").equals(name)) {
-            return new DecimalEncodedValueImpl(name, properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1),
-                    properties.getBool("speed_two_directions", false));
-        } else if (VehicleSpeed.key("wheelchair").equals(name)) {
-            return new DecimalEncodedValueImpl(name, properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1),
-                    properties.getBool("speed_two_directions", true));
-
-        } else if (VehicleSpeed.key("bike").equals(name)
-                || VehicleSpeed.key("racingbike").equals(name)
-                || VehicleSpeed.key("mtb").equals(name)) {
-            return new DecimalEncodedValueImpl(name, properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 2),
-                    properties.getBool("speed_two_directions", false));
-
-        } else if (VehiclePriority.key("car").equals(name)
-                || VehiclePriority.key("roads").equals(name)) {
-            return null;
-        } else if (VehiclePriority.key("motorcycle").equals(name)
-                || VehiclePriority.key("foot").equals(name)
-                || VehiclePriority.key("hike").equals(name)
-                || VehiclePriority.key("wheelchair").equals(name)
-                || VehiclePriority.key("bike").equals(name)
-                || VehiclePriority.key("racingbike").equals(name)
-                || VehiclePriority.key("mtb").equals(name)) {
-            return new DecimalEncodedValueImpl(name, 4, PriorityCode.getFactor(1), false);
-
-        } else if (TurnCost.key("car").equals(name)
-                || TurnCost.key("motorcycle").equals(name)
-                || TurnCost.key("roads").equals(name)
-                || TurnCost.key("foot").equals(name)
-                || TurnCost.key("hike").equals(name)
-                || TurnCost.key("wheelchair").equals(name)
-                || TurnCost.key("bike").equals(name)
-                || TurnCost.key("racingbike").equals(name)
-                || TurnCost.key("mtb").equals(name)) {
-            int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
-            return maxTurnCosts > 0 ? TurnCost.createWithoutKey(name, maxTurnCosts) : null;
-        }
-
-        throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
+        } else
+            throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
     }
 }

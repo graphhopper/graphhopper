@@ -20,7 +20,12 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
+import com.graphhopper.routing.util.VehicleEncodedValues;
+import com.graphhopper.routing.util.VehicleTagParsers;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
@@ -30,8 +35,13 @@ import static org.junit.jupiter.api.Assertions.*;
 
 public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
-    protected String getParserPrefix() {
-        return "mtb";
+    protected EncodingManager createEncodingManager() {
+        return new EncodingManager.Builder().add(VehicleEncodedValues.mountainbike(new PMap())).build();
+    }
+
+    @Override
+    protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap) {
+        return VehicleTagParsers.mtb(lookup, pMap);
     }
 
     @Test

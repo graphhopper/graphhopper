@@ -21,10 +21,14 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BikeNetwork;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.RouteNetwork;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
+import com.graphhopper.routing.util.VehicleEncodedValues;
+import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.storage.IntsRef;
-import org.junit.jupiter.api.Assertions;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
@@ -39,8 +43,13 @@ import static org.junit.jupiter.api.Assertions.*;
 public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Override
-    protected String getParserPrefix() {
-        return "bike";
+    protected EncodingManager createEncodingManager() {
+        return new EncodingManager.Builder().add(VehicleEncodedValues.bike(new PMap())).build();
+    }
+
+    @Override
+    protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap) {
+        return VehicleTagParsers.bike(lookup, pMap);
     }
 
     @Test
@@ -602,10 +611,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         osmRel.setTag("network", "icn");
         IntsRef relFlags = osmParsers.handleRelationTags(osmRel, osmParsers.createRelationFlags());
         IntsRef flags = encodingManager.createEdgeFlags();
-        flags = encodingManager.createEdgeFlags();
         osmParsers.handleWayTags(flags, osmWay, relFlags);
-        Assertions.assertEquals(RouteNetwork.INTERNATIONAL, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
-        Assertions.assertEquals(PriorityCode.getValue(BEST.getValue()), priorityEnc.getDecimal(false, flags), .1);
+        assertEquals(RouteNetwork.INTERNATIONAL, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
+        assertEquals(PriorityCode.getValue(BEST.getValue()), priorityEnc.getDecimal(false, flags), .1);
 
         // for some highways the priority is UNCHANGED
         osmRel = new ReaderRelation(1);
@@ -613,7 +621,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay.setTag("highway", "track");
         flags = encodingManager.createEdgeFlags();
         osmParsers.handleWayTags(flags, osmWay, osmParsers.createRelationFlags());
-        Assertions.assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
+        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
         assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, flags), .1);
 
         // unknown highway tags will be excluded but priority will be unchanged
@@ -622,7 +630,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         flags = encodingManager.createEdgeFlags();
         osmParsers.handleWayTags(flags, osmWay, osmParsers.createRelationFlags());
         assertFalse(accessParser.getAccessEnc().getBool(false, flags));
-        Assertions.assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
+        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
         assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, flags), .1);
     }
 

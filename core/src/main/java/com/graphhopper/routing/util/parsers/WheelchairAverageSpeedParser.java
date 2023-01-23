@@ -39,7 +39,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {

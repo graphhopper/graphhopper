@@ -10,10 +10,10 @@ import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
-import static com.graphhopper.routing.util.parsers.GenericAccessParser.FERRIES;
-import static com.graphhopper.routing.util.parsers.GenericAccessParser.INTENDED;
-import static com.graphhopper.routing.util.parsers.GenericAverageSpeedParser.getMaxSpeed;
-import static com.graphhopper.routing.util.parsers.GenericAverageSpeedParser.isValidSpeed;
+import static com.graphhopper.routing.util.parsers.AbstractAccessParser.FERRIES;
+import static com.graphhopper.routing.util.parsers.AbstractAccessParser.INTENDED;
+import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.getMaxSpeed;
+import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.isValidSpeed;
 
 public class FootPriorityParser implements TagParser {
     final Set<String> ferries = new HashSet<>(FERRIES);

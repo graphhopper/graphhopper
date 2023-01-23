@@ -1,7 +1,10 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.RouteNetwork;
+import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
@@ -9,9 +12,9 @@ import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
-import static com.graphhopper.routing.util.parsers.GenericAccessParser.INTENDED;
+import static com.graphhopper.routing.util.parsers.AbstractAccessParser.INTENDED;
 
-public class FootAverageSpeedParser extends GenericAverageSpeedParser implements TagParser {
+public class FootAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
     static final int SLOW_SPEED = 2;
     static final int MEAN_SPEED = 5;
     // larger value required - ferries are faster than pedestrians
@@ -80,7 +83,7 @@ public class FootAverageSpeedParser extends GenericAverageSpeedParser implements
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {

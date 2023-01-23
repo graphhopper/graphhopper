@@ -1,17 +1,17 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.ConditionalTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.*;
 
-public abstract class GenericAccessParser implements TagParser {
+public abstract class AbstractAccessParser implements TagParser {
     static final Collection<String> FERRIES = Arrays.asList("shuttle_train", "ferry");
     static final Collection<String> ONEWAYS = Arrays.asList("yes", "true", "1", "-1");
     static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official", "permissive");
@@ -29,13 +29,13 @@ public abstract class GenericAccessParser implements TagParser {
     private boolean blockFords = true;
     private ConditionalTagInspector conditionalTagInspector;
 
-    protected GenericAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
+    protected AbstractAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
         this.accessEnc = accessEnc;
 
         restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
     }
 
-    public GenericAccessParser init(DateRangeParser dateRangeParser) {
+    public AbstractAccessParser init(DateRangeParser dateRangeParser) {
         setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
                 restrictions, restrictedValues, intendedValues, false));
         return this;
@@ -80,6 +80,13 @@ public abstract class GenericAccessParser implements TagParser {
             }
         }
     }
+
+    @Override
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+        handleWayTags(edgeFlags, way);
+    }
+
+    protected abstract void handleWayTags(IntsRef edgeFlags, ReaderWay way);
 
     /**
      * @return true if the given OSM node blocks access for this vehicle, false otherwise

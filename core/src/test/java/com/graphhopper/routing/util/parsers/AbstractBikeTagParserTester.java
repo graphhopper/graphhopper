@@ -20,14 +20,15 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.PriorityCode;
+import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -53,30 +54,30 @@ public abstract class AbstractBikeTagParserTester {
 
     @BeforeEach
     public void setUp() {
-        encodingManager = EncodingManager.create(VehicleAccess.key(getParserPrefix()) + "," +
-                VehicleSpeed.key(getParserPrefix()) + "," + VehiclePriority.key(getParserPrefix()));
-
-        TagParserFactory parserFactory = new DefaultTagParserFactory();
-        accessParser = (BikeCommonAccessParser) parserFactory.create(encodingManager,
-                new PMap().putObject("name", VehicleAccess.key(getParserPrefix())).putObject("block_fords", true));
-        speedParser = (BikeCommonAverageSpeedParser) parserFactory.create(encodingManager, new PMap().putObject("name", VehicleSpeed.key(getParserPrefix())));
-        priorityParser = (BikeCommonPriorityParser) parserFactory.create(encodingManager, new PMap().putObject("name", VehiclePriority.key(getParserPrefix())));
+        encodingManager = createEncodingManager();
+        VehicleTagParsers parsers = createBikeTagParsers(encodingManager, new PMap("block_fords=true"));
+        accessParser = (BikeCommonAccessParser) parsers.getAccessParser();
+        accessParser.init(new DateRangeParser());
+        speedParser = (BikeCommonAverageSpeedParser) parsers.getSpeedParser();
+        priorityParser = (BikeCommonPriorityParser) parsers.getPriorityParser();
         osmParsers = new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
                 .addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
                 .addWayTagParser(accessParser).addWayTagParser(speedParser).addWayTagParser(priorityParser);
-        priorityEnc = encodingManager.getDecimalEncodedValue(VehiclePriority.key(getParserPrefix()));
+        priorityEnc = priorityParser.getPriorityEnc();
         avgSpeedEnc = speedParser.getAverageSpeedEnc();
         accessEnc = accessParser.getAccessEnc();
     }
 
-    protected abstract String getParserPrefix();
+    protected abstract EncodingManager createEncodingManager();
+
+    protected abstract VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap);
 
     protected void assertPriority(int expectedPrio, ReaderWay way) {
         IntsRef relFlags = osmParsers.handleRelationTags(new ReaderRelation(0), osmParsers.createRelationFlags());
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
         osmParsers.handleWayTags(edgeFlags, way, relFlags);
-        Assertions.assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeFlags), 0.01);
+        assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeFlags), 0.01);
     }
 
     protected void assertPriorityAndSpeed(int expectedPrio, double expectedSpeed, ReaderWay way) {
@@ -296,6 +297,7 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
         accessParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
+        // todonow: why is it 4 now?, it used to be either 2, 12 or 18, see #2728
         assertEquals(4, avgSpeedEnc.getDecimal(false, edgeFlags));
         assertTrue(accessEnc.getBool(false, edgeFlags));
 
@@ -305,7 +307,7 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("bicycle", "no");
 
         edgeFlags = encodingManager.createEdgeFlags();
-        accessParser.handleWayTags(edgeFlags, way, null);
+        accessParser.handleWayTags(edgeFlags, way);
         assertEquals(0.0, avgSpeedEnc.getDecimal(false, edgeFlags));
         assertFalse(accessEnc.getBool(false, edgeFlags));
     }
@@ -515,17 +517,15 @@ public abstract class AbstractBikeTagParserTester {
     @Test
     void privateAndFords() {
         // defaults: do not block fords, block private
-        BikeCommonAccessParser bike = (BikeCommonAccessParser) new DefaultTagParserFactory().create(encodingManager,
-                new PMap().putObject("name", VehicleAccess.key(getParserPrefix())));
+        BikeCommonAccessParser bike = (BikeCommonAccessParser) createBikeTagParsers(encodingManager, new PMap()).getAccessParser();
         assertFalse(bike.isBlockFords());
-        ReaderNode node = new ReaderNode(1, 1, 1);
-        node.setTag("access", "private");
-        assertTrue(bike.isBarrier(node));
+        assertTrue(bike.restrictedValues.contains("private"));
+        assertFalse(bike.intendedValues.contains("private"));
 
         // block fords, unblock private
-        bike = (BikeCommonAccessParser) new DefaultTagParserFactory().create(encodingManager,
-                new PMap().putObject("name", VehicleAccess.key(getParserPrefix())).putObject("block_fords", true).putObject("block_private", false));
+        bike = (BikeCommonAccessParser) createBikeTagParsers(encodingManager, new PMap("block_fords=true|block_private=false")).getAccessParser();
         assertTrue(bike.isBlockFords());
-        assertFalse(bike.isBarrier(node));
+        assertFalse(bike.restrictedValues.contains("private"));
+        assertTrue(bike.intendedValues.contains("private"));
     }
 }

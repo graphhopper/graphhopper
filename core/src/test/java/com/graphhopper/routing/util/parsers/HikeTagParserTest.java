@@ -21,6 +21,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
+import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -32,7 +33,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Peter Karich
  */
 public class HikeTagParserTest {
-    private final EncodingManager encodingManager = EncodingManager.create("hike_access,car_access,hike_average_speed,hike_priority");
+    private final EncodingManager encodingManager = new EncodingManager.Builder()
+            .add(VehicleEncodedValues.hike(new PMap())).build();
     private final HikeAccessParser accessParser = new HikeAccessParser(encodingManager, new PMap());
     private final HikePriorityParser prioParser = new HikePriorityParser(encodingManager, new PMap());
 

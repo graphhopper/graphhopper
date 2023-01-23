@@ -8,8 +8,8 @@ import java.util.TreeMap;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
-import static com.graphhopper.routing.util.parsers.GenericAverageSpeedParser.getMaxSpeed;
-import static com.graphhopper.routing.util.parsers.GenericAverageSpeedParser.isValidSpeed;
+import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.getMaxSpeed;
+import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.isValidSpeed;
 
 public class HikePriorityParser extends FootPriorityParser {
 

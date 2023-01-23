@@ -11,9 +11,9 @@ import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
-import static com.graphhopper.routing.util.parsers.GenericAccessParser.*;
-import static com.graphhopper.routing.util.parsers.GenericAverageSpeedParser.getMaxSpeed;
-import static com.graphhopper.routing.util.parsers.GenericAverageSpeedParser.isValidSpeed;
+import static com.graphhopper.routing.util.parsers.AbstractAccessParser.*;
+import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.getMaxSpeed;
+import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.isValidSpeed;
 
 public abstract class BikeCommonPriorityParser implements TagParser {
 
@@ -234,5 +234,9 @@ public abstract class BikeCommonPriorityParser implements TagParser {
 
     void setSpecificClassBicycle(String subkey) {
         classBicycleKey = "class:bicycle:" + subkey;
+    }
+
+    public final DecimalEncodedValue getPriorityEnc() {
+        return priorityEnc;
     }
 }

@@ -15,10 +15,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ev;
 
+package com.graphhopper.routing.util;
+
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.PMap;
 
-public interface EncodedValueFactory {
-    EncodedValue create(String name, PMap properties);
+public interface VehicleTagParserFactory {
+    VehicleTagParsers createParsers(EncodedValueLookup lookup, String name, PMap configuration);
 }

@@ -27,12 +27,13 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
-import com.graphhopper.routing.util.parsers.*;
+import com.graphhopper.routing.util.parsers.CountryParser;
+import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
+import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -514,7 +515,7 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testTurnRestrictionsCar() {
+    public void testTurnRestrictionsFromXML() {
         String fileTurnRestrictions = "test-restrictions.xml";
         GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
                 importOrLoad();
@@ -683,24 +684,14 @@ public class OSMReaderTest {
     @Test
     public void testTurnFlagCombination() {
         GraphHopper hopper = new GraphHopper();
-        hopper.setEncodedValueFactory(properties -> {
-            String name = properties.getString("name", "");
-            if (name.startsWith(VehicleAccess.key("truck"))) return new SimpleBooleanEncodedValue(name, true);
-            else if (name.equals(VehicleSpeed.key("truck"))) return new DecimalEncodedValueImpl(name, 5, 5, true);
-            else if (name.startsWith(TurnCost.key("truck"))) return TurnCost.createWithoutKey(name, 1);
-            else if (name.equals(VehiclePriority.key("truck"))) return null;
-
-            return new DefaultEncodedValueFactory().create(properties);
+        hopper.setVehicleEncodedValuesFactory((name, config) -> {
+            if (name.equals("truck")) {
+                return VehicleEncodedValues.car(new PMap(config).putObject("name", "truck"));
+            } else {
+                return new DefaultVehicleEncodedValuesFactory().createVehicleEncodedValues(name, config);
+            }
         });
-        hopper.setTagParserFactory((lookup, properties) -> {
-            String name = properties.getString("name", "");
-            if (name.equals(VehicleAccess.key("truck")))
-                return new CarAccessParser(lookup.getBooleanEncodedValue(name), lookup.getBooleanEncodedValue(Roundabout.KEY),
-                        new PMap(), TransportationMode.HGV).init(new DateRangeParser());
-            if (name.equals(VehicleSpeed.key("truck")))
-                return new CarAverageSpeedParser(lookup.getDecimalEncodedValue(name), 120);
-            return new DefaultTagParserFactory().create(lookup, properties);
-        });
+        // todonow: what is this test supposed to test anyway?
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
@@ -925,13 +916,10 @@ public class OSMReaderTest {
 
     @Test
     public void testCountries() throws IOException {
-        EnumEncodedValue<RoadAccess> roadAccessEnc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
-        EncodedValue speedEnc = new DefaultEncodedValueFactory().create(new PMap().putObject("name", VehicleSpeed.key("car")));
-        EncodingManager em = new EncodingManager.Builder().add(roadAccessEnc).add(speedEnc).build();
+        EncodingManager em = new EncodingManager.Builder().build();
+        EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         OSMParsers osmParsers = new OSMParsers();
         osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
-        CarAverageSpeedParser parser = new CarAverageSpeedParser(em, new PMap("name=" + speedEnc.getName()));
-        osmParsers.addWayTagParser(parser);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
@@ -960,13 +948,11 @@ public class OSMReaderTest {
         // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
         EnumEncodedValue<Country> countryEnc = new EnumEncodedValue<>(Country.KEY, Country.class);
         EncodingManager em = EncodingManager.start()
-                .add(new DefaultEncodedValueFactory().create(new PMap().putObject("name", "car_average_speed")))
+                .add(VehicleEncodedValues.car(new PMap()))
                 .add(countryEnc)
                 .build();
-        CarAverageSpeedParser carParser = new CarAverageSpeedParser(em, new PMap());
         OSMParsers osmParsers = new OSMParsers()
-                .addWayTagParser(new CountryParser(countryEnc))
-                .addWayTagParser(carParser);
+                .addWayTagParser(new CountryParser(countryEnc));
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
@@ -998,12 +984,10 @@ public class OSMReaderTest {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
-            if (turnCosts) setVehiclesString("roads|turn_costs=true|transportation_mode=HGV");
             setProfiles(
                     new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                     new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(turnCosts),
-                    new Profile("bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(turnCosts),
-                    new Profile("roads").setVehicle("roads").setWeighting("fastest").setTurnCosts(turnCosts)
+                    new Profile("bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(turnCosts)
             );
             getReaderConfig().setPreferredLanguage(prefLang);
         }

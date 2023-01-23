@@ -2,8 +2,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.VehicleAccess;
-import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
@@ -11,9 +9,9 @@ import com.graphhopper.storage.IntsRef;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.graphhopper.routing.util.parsers.GenericAccessParser.FERRIES;
+import static com.graphhopper.routing.util.parsers.AbstractAccessParser.FERRIES;
 
-public abstract class GenericAverageSpeedParser {
+public abstract class AbstractAverageSpeedParser implements TagParser {
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final DecimalEncodedValue avgSpeedEnc;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
@@ -22,7 +20,7 @@ public abstract class GenericAverageSpeedParser {
     protected final Set<String> ferries = new HashSet<>(FERRIES);
     protected final FerrySpeedCalculator ferrySpeedCalc;
 
-    protected GenericAverageSpeedParser(DecimalEncodedValue speedEnc, double maxPossibleSpeed) {
+    protected AbstractAverageSpeedParser(DecimalEncodedValue speedEnc, double maxPossibleSpeed) {
         this.maxPossibleSpeed = maxPossibleSpeed;
         this.avgSpeedEnc = speedEnc;
 
@@ -69,6 +67,13 @@ public abstract class GenericAverageSpeedParser {
     public final String getName() {
         return avgSpeedEnc.getName();
     }
+
+    @Override
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+        handleWayTags(edgeFlags, way);
+    }
+
+    abstract void handleWayTags(IntsRef edgeFlags, ReaderWay way);
 
     @Override
     public String toString() {

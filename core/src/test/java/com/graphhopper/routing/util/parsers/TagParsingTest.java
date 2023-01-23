@@ -151,8 +151,8 @@ class TagParsingTest {
                 new MountainBikeAccessParser(manager, new PMap())
         );
         for (TagParser tagParser : tagParsers)
-            if (tagParser instanceof GenericAccessParser)
-                ((GenericAccessParser) tagParser).init(new DateRangeParser());
+            if (tagParser instanceof AbstractAccessParser)
+                ((AbstractAccessParser) tagParser).init(new DateRangeParser());
 
         final IntsRef edgeFlags = manager.createEdgeFlags();
         IntsRef relFlags = manager.createRelationFlags();

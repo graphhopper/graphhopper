@@ -12,7 +12,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public abstract class BikeCommonAverageSpeedParser extends GenericAverageSpeedParser implements TagParser {
+public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
     public static double MAX_SPEED = 30;
     protected static final int PUSHING_SECTION_SPEED = 4;
@@ -136,7 +136,7 @@ public abstract class BikeCommonAverageSpeedParser extends GenericAverageSpeedPa
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {

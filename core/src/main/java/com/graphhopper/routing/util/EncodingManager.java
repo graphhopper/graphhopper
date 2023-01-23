@@ -107,24 +107,23 @@ public class EncodingManager implements EncodedValueLookup {
         this(new LinkedHashMap<>(), 0, 0);
     }
 
-    public static EncodingManager create(String encodedValues) {
-        EncodedValueFactory factory = new DefaultEncodedValueFactory();
-        EncodingManager.Builder builder = new EncodingManager.Builder();
-        for (String envValStr : encodedValues.split(",")) {
-            builder.add(factory.create(EncodedValueFactory.createPMap(envValStr)));
-        }
-        return builder.build();
-    }
-
     public static class Builder {
         private final EncodedValue.InitializerConfig edgeConfig = new EncodedValue.InitializerConfig();
         private final EncodedValue.InitializerConfig turnCostConfig = new EncodedValue.InitializerConfig();
         private EncodingManager em = new EncodingManager();
 
-        public Builder addAll(Collection<EncodedValue> encodedValues) {
-            for(EncodedValue ev : encodedValues) add(ev);
+        public Builder add(VehicleEncodedValues v) {
+            checkNotBuiltAlready();
+            List<EncodedValue> list = new ArrayList<>();
+            v.createEncodedValues(list);
+            list.forEach(this::add);
+
+            list = new ArrayList<>();
+            v.createTurnCostEncodedValues(list);
+            list.forEach(this::addTurnCostEncodedValue);
             return this;
         }
+
         public Builder add(EncodedValue encodedValue) {
             checkNotBuiltAlready();
             if (em.hasEncodedValue(encodedValue.getName()))
@@ -182,7 +181,7 @@ public class EncodingManager implements EncodedValueLookup {
             DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
             for (String key : keys)
                 if (!em.hasEncodedValue(key))
-                    add(evFactory.create(new PMap().putObject("name", key)));
+                    add(evFactory.create(key, new PMap()));
         }
     }
 

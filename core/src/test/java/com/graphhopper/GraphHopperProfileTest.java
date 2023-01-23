@@ -63,14 +63,14 @@ public class GraphHopperProfileTest {
         final GraphHopper hopper = new GraphHopper();
         hopper.setGraphHopperLocation(GH_LOCATION).setStoreOnFlush(false).
                 setProfiles(new Profile("profile").setVehicle("your_car"));
-        assertIllegalArgument(hopper::importOrLoad, "cannot find EncodedValue your_car_access");
+        assertIllegalArgument(hopper::importOrLoad, "entry in vehicle list not supported: your_car");
     }
 
     @Test
     public void vehicleDoesNotExist_error2() {
         final GraphHopper hopper = new GraphHopper().setGraphHopperLocation(GH_LOCATION).setStoreOnFlush(false).
                 setProfiles(new Profile("profile").setVehicle("your_car"));
-        assertIllegalArgument(hopper::importOrLoad, "cannot find EncodedValue your_car_access");
+        assertIllegalArgument(hopper::importOrLoad, "entry in vehicle list not supported: your_car");
     }
 
     @Test

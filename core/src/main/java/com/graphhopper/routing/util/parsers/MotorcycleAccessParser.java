@@ -86,7 +86,7 @@ public class MotorcycleAccessParser extends CarAccessParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
             return;

@@ -13,6 +13,7 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
 
     public RacingBikePriorityParser(EncodedValueLookup lookup, PMap properties) {
         this(lookup.getDecimalEncodedValue(properties.getString("name", VehiclePriority.key("racingbike"))),
+                // todonow: why?
                 lookup.getDecimalEncodedValue(properties.getString("average_speed", VehicleSpeed.key("racingbike"))),
                 lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class));
     }

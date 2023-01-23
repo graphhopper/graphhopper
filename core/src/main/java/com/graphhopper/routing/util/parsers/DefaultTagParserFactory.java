@@ -17,80 +17,15 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 public class DefaultTagParserFactory implements TagParserFactory {
 
     @Override
-    public TagParser create(EncodedValueLookup lookup, PMap properties) {
-        String name = properties.getString("name", "");
-        if (Helper.isEmpty(name))
-            throw new IllegalArgumentException("To create TagParser a name is required in the PMap: " + properties);
-
-        if (VehicleAccess.key("car").equals(name))
-            return new CarAccessParser(lookup, properties).init(properties.getObject("data_range_parser", new DateRangeParser()));
-        else if (VehicleSpeed.key("car").equals(name))
-            return new CarAverageSpeedParser(lookup, properties);
-
-        else if (VehicleAccess.key("motorcycle").equals(name))
-            return new MotorcycleAccessParser(lookup, properties).init(properties.getObject("data_range_parser", new DateRangeParser()));
-        else if (VehicleSpeed.key("motorcycle").equals(name))
-            return new MotorcycleAverageSpeedParser(lookup, properties);
-        else if (VehiclePriority.key("motorcycle").equals(name))
-            return new MotorcyclePriorityParser(lookup, properties);
-
-        else if (VehicleAccess.key("roads").equals(name))
-            return new RoadsAccessParser(lookup, properties);
-        else if (VehicleSpeed.key("roads").equals(name))
-            return new RoadsAverageSpeedParser(lookup, properties);
-
-        else if (VehicleAccess.key("bike").equals(name))
-            return new BikeAccessParser(lookup, properties).init(properties.getObject("data_range_parser", new DateRangeParser()));
-        else if (VehicleSpeed.key("bike").equals(name))
-            return new BikeAverageSpeedParser(lookup, properties);
-        else if (VehiclePriority.key("bike").equals(name))
-            return new BikePriorityParser(lookup, properties.putObject("average_speed", VehicleSpeed.key("bike")));
-
-        else if (VehicleAccess.key("racingbike").equals(name))
-            return new RacingBikeAccessParser(lookup, properties).init(properties.getObject("data_range_parser", new DateRangeParser()));
-        else if (VehicleSpeed.key("racingbike").equals(name))
-            return new RacingBikeAverageSpeedParser(lookup, properties);
-        else if (VehiclePriority.key("racingbike").equals(name))
-            return new RacingBikePriorityParser(lookup, properties.putObject("average_speed", VehicleSpeed.key("racingbike")));
-
-        else if (VehicleAccess.key("mtb").equals(name))
-            return new MountainBikeAccessParser(lookup, properties).init(properties.getObject("data_range_parser", new DateRangeParser()));
-        else if (VehicleSpeed.key("mtb").equals(name))
-            return new MountainBikeAverageSpeedParser(lookup, properties);
-        else if (VehiclePriority.key("mtb").equals(name))
-            return new MountainBikePriorityParser(lookup, properties.putObject("average_speed", VehicleSpeed.key("mtb")));
-
-        else if (VehicleAccess.key("foot").equals(name))
-            return new FootAccessParser(lookup, properties).init(properties.getObject("data_range_parser", new DateRangeParser()));
-        else if (VehicleSpeed.key("foot").equals(name))
-            return new FootAverageSpeedParser(lookup, properties);
-        else if (VehiclePriority.key("foot").equals(name))
-            return new FootPriorityParser(lookup, properties);
-
-        else if (VehicleAccess.key("hike").equals(name))
-            return new HikeAccessParser(lookup, properties).init(properties.getObject("data_range_parser", new DateRangeParser()));
-        else if (VehicleSpeed.key("hike").equals(name))
-            return new HikeAverageSpeedParser(lookup, properties);
-        else if (VehiclePriority.key("hike").equals(name))
-            return new HikePriorityParser(lookup, properties);
-
-        else if (VehicleAccess.key("wheelchair").equals(name))
-            return new WheelchairAccessParser(lookup, properties).init(properties.getObject("data_range_parser", new DateRangeParser()));
-        else if (VehicleSpeed.key("wheelchair").equals(name))
-            return new WheelchairAverageSpeedParser(lookup, properties);
-        else if (VehiclePriority.key("wheelchair").equals(name))
-            return new WheelchairPriorityParser(lookup, properties);
-
-        else if (Roundabout.KEY.equals(name))
+    public TagParser create(EncodedValueLookup lookup, String name, PMap properties) {
+        if (Roundabout.KEY.equals(name))
             return new OSMRoundaboutParser(lookup.getBooleanEncodedValue(Roundabout.KEY));
         else if (name.equals(RoadClass.KEY))
             return new OSMRoadClassParser(lookup.getEnumEncodedValue(RoadClass.KEY, RoadClass.class));

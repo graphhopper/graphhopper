@@ -59,16 +59,16 @@ public class WheelchairTagParserTest {
                 .add(wheelchairAccessEnc).add(wheelchairAvSpeedEnc).add(wheelchairPriorityEnc).add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
                 .add(carAccessEnc).add(carAvSpeedEnc)
                 .build();
-        parser = new WheelchairAccessParser(encodingManager, new PMap("name=wheelchair_access"));
+        parser = new WheelchairAccessParser(encodingManager, new PMap());
         parser.init(new DateRangeParser());
-        speedParser = new WheelchairAverageSpeedParser(encodingManager, new PMap("name=wheelchair_average_speed")) {
+        speedParser = new WheelchairAverageSpeedParser(encodingManager, new PMap()) {
             @Override
             public void applyWayTags(ReaderWay way, IntsRef edgeFlags) {
                 if (way.hasTag("point_list") && way.hasTag("edge_distance"))
                     super.applyWayTags(way, edgeFlags);
             }
         };
-        prioParser = new WheelchairPriorityParser(encodingManager, new PMap("name=wheelchair_priority").putObject("average_speed", wheelchairAvSpeedEnc));
+        prioParser = new WheelchairPriorityParser(encodingManager, new PMap());
     }
 
     @Test

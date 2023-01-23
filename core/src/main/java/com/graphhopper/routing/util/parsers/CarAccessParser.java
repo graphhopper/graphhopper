@@ -34,7 +34,7 @@ import java.util.Set;
 
 import static java.util.Collections.emptyMap;
 
-public class CarAccessParser extends GenericAccessParser implements TagParser {
+public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
     protected final Set<String> trackTypeValues = new HashSet<>();
     protected final Set<String> highwayValues = new HashSet<>();
@@ -141,7 +141,7 @@ public class CarAccessParser extends GenericAccessParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
             return;

@@ -10,12 +10,15 @@ import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
 
-public class FootAccessParser extends GenericAccessParser implements TagParser {
+public class FootAccessParser extends AbstractAccessParser implements TagParser {
 
     final Set<String> safeHighwayTags = new HashSet<>();
     final Set<String> allowedHighwayTags = new HashSet<>();
@@ -150,7 +153,7 @@ public class FootAccessParser extends GenericAccessParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
             return;

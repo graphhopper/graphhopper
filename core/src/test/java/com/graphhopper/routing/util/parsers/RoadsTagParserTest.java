@@ -3,6 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -11,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RoadsTagParserTest {
 
-    private final EncodingManager encodingManager = EncodingManager.create(VehicleSpeed.key("roads"));
+    private final EncodingManager encodingManager = new EncodingManager.Builder().add(VehicleEncodedValues.roads(new PMap())).build();
     private final RoadsAverageSpeedParser parser;
 
     public RoadsTagParserTest() {

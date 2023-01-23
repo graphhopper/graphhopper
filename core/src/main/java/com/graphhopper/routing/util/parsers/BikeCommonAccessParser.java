@@ -13,7 +13,7 @@ import java.util.Set;
 
 import static java.util.Collections.emptyMap;
 
-public abstract class BikeCommonAccessParser extends GenericAccessParser implements TagParser {
+public abstract class BikeCommonAccessParser extends AbstractAccessParser implements TagParser {
 
     protected final HashSet<String> oppositeLanes = new HashSet<>();
     private final Set<String> allowedHighways = new HashSet<>();
@@ -129,7 +129,7 @@ public abstract class BikeCommonAccessParser extends GenericAccessParser impleme
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
             return;

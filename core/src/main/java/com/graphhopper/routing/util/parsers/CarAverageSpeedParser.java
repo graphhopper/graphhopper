@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class CarAverageSpeedParser extends GenericAverageSpeedParser implements TagParser {
+public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
     public static final double CAR_MAX_SPEED = 140;
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
@@ -120,7 +120,7 @@ public class CarAverageSpeedParser extends GenericAverageSpeedParser implements 
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {

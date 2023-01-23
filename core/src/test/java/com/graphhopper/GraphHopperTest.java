@@ -1086,15 +1086,16 @@ public class GraphHopperTest {
         if (!withTunnelInterpolation) {
             hopper.setTagParserFactory(new DefaultTagParserFactory() {
                 @Override
-                public TagParser create(EncodedValueLookup lookup, PMap properties) {
-                    if (properties.getString("name", "").equals("road_environment"))
-                        return new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
+                public TagParser create(EncodedValueLookup lookup, String name, PMap properties) {
+                    TagParser parser = super.create(lookup, name, properties);
+                    if (name.equals("road_environment"))
+                        parser = new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
                             @Override
                             public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
                                 // do not change RoadEnvironment to avoid triggering tunnel interpolation
                             }
                         };
-                    return super.create(lookup, properties);
+                    return parser;
                 }
             });
             hopper.setEncodedValuesString("road_environment");
