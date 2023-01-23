@@ -31,9 +31,7 @@ import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
-import com.graphhopper.routing.util.parsers.CountryParser;
-import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
-import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
+import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -691,7 +689,16 @@ public class OSMReaderTest {
                 return new DefaultVehicleEncodedValuesFactory().createVehicleEncodedValues(name, config);
             }
         });
-        // todonow: what is this test supposed to test anyway?
+        hopper.setVehicleTagParserFactory((lookup, name, config) -> {
+            if (name.equals("truck")) {
+                return new VehicleTagParsers(
+                        new CarAccessParser(lookup.getBooleanEncodedValue(VehicleAccess.key("truck")), lookup.getBooleanEncodedValue(Roundabout.KEY), config, TransportationMode.HGV),
+                        new CarAverageSpeedParser(lookup.getDecimalEncodedValue(VehicleSpeed.key("truck")), 120),
+                        null
+                );
+            }
+            return new DefaultVehicleTagParserFactory().createParsers(lookup, name, config);
+        });
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
@@ -984,10 +991,12 @@ public class OSMReaderTest {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
+            if (turnCosts) setVehiclesString("roads|turn_costs=true|transportation_mode=HGV");
             setProfiles(
                     new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                     new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(turnCosts),
-                    new Profile("bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(turnCosts)
+                    new Profile("bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(turnCosts),
+                    new Profile("roads").setVehicle("roads").setWeighting("fastest").setTurnCosts(turnCosts)
             );
             getReaderConfig().setPreferredLanguage(prefLang);
         }

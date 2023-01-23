@@ -677,10 +677,11 @@ public class GraphHopper {
                 }
                 osmParsers.addWayTagParser(tagParser);
                 String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
-                if (encodingManager.hasEncodedValue(turnCostKey)) {
+                if (encodingManager.hasEncodedValue(turnCostKey)
+                        // need to make sure we do not add the same restriction parsers multiple times
+                        && osmParsers.getRestrictionTagParsers().stream().noneMatch(r -> r.getTurnCostEnc().getName().equals(turnCostKey))) {
                     List<String> restrictions = tagParser instanceof AbstractAccessParser
                             ? ((AbstractAccessParser) tagParser).getRestrictions()
-                            // todonow: this is new?
                             : OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(new PMap(vehicleStr).getString("transportation_mode", "VEHICLE")));
                     osmParsers.addRestrictionTagParser(new RestrictionTagParser(restrictions, encodingManager.getDecimalEncodedValue(turnCostKey)));
                 }
