@@ -120,7 +120,7 @@ public class CarAverageSpeedParser extends GenericAverageSpeedParser implements 
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
@@ -129,7 +129,7 @@ public class CarAverageSpeedParser extends GenericAverageSpeedParser implements 
                 if (avgSpeedEnc.isStoreTwoDirections())
                     setSpeed(true, edgeFlags, ferrySpeed);
             }
-            return edgeFlags;
+            return;
         }
 
         // get assumed speed from highway type
@@ -138,7 +138,6 @@ public class CarAverageSpeedParser extends GenericAverageSpeedParser implements 
 
         setSpeed(false, edgeFlags, applyMaxSpeed(way, speed, false));
         setSpeed(true, edgeFlags, applyMaxSpeed(way, speed, true));
-        return edgeFlags;
     }
 
     /**

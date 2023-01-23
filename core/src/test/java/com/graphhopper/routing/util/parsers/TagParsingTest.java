@@ -58,11 +58,10 @@ class TagParsingTest {
         BikePriorityParser bike1Parser = new BikePriorityParser(em, new PMap("name=bike1_priority").putObject("average_speed", "bike1_average_speed"));
         BikePriorityParser bike2Parser = new BikePriorityParser(em, new PMap("name=bike2_priority").putObject("average_speed", "bike2_average_speed")) {
             @Override
-            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relTags) {
+            public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relTags) {
                 // accept less relations
                 if (bikeRouteEnc.getEnum(false, edgeFlags) != RouteNetwork.MISSING)
                     priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(2));
-                return edgeFlags;
             }
         };
         OSMParsers osmParsers = new OSMParsers()
@@ -77,7 +76,7 @@ class TagParsingTest {
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
         IntsRef edgeFlags = em.createEdgeFlags();
-        edgeFlags = osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
+        osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
         assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeFlags));
         assertTrue(bike1PriorityEnc.getDecimal(false, edgeFlags) > bike2PriorityEnc.getDecimal(false, edgeFlags));
     }
@@ -117,7 +116,7 @@ class TagParsingTest {
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
         IntsRef edgeFlags = em.createEdgeFlags();
-        edgeFlags = osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
+        osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
         // bike: uninfluenced speed for grade but via network => NICE
         // mtb: uninfluenced speed only PREFER
         assertTrue(bikePriorityEnc.getDecimal(false, edgeFlags) > mtbPriorityEnc.getDecimal(false, edgeFlags));
@@ -172,9 +171,9 @@ class TagParsingTest {
         way.setTag("junction", "circular");
         tagParsers.forEach(p -> p.handleWayTags(edgeFlags2, way, relFlags));
 
-        assertTrue(roundaboutEnc.getBool(false, edgeFlags));
+        assertTrue(roundaboutEnc.getBool(false, edgeFlags2));
         for (BooleanEncodedValue accessEnc : accessEncs)
-            assertTrue(accessEnc.getBool(false, edgeFlags));
+            assertTrue(accessEnc.getBool(false, edgeFlags2));
     }
 
 }

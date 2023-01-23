@@ -32,9 +32,9 @@ public class HikeAverageSpeedParser extends FootAverageSpeedParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
-        edgeFlags = super.handleWayTags(edgeFlags, way, relationFlags);
-        return applyWayTags(way, edgeFlags);
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+        super.handleWayTags(edgeFlags, way, relationFlags);
+        applyWayTags(way, edgeFlags);
     }
 
     public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags) {

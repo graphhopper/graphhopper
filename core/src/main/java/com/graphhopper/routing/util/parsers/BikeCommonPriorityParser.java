@@ -77,20 +77,19 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
         Integer priorityFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeFlags));
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 priorityFromRelation = SLIGHT_AVOID.getValue();
             } else {
-                return edgeFlags;
+                return;
             }
         }
 
         double maxSpeed = Math.max(avgSpeedEnc.getDecimal(false, edgeFlags), avgSpeedEnc.getDecimal(true, edgeFlags));
         priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, maxSpeed, priorityFromRelation)));
-        return edgeFlags;
     }
 
     /**

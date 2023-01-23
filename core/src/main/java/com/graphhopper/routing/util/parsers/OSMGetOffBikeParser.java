@@ -27,12 +27,11 @@ public class OSMGetOffBikeParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         String highway = way.getTag("highway");
         if (!way.hasTag("bicycle", accepted) && (pushBikeHighwayTags.contains(highway) || way.hasTag("railway", "platform"))
                 || "steps".equals(highway) || way.hasTag("bicycle", "dismount")) {
             offBikeEnc.setBool(false, edgeFlags, true);
         }
-        return edgeFlags;
     }
 }

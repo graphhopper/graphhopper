@@ -73,11 +73,13 @@ public class FootTagParserTest {
     public void testSteps() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        IntsRef flags = speedParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
+        IntsRef flags = encodingManager.createEdgeFlags();
+        speedParser.handleWayTags(flags, way, null);
         assertEquals(MEAN_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.setTag("highway", "steps");
-        flags = speedParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
+        flags = encodingManager.createEdgeFlags();
+        speedParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
         assertTrue(MEAN_SPEED > footAvgSpeedEnc.getDecimal(false, flags));
     }
 
@@ -237,28 +239,40 @@ public class FootTagParserTest {
     public void testRailPlatformIssue366() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        IntsRef flags = accessParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
-        assertFalse(flags.isEmpty());
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(edgeFlags, way, null);
+        speedParser.handleWayTags(edgeFlags, way, null);
+        assertTrue(footAccessEnc.getBool(false, edgeFlags));
+        assertEquals(5, footAvgSpeedEnc.getDecimal(false, edgeFlags));
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("railway", "platform");
-        flags = accessParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
-        assertFalse(flags.isEmpty());
+        edgeFlags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(edgeFlags, way, null);
+        speedParser.handleWayTags(edgeFlags, way, null);
+        assertTrue(footAccessEnc.getBool(false, edgeFlags));
+        assertEquals(5, footAvgSpeedEnc.getDecimal(false, edgeFlags));
 
         way.clearTags();
         // only tram, no highway => no access
         way.setTag("railway", "tram");
-        flags = accessParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
-        assertTrue(flags.isEmpty());
+        edgeFlags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(edgeFlags, way, null);
+        speedParser.handleWayTags(edgeFlags, way, null);
+        assertFalse(footAccessEnc.getBool(false, edgeFlags));
+        assertEquals(0, footAvgSpeedEnc.getDecimal(false, edgeFlags));
     }
 
     @Test
     public void testPier() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("man_made", "pier");
-        IntsRef flags = accessParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
-        assertFalse(flags.isEmpty());
+        IntsRef flags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(flags, way, null);
+        speedParser.handleWayTags(flags, way, null);
+        assertTrue(footAccessEnc.getBool(false, flags));
+        assertEquals(5, footAvgSpeedEnc.getDecimal(false, flags));
     }
 
     @Test
@@ -278,16 +292,27 @@ public class FootTagParserTest {
     public void testMixSpeedAndSafe() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
-        IntsRef flags = accessParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
-        assertEquals(0, flags.ints[0]);
+        IntsRef flags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(flags, way, null);
+        assertFalse(footAccessEnc.getBool(false, flags));
+        assertFalse(footAccessEnc.getBool(true, flags));
+        assertEquals(0, footAvgSpeedEnc.getDecimal(false, flags));
 
         way.setTag("sidewalk", "yes");
-        flags = speedParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
+        flags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(flags, way, null);
+        speedParser.handleWayTags(flags, way, null);
+        assertTrue(footAccessEnc.getBool(false, flags));
+        assertTrue(footAccessEnc.getBool(true, flags));
         assertEquals(5, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.clearTags();
         way.setTag("highway", "track");
-        flags = speedParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
+        flags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(flags, way, null);
+        speedParser.handleWayTags(flags, way, null);
+        assertTrue(footAccessEnc.getBool(false, flags));
+        assertTrue(footAccessEnc.getBool(true, flags));
         assertEquals(5, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
     }
 
@@ -347,12 +372,14 @@ public class FootTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("sac_scale", "hiking");
-        IntsRef flags = speedParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
+        IntsRef flags = encodingManager.createEdgeFlags();
+        speedParser.handleWayTags(flags, way, null);
         assertEquals(MEAN_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
 
         way.setTag("highway", "track");
         way.setTag("sac_scale", "mountain_hiking");
-        flags = speedParser.handleWayTags(encodingManager.createEdgeFlags(), way, null);
+        flags = encodingManager.createEdgeFlags();
+        speedParser.handleWayTags(flags, way, null);
         assertEquals(SLOW_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
     }
 

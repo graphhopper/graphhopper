@@ -54,7 +54,7 @@ public class MotorcycleAverageSpeedParser extends CarAverageSpeedParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
@@ -62,13 +62,11 @@ public class MotorcycleAverageSpeedParser extends CarAverageSpeedParser {
                 setSpeed(false, edgeFlags, ferrySpeed);
                 setSpeed(true, edgeFlags, ferrySpeed);
             }
-            return edgeFlags;
+        } else {
+            double speed = getSpeed(way);
+            setSpeed(true, edgeFlags, applyMaxSpeed(way, speed, true));
+            setSpeed(false, edgeFlags, applyMaxSpeed(way, speed, true));
         }
-
-        double speed = getSpeed(way);
-        setSpeed(true, edgeFlags, applyMaxSpeed(way, speed, true));
-        setSpeed(false, edgeFlags, applyMaxSpeed(way, speed, true));
-        return edgeFlags;
     }
 
     protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {

@@ -3,17 +3,13 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.ev.RouteNetwork.LOCAL;
 import static com.graphhopper.routing.util.PriorityCode.*;
-import static com.graphhopper.routing.util.PriorityCode.SLIGHT_AVOID;
 import static com.graphhopper.routing.util.parsers.GenericAccessParser.FERRIES;
 import static com.graphhopper.routing.util.parsers.GenericAccessParser.INTENDED;
 import static com.graphhopper.routing.util.parsers.GenericAverageSpeedParser.getMaxSpeed;
@@ -76,17 +72,15 @@ public class FootPriorityParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
         Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
         if (highwayValue == null) {
             if (way.hasTag("route", ferries))
                 priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
-            return edgeFlags;
+        } else {
+            priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
         }
-
-        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
-        return edgeFlags;
     }
 
     public int handlePriority(ReaderWay way, Integer priorityFromRelation) {

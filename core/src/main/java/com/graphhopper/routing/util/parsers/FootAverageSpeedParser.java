@@ -80,14 +80,14 @@ public class FootAverageSpeedParser extends GenericAverageSpeedParser implements
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 double ferrySpeed = ferrySpeedCalc.getSpeed(way);
                 setSpeed(edgeFlags, true, true, ferrySpeed);
             }
-            return edgeFlags;
+            return;
         }
 
         String sacScale = way.getTag("sac_scale");
@@ -96,8 +96,6 @@ public class FootAverageSpeedParser extends GenericAverageSpeedParser implements
         } else {
             setSpeed(edgeFlags, true, true, way.hasTag("highway", "steps") ? MEAN_SPEED - 2 : MEAN_SPEED);
         }
-
-        return edgeFlags;
     }
 
     void setSpeed(IntsRef edgeFlags, boolean fwd, boolean bwd, double speed) {

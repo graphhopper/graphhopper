@@ -26,5 +26,5 @@ import com.graphhopper.storage.IntsRef;
  */
 public interface TagParser {
 
-    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags);
+    void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags);
 }

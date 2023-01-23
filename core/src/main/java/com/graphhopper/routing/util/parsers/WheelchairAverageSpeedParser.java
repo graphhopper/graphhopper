@@ -39,19 +39,18 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 double ferrySpeed = ferrySpeedCalc.getSpeed(way);
                 setSpeed(edgeFlags, true, true, ferrySpeed);
             }
-            return edgeFlags;
+            return;
         }
 
         setSpeed(edgeFlags, true, true, MEAN_SPEED);
-        edgeFlags = applyWayTags(way, edgeFlags);
-        return edgeFlags;
+        applyWayTags(way, edgeFlags);
     }
 
     /**
@@ -59,7 +58,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
      * and maxInclinePercent will reduce speed to SLOW_SPEED. In-/declines above maxInclinePercent will result in zero
      * speed.
      */
-    public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags) {
+    public void applyWayTags(ReaderWay way, IntsRef edgeFlags) {
         PointList pl = way.getTag("point_list", null);
         if (pl == null)
             throw new IllegalArgumentException("The artificial point_list tag is missing");
@@ -71,7 +70,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
 
         // skip elevation data adjustment for too short segments, TODO improve the elevation data handling and/or use the same mechanism as we used to do in bike2
         if (fullDist2D < 20 || !pl.is3D())
-            return edgeFlags;
+            return;
 
         double prevEle = pl.getEle(0);
         double eleDelta = pl.getEle(pl.size() - 1) - prevEle;
@@ -90,7 +89,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
             if (fullDist2D > 50) {
                 setSpeed(edgeFlags, true, false, 0);
                 setSpeed(edgeFlags, true, true, 0);
-                return edgeFlags;
+                return;
             }
 
             fwdSpeed = SLOW_SPEED;
@@ -99,6 +98,5 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
 
         if (fwdSpeed > 0) setSpeed(edgeFlags, true, false, fwdSpeed);
         if (bwdSpeed > 0) setSpeed(edgeFlags, false, true, bwdSpeed);
-        return edgeFlags;
     }
 }

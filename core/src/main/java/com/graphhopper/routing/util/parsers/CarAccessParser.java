@@ -141,10 +141,10 @@ public class CarAccessParser extends GenericAccessParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
-            return edgeFlags;
+            return;
 
         if (!access.isFerry()) {
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
@@ -165,7 +165,6 @@ public class CarAccessParser extends GenericAccessParser implements TagParser {
 
         Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
         handleNodeTags(edgeFlags, nodeTags);
-        return edgeFlags;
     }
 
     /**

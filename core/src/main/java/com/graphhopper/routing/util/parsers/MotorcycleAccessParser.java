@@ -86,10 +86,10 @@ public class MotorcycleAccessParser extends CarAccessParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
-            return edgeFlags;
+            return;
 
         if (!access.isFerry()) {
 
@@ -109,7 +109,5 @@ public class MotorcycleAccessParser extends CarAccessParser {
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
         }
-
-        return edgeFlags;
     }
 }

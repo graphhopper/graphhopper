@@ -19,10 +19,9 @@ public class RoadsAccessParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         accessEnc.setBool(true, edgeFlags, true);
         accessEnc.setBool(false, edgeFlags, true);
-        return edgeFlags;
     }
 
     @Override

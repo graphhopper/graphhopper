@@ -22,11 +22,10 @@ public class RoadsAverageSpeedParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         // let's make it high and let it be reduced in the custom model
         avgSpeedEnc.setDecimal(false, edgeFlags, maxPossibleSpeed);
         if (avgSpeedEnc.isStoreTwoDirections())
             avgSpeedEnc.setDecimal(true, edgeFlags, maxPossibleSpeed);
-        return edgeFlags;
     }
 }

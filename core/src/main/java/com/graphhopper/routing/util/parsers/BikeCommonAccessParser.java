@@ -129,10 +129,10 @@ public abstract class BikeCommonAccessParser extends GenericAccessParser impleme
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
-            return edgeFlags;
+            return;
 
         if (access.isFerry()) {
             accessEnc.setBool(false, edgeFlags, true);
@@ -143,7 +143,6 @@ public abstract class BikeCommonAccessParser extends GenericAccessParser impleme
 
         Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
         handleNodeTags(edgeFlags, nodeTags);
-        return edgeFlags;
     }
 
     protected void handleAccess(IntsRef edgeFlags, ReaderWay way) {

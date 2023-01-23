@@ -136,7 +136,7 @@ public abstract class BikeCommonAverageSpeedParser extends GenericAverageSpeedPa
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
@@ -145,7 +145,7 @@ public abstract class BikeCommonAverageSpeedParser extends GenericAverageSpeedPa
                 if (avgSpeedEnc.isStoreTwoDirections())
                     avgSpeedEnc.setDecimal(true, edgeFlags, ferrySpeed);
             }
-            return edgeFlags;
+            return;
         }
 
         double speed = getSpeed(way);
@@ -157,8 +157,6 @@ public abstract class BikeCommonAverageSpeedParser extends GenericAverageSpeedPa
             speed = applyMaxSpeed(way, speed, true);
             avgSpeedEnc.setDecimal(true, edgeFlags, speed);
         }
-
-        return edgeFlags;
     }
 
     int getSpeed(ReaderWay way) {
