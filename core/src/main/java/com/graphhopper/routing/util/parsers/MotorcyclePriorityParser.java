@@ -17,7 +17,7 @@ public class MotorcyclePriorityParser implements TagParser {
     private final DecimalEncodedValue priorityWayEncoder;
 
     public MotorcyclePriorityParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(properties.getString("name", VehiclePriority.key("motorcycle"))));
+        this(lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "motorcycle"))));
     }
 
     public MotorcyclePriorityParser(DecimalEncodedValue priorityWayEncoder) {

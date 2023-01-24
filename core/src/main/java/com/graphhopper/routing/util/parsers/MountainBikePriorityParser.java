@@ -12,9 +12,8 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 public class MountainBikePriorityParser extends BikeCommonPriorityParser {
 
     public MountainBikePriorityParser(EncodedValueLookup lookup, PMap properties) {
-        // todonow: why?
-        this(lookup.getDecimalEncodedValue(properties.getString("average_speed", VehicleSpeed.key("mtb"))),
-                lookup.getDecimalEncodedValue(properties.getString("name", VehiclePriority.key("mtb"))),
+        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "mtb"))),
+                lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "mtb"))),
                 lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class));
     }
 

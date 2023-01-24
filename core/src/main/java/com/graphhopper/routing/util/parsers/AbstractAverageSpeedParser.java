@@ -73,7 +73,7 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
         handleWayTags(edgeFlags, way);
     }
 
-    abstract void handleWayTags(IntsRef edgeFlags, ReaderWay way);
+    public abstract void handleWayTags(IntsRef edgeFlags, ReaderWay way);
 
     @Override
     public String toString() {

@@ -27,7 +27,7 @@ public class FootPriorityParser implements TagParser {
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     public FootPriorityParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(properties.getString("name", VehiclePriority.key("foot"))),
+        this(lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "foot"))),
                 lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class)
         );
     }

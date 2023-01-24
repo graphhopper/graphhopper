@@ -42,8 +42,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class CarTagParserTest {
     private final EncodingManager em = createEncodingManager("car");
-    final CarAccessParser parser = createParser(em, new PMap("block_fords=true|name=car_access"));
-    final CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em, new PMap("block_fords=true|name=car_average_speed"));
+    final CarAccessParser parser = createParser(em, new PMap("block_fords=true"));
+    final CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em, new PMap("block_fords=true"));
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
     private final DecimalEncodedValue avSpeedEnc = speedParser.getAverageSpeedEnc();
@@ -596,7 +596,7 @@ public class CarTagParserTest {
                 .add(smallFactorSpeedEnc)
                 .addTurnCostEncodedValue(TurnCost.create("car", 1))
                 .build();
-        CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em, new PMap("name=" + smallFactorSpeedEnc.getName()));
+        CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em, new PMap());
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "60 mph");
@@ -636,7 +636,7 @@ public class CarTagParserTest {
         way.setTag("highway", "cycleway");
         way.setTag("sac_scale", "hiking");
 
-        BikeAccessParser bikeParser = new BikeAccessParser(em, new PMap("name=bike_access"));
+        BikeAccessParser bikeParser = new BikeAccessParser(em, new PMap());
         bikeParser.init(new DateRangeParser());
         assertEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
         assertNotEquals(WayAccess.CAN_SKIP, bikeParser.getAccess(way));

@@ -13,8 +13,8 @@ public class MotorcycleAverageSpeedParser extends CarAverageSpeedParser {
 
     public MotorcycleAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getDecimalEncodedValue(properties.getString("name", VehicleSpeed.key("motorcycle"))),
-                lookup.getDecimalEncodedValue(properties.getString("name", VehicleSpeed.key("motorcycle"))).getNextStorableValue(MOTORCYCLE_MAX_SPEED)
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "motorcycle"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "motorcycle"))).getNextStorableValue(MOTORCYCLE_MAX_SPEED)
         );
     }
 

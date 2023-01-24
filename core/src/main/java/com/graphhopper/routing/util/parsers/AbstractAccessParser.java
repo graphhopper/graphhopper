@@ -86,7 +86,7 @@ public abstract class AbstractAccessParser implements TagParser {
         handleWayTags(edgeFlags, way);
     }
 
-    protected abstract void handleWayTags(IntsRef edgeFlags, ReaderWay way);
+    public abstract void handleWayTags(IntsRef edgeFlags, ReaderWay way);
 
     /**
      * @return true if the given OSM node blocks access for this vehicle, false otherwise

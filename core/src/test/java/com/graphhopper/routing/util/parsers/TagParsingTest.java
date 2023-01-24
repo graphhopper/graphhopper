@@ -55,8 +55,8 @@ class TagParsingTest {
                 .add(bikeNetworkEnc)
                 .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
                 .build();
-        BikePriorityParser bike1Parser = new BikePriorityParser(em, new PMap("name=bike1_priority").putObject("average_speed", "bike1_average_speed"));
-        BikePriorityParser bike2Parser = new BikePriorityParser(em, new PMap("name=bike2_priority").putObject("average_speed", "bike2_average_speed")) {
+        BikePriorityParser bike1Parser = new BikePriorityParser(em, new PMap("name=bike1"));
+        BikePriorityParser bike2Parser = new BikePriorityParser(em, new PMap("name=bike2")) {
             @Override
             public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relTags) {
                 // accept less relations
@@ -102,7 +102,7 @@ class TagParsingTest {
                 .add(bikeNetworkEnc)
                 .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
                 .build();
-        BikePriorityParser bikeTagParser = new BikePriorityParser(em, new PMap().putObject("average_speed", bikeSpeedEnc));
+        BikePriorityParser bikeTagParser = new BikePriorityParser(em, new PMap());
         MountainBikePriorityParser mtbTagParser = new MountainBikePriorityParser(em, new PMap());
         OSMParsers osmParsers = new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConfig))

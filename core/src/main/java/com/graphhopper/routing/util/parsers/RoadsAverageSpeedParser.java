@@ -13,7 +13,7 @@ public class RoadsAverageSpeedParser implements TagParser {
     private final double maxPossibleSpeed;
 
     public RoadsAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(properties.getString("name", VehicleSpeed.key("roads"))));
+        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "roads"))));
     }
 
     public RoadsAverageSpeedParser(DecimalEncodedValue avgSpeedEnc) {
