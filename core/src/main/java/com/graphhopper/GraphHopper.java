@@ -652,18 +652,6 @@ public class GraphHopper {
             // NOTE: for bike the order is important as we fill bike_average_speed before bike_priority
             TagParser accessParser = tagParserFactory.create(encodingManager,
                     new PMap(vehicleStr).putObject("name", VehicleAccess.key(name)).putObject("data_range_parser", dateRangeParser));
-            osmParsers.addWayTagParser(accessParser);
-            osmParsers.addWayTagParser(tagParserFactory.create(encodingManager, new PMap(vehicleStr).putObject("name", VehicleSpeed.key(name))));
-            TagParser prioParser = tagParserFactory.create(encodingManager, new PMap(vehicleStr).putObject("name", VehiclePriority.key(name)));
-            if (prioParser != null) osmParsers.addWayTagParser(prioParser);
-
-            String turnCostKey = TurnCost.key(name);
-            if (encodingManager.hasEncodedValue(turnCostKey)) {
-                List<String> restrictions = accessParser instanceof GenericAccessParser
-                        ? ((GenericAccessParser) accessParser).getRestrictions()
-                        : OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(new PMap(vehicleStr).getString("transportation_mode", "VEHICLE")));
-                osmParsers.addRestrictionTagParser(new RestrictionTagParser(restrictions, encodingManager.getDecimalEncodedValue(turnCostKey)));
-            }
 
             if (accessParser instanceof BikeCommonAccessParser) {
                 if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
@@ -675,6 +663,19 @@ public class GraphHopper {
             } else if (accessParser instanceof FootAccessParser) {
                 if (encodingManager.hasEncodedValue(FootNetwork.KEY))
                     osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
+            }
+
+            osmParsers.addWayTagParser(accessParser);
+            osmParsers.addWayTagParser(tagParserFactory.create(encodingManager, new PMap(vehicleStr).putObject("name", VehicleSpeed.key(name))));
+            TagParser prioParser = tagParserFactory.create(encodingManager, new PMap(vehicleStr).putObject("name", VehiclePriority.key(name)));
+            if (prioParser != null) osmParsers.addWayTagParser(prioParser);
+
+            String turnCostKey = TurnCost.key(name);
+            if (encodingManager.hasEncodedValue(turnCostKey)) {
+                List<String> restrictions = accessParser instanceof GenericAccessParser
+                        ? ((GenericAccessParser) accessParser).getRestrictions()
+                        : OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(new PMap(vehicleStr).getString("transportation_mode", "VEHICLE")));
+                osmParsers.addRestrictionTagParser(new RestrictionTagParser(restrictions, encodingManager.getDecimalEncodedValue(turnCostKey)));
             }
         });
         return osmParsers;
