@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -54,23 +55,6 @@ public class EncodingManagerTest {
         assertFalse(new CarTagParser(manager, new PMap("block_fords=false")).isBlockFords());
         assertFalse(new BikeTagParser(manager, new PMap("block_fords=false")).isBlockFords());
         assertFalse(new FootTagParser(manager, new PMap("block_fords=false")).isBlockFords());
-    }
-
-    @Test
-    public void validEV() {
-        for (String str : Arrays.asList("blup_test", "test", "test12", "car_test_test")) {
-            assertTrue(EncodingManager.isValidEncodedValue(str), str);
-        }
-
-        for (String str : Arrays.asList("Test", "12test", "test|3", "car__test", "small_car$average_speed", "tes$0",
-                "blup_te.st_", "car___test", "car$$access", "test{34", "truck__average_speed", "blup.test", "test,21",
-                "täst", "blup.two.three", "blup..test")) {
-            assertFalse(EncodingManager.isValidEncodedValue(str), str);
-        }
-
-        for (String str : Arrays.asList("break", "switch")) {
-            assertFalse(EncodingManager.isValidEncodedValue(str), str);
-        }
     }
 
     @Test

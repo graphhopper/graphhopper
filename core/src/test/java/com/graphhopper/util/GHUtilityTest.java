@@ -29,6 +29,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -162,5 +164,33 @@ public class GHUtilityTest {
 //        assertEquals(0, map2.get(1));
 //        assertEquals(1, map2.get(2));
 //        assertEquals(-1, map2.get(3));
+    }
+
+    @Test
+    public void validEV() {
+        for (String str : Arrays.asList("blup_test", "test", "test12", "car_test_test")) {
+            assertTrue(GHUtility.isValidEncodedValue(str), str);
+        }
+
+        for (String str : Arrays.asList("Test", "12test", "test|3", "car__test", "small_car$average_speed", "tes$0",
+                "blup_te.st_", "car___test", "car$$access", "test{34", "truck__average_speed", "blup.test", "test,21",
+                "täst", "blup.two.three", "blup..test")) {
+            assertFalse(GHUtility.isValidEncodedValue(str), str);
+        }
+
+        for (String str : Arrays.asList("break", "switch")) {
+            assertFalse(GHUtility.isValidEncodedValue(str), str);
+        }
+    }
+
+    @Test
+    public void validAreaID() {
+        for (String str : Arrays.asList("in_bla", "in_BLA")) {
+            assertTrue(GHUtility.isValidAreaId(str), str);
+        }
+
+        for (String str : Arrays.asList("in_", "test")) {
+            assertFalse(GHUtility.isValidAreaId(str), str);
+        }
     }
 }
