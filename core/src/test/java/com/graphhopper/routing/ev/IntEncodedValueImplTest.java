@@ -3,6 +3,9 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
+import static com.graphhopper.routing.ev.IntEncodedValueImpl.isValidEncodedValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class IntEncodedValueImplTest {
@@ -111,5 +114,22 @@ public class IntEncodedValueImplTest {
         prop.setInt(false, ref, -3);
         assertEquals(-3, prop.getInt(false, ref));
         assertEquals(3, prop.getInt(true, ref));
+    }
+
+    @Test
+    public void testEncodedValueName() {
+        for (String str : Arrays.asList("blup_test", "test", "test12", "car_test_test")) {
+            assertTrue(isValidEncodedValue(str), str);
+        }
+
+        for (String str : Arrays.asList("Test", "12test", "test|3", "car__test", "small_car$average_speed", "tes$0",
+                "blup_te.st_", "car___test", "car$$access", "test{34", "truck__average_speed", "blup.test", "test,21",
+                "täst", "blup.two.three", "blup..test")) {
+            assertFalse(isValidEncodedValue(str), str);
+        }
+
+        for (String str : Arrays.asList("break", "switch")) {
+            assertFalse(isValidEncodedValue(str), str);
+        }
     }
 }

@@ -38,6 +38,7 @@ import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.lang.model.SourceVersion;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -636,74 +637,6 @@ public class GHUtility {
         if (feature.getId() != null) return feature.getId();
         if (feature.getProperties() != null) return (String) feature.getProperties().get("id");
         return null;
-    }
-
-    // compared to EncodedValue it does not force lower letter
-    public static boolean isValidAreaId(String name) {
-        if (name.length() <= 3 || !name.startsWith("in_") || KEYWORDS.contains(name)) return false;
-
-        int underscoreCount = 0;
-        for (int i = 1; i < name.length(); i++) {
-            char c = name.charAt(i);
-            if (c == '_') {
-                if (underscoreCount > 0) return false;
-                underscoreCount++;
-            } else if (!isLetter(c) && !isNumber(c)) {
-                return false;
-            } else {
-                underscoreCount = 0;
-            }
-        }
-        return true;
-    }
-
-    // copied from janino
-    private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
-            "first_match",
-            "abstract", "assert",
-            "boolean", "break", "byte",
-            "case", "catch", "char", "class", "const", "continue",
-            "default", "do", "double",
-            "else", "enum", "extends",
-            "false", "final", "finally", "float", "for",
-            "goto",
-            "if", "implements", "import", "instanceof", "int", "interface",
-            "long",
-            "native", "new", "non-sealed", "null",
-            "package", "permits", "private", "protected", "public",
-            "record", "return",
-            "sealed", "short", "static", "strictfp", "super", "switch", "synchronized",
-            "this", "throw", "throws", "transient", "true", "try",
-            "var", "void", "volatile",
-            "while",
-            "yield",
-            "_"
-    ));
-
-    public static boolean isValidEncodedValue(String name) {
-        if (name.isEmpty() || !isLowerLetter(name.charAt(0)) || name.startsWith("in_") || KEYWORDS.contains(name)) return false;
-
-        int underscoreCount = 0;
-        for (int i = 1; i < name.length(); i++) {
-            char c = name.charAt(i);
-            if (c == '_') {
-                if (underscoreCount > 0) return false;
-                underscoreCount++;
-            } else if (!isLowerLetter(c) && !isNumber(c)) {
-                return false;
-            } else {
-                underscoreCount = 0;
-            }
-        }
-        return true;
-    }
-
-    private static boolean isNumber(char c) {
-        return c >= '0' && c <= '9';
-    }
-
-    private static boolean isLowerLetter(char c) {
-        return c >= 'a' && c <= 'z';
     }
 
     public static CustomArea getFirstDuplicateArea(List<CustomArea> areas, String id) {

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import javax.lang.model.SourceVersion;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -27,6 +28,8 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
+
+import static java.lang.Character.*;
 
 /**
  * @author Peter Karich
