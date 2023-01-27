@@ -406,4 +406,8 @@ class BaseGraphNodesAndEdges {
                 + "nodes: " + nf(nodeCount) + "(" + nodes.getCapacity() / Helper.MB + "MB), "
                 + "bounds: " + bounds;
     }
+
+    public boolean isEdgeConcurrentWritable() {
+        return !edges.getType().isMMap();
+    }
 }

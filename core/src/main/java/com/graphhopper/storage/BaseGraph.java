@@ -493,6 +493,13 @@ public class BaseGraph implements Graph, Closeable {
         return segmentSize;
     }
 
+    /**
+     * Currently MMapDataAccess cannot be used when potentially writing to the same DataAccess from multiple threads.
+     */
+    public boolean isEdgeConcurrentWritable() {
+        return store.isEdgeConcurrentWritable();
+    }
+
     public static class Builder {
         private final int intsForFlags;
         private Directory directory = new RAMDirectory();
@@ -569,7 +576,7 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public final boolean next() {
-            while (EdgeIterator.Edge.isValid(nextEdgeId)) {
+            while (Edge.isValid(nextEdgeId)) {
                 goToNext();
                 if (filter.accept(this))
                     return true;

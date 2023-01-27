@@ -107,7 +107,8 @@ public class GraphHopper {
     private int preciseIndexResolution = 300;
     private int maxRegionSearch = 4;
     // subnetworks
-    private int minNetworkSize = 200;
+    private int subnetworksMinSize = 200;
+    private int subnetworksThreads = 2;
     // residential areas
     private double residentialAreaRadius = 300;
     private double residentialAreaSensitivity = 60;
@@ -189,9 +190,9 @@ public class GraphHopper {
         return this;
     }
 
-    public GraphHopper setMinNetworkSize(int minNetworkSize) {
+    public GraphHopper setMinNetworkSize(int subnetworksMinSize) {
         ensureNotLoaded();
-        this.minNetworkSize = minNetworkSize;
+        this.subnetworksMinSize = subnetworksMinSize;
         return this;
     }
 
@@ -561,8 +562,9 @@ public class GraphHopper {
         if (osmReaderConfig.getLongEdgeSamplingDistance() < Double.MAX_VALUE && !elevationProvider.canInterpolate())
             logger.warn("Long edge sampling enabled, but bilinear interpolation disabled. See #1953");
 
-        // optimizable prepare
-        minNetworkSize = ghConfig.getInt("prepare.min_network_size", minNetworkSize);
+        // prepare subnetworks
+        subnetworksMinSize = ghConfig.getInt("prepare.subnetworks.min_size", ghConfig.getInt("prepare.min_network_size", subnetworksMinSize));
+        subnetworksThreads = ghConfig.getInt("prepare.subnetworks.threads", subnetworksThreads);
 
         // prepare CH&LM
         chPreparationHandler.init(ghConfig);
@@ -1353,7 +1355,8 @@ public class GraphHopper {
      */
     protected void cleanUp() {
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(baseGraph.getBaseGraph(), buildSubnetworkRemovalJobs());
-        preparation.setMinNetworkSize(minNetworkSize);
+        preparation.setMinNetworkSize(subnetworksMinSize);
+        preparation.setPreparationThreads(subnetworksThreads);
         preparation.doWork();
         properties.put("profiles", getProfilesString());
         logger.info("nodes: " + Helper.nf(baseGraph.getNodes()) + ", edges: " + Helper.nf(baseGraph.getEdges()));

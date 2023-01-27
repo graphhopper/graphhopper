@@ -32,6 +32,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 
@@ -63,6 +66,7 @@ public class PrepareRoutingSubnetworks {
     private final BaseGraph graph;
     private final List<PrepareJob> prepareJobs;
     private int minNetworkSize = 200;
+    private int preparationThreads = 1;
 
     public PrepareRoutingSubnetworks(BaseGraph graph, List<PrepareJob> prepareJobs) {
         this.graph = graph;
@@ -78,6 +82,10 @@ public class PrepareRoutingSubnetworks {
         return this;
     }
 
+    public void setPreparationThreads(int preparationThreads) {
+        this.preparationThreads = preparationThreads;
+    }
+
     /**
      * Finds and marks all subnetworks according to {@link #setMinNetworkSize(int)}
      *
@@ -91,11 +99,16 @@ public class PrepareRoutingSubnetworks {
         StopWatch sw = new StopWatch().start();
         logger.info("Start marking subnetworks, prepare.min_network_size: " + minNetworkSize + ", nodes: " +
                 Helper.nf(graph.getNodes()) + ", edges: " + Helper.nf(graph.getEdges()) + ", jobs: " + prepareJobs + ", " + Helper.getMemInfo());
-        int total = 0;
-        for (PrepareJob job : prepareJobs)
-            total += setSubnetworks(job.weighting, job.subnetworkEnc);
+        AtomicInteger total = new AtomicInteger(0);
+        if (preparationThreads > 1 && graph.getBaseGraph().isEdgeConcurrentWritable())
+            throw new IllegalArgumentException("when using MMapDataAccess for edges set prepare.subnetworks.threads to 1");
+        Stream<Callable<String>> callables = prepareJobs.stream().map(job -> () -> {
+            total.addAndGet(setSubnetworks(job.weighting, job.subnetworkEnc));
+            return job.toString();
+        });
+        GHUtility.runConcurrently(callables, preparationThreads);
         logger.info("Finished finding and marking subnetworks for " + prepareJobs.size() + " jobs, took: " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
-        return total;
+        return total.get();
     }
 
     private int setSubnetworks(Weighting weighting, BooleanEncodedValue subnetworkEnc) {

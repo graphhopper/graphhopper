@@ -133,6 +133,7 @@ public class PrepareRoutingSubnetworksTest {
         GHUtility.setSpeed(5, false, false, bikeAccessEnc, bikeSpeedEnc, edge);
         instance = new PrepareRoutingSubnetworks(g, prepareJobs);
         instance.setMinNetworkSize(5);
+        instance.setPreparationThreads(2);
         assertEquals(6, instance.doWork());
         assertEquals(IntArrayList.from(7, 8, 9), getSubnetworkEdges(g, carSubnetworkEnc));
         assertEquals(IntArrayList.from(7, 8, 9), getSubnetworkEdges(g, bikeSubnetworkEnc));
