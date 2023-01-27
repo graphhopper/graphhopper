@@ -19,11 +19,12 @@ package com.graphhopper.util;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Locale;
 
 import static com.graphhopper.util.Helper.UTF_CS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author Peter Karich
@@ -123,5 +124,34 @@ public class HelperTest {
         // force incorrect char:
         bytes[0] = -25;
         assertEquals(3, new String(bytes, 0, 1, UTF_CS).getBytes(UTF_CS).length);
+    }
+
+
+    @Test
+    public void validEV() {
+        for (String str : Arrays.asList("blup_test", "test", "test12", "car_test_test")) {
+            assertTrue(Helper.isValidEncodedValue(str), str);
+        }
+
+        for (String str : Arrays.asList("Test", "12test", "test|3", "car__test", "small_car$average_speed", "tes$0",
+                "blup_te.st_", "car___test", "car$$access", "test{34", "truck__average_speed", "blup.test", "test,21",
+                "täst", "blup.two.three", "blup..test")) {
+            assertFalse(Helper.isValidEncodedValue(str), str);
+        }
+
+        for (String str : Arrays.asList("break", "switch")) {
+            assertFalse(Helper.isValidEncodedValue(str), str);
+        }
+    }
+
+    @Test
+    public void validAreaID() {
+        for (String str : Arrays.asList("in_bla", "in_BLA")) {
+            assertTrue(Helper.isValidAreaId(str), str);
+        }
+
+        for (String str : Arrays.asList("in_", "test")) {
+            assertFalse(Helper.isValidAreaId(str), str);
+        }
     }
 }

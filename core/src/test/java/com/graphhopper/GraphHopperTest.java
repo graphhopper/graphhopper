@@ -266,6 +266,7 @@ public class GraphHopperTest {
         Profile profile = new Profile(profileName).setVehicle(vehicle).setWeighting("fastest");
         if (custom) {
             JsonFeature area51Feature = new JsonFeature();
+            area51Feature.setId("area51");
             area51Feature.setGeometry(new GeometryFactory().createPolygon(new Coordinate[]{
                     new Coordinate(7.4174, 43.7345),
                     new Coordinate(7.4198, 43.7355),
@@ -273,7 +274,7 @@ public class GraphHopperTest {
                     new Coordinate(7.4174, 43.7345)}));
             CustomModel customModel = new CustomModel().setDistanceInfluence(0d);
             customModel.getPriority().add(Statement.If("in_area51", Statement.Op.MULTIPLY, "0.1"));
-            customModel.getAreas().put("area51", area51Feature);
+            customModel.getAreas().getFeatures().add(area51Feature);
             profile = new CustomProfile(profileName).setCustomModel(customModel).setVehicle(vehicle);
         }
         hopper.setProfiles(profile);

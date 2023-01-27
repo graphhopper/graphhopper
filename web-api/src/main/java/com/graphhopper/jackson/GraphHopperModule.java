@@ -17,19 +17,27 @@
  */
 package com.graphhopper.jackson;
 
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.DeserializationConfig;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.deser.BeanDeserializerModifier;
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.json.Statement;
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.JsonFeatureCollection;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.GHPoint;
+import jdk.vm.ci.meta.JavaMethod;
 import org.locationtech.jts.geom.Envelope;
 
 public class GraphHopperModule extends SimpleModule {
 
     public GraphHopperModule() {
+        // set custom deserializer only for a single field (CustomModel.areas) as otherwise e.g. ID check is done which let's test like IsochroneResourceTest fail
+//        addDeserializer(JsonFeatureCollection.class, new CustomModelAreasDeserializer());
+
         addDeserializer(Statement.class, new StatementDeserializer());
         addSerializer(Statement.class, new StatementSerializer());
         addDeserializer(GHResponse.class, new GHResponseDeserializer());
