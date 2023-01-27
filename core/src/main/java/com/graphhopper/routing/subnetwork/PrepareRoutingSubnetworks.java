@@ -100,7 +100,7 @@ public class PrepareRoutingSubnetworks {
         logger.info("Start marking subnetworks, prepare.min_network_size: " + minNetworkSize + ", nodes: " +
                 Helper.nf(graph.getNodes()) + ", edges: " + Helper.nf(graph.getEdges()) + ", jobs: " + prepareJobs + ", " + Helper.getMemInfo());
         AtomicInteger total = new AtomicInteger(0);
-        if (preparationThreads > 1 && graph.getBaseGraph().areEdgesConcurrentWritable())
+        if (preparationThreads > 1 && !graph.getBaseGraph().areEdgesConcurrentWritable())
             throw new IllegalArgumentException("when using MMapDataAccess for edges set prepare.subnetworks.threads to 1");
         Stream<Callable<String>> callables = prepareJobs.stream().map(job -> () -> {
             total.addAndGet(setSubnetworks(job.weighting, job.subnetworkEnc));
