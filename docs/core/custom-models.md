@@ -393,9 +393,8 @@ only the first factor (`0.5`) will be applied even for road segments that fulfil
 #### `areas`
 
 You can not only modify the speed of road segments based on properties, like we saw in the previous examples, but you
-can also modify the speed of road segments based on their location. To do this you need to first create and add some
-areas as FeatureCollection to the `areas` section of the custom model. You can then use the "id" of these areas in the 
-conditions of your `if/else/else_if` statements.
+can also modify the speed of road segments based on their location. To do this you need to first add an area to the
+`areas` section of the custom model. You can then use the "id" in the conditions of your `if/else/else_if` statements.
 
 In the following example we multiply the speed of all edges in an area called `custom1` with `0.7` and also limit it
 to `50km/h`. Note that each area's id needs to be prefixed with `in_`:
@@ -435,9 +434,9 @@ to `50km/h`. Note that each area's id needs to be prefixed with `in_`:
 }
 ```
 
-Areas are given in GeoJson format (FeatureCollection). Currently only a member of this collection is limited to the 
-type `Feature` and a geometry type `Polygon`. Note that the coordinates array of `Polygon` is an array of arrays that 
-each must describe a closed ring, i.e. the first point must be equal to the last, identical to the GeoJSON specs. 
+Areas are given in GeoJson format (FeatureCollection). Currently a member of this collection must be a `Feature` with a
+geometry type `Polygon`. Note that the coordinates array of `Polygon` is an array of arrays that
+each must describe a closed ring, i.e. the first point must be equal to the last, identical to the GeoJSON specs.
 Each point is given as an array [longitude, latitude], so the coordinates array has three dimensions total.
 
 Using the `areas` feature you can also block entire areas i.e. by multiplying the speed with `0`, but for this you
