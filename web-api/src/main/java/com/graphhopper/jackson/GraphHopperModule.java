@@ -35,9 +35,6 @@ import org.locationtech.jts.geom.Envelope;
 public class GraphHopperModule extends SimpleModule {
 
     public GraphHopperModule() {
-        // set custom deserializer only for a single field (CustomModel.areas) as otherwise e.g. ID check is done which let's test like IsochroneResourceTest fail
-//        addDeserializer(JsonFeatureCollection.class, new CustomModelAreasDeserializer());
-
         addDeserializer(Statement.class, new StatementDeserializer());
         addSerializer(Statement.class, new StatementSerializer());
         addDeserializer(GHResponse.class, new GHResponseDeserializer());
