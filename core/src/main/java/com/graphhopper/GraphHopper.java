@@ -108,7 +108,7 @@ public class GraphHopper {
     private int maxRegionSearch = 4;
     // subnetworks
     private int subnetworksMinSize = 200;
-    private int subnetworksThreads = 2;
+    private int subnetworksThreads = 1;
     // residential areas
     private double residentialAreaRadius = 300;
     private double residentialAreaSensitivity = 60;
