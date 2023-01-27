@@ -407,7 +407,7 @@ class BaseGraphNodesAndEdges {
                 + "bounds: " + bounds;
     }
 
-    public boolean isEdgeConcurrentWritable() {
+    public boolean areEdgesConcurrentWritable() {
         return !edges.getType().isMMap();
     }
 }

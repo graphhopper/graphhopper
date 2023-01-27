@@ -496,8 +496,8 @@ public class BaseGraph implements Graph, Closeable {
     /**
      * Currently MMapDataAccess cannot be used when potentially writing to the same DataAccess from multiple threads.
      */
-    public boolean isEdgeConcurrentWritable() {
-        return store.isEdgeConcurrentWritable();
+    public boolean areEdgesConcurrentWritable() {
+        return store.areEdgesConcurrentWritable();
     }
 
     public static class Builder {
