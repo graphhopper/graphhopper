@@ -146,7 +146,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         setHighwaySpeed("platform", PUSHING_SECTION_SPEED);
         setHighwaySpeed("pedestrian", PUSHING_SECTION_SPEED);
         setHighwaySpeed("track", 12);
-        setHighwaySpeed("service", 14);
+        setHighwaySpeed("service", 12);
         setHighwaySpeed("residential", 18);
         // no other highway applies:
         setHighwaySpeed("unclassified", 16);
@@ -434,7 +434,6 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
      *                        subclasses to 'insert' more important priorities as well as overwrite determined priorities.
      */
     void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
-        String service = way.getTag("service");
         String highway = way.getTag("highway");
         if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official")) {
             if ("path".equals(highway))
@@ -475,8 +474,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
             weightToPrioMap.put(100d, REACH_DESTINATION.getValue());
         }
 
-        if (pushingSectionsHighways.contains(highway)
-                || "parking_aisle".equals(service)) {
+        if (pushingSectionsHighways.contains(highway) || "parking_aisle".equals(way.getTag("service"))) {
             PriorityCode pushingSectionPrio = SLIGHT_AVOID;
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
                 pushingSectionPrio = PREFER;

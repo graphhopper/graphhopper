@@ -88,11 +88,8 @@ public class RacingBikeTagParser extends BikeCommonTagParser {
 
         setHighwaySpeed("path", 8);
         setHighwaySpeed("footway", PUSHING_SECTION_SPEED);
-        setHighwaySpeed("pedestrian", PUSHING_SECTION_SPEED);
         setHighwaySpeed("track", MIN_SPEED); // assume unpaved
-        setHighwaySpeed("service", 12);
-        setHighwaySpeed("unclassified", 16);
-        setHighwaySpeed("residential", 16);
+        setHighwaySpeed("residential", 18);
 
         setHighwaySpeed("trunk", 20);
         setHighwaySpeed("trunk_link", 20);
@@ -133,8 +130,8 @@ public class RacingBikeTagParser extends BikeCommonTagParser {
         super.collect(way, wayTypeSpeed, weightToPrioMap);
 
         String highway = way.getTag("highway");
-        if ("service".equals(highway)) {
-            weightToPrioMap.put(40d, UNCHANGED.getValue());
+        if ("service".equals(highway) || "residential".equals(highway)) {
+            weightToPrioMap.put(40d, SLIGHT_AVOID.getValue());
         } else if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
             if ("grade1".equals(trackType))
