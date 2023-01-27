@@ -65,7 +65,7 @@ public class CustomModel {
     public void addAreas(JsonFeatureCollection externalAreas) {
         Set<String> indexed = areas.getFeatures().stream().map(JsonFeature::getId).collect(Collectors.toSet());
         for (JsonFeature ext : externalAreas.getFeatures()) {
-            if (!Helper.isValidAreaId("in_" + ext.getId()))
+            if (!JsonFeature.isValidId("in_" + ext.getId()))
                 throw new IllegalArgumentException("The area '" + ext.getId() + "' has an invalid id. Only letters, numbers and underscore are allowed.");
             if (indexed.contains(ext.getId()))
                 throw new IllegalArgumentException("area " + ext.getId() + " already exists");

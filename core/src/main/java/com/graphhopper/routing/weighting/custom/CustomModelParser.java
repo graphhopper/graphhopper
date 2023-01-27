@@ -291,7 +291,7 @@ public class CustomModelParser {
                     includedAreaImports = true;
                 }
 
-                if (!Helper.isValidAreaId(arg))
+                if (!JsonFeature.isValidId(arg))
                     throw new IllegalArgumentException("Area has invalid name: " + arg);
                 String id = arg.substring(IN_AREA_PREFIX.length());
                 JsonFeature feature = areas.get(id);

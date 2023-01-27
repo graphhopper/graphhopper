@@ -265,6 +265,24 @@ public class FootTagParserTest {
     }
 
     @Test
+    public void testOneway() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "path");
+        way.setTag("foot:forward", "yes");
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        footParser.handleWayTags(edgeFlags, way);
+        assertTrue(footAccessEnc.getBool(false, edgeFlags));
+        assertFalse(footAccessEnc.getBool(true, edgeFlags));
+
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("foot:backward", "yes");
+        footParser.handleWayTags(edgeFlags = encodingManager.createEdgeFlags(), way);
+        assertFalse(footAccessEnc.getBool(false, edgeFlags));
+        assertTrue(footAccessEnc.getBool(true, edgeFlags));
+    }
+
+    @Test
     public void testFerrySpeed() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("route", "ferry");

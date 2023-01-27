@@ -19,10 +19,9 @@ package com.graphhopper.routing.ev;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+
+import javax.lang.model.SourceVersion;
 
 /**
  * Implementation of the IntEncodedValue via a certain number of bits (that determines the maximum value) and
@@ -72,7 +71,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
      * @param storeTwoDirections     true if forward and backward direction of the edge should get two independent values.
      */
     public IntEncodedValueImpl(String name, int bits, int minStorableValue, boolean negateReverseDirection, boolean storeTwoDirections) {
-        if (!Helper.isValidEncodedValue(name))
+        if (!isValidEncodedValue(name))
             throw new IllegalArgumentException("EncodedValue name wasn't valid: " + name + ". Use lower case letters, underscore and numbers only.");
         if (bits <= 0)
             throw new IllegalArgumentException(name + ": bits cannot be zero or negative");
@@ -234,4 +233,26 @@ public class IntEncodedValueImpl implements IntEncodedValue {
         return getName();
     }
 
+    static boolean isValidEncodedValue(String name) {
+        if (name.length() < 2 || name.startsWith("in_") || !isLowerLetter(name.charAt(0)) || SourceVersion.isKeyword(name))
+            return false;
+
+        int underscoreCount = 0;
+        for (int i = 1; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (c == '_') {
+                if (underscoreCount > 0) return false;
+                underscoreCount++;
+            } else if (!isLowerLetter(c) && !Character.isDigit(c)) {
+                return false;
+            } else {
+                underscoreCount = 0;
+            }
+        }
+        return true;
+    }
+
+    private static boolean isLowerLetter(char c) {
+        return c >= 'a' && c <= 'z';
+    }
 }
