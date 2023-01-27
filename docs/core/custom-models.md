@@ -394,11 +394,11 @@ only the first factor (`0.5`) will be applied even for road segments that fulfil
 
 You can not only modify the speed of road segments based on properties, like we saw in the previous examples, but you
 can also modify the speed of road segments based on their location. To do this you need to first create and add some
-areas to the `areas` section of the custom model. You can then use the name of these areas in the conditions of your
-`if/else/else_if` statements.
+areas as FeatureCollection to the `areas` section of the custom model. You can then use the "id" of these areas in the 
+conditions of your `if/else/else_if` statements.
 
 In the following example we multiply the speed of all edges in an area called `custom1` with `0.7` and also limit it
-to `50km/h`. Note that each area's name needs to be prefixed with `in_`:
+to `50km/h`. Note that each area's id needs to be prefixed with `in_`:
 
 ```json
 {
@@ -413,9 +413,10 @@ to `50km/h`. Note that each area's name needs to be prefixed with `in_`:
     }
   ],
   "areas": {
-    "custom1": {
+    "type": "FeatureCollection",
+    "features": [{
       "type": "Feature",
-      "id": "something",
+      "id": "custom1",
       "properties": {},
       "geometry": {
         "type": "Polygon",
@@ -429,16 +430,15 @@ to `50km/h`. Note that each area's name needs to be prefixed with `in_`:
           ]
         ]
       }
-    }
+    }]
   }
 }
 ```
 
-Areas are given in GeoJson format, but currently only the exact format in the above example is supported, i.e. one
-object with type `Feature`, a geometry with type `Polygon` and optional (but ignored) `id` and `properties` fields. Note
-that the coordinates array of `Polygon` is an array of arrays that each must describe a closed ring, i.e. the first
-point must be equal to the last. Each point is given as an array [longitude, latitude], so the coordinates array has
-three dimensions total.
+Areas are given in GeoJson format (FeatureCollection). Currently only a member of this collection is limited to the 
+type `Feature` and a geometry type `Polygon`. Note that the coordinates array of `Polygon` is an array of arrays that 
+each must describe a closed ring, i.e. the first point must be equal to the last, identical to the GeoJSON specs. 
+Each point is given as an array [longitude, latitude], so the coordinates array has three dimensions total.
 
 Using the `areas` feature you can also block entire areas i.e. by multiplying the speed with `0`, but for this you
 should rather use the `priority` section that we will explain next.
