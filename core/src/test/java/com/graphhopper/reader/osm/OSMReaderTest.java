@@ -46,6 +46,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -899,9 +900,9 @@ public class OSMReaderTest {
 
         response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
                 .setProfile("profile")
-                .setPathDetails(Collections.singletonList(Toll.KEY)));
+                .setPathDetails(Arrays.asList(Toll.KEY, Country.KEY)));
         Throwable ex = response.getErrors().get(0);
-        assertTrue(ex.getMessage().contains("You requested the details [toll]"), ex.getMessage());
+        assertEquals("Cannot find the path details: [toll, country]", ex.getMessage());
     }
 
     @Test
