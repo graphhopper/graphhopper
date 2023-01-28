@@ -38,6 +38,7 @@ import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.lang.model.SourceVersion;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -53,6 +54,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
+import static java.lang.Character.isLetter;
 
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the

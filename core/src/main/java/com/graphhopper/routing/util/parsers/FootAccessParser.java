@@ -158,7 +158,14 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if (access.canSkip())
             return;
 
-        accessEnc.setBool(false, edgeFlags, true);
-        accessEnc.setBool(true, edgeFlags, true);
+        if (way.hasTag("oneway:foot", oneways) || way.hasTag("foot:backward") || way.hasTag("foot:forward")
+                || way.hasTag("oneway", oneways) && way.hasTag("highway", "steps") // outdated mapping style
+        ) {
+            boolean reverse = way.hasTag("oneway:foot", "-1") || way.hasTag("foot:backward", "yes") || way.hasTag("foot:forward", "no");
+            accessEnc.setBool(reverse, edgeFlags, true);
+        } else {
+            accessEnc.setBool(false, edgeFlags, true);
+            accessEnc.setBool(true, edgeFlags, true);
+        }
     }
 }

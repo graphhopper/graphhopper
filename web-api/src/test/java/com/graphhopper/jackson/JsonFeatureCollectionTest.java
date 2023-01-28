@@ -28,11 +28,12 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -115,4 +116,14 @@ public class JsonFeatureCollectionTest {
         assertEquals("a", ((Map) f3.getProperty("prop1")).get("test"));
     }
 
+    @Test
+    public void validAreaID() {
+        for (String str : Arrays.asList("in_bla", "in_BLA")) {
+            assertTrue(JsonFeature.isValidId(str), str);
+        }
+
+        for (String str : Arrays.asList("in_", "test")) {
+            assertFalse(JsonFeature.isValidId(str), str);
+        }
+    }
 }

@@ -27,10 +27,7 @@ import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
-import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.JsonFeature;
-import com.graphhopper.util.JsonFeatureCollection;
+import com.graphhopper.util.*;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -119,7 +116,8 @@ public class GraphHopperManaged implements Managed {
                         throw new IllegalArgumentException("Yaml is no longer supported, see #2672. Use JSON with optional comments //");
                     try {
                         // Somehow dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
-                        String string = Helper.readJSONFileWithoutComments(Paths.get(customModelFolder).resolve(customModelFileName).toFile().getAbsolutePath());
+                        String string = Helper.readJSONFileWithoutComments(Paths.get(customModelFolder).
+                                resolve(customModelFileName).toFile().getAbsolutePath());
                         customModel = jsonOM.readValue(string, CustomModel.class);
                         newProfiles.add(new CustomProfile(profile).setCustomModel(customModel));
                     } catch (Exception ex) {
@@ -130,11 +128,11 @@ public class GraphHopperManaged implements Managed {
 
             // we can fill in all areas here as in the created template we include only the areas that are used in statements (see CustomModelParser)
             for (JsonFeature feature : globalAreas.getFeatures()) {
+                if (!JsonFeature.isValidId("in_" + feature.getId()))
+                    throw new IllegalArgumentException("The area '" + feature.getId() + "' has an invalid id. Only letters, numbers and underscore are allowed.");
                 if (customModel.getAreas().containsKey(feature.getId()))
-                    throw new IllegalArgumentException("The area '" + feature.getId() + "' in profile configuration '"
-                            + profile.getName() + "' cannot have same ID as global area.");
-                else
-                    customModel.getAreas().put(feature.getId(), feature);
+                    throw new IllegalArgumentException("The area '" + feature.getId() + "' exists twice");
+                customModel.getAreas().put(feature.getId(), feature);
             }
         }
         return newProfiles;
