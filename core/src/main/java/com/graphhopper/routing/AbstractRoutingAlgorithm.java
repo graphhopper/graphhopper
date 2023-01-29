@@ -72,24 +72,6 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         alreadyRun = true;
     }
 
-    /**
-     * To be overwritten from extending class. Should we make this available in RoutingAlgorithm
-     * interface?
-     * <p>
-     *
-     * @return true if finished.
-     */
-    protected abstract boolean finished();
-
-    /**
-     * To be overwritten from extending class. Should we make this available in RoutingAlgorithm
-     * interface?
-     * <p>
-     *
-     * @return true if finished.
-     */
-    protected abstract Path extractPath();
-
     @Override
     public List<Path> calcPaths(int from, int to) {
         return Collections.singletonList(calcPath(from, to));

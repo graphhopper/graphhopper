@@ -94,7 +94,7 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     }
 
     @Override
-    Raster generateRasterFromFile(File file, String tifName) {
+    Raster readFile(File file, String tifName) {
         SeekableStream ss = null;
         try {
             InputStream is = new FileInputStream(file);

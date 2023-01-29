@@ -112,7 +112,7 @@ public class PathSimplificationTest {
         Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 10);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
-                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
+                Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0, g);
 
         ResponsePath responsePath = new ResponsePath();
         responsePath.setInstructions(wayList);
@@ -190,7 +190,7 @@ public class PathSimplificationTest {
     public void testMultiplePartitions() {
         // points are chosen such that DP will remove those marked with an x
         // got this data from running a request like this:
-        // http://localhost:8989/maps/?point=48.891273%2C9.325418&point=48.891005%2C9.322865&point=48.889877%2C9.32102&point=48.88975%2C9.31999&vehicle=car&weighting=fastest&elevation=true&debug=true&details=max_speed&details=street_name&
+        // http://localhost:8989/maps/?point=48.891273%2C9.325418&point=48.891005%2C9.322865&point=48.889877%2C9.32102&point=48.88975%2C9.31999&profile=car&weighting=fastest&elevation=true&debug=true&details=max_speed&details=street_name&
         PointList points = new PointList(20, true);
         points.add(48.89089, 9.32538, 270.0); // 0    -> 0
         points.add(48.89090, 9.32527, 269.0); // 1 x

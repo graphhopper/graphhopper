@@ -141,7 +141,10 @@ public abstract class AbstractSRTMElevationProvider extends TileBasedElevationPr
 
     private void updateHeightsFromFile(double lat, double lon, DataAccess heights) throws FileNotFoundException {
         try {
-            byte[] bytes = getByteArrayFromFile(lat, lon);
+            String zippedURL = baseUrl + getDownloadURL(lat, lon);
+            File zipFile = new File(cacheDir, new File(zippedURL).getName());
+            if (!zipFile.exists()) downloadToFile(zipFile, zippedURL);
+            byte[] bytes = readFile(zipFile);
             heights.create(bytes.length);
             for (int bytePos = 0; bytePos < bytes.length; bytePos += 2) {
                 // we need big endianess to read the SRTM files
@@ -162,28 +165,22 @@ public abstract class AbstractSRTMElevationProvider extends TileBasedElevationPr
         }
     }
 
-    private byte[] getByteArrayFromFile(double lat, double lon) throws InterruptedException, IOException {
-        String zippedURL = baseUrl + getDownloadURL(lat, lon);
-        File file = new File(cacheDir, new File(zippedURL).getName());
-        // get zip file if not already in cacheDir
-        if (!file.exists())
-            for (int i = 0; i < 3; i++) {
-                try {
-                    downloader.downloadFile(zippedURL, file.getAbsolutePath());
-                    break;
-                } catch (SocketTimeoutException ex) {
-                    // just try again after a little nap
-                    Thread.sleep(2000);
-                } catch (FileNotFoundException ex) {
-                    if (zippedURL.contains(".hgt.zip")) {
-                        zippedURL = zippedURL.replace(".hgt.zip", "hgt.zip");
-                    } else {
-                        throw ex;
-                    }
+    private void downloadToFile(File file, String zippedURL) throws InterruptedException, IOException {
+        for (int i = 0; i < 3; i++) {
+            try {
+                downloader.downloadFile(zippedURL, file.getAbsolutePath());
+                break;
+            } catch (SocketTimeoutException ex) {
+                // just try again after a little nap
+                Thread.sleep(2000);
+            } catch (FileNotFoundException ex) {
+                if (zippedURL.contains(".hgt.zip")) {
+                    zippedURL = zippedURL.replace(".hgt.zip", "hgt.zip");
+                } else {
+                    throw ex;
                 }
             }
-
-        return readFile(file);
+        }
     }
 
     protected String getPaddedLonString(int lonInt) {

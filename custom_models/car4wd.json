@@ -1,0 +1,20 @@
+{
+  "comment0": "in the config.yml use graph.vehicles: roads",
+  "distance_influence": 1,
+  "speed": [
+    {
+      "if": "track_type == GRADE4 || track_type == GRADE5",
+      "limit_to": 5
+    },
+    {
+      "else": "",
+      "limit_to": "car_average_speed"
+    }
+  ],
+  "priority": [
+    {
+      "if": "track_type != GRADE4 && track_type != GRADE5 && car_access == false",
+      "multiply_by": "0"
+    }
+  ]
+}

@@ -57,16 +57,15 @@ public class FootTagParser extends VehicleTagParser {
                 lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "foot"))),
                 lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "foot"))),
                 lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "foot"))),
-                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class),
-                "foot"
+                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class)
         );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
     protected FootTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
-                            EnumEncodedValue<RouteNetwork> footRouteEnc, String name) {
-        super(accessEnc, speedEnc, name, null, null, TransportationMode.FOOT, speedEnc.getNextStorableValue(FERRY_SPEED));
+                            EnumEncodedValue<RouteNetwork> footRouteEnc) {
+        super(accessEnc, speedEnc, null, TransportationMode.FOOT, speedEnc.getNextStorableValue(FERRY_SPEED));
         this.footRouteEnc = footRouteEnc;
         priorityWayEncoder = priorityEnc;
 
@@ -133,7 +132,6 @@ public class FootTagParser extends VehicleTagParser {
     /**
      * Some ways are okay but not separate for pedestrians.
      */
-    @Override
     public WayAccess getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
@@ -193,14 +191,22 @@ public class FootTagParser extends VehicleTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
-            return edgeFlags;
+            return;
 
         Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
-        accessEnc.setBool(false, edgeFlags, true);
-        accessEnc.setBool(true, edgeFlags, true);
+        if (way.hasTag("oneway:foot", oneways) || way.hasTag("foot:backward") || way.hasTag("foot:forward")
+                || way.hasTag("oneway", oneways) && way.hasTag("highway", "steps") // outdated mapping style
+        ) {
+            boolean reverse = way.hasTag("oneway:foot", "-1") || way.hasTag("foot:backward", "yes") || way.hasTag("foot:forward", "no");
+            accessEnc.setBool(reverse, edgeFlags, true);
+        } else {
+            accessEnc.setBool(false, edgeFlags, true);
+            accessEnc.setBool(true, edgeFlags, true);
+        }
+
         if (!access.isFerry()) {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null) {
@@ -215,7 +221,6 @@ public class FootTagParser extends VehicleTagParser {
         }
 
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
-        return edgeFlags;
     }
 
     void setSpeed(IntsRef edgeFlags, boolean fwd, boolean bwd, double speed) {
@@ -249,7 +254,7 @@ public class FootTagParser extends VehicleTagParser {
         if (way.hasTag("foot", "designated"))
             weightToPrioMap.put(100d, PREFER.getValue());
 
-        double maxSpeed = getMaxSpeed(way);
+        double maxSpeed = Math.max(getMaxSpeed(way, false), getMaxSpeed(way, true));
         if (safeHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 20)) {
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues)) {

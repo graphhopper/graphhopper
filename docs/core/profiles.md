@@ -35,7 +35,6 @@ The vehicle field must correspond to one of GraphHopper's built-in vehicle types
 - wheelchair
 - bike
 - racingbike
-- bike2
 - mtb
 - car
 - motorcycle

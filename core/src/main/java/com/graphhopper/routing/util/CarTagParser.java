@@ -53,7 +53,6 @@ public class CarTagParser extends VehicleTagParser {
         this(
                 lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "car"))),
                 lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))),
-                lookup.hasEncodedValue(TurnCost.key(properties.getString("name", "car"))) ? lookup.getDecimalEncodedValue(TurnCost.key(properties.getString("name", "car"))) : null,
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 properties,
                 TransportationMode.CAR,
@@ -61,12 +60,10 @@ public class CarTagParser extends VehicleTagParser {
         );
     }
 
-    public CarTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc,
+    public CarTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc,
                         BooleanEncodedValue roundaboutEnc, PMap properties,
                         TransportationMode transportationMode, double maxPossibleSpeed) {
-        super(accessEnc, speedEnc,
-                properties.getString("name", "car"), roundaboutEnc,
-                turnCostEnc, transportationMode, maxPossibleSpeed);
+        super(accessEnc, speedEnc, roundaboutEnc, transportationMode, maxPossibleSpeed);
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
@@ -109,7 +106,6 @@ public class CarTagParser extends VehicleTagParser {
         // autobahn
         defaultSpeedMap.put("motorway", 100);
         defaultSpeedMap.put("motorway_link", 70);
-        defaultSpeedMap.put("motorroad", 90);
         // bundesstraße
         defaultSpeedMap.put("trunk", 70);
         defaultSpeedMap.put("trunk_link", 65);
@@ -143,10 +139,6 @@ public class CarTagParser extends VehicleTagParser {
 
     protected double getSpeed(ReaderWay way) {
         String highwayValue = way.getTag("highway");
-        if (!Helper.isEmpty(highwayValue) && way.hasTag("motorroad", "yes")
-                && !"motorway".equals(highwayValue) && !"motorway_link".equals(highwayValue)) {
-            highwayValue = "motorroad";
-        }
         Integer speed = defaultSpeedMap.get(highwayValue);
         if (speed == null)
             throw new IllegalStateException(getName() + ", no speed found for: " + highwayValue + ", tags: " + way);
@@ -163,7 +155,6 @@ public class CarTagParser extends VehicleTagParser {
         return speed;
     }
 
-    @Override
     public WayAccess getAccess(ReaderWay way) {
         // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
@@ -179,7 +170,7 @@ public class CarTagParser extends VehicleTagParser {
             }
             return WayAccess.CAN_SKIP;
         }
-        
+
         if ("service".equals(highwayValue) && "emergency_access".equals(way.getTag("service"))) {
             return WayAccess.CAN_SKIP;
         }
@@ -197,7 +188,7 @@ public class CarTagParser extends VehicleTagParser {
         if (!firstValue.isEmpty()) {
             String[] restrict = firstValue.split(";");
             boolean notConditionalyPermitted = !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
-            for (String value: restrict) {
+            for (String value : restrict) {
                 if (restrictedValues.contains(value) && notConditionalyPermitted)
                     return WayAccess.CAN_SKIP;
                 if (intendedValues.contains(value))
@@ -216,21 +207,18 @@ public class CarTagParser extends VehicleTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
-            return edgeFlags;
+            return;
 
         if (!access.isFerry()) {
             // get assumed speed from highway type
             double speed = getSpeed(way);
-            speed = applyMaxSpeed(way, speed);
-
             speed = applyBadSurfaceSpeed(way, speed);
 
-            setSpeed(false, edgeFlags, speed);
-            if (avgSpeedEnc.isStoreTwoDirections())
-                setSpeed(true, edgeFlags, speed);
+            setSpeed(false, edgeFlags, applyMaxSpeed(way, speed, false));
+            setSpeed(true, edgeFlags, applyMaxSpeed(way, speed, true));
 
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
             if (isOneway(way) || isRoundabout) {
@@ -251,8 +239,6 @@ public class CarTagParser extends VehicleTagParser {
             if (avgSpeedEnc.isStoreTwoDirections())
                 setSpeed(true, edgeFlags, ferrySpeed);
         }
-
-        return edgeFlags;
     }
 
     /**
@@ -260,14 +246,9 @@ public class CarTagParser extends VehicleTagParser {
      * @param speed speed guessed e.g. from the road type or other tags
      * @return The assumed speed.
      */
-    protected double applyMaxSpeed(ReaderWay way, double speed) {
-        double maxSpeed = getMaxSpeed(way);
-        // We obey speed limits
-        if (isValidSpeed(maxSpeed)) {
-            // We assume that the average speed is 90% of the allowed maximum
-            return maxSpeed * 0.9;
-        }
-        return speed;
+    protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
+        double maxSpeed = getMaxSpeed(way, bwd);
+        return isValidSpeed(maxSpeed) ? maxSpeed * 0.9 : speed;
     }
 
     /**

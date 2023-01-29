@@ -29,6 +29,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

@@ -22,7 +22,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
@@ -47,6 +46,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -390,7 +390,7 @@ public class OSMReaderTest {
     @Test
     public void testFords() {
         GraphHopper hopper = new GraphHopper();
-        hopper.setFlagEncodersString("car|block_fords=true");
+        hopper.setVehiclesString("car|block_fords=true");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
@@ -492,26 +492,33 @@ public class OSMReaderTest {
         osmRel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1, ""));
         osmRel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 2, ""));
 
+        // this is pretty ugly: the bike network parser writes to the edge flags we pass into it, but at a location we
+        // don't know, so we need to get the internal enc to read the flags below
+        EnumEncodedValue<RouteNetwork> transformEnc = ((OSMBikeNetworkTagParser) osmParsers.getRelationTagParsers().get(0)).getTransformerRouteRelEnc();
+
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
 
-        IntsRef flags = manager.createRelationFlags();
-        osmParsers.handleRelationTags(osmRel, flags);
-        assertFalse(flags.isEmpty());
+        IntsRef edgeFlags = manager.createRelationFlags();
+        osmParsers.handleRelationTags(osmRel, edgeFlags);
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeFlags));
 
         // unchanged network
-        IntsRef before = IntsRef.deepCopyOf(flags);
-        osmParsers.handleRelationTags(osmRel, flags);
-        assertEquals(before, flags);
+        IntsRef before = IntsRef.deepCopyOf(edgeFlags);
+        osmParsers.handleRelationTags(osmRel, edgeFlags);
+        assertEquals(before, edgeFlags);
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, before));
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeFlags));
 
         // overwrite network
         osmRel.setTag("network", "ncn");
-        osmParsers.handleRelationTags(osmRel, flags);
-        assertNotEquals(before, flags);
+        osmParsers.handleRelationTags(osmRel, edgeFlags);
+        assertEquals(RouteNetwork.NATIONAL, transformEnc.getEnum(false, edgeFlags));
+        assertNotEquals(before, edgeFlags);
     }
 
     @Test
-    public void testTurnRestrictions() {
+    public void testTurnRestrictionsFromXML() {
         String fileTurnRestrictions = "test-restrictions.xml";
         GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
                 importOrLoad();
@@ -576,31 +583,11 @@ public class OSMReaderTest {
         assertTrue(tcStorage.get(carTCEnc, edge11_14, n11, edge10_11) == 0);
         assertTrue(tcStorage.get(bikeTCEnc, edge11_14, n11, edge10_11) == 0);
 
-        assertTrue(tcStorage.get(carTCEnc, edge10_11, n11, edge11_14) == 0);
+        // the turn is restricted for car even though it turns into a one-way, but we treat this separately now
+        assertTrue(tcStorage.get(carTCEnc, edge10_11, n11, edge11_14) > 0);
         assertTrue(tcStorage.get(bikeTCEnc, edge10_11, n11, edge11_14) > 0);
     }
 
-    @Test
-    public void testMultipleFromForNoEntry() {
-        ReaderRelation rel = new ReaderRelation(1L);
-
-        rel.setTag("restriction", "no_entry");
-        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1L, "from"));
-        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 2L, "from"));
-        rel.add(new ReaderRelation.Member(ReaderElement.Type.NODE, 3L, "via"));
-        rel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 4L, "to"));
-
-        List<OSMTurnRelation> osmRel = OSMReader.createTurnRelations(rel);
-        assertEquals(2, osmRel.size());
-
-        assertEquals(1, osmRel.get(0).getOsmIdFrom());
-        assertEquals(4, osmRel.get(0).getOsmIdTo());
-        assertEquals(OSMTurnRelation.Type.NOT, osmRel.get(0).getRestriction());
-
-        assertEquals(2, osmRel.get(1).getOsmIdFrom());
-        assertEquals(4, osmRel.get(1).getOsmIdTo());
-        assertEquals(OSMTurnRelation.Type.NOT, osmRel.get(1).getRestriction());
-    }
 
     @Test
     public void testRoadAttributes() {
@@ -688,7 +675,6 @@ public class OSMReaderTest {
                 return new CarTagParser(
                         lookup.getBooleanEncodedValue(VehicleAccess.key("truck")),
                         lookup.getDecimalEncodedValue(VehicleSpeed.key("truck")),
-                        lookup.hasEncodedValue(TurnCost.key("truck")) ? lookup.getDecimalEncodedValue(TurnCost.key("truck")) : null,
                         lookup.getBooleanEncodedValue(Roundabout.KEY),
                         config,
                         TransportationMode.HGV,
@@ -907,15 +893,16 @@ public class OSMReaderTest {
         GHResponse response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
                 .setProfile("profile")
                 .setPathDetails(Collections.singletonList(RoadClass.KEY)));
+        assertFalse(response.hasErrors(), response.getErrors().toString());
         List<PathDetail> list = response.getBest().getPathDetails().get(RoadClass.KEY);
         assertEquals(3, list.size());
         assertEquals(RoadClass.MOTORWAY.toString(), list.get(0).getValue());
 
         response = gh.route(new GHRequest(51.2492152, 9.4317166, 52.133, 9.1)
                 .setProfile("profile")
-                .setPathDetails(Collections.singletonList(Toll.KEY)));
+                .setPathDetails(Arrays.asList(Toll.KEY, Country.KEY)));
         Throwable ex = response.getErrors().get(0);
-        assertTrue(ex.getMessage().contains("You requested the details [toll]"), ex.getMessage());
+        assertEquals("Cannot find the path details: [toll, country]", ex.getMessage());
     }
 
     @Test
@@ -926,7 +913,7 @@ public class OSMReaderTest {
         osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
         CarTagParser parser = new CarTagParser(em, new PMap());
         parser.init(new DateRangeParser());
-        osmParsers.addVehicleTagParser(parser);
+        osmParsers.addWayTagParser(parser);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
@@ -945,7 +932,7 @@ public class OSMReaderTest {
 
         ReaderWay way = new ReaderWay(0L);
         PointList list = new PointList();
-        list.add(49.214906,-2.156067);
+        list.add(49.214906, -2.156067);
         reader.setArtificialWayTags(list, way, 10, new HashMap<>());
         assertEquals("JEY", way.getTag("country", null).toString());
     }
@@ -962,7 +949,7 @@ public class OSMReaderTest {
         carParser.init(new DateRangeParser());
         OSMParsers osmParsers = new OSMParsers()
                 .addWayTagParser(new CountryParser(countryEnc))
-                .addVehicleTagParser(carParser);
+                .addWayTagParser(carParser);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());

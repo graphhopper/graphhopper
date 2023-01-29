@@ -24,10 +24,11 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.util.*;
+import com.graphhopper.util.details.PathDetail;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.UUID;
+import java.util.*;
+
+import static com.graphhopper.util.Parameters.Details.INTERSECTION;
 
 public class NavigateResponseConverter {
 
@@ -82,11 +83,20 @@ public class NavigateResponseConverter {
         long time = 0;
         double distance = 0;
         boolean isFirstInstructionOfLeg = true;
+        int pointIndexFrom = 0;
+
+        Map<String, List<PathDetail>> pathDetails = path.getPathDetails();
+        List<PathDetail> intersectionDetails = pathDetails.getOrDefault(INTERSECTION, Collections.emptyList());
 
         for (int i = 0; i < instructions.size(); i++) {
             ObjectNode instructionJson = steps.addObject();
-            putInstruction(instructions, i, locale, translationMap, instructionJson, isFirstInstructionOfLeg, distanceConfig);
             Instruction instruction = instructions.get(i);
+            int pointIndexTo = pointIndexFrom;
+            if (instruction.getSign() != Instruction.REACHED_VIA && instruction.getSign() != Instruction.FINISH) {
+                pointIndexTo += instructions.get(i).getPoints().size();
+            }
+            putInstruction(path.getPoints(), instructions, i, locale, translationMap, instructionJson, isFirstInstructionOfLeg, distanceConfig, intersectionDetails, pointIndexFrom, pointIndexTo);
+            pointIndexFrom = pointIndexTo;
             time += instruction.getTime();
             distance += instruction.getDistance();
             isFirstInstructionOfLeg = false;
@@ -126,26 +136,67 @@ public class NavigateResponseConverter {
         legJson.put("distance", Helper.round(distance, 1));
     }
 
-    private static ObjectNode putInstruction(InstructionList instructions, int index, Locale locale, TranslationMap translationMap,
-                                             ObjectNode instructionJson, boolean isFirstInstructionOfLeg, DistanceConfig distanceConfig) {
-        Instruction instruction = instructions.get(index);
+    private static ObjectNode putInstruction(PointList points, InstructionList instructions, int instructionIndex, Locale locale,
+                                             TranslationMap translationMap, ObjectNode instructionJson, boolean isFirstInstructionOfLeg,
+                                             DistanceConfig distanceConfig, List<PathDetail> intersectionDetails, int pointIndexFrom,
+                                             int pointIndexTo) {
+        Instruction instruction = instructions.get(instructionIndex);
         ArrayNode intersections = instructionJson.putArray("intersections");
-        ObjectNode intersection = intersections.addObject();
-        intersection.putArray("entry");
-        intersection.putArray("bearings");
+
+        for (PathDetail intersectionDetail : intersectionDetails) {
+            if (intersectionDetail.getFirst() >= pointIndexTo) {
+                break;
+            }
+            if (intersectionDetail.getFirst() >= pointIndexFrom) {
+                ObjectNode intersection = intersections.addObject();
+                Map<String, Object> intersectionValue = (Map<String, Object>) intersectionDetail.getValue();
+                // Location
+                ArrayNode locationArray = intersection.putArray("location");
+                locationArray.add(Helper.round6(points.getLon(intersectionDetail.getFirst())));
+                locationArray.add(Helper.round6(points.getLat(intersectionDetail.getFirst())));
+                // Entry
+                List<Boolean> entries = (List<Boolean>) intersectionValue.getOrDefault("entries", Collections.emptyList());
+                ArrayNode entryArray = intersection.putArray("entry");
+                for (Boolean entry : entries) {
+                    entryArray.add(entry);
+                }
+                // Bearings
+                List<Integer> bearingsList = (List<Integer>) intersectionValue.getOrDefault("bearings", Collections.emptyList());
+                ArrayNode bearingsrray = intersection.putArray("bearings");
+                for (Integer bearing : bearingsList) {
+                    bearingsrray.add(bearing);
+                }
+                // in
+                if (intersectionValue.containsKey("in")) {
+                    intersection.put("in", (int) intersectionValue.get("in"));
+                }
+                // out
+                if (intersectionValue.containsKey("out")) {
+                    intersection.put("out", (int) intersectionValue.get("out"));
+                }
+            }
+        }
+
         //Make pointList mutable
         PointList pointList = instruction.getPoints().clone(false);
 
-        if (index + 2 < instructions.size()) {
+        if (instructionIndex + 2 < instructions.size()) {
             // Add the first point of the next instruction
-            PointList nextPoints = instructions.get(index + 1).getPoints();
+            PointList nextPoints = instructions.get(instructionIndex + 1).getPoints();
             pointList.add(nextPoints.getLat(0), nextPoints.getLon(0), nextPoints.getEle(0));
         } else if (pointList.size() == 1) {
             // Duplicate the last point in the arrive instruction, if the size is 1
             pointList.add(pointList.getLat(0), pointList.getLon(0), pointList.getEle(0));
         }
 
-        putLocation(pointList.getLat(0), pointList.getLon(0), intersection);
+        if (intersections.size() == 0) {
+            // this is the fallback if we don't have any intersections.
+            // this can happen for via points or finish instructions or when no intersection details have been requested
+            ObjectNode intersection = intersections.addObject();
+            intersection.putArray("entry");
+            intersection.putArray("bearings");
+            putLocation(pointList.getLat(0), pointList.getLon(0), intersection);
+        }
 
         instructionJson.put("driving_side", "right");
 
@@ -168,9 +219,9 @@ public class NavigateResponseConverter {
         ArrayNode bannerInstructions = instructionJson.putArray("bannerInstructions");
 
         // Voice and banner instructions are empty for the last element
-        if (index + 1 < instructions.size()) {
-            putVoiceInstructions(instructions, distance, index, locale, translationMap, voiceInstructions, distanceConfig);
-            putBannerInstructions(instructions, distance, index, locale, translationMap, bannerInstructions);
+        if (instructionIndex + 1 < instructions.size()) {
+            putVoiceInstructions(instructions, distance, instructionIndex, locale, translationMap, voiceInstructions, distanceConfig);
+            putBannerInstructions(instructions, distance, instructionIndex, locale, translationMap, bannerInstructions);
         }
 
         return instructionJson;

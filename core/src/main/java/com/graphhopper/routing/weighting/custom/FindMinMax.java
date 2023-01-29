@@ -23,10 +23,12 @@ public class FindMinMax {
     public static void checkLMConstraints(CustomModel baseModel, CustomModel queryModel, EncodedValueLookup lookup) {
         if (queryModel.isInternal())
             throw new IllegalArgumentException("CustomModel of query cannot be internal");
-        if (queryModel.hasDistanceInfluence() && queryModel.getDistanceInfluence() < baseModel.getDistanceInfluence())
-            throw new IllegalArgumentException("CustomModel in query can only use " +
-                    "distance_influence bigger or equal to " + baseModel.getDistanceInfluence() +
-                    ", but was: " + queryModel.getDistanceInfluence());
+        if (queryModel.getDistanceInfluence() != null) {
+            double bmDI = baseModel.getDistanceInfluence() == null ? 0 : baseModel.getDistanceInfluence();
+            if (queryModel.getDistanceInfluence() < bmDI)
+                throw new IllegalArgumentException("CustomModel in query can only use distance_influence bigger or equal to "
+                        + bmDI + ", but was: " + queryModel.getDistanceInfluence());
+        }
 
         checkMultiplyValue(queryModel.getPriority(), lookup);
         checkMultiplyValue(queryModel.getSpeed(), lookup);
@@ -38,7 +40,7 @@ public class FindMinMax {
             if (statement.getOperation() == Statement.Op.MULTIPLY) {
                 MinMax minMax = ValueExpressionVisitor.findMinMax(createdObjects, statement.getValue(), lookup);
                 if (minMax.max > 1)
-                    throw new IllegalArgumentException("maximum of value '" + statement.getValue() + "'cannot be larger than 1, but was: " + minMax.max);
+                    throw new IllegalArgumentException("maximum of value '" + statement.getValue() + "' cannot be larger than 1, but was: " + minMax.max);
                 else if (minMax.min < 0)
                     throw new IllegalArgumentException("minimum of value '" + statement.getValue() + "' cannot be smaller than 0, but was: " + minMax.min);
             }

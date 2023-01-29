@@ -20,8 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
@@ -55,7 +53,7 @@ public class WheelchairTagParser extends FootTagParser {
 
     protected WheelchairTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
                                   EnumEncodedValue<RouteNetwork> footRouteEnc) {
-        super(accessEnc, speedEnc, priorityEnc, footRouteEnc, "wheelchair");
+        super(accessEnc, speedEnc, priorityEnc, footRouteEnc);
 
         restrictions.add("wheelchair");
 
@@ -164,10 +162,10 @@ public class WheelchairTagParser extends FootTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
-            return edgeFlags;
+            return;
 
         accessEnc.setBool(false, edgeFlags, true);
         accessEnc.setBool(true, edgeFlags, true);
@@ -180,7 +178,8 @@ public class WheelchairTagParser extends FootTagParser {
 
         Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
         priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
-        return edgeFlags;
+
+        applyWayTags(way, edgeFlags);
     }
 
     /**
@@ -188,14 +187,17 @@ public class WheelchairTagParser extends FootTagParser {
      * and maxInclinePercent will reduce speed to SLOW_SPEED. In-/declines above maxInclinePercent will result in zero
      * speed.
      */
-    @Override
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        PointList pl = edge.fetchWayGeometry(FetchMode.ALL);
-        double fullDist2D = edge.getDistance();
+    public void applyWayTags(ReaderWay way, IntsRef edgeFlags) {
+        PointList pl = way.getTag("point_list", null);
+        if (pl == null)
+            throw new IllegalArgumentException("The artificial point_list tag is missing");
+        if (!way.hasTag("edge_distance"))
+            throw new IllegalArgumentException("The artificial edge_distance tag is missing");
+        double fullDist2D = way.getTag("edge_distance", 0d);
         if (Double.isInfinite(fullDist2D))
             throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
 
-        // skip elevation data adjustment for too short segments, TODO improve the elevation data handling and/or use the same mechanism as in bike2
+        // skip elevation data adjustment for too short segments, TODO improve the elevation data handling and/or use the same mechanism as we used to do in bike2
         if (fullDist2D < 20 || !pl.is3D())
             return;
 
@@ -213,17 +215,20 @@ public class WheelchairTagParser extends FootTagParser {
         } else if (elePercent > maxInclinePercent || elePercent < -maxInclinePercent) {
             // it can be problematic to exclude roads due to potential bad elevation data (e.g.delta for narrow nodes could be too high)
             // so exclude only when we are certain
-            if (fullDist2D > 50) edge.set(accessEnc, false, false);
+            if (fullDist2D > 50) {
+                accessEnc.setBool(false, edgeFlags, false);
+                accessEnc.setBool(true, edgeFlags, false);
+            }
 
             fwdSpeed = SLOW_SPEED;
             bwdSpeed = SLOW_SPEED;
-            edge.set(priorityWayEncoder, PriorityCode.getValue(PriorityCode.REACH_DESTINATION.getValue()));
+            priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(PriorityCode.REACH_DESTINATION.getValue()));
         }
 
-        if (fwdSpeed > 0 && edge.get(accessEnc))
-            setSpeed(edge.getFlags(), true, false, fwdSpeed);
-        if (bwdSpeed > 0 && edge.getReverse(accessEnc))
-            setSpeed(edge.getFlags(), false, true, bwdSpeed);
+        if (fwdSpeed > 0 && accessEnc.getBool(false, edgeFlags))
+            setSpeed(edgeFlags, true, false, fwdSpeed);
+        if (bwdSpeed > 0 && accessEnc.getBool(true, edgeFlags))
+            setSpeed(edgeFlags, false, true, bwdSpeed);
     }
 
     /**

@@ -26,7 +26,6 @@ public interface VehicleEncodedValuesFactory {
     String ROADS = "roads";
     String CAR = "car";
     String BIKE = "bike";
-    String BIKE2 = "bike2";
     String RACINGBIKE = "racingbike";
     String MOUNTAINBIKE = "mtb";
     String FOOT = "foot";

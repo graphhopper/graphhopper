@@ -19,33 +19,30 @@ public class SlopeCalculator implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         PointList pointList = way.getTag("point_list", null);
         if (pointList != null) {
             if (pointList.isEmpty() || !pointList.is3D()) {
-                if (averageSlopeEnc != null) averageSlopeEnc.setDecimal(false, edgeFlags, 0);
-                return edgeFlags;
+                averageSlopeEnc.setDecimal(false, edgeFlags, 0);
+                return;
             }
             // Calculate 2d distance, although pointList might be 3D.
             // This calculation is a bit expensive and edge_distance is available already, but this would be in 3D
             double distance2D = DistanceCalcEarth.calcDistance(pointList, false);
-
             if (distance2D < MIN_LENGTH) {
                 // default is minimum of average_slope is negative so we have to explicitly set it to 0
-                if (averageSlopeEnc != null) averageSlopeEnc.setDecimal(false, edgeFlags, 0);
-                return edgeFlags;
+                averageSlopeEnc.setDecimal(false, edgeFlags, 0);
+                return;
             }
 
             double towerNodeSlope = calcSlope(pointList.getEle(pointList.size() - 1) - pointList.getEle(0), distance2D);
             if (Double.isNaN(towerNodeSlope))
                 throw new IllegalArgumentException("average_slope was NaN for OSM way ID " + way.getId());
 
-            if (averageSlopeEnc != null) {
-                if (towerNodeSlope >= 0)
-                    averageSlopeEnc.setDecimal(false, edgeFlags, Math.min(towerNodeSlope, averageSlopeEnc.getMaxStorableDecimal()));
-                else
-                    averageSlopeEnc.setDecimal(true, edgeFlags, Math.min(Math.abs(towerNodeSlope), averageSlopeEnc.getMaxStorableDecimal()));
-            }
+            if (towerNodeSlope >= 0)
+                averageSlopeEnc.setDecimal(false, edgeFlags, Math.min(towerNodeSlope, averageSlopeEnc.getMaxStorableDecimal()));
+            else
+                averageSlopeEnc.setDecimal(true, edgeFlags, Math.min(Math.abs(towerNodeSlope), averageSlopeEnc.getMaxStorableDecimal()));
 
             // max_slope is more error-prone as the shorter distances increase the fluctuation
             // so apply some more filtering (here we use the average elevation delta of the previous two points)
@@ -74,10 +71,8 @@ public class SlopeCalculator implements TagParser {
 
             // TODO Use two independent values for both directions to store if it is a gain or loss and not just the absolute change.
             // TODO To save space then it would be nice to have an encoded value that can store two different values which are swapped when the reverse direction is used
-            if (maxSlopeEnc != null)
-                maxSlopeEnc.setDecimal(false, edgeFlags, Math.min(maxSlope, maxSlopeEnc.getMaxStorableDecimal()));
+            maxSlopeEnc.setDecimal(false, edgeFlags, Math.min(maxSlope, maxSlopeEnc.getMaxStorableDecimal()));
         }
-        return edgeFlags;
     }
 
     static double calcSlope(double eleDelta, double distance2D) {

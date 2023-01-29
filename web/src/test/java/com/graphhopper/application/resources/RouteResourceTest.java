@@ -78,10 +78,11 @@ public class RouteResourceTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("profiles_mapbox", mapboxResolver).
-                putObject("graph.flag_encoders", "car").
+                putObject("graph.vehicles", "car").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 // adding this so the corresponding check is not just skipped...
                 .putObject(MAX_NON_CH_POINT_DISTANCE, 10e6)
@@ -134,8 +135,8 @@ public class RouteResourceTest {
         assertTrue(distance > 9000, "distance wasn't correct:" + distance);
         assertTrue(distance < 9500, "distance wasn't correct:" + distance);
 
-        // we currently just ignore URL parameters (not sure if this is a good or bad thing)
-        jsonStr = "{\"points\": [[1.536198,42.554851], [1.548128, 42.510071]] }";
+        // we currently just ignore URL parameters in a POST request (not sure if this is a good or bad thing)
+        jsonStr = "{\"points\": [[1.536198,42.554851], [1.548128, 42.510071]], \"profile\": \"my_car\" }";
         response = clientTarget(app, "/route?vehicle=unknown&weighting=unknown").request().post(Entity.json(jsonStr));
         assertEquals(200, response.getStatus());
         assertFalse(response.readEntity(JsonNode.class).get("info").has("errors"));
@@ -294,10 +295,10 @@ public class RouteResourceTest {
         assertEquals(5, averageSpeedList.get(1).getLength());
 
         List<PathDetail> edgeIdDetails = pathDetails.get("edge_id");
-        assertEquals(77, edgeIdDetails.size());
-        assertEquals(882L, edgeIdDetails.get(0).getValue());
+        assertEquals(78, edgeIdDetails.size());
+        assertEquals(924L, edgeIdDetails.get(0).getValue());
         assertEquals(2, edgeIdDetails.get(0).getLength());
-        assertEquals(883L, edgeIdDetails.get(1).getValue());
+        assertEquals(925L, edgeIdDetails.get(1).getValue());
         assertEquals(8, edgeIdDetails.get(1).getLength());
 
         long expectedTime = rsp.getBest().getTime();
@@ -352,8 +353,8 @@ public class RouteResourceTest {
         JsonNode edgeIds = details.get("edge_id");
         int firstLink = edgeIds.get(0).get(2).asInt();
         int lastLink = edgeIds.get(edgeIds.size() - 1).get(2).asInt();
-        assertEquals(882, firstLink);
-        assertEquals(1425, lastLink);
+        assertEquals(924, firstLink);
+        assertEquals(1584, lastLink);
 
         JsonNode maxSpeed = details.get("max_speed");
         assertEquals(-1, maxSpeed.get(0).get(2).asDouble(-1), .01);
@@ -487,13 +488,12 @@ public class RouteResourceTest {
         assertTrue(rsp.getErrors().toString().contains("If you pass point_hint, you need to pass exactly one hint for every point"), rsp.getErrors().toString());
 
         // unknown vehicle
-        rsp = hopper.route(new GHRequest(points).putHint("vehicle", "SPACE-SHUTTLE"));
+        rsp = hopper.route(new GHRequest(points).setProfile("SPACE-SHUTTLE"));
         assertFalse(rsp.getErrors().isEmpty(), "Errors expected but not found.");
         ex = rsp.getErrors().get(0);
         assertTrue(ex instanceof IllegalArgumentException, "Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.");
-        assertTrue(ex.getMessage().contains("Vehicle not supported: `space-shuttle`. Supported are: `car`" +
-                "\nYou should consider using the `profile` parameter instead of specifying a vehicle." +
+        assertTrue(ex.getMessage().contains("The requested profile 'SPACE-SHUTTLE' does not exist." +
                 "\nAvailable profiles: [my_car]"), ex.getMessage());
 
         // an IllegalArgumentException from inside the core is written as JSON, unknown profile
@@ -552,6 +552,7 @@ public class RouteResourceTest {
     @Test
     public void testGPXExport() {
         GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        req.setProfile("my_car");
         req.putHint("elevation", false);
         req.putHint("instructions", true);
         req.putHint("calc_points", true);
@@ -572,13 +573,14 @@ public class RouteResourceTest {
     @Test
     public void testExportWithoutTrack() {
         GHRequest req = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        req.setProfile("my_car");
         req.putHint("elevation", false);
         req.putHint("instructions", true);
         req.putHint("calc_points", true);
         req.putHint("type", "gpx");
         req.putHint("gpx.track", false);
         GraphHopperWeb gh = new GraphHopperWeb(clientUrl(app, "/route"))
-                // gpx not supported for POST
+                // gpx is not supported for POST
                 .setPostRequest(false);
         String res = gh.export(req);
         assertTrue(res.contains("<gpx"));

@@ -159,7 +159,7 @@ public final class CustomWeighting extends AbstractWeighting {
         double get(EdgeIteratorState edge, boolean reverse);
     }
 
-    static class Parameters {
+    public static class Parameters {
         private final EdgeToDoubleMapping edgeToSpeedMapping;
         private final EdgeToDoubleMapping edgeToPriorityMapping;
         private final double maxSpeed;
@@ -168,9 +168,10 @@ public final class CustomWeighting extends AbstractWeighting {
         private final double headingPenaltySeconds;
         private final TurnCostConfig turnCostConfig;
 
-        Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
-                   double maxSpeed, double maxPriority, double distanceInfluence, double headingPenaltySeconds,
-                   TurnCostConfig turnCostConfig) {
+
+        public Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
+                          double maxSpeed, double maxPriority, double distanceInfluence, double headingPenaltySeconds,
+                          TurnCostConfig turnCostConfig) {
             this.edgeToSpeedMapping = edgeToSpeedMapping;
             this.edgeToPriorityMapping = edgeToPriorityMapping;
             this.maxSpeed = maxSpeed;

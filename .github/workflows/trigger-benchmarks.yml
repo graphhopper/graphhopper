@@ -11,4 +11,4 @@ jobs:
           curl -X POST -H "Authorization: token ${{ secrets.BENCHMARKS_TOKEN }}" \
           -H "Accept: application/vnd.github+json" \
           "https://api.github.com/repos/${{ secrets.BENCHMARKS_REPO }}/dispatches" \
-          -d '{"event_type":"measurement_core","client_payload":{"core_commit": "${GITHUB_SHA}" }}'
+          -d '{"event_type":"measurement_core","client_payload":{"core_commit": "'$GITHUB_SHA'", "core_branch": "${{ github.ref_name }}" }}'

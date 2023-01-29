@@ -2,17 +2,18 @@
 
 ## First Steps
 
-Try out our live demo called [GraphHopper Maps](https://graphhopper.com/maps)
+Try out our live demo called [GraphHopper Maps](https://graphhopper.com/maps/)
 
- [![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](https://graphhopper.com/maps)
+ [![GraphHopper Maps](https://www.graphhopper.com/wp-content/uploads/2022/10/maps2-1024x661.png)](https://graphhopper.com/maps)
 
-[The Readme](../README.md#features) lists all features or [this list of slides](https://graphhopper.com/public/slides/).
+[The Readme](../README.md#features) lists all features.
+
 See [users of GraphHopper](https://www.graphhopper.com/showcases/) and let us know your application!
 
 ## Community
 
 For all questions regarding the GraphHopper routing engine please use [our forum](https://discuss.graphhopper.com). 
-For bugs see our contribute section below.
+For bugs see our [contributing guide](https://github.com/graphhopper/graphhopper/blob/master/CONTRIBUTING.md).
 
 ---
 

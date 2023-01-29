@@ -39,7 +39,7 @@ import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
  * @author easbar
  * @see AbstractBidirCHAlgo for bidirectional CH algorithms
  */
-public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implements BidirRoutingAlgorithm {
+public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
     protected final Graph graph;
     protected final NodeAccess nodeAccess;
     protected final Weighting weighting;

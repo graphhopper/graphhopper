@@ -15,13 +15,12 @@ public class OSMHazmatWaterParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         if (readerWay.hasTag("hazmat:water", "no")) {
             hazWaterEnc.setEnum(false, edgeFlags, HazmatWater.NO);
         } else if (readerWay.hasTag("hazmat:water", "permissive")) {
             hazWaterEnc.setEnum(false, edgeFlags, HazmatWater.PERMISSIVE);
         }
-        return edgeFlags;
     }
 
 }

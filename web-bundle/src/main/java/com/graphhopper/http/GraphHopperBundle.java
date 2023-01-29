@@ -126,36 +126,13 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
-    static class LegacyProfileResolverFactory implements Factory<LegacyProfileResolver> {
-
-        @Inject
-        GraphHopper graphHopper;
-
-        @Override
-        public LegacyProfileResolver provide() {
-            return new LegacyProfileResolver(graphHopper.getEncodingManager(),
-                    graphHopper.getProfiles(),
-                    graphHopper.getCHPreparationHandler().getCHProfiles(),
-                    graphHopper.getLMPreparationHandler().getLMProfiles()
-            );
-        }
-
-        @Override
-        public void dispose(LegacyProfileResolver profileResolver) {
-
-        }
-    }
-
     static class ProfileResolverFactory implements Factory<ProfileResolver> {
         @Inject
         GraphHopper graphHopper;
 
-        @Inject
-        LegacyProfileResolver legacyProfileResolver;
-
         @Override
         public ProfileResolver provide() {
-            return new ProfileResolver(graphHopper.getProfiles(), legacyProfileResolver);
+            return new ProfileResolver(graphHopper.getProfiles());
         }
 
         @Override
@@ -278,7 +255,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(new JTSTriangulator(graphHopper.getRouterConfig())).to(Triangulator.class);
                 bindFactory(MapMatchingRouterFactoryFactory.class).to(MapMatchingResource.MapMatchingRouterFactory.class);
                 bindFactory(PathDetailsBuilderFactoryFactory.class).to(PathDetailsBuilderFactory.class);
-                bindFactory(LegacyProfileResolverFactory.class).to(LegacyProfileResolver.class);
                 bindFactory(ProfileResolverFactory.class).to(ProfileResolver.class);
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);

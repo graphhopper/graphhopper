@@ -20,20 +20,10 @@ class RoadsTagParserTest {
     }
 
     @Test
-    public void testAccess() {
-        ReaderWay way = new ReaderWay(1);
-        assertTrue(parser.getAccess(way).canSkip());
-
-        way.setTag("highway", "motorway");
-        assertTrue(parser.getAccess(way).isWay());
-        way.setTag("highway", "footway");
-        assertTrue(parser.getAccess(way).isWay());
-    }
-
-    @Test
     public void testSpeed() {
         ReaderWay way = new ReaderWay(1);
-        IntsRef flags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
+        IntsRef flags = encodingManager.createEdgeFlags();
+        parser.handleWayTags(flags, way);
         assertTrue(parser.getAverageSpeedEnc().getDecimal(false, flags) > 200);
     }
 

@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -76,12 +78,12 @@ public class RoutingAlgorithmWithOSMTest {
         Graph g = hopper.getBaseGraph();
 
         // When OSM file stays unchanged make static edge and node IDs a requirement
-        assertEquals(GHUtility.asSet(9, 111, 182), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
-        assertEquals(GHUtility.asSet(19, 21), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(20)));
-        assertEquals(GHUtility.asSet(478, 84, 83), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(480)));
+        assertEquals(GHUtility.asSet(924, 576, 2), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
+        assertEquals(GHUtility.asSet(291, 369, 19), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(20)));
+        assertEquals(GHUtility.asSet(45, 497, 488), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(480)));
 
-        assertEquals(43.736989, g.getNodeAccess().getLat(10), 1e-6);
-        assertEquals(7.429758, g.getNodeAccess().getLon(201), 1e-6);
+        assertEquals(43.738776, g.getNodeAccess().getLat(10), 1e-6);
+        assertEquals(7.4170402, g.getNodeAccess().getLon(201), 1e-6);
     }
 
     private List<Query> createMonacoCarQueries() {
@@ -122,13 +124,13 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoMotorcycleCurvature() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2681, 119));
+        queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2675, 117));
         queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3727, 170));
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 3157, 165));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
         queries.add(new Query(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
         queries.add(new Query(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
-        CustomModel model = new CustomModel().addToPriority(Statement.If("true", Statement.Op.MULTIPLY, "curvature"));
+        CustomModel model = new CustomModel().setDistanceInfluence(70d).addToPriority(Statement.If("true", MULTIPLY, "curvature"));
 
         GraphHopper hopper = createHopper(MONACO, new CustomProfile("motorcycle").setCustomModel(model).
                 setVehicle("motorcycle").setWeighting("custom"));
@@ -144,8 +146,9 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(52.349969, 8.013813, 52.349713, 8.013293, 56, 7));
         // reverse route avoids the location
 //        list.add(new OneRun(52.349713, 8.013293, 52.349969, 8.013813, 293, 21));
+        CustomModel model = new CustomModel();
         GraphHopper hopper = createHopper(DIR + "/map-bug432.osm.gz",
-                new Profile("bike2").setVehicle("bike2").setWeighting("fastest"));
+                new CustomProfile("bike2").setCustomModel(model).setVehicle("bike").setWeighting("custom"));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -273,12 +276,12 @@ public class RoutingAlgorithmWithOSMTest {
         Graph g = hopper.getBaseGraph();
 
         // see testMonaco for a similar ID test
-        assertEquals(GHUtility.asSet(2, 909, 571), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
-        assertEquals(GHUtility.asSet(444, 956, 740), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(441)));
-        assertEquals(GHUtility.asSet(911, 404, 122, 914), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(912)));
+        assertEquals(GHUtility.asSet(924, 576, 2), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
+        assertEquals(GHUtility.asSet(440, 442), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(441)));
+        assertEquals(GHUtility.asSet(913, 914, 911), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(912)));
 
-        assertEquals(43.743705, g.getNodeAccess().getLat(100), 1e-6);
-        assertEquals(7.426362, g.getNodeAccess().getLon(702), 1e-6);
+        assertEquals(43.7467818, g.getNodeAccess().getLat(100), 1e-6);
+        assertEquals(7.4312824, g.getNodeAccess().getLon(702), 1e-6);
     }
 
     @Test
@@ -322,25 +325,31 @@ public class RoutingAlgorithmWithOSMTest {
     }
 
     @Test
-    public void testMonacoBike3D_twoSpeedsPerEdge() {
+    public void testMonacoBike3D() {
         List<Query> queries = new ArrayList<>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2689, 118));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 1999, 101));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 3735, 194));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 3939, 187));
         // 3.
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 163));
         // 4.
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1544, 84));
 
         // try reverse direction
         // 1.
         queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2599, 115));
-        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4180, 165));
-        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2805, 145));
+        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 3902, 199));
+        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2870, 154));
         // 4. avoid tunnel(s)!
-        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 2436, 112));
-        GraphHopper hopper = createHopper(MONACO, new Profile("bike2").setVehicle("bike2").setWeighting("fastest"));
+        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1795, 96));
+        CustomModel model = new CustomModel();
+        model.addToSpeed(Statement.If("average_slope >= 10", LIMIT, "4")).
+                addToSpeed(Statement.If("average_slope >= 5", MULTIPLY, "0.45")).
+                addToSpeed(Statement.If("average_slope >= 3.5", MULTIPLY, "0.7")).
+                addToSpeed(Statement.If("average_slope >= 2", MULTIPLY, "0.9")).
+                addToSpeed(Statement.If("average_slope < -5", MULTIPLY, "1.25"));
+        GraphHopper hopper = createHopper(MONACO, new CustomProfile("bike2").setCustomModel(model).setVehicle("bike").setWeighting("custom"));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -571,7 +580,8 @@ public class RoutingAlgorithmWithOSMTest {
 
         Helper.removeDir(new File(GH_LOCATION));
 
-        hopper = createHopper(BAYREUTH, new Profile("bike2").setVehicle("bike2").setWeighting("fastest"));
+        CustomModel model = new CustomModel();
+        hopper = createHopper(BAYREUTH, new CustomProfile("bike2").setCustomModel(model).setVehicle("bike").setWeighting("custom"));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, list);
@@ -686,6 +696,7 @@ public class RoutingAlgorithmWithOSMTest {
                 setStoreOnFlush(true).
                 setOSMFile(osmFile).
                 setProfiles(profiles).
+                setEncodedValuesString("average_slope,max_slope").
                 setGraphHopperLocation(GH_LOCATION);
         hopper.getRouterConfig().setSimplifyResponse(false);
         hopper.setMinNetworkSize(0);

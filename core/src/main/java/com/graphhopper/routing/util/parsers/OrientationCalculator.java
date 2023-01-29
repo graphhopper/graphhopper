@@ -16,7 +16,7 @@ public class OrientationCalculator implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         PointList pointList = way.getTag("point_list", null);
         if (pointList != null) {
             // store orientation in radians and use the end of the edge
@@ -29,7 +29,6 @@ public class OrientationCalculator implements TagParser {
                     pointList.getLat(0), pointList.getLon(0), true);
             orientationEnc.setDecimal(true, edgeFlags, revOrientation);
         }
-        return edgeFlags;
     }
 }
 

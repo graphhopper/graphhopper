@@ -48,7 +48,7 @@ Here is an overview:
  * kodonnell, adding support for CH and other algorithms (#60) and penalizing inner-link U-turns (#88)
  * legraina, improved docker for dockerhub
  * lmar, improved instructions
- * lukasalexanderweber, fixes like #2652
+ * lukasalexanderweber, helped to implement via-way restrictions #2689 and fixes like #2652
  * matkoniecz, tweaking documentation
  * manueltimita, fixes like #1651
  * mathstpierre, fixes like #1753
@@ -61,6 +61,7 @@ Here is an overview:
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
  * ocampana, initial implementation for instructions
  * oflebbe, work on iOS port and issues like #2060
+ * OlafFlebbeBosch, improvements like #2730
  * oschlueter, fixes like #1185
  * otbutz, added multiple EncodedValues
  * PGWelch, shapefile reader #874

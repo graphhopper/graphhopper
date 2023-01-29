@@ -94,8 +94,7 @@ public class MapMatchingResource {
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("traversal_keys") @DefaultValue("false") boolean enableTraversalKeys,
-            @QueryParam("gps_accuracy") @DefaultValue("40") double gpsAccuracy,
-            @QueryParam(MAX_VISITED_NODES) @DefaultValue("3000") int maxVisitedNodes) {
+            @QueryParam("gps_accuracy") @DefaultValue("40") double gpsAccuracy) {
 
         boolean writeGPX = "gpx".equalsIgnoreCase(outType);
         if (gpx.trk.isEmpty()) {
@@ -112,9 +111,6 @@ public class MapMatchingResource {
         PMap hints = new PMap();
         RouteResource.initHints(hints, uriInfo.getQueryParameters());
 
-        // add values that are not in hints because they were explicitly listed in query params
-        hints.putObject(MAX_VISITED_NODES, maxVisitedNodes);
-
         // resolve profile and remove legacy vehicle/weighting parameters
         // we need to explicitly disable CH here because map matching does not use it
         PMap profileResolverHints = new PMap(hints);
@@ -130,16 +126,16 @@ public class MapMatchingResource {
         List<Observation> measurements = GpxConversions.getEntries(gpx.trk.get(0));
         MatchResult matchResult = matching.match(measurements);
 
-        double took = sw.stop().getMillisDouble();
+        sw.stop();
         logger.info(objectMapper.createObjectNode()
-                .put("duration", took)
+                .put("duration", sw.getNanos())
                 .put("profile", profile)
                 .put("observations", measurements.size())
                 .putPOJO("mapmatching", matching.getStatistics()).toString());
 
         if ("extended_json".equals(outType)) {
             return Response.ok(convertToTree(matchResult, enableElevation, pointsEncoded)).
-                    header("X-GH-Took", "" + Math.round(took)).
+                    header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                     build();
         } else {
             Translation tr = trMap.getWithFallBack(Helper.getLocale(localeStr));
@@ -163,10 +159,10 @@ public class MapMatchingResource {
                         .map(Date::getTime)
                         .orElse(System.currentTimeMillis());
                 return Response.ok(GpxConversions.createGPX(rsp.getBest().getInstructions(), gpx.trk.get(0).name != null ? gpx.trk.get(0).name : "", time, enableElevation, withRoute, withTrack, false, Constants.VERSION, tr), "application/gpx+xml").
-                        header("X-GH-Took", "" + Math.round(took)).
+                        header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                         build();
             } else {
-                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, took);
+                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, sw.getMillisDouble());
 
                 Map<String, Object> matchStatistics = new HashMap<>();
                 matchStatistics.put("distance", matchResult.getMatchLength());
@@ -184,7 +180,7 @@ public class MapMatchingResource {
                     map.putPOJO("traversal_keys", traversalKeylist);
                 }
                 return Response.ok(map).
-                        header("X-GH-Took", "" + Math.round(took)).
+                        header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                         build();
             }
         }

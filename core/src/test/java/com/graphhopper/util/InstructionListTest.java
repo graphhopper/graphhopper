@@ -414,7 +414,7 @@ public class InstructionListTest {
 
         Weighting weighting = CustomModelParser.createWeighting(null, null, accessEnc, speedEnc,
                 priorityEnc, tmpEM, DefaultTurnCostProvider.NO_TURN_COST_PROVIDER,
-                new CustomModel().setDistanceInfluence(0));
+                new CustomModel().setDistanceInfluence(0d));
         Path p = new Dijkstra(g, weighting, tMode).calcPath(4, 3);
         assertTrue(p.isFound());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);

@@ -17,18 +17,18 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ConditionalTagInspector;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
+import com.graphhopper.reader.osm.conditional.ConditionalTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.*;
 
@@ -43,7 +43,6 @@ import static java.util.Collections.emptyMap;
  * @see EncodingManager
  */
 public abstract class VehicleTagParser implements TagParser {
-    private final String name;
     protected final Set<String> intendedValues = new HashSet<>(5);
     // order is important
     protected final List<String> restrictions = new ArrayList<>(5);
@@ -54,7 +53,6 @@ public abstract class VehicleTagParser implements TagParser {
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
     protected final DecimalEncodedValue avgSpeedEnc;
-    private final DecimalEncodedValue turnCostEnc;
     protected final BooleanEncodedValue roundaboutEnc;
     // This value determines the maximal possible speed of any road regardless of the maxspeed value
     // lower values allow more compact representation of the routing graph
@@ -63,15 +61,12 @@ public abstract class VehicleTagParser implements TagParser {
     private ConditionalTagInspector conditionalTagInspector;
     protected final FerrySpeedCalculator ferrySpeedCalc;
 
-    protected VehicleTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, String name,
-                               BooleanEncodedValue roundaboutEnc,
-                               DecimalEncodedValue turnCostEnc, TransportationMode transportationMode, double maxPossibleSpeed) {
-        this.name = name;
+    protected VehicleTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, BooleanEncodedValue roundaboutEnc,
+                               TransportationMode transportationMode, double maxPossibleSpeed) {
         this.maxPossibleSpeed = maxPossibleSpeed;
 
         this.accessEnc = accessEnc;
         this.avgSpeedEnc = speedEnc;
-        this.turnCostEnc = turnCostEnc;
         this.roundaboutEnc = roundaboutEnc;
 
         oneways.add("yes");
@@ -116,25 +111,22 @@ public abstract class VehicleTagParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
-        edgeFlags = handleWayTags(edgeFlags, way);
-        if (!edgeFlags.isEmpty()) {
-            Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
-            handleNodeTags(edgeFlags, nodeTags);
-        }
-        return edgeFlags;
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+        handleWayTags(edgeFlags, way);
+        Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
+        handleNodeTags(edgeFlags, nodeTags);
     }
 
     /**
      * Analyze properties of a way and create the edge flags. This method is called in the second
      * parsing step.
      */
-    protected abstract IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way);
+    protected abstract void handleWayTags(IntsRef edgeFlags, ReaderWay way);
 
     /**
      * Updates the given edge flags based on node tags
      */
-    public IntsRef handleNodeTags(IntsRef edgeFlags, Map<String, Object> nodeTags) {
+    public void handleNodeTags(IntsRef edgeFlags, Map<String, Object> nodeTags) {
         if (!nodeTags.isEmpty()) {
             // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
             ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
@@ -145,16 +137,7 @@ public abstract class VehicleTagParser implements TagParser {
                 accessEnc.setBool(true, edgeFlags, false);
             }
         }
-        return edgeFlags;
     }
-
-    /**
-     * Decide whether a way is routable for a given mode of travel. This skips some ways before
-     * handleWayTags is called.
-     *
-     * @return the encoded value to indicate if this encoder allows travel or not.
-     */
-    public abstract WayAccess getAccess(ReaderWay way);
 
     /**
      * @return true if the given OSM node blocks access for this vehicle, false otherwise
@@ -179,16 +162,11 @@ public abstract class VehicleTagParser implements TagParser {
     /**
      * @return {@link Double#NaN} if no maxspeed found
      */
-    protected static double getMaxSpeed(ReaderWay way) {
+    protected static double getMaxSpeed(ReaderWay way, boolean bwd) {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
-        double fwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:forward"));
-        if (isValidSpeed(fwdSpeed) && (!isValidSpeed(maxSpeed) || fwdSpeed < maxSpeed))
-            maxSpeed = fwdSpeed;
-
-        double backSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:backward"));
-        if (isValidSpeed(backSpeed) && (!isValidSpeed(maxSpeed) || backSpeed < maxSpeed))
-            maxSpeed = backSpeed;
-
+        double directedMaxSpeed = OSMValueExtractor.stringToKmh(way.getTag(bwd ? "maxspeed:backward" : "maxspeed:forward"));
+        if (isValidSpeed(directedMaxSpeed) && (!isValidSpeed(maxSpeed) || directedMaxSpeed < maxSpeed))
+            maxSpeed = directedMaxSpeed;
         return maxSpeed;
     }
 
@@ -197,13 +175,6 @@ public abstract class VehicleTagParser implements TagParser {
      */
     protected static boolean isValidSpeed(double speed) {
         return !Double.isNaN(speed);
-    }
-
-    /**
-     * Second parsing step. Invoked after splitting the edges. Currently used to offer a hook to
-     * calculate precise speed values based on elevation data stored in the specified edge.
-     */
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
     }
 
     public final DecimalEncodedValue getAverageSpeedEnc() {
@@ -215,6 +186,9 @@ public abstract class VehicleTagParser implements TagParser {
     }
 
     protected void setSpeed(boolean reverse, IntsRef edgeFlags, double speed) {
+        // special case when speed is non-zero but would be "rounded down" to 0 due to the low precision of the EncodedValue
+        if (speed > 0.1 && speed < avgSpeedEnc.getSmallestNonZeroValue())
+            speed = avgSpeedEnc.getSmallestNonZeroValue();
         if (speed < avgSpeedEnc.getSmallestNonZeroValue()) {
             avgSpeedEnc.setDecimal(reverse, edgeFlags, 0);
             accessEnc.setBool(reverse, edgeFlags, false);
@@ -223,19 +197,16 @@ public abstract class VehicleTagParser implements TagParser {
         }
     }
 
-    public boolean supportsTurnCosts() {
-        return turnCostEnc != null;
-    }
-
-    public DecimalEncodedValue getTurnCostEnc() {
-        return turnCostEnc;
-    }
-
     public final List<String> getRestrictions() {
         return restrictions;
     }
 
     public final String getName() {
+        String name = accessEnc.getName().replaceAll("_access", "");
+        // safety check for the time being
+        String expectedKey = VehicleAccess.key(name);
+        if (!accessEnc.getName().equals(expectedKey))
+            throw new IllegalStateException("Expected access key '" + expectedKey + "', but got: " + accessEnc.getName());
         return name;
     }
 

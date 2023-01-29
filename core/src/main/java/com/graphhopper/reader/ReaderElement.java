@@ -28,7 +28,7 @@ import java.util.Map.Entry;
  * @author Peter
  */
 public abstract class ReaderElement {
-    public static enum Type {
+    public enum Type {
         NODE,
         WAY,
         RELATION,
@@ -40,7 +40,7 @@ public abstract class ReaderElement {
     private final Map<String, Object> properties;
 
     protected ReaderElement(long id, Type type) {
-        this(id, type, new HashMap<>(4));
+        this(id, type, new LinkedHashMap<>(4));
     }
 
     protected ReaderElement(long id, Type type, Map<String, Object> properties) {

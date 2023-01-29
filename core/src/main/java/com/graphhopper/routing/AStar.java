@@ -27,6 +27,9 @@ import com.graphhopper.util.*;
 
 import java.util.PriorityQueue;
 
+import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+
 /**
  * This class implements the A* algorithm according to
  * http://en.wikipedia.org/wiki/A*_search_algorithm
@@ -36,13 +39,15 @@ import java.util.PriorityQueue;
  *
  * @author Peter Karich
  */
-public class AStar extends AbstractRoutingAlgorithm {
+public class AStar extends AbstractRoutingAlgorithm implements EdgeToEdgeRoutingAlgorithm {
     private GHIntObjectHashMap<AStarEntry> fromMap;
     private PriorityQueue<AStarEntry> fromHeap;
     private AStarEntry currEdge;
     private int visitedNodes;
     private int to = -1;
     private WeightApproximator weightApprox;
+    private int fromOutEdge;
+    private int toInEdge;
 
     public AStar(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
@@ -68,12 +73,24 @@ public class AStar extends AbstractRoutingAlgorithm {
 
     @Override
     public Path calcPath(int from, int to) {
+        return calcPath(from, to, EdgeIterator.ANY_EDGE, EdgeIterator.ANY_EDGE);
+    }
+
+    @Override
+    public Path calcPath(int from, int to, int fromOutEdge, int toInEdge) {
+        if ((fromOutEdge != ANY_EDGE || toInEdge != ANY_EDGE) && !traversalMode.isEdgeBased()) {
+            throw new IllegalArgumentException("Restricting the start/target edges is only possible for edge-based graph traversal");
+        }
+        this.fromOutEdge = fromOutEdge;
+        this.toInEdge = toInEdge;
         checkAlreadyRun();
         this.to = to;
         weightApprox.setTo(to);
         double weightToGoal = weightApprox.approximate(from);
         AStarEntry startEntry = new AStarEntry(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
         fromHeap.add(startEntry);
+        if (fromOutEdge == NO_EDGE || toInEdge == NO_EDGE)
+            return extractPath();
         if (!traversalMode.isEdgeBased())
             fromMap.put(from, currEdge);
         runAlgo();
@@ -93,7 +110,7 @@ public class AStar extends AbstractRoutingAlgorithm {
             int currNode = currEdge.adjNode;
             EdgeIterator iter = edgeExplorer.setBaseNode(currNode);
             while (iter.next()) {
-                if (!accept(iter, currEdge.edge))
+                if (!accept(iter, currEdge.edge) || (currEdge.edge == NO_EDGE && fromOutEdge != ANY_EDGE && iter.getEdge() != fromOutEdge))
                     continue;
 
                 double tmpWeight = GHUtility.calcWeightWithTurnWeightWithAccess(weighting, iter, false, currEdge.edge) + currEdge.weightOfVisitedPath;
@@ -125,12 +142,10 @@ public class AStar extends AbstractRoutingAlgorithm {
         }
     }
 
-    @Override
-    protected boolean finished() {
-        return currEdge.adjNode == to;
+    private boolean finished() {
+        return currEdge.adjNode == to && (toInEdge == ANY_EDGE || currEdge.edge == toInEdge) && (fromOutEdge == ANY_EDGE || currEdge.edge != NO_EDGE);
     }
 
-    @Override
     protected Path extractPath() {
         if (currEdge == null || !finished())
             return createEmptyPath();

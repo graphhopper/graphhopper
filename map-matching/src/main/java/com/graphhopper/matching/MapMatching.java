@@ -214,6 +214,7 @@ public class MapMatching {
         // Compute the most likely sequence of map matching candidates:
         List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps);
         statistics.put("transitionDistances", seq.stream().filter(s -> s.transitionDescriptor != null).mapToLong(s -> Math.round(s.transitionDescriptor.getDistance())).toArray());
+        statistics.put("visitedNodes", router.getVisitedNodes());
 
         List<EdgeIteratorState> path = seq.stream().filter(s1 -> s1.transitionDescriptor != null).flatMap(s1 -> s1.transitionDescriptor.calcEdges().stream()).collect(Collectors.toList());
 
@@ -427,6 +428,13 @@ public class MapMatching {
                 }
             }
         }
+        if (qe == null) {
+            throw new IllegalArgumentException("Sequence is broken for submitted track at initial time step.");
+        }
+        if (qe.timeStep != timeSteps.size() - 1) {
+            throw new IllegalArgumentException("Sequence is broken for submitted track at time step "
+                    + qe.timeStep + ". observation:" + qe.state.getEntry());
+        }
         ArrayList<SequenceState<State, Observation, Path>> result = new ArrayList<>();
         while (qe != null) {
             final SequenceState<State, Observation, Path> ss = new SequenceState<>(qe.state, qe.state.getEntry(), qe.back == null ? null : roadPaths.get(new Transition<>(qe.back.state, qe.state)));
@@ -552,6 +560,10 @@ public class MapMatching {
         List<Path> calcPaths(QueryGraph queryGraph, int fromNode, int fromOutEdge, int[] toNodes, int[] toInEdges);
 
         Weighting getWeighting();
+
+        default long getVisitedNodes() {
+            return 0L;
+        }
     }
 
 }

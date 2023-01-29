@@ -98,12 +98,12 @@ public class GraphHopperTest {
 
     @ParameterizedTest
     @CsvSource({
-            DIJKSTRA + ",false,511",
-            ASTAR + ",false,256",
-            DIJKSTRA_BI + ",false,228",
-            ASTAR_BI + ",false,142",
-            ASTAR_BI + ",true,41",
-            DIJKSTRA_BI + ",true,48"
+            DIJKSTRA + ",false,708",
+            ASTAR + ",false,363",
+            DIJKSTRA_BI + ",false,346",
+            ASTAR_BI + ",false,192",
+            ASTAR_BI + ",true,46",
+            DIJKSTRA_BI + ",true,51"
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
         final String vehicle = "car";
@@ -150,7 +150,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(706, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(713, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
         assertEquals(3437.1, res.getDistance(), .1);
@@ -271,7 +271,7 @@ public class GraphHopperTest {
                     new Coordinate(7.4198, 43.7355),
                     new Coordinate(7.4207, 43.7344),
                     new Coordinate(7.4174, 43.7345)}));
-            CustomModel customModel = new CustomModel().setDistanceInfluence(0);
+            CustomModel customModel = new CustomModel().setDistanceInfluence(0d);
             customModel.getPriority().add(Statement.If("in_area51", Statement.Op.MULTIPLY, "0.1"));
             customModel.getAreas().put("area51", area51Feature);
             profile = new CustomProfile(profileName).setCustomModel(customModel).setVehicle(vehicle);
@@ -644,9 +644,13 @@ public class GraphHopperTest {
 
         req.putHint(Routing.BLOCK_AREA, "49.984434,11.505212,49.985394,11.506333");
         rsp = hopper.route(req);
-        assertEquals(11.508, rsp.getBest().getWaypoints().getLon(0), 0.001);
+        // we do not snap onto Grüngraben (within the blocked area), but onto Lohweg and then we need to go to Hauptstraße
+        // and turn left onto Waldhüttenstraße. Note that if we exclude footway we get an entirely different path, because
+        // the start point snaps all the way to the East onto the end of Bergstraße (because Lohweg gets no longer split
+        // into several edges...)
+        assertEquals(11.506, rsp.getBest().getWaypoints().getLon(0), 0.001);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(1185, rsp.getBest().getDistance(), 10);
+        assertEquals(510, rsp.getBest().getDistance(), 10);
 
         // first point is contained in block_area => error
         req = new GHRequest(49.979, 11.516, 49.986107, 11.507202).
@@ -688,8 +692,8 @@ public class GraphHopperTest {
         );
         assertDistance(hopper, customCar, customModelWithUnclassifiedRule, 19289);
         // now we use distance influence to avoid the detour
-        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(200), 8725);
-        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(100), 14475);
+        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(200d), 8725);
+        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(100d), 14475);
     }
 
     private void assertDistance(GraphHopper hopper, String profile, CustomModel customModel, double expectedDistance) {
@@ -1087,9 +1091,8 @@ public class GraphHopperTest {
                     if (name.equals("road_environment"))
                         parser = new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
                             @Override
-                            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+                            public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
                                 // do not change RoadEnvironment to avoid triggering tunnel interpolation
-                                return edgeFlags;
                             }
                         };
                     return parser;
@@ -1600,17 +1603,17 @@ public class GraphHopperTest {
         hopper.importOrLoad();
 
         // flex
-        testCrossQueryAssert(profile1, hopper, 528.3, 138, true);
-        testCrossQueryAssert(profile2, hopper, 635.8, 138, true);
-        testCrossQueryAssert(profile3, hopper, 815.2, 140, true);
+        testCrossQueryAssert(profile1, hopper, 528.3, 196, true);
+        testCrossQueryAssert(profile2, hopper, 635.8, 198, true);
+        testCrossQueryAssert(profile3, hopper, 815.2, 198, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
-        testCrossQueryAssert(profile1, hopper, 528.3, 74, false);
-        testCrossQueryAssert(profile2, hopper, 635.8, 124, false);
-        // this is actually interesting: the number of visited nodes *increases* once again (while it strictly decreases
-        // with rising distance factor for flex): cross-querying 'works', but performs *worse*, because the landmarks
-        // were not customized for the weighting in use. Creating a separate LM preparation for profile3 yields 74
-        testCrossQueryAssert(profile3, hopper, 815.2, 162, false);
+        testCrossQueryAssert(profile1, hopper, 528.3, 108, false);
+        testCrossQueryAssert(profile2, hopper, 635.8, 162, false);
+        // this is actually interesting: the number of visited nodes increases: cross-querying 'works',
+        // but can even perform *worse*, because the landmarks were not customized for the weighting in use.
+        // Creating a separate LM preparation for profile3 yields 108 (not shown)
+        testCrossQueryAssert(profile3, hopper, 815.2, 236, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {
@@ -1627,8 +1630,8 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setProfiles(
-                        new CustomProfile("p1").setCustomModel(new CustomModel().setDistanceInfluence(100)).setVehicle("car"),
-                        new CustomProfile("p2").setCustomModel(new CustomModel().setDistanceInfluence(100)).setVehicle("car")).
+                        new CustomProfile("p1").setCustomModel(new CustomModel().setDistanceInfluence(100d)).setVehicle("car"),
+                        new CustomProfile("p2").setCustomModel(new CustomModel().setDistanceInfluence(100d)).setVehicle("car")).
                 setStoreOnFlush(true);
 
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("p1"));
@@ -1640,7 +1643,7 @@ public class GraphHopperTest {
         assertEquals(3587, response.getBest().getDistance(), 1);
 
         // use smaller distance influence to force violating the LM constraint
-        final CustomModel customModel = new CustomModel().setDistanceInfluence(0);
+        final CustomModel customModel = new CustomModel().setDistanceInfluence(0d);
         response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setCustomModel(customModel).
                 setProfile("p1").putHint("lm.disable", false));
@@ -2021,9 +2024,9 @@ public class GraphHopperTest {
 
     @Test
     public void testOneWaySubnetwork_issue1807() {
-        // There is a straight-only turn relation at the junction of Franziskastraße and Gudulastraße, which restricts
+        // There is a straight-only turn restriction at the junction of Franziskastraße and Gudulastraße, which restricts
         // turning onto Gudulastraße. However, Gudulastraße can also not be accessed from the south/west, because
-        // its a one-way. This creates a subnetwork that is not accessible at all. We can only detect this if we
+        // it is a one-way. This creates a subnetwork that is not accessible at all. We can only detect this if we
         // consider the turn restrictions during the subnetwork search.
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
@@ -2198,13 +2201,13 @@ public class GraphHopperTest {
         GHRequest req = new GHRequest(p, q);
         req.setProfile("my_profile");
         // we force the start/target directions such that there are u-turns right after we start and right before
-        // we reach the target
+        // we reach the target. at the start location we do a u-turn at the crossing with the *steps* ('ghost junction')
         req.setCurbsides(Arrays.asList("right", "right"));
         GHResponse res = h.route(req);
         assertFalse(res.hasErrors(), "routing should not fail");
-        assertEquals(266.8, res.getBest().getRouteWeight(), 0.1);
-        assertEquals(2116, res.getBest().getDistance(), 1);
-        assertEquals(266800, res.getBest().getTime(), 1000);
+        assertEquals(242.9, res.getBest().getRouteWeight(), 0.1);
+        assertEquals(1917, res.getBest().getDistance(), 1);
+        assertEquals(243000, res.getBest().getTime(), 1000);
     }
 
     @Test
@@ -2626,7 +2629,7 @@ public class GraphHopperTest {
         int nodes = hopper.getBaseGraph().getNodes();
         hopper.close();
 
-        // load without configured graph.flag_encoders
+        // load without configured graph.vehicles
         hopper = new GraphHopper();
         hopper.setProfiles(Arrays.asList(
                 new Profile("p_car").setVehicle("car").setWeighting("fastest"),
@@ -2638,9 +2641,9 @@ public class GraphHopperTest {
         assertEquals(nodes, hopper.getBaseGraph().getNodes());
         hopper.close();
 
-        // load via explicitly configured graph.flag_encoders
+        // load via explicitly configured graph.vehicles
         hopper = new GraphHopper();
-        hopper.setFlagEncodersString("car,bike");
+        hopper.setVehiclesString("car,bike");
         hopper.setProfiles(Arrays.asList(
                 new Profile("p_car").setVehicle("car").setWeighting("fastest"),
                 new Profile("p_bike").setVehicle("bike").setWeighting("fastest"))
@@ -2655,7 +2658,7 @@ public class GraphHopperTest {
     void testLoadingWithAnotherSpeedFactorWorks() {
         {
             GraphHopper hopper = new GraphHopper()
-                    .setFlagEncodersString("car|speed_factor=7")
+                    .setVehiclesString("car|speed_factor=7")
                     .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"))
                     .setGraphHopperLocation(GH_LOCATION)
                     .setOSMFile(BAYREUTH);
@@ -2667,11 +2670,11 @@ public class GraphHopperTest {
             // during import with those that only matter when routing for some time already. At some point we should
             // separate the 'import' from the 'routing' config (and split the GraphHopper class).
             GraphHopper hopper = new GraphHopper()
-                    .setFlagEncodersString("car|speed_factor=9")
+                    .setVehiclesString("car|speed_factor=9")
                     .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"))
                     .setGraphHopperLocation(GH_LOCATION);
             hopper.load();
-            assertEquals(1942, hopper.getBaseGraph().getNodes());
+            assertEquals(2969, hopper.getBaseGraph().getNodes());
         }
     }
 

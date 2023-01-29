@@ -4,6 +4,8 @@ GraphHopper provides an easy-to-use way to customize its route calculations: Cus
 default routing behavior by specifying a set of rules in JSON language. Here we will first explain some theoretical
 background and then show how to use custom models in practice.
 
+Try some live examples in [this blog post](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/).
+
 ## How GraphHopper's route calculations work
 
 One of GraphHopper's most important functionality is the calculation of the 'optimal' route between two locations. To do
@@ -91,7 +93,7 @@ boolean value (they are either true or false for a given road segment), like:
 
 There are also some that take on a numeric value, like:
 
-- average_slope: a number for 100 * "elevation change" / edge_distance for a road segment; it changes the sign in reverse direction; see also max_slope
+- average_slope: a number for 100 * "elevation change" / edge_distance for a road segment; it changes the sign in reverse direction; see max_slope
 - curvature: "beeline distance" / edge_distance (0..1) e.g. a curvy road is smaller than 1
 - hike_rating, horse_rating, mtb_rating: a number from 0 to 6 for the `sac_scale` in OSM, e.g. 0 means "missing", 1 means "hiking", 2 means "mountain_hiking" and so on
 - lanes: number of lanes

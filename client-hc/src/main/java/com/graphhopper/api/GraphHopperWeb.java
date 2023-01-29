@@ -41,6 +41,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.api.GraphHopperMatrixWeb.*;
+import static com.graphhopper.api.Version.GH_VERSION_FROM_MAVEN;
 import static com.graphhopper.util.Helper.round6;
 import static com.graphhopper.util.Helper.toLowerCase;
 import static com.graphhopper.util.Parameters.Routing.CALC_POINTS;
@@ -54,6 +55,7 @@ import static com.graphhopper.util.Parameters.Routing.INSTRUCTIONS;
  */
 public class GraphHopperWeb {
 
+    public static final String X_GH_CLIENT_VERSION = "X-GH-Client-Version";
     private final ObjectMapper objectMapper;
     private final String routeServiceUrl;
     private OkHttpClient downloader;
@@ -242,6 +244,7 @@ public class GraphHopperWeb {
             throw new RuntimeException("Could not write request body", e);
         }
         Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, body));
+        builder.header(X_GH_CLIENT_VERSION, GH_VERSION_FROM_MAVEN);
         // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
         if (body.length() < maxUnzippedLength)
             builder.header("Content-Encoding", "identity");
@@ -369,7 +372,9 @@ public class GraphHopperWeb {
             }
         }
 
-        return new Request.Builder().url(url).build();
+        return new Request.Builder().url(url)
+                .header(X_GH_CLIENT_VERSION, GH_VERSION_FROM_MAVEN)
+                .build();
     }
 
     public String export(GHRequest ghRequest) {

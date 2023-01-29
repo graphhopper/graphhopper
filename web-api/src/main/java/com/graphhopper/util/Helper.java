@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import javax.lang.model.SourceVersion;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -27,6 +28,8 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
+
+import static java.lang.Character.*;
 
 /**
  * @author Peter Karich
@@ -88,6 +91,18 @@ public class Helper {
         } finally {
             writer.close();
         }
+    }
+
+    public static String readJSONFileWithoutComments(String file) throws IOException {
+        return Helper.readFile(file).stream().
+                filter(line -> !line.trim().startsWith("//")).
+                reduce((s1, s2) -> s1 + "\n" + s2).orElse("");
+    }
+
+    public static String readJSONFileWithoutComments(InputStreamReader reader) throws IOException {
+        return Helper.readFile(reader).stream().
+                filter(line -> !line.trim().startsWith("//")).
+                reduce((s1, s2) -> s1 + "\n" + s2).orElse("");
     }
 
     public static List<String> readFile(String file) throws IOException {

@@ -39,7 +39,7 @@ public class OSMMaxSpeedParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
 
         CountryRule countryRule = way.getTag("country_rule", null);
@@ -66,7 +66,6 @@ public class OSMMaxSpeedParser implements TagParser {
         if (!isValidSpeed(bwdSpeed))
             bwdSpeed = UNSET_SPEED;
         carMaxSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
-        return edgeFlags;
     }
 
     /**

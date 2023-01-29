@@ -61,8 +61,8 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
 
     protected BikeCommonTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
                                   EnumEncodedValue<RouteNetwork> bikeRouteEnc, EnumEncodedValue<Smoothness> smoothnessEnc,
-                                  String name, BooleanEncodedValue roundaboutEnc, DecimalEncodedValue turnCostEnc) {
-        super(accessEnc, speedEnc, name, roundaboutEnc, turnCostEnc, TransportationMode.BIKE, speedEnc.getNextStorableValue(MAX_SPEED));
+                                  BooleanEncodedValue roundaboutEnc) {
+        super(accessEnc, speedEnc, roundaboutEnc, TransportationMode.BIKE, speedEnc.getNextStorableValue(MAX_SPEED));
         this.bikeRouteEnc = bikeRouteEnc;
         this.smoothnessEnc = smoothnessEnc;
         this.priorityEnc = priorityEnc;
@@ -191,7 +191,6 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         setAvoidSpeedLimit(71);
     }
 
-    @Override
     public WayAccess getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
@@ -247,8 +246,17 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
             return WayAccess.CAN_SKIP;
 
         // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-            return WayAccess.CAN_SKIP;
+        boolean notRestrictedWayConditionallyPermitted = !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
+        for (String restriction : restrictions) {
+            String complexAccess = way.getTag(restriction);
+            if (complexAccess != null) {
+                String[] simpleAccess = complexAccess.split(";");
+                for (String access : simpleAccess) {
+                    if (restrictedValues.contains(access) && notRestrictedWayConditionallyPermitted)
+                        return WayAccess.CAN_SKIP;
+                }
+            }
+        }
 
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
             return WayAccess.CAN_SKIP;
@@ -266,8 +274,8 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
      * @param speed speed guessed e.g. from the road type or other tags
      * @return The assumed average speed.
      */
-    protected double applyMaxSpeed(ReaderWay way, double speed) {
-        double maxSpeed = getMaxSpeed(way);
+    protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
+        double maxSpeed = getMaxSpeed(way, bwd);
         // We strictly obey speed limits, see #600
         if (isValidSpeed(maxSpeed) && speed > maxSpeed) {
             return maxSpeed;
@@ -278,21 +286,25 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
-            return edgeFlags;
+            return;
 
         Integer priorityFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeFlags));
-        double wayTypeSpeed = getSpeed(way);
+        double speed = getSpeed(way);
         if (!access.isFerry()) {
-            wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
             Smoothness smoothness = smoothnessEnc.getEnum(false, edgeFlags);
-            wayTypeSpeed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * wayTypeSpeed);
+            speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
+            double speedFwd = applyMaxSpeed(way, speed, false);
+            avgSpeedEnc.setDecimal(false, edgeFlags, speedFwd);
+            double speedBwd = speed;
+            if (avgSpeedEnc.isStoreTwoDirections()) {
+                speedBwd = applyMaxSpeed(way, speed, true);
+                avgSpeedEnc.setDecimal(true, edgeFlags, speedBwd);
+            }
+            speed = Math.max(speedFwd, speedBwd);
 
-            avgSpeedEnc.setDecimal(false, edgeFlags, wayTypeSpeed);
-            if (avgSpeedEnc.isStoreTwoDirections())
-                avgSpeedEnc.setDecimal(true, edgeFlags, wayTypeSpeed);
             handleAccess(edgeFlags, way);
         } else {
             double ferrySpeed = ferrySpeedCalc.getSpeed(way);
@@ -304,8 +316,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
             priorityFromRelation = SLIGHT_AVOID.getValue();
         }
 
-        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, wayTypeSpeed, priorityFromRelation)));
-        return edgeFlags;
+        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, speed, priorityFromRelation)));
     }
 
     int getSpeed(ReaderWay way) {
@@ -439,7 +450,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
                 weightToPrioMap.put(100d, VERY_NICE.getValue());
         }
 
-        double maxSpeed = getMaxSpeed(way);
+        double maxSpeed = Math.max(getMaxSpeed(way, false), getMaxSpeed(way, true));
         if (preferHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 30)) {
             if (!isValidSpeed(maxSpeed) || maxSpeed < avoidSpeedLimit) {
                 weightToPrioMap.put(40d, PREFER.getValue());
@@ -466,21 +477,24 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
 
         if (pushingSectionsHighways.contains(highway)
                 || "parking_aisle".equals(service)) {
-            int pushingSectionPrio = SLIGHT_AVOID.getValue();
+            PriorityCode pushingSectionPrio = SLIGHT_AVOID;
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
-                pushingSectionPrio = PREFER.getValue();
+                pushingSectionPrio = PREFER;
             if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))
-                pushingSectionPrio = VERY_NICE.getValue();
+                pushingSectionPrio = VERY_NICE;
             if (way.hasTag("foot", "yes")) {
-                pushingSectionPrio = Math.max(pushingSectionPrio - 1, BAD.getValue());
+                pushingSectionPrio = PriorityCode.values()[pushingSectionPrio.ordinal() - 1];
                 if (way.hasTag("segregated", "yes"))
-                    pushingSectionPrio = Math.min(pushingSectionPrio + 1, BEST.getValue());
+                    pushingSectionPrio = PriorityCode.values()[pushingSectionPrio.ordinal() + 1];
             }
-            weightToPrioMap.put(100d, pushingSectionPrio);
+            weightToPrioMap.put(100d, pushingSectionPrio.getValue());
         }
 
         if (way.hasTag("railway", "tram"))
             weightToPrioMap.put(50d, AVOID_MORE.getValue());
+
+        if (way.hasTag("lcn", "yes"))
+            weightToPrioMap.put(100d, PREFER.getValue());
 
         String classBicycleValue = way.getTag(classBicycleKey);
         if (classBicycleValue != null) {
@@ -494,18 +508,23 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
 
         // Increase the priority for scenic routes or in case that maxspeed limits our average speed as compensation. See #630
         if (way.hasTag("scenic", "yes") || maxSpeed > 0 && maxSpeed < wayTypeSpeed) {
-            if (weightToPrioMap.lastEntry().getValue() < BEST.getValue())
-                // Increase the prio by one step
-                weightToPrioMap.put(110d, weightToPrioMap.lastEntry().getValue() + 1);
+            int lastEntryValue = weightToPrioMap.lastEntry().getValue();
+            if (lastEntryValue < BEST.getValue()) {
+                int lastEntryIndex = Arrays.stream(PriorityCode.values()).filter(pc -> pc.getValue() == lastEntryValue).findFirst().orElse(UNCHANGED).ordinal();
+                // Increase the PriorityCode by one step
+                weightToPrioMap.put(110d, PriorityCode.values()[lastEntryIndex + 1].getValue());
+            }
         }
     }
 
     protected void handleAccess(IntsRef edgeFlags, ReaderWay way) {
-        // handle oneways
-        // oneway=-1 requires special handling
+        // handle oneways. The value -1 means it is a oneway but for reverse direction of stored geometry.
+        // The tagging oneway:bicycle=no or cycleway:right:oneway=no or cycleway:left:oneway=no lifts the generic oneway restriction of the way for bike
         boolean isOneway = way.hasTag("oneway", oneways) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", intendedValues)
                 || way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", intendedValues)
                 || way.hasTag("oneway:bicycle", oneways)
+                || way.hasTag("cycleway:left:oneway", oneways)
+                || way.hasTag("cycleway:right:oneway", oneways)
                 || way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", intendedValues)
                 || way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", intendedValues)
                 || way.hasTag("bicycle:forward", restrictedValues)
@@ -516,10 +535,12 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
                 && !way.hasTag("cycleway", oppositeLanes)
                 && !way.hasTag("cycleway:left", oppositeLanes)
                 && !way.hasTag("cycleway:right", oppositeLanes)
-                && !way.hasTag("cycleway:left:oneway", "-1")
-                && !way.hasTag("cycleway:right:oneway", "-1")) {
+                && !way.hasTag("cycleway:left:oneway", "no")
+                && !way.hasTag("cycleway:right:oneway", "no")) {
             boolean isBackward = way.hasTag("oneway", "-1")
                     || way.hasTag("oneway:bicycle", "-1")
+                    || way.hasTag("cycleway:left:oneway", "-1")
+                    || way.hasTag("cycleway:right:oneway", "-1")
                     || way.hasTag("vehicle:forward", restrictedValues)
                     || way.hasTag("bicycle:forward", restrictedValues);
             accessEnc.setBool(isBackward, edgeFlags, true);

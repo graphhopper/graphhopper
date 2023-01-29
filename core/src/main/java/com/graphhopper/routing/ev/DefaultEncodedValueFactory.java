@@ -74,6 +74,10 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             enc = new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class);
         } else if (Lanes.KEY.equals(name)) {
             enc = Lanes.create();
+        } else if (Footway.KEY.equals(name)) {
+            enc = new EnumEncodedValue<>(Footway.KEY, Footway.class);
+        } else if (OSMWayID.KEY.equals(name)) {
+            enc = OSMWayID.create();
         } else if (MtbRating.KEY.equals(name)) {
             enc = MtbRating.create();
         } else if (HikeRating.KEY.equals(name)) {
