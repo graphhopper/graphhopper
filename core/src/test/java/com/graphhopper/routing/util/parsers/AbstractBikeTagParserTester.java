@@ -521,11 +521,15 @@ public abstract class AbstractBikeTagParserTester {
         assertFalse(bike.isBlockFords());
         assertTrue(bike.restrictedValues.contains("private"));
         assertFalse(bike.intendedValues.contains("private"));
+        ReaderNode node = new ReaderNode(1, 1, 1);
+        node.setTag("access", "private");
+        assertTrue(bike.isBarrier(node));
 
         // block fords, unblock private
         bike = (BikeCommonAccessParser) createBikeTagParsers(encodingManager, new PMap("block_fords=true|block_private=false")).getAccessParser();
         assertTrue(bike.isBlockFords());
         assertFalse(bike.restrictedValues.contains("private"));
         assertTrue(bike.intendedValues.contains("private"));
+        assertFalse(bike.isBarrier(node));
     }
 }

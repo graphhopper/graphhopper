@@ -443,7 +443,7 @@ public class GraphHopperTest {
 
         assertEquals(3, rsp.getAll().size());
         // via ramsenthal
-        assertEquals(2863, rsp.getAll().get(0).getTime() / 1000);
+        assertEquals(2865, rsp.getAll().get(0).getTime() / 1000);
         // via unterwaiz
         assertEquals(3318, rsp.getAll().get(1).getTime() / 1000);
         // via eselslohe -> theta; BTW: here smaller time as 2nd alternative due to priority influences time order

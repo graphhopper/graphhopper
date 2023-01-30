@@ -26,4 +26,5 @@ class RoadsTagParserTest {
         parser.handleWayTags(flags, way, null);
         assertTrue(encodingManager.getDecimalEncodedValue(VehicleSpeed.key("roads")).getDecimal(false, flags) > 200);
     }
+
 }

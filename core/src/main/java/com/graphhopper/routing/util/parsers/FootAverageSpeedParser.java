@@ -111,19 +111,6 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
             avgSpeedEnc.setDecimal(true, edgeFlags, speed);
     }
 
-    int handlePriority(ReaderWay way, Integer priorityFromRelation) {
-        TreeMap<Double, Integer> weightToPrioMap = new TreeMap<>();
-        if (priorityFromRelation == null)
-            weightToPrioMap.put(0d, UNCHANGED.getValue());
-        else
-            weightToPrioMap.put(110d, priorityFromRelation);
-
-        collect(way, weightToPrioMap);
-
-        // pick priority with biggest order value
-        return weightToPrioMap.lastEntry().getValue();
-    }
-
     /**
      * @param weightToPrioMap associate a weight with every priority. This sorted map allows
      *                        subclasses to 'insert' more important priorities as well as overwrite determined priorities.

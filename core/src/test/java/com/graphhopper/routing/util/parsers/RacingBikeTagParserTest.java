@@ -221,8 +221,10 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
                 .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
                 .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
                 .build();
-        List<TagParser> parsers = Arrays.asList(new RacingBikeAverageSpeedParser(encodingManager, new PMap()),
-                new RacingBikePriorityParser(encodingManager, new PMap()));
+        List<TagParser> parsers = Arrays.asList(
+                new RacingBikeAverageSpeedParser(encodingManager, new PMap()),
+                new RacingBikePriorityParser(encodingManager, new PMap())
+        );
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
         osmWay.setTag("maxspeed", "50");

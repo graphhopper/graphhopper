@@ -23,11 +23,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.WayAccess;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -62,20 +58,6 @@ public class MotorcycleTagParserTest {
         parser = new MotorcycleAccessParser(em, new PMap());
         parser.init(new DateRangeParser());
         speedParser = new MotorcycleAverageSpeedParser(em, new PMap());
-    }
-
-    private Graph initExampleGraph() {
-        BaseGraph gs = new BaseGraph.Builder(em).set3D(true).create();
-        NodeAccess na = gs.getNodeAccess();
-        // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
-        na.setNode(0, 51.1, 12.001, 50);
-        na.setNode(1, 51.1, 12.002, 60);
-        EdgeIteratorState edge = gs.edge(0, 1).
-                setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
-        edge.setDistance(100);
-
-        edge.set(motorcycleAccessEnc, true, true).set(motorcycleSpeedEnc, 10.0, 15.0);
-        return gs;
     }
 
     @Test
