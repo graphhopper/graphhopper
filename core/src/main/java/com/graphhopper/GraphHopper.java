@@ -657,7 +657,8 @@ public class GraphHopper {
 
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         vehiclesByName.forEach((name, vehicleStr) -> {
-            VehicleTagParsers vehicleTagParsers = vehicleTagParserFactory.createParsers(encodingManager, name, new PMap(vehicleStr));
+            VehicleTagParsers vehicleTagParsers = vehicleTagParserFactory.createParsers(encodingManager, name,
+                    new PMap(vehicleStr).putObject("date_range_parser", dateRangeParser));
             if (vehicleTagParsers == null)
                 return;
             vehicleTagParsers.getTagParsers().forEach(tagParser -> {
@@ -685,8 +686,6 @@ public class GraphHopper {
             });
             vehicleTagParsers.getTagParsers().forEach(tagParser -> {
                 if (tagParser == null) return;
-                if (tagParser instanceof AbstractAccessParser)
-                    ((AbstractAccessParser) tagParser).init(dateRangeParser);
                 osmParsers.addWayTagParser(tagParser);
             });
         });

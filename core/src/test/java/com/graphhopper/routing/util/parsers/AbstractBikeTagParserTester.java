@@ -20,7 +20,6 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
@@ -57,7 +56,6 @@ public abstract class AbstractBikeTagParserTester {
         encodingManager = createEncodingManager();
         VehicleTagParsers parsers = createBikeTagParsers(encodingManager, new PMap("block_fords=true"));
         accessParser = (BikeCommonAccessParser) parsers.getAccessParser();
-        accessParser.init(new DateRangeParser());
         speedParser = (BikeCommonAverageSpeedParser) parsers.getSpeedParser();
         priorityParser = (BikeCommonPriorityParser) parsers.getPriorityParser();
         osmParsers = new OSMParsers()
