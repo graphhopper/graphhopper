@@ -108,6 +108,7 @@ public class GraphHopper {
     private int maxRegionSearch = 4;
     // subnetworks
     private int minNetworkSize = 200;
+    private int subnetworksThreads = 1;
     // residential areas
     private double residentialAreaRadius = 300;
     private double residentialAreaSensitivity = 60;
@@ -563,6 +564,7 @@ public class GraphHopper {
 
         // optimizable prepare
         minNetworkSize = ghConfig.getInt("prepare.min_network_size", minNetworkSize);
+        subnetworksThreads = ghConfig.getInt("prepare.subnetworks.threads", subnetworksThreads);
 
         // prepare CH&LM
         chPreparationHandler.init(ghConfig);
@@ -1354,6 +1356,7 @@ public class GraphHopper {
     protected void cleanUp() {
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(baseGraph.getBaseGraph(), buildSubnetworkRemovalJobs());
         preparation.setMinNetworkSize(minNetworkSize);
+        preparation.setThreads(subnetworksThreads);
         preparation.doWork();
         properties.put("profiles", getProfilesString());
         logger.info("nodes: " + Helper.nf(baseGraph.getNodes()) + ", edges: " + Helper.nf(baseGraph.getEdges()));

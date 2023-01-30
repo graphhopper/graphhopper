@@ -153,6 +153,7 @@ graphhopper:
   # allows setting a minimum size (number of edges) for such detached components. This can be used to reduce the number
   # of cases where a connection between locations might not be found.
   prepare.min_network_size: 200
+  prepare.subnetworks.threads: 1
 
 
   #### Routing ####

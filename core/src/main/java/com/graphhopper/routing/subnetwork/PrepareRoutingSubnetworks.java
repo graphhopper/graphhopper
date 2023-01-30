@@ -32,7 +32,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
@@ -65,6 +68,7 @@ public class PrepareRoutingSubnetworks {
     private final BaseGraph graph;
     private final List<PrepareJob> prepareJobs;
     private int minNetworkSize = 200;
+    private int threads = 1;
 
     public PrepareRoutingSubnetworks(BaseGraph graph, List<PrepareJob> prepareJobs) {
         this.graph = graph;
@@ -80,6 +84,11 @@ public class PrepareRoutingSubnetworks {
         return this;
     }
 
+    public PrepareRoutingSubnetworks setThreads(int threads) {
+        this.threads = threads;
+        return this;
+    }
+
     /**
      * Finds and marks all subnetworks according to {@link #setMinNetworkSize(int)}
      *
@@ -91,14 +100,16 @@ public class PrepareRoutingSubnetworks {
             return 0;
         }
         StopWatch sw = new StopWatch().start();
-        logger.info("Start marking subnetworks, prepare.min_network_size: " + minNetworkSize + ", nodes: " +
+        logger.info("Start marking subnetworks, prepare.min_network_size: " + minNetworkSize + ", threads: " + threads + ", nodes: " +
                 Helper.nf(graph.getNodes()) + ", edges: " + Helper.nf(graph.getEdges()) + ", jobs: " + prepareJobs + ", " + Helper.getMemInfo());
-        int total = 0;
+        AtomicInteger total = new AtomicInteger(0);
         List<BitSet> flags = Stream.generate(() -> new BitSet(graph.getEdges())).limit(prepareJobs.size()).collect(Collectors.toList());
-        for (int i = 0; i < prepareJobs.size(); i++) {
+        Stream<Callable<String>> callables = IntStream.range(0, prepareJobs.size()).mapToObj(i -> () -> {
             PrepareJob job = prepareJobs.get(i);
-            total += setSubnetworks(job.weighting, job.subnetworkEnc.getName().replaceAll("_subnetwork", ""), flags.get(i));
-        }
+            total.addAndGet(setSubnetworks(job.weighting, job.subnetworkEnc.getName().replaceAll("_subnetwork", ""), flags.get(i)));
+            return job.toString();
+        });
+        GHUtility.runConcurrently(callables, threads);
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             for (int i = 0; i < prepareJobs.size(); i++) {
@@ -107,7 +118,7 @@ public class PrepareRoutingSubnetworks {
             }
         }
         logger.info("Finished finding and marking subnetworks for " + prepareJobs.size() + " jobs, took: " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
-        return total;
+        return total.get();
     }
 
     private int setSubnetworks(Weighting weighting, String jobName, BitSet subnetworkFlags) {
