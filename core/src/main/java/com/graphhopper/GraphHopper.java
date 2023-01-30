@@ -662,11 +662,6 @@ public class GraphHopper {
                 return;
             vehicleTagParsers.getTagParsers().forEach(tagParser -> {
                 if (tagParser == null) return;
-                if (tagParser instanceof AbstractAccessParser)
-                    ((AbstractAccessParser) tagParser).init(dateRangeParser);
-                osmParsers.addWayTagParser(tagParser);
-            });
-            vehicleTagParsers.getTagParsers().forEach(tagParser -> {
                 if (tagParser instanceof BikeCommonAccessParser) {
                     if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
                         osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
@@ -687,6 +682,12 @@ public class GraphHopper {
                             : OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(new PMap(vehicleStr).getString("transportation_mode", "VEHICLE")));
                     osmParsers.addRestrictionTagParser(new RestrictionTagParser(restrictions, encodingManager.getDecimalEncodedValue(turnCostKey)));
                 }
+            });
+            vehicleTagParsers.getTagParsers().forEach(tagParser -> {
+                if (tagParser == null) return;
+                if (tagParser instanceof AbstractAccessParser)
+                    ((AbstractAccessParser) tagParser).init(dateRangeParser);
+                osmParsers.addWayTagParser(tagParser);
             });
         });
         return osmParsers;
