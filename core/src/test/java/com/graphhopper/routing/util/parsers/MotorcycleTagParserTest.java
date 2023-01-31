@@ -15,16 +15,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.PriorityCode;
+import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -35,7 +34,8 @@ import java.text.DateFormat;
 import java.util.Arrays;
 import java.util.Date;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -51,25 +51,13 @@ public class MotorcycleTagParserTest {
             .add(motorcycleAccessEnc).add(motorcycleSpeedEnc).add(motorcyclePriorityEnc).add(motorcycleCurvatureEnc)
             .add(footAccessEnc).add(footSpeedEnc)
             .build();
-    private final MotorcycleTagParser parser;
+    private final MotorcycleAccessParser parser;
+    private final MotorcycleAverageSpeedParser speedParser;
 
     public MotorcycleTagParserTest() {
-        parser = new MotorcycleTagParser(em, new PMap());
+        parser = new MotorcycleAccessParser(em, new PMap());
         parser.init(new DateRangeParser());
-    }
-
-    private Graph initExampleGraph() {
-        BaseGraph gs = new BaseGraph.Builder(em).set3D(true).create();
-        NodeAccess na = gs.getNodeAccess();
-        // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
-        na.setNode(0, 51.1, 12.001, 50);
-        na.setNode(1, 51.1, 12.002, 60);
-        EdgeIteratorState edge = gs.edge(0, 1).
-                setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
-        edge.setDistance(100);
-
-        edge.set(motorcycleAccessEnc, true, true).set(motorcycleSpeedEnc, 10.0, 15.0);
-        return gs;
+        speedParser = new MotorcycleAverageSpeedParser(em, new PMap());
     }
 
     @Test
@@ -156,9 +144,9 @@ public class MotorcycleTagParserTest {
         way.setTag("highway", "service");
         assertTrue(parser.getAccess(way).isWay());
         IntsRef edgeFlags = em.createEdgeFlags();
-        parser.handleWayTags(edgeFlags, way);
-        assertEquals(20, parser.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
-        assertEquals(20, parser.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
+        speedParser.handleWayTags(edgeFlags, way, null);
+        assertEquals(20, speedParser.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
+        assertEquals(20, speedParser.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
     }
 
     @Test
@@ -166,16 +154,18 @@ public class MotorcycleTagParserTest {
         IntsRef edgeFlags = em.createEdgeFlags();
         motorcycleAccessEnc.setBool(false, edgeFlags, true);
         motorcycleAccessEnc.setBool(true, edgeFlags, true);
-        parser.getAverageSpeedEnc().setDecimal(false, edgeFlags, 10);
-        parser.getAverageSpeedEnc().setDecimal(true, edgeFlags, 10);
+        speedParser.getAverageSpeedEnc().setDecimal(false, edgeFlags, 10);
+        speedParser.getAverageSpeedEnc().setDecimal(true, edgeFlags, 10);
 
-        assertEquals(10, parser.getAverageSpeedEnc().getDecimal(false, edgeFlags), .1);
-        assertEquals(10, parser.getAverageSpeedEnc().getDecimal(true, edgeFlags), .1);
+        assertEquals(10, speedParser.getAverageSpeedEnc().getDecimal(false, edgeFlags), .1);
+        assertEquals(10, speedParser.getAverageSpeedEnc().getDecimal(true, edgeFlags), .1);
 
-        parser.setSpeed(false, edgeFlags, 0);
-        assertEquals(0, parser.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
-        assertEquals(10, parser.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
-        assertFalse(motorcycleAccessEnc.getBool(false, edgeFlags));
+        speedParser.setSpeed(false, edgeFlags, 0);
+        assertEquals(0, speedParser.avgSpeedEnc.getDecimal(false, edgeFlags), .1);
+        assertEquals(10, speedParser.avgSpeedEnc.getDecimal(true, edgeFlags), .1);
+
+        // speed and access are independent
+        assertTrue(motorcycleAccessEnc.getBool(false, edgeFlags));
         assertTrue(motorcycleAccessEnc.getBool(true, edgeFlags));
     }
 

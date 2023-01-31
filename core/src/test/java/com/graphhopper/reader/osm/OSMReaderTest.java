@@ -32,9 +32,7 @@ import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
-import com.graphhopper.routing.util.parsers.CountryParser;
-import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
-import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
+import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -64,7 +62,6 @@ public class OSMReaderTest {
     private final String file2 = "test-osm2.xml";
     private final String file3 = "test-osm3.xml";
     private final String file4 = "test-osm4.xml";
-    private final String file7 = "test-osm7.xml";
     private final String fileBarriers = "test-barriers.xml";
     private final String dir = "./target/tmp/test-db";
     private BooleanEncodedValue carAccessEnc;
@@ -484,8 +481,8 @@ public class OSMReaderTest {
 
     @Test
     public void testRelation() {
-        EncodingManager manager = EncodingManager.create("bike");
-        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = manager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class);
+        EnumEncodedValue<RouteNetwork> bikeNetworkEnc = new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class);
+        EncodingManager manager = new EncodingManager.Builder().add(bikeNetworkEnc).build();
         OSMParsers osmParsers = new OSMParsers()
                 .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConf));
         ReaderRelation osmRel = new ReaderRelation(1);
@@ -588,6 +585,30 @@ public class OSMReaderTest {
         assertTrue(tcStorage.get(bikeTCEnc, edge10_11, n11, edge11_14) > 0);
     }
 
+    @Test
+    public void testTurnRestrictionsViaHgvTransportationMode() {
+        String fileTurnRestrictions = "test-restrictions.xml";
+        GraphHopper hopper = new GraphHopperFacade(fileTurnRestrictions, true, "").
+                importOrLoad();
+
+        Graph graph = hopper.getBaseGraph();
+        assertEquals(15, graph.getNodes());
+        TurnCostStorage tcStorage = graph.getTurnCostStorage();
+        assertNotNull(tcStorage);
+
+        int n3 = AbstractGraphStorageTester.getIdOf(graph, 52, 11);
+        int n8 = AbstractGraphStorageTester.getIdOf(graph, 54, 11);
+        int n9 = AbstractGraphStorageTester.getIdOf(graph, 54, 10);
+
+        int edge9_3 = GHUtility.getEdge(graph, n9, n3).getEdge();
+        int edge3_8 = GHUtility.getEdge(graph, n3, n8).getEdge();
+
+        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
+        DecimalEncodedValue roadsTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("roads"));
+
+        assertTrue(tcStorage.get(carTCEnc, edge9_3, n3, edge3_8) == 0);
+        assertTrue(tcStorage.get(roadsTCEnc, edge9_3, n3, edge3_8) > 0);
+    }
 
     @Test
     public void testRoadAttributes() {
@@ -672,16 +693,14 @@ public class OSMReaderTest {
         });
         hopper.setVehicleTagParserFactory((lookup, name, config) -> {
             if (name.equals("truck")) {
-                return new CarTagParser(
-                        lookup.getBooleanEncodedValue(VehicleAccess.key("truck")),
-                        lookup.getDecimalEncodedValue(VehicleSpeed.key("truck")),
-                        lookup.getBooleanEncodedValue(Roundabout.KEY),
-                        config,
-                        TransportationMode.HGV,
-                        120
+                return new VehicleTagParsers(
+                        new CarAccessParser(lookup.getBooleanEncodedValue(VehicleAccess.key("truck")), lookup.getBooleanEncodedValue(Roundabout.KEY), config, TransportationMode.HGV)
+                                .init(config.getObject("date_range_parser", new DateRangeParser())),
+                        new CarAverageSpeedParser(lookup.getDecimalEncodedValue(VehicleSpeed.key("truck")), 120),
+                        null
                 );
             }
-            return new DefaultVehicleTagParserFactory().createParser(lookup, name, config);
+            return new DefaultVehicleTagParserFactory().createParsers(lookup, name, config);
         });
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
@@ -907,13 +926,10 @@ public class OSMReaderTest {
 
     @Test
     public void testCountries() throws IOException {
-        EncodingManager em = EncodingManager.create("car");
+        EncodingManager em = new EncodingManager.Builder().build();
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         OSMParsers osmParsers = new OSMParsers();
         osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
-        CarTagParser parser = new CarTagParser(em, new PMap());
-        parser.init(new DateRangeParser());
-        osmParsers.addWayTagParser(parser);
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
@@ -945,11 +961,8 @@ public class OSMReaderTest {
                 .add(VehicleEncodedValues.car(new PMap()))
                 .add(countryEnc)
                 .build();
-        CarTagParser carParser = new CarTagParser(em, new PMap());
-        carParser.init(new DateRangeParser());
         OSMParsers osmParsers = new OSMParsers()
-                .addWayTagParser(new CountryParser(countryEnc))
-                .addWayTagParser(carParser);
+                .addWayTagParser(new CountryParser(countryEnc));
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
@@ -981,10 +994,12 @@ public class OSMReaderTest {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
+            if (turnCosts) setVehiclesString("roads|turn_costs=true|transportation_mode=HGV");
             setProfiles(
                     new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                     new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(turnCosts),
-                    new Profile("bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(turnCosts)
+                    new Profile("bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(turnCosts),
+                    new Profile("roads").setVehicle("roads").setWeighting("fastest").setTurnCosts(turnCosts)
             );
             getReaderConfig().setPreferredLanguage(prefLang);
         }

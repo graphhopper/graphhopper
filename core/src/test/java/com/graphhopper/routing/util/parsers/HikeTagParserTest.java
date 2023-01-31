@@ -15,11 +15,15 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.PriorityCode;
+import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.util.PMap;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,11 +33,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Peter Karich
  */
 public class HikeTagParserTest {
-    private final EncodingManager encodingManager = EncodingManager.create("car,hike");
-    private final HikeTagParser hikeParser = new HikeTagParser(encodingManager, new PMap());
+    private final EncodingManager encodingManager = new EncodingManager.Builder()
+            .add(VehicleEncodedValues.hike(new PMap())).build();
+    private final HikeAccessParser accessParser = new HikeAccessParser(encodingManager, new PMap());
+    private final HikePriorityParser prioParser = new HikePriorityParser(encodingManager, new PMap());
 
     public HikeTagParserTest() {
-        hikeParser.init(new DateRangeParser());
+        accessParser.init(new DateRangeParser());
     }
 
     @Test
@@ -43,58 +49,58 @@ public class HikeTagParserTest {
         way.setTag("access", "no");
         way.setTag("sidewalk", "both");
         way.setTag("foot", "no");
-        assertTrue(hikeParser.getAccess(way).canSkip());
+        assertTrue(accessParser.getAccess(way).canSkip());
     }
 
     @Test
     public void testPriority() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "cycleway");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), hikeParser.handlePriority(way, null));
+        Assertions.assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
 
         way.setTag("highway", "primary");
-        assertEquals(PriorityCode.AVOID.getValue(), hikeParser.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "official");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), hikeParser.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "designated");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), hikeParser.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.setTag("highway", "cycleway");
         way.setTag("bicycle", "designated");
         way.setTag("foot", "designated");
-        assertEquals(PriorityCode.PREFER.getValue(), hikeParser.handlePriority(way, null));
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.AVOID.getValue(), hikeParser.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), hikeParser.handlePriority(way, null));
+        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "road");
         way.setTag("bicycle", "official");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), hikeParser.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "trunk");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.BAD.getValue(), hikeParser.handlePriority(way, null));
+        assertEquals(PriorityCode.BAD.getValue(), prioParser.handlePriority(way, null));
         way.setTag("sidewalk", "none");
-        assertEquals(PriorityCode.BAD.getValue(), hikeParser.handlePriority(way, null));
+        assertEquals(PriorityCode.BAD.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.PREFER.getValue(), hikeParser.handlePriority(way, null));
+        assertEquals(PriorityCode.PREFER.getValue(), prioParser.handlePriority(way, null));
     }
 
 }

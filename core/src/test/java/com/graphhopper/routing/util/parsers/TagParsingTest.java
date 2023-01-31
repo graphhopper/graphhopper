@@ -16,16 +16,15 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
-import com.graphhopper.routing.util.parsers.OSMRoadClassParser;
-import com.graphhopper.routing.util.parsers.OSMRoundaboutParser;
-import com.graphhopper.routing.util.parsers.TagParser;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.OSMParsers;
+import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -56,17 +55,15 @@ class TagParsingTest {
                 .add(bikeNetworkEnc)
                 .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
                 .build();
-        BikeTagParser bike1Parser = new BikeTagParser(em, new PMap("name=bike1"));
-        bike1Parser.init(new DateRangeParser());
-        BikeTagParser bike2Parser = new BikeTagParser(em, new PMap("name=bike2")) {
+        BikePriorityParser bike1Parser = new BikePriorityParser(em, new PMap("name=bike1"));
+        BikePriorityParser bike2Parser = new BikePriorityParser(em, new PMap("name=bike2")) {
             @Override
-            public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+            public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relTags) {
                 // accept less relations
                 if (bikeRouteEnc.getEnum(false, edgeFlags) != RouteNetwork.MISSING)
                     priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(2));
             }
         };
-        bike2Parser.init(new DateRangeParser());
         OSMParsers osmParsers = new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConfig))
                 .addWayTagParser(new OSMRoadClassParser(em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)))
@@ -105,10 +102,8 @@ class TagParsingTest {
                 .add(bikeNetworkEnc)
                 .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
                 .build();
-        BikeTagParser bikeTagParser = new BikeTagParser(em, new PMap());
-        bikeTagParser.init(new DateRangeParser());
-        MountainBikeTagParser mtbTagParser = new MountainBikeTagParser(em, new PMap());
-        mtbTagParser.init(new DateRangeParser());
+        BikePriorityParser bikeTagParser = new BikePriorityParser(em, new PMap());
+        MountainBikePriorityParser mtbTagParser = new MountainBikePriorityParser(em, new PMap());
         OSMParsers osmParsers = new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConfig))
                 .addWayTagParser(new OSMRoadClassParser(em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)))
@@ -149,15 +144,15 @@ class TagParsingTest {
         BooleanEncodedValue roundaboutEnc = manager.getBooleanEncodedValue(Roundabout.KEY);
         List<TagParser> tagParsers = Arrays.asList(
                 new OSMRoundaboutParser(roundaboutEnc),
-                new CarTagParser(manager, new PMap()),
-                new FootTagParser(manager, new PMap()),
-                new BikeTagParser(manager, new PMap()),
-                new MotorcycleTagParser(manager, new PMap()),
-                new MountainBikeTagParser(manager, new PMap())
+                new CarAccessParser(manager, new PMap()),
+                new FootAccessParser(manager, new PMap()),
+                new BikeAccessParser(manager, new PMap()),
+                new MotorcycleAccessParser(manager, new PMap()),
+                new MountainBikeAccessParser(manager, new PMap())
         );
         for (TagParser tagParser : tagParsers)
-            if (tagParser instanceof VehicleTagParser)
-                ((VehicleTagParser) tagParser).init(new DateRangeParser());
+            if (tagParser instanceof AbstractAccessParser)
+                ((AbstractAccessParser) tagParser).init(new DateRangeParser());
 
         final IntsRef edgeFlags = manager.createEdgeFlags();
         IntsRef relFlags = manager.createRelationFlags();

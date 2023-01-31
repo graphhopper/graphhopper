@@ -15,55 +15,45 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.Roundabout;
+import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import static java.util.Collections.emptyMap;
 
-/**
- * Defines bit layout for cars. (speed, access, ferries, ...)
- *
- * @author Peter Karich
- * @author Nop
- */
-public class CarTagParser extends VehicleTagParser {
-    public static final double CAR_MAX_SPEED = 140;
-    protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
-    protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
-    // This value determines the maximal possible on roads with bad surfaces
-    protected int badSurfaceSpeed;
+public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
-    /**
-     * A map which associates string to speed. Get some impression:
-     * http://www.itoworld.com/map/124#fullscreen
-     * http://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed
-     */
-    protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
+    protected final Set<String> trackTypeValues = new HashSet<>();
+    protected final Set<String> highwayValues = new HashSet<>();
+    protected final BooleanEncodedValue roundaboutEnc;
 
-    public CarTagParser(EncodedValueLookup lookup, PMap properties) {
+    public CarAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(
                 lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "car"))),
-                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 properties,
-                TransportationMode.CAR,
-                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))).getNextStorableValue(CAR_MAX_SPEED)
+                TransportationMode.CAR
         );
     }
 
-    public CarTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc,
-                        BooleanEncodedValue roundaboutEnc, PMap properties,
-                        TransportationMode transportationMode, double maxPossibleSpeed) {
-        super(accessEnc, speedEnc, roundaboutEnc, transportationMode, maxPossibleSpeed);
+    public CarAccessParser(BooleanEncodedValue accessEnc,
+                           BooleanEncodedValue roundaboutEnc, PMap properties,
+                           TransportationMode transportationMode) {
+        super(accessEnc, transportationMode);
+        this.roundaboutEnc = roundaboutEnc;
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("no");
@@ -92,67 +82,11 @@ public class CarTagParser extends VehicleTagParser {
         barriers.add("sump_buster");
         barriers.add("jersey_barrier");
 
-        badSurfaceSpeedMap.add("cobblestone");
-        badSurfaceSpeedMap.add("grass_paver");
-        badSurfaceSpeedMap.add("gravel");
-        badSurfaceSpeedMap.add("sand");
-        badSurfaceSpeedMap.add("paving_stones");
-        badSurfaceSpeedMap.add("dirt");
-        badSurfaceSpeedMap.add("ground");
-        badSurfaceSpeedMap.add("grass");
-        badSurfaceSpeedMap.add("unpaved");
-        badSurfaceSpeedMap.add("compacted");
+        highwayValues.addAll(Arrays.asList("motorway", "motorway_link", "trunk", "trunk_link",
+                "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
+                "unclassified", "residential", "living_street", "service", "road", "track"));
 
-        // autobahn
-        defaultSpeedMap.put("motorway", 100);
-        defaultSpeedMap.put("motorway_link", 70);
-        // bundesstraße
-        defaultSpeedMap.put("trunk", 70);
-        defaultSpeedMap.put("trunk_link", 65);
-        // linking bigger town
-        defaultSpeedMap.put("primary", 65);
-        defaultSpeedMap.put("primary_link", 60);
-        // linking towns + villages
-        defaultSpeedMap.put("secondary", 60);
-        defaultSpeedMap.put("secondary_link", 50);
-        // streets without middle line separation
-        defaultSpeedMap.put("tertiary", 50);
-        defaultSpeedMap.put("tertiary_link", 40);
-        defaultSpeedMap.put("unclassified", 30);
-        defaultSpeedMap.put("residential", 30);
-        // spielstraße
-        defaultSpeedMap.put("living_street", 5);
-        defaultSpeedMap.put("service", 20);
-        // unknown road
-        defaultSpeedMap.put("road", 20);
-        // forestry stuff
-        defaultSpeedMap.put("track", 15);
-
-        trackTypeSpeedMap.put("grade1", 20); // paved
-        trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with ...
-        trackTypeSpeedMap.put("grade3", 10); // ... hard and soft materials
-        trackTypeSpeedMap.put(null, defaultSpeedMap.get("track"));
-
-        // limit speed on bad surfaces to 30 km/h
-        badSurfaceSpeed = 30;
-    }
-
-    protected double getSpeed(ReaderWay way) {
-        String highwayValue = way.getTag("highway");
-        Integer speed = defaultSpeedMap.get(highwayValue);
-        if (speed == null)
-            throw new IllegalStateException(getName() + ", no speed found for: " + highwayValue + ", tags: " + way);
-
-        if (highwayValue.equals("track")) {
-            String tt = way.getTag("tracktype");
-            if (!Helper.isEmpty(tt)) {
-                Integer tInt = trackTypeSpeedMap.get(tt);
-                if (tInt != null)
-                    speed = tInt;
-            }
-        }
-
-        return speed;
+        trackTypeValues.addAll(Arrays.asList("grade1", "grade2", "grade3", null));
     }
 
     public WayAccess getAccess(ReaderWay way) {
@@ -175,10 +109,10 @@ public class CarTagParser extends VehicleTagParser {
             return WayAccess.CAN_SKIP;
         }
 
-        if ("track".equals(highwayValue) && trackTypeSpeedMap.get(way.getTag("tracktype")) == null)
+        if ("track".equals(highwayValue) && !trackTypeValues.contains(way.getTag("tracktype")))
             return WayAccess.CAN_SKIP;
 
-        if (!defaultSpeedMap.containsKey(highwayValue))
+        if (!highwayValues.contains(highwayValue))
             return WayAccess.CAN_SKIP;
 
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
@@ -213,13 +147,6 @@ public class CarTagParser extends VehicleTagParser {
             return;
 
         if (!access.isFerry()) {
-            // get assumed speed from highway type
-            double speed = getSpeed(way);
-            speed = applyBadSurfaceSpeed(way, speed);
-
-            setSpeed(false, edgeFlags, applyMaxSpeed(way, speed, false));
-            setSpeed(true, edgeFlags, applyMaxSpeed(way, speed, true));
-
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
             if (isOneway(way) || isRoundabout) {
                 if (isForwardOneway(way))
@@ -232,23 +159,12 @@ public class CarTagParser extends VehicleTagParser {
             }
 
         } else {
-            double ferrySpeed = ferrySpeedCalc.getSpeed(way);
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
-            setSpeed(false, edgeFlags, ferrySpeed);
-            if (avgSpeedEnc.isStoreTwoDirections())
-                setSpeed(true, edgeFlags, ferrySpeed);
         }
-    }
 
-    /**
-     * @param way   needed to retrieve tags
-     * @param speed speed guessed e.g. from the road type or other tags
-     * @return The assumed speed.
-     */
-    protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
-        double maxSpeed = getMaxSpeed(way, bwd);
-        return isValidSpeed(maxSpeed) ? maxSpeed * 0.9 : speed;
+        Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
+        handleNodeTags(edgeFlags, nodeTags);
     }
 
     /**
@@ -275,17 +191,5 @@ public class CarTagParser extends VehicleTagParser {
                 || way.hasTag("vehicle:forward", restrictedValues)
                 || way.hasTag("motor_vehicle:backward", restrictedValues)
                 || way.hasTag("motor_vehicle:forward", restrictedValues);
-    }
-
-    /**
-     * @param way   needed to retrieve tags
-     * @param speed speed guessed e.g. from the road type or other tags
-     * @return The assumed speed
-     */
-    protected double applyBadSurfaceSpeed(ReaderWay way, double speed) {
-        // limit speed if bad surface
-        if (badSurfaceSpeed > 0 && isValidSpeed(speed) && speed > badSurfaceSpeed && way.hasTag("surface", badSurfaceSpeedMap))
-            speed = badSurfaceSpeed;
-        return speed;
     }
 }
