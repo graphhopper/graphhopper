@@ -297,9 +297,8 @@ public abstract class AbstractBikeTagParserTester {
         accessParser.handleWayTags(edgeFlags = encodingManager.createEdgeFlags(), way, null);
         assertTrue(accessEnc.getBool(false, edgeFlags));
 
-        // depending on the track speed it is 2, 12 or 18, see #2728
-        // speedParser.handleWayTags(edgeFlags, way, null);
-        // assertEquals(4, avgSpeedEnc.getDecimal(false, edgeFlags));
+        speedParser.handleWayTags(edgeFlags, way, null);
+        assertEquals(4, avgSpeedEnc.getDecimal(false, edgeFlags));
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");

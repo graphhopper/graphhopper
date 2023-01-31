@@ -165,8 +165,10 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         String highwayTag = way.getTag("highway");
         Integer highwaySpeed = highwaySpeeds.get(highwayTag);
 
+        if (way.hasTag("railway", "platform"))
+            highwaySpeed = PUSHING_SECTION_SPEED;
         // Under certain conditions we need to increase the speed of pushing sections to the speed of a "highway=cycleway"
-        if (way.hasTag("highway", pushingSectionsHighways)
+        else if (way.hasTag("highway", pushingSectionsHighways)
                 && ((way.hasTag("foot", "yes") && way.hasTag("segregated", "yes"))
                 || (way.hasTag("bicycle", intendedValues))))
             highwaySpeed = getHighwaySpeed("cycleway");
