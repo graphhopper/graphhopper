@@ -83,7 +83,7 @@ profiles:
 The name and vehicle fields are the same as for standard profiles and the vehicle field is used as the 'base' vehicle
 for the custom profile. The weighting must be always set to `custom` for custom profiles. The custom model itself goes
 into the `custom_model` property. Alternatively, you can also set a path to a custom model file using the
-`custom_model_folder` and `custom_model_file` properties.
+`custom_models.directory` and `custom_model_file` properties.
 
 Using custom profiles for your routing requests works just the same way as for standard profiles. Simply add
 `profile=my_custom_profile` as request parameter to your routing request.

@@ -58,7 +58,7 @@ public class GraphHopperManaged implements Managed {
 
         String customAreasDirectory = configuration.getString("custom_areas.directory", "");
         JsonFeatureCollection globalAreas = resolveCustomAreas(customAreasDirectory);
-        String customModelFolder = configuration.getString("custom_model_folder", "");
+        String customModelFolder = configuration.getString("custom_models.directory", configuration.getString("custom_model_folder", ""));
         List<Profile> newProfiles = resolveCustomModelFiles(customModelFolder, configuration.getProfiles(), globalAreas);
         configuration.setProfiles(newProfiles);
 
@@ -111,7 +111,7 @@ public class GraphHopperManaged implements Managed {
                     newProfiles.add(new CustomProfile(profile).setCustomModel(customModel = new CustomModel()));
                 else {
                     if (customModelFileName.contains(File.separator))
-                        throw new IllegalArgumentException("Use custom_model_folder for the custom_model_file parent");
+                        throw new IllegalArgumentException("Use custom_models.directory for the custom_model_file parent");
                     if (!customModelFileName.endsWith(".json"))
                         throw new IllegalArgumentException("Yaml is no longer supported, see #2672. Use JSON with optional comments //");
                     try {
