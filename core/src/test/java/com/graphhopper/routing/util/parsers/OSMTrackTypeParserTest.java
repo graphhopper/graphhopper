@@ -28,28 +28,28 @@ public class OSMTrackTypeParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = new IntsRef(1);
         readerWay.setTag("tracktype", "grade1");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(TrackType.GRADE1, ttEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(TrackType.GRADE1, ttEnc.getEnum(false, edgeId, intAccess));
 
         intsRef = new IntsRef(1);
         readerWay.setTag("tracktype", "grade2");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(TrackType.GRADE2, ttEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(TrackType.GRADE2, ttEnc.getEnum(false, edgeId, intAccess));
 
         intsRef = new IntsRef(1);
         readerWay.setTag("tracktype", "grade3");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(TrackType.GRADE3, ttEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(TrackType.GRADE3, ttEnc.getEnum(false, edgeId, intAccess));
 
         intsRef = new IntsRef(1);
         readerWay.setTag("tracktype", "grade4");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(TrackType.GRADE4, ttEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(TrackType.GRADE4, ttEnc.getEnum(false, edgeId, intAccess));
 
         intsRef = new IntsRef(1);
         readerWay.setTag("tracktype", "grade5");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(TrackType.GRADE5, ttEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(TrackType.GRADE5, ttEnc.getEnum(false, edgeId, intAccess));
     }
 
     @Test
@@ -57,15 +57,15 @@ public class OSMTrackTypeParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = new IntsRef(1);
         readerWay.setTag("tracktype", "unknownstuff");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(TrackType.MISSING, ttEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(TrackType.MISSING, ttEnc.getEnum(false, edgeId, intAccess));
     }
 
     @Test
     public void testNoNPE() {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = new IntsRef(1);
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(TrackType.MISSING, ttEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(TrackType.MISSING, ttEnc.getEnum(false, edgeId, intAccess));
     }
 }

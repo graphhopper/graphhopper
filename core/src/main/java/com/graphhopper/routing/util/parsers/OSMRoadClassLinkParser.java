@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
@@ -30,9 +31,9 @@ public class OSMRoadClassLinkParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay readerWay, IntsRef relationFlags) {
         String highwayTag = readerWay.getTag("highway");
         if (!Helper.isEmpty(highwayTag) && highwayTag.endsWith("_link"))
-            linkEnc.setBool(false, edgeFlags, true);
+            linkEnc.setBool(false, edgeId, intAccess, true);
     }
 }

@@ -44,16 +44,16 @@ class OSMLanesParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = new IntsRef(1);
         readerWay.setTag("lanes", "4");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        Assertions.assertEquals(4, lanesEnc.getInt(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        Assertions.assertEquals(4, lanesEnc.getInt(false, edgeId, intAccess));
     }
 
     @Test
     void notTagged() {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = new IntsRef(1);
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        Assertions.assertEquals(1, lanesEnc.getInt(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        Assertions.assertEquals(1, lanesEnc.getInt(false, edgeId, intAccess));
     }
 
 }

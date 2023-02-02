@@ -12,11 +12,11 @@ public class MaxWeightTest {
         DecimalEncodedValue mappedDecimalEnc = MaxWeight.create();
         mappedDecimalEnc.init(new EncodedValue.InitializerConfig());
         IntsRef intsRef = new IntsRef(1);
-        mappedDecimalEnc.setDecimal(false, intsRef, 20);
-        assertEquals(20, mappedDecimalEnc.getDecimal(false, intsRef), .1);
+        mappedDecimalEnc.setDecimal(false, edgeId, intAccess, 20);
+        assertEquals(20, mappedDecimalEnc.getDecimal(false, edgeId, intAccess), .1);
 
         intsRef = new IntsRef(1);
-        mappedDecimalEnc.setDecimal(false, intsRef, Double.POSITIVE_INFINITY);
-        assertEquals(Double.POSITIVE_INFINITY, mappedDecimalEnc.getDecimal(false, intsRef), .1);
+        mappedDecimalEnc.setDecimal(false, edgeId, intAccess, Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, mappedDecimalEnc.getDecimal(false, edgeId, intAccess), .1);
     }
 }

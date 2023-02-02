@@ -45,14 +45,14 @@ class OSMMaxSpeedParserTest {
             }
         });
         IntsRef edgeFlags = new IntsRef(1);
-        parser.handleWayTags(edgeFlags, way, relFlags);
-        assertEquals(5, maxSpeedEnc.getDecimal(false, edgeFlags), .1);
+        parser.handleWayTags(edgeId, intAccess, way, relFlags);
+        assertEquals(5, maxSpeedEnc.getDecimal(false, edgeId, intAccess), .1);
 
         // without a country_rule we get the default value
         edgeFlags = new IntsRef(1);
         way.removeTag("country_rule");
-        parser.handleWayTags(edgeFlags, way, relFlags);
-        assertEquals(MaxSpeed.UNSET_SPEED, maxSpeedEnc.getDecimal(false, edgeFlags), .1);
+        parser.handleWayTags(edgeId, intAccess, way, relFlags);
+        assertEquals(MaxSpeed.UNSET_SPEED, maxSpeedEnc.getDecimal(false, edgeId, intAccess), .1);
     }
 
 }

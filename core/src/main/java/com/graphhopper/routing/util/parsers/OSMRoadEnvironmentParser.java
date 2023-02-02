@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.storage.IntsRef;
 
@@ -33,7 +34,7 @@ public class OSMRoadEnvironmentParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay readerWay, IntsRef relationFlags) {
         RoadEnvironment roadEnvironment = OTHER;
         if ((readerWay.hasTag("route", "ferry") && !readerWay.hasTag("ferry", "no")) ||
                 // TODO shuttle_train is sometimes also used in relations, e.g. https://www.openstreetmap.org/relation/1932780
@@ -49,6 +50,6 @@ public class OSMRoadEnvironmentParser implements TagParser {
             roadEnvironment = ROAD;
 
         if (roadEnvironment != OTHER)
-            roadEnvEnc.setEnum(false, edgeFlags, roadEnvironment);
+            roadEnvEnc.setEnum(false, edgeId, intAccess, roadEnvironment);
     }
 }

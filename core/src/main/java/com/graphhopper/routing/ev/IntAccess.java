@@ -15,25 +15,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.IntAccess;
-import com.graphhopper.storage.IntsRef;
+package com.graphhopper.routing.ev;
 
-public class OSMRoundaboutParser implements TagParser {
+public interface IntAccess {
+    int getInt(int edgeId, int index);
 
-    private final BooleanEncodedValue roundaboutEnc;
-
-    public OSMRoundaboutParser(BooleanEncodedValue roundaboutEnc) {
-        this.roundaboutEnc = roundaboutEnc;
-    }
-
-    @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
-        boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
-        if (isRoundabout)
-            roundaboutEnc.setBool(false, edgeId, intAccess, true);
-    }
+    void setInt(int edgeId, int index, int value);
 }

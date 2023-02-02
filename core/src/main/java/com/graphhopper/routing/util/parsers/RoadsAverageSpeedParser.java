@@ -3,6 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
@@ -22,10 +23,10 @@ public class RoadsAverageSpeedParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
         // let's make it high and let it be reduced in the custom model
-        avgSpeedEnc.setDecimal(false, edgeFlags, maxPossibleSpeed);
+        avgSpeedEnc.setDecimal(false, edgeId, intAccess, maxPossibleSpeed);
         if (avgSpeedEnc.isStoreTwoDirections())
-            avgSpeedEnc.setDecimal(true, edgeFlags, maxPossibleSpeed);
+            avgSpeedEnc.setDecimal(true, edgeId, intAccess, maxPossibleSpeed);
     }
 }

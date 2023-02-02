@@ -3,6 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
@@ -77,9 +78,9 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
-        Integer priorityFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeFlags));
+        Integer priorityFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeId, intAccess));
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 priorityFromRelation = SLIGHT_AVOID.getValue();
@@ -88,8 +89,8 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             }
         }
 
-        double maxSpeed = Math.max(avgSpeedEnc.getDecimal(false, edgeFlags), avgSpeedEnc.getDecimal(true, edgeFlags));
-        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, maxSpeed, priorityFromRelation)));
+        double maxSpeed = Math.max(avgSpeedEnc.getDecimal(false, edgeId, intAccess), avgSpeedEnc.getDecimal(true, edgeId, intAccess));
+        priorityEnc.setDecimal(false, edgeId, intAccess, PriorityCode.getValue(handlePriority(way, maxSpeed, priorityFromRelation)));
     }
 
     /**

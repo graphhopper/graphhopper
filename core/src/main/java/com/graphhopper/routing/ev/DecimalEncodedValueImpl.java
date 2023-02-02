@@ -19,7 +19,6 @@ package com.graphhopper.routing.ev;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.storage.IntsRef;
 
 /**
  * This class holds a signed decimal value and stores it as an integer value via a conversion factor and a certain
@@ -80,15 +79,15 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
     }
 
     @Override
-    public void setDecimal(boolean reverse, IntsRef ref, double value) {
+    public void setDecimal(boolean reverse, int edgeId, IntAccess intAccess, double value) {
         if (!isInitialized())
             throw new IllegalStateException("Call init before using EncodedValue " + getName());
         if (useMaximumAsInfinity) {
             if (Double.isInfinite(value)) {
-                super.setInt(reverse, ref, maxStorableValue);
+                super.setInt(reverse, edgeId, intAccess, maxStorableValue);
                 return;
             } else if (value >= maxStorableValue * factor) { // equality is important as maxStorableValue is reserved for infinity
-                super.uncheckedSet(reverse, ref, maxStorableValue - 1);
+                super.uncheckedSet(reverse, edgeId, intAccess, maxStorableValue - 1);
                 return;
             }
         } else if (Double.isInfinite(value))
@@ -103,12 +102,12 @@ public final class DecimalEncodedValueImpl extends IntEncodedValueImpl implement
         if (value < minStorableValue)
             throw new IllegalArgumentException(getName() + " value too small for encoding " + value + ", minValue:" + minStorableValue + ", factor: " + factor);
 
-        super.uncheckedSet(reverse, ref, (int) Math.round(value));
+        super.uncheckedSet(reverse, edgeId, intAccess, (int) Math.round(value));
     }
 
     @Override
-    public double getDecimal(boolean reverse, IntsRef ref) {
-        int value = getInt(reverse, ref);
+    public double getDecimal(boolean reverse, int edgeId, IntAccess intAccess) {
+        int value = getInt(reverse, edgeId, intAccess);
         if (useMaximumAsInfinity && value == maxStorableValue)
             return Double.POSITIVE_INFINITY;
         return value * factor;

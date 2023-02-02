@@ -3,6 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
@@ -34,8 +35,8 @@ public class HikeAverageSpeedParser extends FootAverageSpeedParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
-        super.handleWayTags(edgeFlags, way);
+    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way) {
+        super.handleWayTags(edgeId, intAccess, way);
         applyWayTags(way, edgeFlags);
     }
 
@@ -69,7 +70,7 @@ public class HikeAverageSpeedParser extends FootAverageSpeedParser {
         // slope=h/s_2d=~h/2_3d              = sqrt(1+slope²)/(slope+1/4.5) km/h
         // maximum slope is 0.37 (Ffordd Pen Llech)
         double newSpeed = Math.sqrt(1 + slope * slope) / (slope + 1 / 5.4);
-        avgSpeedEnc.setDecimal(false, edgeFlags, Helper.keepIn(newSpeed, 1, 5));
+        avgSpeedEnc.setDecimal(false, edgeId, intAccess, Helper.keepIn(newSpeed, 1, 5));
 
         return edgeFlags;
     }

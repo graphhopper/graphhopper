@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
@@ -39,7 +40,7 @@ public class OSMRoadAccessParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay readerWay, IntsRef relationFlags) {
         RoadAccess accessValue = YES;
         RoadAccess tmpAccessValue;
         for (String restriction : restrictions) {
@@ -59,7 +60,7 @@ public class OSMRoadAccessParser implements TagParser {
         if (countryRule != null)
             accessValue = countryRule.getAccess(readerWay, TransportationMode.CAR, accessValue);
 
-        roadAccessEnc.setEnum(false, edgeFlags, accessValue);
+        roadAccessEnc.setEnum(false, edgeId, intAccess, accessValue);
     }
 
     public static List<String> toOSMRestrictions(TransportationMode mode) {

@@ -20,8 +20,8 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.ev.VehicleSpeed;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
@@ -120,14 +120,14 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-                setSpeed(false, edgeFlags, ferrySpeed);
+                setSpeed(false, edgeId, intAccess, ferrySpeed);
                 if (avgSpeedEnc.isStoreTwoDirections())
-                    setSpeed(true, edgeFlags, ferrySpeed);
+                    setSpeed(true, edgeId, intAccess, ferrySpeed);
             }
             return;
         }
@@ -136,8 +136,8 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
         double speed = getSpeed(way);
         speed = applyBadSurfaceSpeed(way, speed);
 
-        setSpeed(false, edgeFlags, applyMaxSpeed(way, speed, false));
-        setSpeed(true, edgeFlags, applyMaxSpeed(way, speed, true));
+        setSpeed(false, edgeId, intAccess, applyMaxSpeed(way, speed, false));
+        setSpeed(true, edgeId, intAccess, applyMaxSpeed(way, speed, true));
     }
 
     /**

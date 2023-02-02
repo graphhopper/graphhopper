@@ -27,32 +27,32 @@ public class OSMTollParserTest {
         IntsRef relFlags = new IntsRef(2);
         IntsRef intsRef = new IntsRef(1);
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Toll.MISSING, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Toll.MISSING, tollEnc.getEnum(false, edgeId, intAccess));
 
         intsRef = new IntsRef(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:hgv", "yes");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Toll.HGV, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Toll.HGV, tollEnc.getEnum(false, edgeId, intAccess));
 
         intsRef = new IntsRef(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:N2", "yes");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Toll.HGV, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Toll.HGV, tollEnc.getEnum(false, edgeId, intAccess));
 
         intsRef = new IntsRef(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:N3", "yes");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Toll.HGV, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Toll.HGV, tollEnc.getEnum(false, edgeId, intAccess));
 
         intsRef = new IntsRef(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll", "yes");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Toll.ALL, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Toll.ALL, tollEnc.getEnum(false, edgeId, intAccess));
 
         intsRef = new IntsRef(1);
         readerWay.setTag("highway", "primary");
@@ -60,7 +60,7 @@ public class OSMTollParserTest {
         readerWay.setTag("toll:hgv", "yes");
         readerWay.setTag("toll:N2", "yes");
         readerWay.setTag("toll:N3", "yes");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Toll.ALL, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Toll.ALL, tollEnc.getEnum(false, edgeId, intAccess));
     }
 }

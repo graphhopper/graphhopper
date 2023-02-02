@@ -6,6 +6,7 @@ import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.ConditionalTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
@@ -68,25 +69,25 @@ public abstract class AbstractAccessParser implements TagParser {
     /**
      * Updates the given edge flags based on node tags
      */
-    protected void handleNodeTags(IntsRef edgeFlags, Map<String, Object> nodeTags) {
+    protected void handleNodeTags(int edgeId, IntAccess intAccess, Map<String, Object> nodeTags) {
         if (!nodeTags.isEmpty()) {
             // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
             ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
             // block access for barriers
             if (isBarrier(readerNode)) {
                 BooleanEncodedValue accessEnc = getAccessEnc();
-                accessEnc.setBool(false, edgeFlags, false);
-                accessEnc.setBool(true, edgeFlags, false);
+                accessEnc.setBool(false, edgeId, intAccess, false);
+                accessEnc.setBool(true, edgeId, intAccess, false);
             }
         }
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
-        handleWayTags(edgeFlags, way);
+    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
+        handleWayTags(edgeId, intAccess, way);
     }
 
-    public abstract void handleWayTags(IntsRef edgeFlags, ReaderWay way);
+    public abstract void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way);
 
     /**
      * @return true if the given OSM node blocks access for this vehicle, false otherwise

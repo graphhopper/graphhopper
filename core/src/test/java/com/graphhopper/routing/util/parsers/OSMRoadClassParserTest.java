@@ -28,24 +28,24 @@ public class OSMRoadClassParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef edgeFlags = new IntsRef(1);
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(edgeFlags, readerWay, relFlags);
-        assertEquals(RoadClass.PRIMARY, rcEnc.getEnum(false, edgeFlags));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(RoadClass.PRIMARY, rcEnc.getEnum(false, edgeId, intAccess));
 
         edgeFlags = new IntsRef(1);
         readerWay.setTag("highway", "unknownstuff");
-        parser.handleWayTags(edgeFlags, readerWay, relFlags);
-        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, edgeFlags));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, edgeId, intAccess));
 
         edgeFlags = new IntsRef(1);
         readerWay.setTag("highway", "motorway_link");
-        parser.handleWayTags(edgeFlags, readerWay, relFlags);
-        assertEquals(RoadClass.MOTORWAY, rcEnc.getEnum(false, edgeFlags));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(RoadClass.MOTORWAY, rcEnc.getEnum(false, edgeId, intAccess));
 
         readerWay = new ReaderWay(1);
         readerWay.setTag("highway", "cycleway");
         edgeFlags = new IntsRef(1);
-        parser.handleWayTags(edgeFlags, readerWay, relFlags);
-        assertEquals(RoadClass.CYCLEWAY, rcEnc.getEnum(false, edgeFlags));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(RoadClass.CYCLEWAY, rcEnc.getEnum(false, edgeId, intAccess));
     }
 
     @Test
@@ -53,15 +53,15 @@ public class OSMRoadClassParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef edgeFlags = new IntsRef(1);
         readerWay.setTag("route", "ferry");
-        parser.handleWayTags(edgeFlags, readerWay, relFlags);
-        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, edgeFlags));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, edgeId, intAccess));
     }
 
     @Test
     public void testNoNPE() {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef edgeFlags = new IntsRef(1);
-        parser.handleWayTags(edgeFlags, readerWay, relFlags);
-        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, edgeFlags));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(RoadClass.OTHER, rcEnc.getEnum(false, edgeId, intAccess));
     }
 }

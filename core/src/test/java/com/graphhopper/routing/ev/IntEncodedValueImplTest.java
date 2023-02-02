@@ -15,7 +15,7 @@ public class IntEncodedValueImplTest {
         IntEncodedValue prop = new IntEncodedValueImpl("test", 10, false);
         prop.init(new EncodedValue.InitializerConfig());
         try {
-            prop.setInt(true, new IntsRef(1), -1);
+            prop.setInt(true, edgeId, intAccess, -1);
             fail();
         } catch (Exception ex) {
         }
@@ -26,10 +26,10 @@ public class IntEncodedValueImplTest {
         IntEncodedValue prop = new IntEncodedValueImpl("test", 10, true);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(1);
-        prop.setInt(false, ref, 10);
-        prop.setInt(true, ref, 20);
-        assertEquals(10, prop.getInt(false, ref));
-        assertEquals(20, prop.getInt(true, ref));
+        prop.setInt(false, edgeId, intAccess, 10);
+        prop.setInt(true, edgeId, intAccess, 20);
+        assertEquals(10, prop.getInt(false, edgeId, intAccess));
+        assertEquals(20, prop.getInt(true, edgeId, intAccess));
     }
 
     @Test
@@ -37,10 +37,10 @@ public class IntEncodedValueImplTest {
         IntEncodedValue prop = new IntEncodedValueImpl("test", 31, true);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(2);
-        prop.setInt(false, ref, 10);
-        prop.setInt(true, ref, 20);
-        assertEquals(10, prop.getInt(false, ref));
-        assertEquals(20, prop.getInt(true, ref));
+        prop.setInt(false, edgeId, intAccess, 10);
+        prop.setInt(true, edgeId, intAccess, 20);
+        assertEquals(10, prop.getInt(false, edgeId, intAccess));
+        assertEquals(20, prop.getInt(true, edgeId, intAccess));
     }
 
     @Test
@@ -48,10 +48,10 @@ public class IntEncodedValueImplTest {
         IntEncodedValue prop = new IntEncodedValueImpl("test", 30, true);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(2);
-        prop.setInt(false, ref, 10);
-        prop.setInt(true, ref, 20);
-        assertEquals(10, prop.getInt(false, ref));
-        assertEquals(20, prop.getInt(true, ref));
+        prop.setInt(false, edgeId, intAccess, 10);
+        prop.setInt(true, edgeId, intAccess, 20);
+        assertEquals(10, prop.getInt(false, edgeId, intAccess));
+        assertEquals(20, prop.getInt(true, edgeId, intAccess));
     }
 
     @Test
@@ -59,8 +59,8 @@ public class IntEncodedValueImplTest {
         IntEncodedValue prop = new IntEncodedValueImpl("test", 31, false);
         prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(2);
-        prop.setInt(false, ref, (1 << 31) - 1);
-        assertEquals(2_147_483_647L, prop.getInt(false, ref));
+        prop.setInt(false, edgeId, intAccess, (1 << 31) - 1);
+        assertEquals(2_147_483_647L, prop.getInt(false, edgeId, intAccess));
     }
 
     @Test
@@ -71,13 +71,13 @@ public class IntEncodedValueImplTest {
 
         IntsRef ref = new IntsRef(1);
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            prop.setInt(false, ref, Integer.MAX_VALUE);
+            prop.setInt(false, edgeId, intAccess, Integer.MAX_VALUE);
         });
         assertTrue(exception.getMessage().contains("test value too large for encoding"), exception.getMessage());
 
-        prop.setInt(false, ref, -5);
-        assertEquals(-5, prop.getInt(false, ref));
-        assertEquals(-5, prop.getInt(false, ref));
+        prop.setInt(false, edgeId, intAccess, -5);
+        assertEquals(-5, prop.getInt(false, edgeId, intAccess));
+        assertEquals(-5, prop.getInt(false, edgeId, intAccess));
     }
 
     @Test
@@ -87,11 +87,11 @@ public class IntEncodedValueImplTest {
         prop.init(config);
 
         IntsRef ref = new IntsRef(1);
-        prop.setInt(false, ref, Integer.MAX_VALUE);
-        assertEquals(Integer.MAX_VALUE, prop.getInt(false, ref));
+        prop.setInt(false, edgeId, intAccess, Integer.MAX_VALUE);
+        assertEquals(Integer.MAX_VALUE, prop.getInt(false, edgeId, intAccess));
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            prop.setInt(false, ref, -5);
+            prop.setInt(false, edgeId, intAccess, -5);
         });
         assertTrue(exception.getMessage().contains("test value too small for encoding"), exception.getMessage());
     }
@@ -103,17 +103,17 @@ public class IntEncodedValueImplTest {
         prop.init(config);
 
         IntsRef ref = new IntsRef(1);
-        prop.setInt(false, ref, 5);
-        assertEquals(5, prop.getInt(false, ref));
-        assertEquals(-5, prop.getInt(true, ref));
+        prop.setInt(false, edgeId, intAccess, 5);
+        assertEquals(5, prop.getInt(false, edgeId, intAccess));
+        assertEquals(-5, prop.getInt(true, edgeId, intAccess));
 
-        prop.setInt(true, ref, 2);
-        assertEquals(-2, prop.getInt(false, ref));
-        assertEquals(2, prop.getInt(true, ref));
+        prop.setInt(true, edgeId, intAccess, 2);
+        assertEquals(-2, prop.getInt(false, edgeId, intAccess));
+        assertEquals(2, prop.getInt(true, edgeId, intAccess));
 
-        prop.setInt(false, ref, -3);
-        assertEquals(-3, prop.getInt(false, ref));
-        assertEquals(3, prop.getInt(true, ref));
+        prop.setInt(false, edgeId, intAccess, -3);
+        assertEquals(-3, prop.getInt(false, edgeId, intAccess));
+        assertEquals(3, prop.getInt(true, edgeId, intAccess));
     }
 
     @Test

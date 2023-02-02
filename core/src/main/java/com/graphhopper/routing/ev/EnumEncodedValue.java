@@ -20,7 +20,6 @@ package com.graphhopper.routing.ev;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.storage.IntsRef;
 
 /**
  * This class allows to store distinct values via an enum. I.e. it stores just the indices
@@ -66,13 +65,13 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
         return arr;
     }
 
-    public final void setEnum(boolean reverse, IntsRef ref, E value) {
+    public final void setEnum(boolean reverse, int edgeId, IntAccess intAccess, E value) {
         int intValue = value.ordinal();
-        super.setInt(reverse, ref, intValue);
+        super.setInt(reverse, edgeId, intAccess, intValue);
     }
 
-    public final E getEnum(boolean reverse, IntsRef ref) {
-        int value = super.getInt(reverse, ref);
+    public final E getEnum(boolean reverse, int edgeId, IntAccess intAccess) {
+        int value = super.getInt(reverse, edgeId, intAccess);
         return arr[value];
     }
 

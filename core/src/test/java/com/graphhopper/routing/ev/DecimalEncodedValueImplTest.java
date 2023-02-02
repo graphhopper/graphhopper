@@ -15,10 +15,10 @@ public class DecimalEncodedValueImplTest {
         testEnc.init(new EncodedValue.InitializerConfig());
 
         IntsRef intsRef = new IntsRef(1);
-        assertEquals(0, testEnc.getDecimal(false, intsRef), .1);
+        assertEquals(0, testEnc.getDecimal(false, edgeId, intAccess), .1);
 
-        testEnc.setDecimal(false, intsRef, 7);
-        assertEquals(7, testEnc.getDecimal(false, intsRef), .1);
+        testEnc.setDecimal(false, edgeId, intAccess, 7);
+        assertEquals(7, testEnc.getDecimal(false, edgeId, intAccess), .1);
     }
 
     @Test
@@ -26,21 +26,21 @@ public class DecimalEncodedValueImplTest {
         DecimalEncodedValueImpl testEnc = new DecimalEncodedValueImpl("test", 3, 0, 1, false, false, true);
         testEnc.init(new EncodedValue.InitializerConfig());
         IntsRef intsRef = new IntsRef(1);
-        assertEquals(0, testEnc.getDecimal(false, intsRef), .1);
+        assertEquals(0, testEnc.getDecimal(false, edgeId, intAccess), .1);
 
         assertTrue(Double.isInfinite(testEnc.getMaxOrMaxStorableDecimal()));
         assertTrue(Double.isInfinite(testEnc.getMaxStorableDecimal()));
         assertTrue(Double.isInfinite(testEnc.getNextStorableValue(7)));
         assertEquals(6, testEnc.getNextStorableValue(6));
 
-        testEnc.setDecimal(false, intsRef, 5);
-        assertEquals(5, testEnc.getDecimal(false, intsRef), .1);
+        testEnc.setDecimal(false, edgeId, intAccess, 5);
+        assertEquals(5, testEnc.getDecimal(false, edgeId, intAccess), .1);
 
         assertEquals(5, testEnc.getMaxOrMaxStorableDecimal());
         assertTrue(Double.isInfinite(testEnc.getMaxStorableDecimal()));
 
-        testEnc.setDecimal(false, intsRef, Double.POSITIVE_INFINITY);
-        assertEquals(Double.POSITIVE_INFINITY, testEnc.getDecimal(false, intsRef), .1);
+        testEnc.setDecimal(false, edgeId, intAccess, Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, testEnc.getDecimal(false, edgeId, intAccess), .1);
         assertTrue(Double.isInfinite(testEnc.getMaxOrMaxStorableDecimal()));
         assertTrue(Double.isInfinite(testEnc.getMaxStorableDecimal()));
     }
@@ -51,11 +51,11 @@ public class DecimalEncodedValueImplTest {
         testEnc.init(new EncodedValue.InitializerConfig());
         IntsRef intsRef = new IntsRef(1);
         // a bit ugly: the default is the minimum not 0
-        assertEquals(-6, testEnc.getDecimal(false, intsRef), .1);
+        assertEquals(-6, testEnc.getDecimal(false, edgeId, intAccess), .1);
 
-        testEnc.setDecimal(false, intsRef, -5.5);
-        assertEquals(-5.5, testEnc.getDecimal(false, intsRef), .1);
-        assertEquals(-5.5, testEnc.getDecimal(true, intsRef), .1);
+        testEnc.setDecimal(false, edgeId, intAccess, -5.5);
+        assertEquals(-5.5, testEnc.getDecimal(false, edgeId, intAccess), .1);
+        assertEquals(-5.5, testEnc.getDecimal(true, edgeId, intAccess), .1);
 
         Exception e = assertThrows(IllegalArgumentException.class, () -> {
             new DecimalEncodedValueImpl("test", 3, -6, 0.11, false, false, true);
@@ -68,8 +68,8 @@ public class DecimalEncodedValueImplTest {
         DecimalEncodedValueImpl testEnc = new DecimalEncodedValueImpl("test", 3, -6, 0.1, false, false, true);
         testEnc.init(new EncodedValue.InitializerConfig());
         IntsRef intsRef = new IntsRef(1);
-        testEnc.setDecimal(false, intsRef, Double.POSITIVE_INFINITY);
-        assertEquals(Double.POSITIVE_INFINITY, testEnc.getDecimal(false, intsRef), .1);
+        testEnc.setDecimal(false, edgeId, intAccess, Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, testEnc.getDecimal(false, edgeId, intAccess), .1);
     }
 
     @Test
@@ -77,26 +77,26 @@ public class DecimalEncodedValueImplTest {
         DecimalEncodedValueImpl testEnc = new DecimalEncodedValueImpl("test", 4, 0, 0.5, true, false, false);
         testEnc.init(new EncodedValue.InitializerConfig());
         IntsRef intsRef = new IntsRef(1);
-        testEnc.setDecimal(false, intsRef, 5.5);
-        assertEquals(5.5, testEnc.getDecimal(false, intsRef), .1);
-        assertEquals(-5.5, testEnc.getDecimal(true, intsRef), .1);
+        testEnc.setDecimal(false, edgeId, intAccess, 5.5);
+        assertEquals(5.5, testEnc.getDecimal(false, edgeId, intAccess), .1);
+        assertEquals(-5.5, testEnc.getDecimal(true, edgeId, intAccess), .1);
 
-        testEnc.setDecimal(false, intsRef, -5.5);
-        assertEquals(-5.5, testEnc.getDecimal(false, intsRef), .1);
-        assertEquals(5.5, testEnc.getDecimal(true, intsRef), .1);
+        testEnc.setDecimal(false, edgeId, intAccess, -5.5);
+        assertEquals(-5.5, testEnc.getDecimal(false, edgeId, intAccess), .1);
+        assertEquals(5.5, testEnc.getDecimal(true, edgeId, intAccess), .1);
 
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         new DecimalEncodedValueImpl("tmp1", 5, 1, false).init(config);
         testEnc = new DecimalEncodedValueImpl("tmp2", 5, 0, 1, true, false, false);
         testEnc.init(config);
         intsRef = new IntsRef(1);
-        testEnc.setDecimal(true, intsRef, 2.6);
-        assertEquals(-3, testEnc.getDecimal(false, intsRef), .1);
-        assertEquals(3, testEnc.getDecimal(true, intsRef), .1);
+        testEnc.setDecimal(true, edgeId, intAccess, 2.6);
+        assertEquals(-3, testEnc.getDecimal(false, edgeId, intAccess), .1);
+        assertEquals(3, testEnc.getDecimal(true, edgeId, intAccess), .1);
 
-        testEnc.setDecimal(true, intsRef, -2.6);
-        assertEquals(3, testEnc.getDecimal(false, intsRef), .1);
-        assertEquals(-3, testEnc.getDecimal(true, intsRef), .1);
+        testEnc.setDecimal(true, edgeId, intAccess, -2.6);
+        assertEquals(3, testEnc.getDecimal(false, edgeId, intAccess), .1);
+        assertEquals(-3, testEnc.getDecimal(true, edgeId, intAccess), .1);
     }
 
     @Test
@@ -106,11 +106,11 @@ public class DecimalEncodedValueImplTest {
         IntsRef intsRef = new IntsRef(1);
 
         // some values can be stored...
-        enc.setDecimal(false, intsRef, 3);
-        assertEquals(3, enc.getDecimal(false, intsRef));
+        enc.setDecimal(false, edgeId, intAccess, 3);
+        assertEquals(3, enc.getDecimal(false, edgeId, intAccess));
         // ... and some cannot:
-        enc.setDecimal(false, intsRef, 5);
-        assertEquals(6, enc.getDecimal(false, intsRef));
+        enc.setDecimal(false, edgeId, intAccess, 5);
+        assertEquals(6, enc.getDecimal(false, edgeId, intAccess));
 
         // getNextStorableValue tells us the next highest value we can store without such modification between set/get
         assertEquals(0, enc.getNextStorableValue(0));
@@ -132,8 +132,8 @@ public class DecimalEncodedValueImplTest {
             double value = rnd.nextDouble() * 45;
             double nextStorable = enc.getNextStorableValue(value);
             assertTrue(nextStorable >= value, "next storable value should be larger than the value");
-            enc.setDecimal(false, intsRef, nextStorable);
-            assertEquals(nextStorable, enc.getDecimal(false, intsRef), "next storable value should be returned without modification");
+            enc.setDecimal(false, edgeId, intAccess, nextStorable);
+            assertEquals(nextStorable, enc.getDecimal(false, edgeId, intAccess), "next storable value should be returned without modification");
         }
     }
 
@@ -155,10 +155,10 @@ public class DecimalEncodedValueImplTest {
         enc.init(new EncodedValue.InitializerConfig());
         assertEquals(expected, enc.getSmallestNonZeroValue());
         IntsRef intsRef = new IntsRef(1);
-        enc.setDecimal(false, intsRef, enc.getSmallestNonZeroValue());
-        assertEquals(expected, enc.getDecimal(false, intsRef));
-        enc.setDecimal(false, intsRef, enc.getSmallestNonZeroValue() / 2 - 0.01);
-        assertEquals(0, enc.getDecimal(false, intsRef));
+        enc.setDecimal(false, edgeId, intAccess, enc.getSmallestNonZeroValue());
+        assertEquals(expected, enc.getDecimal(false, edgeId, intAccess));
+        enc.setDecimal(false, edgeId, intAccess, enc.getSmallestNonZeroValue() / 2 - 0.01);
+        assertEquals(0, enc.getDecimal(false, edgeId, intAccess));
     }
 
     @Test
@@ -172,11 +172,11 @@ public class DecimalEncodedValueImplTest {
         assertEquals(Double.POSITIVE_INFINITY, enc.getNextStorableValue(45));
         assertEquals(Double.POSITIVE_INFINITY, enc.getNextStorableValue(45.1));
         IntsRef intsRef = new IntsRef(1);
-        enc.setDecimal(false, intsRef, 45);
-        assertEquals(42, enc.getDecimal(false, intsRef));
+        enc.setDecimal(false, edgeId, intAccess, 45);
+        assertEquals(42, enc.getDecimal(false, edgeId, intAccess));
 
-        enc.setDecimal(false, intsRef, Double.POSITIVE_INFINITY);
-        assertEquals(Double.POSITIVE_INFINITY, enc.getDecimal(false, intsRef));
+        enc.setDecimal(false, edgeId, intAccess, Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, enc.getDecimal(false, edgeId, intAccess));
     }
 
     @Test
@@ -185,15 +185,15 @@ public class DecimalEncodedValueImplTest {
         enc.init(new EncodedValue.InitializerConfig());
         assertEquals(15 * 3, enc.getMaxOrMaxStorableDecimal());
         IntsRef ints = new IntsRef(1);
-        enc.setDecimal(false, ints, 3);
-        assertEquals(3, enc.getDecimal(false, ints));
+        enc.setDecimal(false, edgeId, intAccess, 3);
+        assertEquals(3, enc.getDecimal(false, edgeId, intAccess));
         assertEquals(3, enc.getMaxOrMaxStorableDecimal());
-        enc.setDecimal(true, ints, -6);
-        assertEquals(6, enc.getDecimal(false, ints));
+        enc.setDecimal(true, edgeId, intAccess, -6);
+        assertEquals(6, enc.getDecimal(false, edgeId, intAccess));
         assertEquals(6, enc.getMaxOrMaxStorableDecimal());
         // note that the maximum is never lowered, even when we lower the value for the 'same' edge flags
-        enc.setDecimal(false, ints, 0);
-        assertEquals(0, enc.getDecimal(false, ints));
+        enc.setDecimal(false, edgeId, intAccess, 0);
+        assertEquals(0, enc.getDecimal(false, edgeId, intAccess));
         assertEquals(6, enc.getMaxOrMaxStorableDecimal());
     }
 
@@ -204,7 +204,7 @@ public class DecimalEncodedValueImplTest {
         assertEquals(3.2, enc.getMaxStorableDecimal());
 
         IntsRef flags = new IntsRef(1);
-        enc.setDecimal(true, flags, 1.6);
-        assertEquals(1.6, enc.getDecimal(true, flags));
+        enc.setDecimal(true, edgeId, intAccess, 1.6);
+        assertEquals(1.6, enc.getDecimal(true, edgeId, intAccess));
     }
 }

@@ -18,13 +18,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.RouteNetwork;
-import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.HashMap;
@@ -170,7 +166,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
             return;
@@ -179,10 +175,10 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
                 || way.hasTag("oneway", oneways) && way.hasTag("highway", "steps") // outdated mapping style
         ) {
             boolean reverse = way.hasTag("oneway:foot", "-1") || way.hasTag("foot:backward", "yes") || way.hasTag("foot:forward", "no");
-            accessEnc.setBool(reverse, edgeFlags, true);
+            accessEnc.setBool(reverse, edgeId, intAccess, true);
         } else {
-            accessEnc.setBool(false, edgeFlags, true);
-            accessEnc.setBool(true, edgeFlags, true);
+            accessEnc.setBool(false, edgeId, intAccess, true);
+            accessEnc.setBool(true, edgeId, intAccess, true);
         }
     }
 }

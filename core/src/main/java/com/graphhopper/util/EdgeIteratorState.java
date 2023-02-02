@@ -56,12 +56,12 @@ public interface EdgeIteratorState {
         }
 
         @Override
-        public boolean getBool(boolean reverse, IntsRef ref) {
+        public boolean getBool(boolean reverse, int edgeId, IntAccess intAccess) {
             return reverse;
         }
 
         @Override
-        public void setBool(boolean reverse, IntsRef ref, boolean value) {
+        public void setBool(boolean reverse, int edgeId, IntAccess intAccess, boolean value) {
             throw new IllegalStateException("reverse state cannot be modified");
         }
 

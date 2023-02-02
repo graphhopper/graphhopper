@@ -29,12 +29,12 @@ public class OSMSmoothnessParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = new IntsRef(1);
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Smoothness.MISSING, smoothnessEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Smoothness.MISSING, smoothnessEnc.getEnum(false, edgeId, intAccess));
 
         readerWay.setTag("smoothness", "bad");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Smoothness.BAD, smoothnessEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Smoothness.BAD, smoothnessEnc.getEnum(false, edgeId, intAccess));
         assertTrue(Smoothness.BAD.ordinal() < Smoothness.VERY_BAD.ordinal());
     }
 }

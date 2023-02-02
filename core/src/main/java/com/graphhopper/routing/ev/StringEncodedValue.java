@@ -2,7 +2,6 @@ package com.graphhopper.routing.ev;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.storage.IntsRef;
 
 import java.util.*;
 
@@ -74,9 +73,9 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
         this.indexMap = indexMap;
     }
 
-    public final void setString(boolean reverse, IntsRef ref, String value) {
+    public final void setString(boolean reverse, int edgeId, IntAccess intAccess, String value) {
         if (value == null) {
-            super.setInt(reverse, ref, 0);
+            super.setInt(reverse, edgeId, intAccess, 0);
             return;
         }
         int index = indexMap.getOrDefault(value, 0);
@@ -88,11 +87,11 @@ public final class StringEncodedValue extends IntEncodedValueImpl {
             index = values.size();
             indexMap.put(value, index);
         }
-        super.setInt(reverse, ref, index);
+        super.setInt(reverse, edgeId, intAccess, index);
     }
 
-    public final String getString(boolean reverse, IntsRef ref) {
-        int value = super.getInt(reverse, ref);
+    public final String getString(boolean reverse, int edgeId, IntAccess intAccess) {
+        int value = super.getInt(reverse, edgeId, intAccess);
         if (value == 0) {
             return null;
         }

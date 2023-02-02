@@ -15,25 +15,34 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.IntAccess;
-import com.graphhopper.storage.IntsRef;
+package com.graphhopper.routing.ev;
 
-public class OSMRoundaboutParser implements TagParser {
+import com.carrotsearch.hppc.IntArrayList;
 
-    private final BooleanEncodedValue roundaboutEnc;
+public class ArrayIntAccess implements IntAccess {
+    private final int intsPerEdge;
+    private final IntArrayList arr = new IntArrayList();
 
-    public OSMRoundaboutParser(BooleanEncodedValue roundaboutEnc) {
-        this.roundaboutEnc = roundaboutEnc;
+    public ArrayIntAccess(int intsPerEdge) {
+        this.intsPerEdge = intsPerEdge;
     }
 
     @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
-        boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
-        if (isRoundabout)
-            roundaboutEnc.setBool(false, edgeId, intAccess, true);
+    public int getInt(int edgeId, int index) {
+        int arrIndex = edgeId * intsPerEdge + index;
+        return arrIndex >= arr.size() ? 0 : arr.get(arrIndex);
+    }
+
+    @Override
+    public void setInt(int edgeId, int index, int value) {
+        int arrIndex = edgeId * intsPerEdge + index;
+        if (arrIndex >= arr.size())
+            arr.resize(arrIndex + 1);
+        arr.set(arrIndex, value);
+    }
+
+    public void reset() {
+        arr.clear();
     }
 }

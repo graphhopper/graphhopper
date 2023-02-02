@@ -59,7 +59,7 @@ public class StringEncodedValueTest {
         prop.init(new EncodedValue.InitializerConfig());
 
         IntsRef ref = new IntsRef(1);
-        prop.setString(false, ref, null);
+        prop.setString(false, edgeId, intAccess, null);
         assertEquals(0, prop.getValues().size());
     }
 
@@ -81,23 +81,23 @@ public class StringEncodedValueTest {
         prop.init(new EncodedValue.InitializerConfig());
 
         IntsRef ref = new IntsRef(1);
-        assertEquals(null, prop.getString(false, ref));
+        assertEquals(null, prop.getString(false, edgeId, intAccess));
         assertEquals(0, prop.getValues().size());
 
-        prop.setString(false, ref, "aut");
-        assertEquals("aut", prop.getString(false, ref));
+        prop.setString(false, edgeId, intAccess, "aut");
+        assertEquals("aut", prop.getString(false, edgeId, intAccess));
         assertEquals(1, prop.getValues().size());
 
-        prop.setString(false, ref, "deu");
-        assertEquals("deu", prop.getString(false, ref));
+        prop.setString(false, edgeId, intAccess, "deu");
+        assertEquals("deu", prop.getString(false, edgeId, intAccess));
         assertEquals(2, prop.getValues().size());
 
-        prop.setString(false, ref, "che");
-        assertEquals("che", prop.getString(false, ref));
+        prop.setString(false, edgeId, intAccess, "che");
+        assertEquals("che", prop.getString(false, edgeId, intAccess));
         assertEquals(3, prop.getValues().size());
 
-        prop.setString(false, ref, "deu");
-        assertEquals("deu", prop.getString(false, ref));
+        prop.setString(false, edgeId, intAccess, "deu");
+        assertEquals("deu", prop.getString(false, edgeId, intAccess));
         assertEquals(3, prop.getValues().size());
     }
 
@@ -107,19 +107,19 @@ public class StringEncodedValueTest {
         prop.init(new EncodedValue.InitializerConfig());
 
         IntsRef ref = new IntsRef(1);
-        assertEquals(null, prop.getString(false, ref));
+        assertEquals(null, prop.getString(false, edgeId, intAccess));
 
-        prop.setString(false, ref, "aut");
-        assertEquals("aut", prop.getString(false, ref));
+        prop.setString(false, edgeId, intAccess, "aut");
+        assertEquals("aut", prop.getString(false, edgeId, intAccess));
 
-        prop.setString(false, ref, "deu");
-        assertEquals("deu", prop.getString(false, ref));
+        prop.setString(false, edgeId, intAccess, "deu");
+        assertEquals("deu", prop.getString(false, edgeId, intAccess));
 
-        prop.setString(false, ref, "che");
-        assertEquals("che", prop.getString(false, ref));
+        prop.setString(false, edgeId, intAccess, "che");
+        assertEquals("che", prop.getString(false, edgeId, intAccess));
 
         try {
-            prop.setString(false, ref, "xyz");
+            prop.setString(false, edgeId, intAccess, "xyz");
             fail("The encoded value should only allow a limited number of values");
         } catch (IllegalStateException e) {
             assertTrue(e.getMessage().startsWith("Maximum number of values reached for"));

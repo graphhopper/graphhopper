@@ -29,13 +29,13 @@ public class OSMMaxWeightParserTest {
         IntsRef intsRef = new IntsRef(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("maxweight", "5");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(5.0, mwEnc.getDecimal(false, intsRef), .01);
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(5.0, mwEnc.getDecimal(false, edgeId, intAccess), .01);
 
         // if value is beyond the maximum then do not use infinity instead fallback to more restrictive maximum
         intsRef = new IntsRef(1);
         readerWay.setTag("maxweight", "50");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(25.4, mwEnc.getDecimal(false, intsRef), .01);
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(25.4, mwEnc.getDecimal(false, edgeId, intAccess), .01);
     }
 }

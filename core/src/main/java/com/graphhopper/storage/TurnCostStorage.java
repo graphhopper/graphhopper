@@ -92,7 +92,7 @@ public class TurnCostStorage {
      */
     public void set(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge, double cost) {
         IntsRef tcFlags = TurnCost.createFlags();
-        turnCostEnc.setDecimal(false, tcFlags, cost);
+        turnCostEnc.setDecimal(false, edgeId, intAccess, cost);
         merge(tcFlags, fromEdge, viaNode, toEdge);
     }
 
@@ -156,7 +156,7 @@ public class TurnCostStorage {
      */
     public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
         IntsRef flags = readFlags(fromEdge, viaNode, toEdge);
-        return turnCostEnc.getDecimal(false, flags);
+        return turnCostEnc.getDecimal(false, edgeId, intAccess);
     }
 
     /**
@@ -263,7 +263,7 @@ public class TurnCostStorage {
         @Override
         public double getCost(DecimalEncodedValue encodedValue) {
             intsRef.ints[0] = turnCosts.getInt(turnCostPtr() + TC_FLAGS);
-            return encodedValue.getDecimal(false, intsRef);
+            return encodedValue.getDecimal(false, edgeId, intAccess);
         }
 
         @Override

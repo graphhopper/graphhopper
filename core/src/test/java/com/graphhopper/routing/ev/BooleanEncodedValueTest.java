@@ -17,10 +17,10 @@ public class BooleanEncodedValueTest {
         BooleanEncodedValue bool = new SimpleBooleanEncodedValue("access", false);
         bool.init(config);
         IntsRef ref = new IntsRef(1);
-        bool.setBool(false, ref, false);
-        assertFalse(bool.getBool(false, ref));
-        bool.setBool(false, ref, true);
-        assertTrue(bool.getBool(false, ref));
+        bool.setBool(false, edgeId, intAccess, false);
+        assertFalse(bool.getBool(false, edgeId, intAccess));
+        bool.setBool(false, edgeId, intAccess, true);
+        assertTrue(bool.getBool(false, edgeId, intAccess));
     }
 
     @Test
@@ -29,10 +29,10 @@ public class BooleanEncodedValueTest {
         BooleanEncodedValue bool = new SimpleBooleanEncodedValue("access", true);
         bool.init(config);
         IntsRef ref = new IntsRef(1);
-        bool.setBool(false, ref, false);
-        bool.setBool(true, ref, true);
+        bool.setBool(false, edgeId, intAccess, false);
+        bool.setBool(true, edgeId, intAccess, true);
 
-        assertFalse(bool.getBool(false, ref));
-        assertTrue(bool.getBool(true, ref));
+        assertFalse(bool.getBool(false, edgeId, intAccess));
+        assertTrue(bool.getBool(true, edgeId, intAccess));
     }
 }

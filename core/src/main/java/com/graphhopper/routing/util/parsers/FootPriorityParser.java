@@ -72,14 +72,14 @@ public class FootPriorityParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
         String highwayValue = way.getTag("highway");
-        Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
+        Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeId, intAccess));
         if (highwayValue == null) {
             if (way.hasTag("route", ferries))
-                priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
+                priorityWayEncoder.setDecimal(false, edgeId, intAccess, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
         } else {
-            priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
+            priorityWayEncoder.setDecimal(false, edgeId, intAccess, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
         }
     }
 

@@ -18,10 +18,10 @@ public class EnumEncodedValueTest {
         IntsRef ref = new IntsRef(1);
         // default if empty
         ref.ints[0] = 0;
-        assertEquals(RoadClass.OTHER, prop.getEnum(false, ref));
+        assertEquals(RoadClass.OTHER, prop.getEnum(false, edgeId, intAccess));
 
-        prop.setEnum(false, ref, RoadClass.SECONDARY);
-        assertEquals(RoadClass.SECONDARY, prop.getEnum(false, ref));
+        prop.setEnum(false, edgeId, intAccess, RoadClass.SECONDARY);
+        assertEquals(RoadClass.SECONDARY, prop.getEnum(false, edgeId, intAccess));
     }
 
     @Test

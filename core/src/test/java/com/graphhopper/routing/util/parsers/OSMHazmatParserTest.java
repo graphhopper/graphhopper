@@ -27,30 +27,30 @@ public class OSMHazmatParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = new IntsRef(1);
         readerWay.setTag("hazmat", "no");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Hazmat.NO, hazEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Hazmat.NO, hazEnc.getEnum(false, edgeId, intAccess));
 
         intsRef = new IntsRef(1);
         readerWay.setTag("hazmat", "yes");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Hazmat.YES, hazEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, intAccess));
 
         intsRef = new IntsRef(1);
         readerWay.setTag("hazmat", "designated");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Hazmat.YES, hazEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, intAccess));
 
         intsRef = new IntsRef(1);
         readerWay.setTag("hazmat", "designated");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Hazmat.YES, hazEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, intAccess));
     }
 
     @Test
     public void testNoNPE() {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = new IntsRef(1);
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Hazmat.YES, hazEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, intAccess));
     }
 }

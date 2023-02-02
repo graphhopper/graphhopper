@@ -23,8 +23,8 @@ class RoadsTagParserTest {
     public void testSpeed() {
         ReaderWay way = new ReaderWay(1);
         IntsRef flags = encodingManager.createEdgeFlags();
-        parser.handleWayTags(flags, way, null);
-        assertTrue(encodingManager.getDecimalEncodedValue(VehicleSpeed.key("roads")).getDecimal(false, flags) > 200);
+        parser.handleWayTags(edgeId, intAccess, way, null);
+        assertTrue(encodingManager.getDecimalEncodedValue(VehicleSpeed.key("roads")).getDecimal(false, edgeId, intAccess) > 200);
     }
 
 }

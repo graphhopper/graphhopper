@@ -1,7 +1,5 @@
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.storage.IntsRef;
-
 /**
  * This class defines how and where to store an unsigned integer. It is important to note that: 1. the range of the
  * integer is highly limited (unlike the Java 32bit integer values) so that the storable part of it fits into the
@@ -14,12 +12,12 @@ public interface IntEncodedValue extends EncodedValue {
     /**
      * This method restores the integer value from the specified 'flags' taken from the storage.
      */
-    int getInt(boolean reverse, IntsRef ref);
+    int getInt(boolean reverse, int edgeId, IntAccess intAccess);
 
     /**
      * This method stores the specified integer value in the specified IntsRef.
      */
-    void setInt(boolean reverse, IntsRef ref, int value);
+    void setInt(boolean reverse, int edgeId, IntAccess intAccess, int value);
 
     /**
      * The maximum int value this EncodedValue accepts for setInt without throwing an exception.

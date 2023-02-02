@@ -101,7 +101,7 @@ public class OSMGetOffBikeParserTest {
     private boolean isGetOffBike(ReaderWay way) {
         IntsRef edgeFlags = new IntsRef(1);
         IntsRef relationFlags = new IntsRef(1);
-        parser.handleWayTags(edgeFlags, way, relationFlags);
-        return offBikeEnc.getBool(false, edgeFlags);
+        parser.handleWayTags(edgeId, intAccess, way, relationFlags);
+        return offBikeEnc.getBool(false, edgeId, intAccess);
     }
 }

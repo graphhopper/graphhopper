@@ -37,8 +37,8 @@ class OSMRoadEnvironmentParserTest {
         IntsRef edgeFlags = new IntsRef(1);
         ReaderWay way = new ReaderWay(0);
         way.setTag("route", "shuttle_train");
-        parser.handleWayTags(edgeFlags, way, new IntsRef(2));
-        RoadEnvironment roadEnvironment = roadEnvironmentEnc.getEnum(false, edgeFlags);
+        parser.handleWayTags(edgeId, intAccess, way, new IntsRef(2));
+        RoadEnvironment roadEnvironment = roadEnvironmentEnc.getEnum(false, edgeId, intAccess);
         assertEquals(RoadEnvironment.FERRY, roadEnvironment);
     }
 

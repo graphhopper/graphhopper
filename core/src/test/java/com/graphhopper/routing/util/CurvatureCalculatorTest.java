@@ -2,11 +2,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.Curvature;
-import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
 
@@ -20,12 +16,12 @@ class CurvatureCalculatorTest {
     public void testCurvature() {
         CurvatureCalculator calculator = new CurvatureCalculator(em.getDecimalEncodedValue(Curvature.KEY));
         IntsRef ints = em.createEdgeFlags();
-        calculator.handleWayTags(ints, getStraightWay(), null);
-        double valueStraight = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, ints);
+        calculator.handleWayTags(edgeId, intAccess, getStraightWay(), null);
+        double valueStraight = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, edgeId, intAccess);
 
         ints = em.createEdgeFlags();
-        calculator.handleWayTags(ints, getCurvyWay(), null);
-        double valueCurvy = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, ints);
+        calculator.handleWayTags(edgeId, intAccess, getCurvyWay(), null);
+        double valueCurvy = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, edgeId, intAccess);
 
         assertTrue(valueCurvy < valueStraight, "The bendiness of the straight road is smaller than the one of the curvy road");
     }

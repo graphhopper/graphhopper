@@ -28,16 +28,16 @@ public class OSMSurfaceParserTest {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef intsRef = new IntsRef(1);
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Surface.MISSING, surfaceEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Surface.MISSING, surfaceEnc.getEnum(false, edgeId, intAccess));
 
         readerWay.setTag("surface", "cobblestone");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, intAccess));
         assertTrue(Surface.COBBLESTONE.ordinal() > Surface.ASPHALT.ordinal());
 
         readerWay.setTag("surface", "earth");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Surface.DIRT, surfaceEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
+        assertEquals(Surface.DIRT, surfaceEnc.getEnum(false, edgeId, intAccess));
     }
 }

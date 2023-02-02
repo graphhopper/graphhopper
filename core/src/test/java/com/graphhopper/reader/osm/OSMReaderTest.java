@@ -498,19 +498,19 @@ public class OSMReaderTest {
 
         IntsRef edgeFlags = manager.createRelationFlags();
         osmParsers.handleRelationTags(osmRel, edgeFlags);
-        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeFlags));
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
 
         // unchanged network
         IntsRef before = IntsRef.deepCopyOf(edgeFlags);
         osmParsers.handleRelationTags(osmRel, edgeFlags);
         assertEquals(before, edgeFlags);
-        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, before));
-        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeFlags));
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
 
         // overwrite network
         osmRel.setTag("network", "ncn");
         osmParsers.handleRelationTags(osmRel, edgeFlags);
-        assertEquals(RouteNetwork.NATIONAL, transformEnc.getEnum(false, edgeFlags));
+        assertEquals(RouteNetwork.NATIONAL, transformEnc.getEnum(false, edgeId, intAccess));
         assertNotEquals(before, edgeFlags);
     }
 

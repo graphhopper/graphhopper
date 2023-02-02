@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
@@ -37,7 +38,7 @@ public class OSMTollParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay readerWay, IntsRef relationFlags) {
         Toll toll;
         if (readerWay.hasTag("toll", "yes")) {
             toll = Toll.ALL;
@@ -52,7 +53,7 @@ public class OSMTollParser implements TagParser {
         CountryRule countryRule = readerWay.getTag("country_rule", null);
         if (countryRule != null)
             toll = countryRule.getToll(readerWay, toll);
-        
-        tollEnc.setEnum(false, edgeFlags, toll);
+
+        tollEnc.setEnum(false, edgeId, intAccess, toll);
     }
 }

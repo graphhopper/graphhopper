@@ -22,6 +22,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.RestrictionTagParser;
 import com.graphhopper.routing.ev.EncodedValue;
+import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.util.parsers.RelationTagParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.storage.IntsRef;
@@ -93,11 +94,11 @@ public class OSMParsers {
         return relFlags;
     }
 
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
         for (RelationTagParser relParser : relationTagParsers)
-            relParser.handleWayTags(edgeFlags, way, relationFlags);
+            relParser.handleWayTags(edgeId, intAccess, way, relationFlags);
         for (TagParser parser : wayTagParsers)
-            parser.handleWayTags(edgeFlags, way, relationFlags);
+            parser.handleWayTags(edgeId, intAccess, way, relationFlags);
     }
 
     public IntsRef createRelationFlags() {
