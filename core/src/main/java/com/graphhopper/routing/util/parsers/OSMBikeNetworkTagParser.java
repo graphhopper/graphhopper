@@ -37,8 +37,8 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
 
     @Override
     public void handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
-        IntsRefIntAccess intAccess = new IntsRefIntAccess(relFlags);
-        RouteNetwork oldBikeNetwork = transformerRouteRelEnc.getEnum(false, -1, intAccess);
+        IntsRefIntAccess relIntAccess = new IntsRefIntAccess(relFlags);
+        RouteNetwork oldBikeNetwork = transformerRouteRelEnc.getEnum(false, -1, relIntAccess);
         if (relation.hasTag("route", "bicycle")) {
             String tag = Helper.toLowerCase(relation.getTag("network", ""));
             RouteNetwork newBikeNetwork = RouteNetwork.LOCAL;
@@ -52,7 +52,7 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
                 newBikeNetwork = RouteNetwork.INTERNATIONAL;
             }
             if (oldBikeNetwork == RouteNetwork.MISSING || oldBikeNetwork.ordinal() > newBikeNetwork.ordinal())
-                transformerRouteRelEnc.setEnum(false, -1, intAccess, newBikeNetwork);
+                transformerRouteRelEnc.setEnum(false, -1, relIntAccess, newBikeNetwork);
         }
     }
 

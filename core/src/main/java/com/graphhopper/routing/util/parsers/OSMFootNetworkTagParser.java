@@ -37,8 +37,8 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
 
     @Override
     public void handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
-        IntsRefIntAccess intAccess = new IntsRefIntAccess(relFlags);
-        RouteNetwork oldFootNetwork = transformerRouteRelEnc.getEnum(false, -1, intAccess);
+        IntsRefIntAccess relIntAccess = new IntsRefIntAccess(relFlags);
+        RouteNetwork oldFootNetwork = transformerRouteRelEnc.getEnum(false, -1, relIntAccess);
         if (relation.hasTag("route", "hiking") || relation.hasTag("route", "foot")) {
             String tag = Helper.toLowerCase(relation.getTag("network", ""));
             RouteNetwork newFootNetwork = RouteNetwork.LOCAL;
@@ -52,7 +52,7 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
                 newFootNetwork = RouteNetwork.INTERNATIONAL;
             }
             if (oldFootNetwork == RouteNetwork.MISSING || oldFootNetwork.ordinal() > newFootNetwork.ordinal())
-                transformerRouteRelEnc.setEnum(false, -1, intAccess, newFootNetwork);
+                transformerRouteRelEnc.setEnum(false, -1, relIntAccess, newFootNetwork);
         }
     }
 
