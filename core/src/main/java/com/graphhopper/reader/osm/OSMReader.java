@@ -35,7 +35,6 @@ import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
@@ -81,7 +80,6 @@ public class OSMReader {
     private final IntAccess intAccess;
     private final NodeAccess nodeAccess;
     private final TurnCostStorage turnCostStorage;
-    private final EncodingManager encodingManager;
     private final OSMParsers osmParsers;
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final RestrictionSetter restrictionSetter;
@@ -99,10 +97,9 @@ public class OSMReader {
     private WayToEdgesMap restrictedWaysToEdgesMap = new WayToEdgesMap();
     private List<ReaderRelation> restrictionRelations = new ArrayList<>();
 
-    public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
+    public OSMReader(BaseGraph baseGraph, OSMParsers osmParsers, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
         this.intAccess = baseGraph.createIntAccess();
-        this.encodingManager = encodingManager;
         this.config = config;
         this.nodeAccess = baseGraph.getNodeAccess();
         this.osmParsers = osmParsers;
