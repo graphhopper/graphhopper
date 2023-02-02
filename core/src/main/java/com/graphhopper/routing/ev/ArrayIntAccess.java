@@ -42,7 +42,4 @@ public class ArrayIntAccess implements IntAccess {
         arr.set(arrIndex, value);
     }
 
-    public void reset() {
-        arr.clear();
-    }
 }

@@ -23,7 +23,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.WayAccess;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -143,7 +142,8 @@ public class MotorcycleTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         assertTrue(parser.getAccess(way).isWay());
-        IntsRef edgeFlags = em.createEdgeFlags();
+        IntAccess intAccess = new ArrayIntAccess(em.getIntsForFlags());
+        int edgeId = 0;
         speedParser.handleWayTags(edgeId, intAccess, way, null);
         assertEquals(20, speedParser.avgSpeedEnc.getDecimal(false, edgeId, intAccess), .1);
         assertEquals(20, speedParser.avgSpeedEnc.getDecimal(true, edgeId, intAccess), .1);
@@ -151,7 +151,8 @@ public class MotorcycleTagParserTest {
 
     @Test
     public void testSetSpeed0_issue367() {
-        IntsRef edgeFlags = em.createEdgeFlags();
+        IntAccess intAccess = new ArrayIntAccess(em.getIntsForFlags());
+        int edgeId = 0;
         motorcycleAccessEnc.setBool(false, edgeId, intAccess, true);
         motorcycleAccessEnc.setBool(true, edgeId, intAccess, true);
         speedParser.getAverageSpeedEnc().setDecimal(false, edgeId, intAccess, 10);

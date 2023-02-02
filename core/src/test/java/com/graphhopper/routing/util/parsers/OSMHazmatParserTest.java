@@ -1,9 +1,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.Hazmat;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,22 +23,23 @@ public class OSMHazmatParserTest {
     @Test
     public void testSimpleTags() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = new IntsRef(1);
+        IntAccess intAccess = new ArrayIntAccess(1);
+        int edgeId = 0;
         readerWay.setTag("hazmat", "no");
         parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
         assertEquals(Hazmat.NO, hazEnc.getEnum(false, edgeId, intAccess));
 
-        intsRef = new IntsRef(1);
+        intAccess = new ArrayIntAccess(1);
         readerWay.setTag("hazmat", "yes");
         parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
         assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, intAccess));
 
-        intsRef = new IntsRef(1);
+        intAccess = new ArrayIntAccess(1);
         readerWay.setTag("hazmat", "designated");
         parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
         assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, intAccess));
 
-        intsRef = new IntsRef(1);
+        intAccess = new ArrayIntAccess(1);
         readerWay.setTag("hazmat", "designated");
         parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
         assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, intAccess));
@@ -49,7 +48,8 @@ public class OSMHazmatParserTest {
     @Test
     public void testNoNPE() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = new IntsRef(1);
+        IntAccess intAccess = new ArrayIntAccess(1);
+        int edgeId = 0;
         parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
         assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, intAccess));
     }

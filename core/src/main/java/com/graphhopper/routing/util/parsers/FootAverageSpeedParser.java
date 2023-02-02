@@ -2,7 +2,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
@@ -85,7 +84,7 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-                setSpeed(edgeFlags, true, true, ferrySpeed);
+                setSpeed(edgeId, intAccess, true, true, ferrySpeed);
             }
             if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
                 return;
@@ -93,13 +92,13 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
 
         String sacScale = way.getTag("sac_scale");
         if (sacScale != null) {
-            setSpeed(edgeFlags, true, true, "hiking".equals(sacScale) ? MEAN_SPEED : SLOW_SPEED);
+            setSpeed(edgeId, intAccess, true, true, "hiking".equals(sacScale) ? MEAN_SPEED : SLOW_SPEED);
         } else {
-            setSpeed(edgeFlags, true, true, way.hasTag("highway", "steps") ? MEAN_SPEED - 2 : MEAN_SPEED);
+            setSpeed(edgeId, intAccess, true, true, way.hasTag("highway", "steps") ? MEAN_SPEED - 2 : MEAN_SPEED);
         }
     }
 
-    void setSpeed(IntsRef edgeFlags, boolean fwd, boolean bwd, double speed) {
+    void setSpeed(int edgeId, IntAccess intAccess, boolean fwd, boolean bwd, double speed) {
         if (speed > getMaxSpeed())
             speed = getMaxSpeed();
         if (fwd)

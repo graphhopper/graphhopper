@@ -19,10 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntAccess;
-import com.graphhopper.routing.ev.RouteNetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
@@ -40,7 +37,8 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
 
     @Override
     public void handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
-        RouteNetwork oldFootNetwork = transformerRouteRelEnc.getEnum(false, edgeId, intAccess);
+        IntsRefIntAccess intAccess = new IntsRefIntAccess(relFlags);
+        RouteNetwork oldFootNetwork = transformerRouteRelEnc.getEnum(false, -1, intAccess);
         if (relation.hasTag("route", "hiking") || relation.hasTag("route", "foot")) {
             String tag = Helper.toLowerCase(relation.getTag("network", ""));
             RouteNetwork newFootNetwork = RouteNetwork.LOCAL;
@@ -54,14 +52,15 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
                 newFootNetwork = RouteNetwork.INTERNATIONAL;
             }
             if (oldFootNetwork == RouteNetwork.MISSING || oldFootNetwork.ordinal() > newFootNetwork.ordinal())
-                transformerRouteRelEnc.setEnum(false, edgeId, intAccess, newFootNetwork);
+                transformerRouteRelEnc.setEnum(false, -1, intAccess, newFootNetwork);
         }
     }
 
     @Override
     public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
         // just copy value into different bit range
-        RouteNetwork footNetwork = transformerRouteRelEnc.getEnum(false, edgeId, intAccess);
+        IntsRefIntAccess relIntAccess = new IntsRefIntAccess(relationFlags);
+        RouteNetwork footNetwork = transformerRouteRelEnc.getEnum(false, -1, relIntAccess);
         footRouteEnc.setEnum(false, edgeId, intAccess, footNetwork);
     }
 }

@@ -496,22 +496,24 @@ public class OSMReaderTest {
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
 
-        IntsRef edgeFlags = manager.createRelationFlags();
-        osmParsers.handleRelationTags(osmRel, edgeFlags);
+        IntsRef relFlags = manager.createRelationFlags();
+        IntsRefIntAccess intAccess = new IntsRefIntAccess(relFlags);
+        int edgeId = 0;
+        osmParsers.handleRelationTags(osmRel, relFlags);
         assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
 
         // unchanged network
-        IntsRef before = IntsRef.deepCopyOf(edgeFlags);
-        osmParsers.handleRelationTags(osmRel, edgeFlags);
-        assertEquals(before, edgeFlags);
+        IntsRef before = IntsRef.deepCopyOf(relFlags);
+        osmParsers.handleRelationTags(osmRel, relFlags);
+        assertEquals(before, relFlags);
         assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
         assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
 
         // overwrite network
         osmRel.setTag("network", "ncn");
-        osmParsers.handleRelationTags(osmRel, edgeFlags);
+        osmParsers.handleRelationTags(osmRel, relFlags);
         assertEquals(RouteNetwork.NATIONAL, transformEnc.getEnum(false, edgeId, intAccess));
-        assertNotEquals(before, edgeFlags);
+        assertNotEquals(before, relFlags);
     }
 
     @Test

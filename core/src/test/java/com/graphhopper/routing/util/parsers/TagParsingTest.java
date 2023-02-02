@@ -75,7 +75,8 @@ class TagParsingTest {
         osmRel.setTag("network", "lcn");
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        IntsRef edgeFlags = em.createEdgeFlags();
+        IntAccess intAccess = new ArrayIntAccess(em.getIntsForFlags());
+        int edgeId = 0;
         osmParsers.handleWayTags(edgeId, intAccess, osmWay, relFlags);
         assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeId, intAccess));
         assertTrue(bike1PriorityEnc.getDecimal(false, edgeId, intAccess) > bike2PriorityEnc.getDecimal(false, edgeId, intAccess));
@@ -115,7 +116,8 @@ class TagParsingTest {
         osmRel.setTag("network", "rcn");
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        IntsRef edgeFlags = em.createEdgeFlags();
+        IntAccess intAccess = new ArrayIntAccess(em.getIntsForFlags());
+        int edgeId = 0;
         osmParsers.handleWayTags(edgeId, intAccess, osmWay, relFlags);
         // bike: uninfluenced speed for grade but via network => NICE
         // mtb: uninfluenced speed only PREFER
@@ -154,7 +156,8 @@ class TagParsingTest {
             if (tagParser instanceof AbstractAccessParser)
                 ((AbstractAccessParser) tagParser).init(new DateRangeParser());
 
-        final IntsRef edgeFlags = manager.createEdgeFlags();
+        final ArrayIntAccess intAccess = new ArrayIntAccess(manager.getIntsForFlags());
+        int edgeId = 0;
         IntsRef relFlags = manager.createRelationFlags();
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");

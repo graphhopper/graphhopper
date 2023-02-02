@@ -19,9 +19,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
@@ -46,12 +44,13 @@ class OSMRoadAccessParserTest {
                 return RoadAccess.DESTINATION;
             }
         });
-        IntsRef edgeFlags = new IntsRef(1);
+        IntAccess intAccess = new ArrayIntAccess(1);
+        int edgeId = 0;
         parser.handleWayTags(edgeId, intAccess, way, relFlags);
         assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeId, intAccess));
 
         // if there is no country rule we get the default value
-        edgeFlags = new IntsRef(1);
+        intAccess = new ArrayIntAccess(1);
         way.removeTag("country_rule");
         parser.handleWayTags(edgeId, intAccess, way, relFlags);
         assertEquals(RoadAccess.YES, roadAccessEnc.getEnum(false, edgeId, intAccess));

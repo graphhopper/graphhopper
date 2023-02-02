@@ -19,10 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntAccess;
-import com.graphhopper.routing.ev.RouteNetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
@@ -40,7 +37,8 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
 
     @Override
     public void handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
-        RouteNetwork oldBikeNetwork = transformerRouteRelEnc.getEnum(false, edgeId, intAccess);
+        IntsRefIntAccess intAccess = new IntsRefIntAccess(relFlags);
+        RouteNetwork oldBikeNetwork = transformerRouteRelEnc.getEnum(false, -1, intAccess);
         if (relation.hasTag("route", "bicycle")) {
             String tag = Helper.toLowerCase(relation.getTag("network", ""));
             RouteNetwork newBikeNetwork = RouteNetwork.LOCAL;
@@ -54,14 +52,15 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
                 newBikeNetwork = RouteNetwork.INTERNATIONAL;
             }
             if (oldBikeNetwork == RouteNetwork.MISSING || oldBikeNetwork.ordinal() > newBikeNetwork.ordinal())
-                transformerRouteRelEnc.setEnum(false, edgeId, intAccess, newBikeNetwork);
+                transformerRouteRelEnc.setEnum(false, -1, intAccess, newBikeNetwork);
         }
     }
 
     @Override
     public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
         // just copy value into different bit range
-        RouteNetwork routeNetwork = transformerRouteRelEnc.getEnum(false, edgeId, intAccess);
+        IntsRefIntAccess relIntAccess = new IntsRefIntAccess(relationFlags);
+        RouteNetwork routeNetwork = transformerRouteRelEnc.getEnum(false, -1, relIntAccess);
         bikeRouteEnc.setEnum(false, edgeId, intAccess, routeNetwork);
     }
 

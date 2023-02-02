@@ -5,7 +5,6 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.ev.VehicleSpeed;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
@@ -37,20 +36,20 @@ public class HikeAverageSpeedParser extends FootAverageSpeedParser {
     @Override
     public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way) {
         super.handleWayTags(edgeId, intAccess, way);
-        applyWayTags(way, edgeFlags);
+        applyWayTags(way, edgeId, intAccess);
     }
 
-    public IntsRef applyWayTags(ReaderWay way, IntsRef edgeFlags) {
+    public void applyWayTags(ReaderWay way, int edgeId, IntAccess intAccess) {
         PointList pl = way.getTag("point_list", null);
         if (pl == null)
             throw new IllegalArgumentException("The artificial point_list tag is missing");
         if (!pl.is3D())
-            return edgeFlags;
+            return;
 
         if (way.hasTag("tunnel", "yes") || way.hasTag("bridge", "yes") || way.hasTag("highway", "steps"))
             // do not change speed
             // note: although tunnel can have a difference in elevation it is unlikely that the elevation data is correct for a tunnel
-            return edgeFlags;
+            return;
 
         // Decrease the speed for ele increase (incline), and slightly decrease the speed for ele decrease (decline)
         double prevEle = pl.getEle(0);
@@ -60,7 +59,7 @@ public class HikeAverageSpeedParser extends FootAverageSpeedParser {
 
         // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
         if (fullDistance < 2)
-            return edgeFlags;
+            return;
 
         double eleDelta = Math.abs(pl.getEle(pl.size() - 1) - prevEle);
         double slope = eleDelta / fullDistance;
@@ -71,8 +70,6 @@ public class HikeAverageSpeedParser extends FootAverageSpeedParser {
         // maximum slope is 0.37 (Ffordd Pen Llech)
         double newSpeed = Math.sqrt(1 + slope * slope) / (slope + 1 / 5.4);
         avgSpeedEnc.setDecimal(false, edgeId, intAccess, Helper.keepIn(newSpeed, 1, 5));
-
-        return edgeFlags;
     }
 
 

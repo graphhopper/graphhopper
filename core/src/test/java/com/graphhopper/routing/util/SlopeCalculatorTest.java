@@ -1,9 +1,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.AverageSlope;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.MaxSlope;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PointList;
 import org.junit.jupiter.api.Test;
@@ -18,7 +16,8 @@ class SlopeCalculatorTest {
         DecimalEncodedValue maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
         SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
-        IntsRef edgeRef = new IntsRef(1);
+        IntAccess intAccess = new ArrayIntAccess(1);
+        int edgeId = 0;
         ReaderWay way = new ReaderWay(1L);
         PointList pointList = new PointList(5, true);
         pointList.add(51.0, 12.001, 0);
@@ -42,7 +41,8 @@ class SlopeCalculatorTest {
         DecimalEncodedValue maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
         SlopeCalculator creator = new SlopeCalculator(maxEnc, averageEnc);
-        IntsRef edgeRef = new IntsRef(1);
+        ArrayIntAccess intAccess = new ArrayIntAccess(1);
+        int edgeId = 0;
         ReaderWay way = new ReaderWay(1L);
         PointList pointList = new PointList(5, true);
         pointList.add(51.0, 12.0010, 10);
@@ -65,7 +65,8 @@ class SlopeCalculatorTest {
         pointList.add(47.7283135, 11.9991135, 1178.0);
         ReaderWay way = new ReaderWay(1);
         way.setTag("point_list", pointList);
-        IntsRef edgeRef = new IntsRef(1);
+        ArrayIntAccess intAccess = new ArrayIntAccess(1);
+        int edgeId = 0;
         DecimalEncodedValue averageEnc = AverageSlope.create();
         DecimalEncodedValue maxEnc = MaxSlope.create();
         new EncodingManager.Builder().add(averageEnc).add(maxEnc).build();
@@ -77,7 +78,8 @@ class SlopeCalculatorTest {
 
     @Test
     public void test2D() {
-        IntsRef edgeRef = new IntsRef(1);
+        ArrayIntAccess intAccess = new ArrayIntAccess(1);
+        int edgeId = 0;
         PointList pointList = new PointList(5, false);
         pointList.add(47.7283135, 11.9991135);
         ReaderWay way = new ReaderWay(1);

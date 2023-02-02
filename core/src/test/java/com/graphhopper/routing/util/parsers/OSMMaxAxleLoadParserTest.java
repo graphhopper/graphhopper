@@ -1,9 +1,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.MaxAxleLoad;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,13 +24,14 @@ public class OSMMaxAxleLoadParserTest {
     @Test
     public void testSimpleTags() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = new IntsRef(1);
+        IntAccess intAccess = new ArrayIntAccess(1);
+        int edgeId = 0;
         readerWay.setTag("maxaxleload", "11.5");
         parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
         assertEquals(11.5, malEnc.getDecimal(false, edgeId, intAccess), .01);
 
         // if value is beyond the maximum then do not use infinity instead fallback to more restrictive maximum
-        intsRef = new IntsRef(1);
+        intAccess = new ArrayIntAccess(1);
         readerWay.setTag("maxaxleload", "80");
         parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
         assertEquals(63.0, malEnc.getDecimal(false, edgeId, intAccess), .01);
@@ -41,17 +40,18 @@ public class OSMMaxAxleLoadParserTest {
     @Test
     public void testRounding() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = new IntsRef(1);
+        IntAccess intAccess = new ArrayIntAccess(1);
+        int edgeId = 0;
         readerWay.setTag("maxaxleload", "4.8");
         parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
         assertEquals(5.0, malEnc.getDecimal(false, edgeId, intAccess), .01);
 
-        intsRef = new IntsRef(1);
+        intAccess = new ArrayIntAccess(1);
         readerWay.setTag("maxaxleload", "3.6");
         parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
         assertEquals(3.5, malEnc.getDecimal(false, edgeId, intAccess), .01);
 
-        intsRef = new IntsRef(1);
+        intAccess = new ArrayIntAccess(1);
         readerWay.setTag("maxaxleload", "2.4");
         parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
         assertEquals(2.5, malEnc.getDecimal(false, edgeId, intAccess), .01);
@@ -60,7 +60,8 @@ public class OSMMaxAxleLoadParserTest {
     @Test
     public void testNoLimit() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = new IntsRef(1);
+        IntAccess intAccess = new ArrayIntAccess(1);
+        int edgeId = 0;
         parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
         assertEquals(Double.POSITIVE_INFINITY, malEnc.getDecimal(false, edgeId, intAccess), .01);
     }

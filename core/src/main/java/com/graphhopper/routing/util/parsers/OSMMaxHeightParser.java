@@ -37,6 +37,6 @@ public class OSMMaxHeightParser implements TagParser {
     @Override
     public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
         List<String> heightTags = Arrays.asList("maxheight", "maxheight:physical"/*, the OSM tag "height" is not used for the height of a road, so omit it here! */);
-        OSMValueExtractor.extractMeter(edgeFlags, way, heightEncoder, heightTags);
+        OSMValueExtractor.extractMeter(edgeId, intAccess, way, heightEncoder, heightTags);
     }
 }

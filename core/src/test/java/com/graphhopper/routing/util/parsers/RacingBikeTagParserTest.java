@@ -24,7 +24,6 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.routing.util.VehicleTagParsers;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -100,7 +99,8 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Test
     public void testGetSpeed() {
-        IntsRef intsRef = encodingManager.createEdgeFlags();
+        IntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        int edgeId = 0;
         avgSpeedEnc.setDecimal(false, edgeId, intAccess, 10);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
@@ -274,7 +274,8 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
     private void assertPriorityAndSpeed(EncodingManager encodingManager, DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc,
                                         List<TagParser> parsers, int expectedPrio, double expectedSpeed, ReaderWay way) {
-        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        IntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        int edgeId = 0;
         for (TagParser p : parsers) p.handleWayTags(edgeId, intAccess, way, null);
         assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeId, intAccess), 0.01);
         assertEquals(expectedSpeed, speedEnc.getDecimal(false, edgeId, intAccess), 0.1);

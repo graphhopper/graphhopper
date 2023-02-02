@@ -15,26 +15,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.IntAccess;
-import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
+package com.graphhopper.routing.ev;
+
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Collections;
+public class IntsRefIntAccess implements IntAccess {
+    private final IntsRef intsRef;
 
-public class OSMMaxLengthParser implements TagParser {
-
-    private final DecimalEncodedValue lengthEncoder;
-
-    public OSMMaxLengthParser(DecimalEncodedValue lengthEncoder) {
-        this.lengthEncoder = lengthEncoder;
+    public IntsRefIntAccess(IntsRef intsRef) {
+        this.intsRef = intsRef;
     }
 
     @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
-        OSMValueExtractor.extractMeter(edgeId, intAccess, way, lengthEncoder, Collections.singletonList("maxlength"));
+    public int getInt(int edgeId, int index) {
+        return intsRef.ints[index];
+    }
+
+    @Override
+    public void setInt(int edgeId, int index, int value) {
+        intsRef.ints[index] = value;
     }
 }

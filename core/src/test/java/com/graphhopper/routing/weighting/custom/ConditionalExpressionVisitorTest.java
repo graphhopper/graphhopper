@@ -1,5 +1,6 @@
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.routing.ev.ArrayIntAccess;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
@@ -21,7 +22,7 @@ public class ConditionalExpressionVisitorTest {
     public void before() {
         StringEncodedValue sev = new StringEncodedValue("country", 10);
         lookup = new EncodingManager.Builder().add(sev).build();
-        sev.setString(false, edgeId, intAccess, "DEU");
+        sev.setString(false, 0, new ArrayIntAccess(1), "DEU");
     }
 
     @Test

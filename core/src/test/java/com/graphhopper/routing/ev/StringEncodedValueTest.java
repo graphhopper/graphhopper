@@ -1,6 +1,5 @@
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -58,8 +57,8 @@ public class StringEncodedValueTest {
         StringEncodedValue prop = new StringEncodedValue("country", 3);
         prop.init(new EncodedValue.InitializerConfig());
 
-        IntsRef ref = new IntsRef(1);
-        prop.setString(false, edgeId, intAccess, null);
+        IntAccess intAccess = new ArrayIntAccess(1);
+        prop.setString(false, 0, intAccess, null);
         assertEquals(0, prop.getValues().size());
     }
 
@@ -80,24 +79,24 @@ public class StringEncodedValueTest {
         StringEncodedValue prop = new StringEncodedValue("country", 3);
         prop.init(new EncodedValue.InitializerConfig());
 
-        IntsRef ref = new IntsRef(1);
-        assertEquals(null, prop.getString(false, edgeId, intAccess));
+        IntAccess intAccess = new ArrayIntAccess(1);
+        assertEquals(null, prop.getString(false, 0, intAccess));
         assertEquals(0, prop.getValues().size());
 
-        prop.setString(false, edgeId, intAccess, "aut");
-        assertEquals("aut", prop.getString(false, edgeId, intAccess));
+        prop.setString(false, 0, intAccess, "aut");
+        assertEquals("aut", prop.getString(false, 0, intAccess));
         assertEquals(1, prop.getValues().size());
 
-        prop.setString(false, edgeId, intAccess, "deu");
-        assertEquals("deu", prop.getString(false, edgeId, intAccess));
+        prop.setString(false, 0, intAccess, "deu");
+        assertEquals("deu", prop.getString(false, 0, intAccess));
         assertEquals(2, prop.getValues().size());
 
-        prop.setString(false, edgeId, intAccess, "che");
-        assertEquals("che", prop.getString(false, edgeId, intAccess));
+        prop.setString(false, 0, intAccess, "che");
+        assertEquals("che", prop.getString(false, 0, intAccess));
         assertEquals(3, prop.getValues().size());
 
-        prop.setString(false, edgeId, intAccess, "deu");
-        assertEquals("deu", prop.getString(false, edgeId, intAccess));
+        prop.setString(false, 0, intAccess, "deu");
+        assertEquals("deu", prop.getString(false, 0, intAccess));
         assertEquals(3, prop.getValues().size());
     }
 
@@ -106,20 +105,20 @@ public class StringEncodedValueTest {
         StringEncodedValue prop = new StringEncodedValue("country", 3);
         prop.init(new EncodedValue.InitializerConfig());
 
-        IntsRef ref = new IntsRef(1);
-        assertEquals(null, prop.getString(false, edgeId, intAccess));
+        IntAccess intAccess = new ArrayIntAccess(1);
+        assertEquals(null, prop.getString(false, 0, intAccess));
 
-        prop.setString(false, edgeId, intAccess, "aut");
-        assertEquals("aut", prop.getString(false, edgeId, intAccess));
+        prop.setString(false, 0, intAccess, "aut");
+        assertEquals("aut", prop.getString(false, 0, intAccess));
 
-        prop.setString(false, edgeId, intAccess, "deu");
-        assertEquals("deu", prop.getString(false, edgeId, intAccess));
+        prop.setString(false, 0, intAccess, "deu");
+        assertEquals("deu", prop.getString(false, 0, intAccess));
 
-        prop.setString(false, edgeId, intAccess, "che");
-        assertEquals("che", prop.getString(false, edgeId, intAccess));
+        prop.setString(false, 0, intAccess, "che");
+        assertEquals("che", prop.getString(false, 0, intAccess));
 
         try {
-            prop.setString(false, edgeId, intAccess, "xyz");
+            prop.setString(false, 0, intAccess, "xyz");
             fail("The encoded value should only allow a limited number of values");
         } catch (IllegalStateException e) {
             assertTrue(e.getMessage().startsWith("Maximum number of values reached for"));

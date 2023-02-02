@@ -2,8 +2,8 @@ package com.graphhopper.routing.util.parsers.helpers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.ev.MaxSpeed;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
@@ -29,7 +29,7 @@ public class OSMValueExtractor {
         // utility class
     }
 
-    public static void extractTons(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
+    public static void extractTons(int edgeId, IntAccess intAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
         final String rawValue = way.getFirstPriorityTag(keys);
         double value = stringToTons(rawValue);
 
@@ -68,7 +68,7 @@ public class OSMValueExtractor {
         }
     }
 
-    public static void extractMeter(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
+    public static void extractMeter(int edgeId, IntAccess intAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
         final String rawValue = way.getFirstPriorityTag(keys);
         double value = stringToMeter(rawValue);
 

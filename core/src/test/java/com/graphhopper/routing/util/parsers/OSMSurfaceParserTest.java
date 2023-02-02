@@ -1,9 +1,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.Surface;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +24,8 @@ public class OSMSurfaceParserTest {
     public void testSimpleTags() {
         IntsRef relFlags = new IntsRef(2);
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = new IntsRef(1);
+        IntAccess intAccess = new ArrayIntAccess(1);
+        int edgeId = 0;
         readerWay.setTag("highway", "primary");
         parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
         assertEquals(Surface.MISSING, surfaceEnc.getEnum(false, edgeId, intAccess));
