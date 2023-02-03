@@ -63,7 +63,7 @@ public class RouteResourceCustomModelTest {
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv").
-                putObject("custom_model_folder", "./src/test/resources/com/graphhopper/application/resources").
+                putObject("custom_models.directory", "./src/test/resources/com/graphhopper/application/resources").
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Arrays.asList(

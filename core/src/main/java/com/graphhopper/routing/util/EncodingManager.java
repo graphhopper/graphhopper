@@ -30,8 +30,6 @@ import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.graphhopper.util.Helper.toLowerCase;
-
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
  * during parsing. Create one via:
@@ -45,26 +43,6 @@ public class EncodingManager implements EncodedValueLookup {
     private final LinkedHashMap<String, EncodedValue> encodedValueMap;
     private int intsForFlags;
     private int intsForTurnCostFlags;
-
-    /**
-     * Instantiate manager with the given list of encoders. The manager knows several default
-     * encoders using DefaultVehicleEncodedValuesFactory.
-     */
-    public static EncodingManager create(String flagEncodersStr) {
-        return create(new DefaultVehicleEncodedValuesFactory(), flagEncodersStr);
-    }
-
-    public static EncodingManager create(VehicleEncodedValuesFactory factory, String flagEncodersStr) {
-        return createBuilder(Arrays.stream(flagEncodersStr.split(",")).filter(s -> !s.trim().isEmpty()).
-                map(s -> parseEncoderString(factory, s)).collect(Collectors.toList())).build();
-    }
-
-    private static EncodingManager.Builder createBuilder(List<? extends VehicleEncodedValues> vehicleEncodedValues) {
-        Builder builder = new Builder();
-        for (VehicleEncodedValues v : vehicleEncodedValues)
-            builder.add(v);
-        return builder;
-    }
 
     public static void putEncodingManagerIntoProperties(EncodingManager encodingManager, StorableProperties properties) {
         properties.put("graph.em.version", Constants.VERSION_EM);
@@ -203,25 +181,8 @@ public class EncodingManager implements EncodedValueLookup {
             DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
             for (String key : keys)
                 if (!em.hasEncodedValue(key))
-                    add(evFactory.create(key));
+                    add(evFactory.create(key, new PMap()));
         }
-    }
-
-    static VehicleEncodedValues parseEncoderString(VehicleEncodedValuesFactory factory, String encoderString) {
-        if (!encoderString.equals(toLowerCase(encoderString)))
-            throw new IllegalArgumentException("An upper case name for the vehicle is not allowed: " + encoderString);
-
-        encoderString = encoderString.trim();
-        if (encoderString.isEmpty())
-            throw new IllegalArgumentException("vehicle cannot be empty. " + encoderString);
-
-        String entryVal = "";
-        if (encoderString.contains("|")) {
-            entryVal = encoderString;
-            encoderString = encoderString.split("\\|")[0];
-        }
-        PMap configuration = new PMap(entryVal);
-        return factory.createVehicleEncodedValues(encoderString, configuration);
     }
 
     public int getIntsForFlags() {
@@ -312,55 +273,5 @@ public class EncodingManager implements EncodedValueLookup {
 
     public static String getKey(String prefix, String str) {
         return prefix + "_" + str;
-    }
-
-    // copied from janino
-    private static final Set<String> KEYWORDS = new HashSet<>(Arrays.asList(
-            "first_match",
-            "abstract", "assert",
-            "boolean", "break", "byte",
-            "case", "catch", "char", "class", "const", "continue",
-            "default", "do", "double",
-            "else", "enum", "extends",
-            "false", "final", "finally", "float", "for",
-            "goto",
-            "if", "implements", "import", "instanceof", "int", "interface",
-            "long",
-            "native", "new", "non-sealed", "null",
-            "package", "permits", "private", "protected", "public",
-            "record", "return",
-            "sealed", "short", "static", "strictfp", "super", "switch", "synchronized",
-            "this", "throw", "throws", "transient", "true", "try",
-            "var", "void", "volatile",
-            "while",
-            "yield",
-            "_"
-    ));
-
-    public static boolean isValidEncodedValue(String name) {
-        // first character must be a lower case letter
-        if (name.isEmpty() || !isLowerLetter(name.charAt(0)) || KEYWORDS.contains(name)) return false;
-
-        int underscoreCount = 0;
-        for (int i = 1; i < name.length(); i++) {
-            char c = name.charAt(i);
-            if (c == '_') {
-                if (underscoreCount > 0) return false;
-                underscoreCount++;
-            } else if (!isLowerLetter(c) && !isNumber(c)) {
-                return false;
-            } else {
-                underscoreCount = 0;
-            }
-        }
-        return true;
-    }
-
-    private static boolean isNumber(char c) {
-        return c >= '0' && c <= '9';
-    }
-
-    private static boolean isLowerLetter(char c) {
-        return c >= 'a' && c <= 'z';
     }
 }

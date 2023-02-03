@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -34,10 +35,10 @@ class EncodedValueSerializerTest {
         List<EncodedValue> encodedValues = new ArrayList<>();
         // add enum, int, decimal and boolean encoded values
         DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
-        encodedValues.add(evFactory.create(RoadClass.KEY));
-        encodedValues.add(evFactory.create(Lanes.KEY));
-        encodedValues.add(evFactory.create(MaxWidth.KEY));
-        encodedValues.add(evFactory.create(GetOffBike.KEY));
+        encodedValues.add(evFactory.create(RoadClass.KEY, new PMap()));
+        encodedValues.add(evFactory.create(Lanes.KEY, new PMap()));
+        encodedValues.add(evFactory.create(MaxWidth.KEY, new PMap()));
+        encodedValues.add(evFactory.create(GetOffBike.KEY, new PMap()));
         StringEncodedValue namesEnc = new StringEncodedValue("names", 3, Arrays.asList("jim", "joe", "kate"), false);
         encodedValues.add(namesEnc);
 
@@ -71,9 +72,9 @@ class EncodedValueSerializerTest {
         EncodedValue.InitializerConfig initializerConfig = new EncodedValue.InitializerConfig();
         DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
         List<EncodedValue> evs = Arrays.asList(
-                evFactory.create(Lanes.KEY),
-                evFactory.create(MaxWidth.KEY),
-                evFactory.create(GetOffBike.KEY)
+                evFactory.create(Lanes.KEY, new PMap()),
+                evFactory.create(MaxWidth.KEY, new PMap()),
+                evFactory.create(GetOffBike.KEY, new PMap())
         );
         evs.forEach(ev -> ev.init(initializerConfig));
 

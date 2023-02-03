@@ -292,9 +292,9 @@ public class CustomModelParser {
                     includedAreaImports = true;
                 }
 
-                String id = arg.substring(IN_AREA_PREFIX.length());
-                if (!EncodingManager.isValidEncodedValue(id))
+                if (!JsonFeature.isValidId(arg))
                     throw new IllegalArgumentException("Area has invalid name: " + arg);
+                String id = arg.substring(IN_AREA_PREFIX.length());
                 JsonFeature feature = areas.get(id);
                 if (feature == null)
                     throw new IllegalArgumentException("Area '" + id + "' wasn't found");
@@ -302,8 +302,8 @@ public class CustomModelParser {
                     throw new IllegalArgumentException("Area '" + id + "' does not contain a geometry");
                 if (!(feature.getGeometry() instanceof Polygonal))
                     throw new IllegalArgumentException("Currently only type=Polygon is supported for areas but was " + feature.getGeometry().getGeometryType());
-                if (feature.getProperties() != null && !feature.getProperties().isEmpty() || feature.getBBox() != null)
-                    throw new IllegalArgumentException("Bounding box and properties of area " + id + " must be empty");
+                if (feature.getBBox() != null)
+                    throw new IllegalArgumentException("Bounding box of area " + id + " must be empty");
                 classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
                 initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
                 initSourceCode.append("this." + arg + " = new Polygon(new PreparedPolygon((Polygonal) feature_" + id + ".getGeometry()));\n");

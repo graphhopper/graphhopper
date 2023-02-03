@@ -9,7 +9,9 @@
 - removed YAML support for custom models on the server-side. Only allow JSON with // comments.
 - Bike2WeightTagParser was removed. Use the bike vehicle with a custom model, see custom_models/bike2.json
 - CurvatureWeighting was removed. Use a custom model with 'curvature' instead, see custom_models/curvature.json (#2665)
-- internal keys for EdgeKVStorage changed to contain the street_ prefix like the path details too. Similarly, the extra_info in the instructions of the API response, see #2661
+- internal keys for EdgeKVStorage changed to contain the street_ prefix like the path details too. Similarly, the
+  extra_info in the instructions of the API response, see #2661
+- subnetwork preparation can now be run in parallel to slightly speed up the base graph import (#2737)
 
 ### 6.0 [13 Sep 2022]
 
