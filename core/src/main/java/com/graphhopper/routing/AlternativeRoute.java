@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.util.PMap;
 import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntHashSet;
@@ -24,7 +26,6 @@ import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +35,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
+import static com.graphhopper.core.util.Parameters.Algorithms.AltRoute.*;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.GHUtility;
 
 /**
  * This class implements the alternative paths search using the "plateau" and partially the

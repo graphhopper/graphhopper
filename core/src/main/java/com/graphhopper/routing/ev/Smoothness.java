@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 
 /**
  * This enum defines the road smoothness of an edge. If not tagged the value will be MISSING, which is the default. 

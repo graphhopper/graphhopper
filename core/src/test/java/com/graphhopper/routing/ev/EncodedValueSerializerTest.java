@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

@@ -22,7 +22,7 @@ import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.VehicleEncodedValues;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

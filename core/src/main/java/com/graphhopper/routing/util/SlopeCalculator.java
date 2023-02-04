@@ -5,7 +5,7 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.util.PointList;
 
 public class SlopeCalculator implements TagParser {
     private final DecimalEncodedValue maxSlopeEnc;

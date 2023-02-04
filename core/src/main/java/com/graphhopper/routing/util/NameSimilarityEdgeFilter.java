@@ -21,10 +21,10 @@ import com.graphhopper.apache.commons.lang3.StringUtils;
 import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.graphhopper.util.Helper.toLowerCase;
+import static com.graphhopper.core.util.Helper.toLowerCase;
 
 /**
  * This class defines the basis for NameSimilarity matching using an EdgeFilter. It is not thread-safe.

@@ -17,8 +17,8 @@
  */
 package com.graphhopper.jackson;
 
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PointList;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

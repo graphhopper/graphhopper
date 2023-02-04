@@ -17,18 +17,23 @@
  */
 package com.graphhopper.navigation;
 
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.RoundaboutInstruction;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.Instruction;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.graphhopper.GHResponse;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.jackson.ResponsePathSerializer;
-import com.graphhopper.util.*;
-import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.core.util.details.PathDetail;
 
 import java.util.*;
 
-import static com.graphhopper.util.Parameters.Details.INTERSECTION;
+import static com.graphhopper.core.util.Parameters.Details.INTERSECTION;
+import com.graphhopper.util.TranslationMap;
 
 public class NavigateResponseConverter {
 

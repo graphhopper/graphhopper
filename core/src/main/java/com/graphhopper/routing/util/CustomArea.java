@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.JsonFeature;
+import com.graphhopper.core.util.JsonFeature;
 import org.locationtech.jts.geom.*;
 
 import java.util.ArrayList;

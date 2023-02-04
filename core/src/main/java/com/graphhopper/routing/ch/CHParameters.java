@@ -1,6 +1,6 @@
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.util.Parameters;
+import com.graphhopper.core.util.Parameters;
 
 public final class CHParameters {
     // graph contraction order etc. 

@@ -21,7 +21,7 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.jackson.Gpx;
 import com.graphhopper.matching.Observation;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

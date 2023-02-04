@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.PointAccess;
+import com.graphhopper.core.util.PointAccess;
 
 /**
  * This interface specifies how to access properties of the nodes in the graph. Similar to

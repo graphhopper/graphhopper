@@ -4,7 +4,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 
 import java.util.TreeMap;
 

@@ -27,7 +27,7 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;

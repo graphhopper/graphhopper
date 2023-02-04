@@ -21,7 +21,7 @@ import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Downloader;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 
 import java.io.File;
 import java.io.FileNotFoundException;

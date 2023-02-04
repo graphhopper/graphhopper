@@ -20,7 +20,7 @@ package com.graphhopper.util.details;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.util.Parameters.Details.EDGE_KEY;
+import static com.graphhopper.core.util.Parameters.Details.EDGE_KEY;
 
 public class EdgeKeyDetails extends AbstractPathDetailsBuilder {
 

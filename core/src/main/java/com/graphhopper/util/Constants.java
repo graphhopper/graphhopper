@@ -23,7 +23,7 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.core.util.Helper.*;
 
 /**
  * Defining several important constants for GraphHopper. Partially taken from Lucene.

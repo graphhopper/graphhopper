@@ -31,7 +31,6 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -40,7 +39,12 @@ import java.util.List;
 
 import static com.graphhopper.routing.DirectionResolverResult.unrestricted;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-import static com.graphhopper.util.Helper.createPointList;
+import static com.graphhopper.core.util.Helper.createPointList;
+import com.graphhopper.util.DistancePlaneProjection;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 

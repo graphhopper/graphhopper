@@ -17,7 +17,7 @@
  */
 package com.graphhopper.coll;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

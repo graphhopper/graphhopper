@@ -26,7 +26,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.core.util.Helper.*;
 
 /**
  * Elevation data from Global Multi-resolution Terrain Elevation Data 2010 (GMTED2010).

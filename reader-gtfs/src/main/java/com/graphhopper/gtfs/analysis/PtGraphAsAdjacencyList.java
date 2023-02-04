@@ -1,5 +1,6 @@
 package com.graphhopper.gtfs.analysis;
 
+import com.graphhopper.core.util.PointList;
 import com.graphhopper.gtfs.PtGraph;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -7,7 +8,10 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.Iterator;

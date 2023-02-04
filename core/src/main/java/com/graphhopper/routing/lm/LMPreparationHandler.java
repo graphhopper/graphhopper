@@ -28,9 +28,9 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.JsonFeatureCollection;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.Parameters.Landmark;
+import com.graphhopper.core.util.JsonFeatureCollection;
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.util.Parameters.Landmark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,7 +44,7 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.core.util.Helper.*;
 
 /**
  * This class deals with the A*, landmark and triangulation (ALT) preparations.

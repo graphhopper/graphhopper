@@ -18,11 +18,16 @@
 
 package com.graphhopper.gpx;
 
+import com.graphhopper.core.util.Instruction;
+import com.graphhopper.core.util.Translation;
+import com.graphhopper.core.util.RoundaboutInstruction;
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.Helper;
 import com.graphhopper.jackson.Gpx;
 import com.graphhopper.matching.Observation;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
+import com.graphhopper.core.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint3D;
+import com.graphhopper.util.AngleCalc;
 
 import java.text.DateFormat;
 import java.text.DecimalFormat;

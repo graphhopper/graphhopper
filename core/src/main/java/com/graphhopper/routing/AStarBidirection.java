@@ -27,7 +27,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.core.util.Parameters;
 
 /**
  * This class implements a bidirectional A* algorithm. It is interesting to note that a

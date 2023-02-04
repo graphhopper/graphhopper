@@ -20,7 +20,7 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.apache.commons.collections.IntFloatBinaryHeap;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 
 import java.util.Arrays;
 

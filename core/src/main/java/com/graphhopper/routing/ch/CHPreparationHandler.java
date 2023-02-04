@@ -21,8 +21,8 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters.CH;
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.Parameters.CH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,8 +31,8 @@ import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.graphhopper.util.Helper.createFormatter;
-import static com.graphhopper.util.Helper.getMemInfo;
+import static com.graphhopper.core.util.Helper.createFormatter;
+import static com.graphhopper.core.util.Helper.getMemInfo;
 
 /**
  * This class handles the different CH preparations

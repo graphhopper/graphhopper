@@ -17,6 +17,9 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.core.util.JsonFeatureCollection;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.JsonFeature;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;

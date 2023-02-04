@@ -26,7 +26,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;

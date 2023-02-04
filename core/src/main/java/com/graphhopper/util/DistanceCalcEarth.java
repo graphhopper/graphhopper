@@ -17,8 +17,9 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.core.util.PointList;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 import static java.lang.Math.*;
 

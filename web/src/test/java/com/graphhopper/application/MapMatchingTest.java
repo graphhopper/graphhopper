@@ -17,10 +17,13 @@
  */
 package com.graphhopper.application;
 
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.util.Helper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
-import com.graphhopper.GHRequest;
+import com.graphhopper.core.GHRequest;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gpx.GpxConversions;
@@ -29,8 +32,9 @@ import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistancePlaneProjection;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.extension.ExtensionContext;

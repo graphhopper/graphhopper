@@ -2,7 +2,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 
 import java.util.TreeMap;
 

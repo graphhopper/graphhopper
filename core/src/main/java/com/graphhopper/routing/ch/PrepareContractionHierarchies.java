@@ -22,8 +22,8 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.coll.MinHeapWithUpdate;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PMap;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,8 +32,8 @@ import java.util.Locale;
 import java.util.Random;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.util.Helper.getMemInfo;
-import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.core.util.Helper.getMemInfo;
+import static com.graphhopper.core.util.Helper.nf;
 
 /**
  * This class prepares the graph for a bidirectional algorithm supporting contraction hierarchies

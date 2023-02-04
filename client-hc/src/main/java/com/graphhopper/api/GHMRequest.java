@@ -2,8 +2,8 @@ package com.graphhopper.api;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 import java.util.Collections;
 import java.util.List;

@@ -24,8 +24,8 @@ import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;

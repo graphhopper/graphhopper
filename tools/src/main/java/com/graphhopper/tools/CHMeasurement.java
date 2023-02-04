@@ -17,8 +17,11 @@
  */
 package com.graphhopper.tools;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
@@ -26,8 +29,7 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
-import com.graphhopper.util.exceptions.ConnectionNotFoundException;
+import com.graphhopper.core.util.exceptions.ConnectionNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,8 +38,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.core.util.Parameters.Algorithms.ASTAR_BI;
+import static com.graphhopper.core.util.Parameters.Algorithms.DIJKSTRA_BI;
+import com.graphhopper.util.MiniPerfTest;
+import com.graphhopper.util.StopWatch;
 import static java.lang.System.nanoTime;
 
 public class CHMeasurement {

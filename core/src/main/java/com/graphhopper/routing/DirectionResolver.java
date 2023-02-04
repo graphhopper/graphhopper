@@ -17,11 +17,16 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.NumHelper;
 import com.graphhopper.routing.util.DirectedEdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
+import com.graphhopper.util.AngleCalc;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.FetchMode;
 
 import java.util.*;
 

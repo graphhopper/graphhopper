@@ -6,7 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.GHResponse;
+import com.graphhopper.core.GHResponse;
 
 class PathDetailDeserializerTest {
 

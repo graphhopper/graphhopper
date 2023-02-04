@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util.shapes;
 
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.util.PointList;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.GeometryFactory;

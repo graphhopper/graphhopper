@@ -19,7 +19,7 @@ package com.graphhopper.util.details;
 
 import com.graphhopper.util.EdgeIteratorState;
 
-import static com.graphhopper.util.Parameters.Details.DISTANCE;
+import static com.graphhopper.core.util.Parameters.Details.DISTANCE;
 
 public class DistanceDetails extends AbstractPathDetailsBuilder {
 

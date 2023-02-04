@@ -19,7 +19,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 
 public interface VehicleTagParserFactory {
     VehicleTagParsers createParsers(EncodedValueLookup lookup, String name, PMap configuration);

@@ -3,7 +3,7 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.util.CustomModel;
+import com.graphhopper.core.util.CustomModel;
 
 import java.util.ArrayList;
 import java.util.HashSet;

@@ -22,7 +22,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
-import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
+import static com.graphhopper.core.util.Parameters.Details.AVERAGE_SPEED;
 
 public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
 

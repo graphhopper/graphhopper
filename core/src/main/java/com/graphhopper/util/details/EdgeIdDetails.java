@@ -22,7 +22,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
-import static com.graphhopper.util.Parameters.Details.EDGE_ID;
+import static com.graphhopper.core.util.Parameters.Details.EDGE_ID;
 
 /**
  * Calculate the Edge Id segments of a Path

@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.querygraph;
 
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PointList;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.HeadingResolver;
@@ -30,8 +32,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,7 +43,16 @@ import java.util.LinkedHashSet;
 import java.util.List;
 
 import static com.graphhopper.storage.index.Snap.Position.*;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.DistanceCalcEuclidean;
+import com.graphhopper.util.DistancePlaneProjection;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import static com.graphhopper.util.EdgeIteratorState.UNFAVORED_EDGE;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.GHUtility;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static org.junit.jupiter.api.Assertions.*;
 

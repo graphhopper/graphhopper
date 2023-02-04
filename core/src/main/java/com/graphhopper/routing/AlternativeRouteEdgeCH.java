@@ -24,7 +24,7 @@ import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 
 import java.util.*;
 

@@ -17,16 +17,27 @@
  */
 package com.graphhopper.jackson;
 
+import com.graphhopper.core.util.Instruction;
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.util.exceptions.PointNotFoundException;
+import com.graphhopper.core.util.exceptions.DetailedRuntimeException;
+import com.graphhopper.core.util.FinishInstruction;
+import com.graphhopper.core.util.ViaInstruction;
+import com.graphhopper.core.util.RoundaboutInstruction;
+import com.graphhopper.core.util.exceptions.PointOutOfBoundsException;
+import com.graphhopper.core.util.exceptions.DetailedIllegalArgumentException;
+import com.graphhopper.core.util.exceptions.ConnectionNotFoundException;
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.exceptions.MaximumNodesExceededException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.ResponsePath;
-import com.graphhopper.util.*;
-import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.exceptions.*;
+import com.graphhopper.core.ResponsePath;
+import com.graphhopper.core.util.details.PathDetail;
 import org.locationtech.jts.geom.LineString;
 
 import java.io.IOException;

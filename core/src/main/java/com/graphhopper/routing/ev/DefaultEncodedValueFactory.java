@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 
 public class DefaultEncodedValueFactory implements EncodedValueFactory {
 

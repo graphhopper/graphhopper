@@ -20,8 +20,8 @@ package com.graphhopper.reader.dem;
 import java.io.*;
 import java.util.zip.GZIPInputStream;
 
-import static com.graphhopper.util.Helper.close;
-import static com.graphhopper.util.Helper.toLowerCase;
+import static com.graphhopper.core.util.Helper.close;
+import static com.graphhopper.core.util.Helper.toLowerCase;
 
 /**
  * Skadi contains elevation data for the entire world with 1 arc second (~30m) accuracy in SRTM format stitched

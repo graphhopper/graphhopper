@@ -17,16 +17,21 @@
  */
 package com.graphhopper.util.details;
 
+import com.graphhopper.core.util.PointList;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
 
-import static com.graphhopper.util.Parameters.Details.INTERSECTION;
+import static com.graphhopper.core.util.Parameters.Details.INTERSECTION;
+import com.graphhopper.util.AngleCalc;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.GHUtility;
 
 /**
  * Calculate the intersections for a route. Every change of the edge id is considered an intersection.

@@ -17,16 +17,18 @@
  */
 package com.graphhopper.resources;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.GHPointParam;
 import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.jackson.MultiException;
 import com.graphhopper.jackson.ResponsePathSerializer;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.AbstractParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,8 +42,10 @@ import javax.ws.rs.core.*;
 import java.util.List;
 import java.util.Map;
 
-import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
-import static com.graphhopper.util.Parameters.Routing.*;
+import static com.graphhopper.core.util.Parameters.Details.PATH_DETAILS;
+import static com.graphhopper.core.util.Parameters.Routing.*;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.StopWatch;
 import static java.util.stream.Collectors.toList;
 
 /**

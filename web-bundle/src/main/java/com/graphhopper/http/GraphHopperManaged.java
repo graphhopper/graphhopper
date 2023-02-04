@@ -18,6 +18,10 @@
 
 package com.graphhopper.http;
 
+import com.graphhopper.core.util.JsonFeature;
+import com.graphhopper.core.util.JsonFeatureCollection;
+import com.graphhopper.core.util.CustomModel;
+import com.graphhopper.core.util.Helper;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
@@ -27,7 +31,6 @@ import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
-import com.graphhopper.util.*;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

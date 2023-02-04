@@ -4,7 +4,7 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.core.util.Parameters;
 
 import java.util.List;
 

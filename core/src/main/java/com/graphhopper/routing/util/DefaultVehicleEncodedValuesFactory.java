@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 
 /**
  * This class creates vehicle encoded values that are already included in the GraphHopper distribution.

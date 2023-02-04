@@ -20,7 +20,11 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.ArrayUtil;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.StopWatch;
 
 /**
  * Builds a {@link Path} from the two fwd- and bwd-shortest path tree entries of a bidirectional search

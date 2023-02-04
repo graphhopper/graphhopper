@@ -18,9 +18,9 @@
 package com.graphhopper.application.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
@@ -31,12 +31,12 @@ import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.RoadClassLink;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.ev.Surface;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.exceptions.PointOutOfBoundsException;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.util.details.PathDetail;
+import com.graphhopper.core.util.exceptions.PointOutOfBoundsException;
+import com.graphhopper.core.util.shapes.GHPoint;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
@@ -54,7 +54,7 @@ import java.util.*;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static com.graphhopper.application.util.TestUtils.clientUrl;
-import static com.graphhopper.util.Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE;
+import static com.graphhopper.core.util.Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

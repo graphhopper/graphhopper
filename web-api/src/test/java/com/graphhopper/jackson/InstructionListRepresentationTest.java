@@ -18,8 +18,12 @@
 
 package com.graphhopper.jackson;
 
+import com.graphhopper.core.util.Instruction;
+import com.graphhopper.core.util.RoundaboutInstruction;
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.Translation;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.util.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

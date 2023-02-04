@@ -1,6 +1,6 @@
 package com.graphhopper.example;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;

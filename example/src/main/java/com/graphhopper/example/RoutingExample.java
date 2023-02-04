@@ -1,15 +1,21 @@
 package com.graphhopper.example;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.Instruction;
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.Translation;
+import com.graphhopper.core.util.CustomModel;
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 import java.util.Arrays;
 import java.util.Locale;

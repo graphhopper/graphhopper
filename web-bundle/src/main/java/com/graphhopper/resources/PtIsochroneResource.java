@@ -34,7 +34,7 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.JsonFeature;
+import com.graphhopper.core.util.JsonFeature;
 import com.graphhopper.util.shapes.BBox;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;

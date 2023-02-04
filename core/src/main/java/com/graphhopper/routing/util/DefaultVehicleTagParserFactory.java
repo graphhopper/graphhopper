@@ -19,7 +19,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 
 import static com.graphhopper.routing.util.VehicleEncodedValuesFactory.*;
 

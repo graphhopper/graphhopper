@@ -26,11 +26,11 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointAccess;
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PointAccess;
+import com.graphhopper.core.util.PointList;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.shapes.GHPoint3D;
+import com.graphhopper.core.util.shapes.GHPoint3D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +47,7 @@ import java.util.function.LongToIntFunction;
 import java.util.function.Predicate;
 
 import static com.graphhopper.reader.osm.OSMNodeData.*;
-import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.core.util.Helper.nf;
 import static java.util.Collections.emptyMap;
 
 /**

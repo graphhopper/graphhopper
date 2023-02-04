@@ -1,7 +1,7 @@
 package com.graphhopper.routing.ev;
 
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 

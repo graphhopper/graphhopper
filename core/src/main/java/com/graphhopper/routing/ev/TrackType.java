@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 
 /**
  * This enum defines the track type of an edge which describes how well-maintained a certain track is.

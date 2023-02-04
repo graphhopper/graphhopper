@@ -17,7 +17,7 @@
  */
 package com.graphhopper.matching;
 
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 import java.util.Objects;
 

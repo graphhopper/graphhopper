@@ -17,11 +17,15 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.Helper;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
+import com.graphhopper.core.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint3D;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 
 import java.util.List;
 

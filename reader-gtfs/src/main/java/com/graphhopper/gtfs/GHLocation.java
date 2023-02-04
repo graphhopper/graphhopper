@@ -18,7 +18,7 @@
 
 package com.graphhopper.gtfs;
 
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

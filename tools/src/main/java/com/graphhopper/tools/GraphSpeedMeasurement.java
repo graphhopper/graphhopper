@@ -18,13 +18,17 @@
 
 package com.graphhopper.tools;
 
+import com.graphhopper.core.util.CustomModel;
+import com.graphhopper.core.util.PMap;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.MiniPerfTest;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -24,13 +24,16 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 
 /**

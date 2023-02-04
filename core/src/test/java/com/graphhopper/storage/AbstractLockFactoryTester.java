@@ -18,7 +18,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.Constants;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

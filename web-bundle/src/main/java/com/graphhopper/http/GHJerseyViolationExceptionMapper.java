@@ -18,7 +18,7 @@
 
 package com.graphhopper.http;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import io.dropwizard.jersey.validation.ConstraintMessage;
 import io.dropwizard.jersey.validation.JerseyViolationException;
 import org.glassfish.jersey.server.model.Invocable;

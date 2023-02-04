@@ -19,7 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntContainer;
 import com.graphhopper.storage.CHStorageBuilder;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 import com.graphhopper.util.StopWatch;
 
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Locale;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.core.util.Helper.nf;
 
 class NodeBasedNodeContractor implements NodeContractor {
     private final CHPreparationGraph prepareGraph;

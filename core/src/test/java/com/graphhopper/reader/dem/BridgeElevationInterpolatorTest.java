@@ -17,10 +17,14 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PointList;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

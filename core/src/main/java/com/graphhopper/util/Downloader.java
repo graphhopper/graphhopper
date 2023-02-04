@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.core.util.Helper;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;

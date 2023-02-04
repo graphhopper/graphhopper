@@ -1,18 +1,18 @@
 package com.graphhopper.example;
 
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.core.util.Parameters;
 
 import java.util.Arrays;
 
-import static com.graphhopper.util.Parameters.Curbsides.CURBSIDE_ANY;
-import static com.graphhopper.util.Parameters.Curbsides.CURBSIDE_RIGHT;
+import static com.graphhopper.core.util.Parameters.Curbsides.CURBSIDE_ANY;
+import static com.graphhopper.core.util.Parameters.Curbsides.CURBSIDE_RIGHT;
 
 /**
  * Routing with turn costs. Also see {@link RoutingExample} for more details.

@@ -17,19 +17,32 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.Helper;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.EdgeKVStorage;
-import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
 import java.util.List;
 
-import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.core.util.Helper.nf;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import static com.graphhopper.util.FetchMode.ALL;
+import static com.graphhopper.util.FetchMode.BASE_AND_PILLAR;
+import static com.graphhopper.util.FetchMode.PILLAR_AND_ADJ;
+import static com.graphhopper.util.FetchMode.PILLAR_ONLY;
+import static com.graphhopper.util.FetchMode.TOWER_ONLY;
+import com.graphhopper.util.GHUtility;
 
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory

@@ -20,7 +20,7 @@ package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.ResponsePath;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

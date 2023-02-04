@@ -18,7 +18,7 @@
 
 package com.graphhopper.gtfs;
 
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 public class GHPointLocation extends GHLocation {
     public final GHPoint ghPoint;

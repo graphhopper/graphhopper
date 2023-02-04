@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util.details;
 
+import com.graphhopper.core.util.details.PathDetail;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.weighting.Weighting;

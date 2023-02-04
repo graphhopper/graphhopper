@@ -18,6 +18,11 @@
 
 package com.graphhopper.gpx;
 
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.FinishInstruction;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.RoundaboutInstruction;
+import com.graphhopper.core.util.Instruction;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
@@ -30,7 +35,6 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.xml.sax.SAXException;
@@ -48,6 +52,9 @@ import java.util.Locale;
 
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.TranslationMap;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GpxConversionsTest {

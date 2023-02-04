@@ -17,6 +17,7 @@
  */
 package com.graphhopper.reader.osm;
 
+import com.graphhopper.core.util.PointList;
 import com.carrotsearch.hppc.IntIntMap;
 import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.LongHashSet;
@@ -44,9 +45,8 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
+import com.graphhopper.core.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint3D;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,7 +58,12 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.*;
-import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.core.util.Helper.nf;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.RamerDouglasPeucker;
 import static java.util.Collections.emptyList;
 
 /**

@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.PMap;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
@@ -35,7 +36,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -53,8 +53,12 @@ import java.util.stream.Stream;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 import static com.graphhopper.util.GHUtility.createRandomSnaps;
-import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
+import static com.graphhopper.core.util.Parameters.Algorithms.*;
+import static com.graphhopper.core.util.Parameters.Routing.ALGORITHM;
+import com.graphhopper.util.ArrayUtil;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**

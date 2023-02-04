@@ -24,7 +24,7 @@ import com.graphhopper.util.GHUtility;
 import java.util.Arrays;
 import java.util.Locale;
 
-import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.core.util.Helper.nf;
 
 /**
  * Helper class used to perform local witness path searches for graph preparation in edge-based Contraction Hierarchies.

@@ -24,7 +24,7 @@ import com.graphhopper.storage.Graph;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.graphhopper.util.Parameters.Details.*;
+import static com.graphhopper.core.util.Parameters.Details.*;
 
 /**
  * Generates a list of PathDetailsBuilder from a List of PathDetail names

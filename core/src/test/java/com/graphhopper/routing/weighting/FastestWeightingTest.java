@@ -17,18 +17,23 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.util.PMap;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
-import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.core.util.Parameters.Routing;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FACTOR;
 import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.GHUtility;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

@@ -24,10 +24,9 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DistancePlaneProjection;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
-
-import static com.graphhopper.util.Parameters.Algorithms.*;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PMap;
+import static com.graphhopper.core.util.Parameters.Algorithms.*;
 
 /**
  * A simple factory creating normal algorithms (RoutingAlgorithm) without preparation.

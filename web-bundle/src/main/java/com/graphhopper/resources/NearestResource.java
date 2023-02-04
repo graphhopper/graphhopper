@@ -24,8 +24,8 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
+import com.graphhopper.core.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint3D;
 
 import javax.inject.Inject;
 import javax.inject.Named;

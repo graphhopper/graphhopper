@@ -19,7 +19,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 
 import java.util.Arrays;
 import java.util.List;

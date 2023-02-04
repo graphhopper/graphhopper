@@ -22,7 +22,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;

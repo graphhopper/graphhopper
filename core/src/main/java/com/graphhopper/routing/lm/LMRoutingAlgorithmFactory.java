@@ -22,10 +22,9 @@ import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
-
-import static com.graphhopper.util.Parameters.Algorithms.*;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.Parameters;
+import static com.graphhopper.core.util.Parameters.Algorithms.*;
 
 public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
     private final LandmarkStorage lms;

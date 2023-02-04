@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 
 public class OSMRoadClassLinkParser implements TagParser {
     private final BooleanEncodedValue linkEnc;

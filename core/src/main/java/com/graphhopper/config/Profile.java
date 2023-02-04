@@ -20,8 +20,8 @@ package com.graphhopper.config;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PMap;
 
 /**
  * Corresponds to an entry of the `profiles` section in `config.yml` and specifies the properties of a routing profile.

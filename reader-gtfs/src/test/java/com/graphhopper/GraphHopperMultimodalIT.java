@@ -18,16 +18,19 @@
 
 package com.graphhopper;
 
+import com.graphhopper.core.Trip;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import com.graphhopper.util.TranslationMap;
-import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.details.PathDetail;
+import com.graphhopper.core.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

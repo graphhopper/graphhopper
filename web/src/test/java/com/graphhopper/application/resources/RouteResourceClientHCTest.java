@@ -17,9 +17,14 @@
  */
 package com.graphhopper.application.resources;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.CustomModel;
+import com.graphhopper.core.util.Instruction;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.RoundaboutInstruction;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
@@ -29,11 +34,10 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
-import com.graphhopper.util.*;
-import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.exceptions.PointNotFoundException;
-import com.graphhopper.util.exceptions.PointOutOfBoundsException;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.details.PathDetail;
+import com.graphhopper.core.util.exceptions.PointNotFoundException;
+import com.graphhopper.core.util.exceptions.PointOutOfBoundsException;
+import com.graphhopper.core.util.shapes.GHPoint;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;

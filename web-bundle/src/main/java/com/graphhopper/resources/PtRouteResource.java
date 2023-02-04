@@ -19,7 +19,7 @@
 package com.graphhopper.resources;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.graphhopper.GHResponse;
+import com.graphhopper.core.GHResponse;
 import com.graphhopper.gtfs.GHLocation;
 import com.graphhopper.gtfs.PtRouter;
 import com.graphhopper.gtfs.Request;
@@ -27,7 +27,7 @@ import com.graphhopper.http.DurationParam;
 import com.graphhopper.http.GHLocationParam;
 import com.graphhopper.http.OffsetDateTimeParam;
 import com.graphhopper.jackson.ResponsePathSerializer;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import com.graphhopper.util.StopWatch;
 import io.dropwizard.jersey.params.AbstractParam;
 

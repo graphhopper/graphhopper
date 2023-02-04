@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 
 /**
  * This enum the road environment of an edge. Currently road, ferry, tunnel, ford, bridge. All edges

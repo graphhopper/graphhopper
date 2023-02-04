@@ -17,6 +17,8 @@
  */
 package com.graphhopper.matching;
 
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.Parameters;
 import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
@@ -37,7 +39,9 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.shapes.BBox;
 import org.locationtech.jts.geom.Envelope;
 
@@ -46,6 +50,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 /**
  * This class matches real world GPX entries to the digital road network stored

@@ -22,7 +22,7 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
-import static com.graphhopper.util.Parameters.Details.TIME;
+import static com.graphhopper.core.util.Parameters.Details.TIME;
 
 /**
  * Calculate the time segments for a Path

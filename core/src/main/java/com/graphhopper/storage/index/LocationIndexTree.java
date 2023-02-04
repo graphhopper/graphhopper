@@ -17,13 +17,14 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.Helper;
 import com.carrotsearch.hppc.IntHashSet;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +32,9 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 
 import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.StopWatch;
 
 /**
  * This class implements a Quadtree to get the closest node or edge from GPS coordinates.

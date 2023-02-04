@@ -27,10 +27,10 @@ import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
-import com.graphhopper.util.exceptions.PointNotFoundException;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.Parameters.Algorithms.RoundTrip;
+import com.graphhopper.core.util.exceptions.PointNotFoundException;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;

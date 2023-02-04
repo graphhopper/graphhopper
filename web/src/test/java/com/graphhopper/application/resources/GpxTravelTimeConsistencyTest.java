@@ -18,13 +18,13 @@
 
 package com.graphhopper.application.resources;
 
-import com.graphhopper.GHRequest;
+import com.graphhopper.core.GHRequest;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gpx.GpxConversions;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.shapes.GHPoint;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 

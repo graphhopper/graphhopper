@@ -22,9 +22,9 @@ import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.util.PointAccess;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.GHPoint3D;
+import com.graphhopper.core.util.PointAccess;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.shapes.GHPoint3D;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -17,6 +17,20 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.RoundaboutInstruction;
+import com.graphhopper.core.util.Translation;
+import com.graphhopper.core.ResponsePath;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.util.JsonFeature;
+import com.graphhopper.core.util.CustomModel;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.util.ShallowImmutablePointList;
+import com.graphhopper.core.util.Instruction;
+import com.graphhopper.core.util.PMap;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
@@ -40,16 +54,15 @@ import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
-import com.graphhopper.util.Parameters.CH;
-import com.graphhopper.util.Parameters.Landmark;
-import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.exceptions.MaximumNodesExceededException;
-import com.graphhopper.util.exceptions.PointDistanceExceededException;
+import com.graphhopper.core.util.Parameters.CH;
+import com.graphhopper.core.util.Parameters.Landmark;
+import com.graphhopper.core.util.Parameters.Routing;
+import com.graphhopper.core.util.details.PathDetail;
+import com.graphhopper.core.util.exceptions.MaximumNodesExceededException;
+import com.graphhopper.core.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
+import com.graphhopper.core.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint3D;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -64,9 +77,9 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Curbsides.*;
-import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
+import static com.graphhopper.core.util.Parameters.Algorithms.*;
+import static com.graphhopper.core.util.Parameters.Curbsides.*;
+import static com.graphhopper.core.util.Parameters.Routing.U_TURN_COSTS;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -2318,7 +2331,7 @@ public class GraphHopperTest {
         GHPoint to = new GHPoint(50.029247, 11.582851);
         GHRequest req = new GHRequest(from, to).setProfile(profile);
         GHResponse res = hopper.route(req);
-        assertEquals("[com.graphhopper.util.exceptions.ConnectionNotFoundException: Connection between locations not found]",
+        assertEquals("[com.graphhopper.core.util.exceptions.ConnectionNotFoundException: Connection between locations not found]",
                 res.getErrors().toString());
     }
 

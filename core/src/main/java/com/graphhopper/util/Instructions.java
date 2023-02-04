@@ -18,6 +18,10 @@
 
 package com.graphhopper.util;
 
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.Instruction;
+import com.graphhopper.core.util.InstructionList;
+
 public class Instructions {
 
     /**

@@ -1,6 +1,6 @@
 package com.graphhopper.api;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import okhttp3.MediaType;
 
 /**

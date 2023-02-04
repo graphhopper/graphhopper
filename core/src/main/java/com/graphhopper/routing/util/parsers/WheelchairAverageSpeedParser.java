@@ -5,8 +5,8 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.PointList;
 
 public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
     private final int maxInclinePercent = 6;

@@ -17,18 +17,21 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.RoundaboutInstruction;
+import com.graphhopper.core.util.Translation;
+import com.graphhopper.core.util.Instruction;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
-import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.core.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.junit.jupiter.api.Test;
@@ -38,7 +41,12 @@ import java.util.*;
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
 import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
-import static com.graphhopper.util.Parameters.Details.*;
+import static com.graphhopper.core.util.Parameters.Details.*;
+import com.graphhopper.util.AngleCalc;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.TranslationMapTest;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

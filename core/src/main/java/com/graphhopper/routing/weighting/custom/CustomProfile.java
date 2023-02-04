@@ -18,7 +18,7 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.config.Profile;
-import com.graphhopper.util.CustomModel;
+import com.graphhopper.core.util.CustomModel;
 
 public class CustomProfile extends Profile {
 

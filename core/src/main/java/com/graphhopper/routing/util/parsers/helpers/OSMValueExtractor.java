@@ -5,14 +5,14 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.graphhopper.util.Helper.toLowerCase;
+import static com.graphhopper.core.util.Helper.toLowerCase;
 
 public class OSMValueExtractor {
 

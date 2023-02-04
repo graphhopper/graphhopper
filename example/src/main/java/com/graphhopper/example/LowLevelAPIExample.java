@@ -19,8 +19,8 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PMap;
 
 /**
  * Use this example to gain access to the low level API of GraphHopper.

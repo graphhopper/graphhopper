@@ -30,12 +30,12 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.routing.DirectionResolverResult.*;
-import static com.graphhopper.util.Helper.createPointList;
+import static com.graphhopper.core.util.Helper.createPointList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**

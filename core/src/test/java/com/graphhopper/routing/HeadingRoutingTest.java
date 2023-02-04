@@ -18,9 +18,9 @@
 
 package com.graphhopper.routing;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
@@ -31,16 +31,16 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.core.util.Parameters;
 import com.graphhopper.util.TranslationMap;
-import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.core.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA;
+import static com.graphhopper.core.util.Parameters.Algorithms.DIJKSTRA;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.api.model;
 
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 /**
  * A geocoding request following https://graphhopper.com/api/1/docs/geocoding/

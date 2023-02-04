@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.core.util.Helper;
+
 /**
  * Make simple speed measurements possible.
  * <p>

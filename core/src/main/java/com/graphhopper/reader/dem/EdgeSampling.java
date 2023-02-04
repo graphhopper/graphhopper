@@ -19,8 +19,8 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 /**
  * Ensures that elevation is sampled along a point list with no more than maxDistance between samples. Works by adding

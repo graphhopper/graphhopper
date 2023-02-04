@@ -5,7 +5,7 @@ import com.graphhopper.routing.ev.AverageSlope;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.MaxSlope;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.util.PointList;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

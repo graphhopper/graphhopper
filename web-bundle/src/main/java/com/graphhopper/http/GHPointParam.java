@@ -18,7 +18,7 @@
 
 package com.graphhopper.http;
 
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.AbstractParam;
 
 import javax.annotation.Nullable;

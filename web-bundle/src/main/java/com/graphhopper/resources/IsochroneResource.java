@@ -1,5 +1,8 @@
 package com.graphhopper.resources;
 
+import com.graphhopper.core.util.JsonFeature;
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.Parameters;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
@@ -22,7 +25,6 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
 import org.hibernate.validator.constraints.Range;
 import org.locationtech.jts.geom.*;
 import org.slf4j.Logger;
@@ -42,6 +44,8 @@ import static com.graphhopper.resources.IsochroneResource.ResponseType.geojson;
 import static com.graphhopper.resources.RouteResource.removeLegacyParameters;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.StopWatch;
 
 @Path("isochrone")
 public class IsochroneResource {

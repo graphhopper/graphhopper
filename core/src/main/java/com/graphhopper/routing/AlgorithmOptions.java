@@ -18,8 +18,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.Parameters;
 
 /**
  * @author Peter Karich

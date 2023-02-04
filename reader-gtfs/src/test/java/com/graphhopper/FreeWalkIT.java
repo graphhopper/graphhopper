@@ -18,9 +18,12 @@
 
 package com.graphhopper;
 
+import com.graphhopper.core.Trip;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;

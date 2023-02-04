@@ -3,7 +3,7 @@ package com.graphhopper.search;
 import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.search.EdgeKVStorage.KeyValue;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +13,7 @@ import java.util.*;
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
 import static com.graphhopper.search.EdgeKVStorage.MAX_UNIQUE_KEYS;
 import static com.graphhopper.search.EdgeKVStorage.cutString;
-import static com.graphhopper.util.Helper.UTF_CS;
+import static com.graphhopper.core.util.Helper.UTF_CS;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class EdgeKVStorageTest {

@@ -40,10 +40,10 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.exceptions.ConnectionNotFoundException;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.exceptions.ConnectionNotFoundException;
+import com.graphhopper.core.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -22,14 +22,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ResponsePathDeserializer;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -42,10 +42,10 @@ import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.api.GraphHopperMatrixWeb.*;
 import static com.graphhopper.api.Version.GH_VERSION_FROM_MAVEN;
-import static com.graphhopper.util.Helper.round6;
-import static com.graphhopper.util.Helper.toLowerCase;
-import static com.graphhopper.util.Parameters.Routing.CALC_POINTS;
-import static com.graphhopper.util.Parameters.Routing.INSTRUCTIONS;
+import static com.graphhopper.core.util.Helper.round6;
+import static com.graphhopper.core.util.Helper.toLowerCase;
+import static com.graphhopper.core.util.Parameters.Routing.CALC_POINTS;
+import static com.graphhopper.core.util.Parameters.Routing.INSTRUCTIONS;
 
 /**
  * Main wrapper of the GraphHopper Directions API for a simple and efficient

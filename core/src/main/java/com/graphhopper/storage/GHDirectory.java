@@ -25,7 +25,7 @@ import java.util.Map;
 
 import static com.graphhopper.storage.DAType.RAM_INT;
 import static com.graphhopper.storage.DAType.RAM_INT_STORE;
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.core.util.Helper.*;
 
 /**
  * Implements some common methods for the subclasses.

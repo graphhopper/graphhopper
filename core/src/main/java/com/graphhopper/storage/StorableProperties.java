@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +25,7 @@ import java.io.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.core.util.Helper.*;
 
 /**
  * Writes an in-memory HashMap into a file on flush. Thread safe, see #743.

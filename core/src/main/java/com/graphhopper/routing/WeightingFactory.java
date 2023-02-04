@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 
 public interface WeightingFactory {
     /**

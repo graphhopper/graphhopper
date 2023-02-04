@@ -18,10 +18,15 @@
 
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.CustomModel;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.Helper;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
@@ -41,21 +46,24 @@ import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
-import com.graphhopper.util.exceptions.PointDistanceExceededException;
-import com.graphhopper.util.exceptions.PointNotFoundException;
-import com.graphhopper.util.exceptions.PointOutOfBoundsException;
+import com.graphhopper.core.util.exceptions.PointDistanceExceededException;
+import com.graphhopper.core.util.exceptions.PointNotFoundException;
+import com.graphhopper.core.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 import java.util.*;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
-import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
-import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
-import static com.graphhopper.util.Parameters.Routing.*;
+import static com.graphhopper.core.util.Parameters.Algorithms.ALT_ROUTE;
+import static com.graphhopper.core.util.Parameters.Algorithms.ROUND_TRIP;
+import static com.graphhopper.core.util.Parameters.Routing.*;
+import com.graphhopper.util.PathMerger;
+import com.graphhopper.util.RamerDouglasPeucker;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.TranslationMap;
 
 public class Router {
     private final BaseGraph graph;

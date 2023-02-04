@@ -2,7 +2,7 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DistancePlaneProjection;
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.util.PointList;
 
 /**
  * The ElevationData is read from rectangular tiles. Especially when going along a cliff,

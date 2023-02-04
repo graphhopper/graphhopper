@@ -9,9 +9,9 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.exceptions.PointNotFoundException;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.exceptions.PointNotFoundException;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -21,8 +21,8 @@ import java.util.Objects;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-import static com.graphhopper.util.Parameters.Curbsides.*;
-import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
+import static com.graphhopper.core.util.Parameters.Curbsides.*;
+import static com.graphhopper.core.util.Parameters.Routing.CURBSIDE;
 
 public class DirectionResolverResult {
     private static final DirectionResolverResult UNRESTRICTED = new DirectionResolverResult(ANY_EDGE, ANY_EDGE, ANY_EDGE, ANY_EDGE);

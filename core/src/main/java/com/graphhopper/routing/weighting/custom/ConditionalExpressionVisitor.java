@@ -20,7 +20,7 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.routing.ev.StringEncodedValue;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
 

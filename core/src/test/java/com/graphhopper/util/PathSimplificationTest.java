@@ -17,7 +17,10 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.Translation;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
@@ -30,7 +33,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.core.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.junit.jupiter.api.Test;
@@ -39,7 +42,7 @@ import java.util.*;
 
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
 import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
-import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
+import static com.graphhopper.core.util.Parameters.Details.AVERAGE_SPEED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

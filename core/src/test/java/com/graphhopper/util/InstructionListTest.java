@@ -17,6 +17,11 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.Translation;
+import com.graphhopper.core.util.CustomModel;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.Instruction;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.Dijkstra;

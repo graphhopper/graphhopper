@@ -17,15 +17,15 @@
  */
 package com.graphhopper.navigation;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.TranslationMap;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +39,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
-import static com.graphhopper.util.Parameters.Details.INTERSECTION;
-import static com.graphhopper.util.Parameters.Routing.*;
+import static com.graphhopper.core.util.Parameters.Details.INTERSECTION;
+import static com.graphhopper.core.util.Parameters.Routing.*;
 
 /**
  * Provides an endpoint that is consumable with the Mapbox Navigation SDK. The Mapbox Navigation SDK consumes json

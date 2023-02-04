@@ -21,9 +21,9 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.core.util.Parameters;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.exceptions.MaximumNodesExceededException;
+import com.graphhopper.core.util.exceptions.MaximumNodesExceededException;
 
 import java.util.Collections;
 import java.util.List;

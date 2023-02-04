@@ -17,7 +17,7 @@
  */
 package com.graphhopper.util.shapes;
 
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.util.PointList;
 
 /**
  * A shape interface to implement circles, polygons or rectangles.

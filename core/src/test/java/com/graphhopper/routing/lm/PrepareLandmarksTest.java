@@ -34,9 +34,9 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.Parameters;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -47,8 +47,8 @@ import java.util.List;
 import java.util.Random;
 
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
+import static com.graphhopper.core.util.Parameters.Algorithms.ASTAR;
+import static com.graphhopper.core.util.Parameters.Algorithms.ASTAR_BI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 

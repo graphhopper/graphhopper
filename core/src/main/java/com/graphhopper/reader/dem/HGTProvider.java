@@ -18,7 +18,7 @@
 
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 
 import java.io.*;
 import java.nio.file.Files;

@@ -18,6 +18,10 @@
 
 package com.graphhopper.gtfs;
 
+import com.graphhopper.core.util.Translation;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.Instruction;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
@@ -25,16 +29,16 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.ResponsePath;
-import com.graphhopper.Trip;
+import com.graphhopper.core.ResponsePath;
+import com.graphhopper.core.Trip;
 import com.graphhopper.gtfs.fare.Fares;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
-import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.core.util.details.PathDetail;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.locationtech.jts.geom.Coordinate;

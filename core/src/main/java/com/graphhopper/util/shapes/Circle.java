@@ -19,8 +19,8 @@ package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.NumHelper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.util.NumHelper;
+import com.graphhopper.core.util.PointList;
 
 /**
  * @author Peter Karich

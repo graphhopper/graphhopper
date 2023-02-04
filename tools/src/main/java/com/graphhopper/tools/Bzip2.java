@@ -17,7 +17,7 @@
  */
 package com.graphhopper.tools;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 
 import java.io.FileInputStream;

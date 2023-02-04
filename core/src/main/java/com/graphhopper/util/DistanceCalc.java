@@ -17,8 +17,9 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.core.util.PointList;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 /**
  * Calculates the distance of two points or one point and an edge on earth via haversine formula.

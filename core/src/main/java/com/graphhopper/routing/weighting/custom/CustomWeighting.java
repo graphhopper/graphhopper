@@ -21,7 +21,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.util.CustomModel;
+import com.graphhopper.core.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**

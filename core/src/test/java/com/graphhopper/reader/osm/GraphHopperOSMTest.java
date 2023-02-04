@@ -17,6 +17,13 @@
  */
 package com.graphhopper.reader.osm;
 
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.ResponsePath;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.util.CustomModel;
+import com.graphhopper.core.util.Instruction;
 import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
@@ -29,9 +36,8 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,7 +49,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.core.util.Parameters.Algorithms.DIJKSTRA_BI;
+import com.graphhopper.util.BreadthFirstSearch;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

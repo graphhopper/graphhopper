@@ -21,7 +21,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import no.ecc.vectortile.VectorTileDecoder;
@@ -39,7 +39,7 @@ import java.io.InputStream;
 import java.util.*;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
-import static com.graphhopper.util.Parameters.Details.STREET_NAME;
+import static com.graphhopper.core.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**

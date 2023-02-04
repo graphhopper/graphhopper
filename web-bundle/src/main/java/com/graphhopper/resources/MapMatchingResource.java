@@ -17,14 +17,19 @@
  */
 package com.graphhopper.resources;
 
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.Translation;
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.Parameters;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.graphhopper.GHResponse;
+import com.graphhopper.core.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.jackson.Gpx;
@@ -32,7 +37,6 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ResponsePathSerializer;
 import com.graphhopper.matching.*;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,8 +49,15 @@ import javax.ws.rs.core.UriInfo;
 import java.util.*;
 
 import static com.graphhopper.resources.RouteResource.removeLegacyParameters;
-import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
-import static com.graphhopper.util.Parameters.Routing.*;
+import static com.graphhopper.core.util.Parameters.Details.PATH_DETAILS;
+import static com.graphhopper.core.util.Parameters.Routing.*;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.PathMerger;
+import com.graphhopper.util.RamerDouglasPeucker;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.TranslationMap;
 
 /**
  * Resource to use map matching of GraphHopper in a remote client application.

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 
 /**
  * This enum defines the route network of an edge when part of a hiking or biking network.

@@ -27,16 +27,16 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-import static com.graphhopper.util.Parameters.Curbsides.CURBSIDE_ANY;
-import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
+import static com.graphhopper.core.util.Parameters.Curbsides.CURBSIDE_ANY;
+import static com.graphhopper.core.util.Parameters.Routing.CURBSIDE;
 
 /**
  * The methods here can be used to calculate routes with or without via points and implement possible restrictions

@@ -6,7 +6,7 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 
 public class MotorcycleAverageSpeedParser extends CarAverageSpeedParser {
     public static final double MOTORCYCLE_MAX_SPEED = 120;

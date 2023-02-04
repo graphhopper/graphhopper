@@ -17,7 +17,12 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.Instruction;
+import com.graphhopper.core.util.Translation;
+import com.graphhopper.core.util.ViaInstruction;
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.EncodedValueLookup;
@@ -25,7 +30,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
-import com.graphhopper.util.exceptions.ConnectionNotFoundException;
+import com.graphhopper.core.util.exceptions.ConnectionNotFoundException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -144,7 +149,7 @@ public class PathMerger {
 
         if (!fullPoints.isEmpty()) {
             responsePath.addDebugInfo("simplify (" + origPoints + "->" + fullPoints.size() + ")");
-            if (fullPoints.is3D)
+            if (fullPoints.is3D())
                 calcAscendDescend(responsePath, fullPoints);
         }
 
@@ -183,8 +188,8 @@ public class PathMerger {
         for (int i = 0; i < instructions.size() - 1; i++) {
             instruction = instructions.get(i);
 
-            if (i == 0 && !Double.isNaN(favoredHeading) && instruction.extraInfo.containsKey("heading")) {
-                double heading = (double) instruction.extraInfo.get("heading");
+            if (i == 0 && !Double.isNaN(favoredHeading) && instruction.getExtraInfoJSON().containsKey("heading")) {
+                double heading = (double) instruction.getExtraInfoJSON().get("heading");
                 double diff = Math.abs(heading - favoredHeading) % 360;
                 if (diff > 170 && diff < 190) {
                     // The requested heading points into the opposite direction of the calculated heading
@@ -196,13 +201,13 @@ public class PathMerger {
             if (instruction.getSign() == Instruction.REACHED_VIA) {
                 nextInstruction = instructions.get(i + 1);
                 if (nextInstruction.getSign() != Instruction.CONTINUE_ON_STREET
-                        || !instruction.extraInfo.containsKey("last_heading")
-                        || !nextInstruction.extraInfo.containsKey("heading")) {
+                        || !instruction.getExtraInfoJSON().containsKey("last_heading")
+                        || !nextInstruction.getExtraInfoJSON().containsKey("heading")) {
                     // TODO throw exception?
                     continue;
                 }
-                double lastHeading = (double) instruction.extraInfo.get("last_heading");
-                double heading = (double) nextInstruction.extraInfo.get("heading");
+                double lastHeading = (double) instruction.getExtraInfoJSON().get("last_heading");
+                double heading = (double) nextInstruction.getExtraInfoJSON().get("heading");
 
                 // Since it's supposed to go back the same edge, we can be very strict with the diff
                 double diff = Math.abs(lastHeading - heading) % 360;

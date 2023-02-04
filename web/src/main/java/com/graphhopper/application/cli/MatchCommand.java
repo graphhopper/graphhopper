@@ -18,17 +18,24 @@
 
 package com.graphhopper.application.cli;
 
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.Translation;
+import com.graphhopper.core.util.Helper;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.jackson.Gpx;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.Observation;
-import com.graphhopper.util.*;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.PathMerger;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.TranslationMap;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Argument;

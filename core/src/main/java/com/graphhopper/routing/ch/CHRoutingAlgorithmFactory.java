@@ -23,12 +23,11 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.RoutingCHGraph;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
-
-import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
-import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PMap;
+import static com.graphhopper.core.util.Parameters.Algorithms.*;
+import static com.graphhopper.core.util.Parameters.Routing.ALGORITHM;
+import static com.graphhopper.core.util.Parameters.Routing.MAX_VISITED_NODES;
 
 /**
  * Given a {@link RoutingCHGraph} and possibly a {@link QueryGraph} this class sets up and creates routing

@@ -18,9 +18,9 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.util.JsonFeature;
-import com.graphhopper.util.JsonFeatureCollection;
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.util.JsonFeature;
+import com.graphhopper.core.util.JsonFeatureCollection;
+import com.graphhopper.core.util.PointList;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;

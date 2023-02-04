@@ -23,7 +23,7 @@ import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.graphhopper.storage.CHStorageBuilder;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.PMap;
+import com.graphhopper.core.util.PMap;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +32,7 @@ import java.util.Locale;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
 import static com.graphhopper.util.GHUtility.reverseEdgeKey;
-import static com.graphhopper.util.Helper.nf;
+import static com.graphhopper.core.util.Helper.nf;
 
 /**
  * This class is used to calculate the priority of or contract a given node in edge-based Contraction Hierarchies as it

@@ -17,9 +17,9 @@
  */
 package com.graphhopper.util.shapes;
 
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.NumHelper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.NumHelper;
+import com.graphhopper.core.util.PointList;
 import org.locationtech.jts.algorithm.RectangleLineIntersector;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.Envelope;

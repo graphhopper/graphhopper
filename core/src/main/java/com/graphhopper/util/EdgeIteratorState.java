@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.core.util.PointList;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.Graph;

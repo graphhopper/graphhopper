@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PMap;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
@@ -38,9 +40,8 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -59,10 +60,13 @@ import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
-import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
-import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
+import static com.graphhopper.core.util.Parameters.Algorithms.ASTAR_BI;
+import static com.graphhopper.core.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.core.util.Parameters.Routing.ALGORITHM;
+import static com.graphhopper.core.util.Parameters.Routing.MAX_VISITED_NODES;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**

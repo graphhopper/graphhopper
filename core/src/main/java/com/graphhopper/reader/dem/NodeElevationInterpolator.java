@@ -19,7 +19,7 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.util.PointList;
 
 /**
  * Interpolates elevations of pillar nodes based on elevations of tower nodes.

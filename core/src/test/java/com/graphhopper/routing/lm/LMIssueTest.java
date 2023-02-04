@@ -33,8 +33,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
+import static com.graphhopper.core.util.Parameters.Algorithms.ASTAR;
+import static com.graphhopper.core.util.Parameters.Algorithms.ASTAR_BI;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class LMIssueTest {

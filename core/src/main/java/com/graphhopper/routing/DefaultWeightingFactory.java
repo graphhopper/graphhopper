@@ -27,15 +27,15 @@ import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.core.util.CustomModel;
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.util.Parameters;
 
 import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FACTOR;
 import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
-import static com.graphhopper.util.Helper.toLowerCase;
+import static com.graphhopper.core.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
 

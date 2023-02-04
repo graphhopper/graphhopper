@@ -21,8 +21,8 @@ package com.graphhopper.api;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import static com.graphhopper.util.Helper.UTF_CS;
-import static com.graphhopper.util.Helper.readFile;
+import static com.graphhopper.core.util.Helper.UTF_CS;
+import static com.graphhopper.core.util.Helper.readFile;
 
 public class Version {
     public static final String GH_VERSION_FROM_MAVEN;

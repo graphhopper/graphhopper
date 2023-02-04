@@ -17,6 +17,13 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.core.util.CustomModel;
+import com.graphhopper.core.util.JsonFeatureCollection;
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.util.PMap;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.util.Helper;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.CHProfile;
@@ -45,9 +52,8 @@ import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.util.*;
-import com.graphhopper.util.Parameters.Landmark;
-import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.core.util.Parameters.Landmark;
+import com.graphhopper.core.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,8 +72,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.util.GHUtility.readCountries;
-import static com.graphhopper.util.Helper.*;
-import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
+import static com.graphhopper.core.util.Helper.*;
+import static com.graphhopper.core.util.Parameters.Algorithms.RoundTrip;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.Unzipper;
 
 /**
  * Easy to use access point to configure import and (offline) routing.

@@ -1,7 +1,12 @@
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.PointList;
+import com.graphhopper.core.util.shapes.GHPoint;
+import com.graphhopper.util.AngleCalc;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 
 public class HeadingEdgeFilter implements EdgeFilter {
 

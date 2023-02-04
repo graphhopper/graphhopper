@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util.parsers;
 
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PMap;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
@@ -27,7 +29,10 @@ import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
+import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;

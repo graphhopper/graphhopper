@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.core.util.Helper;
 import static java.lang.Math.cos;
 import static java.lang.Math.toRadians;
 

@@ -24,7 +24,7 @@ import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 
 import java.util.ArrayList;
 import java.util.Arrays;

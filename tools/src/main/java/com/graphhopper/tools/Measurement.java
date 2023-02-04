@@ -17,6 +17,13 @@
  */
 package com.graphhopper.tools;
 
+import com.graphhopper.core.util.CustomModel;
+import com.graphhopper.core.ResponsePath;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.util.Parameters;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.util.PMap;
 import com.carrotsearch.hppc.IntArrayList;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.*;
@@ -37,15 +44,13 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
-import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.*;
-import com.graphhopper.util.Parameters.Algorithms;
-import com.graphhopper.util.Parameters.CH;
-import com.graphhopper.util.Parameters.Landmark;
+import com.graphhopper.core.util.Parameters.Algorithms;
+import com.graphhopper.core.util.Parameters.CH;
+import com.graphhopper.core.util.Parameters.Landmark;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,10 +68,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.graphhopper.util.GHUtility.readCountries;
-import static com.graphhopper.util.Helper.*;
-import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
-import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
-import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
+import static com.graphhopper.core.util.Helper.*;
+import static com.graphhopper.core.util.Parameters.Algorithms.ALT_ROUTE;
+import static com.graphhopper.core.util.Parameters.Routing.BLOCK_AREA;
+import static com.graphhopper.core.util.Parameters.Routing.U_TURN_COSTS;
+import com.graphhopper.util.Constants;
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.MiniPerfTest;
+import com.graphhopper.util.StopWatch;
 
 /**
  * Used to run performance benchmarks for routing and other functionalities of GraphHopper

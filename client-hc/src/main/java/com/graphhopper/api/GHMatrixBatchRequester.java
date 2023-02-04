@@ -19,7 +19,7 @@ package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.jackson.ResponsePathDeserializer;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;

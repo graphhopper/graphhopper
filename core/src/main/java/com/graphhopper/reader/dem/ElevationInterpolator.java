@@ -17,9 +17,8 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.util.PointList;
-
-import static com.graphhopper.util.Helper.round2;
+import com.graphhopper.core.util.PointList;
+import static com.graphhopper.core.util.Helper.round2;
 
 /**
  * Elevation interpolator calculates elevation for the given lat/lon coordinates

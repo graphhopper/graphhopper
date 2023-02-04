@@ -21,10 +21,10 @@ package com.graphhopper.jackson;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.graphhopper.GHResponse;
-import com.graphhopper.ResponsePath;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.ResponsePath;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.PointList;
 
 import java.text.NumberFormat;
 import java.util.Arrays;

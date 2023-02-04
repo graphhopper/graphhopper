@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util.details;
 
+import com.graphhopper.core.util.details.PathDetail;
 import com.graphhopper.coll.MapEntry;
 
 import java.util.ArrayList;

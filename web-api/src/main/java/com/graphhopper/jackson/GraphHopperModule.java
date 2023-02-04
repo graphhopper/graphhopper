@@ -18,13 +18,13 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.ResponsePath;
+import com.graphhopper.core.GHRequest;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.ResponsePath;
 import com.graphhopper.json.Statement;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.core.util.InstructionList;
+import com.graphhopper.core.util.details.PathDetail;
+import com.graphhopper.core.util.shapes.GHPoint;
 import org.locationtech.jts.geom.Envelope;
 
 public class GraphHopperModule extends SimpleModule {

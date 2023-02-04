@@ -18,11 +18,14 @@
 
 package com.graphhopper;
 
+import com.graphhopper.core.Trip;
+import com.graphhopper.core.GHResponse;
+import com.graphhopper.core.ResponsePath;
 import com.conveyal.gtfs.model.Stop;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
+import com.graphhopper.core.util.Helper;
+import com.graphhopper.core.util.Instruction;
 import com.graphhopper.util.TranslationMap;
 import org.assertj.core.util.Maps;
 import org.junit.jupiter.api.AfterAll;

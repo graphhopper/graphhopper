@@ -18,7 +18,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.Constants;
-import com.graphhopper.util.Helper;
+import com.graphhopper.core.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
