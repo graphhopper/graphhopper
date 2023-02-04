@@ -64,8 +64,8 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.graphhopper.util.GHUtility.createCircle;
 import static com.graphhopper.util.GHUtility.createRectangle;
-import static com.graphhopper.util.GHUtility.createTriangle;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Curbsides.*;
 import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
@@ -582,7 +582,7 @@ public class GraphHopperTest {
 
         // block road at 49.985759,11.50687
         CustomModel customModel = new CustomModel().addToPriority(Statement.If("in_blocked_area", Statement.Op.MULTIPLY, "0"));
-        customModel.getAreas().put("blocked_area", createTriangle(49.985759, 11.50687, 5));
+        customModel.getAreas().put("blocked_area", createCircle(49.985759, 11.50687, 5));
         req.setCustomModel(customModel);
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
@@ -603,7 +603,7 @@ public class GraphHopperTest {
         assertEquals(13988, rsp.getBest().getDistance(), 1);
 
         // Add blocked point to above area, to increase detour
-        customModel.getAreas().put("blocked_point", createTriangle(50.017578, 11.547527, 5));
+        customModel.getAreas().put("blocked_point", createCircle(50.017578, 11.547527, 5));
         customModel.addToPriority(Statement.If("in_blocked_point", Statement.Op.MULTIPLY, "0"));
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
@@ -611,13 +611,13 @@ public class GraphHopperTest {
 
         // block by edge IDs -> i.e. use small circular area
         customModel = new CustomModel().addToPriority(Statement.If("in_blocked_area", Statement.Op.MULTIPLY, "0"));
-        customModel.getAreas().put("blocked_area", createTriangle(49.979929, 11.520066, 200));
+        customModel.getAreas().put("blocked_area", createCircle(49.979929, 11.520066, 200));
         req.setCustomModel(customModel);
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
 
-        customModel.getAreas().put("blocked_area", createTriangle(49.980868, 11.516397, 150));
+        customModel.getAreas().put("blocked_area", createCircle(49.980868, 11.516397, 150));
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
@@ -634,7 +634,7 @@ public class GraphHopperTest {
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(1807, rsp.getBest().getDistance(), 1);
 
-        customModel.getAreas().put("blocked_area", createTriangle(50.018277, 11.492336, 5));
+        customModel.getAreas().put("blocked_area", createCircle(50.018277, 11.492336, 5));
         req.setCustomModel(customModel);
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());

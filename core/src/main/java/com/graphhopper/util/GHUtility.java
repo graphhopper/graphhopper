@@ -53,6 +53,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
@@ -678,47 +679,12 @@ public class GHUtility {
                 towerNodes.getLat(secondIndex), towerNodes.getLon(secondIndex));
     }
 
-    public static JsonFeature createTriangle(double centerLat, double centerLon, double radius) {
-        Coordinate[] coordinates = Stream.of(
-                // todonow...
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 0),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 10),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 20),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 30),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 40),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 50),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 60),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 70),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 80),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 90),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 100),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 110),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 120),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 130),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 140),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 150),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 160),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 170),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 180),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 190),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 200),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 210),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 220),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 230),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 240),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 250),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 260),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 270),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 280),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 290),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 300),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 310),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 320),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 330),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 340),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 350),
-                DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, 0)
-        ).map(p -> new Coordinate(p.lon, p.lat)).toArray(Coordinate[]::new);
+    public static JsonFeature createCircle(double centerLat, double centerLon, double radius) {
+        final int n = 36;
+        final double delta = 360.0 / n;
+        Coordinate[] coordinates = IntStream.range(0, n + 1)
+                .mapToObj(i -> DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, (i * delta) % 360))
+                .map(p -> new Coordinate(p.lon, p.lat)).toArray(Coordinate[]::new);
         Polygon polygon = new GeometryFactory().createPolygon(coordinates);
         JsonFeature result = new JsonFeature();
         result.setGeometry(polygon);
