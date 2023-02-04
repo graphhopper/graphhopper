@@ -52,21 +52,4 @@ public class EncodedValueSerializer {
         }
     }
 
-    public static String serializeInitializerConfig(EncodedValue.InitializerConfig initializerConfig) {
-        try {
-            JsonNode tree = MAPPER.valueToTree(initializerConfig);
-            return MAPPER.writeValueAsString(tree);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Could not serialize initializer config: " + e.getMessage());
-        }
-    }
-
-    public static EncodedValue.InitializerConfig deserializeInitializerConfig(String serializedInitializerConfig) {
-        try {
-            JsonNode jsonNode = MAPPER.readTree(serializedInitializerConfig);
-            return MAPPER.treeToValue(jsonNode, EncodedValue.InitializerConfig.class);
-        } catch (JsonProcessingException e) {
-            throw new IllegalStateException("Could not deserialize initializer config: " + serializedInitializerConfig + ", error: " + e.getMessage());
-        }
-    }
 }

@@ -93,12 +93,11 @@ public class OSMParsers {
         return relFlags;
     }
 
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         for (RelationTagParser relParser : relationTagParsers)
             relParser.handleWayTags(edgeFlags, way, relationFlags);
         for (TagParser parser : wayTagParsers)
             parser.handleWayTags(edgeFlags, way, relationFlags);
-        return edgeFlags;
     }
 
     public IntsRef createRelationFlags() {

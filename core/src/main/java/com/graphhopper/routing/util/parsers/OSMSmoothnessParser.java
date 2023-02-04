@@ -33,13 +33,12 @@ public class OSMSmoothnessParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         String smoothnessTag = readerWay.getTag("smoothness");
         Smoothness smoothness = Smoothness.find(smoothnessTag);
         if (smoothness == MISSING)
-            return edgeFlags;
+            return;
 
         smoothnessEnc.setEnum(false, edgeFlags, smoothness);
-        return edgeFlags;
     }
 }

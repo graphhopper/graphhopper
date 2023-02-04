@@ -73,7 +73,7 @@ public class ViaRouting {
                 snap = locationIndex.findClosest(point.lat, point.lon, new HeadingEdgeFilter(directedSnapFilter, headings.get(placeIndex), point));
             } else if (!pointHints.isEmpty()) {
                 snap = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter,
-                        pointHints.get(placeIndex), point, 100));
+                        pointHints.get(placeIndex), point, 170));
             } else if (!snapPreventions.isEmpty()) {
                 snap = locationIndex.findClosest(point.lat, point.lon, strictEdgeFilter);
             }

@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.api.GraphHopperMatrixWeb.*;
+import static com.graphhopper.api.GraphHopperWeb.X_GH_CLIENT_VERSION;
 
 /**
  * @author Peter Karich
@@ -308,6 +309,7 @@ public abstract class GHMatrixAbstractRequester {
     protected String postJson(String url, JsonNode data) throws IOException {
         String stringData = data.toString();
         Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
+        builder.header(X_GH_CLIENT_VERSION, Version.GH_VERSION_FROM_MAVEN);
         // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
         if (stringData.length() < maxUnzippedLength)
             builder.header("Content-Encoding", "identity");

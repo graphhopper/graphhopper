@@ -35,7 +35,7 @@ public class OSMHorseRatingParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         String scale = readerWay.getTag("horse_scale");
         int rating = 0;
         if (scale != null) {
@@ -48,6 +48,5 @@ public class OSMHorseRatingParser implements TagParser {
         }
         if (rating != 0)
             horseScale.setInt(false, edgeFlags, rating);
-        return edgeFlags;
     }
 }

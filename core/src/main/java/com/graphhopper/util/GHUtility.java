@@ -23,13 +23,14 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -198,7 +199,7 @@ public class GHUtility {
     }
 
     /**
-     * @param speed if null a random speed will be assign to every edge
+     * @param speed if null a random speed will be assigned to every edge
      */
     public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree, boolean allowLoops,
                                         boolean allowZeroDistance, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, Double speed,
@@ -457,78 +458,8 @@ public class GHUtility {
         }
     }
 
-    public static EdgeIteratorState createMockedEdgeIteratorState(final double distance, final IntsRef flags) {
-        return createMockedEdgeIteratorState(distance, flags, 0, 1, 2, 3, 4);
-    }
-
-    public static EdgeIteratorState createMockedEdgeIteratorState(final double distance, final IntsRef flags,
-                                                                  final int base, final int adj, final int edge, final int origFirst, final int origLast) {
-        return new GHUtility.DisabledEdgeIterator() {
-            @Override
-            public double getDistance() {
-                return distance;
-            }
-
-            @Override
-            public IntsRef getFlags() {
-                return flags;
-            }
-
-            @Override
-            public boolean get(BooleanEncodedValue property) {
-                return property.getBool(false, flags);
-            }
-
-            @Override
-            public boolean getReverse(BooleanEncodedValue property) {
-                return property.getBool(true, flags);
-            }
-
-            @Override
-            public double get(DecimalEncodedValue property) {
-                return property.getDecimal(false, flags);
-            }
-
-            @Override
-            public double getReverse(DecimalEncodedValue property) {
-                return property.getDecimal(true, flags);
-            }
-
-            @Override
-            public <T extends Enum<?>> T get(EnumEncodedValue<T> property) {
-                return property.getEnum(false, flags);
-            }
-
-            @Override
-            public <T extends Enum<?>> T getReverse(EnumEncodedValue<T> property) {
-                return property.getEnum(true, flags);
-            }
-
-            @Override
-            public int getEdge() {
-                return edge;
-            }
-
-            @Override
-            public int getBaseNode() {
-                return base;
-            }
-
-            @Override
-            public int getAdjNode() {
-                return adj;
-            }
-
-            @Override
-            public PointList fetchWayGeometry(FetchMode type) {
-                return Helper.createPointList(0, 2, 6, 4);
-            }
-
-        };
-    }
-
     /**
-     * @return the the edge between base and adj, or null if there is no such edge
+     * @return the edge between base and adj, or null if there is no such edge
      * @throws IllegalArgumentException when there are multiple edges
      */
     public static EdgeIteratorState getEdge(Graph graph, int base, int adj) {
@@ -579,25 +510,6 @@ public class GHUtility {
      */
     public static int getEdgeFromEdgeKey(int edgeKey) {
         return edgeKey / 2;
-    }
-
-    public static IntsRef setSpeed(double fwdSpeed, double bwdSpeed, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, IntsRef edgeFlags) {
-        if (fwdSpeed < 0 || bwdSpeed < 0)
-            throw new IllegalArgumentException("Speed must be positive but wasn't! fwdSpeed:" + fwdSpeed + ", bwdSpeed:" + bwdSpeed);
-
-        speedEnc.setDecimal(false, edgeFlags, fwdSpeed);
-        if (fwdSpeed > 0)
-            accessEnc.setBool(false, edgeFlags, true);
-
-        if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || speedEnc.isStoreTwoDirections())) {
-            if (!speedEnc.isStoreTwoDirections())
-                throw new IllegalArgumentException("EncodedValue " + speedEnc.getName() + " supports only one direction " +
-                        "but two different speeds were specified " + fwdSpeed + " " + bwdSpeed);
-            speedEnc.setDecimal(true, edgeFlags, bwdSpeed);
-        }
-        if (bwdSpeed > 0)
-            accessEnc.setBool(true, edgeFlags, true);
-        return edgeFlags;
     }
 
     public static void setSpeed(double fwdSpeed, double bwdSpeed, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EdgeIteratorState... edges) {
@@ -704,10 +616,12 @@ public class GHUtility {
             JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
             return jsonFeatureCollection.getFeatures().stream()
                     // exclude areas not in the list of Country enums like FX => Metropolitan France
-                    .filter(customArea -> map.get((String) customArea.getProperties().get("id")) != null)
+                    .filter(customArea -> map.get(getIdOrPropertiesId(customArea)) != null)
                     .map((f) -> {
                         CustomArea ca = CustomArea.fromJsonFeature(f);
-                        Country country = map.get((String) f.getProperties().get("id"));
+                        // the Feature does not include "id" but we expect it
+                        if (f.getId() == null) f.setId(getIdOrPropertiesId(f));
+                        Country country = map.get(f.getId());
                         ca.getProperties().put(Country.ISO_ALPHA3, country.name());
                         return ca;
                     })
@@ -717,9 +631,16 @@ public class GHUtility {
         }
     }
 
+    private static String getIdOrPropertiesId(JsonFeature feature) {
+        if (feature.getId() != null) return feature.getId();
+        if (feature.getProperties() != null) return (String) feature.getProperties().get("id");
+        return null;
+    }
+
     public static CustomArea getFirstDuplicateArea(List<CustomArea> areas, String id) {
         Set<String> result = new HashSet<>(areas.size());
         for (CustomArea area : areas) {
+            if (area.getProperties() == null) continue;
             String countryCode = (String) area.getProperties().get(id);
             // in our country file there are not only countries but "subareas" (with ISO3166-2) or other unnamed areas
             // like Metropolitan Netherlands
@@ -745,228 +666,6 @@ public class GHUtility {
             executorService.shutdownNow();
             throw new RuntimeException(e);
         }
-    }
-
-    /**
-     * This edge iterator can be used in tests to mock specific iterator behaviour via overloading
-     * certain methods.
-     */
-    public static class DisabledEdgeIterator implements EdgeIterator {
-        @Override
-        public EdgeIterator detach(boolean reverse) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState setDistance(double dist) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState setFlags(IntsRef flags) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public boolean next() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getEdge() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getEdgeKey() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getReverseEdgeKey() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getBaseNode() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getAdjNode() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public double getDistance() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public IntsRef getFlags() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public PointList fetchWayGeometry(FetchMode type) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState setWayGeometry(PointList list) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public String getName() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> keyValues) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public List<EdgeKVStorage.KeyValue> getKeyValues() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public Object getValue(String key) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public boolean get(BooleanEncodedValue property) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState set(BooleanEncodedValue property, boolean value) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public boolean getReverse(BooleanEncodedValue property) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState setReverse(BooleanEncodedValue property, boolean value) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState set(BooleanEncodedValue property, boolean fwd, boolean bwd) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int get(IntEncodedValue property) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState set(IntEncodedValue property, int value) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getReverse(IntEncodedValue property) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState setReverse(IntEncodedValue property, int value) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState set(IntEncodedValue property, int fwd, int bwd) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public double get(DecimalEncodedValue property) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState set(DecimalEncodedValue property, double value) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public double getReverse(DecimalEncodedValue property) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState setReverse(DecimalEncodedValue property, double value) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState set(DecimalEncodedValue property, double fwd, double bwd) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public <T extends Enum<?>> T get(EnumEncodedValue<T> property) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T value) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public <T extends Enum<?>> T getReverse(EnumEncodedValue<T> property) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public <T extends Enum<?>> EdgeIteratorState setReverse(EnumEncodedValue<T> property, T value) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public <T extends Enum<?>> EdgeIteratorState set(EnumEncodedValue<T> property, T fwd, T bwd) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public String get(StringEncodedValue property) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState set(StringEncodedValue property, String value) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public String getReverse(StringEncodedValue property) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState setReverse(StringEncodedValue property, String value) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState set(StringEncodedValue property, String fwd, String bwd) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState copyPropertiesFrom(EdgeIteratorState edge) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
     }
 
     public static BBox createBBox(EdgeIteratorState edgeState) {
