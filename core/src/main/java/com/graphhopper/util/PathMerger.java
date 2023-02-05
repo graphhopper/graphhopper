@@ -156,12 +156,14 @@ public class PathMerger {
             responsePath.addError(new ConnectionNotFoundException("Connection between locations not found", Collections.emptyMap()));
         }
 
-        for (int i = 0; i < wayPointIntervals.size(); i++) {
-            int start = wayPointIntervals.get(i).start;
-            int end = wayPointIntervals.get(i).end;
-            if (waypoints.getLat(i) != fullPoints.getLat(start) || waypoints.getLon(i) != fullPoints.getLon(start)
-                    || waypoints.getLat(i + 1) != fullPoints.getLat(end) || waypoints.getLon(i + 1) != fullPoints.getLon(end))
-                throw new IllegalStateException("waypoints are not included in points, or waypoint intervals are wrong");
+        if (allFound) {
+            for (int i = 0; i < wayPointIntervals.size(); i++) {
+                int start = wayPointIntervals.get(i).start;
+                int end = wayPointIntervals.get(i).end;
+                if (waypoints.getLat(i) != fullPoints.getLat(start) || waypoints.getLon(i) != fullPoints.getLon(start)
+                        || waypoints.getLat(i + 1) != fullPoints.getLat(end) || waypoints.getLon(i + 1) != fullPoints.getLon(end))
+                    throw new IllegalStateException("waypoints are not included in points, or waypoint intervals are wrong");
+            }
         }
 
         responsePath.setDescription(description).
