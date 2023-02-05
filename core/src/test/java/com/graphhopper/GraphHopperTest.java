@@ -2287,6 +2287,52 @@ public class GraphHopperTest {
         assertEquals(expected, detail.toString());
     }
 
+    @ParameterizedTest
+    @CsvSource(value = {"true,true", "true,false", "false,true", "false,false"})
+    public void simplifyKeepsWaypoints(boolean elevation, boolean instructions) {
+        GraphHopper h = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
+        if (elevation)
+            h.setElevationProvider(new SRTMProvider(DIR));
+        h.importOrLoad();
+
+        List<GHPoint> reqPoints = asList(
+                new GHPoint(43.741736, 7.428043),
+                new GHPoint(43.741248, 7.4274),
+                new GHPoint(43.73906, 7.426694),
+                new GHPoint(43.736337, 7.420592),
+                new GHPoint(43.735585, 7.419734),
+                new GHPoint(43.734857, 7.41909),
+                new GHPoint(43.73389, 7.418578),
+                new GHPoint(43.733204, 7.418755),
+                new GHPoint(43.731969, 7.416949)
+        );
+        GHRequest req = new GHRequest(reqPoints).setProfile("car");
+        req.putHint("instructions", instructions);
+        GHResponse res = h.route(req);
+        assertFalse(res.hasErrors());
+        assertEquals(elevation ? 1828 : 1793, res.getBest().getDistance(), 1);
+        PointList points = res.getBest().getPoints();
+        PointList wayPoints = res.getBest().getWaypoints();
+        assertEquals(reqPoints.size(), wayPoints.size());
+        assertEquals(points.is3D(), wayPoints.is3D());
+        assertPointlistContainsSublist(points, wayPoints);
+    }
+
+    private static void assertPointlistContainsSublist(PointList pointList, PointList subList) {
+        // we check if all points in sublist exist in pointlist, in the order given by sublist
+        int j = 0;
+        for (int i = 0; i < pointList.size(); i++)
+            if (pointList.getLat(i) == subList.getLat(j) && pointList.getLon(i) == subList.getLon(j) && (!pointList.is3D() || pointList.getEle(i) == subList.getEle(j)))
+                j++;
+        if (j != subList.size())
+            fail("point list does not contain point " + j + " of sublist: " + subList.get(j) +
+                    "\npoint list: " + pointList +
+                    "\nsublist   : " + subList);
+    }
+
     @Test
     public void testNoLoad() {
         String profile = "profile";

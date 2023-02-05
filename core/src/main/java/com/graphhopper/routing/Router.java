@@ -303,7 +303,7 @@ public class Router {
     }
 
     private PointList getWaypoints(List<Snap> snaps) {
-        PointList pointList = new PointList(snaps.size(), true);
+        PointList pointList = new PointList(snaps.size(), graph.getNodeAccess().is3D());
         for (Snap snap : snaps) {
             pointList.add(snap.getSnappedPoint());
         }
