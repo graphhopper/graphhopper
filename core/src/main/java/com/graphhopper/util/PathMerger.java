@@ -156,7 +156,8 @@ public class PathMerger {
             responsePath.addError(new ConnectionNotFoundException("Connection between locations not found", Collections.emptyMap()));
         }
 
-        if (allFound) {
+        // make sure the way point indices actually point to the points in waypoints...
+        if (allFound && !waypoints.isEmpty()) { // we use empty waypoints for map-matching...
             for (int i = 0; i < wayPointIntervals.size(); i++) {
                 int start = wayPointIntervals.get(i).start;
                 int end = wayPointIntervals.get(i).end;
