@@ -45,6 +45,7 @@ import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.BBox;
@@ -660,14 +661,14 @@ public class GraphHopperTest {
         assertEquals(510, rsp.getBest().getDistance(), 10);
 
         // first point is contained in blocked area => error
-        // todonow: what if a (via-?)point is located within the blocked area? so far we got a dedicated error in this
-        // case, but now we get connection-not-found?
         req = new GHRequest(49.979, 11.516, 49.986107, 11.507202).
                 setProfile(profile);
         customModel.getAreas().put("blocked_area", createRectangle(49.981875, 11.515818, 49.979522, 11.521407));
         req.setCustomModel(customModel);
         rsp = hopper.route(req);
         assertTrue(rsp.hasErrors(), "expected errors");
+        assertEquals(1, rsp.getErrors().size());
+        assertTrue(rsp.getErrors().get(0) instanceof ConnectionNotFoundException);
     }
 
     @Test
