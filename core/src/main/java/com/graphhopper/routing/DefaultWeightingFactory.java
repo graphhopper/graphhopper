@@ -52,8 +52,6 @@ public class DefaultWeightingFactory implements WeightingFactory {
         // Merge profile hints with request hints, the request hints take precedence.
         // Note that so far we do not check if overwriting the profile hints actually works with the preparation
         // for LM/CH. Later we should also limit the number of parameters that can be used to modify the profile.
-        // todo: since we are not dealing with block_area here yet we cannot really apply any merging rules
-        // for it, see discussion here: https://github.com/graphhopper/graphhopper/pull/1958#discussion_r395462901
         PMap hints = new PMap();
         hints.putAll(profile.getHints());
         hints.putAll(requestHints);
