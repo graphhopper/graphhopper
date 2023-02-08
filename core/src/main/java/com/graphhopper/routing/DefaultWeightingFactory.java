@@ -105,6 +105,8 @@ public class DefaultWeightingFactory implements WeightingFactory {
         else {
             weighting = handleOrsWeightings(weightingStr, hints, encoder, turnCostProvider);
         }
+
+        weighting = applySoftWeightings(hints, encoder, weighting);
         // ORS-GH MOD END
 
         if (weighting == null)
@@ -137,6 +139,12 @@ public class DefaultWeightingFactory implements WeightingFactory {
     // codebases (graphHopper fork and main code base)
     protected Weighting handleExternalOrsWeightings(String weightingStr, PMap hints, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
         return null; // Override in external ORS code base
+    }
+
+    // Note: this method is only needed because ORS is split into two
+    // codebases (graphHopper fork and main code base)
+     protected Weighting applySoftWeightings(PMap hints, FlagEncoder encoder, Weighting weighting) {
+       return weighting;
     }
     // ORS-GH MOD END
 }
