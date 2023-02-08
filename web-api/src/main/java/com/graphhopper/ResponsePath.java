@@ -42,7 +42,7 @@ public class ResponsePath {
     private String debugInfo = "";
     private InstructionList instructions;
     private PointList waypointList = PointList.EMPTY;
-    private List<Interval> waypointIntervals = new ArrayList<>();
+    private List<Integer> waypointIndices = new ArrayList<>();
     private PointList pointList = PointList.EMPTY;
     private int numChanges;
     private final List<Trip.Leg> legs = new ArrayList<>(5);
@@ -128,13 +128,13 @@ public class ResponsePath {
         return this;
     }
 
-    public List<Interval> getWaypointIntervals() {
-        check("getWaypointIntervals");
-        return waypointIntervals;
+    public List<Integer> getWaypointIndices() {
+        check("getWaypointIndices");
+        return waypointIndices;
     }
 
-    public ResponsePath setWaypointIntervals(List<Interval> waypointIntervals) {
-        this.waypointIntervals = waypointIntervals;
+    public ResponsePath setWaypointIndices(List<Integer> waypointIndices) {
+        this.waypointIndices = waypointIndices;
         return this;
     }
 
@@ -333,20 +333,5 @@ public class ResponsePath {
 
     public void setImpossible(boolean impossible) {
         this.impossible = impossible;
-    }
-
-    public static class Interval {
-        public int start;
-        public int end;
-
-        public Interval(int start, int end) {
-            this.start = start;
-            this.end = end;
-        }
-
-        @Override
-        public String toString() {
-            return "[" + start + ", " + end + "]";
-        }
     }
 }

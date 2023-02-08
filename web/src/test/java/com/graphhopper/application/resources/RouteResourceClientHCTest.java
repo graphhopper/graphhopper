@@ -403,25 +403,24 @@ public class RouteResourceClientHCTest {
         assertEquals(5333, path.getDistance(), 5);
 
         assertEquals(9, path.getWaypoints().size());
-        assertEquals(8, path.getWaypointIntervals().size());
+        assertEquals(9, path.getWaypointIndices().size());
         // explicitly check one of the waypoints
         assertEquals(42.50539, path.getWaypoints().get(2).lat);
-        assertEquals(42.50539, path.getPoints().get(path.getWaypointIntervals().get(1).end).getLat());
-        assertEquals(42.50539, path.getPoints().get(path.getWaypointIntervals().get(2).start).getLat());
+        assertEquals(42.50539, path.getPoints().get(path.getWaypointIndices().get(2)).getLat());
         // check all the waypoints
-        assertEquals(path.getWaypoints().get(0), path.getPoints().get(path.getWaypointIntervals().get(0).start));
-        for (int i = 0; i < path.getWaypointIntervals().size(); ++i)
-            assertEquals(path.getWaypoints().get(i + 1), path.getPoints().get(path.getWaypointIntervals().get(i).end));
+        assertEquals(path.getWaypoints().get(0), path.getPoints().get(path.getWaypointIndices().get(0)));
+        for (int i = 0; i < path.getWaypointIndices().size(); ++i)
+            assertEquals(path.getWaypoints().get(i), path.getPoints().get(path.getWaypointIndices().get(i)));
 
         List<PointList> pointListFromInstructions = getPointListFromInstructions(path);
-        List<PointList> pointListFromWayPointIntervals = getPointListFromWayPointIntervals(path);
+        List<PointList> pointListFromWayPointIndices = getPointListFromWayPointIndices(path);
 
-        assertEquals(pointListFromInstructions.size(), pointListFromWayPointIntervals.size());
-        assertEquals(8, pointListFromWayPointIntervals.size());
-        for (int i = 0; i < pointListFromWayPointIntervals.size(); i++) {
-            assertEquals(pointListFromInstructions.get(i).size(), pointListFromWayPointIntervals.get(i).size());
-            for (int j = 0; j < pointListFromWayPointIntervals.get(i).size(); j++)
-                assertEquals(pointListFromInstructions.get(i).get(j), pointListFromWayPointIntervals.get(i).get(j));
+        assertEquals(pointListFromInstructions.size(), pointListFromWayPointIndices.size());
+        assertEquals(8, pointListFromWayPointIndices.size());
+        for (int i = 0; i < pointListFromWayPointIndices.size(); i++) {
+            assertEquals(pointListFromInstructions.get(i).size(), pointListFromWayPointIndices.get(i).size());
+            for (int j = 0; j < pointListFromWayPointIndices.get(i).size(); j++)
+                assertEquals(pointListFromInstructions.get(i).get(j), pointListFromWayPointIndices.get(i).get(j));
         }
     }
 
@@ -440,12 +439,14 @@ public class RouteResourceClientHCTest {
         return legs;
     }
 
-    private List<PointList> getPointListFromWayPointIntervals(ResponsePath path) {
+    private List<PointList> getPointListFromWayPointIndices(ResponsePath path) {
         List<PointList> legs = new ArrayList<>();
-        for (ResponsePath.Interval interval : path.getWaypointIntervals()) {
-            PointList leg = new PointList(interval.end + 1 - interval.start, path.getPoints().is3D());
-            for (int i = interval.start; i <= interval.end; i++)
-                leg.add(path.getPoints(), i);
+        for (int i = 1; i < path.getWaypointIndices().size(); i++) {
+            int start = path.getWaypointIndices().get(i - 1);
+            int end = path.getWaypointIndices().get(i);
+            PointList leg = new PointList(end - start + 1, path.getPoints().is3D());
+            for (int j = start; j <= end; j++)
+                leg.add(path.getPoints(), j);
             legs.add(leg);
         }
         return legs;

@@ -69,22 +69,26 @@ public class PathSimplification {
         List<Partition> partitions = new ArrayList<>();
 
         // make sure all waypoints are retained in the simplified point list
-        List<ResponsePath.Interval> wayPointIntervals = responsePath.getWaypointIntervals();
+        // we copy the waypoint indices into temporary intervals where they will be mutated by the simplification, afterwards
+        // we need to update the way point indices accordingly.
+        List<Interval> intervals = new ArrayList<>();
+        for (int i = 0; i < responsePath.getWaypointIndices().size() - 1; i++)
+            intervals.add(new Interval(responsePath.getWaypointIndices().get(i), responsePath.getWaypointIndices().get(i + 1)));
         partitions.add(new Partition() {
             @Override
             public int size() {
-                return wayPointIntervals.size();
+                return intervals.size();
             }
 
             @Override
             public int getIntervalLength(int index) {
-                return wayPointIntervals.get(index).end - wayPointIntervals.get(index).start;
+                return intervals.get(index).end - intervals.get(index).start;
             }
 
             @Override
             public void setInterval(int index, int start, int end) {
-                wayPointIntervals.get(index).start = start;
-                wayPointIntervals.get(index).end = end;
+                intervals.get(index).start = start;
+                intervals.get(index).end = end;
             }
         });
 
@@ -145,6 +149,13 @@ public class PathSimplification {
         }
 
         simplify(responsePath.getPoints(), partitions, ramerDouglasPeucker);
+
+        List<Integer> simplifiedWaypointIndices = new ArrayList<>();
+        simplifiedWaypointIndices.add(intervals.get(0).start);
+        for (Interval interval : intervals)
+            simplifiedWaypointIndices.add(interval.end);
+        responsePath.setWaypointIndices(simplifiedWaypointIndices);
+
         assertConsistencyOfPathDetails(responsePath.getPathDetails());
         if (enableInstructions)
             assertConsistencyOfInstructions(responsePath.getInstructions(), responsePath.getPoints().size());
@@ -337,4 +348,18 @@ public class PathSimplification {
         void setInterval(int index, int start, int end);
     }
 
+    public static class Interval {
+        public int start;
+        public int end;
+
+        public Interval(int start, int end) {
+            this.start = start;
+            this.end = end;
+        }
+
+        @Override
+        public String toString() {
+            return "[" + start + ", " + end + "]";
+        }
+    }
 }
