@@ -54,6 +54,8 @@ import java.util.*;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static com.graphhopper.application.util.TestUtils.clientUrl;
+import static com.graphhopper.util.Instruction.FINISH;
+import static com.graphhopper.util.Instruction.REACHED_VIA;
 import static com.graphhopper.util.Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -622,5 +624,60 @@ public class RouteResourceTest {
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertEquals("The number of 'heading' parameters must be zero, one or equal to the number of points (1)", json.get("message").asText());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void waypointIndices(boolean instructions) {
+        final long seed = 123L;
+        Random rnd = new Random(seed);
+        int errors = 0;
+        for (int numPoints = 2; numPoints < 10; numPoints++) {
+            String url = "/route?profile=my_car&points_encoded=false&instructions=" + instructions;
+            for (int i = 0; i < numPoints; i++) {
+                double lat = 42.493748 + rnd.nextDouble() * (42.565155 - 42.493748);
+                double lon = 1.487522 + rnd.nextDouble() * (1.557285 - 1.487522);
+                url += "&point=" + lat + "," + lon;
+            }
+            System.out.println(url);
+            final Response response = clientTarget(app, url).request().buildGet().invoke();
+            JsonNode json = response.readEntity(JsonNode.class);
+            if (response.getStatus() != 200) {
+                // sometimes there can be connection-not-found for example, also becaus we set min_network_size to 0 in this test
+                errors++;
+                continue;
+            }
+            assertFalse(json.has("message"));
+            JsonNode path = json.get("paths").get(0);
+            JsonNode points = path.get("points");
+            JsonNode snappedWaypoints = path.get("snapped_waypoints");
+            JsonNode waypointIndices = path.get("waypoint_indices");
+            assertEquals(numPoints, snappedWaypoints.get("coordinates").size());
+            assertEquals(numPoints, waypointIndices.size());
+            for (int i = 0; i < numPoints; i++)
+                // we make sure that the points defined by the way point indices are the snapped waypoints
+                assertEquals(snappedWaypoints.get("coordinates").get(i), points.get("coordinates").get(waypointIndices.get(i).asInt()));
+
+            if (instructions) {
+                // we can find the way point indices also from the instructions, so we check if this yields the same
+                List<Integer> waypointIndicesFromInstructions = getWaypointIndicesFromInstructions(path.get("instructions"));
+                assertEquals(waypointIndicesFromInstructions.size(), waypointIndices.size());
+                for (int i = 0; i < waypointIndices.size(); i++)
+                    assertEquals(waypointIndicesFromInstructions.get(i), waypointIndices.get(i).asInt());
+            }
+        }
+        if (errors > 3)
+            fail("too many errors");
+    }
+
+    private static List<Integer> getWaypointIndicesFromInstructions(JsonNode instructions) {
+        List<Integer> result = new ArrayList<>();
+        result.add(instructions.get(0).get("interval").get(0).asInt());
+        for (int i = 0; i < instructions.size(); i++) {
+            int sign = instructions.get(i).get("sign").asInt();
+            if (sign == REACHED_VIA || sign == FINISH)
+                result.add(instructions.get(i).get("interval").get(1).asInt());
+        }
+        return result;
     }
 }

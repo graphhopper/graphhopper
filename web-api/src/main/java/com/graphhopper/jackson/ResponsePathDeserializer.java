@@ -76,6 +76,14 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
             final PointList pointList = deserializePointList(objectMapper, path.get("points"), hasElevation);
             responsePath.setPoints(pointList);
 
+            if (path.has("waypoint_indices")) {
+                JsonNode waypointIndices = path.get("waypoint_indices");
+                List<ResponsePath.Interval> waypointIntervals = new ArrayList<>();
+                for (int i = 0; i < waypointIndices.size() - 1; i++)
+                    waypointIntervals.add(new ResponsePath.Interval(waypointIndices.get(i).asInt(), waypointIndices.get(i + 1).asInt()));
+                responsePath.setWaypointIntervals(waypointIntervals);
+            }
+
             if (path.has("instructions")) {
                 JsonNode instrArr = path.get("instructions");
 

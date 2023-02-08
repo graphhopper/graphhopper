@@ -42,7 +42,7 @@ public class ResponsePath {
     private String debugInfo = "";
     private InstructionList instructions;
     private PointList waypointList = PointList.EMPTY;
-    private List<Interval> waypointIntervals;
+    private List<Interval> waypointIntervals = new ArrayList<>();
     private PointList pointList = PointList.EMPTY;
     private int numChanges;
     private final List<Trip.Leg> legs = new ArrayList<>(5);
@@ -342,6 +342,11 @@ public class ResponsePath {
         public Interval(int start, int end) {
             this.start = start;
             this.end = end;
+        }
+
+        @Override
+        public String toString() {
+            return "[" + start + ", " + end + "]";
         }
     }
 }

@@ -106,6 +106,7 @@ public class ResponsePathSerializer {
                 jsonPath.put("points_encoded", pointsEncoded);
                 jsonPath.putPOJO("bbox", p.calcBBox2D());
                 jsonPath.putPOJO("points", pointsEncoded ? encodePolyline(p.getPoints(), enableElevation, 1e5) : p.getPoints().toLineString(enableElevation));
+                jsonPath.putPOJO("waypoint_indices", getWaypointIndices(p.getWaypointIntervals()));
                 if (enableInstructions) {
                     jsonPath.putPOJO("instructions", p.getInstructions());
                 }
@@ -120,5 +121,13 @@ public class ResponsePathSerializer {
             }
         }
         return json;
+    }
+
+    public static int[] getWaypointIndices(List<ResponsePath.Interval> waypointIntervals) {
+        int[] result = new int[waypointIntervals.size() + 1];
+        result[0] = waypointIntervals.get(0).start;
+        for (int i = 0; i < waypointIntervals.size(); i++)
+            result[i + 1] = waypointIntervals.get(i).end;
+        return result;
     }
 }

@@ -46,6 +46,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.io.File;
 import java.util.*;
 
+import static com.graphhopper.util.Instruction.FINISH;
+import static com.graphhopper.util.Instruction.REACHED_VIA;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -378,5 +380,74 @@ public class RouteResourceClientHCTest {
         rsp = gh.route(req);
         assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
         assertEquals(218_000, rsp.getBest().getTime(), 1000);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void testWaypointIntervals(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(42.509141, 1.546063)).
+                addPoint(new GHPoint(42.507173, 1.531902)).
+                addPoint(new GHPoint(42.505435, 1.515943)).
+                addPoint(new GHPoint(42.499062, 1.506067)).
+                addPoint(new GHPoint(42.498801, 1.505568)).
+                addPoint(new GHPoint(42.498465, 1.504898)).
+                addPoint(new GHPoint(42.49833, 1.504619)).
+                addPoint(new GHPoint(42.498217, 1.504377)).
+                addPoint(new GHPoint(42.495611, 1.498368)).
+                setProfile("bike");
+
+        GHResponse response = gh.route(req);
+        ResponsePath path = response.getBest();
+        assertEquals(5333, path.getDistance(), 5);
+
+        assertEquals(9, path.getWaypoints().size());
+        assertEquals(8, path.getWaypointIntervals().size());
+        // explicitly check one of the waypoints
+        assertEquals(42.50539, path.getWaypoints().get(2).lat);
+        assertEquals(42.50539, path.getPoints().get(path.getWaypointIntervals().get(1).end).getLat());
+        assertEquals(42.50539, path.getPoints().get(path.getWaypointIntervals().get(2).start).getLat());
+        // check all the waypoints
+        assertEquals(path.getWaypoints().get(0), path.getPoints().get(path.getWaypointIntervals().get(0).start));
+        for (int i = 0; i < path.getWaypointIntervals().size(); ++i)
+            assertEquals(path.getWaypoints().get(i + 1), path.getPoints().get(path.getWaypointIntervals().get(i).end));
+
+        List<PointList> pointListFromInstructions = getPointListFromInstructions(path);
+        List<PointList> pointListFromWayPointIntervals = getPointListFromWayPointIntervals(path);
+
+        assertEquals(pointListFromInstructions.size(), pointListFromWayPointIntervals.size());
+        assertEquals(8, pointListFromWayPointIntervals.size());
+        for (int i = 0; i < pointListFromWayPointIntervals.size(); i++) {
+            assertEquals(pointListFromInstructions.get(i).size(), pointListFromWayPointIntervals.get(i).size());
+            for (int j = 0; j < pointListFromWayPointIntervals.get(i).size(); j++)
+                assertEquals(pointListFromInstructions.get(i).get(j), pointListFromWayPointIntervals.get(i).get(j));
+        }
+    }
+
+    private List<PointList> getPointListFromInstructions(ResponsePath path) {
+        List<PointList> legs = new ArrayList<>();
+        PointList perLeg = new PointList();
+        for (Instruction instruction : path.getInstructions()) {
+            perLeg.add(instruction.getPoints());
+            if (instruction.getSign() == REACHED_VIA || instruction.getSign() == FINISH) {
+                legs.add(perLeg);
+                perLeg = new PointList();
+            } else {
+                perLeg.removeLastPoint();
+            }
+        }
+        return legs;
+    }
+
+    private List<PointList> getPointListFromWayPointIntervals(ResponsePath path) {
+        List<PointList> legs = new ArrayList<>();
+        for (ResponsePath.Interval interval : path.getWaypointIntervals()) {
+            PointList leg = new PointList(interval.end + 1 - interval.start, path.getPoints().is3D());
+            for (int i = interval.start; i <= interval.end; i++)
+                leg.add(path.getPoints(), i);
+            legs.add(leg);
+        }
+        return legs;
     }
 }
