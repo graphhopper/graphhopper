@@ -45,8 +45,8 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         super.collect(way, wayTypeSpeed, weightToPrioMap);
 
         String highway = way.getTag("highway");
-        if ("service".equals(highway)) {
-            weightToPrioMap.put(40d, UNCHANGED.getValue());
+        if ("service".equals(highway) || "residential".equals(highway)) {
+            weightToPrioMap.put(40d, SLIGHT_AVOID.getValue());
         } else if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
             if ("grade1".equals(trackType))
