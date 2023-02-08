@@ -269,6 +269,7 @@ public class GraphHopperTest {
         Profile profile = new Profile(profileName).setVehicle(vehicle).setWeighting("fastest");
         if (custom) {
             JsonFeature area51Feature = new JsonFeature();
+            area51Feature.setId("area51");
             area51Feature.setGeometry(new GeometryFactory().createPolygon(new Coordinate[]{
                     new Coordinate(7.4174, 43.7345),
                     new Coordinate(7.4198, 43.7355),
@@ -276,7 +277,7 @@ public class GraphHopperTest {
                     new Coordinate(7.4174, 43.7345)}));
             CustomModel customModel = new CustomModel().setDistanceInfluence(0d);
             customModel.getPriority().add(Statement.If("in_area51", Statement.Op.MULTIPLY, "0.1"));
-            customModel.getAreas().put("area51", area51Feature);
+            customModel.getAreas().getFeatures().add(area51Feature);
             profile = new CustomProfile(profileName).setCustomModel(customModel).setVehicle(vehicle);
         }
         hopper.setProfiles(profile);
@@ -583,7 +584,7 @@ public class GraphHopperTest {
 
         // block road at 49.985759,11.50687
         CustomModel customModel = new CustomModel().addToPriority(Statement.If("in_blocked_area", Statement.Op.MULTIPLY, "0"));
-        customModel.getAreas().put("blocked_area", createCircle(49.985759, 11.50687, 5));
+        customModel.getAreas().getFeatures().add(createCircle("blocked_area", 49.985759, 11.50687, 5));
         req.setCustomModel(customModel);
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
@@ -597,14 +598,15 @@ public class GraphHopperTest {
         assertEquals(6685, rsp.getBest().getDistance(), 1);
 
         // block rectangular area
-        customModel.getAreas().put("blocked_area", createRectangle(49.97986, 11.472902, 50.003946, 11.534357));
+        customModel.getAreas().getFeatures().clear();
+        customModel.getAreas().getFeatures().add(createRectangle(49.97986, 11.472902, 50.003946, 11.534357));
         req.setCustomModel(customModel);
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(13988, rsp.getBest().getDistance(), 1);
 
         // Add blocked point to above area, to increase detour
-        customModel.getAreas().put("blocked_point", createCircle(50.017578, 11.547527, 5));
+        customModel.getAreas().getFeatures().add(createCircle("blocked_point", 50.017578, 11.547527, 5));
         customModel.addToPriority(Statement.If("in_blocked_point", Statement.Op.MULTIPLY, "0"));
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
@@ -612,19 +614,21 @@ public class GraphHopperTest {
 
         // block by edge IDs -> i.e. use small circular area
         customModel = new CustomModel().addToPriority(Statement.If("in_blocked_area", Statement.Op.MULTIPLY, "0"));
-        customModel.getAreas().put("blocked_area", createCircle(49.979929, 11.520066, 200));
+        customModel.getAreas().getFeatures().add(createCircle("blocked_area", 49.979929, 11.520066, 200));
         req.setCustomModel(customModel);
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
 
-        customModel.getAreas().put("blocked_area", createCircle(49.980868, 11.516397, 150));
+        customModel.getAreas().getFeatures().clear();
+        customModel.getAreas().getFeatures().add(createCircle("blocked_area", 49.980868, 11.516397, 150));
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small rectangular area
-        customModel.getAreas().put("blocked_area", createRectangle(49.981875, 11.515818, 49.979522, 11.521407));
+        customModel.getAreas().getFeatures().clear();
+        customModel.getAreas().getFeatures().add(createRectangle(49.981875, 11.515818, 49.979522, 11.521407));
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
@@ -635,7 +639,8 @@ public class GraphHopperTest {
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(1807, rsp.getBest().getDistance(), 1);
 
-        customModel.getAreas().put("blocked_area", createCircle(50.018277, 11.492336, 5));
+        customModel.getAreas().getFeatures().clear();
+        customModel.getAreas().getFeatures().add(createCircle("blocked_area", 50.018277, 11.492336, 5));
         req.setCustomModel(customModel);
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
@@ -649,7 +654,8 @@ public class GraphHopperTest {
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(155, rsp.getBest().getDistance(), 10);
 
-        customModel.getAreas().put("blocked_area", createRectangle(49.984434, 11.505212, 49.985394, 11.506333));
+        customModel.getAreas().getFeatures().clear();
+        customModel.getAreas().getFeatures().add(createRectangle(49.984434, 11.505212, 49.985394, 11.506333));
         req.setCustomModel(customModel);
         rsp = hopper.route(req);
         // we do not snap onto Grüngraben (within the blocked area), but onto Lohweg and then we need to go to Hauptstraße
@@ -663,7 +669,8 @@ public class GraphHopperTest {
         // first point is contained in blocked area => error
         req = new GHRequest(49.979, 11.516, 49.986107, 11.507202).
                 setProfile(profile);
-        customModel.getAreas().put("blocked_area", createRectangle(49.981875, 11.515818, 49.979522, 11.521407));
+        customModel.getAreas().getFeatures().clear();
+        customModel.getAreas().getFeatures().add(createRectangle(49.981875, 11.515818, 49.979522, 11.521407));
         req.setCustomModel(customModel);
         rsp = hopper.route(req);
         assertTrue(rsp.hasErrors(), "expected errors");

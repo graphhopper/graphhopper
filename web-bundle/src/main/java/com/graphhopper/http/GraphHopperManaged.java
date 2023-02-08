@@ -126,14 +126,9 @@ public class GraphHopperManaged implements Managed {
                 }
             }
 
-            // we can fill in all areas here as in the created template we include only the areas that are used in statements (see CustomModelParser)
-            for (JsonFeature feature : globalAreas.getFeatures()) {
-                if (!JsonFeature.isValidId("in_" + feature.getId()))
-                    throw new IllegalArgumentException("The area '" + feature.getId() + "' has an invalid id. Only letters, numbers and underscore are allowed.");
-                if (customModel.getAreas().containsKey(feature.getId()))
-                    throw new IllegalArgumentException("The area '" + feature.getId() + "' exists twice");
-                customModel.getAreas().put(feature.getId(), feature);
-            }
+            // we can fill in all areas here as in the created template we include only the areas that are used in
+            // statements (see CustomModelParser)
+            customModel.addAreas(globalAreas);
         }
         return newProfiles;
     }
