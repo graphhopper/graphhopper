@@ -1,5 +1,6 @@
 ### 7.0 [not yet released]
 
+- Format of 'areas' in CustomModel changed to 'FeatureCollection'. The old format is deprecated and will be removed in a later version, #2734
 - TagParser#handleWayTags no longer returns an IntsRef. We assume it never returned anything other than the input IntsRef.
 - there is no longer a default value for the distanceInfluence parameter in custom models sent via client-hc. Previously it was 70. Not setting it explicitly now means the server-side value will be used. getDistanceInfluence can now be null. Server-side profiles with custom weighting now use distance_influence: 0 by default (previously it was 70). see #2716
 - there is a new, required 'import.osm.ignored_highways' configuration option that must be used to not increase the graph size and decrease performance for motorized-only routing compared to previous versions, #2702
@@ -12,6 +13,7 @@
 - internal keys for EdgeKVStorage changed to contain the street_ prefix like the path details too. Similarly, the
   extra_info in the instructions of the API response, see #2661
 - subnetwork preparation can now be run in parallel to slightly speed up the base graph import (#2737)
+- The block_area parameter was removed. Use custom model areas instead.
 
 ### 6.0 [13 Sep 2022]
 

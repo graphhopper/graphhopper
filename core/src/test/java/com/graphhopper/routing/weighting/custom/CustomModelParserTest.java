@@ -24,6 +24,7 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.JsonFeatureCollection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -184,7 +185,7 @@ class CustomModelParserTest {
     @Test
     public void multipleAreas() {
         CustomModel customModel = new CustomModel();
-        Map<String, JsonFeature> areas = new HashMap<>();
+        JsonFeatureCollection areas = new JsonFeatureCollection();
         Coordinate[] area_1_coordinates = new Coordinate[]{
                 new Coordinate(48.019324184801185, 11.28021240234375),
                 new Coordinate(48.019324184801185, 11.53564453125),
@@ -199,12 +200,12 @@ class CustomModelParserTest {
                 new Coordinate(48.281365151571755, 11.53289794921875),
                 new Coordinate(48.15509285476017, 11.53289794921875),
         };
-        areas.put("area_1", new JsonFeature("area_1",
+        areas.getFeatures().add(new JsonFeature("area_1",
                 "Feature",
                 null,
                 new GeometryFactory().createPolygon(area_1_coordinates),
                 new HashMap<>()));
-        areas.put("area_2", new JsonFeature("area_2",
+        areas.getFeatures().add(new JsonFeature("area_2",
                 "Feature",
                 null,
                 new GeometryFactory().createPolygon(area_2_coordinates),
