@@ -124,6 +124,7 @@ public class ResponsePathSerializer {
     }
 
     public static int[] getWaypointIndices(List<ResponsePath.Interval> waypointIntervals) {
+        if (waypointIntervals.isEmpty()) return new int[0];
         int[] result = new int[waypointIntervals.size() + 1];
         result[0] = waypointIntervals.get(0).start;
         for (int i = 0; i < waypointIntervals.size(); i++)
