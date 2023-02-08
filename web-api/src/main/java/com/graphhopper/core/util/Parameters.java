@@ -127,11 +127,6 @@ public class Parameters {
          */
         public static final double DEFAULT_HEADING_PENALTY = 300;
         public static final String HEADING_PENALTY = "heading_penalty";
-        /**
-         * block road access via a point in the format lat,lon or an area defined by a circle lat,lon,radius or
-         * a rectangle lat1,lon1,lat2,lon2
-         */
-        public static final String BLOCK_AREA = "block_area";
     }
 
     /**

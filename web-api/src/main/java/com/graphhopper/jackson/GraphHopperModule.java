@@ -18,7 +18,6 @@
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.graphhopper.core.GHRequest;
 import com.graphhopper.core.GHResponse;
 import com.graphhopper.core.ResponsePath;
 import com.graphhopper.json.Statement;

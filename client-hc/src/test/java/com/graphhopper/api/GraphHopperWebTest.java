@@ -9,6 +9,7 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.Statement;
 import com.graphhopper.core.util.CustomModel;
 import com.graphhopper.core.util.JsonFeature;
+import com.graphhopper.core.util.JsonFeatureCollection;
 import com.graphhopper.core.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -65,7 +66,7 @@ public class GraphHopperWebTest {
     @Test
     public void customModel() throws JsonProcessingException {
         GraphHopperWeb client = new GraphHopperWeb("http://localhost:8080/route");
-        LinkedHashMap<String, JsonFeature> areas = new LinkedHashMap<>();
+        JsonFeatureCollection areas = new JsonFeatureCollection();
         Coordinate[] area_1_coordinates = new Coordinate[]{
                 new Coordinate(48.019324184801185, 11.28021240234375),
                 new Coordinate(48.019324184801185, 11.53564453125),
@@ -80,12 +81,12 @@ public class GraphHopperWebTest {
                 new Coordinate(48.281365151571755, 11.53289794921875),
                 new Coordinate(48.15509285476017, 11.53289794921875),
         };
-        areas.put("area_1", new JsonFeature("area_1",
+        areas.getFeatures().add(new JsonFeature("area_1",
                 "Feature",
                 null,
                 new GeometryFactory().createPolygon(area_1_coordinates),
                 new HashMap<>()));
-        areas.put("area_2", new JsonFeature("area_2",
+        areas.getFeatures().add(new JsonFeature("area_2",
                 "Feature",
                 null,
                 new GeometryFactory().createPolygon(area_2_coordinates),
@@ -108,8 +109,9 @@ public class GraphHopperWebTest {
         JsonNode customModelJson = postRequest.get("custom_model");
         ObjectMapper objectMapper = Jackson.newObjectMapper();
         JsonNode expected = objectMapper.readTree("{\"distance_influence\":69.0,\"heading_penalty\":22.0,\"internal\":false,\"areas\":{" +
-                "\"area_1\":{\"id\":\"area_1\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.019324184801185,11.28021240234375],[48.019324184801185,11.53564453125],[48.11843396091691,11.53564453125],[48.11843396091691,11.28021240234375],[48.019324184801185,11.28021240234375]]]},\"properties\":{}}," +
-                "\"area_2\":{\"id\":\"area_2\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.15509285476017,11.53289794921875],[48.15509285476017,11.8212890625],[48.281365151571755,11.8212890625],[48.281365151571755,11.53289794921875],[48.15509285476017,11.53289794921875]]]},\"properties\":{}}}," +
+                "\"type\":\"FeatureCollection\",\"features\":["+
+                "{\"id\":\"area_1\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.019324184801185,11.28021240234375],[48.019324184801185,11.53564453125],[48.11843396091691,11.53564453125],[48.11843396091691,11.28021240234375],[48.019324184801185,11.28021240234375]]]},\"properties\":{}}," +
+                "{\"id\":\"area_2\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.15509285476017,11.53289794921875],[48.15509285476017,11.8212890625],[48.281365151571755,11.8212890625],[48.281365151571755,11.53289794921875],[48.15509285476017,11.53289794921875]]]},\"properties\":{}}]}," +
                 "\"speed\":[{\"if\":\"road_class == MOTORWAY\",\"limit_to\":\"80\"}]," +
                 "\"priority\":[{\"if\":\"surface == DIRT\",\"multiply_by\":\"0.7\"},{\"if\":\"surface == SAND\",\"multiply_by\":\"0.6\"}]}");
         assertEquals(expected, objectMapper.valueToTree(customModelJson));

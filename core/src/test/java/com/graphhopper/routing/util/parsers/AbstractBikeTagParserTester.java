@@ -345,7 +345,7 @@ public abstract class AbstractBikeTagParserTester {
     public void testService() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        assertPriorityAndSpeed(PREFER.getValue(), 14, way);
+        assertPriorityAndSpeed(PREFER.getValue(), 12, way);
 
         way.setTag("service", "parking_aisle");
         assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 4, way);

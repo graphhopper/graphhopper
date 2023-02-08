@@ -79,7 +79,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setHighwaySpeed("platform", PUSHING_SECTION_SPEED);
         setHighwaySpeed("pedestrian", PUSHING_SECTION_SPEED);
         setHighwaySpeed("track", 12);
-        setHighwaySpeed("service", 14);
+        setHighwaySpeed("service", 12);
         setHighwaySpeed("residential", 18);
         // no other highway applies:
         setHighwaySpeed("unclassified", 16);

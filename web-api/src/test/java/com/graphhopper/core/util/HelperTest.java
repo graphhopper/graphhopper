@@ -20,6 +20,7 @@ package com.graphhopper.core.util;
 import com.graphhopper.core.util.Helper;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Locale;
 
 import static com.graphhopper.core.util.Helper.UTF_CS;
