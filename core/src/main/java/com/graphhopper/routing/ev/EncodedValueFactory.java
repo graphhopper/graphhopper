@@ -17,10 +17,8 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.PMap;
+
 public interface EncodedValueFactory {
-    /**
-     * This method assumes a string value with the key of an EncodedValue like "road_class" and returns an instance
-     * of it.
-     */
-    EncodedValue create(String encodedValueString);
+    EncodedValue create(String name, PMap properties);
 }
