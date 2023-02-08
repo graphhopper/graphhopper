@@ -16,7 +16,7 @@ public class CurvatureCalculator implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         PointList pointList = way.getTag("point_list", null);
         Double edgeDistance = way.getTag("edge_distance", null);
         if (pointList != null && edgeDistance != null && !pointList.isEmpty()) {
@@ -29,6 +29,5 @@ public class CurvatureCalculator implements TagParser {
         } else {
             curvatureEnc.setDecimal(false, edgeFlags, 1.0);
         }
-        return edgeFlags;
     }
 }

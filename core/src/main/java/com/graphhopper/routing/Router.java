@@ -35,13 +35,11 @@ import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.FindMinMax;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -108,7 +106,7 @@ public class Router {
             checkHeadings(request);
             checkPointHints(request);
             checkCurbsides(request);
-            checkNoBlockAreaWithCustomModel(request);
+            checkNoBlockArea(request);
 
             Solver solver = createSolver(request);
             solver.checkRequest();
@@ -181,9 +179,9 @@ public class Router {
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
     }
 
-    private void checkNoBlockAreaWithCustomModel(GHRequest request) {
-        if (request.getCustomModel() != null && request.getHints().has(BLOCK_AREA))
-            throw new IllegalArgumentException("When using `custom_model` do not use `block_area`. Use `areas` in the custom model instead");
+    private void checkNoBlockArea(GHRequest request) {
+        if (request.getHints().has("block_area"))
+            throw new IllegalArgumentException("The `block_area` parameter is no longer supported. Use a custom model with `areas` instead.");
     }
 
     protected Solver createSolver(GHRequest request) {
@@ -211,7 +209,9 @@ public class Router {
 
         RoundTripRouting.Result result = RoundTripRouting.calcPaths(snaps, pathCalculator);
         // we merge the different legs of the roundtrip into one response path
-        ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps));
+        // note that the waypoints are not just the snapped points of the snaps, as usual, because we do some kind of tweak
+        // to avoid 'unnecessary tails' in the roundtrip algo
+        ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, result.wayPoints);
         ghRsp.add(responsePath);
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (snaps.size() - 1));
@@ -307,7 +307,7 @@ public class Router {
     }
 
     private PointList getWaypoints(List<Snap> snaps) {
-        PointList pointList = new PointList(snaps.size(), true);
+        PointList pointList = new PointList(snaps.size(), graph.getNodeAccess().is3D());
         for (Snap snap : snaps) {
             pointList.add(snap.getSnappedPoint());
         }
@@ -432,9 +432,6 @@ public class Router {
             if (getPassThrough(request.getHints()))
                 throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
 
-            if (request.getHints().has(Parameters.Routing.BLOCK_AREA))
-                throw new IllegalArgumentException("The '" + Parameters.Routing.BLOCK_AREA + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`.");
-
             if (request.getCustomModel() != null)
                 throw new IllegalArgumentException("The 'custom_model' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`.");
 
@@ -496,13 +493,7 @@ public class Router {
         protected Weighting createWeighting() {
             PMap requestHints = new PMap(request.getHints());
             requestHints.putObject(CustomModel.KEY, request.getCustomModel());
-            Weighting weighting = weightingFactory.createWeighting(profile, requestHints, false);
-            if (requestHints.has(Parameters.Routing.BLOCK_AREA)) {
-                GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(baseGraph, locationIndex,
-                        request.getPoints(), requestHints, new FiniteWeightFilter(weighting));
-                weighting = new BlockAreaWeighting(weighting, blockArea);
-            }
-            return weighting;
+            return weightingFactory.createWeighting(profile, requestHints, false);
         }
 
         @Override

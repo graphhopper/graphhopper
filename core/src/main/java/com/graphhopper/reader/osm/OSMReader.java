@@ -267,6 +267,7 @@ public class OSMReader {
         Country country = Country.MISSING;
         CustomArea prevCustomArea = null;
         for (CustomArea customArea : customAreas) {
+            if (customArea.getProperties() == null) continue;
             Object alpha3 = customArea.getProperties().get(Country.ISO_ALPHA3);
             if (alpha3 == null)
                 continue;
@@ -352,7 +353,7 @@ public class OSMReader {
         setArtificialWayTags(pointList, way, distance, nodeTags);
         IntsRef relationFlags = getRelFlagsMap(way.getId());
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relationFlags);
+        osmParsers.handleWayTags(edgeFlags, way, relationFlags);
         EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags);
         List<EdgeKVStorage.KeyValue> list = way.getTag("key_values", Collections.emptyList());
         if (!list.isEmpty())

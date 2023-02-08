@@ -19,10 +19,12 @@ class CurvatureCalculatorTest {
     @Test
     public void testCurvature() {
         CurvatureCalculator calculator = new CurvatureCalculator(em.getDecimalEncodedValue(Curvature.KEY));
-        IntsRef ints = calculator.handleWayTags(em.createEdgeFlags(), getStraightWay(), null);
+        IntsRef ints = em.createEdgeFlags();
+        calculator.handleWayTags(ints, getStraightWay(), null);
         double valueStraight = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, ints);
 
-        ints = calculator.handleWayTags(em.createEdgeFlags(), getCurvyWay(), null);
+        ints = em.createEdgeFlags();
+        calculator.handleWayTags(ints, getCurvyWay(), null);
         double valueCurvy = em.getDecimalEncodedValue(Curvature.KEY).getDecimal(false, ints);
 
         assertTrue(valueCurvy < valueStraight, "The bendiness of the straight road is smaller than the one of the curvy road");

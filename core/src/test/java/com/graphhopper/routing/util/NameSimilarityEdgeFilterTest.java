@@ -20,11 +20,10 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.core.util.EdgeIteratorState;
-import com.graphhopper.core.util.FetchMode;
-import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.Test;
@@ -44,6 +43,7 @@ public class NameSimilarityEdgeFilterTest {
     public void testAccept() {
         EdgeFilter edgeFilter = createNameSimilarityEdgeFilter("Laufamholzstraße 154 Nürnberg");
         EdgeIteratorState edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
+        edge.getName();
         assertTrue(edgeFilter.accept(edge));
 
         edge = createTestEdgeIterator("Hauptstraße");
@@ -233,42 +233,7 @@ public class NameSimilarityEdgeFilterTest {
      * so distance is not used when matching
      */
     private NameSimilarityEdgeFilter createNameSimilarityEdgeFilter(String pointHint) {
-        return new NameSimilarityEdgeFilter(new EdgeFilter() {
-            @Override
-            public boolean accept(EdgeIteratorState edgeState) {
-                return true;
-            }
-        }, pointHint, basePoint, 100);
-    }
-
-    private EdgeIteratorState createTestEdgeIterator(final String name, final int baseNodeId, final int adjNodeId) {
-        return new GHUtility.DisabledEdgeIterator() {
-            @Override
-            public String getName() {
-                return name;
-            }
-
-            @Override
-            public int getBaseNode() {
-                return baseNodeId;
-            }
-
-            @Override
-            public int getAdjNode() {
-                return adjNodeId;
-            }
-
-            @Override
-            public PointList fetchWayGeometry(FetchMode type) {
-                PointList list = new PointList();
-                list.add(basePoint);
-                return list;
-            }
-        };
-    }
-
-    private EdgeIteratorState createTestEdgeIterator(final String name) {
-        return createTestEdgeIterator(name, 0, 0);
+        return new NameSimilarityEdgeFilter(edgeState -> true, pointHint, basePoint, 100);
     }
 
     @Test
@@ -337,6 +302,16 @@ public class NameSimilarityEdgeFilterTest {
         assertFalse(filter.accept(golden));
         assertFalse(filter.accept(denison));
         assertTrue(filter.accept(doubtfire));
+    }
+
+    private EdgeIteratorState createTestEdgeIterator(String name) {
+        PointList pointList = new PointList();
+        pointList.add(basePoint);
+        EdgeIteratorState edge = new BaseGraph.Builder(1).create().edge(0, 0)
+                .setWayGeometry(pointList);
+        if (name != null)
+            edge.setKeyValues(EdgeKVStorage.KeyValue.createKV(EdgeKVStorage.KeyValue.STREET_NAME, name));
+        return edge;
     }
 
 }

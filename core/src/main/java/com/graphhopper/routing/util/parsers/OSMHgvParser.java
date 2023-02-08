@@ -13,8 +13,7 @@ public class OSMHgvParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         hgvEnc.setEnum(false, edgeFlags, Hgv.find(way.getTag("hgv")));
-        return edgeFlags;
     }
 }

@@ -72,6 +72,27 @@ public class PathSimplification {
     public static PointList simplify(ResponsePath responsePath, RamerDouglasPeucker ramerDouglasPeucker, boolean enableInstructions) {
         final PointList pointList = responsePath.getPoints();
         List<Partition> partitions = new ArrayList<>();
+
+        // make sure all waypoints are retained in the simplified point list
+        List<ResponsePath.Interval> wayPointIntervals = responsePath.getWaypointIntervals();
+        partitions.add(new Partition() {
+            @Override
+            public int size() {
+                return wayPointIntervals.size();
+            }
+
+            @Override
+            public int getIntervalLength(int index) {
+                return wayPointIntervals.get(index).end - wayPointIntervals.get(index).start;
+            }
+
+            @Override
+            public void setInterval(int index, int start, int end) {
+                wayPointIntervals.get(index).start = start;
+                wayPointIntervals.get(index).end = end;
+            }
+        });
+
         // todo: maybe this code can be simplified if path details and instructions would be merged, see #1121
         if (enableInstructions) {
             final InstructionList instructions = responsePath.getInstructions();

@@ -301,7 +301,7 @@ public class GtfsStorage {
 		try (ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(Files.newOutputStream(Paths.get(dir.getLocation() + filename))))) {
 			oos.writeInt(data.size());
 			for (IntObjectCursor<int[]> e : data) {
-				oos.write(e.key);
+				oos.writeInt(e.key);
 				oos.writeObject(e.value);
 			}
 		} catch (IOException e) {
@@ -313,8 +313,8 @@ public class GtfsStorage {
 		try (ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(Files.newOutputStream(Paths.get(dir.getLocation() + filename))))) {
 			oos.writeInt(data.size());
 			for (IntIntCursor e : data) {
-				oos.write(e.key);
-				oos.write(e.value);
+				oos.writeInt(e.key);
+				oos.writeInt(e.value);
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);

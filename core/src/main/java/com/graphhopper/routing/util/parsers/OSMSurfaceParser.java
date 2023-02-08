@@ -33,11 +33,11 @@ public class OSMSurfaceParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         String surfaceTag = readerWay.getTag("surface");
         Surface surface = Surface.find(surfaceTag);
         if (surface == MISSING)
-            return edgeFlags;
+            return;
 
         if (surfaceTag.equals("metal"))
             surface = PAVED;
@@ -49,6 +49,5 @@ public class OSMSurfaceParser implements TagParser {
             surface = DIRT;
 
         surfaceEnc.setEnum(false, edgeFlags, surface);
-        return edgeFlags;
     }
 }

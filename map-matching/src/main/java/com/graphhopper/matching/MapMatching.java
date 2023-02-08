@@ -49,6 +49,7 @@ import org.locationtech.jts.geom.Envelope;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.graphhopper.core.util.DistancePlaneProjection.DIST_PLANE;
 
@@ -204,7 +205,7 @@ public class MapMatching {
         statistics.put("filteredObservations", filteredObservations.size());
 
         // Snap observations to links. Generates multiple candidate snaps per observation.
-        List<Collection<Snap>> snapsPerObservation = filteredObservations.stream()
+        List<List<Snap>> snapsPerObservation = filteredObservations.stream()
                 .map(o -> findCandidateSnaps(o.getPoint().lat, o.getPoint().lon))
                 .collect(Collectors.toList());
         statistics.put("snapsPerObservation", snapsPerObservation.stream().mapToInt(Collection::size).toArray());
@@ -221,6 +222,7 @@ public class MapMatching {
         List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps);
         statistics.put("transitionDistances", seq.stream().filter(s -> s.transitionDescriptor != null).mapToLong(s -> Math.round(s.transitionDescriptor.getDistance())).toArray());
         statistics.put("visitedNodes", router.getVisitedNodes());
+        statistics.put("snapDistanceRanks", IntStream.range(0, seq.size()).map(i -> snapsPerObservation.get(i).indexOf(seq.get(i).state.getSnap())).toArray());
 
         List<EdgeIteratorState> path = seq.stream().filter(s1 -> s1.transitionDescriptor != null).flatMap(s1 -> s1.transitionDescriptor.calcEdges().stream()).collect(Collectors.toList());
 
@@ -318,6 +320,7 @@ public class MapMatching {
                 }
             }
         });
+        snaps.sort(Comparator.comparingDouble(Snap::getQueryDistance));
         return snaps;
     }
 
@@ -326,7 +329,7 @@ public class MapMatching {
      * transition probabilities. Creates directed candidates for virtual nodes and undirected
      * candidates for real nodes.
      */
-    private List<ObservationWithCandidateStates> createTimeSteps(List<Observation> filteredObservations, List<Collection<Snap>> splitsPerObservation) {
+    private List<ObservationWithCandidateStates> createTimeSteps(List<Observation> filteredObservations, List<List<Snap>> splitsPerObservation) {
         if (splitsPerObservation.size() != filteredObservations.size()) {
             throw new IllegalArgumentException(
                     "filteredGPXEntries and queriesPerEntry must have same size.");

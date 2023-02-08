@@ -31,5 +31,5 @@ public interface RelationTagParser extends TagParser {
      * Analyze the tags of a relation and create the routing flags for the second read step.
      * In the pre-parsing step this method will be called to determine the useful relation tags.
      */
-    IntsRef handleRelationTags(IntsRef relFlags, ReaderRelation relation);
+    void handleRelationTags(IntsRef relFlags, ReaderRelation relation);
 }

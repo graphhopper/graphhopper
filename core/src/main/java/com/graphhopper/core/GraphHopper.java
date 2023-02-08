@@ -115,6 +115,7 @@ public class GraphHopper {
     private int maxRegionSearch = 4;
     // subnetworks
     private int minNetworkSize = 200;
+    private int subnetworksThreads = 1;
     // residential areas
     private double residentialAreaRadius = 300;
     private double residentialAreaSensitivity = 60;
@@ -570,6 +571,7 @@ public class GraphHopper {
 
         // optimizable prepare
         minNetworkSize = ghConfig.getInt("prepare.min_network_size", minNetworkSize);
+        subnetworksThreads = ghConfig.getInt("prepare.subnetworks.threads", subnetworksThreads);
 
         // prepare CH&LM
         chPreparationHandler.init(ghConfig);
@@ -618,21 +620,23 @@ public class GraphHopper {
         return this;
     }
 
-    protected EncodingManager buildEncodingManager(Map<String, String> vehiclesByName, List<String> encodedValueStrings, boolean withUrbanDensity, Collection<Profile> profiles) {
+    protected EncodingManager buildEncodingManager(Map<String, String> vehiclesByName, List<String> encodedValueStrings,
+                                                   boolean withUrbanDensity, Collection<Profile> profiles) {
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         vehiclesByName.forEach((name, vehicleStr) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, new PMap(vehicleStr))));
         profiles.forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
         if (withUrbanDensity)
             emBuilder.add(UrbanDensity.create());
-        encodedValueStrings.forEach(s -> emBuilder.add(encodedValueFactory.create(s)));
+        encodedValueStrings.forEach(s -> emBuilder.add(encodedValueFactory.create(s, new PMap())));
         return emBuilder.build();
     }
 
-    protected OSMParsers buildOSMParsers(Map<String, String> vehiclesByName, List<String> encodedValueStrings, List<String> ignoredHighways, String dateRangeParserString) {
+    protected OSMParsers buildOSMParsers(Map<String, String> vehiclesByName, List<String> encodedValueStrings,
+                                         List<String> ignoredHighways, String dateRangeParserString) {
         OSMParsers osmParsers = new OSMParsers();
         ignoredHighways.forEach(osmParsers::addIgnoredHighway);
         for (String s : encodedValueStrings) {
-            TagParser tagParser = tagParserFactory.create(encodingManager, s);
+            TagParser tagParser = tagParserFactory.create(encodingManager, s, new PMap());
             if (tagParser != null)
                 osmParsers.addWayTagParser(tagParser);
         }
@@ -662,25 +666,37 @@ public class GraphHopper {
 
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         vehiclesByName.forEach((name, vehicleStr) -> {
-            VehicleTagParser vehicleTagParser = vehicleTagParserFactory.createParser(encodingManager, name, new PMap(vehicleStr));
-            if (vehicleTagParser == null)
+            VehicleTagParsers vehicleTagParsers = vehicleTagParserFactory.createParsers(encodingManager, name,
+                    new PMap(vehicleStr).putObject("date_range_parser", dateRangeParser));
+            if (vehicleTagParsers == null)
                 return;
-            vehicleTagParser.init(dateRangeParser);
-            if (vehicleTagParser instanceof BikeCommonTagParser) {
-                if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
-                    osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
-                if (encodingManager.hasEncodedValue(GetOffBike.KEY))
-                    osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY)));
-                if (encodingManager.hasEncodedValue(Smoothness.KEY))
-                    osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
-            } else if (vehicleTagParser instanceof FootTagParser) {
-                if (encodingManager.hasEncodedValue(FootNetwork.KEY))
-                    osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
-            }
-            osmParsers.addWayTagParser(vehicleTagParser);
-            String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
-            if (encodingManager.hasEncodedValue(turnCostKey))
-                osmParsers.addRestrictionTagParser(new RestrictionTagParser(vehicleTagParser.getRestrictions(), encodingManager.getDecimalEncodedValue(turnCostKey)));
+            vehicleTagParsers.getTagParsers().forEach(tagParser -> {
+                if (tagParser == null) return;
+                if (tagParser instanceof BikeCommonAccessParser) {
+                    if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
+                        osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
+                    if (encodingManager.hasEncodedValue(GetOffBike.KEY))
+                        osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY)));
+                    if (encodingManager.hasEncodedValue(Smoothness.KEY))
+                        osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
+                } else if (tagParser instanceof FootAccessParser) {
+                    if (encodingManager.hasEncodedValue(FootNetwork.KEY))
+                        osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
+                }
+                String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
+                if (encodingManager.hasEncodedValue(turnCostKey)
+                        // need to make sure we do not add the same restriction parsers multiple times
+                        && osmParsers.getRestrictionTagParsers().stream().noneMatch(r -> r.getTurnCostEnc().getName().equals(turnCostKey))) {
+                    List<String> restrictions = tagParser instanceof AbstractAccessParser
+                            ? ((AbstractAccessParser) tagParser).getRestrictions()
+                            : OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(new PMap(vehicleStr).getString("transportation_mode", "VEHICLE")));
+                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(restrictions, encodingManager.getDecimalEncodedValue(turnCostKey)));
+                }
+            });
+            vehicleTagParsers.getTagParsers().forEach(tagParser -> {
+                if (tagParser == null) return;
+                osmParsers.addWayTagParser(tagParser);
+            });
         });
         return osmParsers;
     }
@@ -699,7 +715,7 @@ public class GraphHopper {
             if (name.isEmpty())
                 continue;
             if (vehiclesMap.containsKey(name))
-                throw new IllegalArgumentException("Duplicate flag encoder: " + name + " in: " + encoderStr);
+                throw new IllegalArgumentException("Duplicate vehicle: " + name + " in: " + encoderStr);
             vehiclesMap.put(name, encoderStr);
         }
         Map<String, String> vehiclesFromProfiles = new LinkedHashMap<>();
@@ -1359,6 +1375,7 @@ public class GraphHopper {
     protected void cleanUp() {
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(baseGraph.getBaseGraph(), buildSubnetworkRemovalJobs());
         preparation.setMinNetworkSize(minNetworkSize);
+        preparation.setThreads(subnetworksThreads);
         preparation.doWork();
         properties.put("profiles", getProfilesString());
         logger.info("nodes: " + Helper.nf(baseGraph.getNodes()) + ", edges: " + Helper.nf(baseGraph.getEdges()));

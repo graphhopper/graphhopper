@@ -19,12 +19,12 @@ public class SlopeCalculator implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         PointList pointList = way.getTag("point_list", null);
         if (pointList != null) {
             if (pointList.isEmpty() || !pointList.is3D()) {
                 averageSlopeEnc.setDecimal(false, edgeFlags, 0);
-                return edgeFlags;
+                return;
             }
             // Calculate 2d distance, although pointList might be 3D.
             // This calculation is a bit expensive and edge_distance is available already, but this would be in 3D
@@ -32,7 +32,7 @@ public class SlopeCalculator implements TagParser {
             if (distance2D < MIN_LENGTH) {
                 // default is minimum of average_slope is negative so we have to explicitly set it to 0
                 averageSlopeEnc.setDecimal(false, edgeFlags, 0);
-                return edgeFlags;
+                return;
             }
 
             double towerNodeSlope = calcSlope(pointList.getEle(pointList.size() - 1) - pointList.getEle(0), distance2D);
@@ -73,7 +73,6 @@ public class SlopeCalculator implements TagParser {
             // TODO To save space then it would be nice to have an encoded value that can store two different values which are swapped when the reverse direction is used
             maxSlopeEnc.setDecimal(false, edgeFlags, Math.min(maxSlope, maxSlopeEnc.getMaxStorableDecimal()));
         }
-        return edgeFlags;
     }
 
     static double calcSlope(double eleDelta, double distance2D) {

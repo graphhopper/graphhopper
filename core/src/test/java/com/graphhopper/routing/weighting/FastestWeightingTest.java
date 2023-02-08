@@ -19,24 +19,20 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.core.util.GHUtility;
 import com.graphhopper.core.util.EdgeIteratorState;
+import com.graphhopper.core.util.FetchMode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FACTOR;
 import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
-import static com.graphhopper.core.util.GHUtility.createMockedEdgeIteratorState;
 import static com.graphhopper.core.util.GHUtility.getEdge;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -47,20 +43,23 @@ public class FastestWeightingTest {
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
     private final DecimalEncodedValue turnCostEnc = TurnCost.create("car", 10);
     private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+    private final BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
-        IntsRef flags = GHUtility.setSpeed(140, 0, accessEnc, speedEnc, encodingManager.createEdgeFlags());
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(10);
+        GHUtility.setSpeed(140, 0, accessEnc, speedEnc, edge);
         Weighting instance = new FastestWeighting(accessEnc, speedEnc);
-        assertEquals(instance.getMinWeight(10), instance.calcEdgeWeight(createMockedEdgeIteratorState(10, flags), false), 1e-8);
+        assertEquals(instance.getMinWeight(10), instance.calcEdgeWeight(edge, false), 1e-8);
     }
 
     @Test
     public void testWeightWrongHeading() {
         Weighting instance = new FastestWeighting(accessEnc, speedEnc, null, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, 100), TurnCostProvider.NO_TURN_COST_PROVIDER);
-
-        VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, GHUtility.createEdgeKey(1, false, false), 1, 2, 10,
-                GHUtility.setSpeed(10, 0, accessEnc, speedEnc, encodingManager.createEdgeFlags()), createKV("name", "test"), Helper.createPointList(51, 0, 51, 1), false);
+        EdgeIteratorState edge = graph.edge(1, 2).setDistance(10).setWayGeometry(Helper.createPointList(51, 0, 51, 1));
+        GHUtility.setSpeed(10, 0, accessEnc, speedEnc, edge);
+        VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(edge.getEdgeKey(), 99, 5, 6, edge.getDistance(), edge.getFlags(),
+                edge.getKeyValues(), edge.fetchWayGeometry(FetchMode.PILLAR_ONLY), false);
         double time = instance.calcEdgeWeight(virtEdge, false);
 
         virtEdge.setUnfavored(true);
@@ -81,13 +80,14 @@ public class FastestWeightingTest {
 
     @Test
     public void testSpeed0() {
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(10);
         Weighting instance = new FastestWeighting(accessEnc, speedEnc);
-        IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        speedEnc.setDecimal(false, edgeFlags, 0);
-        assertEquals(1.0 / 0, instance.calcEdgeWeight(createMockedEdgeIteratorState(10, edgeFlags), false), 1e-8);
+        edge.set(speedEnc, 0);
+        assertEquals(1.0 / 0, instance.calcEdgeWeight(edge, false), 1e-8);
 
         // 0 / 0 returns NaN but calcWeight should not return NaN!
-        assertEquals(1.0 / 0, instance.calcEdgeWeight(createMockedEdgeIteratorState(0, edgeFlags), false), 1e-8);
+        edge.setDistance(0);
+        assertEquals(1.0 / 0, instance.calcEdgeWeight(edge, false), 1e-8);
     }
 
     @Test

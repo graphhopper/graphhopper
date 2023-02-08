@@ -34,10 +34,9 @@ public class OSMMaxWeightParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         // do not include OSM tag "height" here as it has completely different meaning (height of peak)
         List<String> weightTags = Arrays.asList("maxweight", "maxgcweight");
         OSMValueExtractor.extractTons(edgeFlags, way, weightEncoder, weightTags);
-        return edgeFlags;
     }
 }
