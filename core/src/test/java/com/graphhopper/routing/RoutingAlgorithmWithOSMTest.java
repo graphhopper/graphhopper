@@ -339,8 +339,8 @@ public class RoutingAlgorithmWithOSMTest {
         // try reverse direction
         // 1.
         queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2599, 115));
-        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4230, 201));
-        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2870, 154));
+        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4206, 201));
+        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2880, 152));
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1795, 96));
         CustomModel model = new CustomModel();
@@ -387,8 +387,8 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoBike() {
         List<Query> queries = new ArrayList<>();
         queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 1642, 87));
-        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3580, 168));
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2323, 121));
+        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3568, 175));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2197, 119));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1434, 89));
         GraphHopper hopper = createHopper(MONACO, new Profile("bike").setVehicle("bike").setWeighting("shortest"));
         hopper.importOrLoad();

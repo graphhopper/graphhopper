@@ -46,6 +46,8 @@ public abstract class AbstractBikeTagParserTester {
     protected BikeCommonAccessParser accessParser;
     protected BikeCommonAverageSpeedParser speedParser;
     protected BikeCommonPriorityParser priorityParser;
+
+    protected BikeCommonOneWayPushParser onewayPushParser;
     protected OSMParsers osmParsers;
     protected DecimalEncodedValue priorityEnc;
     protected DecimalEncodedValue avgSpeedEnc;
@@ -58,6 +60,7 @@ public abstract class AbstractBikeTagParserTester {
         accessParser = (BikeCommonAccessParser) parsers.getAccessParser();
         speedParser = (BikeCommonAverageSpeedParser) parsers.getSpeedParser();
         priorityParser = (BikeCommonPriorityParser) parsers.getPriorityParser();
+        onewayPushParser = (BikeCommonOneWayPushParser) parsers.getOneWayPushParser();
         osmParsers = new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
                 .addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))

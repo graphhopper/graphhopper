@@ -31,10 +31,13 @@ public class VehicleTagParsers {
     private final TagParser speedParser;
     private final TagParser priorityParser;
 
+    private final TagParser oneWayPushParser;
+
     public static VehicleTagParsers roads(EncodedValueLookup lookup, PMap properties) {
         return new VehicleTagParsers(
                 new RoadsAccessParser(lookup, properties),
                 new RoadsAverageSpeedParser(lookup, properties),
+                null,
                 null
         );
     }
@@ -43,6 +46,7 @@ public class VehicleTagParsers {
         return new VehicleTagParsers(
                 new CarAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
                 new CarAverageSpeedParser(lookup, properties),
+                null,
                 null
         );
     }
@@ -51,7 +55,8 @@ public class VehicleTagParsers {
         return new VehicleTagParsers(
                 new BikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
                 new BikeAverageSpeedParser(lookup, properties),
-                new BikePriorityParser(lookup, properties)
+                new BikePriorityParser(lookup, properties),
+                new BikeOneWayPushParser(lookup, properties)
         );
     }
 
@@ -59,7 +64,8 @@ public class VehicleTagParsers {
         return new VehicleTagParsers(
                 new RacingBikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
                 new RacingBikeAverageSpeedParser(lookup, properties),
-                new RacingBikePriorityParser(lookup, properties)
+                new RacingBikePriorityParser(lookup, properties),
+               null
         );
     }
 
@@ -67,7 +73,8 @@ public class VehicleTagParsers {
         return new VehicleTagParsers(
                 new MountainBikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
                 new MountainBikeAverageSpeedParser(lookup, properties),
-                new MountainBikePriorityParser(lookup, properties)
+                new MountainBikePriorityParser(lookup, properties),
+                null
         );
     }
 
@@ -75,7 +82,8 @@ public class VehicleTagParsers {
         return new VehicleTagParsers(
                 new FootAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
                 new FootAverageSpeedParser(lookup, properties),
-                new FootPriorityParser(lookup, properties)
+                new FootPriorityParser(lookup, properties),
+                null
         );
     }
 
@@ -83,7 +91,8 @@ public class VehicleTagParsers {
         return new VehicleTagParsers(
                 new HikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
                 new HikeAverageSpeedParser(lookup, properties),
-                new HikePriorityParser(lookup, properties)
+                new HikePriorityParser(lookup, properties),
+                null
         );
     }
 
@@ -91,7 +100,8 @@ public class VehicleTagParsers {
         return new VehicleTagParsers(
                 new MotorcycleAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
                 new MotorcycleAverageSpeedParser(lookup, properties),
-                new MotorcyclePriorityParser(lookup, properties)
+                new MotorcyclePriorityParser(lookup, properties),
+                null
         );
     }
 
@@ -99,14 +109,16 @@ public class VehicleTagParsers {
         return new VehicleTagParsers(
                 new WheelchairAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
                 new WheelchairAverageSpeedParser(lookup, properties),
-                new WheelchairPriorityParser(lookup, properties)
+                new WheelchairPriorityParser(lookup, properties),
+                null
         );
     }
 
-    public VehicleTagParsers(TagParser accessParser, TagParser speedParser, TagParser priorityParser) {
+    public VehicleTagParsers(TagParser accessParser, TagParser speedParser, TagParser priorityParser, TagParser oneWayPushParser) {
         this.accessParser = accessParser;
         this.speedParser = speedParser;
         this.priorityParser = priorityParser;
+        this.oneWayPushParser = oneWayPushParser;
     }
 
     public TagParser getAccessParser() {
@@ -121,8 +133,12 @@ public class VehicleTagParsers {
         return priorityParser;
     }
 
+    public TagParser getOneWayPushParser() {
+        return oneWayPushParser;
+    }
+
     public List<TagParser> getTagParsers() {
-        return Arrays.asList(accessParser, speedParser, priorityParser);
+        return Arrays.asList(accessParser, speedParser, priorityParser, oneWayPushParser);
     }
 
 }

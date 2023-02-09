@@ -697,6 +697,7 @@ public class OSMReaderTest {
                         new CarAccessParser(lookup.getBooleanEncodedValue(VehicleAccess.key("truck")), lookup.getBooleanEncodedValue(Roundabout.KEY), config, TransportationMode.HGV)
                                 .init(config.getObject("date_range_parser", new DateRangeParser())),
                         new CarAverageSpeedParser(lookup.getDecimalEncodedValue(VehicleSpeed.key("truck")), 120),
+                        null,
                         null
                 );
             }
