@@ -16,7 +16,5 @@ public class BikeOneWayPushParser extends BikeCommonOneWayPushParser {
                                 DecimalEncodedValue speedEnc) {
         super(accessEnc, speedEnc);
 
-        addPushingSection("path");
-
     }
 }

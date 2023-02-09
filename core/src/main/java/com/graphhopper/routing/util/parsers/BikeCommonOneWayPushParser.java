@@ -35,6 +35,7 @@ public abstract class BikeCommonOneWayPushParser implements TagParser {
         addPushingSection("pedestrian");
         addPushingSection("steps");
         addPushingSection("platform");
+        addPushingSection("path");
 
         setHighwaySpeed("cycleway", PUSHING_SECTION_SPEED);
         setHighwaySpeed("path", PUSHING_SECTION_SPEED);
