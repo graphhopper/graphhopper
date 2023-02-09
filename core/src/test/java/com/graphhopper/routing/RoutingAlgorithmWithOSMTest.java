@@ -330,19 +330,19 @@ public class RoutingAlgorithmWithOSMTest {
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
         queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 1999, 101));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 3939, 187));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 3889, 164));
         // 3.
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 163));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2823, 167));
         // 4.
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1544, 84));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1593, 88));
 
         // try reverse direction
         // 1.
-        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2599, 115));
-        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4206, 201));
-        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2880, 152));
+        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2642, 113));
+        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4230, 201));
+        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2461, 142));
         // 4. avoid tunnel(s)!
-        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1795, 96));
+        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1853, 101));
         CustomModel model = new CustomModel();
         model.addToSpeed(Statement.If("average_slope >= 10", LIMIT, "4")).
                 addToSpeed(Statement.If("average_slope >= 5", MULTIPLY, "0.45")).
@@ -386,10 +386,20 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoBike() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 1642, 87));
-        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3568, 175));
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2197, 119));
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1434, 89));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 1510, 84));
+        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3437, 136));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2084, 112));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1425, 89));
+        GraphHopper hopper = createHopper(MONACO, new Profile("bike").setVehicle("bike").setWeighting("shortest"));
+        hopper.importOrLoad();
+        checkQueries(hopper, queries);
+    }
+
+    @Test
+    public void testMonacoBikeAllowOppositeOneways() {
+        List<Query> queries = new ArrayList<>();
+        queries.add(new Query(43.73839, 7.42218, 43.73833, 7.42132, 70, 5));
+        queries.add(new Query(43.73833, 7.42132,43.73839, 7.42218,  70, 5));
         GraphHopper hopper = createHopper(MONACO, new Profile("bike").setVehicle("bike").setWeighting("shortest"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -445,8 +455,8 @@ public class RoutingAlgorithmWithOSMTest {
     public void testKremsBikeRelation() {
         List<Query> queries = new ArrayList<>();
         queries.add(new Query(48.409523, 15.602394, 48.375466, 15.72916, 12491, 159));
-        queries.add(new Query(48.410061, 15.63951, 48.411386, 15.604899, 3077, 79));
-        queries.add(new Query(48.412294, 15.62007, 48.398306, 15.609667, 3965, 94));
+        queries.add(new Query(48.410061, 15.63951, 48.411386, 15.604899, 3052, 77));
+        queries.add(new Query(48.412294, 15.62007, 48.398306, 15.609667, 3385, 83));
 
         GraphHopper hopper = createHopper(KREMS,
                 new Profile("bike").setVehicle("bike").setWeighting("fastest"));
@@ -717,6 +727,7 @@ public class RoutingAlgorithmWithOSMTest {
                 Profile profile = hopper.getProfiles().get(0);
                 request.setProfile(profile.getName());
                 GHResponse res = hopper.route(request);
+
                 checkResponse(res, query);
                 String expectedAlgo = request.getHints().getString("expected_algo", "no_expected_algo");
                 // for edge-based routing we expect a slightly different algo name for CH

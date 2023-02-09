@@ -286,7 +286,7 @@ public class RouteResourceCustomModelTest {
                 " \"ch.disable\": true" +
                 "}";
         path = getPath(body);
-        assertEquals(5370, path.get("distance").asDouble(), 5);
+        assertEquals(5364, path.get("distance").asDouble(), 5);
     }
 
     @Test

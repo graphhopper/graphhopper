@@ -350,7 +350,7 @@ public class RouteResourceClientHCTest {
         // starting in eastern direction results in a longer way
         req.setHeadings(Collections.singletonList(90.0));
         GHResponse response = gh.route(req);
-        assertEquals(978, response.getBest().getDistance(), 5);
+        assertEquals(945, response.getBest().getDistance(), 5);
 
         // ... than going west
         req.setHeadings(Arrays.asList(270.0));

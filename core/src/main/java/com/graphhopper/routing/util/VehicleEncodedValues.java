@@ -65,7 +65,7 @@ public class VehicleEncodedValues {
         String name = properties.getString("name", "bike");
         int speedBits = properties.getInt("speed_bits", 4);
         double speedFactor = properties.getDouble("speed_factor", 2);
-        boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
+        boolean speedTwoDirections = properties.getBool("speed_two_directions", true);
         int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
@@ -75,11 +75,17 @@ public class VehicleEncodedValues {
     }
 
     public static VehicleEncodedValues racingbike(PMap properties) {
-        return bike(new PMap(properties).putObject("name", properties.getString("name", "racingbike")));
+        return bike(new PMap(properties)
+                .putObject("name", properties.getString("name", "racingbike"))
+                .putObject("speed_two_directions",false)
+        );
     }
 
     public static VehicleEncodedValues mountainbike(PMap properties) {
-        return bike(new PMap(properties).putObject("name", properties.getString("name", "mtb")));
+        return bike(new PMap(properties)
+                .putObject("name", properties.getString("name", "mtb"))
+                .putObject("speed_two_directions",false)
+        );
     }
 
     public static VehicleEncodedValues car(PMap properties) {
