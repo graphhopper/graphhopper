@@ -42,6 +42,7 @@ Here is an overview:
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config
  * joe-akeem, improvements like #2158
+ * jp-lopez, improvements like Allow oneways and foot-only roads for bike #196
  * JohannesPelzer, improved GPX information and various other things
  * karussell, one of the core developers
  * khuebner, initial turn costs support
