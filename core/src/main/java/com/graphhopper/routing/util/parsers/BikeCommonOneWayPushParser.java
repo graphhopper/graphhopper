@@ -84,6 +84,7 @@ public abstract class BikeCommonOneWayPushParser implements TagParser {
             }
         }
 
+
         // pushing bikes - if no other mode found
         if(forwardInaccessible || backwardInaccessible
                 || isInvalidSpeed(forwardSpeed)
@@ -124,7 +125,7 @@ public abstract class BikeCommonOneWayPushParser implements TagParser {
                 }
 
                 if (isValidSpeed(pushBackwardSpeed) && (backwardInaccessible || isInvalidSpeed(backwardSpeed))) {
-                    if(accessEnc.isStoreTwoDirections() && avgSpeedEnc.isStoreTwoDirections()){
+                    if(accessEnc.isStoreTwoDirections() && avgSpeedEnc.isStoreTwoDirections()) {
                         accessEnc.setBool(true, edgeFlags, true);
                         avgSpeedEnc.setDecimal(true, edgeFlags, pushBackwardSpeed);
                     }
@@ -132,6 +133,19 @@ public abstract class BikeCommonOneWayPushParser implements TagParser {
 
             }
         }
+
+        // dismount
+        if (way.hasTag("bicycle", "dismount")){
+            accessEnc.setBool(false, edgeFlags, true);
+            avgSpeedEnc.setDecimal(false, edgeFlags, PUSHING_SECTION_SPEED);
+
+            if(accessEnc.isStoreTwoDirections() && avgSpeedEnc.isStoreTwoDirections()){
+                accessEnc.setBool(true, edgeFlags, true);
+                avgSpeedEnc.setDecimal(true, edgeFlags, PUSHING_SECTION_SPEED);
+            }
+        }
+
+
     }
 
     boolean isInvalidSpeed(double speed){
