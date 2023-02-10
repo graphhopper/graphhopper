@@ -367,6 +367,117 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("vehicle", "agricultural;forestry");
         assertTrue(accessParser.getAccess(way).canSkip());
     }
+    
+    @Test
+    public void testOneWayPushBackward(){
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("foot", "no");
+        IntsRef flags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(flags, way, null);
+        speedParser.handleWayTags(flags,way,null);
+        onewayPushParser.handleWayTags(flags,way,null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, flags));
+        assertFalse(accessParser.getAccessEnc().getBool(true, flags));
+        assertEquals(18, avgSpeedEnc.getDecimal(false, flags), 0.1);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("foot", "yes");
+        flags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(flags, way, null);
+        speedParser.handleWayTags(flags,way,null);
+        onewayPushParser.handleWayTags(flags,way,null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, flags));
+        assertTrue(accessParser.getAccessEnc().getBool(true, flags));
+        assertEquals(18, avgSpeedEnc.getDecimal(false, flags), 0.1);
+        assertEquals(4, avgSpeedEnc.getDecimal(true, flags), 0.1);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("foot:forward", "yes");
+        flags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(flags, way, null);
+        speedParser.handleWayTags(flags,way,null);
+        onewayPushParser.handleWayTags(flags,way,null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, flags));
+        assertFalse(accessParser.getAccessEnc().getBool(true, flags));
+        assertEquals(18, avgSpeedEnc.getDecimal(false, flags), 0.1);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("foot:backward", "yes");
+        flags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(flags, way, null);
+        speedParser.handleWayTags(flags,way,null);
+        onewayPushParser.handleWayTags(flags,way,null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, flags));
+        assertTrue(accessParser.getAccessEnc().getBool(true, flags));
+        assertEquals(18, avgSpeedEnc.getDecimal(false, flags), 0.1);
+        assertEquals(4, avgSpeedEnc.getDecimal(true, flags), 0.1);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("junction", "roundabout");
+        way.setTag("foot", "yes");
+        way.setTag("oneway", "yes");
+        flags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(flags, way, null);
+        speedParser.handleWayTags(flags,way,null);
+        onewayPushParser.handleWayTags(flags,way,null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, flags));
+        assertFalse(accessParser.getAccessEnc().getBool(true, flags));
+        assertEquals(18, avgSpeedEnc.getDecimal(false, flags), 0.1);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("railway", "platform");
+        way.setTag("foot", "yes");
+        way.setTag("oneway", "yes");
+        flags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(flags, way, null);
+        speedParser.handleWayTags(flags,way,null);
+        onewayPushParser.handleWayTags(flags,way,null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, flags));
+        assertTrue(accessParser.getAccessEnc().getBool(true, flags));
+        assertEquals(4, avgSpeedEnc.getDecimal(false, flags), 0.1);
+        assertEquals(4, avgSpeedEnc.getDecimal(true, flags), 0.1);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("access", "yes");
+        way.setTag("junction", "roundabout");
+        way.setTag("foot", "yes");
+        way.setTag("oneway", "yes");
+        flags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(flags, way, null);
+        speedParser.handleWayTags(flags,way,null);
+        onewayPushParser.handleWayTags(flags,way,null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, flags));
+        assertFalse(accessParser.getAccessEnc().getBool(true, flags));
+        assertEquals(18, avgSpeedEnc.getDecimal(false, flags), 0.1);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("foot", "no");
+        way.setTag("bicycle", "dismount");
+        flags = encodingManager.createEdgeFlags();
+        accessParser.handleWayTags(flags, way, null);
+        speedParser.handleWayTags(flags,way,null);
+        onewayPushParser.handleWayTags(flags,way,null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, flags));
+        assertTrue(accessParser.getAccessEnc().getBool(true, flags));
+        assertEquals(4, avgSpeedEnc.getDecimal(false, flags), 0.1);
+        assertEquals(4, avgSpeedEnc.getDecimal(false, flags), 0.1);
+
+
+    }
 
     @Test
     public void testOneway() {
