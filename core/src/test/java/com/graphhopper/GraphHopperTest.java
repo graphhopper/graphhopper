@@ -1234,24 +1234,22 @@ public class GraphHopperTest {
 
     @Test
     public void testKremsCyclewayInstructionsWithWayTypeInfo() {
-        final String profile1 = "foot_profile";
-        final String profile2 = "bike_profile";
-        final String vehicle1 = "foot";
-        final String vehicle2 = "bike";
+        final String footProfile = "foot_profile";
+        final String bikeProfile = "bike_profile";
         final String weighting = "fastest";
 
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(KREMS).
                 setProfiles(
-                        new Profile(profile1).setVehicle(vehicle1).setWeighting(weighting),
-                        new Profile(profile2).setVehicle(vehicle2).setWeighting(weighting)).
+                        new Profile(footProfile).setVehicle("foot").setWeighting(weighting),
+                        new Profile(bikeProfile).setVehicle("bike").setWeighting(weighting)).
                 setStoreOnFlush(true).
                 importOrLoad();
 
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
         GHResponse rsp = hopper.route(new GHRequest(48.410987, 15.599492, 48.383419, 15.659294).
-                setProfile(profile2));
+                setProfile(bikeProfile));
         assertFalse(rsp.hasErrors());
         ResponsePath res = rsp.getBest();
         assertEquals(6931.8, res.getDistance(), .1);
@@ -1278,7 +1276,7 @@ public class GraphHopperTest {
 
         // do not return 'get off bike' for foot
         rsp = hopper.route(new GHRequest(48.410987, 15.599492, 48.411172, 15.600371).
-                setAlgorithm(ASTAR).setProfile(profile1));
+                setAlgorithm(ASTAR).setProfile(footProfile));
         assertFalse(rsp.hasErrors());
         il = rsp.getBest().getInstructions();
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));

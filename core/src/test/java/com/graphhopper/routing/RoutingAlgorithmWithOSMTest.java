@@ -467,7 +467,7 @@ public class RoutingAlgorithmWithOSMTest {
     public void testKremsMountainBikeRelation() {
         List<Query> queries = new ArrayList<>();
         queries.add(new Query(48.409523, 15.602394, 48.375466, 15.72916, 12574, 169));
-        queries.add(new Query(48.410061, 15.63951, 48.411386, 15.604899, 3101, 94));
+        queries.add(new Query(48.410061, 15.63951, 48.411386, 15.604899, 2804, 94));
         queries.add(new Query(48.412294, 15.62007, 48.398306, 15.609667, 3965, 95));
 
         GraphHopper hopper = createHopper(KREMS,
