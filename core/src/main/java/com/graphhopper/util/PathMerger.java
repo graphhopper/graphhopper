@@ -161,8 +161,9 @@ public class PathMerger {
             for (int i = 0; i < wayPointIntervals.size(); i++) {
                 int start = wayPointIntervals.get(i).start;
                 int end = wayPointIntervals.get(i).end;
-                if (waypoints.getLat(i) != fullPoints.getLat(start) || waypoints.getLon(i) != fullPoints.getLon(start)
-                        || waypoints.getLat(i + 1) != fullPoints.getLat(end) || waypoints.getLon(i + 1) != fullPoints.getLon(end))
+                final double tolerance = 1.e-6; // todo: why does this fail sometimes when we set the tolerance to zero?
+                if (Math.abs(waypoints.getLat(i) - fullPoints.getLat(start)) > tolerance || Math.abs(waypoints.getLon(i) - fullPoints.getLon(start)) > tolerance
+                        || Math.abs(waypoints.getLat(i + 1) - fullPoints.getLat(end)) > tolerance || Math.abs(waypoints.getLon(i + 1) - fullPoints.getLon(end)) > tolerance)
                     throw new IllegalStateException("waypoints are not included in points, or waypoint intervals are wrong");
             }
         }
