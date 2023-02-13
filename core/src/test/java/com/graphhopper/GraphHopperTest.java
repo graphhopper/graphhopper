@@ -45,6 +45,7 @@ import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.BBox;
@@ -266,14 +267,15 @@ public class GraphHopperTest {
         Profile profile = new Profile(profileName).setVehicle(vehicle).setWeighting("fastest");
         if (custom) {
             JsonFeature area51Feature = new JsonFeature();
+            area51Feature.setId("area51");
             area51Feature.setGeometry(new GeometryFactory().createPolygon(new Coordinate[]{
                     new Coordinate(7.4174, 43.7345),
                     new Coordinate(7.4198, 43.7355),
                     new Coordinate(7.4207, 43.7344),
                     new Coordinate(7.4174, 43.7345)}));
-            CustomModel customModel = new CustomModel().setDistanceInfluence(0);
+            CustomModel customModel = new CustomModel().setDistanceInfluence(0d);
             customModel.getPriority().add(Statement.If("in_area51", Statement.Op.MULTIPLY, "0.1"));
-            customModel.getAreas().put("area51", area51Feature);
+            customModel.getAreas().getFeatures().add(area51Feature);
             profile = new CustomProfile(profileName).setCustomModel(customModel).setVehicle(vehicle);
         }
         hopper.setProfiles(profile);
@@ -658,6 +660,8 @@ public class GraphHopperTest {
         req.putHint(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
         rsp = hopper.route(req);
         assertTrue(rsp.hasErrors(), "expected errors");
+        assertEquals(1, rsp.getErrors().size());
+        assertTrue(rsp.getErrors().get(0) instanceof ConnectionNotFoundException);
     }
 
     @Test
@@ -692,8 +696,8 @@ public class GraphHopperTest {
         );
         assertDistance(hopper, customCar, customModelWithUnclassifiedRule, 19289);
         // now we use distance influence to avoid the detour
-        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(200), 8725);
-        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(100), 14475);
+        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(200d), 8725);
+        assertDistance(hopper, customCar, new CustomModel(customModelWithUnclassifiedRule).setDistanceInfluence(100d), 14475);
     }
 
     private void assertDistance(GraphHopper hopper, String profile, CustomModel customModel, double expectedDistance) {
@@ -1086,14 +1090,13 @@ public class GraphHopperTest {
         if (!withTunnelInterpolation) {
             hopper.setTagParserFactory(new DefaultTagParserFactory() {
                 @Override
-                public TagParser create(EncodedValueLookup lookup, String name) {
-                    TagParser parser = super.create(lookup, name);
+                public TagParser create(EncodedValueLookup lookup, String name, PMap properties) {
+                    TagParser parser = super.create(lookup, name, properties);
                     if (name.equals("road_environment"))
                         parser = new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
                             @Override
-                            public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+                            public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
                                 // do not change RoadEnvironment to avoid triggering tunnel interpolation
-                                return edgeFlags;
                             }
                         };
                     return parser;
@@ -1631,8 +1634,8 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setProfiles(
-                        new CustomProfile("p1").setCustomModel(new CustomModel().setDistanceInfluence(100)).setVehicle("car"),
-                        new CustomProfile("p2").setCustomModel(new CustomModel().setDistanceInfluence(100)).setVehicle("car")).
+                        new CustomProfile("p1").setCustomModel(new CustomModel().setDistanceInfluence(100d)).setVehicle("car"),
+                        new CustomProfile("p2").setCustomModel(new CustomModel().setDistanceInfluence(100d)).setVehicle("car")).
                 setStoreOnFlush(true);
 
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("p1"));
@@ -1644,7 +1647,7 @@ public class GraphHopperTest {
         assertEquals(3587, response.getBest().getDistance(), 1);
 
         // use smaller distance influence to force violating the LM constraint
-        final CustomModel customModel = new CustomModel().setDistanceInfluence(0);
+        final CustomModel customModel = new CustomModel().setDistanceInfluence(0d);
         response = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setCustomModel(customModel).
                 setProfile("p1").putHint("lm.disable", false));
@@ -2286,6 +2289,52 @@ public class GraphHopperTest {
 
     private void assertDetail(PathDetail detail, String expected) {
         assertEquals(expected, detail.toString());
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = {"true,true", "true,false", "false,true", "false,false"})
+    public void simplifyKeepsWaypoints(boolean elevation, boolean instructions) {
+        GraphHopper h = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
+        if (elevation)
+            h.setElevationProvider(new SRTMProvider(DIR));
+        h.importOrLoad();
+
+        List<GHPoint> reqPoints = asList(
+                new GHPoint(43.741736, 7.428043),
+                new GHPoint(43.741248, 7.4274),
+                new GHPoint(43.73906, 7.426694),
+                new GHPoint(43.736337, 7.420592),
+                new GHPoint(43.735585, 7.419734),
+                new GHPoint(43.734857, 7.41909),
+                new GHPoint(43.73389, 7.418578),
+                new GHPoint(43.733204, 7.418755),
+                new GHPoint(43.731969, 7.416949)
+        );
+        GHRequest req = new GHRequest(reqPoints).setProfile("car");
+        req.putHint("instructions", instructions);
+        GHResponse res = h.route(req);
+        assertFalse(res.hasErrors());
+        assertEquals(elevation ? 1828 : 1793, res.getBest().getDistance(), 1);
+        PointList points = res.getBest().getPoints();
+        PointList wayPoints = res.getBest().getWaypoints();
+        assertEquals(reqPoints.size(), wayPoints.size());
+        assertEquals(points.is3D(), wayPoints.is3D());
+        assertPointlistContainsSublist(points, wayPoints);
+    }
+
+    private static void assertPointlistContainsSublist(PointList pointList, PointList subList) {
+        // we check if all points in sublist exist in pointlist, in the order given by sublist
+        int j = 0;
+        for (int i = 0; i < pointList.size(); i++)
+            if (pointList.getLat(i) == subList.getLat(j) && pointList.getLon(i) == subList.getLon(j) && (!pointList.is3D() || pointList.getEle(i) == subList.getEle(j)))
+                j++;
+        if (j != subList.size())
+            fail("point list does not contain point " + j + " of sublist: " + subList.get(j) +
+                    "\npoint list: " + pointList +
+                    "\nsublist   : " + subList);
     }
 
     @Test

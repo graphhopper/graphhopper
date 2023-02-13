@@ -130,7 +130,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
         queries.add(new Query(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
         queries.add(new Query(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
-        CustomModel model = new CustomModel().addToPriority(Statement.If("true", MULTIPLY, "curvature"));
+        CustomModel model = new CustomModel().setDistanceInfluence(70d).addToPriority(Statement.If("true", MULTIPLY, "curvature"));
 
         GraphHopper hopper = createHopper(MONACO, new CustomProfile("motorcycle").setCustomModel(model).
                 setVehicle("motorcycle").setWeighting("custom"));
@@ -339,7 +339,7 @@ public class RoutingAlgorithmWithOSMTest {
         // try reverse direction
         // 1.
         queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2599, 115));
-        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 3902, 199));
+        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4230, 201));
         queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2870, 154));
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1795, 96));
@@ -421,9 +421,9 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoRacingBike() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2594, 111));
-        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3614, 184));
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2572, 135));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2597, 118));
+        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3589, 170));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2568, 135));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1490, 84));
 
         GraphHopper hopper = createHopper(MONACO,

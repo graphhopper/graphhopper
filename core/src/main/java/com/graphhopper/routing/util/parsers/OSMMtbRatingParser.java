@@ -36,7 +36,7 @@ public class OSMMtbRatingParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         String scale = readerWay.getTag("mtb:scale");
         int rating = 0;
         if (scale != null) {
@@ -50,6 +50,5 @@ public class OSMMtbRatingParser implements TagParser {
         }
         if (rating > 0 && rating < 8)
             mtbRatingEnc.setInt(false, edgeFlags, rating);
-        return edgeFlags;
     }
 }

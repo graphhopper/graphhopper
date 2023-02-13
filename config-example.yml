@@ -23,7 +23,7 @@ graphhopper:
   # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
   #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
   #   in seconds, so for example it does not work with shortest weighting.
-  # - custom_model_file: when you specified "weighting: custom" you need to set a json file inside your custom_model_folder
+  # - custom_model_file: when you specified "weighting: custom" you need to set a json file inside your custom_models.directory
   #   or working directory that defines the custom_model. If you want an empty model you can also set "custom_model_file: empty".
   #   You can also use th e`custom_model` field instead and specify your custom model in the profile directly.
   #
@@ -45,7 +45,9 @@ graphhopper:
   #   weighting: custom
   #   # the custom model in bike2.json is defined to avoid hills
   #   custom_model_file: bike2.json
-  custom_model_folder: custom_models
+
+  # specify the folder where to find the custom model files
+  custom_models.directory: custom_models
 
   # Speed mode:
   # Its possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
@@ -151,6 +153,7 @@ graphhopper:
   # allows setting a minimum size (number of edges) for such detached components. This can be used to reduce the number
   # of cases where a connection between locations might not be found.
   prepare.min_network_size: 200
+  prepare.subnetworks.threads: 1
 
 
   #### Routing ####
@@ -190,7 +193,8 @@ graphhopper:
   #### Custom Areas ####
 
   # GraphHopper reads GeoJSON polygon files including their properties from this directory and makes them available
-  # to all tag parsers and vehicles. Country borders (see countries.geojson) are always included automatically.
+  # to all tag parsers, vehicles and custom models. All GeoJSON Features require to have the "id" property.
+  # Country borders are included automatically (see countries.geojson).
   # custom_areas.directory: path/to/custom_areas
 
 

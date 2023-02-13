@@ -364,7 +364,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.5179, 1.555574)).
                 addPoint(new GHPoint(42.532022, 1.519504)).
-                setCustomModel(new CustomModel()
+                setCustomModel(new CustomModel().setDistanceInfluence(70d)
                         // we reduce the speed in the long tunnel
                         .addToSpeed(Statement.If("road_environment == TUNNEL", Statement.Op.MULTIPLY, "0.1"))).
                 setProfile("my_custom_car").
