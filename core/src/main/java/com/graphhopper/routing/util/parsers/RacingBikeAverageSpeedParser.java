@@ -7,11 +7,12 @@ public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
 
     public RacingBikeAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
         this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "racingbike"))),
-                lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class));
+                lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class), lookup.getBooleanEncodedValue(GetOffBike.KEY));
     }
 
-    protected RacingBikeAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc) {
-        super(speedEnc, smoothnessEnc);
+    protected RacingBikeAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc,
+                                           BooleanEncodedValue getOffBikeEnc) {
+        super(speedEnc, smoothnessEnc, getOffBikeEnc);
 
         setTrackTypeSpeed("grade1", 20); // paved
         setTrackTypeSpeed("grade2", 10); // now unpaved ...

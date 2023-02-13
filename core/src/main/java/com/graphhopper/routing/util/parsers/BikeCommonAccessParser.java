@@ -15,32 +15,12 @@ import static java.util.Collections.emptyMap;
 
 public abstract class BikeCommonAccessParser extends AbstractAccessParser implements TagParser {
 
-    protected final HashSet<String> oppositeLanes = new HashSet<>();
     private final Set<String> allowedHighways = new HashSet<>();
-    private final BooleanEncodedValue roundaboutEnc;
 
-    protected BikeCommonAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc) {
+    protected BikeCommonAccessParser(BooleanEncodedValue accessEnc) {
         super(accessEnc, TransportationMode.BIKE);
 
-        this.roundaboutEnc = roundaboutEnc;
-
-        restrictedValues.add("agricultural");
-        restrictedValues.add("forestry");
-        restrictedValues.add("no");
-        restrictedValues.add("restricted");
-        restrictedValues.add("delivery");
-        restrictedValues.add("military");
-        restrictedValues.add("emergency");
-        restrictedValues.add("private");
-
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("official");
-        intendedValues.add("permissive");
-
-        oppositeLanes.add("opposite");
-        oppositeLanes.add("opposite_lane");
-        oppositeLanes.add("opposite_track");
+        restrictedValues.addAll(Arrays.asList("agricultural", "forestry", "no", "restricted", "delivery", "military", "emergency", "private"));
 
         barriers.add("fence");
 
@@ -134,48 +114,10 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (access.canSkip())
             return;
 
-        if (access.isFerry()) {
-            accessEnc.setBool(false, edgeFlags, true);
-            accessEnc.setBool(true, edgeFlags, true);
-        } else {
-            handleAccess(edgeFlags, way);
-        }
+        accessEnc.setBool(false, edgeFlags, true);
+        accessEnc.setBool(true, edgeFlags, true);
 
         Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
         handleNodeTags(edgeFlags, nodeTags);
-    }
-
-    protected void handleAccess(IntsRef edgeFlags, ReaderWay way) {
-        // handle oneways. The value -1 means it is a oneway but for reverse direction of stored geometry.
-        // The tagging oneway:bicycle=no or cycleway:right:oneway=no or cycleway:left:oneway=no lifts the generic oneway restriction of the way for bike
-        boolean isOneway = way.hasTag("oneway", oneways) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", intendedValues)
-                || way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", intendedValues)
-                || way.hasTag("oneway:bicycle", oneways)
-                || way.hasTag("cycleway:left:oneway", oneways)
-                || way.hasTag("cycleway:right:oneway", oneways)
-                || way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", intendedValues)
-                || way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", intendedValues)
-                || way.hasTag("bicycle:forward", restrictedValues)
-                || way.hasTag("bicycle:backward", restrictedValues);
-
-        if ((isOneway || roundaboutEnc.getBool(false, edgeFlags))
-                && !way.hasTag("oneway:bicycle", "no")
-                && !way.hasTag("cycleway", oppositeLanes)
-                && !way.hasTag("cycleway:left", oppositeLanes)
-                && !way.hasTag("cycleway:right", oppositeLanes)
-                && !way.hasTag("cycleway:left:oneway", "no")
-                && !way.hasTag("cycleway:right:oneway", "no")) {
-            boolean isBackward = way.hasTag("oneway", "-1")
-                    || way.hasTag("oneway:bicycle", "-1")
-                    || way.hasTag("cycleway:left:oneway", "-1")
-                    || way.hasTag("cycleway:right:oneway", "-1")
-                    || way.hasTag("vehicle:forward", restrictedValues)
-                    || way.hasTag("bicycle:forward", restrictedValues);
-            accessEnc.setBool(isBackward, edgeFlags, true);
-
-        } else {
-            accessEnc.setBool(false, edgeFlags, true);
-            accessEnc.setBool(true, edgeFlags, true);
-        }
     }
 }

@@ -1393,8 +1393,8 @@ public class GraphHopperTest {
                 .setProfile(bikeProfile));
         res = rsp.getBest();
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(511, res.getTime() / 1000f, 1);
-        assertEquals(2481, res.getDistance(), 1);
+        assertEquals(452, res.getTime() / 1000f, 1);
+        assertEquals(2281, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile3"));
@@ -2476,16 +2476,6 @@ public class GraphHopperTest {
                 ).
                 setMinNetworkSize(0);
         hopper.importOrLoad();
-
-        {
-            // the bollard blocks the road for bikes, and we need to take a big detour. note that this bollard connects
-            // two ways
-            GHResponse bikeRsp = hopper.route(new GHRequest(51.257709, 12.309269, 51.257594, 12.308882).setProfile("bike"));
-            assertEquals(1185, bikeRsp.getBest().getDistance(), 1);
-            // pedestrians can just pass the bollard
-            GHResponse footRsp = hopper.route(new GHRequest(51.257709, 12.309269, 51.257594, 12.308882).setProfile("foot"));
-            assertEquals(28, footRsp.getBest().getDistance(), 1);
-        }
 
         {
             // here the bollard blocks the road for cars

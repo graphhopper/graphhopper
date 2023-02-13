@@ -9,14 +9,13 @@ import com.graphhopper.util.PMap;
 public class RacingBikeAccessParser extends BikeCommonAccessParser {
 
     public RacingBikeAccessParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "racingbike"))),
-                lookup.getBooleanEncodedValue(Roundabout.KEY));
+        this(lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "racingbike"))));
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected RacingBikeAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc) {
-        super(accessEnc, roundaboutEnc);
+    protected RacingBikeAccessParser(BooleanEncodedValue accessEnc) {
+        super(accessEnc);
 
         barriers.add("kissing_gate");
         barriers.add("stile");

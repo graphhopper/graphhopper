@@ -4,15 +4,15 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.GetOffBike;
+import com.graphhopper.routing.ev.Roundabout;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class OSMGetOffBikeParserTest {
     private final BooleanEncodedValue offBikeEnc = GetOffBike.create();
-    private final OSMGetOffBikeParser parser = new OSMGetOffBikeParser(offBikeEnc);
+    private final OSMGetOffBikeParser parser = new OSMGetOffBikeParser(offBikeEnc, Roundabout.create());
 
     public OSMGetOffBikeParserTest() {
         offBikeEnc.init(new EncodedValue.InitializerConfig());
@@ -22,86 +22,193 @@ public class OSMGetOffBikeParserTest {
     public void testHandleCommonWayTags() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "steps");
-        assertTrue(isGetOffBike(way));
+        assertGetOffBike(way, true, true);
 
         way.setTag("highway", "footway");
-        assertTrue(isGetOffBike(way));
+        assertGetOffBike(way, true, true);
 
         way.setTag("highway", "footway");
         way.setTag("surface", "pebblestone");
-        assertTrue(isGetOffBike(way));
+        assertGetOffBike(way, true, true);
 
         way.setTag("highway", "residential");
-        assertFalse(isGetOffBike(way));
+        assertGetOffBike(way, false, false);
 
         way = new ReaderWay(1);
         way.setTag("highway", "residential");
         way.setTag("bicycle", "yes");
-        assertFalse(isGetOffBike(way));
+        assertGetOffBike(way, false, false);
 
         way = new ReaderWay(1);
         way.setTag("highway", "footway");
         way.setTag("surface", "grass");
-        assertTrue(isGetOffBike(way));
+        assertGetOffBike(way, true, true);
         way.setTag("bicycle", "yes");
-        assertFalse(isGetOffBike(way));
+        assertGetOffBike(way, false, false);
         way.setTag("bicycle", "designated");
-        assertFalse(isGetOffBike(way));
+        assertGetOffBike(way, false, false);
         way.setTag("bicycle", "official");
-        assertFalse(isGetOffBike(way));
+        assertGetOffBike(way, false, false);
         way.setTag("bicycle", "permissive");
-        assertFalse(isGetOffBike(way));
+        assertGetOffBike(way, false, false);
 
         way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        assertTrue(isGetOffBike(way));
+        assertGetOffBike(way, true, true);
 
         way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("bicycle", "dismount");
-        assertTrue(isGetOffBike(way));
+        assertGetOffBike(way, true, true);
 
         way = new ReaderWay(1);
         way.setTag("highway", "platform");
         way.setTag("bicycle", "yes");
-        assertFalse(isGetOffBike(way));
+        assertGetOffBike(way, false, false);
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("foot", "yes");
-        assertFalse(isGetOffBike(way));
+        assertGetOffBike(way, false, false);
 
         way = new ReaderWay(1);
         way.setTag("highway", "pedestrian");
-        assertTrue(isGetOffBike(way));
+        assertGetOffBike(way, true, true);
 
         way = new ReaderWay(1);
         way.setTag("highway", "path");
         way.setTag("surface", "concrete");
-        assertTrue(isGetOffBike(way));
+        assertGetOffBike(way, true, true);
         way.setTag("bicycle", "yes");
-        assertFalse(isGetOffBike(way));
+        assertGetOffBike(way, false, false);
         way.setTag("bicycle", "designated");
-        assertFalse(isGetOffBike(way));
+        assertGetOffBike(way, false, false);
         way.setTag("bicycle", "official");
-        assertFalse(isGetOffBike(way));
+        assertGetOffBike(way, false, false);
         way.setTag("bicycle", "permissive");
-        assertFalse(isGetOffBike(way));
+        assertGetOffBike(way, false, false);
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
-        assertFalse(isGetOffBike(way));
+        assertGetOffBike(way, false, false);
 
         way = new ReaderWay(1);
         way.setTag("highway", "path");
         way.setTag("foot", "designated");
-        assertTrue(isGetOffBike(way));
+        assertGetOffBike(way, true, true);
     }
 
-    private boolean isGetOffBike(ReaderWay way) {
+    @Test
+    public void testOneway() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "tertiary");
+        assertGetOffBike(way, false, false);
+
+        way.setTag("oneway", "yes");
+        assertGetOffBike(way, false, true);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway:bicycle", "yes");
+        assertGetOffBike(way, false, true);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("oneway:bicycle", "no");
+        assertGetOffBike(way, false, false);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("oneway:bicycle", "-1");
+        assertGetOffBike(way, true, false);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway:right:oneway", "no");
+        assertGetOffBike(way, false, false);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway:right:oneway", "-1");
+        assertGetOffBike(way, true, false);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        assertGetOffBike(way, false, false);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("vehicle:forward", "no");
+        assertGetOffBike(way, true, false);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("bicycle:forward", "no");
+        assertGetOffBike(way, true, false);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("vehicle:backward", "no");
+        assertGetOffBike(way, false, true);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("motor_vehicle:backward", "no");
+        assertGetOffBike(way, false, false);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("bicycle:backward", "no");
+        assertGetOffBike(way, false, true);
+
+        way.setTag("bicycle:backward", "yes");
+        assertGetOffBike(way, false, false);
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("oneway", "yes");
+        way.setTag("bicycle:backward", "yes");
+        assertGetOffBike(way, false, false);
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("oneway", "-1");
+        way.setTag("bicycle:forward", "yes");
+        assertGetOffBike(way, false, false);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("bicycle:forward", "use_sidepath");
+        assertGetOffBike(way, false, false);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("bicycle:forward", "use_sidepath");
+        assertGetOffBike(way, false, false);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway", "opposite");
+        assertGetOffBike(way, false, false);
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway:left", "opposite_lane");
+        assertGetOffBike(way, false, false);
+    }
+
+    private void assertGetOffBike(ReaderWay way, boolean fwd, boolean bwd) {
         IntsRef edgeFlags = new IntsRef(1);
         IntsRef relationFlags = new IntsRef(1);
         parser.handleWayTags(edgeFlags, way, relationFlags);
-        return offBikeEnc.getBool(false, edgeFlags);
+        if (fwd) assertTrue(offBikeEnc.getBool(false, edgeFlags));
+        if (bwd) assertTrue(offBikeEnc.getBool(true, edgeFlags));
     }
 }
