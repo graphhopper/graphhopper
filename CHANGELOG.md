@@ -13,7 +13,6 @@
 - internal keys for EdgeKVStorage changed to contain the street_ prefix like the path details too. Similarly, the
   extra_info in the instructions of the API response, see #2661
 - subnetwork preparation can now be run in parallel to slightly speed up the base graph import (#2737)
-- The block_area parameter was removed. Use custom model areas instead.
 
 ### 6.0 [13 Sep 2022]
 

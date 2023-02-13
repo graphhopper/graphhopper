@@ -65,8 +65,6 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.graphhopper.util.GHUtility.createCircle;
-import static com.graphhopper.util.GHUtility.createRectangle;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Curbsides.*;
 import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
@@ -568,11 +566,12 @@ public class GraphHopperTest {
     public void testNorthBayreuthBlockedEdges() {
         final String profile = "profile";
         final String vehicle = "car";
+        final String weighting = "fastest";
 
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
-                setProfiles(new CustomProfile(profile).setCustomModel(new CustomModel()).setVehicle(vehicle));
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
@@ -582,10 +581,8 @@ public class GraphHopperTest {
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(122, rsp.getBest().getDistance(), 1);
 
-        // block road at 49.985759,11.50687
-        CustomModel customModel = new CustomModel().addToPriority(Statement.If("in_blocked_area", Statement.Op.MULTIPLY, "0"));
-        customModel.getAreas().getFeatures().add(createCircle("blocked_area", 49.985759, 11.50687, 5));
-        req.setCustomModel(customModel);
+        // block point 49.985759,11.50687
+        req.putHint(Routing.BLOCK_AREA, "49.985759,11.50687");
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(365, rsp.getBest().getDistance(), 1);
@@ -597,56 +594,49 @@ public class GraphHopperTest {
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(6685, rsp.getBest().getDistance(), 1);
 
-        // block rectangular area
-        customModel.getAreas().getFeatures().clear();
-        customModel.getAreas().getFeatures().add(createRectangle(49.97986, 11.472902, 50.003946, 11.534357));
-        req.setCustomModel(customModel);
+        // block by area
+        String someArea = "49.97986,11.472902,50.003946,11.534357";
+        req.putHint(Routing.BLOCK_AREA, someArea);
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(13988, rsp.getBest().getDistance(), 1);
 
         // Add blocked point to above area, to increase detour
-        customModel.getAreas().getFeatures().add(createCircle("blocked_point", 50.017578, 11.547527, 5));
-        customModel.addToPriority(Statement.If("in_blocked_point", Statement.Op.MULTIPLY, "0"));
+        req.putHint(Routing.BLOCK_AREA, "50.017578,11.547527;" + someArea);
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(14601, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small circular area
-        customModel = new CustomModel().addToPriority(Statement.If("in_blocked_area", Statement.Op.MULTIPLY, "0"));
-        customModel.getAreas().getFeatures().add(createCircle("blocked_area", 49.979929, 11.520066, 200));
-        req.setCustomModel(customModel);
+        req.putHint(Routing.BLOCK_AREA, "49.979929,11.520066,200");
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
 
-        customModel.getAreas().getFeatures().clear();
-        customModel.getAreas().getFeatures().add(createCircle("blocked_area", 49.980868, 11.516397, 150));
+        req.putHint(Routing.BLOCK_AREA, "49.980868,11.516397,150");
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small rectangular area
-        customModel.getAreas().getFeatures().clear();
-        customModel.getAreas().getFeatures().add(createRectangle(49.981875, 11.515818, 49.979522, 11.521407));
+        req.putHint(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
 
+        // blocking works for all weightings
         req = new GHRequest(50.009504, 11.490669, 50.024726, 11.496162).
                 setProfile(profile);
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(1807, rsp.getBest().getDistance(), 1);
 
-        customModel.getAreas().getFeatures().clear();
-        customModel.getAreas().getFeatures().add(createCircle("blocked_area", 50.018277, 11.492336, 5));
-        req.setCustomModel(customModel);
+        req.putHint(Routing.BLOCK_AREA, "50.018277,11.492336");
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(3363, rsp.getBest().getDistance(), 1);
 
-        // query point and snapped point are different => block snapped point only => show that blocking an area changes lookup
+        // query point and snapped point are different => block snapped point only => show that block_area changes lookup
         req = new GHRequest(49.984465, 11.507009, 49.986107, 11.507202).
                 setProfile(profile);
         rsp = hopper.route(req);
@@ -654,9 +644,7 @@ public class GraphHopperTest {
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(155, rsp.getBest().getDistance(), 10);
 
-        customModel.getAreas().getFeatures().clear();
-        customModel.getAreas().getFeatures().add(createRectangle(49.984434, 11.505212, 49.985394, 11.506333));
-        req.setCustomModel(customModel);
+        req.putHint(Routing.BLOCK_AREA, "49.984434,11.505212,49.985394,11.506333");
         rsp = hopper.route(req);
         // we do not snap onto Grüngraben (within the blocked area), but onto Lohweg and then we need to go to Hauptstraße
         // and turn left onto Waldhüttenstraße. Note that if we exclude footway we get an entirely different path, because
@@ -666,12 +654,10 @@ public class GraphHopperTest {
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(510, rsp.getBest().getDistance(), 10);
 
-        // first point is contained in blocked area => error
+        // first point is contained in block_area => error
         req = new GHRequest(49.979, 11.516, 49.986107, 11.507202).
                 setProfile(profile);
-        customModel.getAreas().getFeatures().clear();
-        customModel.getAreas().getFeatures().add(createRectangle(49.981875, 11.515818, 49.979522, 11.521407));
-        req.setCustomModel(customModel);
+        req.putHint(Routing.BLOCK_AREA, "49.981875,11.515818,49.979522,11.521407");
         rsp = hopper.route(req);
         assertTrue(rsp.hasErrors(), "expected errors");
         assertEquals(1, rsp.getErrors().size());
