@@ -203,15 +203,15 @@ public class GraphHopperWeb {
                 return res;
 
             JsonNode paths = json.get("paths");
-            JsonNode b = json.get("hints");
-            PMap pmap = new PMap();
-            b.fields().forEachRemaining(f -> pmap.putObject(f.getKey(), f.getValue().asText()));
-            res.setHints(pmap);
-
             for (JsonNode path : paths) {
                 ResponsePath altRsp = ResponsePathDeserializer.createResponsePath(objectMapper, path, tmpElevation, tmpTurnDescription);
                 res.add(altRsp);
             }
+
+            JsonNode b = json.get("hints");
+            PMap hints = new PMap();
+            b.fields().forEachRemaining(f -> hints.putObject(f.getKey(), f.getValue()));
+            res.setHints(hints);
 
             return res;
 
