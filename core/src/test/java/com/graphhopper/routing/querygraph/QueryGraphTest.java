@@ -391,9 +391,10 @@ public class QueryGraphTest {
         assertEquals(3, res1.getClosestNode());
         assertEquals(3, res2.getClosestNode());
 
-        // force skip due to **tower** node snapping in phase 2, but no virtual edges should be created for res1
+        // force skip due to **tower** node snapping in phase 2 (QueryOverlayBuilder.buildVirtualEdges -> prevPoint.equals(currSnapped))
+        // and no virtual edges should be created for res1
         edgeState = GHUtility.getEdge(g, 0, 1);
-        res1 = createLocationResult(1, 0, edgeState, 0, EDGE);
+        res1 = createLocationResult(1, 0, edgeState, 0, TOWER);
         // now create virtual edges
         edgeState = GHUtility.getEdge(g, 0, 2);
         res2 = createLocationResult(0.5, 0, edgeState, 0, EDGE);
@@ -461,8 +462,8 @@ public class QueryGraphTest {
 
         // setup snaps
         EdgeIteratorState it = GHUtility.getEdge(g, nodeA, nodeB);
-        Snap snap1 = createLocationResult(1.5, 3, it, 1, Snap.Position.EDGE);
-        Snap snap2 = createLocationResult(1.5, 7, it, 2, Snap.Position.EDGE);
+        Snap snap1 = createLocationResult(1.5, 3, it, 1, PILLAR);
+        Snap snap2 = createLocationResult(1.5, 7, it, 2, PILLAR);
 
         QueryGraph q = lookup(Arrays.asList(snap1, snap2));
         int nodeC = snap1.getClosestNode();

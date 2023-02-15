@@ -161,9 +161,8 @@ public class Snap {
                 snappedPoint = new GHPoint3D(crossingPoint.lat, crossingPoint.lon, (tmpEle + adjEle) / 2);
             }
         } else {
-            // outside of edge segment [wayIndex, wayIndex+1]
-            snappedPoint = new GHPoint3D(tmpLat, tmpLon, tmpEle);
-            assert snappedPosition == Position.PILLAR : "incorrect pos: " + snappedPosition + " for " + snappedPoint + ", " + fullPL + ", " + wayIndex;
+            // outside of edge segment [wayIndex, wayIndex+1] should not happen for EDGE
+            assert false : "incorrect pos: " + snappedPosition + " for " + snappedPoint + ", " + fullPL + ", " + wayIndex;
         }
     }
 
