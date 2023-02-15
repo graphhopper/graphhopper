@@ -210,7 +210,7 @@ public class GraphHopperWeb {
 
             JsonNode b = json.get("hints");
             PMap hints = new PMap();
-            b.fields().forEachRemaining(f -> hints.putObject(f.getKey(), f.getValue()));
+            b.fields().forEachRemaining(f -> hints.putObject(f.getKey(), f.getValue().asText()));
             res.setHints(hints);
 
             return res;
