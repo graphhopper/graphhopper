@@ -125,7 +125,8 @@ public class Snap {
     }
 
     /**
-     * Calculates the closest point on the edge from the query point.
+     * Calculates the closest point on the edge from the query point. If too close to a tower or pillar node this method
+     * might change the snappedPosition and wayIndex.
      */
     public void calcSnappedPoint(DistanceCalc distCalc) {
         if (closestEdge == null)
@@ -145,12 +146,25 @@ public class Snap {
         double queryLat = getQueryPoint().lat, queryLon = getQueryPoint().lon;
         double adjLat = fullPL.getLat(wayIndex + 1), adjLon = fullPL.getLon(wayIndex + 1);
         if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon)) {
-            GHPoint tmpPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
+            GHPoint crossingPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
             double adjEle = fullPL.getEle(wayIndex + 1);
-            snappedPoint = new GHPoint3D(tmpPoint.lat, tmpPoint.lon, (tmpEle + adjEle) / 2);
-        } else
+
+            // if crossingPoint is too close to a pillar or tower node we have to fix the snappedPosition and wayIndex to make it consistent with GHPoint::equals
+            if (NumHelper.equalsEps(crossingPoint.lat, tmpLat) && NumHelper.equalsEps(crossingPoint.lon, tmpLon)) {
+                snappedPosition = wayIndex == 0 ? Position.TOWER : Position.PILLAR;
+                snappedPoint = new GHPoint3D(tmpLat, tmpLon, tmpEle);
+            } else if (NumHelper.equalsEps(crossingPoint.lat, adjLat) && NumHelper.equalsEps(crossingPoint.lon, adjLon)) {
+                wayIndex++;
+                snappedPosition = wayIndex == fullPL.size() - 1 ? Position.TOWER : Position.PILLAR;
+                snappedPoint = new GHPoint3D(adjLat, adjLon, adjEle);
+            } else {
+                snappedPoint = new GHPoint3D(crossingPoint.lat, crossingPoint.lon, (tmpEle + adjEle) / 2);
+            }
+        } else {
             // outside of edge boundaries
             snappedPoint = new GHPoint3D(tmpLat, tmpLon, tmpEle);
+            if (wayIndex == 0 || fullPL.size() - 1 == wayIndex) snappedPosition = Position.TOWER;
+        }
     }
 
     @Override
