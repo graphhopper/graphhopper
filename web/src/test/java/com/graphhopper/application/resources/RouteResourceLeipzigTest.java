@@ -65,8 +65,7 @@ public class RouteResourceLeipzigTest {
         Helper.removeDir(new File(DIR));
     }
 
-    @RepeatedTest(10000)
-//    @Test
+    @Test
     void testNoErrors() {
         // we just send a bunch of routing requests to make sure there are no internal server errors
         double minLat = 51.319685;
