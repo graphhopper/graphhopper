@@ -99,7 +99,6 @@ public class ResponsePathSerializer {
             jsonPath.put("weight", Helper.round6(p.getRouteWeight()));
             jsonPath.put("time", p.getTime());
             jsonPath.put("transfers", p.getNumChanges());
-            jsonPath.put("debug", ghRsp.getDebugInfo());
             if (!p.getDescription().isEmpty()) {
                 jsonPath.putPOJO("description", p.getDescription());
             }

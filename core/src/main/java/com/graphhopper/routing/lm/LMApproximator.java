@@ -34,11 +34,13 @@ import java.util.Arrays;
 public class LMApproximator implements WeightApproximator {
 
     private final LandmarkStorage lms;
+    // the weighting used for the LM preparation
     private final Weighting lmWeighting;
+    // the weighting used for the current path calculation
     private final Weighting routingWeighting;
-    private int[] activeLandmarkIndices;
-    private int[] weightsFromActiveLandmarksToT;
-    private int[] weightsFromTToActiveLandmarks;
+    private final int[] activeLandmarkIndices;
+    private final int[] weightsFromActiveLandmarksToT;
+    private final int[] weightsFromTToActiveLandmarks;
     private double epsilon = 1;
     private int towerNodeNextToT = -1;
     private double weightFromTToTowerNode;
@@ -51,6 +53,10 @@ public class LMApproximator implements WeightApproximator {
     private final WeightApproximator beelineApproximation;
     private boolean fallback = false;
 
+    /**
+     * @param weighting the weighting used for the current path calculation, not necessarily the same that we used for the LM preparation.
+     *                  All edge weights must be larger or equal compared to those used for the preparation.
+     */
     public static LMApproximator forLandmarks(Graph g, Weighting weighting, LandmarkStorage lms, int activeLM) {
         return new LMApproximator(g, lms.getWeighting(), weighting, lms.getBaseNodes(), lms, activeLM, lms.getFactor(), false);
     }
@@ -114,7 +120,9 @@ public class LMApproximator implements WeightApproximator {
             }
         }
         double lmApproximation = Math.max(0.0, (getRemainingWeightUnderestimationUpToTowerNode(v) - weightFromTToTowerNode) * epsilon);
-//        return lmApproximation;
+        // Since both the LM and the beeline approximations underestimate the real remaining weight the larger one is
+        // more accurate. For example when the speed is reduced for all roads the beeline approximation adjusts automatically
+        // to the reduced global maximum speed, while the LM approximation becomes worse.
         return Math.max(lmApproximation, beelineApproximation.approximate(v));
     }
 
