@@ -26,12 +26,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
 
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
-        restrictedValues.add("no");
-        restrictedValues.add("restricted");
         restrictedValues.add("delivery");
-        restrictedValues.add("military");
-        restrictedValues.add("emergency");
-        restrictedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("designated");
