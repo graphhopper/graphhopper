@@ -25,13 +25,11 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     private final Map<Smoothness, Double> smoothnessFactor = new HashMap<>();
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     private final EnumEncodedValue<Smoothness> smoothnessEnc;
-    private final BooleanEncodedValue getOffBikeEnc;
     protected final Set<String> intendedValues = new HashSet<>(5);
 
-    protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, BooleanEncodedValue getOffBikeEnc) {
+    protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc) {
         super(speedEnc, speedEnc.getNextStorableValue(MAX_SPEED));
         this.smoothnessEnc = smoothnessEnc;
-        this.getOffBikeEnc = getOffBikeEnc;
 
         // duplicate code as also in BikeCommonPriorityParser
         addPushingSection("footway");
@@ -156,17 +154,10 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         Smoothness smoothness = smoothnessEnc.getEnum(false, edgeFlags);
         speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
         double speedFwd = applyMaxSpeed(way, speed, false);
-
+        avgSpeedEnc.setDecimal(false, edgeFlags, speedFwd);
         if (avgSpeedEnc.isStoreTwoDirections()) {
-            avgSpeedEnc.setDecimal(false, edgeFlags, getOffBikeEnc.getBool(false, edgeFlags) ? PUSHING_SECTION_SPEED : speedFwd);
             double bwdSpeed = applyMaxSpeed(way, speed, true);
-            avgSpeedEnc.setDecimal(true, edgeFlags, getOffBikeEnc.getBool(true, edgeFlags) ? PUSHING_SECTION_SPEED : bwdSpeed);
-        } else {
-            // TODO move this handling into a customm model because having a single value for speed is suboptimal not
-            //  only because of maxspeed but also because of oneways that are accessible in reverse direction at low speed.
-            if (getOffBikeEnc.getBool(false, edgeFlags) || getOffBikeEnc.getBool(true, edgeFlags))
-                speedFwd = PUSHING_SECTION_SPEED;
-            avgSpeedEnc.setDecimal(false, edgeFlags, speedFwd);
+            avgSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
         }
     }
 

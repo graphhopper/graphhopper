@@ -1245,7 +1245,7 @@ public class GraphHopperTest {
                 setEncodedValuesString("get_off_bike").
                 setProfiles(
                         new Profile(footProfile).setVehicle("foot").setWeighting("fastest"),
-                        new CustomProfile(bikeProfile).setCustomModel(new CustomModel().addToPriority(If("get_off_bike", MULTIPLY, "0.3"))).setVehicle("bike")).
+                        new CustomProfile(bikeProfile).setCustomModel(new CustomModel().addToPriority(If("!bike_oneway", MULTIPLY, "0"))).setVehicle("bike")).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -1269,13 +1269,12 @@ public class GraphHopperTest {
         assertEquals("keep left onto Hoher Markt", il.get(4).getTurnDescription(tr));
         assertEquals("turn right onto Wegscheid", il.get(6).getTurnDescription(tr));
         assertEquals("continue onto Wegscheid", il.get(7).getTurnDescription(tr));
-        assertEquals("turn slight left onto Untere Landstraße", il.get(8).getTurnDescription(tr));
-        assertEquals("turn right onto Ringstraße", il.get(9).getTurnDescription(tr));
-        assertEquals("keep left onto Eyblparkstraße", il.get(10).getTurnDescription(tr));
-        assertEquals("keep left onto Austraße", il.get(11).getTurnDescription(tr));
-        assertEquals("keep left onto Rechte Kremszeile", il.get(12).getTurnDescription(tr));
+        assertEquals("turn right onto Ringstraße", il.get(8).getTurnDescription(tr));
+        assertEquals("keep left onto Eyblparkstraße", il.get(9).getTurnDescription(tr));
+        assertEquals("keep left onto Austraße", il.get(10).getTurnDescription(tr));
+        assertEquals("keep left onto Rechte Kremszeile", il.get(11).getTurnDescription(tr));
         //..
-        assertEquals("turn right onto Treppelweg", il.get(16).getTurnDescription(tr));
+        assertEquals("turn right onto Treppelweg", il.get(15).getTurnDescription(tr));
 
         rsp = hopper.route(new GHRequest(48.410987, 15.599492, 48.411172, 15.600371).
                 setAlgorithm(ASTAR).setProfile(footProfile));
@@ -1368,7 +1367,7 @@ public class GraphHopperTest {
         final String bikeProfile = "bike_profile";
         final String carProfile = "car_profile";
         List<Profile> profiles = asList(
-                new CustomProfile(bikeProfile).setCustomModel(new CustomModel().addToPriority(If("get_off_bike", MULTIPLY, "1"))).setVehicle("bike"),
+                new CustomProfile(bikeProfile).setCustomModel(new CustomModel().addToPriority(If("!bike_oneway", MULTIPLY, "0"))).setVehicle("bike"),
                 new Profile(carProfile).setVehicle("car").setWeighting("fastest")
         );
         GraphHopper hopper = new GraphHopper().
@@ -1392,8 +1391,8 @@ public class GraphHopperTest {
                 .setProfile(bikeProfile));
         res = rsp.getBest();
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(452, res.getTime() / 1000f, 1);
-        assertEquals(2281, res.getDistance(), 1);
+        assertEquals(511, res.getTime() / 1000f, 1);
+        assertEquals(2481, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile3"));

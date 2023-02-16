@@ -668,8 +668,10 @@ public class GraphHopper {
                 if (tagParser instanceof BikeCommonAccessParser) {
                     if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
                         osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
-                    if (encodingManager.hasEncodedValue(GetOffBike.KEY))
-                        osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY), encodingManager.getBooleanEncodedValue(Roundabout.KEY)));
+                    if (encodingManager.hasEncodedValue(BikeOneway.KEY))
+                        osmParsers.addWayTagParser(new OSMBikeOnewayParser(encodingManager.getBooleanEncodedValue(BikeOneway.KEY), encodingManager.getBooleanEncodedValue(Roundabout.KEY)));
+                    if (encodingManager.hasEncodedValue(GetOffBike.KEY) && encodingManager.hasEncodedValue(BikeOneway.KEY))
+                        osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY), encodingManager.getBooleanEncodedValue(BikeOneway.KEY)));
                     if (encodingManager.hasEncodedValue(Smoothness.KEY))
                         osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
                 } else if (tagParser instanceof FootAccessParser) {
