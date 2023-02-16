@@ -1,6 +1,6 @@
 ### 7.0 [not yet released]
 
-- bike vehicles are now allowed to go in reverse direction of oneways. Consider bike_oneway in the custom model via avoiding this and limiting the speed to walking speed, see custom_models/bike.json #196
+- bike vehicles are now allowed to go in reverse direction of oneways. Consider bike_oneway in the custom model to avoid this and limit the speed to walking speed, see custom_models/bike.json #196
 - Format of 'areas' in CustomModel changed to 'FeatureCollection'. The old format is deprecated and will be removed in a later version, #2734
 - TagParser#handleWayTags no longer returns an IntsRef. We assume it never returned anything other than the input IntsRef.
 - there is no longer a default value for the distanceInfluence parameter in custom models sent via client-hc. Previously it was 70. Not setting it explicitly now means the server-side value will be used. getDistanceInfluence can now be null. Server-side profiles with custom weighting now use distance_influence: 0 by default (previously it was 70). see #2716

@@ -11,7 +11,7 @@ import java.util.Set;
 public class OSMBikeOnewayParser implements TagParser {
     private static final Set<String> OPP_LANES = new HashSet<>(Arrays.asList("opposite", "opposite_lane", "opposite_track"));
     private static final Set<String> ONEWAYS = new HashSet<>(Arrays.asList("yes", "true", "1", "-1"));
-    static final Set<String> INTENDED = new HashSet<>(Arrays.asList("yes", "designated", "official", "permissive"));
+    private static final Set<String> INTENDED = new HashSet<>(Arrays.asList("yes", "designated", "official", "permissive"));
     private static final Set<String> RESTRICTED = new HashSet<>(Arrays.asList("no")); // private, delivery, etc will be handled from access
     private final BooleanEncodedValue onewayEnc;
     private final BooleanEncodedValue roundaboutEnc;
