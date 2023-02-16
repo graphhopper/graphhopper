@@ -149,6 +149,10 @@ public class Snap {
             GHPoint crossingPoint = distCalc.calcCrossingPointToEdge(queryLat, queryLon, tmpLat, tmpLon, adjLat, adjLon);
             double adjEle = fullPL.getEle(wayIndex + 1);
 
+            // We want to prevent extra virtual nodes and very short virtual edges in case the snap/crossing point is
+            // very close to a tower node. Since we delayed the calculation of the crossing point until here, we need
+            // to correct the Snap.Position in these cases. Note that it is possible that the query point is very far
+            // from the tower node, but the crossing point is still very close to it.
             // if crossingPoint is too close to a pillar or tower node we have to fix the snappedPosition and wayIndex to make it consistent with GHPoint::equals
             if (NumHelper.equalsEps(crossingPoint.lat, tmpLat) && NumHelper.equalsEps(crossingPoint.lon, tmpLon)) {
                 snappedPosition = wayIndex == 0 ? Position.TOWER : Position.PILLAR;

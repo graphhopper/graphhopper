@@ -406,6 +406,24 @@ public class QueryGraphTest {
     }
 
     @Test
+    void towerSnapWhenCrossingPointIsOnEdgeButCloseToTower() {
+        g.getNodeAccess().setNode(0, 49.000000, 11.00100);
+        g.getNodeAccess().setNode(1, 49.000000, 11.00200);
+        g.getNodeAccess().setNode(2, 49.000300, 11.00200);
+        g.edge(0, 1).set(accessEnc, true, true);
+        g.edge(1, 2).set(accessEnc, true, true);
+        LocationIndexTree locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        locationIndex.prepareIndex();
+        Snap snap = locationIndex.findClosest(49.0000010, 11.00800, EdgeFilter.ALL_EDGES);
+        // Our query point is quite far away from the edge and further away from the tower node than from the crossing
+        // point along the edge. But since the crossing point is very near to the tower node we still want it to be a
+        // tower-snap to prevent a virtual node with a very short virtual edge
+        assertEquals(Snap.Position.TOWER, snap.getSnappedPosition());
+        QueryGraph queryGraph = QueryGraph.create(g, snap);
+        assertEquals(g.getNodes(), queryGraph.getNodes());
+    }
+
+    @Test
     public void testGetEdgeProps() {
         initGraph(g);
         EdgeIteratorState e1 = GHUtility.getEdge(g, 0, 2);
