@@ -141,6 +141,17 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         }
     }
 
+    static class GHRequestTransformerFactory implements Factory<GHRequestTransformer> {
+        @Override
+        public GHRequestTransformer provide() {
+            return req -> req;
+        }
+
+        @Override
+        public void dispose(GHRequestTransformer instance) {
+        }
+    }
+
     static class PathDetailsBuilderFactoryFactory implements Factory<PathDetailsBuilderFactory> {
 
         @Inject
@@ -256,6 +267,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bindFactory(MapMatchingRouterFactoryFactory.class).to(MapMatchingResource.MapMatchingRouterFactory.class);
                 bindFactory(PathDetailsBuilderFactoryFactory.class).to(PathDetailsBuilderFactory.class);
                 bindFactory(ProfileResolverFactory.class).to(ProfileResolver.class);
+                bindFactory(GHRequestTransformerFactory.class).to(GHRequestTransformer.class);
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
                 bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
