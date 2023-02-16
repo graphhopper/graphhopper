@@ -589,6 +589,10 @@ public class BufferUpstreamShared {
         }
     }
 
+    /**
+     * Method which calculates both sides of the buffer. See computeBufferSegment() for more details
+     * on parameters and returns.
+     */
     public List<LineString> calculateBuffer(EdgeIteratorState state, BufferFeature primaryStartFeature,
             String roadName, Double thresholdDistance, Boolean buildUpstream) {
         List<LineString> lineStrings = new ArrayList<>();
