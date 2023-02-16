@@ -1,6 +1,5 @@
 package com.graphhopper.resources;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -51,24 +50,8 @@ public class BufferResource {
                 point.get().lon, roadName,
                 queryMultiplier);
         EdgeIteratorState state = bufferUpstreamShared.getEdgeIteratorState(primaryStartFeature);
-        List<LineString> lineStrings = new ArrayList<LineString>();
-
-        // Start feature edge is bidirectional. Simple
-        if (bufferUpstreamShared.isBidirectional(state)) {
-            lineStrings.add(bufferUpstreamShared.computeBufferSegment(primaryStartFeature, roadName, thresholdDistance,
-                    buildUpstream, true));
-            lineStrings.add(bufferUpstreamShared.computeBufferSegment(primaryStartFeature, roadName, thresholdDistance,
-                    buildUpstream, false));
-        }
-        // Start feature edge is unidirectional. Requires finding sister road
-        else {
-            BufferFeature secondaryStartFeature = bufferUpstreamShared
-                    .calculateSecondaryStartFeature(primaryStartFeature, roadName, .005);
-            lineStrings.add(bufferUpstreamShared.computeBufferSegment(primaryStartFeature, roadName, thresholdDistance,
-                    buildUpstream, buildUpstream));
-            lineStrings.add(bufferUpstreamShared.computeBufferSegment(secondaryStartFeature, roadName,
-                    thresholdDistance, buildUpstream, buildUpstream));
-        }
+        List<LineString> lineStrings = bufferUpstreamShared.calculateBuffer(state, primaryStartFeature, roadName,
+                thresholdDistance, buildUpstream);
 
         return bufferUpstreamShared.createGeoJsonResponse(lineStrings, sw);
     }

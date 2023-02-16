@@ -589,6 +589,29 @@ public class BufferUpstreamShared {
         }
     }
 
+    public List<LineString> calculateBuffer(EdgeIteratorState state, BufferFeature primaryStartFeature,
+            String roadName, Double thresholdDistance, Boolean buildUpstream) {
+        List<LineString> lineStrings = new ArrayList<>();
+
+        // Start feature edge is bidirectional. Simple
+        if (isBidirectional(state)) {
+            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance,
+                    buildUpstream, true));
+            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance,
+                    buildUpstream, false));
+        }
+        // Start feature edge is unidirectional. Requires finding sister road
+        else {
+            BufferFeature secondaryStartFeature = calculateSecondaryStartFeature(primaryStartFeature, roadName, .005);
+            lineStrings.add(computeBufferSegment(primaryStartFeature, roadName, thresholdDistance,
+                    buildUpstream, buildUpstream));
+            lineStrings.add(computeBufferSegment(secondaryStartFeature, roadName,
+                    thresholdDistance, buildUpstream, buildUpstream));
+        }
+
+        return lineStrings;
+    }
+
     /**
      * Checks if the road has access flags going in both directions.
      * 
