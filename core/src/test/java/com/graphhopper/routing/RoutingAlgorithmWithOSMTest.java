@@ -24,7 +24,6 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.json.Statement;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.Graph;
@@ -345,7 +344,6 @@ public class RoutingAlgorithmWithOSMTest {
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1795, 96));
         CustomModel model = new CustomModel().
-                setDistanceInfluence(70d).
                 addToPriority(If("!bike_oneway", MULTIPLY, "0")).
                 addToSpeed(If("average_slope >= 10", LIMIT, "4")).
                 addToSpeed(If("average_slope >= 5", MULTIPLY, "0.45")).
@@ -394,7 +392,8 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2323, 121));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1434, 89));
         GraphHopper hopper = createHopper(MONACO, new CustomProfile("bike").
-                setCustomModel(new CustomModel().setDistanceInfluence(1000d).addToPriority(If("!bike_oneway", MULTIPLY, "0"))).setVehicle("bike"));
+                setCustomModel(new CustomModel().setDistanceInfluence(7000d). // "shortest"
+                        addToPriority(If("!bike_oneway", MULTIPLY, "0"))).setVehicle("bike"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -410,15 +409,14 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1459, 88));
 
         GraphHopper hopper = createHopper(MONACO, new CustomProfile("mtb").
-                setCustomModel(new CustomModel().setDistanceInfluence(70d).
-                        addToPriority(If("!bike_oneway", MULTIPLY, "0"))).setVehicle("mtb"));
+                setCustomModel(new CustomModel().addToPriority(If("!bike_oneway", MULTIPLY, "0"))).setVehicle("mtb"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
 
         Helper.removeDir(new File(GH_LOCATION));
 
         hopper = createHopper(MONACO,
-                new CustomProfile("mtb").setCustomModel(new CustomModel().setDistanceInfluence(70d).addToPriority(If("!bike_oneway", MULTIPLY, "0"))).setVehicle("mtb"),
+                new CustomProfile("mtb").setCustomModel(new CustomModel().addToPriority(If("!bike_oneway", MULTIPLY, "0"))).setVehicle("mtb"),
                 new Profile("racingbike").setVehicle("racingbike").setWeighting("fastest"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -433,8 +431,8 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1490, 84));
 
         GraphHopper hopper = createHopper(MONACO, new CustomProfile("racingbike").
-                setCustomModel(new CustomModel().setDistanceInfluence(70d).
-                                addToPriority(If("!bike_oneway", MULTIPLY, "0"))).setVehicle("racingbike"));
+                setCustomModel(new CustomModel().
+                        addToPriority(If("!bike_oneway", MULTIPLY, "0"))).setVehicle("racingbike"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
 

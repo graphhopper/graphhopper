@@ -90,7 +90,7 @@ public class RouteResourceCustomModelTest {
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike2").setCustomModel(
                                         new CustomModel(new CustomModel().setDistanceInfluence(70d).
-                                                addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0")))).
+                                                addToPriority(If("road_class == TERTIARY || road_class == TRACK || !bike_oneway", MULTIPLY, "0")))).
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike3").setCustomModel(
                                         new CustomModel(new CustomModel().
