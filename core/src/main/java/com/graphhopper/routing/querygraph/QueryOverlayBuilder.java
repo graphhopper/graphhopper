@@ -164,7 +164,7 @@ class QueryOverlayBuilder {
                     GHPoint3D currSnapped = res.getSnappedPoint();
 
                     // no new virtual nodes if very close ("snap" together)
-                    if (Math.abs(prevPoint.lat - currSnapped.lat) < 10e-6 && Math.abs(prevPoint.lon - currSnapped.lon) < 10e-6) {
+                    if (Snap.considerEqual(prevPoint.lat, prevPoint.lon, currSnapped.lat, currSnapped.lon)) {
                         res.setClosestNode(prevNodeId);
                         continue;
                     }

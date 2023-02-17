@@ -153,10 +153,10 @@ public class Snap {
             // very close to a tower node. Since we delayed the calculation of the crossing point until here, we need
             // to correct the Snap.Position in these cases. Note that it is possible that the query point is very far
             // from the tower node, but the crossing point is still very close to it.
-            if (Math.abs(crossingPoint.lat - tmpLat) < 1e-6 && Math.abs(crossingPoint.lon - tmpLon) < 1e-6) {
+            if (considerEqual(crossingPoint.lat, crossingPoint.lon, tmpLat, tmpLon)) {
                 snappedPosition = wayIndex == 0 ? Position.TOWER : Position.PILLAR;
                 snappedPoint = new GHPoint3D(tmpLat, tmpLon, tmpEle);
-            } else if (Math.abs(crossingPoint.lat - adjLat) < 1e-6 && Math.abs(crossingPoint.lon - adjLon) < 1e-6) {
+            } else if (considerEqual(crossingPoint.lat, crossingPoint.lon, adjLat, adjLon)) {
                 wayIndex++;
                 snappedPosition = wayIndex == fullPL.size() - 1 ? Position.TOWER : Position.PILLAR;
                 snappedPoint = new GHPoint3D(adjLat, adjLon, adjEle);
@@ -167,6 +167,10 @@ public class Snap {
             // outside of edge segment [wayIndex, wayIndex+1] should not happen for EDGE
             assert false : "incorrect pos: " + snappedPosition + " for " + snappedPoint + ", " + fullPL + ", " + wayIndex;
         }
+    }
+
+    public static boolean considerEqual(double lat, double lon, double lat2, double lon2) {
+        return Math.abs(lat - lat2) < 1e-6 && Math.abs(lon - lon2) < 1e-6;
     }
 
     @Override
