@@ -161,8 +161,8 @@ public class PathMerger {
             for (int i = 0; i < wayPointIntervals.size(); i++) {
                 int start = wayPointIntervals.get(i).start;
                 int end = wayPointIntervals.get(i).end;
-                if (Math.abs(waypoints.getLat(i) - fullPoints.getLat(start)) > 0 || Math.abs(waypoints.getLon(i) - fullPoints.getLon(start)) > 0
-                        || Math.abs(waypoints.getLat(i + 1) - fullPoints.getLat(end)) > 0 || Math.abs(waypoints.getLon(i + 1) - fullPoints.getLon(end)) > 0)
+                if (waypoints.getLat(i) != fullPoints.getLat(start) || waypoints.getLon(i) != fullPoints.getLon(start)
+                        || waypoints.getLat(i + 1) != fullPoints.getLat(end) || waypoints.getLon(i + 1) != fullPoints.getLon(end))
                     throw new IllegalStateException("waypoints are not included in points, or waypoint intervals are wrong");
             }
         }

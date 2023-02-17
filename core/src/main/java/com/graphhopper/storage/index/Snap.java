@@ -153,11 +153,10 @@ public class Snap {
             // very close to a tower node. Since we delayed the calculation of the crossing point until here, we need
             // to correct the Snap.Position in these cases. Note that it is possible that the query point is very far
             // from the tower node, but the crossing point is still very close to it.
-            // if crossingPoint is too close to a pillar or tower node we have to fix the snappedPosition and wayIndex to make it consistent with GHPoint::equals
-            if (NumHelper.equalsEps(crossingPoint.lat, tmpLat) && NumHelper.equalsEps(crossingPoint.lon, tmpLon)) {
+            if (Math.abs(crossingPoint.lat - tmpLat) < 1e-6 && Math.abs(crossingPoint.lon - tmpLon) < 1e-6) {
                 snappedPosition = wayIndex == 0 ? Position.TOWER : Position.PILLAR;
                 snappedPoint = new GHPoint3D(tmpLat, tmpLon, tmpEle);
-            } else if (NumHelper.equalsEps(crossingPoint.lat, adjLat) && NumHelper.equalsEps(crossingPoint.lon, adjLon)) {
+            } else if (Math.abs(crossingPoint.lat - adjLat) < 1e-6 && Math.abs(crossingPoint.lon - adjLon) < 1e-6) {
                 wayIndex++;
                 snappedPosition = wayIndex == fullPL.size() - 1 ? Position.TOWER : Position.PILLAR;
                 snappedPoint = new GHPoint3D(adjLat, adjLon, adjEle);
