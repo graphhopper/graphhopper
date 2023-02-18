@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -24,6 +26,7 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.json.Statement;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
@@ -221,6 +224,16 @@ public class RoutingAlgorithmWithOSMTest {
         checkQueries(hopper, list);
     }
 
+    static CustomModel getHikeCustomModel() {
+        try {
+            ObjectMapper jsonOM = Jackson.newObjectMapper().
+                    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false); // ignore "comment" field
+            return jsonOM.readValue(new File("../custom_models/hike.json"), CustomModel.class);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
     @Test
     public void testSidewalkNo() {
         List<Query> queries = new ArrayList<>();
@@ -229,7 +242,7 @@ public class RoutingAlgorithmWithOSMTest {
         // longer path should go through tertiary, see discussion in #476
         queries.add(new Query(57.154888, -2.101822, 57.147299, -2.096286, 1118, 68));
 
-        Profile profile = new Profile("hike").setVehicle("hike").setWeighting("fastest");
+        Profile profile = new Profile("hike").setWeighting("fastest").setVehicle("foot");
         GraphHopper hopper = createHopper(DIR + "/map-sidewalk-no.osm.gz", profile);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -315,10 +328,10 @@ public class RoutingAlgorithmWithOSMTest {
     public void testNorthBayreuthHikeFastestAnd3D() {
         List<Query> queries = new ArrayList<>();
         // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'        
-        queries.add(new Query(49.974972, 11.515657, 49.991022, 11.512299, 2384, 93));
+        queries.add(new Query(49.974972, 11.515657, 49.991022, 11.512299, 2342, 80));
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
-        queries.add(new Query(49.990967, 11.545258, 50.023182, 11.555386, 4746, 119));
-        GraphHopper hopper = createHopper(BAYREUTH, new Profile("hike").setVehicle("hike").setWeighting("fastest"));
+        queries.add(new Query(49.990967, 11.545258, 50.023182, 11.555386, 5636, 97));
+        GraphHopper hopper = createHopper(BAYREUTH, new CustomProfile("hike").setCustomModel(getHikeCustomModel()).setVehicle("foot"));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -696,7 +709,7 @@ public class RoutingAlgorithmWithOSMTest {
                 setStoreOnFlush(true).
                 setOSMFile(osmFile).
                 setProfiles(profiles).
-                setEncodedValuesString("average_slope,max_slope").
+                setEncodedValuesString("average_slope,max_slope,hike_rating").
                 setGraphHopperLocation(GH_LOCATION);
         hopper.getRouterConfig().setSimplifyResponse(false);
         hopper.setMinNetworkSize(0);

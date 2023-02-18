@@ -22,7 +22,6 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
     final Set<String> safeHighwayTags = new HashSet<>();
     final Set<String> allowedHighwayTags = new HashSet<>();
     final Set<String> avoidHighwayTags = new HashSet<>();
-    final Set<String> allowedSacScale = new HashSet<>();
     final Set<String> intendedValues = new HashSet<>(INTENDED);
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
@@ -76,10 +75,6 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
         routeMap.put(NATIONAL, UNCHANGED.getValue());
         routeMap.put(REGIONAL, UNCHANGED.getValue());
         routeMap.put(LOCAL, UNCHANGED.getValue());
-
-        allowedSacScale.add("hiking");
-        allowedSacScale.add("mountain_hiking");
-        allowedSacScale.add("demanding_mountain_hiking");
     }
 
     @Override
@@ -109,32 +104,5 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
             avgSpeedEnc.setDecimal(false, edgeFlags, speed);
         if (bwd && avgSpeedEnc.isStoreTwoDirections())
             avgSpeedEnc.setDecimal(true, edgeFlags, speed);
-    }
-
-    /**
-     * @param weightToPrioMap associate a weight with every priority. This sorted map allows
-     *                        subclasses to 'insert' more important priorities as well as overwrite determined priorities.
-     */
-    void collect(ReaderWay way, TreeMap<Double, Integer> weightToPrioMap) {
-        String highway = way.getTag("highway");
-        if (way.hasTag("foot", "designated"))
-            weightToPrioMap.put(100d, PREFER.getValue());
-
-        double maxSpeed = Math.max(getMaxSpeed(way, false), getMaxSpeed(way, true));
-        if (safeHighwayTags.contains(highway) || (isValidSpeed(maxSpeed) && maxSpeed <= 20)) {
-            weightToPrioMap.put(40d, PREFER.getValue());
-            if (way.hasTag("tunnel", intendedValues)) {
-                if (way.hasTag("sidewalk", sidewalksNoValues))
-                    weightToPrioMap.put(40d, SLIGHT_AVOID.getValue());
-                else
-                    weightToPrioMap.put(40d, UNCHANGED.getValue());
-            }
-        } else if ((isValidSpeed(maxSpeed) && maxSpeed > 50) || avoidHighwayTags.contains(highway)) {
-            if (!way.hasTag("sidewalk", sidewalkValues))
-                weightToPrioMap.put(45d, AVOID.getValue());
-        }
-
-        if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
-            weightToPrioMap.put(44d, SLIGHT_AVOID.getValue());
     }
 }

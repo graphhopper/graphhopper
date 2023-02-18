@@ -48,10 +48,6 @@ public class VehicleEncodedValues {
         return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnCostEnc);
     }
 
-    public static VehicleEncodedValues hike(PMap properties) {
-        return foot(new PMap(properties).putObject("name", properties.getString("name", "hike")));
-    }
-
     public static VehicleEncodedValues wheelchair(PMap properties) {
         if (properties.has("speed_two_directions"))
             throw new IllegalArgumentException("wheelchair always uses two directions");
