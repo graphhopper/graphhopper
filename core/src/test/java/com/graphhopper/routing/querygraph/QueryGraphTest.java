@@ -391,7 +391,7 @@ public class QueryGraphTest {
         assertEquals(3, res1.getClosestNode());
         assertEquals(3, res2.getClosestNode());
 
-        // force skip due to **tower** node snapping in phase 2 (QueryOverlayBuilder.buildVirtualEdges -> prevPoint.equals(currSnapped))
+        // force skip due to **tower** node snapping in phase 2 (QueryOverlayBuilder.buildVirtualEdges -> Snap.considerEqual)
         // and no virtual edges should be created for res1
         edgeState = GHUtility.getEdge(g, 0, 1);
         res1 = createLocationResult(1, 0, edgeState, 0, TOWER);
