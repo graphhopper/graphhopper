@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 
 import static com.graphhopper.routing.weighting.custom.ConditionalExpressionVisitor.parse;
-import static com.graphhopper.routing.weighting.custom.CustomModelParser.isValidVariableName;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class ConditionalExpressionVisitorTest {
@@ -57,8 +56,7 @@ public class ConditionalExpressionVisitorTest {
 
     @Test
     public void testConvertExpression() {
-        NameValidator validVariable = s -> isValidVariableName(s)
-                || Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("toll");
+        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("toll");
 
         ParseResult result = parse("toll == NO", validVariable, lookup);
         assertTrue(result.ok);
@@ -79,7 +77,7 @@ public class ConditionalExpressionVisitorTest {
 
     @Test
     public void testStringExpression() {
-        NameValidator validVariable = s -> isValidVariableName(s) || s.equals("country");
+        NameValidator validVariable = s -> s.equals("country");
 
         ParseResult result = parse("country == \"DEU\"", validVariable, lookup);
         assertTrue(result.ok);
@@ -96,8 +94,7 @@ public class ConditionalExpressionVisitorTest {
 
     @Test
     public void isValidAndSimpleCondition() {
-        NameValidator validVariable = s -> isValidVariableName(s)
-                || Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("toll") || s.equals("my_speed");
+        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("toll") || s.equals("my_speed") || s.equals("backward_my_speed");
 
         ParseResult result = parse("in_something", validVariable, lookup);
         assertTrue(result.ok);
@@ -136,6 +133,10 @@ public class ConditionalExpressionVisitorTest {
         result = parse("(toll == NO || road_class == PRIMARY) && toll == NO", validVariable, lookup);
         assertTrue(result.ok);
         assertEquals("[toll, road_class]", result.guessedVariables.toString());
+
+        result = parse("backward_my_speed", validVariable, lookup);
+        assertTrue(result.ok);
+        assertEquals("[backward_my_speed]", result.guessedVariables.toString());
     }
 
     @Test
