@@ -38,15 +38,13 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
     private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
             "contains", "sqrt", "abs"));
     private final ParseResult result;
-    private final EncodedValueLookup lookup;
     private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
     private final NameValidator variableValidator;
     private String invalidMessage;
 
-    public ConditionalExpressionVisitor(ParseResult result, NameValidator variableValidator, EncodedValueLookup lookup) {
+    public ConditionalExpressionVisitor(ParseResult result, NameValidator variableValidator) {
         this.result = result;
         this.variableValidator = variableValidator;
-        this.lookup = lookup;
     }
 
     // allow only methods and other identifiers (constants and encoded values)
@@ -124,18 +122,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             if (binOp.lhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.lhs).identifiers.length == 1) {
                 String lhVarAsString = ((Java.AmbiguousName) binOp.lhs).identifiers[0];
                 boolean eqOps = binOp.operator.equals("==") || binOp.operator.equals("!=");
-                if (binOp.rhs instanceof Java.StringLiteral) {
-                    // replace String with its index for faster comparison (?) and skipping the Map<String, Integer> lookup at runtime
-                    if (lookup.hasEncodedValue(lhVarAsString)) {
-                        if (!eqOps)
-                            throw new IllegalArgumentException("Operator " + binOp.operator + " not allowed for String");
-                        StringEncodedValue ev = lookup.getStringEncodedValue(lhVarAsString);
-                        String str = ((Java.StringLiteral) binOp.rhs).value;
-                        int integ = ev.indexOf(str.substring(1, str.length() - 1));
-                        if (integ == 0) integ = -1; // 0 means not found and this should always trigger inequality
-                        replacements.put(startRH, new Replacement(startRH, str.length(), "" + integ));
-                    }
-                } else if (binOp.rhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.rhs).identifiers.length == 1) {
+                if (binOp.rhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.rhs).identifiers.length == 1) {
                     // Make enum explicit as NO or OTHER can occur in other enums so convert "toll == NO" to "toll == Toll.NO"
                     String rhValueAsString = ((Java.AmbiguousName) binOp.rhs).identifiers[0];
                     if (variableValidator.isValid(lhVarAsString) && Helper.toUpperCase(rhValueAsString).equals(rhValueAsString)) {
@@ -173,7 +160,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
      * converted expression that includes class names for constants to avoid conflicts e.g. when doing "toll == Toll.NO"
      * instead of "toll == NO".
      */
-    static ParseResult parse(String expression, NameValidator validator, EncodedValueLookup lookup) {
+    static ParseResult parse(String expression, NameValidator validator) {
         ParseResult result = new ParseResult();
         try {
             Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
@@ -181,7 +168,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             // after parsing the expression the input should end (otherwise it is not "simple")
             if (parser.peek().type == TokenType.END_OF_INPUT) {
                 result.guessedVariables = new LinkedHashSet<>();
-                ConditionalExpressionVisitor visitor = new ConditionalExpressionVisitor(result, validator, lookup);
+                ConditionalExpressionVisitor visitor = new ConditionalExpressionVisitor(result, validator);
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;
                 if (result.ok) {
