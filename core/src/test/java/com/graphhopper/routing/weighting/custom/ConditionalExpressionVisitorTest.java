@@ -97,10 +97,18 @@ public class ConditionalExpressionVisitorTest {
     @Test
     public void isValidAndSimpleCondition() {
         NameValidator validVariable = s -> isValidVariableName(s)
-                || Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("toll");
-        ParseResult result = parse("edge == edge", validVariable, lookup);
+                || Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("toll") || s.equals("my_speed");
+
+        ParseResult result = parse("in_something", validVariable, lookup);
         assertTrue(result.ok);
-        assertEquals("[edge]", result.guessedVariables.toString());
+        assertEquals("[in_something]", result.guessedVariables.toString());
+
+        result = parse("edge == edge", validVariable, lookup);
+        assertFalse(result.ok);
+
+        result = parse("Math.sqrt(my_speed)", validVariable, lookup);
+        assertTrue(result.ok);
+        assertEquals("[my_speed]", result.guessedVariables.toString());
 
         result = parse("Math.sqrt(2)", validVariable, lookup);
         assertTrue(result.ok);
@@ -138,5 +146,9 @@ public class ConditionalExpressionVisitorTest {
         result = parse("-average_slope > -0.5", "average_slope"::equals, lookup);
         assertTrue(result.ok);
         assertEquals("[average_slope]", result.guessedVariables.toString());
+
+        result = parse("Math.sqrt(-2)", (var) -> false, lookup);
+        assertTrue(result.ok);
+        assertTrue(result.guessedVariables.isEmpty());
     }
 }

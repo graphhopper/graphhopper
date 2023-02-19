@@ -548,31 +548,43 @@ blocked.
 
 ### The value expression
 
-The value of `limit_to` or `multiply_by` is usually only a number and can be a more complex expression like 
-`Math.sqrt(2)`. You can even specify dynamic values like `max_speed`. This can be useful if the base profile does 
-not restrict this like it is the case for the `roads` profile. See this example:
+The value of `limit_to` or `multiply_by` is usually only a number but can be more complex expression like `max_speed`
+or even something like `max_speed + 0.5`. In general one encoded value is accepted in combination with one or more 
+operations with a number and the operator `+`, `*` and `-`.
+
+This can be useful to reduce the speed of the base profile to a dynamic value. See e.g. the following example:
 
 ```json
 {
   "speed": [
-    {
-      "if": "true",
-      "limit_to": "max_speed * 0.9"
-    }
+    { "if": "true", "limit_to": "max_speed * 0.9" }
   ]
 }
 ```
 
-This limits the speed on all roads to 90% of the maximum speed value if it exists. It can be also useful to set a 
-start value of the priority to a value that you pre-populated based on your algorithm:
+This limits the speed on all roads to 90% of the maximum speed value if it exists.
+
+Or you could use the following statements for a truck profile that needs a car-like speed but for faster roads the truck 
+should be 10% slower and the maximum should be 100km/h:
+
+```json
+{
+  "speed": [
+    { "if": "true", "limit_to": "100" },
+    { "if": "car_average_speed > 50", "limit_to": "car_average_speed * 0.9" }
+    { "else": "", "limit_to": "car_average_speed" }
+  ]
+}
+```
+
+Note that the last `else` statement is optional if you use the `car` profile as base.
+
+You can use a value expression also for `priority`, e.g. to pre-populated it based on a custom variable:
 
 ```json
 {
   "priority": [
-    {
-      "if": "true",
-      "limit_to": "my_precalculated_value"
-    }
+    { "if": "true", "limit_to": "my_precalculated_value" }
   ]
 }
 ```

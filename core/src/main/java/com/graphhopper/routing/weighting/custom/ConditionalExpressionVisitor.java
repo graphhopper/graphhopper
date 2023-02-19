@@ -34,23 +34,24 @@ import static com.graphhopper.routing.weighting.custom.CustomModelParser.IN_AREA
  */
 class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
+    private static final Set<String> allowedMethodParents = new HashSet<>(Arrays.asList("edge", "Math"));
+    private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
+            "contains", "sqrt", "abs"));
     private final ParseResult result;
     private final EncodedValueLookup lookup;
     private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
-    private final NameValidator nameValidator;
-    private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
-            "contains", "sqrt", "abs"));
+    private final NameValidator variableValidator;
     private String invalidMessage;
 
-    public ConditionalExpressionVisitor(ParseResult result, NameValidator nameValidator, EncodedValueLookup lookup) {
+    public ConditionalExpressionVisitor(ParseResult result, NameValidator variableValidator, EncodedValueLookup lookup) {
         this.result = result;
-        this.nameValidator = nameValidator;
+        this.variableValidator = variableValidator;
         this.lookup = lookup;
     }
 
     // allow only methods and other identifiers (constants and encoded values)
     boolean isValidIdentifier(String identifier) {
-        if (nameValidator.isValid(identifier)) {
+        if (variableValidator.isValid(identifier)) {
             if (!Character.isUpperCase(identifier.charAt(0)))
                 result.guessedVariables.add(identifier);
             return true;
@@ -90,14 +91,30 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
         } else if (rv instanceof Java.MethodInvocation) {
             Java.MethodInvocation mi = (Java.MethodInvocation) rv;
             if (allowedMethods.contains(mi.methodName)) {
-                // skip methods like this.in() for now
+                // skip methods like this.in()
                 if (mi.target != null) {
-                    // edge.getDistance, Math.sqrt => check target name (edge or Math)
                     Java.AmbiguousName n = (Java.AmbiguousName) mi.target.toRvalue();
-                    if (n.identifiers.length == 2 && isValidIdentifier(n.identifiers[0])) return true;
+                    if (n.identifiers.length == 2) {
+                        if (allowedMethodParents.contains(n.identifiers[0])) {
+                            // edge.getDistance(), Math.sqrt(x) => check target name i.e. edge or Math
+                            if (mi.arguments.length == 0) {
+                                result.guessedVariables.add(n.identifiers[0]); // return "edge"
+                                return true;
+                            } else if (mi.arguments.length == 1) {
+                                // return "x" but verify before
+                                return mi.arguments[0].accept(this);
+                            }
+                        } else if (variableValidator.isValid(n.identifiers[0])) {
+                            // road_class.ordinal()
+                            if (mi.arguments.length == 0) {
+                                result.guessedVariables.add(n.identifiers[0]); // return road_class
+                                return true;
+                            }
+                        }
+                    }
                 }
             }
-            invalidMessage = mi.methodName + " is an illegal method";
+            invalidMessage = mi.methodName + " is an illegal method in a conditional expression";
             return false;
         } else if (rv instanceof Java.ParenthesizedExpression) {
             return ((Java.ParenthesizedExpression) rv).value.accept(this);
@@ -121,7 +138,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                 } else if (binOp.rhs instanceof Java.AmbiguousName && ((Java.AmbiguousName) binOp.rhs).identifiers.length == 1) {
                     // Make enum explicit as NO or OTHER can occur in other enums so convert "toll == NO" to "toll == Toll.NO"
                     String rhValueAsString = ((Java.AmbiguousName) binOp.rhs).identifiers[0];
-                    if (nameValidator.isValid(lhVarAsString) && Helper.toUpperCase(rhValueAsString).equals(rhValueAsString)) {
+                    if (variableValidator.isValid(lhVarAsString) && Helper.toUpperCase(rhValueAsString).equals(rhValueAsString)) {
                         if (!eqOps)
                             throw new IllegalArgumentException("Operator " + binOp.operator + " not allowed for enum");
                         String value = toEncodedValueClassName(binOp.lhs.toString());
@@ -189,7 +206,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
         return Character.toUpperCase(clazz.charAt(0)) + clazz.substring(1);
     }
 
-    class Replacement {
+    static class Replacement {
         int start;
         int oldLength;
         String newString;
