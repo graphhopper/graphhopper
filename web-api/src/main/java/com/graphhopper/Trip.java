@@ -103,6 +103,7 @@ public class Trip {
     }
     public static class PtLeg extends Leg {
         public final String feed_id;
+        public final String agency_id;
         public final String agency_name;
         public final boolean isInSameVehicleAsPrevious;
         public final String trip_headsign;
@@ -116,9 +117,10 @@ public class Trip {
         public final String trip_id;
         public final String route_id;
 
-        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, String headsign, String color, String routeName, int routeType, int bikesAllowed, String agencyName, List<Stop> stops, double distance, double weight, long travelTime, Geometry geometry) {
+        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, String headsign, String color, String routeName, int routeType, int bikesAllowed, String agencyId, String agencyName, List<Stop> stops, double distance, double weight, long travelTime, Geometry geometry) {
             super("pt", stops.get(0).stop_name, geometry, distance, weight);
             this.feed_id = feedId;
+            this.agency_id = agencyId;
             this.agency_name = agencyName;
             this.isInSameVehicleAsPrevious = isInSameVehicleAsPrevious;
             this.trip_id = tripId;

@@ -375,6 +375,7 @@ class TripFromLabel {
                             route.route_short_name == "" ? route.route_long_name : route.route_short_name,
                             route.route_type,
                             trip.bikes_allowed,
+                            agency.agency_id,
                             agency.agency_name,
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
