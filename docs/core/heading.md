@@ -14,14 +14,14 @@ You can follow this example in 3 ways:
 2.	With Java client-hc requests to server ([HeadingExamples.java](../../client-hc/src/test/java/com/graphhopper/api/HeadingExamples.java))
 3.	With common get request to server (the urls used in the following)
 
-For 2 and 3 you can self-host a graphhopper web server as described [here](https://github.com/graphhopper/graphhopper#installation), but in [config-example.yml](../../config-example.yml) we need to outcomment
+For 2 and 3 you can self-host a graphhopper web server as described [here](https://github.com/graphhopper/graphhopper#installation). In [config-example.yml](../../config-example.yml) speed mode is enabled:
 
 ```
   profiles_ch:
     - profile: car
 ```
 
-in line 56-57 since `heading` is not available in speed mode.
+Since the 'heading' parameter is currently not supported for speed mode, we need to disable it with `ch.disable=true`
 
 The docs for the API can be found [here](../../docs/web/api-doc.md#parameters)
 
@@ -44,7 +44,7 @@ to point
 
 The first heading parameter defines the start direction which should be prefered. In this case, we can set it to `heading towards west` (270 degree) and we see that a different route is returned
 
-`localhost:8989/route?profile=car&point=42.566757,1.597751&point=42.567396,1.597807&type=json&instructions=false&points_encoded=false&heading=270`
+`localhost:8989/route?profile=car&point=42.566757,1.597751&point=42.567396,1.597807&type=json&instructions=false&points_encoded=false&ch.disable=true&heading=270`
 
 ![with_heading_start](./images/with_heading_start.PNG)
 
@@ -52,7 +52,7 @@ The first heading parameter defines the start direction which should be prefered
 
 For all via or end points we can also specify a prefered heading. Especially at the end point it must be noted that we still need to define the direction as `heading towards`. In this case, we want to prefer `coming from north`, but we need to specify it with `heading towards south` (180 degree), although we know that the route ends here
 
-`localhost:8989/route?profile=car&point=42.566757,1.597751&point=42.567396,1.597807&type=json&instructions=false&points_encoded=false&heading=270&heading=180`
+`localhost:8989/route?profile=car&point=42.566757,1.597751&point=42.567396,1.597807&type=json&instructions=false&points_encoded=false&ch.disable=true&heading=270&heading=180&`
 
 ![with_heading_start_stop](./images/with_heading_start_stop.PNG)
 
@@ -60,7 +60,7 @@ For all via or end points we can also specify a prefered heading. Especially at 
 
 Headings with value 'NaN' won't be enforced. We can omit the start heading and only enforce a end heading
 
-`localhost:8989/route?profile=car&point=42.566757,1.597751&point=42.567396,1.597807&type=json&instructions=false&points_encoded=false&heading=NaN&heading=180`
+`localhost:8989/route?profile=car&point=42.566757,1.597751&point=42.567396,1.597807&type=json&instructions=false&points_encoded=false&ch.disable=true&heading=NaN&heading=180&ch.disable=true`
 
 ![with_heading_stop](./images/with_heading_stop.PNG)
 
@@ -72,5 +72,5 @@ As stated in the docs
 
 We can modify the `heading_penalty`, which by default is 120 seconds. If we, in our use case with start and end heading, reduce it to 10 seconds, the route is equivalent to the route without a heading
 
-`localhost:8989/route?profile=car&point=42.566757,1.597751&point=42.567396,1.597807&type=json&instructions=false&points_encoded=false&heading=270&heading=180&heading_penalty=10`
+`localhost:8989/route?profile=car&point=42.566757,1.597751&point=42.567396,1.597807&type=json&instructions=false&points_encoded=false&ch.disable=true&heading=270&heading=180&heading_penalty=10&ch.disable=true`
 
