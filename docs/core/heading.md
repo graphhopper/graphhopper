@@ -2,7 +2,7 @@
 
 The flexible and hybrid modes allow adding a desired heading (north based azimuth between 0 and 360 degree) to any point. Adding a heading makes it more likely that a route starts towards the provided direction, because roads going into other directions are penalized (see the [heading_penalty](#heading-penalty) parameter).
 
-A heading with the value 'NaN' won't be enforced and a heading not within [0, 360] will trigger an IllegalStateException. It is important to note that if you force the heading at via or end points the outgoing heading needs to be specified. I.e. if you want to force "coming from south" to a destination you need to specify the resulting "heading towards north" instead, which is 0.
+A heading with the value 'NaN' won't be enforced and a heading not within [0, 360] will trigger an IllegalArgumentException. It is important to note that if you force the heading at via or end points the outgoing heading needs to be specified. I.e. if you want to force "coming from south" to a destination you need to specify the resulting "heading towards north" instead, which is 0.
 
 ## Example
 
