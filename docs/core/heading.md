@@ -10,7 +10,7 @@ For this example we use [andorra.osm.pbf](../../core/files/andorra.osm.pbf).
 
 You can follow this example in 2 ways:
 
-1.	The Graphhopper Examples module ([HeadingExample.java](../../example/src/main/java/com/graphhopper/example/HeadingExample.java))
+1.	The Graphhopper example module ([HeadingExample.java](../../example/src/main/java/com/graphhopper/example/HeadingExample.java))
 2.	With requests to a self hostet server (the urls used in the following)
 
 You can self-host a graphhopper web server as described [here](https://github.com/graphhopper/graphhopper#installation). In [config-example.yml](../../config-example.yml) speed mode is enabled:
