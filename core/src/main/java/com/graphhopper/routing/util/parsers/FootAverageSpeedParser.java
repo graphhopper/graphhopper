@@ -22,7 +22,6 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
     final Set<String> safeHighwayTags = new HashSet<>();
     final Set<String> allowedHighwayTags = new HashSet<>();
     final Set<String> avoidHighwayTags = new HashSet<>();
-    final Set<String> intendedValues = new HashSet<>(INTENDED);
     protected HashSet<String> sidewalkValues = new HashSet<>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<>(5);
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();

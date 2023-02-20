@@ -328,10 +328,11 @@ public class RoutingAlgorithmWithOSMTest {
     public void testNorthBayreuthHikeFastestAnd3D() {
         List<Query> queries = new ArrayList<>();
         // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'        
-        queries.add(new Query(49.974972, 11.515657, 49.991022, 11.512299, 2342, 80));
+        queries.add(new Query(49.974972, 11.515657, 49.991022, 11.512299, 2365, 67));
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
         queries.add(new Query(49.990967, 11.545258, 50.023182, 11.555386, 5636, 97));
-        GraphHopper hopper = createHopper(BAYREUTH, new CustomProfile("hike").setCustomModel(getHikeCustomModel()).setVehicle("foot"));
+        GraphHopper hopper = createHopper(BAYREUTH, new CustomProfile("hike").setCustomModel(getHikeCustomModel()).setVehicle("roads"),
+                new Profile("foot").setVehicle("foot") /*just to make foot vehicle available */);
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);

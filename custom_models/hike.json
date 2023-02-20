@@ -1,16 +1,17 @@
 {
-  "comment1": "use this custom model with the foot vehicle",
-  "comment2": "do not forget to add: graph.encoded_values: hike_rating,average_slope,max_slope",
+  "comment1": "use this custom model with the roads vehicle and add graph.encoded_values: hike_rating,average_slope,max_slope",
   "priority": [
     { "if": "hike_rating < 4 && foot_access == false", "multiply_by": "0"},
+    { "else": "", "multiply_by": "foot_priority"},
     { "if": "foot_network == INTERNATIONAL || foot_network == NATIONAL", "multiply_by": "1.7"},
-    { "else_if": "foot_network == REGIONAL || foot_network == LOCAL", "multiply_by": "1.4"}
+    { "else_if": "foot_network == REGIONAL || foot_network == LOCAL", "multiply_by": "1.5"}
   ],
   "speed": [
-    { "if": "hike_rating < 4", "limit_to": "foot_average_speed" },
-    { "else":   "", "limit_to": "3" },
-    { "if":      "average_slope >= 20", "limit_to": "1"},
-    { "else_if": "average_slope >= 10", "limit_to": "2"},
+    { "if": "hike_rating < 1", "limit_to": "foot_average_speed" },
+    { "else_if": "hike_rating > 2", "limit_to": "2" },
+    { "else":   "", "limit_to": "4" },
+    { "if":      "average_slope >= 20", "limit_to": "1.5"},
+    { "else_if": "average_slope >= 10", "limit_to": "2.5"},
     { "else_if": "average_slope >=  4", "multiply_by": "0.85"},
     { "else_if": "average_slope <= -4", "multiply_by": "1.05"}
   ]
