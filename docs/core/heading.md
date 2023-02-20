@@ -8,13 +8,12 @@ A heading with the value 'NaN' won't be enforced and a heading not within [0, 36
 
 For this example we use [andorra.osm.pbf](../../core/files/andorra.osm.pbf).
 
-You can follow this example in 3 ways:
+You can follow this example in 2 ways:
 
-1.	Pure Java without server ([HeadingExample.java](../../example/src/test/java/com/graphhopper/example/HeadingExample.java))
-2.	With Java client-hc requests to server ([HeadingExamples.java](../../client-hc/src/test/java/com/graphhopper/api/HeadingExamples.java))
-3.	With common get request to server (the urls used in the following)
+1.	The Graphhopper Examples module ([HeadingExample.java](../../example/src/main/java/com/graphhopper/example/HeadingExample.java))
+2.	With requests to a self hostet server (the urls used in the following)
 
-For 2 and 3 you can self-host a graphhopper web server as described [here](https://github.com/graphhopper/graphhopper#installation). In [config-example.yml](../../config-example.yml) speed mode is enabled:
+You can self-host a graphhopper web server as described [here](https://github.com/graphhopper/graphhopper#installation). In [config-example.yml](../../config-example.yml) speed mode is enabled:
 
 ```
   profiles_ch:
