@@ -62,8 +62,7 @@ public class RouteResourceProfileSelectionTest {
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
                         new Profile("my_car").setVehicle("car").setWeighting("fastest"),
-                        new CustomProfile("my_bike").setCustomModel(new CustomModel().setDistanceInfluence(200d).
-                                addToPriority(If("!bike_oneway", MULTIPLY, "0"))).setVehicle("bike"),
+                        new CustomProfile("my_bike").setCustomModel(new CustomModel().setDistanceInfluence(200d)).setVehicle("bike"),
                         new Profile("my_feet").setVehicle("foot").setWeighting("shortest")
                 ))
                 .setCHProfiles(Arrays.asList(

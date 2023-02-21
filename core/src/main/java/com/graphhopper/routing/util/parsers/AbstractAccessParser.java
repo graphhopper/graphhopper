@@ -32,6 +32,13 @@ public abstract class AbstractAccessParser implements TagParser {
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
         this.accessEnc = accessEnc;
 
+        restrictedValues.add("no");
+        restrictedValues.add("restricted");
+        restrictedValues.add("military");
+        restrictedValues.add("emergency");
+        restrictedValues.add("private");
+        restrictedValues.add("permit");
+
         restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
     }
 
@@ -57,7 +64,10 @@ public abstract class AbstractAccessParser implements TagParser {
         if (!blockPrivate) {
             if (!restrictedValues.remove("private"))
                 throw new IllegalStateException("no 'private' found in restrictedValues");
+            if (!restrictedValues.remove("permit"))
+                throw new IllegalStateException("no 'permit' found in restrictedValues");
             intendedValues.add("private");
+            intendedValues.add("permit");
         }
     }
 

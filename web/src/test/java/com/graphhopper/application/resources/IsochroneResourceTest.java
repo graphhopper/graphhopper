@@ -29,7 +29,6 @@ import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Coordinate;
@@ -43,6 +42,7 @@ import java.io.File;
 import java.util.Arrays;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -272,7 +272,6 @@ public class IsochroneResourceTest {
         assertEquals("query param time_limit is not a number.", message);
     }
 
-    @Disabled("block_area is no longer supported and to use custom models we'd need a POST endpoint for isochrones")
     @Test
     public void requestWithBlockArea() {
         Response rsp = clientTarget(app, "/isochrone")
@@ -281,7 +280,7 @@ public class IsochroneResourceTest {
                 .queryParam("time_limit", 5 * 60)
                 .queryParam("buckets", 2)
                 .queryParam("type", "geojson")
-                .queryParam("block_area", "42.558067,1.589429,100")
+                .queryParam(BLOCK_AREA, "42.558067,1.589429,100")
                 .request().buildGet().invoke();
         JsonFeatureCollection featureCollection = rsp.readEntity(JsonFeatureCollection.class);
 

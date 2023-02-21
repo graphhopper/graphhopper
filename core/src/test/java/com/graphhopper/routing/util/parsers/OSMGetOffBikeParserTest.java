@@ -1,8 +1,13 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.GetOffBike;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -10,14 +15,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class OSMGetOffBikeParserTest {
     private final BooleanEncodedValue offBikeEnc = GetOffBike.create();
-    private final BooleanEncodedValue onewayEnc = BikeOneway.create();
-    private final OSMBikeOnewayParser onewayParser = new OSMBikeOnewayParser(onewayEnc, Roundabout.create());
-    private final OSMGetOffBikeParser getOffParser = new OSMGetOffBikeParser(offBikeEnc, onewayEnc);
+    private final BikeAccessParser accessParser;
+    private final OSMGetOffBikeParser getOffParser;
 
     public OSMGetOffBikeParserTest() {
-        EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
-        onewayEnc.init(config);
-        offBikeEnc.init(config);
+        EncodingManager em = new EncodingManager.Builder().add(offBikeEnc).add(VehicleEncodedValues.bike(new PMap()).getAccessEnc()).build();
+        accessParser = new BikeAccessParser(em, new PMap());
+        accessParser.init(new DateRangeParser());
+        getOffParser = new OSMGetOffBikeParser(offBikeEnc, accessParser.getAccessEnc());
     }
 
     @Test
@@ -107,7 +112,7 @@ public class OSMGetOffBikeParserTest {
         way.setTag("oneway", "yes");
 
         IntsRef edgeFlags = new IntsRef(1);
-        onewayParser.handleWayTags(edgeFlags, way, new IntsRef(1));
+        accessParser.handleWayTags(edgeFlags, way, new IntsRef(1));
         getOffParser.handleWayTags(edgeFlags, way, new IntsRef(1));
 
         assertFalse(offBikeEnc.getBool(false, edgeFlags));
@@ -117,7 +122,7 @@ public class OSMGetOffBikeParserTest {
     private boolean isGetOffBike(ReaderWay way) {
         IntsRef edgeFlags = new IntsRef(1);
         IntsRef rel = new IntsRef(1);
-        onewayParser.handleWayTags(edgeFlags, way, rel);
+        accessParser.handleWayTags(edgeFlags, way, rel);
         getOffParser.handleWayTags(edgeFlags, way, rel);
         return offBikeEnc.getBool(false, edgeFlags);
     }

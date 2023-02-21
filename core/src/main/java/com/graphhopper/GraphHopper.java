@@ -668,10 +668,8 @@ public class GraphHopper {
                 if (tagParser instanceof BikeCommonAccessParser) {
                     if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
                         osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
-                    if (encodingManager.hasEncodedValue(BikeOneway.KEY))
-                        osmParsers.addWayTagParser(new OSMBikeOnewayParser(encodingManager.getBooleanEncodedValue(BikeOneway.KEY), encodingManager.getBooleanEncodedValue(Roundabout.KEY)));
-                    if (encodingManager.hasEncodedValue(GetOffBike.KEY) && encodingManager.hasEncodedValue(BikeOneway.KEY))
-                        osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY), encodingManager.getBooleanEncodedValue(BikeOneway.KEY)));
+                    if (encodingManager.hasEncodedValue(GetOffBike.KEY))
+                        osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY), ((BikeCommonAccessParser) tagParser).getAccessEnc()));
                     if (encodingManager.hasEncodedValue(Smoothness.KEY))
                         osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
                 } else if (tagParser instanceof FootAccessParser) {
@@ -1037,7 +1035,6 @@ public class GraphHopper {
                     .setSegmentSize(defaultSegmentSize)
                     .build();
             baseGraph.loadExisting();
-            checkProfilesConsistency();
             String storedProfiles = properties.get("profiles");
             String configuredProfiles = getProfilesString();
             if (!storedProfiles.equals(configuredProfiles))
@@ -1045,6 +1042,7 @@ public class GraphHopper {
                         + "\nGraphhopper config: " + configuredProfiles
                         + "\nGraph: " + storedProfiles
                         + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
+            checkProfilesConsistency();
 
             postProcessing(false);
             directory.loadMMap();

@@ -27,8 +27,6 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return Roundabout.create();
         } else if (GetOffBike.KEY.equals(name)) {
             return GetOffBike.create();
-        } else if (BikeOneway.KEY.equals(name)) {
-            return BikeOneway.create();
         } else if (RoadClass.KEY.equals(name)) {
             return new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
         } else if (RoadClassLink.KEY.equals(name)) {

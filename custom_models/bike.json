@@ -1,10 +1,11 @@
 {
+  "comment": "use with 'roads' vehicle to allow walking in reverse direction of oneways",
   "distance_influence": 10,
   "priority": [
-    { "if": "!bike_oneway", "multiply_by": "0.1" }
+    { "if": "backward_bike_access != bike_access",  "multiply_by": "0.5" }
   ],
   "speed": [
-    { "if": "average_slope >= 10 || !bike_oneway",  "limit_to": "4" },
+    { "if": "average_slope >= 10 || backward_bike_access != bike_access",  "limit_to": "4" },
     { "if": "average_slope >= 5",   "multiply_by": "0.45" },
     { "if": "average_slope >= 3.5", "multiply_by": "0.7"  },
     { "if": "average_slope >= 2",   "multiply_by": "0.9"  },

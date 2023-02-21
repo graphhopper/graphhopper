@@ -15,12 +15,23 @@ import static java.util.Collections.emptyMap;
 
 public abstract class BikeCommonAccessParser extends AbstractAccessParser implements TagParser {
 
+    private static final Set<String> OPP_LANES = new HashSet<>(Arrays.asList("opposite", "opposite_lane", "opposite_track"));
     private final Set<String> allowedHighways = new HashSet<>();
+    private final BooleanEncodedValue roundaboutEnc;
 
-    protected BikeCommonAccessParser(BooleanEncodedValue accessEnc) {
+    protected BikeCommonAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc) {
         super(accessEnc, TransportationMode.BIKE);
 
-        restrictedValues.addAll(Arrays.asList("agricultural", "forestry", "no", "restricted", "delivery", "military", "emergency", "private"));
+        this.roundaboutEnc = roundaboutEnc;
+
+        restrictedValues.add("agricultural");
+        restrictedValues.add("forestry");
+        restrictedValues.add("delivery");
+
+        intendedValues.add("yes");
+        intendedValues.add("designated");
+        intendedValues.add("official");
+        intendedValues.add("permissive");
 
         barriers.add("fence");
 
@@ -114,10 +125,47 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (access.canSkip())
             return;
 
-        accessEnc.setBool(false, edgeFlags, true);
-        accessEnc.setBool(true, edgeFlags, true);
+        if (access.isFerry()) {
+            accessEnc.setBool(false, edgeFlags, true);
+            accessEnc.setBool(true, edgeFlags, true);
+        } else {
+            handleAccess(edgeFlags, way);
+        }
 
         Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
         handleNodeTags(edgeFlags, nodeTags);
+    }
+
+    private void handleAccess(IntsRef edgeFlags, ReaderWay way) {
+        // handle oneways. The value -1 means it is a oneway but for reverse direction of stored geometry.
+        // The tagging oneway:bicycle=no or cycleway:right:oneway=no or cycleway:left:oneway=no lifts the generic oneway restriction of the way for bike
+        boolean isOneway = way.hasTag("oneway", ONEWAYS) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", INTENDED)
+                || way.hasTag("oneway", "-1") && !way.hasTag("bicycle:forward", INTENDED)
+                || way.hasTag("oneway:bicycle", ONEWAYS)
+                || way.hasTag("cycleway:left:oneway", ONEWAYS)
+                || way.hasTag("cycleway:right:oneway", ONEWAYS)
+                || way.hasTag("vehicle:backward", restrictedValues) && !way.hasTag("bicycle:forward", INTENDED)
+                || way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", INTENDED)
+                || way.hasTag("bicycle:forward", restrictedValues)
+                || way.hasTag("bicycle:backward", restrictedValues);
+
+        if ((isOneway || roundaboutEnc.getBool(false, edgeFlags))
+                && !way.hasTag("oneway:bicycle", "no")
+                && !way.hasTag("cycleway", OPP_LANES)
+                && !way.hasTag("cycleway:left", OPP_LANES)
+                && !way.hasTag("cycleway:right", OPP_LANES)
+                && !way.hasTag("cycleway:left:oneway", "no")
+                && !way.hasTag("cycleway:right:oneway", "no")) {
+            boolean isBackward = way.hasTag("oneway", "-1")
+                    || way.hasTag("oneway:bicycle", "-1")
+                    || way.hasTag("cycleway:left:oneway", "-1")
+                    || way.hasTag("cycleway:right:oneway", "-1")
+                    || way.hasTag("vehicle:forward", restrictedValues)
+                    || way.hasTag("bicycle:forward", restrictedValues);
+            accessEnc.setBool(isBackward, edgeFlags, true);
+        } else {
+            accessEnc.setBool(true, edgeFlags, true);
+            accessEnc.setBool(false, edgeFlags, true);
+        }
     }
 }

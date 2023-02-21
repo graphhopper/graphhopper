@@ -17,16 +17,16 @@ public class OSMGetOffBikeParser implements TagParser {
     private final List<String> accepted = Arrays.asList("designated", "yes", "official", "permissive");
     private final HashSet<String> pushBikeHighwayTags;
     private final BooleanEncodedValue getOffBikeEnc;
-    private final BooleanEncodedValue onewayEnc;
+    private final BooleanEncodedValue bikeAccessEnc;
 
-    public OSMGetOffBikeParser(BooleanEncodedValue getOffBikeEnc, BooleanEncodedValue onewayEnc) {
+    public OSMGetOffBikeParser(BooleanEncodedValue getOffBikeEnc, BooleanEncodedValue bikeAccessEnc) {
         // steps -> special handling
-        this(getOffBikeEnc, onewayEnc, Arrays.asList("path", "footway", "pedestrian", "platform"));
+        this(getOffBikeEnc, bikeAccessEnc, Arrays.asList("path", "footway", "pedestrian", "platform"));
     }
 
-    public OSMGetOffBikeParser(BooleanEncodedValue getOffBikeEnc, BooleanEncodedValue onewayEnc, List<String> pushBikeTags) {
+    public OSMGetOffBikeParser(BooleanEncodedValue getOffBikeEnc, BooleanEncodedValue bikeAccessEnc, List<String> pushBikeTags) {
         this.getOffBikeEnc = getOffBikeEnc;
-        this.onewayEnc = onewayEnc;
+        this.bikeAccessEnc = bikeAccessEnc;
         this.pushBikeHighwayTags = new HashSet<>(pushBikeTags);
     }
 
@@ -38,7 +38,9 @@ public class OSMGetOffBikeParser implements TagParser {
             getOffBikeEnc.setBool(false, edgeFlags, true);
             getOffBikeEnc.setBool(true, edgeFlags, true);
         }
-        if (!onewayEnc.getBool(false, edgeFlags)) getOffBikeEnc.setBool(false, edgeFlags, true);
-        if (!onewayEnc.getBool(true, edgeFlags)) getOffBikeEnc.setBool(true, edgeFlags, true);
+        if (bikeAccessEnc.getBool(false, edgeFlags) != bikeAccessEnc.getBool(true, edgeFlags)) {
+            if (!bikeAccessEnc.getBool(false, edgeFlags)) getOffBikeEnc.setBool(false, edgeFlags, true);
+            if (!bikeAccessEnc.getBool(true, edgeFlags)) getOffBikeEnc.setBool(true, edgeFlags, true);
+        }
     }
 }
