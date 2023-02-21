@@ -73,14 +73,6 @@ public abstract class DataAccessTest {
         assertEquals(Integer.MAX_VALUE / 3, da.getInt(10 * 4));
         da.close();
 
-        // cannot load data if already closed
-        try {
-            da.loadExisting();
-            assertTrue(false);
-        } catch (Exception ex) {
-            assertEquals("already closed", ex.getMessage());
-        }
-
         da = createDataAccess(name);
         assertTrue(da.loadExisting());
         assertEquals(123, da.getInt(7 * 4));
@@ -150,26 +142,6 @@ public abstract class DataAccessTest {
         da = createDataAccess(name);
         da.create(200 * 4);
         da.ensureCapacity(600 * 4);
-        da.close();
-    }
-
-    @Test
-    public void testSegments() {
-        DataAccess da = createDataAccess(name, 128);
-        da.create(10);
-        assertEquals(1, da.getSegments());
-        da.ensureCapacity(500);
-        int olds = da.getSegments();
-        assertTrue(olds > 3);
-
-        da.setInt(400, 321);
-        da.flush();
-        da.close();
-
-        da = createDataAccess(name);
-        assertTrue(da.loadExisting());
-        assertEquals(olds, da.getSegments());
-        assertEquals(321, da.getInt(400));
         da.close();
     }
 

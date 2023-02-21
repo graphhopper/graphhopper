@@ -146,12 +146,6 @@ public final class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public int getSegments() {
-        throw new UnsupportedOperationException();
-    }
-
-
-    @Override
     public DAType getType() {
         return DAType.MMAP;
     }

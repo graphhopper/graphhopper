@@ -261,12 +261,7 @@ public class RAMDataAccess extends AbstractDataAccess {
 
     @Override
     public long getCapacity() {
-        return (long) getSegments() * segmentSizeInBytes;
-    }
-
-    @Override
-    public int getSegments() {
-        return segments.length;
+        return (long) segments.length * segmentSizeInBytes;
     }
 
     @Override

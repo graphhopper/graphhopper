@@ -125,11 +125,6 @@ public interface DataAccess extends Closeable {
     int getSegmentSize();
 
     /**
-     * @return the number of segments.
-     */
-    int getSegments();
-
-    /**
      * @return the data access type of this object.
      */
     DAType getType();
