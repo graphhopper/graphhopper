@@ -2,7 +2,6 @@
 // graph.vehicles: roads|transportation_mode=BUS,car
 // graph.encoded_values: max_width,max_height
 {
-
   "distance_influence": 90,
   "speed": [
     {

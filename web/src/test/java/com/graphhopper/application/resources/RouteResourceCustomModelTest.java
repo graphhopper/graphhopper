@@ -39,8 +39,11 @@ import org.junit.jupiter.params.provider.CsvSource;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
@@ -62,8 +65,8 @@ public class RouteResourceCustomModelTest {
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
-                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv").
-                putObject("custom_models.directory", "./src/test/resources/com/graphhopper/application/resources").
+                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv,average_slope,max_slope").
+                putObject("custom_models.directory", "../custom_models/").
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Arrays.asList(
@@ -77,7 +80,7 @@ public class RouteResourceCustomModelTest {
                         new CustomProfile("cargo_bike").setVehicle("bike").
                                 putHint("custom_model_file", "cargo_bike.json"),
                         new CustomProfile("json_bike").setVehicle("bike").
-                                putHint("custom_model_file", "json_bike.json"),
+                                putHint("custom_model_file", "bike.json"),
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile("car_no_unclassified").setCustomModel(
                                         new CustomModel(new CustomModel().
@@ -206,7 +209,7 @@ public class RouteResourceCustomModelTest {
         JsonNode path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 661, 5);
 
-        String json = Helper.readJSONFileWithoutComments(new InputStreamReader(getClass().getResourceAsStream("cargo_bike.json")));
+        String json = Helper.readJSONFileWithoutComments(new InputStreamReader(Files.newInputStream(Paths.get("../custom_models/cargo_bike.json"))));
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", \"custom_model\":" + json + ", \"ch.disable\": true}";
         path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 1007, 5);

@@ -1227,7 +1227,6 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(KREMS).
-                setEncodedValuesString("get_off_bike").
                 setProfiles(
                         new Profile(footProfile).setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile(bikeProfile).setCustomModel(new CustomModel()).setVehicle("bike")).
