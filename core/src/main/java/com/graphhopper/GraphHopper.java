@@ -948,7 +948,9 @@ public class GraphHopper {
         return chPreparationHandler;
     }
 
-    private void initCHPreparationHandler() {
+// ORS-GH MOD START change access private -> protected
+    protected void initCHPreparationHandler() {
+// ORS-GH MOD END
         if (chPreparationHandler.hasCHConfigs()) {
             return;
         }
