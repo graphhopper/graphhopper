@@ -43,7 +43,10 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
@@ -209,10 +212,8 @@ public class RouteResourceCustomModelTest {
         JsonNode path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 661, 5);
 
-        ObjectMapper jsonOM = Jackson.newObjectMapper().configure(JsonParser.Feature.ALLOW_COMMENTS, true);
-        StringWriter writer = new StringWriter();
-        jsonOM.writeValue(writer, jsonOM.readValue(new File("../custom_models/cargo_bike.json"), CustomModel.class));
-        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", \"custom_model\":" + writer + ", \"ch.disable\": true}";
+        String json = Helper.readJSONFileWithoutComments(new InputStreamReader(Files.newInputStream(Paths.get("../custom_models/cargo_bike.json"))));
+        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", \"custom_model\":" + json + ", \"ch.disable\": true}";
         path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 1007, 5);
 

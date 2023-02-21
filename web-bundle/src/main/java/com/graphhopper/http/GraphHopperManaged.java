@@ -85,7 +85,7 @@ public class GraphHopperManaged implements Managed {
     }
 
     public static List<Profile> resolveCustomModelFiles(String customModelFolder, List<Profile> profiles, JsonFeatureCollection globalAreas) {
-        ObjectMapper jsonOM = Jackson.newObjectMapper().configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+        ObjectMapper jsonOM = Jackson.newObjectMapper();
         List<Profile> newProfiles = new ArrayList<>();
         for (Profile profile : profiles) {
             if (!CustomWeighting.NAME.equals(profile.getWeighting())) {
@@ -117,7 +117,9 @@ public class GraphHopperManaged implements Managed {
                         throw new IllegalArgumentException("Yaml is no longer supported, see #2672. Use JSON with optional comments //");
                     try {
                         // Somehow dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
-                        customModel = jsonOM.readValue(new File(customModelFolder, customModelFileName), CustomModel.class);
+                        String string = Helper.readJSONFileWithoutComments(Paths.get(customModelFolder).
+                                resolve(customModelFileName).toFile().getAbsolutePath());
+                        customModel = jsonOM.readValue(string, CustomModel.class);
                         newProfiles.add(new CustomProfile(profile).setCustomModel(customModel));
                     } catch (Exception ex) {
                         throw new RuntimeException("Cannot load custom_model from location " + customModelFileName + " for profile " + profile.getName(), ex);

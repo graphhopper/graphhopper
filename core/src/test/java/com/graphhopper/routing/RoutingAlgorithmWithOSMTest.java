@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -225,8 +223,8 @@ public class RoutingAlgorithmWithOSMTest {
 
     static CustomModel getCustomModel(String file) {
         try {
-            ObjectMapper jsonOM = Jackson.newObjectMapper().configure(JsonParser.Feature.ALLOW_COMMENTS, true);
-            return jsonOM.readValue(new File("../custom_models/", file), CustomModel.class);
+            String string = Helper.readJSONFileWithoutComments(new File("../custom_models/", file).getAbsolutePath());
+            return Jackson.newObjectMapper().readValue(string, CustomModel.class);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }

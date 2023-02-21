@@ -735,9 +735,9 @@ public class Measurement {
     }
 
     private CustomModel loadCustomModel(String customModelLocation) {
-        ObjectMapper jsonOM = Jackson.newObjectMapper().configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+        ObjectMapper om = Jackson.initObjectMapper(new ObjectMapper());
         try {
-            return jsonOM.readValue(new File(customModelLocation), CustomModel.class);
+            return om.readValue(Helper.readJSONFileWithoutComments(customModelLocation), CustomModel.class);
         } catch (Exception e) {
             throw new RuntimeException("Cannot load custom_model from " + customModelLocation, e);
         }
