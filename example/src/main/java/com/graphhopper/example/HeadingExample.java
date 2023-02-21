@@ -48,7 +48,9 @@ public class HeadingExample
   static void with_heading_start(GraphHopper hopper) {
       GHRequest request = new GHRequest(new GHPoint(42.566757, 1.597751), new GHPoint(42.567396, 1.597807)).
               setHeadings(Arrays.asList(270d)).
-              putHint(Parameters.CH.DISABLE, true).
+              // important: if CH is enabled on the server-side we need to disable it for each request that uses heading,
+              // because heading is not supported by CH
+                      putHint(Parameters.CH.DISABLE, true).
               setProfile("car");
       GHResponse response = hopper.route(request);
       if (response.hasErrors())

@@ -10,17 +10,10 @@ For this example we use [andorra.osm.pbf](../../core/files/andorra.osm.pbf).
 
 You can follow this example in 2 ways:
 
-1.	The Graphhopper example module ([HeadingExample.java](../../example/src/main/java/com/graphhopper/example/HeadingExample.java))
-2.	With requests to a self hostet server (the urls used in the following)
-
-You can self-host a graphhopper web server as described [here](https://github.com/graphhopper/graphhopper#installation). In [config-example.yml](../../config-example.yml) speed mode is enabled:
-
-```
-  profiles_ch:
-    - profile: car
-```
-
-Since the 'heading' parameter is currently not supported for speed mode, we need to disable it with `ch.disable=true`
+1. The Graphhopper example
+   module ([HeadingExample.java](../../example/src/main/java/com/graphhopper/example/HeadingExample.java))
+2. With requests to a self-hosted server (the urls used in the following). You can self-host a graphhopper web server as
+   described [here](https://github.com/graphhopper/graphhopper#installation)
 
 The docs for the API can be found [here](../../docs/web/api-doc.md#parameters)
 
@@ -41,15 +34,21 @@ to point
 
 #### With Heading: Start Direction
 
-The first heading parameter defines the start direction which should be prefered. In this case, we can set it to `heading towards west` (270 degree) and we see that a different route is returned
+The first heading parameter defines the start direction which should be preferred. In this case, we can set it
+to `heading towards west` (270 degree) and we see that a different route is returned
 
 `localhost:8989/route?profile=car&point=42.566757,1.597751&point=42.567396,1.597807&type=json&instructions=false&points_encoded=false&ch.disable=true&heading=270`
+
+Note that since the 'heading' parameter is currently not supported for speed mode, we need to disable it by
+using `ch.disable=true`
 
 ![with_heading_start](./images/with_heading_start.PNG)
 
 #### With Heading: Start and End Direction
 
-For all via or end points we can also specify a prefered heading. Especially at the end point it must be noted that we still need to define the direction as `heading towards`. In this case, we want to prefer `coming from north`, but we need to specify it with `heading towards south` (180 degree), although we know that the route ends here
+For all via or end points we can also specify a prefered heading. Especially at the end point it must be noted that we
+still need to define the direction as `heading towards`. In this case, we want to prefer `coming from north`, but we
+need to specify it with `heading towards south` (180 degree), although we know that the route ends here
 
 `localhost:8989/route?profile=car&point=42.566757,1.597751&point=42.567396,1.597807&type=json&instructions=false&points_encoded=false&ch.disable=true&heading=270&heading=180&`
 
