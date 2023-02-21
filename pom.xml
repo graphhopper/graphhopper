@@ -183,8 +183,10 @@
                         <compilerArgument>-Xlint:deprecation</compilerArgument>
                         -->
                         <fork>true</fork>
-                        <source>19</source>
-                        <target>19</target>
+                        <release>19</release>
+                        <compilerArgs>
+                            <arg>--enable-preview</arg>
+                        </compilerArgs>
                     </configuration>
                 </plugin>
 
@@ -194,7 +196,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.22.2</version>
                     <configuration>
-                        <argLine>-Xmx190m -Xms190m -Duser.language=en</argLine>
+                        <argLine>-Xmx190m -Xms190m -Duser.language=en --enable-preview</argLine>
                     </configuration>
                 </plugin>
 
