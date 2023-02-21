@@ -1617,7 +1617,7 @@ public class GraphHopperTest {
         // this is actually interesting: the number of visited nodes increases: cross-querying 'works',
         // but can even perform *worse*, because the landmarks were not customized for the weighting in use.
         // Creating a separate LM preparation for profile3 yields 108 (not shown)
-        testCrossQueryAssert(profile3, hopper, 815.2, 236, false);
+        testCrossQueryAssert(profile3, hopper, 815.2, 202, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {
