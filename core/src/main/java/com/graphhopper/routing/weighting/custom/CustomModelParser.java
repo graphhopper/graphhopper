@@ -366,12 +366,12 @@ public class CustomModelParser {
                 || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX)
                 || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()));
 
-        parseExpressions(expressions, nameInConditionValidator, lookup, info, createObjects, list);
+        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list);
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }
 
-    static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, EncodedValueLookup lookup,
+    static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
                                  String exceptionInfo, Set<String> createObjects, List<Statement> list) {
 
         for (Statement statement : list) {
@@ -382,7 +382,7 @@ public class CustomModelParser {
 
                 expressions.append("else {").append(statement.getOperation().build(statement.getValue())).append("; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator, lookup);
+                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator);
                 if (!parseResult.ok)
                     throw new IllegalArgumentException(exceptionInfo + " invalid condition \"" + statement.getCondition() + "\"" +
                             (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
