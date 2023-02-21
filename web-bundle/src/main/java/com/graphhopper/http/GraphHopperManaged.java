@@ -19,6 +19,7 @@
 package com.graphhopper.http;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
@@ -84,7 +85,7 @@ public class GraphHopperManaged implements Managed {
     }
 
     public static List<Profile> resolveCustomModelFiles(String customModelFolder, List<Profile> profiles, JsonFeatureCollection globalAreas) {
-        ObjectMapper jsonOM = Jackson.newObjectMapper();
+        ObjectMapper jsonOM = Jackson.newObjectMapper().configure(JsonParser.Feature.ALLOW_COMMENTS, true);
         List<Profile> newProfiles = new ArrayList<>();
         for (Profile profile : profiles) {
             if (!CustomWeighting.NAME.equals(profile.getWeighting())) {
@@ -116,9 +117,7 @@ public class GraphHopperManaged implements Managed {
                         throw new IllegalArgumentException("Yaml is no longer supported, see #2672. Use JSON with optional comments //");
                     try {
                         // Somehow dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
-                        String string = Helper.readJSONFileWithoutComments(Paths.get(customModelFolder).
-                                resolve(customModelFileName).toFile().getAbsolutePath());
-                        customModel = jsonOM.readValue(string, CustomModel.class);
+                        customModel = jsonOM.readValue(new File(customModelFolder, customModelFileName), CustomModel.class);
                         newProfiles.add(new CustomProfile(profile).setCustomModel(customModel));
                     } catch (Exception ex) {
                         throw new RuntimeException("Cannot load custom_model from location " + customModelFileName + " for profile " + profile.getName(), ex);

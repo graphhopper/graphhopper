@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
@@ -225,9 +225,8 @@ public class RoutingAlgorithmWithOSMTest {
 
     static CustomModel getCustomModel(String file) {
         try {
-            ObjectMapper jsonOM = Jackson.newObjectMapper().
-                    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false); // ignore "comment" field
-            return jsonOM.readValue(new File("../custom_models/" + file), CustomModel.class);
+            ObjectMapper jsonOM = Jackson.newObjectMapper().configure(JsonParser.Feature.ALLOW_COMMENTS, true);
+            return jsonOM.readValue(new File("../custom_models/", file), CustomModel.class);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }

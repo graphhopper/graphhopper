@@ -90,18 +90,6 @@ public class Helper {
         }
     }
 
-    public static String readJSONFileWithoutComments(String file) throws IOException {
-        return Helper.readFile(file).stream().
-                filter(line -> !line.trim().startsWith("//")).
-                reduce((s1, s2) -> s1 + "\n" + s2).orElse("");
-    }
-
-    public static String readJSONFileWithoutComments(InputStreamReader reader) throws IOException {
-        return Helper.readFile(reader).stream().
-                filter(line -> !line.trim().startsWith("//")).
-                reduce((s1, s2) -> s1 + "\n" + s2).orElse("");
-    }
-
     public static List<String> readFile(String file) throws IOException {
         return readFile(new InputStreamReader(new FileInputStream(file), UTF_CS));
     }

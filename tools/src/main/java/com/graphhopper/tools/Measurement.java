@@ -18,6 +18,7 @@
 package com.graphhopper.tools;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
@@ -734,9 +735,9 @@ public class Measurement {
     }
 
     private CustomModel loadCustomModel(String customModelLocation) {
-        ObjectMapper om = Jackson.initObjectMapper(new ObjectMapper());
+        ObjectMapper jsonOM = Jackson.newObjectMapper().configure(JsonParser.Feature.ALLOW_COMMENTS, true);
         try {
-            return om.readValue(Helper.readJSONFileWithoutComments(customModelLocation), CustomModel.class);
+            return jsonOM.readValue(new File(customModelLocation), CustomModel.class);
         } catch (Exception e) {
             throw new RuntimeException("Cannot load custom_model from " + customModelLocation, e);
         }

@@ -1,5 +1,7 @@
+// to use this custom model you need to set the following option in the config.yml:
+// graph.vehicles: roads
+// graph.encoded_values: hike_rating,average_slope,max_slope",
 {
-  "comment1": "use this custom model with the roads vehicle and add graph.encoded_values: hike_rating,average_slope,max_slope",
   "priority": [
     { "if": "hike_rating < 4 && foot_access == false", "multiply_by": "0"},
     { "else": "", "multiply_by": "foot_priority"},
