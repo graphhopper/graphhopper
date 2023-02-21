@@ -111,20 +111,4 @@ public class Polygon implements Shape {
     public String toString() {
         return "polygon (" + prepPolygon.getGeometry().getNumPoints() + " points," + prepPolygon.getGeometry().getNumGeometries() + " geometries)";
     }
-
-    public static Polygon parsePoints(String pointsStr) {
-        String[] arr = pointsStr.split(",");
-        if (arr.length % 2 == 1)
-            throw new IllegalArgumentException("incorrect polygon specified: " + Arrays.asList(arr));
-
-        Coordinate[] coordinates = new Coordinate[arr.length / 2 + 1];
-        for (int i = 0; i < coordinates.length - 1; i++) {
-            int arrIndex = i * 2;
-            coordinates[i] = new Coordinate(Double.parseDouble(arr[arrIndex + 1]), Double.parseDouble(arr[arrIndex]));
-        }
-        coordinates[coordinates.length - 1] = coordinates[0];
-
-        // store more efficient
-        return new Polygon(new PreparedPolygon(new GeometryFactory().createPolygon(new PackedCoordinateSequence.Double(coordinates, 2))));
-    }
 }

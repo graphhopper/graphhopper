@@ -31,13 +31,11 @@ import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.FindMinMax;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -104,7 +102,7 @@ public class Router {
             checkHeadings(request);
             checkPointHints(request);
             checkCurbsides(request);
-            checkNoBlockAreaWithCustomModel(request);
+            checkNoBlockArea(request);
 
             Solver solver = createSolver(request);
             solver.checkRequest();
@@ -177,9 +175,9 @@ public class Router {
             throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
     }
 
-    private void checkNoBlockAreaWithCustomModel(GHRequest request) {
-        if (request.getCustomModel() != null && request.getHints().has(BLOCK_AREA))
-            throw new IllegalArgumentException("When using `custom_model` do not use `block_area`. Use `areas` in the custom model instead");
+    private void checkNoBlockArea(GHRequest request) {
+        if (request.getHints().has("block_area"))
+            throw new IllegalArgumentException("The `block_area` parameter is no longer supported. Use a custom model with `areas` instead.");
     }
 
     protected Solver createSolver(GHRequest request) {
@@ -430,9 +428,6 @@ public class Router {
             if (getPassThrough(request.getHints()))
                 throw new IllegalArgumentException("The '" + Parameters.Routing.PASS_THROUGH + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`. See issue #1765");
 
-            if (request.getHints().has(Parameters.Routing.BLOCK_AREA))
-                throw new IllegalArgumentException("The '" + Parameters.Routing.BLOCK_AREA + "' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`.");
-
             if (request.getCustomModel() != null)
                 throw new IllegalArgumentException("The 'custom_model' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`.");
 
@@ -494,13 +489,7 @@ public class Router {
         protected Weighting createWeighting() {
             PMap requestHints = new PMap(request.getHints());
             requestHints.putObject(CustomModel.KEY, request.getCustomModel());
-            Weighting weighting = weightingFactory.createWeighting(profile, requestHints, false);
-            if (requestHints.has(Parameters.Routing.BLOCK_AREA)) {
-                GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(baseGraph, locationIndex,
-                        request.getPoints(), requestHints, new FiniteWeightFilter(weighting));
-                weighting = new BlockAreaWeighting(weighting, blockArea);
-            }
-            return weighting;
+            return weightingFactory.createWeighting(profile, requestHints, false);
         }
 
         @Override
