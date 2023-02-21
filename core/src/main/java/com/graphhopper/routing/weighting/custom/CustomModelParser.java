@@ -277,13 +277,16 @@ public class CustomModelParser {
 
         final StringBuilder initSourceCode = new StringBuilder("this.avg_speed_enc = avgSpeedEnc;\n");
         initSourceCode.append("this.priority_enc = priorityEnc;\n");
-        Set<String> set = new HashSet<>(priorityVariables);
-        set.addAll(speedVariables);
+        Set<String> set = new HashSet<>();
+        for (String prioVar : priorityVariables)
+            set.add(prioVar.startsWith(BACKWARD_PREFIX) ? prioVar.substring(BACKWARD_PREFIX.length()) : prioVar);
+        for (String speedVar : speedVariables)
+            set.add(speedVar.startsWith(BACKWARD_PREFIX) ? speedVar.substring(BACKWARD_PREFIX.length()) : speedVar);
+
         for (String arg : set) {
             if (lookup.hasEncodedValue(arg)) {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
                 classSourceCode.append("protected " + getInterface(enc) + " " + arg + "_enc;\n");
-                initSourceCode.append("if (lookup.hasEncodedValue(\"" + arg + "\")) ");
                 initSourceCode.append("this." + arg + "_enc = (" + getInterface(enc)
                         + ") lookup.getEncodedValue(\"" + arg + "\", EncodedValue.class);\n");
             } else if (arg.startsWith(IN_AREA_PREFIX)) {
