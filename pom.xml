@@ -183,6 +183,7 @@
                         <compilerArgument>-Xlint:deprecation</compilerArgument>
                         -->
                         <fork>true</fork>
+                        <release>19</release>
                         <compilerArgs>
                             <arg>--enable-preview</arg>
                         </compilerArgs>
