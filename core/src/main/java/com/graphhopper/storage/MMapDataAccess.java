@@ -152,7 +152,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void setHeader(int bytePos, int value) {
-        header.set(HEADER_INT, bytePos, value);
+        if (header != null) // some old test calls this without initializing
+            header.set(HEADER_INT, bytePos, value);
     }
 
     @Override
