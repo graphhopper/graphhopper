@@ -26,17 +26,21 @@ import java.lang.foreign.MemorySession;
 import java.lang.foreign.ValueLayout;
 import java.nio.ByteOrder;
 import java.nio.channels.FileChannel;
-import java.nio.file.Files;
 
 import static java.lang.foreign.ValueLayout.JAVA_INT;
 
 public final class MMapDataAccess extends AbstractDataAccess {
 
     public static final ValueLayout.OfShort UNALIGNED_SHORT = (ValueLayout.OfShort) MemoryLayout.valueLayout(short.class, ByteOrder.nativeOrder()).withBitAlignment(8);
+    public static final ValueLayout.OfLong HEADER_LONG = (ValueLayout.OfLong) MemoryLayout.valueLayout(long.class, ByteOrder.BIG_ENDIAN).withBitAlignment(8);
     public static final ValueLayout.OfInt HEADER_INT = (ValueLayout.OfInt) MemoryLayout.valueLayout(int.class, ByteOrder.BIG_ENDIAN);
 
     private MemorySegment memorySegment;
+    private MemorySegment headerHeader;
     private MemorySegment header;
+    private RandomAccessFile file;
+
+    long currentSize;
 
     MMapDataAccess(String name, String location, int segmentSize) {
         super(name, location, segmentSize);
@@ -45,24 +49,39 @@ public final class MMapDataAccess extends AbstractDataAccess {
     @Override
     public MMapDataAccess create(long bytes) {
         try {
-            File wurst = new File(getFullName());
-            RandomAccessFile file = new RandomAccessFile(wurst, "rw");
-            file.writeUTF("GH");
-            file.writeLong(bytes + (segmentSizeInBytes - (bytes % segmentSizeInBytes)));
-            file.writeInt(segmentSizeInBytes);
-            FileChannel path = file.getChannel();
-            MemorySegment wholeFile = path.map(FileChannel.MapMode.READ_WRITE, 0, HEADER_OFFSET + bytes, MemorySession.global());
-            header = wholeFile.asSlice(16, HEADER_OFFSET - 16);
-            memorySegment = wholeFile.asSlice(HEADER_OFFSET);
+            file = getRandomAccessFile(bytes);
+            headerHeader = file.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, 16, MemorySession.global());
+            header = file.getChannel().map(FileChannel.MapMode.READ_WRITE, 16, HEADER_OFFSET - 16, MemorySession.global());
+            currentSize = 0;
+            ensureCapacity(bytes);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
         return this;
     }
 
+    private RandomAccessFile getRandomAccessFile(long bytes) throws IOException {
+        File wurst = new File(getFullName());
+        RandomAccessFile file = new RandomAccessFile(wurst, "rw");
+        file.writeUTF("GH");
+        file.writeLong(bytes + (segmentSizeInBytes - (bytes % segmentSizeInBytes)));
+        file.writeInt(segmentSizeInBytes);
+        return file;
+    }
+
     @Override
     public boolean ensureCapacity(long bytes) {
-        create(bytes);
+        if (bytes > currentSize) {
+            long l = bytes / getSegmentSize();
+            try {
+                long newSize = (l + 1) * getSegmentSize();
+                memorySegment = file.getChannel().map(FileChannel.MapMode.READ_WRITE, HEADER_OFFSET, HEADER_OFFSET + newSize, MemorySession.global());
+                currentSize = newSize;
+                headerHeader.set(HEADER_LONG, 4, currentSize);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
         return true;
     }
 
@@ -72,14 +91,13 @@ public final class MMapDataAccess extends AbstractDataAccess {
             File wurst = new File(getFullName());
             if (!wurst.exists())
                 return false;
-            RandomAccessFile file = new RandomAccessFile(wurst, "rw");
+            file = new RandomAccessFile(wurst, "rw");
             file.readUTF();
-            file.readLong();
+            currentSize = file.readLong();
             setSegmentSize(file.readInt());
-            FileChannel path = file.getChannel();
-            MemorySegment wholeFile = path.map(FileChannel.MapMode.READ_WRITE, 0, Files.size(wurst.toPath()), MemorySession.global());
-            header = wholeFile.asSlice(16, HEADER_OFFSET - 16);
-            memorySegment = wholeFile.asSlice(HEADER_OFFSET);
+            headerHeader = file.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, 16, MemorySession.global());
+            header = file.getChannel().map(FileChannel.MapMode.READ_WRITE, 16, HEADER_OFFSET - 16, MemorySession.global());
+            memorySegment = file.getChannel().map(FileChannel.MapMode.READ_WRITE, HEADER_OFFSET,  wurst.length() - HEADER_OFFSET, MemorySession.global());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -152,8 +170,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
 
     @Override
     public void setHeader(int bytePos, int value) {
-        if (header != null) // some old test calls this without initializing
-            header.set(HEADER_INT, bytePos, value);
+        header.set(HEADER_INT, bytePos, value);
     }
 
     @Override

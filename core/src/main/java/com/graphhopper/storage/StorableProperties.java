@@ -64,8 +64,8 @@ public class StorableProperties {
         try {
             StringWriter sw = new StringWriter();
             saveProperties(map, sw);
-            // TODO at the moment the size is limited to da.segmentSize() !
             byte[] bytes = sw.toString().getBytes(UTF_CS);
+            da.ensureCapacity(bytes.length);
             da.setBytes(0, bytes, bytes.length);
             da.flush();
         } catch (IOException ex) {
