@@ -327,8 +327,8 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(49.974972, 11.515657, 49.991022, 11.512299, 2365, 67));
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
         queries.add(new Query(49.990967, 11.545258, 50.023182, 11.555386, 5636, 97));
-        GraphHopper hopper = createHopper(BAYREUTH, new CustomProfile("hike").setCustomModel(getCustomModel("hike.json")).setVehicle("roads"),
-                new Profile("foot").setVehicle("foot") /* make foot vehicle available */);
+        GraphHopper hopper = createHopper(BAYREUTH, new CustomProfile("hike").setCustomModel(getCustomModel("hike.json")).setVehicle("roads"));
+        hopper.setVehiclesString("roads,foot");
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -336,8 +336,8 @@ public class RoutingAlgorithmWithOSMTest {
 
     @Test
     public void testHikeCanUseExtremeSacScales() {
-        GraphHopper hopper = createHopper(HOHEWARTE, new CustomProfile("hike").setCustomModel(getCustomModel("hike.json")).setVehicle("roads"),
-                new Profile("foot").setVehicle("foot") /* make foot vehicle available */);
+        GraphHopper hopper = createHopper(HOHEWARTE, new CustomProfile("hike").setCustomModel(getCustomModel("hike.json")).setVehicle("roads"));
+        hopper.setVehiclesString("foot,roads");
         // do not pull elevation data: hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         GHResponse res = hopper.route(new GHRequest(47.290322, 11.333889, 47.301593, 11.333489).setProfile("hike"));
@@ -364,7 +364,12 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2870, 154));
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1795, 96));
-        GraphHopper hopper = createHopper(MONACO, new CustomProfile("bike2").setCustomModel(getCustomModel("bike.json")).setVehicle("bike"));
+        // atm custom model is intended to be used with 'roads' vehicle when allowing reverse direction for oneways
+        // but tests here still assert that reverse oneways are excluded
+        GraphHopper hopper = createHopper(MONACO,
+                new CustomProfile("bike").setCustomModel(getCustomModel("bike.json").
+                        addToPriority(If("!bike_access", MULTIPLY, "0"))).setVehicle("roads"));
+        hopper.setVehiclesString("roads,bike");
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
