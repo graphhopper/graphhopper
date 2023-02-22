@@ -3,8 +3,8 @@
 // graph.encoded_values: hike_rating,average_slope,max_slope",
 {
   "priority": [
+    { "if": "true", "multiply_by": "foot_priority"},
     { "if": "!foot_access && hike_rating < 4", "multiply_by": "0"},
-    { "else": "", "multiply_by": "foot_priority"},
     { "if": "foot_network == INTERNATIONAL || foot_network == NATIONAL", "multiply_by": "1.7"},
     { "else_if": "foot_network == REGIONAL || foot_network == LOCAL", "multiply_by": "1.5"}
   ],
