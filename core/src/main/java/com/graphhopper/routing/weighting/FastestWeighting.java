@@ -88,7 +88,9 @@ public class FastestWeighting extends AbstractWeighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse, long edgeEnterTime) {
-        double speed = reverse ? edgeState.getReverse(avSpeedEnc) : edgeState.get(avSpeedEnc);
+        // ORS-GH MOD START: use speed calculator rather than average speed encoder to obtain edge speed
+        double speed = speedCalculator.getSpeed(edgeState, reverse, edgeEnterTime);
+        // ORS-GH MOD END
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
 
