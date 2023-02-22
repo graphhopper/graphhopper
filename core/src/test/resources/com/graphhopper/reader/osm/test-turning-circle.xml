@@ -1,0 +1,52 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6">
+    <node id="10" lat="51.01" lon="9.4" version="1">
+        <tag k="highway" v="turning_circle"/>
+    </node>
+    <node id="20" lat="51.02" lon="9.4" version="1">
+    </node>
+    <node id="30" lat="51.03" lon="9.4" version="1">
+    </node>
+    <node id="40" lat="51.04" lon="9.4" version="1">
+        <tag k="highway" v="turning_loop"/>
+    </node>
+    <node id="50" lat="51.05" lon="9.4" version="1">
+        <tag k="highway" v="turning_loop"/>
+    </node>
+    <node id="60" lat="51.06" lon="9.4" version="1">
+        <tag k="highway" v="turning_circle"/>
+    </node>
+    <node id="70" lat="51.07" lon="9.4" version="1">
+    </node>
+    <node id="80" lat="51.08" lon="9.4" version="1">
+    </node>
+    <node id="90" lat="51.09" lon="9.39" version="1">
+    </node>
+    <!--  o        o  o  o       -->
+    <!-- 10-20-30-40-50-60-70-80
+             |
+            90
+    -->
+    <way id="10" version="1">
+        <nd ref="10"/>
+        <nd ref="20"/>
+        <nd ref="30"/>
+        <nd ref="40"/>
+        <nd ref="50"/>
+        <nd ref="60"/>
+        <tag k="highway" v="tertiary"/>
+    </way>
+
+    <way id="20" version="1">
+        <nd ref="60"/>
+        <nd ref="70"/>
+        <nd ref="80"/>
+        <tag k="highway" v="footway"/>
+    </way>
+
+    <way id="30" version="1">
+        <nd ref="20"/>
+        <nd ref="90"/>
+        <tag k="highway" v="tertiary"/>
+    </way>
+</osm>

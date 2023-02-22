@@ -44,10 +44,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
@@ -382,6 +379,28 @@ public class OSMReaderTest {
                 loops++;
         }
         assertEquals(5, loops);
+    }
+
+    @Test
+    public void testTurningCircle() {
+        GraphHopper hopper = new GraphHopperFacade("test-turning-circle.xml").
+                setMinNetworkSize(0).
+                importOrLoad();
+
+        // it should look somewhat like this: there are artificial 'loops' at nodes 1, 2, 4 and 6, each of which are
+        // realized by inserting an extra node (3, 5, 7, 8, 9). at node 1 there are two loops because it connects two ways.
+        // 3   5 7 8
+        // o   o o o
+        // 2-0-4-6-1-10
+        //   |     o
+        //  11     9
+        Graph graph = hopper.getBaseGraph();
+        assertEquals(12, graph.getNodes());
+        assertEquals(16, graph.getEdges());
+        EnumEncodedValue<RoadClass> roadClassEnc = hopper.getEncodingManager().getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        assertEquals(RoadClass.TERTIARY, graph.getEdgeIteratorState(0, 3).get(roadClassEnc));
+        assertEquals(RoadClass.TERTIARY, graph.getEdgeIteratorState(9, 8).get(roadClassEnc));
+        assertEquals(RoadClass.FOOTWAY, graph.getEdgeIteratorState(12, 9).get(roadClassEnc));
     }
 
     @Test

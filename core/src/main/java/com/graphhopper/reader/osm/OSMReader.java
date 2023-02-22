@@ -165,6 +165,7 @@ public class OSMReader {
                 .setElevationProvider(eleProvider)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
+                .setAddLoopNodeFilter(this::isTurningCircleNode)
                 .setWayPreprocessor(this::preprocessWay)
                 .setRelationPreprocessor(this::preprocessRelations)
                 .setRelationProcessor(this::processRelation)
@@ -211,6 +212,13 @@ public class OSMReader {
      */
     protected boolean isBarrierNode(ReaderNode node) {
         return node.hasTag("barrier") || node.hasTag("ford");
+    }
+
+    /**
+     * @return true if a loop edge should be created at the given node.
+     */
+    protected boolean isTurningCircleNode(ReaderNode node) {
+        return node.hasTag("highway", "turning_circle", "turning_loop");
     }
 
     /**
