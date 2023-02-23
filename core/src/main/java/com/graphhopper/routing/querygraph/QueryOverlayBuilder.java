@@ -28,7 +28,10 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 class QueryOverlayBuilder {
     private final int firstVirtualNodeId;
@@ -160,8 +163,8 @@ class QueryOverlayBuilder {
 
                     GHPoint3D currSnapped = res.getSnappedPoint();
 
-                    // no new virtual nodes if exactly the same snapped point
-                    if (prevPoint.equals(currSnapped)) {
+                    // no new virtual nodes if very close ("snap" together)
+                    if (Snap.considerEqual(prevPoint.lat, prevPoint.lon, currSnapped.lat, currSnapped.lon)) {
                         res.setClosestNode(prevNodeId);
                         continue;
                     }

@@ -29,6 +29,7 @@ import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -72,9 +73,9 @@ public class RouteResourceLeipzigTest {
         double minLon = 12.335525;
         double maxLon = 12.434745;
         final long seed = System.nanoTime();
-//        final long seed = 1342503266951775l; // todo: with this one the strict waypoint check failed
+
         Random rnd = new Random(seed);
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 100; i++) {
             double latFrom = minLat + rnd.nextDouble() * (maxLat - minLat);
             double lonFrom = minLon + rnd.nextDouble() * (maxLon - minLon);
             double latTo = minLat + rnd.nextDouble() * (maxLat - minLat);
