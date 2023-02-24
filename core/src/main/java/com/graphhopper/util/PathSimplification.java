@@ -69,8 +69,8 @@ public class PathSimplification {
         List<Partition> partitions = new ArrayList<>();
 
         // make sure all waypoints are retained in the simplified point list
-        // we copy the waypoint indices into temporary intervals where they will be mutated by the simplification, afterwards
-        // we need to update the way point indices accordingly.
+        // we copy the waypoint indices into temporary intervals where they will be mutated by the simplification,
+        // afterwards we need to update the way point indices accordingly.
         List<Interval> intervals = new ArrayList<>();
         for (int i = 0; i < responsePath.getWaypointIndices().size() - 1; i++)
             intervals.add(new Interval(responsePath.getWaypointIndices().get(i), responsePath.getWaypointIndices().get(i + 1)));

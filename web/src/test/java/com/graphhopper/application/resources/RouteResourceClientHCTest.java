@@ -384,7 +384,7 @@ public class RouteResourceClientHCTest {
 
     @ParameterizedTest
     @EnumSource(value = TestParam.class)
-    public void testWaypointIntervals(TestParam p) {
+    public void testWaypointIndices(TestParam p) {
         GraphHopperWeb gh = createGH(p);
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.509141, 1.546063)).
