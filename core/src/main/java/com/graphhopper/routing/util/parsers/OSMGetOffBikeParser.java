@@ -14,33 +14,34 @@ import java.util.List;
  */
 public class OSMGetOffBikeParser implements TagParser {
 
-    private final List<String> accepted = Arrays.asList("designated", "yes", "official", "permissive");
-    private final HashSet<String> pushBikeHighwayTags;
+    private final List<String> INTENDED = Arrays.asList("designated", "yes", "official", "permissive");
+    // steps -> special handling
+    private final HashSet<String> GET_OFF_BIKE = new HashSet<>(Arrays.asList("path", "footway", "pedestrian", "platform"));
     private final BooleanEncodedValue getOffBikeEnc;
     private final BooleanEncodedValue bikeAccessEnc;
 
+    /**
+     * @param bikeAccessEnc used to find out if way is oneway and so it does not matter which bike type is used.
+     */
     public OSMGetOffBikeParser(BooleanEncodedValue getOffBikeEnc, BooleanEncodedValue bikeAccessEnc) {
-        // steps -> special handling
-        this(getOffBikeEnc, bikeAccessEnc, Arrays.asList("path", "footway", "pedestrian", "platform"));
-    }
-
-    public OSMGetOffBikeParser(BooleanEncodedValue getOffBikeEnc, BooleanEncodedValue bikeAccessEnc, List<String> pushBikeTags) {
         this.getOffBikeEnc = getOffBikeEnc;
         this.bikeAccessEnc = bikeAccessEnc;
-        this.pushBikeHighwayTags = new HashSet<>(pushBikeTags);
     }
 
     @Override
     public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         String highway = way.getTag("highway");
-        if (!way.hasTag("bicycle", accepted) && (pushBikeHighwayTags.contains(highway) || way.hasTag("railway", "platform"))
+        if (!way.hasTag("bicycle", INTENDED) && (GET_OFF_BIKE.contains(highway) || way.hasTag("railway", "platform"))
                 || "steps".equals(highway) || way.hasTag("bicycle", "dismount")) {
             getOffBikeEnc.setBool(false, edgeFlags, true);
             getOffBikeEnc.setBool(true, edgeFlags, true);
         }
-        if (bikeAccessEnc.getBool(false, edgeFlags) != bikeAccessEnc.getBool(true, edgeFlags)) {
-            if (!bikeAccessEnc.getBool(false, edgeFlags)) getOffBikeEnc.setBool(false, edgeFlags, true);
-            if (!bikeAccessEnc.getBool(true, edgeFlags)) getOffBikeEnc.setBool(true, edgeFlags, true);
+        boolean fwd = bikeAccessEnc.getBool(false, edgeFlags);
+        boolean bwd = bikeAccessEnc.getBool(true, edgeFlags);
+        // get off bike for reverse oneways
+        if (fwd != bwd) {
+            if (!fwd) getOffBikeEnc.setBool(false, edgeFlags, true);
+            if (!bwd) getOffBikeEnc.setBool(true, edgeFlags, true);
         }
     }
 }
