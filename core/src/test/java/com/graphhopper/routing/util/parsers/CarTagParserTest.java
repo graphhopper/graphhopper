@@ -245,18 +245,21 @@ public class CarTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("access", "private");
-        IntsRef flags = em.createEdgeFlags();
-        parser.handleWayTags(flags, way);
-        assertFalse(accessEnc.getBool(false, flags));
+        IntAccess intAccess = new ArrayIntAccess(em.getIntsForFlags());
+        int edgeId = 0;
+        parser.handleWayTags(edgeId, intAccess, way);
+        assertFalse(accessEnc.getBool(false, edgeId, intAccess));
 
         final CarAccessParser parser = createParser(em, new PMap("block_private=false"));
-        parser.handleWayTags(flags = em.createEdgeFlags(), way);
-        assertTrue(parser.getAccessEnc().getBool(false, flags));
+        intAccess = new ArrayIntAccess(em.getIntsForFlags());
+        parser.handleWayTags(edgeId, intAccess, way);
+        assertTrue(parser.getAccessEnc().getBool(false, edgeId, intAccess));
 
         way.setTag("highway", "primary");
         way.setTag("motor_vehicle", "permit"); // currently handled like "private", see #2712
-        parser.handleWayTags(flags = em.createEdgeFlags(), way);
-        assertTrue(parser.getAccessEnc().getBool(false, flags));
+        intAccess = new ArrayIntAccess(em.getIntsForFlags());
+        parser.handleWayTags(edgeId, intAccess, way);
+        assertTrue(parser.getAccessEnc().getBool(false, edgeId, intAccess));
     }
 
     @Test
