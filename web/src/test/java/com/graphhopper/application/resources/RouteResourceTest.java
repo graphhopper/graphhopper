@@ -643,7 +643,7 @@ public class RouteResourceTest {
             final Response response = clientTarget(app, url).request().buildGet().invoke();
             JsonNode json = response.readEntity(JsonNode.class);
             if (response.getStatus() != 200) {
-                // sometimes there can be connection-not-found for example, also becaus we set min_network_size to 0 in this test
+                // sometimes there can be connection-not-found for example, also because we set min_network_size to 0 in this test
                 errors++;
                 continue;
             }
