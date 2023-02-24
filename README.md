@@ -23,7 +23,7 @@ We even have [good first issues](https://github.com/graphhopper/graphhopper/issu
 To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through our documentation and install the GraphHopper Web Service locally.
 
 * 6.x: [documentation](https://github.com/graphhopper/graphhopper/blob/6.x/docs/index.md)
-  , [web service jar](https://github.com/graphhopper/graphhopper/releases/download/6.0/graphhopper-web-6.0.jar)
+  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/6.2/graphhopper-web-6.2.jar)
   , [announcement](https://www.graphhopper.com/blog/2022/09/19/graphhopper-routing-engine-6-0-released/)
 * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 
@@ -81,7 +81,7 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
 To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptium.net) (>= Java 8) and do:
 
 ```bash
-wget https://github.com/graphhopper/graphhopper/releases/download/6.0/graphhopper-web-6.0.jar https://raw.githubusercontent.com/graphhopper/graphhopper/6.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
+wget https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/6.2/graphhopper-web-6.2.jar https://raw.githubusercontent.com/graphhopper/graphhopper/6.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -Ddw.graphhopper.datareader.file=berlin-latest.osm.pbf -jar *.jar server config-example.yml
 ```
 

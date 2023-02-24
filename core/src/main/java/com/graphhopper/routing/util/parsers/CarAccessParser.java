@@ -52,12 +52,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         this.roundaboutEnc = roundaboutEnc;
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
-        restrictedValues.add("no");
-        restrictedValues.add("restricted");
         restrictedValues.add("delivery");
-        restrictedValues.add("military");
-        restrictedValues.add("emergency");
-        restrictedValues.add("private");
 
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));

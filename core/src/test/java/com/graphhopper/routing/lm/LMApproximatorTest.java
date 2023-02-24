@@ -63,13 +63,13 @@ public class LMApproximatorTest {
         LandmarkStorage landmarkStorage = lm.getLandmarkStorage();
 
         for (int t = 0; t < graph.getNodes(); t++) {
-            LMApproximator lmApproximator = new LMApproximator(graph, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false);
+            LMApproximator lmApproximator = new LMApproximator(graph, weighting, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false);
             WeightApproximator reverseLmApproximator = lmApproximator.reverse();
             BeelineWeightApproximator beelineApproximator = new BeelineWeightApproximator(graph.getNodeAccess(), weighting);
             WeightApproximator reverseBeelineApproximator = beelineApproximator.reverse();
             PerfectApproximator perfectApproximator = new PerfectApproximator(graph, weighting, TraversalMode.NODE_BASED, false);
             PerfectApproximator reversePerfectApproximator = new PerfectApproximator(graph, weighting, TraversalMode.NODE_BASED, true);
-            BalancedWeightApproximator balancedWeightApproximator = new BalancedWeightApproximator(new LMApproximator(graph, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false));
+            BalancedWeightApproximator balancedWeightApproximator = new BalancedWeightApproximator(new LMApproximator(graph, weighting, weighting, graph.getNodes(), landmarkStorage, 8, landmarkStorage.getFactor(), false));
 
             lmApproximator.setTo(t);
             beelineApproximator.setTo(t);

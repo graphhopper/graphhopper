@@ -658,6 +658,7 @@ public class GraphHopper {
             osmParsers.addWayTagParser(new CurvatureCalculator(encodingManager.getDecimalEncodedValue(Curvature.KEY)));
 
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
+        Set<String> added = new HashSet<>();
         vehiclesByName.forEach((name, vehicleStr) -> {
             VehicleTagParsers vehicleTagParsers = vehicleTagParserFactory.createParsers(encodingManager, name,
                     new PMap(vehicleStr).putObject("date_range_parser", dateRangeParser));
@@ -666,14 +667,14 @@ public class GraphHopper {
             vehicleTagParsers.getTagParsers().forEach(tagParser -> {
                 if (tagParser == null) return;
                 if (tagParser instanceof BikeCommonAccessParser) {
-                    if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
+                    if (encodingManager.hasEncodedValue(BikeNetwork.KEY) && added.add(BikeNetwork.KEY))
                         osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
-                    if (encodingManager.hasEncodedValue(GetOffBike.KEY))
+                    if (encodingManager.hasEncodedValue(GetOffBike.KEY) && added.add(GetOffBike.KEY))
                         osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY)));
-                    if (encodingManager.hasEncodedValue(Smoothness.KEY))
+                    if (encodingManager.hasEncodedValue(Smoothness.KEY) && added.add(Smoothness.KEY))
                         osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
                 } else if (tagParser instanceof FootAccessParser) {
-                    if (encodingManager.hasEncodedValue(FootNetwork.KEY))
+                    if (encodingManager.hasEncodedValue(FootNetwork.KEY) && added.add(FootNetwork.KEY))
                         osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
                 }
                 String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
@@ -1035,7 +1036,6 @@ public class GraphHopper {
                     .setSegmentSize(defaultSegmentSize)
                     .build();
             baseGraph.loadExisting();
-            checkProfilesConsistency();
             String storedProfiles = properties.get("profiles");
             String configuredProfiles = getProfilesString();
             if (!storedProfiles.equals(configuredProfiles))
@@ -1043,6 +1043,7 @@ public class GraphHopper {
                         + "\nGraphhopper config: " + configuredProfiles
                         + "\nGraph: " + storedProfiles
                         + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
+            checkProfilesConsistency();
 
             postProcessing(false);
             directory.loadMMap();

@@ -170,7 +170,7 @@ public class EncodingManager implements EncodedValueLookup {
                     MaxSpeed.KEY,
                     RoadAccess.KEY
             ));
-            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("bike") || vehicle.contains("mtb"))) {
+            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("bike") || vehicle.contains("mtb") || vehicle.contains("racingbike"))) {
                 keys.add(BikeNetwork.KEY);
                 keys.add(GetOffBike.KEY);
                 keys.add(Smoothness.KEY);

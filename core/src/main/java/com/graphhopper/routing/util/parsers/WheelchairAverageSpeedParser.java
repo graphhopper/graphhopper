@@ -34,8 +34,6 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
         allowedHighwayTags.add("cycleway");
         allowedHighwayTags.add("unclassified");
         allowedHighwayTags.add("road");
-
-        allowedSacScale.clear();
     }
 
     @Override

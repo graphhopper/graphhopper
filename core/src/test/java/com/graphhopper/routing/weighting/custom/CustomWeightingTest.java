@@ -237,7 +237,8 @@ class CustomWeightingTest {
         ObjectMapper om = new ObjectMapper().registerModule(new JtsModule());
         JsonFeature json = om.readValue("{ \"geometry\":{ \"type\": \"Polygon\", \"coordinates\": " +
                 "[[[11.5818,50.0126], [11.5818,50.0119], [11.5861,50.0119], [11.5861,50.0126], [11.5818,50.0126]]] }}", JsonFeature.class);
-        vehicleModel.getAreas().put("custom1", json);
+        json.setId("custom1");
+        vehicleModel.getAreas().getFeatures().add(json);
 
         // edge1 is located within the area custom1, edge2 is not
         assertEquals(1.6, createWeighting(vehicleModel).calcEdgeWeight(edge1, false), 0.01);
