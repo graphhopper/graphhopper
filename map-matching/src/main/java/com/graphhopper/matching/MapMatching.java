@@ -140,20 +140,21 @@ public class MapMatching {
             }
 
             private Path calcOnePath(QueryGraph queryGraph, int fromNode, int toNode, int fromOutEdge, int toInEdge) {
+                Weighting queryGraphWeighting = queryGraph.wrapWeighting(weighting);
                 if (landmarks != null) {
-                    AStarBidirection aStarBidirection = new AStarBidirection(queryGraph, queryGraph.wrapWeighting(weighting), TraversalMode.EDGE_BASED) {
+                    AStarBidirection aStarBidirection = new AStarBidirection(queryGraph, queryGraphWeighting, TraversalMode.EDGE_BASED) {
                         @Override
                         protected void initCollections(int size) {
                             super.initCollections(50);
                         }
                     };
                     int activeLM = Math.min(8, landmarks.getLandmarkCount());
-                    LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, landmarks, activeLM);
+                    LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, queryGraphWeighting, landmarks, activeLM);
                     aStarBidirection.setApproximation(lmApproximator);
                     aStarBidirection.setMaxVisitedNodes(maxVisitedNodes);
                     return aStarBidirection.calcPath(fromNode, toNode, fromOutEdge, toInEdge);
                 } else {
-                    DijkstraBidirectionRef dijkstraBidirectionRef = new DijkstraBidirectionRef(queryGraph, queryGraph.wrapWeighting(weighting), TraversalMode.EDGE_BASED) {
+                    DijkstraBidirectionRef dijkstraBidirectionRef = new DijkstraBidirectionRef(queryGraph, queryGraphWeighting, TraversalMode.EDGE_BASED) {
                         @Override
                         protected void initCollections(int size) {
                             super.initCollections(50);
@@ -217,6 +218,8 @@ public class MapMatching {
         statistics.put("transitionDistances", seq.stream().filter(s -> s.transitionDescriptor != null).mapToLong(s -> Math.round(s.transitionDescriptor.getDistance())).toArray());
         statistics.put("visitedNodes", router.getVisitedNodes());
         statistics.put("snapDistanceRanks", IntStream.range(0, seq.size()).map(i -> snapsPerObservation.get(i).indexOf(seq.get(i).state.getSnap())).toArray());
+        statistics.put("snapDistances", seq.stream().mapToDouble(s -> s.state.getSnap().getQueryDistance()).toArray());
+        statistics.put("maxSnapDistances", IntStream.range(0, seq.size()).mapToDouble(i -> snapsPerObservation.get(i).stream().mapToDouble(Snap::getQueryDistance).max().orElse(-1.0)).toArray());
 
         List<EdgeIteratorState> path = seq.stream().filter(s1 -> s1.transitionDescriptor != null).flatMap(s1 -> s1.transitionDescriptor.calcEdges().stream()).collect(Collectors.toList());
 

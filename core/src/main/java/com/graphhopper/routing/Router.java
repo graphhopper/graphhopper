@@ -184,12 +184,29 @@ public class Router {
         final boolean disableCH = getDisableCH(request.getHints());
         final boolean disableLM = getDisableLM(request.getHints());
         if (chEnabled && !disableCH) {
-            return new CHSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
+            return createCHSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
         } else if (lmEnabled && !disableLM) {
-            return new LMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex, landmarks);
+            return createLMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex, landmarks);
         } else {
-            return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex);
+            return createFlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex);
         }
+    }
+
+    protected Solver createCHSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig,
+                                    EncodingManager encodingManager, Map<String, RoutingCHGraph> chGraphs) {
+        return new CHSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
+    }
+
+    protected Solver createLMSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig,
+                                    EncodingManager encodingManager, WeightingFactory weightingFactory, BaseGraph baseGraph,
+                                    LocationIndex locationIndex, Map<String, LandmarkStorage> landmarks) {
+        return new LMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, baseGraph, locationIndex, landmarks);
+    }
+
+    protected Solver createFlexSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig,
+                                      EncodingManager encodingManager, WeightingFactory weightingFactory, BaseGraph baseGraph,
+                                      LocationIndex locationIndex) {
+        return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, baseGraph, locationIndex);
     }
 
     protected GHResponse routeRoundTrip(GHRequest request, FlexSolver solver) {

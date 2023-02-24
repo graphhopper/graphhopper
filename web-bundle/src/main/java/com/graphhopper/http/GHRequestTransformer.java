@@ -15,28 +15,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
 
-import java.util.ArrayList;
-import java.util.List;
+package com.graphhopper.http;
 
-/**
- * @author Peter Karich
- */
-public class JsonFeatureCollection {
-    String type = "FeatureCollection";
-    List<JsonFeature> features = new ArrayList<>();
+import com.graphhopper.GHRequest;
 
-    public String getType() {
-        return type;
-    }
-
-    public List<JsonFeature> getFeatures() {
-        return features;
-    }
-
-    @Override
-    public String toString() {
-        return features.toString();
-    }
+public interface GHRequestTransformer {
+    GHRequest transformRequest(GHRequest request);
 }

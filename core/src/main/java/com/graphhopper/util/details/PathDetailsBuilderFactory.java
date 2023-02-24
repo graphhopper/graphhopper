@@ -82,8 +82,9 @@ public class PathDetailsBuilderFactory {
         }
 
         if (requestedPathDetails.size() > builders.size()) {
-            for (PathDetailsBuilder pdb : builders) requestedPathDetails.remove(pdb.getName());
-            throw new IllegalArgumentException("Cannot find the path details: " + requestedPathDetails);
+            ArrayList<String> clonedArr = new ArrayList<>(requestedPathDetails); // avoid changing request parameter
+            for (PathDetailsBuilder pdb : builders) clonedArr.remove(pdb.getName());
+            throw new IllegalArgumentException("Cannot find the path details: " + clonedArr);
         } else if (requestedPathDetails.size() < builders.size())
             throw new IllegalStateException("It should not happen that there are more path details added " + builders + " than requested " + requestedPathDetails);
 

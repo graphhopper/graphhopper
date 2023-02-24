@@ -393,12 +393,11 @@ only the first factor (`0.5`) will be applied even for road segments that fulfil
 #### `areas`
 
 You can not only modify the speed of road segments based on properties, like we saw in the previous examples, but you
-can also modify the speed of road segments based on their location. To do this you need to first create and add some
-areas to the `areas` section of the custom model. You can then use the name of these areas in the conditions of your
-`if/else/else_if` statements.
+can also modify the speed of road segments based on their location. To do this you need to first add an area to the
+`areas` section of the custom model. You can then use the "id" in the conditions of your `if/else/else_if` statements.
 
 In the following example we multiply the speed of all edges in an area called `custom1` with `0.7` and also limit it
-to `50km/h`. Note that each area's name needs to be prefixed with `in_`:
+to `50km/h`. Note that each area's id needs to be prefixed with `in_`:
 
 ```json
 {
@@ -413,9 +412,10 @@ to `50km/h`. Note that each area's name needs to be prefixed with `in_`:
     }
   ],
   "areas": {
-    "custom1": {
+    "type": "FeatureCollection",
+    "features": [{
       "type": "Feature",
-      "id": "something",
+      "id": "custom1",
       "properties": {},
       "geometry": {
         "type": "Polygon",
@@ -429,16 +429,15 @@ to `50km/h`. Note that each area's name needs to be prefixed with `in_`:
           ]
         ]
       }
-    }
+    }]
   }
 }
 ```
 
-Areas are given in GeoJson format, but currently only the exact format in the above example is supported, i.e. one
-object with type `Feature`, a geometry with type `Polygon` and optional (but ignored) `id` and `properties` fields. Note
-that the coordinates array of `Polygon` is an array of arrays that each must describe a closed ring, i.e. the first
-point must be equal to the last. Each point is given as an array [longitude, latitude], so the coordinates array has
-three dimensions total.
+Areas are given in GeoJson format (FeatureCollection). Currently a member of this collection must be a `Feature` with a
+geometry type `Polygon`. Note that the coordinates array of `Polygon` is an array of arrays that
+each must describe a closed ring, i.e. the first point must be equal to the last, identical to the GeoJSON specs.
+Each point is given as an array [longitude, latitude], so the coordinates array has three dimensions total.
 
 Using the `areas` feature you can also block entire areas i.e. by multiplying the speed with `0`, but for this you
 should rather use the `priority` section that we will explain next.
@@ -549,31 +548,43 @@ blocked.
 
 ### The value expression
 
-The value of `limit_to` or `multiply_by` is usually only a number and can be a more complex expression like 
-`Math.sqrt(2)`. You can even specify dynamic values like `max_speed`. This can be useful if the base profile does 
-not restrict this like it is the case for the `roads` profile. See this example:
+The value of `limit_to` or `multiply_by` is usually only a number but can be more complex expression like `max_speed`
+or even something like `max_speed + 0.5`. In general one encoded value is accepted in combination with one or more 
+operations with a number and the operator `+`, `*` and `-`.
+
+This can be useful to reduce the speed of the base profile to a dynamic value. See e.g. the following example:
 
 ```json
 {
   "speed": [
-    {
-      "if": "true",
-      "limit_to": "max_speed * 0.9"
-    }
+    { "if": "true", "limit_to": "max_speed * 0.9" }
   ]
 }
 ```
 
-This limits the speed on all roads to 90% of the maximum speed value if it exists. It can be also useful to set a 
-start value of the priority to a value that you pre-populated based on your algorithm:
+This limits the speed on all roads to 90% of the maximum speed value if it exists.
+
+Or you could use the following statements for a truck profile that needs a car-like speed but for faster roads the truck 
+should be 10% slower and the maximum should be 100km/h:
+
+```json
+{
+  "speed": [
+    { "if": "true", "limit_to": "100" },
+    { "if": "car_average_speed > 50", "limit_to": "car_average_speed * 0.9" }
+    { "else": "", "limit_to": "car_average_speed" }
+  ]
+}
+```
+
+Note that the last `else` statement is optional if you use the `car` profile as base.
+
+You can use a value expression also for `priority`, e.g. to pre-populated it based on a custom variable:
 
 ```json
 {
   "priority": [
-    {
-      "if": "true",
-      "limit_to": "my_precalculated_value"
-    }
+    { "if": "true", "limit_to": "my_precalculated_value" }
   ]
 }
 ```

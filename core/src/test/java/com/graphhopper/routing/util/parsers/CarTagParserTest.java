@@ -241,6 +241,25 @@ public class CarTagParserTest {
     }
 
     @Test
+    public void shouldBlockPrivate() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("access", "private");
+        IntsRef flags = em.createEdgeFlags();
+        parser.handleWayTags(flags, way);
+        assertFalse(accessEnc.getBool(false, flags));
+
+        final CarAccessParser parser = createParser(em, new PMap("block_private=false"));
+        parser.handleWayTags(flags = em.createEdgeFlags(), way);
+        assertTrue(parser.getAccessEnc().getBool(false, flags));
+
+        way.setTag("highway", "primary");
+        way.setTag("motor_vehicle", "permit"); // currently handled like "private", see #2712
+        parser.handleWayTags(flags = em.createEdgeFlags(), way);
+        assertTrue(parser.getAccessEnc().getBool(false, flags));
+    }
+
+    @Test
     public void testSetAccess() {
         IntsRef edgeFlags = em.createEdgeFlags();
         accessEnc.setBool(false, edgeFlags, true);

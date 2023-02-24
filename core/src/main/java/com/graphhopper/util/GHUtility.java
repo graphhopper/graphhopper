@@ -679,7 +679,7 @@ public class GHUtility {
                 towerNodes.getLat(secondIndex), towerNodes.getLon(secondIndex));
     }
 
-    public static JsonFeature createCircle(double centerLat, double centerLon, double radius) {
+    public static JsonFeature createCircle(String id, double centerLat, double centerLon, double radius) {
         final int n = 36;
         final double delta = 360.0 / n;
         Coordinate[] coordinates = IntStream.range(0, n + 1)
@@ -687,11 +687,12 @@ public class GHUtility {
                 .map(p -> new Coordinate(p.lon, p.lat)).toArray(Coordinate[]::new);
         Polygon polygon = new GeometryFactory().createPolygon(coordinates);
         JsonFeature result = new JsonFeature();
+        result.setId(id);
         result.setGeometry(polygon);
         return result;
     }
 
-    public static JsonFeature createRectangle(double minLat, double minLon, double maxLat, double maxLon) {
+    public static JsonFeature createRectangle(String id, double minLat, double minLon, double maxLat, double maxLon) {
         Coordinate[] coordinates = new Coordinate[]{
                 new Coordinate(minLon, minLat),
                 new Coordinate(minLon, maxLat),
@@ -701,6 +702,7 @@ public class GHUtility {
         };
         Polygon polygon = new GeometryFactory().createPolygon(coordinates);
         JsonFeature result = new JsonFeature();
+        result.setId(id);
         result.setGeometry(polygon);
         return result;
     }
