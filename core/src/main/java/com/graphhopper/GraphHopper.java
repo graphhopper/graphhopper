@@ -64,6 +64,7 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.graphhopper.util.GHUtility.readCountries;
 import static com.graphhopper.util.Helper.*;
@@ -1136,6 +1137,8 @@ public class GraphHopper {
             Profile profile = profilesByName.get(chProfile.getProfile());
             if (profile.isTurnCosts()) {
                 chConfigs.add(CHConfig.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
+                if (!chProfile.getNodeBasedCH().isEmpty())
+                    chConfigs.add(CHConfig.nodeBased(chProfile.getNodeBasedCH(), createWeighting(profile, new PMap(), true)));
             } else {
                 chConfigs.add(CHConfig.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
             }
@@ -1300,17 +1303,19 @@ public class GraphHopper {
 
         // we map all profile names for which there is CH support to the according CH graphs
         chGraphs = new LinkedHashMap<>();
-        for (CHProfile profile : chPreparationHandler.getCHProfiles()) {
-            if (loaded.containsKey(profile.getProfile()) && prepared.containsKey(profile.getProfile()))
-                throw new IllegalStateException("CH graph should be either loaded or prepared, but not both: " + profile.getProfile());
-            else if (prepared.containsKey(profile.getProfile())) {
-                setCHProfileVersion(profile.getProfile(), profilesByName.get(profile.getProfile()).getVersion());
-                PrepareContractionHierarchies.Result res = prepared.get(profile.getProfile());
-                chGraphs.put(profile.getProfile(), RoutingCHGraphImpl.fromGraph(baseGraph.getBaseGraph(), res.getCHStorage(), res.getCHConfig()));
-            } else if (loaded.containsKey(profile.getProfile())) {
-                chGraphs.put(profile.getProfile(), loaded.get(profile.getProfile()));
-            } else
-                throw new IllegalStateException("CH graph should be either loaded or prepared: " + profile.getProfile());
+        for (CHProfile chProfile : chPreparationHandler.getCHProfiles()) {
+            Stream.of(chProfile.getProfile(), chProfile.getNodeBasedCH()).filter(s -> !s.isEmpty()).forEach(name -> {
+                if (loaded.containsKey(name) && prepared.containsKey(name))
+                    throw new IllegalStateException("CH graph should be either loaded or prepared, but not both: " + name);
+                else if (prepared.containsKey(name)) {
+                    setCHProfileVersion(name, profilesByName.get(chProfile.getProfile()).getVersion());
+                    PrepareContractionHierarchies.Result res = prepared.get(name);
+                    chGraphs.put(name, RoutingCHGraphImpl.fromGraph(baseGraph.getBaseGraph(), res.getCHStorage(), res.getCHConfig()));
+                } else if (loaded.containsKey(name)) {
+                    chGraphs.put(name, loaded.get(name));
+                } else
+                    throw new IllegalStateException("CH graph should be either loaded or prepared: " + name);
+            });
         }
     }
 

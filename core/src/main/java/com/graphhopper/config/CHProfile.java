@@ -18,7 +18,7 @@
 
 package com.graphhopper.config;
 
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import static com.graphhopper.config.Profile.validateProfileName;
 
@@ -30,6 +30,7 @@ import static com.graphhopper.config.Profile.validateProfileName;
  */
 public class CHProfile {
     private String profile = "";
+    private String nodeBasedCH = "";
 
     private CHProfile() {
         // default constructor needed for jackson
@@ -49,21 +50,19 @@ public class CHProfile {
         return this;
     }
 
+    public String getNodeBasedCH() {
+        return nodeBasedCH;
+    }
+
+    @JsonProperty("node_based_ch")
+    public CHProfile setNodeBasedCH(String nodeBasedCH) {
+        this.nodeBasedCH = nodeBasedCH;
+        return this;
+    }
+
     @Override
     public String toString() {
         return profile;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        CHProfile that = (CHProfile) o;
-        return Objects.equals(profile, that.profile);
-    }
-
-    @Override
-    public int hashCode() {
-        return profile.hashCode();
-    }
 }
