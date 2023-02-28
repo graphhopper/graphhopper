@@ -364,7 +364,7 @@ public class FootTagParserTest {
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "road");
