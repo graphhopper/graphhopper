@@ -219,6 +219,13 @@ public class Router {
         // we merge the different legs of the roundtrip into one response path
         ResponsePath responsePath = concatenatePaths(request, solver.weighting, queryGraph, result.paths, getWaypoints(snaps));
         ghRsp.add(responsePath);
+        // ORS-GH MOD START - pass graph date
+        String date = ghStorage.getProperties().get("datareader.import.date");
+        if (Helper.isEmpty(date)) {
+            date = ghStorage.getProperties().get("datareader.data.date");
+        }
+        ghRsp.getHints().putObject("data.date", date);
+        // ORS-GH MOD END
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (snaps.size() - 1));
         return ghRsp;
@@ -278,6 +285,13 @@ public class Router {
             // ORS-GH MOD END
             ghRsp.add(responsePath);
         }
+        // ORS-GH MOD START - pass graph date
+        String date = ghStorage.getProperties().get("datareader.import.date");
+        if (Helper.isEmpty(date)) {
+            date = ghStorage.getProperties().get("datareader.data.date");
+        }
+        ghRsp.getHints().putObject("data.date", date);
+        // ORS-GH MOD END
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (snaps.size() - 1));
         return ghRsp;
@@ -316,6 +330,13 @@ public class Router {
 
         responsePath.addDebugInfo(result.debug);
         ghRsp.add(responsePath);
+        // ORS-GH MOD START - pass graph date
+        String date = ghStorage.getProperties().get("datareader.import.date");
+        if (Helper.isEmpty(date)) {
+            date = ghStorage.getProperties().get("datareader.data.date");
+        }
+        ghRsp.getHints().putObject("data.date", date);
+        // ORS-GH MOD END
         ghRsp.getHints().putObject("visited_nodes.sum", result.visitedNodes);
         ghRsp.getHints().putObject("visited_nodes.average", (float) result.visitedNodes / (snaps.size() - 1));
         return ghRsp;
