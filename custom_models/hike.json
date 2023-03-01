@@ -1,8 +1,17 @@
+// to use this custom model you set the following option in the config.yml:
+// graph.vehicles: roads,foot
+// graph.encoded_values: hike_rating,average_slope,max_slope
+// graph.elevation.provider: srtm   # enables elevation
+// profiles:
+//    - name: hike
+//      vehicle: roads
+//      weighting: custom
+//      custom_model_file: hike.json
+
 {
-  "comment1": "use this custom model with the roads vehicle and add graph.encoded_values: hike_rating,average_slope,max_slope",
   "priority": [
-    { "if": "hike_rating < 4 && foot_access == false", "multiply_by": "0"},
-    { "else": "", "multiply_by": "foot_priority"},
+    { "if": "true", "multiply_by": "foot_priority"},
+    { "if": "!foot_access && hike_rating < 4", "multiply_by": "0"},
     { "if": "foot_network == INTERNATIONAL || foot_network == NATIONAL", "multiply_by": "1.7"},
     { "else_if": "foot_network == REGIONAL || foot_network == LOCAL", "multiply_by": "1.5"}
   ],

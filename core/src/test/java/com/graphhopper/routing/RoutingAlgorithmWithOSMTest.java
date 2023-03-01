@@ -38,6 +38,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -225,9 +226,8 @@ public class RoutingAlgorithmWithOSMTest {
 
     static CustomModel getCustomModel(String file) {
         try {
-            ObjectMapper jsonOM = Jackson.newObjectMapper().
-                    configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false); // ignore "comment" field
-            return jsonOM.readValue(new File("../custom_models/" + file), CustomModel.class);
+            String string = Helper.readJSONFileWithoutComments(new File("../custom_models/" + file).getAbsolutePath());
+            return Jackson.newObjectMapper().readValue(string, CustomModel.class);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
@@ -367,7 +367,8 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2870, 154));
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1795, 96));
-        GraphHopper hopper = createHopper(MONACO, new CustomProfile("bike2").setCustomModel(getCustomModel("bike2.json")).setVehicle("bike"));
+        GraphHopper hopper = createHopper(MONACO, new CustomProfile("bike").
+                setCustomModel(getCustomModel("bike.json")).setVehicle("bike"));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);

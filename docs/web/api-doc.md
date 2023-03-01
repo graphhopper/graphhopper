@@ -59,6 +59,7 @@ empty list for `profiles_ch`.
 Parameter        | Default    | Description
 :----------------|:-----------|:-----------
 ch.disable       | `false`    | Use this parameter in combination with one or more parameters of this table
+custom_model     | -          | Customize the route calculations. See [the documentation](../core/custom-models.md) for more information.
 algorithm        |`astarbi`   | The algorithm to calculate the route. Other options are `dijkstra`, `astar`, `astarbi`, `alternative_route` and `round_trip`
 heading          | NaN        | Favour a heading direction for a certain point. Specify either one heading for the start point or as many as there are points. In this case headings are associated by their order to the specific points. Headings are given as north based clockwise angle between 0 and 360 degree. This parameter also influences the tour generated with `algorithm=round_trip` and forces the initial direction.
 heading_penalty  | 120        | Penalty for omitting a specified heading. The penalty corresponds to the accepted time delay in seconds in comparison to the route without a heading.
