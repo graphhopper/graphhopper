@@ -40,9 +40,9 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
     @Override
     public IntsRef handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
         RouteNetwork oldFootNetwork = transformerRouteRelEnc.getEnum(false, relFlags);
+        RouteNetwork newFootNetwork = RouteNetwork.MISSING;
         if (relation.hasTag("route", "hiking") || relation.hasTag("route", "foot")) {
             String tag = Helper.toLowerCase(relation.getTag("network", ""));
-            RouteNetwork newFootNetwork = RouteNetwork.LOCAL;
             if ("lwn".equals(tag)) {
                 newFootNetwork = RouteNetwork.LOCAL;
             } else if ("rwn".equals(tag)) {
@@ -51,11 +51,18 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
                 newFootNetwork = RouteNetwork.NATIONAL;
             } else if ("iwn".equals(tag)) {
                 newFootNetwork = RouteNetwork.INTERNATIONAL;
+            } else {
+                newFootNetwork = RouteNetwork.LOCAL;
             }
-            if (oldFootNetwork == RouteNetwork.MISSING || oldFootNetwork.ordinal() > newFootNetwork.ordinal())
-                transformerRouteRelEnc.setEnum(false, relFlags, newFootNetwork);
         }
-
+        if (relation.hasTag("route", "ferry")) {
+            newFootNetwork = RouteNetwork.FERRY;
+        }
+        if (relation.hasTag("route", "bicycle") || relation.hasTag("route", "inline_skates")) { // for wheelchair profile
+            newFootNetwork = RouteNetwork.OTHER;
+        }
+        if (oldFootNetwork == RouteNetwork.MISSING || oldFootNetwork.ordinal() > newFootNetwork.ordinal())
+            transformerRouteRelEnc.setEnum(false, relFlags, newFootNetwork);
         return relFlags;
     }
 

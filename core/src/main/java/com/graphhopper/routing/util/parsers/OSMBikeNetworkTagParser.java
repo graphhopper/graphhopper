@@ -40,9 +40,9 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
     @Override
     public IntsRef handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
         RouteNetwork oldBikeNetwork = transformerRouteRelEnc.getEnum(false, relFlags);
+        RouteNetwork newBikeNetwork = RouteNetwork.MISSING;
         if (relation.hasTag("route", "bicycle")) {
             String tag = Helper.toLowerCase(relation.getTag("network", ""));
-            RouteNetwork newBikeNetwork = RouteNetwork.LOCAL;
             if ("lcn".equals(tag)) {
                 newBikeNetwork = RouteNetwork.LOCAL;
             } else if ("rcn".equals(tag)) {
@@ -51,11 +51,20 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
                 newBikeNetwork = RouteNetwork.NATIONAL;
             } else if ("icn".equals(tag)) {
                 newBikeNetwork = RouteNetwork.INTERNATIONAL;
+            } else if ("deprecated".equals(tag)) {
+                newBikeNetwork = RouteNetwork.DEPRECATED;
+            } else {
+                newBikeNetwork = RouteNetwork.LOCAL;
             }
-            if (oldBikeNetwork == RouteNetwork.MISSING || oldBikeNetwork.ordinal() > newBikeNetwork.ordinal())
-                transformerRouteRelEnc.setEnum(false, relFlags, newBikeNetwork);
         }
-
+        if (relation.hasTag("route", "ferry")) {
+            newBikeNetwork = RouteNetwork.FERRY;
+        }
+        if (relation.hasTag("route", "mtb")) { // for MTB profile
+            newBikeNetwork = RouteNetwork.MTB;
+        }
+        if (oldBikeNetwork == RouteNetwork.MISSING || oldBikeNetwork.ordinal() > newBikeNetwork.ordinal())
+            transformerRouteRelEnc.setEnum(false, relFlags, newBikeNetwork);
         return relFlags;
     }
 
