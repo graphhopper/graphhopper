@@ -126,7 +126,6 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
             }
         }
 
-        // do not drive street cars into fords
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return WayAccess.CAN_SKIP;
 

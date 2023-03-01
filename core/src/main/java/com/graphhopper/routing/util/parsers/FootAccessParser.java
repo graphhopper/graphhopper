@@ -158,7 +158,6 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if (way.hasTag("motorroad", "yes"))
             return WayAccess.CAN_SKIP;
 
-        // do not get our feet wet, "yes" is already included above
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return WayAccess.CAN_SKIP;
 

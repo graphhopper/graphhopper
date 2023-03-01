@@ -106,7 +106,6 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (way.hasTag("motorroad", "yes"))
             return WayAccess.CAN_SKIP;
 
-        // do not drive street cars into fords
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return WayAccess.CAN_SKIP;
 
