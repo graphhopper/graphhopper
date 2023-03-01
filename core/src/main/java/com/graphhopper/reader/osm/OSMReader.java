@@ -378,6 +378,10 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
             way.setTag("estimated_center", estimatedCenter);
         }
 
+        // ORS-GH MOD START - Store the actual length of the way (e.g. used for better ferry duration calculations)
+        recordExactWayDistance(way, osmNodeIds);
+        // ORS-GH MOD END
+
         if (way.getTag("duration") != null) {
             try {
                 long dur = OSMReaderUtility.parseDuration(way.getTag("duration"));
@@ -522,18 +526,9 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
     }
     // ORS-GH MOD END
 
-    // ORS-GH MOD START - Move the distance calculation to a separate method so it can be cleanly overridden
-    protected void recordWayDistance(ReaderWay way, LongArrayList osmNodeIds) {
-        int first = getNodeMap().get(osmNodeIds.get(0));
-        int last = getNodeMap().get(osmNodeIds.get(osmNodeIds.size() - 1));
-        double firstLat = getTmpLatitude(first), firstLon = getTmpLongitude(first);
-        double lastLat = getTmpLatitude(last), lastLon = getTmpLongitude(last);
-        if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon)) {
-            double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
-            // Add artificial tag for the estimated distance and center
-            way.setTag("estimated_distance", estimatedDist);
-            way.setTag("estimated_center", new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2));
-        }
+    // ORS-GH MOD START - code injection method
+    protected void recordExactWayDistance(ReaderWay way, LongArrayList osmNodeIds) {
+        // Code here has to be in the main block as the point for the centre is required by following code statements
     }
     // ORS-GH MOD END
 

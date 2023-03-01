@@ -32,7 +32,11 @@ public class FerrySpeedCalculator {
         // seconds to hours
         double durationInHours = duration / 60d / 60d;
         // Check if our graphhopper specific artificially created estimated_distance way tag is present
-        Number estimatedLength = way.getTag("estimated_distance", null);
+        // OSM MOD start
+        Number estimatedLength = way.getTag("exact_distance", null);
+        if (estimatedLength == null)
+            estimatedLength = way.getTag("estimated_distance", null);
+        // OSM MOD end
         if (durationInHours > 0)
             try {
                 if (estimatedLength != null) {
