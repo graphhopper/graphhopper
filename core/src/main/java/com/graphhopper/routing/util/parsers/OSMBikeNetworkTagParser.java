@@ -51,6 +51,8 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
                 newBikeNetwork = RouteNetwork.NATIONAL;
             } else if ("icn".equals(tag)) {
                 newBikeNetwork = RouteNetwork.INTERNATIONAL;
+            } else if ("mtb".equals(tag)) {
+                newBikeNetwork = RouteNetwork.MTB;
             } else if ("deprecated".equals(tag)) {
                 newBikeNetwork = RouteNetwork.DEPRECATED;
             } else {
@@ -61,9 +63,9 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
             newBikeNetwork = RouteNetwork.FERRY;
         }
         if (relation.hasTag("route", "mtb")) { // for MTB profile
-            newBikeNetwork = RouteNetwork.MTB;
+            newBikeNetwork = RouteNetwork.OTHER;
         }
-        if (oldBikeNetwork == RouteNetwork.MISSING || oldBikeNetwork.ordinal() > newBikeNetwork.ordinal())
+        if (newBikeNetwork != RouteNetwork.MISSING && (oldBikeNetwork == RouteNetwork.MISSING || oldBikeNetwork.ordinal() > newBikeNetwork.ordinal()))
             transformerRouteRelEnc.setEnum(false, relFlags, newBikeNetwork);
         return relFlags;
     }

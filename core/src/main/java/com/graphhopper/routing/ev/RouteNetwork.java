@@ -26,7 +26,7 @@ import com.graphhopper.util.Helper;
 public enum RouteNetwork {
 
     MISSING("missing"), INTERNATIONAL("international"), NATIONAL("national"), REGIONAL("regional"),
-    LOCAL("local"), FERRY("ferry"), DEPRECATED("deprecated"), MTB("mtb"), OTHER("other");
+    LOCAL("local"), MTB("mtb"), FERRY("ferry"), DEPRECATED("deprecated"), OTHER("other");
 
     public static String key(String prefix) {
         return prefix + "_network";

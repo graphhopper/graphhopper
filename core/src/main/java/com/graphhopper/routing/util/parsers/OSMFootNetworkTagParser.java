@@ -61,7 +61,7 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
         if (relation.hasTag("route", "bicycle") || relation.hasTag("route", "inline_skates")) { // for wheelchair profile
             newFootNetwork = RouteNetwork.OTHER;
         }
-        if (oldFootNetwork == RouteNetwork.MISSING || oldFootNetwork.ordinal() > newFootNetwork.ordinal())
+        if (newFootNetwork != RouteNetwork.MISSING && (oldFootNetwork == RouteNetwork.MISSING || oldFootNetwork.ordinal() > newFootNetwork.ordinal()))
             transformerRouteRelEnc.setEnum(false, relFlags, newFootNetwork);
         return relFlags;
     }
