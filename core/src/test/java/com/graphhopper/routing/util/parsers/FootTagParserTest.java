@@ -228,6 +228,9 @@ public class FootTagParserTest {
         way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
         assertTrue(accessParser.getAccess(way).canSkip());
 
+        way.setTag("foot", "yes"); // the conditional tag even overrules "yes"
+        assertTrue(accessParser.getAccess(way).canSkip());
+
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("access", "no");

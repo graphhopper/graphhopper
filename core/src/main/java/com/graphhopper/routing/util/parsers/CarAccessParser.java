@@ -113,14 +113,15 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
             return WayAccess.CAN_SKIP;
 
-        // multiple restrictions needs special handling compared to foot and bike, see also motorcycle
+        // multiple restrictions needs special handling, see also motorcycle
+        boolean permittedWayConditionallyRestricted = getConditionalTagInspector().isPermittedWayConditionallyRestricted(way);
+        boolean restrictedWayConditionallyPermitted = getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
         if (!firstValue.isEmpty()) {
             String[] restrict = firstValue.split(";");
-            boolean notConditionalyPermitted = !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && notConditionalyPermitted)
+                if (restrictedValues.contains(value) && !restrictedWayConditionallyPermitted)
                     return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value))
+                if (intendedValues.contains(value) && !permittedWayConditionallyRestricted)
                     return WayAccess.WAY;
             }
         }
@@ -129,10 +130,10 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return WayAccess.CAN_SKIP;
 
-        if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
+        if (permittedWayConditionallyRestricted)
             return WayAccess.CAN_SKIP;
-        else
-            return WayAccess.WAY;
+
+        return WayAccess.WAY;
     }
 
     @Override
