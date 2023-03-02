@@ -34,6 +34,7 @@ import java.util.Set;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
+import static java.util.Collections.emptyMap;
 
 public class FootAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -182,5 +183,8 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
         }
+
+        Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
+        handleNodeTags(edgeFlags, nodeTags);
     }
 }
