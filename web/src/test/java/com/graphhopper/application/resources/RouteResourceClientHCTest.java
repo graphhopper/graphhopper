@@ -65,6 +65,7 @@ public class RouteResourceClientHCTest {
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
                         new Profile("car").setVehicle("car").setWeighting("fastest"),
@@ -363,7 +364,7 @@ public class RouteResourceClientHCTest {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(42.5179, 1.555574)).
                 addPoint(new GHPoint(42.532022, 1.519504)).
-                setCustomModel(new CustomModel()
+                setCustomModel(new CustomModel().setDistanceInfluence(70d)
                         // we reduce the speed in the long tunnel
                         .addToSpeed(Statement.If("road_environment == TUNNEL", Statement.Op.MULTIPLY, "0.1"))).
                 setProfile("my_custom_car").

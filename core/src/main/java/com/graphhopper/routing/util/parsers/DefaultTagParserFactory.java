@@ -19,16 +19,12 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
-
-import static com.graphhopper.util.Helper.toLowerCase;
+import com.graphhopper.util.PMap;
 
 public class DefaultTagParserFactory implements TagParserFactory {
-    @Override
-    public TagParser create(EncodedValueLookup lookup, String name) {
-        name = name.trim();
-        if (!name.equals(toLowerCase(name)))
-            throw new IllegalArgumentException("Use lower case for TagParsers: " + name);
 
+    @Override
+    public TagParser create(EncodedValueLookup lookup, String name, PMap properties) {
         if (Roundabout.KEY.equals(name))
             return new OSMRoundaboutParser(lookup.getBooleanEncodedValue(Roundabout.KEY));
         else if (name.equals(RoadClass.KEY))
@@ -77,6 +73,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMHikeRatingParser(lookup.getIntEncodedValue(HikeRating.KEY));
         else if (name.equals(HorseRating.KEY))
             return new OSMHorseRatingParser(lookup.getIntEncodedValue(HorseRating.KEY));
+        else if (name.equals(Footway.KEY))
+            return new OSMFootwayParser(lookup.getEnumEncodedValue(Footway.KEY, Footway.class));
         else if (name.equals(Country.KEY))
             return new CountryParser(lookup.getEnumEncodedValue(Country.KEY, Country.class));
         else if (name.equals(Crossing.KEY))

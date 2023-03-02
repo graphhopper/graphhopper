@@ -10,7 +10,6 @@ const config = {
         kurviger: "missing_api_key"
     },
     routingGraphLayerAllowed: true,
-    extraProfiles: {},
     request: {
         details: [
             'road_class',

@@ -20,29 +20,29 @@ public class OSMCrossingParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         List<Map<String, Object>> nodeTags = readerWay.getTag("node_tags", null);
         if (nodeTags == null)
-            return edgeFlags;
+            return;
 
         for (int i = 0; i < nodeTags.size(); i++) {
             Map<String, Object> tags = nodeTags.get(i);
             if ("crossing".equals(tags.get("railway")) || "level_crossing".equals(tags.get("railway"))) {
                 String barrierVal = (String) tags.get("crossing:barrier");
                 crossingEnc.setEnum(false, edgeFlags, (Helper.isEmpty(barrierVal) || "no".equals(barrierVal)) ? Crossing.RAILWAY : Crossing.RAILWAY_BARRIER);
-                return edgeFlags;
+                return;
             }
 
             String crossingSignals = (String) tags.get("crossing:signals");
             if ("yes".equals(crossingSignals)) {
                 crossingEnc.setEnum(false, edgeFlags, Crossing.TRAFFIC_SIGNALS);
-                return edgeFlags;
+                return;
             }
 
             String crossingMarkings = (String) tags.get("crossing:markings");
             if ("yes".equals(crossingMarkings)) {
                 crossingEnc.setEnum(false, edgeFlags, Crossing.MARKED);
-                return edgeFlags;
+                return;
             }
 
             String crossingValue = (String) tags.get("crossing");
@@ -54,11 +54,8 @@ public class OSMCrossingParser implements TagParser {
                 continue;
             }
             Crossing crossing = Crossing.find(crossingValue);
-            if (crossing != Crossing.MISSING) {
+            if (crossing != Crossing.MISSING)
                 crossingEnc.setEnum(false, edgeFlags, crossing);
-                return edgeFlags;
-            }
         }
-        return edgeFlags;
     }
 }

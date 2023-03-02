@@ -61,8 +61,7 @@ Information Systems. ACM, 2009.*
 
 This algorithm works as follows. For each input GPS position, a number of
 map matching candidates within a certain radius around the GPS position is computed.
-The [Viterbi algorithm](https://en.wikipedia.org/wiki/Viterbi_algorithm) as provided by the
-[hmm-lib](https://github.com/bmwcarit/hmm-lib) is then used to compute the most likely sequence
+The [Viterbi algorithm](https://en.wikipedia.org/wiki/Viterbi_algorithm) is then used to compute the most likely sequence
 of map matching candidates. Thereby, the distances between GPS positions and map matching
 candidates as well as the routing distances between consecutive map matching candidates are taken
 into account. The GraphHopper routing engine is used to find candidates and to compute routing

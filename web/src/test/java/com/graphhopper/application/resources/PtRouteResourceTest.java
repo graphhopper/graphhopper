@@ -54,6 +54,7 @@ public class PtRouteResourceTest {
                 putObject("datareader.file", "../reader-gtfs/files/beatty.osm").
                 putObject("gtfs.file", "../reader-gtfs/files/sample-feed").
                 putObject("graph.location", DIR).
+                putObject("import.osm.ignored_highways", "").
                 setProfiles(Collections.singletonList(new Profile("foot").setVehicle("foot").setWeighting("fastest")));
         return config;
     }

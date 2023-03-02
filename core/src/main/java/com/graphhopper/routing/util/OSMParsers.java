@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.function.Function;
 
 public class OSMParsers {
+    private final List<String> ignoredHighways;
     private final List<TagParser> wayTagParsers;
-    private final List<VehicleTagParser> vehicleTagParsers;
     private final List<RelationTagParser> relationTagParsers;
     private final List<RestrictionTagParser> restrictionTagParsers;
     private final EncodedValue.InitializerConfig relConfig = new EncodedValue.InitializerConfig();
@@ -41,24 +41,21 @@ public class OSMParsers {
         this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
-    public OSMParsers(List<TagParser> wayTagParsers, List<VehicleTagParser> vehicleTagParsers,
+    public OSMParsers(List<String> ignoredHighways, List<TagParser> wayTagParsers,
                       List<RelationTagParser> relationTagParsers, List<RestrictionTagParser> restrictionTagParsers) {
+        this.ignoredHighways = ignoredHighways;
         this.wayTagParsers = wayTagParsers;
-        this.vehicleTagParsers = vehicleTagParsers;
         this.relationTagParsers = relationTagParsers;
         this.restrictionTagParsers = restrictionTagParsers;
     }
 
-    public OSMParsers addWayTagParser(TagParser tagParser) {
-        wayTagParsers.add(tagParser);
+    public OSMParsers addIgnoredHighway(String highway) {
+        ignoredHighways.add(highway);
         return this;
     }
 
-    public OSMParsers addVehicleTagParser(VehicleTagParser vehicleTagParser) {
-        vehicleTagParsers.add(vehicleTagParser);
-        if (vehicleTagParser.supportsTurnCosts()) {
-            restrictionTagParsers.add(new RestrictionTagParser(vehicleTagParser.getRestrictions(), vehicleTagParser.getTurnCostEnc()));
-        }
+    public OSMParsers addWayTagParser(TagParser tagParser) {
+        wayTagParsers.add(tagParser);
         return this;
     }
 
@@ -73,7 +70,20 @@ public class OSMParsers {
     }
 
     public boolean acceptWay(ReaderWay way) {
-        return vehicleTagParsers.stream().anyMatch(v -> !v.getAccess(way).equals(WayAccess.CAN_SKIP));
+        String highway = way.getTag("highway");
+        if (highway != null)
+            return !ignoredHighways.contains(highway);
+        else if (way.getTag("route") != null)
+            // we accept *all* ways with a 'route' tag and no 'highway' tag, because most of them are ferries
+            // (route=ferry), which we want, and there aren't so many such ways we do not want
+            // https://github.com/graphhopper/graphhopper/pull/2702#discussion_r1038093050
+            return true;
+        else if ("pier".equals(way.getTag("man_made")))
+            return true;
+        else if ("platform".equals(way.getTag("railway")))
+            return true;
+        else
+            return false;
     }
 
     public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {
@@ -83,14 +93,11 @@ public class OSMParsers {
         return relFlags;
     }
 
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         for (RelationTagParser relParser : relationTagParsers)
             relParser.handleWayTags(edgeFlags, way, relationFlags);
         for (TagParser parser : wayTagParsers)
             parser.handleWayTags(edgeFlags, way, relationFlags);
-        for (VehicleTagParser vehicleTagParser : vehicleTagParsers)
-            vehicleTagParser.handleWayTags(edgeFlags, way, relationFlags);
-        return edgeFlags;
     }
 
     public IntsRef createRelationFlags() {
@@ -100,8 +107,16 @@ public class OSMParsers {
         return new IntsRef(2);
     }
 
-    public List<VehicleTagParser> getVehicleTagParsers() {
-        return vehicleTagParsers;
+    public List<String> getIgnoredHighways() {
+        return ignoredHighways;
+    }
+
+    public List<TagParser> getWayTagParsers() {
+        return wayTagParsers;
+    }
+
+    public List<RelationTagParser> getRelationTagParsers() {
+        return relationTagParsers;
     }
 
     public List<RestrictionTagParser> getRestrictionTagParsers() {

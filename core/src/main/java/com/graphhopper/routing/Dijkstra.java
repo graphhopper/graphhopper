@@ -105,13 +105,11 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
         }
     }
 
-    @Override
     protected boolean finished() {
         return currEdge.adjNode == to;
     }
 
-    @Override
-    protected Path extractPath() {
+    private Path extractPath() {
         if (currEdge == null || !finished())
             return createEmptyPath();
 

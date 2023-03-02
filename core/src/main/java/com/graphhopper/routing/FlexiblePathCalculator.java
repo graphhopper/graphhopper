@@ -70,9 +70,9 @@ public class FlexiblePathCalculator implements PathCalculator {
 
         List<Path> paths;
         if (edgeRestrictions.getSourceOutEdge() != ANY_EDGE || edgeRestrictions.getTargetInEdge() != ANY_EDGE) {
-            if (!(algo instanceof BidirRoutingAlgorithm))
+            if (!(algo instanceof EdgeToEdgeRoutingAlgorithm))
                 throw new IllegalArgumentException("To make use of the " + Parameters.Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
-            paths = Collections.singletonList(((BidirRoutingAlgorithm) algo).calcPath(from, to, edgeRestrictions.getSourceOutEdge(), edgeRestrictions.getTargetInEdge()));
+            paths = Collections.singletonList(((EdgeToEdgeRoutingAlgorithm) algo).calcPath(from, to, edgeRestrictions.getSourceOutEdge(), edgeRestrictions.getTargetInEdge()));
         } else {
             paths = algo.calcPaths(from, to);
         }

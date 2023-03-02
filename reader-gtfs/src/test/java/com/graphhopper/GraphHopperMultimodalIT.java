@@ -57,6 +57,7 @@ public class GraphHopperMultimodalIT {
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("datareader.file", "files/beatty.osm");
+        ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("gtfs.file", "files/sample-feed");
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.setProfiles(Arrays.asList(
@@ -66,6 +67,13 @@ public class GraphHopperMultimodalIT {
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
+
+        graphHopperGtfs.close();
+        // Re-load read only
+        graphHopperGtfs = new GraphHopperGtfs(ghConfig);
+        graphHopperGtfs.init(ghConfig);
+        graphHopperGtfs.importOrLoad();
+
         locationIndex = graphHopperGtfs.getLocationIndex();
         graphHopper = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), locationIndex, graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();

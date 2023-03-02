@@ -37,7 +37,7 @@ public class OSMTollParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         Toll toll;
         if (readerWay.hasTag("toll", "yes")) {
             toll = Toll.ALL;
@@ -54,7 +54,5 @@ public class OSMTollParser implements TagParser {
             toll = countryRule.getToll(readerWay, toll);
         
         tollEnc.setEnum(false, edgeFlags, toll);
-        
-        return edgeFlags;
     }
 }

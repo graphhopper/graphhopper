@@ -136,9 +136,9 @@ public class WaySegmentParser {
     private class Pass1Handler implements ReaderElementHandler {
         private boolean handledWays;
         private boolean handledRelations;
-        private long wayCounter = 1;
+        private long wayCounter = 0;
         private long acceptedWays = 0;
-        private long relationsCounter = -1;
+        private long relationsCounter = 0;
 
         @Override
         public void handleWay(ReaderWay way) {
@@ -197,10 +197,10 @@ public class WaySegmentParser {
         private boolean handledNodes;
         private boolean handledWays;
         private boolean handledRelations;
-        private long nodeCounter = -1;
+        private long nodeCounter = 0;
         private long acceptedNodes = 0;
         private long ignoredSplitNodes = 0;
-        private long wayCounter = -1;
+        private long wayCounter = 0;
 
         @Override
         public void handleNode(ReaderNode node) {

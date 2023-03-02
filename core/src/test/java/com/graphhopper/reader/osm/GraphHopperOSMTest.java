@@ -182,7 +182,7 @@ public class GraphHopperOSMTest {
             }
         });
 
-        assertEquals(57, indexNodeList.size());
+        assertEquals(152, indexNodeList.size());
         for (int nodeId : indexNodeList) {
             if (!bbox.contains(na.getLat(nodeId), na.getLon(nodeId)))
                 fail("bbox " + bbox + " should contain " + nodeId);
@@ -462,6 +462,7 @@ public class GraphHopperOSMTest {
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
                                 putObject("graph.vehicles", "foot,car").
+                                putObject("import.osm.ignored_highways", "").
                                 setProfiles(Arrays.asList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                                         new Profile("car").setVehicle("car").setWeighting("fastest")
@@ -477,6 +478,7 @@ public class GraphHopperOSMTest {
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
                                 putObject("graph.vehicles", "foot").
+                                putObject("import.osm.ignored_highways", "").
                                 setProfiles(Collections.singletonList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest")
                                 ))).
@@ -490,6 +492,7 @@ public class GraphHopperOSMTest {
                         putObject("datareader.file", testOsm3).
                         putObject("datareader.dataaccess", "RAM").
                         putObject("graph.vehicles", "car,foot").
+                        putObject("import.osm.ignored_highways", "").
                         setProfiles(Arrays.asList(
                                 new Profile("car").setVehicle("car").setWeighting("fastest"),
                                 new Profile("foot").setVehicle("foot").setWeighting("fastest")
@@ -506,6 +509,7 @@ public class GraphHopperOSMTest {
                                 putObject("datareader.dataaccess", "RAM").
                                 putObject("graph.encoded_values", "road_class").
                                 putObject("graph.vehicles", "foot,car").
+                                putObject("import.osm.ignored_highways", "").
                                 setProfiles(Arrays.asList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                                         new Profile("car").setVehicle("car").setWeighting("fastest")
@@ -525,6 +529,7 @@ public class GraphHopperOSMTest {
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
                                 putObject("graph.vehicles", "foot,car").
+                                putObject("import.osm.ignored_highways", "").
                                 setProfiles(Arrays.asList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                                         new Profile("car").setVehicle("car").setWeighting("fastest")
@@ -545,6 +550,7 @@ public class GraphHopperOSMTest {
                                 putObject("graph.location", ghLoc).
                                 putObject("graph.encoded_values", "road_environment,road_class").
                                 putObject("graph.vehicles", "foot,car").
+                                putObject("import.osm.ignored_highways", "").
                                 setProfiles(Arrays.asList(
                                         new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                                         new Profile("car").setVehicle("car").setWeighting("fastest")
@@ -635,6 +641,8 @@ public class GraphHopperOSMTest {
                 setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
+        // exclude motorways which aren't accessible for foot
+        instance.getReaderConfig().setIgnoredHighways(Arrays.asList("motorway"));
         instance.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         instance.importOrLoad();
 
@@ -661,6 +669,7 @@ public class GraphHopperOSMTest {
                         putObject("datareader.file", testOsm3).
                         putObject("prepare.min_network_size", 0).
                         putObject("graph.vehicles", vehicle).
+                        putObject("import.osm.ignored_highways", "").
                         setProfiles(Collections.singletonList(new Profile(profile).setVehicle(vehicle).setWeighting(weighting))).
                         setCHProfiles(Collections.singletonList(new CHProfile(profile)))
                 ).
@@ -807,7 +816,7 @@ public class GraphHopperOSMTest {
         {
             GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
                     new Profile("car").setVehicle("car").setWeighting("fastest"),
-                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3)).setVehicle("car")
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3d)).setVehicle("car")
             ));
             hopper.importOrLoad();
             hopper.close();
@@ -816,16 +825,26 @@ public class GraphHopperOSMTest {
             // load without problem
             GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
                     new Profile("car").setVehicle("car").setWeighting("fastest"),
-                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3)).setVehicle("car")
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3d)).setVehicle("car")
             ));
             hopper.importOrLoad();
+            hopper.close();
+        }
+        {
+            // problem: the vehicle was changed. this is not allowed.
+            GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
+                    new Profile("car").setVehicle("bike").setWeighting("fastest"),
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3d)).setVehicle("car")
+            ));
+            IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
+            assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
             hopper.close();
         }
         {
             // problem: the profile changed (slightly). we do not allow this because we would potentially need to re-calculate the subnetworks
             GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
                     new Profile("car").setVehicle("car").setWeighting("fastest"),
-                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(80)).setVehicle("car")
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(80d)).setVehicle("car")
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
             assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
@@ -835,7 +854,7 @@ public class GraphHopperOSMTest {
             // problem: we add another profile, which is not allowed, because there would be no subnetwork ev for it
             GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
                     new Profile("car").setVehicle("car").setWeighting("fastest"),
-                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3)).setVehicle("car"),
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3d)).setVehicle("car"),
                     new Profile("car2").setVehicle("car").setWeighting("fastest")
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
@@ -859,6 +878,7 @@ public class GraphHopperOSMTest {
         hopper.init(new GraphHopperConfig()
                 .putObject("graph.location", ghLoc)
                 .putObject("datareader.file", testOsm)
+                .putObject("import.osm.ignored_highways", "")
                 .setProfiles(profiles)
         );
         return hopper;

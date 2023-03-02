@@ -28,6 +28,7 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ResponsePathDeserializer;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
@@ -41,6 +42,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.api.GraphHopperMatrixWeb.*;
+import static com.graphhopper.api.Version.GH_VERSION_FROM_MAVEN;
 import static com.graphhopper.util.Helper.round6;
 import static com.graphhopper.util.Helper.toLowerCase;
 import static com.graphhopper.util.Parameters.Routing.CALC_POINTS;
@@ -54,6 +56,7 @@ import static com.graphhopper.util.Parameters.Routing.INSTRUCTIONS;
  */
 public class GraphHopperWeb {
 
+    public static final String X_GH_CLIENT_VERSION = "X-GH-Client-Version";
     private final ObjectMapper objectMapper;
     private final String routeServiceUrl;
     private OkHttpClient downloader;
@@ -200,11 +203,15 @@ public class GraphHopperWeb {
                 return res;
 
             JsonNode paths = json.get("paths");
-
             for (JsonNode path : paths) {
                 ResponsePath altRsp = ResponsePathDeserializer.createResponsePath(objectMapper, path, tmpElevation, tmpTurnDescription);
                 res.add(altRsp);
             }
+
+            JsonNode b = json.get("hints");
+            PMap hints = new PMap();
+            b.fields().forEachRemaining(f -> hints.putObject(f.getKey(), Helper.toObject(f.getValue().asText())));
+            res.setHints(hints);
 
             return res;
 
@@ -242,6 +249,7 @@ public class GraphHopperWeb {
             throw new RuntimeException("Could not write request body", e);
         }
         Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, body));
+        builder.header(X_GH_CLIENT_VERSION, GH_VERSION_FROM_MAVEN);
         // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
         if (body.length() < maxUnzippedLength)
             builder.header("Content-Encoding", "identity");
@@ -369,7 +377,9 @@ public class GraphHopperWeb {
             }
         }
 
-        return new Request.Builder().url(url).build();
+        return new Request.Builder().url(url)
+                .header(X_GH_CLIENT_VERSION, GH_VERSION_FROM_MAVEN)
+                .build();
     }
 
     public String export(GHRequest ghRequest) {
