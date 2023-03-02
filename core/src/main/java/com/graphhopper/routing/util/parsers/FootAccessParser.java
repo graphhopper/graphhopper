@@ -27,10 +27,7 @@ import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
@@ -184,7 +181,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
             accessEnc.setBool(true, edgeFlags, true);
         }
 
-        Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
+        List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
         handleNodeTags(edgeFlags, nodeTags);
     }
 }
