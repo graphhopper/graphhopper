@@ -234,8 +234,12 @@ public class WaySegmentParser {
             }
 
             // we keep all the node tags, so they will be available for the edge handler
-            if (node.hasTags())
+            if (node.hasTags()) {
+                node.removeTag("created_by");
+                node.removeTag("source");
+                node.removeTag("note");
                 nodeData.setTags(node);
+            }
         }
 
         @Override
