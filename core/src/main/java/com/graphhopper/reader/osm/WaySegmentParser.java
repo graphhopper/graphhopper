@@ -71,6 +71,7 @@ public class WaySegmentParser {
 
     private final ElevationProvider eleProvider;
 
+    private final Consumer<ReaderRelation> pass0RelationHook;
     private final Consumer<ReaderWay> pass1WayPreHook;
     private final Predicate<ReaderWay> wayFilter;
     private final Consumer<ReaderNode> pass2NodePreHook;
@@ -86,6 +87,7 @@ public class WaySegmentParser {
     private Date timestamp;
 
     private WaySegmentParser(PointAccess nodeAccess, Directory directory, ElevationProvider eleProvider,
+                             Consumer<ReaderRelation> pass0RelationHook,
                              Consumer<ReaderWay> pass1WayPreHook,
                              Predicate<ReaderWay> wayFilter,
                              Consumer<ReaderNode> pass2NodePreHook,
@@ -94,6 +96,7 @@ public class WaySegmentParser {
                              Consumer<ReaderRelation> relationPreprocessor, RelationProcessor relationProcessor,
                              EdgeHandler edgeHandler, int workerThreads) {
         this.eleProvider = eleProvider;
+        this.pass0RelationHook = pass0RelationHook;
         this.pass1WayPreHook = pass1WayPreHook;
         this.wayFilter = wayFilter;
         this.pass2NodePreHook = pass2NodePreHook;
@@ -116,6 +119,12 @@ public class WaySegmentParser {
             throw new IllegalStateException("You can only run way segment parser once");
 
         LOGGER.info("Start reading OSM file: '" + osmFile + "'");
+        LOGGER.info("pass0 - start");
+        StopWatch sw0 = StopWatch.started();
+        readOSM(osmFile, new Pass0Handler());
+        LOGGER.info("pass0 - finished, took: {}", sw0.stop().getTimeString());
+
+        LOGGER.info("Start reading OSM file: '" + osmFile + "'");
         LOGGER.info("pass1 - start");
         StopWatch sw1 = StopWatch.started();
         readOSM(osmFile, new Pass1Handler());
@@ -133,9 +142,10 @@ public class WaySegmentParser {
         nodeData.release();
 
         LOGGER.info("Finished reading OSM file." +
+                " pass0: " + (int) sw0.getSeconds() + "s, " +
                 " pass1: " + (int) sw1.getSeconds() + "s, " +
                 " pass2: " + (int) sw2.getSeconds() + "s, " +
-                " total: " + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
+                " total: " + (int) (sw0.getSeconds() + sw1.getSeconds() + sw2.getSeconds()) + "s");
     }
 
     /**
@@ -143,6 +153,13 @@ public class WaySegmentParser {
      */
     public Date getTimeStamp() {
         return timestamp;
+    }
+
+    private class Pass0Handler implements ReaderElementHandler {
+        @Override
+        public void handleRelation(ReaderRelation relation) {
+            pass0RelationHook.accept(relation);
+        }
     }
 
     private class Pass1Handler implements ReaderElementHandler {
@@ -426,6 +443,8 @@ public class WaySegmentParser {
         private final PointAccess nodeAccess;
         private Directory directory = new RAMDirectory();
         private ElevationProvider elevationProvider = ElevationProvider.NOOP;
+        private Consumer<ReaderRelation> pass0RelationHook = rel -> {
+        };
         private Consumer<ReaderWay> pass1WayPreHook = way -> {
         };
         private Predicate<ReaderWay> wayFilter = way -> true;
@@ -465,6 +484,11 @@ public class WaySegmentParser {
          */
         public Builder setElevationProvider(ElevationProvider elevationProvider) {
             this.elevationProvider = elevationProvider;
+            return this;
+        }
+
+        public Builder setPass0RelationHook(Consumer<ReaderRelation> pass0RelationHook) {
+            this.pass0RelationHook = pass0RelationHook;
             return this;
         }
 
@@ -541,7 +565,7 @@ public class WaySegmentParser {
 
         public WaySegmentParser build() {
             return new WaySegmentParser(
-                    nodeAccess, directory, elevationProvider, pass1WayPreHook, wayFilter, pass2NodePreHook, pass2AfterNodesHook, splitNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
+                    nodeAccess, directory, elevationProvider, pass0RelationHook, pass1WayPreHook, wayFilter, pass2NodePreHook, pass2AfterNodesHook, splitNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
                     edgeHandler, workerThreads
             );
         }

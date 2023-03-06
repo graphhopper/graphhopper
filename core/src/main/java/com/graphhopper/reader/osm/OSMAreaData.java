@@ -22,6 +22,8 @@ import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.storage.Directory;
 import org.locationtech.jts.geom.Coordinate;
@@ -29,16 +31,21 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class OSMAreaData {
     private final List<OSMArea> osmAreas;
     private final LongIntMap nodeIndexByOSMNodeId;
+    private final List<ReaderRelation> osmAreaRelations;
+    private final LongIntMap relationIndexByOSMWayId;
     private final PillarInfo coordinates;
 
     public OSMAreaData(Directory directory) {
         osmAreas = new ArrayList<>();
         nodeIndexByOSMNodeId = new GHLongIntBTree(200);
+        osmAreaRelations = new ArrayList<>();
+        relationIndexByOSMWayId = new GHLongIntBTree(200);
         coordinates = new PillarInfo(false, directory, "_osm_area");
     }
 
@@ -49,6 +56,17 @@ public class OSMAreaData {
                 nodeIndexByOSMNodeId.put(node.value, Math.toIntExact(nodeIndexByOSMNodeId.getSize()));
     }
 
+    public void handleWay(ReaderWay way) {
+        int relationIndex = relationIndexByOSMWayId.get(way.getId());
+        if (relationIndex >= 0) {
+            ReaderRelation relation = osmAreaRelations.get(relationIndex);
+            osmAreas.add(new OSMArea(relation.getTags(), way.getNodes()));
+            for (LongCursor node : way.getNodes())
+                if (nodeIndexByOSMNodeId.get(node.value) < 0)
+                    nodeIndexByOSMNodeId.put(node.value, Math.toIntExact(nodeIndexByOSMNodeId.getSize()));
+        }
+    }
+
     public void setCoordinate(long osmNodeId, double lat, double lon) {
         int nodeIndex = nodeIndexByOSMNodeId.get(osmNodeId);
         if (nodeIndex >= 0)
@@ -56,8 +74,9 @@ public class OSMAreaData {
     }
 
     public List<CustomArea> buildOSMAreas() {
+        AtomicInteger invalidGeometries = new AtomicInteger();
         GeometryFactory geometryFactory = new GeometryFactory();
-        return osmAreas.stream().map(a -> {
+        List<CustomArea> result = osmAreas.stream().map(a -> {
                     Coordinate[] cs = new Coordinate[a.nodes.size()];
                     for (LongCursor node : a.nodes) {
                         int nodeIndex = nodeIndexByOSMNodeId.get(node.value);
@@ -68,14 +87,23 @@ public class OSMAreaData {
                         return new CustomArea(a.tags, polygons);
                     } catch (IllegalArgumentException e) {
                         // todonow: apparently, some areas do not form a closed ring or something, looks like these are tagging errors in OSM!
-                        System.out.println(e.getMessage());
-                        System.out.println(a.tags);
-                        System.out.println(Arrays.toString(cs));
+                        invalidGeometries.incrementAndGet();
                         return null;
                     }
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
+        System.out.println("Warning: There were " + invalidGeometries.get() + " invalid geometries among the " + osmAreas.size() + " osm areas");
+        return result;
+    }
+
+    public void addRelation(ReaderRelation relation) {
+        osmAreaRelations.add(relation);
+        for (ReaderRelation.Member member : relation.getMembers())
+            // todonow: we keep it simple for now and just consider the outer polygons. for the holes there might be other landuse areas anyway.
+            if ("outer".equals(member.getRole()))
+                // todonow: so far we simply ignore the possibility of ways being contained in multiple landuse relations
+                relationIndexByOSMWayId.put(member.getRef(), osmAreaRelations.size() - 1);
     }
 
     public static class OSMArea {
