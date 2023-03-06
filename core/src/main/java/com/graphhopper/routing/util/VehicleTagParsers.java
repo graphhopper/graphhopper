@@ -79,14 +79,6 @@ public class VehicleTagParsers {
         );
     }
 
-    public static VehicleTagParsers hike(EncodedValueLookup lookup, PMap properties) {
-        return new VehicleTagParsers(
-                new HikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
-                new HikeAverageSpeedParser(lookup, properties),
-                new HikePriorityParser(lookup, properties)
-        );
-    }
-
     public static VehicleTagParsers motorcycle(EncodedValueLookup lookup, PMap properties) {
         return new VehicleTagParsers(
                 new MotorcycleAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),

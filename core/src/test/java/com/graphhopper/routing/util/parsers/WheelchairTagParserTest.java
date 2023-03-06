@@ -364,12 +364,12 @@ public class WheelchairTagParserTest {
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
+        assertEquals(PriorityCode.SLIGHT_AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "road");
@@ -380,9 +380,9 @@ public class WheelchairTagParserTest {
         way.clearTags();
         way.setTag("highway", "trunk");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
+        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
         way.setTag("sidewalk", "none");
-        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
+        assertEquals(PriorityCode.VERY_BAD.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "residential");

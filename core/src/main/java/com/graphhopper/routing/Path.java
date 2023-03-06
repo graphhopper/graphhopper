@@ -57,6 +57,10 @@ public class Path {
         this.nodeAccess = graph.getNodeAccess();
     }
 
+    public Graph getGraph() {
+        return graph;
+    }
+
     /**
      * @return the description of this route alternative to make it meaningful for the user e.g. it
      * displays one or two main roads of the route.

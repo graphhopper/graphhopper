@@ -62,8 +62,8 @@ public class RouteResourceCustomModelTest {
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
-                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv").
-                putObject("custom_models.directory", "./src/test/resources/com/graphhopper/application/resources").
+                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv,average_slope,max_slope").
+                putObject("custom_models.directory", "../custom_models").
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Arrays.asList(
@@ -77,7 +77,7 @@ public class RouteResourceCustomModelTest {
                         new CustomProfile("cargo_bike").setVehicle("bike").
                                 putHint("custom_model_file", "cargo_bike.json"),
                         new CustomProfile("json_bike").setVehicle("bike").
-                                putHint("custom_model_file", "json_bike.json"),
+                                putHint("custom_model_file", "bike.json"),
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile("car_no_unclassified").setCustomModel(
                                         new CustomModel(new CustomModel().
@@ -109,9 +109,9 @@ public class RouteResourceCustomModelTest {
 
     @Test
     public void testBlockAreaNotAllowed() {
-        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car\", \"custom_model\": {}, \"block_area\": \"abc\", \"ch.disable\": true}";
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car\", \"block_area\": \"abc\", \"ch.disable\": true}";
         JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertMessageStartsWith(jsonNode, "When using `custom_model` do not use `block_area`. Use `areas` in the custom model instead");
+        assertMessageStartsWith(jsonNode, "The `block_area` parameter is no longer supported. Use a custom model with `areas` instead.");
     }
 
     @Test
@@ -206,7 +206,7 @@ public class RouteResourceCustomModelTest {
         JsonNode path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 661, 5);
 
-        String json = Helper.readJSONFileWithoutComments(new InputStreamReader(getClass().getResourceAsStream("cargo_bike.json")));
+        String json = Helper.readJSONFileWithoutComments(new File("../custom_models/cargo_bike.json").getAbsolutePath());
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", \"custom_model\":" + json + ", \"ch.disable\": true}";
         path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 1007, 5);

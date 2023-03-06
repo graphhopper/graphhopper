@@ -4,7 +4,8 @@ GraphHopper provides an easy-to-use way to customize its route calculations: Cus
 default routing behavior by specifying a set of rules in JSON language. Here we will first explain some theoretical
 background and then show how to use custom models in practice.
 
-Try some live examples in [this blog post](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/).
+Try some live examples in [this blog post](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/)
+and the [custom_models](../../custom_models) folder on how to use them on the server-side.
 
 ## How GraphHopper's route calculations work
 

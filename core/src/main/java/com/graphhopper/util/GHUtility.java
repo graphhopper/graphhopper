@@ -23,6 +23,7 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -35,6 +36,9 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.shapes.BBox;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.Polygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +54,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
@@ -673,5 +678,123 @@ public class GHUtility {
         int secondIndex = towerNodes.size() == 1 ? 0 : 1;
         return BBox.fromPoints(towerNodes.getLat(0), towerNodes.getLon(0),
                 towerNodes.getLat(secondIndex), towerNodes.getLon(secondIndex));
+    }
+
+    public static JsonFeature createCircle(String id, double centerLat, double centerLon, double radius) {
+        final int n = 36;
+        final double delta = 360.0 / n;
+        Coordinate[] coordinates = IntStream.range(0, n + 1)
+                .mapToObj(i -> DIST_EARTH.projectCoordinate(centerLat, centerLon, radius, (i * delta) % 360))
+                .map(p -> new Coordinate(p.lon, p.lat)).toArray(Coordinate[]::new);
+        Polygon polygon = new GeometryFactory().createPolygon(coordinates);
+        JsonFeature result = new JsonFeature();
+        result.setId(id);
+        result.setGeometry(polygon);
+        return result;
+    }
+
+    public static JsonFeature createRectangle(String id, double minLat, double minLon, double maxLat, double maxLon) {
+        Coordinate[] coordinates = new Coordinate[]{
+                new Coordinate(minLon, minLat),
+                new Coordinate(minLon, maxLat),
+                new Coordinate(maxLon, maxLat),
+                new Coordinate(maxLon, minLat),
+                new Coordinate(minLon, minLat)
+        };
+        Polygon polygon = new GeometryFactory().createPolygon(coordinates);
+        JsonFeature result = new JsonFeature();
+        result.setId(id);
+        result.setGeometry(polygon);
+        return result;
+    }
+
+    public static List<String> comparePaths(Path refPath, Path path, int source, int target, long seed) {
+        List<String> strictViolations = new ArrayList<>();
+        double refWeight = refPath.getWeight();
+        double weight = path.getWeight();
+        if (Math.abs(refWeight - weight) > 1.e-2) {
+            LOGGER.warn("expected: " + refPath.calcNodes());
+            LOGGER.warn("given:    " + path.calcNodes());
+            LOGGER.warn("seed: " + seed);
+            fail("wrong weight: " + source + "->" + target + "\nexpected: " + refWeight + "\ngiven:    " + weight + "\nseed: " + seed);
+        }
+        if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
+            strictViolations.add("wrong distance " + source + "->" + target + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());
+        }
+        if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
+            strictViolations.add("wrong time " + source + "->" + target + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
+        }
+        IntIndexedContainer refNodes = refPath.calcNodes();
+        IntIndexedContainer pathNodes = path.calcNodes();
+        if (!refNodes.equals(pathNodes)) {
+            // sometimes paths are only different because of a zero weight loop. we do not consider these as strict
+            // violations, see: #1864
+            boolean isStrictViolation = !ArrayUtil.withoutConsecutiveDuplicates(refNodes).equals(ArrayUtil.withoutConsecutiveDuplicates(pathNodes));
+            // sometimes there are paths including an edge a-c that has the same distance as the two edges a-b-c. in this
+            // case both options are valid best paths. we only check for this most simple and frequent case here...
+            if (path.getGraph() != refPath.getGraph())
+                fail("path and refPath graphs are different");
+            if (pathsEqualExceptOneEdge(path.getGraph(), refNodes, pathNodes))
+                isStrictViolation = false;
+            if (isStrictViolation)
+                strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refNodes + "\ngiven:    " + pathNodes);
+        }
+        return strictViolations;
+    }
+
+    /**
+     * Sometimes the graph can contain edges like this:
+     * A--C
+     * \-B|
+     * where A-C is the same distance as A-B-C. In this case the shortest path is not well defined in terms of nodes.
+     * This method checks if two node-paths are equal except for such an edge.
+     */
+    private static boolean pathsEqualExceptOneEdge(Graph graph, IntIndexedContainer p1, IntIndexedContainer p2) {
+        if (p1.equals(p2))
+            throw new IllegalArgumentException("paths are equal");
+        if (Math.abs(p1.size() - p2.size()) != 1)
+            return false;
+        IntIndexedContainer shorterPath = p1.size() < p2.size() ? p1 : p2;
+        IntIndexedContainer longerPath = p1.size() < p2.size() ? p2 : p1;
+        if (shorterPath.size() < 2)
+            return false;
+        IntArrayList indicesWithDifferentNodes = new IntArrayList();
+        for (int i = 1; i < shorterPath.size(); i++) {
+            if (shorterPath.get(i - indicesWithDifferentNodes.size()) != longerPath.get(i)) {
+                indicesWithDifferentNodes.add(i);
+            }
+        }
+        if (indicesWithDifferentNodes.size() != 1)
+            return false;
+        int b = indicesWithDifferentNodes.get(0);
+        int a = b - 1;
+        int c = b + 1;
+        assert shorterPath.get(a) == longerPath.get(a);
+        assert shorterPath.get(b) != longerPath.get(b);
+        if (shorterPath.get(b) != longerPath.get(c))
+            return false;
+        double distABC = getMinDist(graph, longerPath.get(a), longerPath.get(b)) + getMinDist(graph, longerPath.get(b), longerPath.get(c));
+
+        double distAC = getMinDist(graph, shorterPath.get(a), longerPath.get(c));
+        if (Math.abs(distABC - distAC) > 0.1)
+            return false;
+        LOGGER.info("Distance " + shorterPath.get(a) + "-" + longerPath.get(c) + " is the same as distance " +
+                longerPath.get(a) + "-" + longerPath.get(b) + "-" + longerPath.get(c) + " -> there are multiple possibilities " +
+                "for shortest paths");
+        return true;
+    }
+
+    private static double getMinDist(Graph graph, int p, int q) {
+        EdgeExplorer explorer = graph.createEdgeExplorer();
+        EdgeIterator iter = explorer.setBaseNode(p);
+        double distance = Double.MAX_VALUE;
+        while (iter.next())
+            if (iter.getAdjNode() == q)
+                distance = Math.min(distance, iter.getDistance());
+        return distance;
+    }
+
+    private static void fail(String message) {
+        throw new AssertionError(message);
     }
 }

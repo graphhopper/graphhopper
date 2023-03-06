@@ -34,8 +34,6 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
         allowedHighwayTags.add("cycleway");
         allowedHighwayTags.add("unclassified");
         allowedHighwayTags.add("road");
-
-        allowedSacScale.clear();
     }
 
     @Override
@@ -69,7 +67,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
         if (Double.isInfinite(fullDist2D))
             throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
 
-        // skip elevation data adjustment for too short segments, TODO improve the elevation data handling and/or use the same mechanism as we used to do in bike2
+        // skip elevation data adjustment for too short segments, TODO use custom model for elevation handling
         if (fullDist2D < 20 || !pl.is3D())
             return;
 

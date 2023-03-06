@@ -110,14 +110,19 @@ public class FootPriorityParser implements TagParser {
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues)) {
                 if (way.hasTag("sidewalk", sidewalksNoValues))
-                    weightToPrioMap.put(40d, SLIGHT_AVOID.getValue());
+                    weightToPrioMap.put(40d, AVOID.getValue());
                 else
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
         } else if ((isValidSpeed(maxSpeed) && maxSpeed > 50) || avoidHighwayTags.contains(highway)) {
-            if (!way.hasTag("sidewalk", sidewalkValues))
-                weightToPrioMap.put(45d, AVOID.getValue());
-        }
+            if (way.hasTag("sidewalk", sidewalksNoValues))
+                weightToPrioMap.put(40d, VERY_BAD.getValue());
+            else if (!way.hasTag("sidewalk", sidewalkValues))
+                weightToPrioMap.put(40d, AVOID.getValue());
+            else
+                weightToPrioMap.put(40d, SLIGHT_AVOID.getValue());
+        } else if (way.hasTag("sidewalk", sidewalksNoValues))
+            weightToPrioMap.put(40d, AVOID.getValue());
 
         if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
             weightToPrioMap.put(44d, SLIGHT_AVOID.getValue());
