@@ -254,7 +254,7 @@ class OSMNodeData {
     }
 
     public void removeTag(long osmNodeId, String key) {
-        int prev = nodeTagIndicesByOsmNodeIds.put(osmNodeId, -2);
+        int prev = nodeTagIndicesByOsmNodeIds.get(osmNodeId);
         nodeTags.get(prev).remove(key);
     }
 

@@ -38,10 +38,7 @@ import javax.xml.stream.XMLStreamException;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.LongToIntFunction;
 import java.util.function.Predicate;
@@ -67,6 +64,7 @@ import static com.graphhopper.util.Helper.nf;
  */
 public class WaySegmentParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaySegmentParser.class);
+    private static final Set<String> ALLOWED_NODE_TAGS = new HashSet<>(Arrays.asList("gh:split_node", "barrier", "highway", "railway", "crossing", "ford"));
 
     private final ElevationProvider eleProvider;
     private final Predicate<ReaderWay> wayFilter;
@@ -233,12 +231,16 @@ public class WaySegmentParser {
                     node.setTag("gh:split_node", true);
             }
 
-            // we keep important node tags, so they will be available for the edge handler
-            node.removeTag("created_by");
-            node.removeTag("source");
-            node.removeTag("note");
-            if (node.hasTags())
-                nodeData.setTags(node);
+            // store node tags if at least one important tag is included and make this available for the edge handler
+            for (Map.Entry<String, Object> e : node.getTags().entrySet()) {
+                if (ALLOWED_NODE_TAGS.contains(e.getKey())) {
+                    node.removeTag("created_by");
+                    node.removeTag("source");
+                    node.removeTag("note");
+                    nodeData.setTags(node);
+                    break;
+                }
+            }
         }
 
         @Override
