@@ -70,7 +70,11 @@ public class WaySegmentParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaySegmentParser.class);
 
     private final ElevationProvider eleProvider;
+
+    private final Consumer<ReaderWay> pass1WayPreHook;
     private final Predicate<ReaderWay> wayFilter;
+    private final Consumer<ReaderNode> pass2NodePreHook;
+    private final Runnable pass2AfterNodesHook;
     private final Predicate<ReaderNode> splitNodeFilter;
     private final WayPreprocessor wayPreprocessor;
     private final Consumer<ReaderRelation> relationPreprocessor;
@@ -82,11 +86,18 @@ public class WaySegmentParser {
     private Date timestamp;
 
     private WaySegmentParser(PointAccess nodeAccess, Directory directory, ElevationProvider eleProvider,
-                             Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
+                             Consumer<ReaderWay> pass1WayPreHook,
+                             Predicate<ReaderWay> wayFilter,
+                             Consumer<ReaderNode> pass2NodePreHook,
+                             Runnable pass2AfterNodesHook,
+                             Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
                              Consumer<ReaderRelation> relationPreprocessor, RelationProcessor relationProcessor,
                              EdgeHandler edgeHandler, int workerThreads) {
         this.eleProvider = eleProvider;
+        this.pass1WayPreHook = pass1WayPreHook;
         this.wayFilter = wayFilter;
+        this.pass2NodePreHook = pass2NodePreHook;
+        this.pass2AfterNodesHook = pass2AfterNodesHook;
         this.splitNodeFilter = splitNodeFilter;
         this.wayPreprocessor = wayPreprocessor;
         this.relationPreprocessor = relationPreprocessor;
@@ -154,6 +165,8 @@ public class WaySegmentParser {
                 LOGGER.info("pass1 - processed ways: " + nf(wayCounter) + ", accepted ways: " + nf(acceptedWays) +
                         ", way nodes: " + nf(nodeData.getNodeCount()) + ", " + Helper.getMemInfo());
 
+            pass1WayPreHook.accept(way);
+
             if (!wayFilter.test(way))
                 return;
             acceptedWays++;
@@ -218,6 +231,8 @@ public class WaySegmentParser {
                 LOGGER.info("pass2 - processed nodes: " + nf(nodeCounter) + ", accepted nodes: " + nf(acceptedNodes) +
                         ", " + Helper.getMemInfo());
 
+            pass2NodePreHook.accept(node);
+
             int nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), () -> eleProvider.getEle(node));
             if (nodeType == EMPTY_NODE)
                 return;
@@ -238,6 +253,7 @@ public class WaySegmentParser {
         @Override
         public void handleWay(ReaderWay way) {
             if (!handledWays) {
+                pass2AfterNodesHook.run();
                 LOGGER.info("pass2 - start reading OSM ways");
                 handledWays = true;
             }
@@ -410,7 +426,13 @@ public class WaySegmentParser {
         private final PointAccess nodeAccess;
         private Directory directory = new RAMDirectory();
         private ElevationProvider elevationProvider = ElevationProvider.NOOP;
+        private Consumer<ReaderWay> pass1WayPreHook = way -> {
+        };
         private Predicate<ReaderWay> wayFilter = way -> true;
+        private Consumer<ReaderNode> pass2NodePreHook = node -> {
+        };
+        private Runnable pass2AfterNodesHook = () -> {
+        };
         private Predicate<ReaderNode> splitNodeFilter = node -> false;
         private WayPreprocessor wayPreprocessor = (way, supplier) -> {
         };
@@ -446,11 +468,26 @@ public class WaySegmentParser {
             return this;
         }
 
+        public Builder setPass1WayPreHook(Consumer<ReaderWay> pass1WayPreHook) {
+            this.pass1WayPreHook = pass1WayPreHook;
+            return this;
+        }
+
         /**
          * @param wayFilter return true for OSM ways that should be considered and false otherwise
          */
         public Builder setWayFilter(Predicate<ReaderWay> wayFilter) {
             this.wayFilter = wayFilter;
+            return this;
+        }
+
+        public Builder setPass2NodePreHook(Consumer<ReaderNode> pass2NodePreHook) {
+            this.pass2NodePreHook = pass2NodePreHook;
+            return this;
+        }
+
+        public Builder setPass2AfterNodesHook(Runnable pass2AfterNodesHook) {
+            this.pass2AfterNodesHook = pass2AfterNodesHook;
             return this;
         }
 
@@ -504,7 +541,7 @@ public class WaySegmentParser {
 
         public WaySegmentParser build() {
             return new WaySegmentParser(
-                    nodeAccess, directory, elevationProvider, wayFilter, splitNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
+                    nodeAccess, directory, elevationProvider, pass1WayPreHook, wayFilter, pass2NodePreHook, pass2AfterNodesHook, splitNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
                     edgeHandler, workerThreads
             );
         }

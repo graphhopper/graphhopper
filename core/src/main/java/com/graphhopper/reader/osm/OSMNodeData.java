@@ -85,7 +85,7 @@ class OSMNodeData {
         // entries.
         idsByOsmNodeIds = new GHLongIntBTree(200);
         towerNodes = nodeAccess;
-        pillarNodes = new PillarInfo(towerNodes.is3D(), directory);
+        pillarNodes = new PillarInfo(towerNodes.is3D(), directory, "");
 
         nodeTagIndicesByOsmNodeIds = new GHLongIntBTree(200);
         nodeTags = new ArrayList<>();
