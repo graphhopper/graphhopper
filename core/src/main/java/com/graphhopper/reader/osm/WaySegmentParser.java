@@ -233,7 +233,7 @@ public class WaySegmentParser {
                     node.setTag("gh:split_node", true);
             }
 
-            // we important node tags, so they will be available for the edge handler
+            // we keep important node tags, so they will be available for the edge handler
             node.removeTag("created_by");
             node.removeTag("source");
             node.removeTag("note");
