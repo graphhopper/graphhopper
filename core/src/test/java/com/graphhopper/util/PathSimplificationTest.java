@@ -118,14 +118,14 @@ public class PathSimplificationTest {
         PointList waypoints = new PointList(2, g.getNodeAccess().is3D());
         waypoints.add(g.getNodeAccess(), 0);
         waypoints.add(g.getNodeAccess(), 10);
-        List<ResponsePath.Interval> waypointIntervals = Collections.singletonList(new ResponsePath.Interval(0, points.size() - 1));
+        List<Integer> waypointIndices = Arrays.asList(0, points.size() - 1);
 
         ResponsePath responsePath = new ResponsePath();
         responsePath.setInstructions(wayList);
         responsePath.addPathDetails(details);
         responsePath.setPoints(points);
         responsePath.setWaypoints(waypoints);
-        responsePath.setWaypointIntervals(waypointIntervals);
+        responsePath.setWaypointIndices(waypointIndices);
 
         int numberOfPoints = points.size();
 
@@ -142,7 +142,7 @@ public class PathSimplificationTest {
         responsePath.addPathDetails(details);
         responsePath.setPoints(p.calcPoints());
         responsePath.setWaypoints(waypoints);
-        responsePath.setWaypointIntervals(waypointIntervals);
+        responsePath.setWaypointIndices(waypointIndices);
 
         ramerDouglasPeucker.setMaxDistance(100000000);
         PathSimplification.simplify(responsePath, ramerDouglasPeucker, true);
