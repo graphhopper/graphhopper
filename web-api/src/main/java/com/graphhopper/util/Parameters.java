@@ -205,6 +205,10 @@ public class Parameters {
         public static final String WEIGHT = "weight";
         public static final String DISTANCE = "distance";
         public static final String INTERSECTION = "intersection";
+
+        public static final String LEG_TIME = "leg_time";
+        public static final String LEG_DISTANCE = "leg_distance";
+        public static final String LEG_WEIGHT = "leg_weight";
     }
 
 }
