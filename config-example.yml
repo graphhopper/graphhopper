@@ -36,15 +36,15 @@ graphhopper:
       weighting: custom
       custom_model:
         distance_influence: 70
-  #   turn_costs: true
-  #   u_turn_costs: 60
+#      turn_costs: true
+#      u_turn_costs: 60
 
-  # - name: bike
-      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
-  #   vehicle: bike
-  #   weighting: custom
-  #   # the custom model in bike2.json is defined to avoid hills
-  #   custom_model_file: bike2.json
+#    - name: bike
+#      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
+#      vehicle: bike
+#      weighting: custom
+#      # the custom model in bike.json is defined to avoid hills
+#      custom_model_file: bike.json
 
   # specify the folder where to find the custom model files
   custom_models.directory: custom_models

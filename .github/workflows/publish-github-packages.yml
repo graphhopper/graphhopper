@@ -41,8 +41,9 @@ jobs:
           restore-keys: |
             ${{ runner.os}}-node_modules-
       - name: Build and publish package ${{ matrix.java-version }}
+        # special 'wagon' option due to https://github.com/orgs/community/discussions/49001
         run: |
           mvn -B versions:set -DnewVersion=$GITHUB_SHA -DgenerateBackupPoms=false
-          mvn -B -DskipTests -Pskip-shaded-web-jar -Pskip-tools-jar source:jar deploy
+          mvn -Dmaven.resolver.transport=wagon -B -DskipTests -Pskip-shaded-web-jar -Pskip-tools-jar source:jar deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

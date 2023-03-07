@@ -30,6 +30,8 @@ import com.graphhopper.util.*;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 
 import static com.graphhopper.routing.util.parsers.FootAverageSpeedParser.MEAN_SPEED;
@@ -228,6 +230,9 @@ public class FootTagParserTest {
         way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
         assertTrue(accessParser.getAccess(way).canSkip());
 
+        way.setTag("foot", "yes"); // the conditional tag even overrules "yes"
+        assertTrue(accessParser.getAccess(way).canSkip());
+
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("access", "no");
@@ -364,7 +369,7 @@ public class FootTagParserTest {
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "road");
@@ -399,6 +404,22 @@ public class FootTagParserTest {
         flags = encodingManager.createEdgeFlags();
         speedParser.handleWayTags(flags, way);
         assertEquals(SLOW_SPEED, footAvgSpeedEnc.getDecimal(false, flags), 1e-1);
+    }
+
+    @Test
+    public void testReadBarrierNodesFromWay() {
+        IntsRef intsRef = encodingManager.createEdgeFlags();
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+
+        ReaderNode node = new ReaderNode(1, -1, -1);
+        node.setTag("barrier", "gate");
+        node.setTag("access", "no");
+        way.setTag("node_tags", node.getTags());
+        accessParser.handleWayTags(intsRef, way);
+
+        assertFalse(footAccessEnc.getBool(false, intsRef));
+        assertFalse(footAccessEnc.getBool(true, intsRef));
     }
 
     @Test

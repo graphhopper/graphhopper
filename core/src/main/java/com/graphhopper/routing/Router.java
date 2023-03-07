@@ -56,18 +56,18 @@ import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
 import static com.graphhopper.util.Parameters.Routing.*;
 
 public class Router {
-    private final BaseGraph graph;
-    private final EncodingManager encodingManager;
-    private final LocationIndex locationIndex;
-    private final Map<String, Profile> profilesByName;
-    private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
-    private final TranslationMap translationMap;
-    private final RouterConfig routerConfig;
-    private final WeightingFactory weightingFactory;
-    private final Map<String, RoutingCHGraph> chGraphs;
-    private final Map<String, LandmarkStorage> landmarks;
-    private final boolean chEnabled;
-    private final boolean lmEnabled;
+    protected final BaseGraph graph;
+    protected final EncodingManager encodingManager;
+    protected final LocationIndex locationIndex;
+    protected final Map<String, Profile> profilesByName;
+    protected final PathDetailsBuilderFactory pathDetailsBuilderFactory;
+    protected final TranslationMap translationMap;
+    protected final RouterConfig routerConfig;
+    protected final WeightingFactory weightingFactory;
+    protected final Map<String, RoutingCHGraph> chGraphs;
+    protected final Map<String, LandmarkStorage> landmarks;
+    protected final boolean chEnabled;
+    protected final boolean lmEnabled;
 
     public Router(BaseGraph graph, EncodingManager encodingManager, LocationIndex locationIndex,
                   Map<String, Profile> profilesByName, PathDetailsBuilderFactory pathDetailsBuilderFactory,
