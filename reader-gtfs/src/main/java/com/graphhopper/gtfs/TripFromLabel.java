@@ -361,7 +361,7 @@ class TripFromLabel {
                     List<StopTime> stopTimes = StreamSupport.stream(currentFeed.getOrderedStopTimesForTrip(tripDescriptor.getTripId()).spliterator(), false)
                             .filter(st -> stopIds.contains(st.stop_id)).collect(Collectors.toList());
                     LineString ptGeometry = currentFeed.getTripGeometry(tripDescriptor.getTripId(), stopTimes);
-                    double ptDistance = stopTimes.get(stopTimes.size() - 1).shape_dist_traveled - stopTimes.get(0).shape_dist_traveled;
+                    double ptDistance = !stopTimes.isEmpty() ? stopTimes.get(stopTimes.size() - 1).shape_dist_traveled - stopTimes.get(0).shape_dist_traveled : Double.NaN;
                     if (Double.isNaN(ptDistance)) {
                         // if distance can't be read from the stoptimes data, try looking at the partition edges
                         ptDistance = partition.stream().mapToDouble(t -> t.edge.getDistance()).sum();

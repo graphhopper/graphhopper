@@ -51,7 +51,7 @@ public class FreeWalkIT {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.putObject("datareader.file", "files/beatty.osm");
-        ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
+        ghConfig.putObject("gtfs.file", "files/sample-feed.zip,files/another-sample-feed.zip");
         ghConfig.putObject("gtfs.max_transfer_interpolation_walk_time_seconds", 0);
         // TODO: This setting vv is currently "dead", as in production it switches to PtRouterFreeWalkImpl, but
         // TODO: here it is instantiated directly. Refactor by having only one Router but two Solvers, similar

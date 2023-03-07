@@ -305,7 +305,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     public LineString getTripGeometry(String trip_id, List<StopTime> tripStopTimes){
         Trip trip = trips.get(trip_id);
         // If trip has shape_id and we know the relevant stops / stoptimes, use those to generate geometry.
-        if (trip.shape_id != null && tripStopTimes != null && tripStopTimes.size() >= 2) {
+        if (trip != null && trip.shape_id != null && tripStopTimes != null && tripStopTimes.size() >= 2) {
             Shape shape = getShape(trip.shape_id);
             if (shape != null) {
                 return shape.getGeometryStartToEnd(

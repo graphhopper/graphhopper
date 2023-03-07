@@ -27,6 +27,11 @@ public class IndexStructureInfo {
     }
 
     public static IndexStructureInfo create(BBox bounds, int minResolutionInMeter) {
+        // I still need to be able to save and load an empty LocationIndex, and I can't when the extent
+        // is zero.
+        if (!bounds.isValid())
+            bounds = new BBox(-10.0, 10.0, -10.0, 10.0);
+
         double lat = Math.min(Math.abs(bounds.maxLat), Math.abs(bounds.minLat));
         double maxDistInMeter = Math.max(
                 (bounds.maxLat - bounds.minLat) / 360 * C,
