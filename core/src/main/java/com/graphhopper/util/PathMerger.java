@@ -23,13 +23,12 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class merges multiple {@link Path} objects into one continuous object that
@@ -136,7 +135,17 @@ public class PathMerger {
                 }
 
                 fullPoints.add(tmpPoints);
-                responsePath.addPathDetails(PathDetailsFromEdges.calcDetails(path, evLookup, weighting, requestedPathDetails, pathBuilderFactory, origPoints, graph));
+
+                Map<String, List<PathDetail>> details = new LinkedHashMap<>(
+                        PathDetailsFromEdges.calcDetails(path, evLookup, weighting, requestedPathDetails, pathBuilderFactory, origPoints, graph)
+                );
+                int legFirst = origPoints;
+                int legLast = pathIndex < paths.size() - 1 ? fullPoints.size() : fullPoints.size() - 1;
+                details.put("leg_time", createLegDetail(path.getTime(), legFirst, legLast));
+                details.put("leg_distance", createLegDetail(path.getDistance(), legFirst, legLast));
+                details.put("leg_weight", createLegDetail(path.getWeight(), legFirst, legLast));
+                responsePath.addPathDetails(details);
+
                 wayPointIndices.add(origPoints);
                 if (pathIndex == paths.size() - 1)
                     wayPointIndices.add(fullPoints.size() - 1);
@@ -179,6 +188,13 @@ public class PathMerger {
             PathSimplification.simplify(responsePath, ramerDouglasPeucker, enableInstructions);
         }
         return responsePath;
+    }
+
+    private List<PathDetail> createLegDetail(Object value, int first, int last) {
+        PathDetail detail = new PathDetail(value);
+        detail.setFirst(first);
+        detail.setLast(last);
+        return new ArrayList<>(Collections.singletonList(detail));
     }
 
     /**
