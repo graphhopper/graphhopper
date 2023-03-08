@@ -166,6 +166,7 @@ class QueryOverlayBuilder {
                     // no new virtual nodes if very close ("snap" together)
                     if (Snap.considerEqual(prevPoint.lat, prevPoint.lon, currSnapped.lat, currSnapped.lon)) {
                         res.setClosestNode(prevNodeId);
+                        res.setSnappedPoint(prevPoint);
                         continue;
                     }
 
