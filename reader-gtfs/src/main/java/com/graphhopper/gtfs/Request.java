@@ -23,10 +23,7 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public class Request {
     private List<GHLocation> points;
@@ -40,6 +37,7 @@ public class Request {
     private boolean arriveBy;
     private double walkSpeedKmH = 5.0;
     private int blockedRouteTypes;
+    private Map<Integer, Long> boardingPenaltiesByRouteType = new HashMap<>();
     private Locale locale = Helper.getLocale("en");
     private Duration limitTripTime;
     private Duration limitStreetTime;
@@ -135,6 +133,14 @@ public class Request {
 
     public void setBlockedRouteTypes(int blockedRouteTypes) {
         this.blockedRouteTypes = blockedRouteTypes;
+    }
+
+    public Map<Integer, Long> getBoardingPenaltiesByRouteType() {
+        return boardingPenaltiesByRouteType;
+    }
+
+    public void setBoardingPenaltiesByRouteType(Map<Integer, Long> boardingPenaltiesByRouteType) {
+        this.boardingPenaltiesByRouteType = boardingPenaltiesByRouteType;
     }
 
     public Locale getLocale() {

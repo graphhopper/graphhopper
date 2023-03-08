@@ -98,18 +98,26 @@ public class Trip {
         public final String feed_id;
         public final boolean isInSameVehicleAsPrevious;
         public final String trip_headsign;
+        public final String route_long_name;
+        public final String route_short_name;
+        public final int route_type;
+        public final String route_desc;
         public final long travelTime;
         public final List<Stop> stops;
         public final String trip_id;
         public final String route_id;
 
-        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, String headsign, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
+        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, String headsign, String route_long_name, String route_short_name, String route_desc, int route_type, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
             super("pt", stops.get(0).stop_name, geometry, distance);
             this.feed_id = feedId;
             this.isInSameVehicleAsPrevious = isInSameVehicleAsPrevious;
             this.trip_id = tripId;
             this.route_id = routeId;
             this.trip_headsign = headsign;
+            this.route_long_name = route_long_name;
+            this.route_short_name = route_short_name;
+            this.route_desc = route_desc;
+            this.route_type = route_type;
             this.travelTime = travelTime;
             this.stops = stops;
         }

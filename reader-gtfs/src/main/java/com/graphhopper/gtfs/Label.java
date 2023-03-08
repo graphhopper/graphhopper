@@ -17,77 +17,54 @@
  */
 package com.graphhopper.gtfs;
 
-import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIteratorState;
-
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Label {
 
     static class Transition {
         final Label label;
-        final EdgeLabel edge;
+        final GraphExplorer.MultiModalEdge edge;
 
-        Transition(Label label, EdgeLabel edge) {
+        Transition(Label label, GraphExplorer.MultiModalEdge edge) {
             this.label = label;
             this.edge = edge;
         }
 
         @Override
         public String toString() {
-            return (edge != null ? edge.toString() + " -> " : "") + label.adjNode;
+            return (edge != null ? edge.toString() + " -> " : "") + label.node;
         }
 
-    }
-
-    public static class EdgeLabel {
-        public final EdgeIteratorState edgeIteratorState;
-        public final GtfsStorage.EdgeType edgeType;
-        public final String feedId;
-        public final int nTransfers;
-        public final double distance;
-
-        public EdgeLabel(EdgeIteratorState edgeIteratorState, GtfsStorage.EdgeType edgeType, String feedId, int nTransfers, double distance) {
-            this.edgeIteratorState = edgeIteratorState;
-            this.edgeType = edgeType;
-            this.feedId = feedId;
-            this.nTransfers = nTransfers;
-            this.distance = distance;
-        }
-
-        @Override
-        public String toString() {
-            return edgeType.toString();
-        }
     }
 
     public boolean deleted = false;
 
     public final long currentTime;
 
-    public final int edge;
-    public final int adjNode;
+    public final GraphExplorer.MultiModalEdge edge;
+    public final NodeId node;
 
     public final int nTransfers;
 
     public final Long departureTime;
     public final long streetTime;
+    public final long extraWeight;
+
 
     final long residualDelay;
     final boolean impossible;
 
     public final Label parent;
 
-    Label(long currentTime, int edgeId, int adjNode, int nTransfers, Long departureTime, long streetTime, long residualDelay, boolean impossible, Label parent) {
+    Label(long currentTime, GraphExplorer.MultiModalEdge edge, NodeId node, int nTransfers, Long departureTime, long streetTime, long extraWeight, long residualDelay, boolean impossible, Label parent) {
         this.currentTime = currentTime;
-        this.edge = edgeId;
-        this.adjNode = adjNode;
+        this.edge = edge;
+        this.node = node;
         this.nTransfers = nTransfers;
         this.departureTime = departureTime;
         this.streetTime = streetTime;
+        this.extraWeight = extraWeight;
         this.residualDelay = residualDelay;
         this.impossible = impossible;
         this.parent = parent;
@@ -95,10 +72,10 @@ public class Label {
 
     @Override
     public String toString() {
-        return adjNode + " " + (departureTime != null ? Instant.ofEpochMilli(departureTime) : "---") + "\t" + nTransfers + "\t" + Instant.ofEpochMilli(currentTime);
+        return node + " " + (departureTime != null ? Instant.ofEpochMilli(departureTime) : "---") + "\t" + nTransfers + "\t" + Instant.ofEpochMilli(currentTime);
     }
 
-    static List<Label.Transition> getTransitions(Label _label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, RealtimeFeed realtimeFeed) {
+    static List<Label.Transition> getTransitions(Label _label, boolean arriveBy) {
         Label label = _label;
         boolean reverseEdgeFlags = !arriveBy;
         List<Label.Transition> result = new ArrayList<>();
@@ -106,19 +83,11 @@ public class Label {
             result.add(new Label.Transition(label, null));
         }
         while (label.parent != null) {
-            EdgeIteratorState edgeIteratorState = queryGraph.getEdgeIteratorState(label.edge, reverseEdgeFlags ? label.adjNode : label.parent.adjNode).detach(false);
-            if (reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getBaseNode() != label.parent.adjNode || edgeIteratorState.getAdjNode() != label.adjNode)) {
-                throw new IllegalStateException();
-            }
-            if (!reverseEdgeFlags && edgeIteratorState != null && (edgeIteratorState.getAdjNode() != label.parent.adjNode || edgeIteratorState.getBaseNode() != label.adjNode)) {
-                throw new IllegalStateException();
-            }
-
             Label.Transition transition;
             if (reverseEdgeFlags) {
-                transition = new Label.Transition(label, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder, realtimeFeed) : null);
+                transition = new Label.Transition(label, label.edge);
             } else {
-                transition = new Label.Transition(label.parent, edgeIteratorState != null ? Label.getEdgeLabel(edgeIteratorState, encoder, realtimeFeed) : null);
+                transition = new Label.Transition(label.parent, label.edge);
             }
             label = label.parent;
             result.add(transition);
@@ -130,18 +99,37 @@ public class Label {
         return result;
     }
 
-    public static EdgeLabel getEdgeLabel(EdgeIteratorState edgeIteratorState, PtEncodedValues flagEncoder, RealtimeFeed realtimeFeed) {
-        GtfsStorage.EdgeType edgeType = edgeIteratorState.get(flagEncoder.getTypeEnc());
-        String feedId;
-        if (edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.TRANSFER) {
-            GtfsStorageI.PlatformDescriptor platformDescriptor = realtimeFeed.getPlatformDescriptorByEdge().get(edgeIteratorState.getEdge());
-            feedId = platformDescriptor.feed_id;
-        } else {
-            feedId = null;
+    public static class NodeId {
+        public NodeId(int streetNode, int ptNode) {
+            this.streetNode = streetNode;
+            this.ptNode = ptNode;
         }
-        int nTransfers = edgeIteratorState.get(flagEncoder.getTransfersEnc());
-        double distance = edgeIteratorState.getDistance();
-        return new EdgeLabel(edgeIteratorState, edgeType, feedId, nTransfers, distance);
-    }
 
+        public int streetNode;
+        public int ptNode;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            NodeId nodeId = (NodeId) o;
+            return streetNode == nodeId.streetNode && ptNode == nodeId.ptNode;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = 1;
+            result = 31 * result + streetNode;
+            result = 31 * result + ptNode;
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "NodeId{" +
+                    "streetNode=" + streetNode +
+                    ", ptNode=" + ptNode +
+                    '}';
+        }
+    }
 }

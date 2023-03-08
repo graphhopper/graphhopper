@@ -52,8 +52,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
 
 /**
  * All entities must be from a single feed namespace.
@@ -111,20 +109,8 @@ public class GTFSFeed implements Cloneable, Closeable {
      *
      * Interestingly, all references are resolvable when tables are loaded in alphabetical order.
      */
-    public void loadFromFile(ZipFile zip, String fid) throws IOException {
+    public void loadFromZipfileOrDirectory(File zip, String fid) throws IOException {
         if (this.loaded) throw new UnsupportedOperationException("Attempt to load GTFS into existing database");
-
-        // NB we don't have a single CRC for the file, so we combine all the CRCs of the component files. NB we are not
-        // simply summing the CRCs because CRCs are (I assume) uniformly randomly distributed throughout the width of a
-        // long, so summing them is a convolution which moves towards a Gaussian with mean 0 (i.e. more concentrated
-        // probability in the center), degrading the quality of the hash. Instead we XOR. Assuming each bit is independent,
-        // this will yield a nice uniformly distributed result, because when combining two bits there is an equal
-        // probability of any input, which means an equal probability of any output. At least I think that's all correct.
-        // Repeated XOR is not commutative but zip.stream returns files in the order they are in the central directory
-        // of the zip file, so that's not a problem.
-        checksum = zip.stream().mapToLong(ZipEntry::getCrc).reduce((l1, l2) -> l1 ^ l2).getAsLong();
-
-        db.getAtomicLong("checksum").set(checksum);
 
         new FeedInfo.Loader(this).loadTable(zip);
         // maybe we should just point to the feed object itself instead of its ID, and null out its stoptimes map after loading
@@ -173,8 +159,8 @@ public class GTFSFeed implements Cloneable, Closeable {
         loaded = true;
     }
 
-    public void loadFromFileAndLogErrors(ZipFile zip) throws IOException {
-        loadFromFile(zip, null);
+    public void loadFromFileAndLogErrors(File zip) throws IOException {
+        loadFromZipfileOrDirectory(zip, null);
         for (GTFSError error : errors) {
             LOG.error(error.getMessageWithContext());
         }
@@ -307,29 +293,6 @@ public class GTFSFeed implements Cloneable, Closeable {
                 .collect(Collectors.toList());
     }
 
-    public LineString getStraightLineForStops(String trip_id) {
-        CoordinateList coordinates = new CoordinateList();
-        LineString ls = null;
-        Trip trip = trips.get(trip_id);
-
-        Iterable<StopTime> stopTimes;
-        stopTimes = getOrderedStopTimesForTrip(trip.trip_id);
-        if (Iterables.size(stopTimes) > 1) {
-            for (StopTime stopTime : stopTimes) {
-                Stop stop = stops.get(stopTime.stop_id);
-                Double lat = stop.stop_lat;
-                Double lon = stop.stop_lon;
-                coordinates.add(new Coordinate(lon, lat));
-            }
-            ls = gf.createLineString(coordinates.toCoordinateArray());
-        }
-        // set ls equal to null if there is only one stopTime to avoid an exception when creating linestring
-        else{
-            ls = null;
-        }
-        return ls;
-    }
-
     /**
      * Returns a trip geometry object (LineString) for a given trip id.
      * If the trip has a shape reference, this will be used for the geometry.
@@ -339,24 +302,26 @@ public class GTFSFeed implements Cloneable, Closeable {
      * @return          the LineString representing the trip geometry.
      * @see             LineString
      */
-    public LineString getTripGeometry(String trip_id){
-
-        CoordinateList coordinates = new CoordinateList();
-        LineString ls = null;
+    public LineString getTripGeometry(String trip_id, List<StopTime> tripStopTimes){
         Trip trip = trips.get(trip_id);
-
-        // If trip has shape_id, use it to generate geometry.
-        if (trip.shape_id != null) {
+        // If trip has shape_id and we know the relevant stops / stoptimes, use those to generate geometry.
+        if (trip != null && trip.shape_id != null && tripStopTimes != null && tripStopTimes.size() >= 2) {
             Shape shape = getShape(trip.shape_id);
-            if (shape != null) ls = shape.geometry;
+            if (shape != null) {
+                return shape.getGeometryStartToEnd(
+                    tripStopTimes.get(0).shape_dist_traveled,
+                    tripStopTimes.get(tripStopTimes.size() - 1).shape_dist_traveled,
+                    stops.get(tripStopTimes.get(0).stop_id).getCoordinates(),
+                    stops.get(tripStopTimes.get(tripStopTimes.size() - 1).stop_id).getCoordinates()
+                );
+            }
         }
-
-        // Use the ordered stoptimes.
-        if (ls == null) {
-            ls = getStraightLineForStops(trip_id);
+        // Else Use the stoptimes
+        if (tripStopTimes != null) {
+            return gf.createLineString(tripStopTimes.stream().map(st -> stops.get(st.stop_id).getCoordinates())
+                    .collect(Collectors.toList()).toArray(new Coordinate[tripStopTimes.size()]));
         }
-
-        return ls;
+        return null;
     }
 
     /**
@@ -413,7 +378,6 @@ public class GTFSFeed implements Cloneable, Closeable {
 
     private GTFSFeed (DB db) {
         this.db = db;
-
         agency = db.getTreeMap("agency");
         feedInfo = db.getTreeMap("feed_info");
         routes = db.getTreeMap("routes");
@@ -425,10 +389,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         fares = db.getTreeMap("fares");
         services = db.getTreeMap("services");
         shape_points = db.getTreeMap("shape_points");
-
         feedId = db.getAtomicString("feed_id").get();
-        checksum = db.getAtomicLong("checksum").get();
-
         errors = db.getTreeSet("errors");
     }
 

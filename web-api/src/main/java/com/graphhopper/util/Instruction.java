@@ -46,6 +46,7 @@ public class Instruction {
     protected boolean rawName;
     protected int sign;
     protected String name;
+    protected String headsign;
     protected double distance;
     protected long time;
     protected Map<String, Object> extraInfo = new HashMap<>(3);
@@ -58,6 +59,11 @@ public class Instruction {
         this.sign = sign;
         this.name = name;
         this.points = pl;
+    }
+
+    public Instruction(int sign, String name, String headsign, PointList pl) {
+        this(sign, name, pl);
+        this.headsign = headsign;
     }
 
     /**
@@ -85,6 +91,10 @@ public class Instruction {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getHeadsign()  {
+        return headsign;
     }
 
     public Map<String, Object> getExtraInfoJSON() {

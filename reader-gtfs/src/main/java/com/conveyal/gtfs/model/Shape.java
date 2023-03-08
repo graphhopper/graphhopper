@@ -28,6 +28,7 @@ package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
 import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.CoordinateList;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.mapdb.Fun;
@@ -54,5 +55,35 @@ public class Shape {
                 .toArray(i -> new Coordinate[i]);
         geometry = geometryFactory.createLineString(coords);
         shape_dist_traveled = points.values().stream().mapToDouble(point -> point.shape_dist_traveled).toArray();
+    }
+
+    public LineString getGeometryStartToEnd(double distTravelledStart, double distTravelledEnd, Coordinate departureStopCoordinates, Coordinate arrivalStopCoordinates) {
+        CoordinateList coordinates = new CoordinateList();
+        Coordinate[] shapePoints = geometry.getCoordinates();
+        coordinates.add(departureStopCoordinates);
+        boolean startProcessed = false;
+        for (int i = 0; i < shape_dist_traveled.length; i++) {
+            if (shape_dist_traveled[i] >= distTravelledStart) { // Point i is on the route
+                if (!startProcessed) { // Start point has not been processed yet
+                    if (i > 0) { // Start point is on an edge between 2 shape coordinates
+                        coordinates.add(getPartialDistanceCoordinates(distTravelledStart, shape_dist_traveled[i - 1], shape_dist_traveled[i], shapePoints[i - 1], shapePoints[i]));
+                    }
+                    startProcessed = true;
+                }
+                if (shape_dist_traveled[i] >= distTravelledEnd) { // Point i is after the end of the route
+                    coordinates.add(getPartialDistanceCoordinates(distTravelledEnd, shape_dist_traveled[i - 1], shape_dist_traveled[i], shapePoints[i - 1], shapePoints[i]));
+                    break;
+                } else {
+                    coordinates.add(shapePoints[i]);
+                }
+            }
+        }
+        coordinates.add(arrivalStopCoordinates);
+        return geometryFactory.createLineString(coordinates.toCoordinateArray());
+    }
+
+    private Coordinate getPartialDistanceCoordinates(double distancePoint, double distanceA, double distanceB, Coordinate pointA, Coordinate pointB) {
+        double partRatio = (distancePoint - distanceA) / (distanceB - distanceA);
+        return new Coordinate(pointA.x + (pointB.x - pointA.x) * partRatio, pointA.y + (pointB.y - pointA.y) * partRatio);
     }
 }

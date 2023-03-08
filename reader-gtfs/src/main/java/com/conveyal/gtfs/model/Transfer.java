@@ -93,4 +93,12 @@ public class Transfer extends Entity {
 
     }
 
+    @Override
+    public Transfer clone() {
+        try {
+            return (Transfer) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

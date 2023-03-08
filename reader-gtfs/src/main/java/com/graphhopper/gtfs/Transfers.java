@@ -19,10 +19,12 @@
 package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.Transfer;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Transfers {
 
@@ -31,11 +33,41 @@ public class Transfers {
     private final Map<String, Set<String>> routesByStop;
 
     public Transfers(GTFSFeed feed) {
-        this.transfersToStop = feed.transfers.values().stream().collect(Collectors.groupingBy(t -> t.to_stop_id));
-        this.transfersFromStop = feed.transfers.values().stream().collect(Collectors.groupingBy(t -> t.from_stop_id));
+        this.transfersToStop = explodeTransfers(feed).collect(Collectors.groupingBy(t -> t.to_stop_id));
+        this.transfersFromStop = explodeTransfers(feed).collect(Collectors.groupingBy(t -> t.from_stop_id));
         this.routesByStop = feed.stop_times.values().stream()
                 .collect(Collectors.groupingBy(stopTime -> stopTime.stop_id,
                         Collectors.mapping(stopTime -> feed.trips.get(stopTime.trip_id).route_id, Collectors.toSet())));
+    }
+
+    private Stream<Transfer> explodeTransfers(GTFSFeed feed) {
+        return feed.transfers.values().stream()
+                .flatMap(t -> {
+                    Stop fromStop = feed.stops.get(t.from_stop_id);
+                    if (fromStop.location_type == 1) {
+                        return feed.stops.values().stream().filter(platform -> fromStop.stop_id.equals(platform.parent_station))
+                                .map(platform -> {
+                                    Transfer clone = t.clone();
+                                    clone.from_stop_id = platform.stop_id;
+                                    return clone;
+                                });
+                    } else {
+                        return Stream.of(t);
+                    }
+                })
+                .flatMap(t -> {
+                    Stop toStop = feed.stops.get(t.to_stop_id);
+                    if (toStop.location_type == 1) {
+                        return feed.stops.values().stream().filter(platform -> toStop.stop_id.equals(platform.parent_station))
+                                .map(platform -> {
+                                    Transfer clone = t.clone();
+                                    clone.to_stop_id = platform.stop_id;
+                                    return clone;
+                                });
+                    } else {
+                        return Stream.of(t);
+                    }
+                });
     }
 
     // Starts implementing the proposed GTFS extension for route and trip specific transfer rules.

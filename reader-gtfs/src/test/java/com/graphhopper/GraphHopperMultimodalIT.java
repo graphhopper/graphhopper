@@ -31,6 +31,10 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 
 import java.io.File;
 import java.time.*;
@@ -53,7 +57,7 @@ public class GraphHopperMultimodalIT {
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("datareader.file", "files/beatty.osm");
-        ghConfig.putObject("gtfs.file", "files/sample-feed.zip");
+        ghConfig.putObject("gtfs.file", "files/sample-feed");
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("foot").setVehicle("foot").setWeighting("fastest"),
@@ -63,7 +67,7 @@ public class GraphHopperMultimodalIT {
         graphHopperGtfs.init(ghConfig);
         graphHopperGtfs.importOrLoad();
         locationIndex = graphHopperGtfs.getLocationIndex();
-        graphHopper = PtRouterImpl.createFactory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs, locationIndex, graphHopperGtfs.getGtfsStorage())
+        graphHopper = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getGraphHopperStorage(), locationIndex, graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
@@ -138,7 +142,7 @@ public class GraphHopperMultimodalIT {
         assertThat(distances.stream().mapToDouble(d -> (double) d.getValue()).sum())
                 .isEqualTo(EXPECTED_TOTAL_WALKING_DISTANCE); // Also total walking distance -- PathDetails only cover access/egress for now
         assertThat(distances.get(0).getFirst()).isEqualTo(0); // PathDetails start and end with PointList
-        assertThat(distances.get(distances.size()-1).getLast()).isEqualTo(10);
+        assertThat(distances.get(distances.size()-1).getLast()).isEqualTo(9);
 
         List<PathDetail> accessDistances = ((Trip.WalkLeg) firstTransitSolution.getLegs().get(0)).details.get("distance");
         assertThat(accessDistances.get(0).getFirst()).isEqualTo(0);
@@ -295,6 +299,21 @@ public class GraphHopperMultimodalIT {
         assertThat(responses).allMatch(r -> !r.getAll().isEmpty());
     }
 
+    @Test
+    public void testLineStringWhenWalking() {
+        Request ghRequest = new Request(
+                36.90662748004327, -116.76506702494832,
+                36.90814220713894, -116.76219285567532
+        );
+        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
+
+        GHResponse response = graphHopper.route(ghRequest);
+        Geometry routeGeometry = response.getAll().get(0).getPoints().toLineString(false);
+        Geometry legGeometry = response.getAll().get(0).getLegs().get(0).geometry;
+        assertThat(routeGeometry).isEqualTo(readWktLineString("LINESTRING (-116.765169 36.906693, -116.764614 36.907243, -116.763438 36.908382, -116.762615 36.907825, -116.762241 36.908175)"));
+        assertThat(legGeometry).isEqualTo(readWktLineString("LINESTRING (-116.765169 36.906693, -116.764614 36.907243, -116.763438 36.908382, -116.762615 36.907825, -116.762241 36.908175)"));
+    }
+
     private Duration legDuration(Trip.Leg leg) {
         return Duration.between(departureTime(leg), arrivalTime(leg));
     }
@@ -313,5 +332,15 @@ public class GraphHopperMultimodalIT {
         return Instant.ofEpochMilli(leg.getArrivalTime().getTime());
     }
 
+    private LineString readWktLineString(String wkt) {
+        WKTReader wktReader = new WKTReader();
+        LineString expectedGeometry = null;
+        try {
+            expectedGeometry = (LineString) wktReader.read(wkt);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return expectedGeometry;
+    }
 
 }

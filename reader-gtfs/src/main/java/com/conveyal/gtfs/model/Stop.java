@@ -27,6 +27,7 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
+import org.locationtech.jts.geom.Coordinate;
 
 import java.io.IOException;
 import java.net.URL;
@@ -72,7 +73,7 @@ public class Stop extends Entity {
             s.stop_lon  = getDoubleField("stop_lon", true, -180D, 180D);
             s.zone_id   = getStringField("zone_id", false);
             s.stop_url  = getUrlField("stop_url", false);
-            s.location_type  = getIntField("location_type", false, 0, 1);
+            s.location_type  = getIntField("location_type", false, 0, 4);
             s.parent_station = getStringField("parent_station", false);
             s.stop_timezone  = getStringField("stop_timezone", false);
             s.wheelchair_boarding = getStringField("wheelchair_boarding", false);
@@ -85,4 +86,14 @@ public class Stop extends Entity {
 
     }
 
+    public Coordinate getCoordinates() {
+        return new Coordinate(stop_lon, stop_lat);
+    }
+
+    @Override
+    public String toString() {
+        return "Stop{" +
+                "stop_id='" + stop_id + '\'' +
+                '}';
+    }
 }
