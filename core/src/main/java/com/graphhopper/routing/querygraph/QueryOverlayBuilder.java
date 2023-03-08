@@ -33,6 +33,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
+
 class QueryOverlayBuilder {
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
@@ -170,6 +172,7 @@ class QueryOverlayBuilder {
                         res.setSnappedPoint(prevPoint);
                         res.setWayIndex(i == 0 ? 0 : results.get(i - 1).getWayIndex());
                         res.setSnappedPosition(i == 0 ? Snap.Position.TOWER : results.get(i - 1).getSnappedPosition());
+                        res.setQueryDistance(DIST_PLANE.calcDist(prevPoint.lat, prevPoint.lon, res.getQueryPoint().lat, res.getQueryPoint().lon));
                         continue;
                     }
 
