@@ -1,0 +1,11 @@
+route_id,agency_id,route_short_name,route_long_name,route_desc,route_type,route_url,route_color,route_text_color
+AB,DTA,10,Airport - Bullfrog,,2,,,
+BFC,DTA,20,Bullfrog - Furnace Creek Resort,,3,,,
+STBA,DTA,30,Stagecoach - Airport Shuttle,,3,,,
+CITY,DTA,40,City,,3,,,
+AAMV,DTA,50,Airport - Amargosa Valley,,3,,,
+ABBFC,DTA,10,Airport - Furnace Creek Resort (without change),,3,,,
+FUNNY_BLOCK_AB,DTA,Wurst1,Funny Block Trip to Bullfrog,,3,,,
+FUNNY_BLOCK_BFC,DTA,Wurst2,Funny Block Trip to Bullfrog,,3,,,
+FUNNY_BLOCK_NADAVAMV,DTA,Wurst3,Funny Block Trip to Bullfrog,,3,,,
+FUNNY_BLOCK_FCAMV,DTA,Wurst4,Funny Block Trip to Bullfrog,,3,,,

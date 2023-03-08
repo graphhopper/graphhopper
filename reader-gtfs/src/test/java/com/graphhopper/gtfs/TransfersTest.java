@@ -41,10 +41,10 @@ public class TransfersTest {
     @BeforeAll
     public void init() throws IOException {
         GTFSFeed gtfsFeed1 = new GTFSFeed();
-        gtfsFeed1.loadFromZipfileOrDirectory(new File("files/sample-feed.zip"), "");
+        gtfsFeed1.loadFromZipfileOrDirectory(new File("files/sample-feed"), "");
         sampleFeed = new Transfers(gtfsFeed1);
         GTFSFeed gtfsFeed2 = new GTFSFeed();
-        gtfsFeed2.loadFromZipfileOrDirectory(new File("files/another-sample-feed.zip"), "");
+        gtfsFeed2.loadFromZipfileOrDirectory(new File("files/another-sample-feed"), "");
         anotherSampleFeed = new Transfers(gtfsFeed2);
     }
 

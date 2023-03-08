@@ -20,6 +20,7 @@ public class PtEdgeAttributes {
                 "type=" + type +
                 ", time=" + time +
                 ", transfers=" + transfers +
+                ", route_type=" + route_type +
                 '}';
     }
 

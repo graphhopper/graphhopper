@@ -1,0 +1,4 @@
+route_id,service_id,trip_id,trip_headsign,direction_id,block_id,shape_id
+COURT2MUSEUM,FULLW,MUSEUM1,to Museum,0
+COURT2MUSEUM,FULLW,MUSEUM2,to Airport,0
+MUSEUM2AIRPORT,FULLW,MUSEUMAIRPORT1,to Airport,0

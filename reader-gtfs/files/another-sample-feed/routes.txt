@@ -1,0 +1,4 @@
+route_id,agency_id,route_short_name,route_long_name,route_desc,route_type,route_url,route_color,route_text_color
+COURT2MUSEUM,PTA,C2M,Beatty Justice Court - Beatty Museum,,3,,,
+MUSEUM2AIRPORT,PTA,M2A,Next to Musem - Airport,,3,,,
+

@@ -57,7 +57,7 @@ public class GraphHopperMultimodalIT {
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("datareader.file", "files/beatty.osm");
-        ghConfig.putObject("gtfs.file", "files/sample-feed.zip");
+        ghConfig.putObject("gtfs.file", "files/sample-feed");
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("foot").setVehicle("foot").setWeighting("fastest"),
@@ -142,7 +142,7 @@ public class GraphHopperMultimodalIT {
         assertThat(distances.stream().mapToDouble(d -> (double) d.getValue()).sum())
                 .isEqualTo(EXPECTED_TOTAL_WALKING_DISTANCE); // Also total walking distance -- PathDetails only cover access/egress for now
         assertThat(distances.get(0).getFirst()).isEqualTo(0); // PathDetails start and end with PointList
-        assertThat(distances.get(distances.size()-1).getLast()).isEqualTo(10);
+        assertThat(distances.get(distances.size()-1).getLast()).isEqualTo(9);
 
         List<PathDetail> accessDistances = ((Trip.WalkLeg) firstTransitSolution.getLegs().get(0)).details.get("distance");
         assertThat(accessDistances.get(0).getFirst()).isEqualTo(0);
