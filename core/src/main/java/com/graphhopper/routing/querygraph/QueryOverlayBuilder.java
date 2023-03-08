@@ -157,7 +157,8 @@ class QueryOverlayBuilder {
                 // Create base and adjacent PointLists for all non-equal virtual nodes.
                 // We do so via inserting them at the correct position of fullPL and cutting the
                 // fullPL into the right pieces.
-                for (Snap res : results) {
+                for (int i = 0; i < results.size(); i++) {
+                    Snap res = results.get(i);
                     if (res.getClosestEdge().getBaseNode() != baseNode)
                         throw new IllegalStateException("Base nodes have to be identical but were not: " + closestEdge + " vs " + res.getClosestEdge());
 
@@ -167,6 +168,8 @@ class QueryOverlayBuilder {
                     if (Snap.considerEqual(prevPoint.lat, prevPoint.lon, currSnapped.lat, currSnapped.lon)) {
                         res.setClosestNode(prevNodeId);
                         res.setSnappedPoint(prevPoint);
+                        res.setWayIndex(i == 0 ? 0 : results.get(i - 1).getWayIndex());
+                        res.setSnappedPosition(i == 0 ? Snap.Position.TOWER : results.get(i - 1).getSnappedPosition());
                         continue;
                     }
 
