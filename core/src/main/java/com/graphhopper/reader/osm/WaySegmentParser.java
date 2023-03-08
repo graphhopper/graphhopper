@@ -121,7 +121,7 @@ public class WaySegmentParser {
         LOGGER.info("Start reading OSM file: '" + osmFile + "'");
         LOGGER.info("pass0 - start");
         StopWatch sw0 = StopWatch.started();
-        readOSM(osmFile, new Pass0Handler());
+        readOSM(osmFile, new Pass0Handler(), new SkipOptions(true, true, false));
         LOGGER.info("pass0 - finished, took: {}", sw0.stop().getTimeString());
 
         LOGGER.info("Start reading OSM file: '" + osmFile + "'");
