@@ -229,32 +229,33 @@ public class GraphHopperTest {
     public void testUTurn() {
         final String profile = "profile";
         final String vehicle = "car";
-        final String weighting = "shortest";
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
-                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
+                setProfiles(new CustomProfile(profile).setCustomModel(new CustomModel()).setVehicle(vehicle).setTurnCosts(true));
         hopper.importOrLoad();
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
 
-        GHRequest request = new GHRequest();
-        request.addPoint(new GHPoint(43.743887, 7.431151));
-        request.addPoint(new GHPoint(43.744007, 7.431076));
-        //Force initial U-Turn
-        request.setHeadings(Arrays.asList(200.));
+        {
+            GHRequest request = new GHRequest();
+            request.addPoint(new GHPoint(43.743887, 7.431151));
+            request.addPoint(new GHPoint(43.744007, 7.431076));
+            //Force initial (two-lane) U-Turn
+            request.setHeadings(Arrays.asList(200.));
 
-        request.setAlgorithm(ASTAR).setProfile(profile);
-        GHResponse rsp = hopper.route(request);
+            request.setProfile(profile);
+            GHResponse rsp = hopper.route(request);
 
-        assertFalse(rsp.hasErrors());
-        ResponsePath res = rsp.getBest();
-        InstructionList il = res.getInstructions();
-        assertEquals(4, il.size());
+            assertFalse(rsp.hasErrors());
+            ResponsePath res = rsp.getBest();
+            InstructionList il = res.getInstructions();
+            assertEquals(4, il.size());
 
-        // Initial U-turn
-        assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(1).getTurnDescription(tr));
-        // Second U-turn to get to destination
-        assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(2).getTurnDescription(tr));
+            // Initial (two-lane) U-turn
+            assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(1).getTurnDescription(tr));
+            // Second (two-lane) U-turn to get to destination
+            assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(2).getTurnDescription(tr));
+        }
     }
 
     private void testImportCloseAndLoad(boolean ch, boolean lm, boolean sort, boolean custom) {
