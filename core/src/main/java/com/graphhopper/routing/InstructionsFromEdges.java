@@ -332,6 +332,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     }
 
     private int getTurn(EdgeIteratorState edge, int baseNode, int prevNode, int adjNode, String name, String destinationAndRef) {
+        if (edge.getEdge() == prevEdge.getEdge())
+            // this is the simplest turn to recognize, a plain u-turn.
+            return Instruction.U_TURN_UNKNOWN;
         GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
         double lat = point.getLat();
         double lon = point.getLon();
