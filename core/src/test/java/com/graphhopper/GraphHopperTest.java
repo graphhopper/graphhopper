@@ -226,35 +226,61 @@ public class GraphHopperTest {
     }
 
     @Test
-    public void testUTurn() {
+    public void testUTurnInstructions() {
         final String profile = "profile";
         final String vehicle = "car";
-        final String weighting = "shortest";
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
-                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting));
+                setProfiles(new CustomProfile(profile).setCustomModel(new CustomModel()).setVehicle(vehicle).setTurnCosts(true).putHint(U_TURN_COSTS, 20));
         hopper.importOrLoad();
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
 
-        GHRequest request = new GHRequest();
-        request.addPoint(new GHPoint(43.743887, 7.431151));
-        request.addPoint(new GHPoint(43.744007, 7.431076));
-        //Force initial U-Turn
-        request.setHeadings(Arrays.asList(200.));
+        {
+            GHRequest request = new GHRequest();
+            request.addPoint(new GHPoint(43.747418, 7.430371));
+            request.addPoint(new GHPoint(43.746853, 7.42974));
+            request.addPoint(new GHPoint(43.746929, 7.430458));
+            request.setProfile(profile);
+            request.setCurbsides(Arrays.asList("right", "any", "right"));
+            GHResponse rsp = hopper.route(request);
+            assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+            ResponsePath res = rsp.getBest();
+            assertEquals(286, res.getDistance(), 1);
+            // note that this includes the u-turn time for the second u-turn, but not the first, because it's a waypoint!
+            assertEquals(54351, res.getTime(), 1);
+            // the route follows Avenue de l'Annonciade to the waypoint, u-turns there, then does a sharp right turn onto the parallel (dead-end) road,
+            // does a u-turn at the dead-end and then arrives at the destination
+            InstructionList il = res.getInstructions();
+            assertEquals(6, il.size());
+            assertEquals("continue", il.get(0).getTurnDescription(tr));
+            assertEquals("waypoint 1", il.get(1).getTurnDescription(tr));
+            assertEquals("make a U-turn", il.get(2).getTurnDescription(tr));
+            assertEquals("turn sharp right", il.get(3).getTurnDescription(tr));
+            assertEquals("make a U-turn", il.get(4).getTurnDescription(tr));
+            assertEquals("arrive at destination", il.get(5).getTurnDescription(tr));
+        }
 
-        request.setAlgorithm(ASTAR).setProfile(profile);
-        GHResponse rsp = hopper.route(request);
+        {
+            GHRequest request = new GHRequest();
+            request.addPoint(new GHPoint(43.743887, 7.431151));
+            request.addPoint(new GHPoint(43.744007, 7.431076));
+            //Force initial (two-lane) U-Turn
+            request.setHeadings(Arrays.asList(200.));
 
-        assertFalse(rsp.hasErrors());
-        ResponsePath res = rsp.getBest();
-        InstructionList il = res.getInstructions();
-        assertEquals(4, il.size());
+            request.setProfile(profile);
+            GHResponse rsp = hopper.route(request);
 
-        // Initial U-turn
-        assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(1).getTurnDescription(tr));
-        // Second U-turn to get to destination
-        assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(2).getTurnDescription(tr));
+            assertFalse(rsp.hasErrors());
+            ResponsePath res = rsp.getBest();
+            InstructionList il = res.getInstructions();
+            assertEquals(4, il.size());
+
+            // Initial (two-lane) U-turn
+            assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(1).getTurnDescription(tr));
+            // Second (two-lane) U-turn to get to destination
+            assertEquals("make a U-turn onto Avenue Princesse Grace", il.get(2).getTurnDescription(tr));
+        }
     }
 
     private void testImportCloseAndLoad(boolean ch, boolean lm, boolean sort, boolean custom) {

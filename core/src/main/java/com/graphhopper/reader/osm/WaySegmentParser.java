@@ -104,7 +104,7 @@ public class WaySegmentParser {
         LOGGER.info("Start reading OSM file: '" + osmFile + "'");
         LOGGER.info("pass1 - start");
         StopWatch sw1 = StopWatch.started();
-        readOSM(osmFile, new Pass1Handler());
+        readOSM(osmFile, new Pass1Handler(), new SkipOptions(true, false, false));
         LOGGER.info("pass1 - finished, took: {}", sw1.stop().getTimeString());
 
         long nodes = nodeData.getNodeCount();
@@ -113,7 +113,7 @@ public class WaySegmentParser {
 
         LOGGER.info("pass2 - start");
         StopWatch sw2 = new StopWatch().start();
-        readOSM(osmFile, new Pass2Handler());
+        readOSM(osmFile, new Pass2Handler(), SkipOptions.none());
         LOGGER.info("pass2 - finished, took: {}", sw2.stop().getTimeString());
 
         nodeData.release();
@@ -398,8 +398,8 @@ public class WaySegmentParser {
         }
     }
 
-    private void readOSM(File file, ReaderElementHandler handler) {
-        try (OSMInput osmInput = openOsmInputFile(file)) {
+    private void readOSM(File file, ReaderElementHandler handler, SkipOptions skipOptions) {
+        try (OSMInput osmInput = openOsmInputFile(file, skipOptions)) {
             ReaderElement elem;
             while ((elem = osmInput.getNext()) != null)
                 handler.handleElement(elem);
@@ -411,8 +411,8 @@ public class WaySegmentParser {
         }
     }
 
-    protected OSMInput openOsmInputFile(File osmFile) throws XMLStreamException, IOException {
-        return new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
+    protected OSMInput openOsmInputFile(File osmFile, SkipOptions skipOptions) throws XMLStreamException, IOException {
+        return new OSMInputFile(osmFile).setWorkerThreads(workerThreads).setSkipOptions(skipOptions).open();
     }
 
     public static class Builder {
