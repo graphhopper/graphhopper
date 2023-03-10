@@ -24,8 +24,9 @@ import java.util.List;
  * Implementations of this class allow repeatedly calculating paths for different start/target nodes and edge restrictions
  */
 public interface PathCalculator {
-    List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions);
-
+// ORS-GH MOD START - add argument for TD routing
+    List<Path> calcPaths(int from, int to, long at, EdgeRestrictions edgeRestrictions);
+// ORS-GH MOD END
     String getDebugString();
 
     int getVisitedNodes();

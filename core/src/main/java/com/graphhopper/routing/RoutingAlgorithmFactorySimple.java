@@ -61,7 +61,12 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
             AStar aStar = new AStar(g, weighting, opts.getTraversalMode());
             aStar.setApproximation(getApproximation(ASTAR, opts.getHints(), w, g.getNodeAccess()));
             ra = aStar;
-        // ORS-GH MOD START -- new code
+        // ORS-GH MOD START: TD routing
+        } else if (TD_DIJKSTRA.equalsIgnoreCase(algoStr)) {
+            TDDijkstra tdd = new TDDijkstra(g, weighting, opts.getTraversalMode());
+            if (opts.getHints().has("arrival"))
+                tdd.reverse();
+            ra = tdd;
         } else if (TD_ASTAR.equalsIgnoreCase(algoStr)) {
             TDAStar tda = new TDAStar(g, weighting, opts.getTraversalMode());
             tda.setApproximation(getApproximation(ASTAR, opts.getHints(), w, g.getNodeAccess()));

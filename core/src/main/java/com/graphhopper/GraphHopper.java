@@ -40,7 +40,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.TagParserFactory;
-import com.graphhopper.routing.weighting.TimeDependentAccessWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -1080,23 +1079,6 @@ public class GraphHopper {
 
     protected WeightingFactory createWeightingFactory() {
         return new DefaultWeightingFactory(ghStorage, getEncodingManager());
-    }
-
-    // ORS-GH MOD START - additional method
-    /**
-     * Potentially wraps the specified weighting into a TimeDependentAccessWeighting.
-     */
-    public Weighting createTimeDependentAccessWeighting(Weighting weighting, String algo) {
-        FlagEncoder flagEncoder = weighting.getFlagEncoder();
-        if (encodingManager.hasEncodedValue(EncodingManager.getKey(flagEncoder, ConditionalEdges.ACCESS)) && isAlgorithmTimeDependent(algo))
-            return new TimeDependentAccessWeighting(weighting, ghStorage, flagEncoder);
-        else
-            return weighting;
-    }
-    // ORS-GH MOD END
-
-    private boolean isAlgorithmTimeDependent(String algo) {
-        return ("td_dijkstra".equals(algo) || "td_astar".equals(algo)) ? true : false;
     }
 
     public GHResponse route(GHRequest request) {

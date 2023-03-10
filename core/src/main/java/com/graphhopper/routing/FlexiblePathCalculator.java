@@ -45,9 +45,15 @@ public class FlexiblePathCalculator implements PathCalculator {
     }
 
     @Override
-    public List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions) {
+// ORS-GH MOD START - add argument for TD routing
+    public List<Path> calcPaths(int from, int to, long at, EdgeRestrictions edgeRestrictions) {
         RoutingAlgorithm algo = createAlgo();
-        return calcPaths(from, to, edgeRestrictions, algo);
+        return calcPaths(from, to, at, edgeRestrictions, algo);
+    }
+
+    public List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions) {
+        return calcPaths(from, to, -1, edgeRestrictions);
+// ORS-GH MOD END
     }
 
     private RoutingAlgorithm createAlgo() {
@@ -60,7 +66,9 @@ public class FlexiblePathCalculator implements PathCalculator {
         return algo;
     }
 
-    private List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions, RoutingAlgorithm algo) {
+// ORS-GH MOD START - add argument for TD routing
+    private List<Path> calcPaths(int from, int to, long at, EdgeRestrictions edgeRestrictions, RoutingAlgorithm algo) {
+// ORS-GH MOD END
         StopWatch sw = new StopWatch().start();
         // todo: so far 'heading' is implemented like this: we mark the unfavored edges on the query graph and then
         // our weighting applies a penalty to these edges. however, this only works for virtual edges and to make
@@ -76,7 +84,9 @@ public class FlexiblePathCalculator implements PathCalculator {
                 throw new IllegalArgumentException("To make use of the " + Parameters.Routing.CURBSIDE + " parameter you need a bidirectional algorithm, got: " + algo.getName());
             paths = Collections.singletonList(((BidirRoutingAlgorithm) algo).calcPath(from, to, edgeRestrictions.getSourceOutEdge(), edgeRestrictions.getTargetInEdge()));
         } else {
-            paths = algo.calcPaths(from, to);
+// ORS-GH MOD START - add argument for TD routing
+            paths = (at == -1) ? algo.calcPaths(from, to) : algo.calcPaths(from, to, at);
+// ORS-GH MOD END
         }
 
         // reset all direction enforcements in queryGraph to avoid influencing next path

@@ -44,6 +44,7 @@ import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 
+import java.time.Instant;
 import java.util.*;
 
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
@@ -311,7 +312,10 @@ public class Router {
         PathCalculator pathCalculator = solver.createPathCalculator(queryGraph);
         boolean passThrough = getPassThrough(request.getHints());
         boolean forceCurbsides = getForceCurbsides(request.getHints());
-        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, snaps, solver.weighting, pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough);
+        // ORS-GH MOD START: enable TD routing
+        long time = getTime(request.getHints());
+        ViaRouting.Result result = ViaRouting.calcPaths(request.getPoints(), queryGraph, snaps, solver.weighting, pathCalculator, request.getCurbsides(), forceCurbsides, request.getHeadings(), passThrough, time);
+        // ORS-GH MOD END
 
         if (request.getPoints().size() != result.paths.size() + 1)
             throw new RuntimeException("There should be exactly one more point than paths. points:" + request.getPoints().size() + ", paths:" + result.paths.size());
@@ -399,7 +403,13 @@ public class Router {
         return hints.getBool(FORCE_CURBSIDE, true);
     }
 
-    // ORS GH-MOD START: way to inject additional edgeFilters to router
+    // ORS GH-MOD START
+    private static long getTime(PMap hints) {
+        Instant time = hints.has("departure") ? hints.getObject("departure", null) : hints.getObject("arrival", null);
+        return (time == null) ? -1 : time.toEpochMilli();
+    }
+
+    // way to inject additional edgeFilters to router
     public void setEdgeFilterFactory(EdgeFilterFactory edgeFilterFactory) {
         this.edgeFilterFactory = edgeFilterFactory;
     }
