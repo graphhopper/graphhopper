@@ -24,8 +24,8 @@ import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.routing.ev.RoadAccess.YES;
 
@@ -41,18 +41,18 @@ public class OSMRoadAccessParser implements TagParser {
     @Override
     public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         RoadAccess accessValue = YES;
-        RoadAccess tmpAccessValue;
-        for (String restriction : restrictions) {
-            String tagValue = readerWay.getTag(restriction);
-            if (tagValue != null) {
-                String[] complex = tagValue.split(";");
-                for (String simple : complex) {
-                    tmpAccessValue = RoadAccess.find(simple);
-                    if (tmpAccessValue != null && tmpAccessValue.ordinal() > accessValue.ordinal()) {
-                        accessValue = tmpAccessValue;
-                    }
-                }
+
+        List<Map<String, Object>> nodeTags = readerWay.getTag("node_tags", Collections.emptyList());
+        if (nodeTags.size() == 2)
+            for (String restriction : restrictions) {
+                // a barrier edge has the restriction in both nodes and the restriction is the same
+                Set<Object> set = nodeTags.stream().map(tags -> tags.get(restriction)).collect(Collectors.toSet());
+                if (set.size() == 1)
+                    accessValue = getRoadAccess((String) set.iterator().next(), accessValue);
             }
+
+        for (String restriction : restrictions) {
+            accessValue = getRoadAccess(readerWay.getTag(restriction), accessValue);
         }
 
         CountryRule countryRule = readerWay.getTag("country_rule", null);
@@ -60,6 +60,20 @@ public class OSMRoadAccessParser implements TagParser {
             accessValue = countryRule.getAccess(readerWay, TransportationMode.CAR, accessValue);
 
         roadAccessEnc.setEnum(false, edgeFlags, accessValue);
+    }
+
+    private RoadAccess getRoadAccess(String tagValue, RoadAccess accessValue) {
+        RoadAccess tmpAccessValue;
+        if (tagValue != null) {
+            String[] complex = tagValue.split(";");
+            for (String simple : complex) {
+                tmpAccessValue = RoadAccess.find(simple);
+                if (tmpAccessValue != null && tmpAccessValue.ordinal() > accessValue.ordinal()) {
+                    accessValue = tmpAccessValue;
+                }
+            }
+        }
+        return accessValue;
     }
 
     public static List<String> toOSMRestrictions(TransportationMode mode) {

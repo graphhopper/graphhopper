@@ -237,6 +237,8 @@ public class WaySegmentParser {
                     node.removeTag("created_by");
                     node.removeTag("source");
                     node.removeTag("note");
+                    node.removeTag("fixme");
+                    node.setTags(new HashMap<>(node.getTags())); // create compact Map
                     nodeData.setTags(node);
                     break;
                 }

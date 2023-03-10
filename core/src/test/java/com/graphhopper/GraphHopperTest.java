@@ -2495,10 +2495,11 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
+                setVehiclesString("car|block_private=false").
                 setProfiles(
-                        new Profile("car").setVehicle("car").setWeighting("fastest"),
-                        new Profile("bike").setVehicle("bike").setWeighting("fastest"),
-                        new Profile("foot").setVehicle("foot").setWeighting("fastest")
+                        new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
+                        new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"),
+                        new CustomProfile("foot").setCustomModel(new CustomModel()).setVehicle("foot")
                 ).
                 setMinNetworkSize(0);
         hopper.importOrLoad();
@@ -2559,6 +2560,28 @@ public class GraphHopperTest {
             assertEquals(24, carRsp.getBest().getDistance(), 1);
             bikeRsp = hopper.route(new GHRequest(51.355455, 12.40202, 51.355318, 12.401741).setProfile("bike"));
             assertEquals(24, bikeRsp.getBest().getDistance(), 1);
+        }
+
+        {
+            // node tag "ford" should be recognized in road_environment
+            GHResponse footRsp = hopper.route(new GHRequest(51.290141, 12.365849, 51.290996, 12.366155).setProfile("foot"));
+            assertEquals(105, footRsp.getBest().getDistance(), 1);
+
+            footRsp = hopper.route(new GHRequest(51.290141, 12.365849, 51.290996, 12.366155).
+                    setCustomModel(new CustomModel().addToPriority(Statement.If("road_environment == FORD", Statement.Op.MULTIPLY, "0"))).setProfile("foot"));
+            assertEquals(330, footRsp.getBest().getDistance(), 1);
+        }
+
+        {
+            // private access restriction as node tag
+            GHResponse rsp = hopper.route(new GHRequest(51.327411, 12.429598, 51.32723, 12.429979).setProfile("car"));
+            assertEquals(39, rsp.getBest().getDistance(), 1);
+
+            rsp = hopper.route(new GHRequest(51.327411, 12.429598, 51.32723, 12.429979).
+                    setCustomModel(new CustomModel().addToPriority(Statement.If("road_access == PRIVATE", Statement.Op.MULTIPLY, "0"))).
+                    setProfile("car"));
+            assertFalse(rsp.hasErrors());
+            assertEquals(20, rsp.getBest().getDistance(), 1);
         }
     }
 
