@@ -46,9 +46,9 @@ public class OSMRoadAccessParser implements TagParser {
         if (nodeTags.size() == 2)
             for (String restriction : restrictions) {
                 // a barrier edge has the restriction in both nodes and the restriction is the same
-                Set<Object> set = nodeTags.stream().map(tags -> tags.get(restriction)).collect(Collectors.toSet());
-                if (set.size() == 1)
-                    accessValue = getRoadAccess((String) set.iterator().next(), accessValue);
+                Object value1 = nodeTags.get(0).get(restriction);
+                if (value1 != null && value1.equals(nodeTags.get(1).get(restriction)))
+                    accessValue = getRoadAccess((String) value1, accessValue);
             }
 
         for (String restriction : restrictions) {
