@@ -64,7 +64,7 @@ import static com.graphhopper.util.Helper.nf;
  */
 public class WaySegmentParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaySegmentParser.class);
-    private static final Set<String> ALLOWED_NODE_TAGS = new HashSet<>(Arrays.asList("gh:split_node", "barrier", "highway", "railway", "crossing", "ford"));
+    private static final Set<String> INCLUDE_IF_NODE_TAGS = new HashSet<>(Arrays.asList("gh:split_node", "barrier", "highway", "railway", "crossing", "ford"));
 
     private final ElevationProvider eleProvider;
     private final Predicate<ReaderWay> wayFilter;
@@ -233,7 +233,7 @@ public class WaySegmentParser {
 
             // store node tags if at least one important tag is included and make this available for the edge handler
             for (Map.Entry<String, Object> e : node.getTags().entrySet()) {
-                if (ALLOWED_NODE_TAGS.contains(e.getKey())) {
+                if (INCLUDE_IF_NODE_TAGS.contains(e.getKey())) {
                     node.removeTag("created_by");
                     node.removeTag("source");
                     node.removeTag("note");
@@ -316,6 +316,10 @@ public class WaySegmentParser {
                 SegmentNode node = parentSegment.get(i);
                 Map<String, Object> nodeTags = node.tags;
                 if ((boolean) nodeTags.getOrDefault("gh:split_node", false)) {
+                    // do not split this node again. for example a barrier can be connecting two ways (appear in both
+                    // ways) and we only want to add a barrier edge once (but we want to add one).
+                    nodeData.removeTag(node.osmNodeId, "gh:split_node");
+
                     // this node is a barrier. we will copy it and add an extra edge
                     SegmentNode barrierFrom = node;
                     SegmentNode barrierTo = nodeData.addCopyOfNode(node);
@@ -330,15 +334,18 @@ public class WaySegmentParser {
                         handleSegment(segment, way);
                         segment = new ArrayList<>();
                     }
+
+                    // mark only node tags of barrier edge as "split_node"
+                    barrierFrom.tags.put("gh:split_node", true);
+                    barrierTo.tags.put("gh:split_node", true);
                     segment.add(barrierFrom);
                     segment.add(barrierTo);
                     handleSegment(segment, way);
+                    barrierFrom.tags.remove("gh:split_node");
+                    barrierTo.tags.remove("gh:split_node");
+
                     segment = new ArrayList<>();
                     segment.add(barrierTo);
-
-                    // do not split this node again. for example a barrier can be connecting two ways (appear in both
-                    // ways) and we only want to add a barrier edge once (but we want to add one).
-                    nodeData.removeTag(node.osmNodeId, "gh:split_node");
                 } else {
                     segment.add(node);
                 }
