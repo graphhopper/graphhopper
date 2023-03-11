@@ -40,7 +40,7 @@ public class OSMRoadEnvironmentParser implements TagParser {
     public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         List<Map<String, Object>> nodeTags = readerWay.getTag("node_tags", Collections.emptyList());
         // a barrier edge has the restriction in both nodes
-        if (nodeTags.size() == 2 && nodeTags.stream().allMatch(tags -> tags.containsKey("ford"))) {
+        if (nodeTags.size() == 2 && nodeTags.get(0).containsKey("ford") && nodeTags.get(1).containsKey("ford")) {
             roadEnvEnc.setEnum(false, edgeFlags, FORD);
             return;
         }
