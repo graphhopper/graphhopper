@@ -99,8 +99,10 @@
     }
   ],
   "areas": {
-    "custom1": {
+    "type": "FeatureCollection",
+    "features": [{
       "type": "Feature",
+      "id": "custom1",
       "geometry": {
         "type": "Polygon",
         "coordinates": [
@@ -128,6 +130,6 @@
           ]
         ]
       }
-    }
+    }]
   }
 }

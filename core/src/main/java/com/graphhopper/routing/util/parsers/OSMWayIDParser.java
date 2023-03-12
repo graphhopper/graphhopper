@@ -30,13 +30,12 @@ public class OSMWayIDParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         if (way.getId() > osmWayIdEnc.getMaxStorableInt())
             throw new IllegalArgumentException("Cannot store OSM way ID: " + way.getId() + " as it is too large (> "
                     + osmWayIdEnc.getMaxStorableInt() + "). You can disable " + osmWayIdEnc.getName() + " if you do not " +
                     "need to store the OSM way IDs");
         int wayId = Math.toIntExact(way.getId());
         osmWayIdEnc.setInt(false, edgeFlags, wayId);
-        return edgeFlags;
     }
 }

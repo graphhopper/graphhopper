@@ -36,7 +36,7 @@ public class RouteResourceTruckTest {
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,hgv").
                 putObject("import.osm.ignored_highways", "").
-                putObject("custom_model_folder", "./src/test/resources/com/graphhopper/application/resources").
+                putObject("custom_models.directory", "./src/test/resources/com/graphhopper/application/resources").
                 setProfiles(Arrays.asList(new CustomProfile("truck").setVehicle("roads").putHint("custom_model_file", "truck.json"))).
                 setCHProfiles(Arrays.asList(new CHProfile("truck")));
         return config;

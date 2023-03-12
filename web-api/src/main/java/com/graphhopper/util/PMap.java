@@ -103,9 +103,8 @@ public class PMap {
         return this;
     }
 
-    public PMap remove(String key) {
-        map.remove(key);
-        return this;
+    public Object remove(String key) {
+        return map.remove(key);
     }
 
     public boolean has(String key) {

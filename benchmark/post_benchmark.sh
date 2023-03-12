@@ -7,7 +7,7 @@
 # <user>:<pwd> = credentials for basic auth
 # <url> = url the results are posted to
 
-# make this script exit if a command faiils, a variable is missing etc.
+# make this script exit if a command fails, a variable is missing etc.
 set -euo pipefail
 
 # use curl to post results (requires external variables to be set)

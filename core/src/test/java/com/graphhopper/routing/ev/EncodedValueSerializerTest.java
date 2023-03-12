@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -33,10 +34,11 @@ class EncodedValueSerializerTest {
     public void serializationAndDeserialization() {
         List<EncodedValue> encodedValues = new ArrayList<>();
         // add enum, int, decimal and boolean encoded values
-        encodedValues.add(new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class));
-        encodedValues.add(Lanes.create());
-        encodedValues.add(MaxWidth.create());
-        encodedValues.add(GetOffBike.create());
+        DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
+        encodedValues.add(evFactory.create(RoadClass.KEY, new PMap()));
+        encodedValues.add(evFactory.create(Lanes.KEY, new PMap()));
+        encodedValues.add(evFactory.create(MaxWidth.KEY, new PMap()));
+        encodedValues.add(evFactory.create(GetOffBike.KEY, new PMap()));
         StringEncodedValue namesEnc = new StringEncodedValue("names", 3, Arrays.asList("jim", "joe", "kate"), false);
         encodedValues.add(namesEnc);
 
@@ -68,7 +70,12 @@ class EncodedValueSerializerTest {
     @Test
     void explicitString() {
         EncodedValue.InitializerConfig initializerConfig = new EncodedValue.InitializerConfig();
-        List<EncodedValue> evs = Arrays.asList(Lanes.create(), MaxWidth.create(), GetOffBike.create());
+        DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
+        List<EncodedValue> evs = Arrays.asList(
+                evFactory.create(Lanes.KEY, new PMap()),
+                evFactory.create(MaxWidth.KEY, new PMap()),
+                evFactory.create(GetOffBike.KEY, new PMap())
+        );
         evs.forEach(ev -> ev.init(initializerConfig));
 
         List<String> serialized = evs.stream().map(EncodedValueSerializer::serializeEncodedValue).collect(Collectors.toList());
@@ -91,17 +98,4 @@ class EncodedValueSerializerTest {
         assertEquals("get_off_bike", ev2.getName());
     }
 
-    @Test
-    void initializerConfig() {
-        EncodedValue.InitializerConfig initializerConfig = new EncodedValue.InitializerConfig();
-        Lanes.create().init(initializerConfig);
-        MaxWidth.create().init(initializerConfig);
-        String s = EncodedValueSerializer.serializeInitializerConfig(initializerConfig);
-        assertEquals("{\"data_index\":0,\"shift\":3,\"next_shift\":10,\"bit_mask\":1016}", s);
-        EncodedValue.InitializerConfig deserialized = EncodedValueSerializer.deserializeInitializerConfig(s);
-        assertEquals(0, deserialized.dataIndex);
-        assertEquals(3, deserialized.shift);
-        assertEquals(10, deserialized.nextShift);
-        assertEquals(1016, deserialized.bitMask);
-    }
 }

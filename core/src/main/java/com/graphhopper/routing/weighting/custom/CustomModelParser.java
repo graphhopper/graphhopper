@@ -20,7 +20,6 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -42,7 +41,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
     static final String IN_AREA_PREFIX = "in_";
-    private static final Set<String> allowedNamesInCondition = new HashSet<>(Arrays.asList("edge", "Math"));
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
     private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
 
@@ -113,9 +111,9 @@ public class CustomModelParser {
         try {
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
-            prio.init(lookup, avgSpeedEnc, priorityEnc, customModel.getAreas());
+            prio.init(lookup, avgSpeedEnc, priorityEnc, CustomModel.getAreasAsMap(customModel.getAreas()));
             return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority, prio.getMaxSpeed(), prio.getMaxPriority(),
-                    customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
+                    customModel.getDistanceInfluence() == null ? 0 : customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
             throw new IllegalArgumentException("Cannot compile expression " + ex.getMessage(), ex);
         }
@@ -164,7 +162,7 @@ public class CustomModelParser {
             //  have the same name and it mixes performance stats. See https://github.com/janino-compiler/janino/issues/137
             long counter = longVal.incrementAndGet();
             String classTemplate = createClassTemplate(counter, priorityVariables, minMaxPriority.max, speedVariables, minMaxSpeed.max,
-                    lookup, customModel.getAreas());
+                    lookup, CustomModel.getAreasAsMap(customModel.getAreas()));
             Java.CompilationUnit cu = (Java.CompilationUnit) new Parser(new Scanner("source", new StringReader(classTemplate))).
                     parseAbstractCompilationUnit();
             cu = injectStatements(priorityStatements, speedStatements, cu);
@@ -214,7 +212,7 @@ public class CustomModelParser {
     }
 
     static boolean isValidVariableName(String name) {
-        return name.startsWith(IN_AREA_PREFIX) || allowedNamesInCondition.contains(name);
+        return name.startsWith(IN_AREA_PREFIX);
     }
 
     /**
@@ -292,9 +290,9 @@ public class CustomModelParser {
                     includedAreaImports = true;
                 }
 
-                String id = arg.substring(IN_AREA_PREFIX.length());
-                if (!EncodingManager.isValidEncodedValue(id))
+                if (!JsonFeature.isValidId(arg))
                     throw new IllegalArgumentException("Area has invalid name: " + arg);
+                String id = arg.substring(IN_AREA_PREFIX.length());
                 JsonFeature feature = areas.get(id);
                 if (feature == null)
                     throw new IllegalArgumentException("Area '" + id + "' wasn't found");
@@ -302,8 +300,8 @@ public class CustomModelParser {
                     throw new IllegalArgumentException("Area '" + id + "' does not contain a geometry");
                 if (!(feature.getGeometry() instanceof Polygonal))
                     throw new IllegalArgumentException("Currently only type=Polygon is supported for areas but was " + feature.getGeometry().getGeometryType());
-                if (feature.getProperties() != null && !feature.getProperties().isEmpty() || feature.getBBox() != null)
-                    throw new IllegalArgumentException("Bounding box and properties of area " + id + " must be empty");
+                if (feature.getBBox() != null)
+                    throw new IllegalArgumentException("Bounding box of area " + id + " must be empty");
                 classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
                 initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
                 initSourceCode.append("this." + arg + " = new Polygon(new PreparedPolygon((Polygonal) feature_" + id + ".getGeometry()));\n");
@@ -360,12 +358,12 @@ public class CustomModelParser {
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
 
-        parseExpressions(expressions, nameInConditionValidator, lookup, info, createObjects, list);
+        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list);
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }
 
-    static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, EncodedValueLookup lookup,
+    static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
                                  String exceptionInfo, Set<String> createObjects, List<Statement> list) {
 
         for (Statement statement : list) {
@@ -376,7 +374,7 @@ public class CustomModelParser {
 
                 expressions.append("else {").append(statement.getOperation().build(statement.getValue())).append("; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator, lookup);
+                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator);
                 if (!parseResult.ok)
                     throw new IllegalArgumentException(exceptionInfo + " invalid condition \"" + statement.getCondition() + "\"" +
                             (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));

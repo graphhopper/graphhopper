@@ -38,7 +38,7 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
     }
 
     @Override
-    public IntsRef handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
+    public void handleRelationTags(IntsRef relFlags, ReaderRelation relation) {
         RouteNetwork oldBikeNetwork = transformerRouteRelEnc.getEnum(false, relFlags);
         if (relation.hasTag("route", "bicycle")) {
             String tag = Helper.toLowerCase(relation.getTag("network", ""));
@@ -55,15 +55,16 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
             if (oldBikeNetwork == RouteNetwork.MISSING || oldBikeNetwork.ordinal() > newBikeNetwork.ordinal())
                 transformerRouteRelEnc.setEnum(false, relFlags, newBikeNetwork);
         }
-
-        return relFlags;
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
         // just copy value into different bit range
         RouteNetwork routeNetwork = transformerRouteRelEnc.getEnum(false, relationFlags);
         bikeRouteEnc.setEnum(false, edgeFlags, routeNetwork);
-        return edgeFlags;
+    }
+
+    public EnumEncodedValue<RouteNetwork> getTransformerRouteRelEnc() {
+        return transformerRouteRelEnc;
     }
 }

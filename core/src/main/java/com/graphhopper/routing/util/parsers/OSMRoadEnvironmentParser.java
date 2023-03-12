@@ -33,7 +33,7 @@ public class OSMRoadEnvironmentParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         RoadEnvironment roadEnvironment = OTHER;
         if ((readerWay.hasTag("route", "ferry") && !readerWay.hasTag("ferry", "no")) ||
                 // TODO shuttle_train is sometimes also used in relations, e.g. https://www.openstreetmap.org/relation/1932780
@@ -50,6 +50,5 @@ public class OSMRoadEnvironmentParser implements TagParser {
 
         if (roadEnvironment != OTHER)
             roadEnvEnc.setEnum(false, edgeFlags, roadEnvironment);
-        return edgeFlags;
     }
 }

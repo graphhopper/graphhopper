@@ -48,10 +48,6 @@ public class VehicleEncodedValues {
         return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnCostEnc);
     }
 
-    public static VehicleEncodedValues hike(PMap properties) {
-        return foot(new PMap(properties).putObject("name", properties.getString("name", "hike")));
-    }
-
     public static VehicleEncodedValues wheelchair(PMap properties) {
         if (properties.has("speed_two_directions"))
             throw new IllegalArgumentException("wheelchair always uses two directions");
@@ -86,10 +82,9 @@ public class VehicleEncodedValues {
         String name = properties.getString("name", "car");
         int speedBits = properties.getInt("speed_bits", 5);
         double speedFactor = properties.getDouble("speed_factor", 5);
-        boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
         int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
-        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
+        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, true);
         DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
         return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnCostEnc);
     }
@@ -112,7 +107,7 @@ public class VehicleEncodedValues {
         int speedBits = properties.getInt("speed_bits", 7);
         double speedFactor = properties.getDouble("speed_factor", 2);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", true);
-        int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", true) ? 1 : 0);
+        int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;

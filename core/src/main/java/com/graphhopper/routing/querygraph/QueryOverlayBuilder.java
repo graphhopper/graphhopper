@@ -28,7 +28,12 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
+import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
 
 class QueryOverlayBuilder {
     private final int firstVirtualNodeId;
@@ -154,15 +159,20 @@ class QueryOverlayBuilder {
                 // Create base and adjacent PointLists for all non-equal virtual nodes.
                 // We do so via inserting them at the correct position of fullPL and cutting the
                 // fullPL into the right pieces.
-                for (Snap res : results) {
+                for (int i = 0; i < results.size(); i++) {
+                    Snap res = results.get(i);
                     if (res.getClosestEdge().getBaseNode() != baseNode)
                         throw new IllegalStateException("Base nodes have to be identical but were not: " + closestEdge + " vs " + res.getClosestEdge());
 
                     GHPoint3D currSnapped = res.getSnappedPoint();
 
-                    // no new virtual nodes if exactly the same snapped point
-                    if (prevPoint.equals(currSnapped)) {
+                    // no new virtual nodes if very close ("snap" together)
+                    if (Snap.considerEqual(prevPoint.lat, prevPoint.lon, currSnapped.lat, currSnapped.lon)) {
                         res.setClosestNode(prevNodeId);
+                        res.setSnappedPoint(prevPoint);
+                        res.setWayIndex(i == 0 ? 0 : results.get(i - 1).getWayIndex());
+                        res.setSnappedPosition(i == 0 ? Snap.Position.TOWER : results.get(i - 1).getSnappedPosition());
+                        res.setQueryDistance(DIST_PLANE.calcDist(prevPoint.lat, prevPoint.lon, res.getQueryPoint().lat, res.getQueryPoint().lon));
                         continue;
                     }
 

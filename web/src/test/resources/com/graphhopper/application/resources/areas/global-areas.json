@@ -1,0 +1,37 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "id": "external_area52",
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              11.5818,
+              50.0126
+            ],
+            [
+              11.5818,
+              50.0119
+            ],
+            [
+              11.5861,
+              50.0119
+            ],
+            [
+              11.5861,
+              50.0126
+            ],
+            [
+              11.5818,
+              50.0126
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
+                

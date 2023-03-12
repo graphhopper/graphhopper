@@ -40,7 +40,7 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
             return VehicleEncodedValues.bike(configuration);
 
         if (name.equals("bike2"))
-            throw new IllegalArgumentException("Instead of bike2 use the bike vehicle and a custom model, see custom_models/bike2.json and #1234");
+            throw new IllegalArgumentException("Instead of bike2 use the bike vehicle and a custom model, see custom_models/bike.json and #1234");
 
         if (name.equals(RACINGBIKE))
             return VehicleEncodedValues.racingbike(configuration);
@@ -52,7 +52,7 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
             return VehicleEncodedValues.foot(configuration);
 
         if (name.equals(HIKE))
-            return VehicleEncodedValues.hike(configuration);
+            throw new IllegalArgumentException("Instead of hike use the foot vehicle and a custom model, see custom_models/hike.json and #2759");
 
         if (name.equals(MOTORCYCLE))
             return VehicleEncodedValues.motorcycle(configuration);

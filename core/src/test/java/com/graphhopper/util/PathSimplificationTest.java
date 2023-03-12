@@ -114,12 +114,20 @@ public class PathSimplificationTest {
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
                 Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0, g);
 
+        PointList points = p.calcPoints();
+        PointList waypoints = new PointList(2, g.getNodeAccess().is3D());
+        waypoints.add(g.getNodeAccess(), 0);
+        waypoints.add(g.getNodeAccess(), 10);
+        List<Integer> waypointIndices = Arrays.asList(0, points.size() - 1);
+
         ResponsePath responsePath = new ResponsePath();
         responsePath.setInstructions(wayList);
         responsePath.addPathDetails(details);
-        responsePath.setPoints(p.calcPoints());
+        responsePath.setPoints(points);
+        responsePath.setWaypoints(waypoints);
+        responsePath.setWaypointIndices(waypointIndices);
 
-        int numberOfPoints = p.calcPoints().size();
+        int numberOfPoints = points.size();
 
         RamerDouglasPeucker ramerDouglasPeucker = new RamerDouglasPeucker();
         // Do not simplify anything
@@ -133,6 +141,8 @@ public class PathSimplificationTest {
         responsePath.setInstructions(wayList);
         responsePath.addPathDetails(details);
         responsePath.setPoints(p.calcPoints());
+        responsePath.setWaypoints(waypoints);
+        responsePath.setWaypointIndices(waypointIndices);
 
         ramerDouglasPeucker.setMaxDistance(100000000);
         PathSimplification.simplify(responsePath, ramerDouglasPeucker, true);

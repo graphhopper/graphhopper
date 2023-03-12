@@ -816,7 +816,7 @@ public class GraphHopperOSMTest {
         {
             GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
                     new Profile("car").setVehicle("car").setWeighting("fastest"),
-                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3)).setVehicle("car")
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3d)).setVehicle("car")
             ));
             hopper.importOrLoad();
             hopper.close();
@@ -825,16 +825,26 @@ public class GraphHopperOSMTest {
             // load without problem
             GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
                     new Profile("car").setVehicle("car").setWeighting("fastest"),
-                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3)).setVehicle("car")
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3d)).setVehicle("car")
             ));
             hopper.importOrLoad();
+            hopper.close();
+        }
+        {
+            // problem: the vehicle was changed. this is not allowed.
+            GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
+                    new Profile("car").setVehicle("bike").setWeighting("fastest"),
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3d)).setVehicle("car")
+            ));
+            IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
+            assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
             hopper.close();
         }
         {
             // problem: the profile changed (slightly). we do not allow this because we would potentially need to re-calculate the subnetworks
             GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
                     new Profile("car").setVehicle("car").setWeighting("fastest"),
-                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(80)).setVehicle("car")
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(80d)).setVehicle("car")
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
             assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
@@ -844,7 +854,7 @@ public class GraphHopperOSMTest {
             // problem: we add another profile, which is not allowed, because there would be no subnetwork ev for it
             GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
                     new Profile("car").setVehicle("car").setWeighting("fastest"),
-                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3)).setVehicle("car"),
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3d)).setVehicle("car"),
                     new Profile("car2").setVehicle("car").setWeighting("fastest")
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);

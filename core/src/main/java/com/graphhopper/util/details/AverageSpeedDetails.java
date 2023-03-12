@@ -53,20 +53,21 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        // for very short edges we might not be able to calculate a proper value for speed. dividing by calcMillis can
-        // even lead to speed=Infinity -> just ignore these cases here, see #1848 and #2620
+        // For very short edges we might not be able to calculate a proper value for speed. dividing by calcMillis can
+        // even lead to an infinity speed. So, just ignore these edges, see #1848 and #2620 and #2636.
         final double distance = edge.getDistance();
-        if (distance < 0.01) {
+        long time = GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdgeId);
+        if (distance < 0.01 || time < 1) {
             prevEdgeId = edge.getEdge();
             if (decimalValue != null) return false;
             // in case this is the first edge we return decimalValue=null
             return true;
         }
 
-        double tmpVal = distance / GHUtility.calcMillisWithTurnMillis(weighting, edge, false, prevEdgeId) * 3600;
+        double speed = distance / time * 3600;
         prevEdgeId = edge.getEdge();
-        if (decimalValue == null || Math.abs(tmpVal - decimalValue) >= precision) {
-            this.decimalValue = Math.round(tmpVal / precision) * precision;
+        if (decimalValue == null || Math.abs(speed - decimalValue) >= precision) {
+            this.decimalValue = Math.round(speed / precision) * precision;
             return true;
         }
         return false;

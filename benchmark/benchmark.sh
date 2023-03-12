@@ -61,8 +61,7 @@ graph.location=${GRAPH_DIR}measurement-small-gh \
 prepare.min_network_size=10000 \
 measurement.json=true \
 measurement.count=5000 \
-measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME} \
-"measurement.block_area=49.394664,11.144428,49.348388,11.144943,49.355768,11.227169,49.411643,11.227512"
+measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 echo "2 - big map: node-based CH + landmarks (edge- & node-based for LM) + slow routing"
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
@@ -90,8 +89,7 @@ graph.location=${GRAPH_DIR}measurement-big-gh \
 prepare.min_network_size=10000 \
 measurement.json=true \
 measurement.count=5000 \
-measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME} \
-"measurement.block_area=49.394664,11.144428,49.348388,11.144943,49.355768,11.227169,49.411643,11.227512"
+measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 echo "3 - big map with a custom model that is 'a little customized', i.e. similar to the standard fastest-car profile"
 echo "node-based CH + LM"
@@ -122,8 +120,7 @@ graph.location=${GRAPH_DIR}measurement-big-little-custom-gh \
 prepare.min_network_size=10000 \
 measurement.json=true \
 measurement.count=5000 \
-measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME} \
-"measurement.block_area=49.394664,11.144428,49.348388,11.144943,49.355768,11.227169,49.411643,11.227512"
+measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 echo "4 - big map with a custom model that is 'very customized', i.e. has many custom weighting rules"
 echo "node-based CH + LM"
@@ -154,8 +151,7 @@ graph.location=${GRAPH_DIR}measurement-big-very-custom-gh \
 prepare.min_network_size=10000 \
 measurement.json=true \
 measurement.count=5000 \
-measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME} \
-"measurement.block_area=49.394664,11.144428,49.348388,11.144943,49.355768,11.227169,49.411643,11.227512"
+measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}
 
 echo "5 - big map, outdoor: node-based CH + landmarks (edge- & node-based for LM)"
 java -cp tools/target/graphhopper-tools-*-jar-with-dependencies.jar \
@@ -183,5 +179,4 @@ graph.location=${GRAPH_DIR}measurement-big-outdoor-gh \
 prepare.min_network_size=10000 \
 measurement.json=true \
 measurement.count=5000 \
-measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME} \
-"measurement.block_area=49.394664,11.144428,49.348388,11.144943,49.355768,11.227169,49.411643,11.227512"
+measurement.use_measurement_time_as_ref_time=${USE_MEASUREMENT_TIME_AS_REF_TIME}

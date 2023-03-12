@@ -20,7 +20,11 @@ package com.graphhopper.util;
 import org.locationtech.jts.geom.Envelope;
 import org.locationtech.jts.geom.Geometry;
 
+import javax.lang.model.SourceVersion;
 import java.util.Map;
+
+import static java.lang.Character.isDigit;
+import static java.lang.Character.isLetter;
 
 /**
  * This class defines a properties where a geometry is associated. Typically read from GeoJSON but also from in-memory is possible.
@@ -88,5 +92,23 @@ public class JsonFeature {
     @Override
     public String toString() {
         return "id:" + getId();
+    }
+
+    public static boolean isValidId(String name) {
+        if (name.length() <= 3 || !name.startsWith("in_") || SourceVersion.isKeyword(name)) return false;
+
+        int underscoreCount = 0;
+        for (int i = 1; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (c == '_') {
+                if (underscoreCount > 0) return false;
+                underscoreCount++;
+            } else if (!isLetter(c) && !isDigit(c)) {
+                return false;
+            } else {
+                underscoreCount = 0;
+            }
+        }
+        return true;
     }
 }

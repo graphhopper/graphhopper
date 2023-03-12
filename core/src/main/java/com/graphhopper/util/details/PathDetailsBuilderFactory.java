@@ -81,9 +81,12 @@ public class PathDetailsBuilderFactory {
             else throw new IllegalArgumentException("unknown EncodedValue class " + ev.getClass().getName());
         }
 
-        if (requestedPathDetails.size() != builders.size()) {
-            throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we could only find " + builders);
-        }
+        if (requestedPathDetails.size() > builders.size()) {
+            ArrayList<String> clonedArr = new ArrayList<>(requestedPathDetails); // avoid changing request parameter
+            for (PathDetailsBuilder pdb : builders) clonedArr.remove(pdb.getName());
+            throw new IllegalArgumentException("Cannot find the path details: " + clonedArr);
+        } else if (requestedPathDetails.size() < builders.size())
+            throw new IllegalStateException("It should not happen that there are more path details added " + builders + " than requested " + requestedPathDetails);
 
         return builders;
     }
