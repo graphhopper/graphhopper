@@ -108,16 +108,14 @@ public abstract class AbstractBidirAlgo implements BidirRoutingAlgorithm {
     // ORS-GH MOD START: additional method for TD routing
     @Override
     public Path calcPath(int from, int to, long at) {
-        // TODO ORS: implement cleanly
-        throw new RuntimeException("Dummy implementation to make ORS-GH compile");
+        throw new RuntimeException("Cannot use bidirectional algorithm for time-dependent routing");
     }
     // ORS-GH-MOD END
 
     // ORS-GH MOD START: additional method for TD routing
     @Override
     public List<Path> calcPaths(int from, int to, long at) {
-        // TODO ORS: implement cleanly
-        throw new RuntimeException("Dummy implementation to make ORS-GH compile");
+        throw new RuntimeException("Cannot use bidirectional algorithm for time-dependent routing");
     }
     // ORS-GH-MOD END
 
