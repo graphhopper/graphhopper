@@ -24,8 +24,10 @@ import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.routing.ev.RoadAccess.YES;
 
@@ -43,12 +45,11 @@ public class OSMRoadAccessParser implements TagParser {
         RoadAccess accessValue = YES;
 
         List<Map<String, Object>> nodeTags = readerWay.getTag("node_tags", Collections.emptyList());
-        if (nodeTags.size() == 2)
+        // a barrier edge has the restriction in both nodes and the tags are the same
+        if (readerWay.hasTag("gh:barrier_edge"))
             for (String restriction : restrictions) {
-                // a barrier edge has the restriction in both nodes and the restriction is the same
                 Object value1 = nodeTags.get(0).get(restriction);
-                if (value1 != null && value1.equals(nodeTags.get(1).get(restriction)))
-                    accessValue = getRoadAccess((String) value1, accessValue);
+                if (value1 != null) accessValue = getRoadAccess((String) value1, accessValue);
             }
 
         for (String restriction : restrictions) {

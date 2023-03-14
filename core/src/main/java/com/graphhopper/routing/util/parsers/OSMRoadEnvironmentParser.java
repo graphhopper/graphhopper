@@ -39,8 +39,8 @@ public class OSMRoadEnvironmentParser implements TagParser {
     @Override
     public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
         List<Map<String, Object>> nodeTags = readerWay.getTag("node_tags", Collections.emptyList());
-        // a barrier edge has the restriction in both nodes
-        if (nodeTags.size() == 2 && nodeTags.get(0).containsKey("ford") && nodeTags.get(1).containsKey("ford")) {
+        // a barrier edge has the restriction in both nodes and the tags are the same
+        if (readerWay.hasTag("gh:barrier_edge") && nodeTags.get(0).containsKey("ford")) {
             roadEnvEnc.setEnum(false, edgeFlags, FORD);
             return;
         }

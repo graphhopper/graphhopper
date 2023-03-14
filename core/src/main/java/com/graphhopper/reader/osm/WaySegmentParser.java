@@ -335,14 +335,12 @@ public class WaySegmentParser {
                         segment = new ArrayList<>();
                     }
 
-                    // mark only node tags of barrier edge as "split_node"
-                    barrierFrom.tags.put("gh:split_node", true);
-                    barrierTo.tags.put("gh:split_node", true);
+                    // mark barrier edge
+                    way.setTag("gh:barrier_edge", true);
                     segment.add(barrierFrom);
                     segment.add(barrierTo);
                     handleSegment(segment, way);
-                    barrierFrom.tags.remove("gh:split_node");
-                    barrierTo.tags.remove("gh:split_node");
+                    way.removeTag("gh:barrier_edge");
 
                     segment = new ArrayList<>();
                     segment.add(barrierTo);
