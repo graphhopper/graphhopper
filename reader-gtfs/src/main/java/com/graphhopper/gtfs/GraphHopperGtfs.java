@@ -200,7 +200,7 @@ public class GraphHopperGtfs extends GraphHopper {
 
     @Override
     public void close() {
-        getGtfsStorage().close();
+        if (gtfsStorage != null) gtfsStorage.close();
         super.close();
     }
 
