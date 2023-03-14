@@ -61,6 +61,15 @@ public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
             algo.setApproximation(getApproximator(g, activeLM, epsilon));
             algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
             return algo;
+// ORS-GH MOD START: TD routing
+        } else if (TD_ASTAR.equalsIgnoreCase(algoStr)) {
+            TDAStar algo = new TDAStar(g, weighting, opts.getTraversalMode());
+            algo.setApproximation(getApproximator(g, activeLM, 1.0));
+            algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+            if (opts.getHints().has("arrival"))
+                algo.reverse();
+            return algo;
+// ORS-GH MOD END
         } else if (ALT_ROUTE.equalsIgnoreCase(algoStr)) {
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
             AlternativeRoute algo = new AlternativeRoute(g, weighting, opts.getTraversalMode());
