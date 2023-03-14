@@ -40,7 +40,9 @@ public class CHPathCalculator implements PathCalculator {
     }
 
     @Override
-    public List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions) {
+// ORS-GH MOD START - add argument for TD routing
+    public List<Path> calcPaths(int from, int to, long at, EdgeRestrictions edgeRestrictions) {
+// ORS-GH MOD END
         if (!edgeRestrictions.getUnfavoredEdges().isEmpty())
             throw new IllegalArgumentException("Using unfavored edges is currently not supported for CH");
         BidirRoutingAlgorithm algo = createAlgo();

@@ -114,6 +114,9 @@ public class DefaultWeightingFactory implements WeightingFactory {
 
         // ORS-GH MOD START - hook for attaching speed calculators
         setSpeedCalculator(weighting, hints);
+
+        if (isRequestTimeDependent(hints))
+            weighting = createTimeDependentAccessWeighting(weighting);
         // ORS-GH MOD END
 
         return weighting;
@@ -121,9 +124,8 @@ public class DefaultWeightingFactory implements WeightingFactory {
 
     // ORS-GH MOD START - additional methods
     protected void setSpeedCalculator(Weighting weighting, PMap hints) {
-        //TODO ORS Future improvement : attach conditional speed calculator only for time-dependent queries
         FlagEncoder encoder = weighting.getFlagEncoder();
-        if (encodingManager.hasEncodedValue(EncodingManager.getKey(encoder, ConditionalEdges.SPEED)))
+        if (encodingManager.hasEncodedValue(EncodingManager.getKey(encoder, ConditionalEdges.SPEED)) && isRequestTimeDependent(hints))
             weighting.setSpeedCalculator(new ConditionalSpeedCalculator(weighting.getSpeedCalculator(), ghStorage, encoder));
     }
 
@@ -134,6 +136,22 @@ public class DefaultWeightingFactory implements WeightingFactory {
             return handleExternalOrsWeightings(weightingStr, hints, encoder, turnCostProvider);
         }
     }
+
+    /**
+     * Potentially wraps the specified weighting into a TimeDependentAccessWeighting.
+     */
+    private Weighting createTimeDependentAccessWeighting(Weighting weighting) {
+        FlagEncoder flagEncoder = weighting.getFlagEncoder();
+        if (encodingManager.hasEncodedValue(EncodingManager.getKey(flagEncoder, ConditionalEdges.ACCESS)))
+            return new TimeDependentAccessWeighting(weighting, ghStorage, flagEncoder);
+        else
+            return weighting;
+    }
+
+    protected boolean isRequestTimeDependent(PMap hints) {
+        return false;//only time-dependent requests coming from ORS are supported
+    }
+    // ORS-GH MOD END
 
     // Note: this method is only needed because ORS is split into two
     // codebases (graphHopper fork and main code base)
