@@ -409,6 +409,7 @@ public class FootTagParserTest {
         IntsRef intsRef = encodingManager.createEdgeFlags();
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
+        way.setTag("gh:barrier_edge", true);
 
         Map<String, Object> tags = new HashMap<>();
         tags.put("barrier", "gate");

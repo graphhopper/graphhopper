@@ -78,15 +78,11 @@ public abstract class AbstractAccessParser implements TagParser {
     /**
      * Updates the given edge flags based on node tags
      */
-    protected void handleNodeTags(IntsRef edgeFlags, List<Map<String, Object>> nodeTags) {
-        if (nodeTags.isEmpty()) return; // allMatch returns 'true' by default
-        boolean isBarrier = nodeTags.stream().allMatch(tags -> {
-            // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
-            ReaderNode readerNode = new ReaderNode(0, 0, 0, tags);
-            return isBarrier(readerNode);
-        });
+    protected void handleNodeTags(IntsRef edgeFlags, Map<String, Object> nodeTags) {
+        // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
+        ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
         // block access for barriers
-        if (isBarrier) {
+        if (isBarrier(readerNode)) {
             BooleanEncodedValue accessEnc = getAccessEnc();
             accessEnc.setBool(false, edgeFlags, false);
             accessEnc.setBool(true, edgeFlags, false);

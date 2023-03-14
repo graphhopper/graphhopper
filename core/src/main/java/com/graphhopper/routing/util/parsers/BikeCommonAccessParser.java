@@ -8,8 +8,6 @@ import com.graphhopper.storage.IntsRef;
 
 import java.util.*;
 
-import static java.util.Collections.emptyMap;
-
 public abstract class BikeCommonAccessParser extends AbstractAccessParser implements TagParser {
 
     protected final HashSet<String> oppositeLanes = new HashSet<>();
@@ -130,8 +128,10 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
             handleAccess(edgeFlags, way);
         }
 
-        List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
-        handleNodeTags(edgeFlags, nodeTags);
+        if (way.hasTag("gh:barrier_edge")) {
+            List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
+            handleNodeTags(edgeFlags, nodeTags.get(0));
+        }
     }
 
     protected void handleAccess(IntsRef edgeFlags, ReaderWay way) {

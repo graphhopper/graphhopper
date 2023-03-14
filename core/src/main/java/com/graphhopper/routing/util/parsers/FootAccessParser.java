@@ -31,7 +31,6 @@ import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
-import static java.util.Collections.emptyMap;
 
 public class FootAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -181,7 +180,9 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
             accessEnc.setBool(true, edgeFlags, true);
         }
 
-        List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
-        handleNodeTags(edgeFlags, nodeTags);
+        if (way.hasTag("gh:barrier_edge")) {
+            List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
+            handleNodeTags(edgeFlags, nodeTags.get(0));
+        }
     }
 }
