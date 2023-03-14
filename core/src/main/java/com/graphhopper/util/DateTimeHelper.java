@@ -25,19 +25,19 @@ public class DateTimeHelper {
         int node = iter.getBaseNode();
         double lat = nodeAccess.getLat(node);
         double lon = nodeAccess.getLon(node);
-        String timeZoneId = timeZoneMap.getOverlappingTimeZone(lat, lon).getZoneId();
-        ZoneId edgeZoneId = ZoneId.of(timeZoneId);
+        ZoneId edgeZoneId = getZoneId(lat, lon);
         Instant edgeEnterTime = Instant.ofEpochMilli(time);
         return ZonedDateTime.ofInstant(edgeEnterTime, edgeZoneId);
     }
 
     public ZonedDateTime getZonedDateTime(double lat, double lon, String time) {
         LocalDateTime localDateTime = LocalDateTime.parse(time);
-        String timeZoneId = timeZoneMap.getOverlappingTimeZone(lat, lon).getZoneId();
-        return localDateTime.atZone(ZoneId.of(timeZoneId));
+        ZoneId zoneId = getZoneId(lat, lon);
+        return localDateTime.atZone(zoneId);
     }
 
-    public String getZoneId(double lat, double lon) {
-        return timeZoneMap.getOverlappingTimeZone(lat, lon).getZoneId();
+    public ZoneId getZoneId(double lat, double lon) {
+        String zoneId = (timeZoneMap == null) ? "Europe/Berlin" : timeZoneMap.getOverlappingTimeZone(lat, lon).getZoneId();
+        return ZoneId.of(zoneId);
     }
 }
