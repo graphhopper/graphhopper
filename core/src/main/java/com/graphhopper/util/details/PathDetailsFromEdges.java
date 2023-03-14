@@ -52,8 +52,6 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
     /**
      * Calculates the PathDetails for a Path. This method will return fast, if there are no calculators.
      *
-     * @param path
-     * @param weighting
      * @param pathBuilderFactory Generates the relevant PathBuilders
      * @return List of PathDetails for this Path
      */
@@ -62,7 +60,7 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
                                                             int previousIndex, Graph graph) {
         if (!path.isFound() || requestedPathDetails.isEmpty())
             return Collections.emptyMap();
-        List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, evLookup, weighting, graph);
+        List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, path, evLookup, weighting, graph);
         if (pathBuilders.isEmpty())
             return Collections.emptyMap();
 
