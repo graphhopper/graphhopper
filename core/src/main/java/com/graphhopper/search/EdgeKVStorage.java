@@ -40,6 +40,7 @@ public class EdgeKVStorage {
     // Store string value as byte array and store the length into 1 byte
     private static final int MAX_LENGTH = (1 << 8) - 1;
 
+    private final Directory dir;
     // It stores the mapping of "key to index" in the keys DataAccess. E.g. if your first key is "some" then we will
     // store the mapping "1->some" there (the 0th index is skipped on purpose). As this map is 'small' the keys
     // DataAccess is only used for long term storage, i.e. only in loadExisting and flush. For add and getAll we use
@@ -85,9 +86,15 @@ public class EdgeKVStorage {
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
-    public EdgeKVStorage(Directory dir) {
-        keys = dir.create("edgekv_keys", 10 * 1024);
-        vals = dir.create("edgekv_vals");
+    public EdgeKVStorage(Directory dir, boolean edge) {
+        this.dir = dir;
+        if (edge) {
+            this.keys = dir.create("edgekv_keys", 10 * 1024);
+            this.vals = dir.create("edgekv_vals");
+        } else {
+            this.keys = dir.create("nodekv_keys", 10 * 1024);
+            this.vals = dir.create("nodekv_vals");
+        }
     }
 
     public EdgeKVStorage create(long initBytes) {
@@ -137,37 +144,9 @@ public class EdgeKVStorage {
         return indexToKey;
     }
 
-    /**
-     * This method writes the specified entryMap (key-value pairs) into the storage. Please note that null keys or null
-     * values are rejected. The Class of a value can be only: byte[], String, int, long, float or double
-     * (or more precisely, their wrapper equivalent). For all other types an exception is thrown. The first call of add
-     * assigns a Class to every key in the Map and future calls of add will throw an exception if this Class differs.
-     *
-     * @return entryPointer with which you can later fetch the entryMap via the get or getAll method
-     */
-    public long add(final List<KeyValue> entries) {
-        if (entries == null) throw new IllegalArgumentException("specified List must not be null");
-        if (entries.isEmpty()) return EMPTY_POINTER;
-        else if (entries.size() > 200)
-            throw new IllegalArgumentException("Cannot store more than 200 entries per entry");
-
-        // This is a very important "compression" mechanism because one OSM way is split into multiple edges and so we
-        // can often re-use the serialized key-value pairs of the previous edge.
-        if (isEquals(entries, lastEntries)) return lastEntryPointer;
-
-        // If the Class of a value is unknown it should already fail here, before we modify internal data. (see #2597#discussion_r896469840)
-        for (KeyValue kv : entries)
-            if (keyToIndex.get(kv.key) != null)
-                getBytesForValue(indexToClass.get(keyToIndex.get(kv.key)), kv.value);
-
-        lastEntries = entries;
-        lastEntryPointer = bytePointer;
-        // while adding there could be exceptions and we need to avoid that the bytePointer is modified
-        long currentPointer = bytePointer;
-
-        vals.ensureCapacity(currentPointer + 1);
-        vals.setByte(currentPointer, (byte) entries.size());
-        currentPointer += 1;
+    private long setKVList(long currentPointer, final List<KeyValue> entries) {
+        if (currentPointer == EMPTY_POINTER) return currentPointer;
+        currentPointer += 1; // skip stored count
         for (KeyValue entry : entries) {
             String key = entry.key;
             if (key == null) throw new IllegalArgumentException("key cannot be null");
@@ -215,7 +194,37 @@ public class EdgeKVStorage {
             vals.setBytes(currentPointer, valueBytes, valueBytes.length);
             currentPointer += valueBytes.length;
         }
-        bytePointer = currentPointer;
+        return currentPointer;
+    }
+
+    /**
+     * This method writes the specified entryMap (key-value pairs) into the storage. Please note that null keys or null
+     * values are rejected. The Class of a value can be only: byte[], String, int, long, float or double
+     * (or more precisely, their wrapper equivalent). For all other types an exception is thrown. The first call of add
+     * assigns a Class to every key in the Map and future calls of add will throw an exception if this Class differs.
+     *
+     * @return entryPointer with which you can later fetch the entryMap via the get or getAll method
+     */
+    public long add(final List<KeyValue> entries) {
+        if (entries == null) throw new IllegalArgumentException("specified List must not be null");
+        if (entries.isEmpty()) return EMPTY_POINTER;
+        else if (entries.size() > 200)
+            throw new IllegalArgumentException("Cannot store more than 200 entries per entry");
+
+        // This is a very important "compression" mechanism because one OSM way is split into multiple edges and so we
+        // can often re-use the serialized key-value pairs of the previous edge.
+        if (isEquals(entries, lastEntries)) return lastEntryPointer;
+
+        // If the Class of a value is unknown it should already fail here, before we modify internal data. (see #2597#discussion_r896469840)
+        for (KeyValue kv : entries)
+            if (keyToIndex.get(kv.key) != null)
+                getBytesForValue(indexToClass.get(keyToIndex.get(kv.key)), kv.value);
+
+        lastEntries = entries;
+        lastEntryPointer = bytePointer;
+        vals.ensureCapacity(bytePointer + 1);
+        vals.setByte(bytePointer, (byte) entries.size());
+        bytePointer = setKVList(bytePointer, entries);
         if (bytePointer < 0)
             throw new IllegalStateException("Negative bytePointer in EdgeKVStorage");
         return lastEntryPointer;
@@ -261,6 +270,36 @@ public class EdgeKVStorage {
         }
 
         return list;
+    }
+
+    /**
+     * Please note that this method ignores potentially different tags for forward and backward direction. To avoid this
+     * use {@link #getAll(long)} instead.
+     */
+    public Map<String, Object> getMap(final long entryPointer) {
+        if (entryPointer < 0)
+            throw new IllegalStateException("Pointer to access EdgeKVStorage cannot be negative:" + entryPointer);
+
+        if (entryPointer == EMPTY_POINTER) return Collections.emptyMap();
+
+        int keyCount = vals.getByte(entryPointer) & 0xFF;
+        if (keyCount == 0) return Collections.emptyMap();
+
+        HashMap<String, Object> map = new HashMap<>(keyCount);
+        long tmpPointer = entryPointer + 1;
+        AtomicInteger sizeOfObject = new AtomicInteger();
+        for (int i = 0; i < keyCount; i++) {
+            int currentKeyIndexRaw = vals.getShort(tmpPointer);
+            int currentKeyIndex = currentKeyIndexRaw >>> 2;
+            tmpPointer += 2;
+
+            Object object = deserializeObj(sizeOfObject, tmpPointer, indexToClass.get(currentKeyIndex));
+            tmpPointer += sizeOfObject.get();
+            String key = indexToKey.get(currentKeyIndex);
+            map.put(key, object);
+        }
+
+        return map;
     }
 
     private boolean hasDynLength(Class<?> clazz) {
@@ -416,6 +455,11 @@ public class EdgeKVStorage {
         vals.flush();
     }
 
+    public void clear() {
+        dir.remove(keys.getName());
+        dir.remove(vals.getName());
+    }
+
     public void close() {
         keys.close();
         vals.close();
@@ -444,6 +488,14 @@ public class EdgeKVStorage {
             this.value = value;
             this.fwd = true;
             this.bwd = true;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+
+        public String getKey() {
+            return key;
         }
 
         public KeyValue(String key, Object value, boolean fwd, boolean bwd) {

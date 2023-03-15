@@ -23,14 +23,18 @@ import com.carrotsearch.hppc.LongSet;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint3D;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.DoubleSupplier;
 import java.util.function.IntUnaryOperator;
+import java.util.stream.Collectors;
 
 /**
  * This class stores OSM node data while reading an OSM file in {@link WaySegmentParser}. It is not trivial to do this
@@ -69,7 +73,8 @@ class OSMNodeData {
     private final LongIntMap nodeTagIndicesByOsmNodeIds;
 
     // stores node tags
-    private final List<Map<String, Object>> nodeTags;
+    private final EdgeKVStorage nodeKVStorage;
+    // collect all nodes that should be split and a barrier edge should be created between them.
     private final LongSet nodesToBeSplit;
 
     private int nextTowerId = 0;
@@ -78,16 +83,16 @@ class OSMNodeData {
     private long nextArtificialOSMNodeId = -Long.MAX_VALUE;
 
     public OSMNodeData(PointAccess nodeAccess, Directory directory) {
-        // we use GHLongIntBTree, because it is based on a tree, not an array, so it can store as many entries as there
-        // are longs. this also makes it memory efficient, because there is no need to pre-allocate memory for empty
-        // entries.
+        // We use GHLongIntBTree, because it is based on a tree, not an array, so it can store as many entries as there
+        // are longs. This also makes it memory efficient, because there is no need to pre-allocate memory for empty
+        // entries, and it also avoids allocating a new array and copying into it when increasing the size.
         idsByOsmNodeIds = new GHLongIntBTree(200);
         towerNodes = nodeAccess;
         pillarNodes = new PillarInfo(towerNodes.is3D(), directory);
 
         nodeTagIndicesByOsmNodeIds = new GHLongIntBTree(200);
         nodesToBeSplit = new LongScatterSet();
-        nodeTags = new ArrayList<>();
+        nodeKVStorage = new EdgeKVStorage(directory, false);
     }
 
     public boolean is3D() {
@@ -134,8 +139,8 @@ class OSMNodeData {
     /**
      * @return the number of nodes for which we store tags
      */
-    public long getTaggedNodeCount() {
-        return nodeTags.size();
+    public long getNodeTagCapacity() {
+        return nodeKVStorage.getCapacity();
     }
 
     /**
@@ -241,8 +246,12 @@ class OSMNodeData {
     public void setTags(ReaderNode node) {
         int tagIndex = nodeTagIndicesByOsmNodeIds.get(node.getId());
         if (tagIndex == -1) {
-            nodeTagIndicesByOsmNodeIds.put(node.getId(), nodeTags.size());
-            nodeTags.add(node.getTags());
+            long pointer = nodeKVStorage.add(node.getTags().entrySet().stream().map(m -> new EdgeKVStorage.KeyValue(m.getKey(),
+                            m.getValue() instanceof String ? EdgeKVStorage.cutString((String) m.getValue()) : m.getValue())).
+                    collect(Collectors.toList()));
+            if (pointer > 0xFFFF_FFFFL)
+                throw new IllegalStateException("Too many key value pairs are stored in node tags, was " + pointer);
+            nodeTagIndicesByOsmNodeIds.put(node.getId(), (int) pointer);
         } else {
             throw new IllegalStateException("Cannot add tags twice, duplicate node OSM ID: " + node.getId());
         }
@@ -252,11 +261,12 @@ class OSMNodeData {
         int tagIndex = nodeTagIndicesByOsmNodeIds.get(osmNodeId);
         if (tagIndex < 0)
             return Collections.emptyMap();
-        return nodeTags.get(tagIndex);
+        return nodeKVStorage.getMap(tagIndex);
     }
 
     public void release() {
         pillarNodes.clear();
+        nodeKVStorage.clear();
     }
 
     public int towerNodeToId(int towerId) {
