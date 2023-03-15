@@ -42,16 +42,11 @@ public class ExternalBooleanEncodedValue implements BooleanEncodedValue {
     public void setBool(int edgeId, boolean reverse, IntsRef ref, boolean value) {
         // it'll grow as we go
         if (value) bits.set(getIndex(edgeId, reverse));
-        else {
-            bits.ensureCapacity(getIndex(edgeId, reverse) + 1);
-            bits.clear(getIndex(edgeId, reverse));
-        }
+        else bits.clear(getIndex(edgeId, reverse));
     }
 
     @Override
     public boolean getBool(int edgeId, boolean reverse, IntsRef ref) {
-        if (edgeId >= bits.size())
-            throw new IllegalStateException("no bit reserved yet for edge id: " + edgeId + ". make sure to initialize the bitset first");
         return bits.get(getIndex(edgeId, reverse));
     }
 

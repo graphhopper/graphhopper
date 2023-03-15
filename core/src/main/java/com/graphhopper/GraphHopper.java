@@ -1367,18 +1367,6 @@ public class GraphHopper {
      * Internal method to clean up the graph.
      */
     protected void cleanUp() {
-        // todonow: this is too ugly
-        // we set the highest edge id's attributes to false for all external boolean encoded values. this way the
-        // underlying external boolean value storage is initialized with the right size. simply setting to false is ok
-        // because we do not use external encoded values during the osm parsing (yet...)
-        getEncodingManager().getEncodedValues().forEach(encodedValue -> {
-            if (encodedValue instanceof ExternalBooleanEncodedValue) {
-                int highestEdge = getBaseGraph().getEdges() - 1;
-                if (encodedValue.isStoreTwoDirections())
-                    highestEdge *= 2;
-                ((ExternalBooleanEncodedValue) encodedValue).setBool(highestEdge, false, null, false);
-            }
-        });
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(baseGraph.getBaseGraph(), buildSubnetworkRemovalJobs());
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.setThreads(subnetworksThreads);
