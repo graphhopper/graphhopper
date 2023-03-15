@@ -155,7 +155,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
         if (way.hasTag("gh:barrier_edge")) {
             List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
-            handleNodeTags(edgeFlags, nodeTags.get(0));
+            handleBarrierEdge(edgeFlags, nodeTags.get(0));
         }
     }
 
