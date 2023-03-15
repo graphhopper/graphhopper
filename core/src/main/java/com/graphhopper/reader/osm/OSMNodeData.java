@@ -23,7 +23,7 @@ import com.carrotsearch.hppc.LongSet;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.ReaderNode;
-import com.graphhopper.search.EdgeKVStorage;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
@@ -73,7 +73,7 @@ class OSMNodeData {
     private final LongIntMap nodeTagIndicesByOsmNodeIds;
 
     // stores node tags
-    private final EdgeKVStorage nodeKVStorage;
+    private final KVStorage nodeKVStorage;
     // collect all nodes that should be split and a barrier edge should be created between them.
     private final LongSet nodesToBeSplit;
 
@@ -92,7 +92,7 @@ class OSMNodeData {
 
         nodeTagIndicesByOsmNodeIds = new GHLongIntBTree(200);
         nodesToBeSplit = new LongScatterSet();
-        nodeKVStorage = new EdgeKVStorage(directory, false);
+        nodeKVStorage = new KVStorage(directory, false);
     }
 
     public boolean is3D() {
@@ -246,8 +246,8 @@ class OSMNodeData {
     public void setTags(ReaderNode node) {
         int tagIndex = nodeTagIndicesByOsmNodeIds.get(node.getId());
         if (tagIndex == -1) {
-            long pointer = nodeKVStorage.add(node.getTags().entrySet().stream().map(m -> new EdgeKVStorage.KeyValue(m.getKey(),
-                            m.getValue() instanceof String ? EdgeKVStorage.cutString((String) m.getValue()) : m.getValue())).
+            long pointer = nodeKVStorage.add(node.getTags().entrySet().stream().map(m -> new KVStorage.KeyValue(m.getKey(),
+                            m.getValue() instanceof String ? KVStorage.cutString((String) m.getValue()) : m.getValue())).
                     collect(Collectors.toList()));
             if (pointer > 0xFFFF_FFFFL)
                 throw new IllegalStateException("Too many key value pairs are stored in node tags, was " + pointer);

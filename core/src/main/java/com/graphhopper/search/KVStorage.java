@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  *
  * @author Peter Karich
  */
-public class EdgeKVStorage {
+public class KVStorage {
 
     private static final long EMPTY_POINTER = 0, START_POINTER = 1;
     // Store the key index in 2 bytes. Use first 2 bits for marking fwd+bwd existence.
@@ -86,7 +86,7 @@ public class EdgeKVStorage {
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
-    public EdgeKVStorage(Directory dir, boolean edge) {
+    public KVStorage(Directory dir, boolean edge) {
         this.dir = dir;
         if (edge) {
             this.keys = dir.create("edgekv_keys", 10 * 1024);
@@ -97,7 +97,7 @@ public class EdgeKVStorage {
         }
     }
 
-    public EdgeKVStorage create(long initBytes) {
+    public KVStorage create(long initBytes) {
         keys.create(initBytes);
         vals.create(initBytes);
         // add special empty case to have a reliable duplicate detection via negative keyIndex
@@ -111,8 +111,8 @@ public class EdgeKVStorage {
         if (vals.loadExisting()) {
             if (!keys.loadExisting()) throw new IllegalStateException("Loaded values but cannot load keys");
             bytePointer = bitUtil.combineIntsToLong(vals.getHeader(0), vals.getHeader(4));
-            GHUtility.checkDAVersion(vals.getName(), Constants.VERSION_EDGEKV_STORAGE, vals.getHeader(8));
-            GHUtility.checkDAVersion(keys.getName(), Constants.VERSION_EDGEKV_STORAGE, keys.getHeader(0));
+            GHUtility.checkDAVersion(vals.getName(), Constants.VERSION_KV_STORAGE, vals.getHeader(8));
+            GHUtility.checkDAVersion(keys.getName(), Constants.VERSION_KV_STORAGE, keys.getHeader(0));
 
             // load keys into memory
             int count = keys.getShort(0);
@@ -226,7 +226,7 @@ public class EdgeKVStorage {
         vals.setByte(bytePointer, (byte) entries.size());
         bytePointer = setKVList(bytePointer, entries);
         if (bytePointer < 0)
-            throw new IllegalStateException("Negative bytePointer in EdgeKVStorage");
+            throw new IllegalStateException("Negative bytePointer in KVStorage");
         return lastEntryPointer;
     }
 
@@ -244,16 +244,16 @@ public class EdgeKVStorage {
         return false;
     }
 
-    public List<EdgeKVStorage.KeyValue> getAll(final long entryPointer) {
+    public List<KVStorage.KeyValue> getAll(final long entryPointer) {
         if (entryPointer < 0)
-            throw new IllegalStateException("Pointer to access EdgeKVStorage cannot be negative:" + entryPointer);
+            throw new IllegalStateException("Pointer to access KVStorage cannot be negative:" + entryPointer);
 
         if (entryPointer == EMPTY_POINTER) return Collections.emptyList();
 
         int keyCount = vals.getByte(entryPointer) & 0xFF;
         if (keyCount == 0) return Collections.emptyList();
 
-        List<EdgeKVStorage.KeyValue> list = new ArrayList<>(keyCount);
+        List<KVStorage.KeyValue> list = new ArrayList<>(keyCount);
         long tmpPointer = entryPointer + 1;
         AtomicInteger sizeOfObject = new AtomicInteger();
         for (int i = 0; i < keyCount; i++) {
@@ -278,7 +278,7 @@ public class EdgeKVStorage {
      */
     public Map<String, Object> getMap(final long entryPointer) {
         if (entryPointer < 0)
-            throw new IllegalStateException("Pointer to access EdgeKVStorage cannot be negative:" + entryPointer);
+            throw new IllegalStateException("Pointer to access KVStorage cannot be negative:" + entryPointer);
 
         if (entryPointer == EMPTY_POINTER) return Collections.emptyMap();
 
@@ -392,7 +392,7 @@ public class EdgeKVStorage {
 
     public Object get(final long entryPointer, String key, boolean reverse) {
         if (entryPointer < 0)
-            throw new IllegalStateException("Pointer to access EdgeKVStorage cannot be negative:" + entryPointer);
+            throw new IllegalStateException("Pointer to access KVStorage cannot be negative:" + entryPointer);
 
         if (entryPointer == EMPTY_POINTER) return null;
 
@@ -446,12 +446,12 @@ public class EdgeKVStorage {
             keys.setBytes(keyBytePointer, clazzBytes, 1);
             keyBytePointer += 1;
         }
-        keys.setHeader(0, Constants.VERSION_EDGEKV_STORAGE);
+        keys.setHeader(0, Constants.VERSION_KV_STORAGE);
         keys.flush();
 
         vals.setHeader(0, bitUtil.getIntLow(bytePointer));
         vals.setHeader(4, bitUtil.getIntHigh(bytePointer));
-        vals.setHeader(8, Constants.VERSION_EDGEKV_STORAGE);
+        vals.setHeader(8, Constants.VERSION_KV_STORAGE);
         vals.flush();
     }
 
@@ -533,7 +533,7 @@ public class EdgeKVStorage {
     }
 
     /**
-     * This method limits the specified String value to the length currently accepted for values in the EdgeKVStorage.
+     * This method limits the specified String value to the length currently accepted for values in the KVStorage.
      */
     public static String cutString(String value) {
         byte[] bytes = value.getBytes(Helper.UTF_CS);
