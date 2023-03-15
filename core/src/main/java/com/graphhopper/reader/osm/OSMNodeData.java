@@ -68,8 +68,7 @@ class OSMNodeData {
     private final PillarInfo pillarNodes;
     private final PointAccess towerNodes;
 
-    // this map stores an index for each OSM node we keep the node tags of. a value of -1 means there is no entry
-    // yet.
+    // this map stores an index for each OSM node we keep the node tags of. a value of -1 means there is no entry yet.
     private final LongIntMap nodeTagIndicesByOsmNodeIds;
 
     // stores node tags
@@ -249,7 +248,7 @@ class OSMNodeData {
             long pointer = nodeKVStorage.add(node.getTags().entrySet().stream().map(m -> new KVStorage.KeyValue(m.getKey(),
                             m.getValue() instanceof String ? KVStorage.cutString((String) m.getValue()) : m.getValue())).
                     collect(Collectors.toList()));
-            if (pointer > 0xFFFF_FFFFL)
+            if (pointer > Integer.MAX_VALUE)
                 throw new IllegalStateException("Too many key value pairs are stored in node tags, was " + pointer);
             nodeTagIndicesByOsmNodeIds.put(node.getId(), (int) pointer);
         } else {
