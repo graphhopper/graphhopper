@@ -392,7 +392,7 @@ public class WaySegmentParser {
         @Override
         public void onFinish() {
             LOGGER.info("pass2 - finished, processed ways: {}, way nodes: {}, nodes with tags: {}, node tag capacity: {}, ignored barriers at junctions: {}",
-                    nf(wayCounter), nf(acceptedNodes), nf(nodeData.getNodeCount()), nf(nodeData.getNodeTagCapacity()), nf(ignoredSplitNodes));
+                    nf(wayCounter), nf(acceptedNodes), nf(nodeData.getTaggedNodeCount()), nf(nodeData.getNodeTagCapacity()), nf(ignoredSplitNodes));
         }
 
         public int getInternalNodeIdOfOSMNode(long nodeOsmId) {

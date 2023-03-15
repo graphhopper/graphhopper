@@ -135,6 +135,10 @@ class OSMNodeData {
         return idsByOsmNodeIds.getSize();
     }
 
+    public long getTaggedNodeCount() {
+        return nodeTagIndicesByOsmNodeIds.getSize();
+    }
+
     /**
      * @return the number of nodes for which we store tags
      */
