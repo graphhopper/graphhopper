@@ -18,6 +18,8 @@
 
 package com.graphhopper.reader.osm;
 
+import com.carrotsearch.hppc.LongScatterSet;
+import com.carrotsearch.hppc.LongSet;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.ReaderNode;
@@ -63,11 +65,12 @@ class OSMNodeData {
     private final PointAccess towerNodes;
 
     // this map stores an index for each OSM node we keep the node tags of. a value of -1 means there is no entry
-    // yet and a value of -2 means there was an entry but it was removed again
+    // yet.
     private final LongIntMap nodeTagIndicesByOsmNodeIds;
 
     // stores node tags
     private final List<Map<String, Object>> nodeTags;
+    private final LongSet nodesToBeSplit;
 
     private int nextTowerId = 0;
     private int nextPillarId = 0;
@@ -83,6 +86,7 @@ class OSMNodeData {
         pillarNodes = new PillarInfo(towerNodes.is3D(), directory);
 
         nodeTagIndicesByOsmNodeIds = new GHLongIntBTree(200);
+        nodesToBeSplit = new LongScatterSet();
         nodeTags = new ArrayList<>();
     }
 
@@ -236,9 +240,7 @@ class OSMNodeData {
 
     public void setTags(ReaderNode node) {
         int tagIndex = nodeTagIndicesByOsmNodeIds.get(node.getId());
-        if (tagIndex == -2)
-            throw new IllegalStateException("Cannot add tags after they were removed");
-        else if (tagIndex == -1) {
+        if (tagIndex == -1) {
             nodeTagIndicesByOsmNodeIds.put(node.getId(), nodeTags.size());
             nodeTags.add(node.getTags());
         } else {
@@ -251,11 +253,6 @@ class OSMNodeData {
         if (tagIndex < 0)
             return Collections.emptyMap();
         return nodeTags.get(tagIndex);
-    }
-
-    public void removeTag(long osmNodeId, String key) {
-        int prev = nodeTagIndicesByOsmNodeIds.get(osmNodeId);
-        nodeTags.get(prev).remove(key);
     }
 
     public void release() {
@@ -276,5 +273,19 @@ class OSMNodeData {
 
     public int idToPillarNode(int id) {
         return id - 3;
+    }
+
+    public boolean setSplitNode(long osmNodeId) {
+        return nodesToBeSplit.add(osmNodeId);
+    }
+
+    public void unsetSplitNode(long osmNodeId) {
+        int removed = nodesToBeSplit.removeAll(osmNodeId);
+        if (removed == 0)
+            throw new IllegalStateException("Node " + osmNodeId + " was not a split node");
+    }
+
+    public boolean isSplitNode(long osmNodeId) {
+        return nodesToBeSplit.contains(osmNodeId);
     }
 }
