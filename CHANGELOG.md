@@ -1,4 +1,7 @@
-### 7.0 [not yet released]
+### 8.0 [not yet released]
+
+
+### 7.0 [14 Mar 2023]
 
 - remove StringEncodedValue support from custom model due to insufficient usage/testing
 - handle also node_tags in handleWayTags, when extending AbstractAccessParser call handleNodeTags, #2738
