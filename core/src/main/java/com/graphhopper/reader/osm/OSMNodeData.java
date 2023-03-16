@@ -67,7 +67,7 @@ class OSMNodeData {
     private final PointAccess towerNodes;
 
     // this map stores an index for each OSM node we keep the node tags of. a value of -1 means there is no entry yet.
-    private final LongIntMap nodeTagIndicesByOsmNodeIds;
+    private final GHLongIntBTree nodeTagIndicesByOsmNodeIds;
 
     // stores node tags
     private final KVStorage nodeKVStorage;
@@ -254,17 +254,18 @@ class OSMNodeData {
     }
 
     public void setTags(ReaderNode node) {
-        int tagIndex = nodeTagIndicesByOsmNodeIds.get(node.getId());
-        if (tagIndex == -1) {
-            long pointer = nodeKVStorage.add(node.getTags().entrySet().stream().map(m -> new KVStorage.KeyValue(m.getKey(),
-                            m.getValue() instanceof String ? KVStorage.cutString((String) m.getValue()) : m.getValue())).
-                    collect(Collectors.toList()));
-            if (pointer > Integer.MAX_VALUE)
-                throw new IllegalStateException("Too many key value pairs are stored in node tags, was " + pointer);
-            nodeTagIndicesByOsmNodeIds.put(node.getId(), (int) pointer);
-        } else {
-            throw new IllegalStateException("Cannot add tags twice, duplicate node OSM ID: " + node.getId());
-        }
+        nodeTagIndicesByOsmNodeIds.putConditionally(node.getId(), tagIndex -> {
+            if (tagIndex == -1) {
+                long pointer = nodeKVStorage.add(node.getTags().entrySet().stream().map(m -> new KVStorage.KeyValue(m.getKey(),
+                                m.getValue() instanceof String ? KVStorage.cutString((String) m.getValue()) : m.getValue())).
+                        collect(Collectors.toList()));
+                if (pointer > Integer.MAX_VALUE)
+                    throw new IllegalStateException("Too many key value pairs are stored in node tags, was " + pointer);
+                return (int) pointer;
+            } else {
+                throw new IllegalStateException("Cannot add tags twice, duplicate node OSM ID: " + node.getId());
+            }
+        });
     }
 
     public Map<String, Object> getTags(long osmNodeId) {
