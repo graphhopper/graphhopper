@@ -4,6 +4,9 @@ import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.PointList;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * The ElevationData is read from rectangular tiles. Especially when going along a cliff,
  * valley, or pass, it can happen that a small part of the road contains incorrect elevation data.
@@ -56,6 +59,97 @@ public class EdgeElevationSmoothing {
             double smoothed = sum / (end - start);
             geometry.setElevation(i, smoothed);
         }
+    }
+
+    /**
+     * This method smooths the elevation data of a PointList by calculating the average elevation over
+     * multiple points of that PointList.
+     */
+    public static void smoothMovingAverageAdaptiveWindow(PointList geometry) {
+        Map<Integer, Double> updatedElevations = new HashMap<>(geometry.size() - 2);
+        for (int i = 1; i < geometry.size() - 1; i++) {
+            // the max distance to consider from the geometry point i
+            // converts towards 0 when close to end or start points (tower nodes)
+            double maxSearchDistance = 75; // in meter TODO: extract constant and tune value
+
+            double distanceBack = 0.0;
+            for (int j = i - 1; j >= 0; j--) {
+                double dist = DistancePlaneProjection.DIST_PLANE.calcDist(
+                        geometry.getLat(j), geometry.getLon(j),
+                        geometry.getLat(j + 1), geometry.getLon(j + 1)
+                );
+
+                distanceBack += dist;
+                if (distanceBack > maxSearchDistance) {
+                    break;
+                }
+            }
+
+            double distanceForward = 0.0;
+            for (int j = i; j < geometry.size() - 1; j++) {
+                double dist = DistancePlaneProjection.DIST_PLANE.calcDist(
+                        geometry.getLat(j), geometry.getLon(j),
+                        geometry.getLat(j + 1), geometry.getLon(j + 1)
+                );
+                distanceForward += dist;
+                if (distanceForward > maxSearchDistance) {
+                    // TODO: we could stop earlier if we also take a look at distanceBack,
+                    //  maybe not relevant for performance
+                    break;
+                }
+            }
+
+            double searchDistance = Math.min(
+                    Math.min(distanceBack, distanceForward),
+                    maxSearchDistance
+            );
+
+            double elevationArea = 0.0;
+            distanceBack = 0.0;
+            for (int j = i - 1; j >= 0; j--) {
+                double dist = DistancePlaneProjection.DIST_PLANE.calcDist(
+                        geometry.getLat(j), geometry.getLon(j),
+                        geometry.getLat(j + 1), geometry.getLon(j + 1)
+                );
+
+                double searchDistLeft = searchDistance - distanceBack;
+                distanceBack += dist;
+                if (searchDistance < dist) {
+                    double elevationDelta = geometry.getEle(j) - geometry.getEle(j + 1);
+                    double elevationAtSearchDistance = geometry.getEle(j + 1) + searchDistLeft / dist * elevationDelta;
+                    elevationArea += searchDistLeft * (geometry.getEle(j + 1) + elevationAtSearchDistance) / 2;
+                    break;
+                } else {
+                    elevationArea += dist * (geometry.getEle(j + 1) + geometry.getEle(j)) / 2.0;
+                }
+            }
+
+            distanceForward = 0.0;
+            for (int j = i; j < geometry.size() - 1; j++) {
+                double dist = DistancePlaneProjection.DIST_PLANE.calcDist(
+                        geometry.getLat(j), geometry.getLon(j),
+                        geometry.getLat(j + 1), geometry.getLon(j + 1)
+                );
+
+                double searchDistLeft = searchDistance - distanceForward;
+                distanceForward += dist;
+                if (searchDistLeft < dist) {
+                    double elevationDelta = geometry.getEle(j + 1) - geometry.getEle(j);
+                    double elevationAtSearchDistance = geometry.getEle(j) + searchDistLeft / dist * elevationDelta;
+                    elevationArea += searchDistLeft * (geometry.getEle(j) + elevationAtSearchDistance) / 2;
+                    break;
+                } else {
+                    elevationArea += dist * (geometry.getEle(j + 1) + geometry.getEle(j)) / 2.0;
+                }
+            }
+
+            double elevationAverage = elevationArea / (searchDistance * 2); // TODO: division by zero?
+            updatedElevations.put(i, elevationAverage);
+        }
+
+        updatedElevations.forEach((index, ele) -> {
+            geometry.setElevation(index, ele);
+        });
     }
 
     /**

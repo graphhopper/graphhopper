@@ -317,6 +317,8 @@ public class OSMReader {
                 EdgeElevationSmoothing.smoothRamer(pointList, config.getElevationSmoothingRamerMax());
             else if (config.getElevationSmoothing().equals("moving_average"))
                 EdgeElevationSmoothing.smoothMovingAverage(pointList);
+            else if (config.getElevationSmoothing().equals("moving_average_adaptive_window"))
+                EdgeElevationSmoothing.smoothMovingAverageAdaptiveWindow(pointList);
         }
 
         if (config.getMaxWayPointDistance() > 0 && pointList.size() > 2)
