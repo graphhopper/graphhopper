@@ -192,7 +192,7 @@ public class Parameters {
 
         public static final String PATH_DETAILS = "details";
 
-        // these details are directly accessing the EdgeKVStorage and the names have to be identical
+        // these details are directly accessing the KVStorage for edges and the names have to be identical
         public static final String STREET_NAME = "street_name";
         public static final String STREET_REF = "street_ref";
         public static final String STREET_DESTINATION = "street_destination";

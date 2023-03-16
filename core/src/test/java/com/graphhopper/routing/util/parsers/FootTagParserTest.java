@@ -30,9 +30,7 @@ import com.graphhopper.util.*;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
+import java.util.*;
 
 import static com.graphhopper.routing.util.parsers.FootAverageSpeedParser.MEAN_SPEED;
 import static com.graphhopper.routing.util.parsers.FootAverageSpeedParser.SLOW_SPEED;
@@ -411,11 +409,12 @@ public class FootTagParserTest {
         IntsRef intsRef = encodingManager.createEdgeFlags();
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
+        way.setTag("gh:barrier_edge", true);
 
-        ReaderNode node = new ReaderNode(1, -1, -1);
-        node.setTag("barrier", "gate");
-        node.setTag("access", "no");
-        way.setTag("node_tags", node.getTags());
+        Map<String, Object> tags = new HashMap<>();
+        tags.put("barrier", "gate");
+        tags.put("access", "no");
+        way.setTag("node_tags", Collections.singletonList(tags));
         accessParser.handleWayTags(intsRef, way);
 
         assertFalse(footAccessEnc.getBool(false, intsRef));
