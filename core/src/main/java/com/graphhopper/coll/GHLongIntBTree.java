@@ -101,6 +101,7 @@ public class GHLongIntBTree implements LongIntMap {
         }
 
         ReturnValue rv = root.putConditionally(key, update);
+        if (rv == null) return noNumberValue;
         if (rv.tree != null) {
             height++;
             root = rv.tree;
@@ -220,11 +221,11 @@ public class GHLongIntBTree implements LongIntMap {
             index = ~index;
             ReturnValue downTreeRV;
             if (isLeaf || children[index] == null) {
-                downTreeRV = new ReturnValue(noNumberValue);
                 int newValue = update.applyAsInt(noNumberValue);
                 if (newValue == noNumberValue)
                     // we don't want to create a new entry!
-                    return downTreeRV;
+                    return null;
+                downTreeRV = new ReturnValue(noNumberValue);
                 // insert
                 downTreeRV.tree = checkSplitEntry();
                 if (downTreeRV.tree == null) {
@@ -238,12 +239,12 @@ public class GHLongIntBTree implements LongIntMap {
             }
 
             downTreeRV = children[index].putConditionally(key, update);
-            if (downTreeRV.oldValue != noNumberValue) // only update
+            if (downTreeRV != null && downTreeRV.oldValue != noNumberValue) // only update
             {
                 return downTreeRV;
             }
 
-            if (downTreeRV.tree != null) {
+            if (downTreeRV != null && downTreeRV.tree != null) {
                 // split this treeEntry if it is too big
                 BTreeEntry returnTree, downTree = returnTree = checkSplitEntry();
                 if (downTree == null) {
