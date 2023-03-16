@@ -220,15 +220,19 @@ public class GHLongIntBTree implements LongIntMap {
             index = ~index;
             ReturnValue downTreeRV;
             if (isLeaf || children[index] == null) {
-                // insert
                 downTreeRV = new ReturnValue(noNumberValue);
+                int newValue = update.applyAsInt(noNumberValue);
+                if (newValue == noNumberValue)
+                    // we don't want to create a new entry!
+                    return downTreeRV;
+                // insert
                 downTreeRV.tree = checkSplitEntry();
                 if (downTreeRV.tree == null) {
-                    insertKeyValue(index, key, update.applyAsInt(noNumberValue));
+                    insertKeyValue(index, key, newValue);
                 } else if (index <= splitIndex) {
-                    downTreeRV.tree.children[0].insertKeyValue(index, key, update.applyAsInt(noNumberValue));
+                    downTreeRV.tree.children[0].insertKeyValue(index, key, newValue);
                 } else {
-                    downTreeRV.tree.children[1].insertKeyValue(index - splitIndex - 1, key, update.applyAsInt(noNumberValue));
+                    downTreeRV.tree.children[1].insertKeyValue(index - splitIndex - 1, key, newValue);
                 }
                 return downTreeRV;
             }
