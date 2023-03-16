@@ -29,9 +29,7 @@ import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint3D;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.DoubleSupplier;
 import java.util.function.IntUnaryOperator;
 import java.util.stream.Collectors;
@@ -62,7 +60,7 @@ class OSMNodeData {
     static final int CONNECTION_NODE = 2;
 
     // this map stores our internal node id for each OSM node
-    private final LongIntMap idsByOsmNodeIds;
+    private final GHLongIntBTree idsByOsmNodeIds;
 
     // here we store node coordinates, separated for pillar and tower nodes
     private final PillarInfo pillarNodes;
@@ -121,11 +119,12 @@ class OSMNodeData {
     }
 
     public void setOrUpdateNodeType(long osmNodeId, int newNodeType, IntUnaryOperator nodeTypeUpdate) {
-        int curr = idsByOsmNodeIds.get(osmNodeId);
-        if (curr == EMPTY_NODE)
-            idsByOsmNodeIds.put(osmNodeId, newNodeType);
-        else
-            idsByOsmNodeIds.put(osmNodeId, nodeTypeUpdate.applyAsInt(curr));
+        idsByOsmNodeIds.putConditionally(osmNodeId, curr -> {
+            if (curr == EMPTY_NODE)
+                return newNodeType;
+            else
+                return nodeTypeUpdate.applyAsInt(curr);
+        });
     }
 
     /**
@@ -153,16 +152,24 @@ class OSMNodeData {
      * @return the node type this OSM node was associated with before this method was called
      */
     public int addCoordinatesIfMapped(long osmNodeId, double lat, double lon, DoubleSupplier getEle) {
-        int nodeType = idsByOsmNodeIds.get(osmNodeId);
-        if (nodeType == EMPTY_NODE)
-            return nodeType;
-        else if (nodeType == JUNCTION_NODE || nodeType == CONNECTION_NODE)
-            addTowerNode(osmNodeId, lat, lon, getEle.getAsDouble());
-        else if (nodeType == INTERMEDIATE_NODE || nodeType == END_NODE)
-            addPillarNode(osmNodeId, lat, lon, getEle.getAsDouble());
-        else
-            throw new IllegalStateException("Unknown node type: " + nodeType + ", or coordinates already set. Possibly duplicate OSM node ID: " + osmNodeId);
-        return nodeType;
+        return idsByOsmNodeIds.putConditionally(osmNodeId, nodeType -> {
+            if (nodeType == EMPTY_NODE)
+                return nodeType;
+            else if (nodeType == JUNCTION_NODE || nodeType == CONNECTION_NODE) {
+                double ele = getEle.getAsDouble();
+                towerNodes.setNode(nextTowerId, lat, lon, ele);
+                int id = towerNodeToId(nextTowerId);
+                nextTowerId++;
+                return id;
+            } else if (nodeType == INTERMEDIATE_NODE || nodeType == END_NODE) {
+                double ele = getEle.getAsDouble();
+                pillarNodes.setNode(nextPillarId, lat, lon, ele);
+                int id = pillarNodeToId(nextPillarId);
+                nextPillarId++;
+                return id;
+            } else
+                throw new IllegalStateException("Unknown node type: " + nodeType + ", or coordinates already set. Possibly duplicate OSM node ID: " + osmNodeId);
+        });
     }
 
     private int addTowerNode(long osmId, double lat, double lon, double ele) {

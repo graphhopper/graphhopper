@@ -22,6 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
+import java.util.function.IntUnaryOperator;
 
 /**
  * An in-memory simple B-Tree. Later we'll use DataAccess to allow on-disc storage for very large
@@ -91,11 +92,15 @@ public class GHLongIntBTree implements LongIntMap {
 
     @Override
     public int put(long key, int value) {
+        return putConditionally(key, oldValue -> value);
+    }
+
+    public int putConditionally(long key, IntUnaryOperator update) {
         if (key == noNumberValue) {
             throw new IllegalArgumentException("Illegal key " + key);
         }
 
-        ReturnValue rv = root.put(key, value);
+        ReturnValue rv = root.putConditionally(key, update);
         if (rv.tree != null) {
             height++;
             root = rv.tree;
@@ -203,12 +208,12 @@ public class GHLongIntBTree implements LongIntMap {
          * @return the old value which was associated with the specified key or if no update it
          * returns noNumberValue
          */
-        ReturnValue put(long key, int newValue) {
+        ReturnValue putConditionally(long key, IntUnaryOperator update) {
             int index = binarySearch(keys, 0, entrySize, key);
             if (index >= 0) {
                 // update
                 int oldValue = values[index];
-                values[index] = newValue;
+                values[index] = update.applyAsInt(oldValue);
                 return new ReturnValue(oldValue);
             }
 
@@ -219,16 +224,16 @@ public class GHLongIntBTree implements LongIntMap {
                 downTreeRV = new ReturnValue(noNumberValue);
                 downTreeRV.tree = checkSplitEntry();
                 if (downTreeRV.tree == null) {
-                    insertKeyValue(index, key, newValue);
+                    insertKeyValue(index, key, update.applyAsInt(noNumberValue));
                 } else if (index <= splitIndex) {
-                    downTreeRV.tree.children[0].insertKeyValue(index, key, newValue);
+                    downTreeRV.tree.children[0].insertKeyValue(index, key, update.applyAsInt(noNumberValue));
                 } else {
-                    downTreeRV.tree.children[1].insertKeyValue(index - splitIndex - 1, key, newValue);
+                    downTreeRV.tree.children[1].insertKeyValue(index - splitIndex - 1, key, update.applyAsInt(noNumberValue));
                 }
                 return downTreeRV;
             }
 
-            downTreeRV = children[index].put(key, newValue);
+            downTreeRV = children[index].putConditionally(key, update);
             if (downTreeRV.oldValue != noNumberValue) // only update
             {
                 return downTreeRV;
