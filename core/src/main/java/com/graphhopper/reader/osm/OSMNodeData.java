@@ -194,7 +194,7 @@ class OSMNodeData {
         if (idsByOsmNodeIds.put(newOsmId, INTERMEDIATE_NODE) != EMPTY_NODE)
             throw new IllegalStateException("Artificial osm node id already exists: " + newOsmId);
         int id = addPillarNode(newOsmId, point.getLat(), point.getLon(), point.getEle());
-        return new SegmentNode(newOsmId, id, new HashMap<>(node.tags));
+        return new SegmentNode(newOsmId, id, node.tags);
     }
 
     int convertPillarToTowerNode(int id, long osmNodeId) {
