@@ -18,8 +18,7 @@
 
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.LongScatterSet;
-import com.carrotsearch.hppc.LongSet;
+import com.carrotsearch.hppc.*;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.ReaderNode;
@@ -69,7 +68,7 @@ class OSMNodeData {
     private final PointAccess towerNodes;
 
     // this map stores an index for each OSM node we keep the node tags of. a value of -1 means there is no entry yet.
-    private final LongIntMap nodeTagIndicesByOsmNodeIds;
+    private final LongIntScatterMap nodeTagIndicesByOsmNodeIds;
 
     // stores node tags
     private final KVStorage nodeKVStorage;
@@ -89,7 +88,7 @@ class OSMNodeData {
         towerNodes = nodeAccess;
         pillarNodes = new PillarInfo(towerNodes.is3D(), directory);
 
-        nodeTagIndicesByOsmNodeIds = new GHLongIntBTree(200);
+        nodeTagIndicesByOsmNodeIds = new LongIntScatterMap();
         nodesToBeSplit = new LongScatterSet();
         nodeKVStorage = new KVStorage(directory, false);
     }
@@ -136,7 +135,7 @@ class OSMNodeData {
     }
 
     public long getTaggedNodeCount() {
-        return nodeTagIndicesByOsmNodeIds.getSize();
+        return nodeTagIndicesByOsmNodeIds.size();
     }
 
     /**
@@ -247,7 +246,7 @@ class OSMNodeData {
     }
 
     public void setTags(ReaderNode node) {
-        int tagIndex = nodeTagIndicesByOsmNodeIds.get(node.getId());
+        int tagIndex = nodeTagIndicesByOsmNodeIds.getOrDefault(node.getId(), -1);
         if (tagIndex == -1) {
             long pointer = nodeKVStorage.add(node.getTags().entrySet().stream().map(m -> new KVStorage.KeyValue(m.getKey(),
                             m.getValue() instanceof String ? KVStorage.cutString((String) m.getValue()) : m.getValue())).
