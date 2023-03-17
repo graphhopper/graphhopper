@@ -152,24 +152,31 @@ class OSMNodeData {
      * @return the node type this OSM node was associated with before this method was called
      */
     public int addCoordinatesIfMapped(long osmNodeId, double lat, double lon, DoubleSupplier getEle) {
-        return idsByOsmNodeIds.putConditionally(osmNodeId, nodeType -> {
+        int prevNodeType = idsByOsmNodeIds.putConditionally(osmNodeId, nodeType -> {
             if (nodeType == EMPTY_NODE)
                 return nodeType;
             else if (nodeType == JUNCTION_NODE || nodeType == CONNECTION_NODE) {
-                double ele = getEle.getAsDouble();
-                towerNodes.setNode(nextTowerId, lat, lon, ele);
-                int id = towerNodeToId(nextTowerId);
-                nextTowerId++;
-                return id;
+                return towerNodeToId(nextTowerId);
             } else if (nodeType == INTERMEDIATE_NODE || nodeType == END_NODE) {
-                double ele = getEle.getAsDouble();
-                pillarNodes.setNode(nextPillarId, lat, lon, ele);
-                int id = pillarNodeToId(nextPillarId);
-                nextPillarId++;
-                return id;
+                return pillarNodeToId(nextPillarId);
             } else
                 throw new IllegalStateException("Unknown node type: " + nodeType + ", or coordinates already set. Possibly duplicate OSM node ID: " + osmNodeId);
         });
+
+        if (prevNodeType == EMPTY_NODE)
+            return prevNodeType;
+        else if (prevNodeType == JUNCTION_NODE || prevNodeType == CONNECTION_NODE) {
+            double ele = getEle.getAsDouble();
+            towerNodes.setNode(nextTowerId, lat, lon, ele);
+            nextTowerId++;
+            return prevNodeType;
+        } else if (prevNodeType == INTERMEDIATE_NODE || prevNodeType == END_NODE) {
+            double ele = getEle.getAsDouble();
+            pillarNodes.setNode(nextPillarId, lat, lon, ele);
+            nextPillarId++;
+            return prevNodeType;
+        } else
+            throw new IllegalStateException("Unknown node type: " + prevNodeType + ", or coordinates already set. Possibly duplicate OSM node ID: " + osmNodeId);
     }
 
     private int addTowerNode(long osmId, double lat, double lon, double ele) {
