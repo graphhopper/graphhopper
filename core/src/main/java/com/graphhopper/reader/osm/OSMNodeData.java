@@ -21,7 +21,6 @@ package com.graphhopper.reader.osm;
 import com.carrotsearch.hppc.LongScatterSet;
 import com.carrotsearch.hppc.LongSet;
 import com.graphhopper.coll.GHLongIntBTree;
-import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.Directory;
@@ -156,9 +155,9 @@ class OSMNodeData {
             if (nodeType == EMPTY_NODE)
                 return nodeType;
             else if (nodeType == JUNCTION_NODE || nodeType == CONNECTION_NODE) {
-                return towerNodeToId(nextTowerId);
+                return -nextTowerId - 3;
             } else if (nodeType == INTERMEDIATE_NODE || nodeType == END_NODE) {
-                return pillarNodeToId(nextPillarId);
+                return nextPillarId + 3;
             } else
                 throw new IllegalStateException("Unknown node type: " + nodeType + ", or coordinates already set. Possibly duplicate OSM node ID: " + osmNodeId);
         });
