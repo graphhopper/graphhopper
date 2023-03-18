@@ -87,9 +87,12 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return AverageSlope.create();
         } else if (Curvature.KEY.equals(name)) {
             return Curvature.create();
+        } else if (Crossing.KEY.equals(name)) {
+            return new EnumEncodedValue<>(Crossing.KEY, Crossing.class);
         } else if (Landuse.KEY.equals(name)) {
             return new EnumEncodedValue<>(Landuse.KEY, Landuse.class);
-        } else
+        } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
+        }
     }
 }

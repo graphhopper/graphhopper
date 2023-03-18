@@ -1,7 +1,7 @@
 package com.graphhopper.search;
 
 import com.carrotsearch.hppc.LongArrayList;
-import com.graphhopper.search.EdgeKVStorage.KeyValue;
+import com.graphhopper.search.KVStorage.KeyValue;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.RepeatedTest;
@@ -10,18 +10,18 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.*;
 
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
-import static com.graphhopper.search.EdgeKVStorage.MAX_UNIQUE_KEYS;
-import static com.graphhopper.search.EdgeKVStorage.cutString;
+import static com.graphhopper.search.KVStorage.KeyValue.createKV;
+import static com.graphhopper.search.KVStorage.MAX_UNIQUE_KEYS;
+import static com.graphhopper.search.KVStorage.cutString;
 import static com.graphhopper.util.Helper.UTF_CS;
 import static org.junit.jupiter.api.Assertions.*;
 
-public class EdgeKVStorageTest {
+public class KVStorageTest {
 
     private final static String location = "./target/edge-kv-storage";
 
-    private EdgeKVStorage create() {
-        return new EdgeKVStorage(new RAMDirectory()).create(1000);
+    private KVStorage create() {
+        return new KVStorage(new RAMDirectory(), true).create(1000);
     }
 
     List<KeyValue> createList(Object... keyValues) {
@@ -36,7 +36,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void putSame() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
         long aPointer = index.add(createList("a", "same name", "b", "same name"));
 
         assertNull(index.get(aPointer, "", false));
@@ -51,7 +51,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void putAB() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
         long aPointer = index.add(createList("a", "a name", "b", "b name"));
 
         assertNull(index.get(aPointer, "", false));
@@ -61,7 +61,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void getForwardBackward() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
         List<KeyValue> list = new ArrayList<>();
         list.add(new KeyValue("keyA", "FORWARD", true, false));
         list.add(new KeyValue("keyB", "BACKWARD", false, true));
@@ -84,7 +84,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void putEmpty() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
         assertEquals(1, index.add(createList("", "")));
         // cannot store null (in its first version we accepted null once it was clear which type the value has, but this is inconsequential)
         assertThrows(IllegalArgumentException.class, () -> assertEquals(5, index.add(createList("", null))));
@@ -98,7 +98,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void putMany() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
         long aPointer = 0, tmpPointer = 0;
 
         for (int i = 0; i < 10000; i++) {
@@ -117,7 +117,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void putManyKeys() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
         // one key is already stored => empty key
         for (int i = 1; i < MAX_UNIQUE_KEYS; i++) {
             index.add(createList("a" + i, "a name"));
@@ -131,7 +131,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void testNoErrorOnLargeStringValue() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
         String str = "";
         for (int i = 0; i < 127; i++) {
             str += "ß";
@@ -143,7 +143,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void testTooLongStringValueError() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
         assertThrows(IllegalArgumentException.class, () -> index.add(createList("", "Бухарестская улица (http://ru.wikipedia.org/wiki" +
                 "/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))")));
 
@@ -157,7 +157,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void testNoErrorOnLargestByteArray() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
         byte[] bytes = new byte[255];
         byte[] copy = new byte[255];
         for (int i = 0; i < bytes.length; i++) {
@@ -175,7 +175,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void testIntLongDoubleFloat() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
         long intres = index.add(createKV("intres", 4));
         long doubleres = index.add(createKV("doubleres", 4d));
         long floatres = index.add(createKV("floatres", 4f));
@@ -193,7 +193,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void testIntLongDoubleFloat2() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
         List<KeyValue> list = new ArrayList<>();
         list.add(new KeyValue("int", 4));
         list.add(new KeyValue("long", 4L));
@@ -217,12 +217,12 @@ public class EdgeKVStorageTest {
     public void testFlush() {
         Helper.removeDir(new File(location));
 
-        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create());
+        KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), true);
         long pointer = index.add(createList("", "test"));
         index.flush();
         index.close();
 
-        index = new EdgeKVStorage(new RAMDirectory(location, true));
+        index = new KVStorage(new RAMDirectory(location, true), true);
         assertTrue(index.loadExisting());
         assertEquals("test", index.get(pointer, "", false));
         // make sure bytePointer is correctly set after loadExisting
@@ -237,7 +237,7 @@ public class EdgeKVStorageTest {
     public void testLoadKeys() {
         Helper.removeDir(new File(location));
 
-        EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create()).create(1000);
+        KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), true).create(1000);
         long pointerA = index.add(createList("c", "test value"));
         assertEquals(2, index.getKeys().size());
         long pointerB = index.add(createList("a", "value", "b", "another value"));
@@ -246,7 +246,7 @@ public class EdgeKVStorageTest {
         index.flush();
         index.close();
 
-        index = new EdgeKVStorage(new RAMDirectory(location, true));
+        index = new KVStorage(new RAMDirectory(location, true), true);
         assertTrue(index.loadExisting());
         assertEquals("[, c, a, b]", index.getKeys().toString());
         assertEquals("test value", index.get(pointerA, "c", false));
@@ -263,7 +263,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void testEmptyKey() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
         long pointerA = index.add(createList("", "test value"));
         long pointerB = index.add(createList("a", "value", "b", "another value"));
 
@@ -276,7 +276,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void testSameByteArray() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
 
         long pointerA = index.add(createList("mykey", new byte[]{1, 2, 3, 4}));
         long pointerB = index.add(createList("mykey", new byte[]{1, 2, 3, 4}));
@@ -290,7 +290,7 @@ public class EdgeKVStorageTest {
 
     @Test
     public void testUnknownValueClass() {
-        EdgeKVStorage index = create();
+        KVStorage index = create();
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> index.add(createList("mykey", new Object())));
         assertTrue(ex.getMessage().contains("The Class of a value was Object, currently supported"), ex.getMessage());
     }
@@ -299,7 +299,7 @@ public class EdgeKVStorageTest {
     public void testRandom() {
         final long seed = new Random().nextLong();
         try {
-            EdgeKVStorage index = new EdgeKVStorage(new RAMDirectory(location, true).create()).create(1000);
+            KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), true).create(1000);
             Random random = new Random(seed);
             List<String> keys = createRandomStringList(random, "_key", 100);
             List<Integer> values = createRandomList(random, 500);
@@ -328,7 +328,7 @@ public class EdgeKVStorageTest {
             index.flush();
             index.close();
 
-            index = new EdgeKVStorage(new RAMDirectory(location, true).create());
+            index = new KVStorage(new RAMDirectory(location, true).create(), true);
             assertTrue(index.loadExisting());
             for (int i = 0; i < size; i++) {
                 List<KeyValue> list = index.getAll(pointers.get(i));
@@ -340,7 +340,7 @@ public class EdgeKVStorageTest {
             }
             index.close();
         } catch (Throwable t) {
-            throw new RuntimeException("EdgeKVStorageTest.testRandom seed:" + seed, t);
+            throw new RuntimeException("KVStorageTest.testRandom seed:" + seed, t);
         }
     }
 

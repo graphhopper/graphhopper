@@ -6,12 +6,7 @@ import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import static java.util.Collections.emptyMap;
+import java.util.*;
 
 public abstract class BikeCommonAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -133,8 +128,10 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
             handleAccess(edgeFlags, way);
         }
 
-        Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
-        handleNodeTags(edgeFlags, nodeTags);
+        if (way.hasTag("gh:barrier_edge")) {
+            List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
+            handleBarrierEdge(edgeFlags, nodeTags.get(0));
+        }
     }
 
     protected void handleAccess(IntsRef edgeFlags, ReaderWay way) {

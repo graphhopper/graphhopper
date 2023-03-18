@@ -36,7 +36,7 @@ import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
-import com.graphhopper.search.EdgeKVStorage;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -226,15 +226,40 @@ public class GraphHopperTest {
     }
 
     @Test
-    public void testUTurn() {
+    public void testUTurnInstructions() {
         final String profile = "profile";
         final String vehicle = "car";
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
-                setProfiles(new CustomProfile(profile).setCustomModel(new CustomModel()).setVehicle(vehicle).setTurnCosts(true));
+                setProfiles(new CustomProfile(profile).setCustomModel(new CustomModel()).setVehicle(vehicle).setTurnCosts(true).putHint(U_TURN_COSTS, 20));
         hopper.importOrLoad();
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
+
+        {
+            GHRequest request = new GHRequest();
+            request.addPoint(new GHPoint(43.747418, 7.430371));
+            request.addPoint(new GHPoint(43.746853, 7.42974));
+            request.addPoint(new GHPoint(43.746929, 7.430458));
+            request.setProfile(profile);
+            request.setCurbsides(Arrays.asList("right", "any", "right"));
+            GHResponse rsp = hopper.route(request);
+            assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+            ResponsePath res = rsp.getBest();
+            assertEquals(286, res.getDistance(), 1);
+            // note that this includes the u-turn time for the second u-turn, but not the first, because it's a waypoint!
+            assertEquals(54351, res.getTime(), 1);
+            // the route follows Avenue de l'Annonciade to the waypoint, u-turns there, then does a sharp right turn onto the parallel (dead-end) road,
+            // does a u-turn at the dead-end and then arrives at the destination
+            InstructionList il = res.getInstructions();
+            assertEquals(6, il.size());
+            assertEquals("continue", il.get(0).getTurnDescription(tr));
+            assertEquals("waypoint 1", il.get(1).getTurnDescription(tr));
+            assertEquals("make a U-turn", il.get(2).getTurnDescription(tr));
+            assertEquals("turn sharp right", il.get(3).getTurnDescription(tr));
+            assertEquals("make a U-turn", il.get(4).getTurnDescription(tr));
+            assertEquals("arrive at destination", il.get(5).getTurnDescription(tr));
+        }
 
         {
             GHRequest request = new GHRequest();
@@ -2243,7 +2268,7 @@ public class GraphHopperTest {
                 .addPoint(new GHPoint(50.016895, 11.4923))
                 .addPoint(new GHPoint(50.003464, 11.49157))
                 .setProfile(profile)
-                .setPathDetails(Arrays.asList(EdgeKVStorage.KeyValue.STREET_REF, "max_speed"));
+                .setPathDetails(Arrays.asList(KVStorage.KeyValue.STREET_REF, "max_speed"));
         req.putHint("elevation", true);
 
         GHResponse rsp = hopper.route(req);
@@ -2285,7 +2310,7 @@ public class GraphHopperTest {
         assertDetail(speeds.get(7), "null [38, 40]");
 
         // check street names
-        List<PathDetail> streetNames = path.getPathDetails().get(EdgeKVStorage.KeyValue.STREET_REF);
+        List<PathDetail> streetNames = path.getPathDetails().get(KVStorage.KeyValue.STREET_REF);
         assertDetail(streetNames.get(0), "KU 11 [0, 4]");
         assertDetail(streetNames.get(1), "B 85 [4, 16]");
         assertDetail(streetNames.get(2), "B 85 [16, 32]");
@@ -2296,7 +2321,7 @@ public class GraphHopperTest {
     }
 
     private void assertInstruction(Instruction instruction, String expectedRef, String expectedInterval, int expectedLength, int expectedPoints) {
-        assertEquals(expectedRef, instruction.getExtraInfoJSON().get(EdgeKVStorage.KeyValue.STREET_REF));
+        assertEquals(expectedRef, instruction.getExtraInfoJSON().get(KVStorage.KeyValue.STREET_REF));
         assertEquals(expectedInterval, ((ShallowImmutablePointList) instruction.getPoints()).getIntervalString());
         assertEquals(expectedLength, instruction.getLength());
         assertEquals(expectedPoints, instruction.getPoints().size());
@@ -2470,10 +2495,11 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
+                setVehiclesString("car|block_private=false").
                 setProfiles(
-                        new Profile("car").setVehicle("car").setWeighting("fastest"),
-                        new Profile("bike").setVehicle("bike").setWeighting("fastest"),
-                        new Profile("foot").setVehicle("foot").setWeighting("fastest")
+                        new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
+                        new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"),
+                        new CustomProfile("foot").setCustomModel(new CustomModel()).setVehicle("foot")
                 ).
                 setMinNetworkSize(0);
         hopper.importOrLoad();
@@ -2534,6 +2560,28 @@ public class GraphHopperTest {
             assertEquals(24, carRsp.getBest().getDistance(), 1);
             bikeRsp = hopper.route(new GHRequest(51.355455, 12.40202, 51.355318, 12.401741).setProfile("bike"));
             assertEquals(24, bikeRsp.getBest().getDistance(), 1);
+        }
+
+        {
+            // node tag "ford" should be recognized in road_environment
+            GHResponse footRsp = hopper.route(new GHRequest(51.290141, 12.365849, 51.290996, 12.366155).setProfile("foot"));
+            assertEquals(105, footRsp.getBest().getDistance(), 1);
+
+            footRsp = hopper.route(new GHRequest(51.290141, 12.365849, 51.290996, 12.366155).
+                    setCustomModel(new CustomModel().addToPriority(Statement.If("road_environment == FORD", Statement.Op.MULTIPLY, "0"))).setProfile("foot"));
+            assertEquals(330, footRsp.getBest().getDistance(), 1);
+        }
+
+        {
+            // private access restriction as node tag
+            GHResponse rsp = hopper.route(new GHRequest(51.327411, 12.429598, 51.32723, 12.429979).setProfile("car"));
+            assertEquals(39, rsp.getBest().getDistance(), 1);
+
+            rsp = hopper.route(new GHRequest(51.327411, 12.429598, 51.32723, 12.429979).
+                    setCustomModel(new CustomModel().addToPriority(Statement.If("road_access == PRIVATE", Statement.Op.MULTIPLY, "0"))).
+                    setProfile("car"));
+            assertFalse(rsp.hasErrors());
+            assertEquals(20, rsp.getBest().getDistance(), 1);
         }
     }
 
