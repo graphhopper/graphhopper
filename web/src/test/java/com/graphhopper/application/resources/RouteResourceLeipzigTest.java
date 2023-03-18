@@ -29,7 +29,6 @@ import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -68,14 +67,15 @@ public class RouteResourceLeipzigTest {
     @Test
     void testNoErrors() {
         // we just send a bunch of routing requests to make sure there are no internal server errors
-        double minLat = 51.319685;
-        double maxLat = 51.367294;
-        double minLon = 12.335525;
-        double maxLon = 12.434745;
-        final long seed = System.nanoTime();
+        queryRandomRoutes(100, 51.319685, 51.367294, 12.335525, 12.434745);
+        // repeat the same for a very small bounding box to better cover cases where the query points are close together
+        queryRandomRoutes(1000, 51.342534, 51.34285, 12.384917, 12.385278);
+    }
 
+    private static void queryRandomRoutes(int numQueries, double minLat, double maxLat, double minLon, double maxLon) {
+        final long seed = System.nanoTime();
         Random rnd = new Random(seed);
-        for (int i = 0; i < 100; i++) {
+        for (int i = 0; i < numQueries; i++) {
             double latFrom = minLat + rnd.nextDouble() * (maxLat - minLat);
             double lonFrom = minLon + rnd.nextDouble() * (maxLon - minLon);
             double latTo = minLat + rnd.nextDouble() * (maxLat - minLat);

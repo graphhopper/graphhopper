@@ -55,6 +55,7 @@ public class OSMInputFile implements Sink, OSMInput {
     private Thread pbfReaderThread;
     private boolean hasIncomingData;
     private int workerThreads = -1;
+    private SkipOptions skipOptions = SkipOptions.none();
     private OSMFileHeader fileheader;
 
     public OSMInputFile(File file) throws IOException {
@@ -73,10 +74,19 @@ public class OSMInputFile implements Sink, OSMInput {
     }
 
     /**
-     * Currently on for pbf format. Default is number of cores.
+     * Currently only for pbf format. Default is number of cores.
      */
     public OSMInputFile setWorkerThreads(int threads) {
         workerThreads = threads;
+        return this;
+    }
+
+    /**
+     * Use this to prevent the creation of OSM nodes, ways and/or relations to speed up the file reading process.
+     * This will only affect the reading of pbf files.
+     */
+    public OSMInputFile setSkipOptions(SkipOptions skipOptions) {
+        this.skipOptions = skipOptions;
         return this;
     }
 
@@ -247,7 +257,7 @@ public class OSMInputFile implements Sink, OSMInput {
         if (workerThreads <= 0)
             workerThreads = 1;
 
-        pbfReader = new PbfReader(stream, this, workerThreads);
+        pbfReader = new PbfReader(stream, this, workerThreads, skipOptions);
         pbfReaderThread = new Thread(pbfReader, "PBF Reader");
         pbfReaderThread.start();
     }

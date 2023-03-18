@@ -2,6 +2,7 @@
 package com.graphhopper.reader.osm.pbf;
 
 import com.graphhopper.reader.ReaderElement;
+import com.graphhopper.reader.osm.SkipOptions;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -26,6 +27,7 @@ public class PbfDecoder {
     private final Lock lock;
     private final Condition dataWaitCondition;
     private final Queue<PbfBlobResult> blobResults;
+    private final SkipOptions skipOptions;
 
     /**
      * Creates a new instance.
@@ -37,11 +39,12 @@ public class PbfDecoder {
      * @param sink            The sink to send all decoded entities to.
      */
     public PbfDecoder(PbfStreamSplitter streamSplitter, ExecutorService executorService, int maxPendingBlobs,
-                      Sink sink) {
+                      Sink sink, SkipOptions skipOptions) {
         this.streamSplitter = streamSplitter;
         this.executorService = executorService;
         this.maxPendingBlobs = maxPendingBlobs;
         this.sink = sink;
+        this.skipOptions = skipOptions;
 
         // Create the thread synchronisation primitives.
         lock = new ReentrantLock();
@@ -140,7 +143,7 @@ public class PbfDecoder {
             };
 
             // Create the blob decoder itself and execute it on a worker thread.
-            PbfBlobDecoder blobDecoder = new PbfBlobDecoder(rawBlob.getType(), rawBlob.getData(), decoderListener);
+            PbfBlobDecoder blobDecoder = new PbfBlobDecoder(rawBlob.getType(), rawBlob.getData(), decoderListener, skipOptions);
             executorService.execute(blobDecoder);
 
             // If the number of pending blobs has reached capacity we must begin

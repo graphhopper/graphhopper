@@ -18,21 +18,30 @@
 
 package com.graphhopper.reader.osm;
 
-import java.util.Map;
+public class SkipOptions {
+    private final boolean skipNodes;
+    private final boolean skipWays;
+    private final boolean skipRelations;
 
-class SegmentNode {
-    long osmNodeId;
-    int id;
-    Map<String, Object> tags;
-
-    public SegmentNode(long osmNodeId, int id, Map<String, Object> tags) {
-        this.osmNodeId = osmNodeId;
-        this.id = id;
-        this.tags = tags;
+    public static SkipOptions none() {
+        return new SkipOptions(false, false, false);
     }
 
-    @Override
-    public String toString() {
-        return "id: " + id + ", osm-node-id: " + osmNodeId;
+    public SkipOptions(boolean skipNodes, boolean skipWays, boolean skipRelations) {
+        this.skipNodes = skipNodes;
+        this.skipWays = skipWays;
+        this.skipRelations = skipRelations;
+    }
+
+    public boolean isSkipNodes() {
+        return skipNodes;
+    }
+
+    public boolean isSkipWays() {
+        return skipWays;
+    }
+
+    public boolean isSkipRelations() {
+        return skipRelations;
     }
 }

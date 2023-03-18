@@ -18,7 +18,7 @@
 package com.graphhopper.routing.querygraph;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.search.EdgeKVStorage;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
@@ -41,14 +41,14 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
     private final int originalEdgeKey;
     private double distance;
     private IntsRef edgeFlags;
-    private List<EdgeKVStorage.KeyValue> keyValues;
+    private List<KVStorage.KeyValue> keyValues;
     // true if edge should be avoided as start/stop
     private boolean unfavored;
     private EdgeIteratorState reverseEdge;
     private final boolean reverse;
 
     public VirtualEdgeIteratorState(int originalEdgeKey, int edgeKey, int baseNode, int adjNode, double distance,
-                                    IntsRef edgeFlags, List<EdgeKVStorage.KeyValue> keyValues, PointList pointList, boolean reverse) {
+                                    IntsRef edgeFlags, List<KVStorage.KeyValue> keyValues, PointList pointList, boolean reverse) {
         this.originalEdgeKey = originalEdgeKey;
         this.edgeKey = edgeKey;
         this.baseNode = baseNode;
@@ -310,25 +310,25 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public String getName() {
-        String name = (String) getValue(EdgeKVStorage.KeyValue.STREET_NAME);
+        String name = (String) getValue(KVStorage.KeyValue.STREET_NAME);
         // preserve backward compatibility (returns empty string if name tag missing)
         return name == null ? "" : name;
     }
 
     @Override
-    public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> list) {
+    public EdgeIteratorState setKeyValues(List<KVStorage.KeyValue> list) {
         this.keyValues = list;
         return this;
     }
 
     @Override
-    public List<EdgeKVStorage.KeyValue> getKeyValues() {
+    public List<KVStorage.KeyValue> getKeyValues() {
         return keyValues;
     }
 
     @Override
     public Object getValue(String key) {
-        for (EdgeKVStorage.KeyValue keyValue : keyValues) {
+        for (KVStorage.KeyValue keyValue : keyValues) {
             if (keyValue.key.equals(key)) return keyValue.value;
         }
         return null;

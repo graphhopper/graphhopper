@@ -27,12 +27,7 @@ import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import static java.util.Collections.emptyMap;
+import java.util.*;
 
 public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -158,8 +153,10 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
             accessEnc.setBool(true, edgeFlags, true);
         }
 
-        Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
-        handleNodeTags(edgeFlags, nodeTags);
+        if (way.hasTag("gh:barrier_edge")) {
+            List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
+            handleBarrierEdge(edgeFlags, nodeTags.get(0));
+        }
     }
 
     /**

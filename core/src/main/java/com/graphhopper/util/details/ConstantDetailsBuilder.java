@@ -16,23 +16,33 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.reader.osm;
+package com.graphhopper.util.details;
 
-import java.util.Map;
+import com.graphhopper.util.EdgeIteratorState;
 
-class SegmentNode {
-    long osmNodeId;
-    int id;
-    Map<String, Object> tags;
+/**
+ * Simply returns the same value everywhere, useful to represent values that are the same between two (via-)points
+ */
+public class ConstantDetailsBuilder extends AbstractPathDetailsBuilder {
+    private final Object value;
+    private boolean firstEdge = true;
 
-    public SegmentNode(long osmNodeId, int id, Map<String, Object> tags) {
-        this.osmNodeId = osmNodeId;
-        this.id = id;
-        this.tags = tags;
+    public ConstantDetailsBuilder(String name, Object value) {
+        super(name);
+        this.value = value;
     }
 
     @Override
-    public String toString() {
-        return "id: " + id + ", osm-node-id: " + osmNodeId;
+    protected Object getCurrentValue() {
+        return value;
+    }
+
+    @Override
+    public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
+        if (firstEdge) {
+            firstEdge = false;
+            return true;
+        } else
+            return false;
     }
 }

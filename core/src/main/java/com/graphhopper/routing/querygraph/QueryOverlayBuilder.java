@@ -20,7 +20,7 @@ package com.graphhopper.routing.querygraph;
 
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntObjectHashMap;
-import com.graphhopper.search.EdgeKVStorage;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.Snap;
@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+
+import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
 
 class QueryOverlayBuilder {
     private final int firstVirtualNodeId;
@@ -157,7 +159,8 @@ class QueryOverlayBuilder {
                 // Create base and adjacent PointLists for all non-equal virtual nodes.
                 // We do so via inserting them at the correct position of fullPL and cutting the
                 // fullPL into the right pieces.
-                for (Snap res : results) {
+                for (int i = 0; i < results.size(); i++) {
+                    Snap res = results.get(i);
                     if (res.getClosestEdge().getBaseNode() != baseNode)
                         throw new IllegalStateException("Base nodes have to be identical but were not: " + closestEdge + " vs " + res.getClosestEdge());
 
@@ -166,6 +169,10 @@ class QueryOverlayBuilder {
                     // no new virtual nodes if very close ("snap" together)
                     if (Snap.considerEqual(prevPoint.lat, prevPoint.lon, currSnapped.lat, currSnapped.lon)) {
                         res.setClosestNode(prevNodeId);
+                        res.setSnappedPoint(prevPoint);
+                        res.setWayIndex(i == 0 ? 0 : results.get(i - 1).getWayIndex());
+                        res.setSnappedPosition(i == 0 ? Snap.Position.TOWER : results.get(i - 1).getSnappedPosition());
+                        res.setQueryDistance(DIST_PLANE.calcDist(prevPoint.lat, prevPoint.lon, res.getQueryPoint().lat, res.getQueryPoint().lon));
                         continue;
                     }
 
@@ -226,7 +233,7 @@ class QueryOverlayBuilder {
 
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);
         // edges between base and snapped point
-        List<EdgeKVStorage.KeyValue> keyValues = closestEdge.getKeyValues();
+        List<KVStorage.KeyValue> keyValues = closestEdge.getKeyValues();
         VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origEdgeKey, GHUtility.createEdgeKey(virtEdgeId, prevNodeId == nodeId, false),
                 prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), keyValues, basePoints, reverse);
         VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevEdgeKey, GHUtility.createEdgeKey(virtEdgeId, prevNodeId == nodeId, true),
