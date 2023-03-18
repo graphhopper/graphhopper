@@ -45,7 +45,6 @@ import java.util.function.Predicate;
 
 import static com.graphhopper.reader.osm.OSMNodeData.*;
 import static com.graphhopper.util.Helper.nf;
-import static java.util.Collections.emptyMap;
 
 /**
  * This class parses a given OSM file and splits OSM ways into 'segments' at all intersections (or 'junctions').
@@ -70,7 +69,7 @@ public class WaySegmentParser {
     private final ElevationProvider eleProvider;
     private final Predicate<ReaderWay> wayFilter;
     private final Predicate<ReaderNode> splitNodeFilter;
-    private final Predicate<ReaderNode> addLoopNodeFilter;
+    private final Predicate<Map<String, Object>> addLoopNodeFilter;
     private final WayPreprocessor wayPreprocessor;
     private final Consumer<ReaderRelation> relationPreprocessor;
     private final RelationProcessor relationProcessor;
@@ -81,7 +80,7 @@ public class WaySegmentParser {
     private Date timestamp;
 
     private WaySegmentParser(PointAccess nodeAccess, Directory directory, ElevationProvider eleProvider,
-                             Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, Predicate<ReaderNode> addLoopNodeFilter,
+                             Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, Predicate<Map<String, Object>> addLoopNodeFilter,
                              WayPreprocessor wayPreprocessor,
                              Consumer<ReaderRelation> relationPreprocessor, RelationProcessor relationProcessor,
                              EdgeHandler edgeHandler, int workerThreads) {
@@ -233,11 +232,6 @@ public class WaySegmentParser {
                     ignoredSplitNodes++;
                 } else
                     nodeData.setSplitNode(node.getId());
-            } else if (addLoopNodeFilter.test(node)) {
-                // ... and also for those for which we want to add a loop
-                // In the unlikely case where a node is a split node and a loop shall be added we only split the node.
-                node.setTag("gh:add_loop_node", true);
-                nodeData.setTags(node);
             }
 
             // store node tags if at least one important tag is included and make this available for the edge handler
@@ -351,8 +345,8 @@ public class WaySegmentParser {
 
                     segment = new ArrayList<>();
                     segment.add(barrierTo);
-                } else if ((boolean) nodeTags.getOrDefault("gh:add_loop_node", false)) {
-                    // create an extra loop edge at this node using the parent way's tags
+                } else if (addLoopNodeFilter.test(node.tags)) {
+                    // Create an extra loop edge at this node using the parent way's tags.
                     // Note that quite often the node connects two or more ways with different tags, like a turning_circle
                     // at the end of a residential road that is connected to some path or footway. To make sure we add
                     // a loop with the right tags we simply create a loop for every such way.
@@ -360,13 +354,13 @@ public class WaySegmentParser {
                     // if the node is not located at a junction or a dead-end we finish the current segment here.
                     if (i > 0 && i < parentSegment.size() - 1) {
                         segment.add(node);
-                        handleSegment(segment, way, emptyMap());
+                        handleSegment(segment, way);
                         segment = new ArrayList<>();
                     }
                     // instead of creating a real loop edge we add an artificial extra node and two edges for each loop
                     SegmentNode copy = nodeData.addCopyOfNode(node);
-                    handleSegment(Arrays.asList(node, copy), way, nodeTags);
-                    handleSegment(Arrays.asList(copy, node), way, nodeTags);
+                    handleSegment(Arrays.asList(node, copy), way);
+                    handleSegment(Arrays.asList(copy, node), way);
 
                     segment.add(node);
                 } else {
@@ -453,7 +447,7 @@ public class WaySegmentParser {
         private ElevationProvider elevationProvider = ElevationProvider.NOOP;
         private Predicate<ReaderWay> wayFilter = way -> true;
         private Predicate<ReaderNode> splitNodeFilter = node -> false;
-        private Predicate<ReaderNode> addLoopNodeFilter = node -> false;
+        private Predicate<Map<String, Object>> addLoopNodeFilter = node -> false;
         private WayPreprocessor wayPreprocessor = (way, supplier) -> {
         };
         private Consumer<ReaderRelation> relationPreprocessor = relation -> {
@@ -505,9 +499,10 @@ public class WaySegmentParser {
         }
 
         /**
-         * @param addLoopNodeFilter return true if a loop edge should be added at the given OSM node
+         * @param addLoopNodeFilter return true if a loop edge should be added at the given OSM node, in the unlikely
+         *                          case that the same node is a split node no loop will be created
          */
-        public Builder setAddLoopNodeFilter(Predicate<ReaderNode> addLoopNodeFilter) {
+        public Builder setAddLoopNodeFilter(Predicate<Map<String, Object>> addLoopNodeFilter) {
             this.addLoopNodeFilter = addLoopNodeFilter;
             return this;
         }

@@ -217,8 +217,9 @@ public class OSMReader {
     /**
      * @return true if a loop edge should be created at the given node.
      */
-    protected boolean isTurningCircleNode(ReaderNode node) {
-        return node.hasTag("highway", "turning_circle", "turning_loop");
+    protected boolean isTurningCircleNode(Map<String, Object> node) {
+        Object highway = node.get("highway");
+        return "turning_circle".equals(highway) || "turning_loop".equals(highway);
     }
 
     /**
