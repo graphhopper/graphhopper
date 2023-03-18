@@ -23,6 +23,10 @@ import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
 import static com.graphhopper.routing.ev.RoadEnvironment.*;
 
 public class OSMRoadEnvironmentParser implements TagParser {
@@ -35,6 +39,13 @@ public class OSMRoadEnvironmentParser implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay readerWay, IntsRef relationFlags) {
+        List<Map<String, Object>> nodeTags = readerWay.getTag("node_tags", Collections.emptyList());
+        // a barrier edge has the restriction in both nodes and the tags are the same
+        if (readerWay.hasTag("gh:barrier_edge") && nodeTags.get(0).containsKey("ford")) {
+            roadEnvEnc.setEnum(false, edgeId, intAccess, FORD);
+            return;
+        }
+
         RoadEnvironment roadEnvironment = OTHER;
         if ((readerWay.hasTag("route", "ferry") && !readerWay.hasTag("ferry", "no")) ||
                 // TODO shuttle_train is sometimes also used in relations, e.g. https://www.openstreetmap.org/relation/1932780

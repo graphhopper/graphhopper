@@ -124,6 +124,10 @@ public class Snap {
         return snappedPoint;
     }
 
+    public void setSnappedPoint(GHPoint3D point) {
+        this.snappedPoint = point;
+    }
+
     /**
      * Calculates the closest point on the edge from the query point. If too close to a tower or pillar node this method
      * might change the snappedPosition and wayIndex.

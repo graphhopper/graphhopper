@@ -6,12 +6,7 @@ import com.graphhopper.routing.ev.IntAccess;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import static java.util.Collections.emptyMap;
+import java.util.*;
 
 public abstract class BikeCommonAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -83,10 +78,21 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         }
 
         // use the way if it is tagged for bikes
-        if (way.hasTag("bicycle", intendedValues) ||
-                way.hasTag("bicycle", "dismount") ||
-                way.hasTag("highway", "cycleway"))
+        if (way.hasTag("bicycle", "dismount") || way.hasTag("highway", "cycleway"))
             return WayAccess.WAY;
+
+        boolean permittedWayConditionallyRestricted = getConditionalTagInspector().isPermittedWayConditionallyRestricted(way);
+        boolean restrictedWayConditionallyPermitted = getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
+        String firstValue = way.getFirstPriorityTag(restrictions);
+        if (!firstValue.isEmpty()) {
+            String[] restrict = firstValue.split(";");
+            for (String value : restrict) {
+                if (restrictedValues.contains(value) && !restrictedWayConditionallyPermitted)
+                    return WayAccess.CAN_SKIP;
+                if (intendedValues.contains(value) && !permittedWayConditionallyRestricted)
+                    return WayAccess.WAY;
+            }
+        }
 
         // accept only if explicitly tagged for bike usage
         if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue) || "bridleway".equals(highwayValue))
@@ -95,27 +101,13 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (way.hasTag("motorroad", "yes"))
             return WayAccess.CAN_SKIP;
 
-        // do not use fords with normal bikes, flagged fords are in included above
-        if (isBlockFords() && (way.hasTag("highway", "ford") || way.hasTag("ford")))
+        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return WayAccess.CAN_SKIP;
 
-        // check access restrictions
-        boolean notRestrictedWayConditionallyPermitted = !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
-        for (String restriction : restrictions) {
-            String complexAccess = way.getTag(restriction);
-            if (complexAccess != null) {
-                String[] simpleAccess = complexAccess.split(";");
-                for (String access : simpleAccess) {
-                    if (restrictedValues.contains(access) && notRestrictedWayConditionallyPermitted)
-                        return WayAccess.CAN_SKIP;
-                }
-            }
-        }
-
-        if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
+        if (permittedWayConditionallyRestricted)
             return WayAccess.CAN_SKIP;
-        else
-            return WayAccess.WAY;
+
+        return WayAccess.WAY;
     }
 
     boolean isSacScaleAllowed(String sacScale) {
@@ -136,8 +128,10 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
             handleAccess(edgeId, intAccess, way);
         }
 
-        Map<String, Object> nodeTags = way.getTag("node_tags", emptyMap());
-        handleNodeTags(edgeId, intAccess, nodeTags);
+        if (way.hasTag("gh:barrier_edge")) {
+            List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
+            handleBarrierEdge(edgeId, intAccess, nodeTags.get(0));
+        }
     }
 
     protected void handleAccess(int edgeId, IntAccess intAccess, ReaderWay way) {

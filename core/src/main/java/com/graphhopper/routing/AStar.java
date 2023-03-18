@@ -150,7 +150,11 @@ public class AStar extends AbstractRoutingAlgorithm implements EdgeToEdgeRouting
         if (currEdge == null || !finished())
             return createEmptyPath();
 
-        return PathExtractor.extractPath(graph, weighting, currEdge);
+        return PathExtractor.extractPath(graph, weighting, currEdge)
+                // the path extractor uses currEdge.weight to set the weight, but this is the one that includes the
+                // A* approximation, not the weight of the visited path! this is still correct, because the approximation
+                // at the to-node (the end of the route) must be zero. Still it seems clearer to set the weight explicitly.
+                .setWeight(currEdge.getWeightOfVisitedPath());
     }
 
     @Override

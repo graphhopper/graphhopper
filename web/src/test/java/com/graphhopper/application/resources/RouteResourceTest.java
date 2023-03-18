@@ -54,6 +54,8 @@ import java.util.*;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static com.graphhopper.application.util.TestUtils.clientUrl;
+import static com.graphhopper.util.Instruction.FINISH;
+import static com.graphhopper.util.Instruction.REACHED_VIA;
 import static com.graphhopper.util.Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -622,5 +624,87 @@ public class RouteResourceTest {
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertEquals("The number of 'heading' parameters must be zero, one or equal to the number of points (1)", json.get("message").asText());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void legDetailsAndPointIndices(boolean instructions) {
+        final long seed = 123L;
+        Random rnd = new Random(seed);
+        List<String> legDetails = Arrays.asList("leg_time", "leg_distance", "leg_weight");
+        int errors = 0;
+        for (int numPoints = 2; numPoints < 10; numPoints++) {
+            String url = "/route?profile=my_car&points_encoded=false&instructions=" + instructions;
+            for (int i = 0; i < numPoints; i++) {
+                double lat = 42.493748 + rnd.nextDouble() * (42.565155 - 42.493748);
+                double lon = 1.487522 + rnd.nextDouble() * (1.557285 - 1.487522);
+                url += "&point=" + lat + "," + lon;
+            }
+            for (String legDetail : legDetails)
+                url += "&details=" + legDetail;
+            final Response response = clientTarget(app, url).request().buildGet().invoke();
+            JsonNode json = response.readEntity(JsonNode.class);
+            if (response.getStatus() != 200) {
+                // sometimes there can be connection-not-found for example, also because we set min_network_size to 0 in this test
+                errors++;
+                continue;
+            }
+            assertFalse(json.has("message"));
+            JsonNode path = json.get("paths").get(0);
+            JsonNode points = path.get("points");
+            JsonNode snappedWaypoints = path.get("snapped_waypoints");
+            assertEquals(numPoints, snappedWaypoints.get("coordinates").size());
+
+            assertEquals(path.get("time").asDouble(), sumDetail(path.get("details").get("leg_time")), 1);
+            assertEquals(path.get("distance").asDouble(), sumDetail(path.get("details").get("leg_distance")), 1);
+            assertEquals(path.get("weight").asDouble(), sumDetail(path.get("details").get("leg_weight")), 1);
+
+            for (String detail : legDetails) {
+                JsonNode legDetail = path.get("details").get(detail);
+                assertEquals(numPoints - 1, legDetail.size());
+                assertEquals(snappedWaypoints.get("coordinates").get(0), points.get("coordinates").get(legDetail.get(0).get(0).asInt()));
+                for (int i = 1; i < numPoints; i++)
+                    // we make sure that the intervals defined by the leg details start/end at the snapped waypoints
+                    assertEquals(snappedWaypoints.get("coordinates").get(i), points.get("coordinates").get(legDetail.get(i - 1).get(1).asInt()));
+
+                if (instructions) {
+                    // we can find the way point indices also from the instructions, so we check if this yields the same
+                    List<Integer> waypointIndicesFromInstructions = getWaypointIndicesFromInstructions(path.get("instructions"));
+                    List<Integer> waypointIndicesFromLegDetails = getWaypointIndicesFromLegDetails(legDetail);
+                    assertEquals(waypointIndicesFromInstructions, waypointIndicesFromLegDetails);
+                }
+            }
+        }
+        if (errors > 3)
+            fail("too many errors");
+    }
+
+    private static List<Integer> getWaypointIndicesFromInstructions(JsonNode instructions) {
+        List<Integer> result = new ArrayList<>();
+        result.add(instructions.get(0).get("interval").get(0).asInt());
+        for (int i = 0; i < instructions.size(); i++) {
+            int sign = instructions.get(i).get("sign").asInt();
+            if (sign == REACHED_VIA || sign == FINISH)
+                result.add(instructions.get(i).get("interval").get(1).asInt());
+        }
+        return result;
+    }
+
+    private static List<Integer> getWaypointIndicesFromLegDetails(JsonNode detail) {
+        List<Integer> result = new ArrayList<>();
+        result.add(detail.get(0).get(0).asInt());
+        for (int i = 0; i < detail.size(); i++) {
+            if (i > 0)
+                assertEquals(detail.get(i - 1).get(1).asInt(), detail.get(i).get(0).asInt());
+            result.add(detail.get(i).get(1).asInt());
+        }
+        return result;
+    }
+
+    private double sumDetail(JsonNode detail) {
+        double result = 0;
+        for (int i = 0; i < detail.size(); i++)
+            result += detail.get(i).get(2).asDouble();
+        return result;
     }
 }

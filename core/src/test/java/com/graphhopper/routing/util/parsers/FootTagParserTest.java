@@ -29,7 +29,7 @@ import com.graphhopper.util.*;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
-import java.util.Date;
+import java.util.*;
 
 import static com.graphhopper.routing.util.parsers.FootAverageSpeedParser.MEAN_SPEED;
 import static com.graphhopper.routing.util.parsers.FootAverageSpeedParser.SLOW_SPEED;
@@ -230,6 +230,9 @@ public class FootTagParserTest {
         way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
         assertTrue(accessParser.getAccess(way).canSkip());
 
+        way.setTag("foot", "yes"); // the conditional tag even overrules "yes"
+        assertTrue(accessParser.getAccess(way).canSkip());
+
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("access", "no");
@@ -372,7 +375,7 @@ public class FootTagParserTest {
         way.clearTags();
         way.setTag("highway", "cycleway");
         way.setTag("sidewalk", "no");
-        assertEquals(PriorityCode.UNCHANGED.getValue(), prioParser.handlePriority(way, null));
+        assertEquals(PriorityCode.AVOID.getValue(), prioParser.handlePriority(way, null));
 
         way.clearTags();
         way.setTag("highway", "road");
@@ -408,6 +411,24 @@ public class FootTagParserTest {
         intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
         speedParser.handleWayTags(edgeId, intAccess, way);
         assertEquals(SLOW_SPEED, footAvgSpeedEnc.getDecimal(false, edgeId, intAccess), 1e-1);
+    }
+
+    @Test
+    public void testReadBarrierNodesFromWay() {
+        int edgeId = 0;
+        IntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+        way.setTag("gh:barrier_edge", true);
+
+        Map<String, Object> tags = new HashMap<>();
+        tags.put("barrier", "gate");
+        tags.put("access", "no");
+        way.setTag("node_tags", Collections.singletonList(tags));
+        accessParser.handleWayTags(edgeId, intAccess, way);
+
+        assertFalse(footAccessEnc.getBool(false, edgeId, intAccess));
+        assertFalse(footAccessEnc.getBool(true, edgeId, intAccess));
     }
 
     @Test

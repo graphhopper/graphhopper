@@ -156,6 +156,12 @@ public class CarTagParserTest {
         assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("access", "yes");
+        way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
+        assertTrue(parser.getAccess(way).canSkip());
+
+        way.clearTags();
         way.setTag("highway", "service");
         way.setTag("service", "emergency_access");
         assertTrue(parser.getAccess(way).canSkip());

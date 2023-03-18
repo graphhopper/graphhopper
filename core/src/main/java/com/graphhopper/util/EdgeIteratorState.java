@@ -18,7 +18,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.search.EdgeKVStorage;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
 
@@ -208,14 +208,14 @@ public interface EdgeIteratorState {
      * But it might be slow and more inefficient on retrieval. Call this setKeyValues method only once per
      * EdgeIteratorState as it allocates new space everytime this method is called.
      */
-    EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> map);
+    EdgeIteratorState setKeyValues(List<KVStorage.KeyValue> map);
 
     /**
      * This method returns KeyValue pairs for both directions in contrast to {@link #getValue(String)}.
      *
      * @see #setKeyValues(List)
      */
-    List<EdgeKVStorage.KeyValue> getKeyValues();
+    List<KVStorage.KeyValue> getKeyValues();
 
     /**
      * This method returns the *first* value for the specified key and only if stored for the direction of this

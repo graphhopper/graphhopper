@@ -5,7 +5,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.search.EdgeKVStorage;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -304,12 +304,12 @@ class PtGraphAsAdjacencyList implements Graph {
             }
 
             @Override
-            public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> list) {
+            public EdgeIteratorState setKeyValues(List<KVStorage.KeyValue> list) {
                 throw new RuntimeException();
             }
 
             @Override
-            public List<EdgeKVStorage.KeyValue> getKeyValues() {
+            public List<KVStorage.KeyValue> getKeyValues() {
                 throw new RuntimeException();
             }
 
