@@ -17,11 +17,12 @@
  */
 package com.graphhopper.coll;
 
+import com.carrotsearch.hppc.LongIntScatterMap;
+import com.carrotsearch.hppc.LongLongScatterMap;
+import com.graphhopper.util.MiniPerfTest;
 import org.junit.jupiter.api.Test;
 
-import java.util.LinkedHashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -172,5 +173,44 @@ public class GHLongIntBTreeTest {
                 i++;
             }
         }
+    }
+
+    public static void main(String[] args) {
+        GHLongIntBTree tree = new GHLongIntBTree(200);
+        LongIntScatterMap map = new LongIntScatterMap();
+        final int elements = 30_000_000;
+        Random rnd = new Random(123);
+        List<Long> keys = new ArrayList<>();
+        for (int i = 0; i < elements; i++) {
+            keys.add(rnd.nextLong());
+        }
+        Collections.shuffle(keys, rnd);
+
+        for (Long key : keys) {
+            int val = rnd.nextInt(100);
+            tree.put(key, val);
+            map.put(key, val);
+        }
+
+        Random rnd1 = new Random(123);
+        MiniPerfTest t1 = new MiniPerfTest().setIterations(100_000).start((warmup, run) -> {
+            int sum = 0;
+            for (int i = 0; i < 100; i++) {
+                sum += tree.get(keys.get(rnd1.nextInt(elements)));
+            }
+            return sum;
+        });
+
+        Random rnd2 = new Random(123);
+        MiniPerfTest t2 = new MiniPerfTest().setIterations(100_000).start((warmup, run) -> {
+            int sum = 0;
+            for (int i = 0; i < 100; i++) {
+                sum += map.get(keys.get(rnd2.nextInt(elements)));
+            }
+            return sum;
+        });
+
+        System.out.println("GHLongIntBTree: " + t1.getReport());
+        System.out.println("LongIntScatterMap: " + t2.getReport());
     }
 }
