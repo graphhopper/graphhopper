@@ -118,7 +118,7 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed 
                 throw new RuntimeException(e);
             }
         }
-        return RealtimeFeed.fromProtobuf(baseGraph, encodingManager, gtfsStorage, this.transfers, feedMessageMap);
+        return RealtimeFeed.fromProtobuf(gtfsStorage, this.transfers, feedMessageMap);
     }
 
 }
