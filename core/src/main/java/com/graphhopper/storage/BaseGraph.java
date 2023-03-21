@@ -22,7 +22,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.search.EdgeKVStorage;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
@@ -46,7 +46,7 @@ public class BaseGraph implements Graph, Closeable {
     final static long MAX_UNSIGNED_INT = 0xFFFF_FFFFL;
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
-    final EdgeKVStorage edgeKVStorage;
+    final KVStorage edgeKVStorage;
     // can be null if turn costs are not supported
     final TurnCostStorage turnCostStorage;
     final BitUtil bitUtil;
@@ -62,7 +62,7 @@ public class BaseGraph implements Graph, Closeable {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
         this.wayGeometry = dir.create("geometry", segmentSize);
-        this.edgeKVStorage = new EdgeKVStorage(dir);
+        this.edgeKVStorage = new KVStorage(dir, true);
         this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
@@ -184,7 +184,7 @@ public class BaseGraph implements Graph, Closeable {
     }
 
     /**
-     * Flush and free resources that are not needed for post-processing (way geometries and EdgeKVStorage).
+     * Flush and free resources that are not needed for post-processing (way geometries and KVStorage for edges).
      */
     public void flushAndCloseGeometryAndNameStorage() {
         setWayGeometryHeader();
@@ -952,7 +952,7 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> entries) {
+        public EdgeIteratorState setKeyValues(List<KVStorage.KeyValue> entries) {
             long pointer = baseGraph.edgeKVStorage.add(entries);
             if (pointer > MAX_UNSIGNED_INT)
                 throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + MAX_UNSIGNED_INT + " was " + pointer);
@@ -961,7 +961,7 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public List<EdgeKVStorage.KeyValue> getKeyValues() {
+        public List<KVStorage.KeyValue> getKeyValues() {
             long kvEntryRef = Helper.toUnsignedLong(store.getKeyValuesRef(edgePointer));
             return baseGraph.edgeKVStorage.getAll(kvEntryRef);
         }
@@ -974,7 +974,7 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public String getName() {
-            String name = (String) getValue(EdgeKVStorage.KeyValue.STREET_NAME);
+            String name = (String) getValue(KVStorage.KeyValue.STREET_NAME);
             // preserve backward compatibility (returns empty string if name tag missing)
             return name == null ? "" : name;
         }

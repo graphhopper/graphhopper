@@ -19,7 +19,7 @@ package com.graphhopper.routing.querygraph;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.search.EdgeKVStorage;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -262,12 +262,12 @@ class VirtualEdgeIterator implements EdgeIterator {
     }
 
     @Override
-    public List<EdgeKVStorage.KeyValue> getKeyValues() {
+    public List<KVStorage.KeyValue> getKeyValues() {
         return getCurrentEdge().getKeyValues();
     }
 
     @Override
-    public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> list) {
+    public EdgeIteratorState setKeyValues(List<KVStorage.KeyValue> list) {
         return getCurrentEdge().setKeyValues(list);
     }
 

@@ -212,7 +212,7 @@ public class RouteResourceCustomModelTest {
         JsonNode path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 661, 5);
 
-        String json = Helper.readJSONFileWithoutComments(new InputStreamReader(Files.newInputStream(Paths.get("../custom_models/cargo_bike.json"))));
+        String json = Helper.readJSONFileWithoutComments(new File("../custom_models/cargo_bike.json").getAbsolutePath());
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", \"custom_model\":" + json + ", \"ch.disable\": true}";
         path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 1007, 5);

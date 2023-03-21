@@ -949,7 +949,7 @@ public class OSMReaderTest {
         ReaderWay way = new ReaderWay(0L);
         PointList list = new PointList();
         list.add(49.214906, -2.156067);
-        reader.setArtificialWayTags(list, way, 10, new HashMap<>());
+        reader.setArtificialWayTags(list, way, 10, Collections.singletonList(new HashMap<>()));
         assertEquals("JEY", way.getTag("country", null).toString());
     }
 

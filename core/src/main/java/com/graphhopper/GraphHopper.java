@@ -797,7 +797,7 @@ public class GraphHopper {
                 ",edges:" + Constants.VERSION_EDGE +
                 ",geometry:" + Constants.VERSION_GEOMETRY +
                 ",location_index:" + Constants.VERSION_LOCATION_IDX +
-                ",string_index:" + Constants.VERSION_EDGEKV_STORAGE +
+                ",string_index:" + Constants.VERSION_KV_STORAGE +
                 ",nodesCH:" + Constants.VERSION_NODE_CH +
                 ",shortcuts:" + Constants.VERSION_SHORTCUT;
     }
@@ -1177,7 +1177,7 @@ public class GraphHopper {
         if (closeEarly) {
             boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> p instanceof CustomProfile);
             if (!includesCustomProfiles)
-                // when there are custom profiles we must not close way geometry or EdgeKVStorage, because
+                // when there are custom profiles we must not close way geometry or KVStorage, because
                 // they might be needed to evaluate the custom weightings for the following preparations
                 baseGraph.flushAndCloseGeometryAndNameStorage();
         }
