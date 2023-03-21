@@ -489,4 +489,15 @@ public class GTFSFeed implements Cloneable, Closeable {
         return endDate;
     }
 
+    public Map<PatternFinder.TripPatternKey, PatternFinder.Pattern> findPatterns () {
+        PatternFinder patternFinder = new PatternFinder();
+        // Iterate over trips and process each trip and its stop times.
+        for (Trip trip : this.trips.values()) {
+            Iterable<StopTime> orderedStopTimesForTrip = this.getOrderedStopTimesForTrip(trip.trip_id);
+            patternFinder.processTrip(trip, orderedStopTimesForTrip);
+        }
+        Map<PatternFinder.TripPatternKey, PatternFinder.Pattern> patternObjects = patternFinder.createPatternObjects(this.stops);
+        return patternObjects;
+    }
+
 }

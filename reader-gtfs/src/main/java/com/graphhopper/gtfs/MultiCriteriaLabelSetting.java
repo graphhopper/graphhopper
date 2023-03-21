@@ -178,6 +178,8 @@ public class MultiCriteriaLabelSetting {
     }
 
 
+    public List<Label> pushedBoardings = new ArrayList<Label>();
+
     void insertIfNotDominated(Label me) {
         Predicate<Label> filter;
         if (profileQuery && me.departureTime != null) {
@@ -191,6 +193,9 @@ public class MultiCriteriaLabelSetting {
                 removeDominated(me, sptEntries, filter);
                 sptEntries.add(me);
                 fromHeap.add(me);
+                if (me.edge.getType() == GtfsStorage.EdgeType.BOARD) {
+                    pushedBoardings.add(me);
+                }
             }
         }
     }

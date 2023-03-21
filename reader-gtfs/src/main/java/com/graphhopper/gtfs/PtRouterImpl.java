@@ -19,6 +19,7 @@
 package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.PatternFinder;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperConfig;
@@ -59,6 +60,7 @@ public final class PtRouterImpl implements PtRouter {
     private final RealtimeFeed realtimeFeed;
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final WeightingFactory weightingFactory;
+    private final Collection<PatternFinder.Pattern> patterns = new ArrayList<>();
 
     @Inject
     public PtRouterImpl(GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
@@ -72,6 +74,10 @@ public final class PtRouterImpl implements PtRouter {
         this.ptGraph = gtfsStorage.getPtGraph();
         this.realtimeFeed = realtimeFeed;
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
+
+        for (GTFSFeed gtfsFeed : gtfsStorage.getGtfsFeeds().values()) {
+            patterns.addAll(gtfsFeed.findPatterns().values());
+        }
     }
 
     @Override
@@ -205,6 +211,77 @@ public final class PtRouterImpl implements PtRouter {
             response.getAll().sort(c.thenComparing(d));
         }
 
+        class TripBoarding {
+            GtfsStorage.PlatformDescriptor platformDescriptor;
+            GtfsRealtime.TripDescriptor  tripDescriptor;
+
+            public TripBoarding(GtfsStorage.PlatformDescriptor platformDescriptor, GtfsRealtime.TripDescriptor tripDescriptor) {
+                this.platformDescriptor = platformDescriptor;
+                this.tripDescriptor = tripDescriptor;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+                TripBoarding that = (TripBoarding) o;
+                return Objects.equals(platformDescriptor, that.platformDescriptor) && Objects.equals(tripDescriptor, that.tripDescriptor);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(platformDescriptor, tripDescriptor);
+            }
+        }
+
+        class RouteBoarding {
+            GtfsStorage.PlatformDescriptor platformDescriptor;
+            String  routeId;
+
+            public RouteBoarding(GtfsStorage.PlatformDescriptor platformDescriptor, String routeId) {
+                this.platformDescriptor = platformDescriptor;
+                this.routeId = routeId;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+                RouteBoarding that = (RouteBoarding) o;
+                return Objects.equals(platformDescriptor, that.platformDescriptor) && Objects.equals(routeId, that.routeId);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(platformDescriptor, routeId);
+            }
+        }
+
+        class PatternBoarding {
+            GtfsStorage.PlatformDescriptor platformDescriptor;
+            String  patternId;
+
+            public PatternBoarding(GtfsStorage.PlatformDescriptor platformDescriptor, String patternId) {
+                this.platformDescriptor = platformDescriptor;
+                this.patternId = patternId;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+                PatternBoarding that = (PatternBoarding) o;
+                return Objects.equals(platformDescriptor, that.platformDescriptor) && Objects.equals(patternId, that.patternId);
+            }
+
+            @Override
+            public int hashCode() {
+                return Objects.hash(platformDescriptor, patternId);
+            }
+        }
+
+
+
         private List<List<Label.Transition>> findPaths(Label.NodeId startNode, Label.NodeId destNode) {
             StopWatch stopWatch = new StopWatch().start();
             boolean isEgress = !arriveBy;
@@ -309,6 +386,20 @@ public final class PtRouterImpl implements PtRouter {
                 }
             }
 
+            System.out.printf("Boardings pushed: %d\n", router.pushedBoardings.size());
+            List<TripBoarding> pushedBoardings = router.pushedBoardings.stream().map(t -> new TripBoarding(findStop(t), t.edge.getTripDescriptor())).collect(Collectors.toList());
+            long tripBoardings = pushedBoardings.stream().distinct().count();
+            System.out.printf("Distinct trip boardings among boardings pushed: %d\n", tripBoardings);
+
+            List<PatternBoarding> patternBoardings = new ArrayList<>();
+            for (TripBoarding pushedBoarding : pushedBoardings) {
+                PatternFinder.Pattern pattern = findPattern(pushedBoarding);
+                assert pattern != null;
+                patternBoardings.add(new PatternBoarding(pushedBoarding.platformDescriptor, pattern.getId()));
+            }
+            long nPatternBoardings = patternBoardings.stream().distinct().count();
+            System.out.printf("Distinct pattern boardings among boardings pushed: %d\n", nPatternBoardings);
+
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {
                 Label originalSolution = originalSolutions.get(discoveredSolution);
@@ -345,6 +436,24 @@ public final class PtRouterImpl implements PtRouter {
                 response.addError(new ConnectionNotFoundException("No route found", Collections.emptyMap()));
             }
             return paths;
+        }
+
+        private PatternFinder.Pattern findPattern(TripBoarding pushedBoarding) {
+            for (PatternFinder.Pattern pattern : patterns) {
+                if (pattern.route_id.equals(pushedBoarding.tripDescriptor.getRouteId()) && pattern.associatedTrips.contains(pushedBoarding.tripDescriptor.getTripId())) {
+                    return pattern;
+                }
+            }
+            return null;
+        }
+
+        private GtfsStorage.PlatformDescriptor findStop(Label t) {
+            while (t.parent != null) {
+                t = t.parent;
+                if (t.edge.getPlatformDescriptor() != null)
+                    return t.edge.getPlatformDescriptor();
+            }
+            throw new RuntimeException();
         }
 
         private boolean profileFinished(MultiCriteriaLabelSetting router, List<Label> discoveredSolutions, Label walkSolution) {
