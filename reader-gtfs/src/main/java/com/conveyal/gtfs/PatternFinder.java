@@ -49,7 +49,7 @@ public class PatternFinder {
         if (++nTripsProcessed % 100000 == 0) {
             LOG.info("trip {}", nTripsProcessed);
         }
-        TripPatternKey key = new TripPatternKey(trip.route_id);
+        TripPatternKey key = new TripPatternKey();
         for (StopTime st : orderedStopTimes) {
             key.addStopTime(st);
         }
@@ -84,105 +84,8 @@ public class PatternFinder {
             }
             patterns.put(key, pattern);
         }
-        // Name patterns before storing in SQL database.
-        renamePatterns(patterns.values(), stopById);
         LOG.info("Total patterns: {}", tripsForPattern.keySet().size());
         return patterns;
-    }
-
-    /**
-     * Destructively rename the supplied collection of patterns.
-     * This process requires access to all the stops in the feed.
-     * Some validators already cache a map of all the stops. There's probably a cleaner way to do this.
-     */
-    public static void renamePatterns(Collection<Pattern> patterns, Map<String, Stop> stopById) {
-        LOG.info("Generating unique names for patterns");
-
-        Map<String, PatternNamingInfo> namingInfoForRoute = new HashMap<>();
-
-        for (Pattern pattern : patterns) {
-            if (pattern.associatedTrips.isEmpty() || pattern.orderedStops.isEmpty()) continue;
-
-            // Each pattern within a route has a unique name (within that route, not across the entire feed)
-
-            PatternNamingInfo namingInfo = namingInfoForRoute.get(pattern.route_id);
-            if (namingInfo == null) {
-                namingInfo = new PatternNamingInfo();
-                namingInfoForRoute.put(pattern.route_id, namingInfo);
-            }
-
-            // Pattern names are built using stop names rather than stop IDs.
-            // Stop names, unlike IDs, are not guaranteed to be unique.
-            // Therefore we must track used names carefully to avoid duplicates.
-
-            String fromName = stopById.get(pattern.orderedStops.get(0)).stop_name;
-            String toName = stopById.get(pattern.orderedStops.get(pattern.orderedStops.size() - 1)).stop_name;
-
-            namingInfo.fromStops.put(fromName, pattern);
-            namingInfo.toStops.put(toName, pattern);
-
-            for (String stopId : pattern.orderedStops) {
-                Stop stop = stopById.get(stopId);
-                if (fromName.equals(stop.stop_name) || toName.equals(stop.stop_name)) continue;
-                namingInfo.vias.put(stop.stop_name, pattern);
-            }
-            namingInfo.patternsOnRoute.add(pattern);
-        }
-
-        // name the patterns on each route
-        for (PatternNamingInfo info : namingInfoForRoute.values()) {
-            for (Pattern pattern : info.patternsOnRoute) {
-                pattern.name = null; // clear this now so we don't get confused later on
-                String fromName = stopById.get(pattern.orderedStops.get(0)).stop_name;
-                String toName = stopById.get(pattern.orderedStops.get(pattern.orderedStops.size() - 1)).stop_name;
-
-                // check if combination from, to is unique
-                Set<Pattern> intersection = new HashSet<>(info.fromStops.get(fromName));
-                intersection.retainAll(info.toStops.get(toName));
-
-                if (intersection.size() == 1) {
-                    pattern.name = String.format(Locale.US, "from %s to %s", fromName, toName);
-                    continue;
-                }
-
-                // check for unique via stop
-                pattern.orderedStops.stream().map(stopById::get).forEach(stop -> {
-                    Set<Pattern> viaIntersection = new HashSet<>(intersection);
-                    viaIntersection.retainAll(info.vias.get(stop.stop_name));
-
-                    if (viaIntersection.size() == 1) {
-                        pattern.name = String.format(Locale.US, "from %s to %s via %s", fromName, toName, stop.stop_name);
-                    }
-                });
-
-                if (pattern.name == null) {
-                    // no unique via, one pattern is subset of other.
-                    if (intersection.size() == 2) {
-                        Iterator<Pattern> it = intersection.iterator();
-                        Pattern p0 = it.next();
-                        Pattern p1 = it.next();
-                        if (p0.orderedStops.size() > p1.orderedStops.size()) {
-                            p1.name = String.format(Locale.US, "from %s to %s express", fromName, toName);
-                            p0.name = String.format(Locale.US, "from %s to %s local", fromName, toName);
-                        } else if (p1.orderedStops.size() > p0.orderedStops.size()){
-                            p0.name = String.format(Locale.US, "from %s to %s express", fromName, toName);
-                            p1.name = String.format(Locale.US, "from %s to %s local", fromName, toName);
-                        }
-                    }
-                }
-
-                if (pattern.name == null) {
-                    // give up
-                    pattern.name = String.format(Locale.US, "from %s to %s like trip %s", fromName, toName, pattern.associatedTrips.get(0));
-                }
-            }
-
-            // attach a stop and trip count to each
-            for (Pattern pattern : info.patternsOnRoute) {
-                pattern.name = String.format(Locale.US, "%s stops %s (%s trips)",
-                        pattern.orderedStops.size(), pattern.name, pattern.associatedTrips.size());
-            }
-        }
     }
 
     /**
@@ -205,13 +108,11 @@ public class PatternFinder {
      */
     public static class TripPatternKey {
 
-        public String routeId;
         public List<String> stops = new ArrayList<>();
         public IntArrayList pickupTypes = new IntArrayList();
         public IntArrayList dropoffTypes = new IntArrayList();
 
-        public TripPatternKey (String routeId) {
-            this.routeId = routeId;
+        public TripPatternKey () {
         }
 
         public void addStopTime (StopTime st) {
@@ -229,7 +130,6 @@ public class PatternFinder {
 
             if (!Objects.equals(dropoffTypes, that.dropoffTypes)) return false;
             if (!Objects.equals(pickupTypes, that.pickupTypes)) return false;
-            if (!Objects.equals(routeId, that.routeId)) return false;
             if (!Objects.equals(stops, that.stops)) return false;
 
             return true;
@@ -237,8 +137,7 @@ public class PatternFinder {
 
         @Override
         public int hashCode() {
-            int result = routeId != null ? routeId.hashCode() : 0;
-            result = 31 * result + (stops != null ? stops.hashCode() : 0);
+            int result = stops != null ? stops.hashCode() : 0;
             result = 31 * result + (pickupTypes != null ? pickupTypes.hashCode() : 0);
             result = 31 * result + (dropoffTypes != null ? dropoffTypes.hashCode() : 0);
             return result;
@@ -273,8 +172,6 @@ public class PatternFinder {
         public Set<String> associatedShapes;
         public LineString geometry;
         public String name;
-        public String route_id;
-        public int direction_id = INT_MISSING;
         public static Joiner joiner = Joiner.on("-").skipNulls();
         public String feed_id;
 
@@ -307,10 +204,6 @@ public class PatternFinder {
 
             // feed.getTripGeometry(exemplarTrip.trip_id);
 
-            // Patterns have one and only one route.
-            // FIXME are we certain we're only passing in trips on one route? or are we losing information here?
-            this.route_id = exemplarTrip.route_id;
-            this.direction_id = exemplarTrip.direction_id;
 
             // A name is assigned to this pattern based on the headsign, short name, direction ID or stop IDs.
             // This is not at all guaranteed to be unique, it's just to help identify the pattern.

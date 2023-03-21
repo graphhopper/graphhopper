@@ -440,7 +440,7 @@ public final class PtRouterImpl implements PtRouter {
 
         private PatternFinder.Pattern findPattern(TripBoarding pushedBoarding) {
             for (PatternFinder.Pattern pattern : patterns) {
-                if (pattern.route_id.equals(pushedBoarding.tripDescriptor.getRouteId()) && pattern.associatedTrips.contains(pushedBoarding.tripDescriptor.getTripId())) {
+                if (pattern.associatedTrips.contains(pushedBoarding.tripDescriptor.getTripId())) {
                     return pattern;
                 }
             }
