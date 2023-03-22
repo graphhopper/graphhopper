@@ -1,6 +1,6 @@
 // to use this custom model you need to set the following option in the config.yml
 // graph.vehicles: roads,bike
-// graph.encoded_values: max_width,max_height
+// graph.encoded_values: average_slope,max_slope
 // profiles:
 //    - name: bike
 //      vehicle: roads
