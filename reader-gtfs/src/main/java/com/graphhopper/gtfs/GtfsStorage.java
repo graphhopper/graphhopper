@@ -88,8 +88,8 @@ public class GtfsStorage {
 		}
 	}
 
-	static class FeedIdWithTimezone implements Serializable {
-		final String feedId;
+	public static class FeedIdWithTimezone implements Serializable {
+		public final String feedId;
 		final ZoneId zoneId;
 
 		FeedIdWithTimezone(String feedId, ZoneId zoneId) {

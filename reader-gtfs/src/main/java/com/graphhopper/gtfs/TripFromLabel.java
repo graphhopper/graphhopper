@@ -228,7 +228,7 @@ class TripFromLabel {
                 case BOARD: {
                     boardTime = Instant.ofEpochMilli(t.label.currentTime);
                     stopSequence = t.edge.getStopSequence();
-                    stopTime = realtimeFeed.getStopTime(gtfsFeed, tripDescriptor, t, boardTime, stopSequence);
+                    stopTime = realtimeFeed.getStopTime(gtfsFeed, tripDescriptor, boardTime, stopSequence);
                     tripUpdate = realtimeFeed.getTripUpdate(gtfsFeed, tripDescriptor, boardTime).orElse(null);
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
                     Optional<Instant> updatedDeparture = getDepartureDelay(stopSequence).map(delay -> plannedDeparture.plus(delay, SECONDS));
@@ -241,7 +241,7 @@ class TripFromLabel {
                 }
                 case HOP: {
                     stopSequence = t.edge.getStopSequence();
-                    stopTime = realtimeFeed.getStopTime(gtfsFeed, tripDescriptor, t, boardTime, stopSequence);
+                    stopTime = realtimeFeed.getStopTime(gtfsFeed, tripDescriptor, boardTime, stopSequence);
                     arrivalTimeFromHopEdge = Instant.ofEpochMilli(t.label.currentTime);
                     updatedArrival = getArrivalDelay(stopSequence).map(delay -> arrivalTimeFromHopEdge.plus(delay, SECONDS));
                     break;

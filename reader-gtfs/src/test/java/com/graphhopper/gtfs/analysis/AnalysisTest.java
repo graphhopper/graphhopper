@@ -18,6 +18,8 @@
 
 package com.graphhopper.gtfs.analysis;
 
+import com.conveyal.gtfs.model.StopTime;
+import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
@@ -27,10 +29,12 @@ import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.mapdb.Fun;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -74,6 +78,33 @@ public class AnalysisTest {
         assertThat(singleElementComponents.stream().map(it -> it.get(0)))
                 .extracting("stopId")
                 .containsExactlyInAnyOrder("JUSTICE_COURT", "MUSEUM", "NEXT_TO_MUSEUM");
+    }
+
+    @Test
+    public void testReduceTransfers() {
+        PtGraph ptGraph = graphHopperGtfs.getPtGraph();
+        for (int i = 0; i < ptGraph.getNodeCount(); i++) {
+            for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(i)) {
+                if (ptEdge.getType() == GtfsStorage.EdgeType.ALIGHT) {
+                    GtfsStorage.FeedIdWithTimezone feedId = findFeedId(ptGraph, ptEdge);
+                    if (feedId != null) {
+                        GtfsRealtime.TripDescriptor tripDescriptor = ptEdge.getAttrs().tripDescriptor;
+                        System.out.printf("%s %s %d\n", tripDescriptor.getTripId(), tripDescriptor.hasStartTime() ? tripDescriptor.getStartTime() : "", ptEdge.getAttrs().stop_sequence);
+                        StopTime stopTime = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get(feedId.feedId).stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), ptEdge.getAttrs().stop_sequence));
+                        System.out.printf("  %s\n", stopTime.stop_id);
+                    }
+                }
+            }
+        }
+    }
+
+    private GtfsStorage.FeedIdWithTimezone findFeedId(PtGraph ptGraph, PtGraph.PtEdge ptEdge) {
+        for (PtGraph.PtEdge edge : ptGraph.edgesAround(ptEdge.getAdjNode())) {
+            if (edge.getAttrs().feedIdWithTimezone != null) {
+                return edge.getAttrs().feedIdWithTimezone;
+            }
+        }
+        throw new RuntimeException();
     }
 
 }
