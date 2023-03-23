@@ -2101,6 +2101,33 @@ public class GraphHopperTest {
     }
 
     @Test
+    public void testTagParserProcessingOrder() {
+        // it does not matter when the OSMBikeNetworkTagParser is added (before or even after BikeCommonPriorityParser)
+        // as it is a different type but it is important that OSMSmoothnessParser is added before smoothnessEnc is used
+        // in BikeCommonAverageSpeedParser
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(BAYREUTH).
+                setMinNetworkSize(0).
+                setProfiles(new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"));
+
+        hopper.importOrLoad();
+        GHRequest req = new GHRequest(new GHPoint(49.98021, 11.50730), new GHPoint(49.98026, 11.50795));
+        req.setProfile("bike");
+        GHResponse rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        // due to smoothness=bad => 7 seconds longer
+        assertEquals(21, rsp.getBest().getTime() / 1000.0, 1);
+
+        req = new GHRequest(new GHPoint(50.015067, 11.502093), new GHPoint(50.014694, 11.499748));
+        req.setProfile("bike");
+        rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        // due to bike network (relation 2247905) a lower route weight => otherwise 29.0
+        assertEquals(23.2, rsp.getBest().getRouteWeight(), .1);
+    }
+
+    @Test
     public void testEdgeCount() {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
