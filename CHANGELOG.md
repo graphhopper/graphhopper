@@ -1,5 +1,5 @@
 ### 8.0 [not yet released]
-
+- renamed EdgeKVStorage to KVStorage as it is (temporarily) used for node tage too, see #2705
 
 ### 7.0 [14 Mar 2023]
 

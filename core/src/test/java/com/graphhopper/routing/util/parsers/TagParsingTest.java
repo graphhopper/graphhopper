@@ -58,10 +58,10 @@ class TagParsingTest {
         BikePriorityParser bike1Parser = new BikePriorityParser(em, new PMap("name=bike1"));
         BikePriorityParser bike2Parser = new BikePriorityParser(em, new PMap("name=bike2")) {
             @Override
-            public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relTags) {
+            public void handleWayTags(int edgeId, EdgeIntAccess intAccess, ReaderWay way, IntsRef relTags) {
                 // accept less relations
-                if (bikeRouteEnc.getEnum(false, edgeFlags) != RouteNetwork.MISSING)
-                    priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(2));
+                if (bikeRouteEnc.getEnum(false, edgeId, intAccess) != RouteNetwork.MISSING)
+                    priorityEnc.setDecimal(false, edgeId, intAccess, PriorityCode.getFactor(2));
             }
         };
         OSMParsers osmParsers = new OSMParsers()
@@ -75,10 +75,11 @@ class TagParsingTest {
         osmRel.setTag("network", "lcn");
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        IntsRef edgeFlags = em.createEdgeFlags();
-        osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
-        assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeFlags));
-        assertTrue(bike1PriorityEnc.getDecimal(false, edgeFlags) > bike2PriorityEnc.getDecimal(false, edgeFlags));
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        int edgeId = 0;
+        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
+        assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertTrue(bike1PriorityEnc.getDecimal(false, edgeId, edgeIntAccess) > bike2PriorityEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -115,11 +116,12 @@ class TagParsingTest {
         osmRel.setTag("network", "rcn");
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        IntsRef edgeFlags = em.createEdgeFlags();
-        osmParsers.handleWayTags(edgeFlags, osmWay, relFlags);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        int edgeId = 0;
+        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
         // bike: uninfluenced speed for grade but via network => NICE
         // mtb: uninfluenced speed only PREFER
-        assertTrue(bikePriorityEnc.getDecimal(false, edgeFlags) > mtbPriorityEnc.getDecimal(false, edgeFlags));
+        assertTrue(bikePriorityEnc.getDecimal(false, edgeId, edgeIntAccess) > mtbPriorityEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -154,26 +156,27 @@ class TagParsingTest {
             if (tagParser instanceof AbstractAccessParser)
                 ((AbstractAccessParser) tagParser).init(new DateRangeParser());
 
-        final IntsRef edgeFlags = manager.createEdgeFlags();
+        final ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(manager.getIntsForFlags());
+        int edgeId = 0;
         IntsRef relFlags = manager.createRelationFlags();
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("junction", "roundabout");
-        tagParsers.forEach(p -> p.handleWayTags(edgeFlags, way, relFlags));
+        tagParsers.forEach(p -> p.handleWayTags(edgeId, intAccess, way, relFlags));
 
-        assertTrue(roundaboutEnc.getBool(false, edgeFlags));
+        assertTrue(roundaboutEnc.getBool(false, edgeId, intAccess));
         for (BooleanEncodedValue accessEnc : accessEncs)
-            assertTrue(accessEnc.getBool(false, edgeFlags));
+            assertTrue(accessEnc.getBool(false, edgeId, intAccess));
 
         final IntsRef edgeFlags2 = manager.createEdgeFlags();
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("junction", "circular");
-        tagParsers.forEach(p -> p.handleWayTags(edgeFlags2, way, relFlags));
+        tagParsers.forEach(p -> p.handleWayTags(edgeId, intAccess, way, relFlags));
 
-        assertTrue(roundaboutEnc.getBool(false, edgeFlags2));
+        assertTrue(roundaboutEnc.getBool(false, edgeId, intAccess));
         for (BooleanEncodedValue accessEnc : accessEncs)
-            assertTrue(accessEnc.getBool(false, edgeFlags2));
+            assertTrue(accessEnc.getBool(false, edgeId, intAccess));
     }
 
 }

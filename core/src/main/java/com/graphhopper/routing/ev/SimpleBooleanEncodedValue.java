@@ -19,7 +19,6 @@ package com.graphhopper.routing.ev;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.storage.IntsRef;
 
 /**
  * This class implements a simple boolean storage via an UnsignedIntEncodedValue with 1 bit.
@@ -54,12 +53,12 @@ public final class SimpleBooleanEncodedValue extends IntEncodedValueImpl impleme
     }
 
     @Override
-    public final void setBool(boolean reverse, IntsRef ref, boolean value) {
-        setInt(reverse, ref, value ? 1 : 0);
+    public final void setBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, boolean value) {
+        setInt(reverse, edgeId, edgeIntAccess, value ? 1 : 0);
     }
 
     @Override
-    public final boolean getBool(boolean reverse, IntsRef ref) {
-        return getInt(reverse, ref) == 1;
+    public final boolean getBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
+        return getInt(reverse, edgeId, edgeIntAccess) == 1;
     }
 }

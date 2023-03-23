@@ -18,13 +18,9 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.Roundabout;
-import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
@@ -131,31 +127,31 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
             return;
 
         if (!access.isFerry()) {
-            boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
+            boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
             if (isOneway(way) || isRoundabout) {
                 if (isForwardOneway(way))
-                    accessEnc.setBool(false, edgeFlags, true);
+                    accessEnc.setBool(false, edgeId, edgeIntAccess, true);
                 if (isBackwardOneway(way))
-                    accessEnc.setBool(true, edgeFlags, true);
+                    accessEnc.setBool(true, edgeId, edgeIntAccess, true);
             } else {
-                accessEnc.setBool(false, edgeFlags, true);
-                accessEnc.setBool(true, edgeFlags, true);
+                accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+                accessEnc.setBool(true, edgeId, edgeIntAccess, true);
             }
 
         } else {
-            accessEnc.setBool(false, edgeFlags, true);
-            accessEnc.setBool(true, edgeFlags, true);
+            accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+            accessEnc.setBool(true, edgeId, edgeIntAccess, true);
         }
 
         if (way.hasTag("gh:barrier_edge")) {
             List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
-            handleBarrierEdge(edgeFlags, nodeTags.get(0));
+            handleBarrierEdge(edgeId, edgeIntAccess, nodeTags.get(0));
         }
     }
 

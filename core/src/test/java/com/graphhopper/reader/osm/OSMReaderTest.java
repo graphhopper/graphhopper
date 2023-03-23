@@ -515,22 +515,24 @@ public class OSMReaderTest {
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
 
-        IntsRef edgeFlags = manager.createRelationFlags();
-        osmParsers.handleRelationTags(osmRel, edgeFlags);
-        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeFlags));
+        IntsRef relFlags = manager.createRelationFlags();
+        IntsRefEdgeIntAccess intAccess = new IntsRefEdgeIntAccess(relFlags);
+        int edgeId = 0;
+        osmParsers.handleRelationTags(osmRel, relFlags);
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
 
         // unchanged network
-        IntsRef before = IntsRef.deepCopyOf(edgeFlags);
-        osmParsers.handleRelationTags(osmRel, edgeFlags);
-        assertEquals(before, edgeFlags);
-        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, before));
-        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeFlags));
+        IntsRef before = IntsRef.deepCopyOf(relFlags);
+        osmParsers.handleRelationTags(osmRel, relFlags);
+        assertEquals(before, relFlags);
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
 
         // overwrite network
         osmRel.setTag("network", "ncn");
-        osmParsers.handleRelationTags(osmRel, edgeFlags);
-        assertEquals(RouteNetwork.NATIONAL, transformEnc.getEnum(false, edgeFlags));
-        assertNotEquals(before, edgeFlags);
+        osmParsers.handleRelationTags(osmRel, relFlags);
+        assertEquals(RouteNetwork.NATIONAL, transformEnc.getEnum(false, edgeId, intAccess));
+        assertNotEquals(before, relFlags);
     }
 
     @Test
@@ -950,7 +952,7 @@ public class OSMReaderTest {
         OSMParsers osmParsers = new OSMParsers();
         osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
+        OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         // there are two edges, both with highway=track, one in Berlin, one in Paris
@@ -983,7 +985,7 @@ public class OSMReaderTest {
         OSMParsers osmParsers = new OSMParsers()
                 .addWayTagParser(new CountryParser(countryEnc));
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
+        OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         reader.setFile(new File(getClass().getResource("test-osm12.xml").getFile()));
