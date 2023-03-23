@@ -240,14 +240,18 @@ class GtfsReader {
     private void addTrips(ZoneId zoneId, List<TripWithStopTimes> trips, int time, boolean frequencyBased) {
         List<TripWithStopTimeAndArrivalNode> arrivalNodes = new ArrayList<>();
         for (TripWithStopTimes trip : trips) {
-            GtfsRealtime.TripDescriptor.Builder tripDescriptor = GtfsRealtime.TripDescriptor.newBuilder()
-                    .setTripId(trip.trip.trip_id)
-                    .setRouteId(trip.trip.route_id);
-            if (frequencyBased) {
-                tripDescriptor = tripDescriptor.setStartTime(convertToGtfsTime(time));
-            }
-            addTrip(zoneId, time, arrivalNodes, trip, tripDescriptor.build());
+            addTrip(zoneId, time, arrivalNodes, trip, getTripDescriptor(time, frequencyBased, trip));
         }
+    }
+
+    private static GtfsRealtime.TripDescriptor getTripDescriptor(int time, boolean frequencyBased, TripWithStopTimes trip) {
+        GtfsRealtime.TripDescriptor.Builder tripDescriptor = GtfsRealtime.TripDescriptor.newBuilder()
+                .setTripId(trip.trip.trip_id)
+                .setRouteId(trip.trip.route_id);
+        if (frequencyBased) {
+            tripDescriptor = tripDescriptor.setStartTime(convertToGtfsTime(time));
+        }
+        return tripDescriptor.build();
     }
 
     private static class TripWithStopTimeAndArrivalNode {
