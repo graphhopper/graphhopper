@@ -19,9 +19,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
@@ -33,7 +31,7 @@ class OSMRoadAccessParserTest {
 
     @Test
     void countryRule() {
-        EnumEncodedValue<RoadAccess> roadAccessEnc = new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
+        EnumEncodedValue<RoadAccess> roadAccessEnc = RoadAccess.create();
         roadAccessEnc.init(new EncodedValue.InitializerConfig());
 
         OSMRoadAccessParser parser = new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
@@ -46,23 +44,24 @@ class OSMRoadAccessParserTest {
                 return RoadAccess.DESTINATION;
             }
         });
-        IntsRef edgeFlags = new IntsRef(1);
-        parser.handleWayTags(edgeFlags, way, relFlags);
-        assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeFlags));
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
         // if there is no country rule we get the default value
-        edgeFlags = new IntsRef(1);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         way.removeTag("country_rule");
-        parser.handleWayTags(edgeFlags, way, relFlags);
-        assertEquals(RoadAccess.YES, roadAccessEnc.getEnum(false, edgeFlags));
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(RoadAccess.YES, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
         way.setTag("motor_vehicle", "agricultural;forestry");
-        parser.handleWayTags(edgeFlags, way, relFlags);
-        assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeFlags));
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
         way.setTag("motor_vehicle", "forestry;agricultural");
-        parser.handleWayTags(edgeFlags, way, relFlags);
-        assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeFlags));
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
     }
 

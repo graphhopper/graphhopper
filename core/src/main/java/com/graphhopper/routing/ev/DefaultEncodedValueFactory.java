@@ -28,13 +28,13 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         } else if (GetOffBike.KEY.equals(name)) {
             return GetOffBike.create();
         } else if (RoadClass.KEY.equals(name)) {
-            return new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
+            return RoadClass.create();
         } else if (RoadClassLink.KEY.equals(name)) {
-            return new SimpleBooleanEncodedValue(RoadClassLink.KEY);
+            return RoadClassLink.create();
         } else if (RoadEnvironment.KEY.equals(name)) {
-            return new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class);
+            return RoadEnvironment.create();
         } else if (RoadAccess.KEY.equals(name)) {
-            return new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
+            return RoadAccess.create();
         } else if (MaxSpeed.KEY.equals(name)) {
             return MaxSpeed.create();
         } else if (MaxWeight.KEY.equals(name)) {
@@ -48,27 +48,27 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         } else if (MaxLength.KEY.equals(name)) {
             return MaxLength.create();
         } else if (Hgv.KEY.equals(name)) {
-            return new EnumEncodedValue<>(Hgv.KEY, Hgv.class);
+            return Hgv.create();
         } else if (Surface.KEY.equals(name)) {
-            return new EnumEncodedValue<>(Surface.KEY, Surface.class);
+            return Surface.create();
         } else if (Smoothness.KEY.equals(name)) {
-            return new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class);
+            return Smoothness.create();
         } else if (Toll.KEY.equals(name)) {
-            return new EnumEncodedValue<>(Toll.KEY, Toll.class);
+            return Toll.create();
         } else if (TrackType.KEY.equals(name)) {
-            return new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
+            return TrackType.create();
         } else if (BikeNetwork.KEY.equals(name) || FootNetwork.KEY.equals(name)) {
-            return new EnumEncodedValue<>(name, RouteNetwork.class);
+            return RouteNetwork.create(name);
         } else if (Hazmat.KEY.equals(name)) {
-            return new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class);
+            return Hazmat.create();
         } else if (HazmatTunnel.KEY.equals(name)) {
-            return new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class);
+            return HazmatTunnel.create();
         } else if (HazmatWater.KEY.equals(name)) {
-            return new EnumEncodedValue<>(HazmatWater.KEY, HazmatWater.class);
+            return HazmatWater.create();
         } else if (Lanes.KEY.equals(name)) {
             return Lanes.create();
         } else if (Footway.KEY.equals(name)) {
-            return new EnumEncodedValue<>(Footway.KEY, Footway.class);
+            return Footway.create();
         } else if (OSMWayID.KEY.equals(name)) {
             return OSMWayID.create();
         } else if (MtbRating.KEY.equals(name)) {
@@ -80,7 +80,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         } else if (Country.KEY.equals(name)) {
             return Country.create();
         } else if (name.endsWith(Subnetwork.key(""))) {
-            return new SimpleBooleanEncodedValue(name);
+            return Subnetwork.create(name);
         } else if (MaxSlope.KEY.equals(name)) {
             return MaxSlope.create();
         } else if (AverageSlope.KEY.equals(name)) {

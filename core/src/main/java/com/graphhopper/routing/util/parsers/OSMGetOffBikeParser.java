@@ -2,6 +2,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
@@ -29,19 +30,19 @@ public class OSMGetOffBikeParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         String highway = way.getTag("highway");
         if (!way.hasTag("bicycle", INTENDED) && (GET_OFF_BIKE.contains(highway) || way.hasTag("railway", "platform"))
                 || "steps".equals(highway) || way.hasTag("bicycle", "dismount")) {
-            getOffBikeEnc.setBool(false, edgeFlags, true);
-            getOffBikeEnc.setBool(true, edgeFlags, true);
+            getOffBikeEnc.setBool(false, edgeId, edgeIntAccess, true);
+            getOffBikeEnc.setBool(true, edgeId, edgeIntAccess, true);
         }
-        boolean fwd = bikeAccessEnc.getBool(false, edgeFlags);
-        boolean bwd = bikeAccessEnc.getBool(true, edgeFlags);
+        boolean fwd = bikeAccessEnc.getBool(false, edgeId, edgeIntAccess);
+        boolean bwd = bikeAccessEnc.getBool(true, edgeId, edgeIntAccess);
         // get off bike for reverse oneways
         if (fwd != bwd) {
-            if (!fwd) getOffBikeEnc.setBool(false, edgeFlags, true);
-            if (!bwd) getOffBikeEnc.setBool(true, edgeFlags, true);
+            if (!fwd) getOffBikeEnc.setBool(false, edgeId, edgeIntAccess, true);
+            if (!bwd) getOffBikeEnc.setBool(true, edgeId, edgeIntAccess, true);
         }
     }
 }

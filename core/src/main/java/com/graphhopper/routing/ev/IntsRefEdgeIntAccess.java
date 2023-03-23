@@ -15,12 +15,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package com.graphhopper.routing.ev;
 
-public class RoadClassLink {
-    public static final String KEY = "road_class_link";
+import com.graphhopper.storage.IntsRef;
 
-    public static BooleanEncodedValue create() {
-        return new SimpleBooleanEncodedValue(KEY);
+public class IntsRefEdgeIntAccess implements EdgeIntAccess {
+    private final IntsRef intsRef;
+
+    public IntsRefEdgeIntAccess(IntsRef intsRef) {
+        this.intsRef = intsRef;
+    }
+
+    @Override
+    public int getInt(int edgeId, int index) {
+        return intsRef.ints[index];
+    }
+
+    @Override
+    public void setInt(int edgeId, int index, int value) {
+        intsRef.ints[index] = value;
     }
 }

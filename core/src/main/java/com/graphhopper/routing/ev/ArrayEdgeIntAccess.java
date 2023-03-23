@@ -15,12 +15,31 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package com.graphhopper.routing.ev;
 
-public class RoadClassLink {
-    public static final String KEY = "road_class_link";
+import com.carrotsearch.hppc.IntArrayList;
 
-    public static BooleanEncodedValue create() {
-        return new SimpleBooleanEncodedValue(KEY);
+public class ArrayEdgeIntAccess implements EdgeIntAccess {
+    private final int intsPerEdge;
+    private final IntArrayList arr = new IntArrayList();
+
+    public ArrayEdgeIntAccess(int intsPerEdge) {
+        this.intsPerEdge = intsPerEdge;
     }
+
+    @Override
+    public int getInt(int edgeId, int index) {
+        int arrIndex = edgeId * intsPerEdge + index;
+        return arrIndex >= arr.size() ? 0 : arr.get(arrIndex);
+    }
+
+    @Override
+    public void setInt(int edgeId, int index, int value) {
+        int arrIndex = edgeId * intsPerEdge + index;
+        if (arrIndex >= arr.size())
+            arr.resize(arrIndex + 1);
+        arr.set(arrIndex, value);
+    }
+
 }

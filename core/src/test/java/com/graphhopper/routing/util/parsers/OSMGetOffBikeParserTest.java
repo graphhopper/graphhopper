@@ -2,7 +2,9 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.GetOffBike;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.VehicleEncodedValues;
@@ -111,19 +113,22 @@ public class OSMGetOffBikeParserTest {
         way.setTag("highway", "primary");
         way.setTag("oneway", "yes");
 
-        IntsRef edgeFlags = new IntsRef(1);
-        accessParser.handleWayTags(edgeFlags, way, new IntsRef(1));
-        getOffParser.handleWayTags(edgeFlags, way, new IntsRef(1));
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        IntsRef rel = new IntsRef(1);
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        getOffParser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
 
-        assertFalse(offBikeEnc.getBool(false, edgeFlags));
-        assertTrue(offBikeEnc.getBool(true, edgeFlags));
+        assertFalse(offBikeEnc.getBool(false, edgeId, edgeIntAccess));
+        assertTrue(offBikeEnc.getBool(true, edgeId, edgeIntAccess));
     }
 
     private boolean isGetOffBike(ReaderWay way) {
-        IntsRef edgeFlags = new IntsRef(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
         IntsRef rel = new IntsRef(1);
-        accessParser.handleWayTags(edgeFlags, way, rel);
-        getOffParser.handleWayTags(edgeFlags, way, rel);
-        return offBikeEnc.getBool(false, edgeFlags);
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, rel);
+        getOffParser.handleWayTags(edgeId, edgeIntAccess, way, rel);
+        return offBikeEnc.getBool(false, edgeId, edgeIntAccess);
     }
 }

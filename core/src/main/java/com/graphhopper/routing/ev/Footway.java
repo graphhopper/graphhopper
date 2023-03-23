@@ -24,6 +24,10 @@ public enum Footway {
 
     public static final String KEY = "footway";
 
+    public static EnumEncodedValue<Footway> create() {
+        return new EnumEncodedValue<>(KEY, Footway.class);
+    }
+
     private final String name;
 
     Footway(String name) {

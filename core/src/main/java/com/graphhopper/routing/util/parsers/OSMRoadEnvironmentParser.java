@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.storage.IntsRef;
 
@@ -37,11 +38,11 @@ public class OSMRoadEnvironmentParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         List<Map<String, Object>> nodeTags = readerWay.getTag("node_tags", Collections.emptyList());
         // a barrier edge has the restriction in both nodes and the tags are the same
         if (readerWay.hasTag("gh:barrier_edge") && nodeTags.get(0).containsKey("ford")) {
-            roadEnvEnc.setEnum(false, edgeFlags, FORD);
+            roadEnvEnc.setEnum(false, edgeId, edgeIntAccess, FORD);
             return;
         }
 
@@ -60,6 +61,6 @@ public class OSMRoadEnvironmentParser implements TagParser {
             roadEnvironment = ROAD;
 
         if (roadEnvironment != OTHER)
-            roadEnvEnc.setEnum(false, edgeFlags, roadEnvironment);
+            roadEnvEnc.setEnum(false, edgeId, edgeIntAccess, roadEnvironment);
     }
 }

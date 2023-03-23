@@ -20,9 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.BikeNetwork;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.RouteNetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.VehicleEncodedValues;
@@ -447,28 +445,29 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "icn");
         IntsRef relFlags = osmParsers.handleRelationTags(osmRel, osmParsers.createRelationFlags());
-        IntsRef flags = encodingManager.createEdgeFlags();
-        osmParsers.handleWayTags(flags, osmWay, relFlags);
-        assertEquals(RouteNetwork.INTERNATIONAL, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
-        assertEquals(PriorityCode.getValue(BEST.getValue()), priorityEnc.getDecimal(false, flags), .1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        int edgeId = 0;
+        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
+        assertEquals(RouteNetwork.INTERNATIONAL, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(PriorityCode.getValue(BEST.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
 
         // for some highways the priority is UNCHANGED
         osmRel = new ReaderRelation(1);
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
-        flags = encodingManager.createEdgeFlags();
-        osmParsers.handleWayTags(flags, osmWay, osmParsers.createRelationFlags());
-        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
-        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, flags), .1);
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, osmParsers.createRelationFlags());
+        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
 
         // unknown highway tags will be excluded but priority will be unchanged
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "whatever");
-        flags = encodingManager.createEdgeFlags();
-        osmParsers.handleWayTags(flags, osmWay, osmParsers.createRelationFlags());
-        assertFalse(accessParser.getAccessEnc().getBool(false, flags));
-        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
-        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, flags), .1);
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, osmParsers.createRelationFlags());
+        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
     }
 
     @Test

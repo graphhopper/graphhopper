@@ -19,7 +19,6 @@ package com.graphhopper.routing.ev;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.storage.IntsRef;
 
 import javax.lang.model.SourceVersion;
 
@@ -150,9 +149,9 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     }
 
     @Override
-    public final void setInt(boolean reverse, IntsRef ref, int value) {
+    public final void setInt(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, int value) {
         checkValue(value);
-        uncheckedSet(reverse, ref, value);
+        uncheckedSet(reverse, edgeId, edgeIntAccess, value);
     }
 
     private void checkValue(int value) {
@@ -164,7 +163,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
             throw new IllegalArgumentException(name + " value too small for encoding " + value + ", minValue:" + minStorableValue);
     }
 
-    final void uncheckedSet(boolean reverse, IntsRef ref, int value) {
+    final void uncheckedSet(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, int value) {
         if (negateReverseDirection) {
             if (reverse) {
                 reverse = false;
@@ -177,26 +176,26 @@ public class IntEncodedValueImpl implements IntEncodedValue {
 
         value -= minStorableValue;
         if (reverse) {
-            int flags = ref.ints[bwdDataIndex + ref.offset];
+            int flags = edgeIntAccess.getInt(edgeId, bwdDataIndex);
             // clear value bits
             flags &= ~bwdMask;
-            ref.ints[bwdDataIndex + ref.offset] = flags | (value << bwdShift);
+            edgeIntAccess.setInt(edgeId, bwdDataIndex, flags | (value << bwdShift));
         } else {
-            int flags = ref.ints[fwdDataIndex + ref.offset];
+            int flags = edgeIntAccess.getInt(edgeId, fwdDataIndex);
             flags &= ~fwdMask;
-            ref.ints[fwdDataIndex + ref.offset] = flags | (value << fwdShift);
+            edgeIntAccess.setInt(edgeId, fwdDataIndex, flags | (value << fwdShift));
         }
     }
 
     @Override
-    public final int getInt(boolean reverse, IntsRef ref) {
+    public final int getInt(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
         int flags;
         // if we do not store both directions ignore reverse == true for convenient reading
         if (storeTwoDirections && reverse) {
-            flags = ref.ints[bwdDataIndex + ref.offset];
+            flags = edgeIntAccess.getInt(edgeId, bwdDataIndex);
             return minStorableValue + ((flags & bwdMask) >>> bwdShift);
         } else {
-            flags = ref.ints[fwdDataIndex + ref.offset];
+            flags = edgeIntAccess.getInt(edgeId, fwdDataIndex);
             if (negateReverseDirection && reverse)
                 return -(minStorableValue + ((flags & fwdMask) >>> fwdShift));
             return minStorableValue + ((flags & fwdMask) >>> fwdShift);
