@@ -18,12 +18,9 @@
 
 package com.graphhopper.gtfs.analysis;
 
-import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Frequency;
-import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
-import com.google.common.collect.Lists;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
@@ -36,10 +33,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -105,47 +99,8 @@ public class AnalysisTest {
                     }
                 }
                 for (GtfsRealtime.TripDescriptor tripDescriptor : actualTrips) {
-                    computeReducedTransfers(tripTransfers, e, feed, tripDescriptor);
+                    Trips.computeReducedTransfers(tripTransfers, e, feed, tripDescriptor);
                 }
-            }
-        }
-    }
-
-    private static void computeReducedTransfers(Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers, Map.Entry<String, GTFSFeed> e, GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor) {
-        Iterable<StopTime> orderedStopTimesForTrip = feed.getOrderedStopTimesForTrip(tripDescriptor.getTripId());
-        List<StopTime> stopTimesExceptFirst = StreamSupport.stream(orderedStopTimesForTrip.spliterator(), false).skip(1).collect(Collectors.toList());
-        Collections.reverse(stopTimesExceptFirst);
-
-        ObjectIntHashMap<GtfsStorage.FeedIdWithStopId> arrivalTimes = new ObjectIntHashMap<>();
-        for (StopTime stopTime : stopTimesExceptFirst) {
-            GtfsStorage.FeedIdWithStopId stopId = new GtfsStorage.FeedIdWithStopId(e.getKey(), stopTime.stop_id);
-            int arrivalTime = stopTime.arrival_time + (tripDescriptor.hasStartTime() ? LocalTime.parse(tripDescriptor.getStartTime()).toSecondOfDay() : 0);
-            arrivalTimes.put(stopId, Math.min(arrivalTime, arrivalTimes.getOrDefault(stopId, Integer.MAX_VALUE)));
-            Trips.TripAtStopTime origin = new Trips.TripAtStopTime(e.getKey(), tripDescriptor, stopTime.stop_sequence);
-            System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopTime.stop_id);
-            Collection<Trips.TripAtStopTime> destinations = tripTransfers.get(origin);
-            System.out.printf("  %d transfers\n", destinations.size());
-            Collection<Trips.TripAtStopTime> filteredDestinations = new ArrayList<>();
-            for (Trips.TripAtStopTime destination : destinations) {
-                boolean keep = false;
-                for (StopTime destinationStopTime : feed.getOrderedStopTimesForTrip(destination.tripDescriptor.getTripId())) {
-                    if (destinationStopTime.stop_sequence > destination.stop_sequence) {
-                        int destinationArrivalTime = destinationStopTime.arrival_time + (destination.tripDescriptor.hasStartTime() ? LocalTime.parse(destination.tripDescriptor.getStartTime()).toSecondOfDay() : 0);
-                        if (destinationArrivalTime < arrivalTime) {
-                            destinationArrivalTime += 24 * 60 * 60;
-                        }
-                        GtfsStorage.FeedIdWithStopId destinationStopId = new GtfsStorage.FeedIdWithStopId(destination.feedId, destinationStopTime.stop_id);
-                        keep = keep || destinationArrivalTime < arrivalTimes.getOrDefault(destinationStopId, Integer.MAX_VALUE);
-                        arrivalTimes.put(destinationStopId, Math.min(arrivalTimes.get(destinationStopId), arrivalTime));
-                    }
-                }
-                if (keep) {
-                    filteredDestinations.add(destination);
-                }
-            }
-            System.out.printf("  %d filtered transfers\n", filteredDestinations.size());
-            for (Trips.TripAtStopTime destination : filteredDestinations) {
-                System.out.printf("    %s %s %d %s\n", destination.tripDescriptor.getTripId(), destination.tripDescriptor.hasStartTime() ? destination.tripDescriptor.getStartTime() : "", destination.stop_sequence, stopTime.stop_id);
             }
         }
     }
@@ -157,7 +112,7 @@ public class AnalysisTest {
             for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(i)) {
                 if (ptEdge.getType() == GtfsStorage.EdgeType.ALIGHT) {
                     String feedId = findFeedIdForAlight(ptGraph, ptEdge);
-                    ArrayList<Trips.TripAtStopTime> transferTrips = listTransfers(ptGraph, ptEdge.getAdjNode());
+                    ArrayList<Trips.TripAtStopTime> transferTrips = Trips.listTransfers(ptGraph, ptEdge.getAdjNode());
                     tripTransfers.put(new Trips.TripAtStopTime(feedId, ptEdge.getAttrs().tripDescriptor, ptEdge.getAttrs().stop_sequence), transferTrips);
                 }
             }
@@ -165,42 +120,8 @@ public class AnalysisTest {
         return tripTransfers;
     }
 
-    private ArrayList<Trips.TripAtStopTime> listTransfers(PtGraph ptGraph, int node) {
-        ArrayList<Trips.TripAtStopTime> result = new ArrayList<>();
-        for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(node)) {
-            if (ptEdge.getType() == GtfsStorage.EdgeType.TRANSFER) {
-                listTrips(ptGraph, ptEdge.getAdjNode(), result);
-            }
-        }
-        return result;
-    }
-
-    private void listTrips(PtGraph ptGraph, final int startNode, ArrayList<Trips.TripAtStopTime> acc) {
-        int node = startNode;
-        do {
-            int thisNode = node;
-            node = startNode;
-            for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(thisNode)) {
-                if (ptEdge.getType() == GtfsStorage.EdgeType.BOARD) {
-                    acc.add(new Trips.TripAtStopTime(findFeedIdForBoard(ptGraph, ptEdge), ptEdge.getAttrs().tripDescriptor, ptEdge.getAttrs().stop_sequence));
-                } else if (ptEdge.getType() == GtfsStorage.EdgeType.WAIT || ptEdge.getType() == GtfsStorage.EdgeType.OVERNIGHT) {
-                    node = ptEdge.getAdjNode();
-                }
-            }
-        } while (node != startNode);
-    }
-
     private String findFeedIdForAlight(PtGraph ptGraph, PtGraph.PtEdge ptEdge) {
         for (PtGraph.PtEdge edge : ptGraph.edgesAround(ptEdge.getAdjNode())) {
-            if (edge.getAttrs().feedIdWithTimezone != null) {
-                return edge.getAttrs().feedIdWithTimezone.feedId;
-            }
-        }
-        throw new RuntimeException();
-    }
-
-    private String findFeedIdForBoard(PtGraph ptGraph, PtGraph.PtEdge ptEdge) {
-        for (PtGraph.PtEdge edge : ptGraph.backEdgesAround(ptEdge.getBaseNode())) {
             if (edge.getAttrs().feedIdWithTimezone != null) {
                 return edge.getAttrs().feedIdWithTimezone.feedId;
             }
