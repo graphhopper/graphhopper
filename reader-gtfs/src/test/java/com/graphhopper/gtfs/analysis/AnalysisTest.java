@@ -34,7 +34,6 @@ import org.mapdb.Fun;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -81,25 +80,59 @@ public class AnalysisTest {
     }
 
     @Test
-    public void testReduceTransfers() {
+    public void testComputeTransfers() {
         PtGraph ptGraph = graphHopperGtfs.getPtGraph();
         for (int i = 0; i < ptGraph.getNodeCount(); i++) {
             for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(i)) {
                 if (ptEdge.getType() == GtfsStorage.EdgeType.ALIGHT) {
-                    GtfsStorage.FeedIdWithTimezone feedId = findFeedId(ptGraph, ptEdge);
-                    if (feedId != null) {
-                        GtfsRealtime.TripDescriptor tripDescriptor = ptEdge.getAttrs().tripDescriptor;
-                        System.out.printf("%s %s %d\n", tripDescriptor.getTripId(), tripDescriptor.hasStartTime() ? tripDescriptor.getStartTime() : "", ptEdge.getAttrs().stop_sequence);
-                        StopTime stopTime = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get(feedId.feedId).stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), ptEdge.getAttrs().stop_sequence));
-                        System.out.printf("  %s\n", stopTime.stop_id);
-                    }
+                    GtfsStorage.FeedIdWithTimezone feedId = findFeedIdForAlight(ptGraph, ptEdge);
+                    GtfsRealtime.TripDescriptor tripDescriptor = ptEdge.getAttrs().tripDescriptor;
+                    StopTime stopTime = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get(feedId.feedId).stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), ptEdge.getAttrs().stop_sequence));
+                    System.out.printf("%s %s %d %s\n", tripDescriptor.getTripId(), tripDescriptor.hasStartTime() ? tripDescriptor.getStartTime() : "", ptEdge.getAttrs().stop_sequence, stopTime.stop_id);
+                    listTransfers(ptGraph, ptEdge.getAdjNode());
                 }
             }
         }
     }
 
-    private GtfsStorage.FeedIdWithTimezone findFeedId(PtGraph ptGraph, PtGraph.PtEdge ptEdge) {
+    private void listTransfers(PtGraph ptGraph, int node) {
+        for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(node)) {
+            if (ptEdge.getType() == GtfsStorage.EdgeType.TRANSFER) {
+                System.out.printf("  %s\n",ptEdge.getAttrs().platformDescriptor);
+                listTrips(ptGraph, ptEdge.getAdjNode());
+            }
+        }
+    }
+
+    private void listTrips(PtGraph ptGraph, final int startNode) {
+        int node = startNode;
+        do {
+            int thisNode = node;
+            node = startNode;
+            for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(thisNode)) {
+                if (ptEdge.getType() == GtfsStorage.EdgeType.BOARD) {
+                    GtfsStorage.FeedIdWithTimezone feedId = findFeedIdForBoard(ptGraph, ptEdge);
+                    GtfsRealtime.TripDescriptor tripDescriptor = ptEdge.getAttrs().tripDescriptor;
+                    StopTime stopTime = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get(feedId.feedId).stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), ptEdge.getAttrs().stop_sequence));
+                    System.out.printf("    %s %s %d %s\n", tripDescriptor.getTripId(), tripDescriptor.hasStartTime() ? tripDescriptor.getStartTime() : "", ptEdge.getAttrs().stop_sequence, stopTime.stop_id);
+                } else if (ptEdge.getType() == GtfsStorage.EdgeType.WAIT || ptEdge.getType() == GtfsStorage.EdgeType.OVERNIGHT) {
+                    node = ptEdge.getAdjNode();
+                }
+            }
+        } while (node != startNode);
+    }
+
+    private GtfsStorage.FeedIdWithTimezone findFeedIdForAlight(PtGraph ptGraph, PtGraph.PtEdge ptEdge) {
         for (PtGraph.PtEdge edge : ptGraph.edgesAround(ptEdge.getAdjNode())) {
+            if (edge.getAttrs().feedIdWithTimezone != null) {
+                return edge.getAttrs().feedIdWithTimezone;
+            }
+        }
+        throw new RuntimeException();
+    }
+
+    private GtfsStorage.FeedIdWithTimezone findFeedIdForBoard(PtGraph ptGraph, PtGraph.PtEdge ptEdge) {
+        for (PtGraph.PtEdge edge : ptGraph.backEdgesAround(ptEdge.getBaseNode())) {
             if (edge.getAttrs().feedIdWithTimezone != null) {
                 return edge.getAttrs().feedIdWithTimezone;
             }
