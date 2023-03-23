@@ -1,12 +1,10 @@
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.storage.IntsRef;
-
 /**
  * This interface defines access to an edge property of type boolean. The default value is false.
  */
 public interface BooleanEncodedValue extends EncodedValue {
-    void setBool(boolean reverse, IntsRef ref, boolean value);
+    void setBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, boolean value);
 
-    boolean getBool(boolean reverse, IntsRef ref);
+    boolean getBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess);
 }

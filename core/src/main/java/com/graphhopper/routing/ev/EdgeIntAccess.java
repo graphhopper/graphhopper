@@ -15,17 +15,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.parsers;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.storage.IntsRef;
+package com.graphhopper.routing.ev;
 
-/**
- * This interface defines how parts of the information from 'way' is converted into IntsRef. A TagParser usually
- * has one corresponding EncodedValue but more are possible too.
- */
-public interface TagParser {
+public interface EdgeIntAccess {
+    /**
+     * Gets the int value at the given index for the given edgeId
+     */
+    int getInt(int edgeId, int index);
 
-    void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags);
+    /**
+     * Sets the int value at the given index for the given edgeId
+     */
+    void setInt(int edgeId, int index, int value);
 }

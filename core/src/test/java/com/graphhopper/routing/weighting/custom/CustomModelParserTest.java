@@ -284,4 +284,20 @@ class CustomModelParserTest {
                         Arrays.asList(If("edge.fetchWayGeometry().size() > 2", MULTIPLY, "0"))));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"edge.fetchWayGeometry().size() > 2\": size is an illegal method"), ret.getMessage());
     }
+
+    @Test
+    void testBackwardFunction() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("backward_car_access != car_access", MULTIPLY, "0.5"));
+        CustomWeighting.EdgeToDoubleMapping priorityMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
+                avgSpeedEnc, maxSpeed, null).getEdgeToPriorityMapping();
+
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
+        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(accessEnc, true, false);
+        EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).set(accessEnc, true, true);
+
+        assertEquals(0.5, priorityMapping.get(edge1, false), 1.e-6);
+        assertEquals(1.0, priorityMapping.get(edge2, false), 1.e-6);
+    }
+
 }

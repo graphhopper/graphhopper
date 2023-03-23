@@ -33,6 +33,7 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.Landuse;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.EncodingManager;
@@ -78,9 +79,9 @@ public class OSMReader {
 
     private final OSMReaderConfig config;
     private final BaseGraph baseGraph;
+    private final EdgeIntAccess edgeIntAccess;
     private final NodeAccess nodeAccess;
     private final TurnCostStorage turnCostStorage;
-    private final EncodingManager encodingManager;
     private final OSMParsers osmParsers;
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final RestrictionSetter restrictionSetter;
@@ -100,10 +101,12 @@ public class OSMReader {
 
     private OSMAreaData osmAreaData;
     private AreaIndex<CustomArea> osmAreaIndex;
+    private final EncodingManager encodingManager;
 
     public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
         this.encodingManager = encodingManager;
+        this.edgeIntAccess = baseGraph.createIntAccess();
         this.config = config;
         this.nodeAccess = baseGraph.getNodeAccess();
         this.osmParsers = osmParsers;
@@ -386,9 +389,8 @@ public class OSMReader {
 
         setArtificialWayTags(pointList, way, distance, nodeTags);
         IntsRef relationFlags = getRelFlagsMap(way.getId());
-        IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        osmParsers.handleWayTags(edgeFlags, way, relationFlags);
-        EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags);
+        EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance);
+        osmParsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, relationFlags);
         List<KVStorage.KeyValue> list = way.getTag("key_values", Collections.emptyList());
         if (!list.isEmpty())
             edge.setKeyValues(list);

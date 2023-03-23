@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Landuse;
 import com.graphhopper.routing.util.CustomArea;
@@ -37,7 +38,7 @@ public class OSMLanduseParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         List<CustomArea> osmAreas = readerWay.getTag("gh:osm_areas", null);
         if (!osmAreas.isEmpty()) {
             osmAreas.sort(Comparator.comparing(CustomArea::getArea));
@@ -46,7 +47,7 @@ public class OSMLanduseParser implements TagParser {
             String landuseStr = (String) osmArea.getProperties().get("landuse");
             Landuse landuse = Landuse.find(landuseStr);
             if (landuse != OTHER)
-                landuseEnc.setEnum(false, edgeFlags, landuse);
+                landuseEnc.setEnum(false, edgeId, edgeIntAccess, landuse);
         }
     }
 }

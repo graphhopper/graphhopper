@@ -1,9 +1,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.GetOffBike;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
@@ -99,9 +97,10 @@ public class OSMGetOffBikeParserTest {
     }
 
     private boolean isGetOffBike(ReaderWay way) {
-        IntsRef edgeFlags = new IntsRef(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
         IntsRef relationFlags = new IntsRef(1);
-        parser.handleWayTags(edgeFlags, way, relationFlags);
-        return offBikeEnc.getBool(false, edgeFlags);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relationFlags);
+        return offBikeEnc.getBool(false, edgeId, edgeIntAccess);
     }
 }

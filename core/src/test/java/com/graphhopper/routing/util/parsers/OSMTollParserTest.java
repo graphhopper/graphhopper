@@ -1,9 +1,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.Toll;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,42 +23,43 @@ public class OSMTollParserTest {
     public void testSimpleTags() {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef relFlags = new IntsRef(2);
-        IntsRef intsRef = new IntsRef(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Toll.MISSING, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Toll.MISSING, tollEnc.getEnum(false, edgeId, edgeIntAccess));
 
-        intsRef = new IntsRef(1);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:hgv", "yes");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Toll.HGV, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Toll.HGV, tollEnc.getEnum(false, edgeId, edgeIntAccess));
 
-        intsRef = new IntsRef(1);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:N2", "yes");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Toll.HGV, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Toll.HGV, tollEnc.getEnum(false, edgeId, edgeIntAccess));
 
-        intsRef = new IntsRef(1);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:N3", "yes");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Toll.HGV, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Toll.HGV, tollEnc.getEnum(false, edgeId, edgeIntAccess));
 
-        intsRef = new IntsRef(1);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll", "yes");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Toll.ALL, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Toll.ALL, tollEnc.getEnum(false, edgeId, edgeIntAccess));
 
-        intsRef = new IntsRef(1);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll", "yes");
         readerWay.setTag("toll:hgv", "yes");
         readerWay.setTag("toll:N2", "yes");
         readerWay.setTag("toll:N3", "yes");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(Toll.ALL, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Toll.ALL, tollEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 }
