@@ -18,7 +18,6 @@
 package com.graphhopper.tools;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.*;
 import com.graphhopper.coll.GHBitSet;
