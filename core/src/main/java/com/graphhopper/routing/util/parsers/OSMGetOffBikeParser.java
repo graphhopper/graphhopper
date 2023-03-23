@@ -2,6 +2,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
@@ -27,11 +28,11 @@ public class OSMGetOffBikeParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         String highway = way.getTag("highway");
         if (!way.hasTag("bicycle", accepted) && (pushBikeHighwayTags.contains(highway) || way.hasTag("railway", "platform"))
                 || "steps".equals(highway) || way.hasTag("bicycle", "dismount")) {
-            offBikeEnc.setBool(false, edgeFlags, true);
+            offBikeEnc.setBool(false, edgeId, edgeIntAccess, true);
         }
     }
 }

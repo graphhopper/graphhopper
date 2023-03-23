@@ -243,13 +243,21 @@ class BaseGraphNodesAndEdges {
     public void readFlags(long edgePointer, IntsRef edgeFlags) {
         int size = edgeFlags.ints.length;
         for (int i = 0; i < size; ++i)
-            edgeFlags.ints[i] = edges.getInt(edgePointer + E_FLAGS + i * 4);
+            edgeFlags.ints[i] = getFlagInt(edgePointer, i);
     }
 
     public void writeFlags(long edgePointer, IntsRef edgeFlags) {
         int size = edgeFlags.ints.length;
         for (int i = 0; i < size; ++i)
-            edges.setInt(edgePointer + E_FLAGS + i * 4, edgeFlags.ints[i]);
+            setFlagInt(edgePointer, i, edgeFlags.ints[i]);
+    }
+
+    public int getFlagInt(long edgePointer, int index) {
+        return edges.getInt(edgePointer + E_FLAGS + index * 4);
+    }
+
+    public void setFlagInt(long edgePointer, int index, int value) {
+        edges.setInt(edgePointer + E_FLAGS + index * 4, value);
     }
 
     public void setNodeA(long edgePointer, int nodeA) {

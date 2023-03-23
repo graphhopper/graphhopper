@@ -3,6 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.VehiclePriority;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
@@ -33,8 +34,8 @@ public class MotorcyclePriorityParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
-        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way)));
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+        priorityWayEncoder.setDecimal(false, edgeId, edgeIntAccess, PriorityCode.getValue(handlePriority(way)));
     }
 
     private int handlePriority(ReaderWay way) {

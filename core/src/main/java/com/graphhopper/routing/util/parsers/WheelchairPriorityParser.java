@@ -33,9 +33,9 @@ public class WheelchairPriorityParser extends FootPriorityParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
-        Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeFlags));
-        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+        Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeId, edgeIntAccess));
+        priorityWayEncoder.setDecimal(false, edgeId, edgeIntAccess, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
     }
 
     /**
