@@ -19,7 +19,13 @@
 package com.graphhopper.routing.ev;
 
 public interface EdgeIntAccess {
+    /**
+     * Gets the int value at the given index for the given edgeId
+     */
     int getInt(int edgeId, int index);
 
+    /**
+     * Sets the int value at the given index for the given edgeId
+     */
     void setInt(int edgeId, int index, int value);
 }
