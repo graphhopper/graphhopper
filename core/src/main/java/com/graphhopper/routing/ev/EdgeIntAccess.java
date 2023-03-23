@@ -15,12 +15,17 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package com.graphhopper.routing.ev;
 
-public class RoadClassLink {
-    public static final String KEY = "road_class_link";
+public interface EdgeIntAccess {
+    /**
+     * Gets the int value at the given index for the given edgeId
+     */
+    int getInt(int edgeId, int index);
 
-    public static BooleanEncodedValue create() {
-        return new SimpleBooleanEncodedValue(KEY);
-    }
+    /**
+     * Sets the int value at the given index for the given edgeId
+     */
+    void setInt(int edgeId, int index, int value);
 }

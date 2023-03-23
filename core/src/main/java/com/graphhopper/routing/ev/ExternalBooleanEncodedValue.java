@@ -21,7 +21,6 @@ package com.graphhopper.routing.ev;
 import com.carrotsearch.hppc.BitSet;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.storage.IntsRef;
 
 public class ExternalBooleanEncodedValue implements BooleanEncodedValue {
     private final String name;
@@ -39,14 +38,14 @@ public class ExternalBooleanEncodedValue implements BooleanEncodedValue {
     }
 
     @Override
-    public void setBool(int edgeId, boolean reverse, IntsRef ref, boolean value) {
+    public void setBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, boolean value) {
         // it'll grow as we go
         if (value) bits.set(getIndex(edgeId, reverse));
         else bits.clear(getIndex(edgeId, reverse));
     }
 
     @Override
-    public boolean getBool(int edgeId, boolean reverse, IntsRef ref) {
+    public boolean getBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
         return bits.get(getIndex(edgeId, reverse));
     }
 

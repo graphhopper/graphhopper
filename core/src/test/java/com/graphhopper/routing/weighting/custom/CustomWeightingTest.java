@@ -37,9 +37,9 @@ class CustomWeightingTest {
         accessEnc = VehicleAccess.create("car");
         avSpeedEnc = VehicleSpeed.create("car", 5, 5, true);
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avSpeedEnc)
-                .add(new EnumEncodedValue<>(Toll.KEY, Toll.class))
-                .add(new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class))
-                .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
+                .add(Toll.create())
+                .add(Hazmat.create())
+                .add(RouteNetwork.create(BikeNetwork.KEY))
                 .build();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);

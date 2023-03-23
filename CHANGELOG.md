@@ -1,5 +1,9 @@
-### 7.0 [not yet released]
+### 8.0 [not yet released]
+- renamed EdgeKVStorage to KVStorage as it is (temporarily) used for node tage too, see #2705
 
+### 7.0 [14 Mar 2023]
+
+- access node tags via List instead of Map: List<Map<String, Object>> nodeTags = way.getTag("node_tags", emptyList()), see #2705
 - remove StringEncodedValue support from custom model due to insufficient usage/testing
 - handle also node_tags in handleWayTags, when extending AbstractAccessParser call handleNodeTags, #2738
 - Format of 'areas' in CustomModel changed to 'FeatureCollection'. The old format is deprecated and will be removed in a later version, #2734
