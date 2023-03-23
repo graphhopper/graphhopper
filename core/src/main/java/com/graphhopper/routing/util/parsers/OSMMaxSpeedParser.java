@@ -19,7 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.IntAccess;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
@@ -40,7 +40,7 @@ public class OSMMaxSpeedParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
 
         CountryRule countryRule = way.getTag("country_rule", null);
@@ -62,11 +62,11 @@ public class OSMMaxSpeedParser implements TagParser {
 
         if (!isValidSpeed(fwdSpeed))
             fwdSpeed = UNSET_SPEED;
-        carMaxSpeedEnc.setDecimal(false, edgeId, intAccess, fwdSpeed);
+        carMaxSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, fwdSpeed);
 
         if (!isValidSpeed(bwdSpeed))
             bwdSpeed = UNSET_SPEED;
-        carMaxSpeedEnc.setDecimal(true, edgeId, intAccess, bwdSpeed);
+        carMaxSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, bwdSpeed);
     }
 
     /**

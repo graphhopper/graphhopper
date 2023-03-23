@@ -73,7 +73,7 @@ public abstract class AbstractBikeTagParserTester {
 
     protected void assertPriority(int expectedPrio, ReaderWay way) {
         IntsRef relFlags = osmParsers.handleRelationTags(new ReaderRelation(0), osmParsers.createRelationFlags());
-        ArrayIntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, intAccess, way, relFlags);
         assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeId, intAccess), 0.01);
@@ -85,7 +85,7 @@ public abstract class AbstractBikeTagParserTester {
 
     protected void assertPriorityAndSpeed(int expectedPrio, double expectedSpeed, ReaderWay way, ReaderRelation rel) {
         IntsRef relFlags = osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags());
-        ArrayIntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, intAccess, way, relFlags);
         assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeId, intAccess), 0.01);
@@ -95,7 +95,7 @@ public abstract class AbstractBikeTagParserTester {
 
     protected double getSpeedFromFlags(ReaderWay way) {
         IntsRef relFlags = osmParsers.createRelationFlags();
-        ArrayIntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, intAccess, way, relFlags);
         return avgSpeedEnc.getDecimal(false, edgeId, intAccess);
@@ -262,7 +262,7 @@ public abstract class AbstractBikeTagParserTester {
         // two relation tags => we currently cannot store a list, so pick the lower ordinal 'regional'
         // Example https://www.openstreetmap.org/way/213492914 => two hike 84544, 2768803 and two bike relations 3162932, 5254650
         IntsRef relFlags = osmParsers.handleRelationTags(rel2, osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags()));
-        ArrayIntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
         int edgeId = 0;
         osmParsers.handleWayTags(edgeId, intAccess, way, relFlags);
         EnumEncodedValue<RouteNetwork> enc = encodingManager.getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
@@ -292,7 +292,7 @@ public abstract class AbstractBikeTagParserTester {
 
         way = new ReaderWay(1);
         way.setTag("railway", "platform");
-        ArrayIntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
         int edgeId = 0;
         accessParser.handleWayTags(edgeId, intAccess, way, null);
         speedParser.handleWayTags(edgeId, intAccess, way, null);
@@ -313,7 +313,7 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("railway", "platform");
         way.setTag("bicycle", "no");
 
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        intAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
         accessParser.handleWayTags(edgeId, intAccess, way);
         assertEquals(0.0, avgSpeedEnc.getDecimal(false, edgeId, intAccess));
         assertFalse(accessEnc.getBool(false, edgeId, intAccess));
@@ -390,7 +390,7 @@ public abstract class AbstractBikeTagParserTester {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");
 
-        ArrayIntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
         int edgeId = 0;
         priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
         assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);

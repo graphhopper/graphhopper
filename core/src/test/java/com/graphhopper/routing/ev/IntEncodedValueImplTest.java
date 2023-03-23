@@ -24,42 +24,42 @@ public class IntEncodedValueImplTest {
     public void testDirectedValue() {
         IntEncodedValue prop = new IntEncodedValueImpl("test", 10, true);
         prop.init(new EncodedValue.InitializerConfig());
-        IntAccess intAccess = createIntAccess(1);
-        prop.setInt(false, 0, intAccess, 10);
-        prop.setInt(true, 0, intAccess, 20);
-        assertEquals(10, prop.getInt(false, 0, intAccess));
-        assertEquals(20, prop.getInt(true, 0, intAccess));
+        EdgeIntAccess edgeIntAccess = createIntAccess(1);
+        prop.setInt(false, 0, edgeIntAccess, 10);
+        prop.setInt(true, 0, edgeIntAccess, 20);
+        assertEquals(10, prop.getInt(false, 0, edgeIntAccess));
+        assertEquals(20, prop.getInt(true, 0, edgeIntAccess));
     }
 
     @Test
     public void multiIntsUsage() {
         IntEncodedValue prop = new IntEncodedValueImpl("test", 31, true);
         prop.init(new EncodedValue.InitializerConfig());
-        IntAccess intAccess = createIntAccess(2);
-        prop.setInt(false, 0, intAccess, 10);
-        prop.setInt(true, 0, intAccess, 20);
-        assertEquals(10, prop.getInt(false, 0, intAccess));
-        assertEquals(20, prop.getInt(true, 0, intAccess));
+        EdgeIntAccess edgeIntAccess = createIntAccess(2);
+        prop.setInt(false, 0, edgeIntAccess, 10);
+        prop.setInt(true, 0, edgeIntAccess, 20);
+        assertEquals(10, prop.getInt(false, 0, edgeIntAccess));
+        assertEquals(20, prop.getInt(true, 0, edgeIntAccess));
     }
 
     @Test
     public void padding() {
         IntEncodedValue prop = new IntEncodedValueImpl("test", 30, true);
         prop.init(new EncodedValue.InitializerConfig());
-        IntAccess intAccess = createIntAccess(2);
-        prop.setInt(false, 0, intAccess, 10);
-        prop.setInt(true, 0, intAccess, 20);
-        assertEquals(10, prop.getInt(false, 0, intAccess));
-        assertEquals(20, prop.getInt(true, 0, intAccess));
+        EdgeIntAccess edgeIntAccess = createIntAccess(2);
+        prop.setInt(false, 0, edgeIntAccess, 10);
+        prop.setInt(true, 0, edgeIntAccess, 20);
+        assertEquals(10, prop.getInt(false, 0, edgeIntAccess));
+        assertEquals(20, prop.getInt(true, 0, edgeIntAccess));
     }
 
     @Test
     public void maxValue() {
         IntEncodedValue prop = new IntEncodedValueImpl("test", 31, false);
         prop.init(new EncodedValue.InitializerConfig());
-        IntAccess intAccess = createIntAccess(2);
-        prop.setInt(false, 0, intAccess, (1 << 31) - 1);
-        assertEquals(2_147_483_647L, prop.getInt(false, 0, intAccess));
+        EdgeIntAccess edgeIntAccess = createIntAccess(2);
+        prop.setInt(false, 0, edgeIntAccess, (1 << 31) - 1);
+        assertEquals(2_147_483_647L, prop.getInt(false, 0, edgeIntAccess));
     }
 
     @Test
@@ -68,15 +68,15 @@ public class IntEncodedValueImplTest {
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         prop.init(config);
 
-        IntAccess intAccess = createIntAccess(1);
+        EdgeIntAccess edgeIntAccess = createIntAccess(1);
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            prop.setInt(false, 0, intAccess, Integer.MAX_VALUE);
+            prop.setInt(false, 0, edgeIntAccess, Integer.MAX_VALUE);
         });
         assertTrue(exception.getMessage().contains("test value too large for encoding"), exception.getMessage());
 
-        prop.setInt(false, 0, intAccess, -5);
-        assertEquals(-5, prop.getInt(false, 0, intAccess));
-        assertEquals(-5, prop.getInt(false, 0, intAccess));
+        prop.setInt(false, 0, edgeIntAccess, -5);
+        assertEquals(-5, prop.getInt(false, 0, edgeIntAccess));
+        assertEquals(-5, prop.getInt(false, 0, edgeIntAccess));
     }
 
     @Test
@@ -85,12 +85,12 @@ public class IntEncodedValueImplTest {
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         prop.init(config);
 
-        IntAccess intAccess = createIntAccess(1);
-        prop.setInt(false, 0, intAccess, Integer.MAX_VALUE);
-        assertEquals(Integer.MAX_VALUE, prop.getInt(false, 0, intAccess));
+        EdgeIntAccess edgeIntAccess = createIntAccess(1);
+        prop.setInt(false, 0, edgeIntAccess, Integer.MAX_VALUE);
+        assertEquals(Integer.MAX_VALUE, prop.getInt(false, 0, edgeIntAccess));
 
         Exception exception = assertThrows(IllegalArgumentException.class, () -> {
-            prop.setInt(false, 0, intAccess, -5);
+            prop.setInt(false, 0, edgeIntAccess, -5);
         });
         assertTrue(exception.getMessage().contains("test value too small for encoding"), exception.getMessage());
     }
@@ -101,18 +101,18 @@ public class IntEncodedValueImplTest {
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         prop.init(config);
 
-        IntAccess intAccess = createIntAccess(1);
-        prop.setInt(false, 0, intAccess, 5);
-        assertEquals(5, prop.getInt(false, 0, intAccess));
-        assertEquals(-5, prop.getInt(true, 0, intAccess));
+        EdgeIntAccess edgeIntAccess = createIntAccess(1);
+        prop.setInt(false, 0, edgeIntAccess, 5);
+        assertEquals(5, prop.getInt(false, 0, edgeIntAccess));
+        assertEquals(-5, prop.getInt(true, 0, edgeIntAccess));
 
-        prop.setInt(true, 0, intAccess, 2);
-        assertEquals(-2, prop.getInt(false, 0, intAccess));
-        assertEquals(2, prop.getInt(true, 0, intAccess));
+        prop.setInt(true, 0, edgeIntAccess, 2);
+        assertEquals(-2, prop.getInt(false, 0, edgeIntAccess));
+        assertEquals(2, prop.getInt(true, 0, edgeIntAccess));
 
-        prop.setInt(false, 0, intAccess, -3);
-        assertEquals(-3, prop.getInt(false, 0, intAccess));
-        assertEquals(3, prop.getInt(true, 0, intAccess));
+        prop.setInt(false, 0, edgeIntAccess, -3);
+        assertEquals(-3, prop.getInt(false, 0, edgeIntAccess));
+        assertEquals(3, prop.getInt(true, 0, edgeIntAccess));
     }
 
     @Test
@@ -132,7 +132,7 @@ public class IntEncodedValueImplTest {
         }
     }
 
-    private static ArrayIntAccess createIntAccess(int ints) {
-        return new ArrayIntAccess(ints);
+    private static ArrayEdgeIntAccess createIntAccess(int ints) {
+        return new ArrayEdgeIntAccess(ints);
     }
 }

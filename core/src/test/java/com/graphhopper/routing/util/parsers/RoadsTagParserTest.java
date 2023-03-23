@@ -1,8 +1,8 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.ArrayIntAccess;
-import com.graphhopper.routing.ev.IntAccess;
+import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.VehicleEncodedValues;
@@ -23,10 +23,10 @@ class RoadsTagParserTest {
     @Test
     public void testSpeed() {
         ReaderWay way = new ReaderWay(1);
-        IntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
         int edgeId = 0;
-        parser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(encodingManager.getDecimalEncodedValue(VehicleSpeed.key("roads")).getDecimal(false, edgeId, intAccess) > 200);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(encodingManager.getDecimalEncodedValue(VehicleSpeed.key("roads")).getDecimal(false, edgeId, edgeIntAccess) > 200);
     }
 
 }

@@ -161,7 +161,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
     }
 
     @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
             return;
@@ -170,15 +170,15 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
                 || way.hasTag("oneway", oneways) && way.hasTag("highway", "steps") // outdated mapping style
         ) {
             boolean reverse = way.hasTag("oneway:foot", "-1") || way.hasTag("foot:backward", "yes") || way.hasTag("foot:forward", "no");
-            accessEnc.setBool(reverse, edgeId, intAccess, true);
+            accessEnc.setBool(reverse, edgeId, edgeIntAccess, true);
         } else {
-            accessEnc.setBool(false, edgeId, intAccess, true);
-            accessEnc.setBool(true, edgeId, intAccess, true);
+            accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+            accessEnc.setBool(true, edgeId, edgeIntAccess, true);
         }
 
         if (way.hasTag("gh:barrier_edge")) {
             List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
-            handleBarrierEdge(edgeId, intAccess, nodeTags.get(0));
+            handleBarrierEdge(edgeId, edgeIntAccess, nodeTags.get(0));
         }
     }
 }

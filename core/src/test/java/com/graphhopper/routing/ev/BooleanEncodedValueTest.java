@@ -15,12 +15,12 @@ public class BooleanEncodedValueTest {
 
         BooleanEncodedValue bool = new SimpleBooleanEncodedValue("access", false);
         bool.init(config);
-        IntAccess intAccess = new ArrayIntAccess(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
-        bool.setBool(false, edgeId, intAccess, false);
-        assertFalse(bool.getBool(false, edgeId, intAccess));
-        bool.setBool(false, edgeId, intAccess, true);
-        assertTrue(bool.getBool(false, edgeId, intAccess));
+        bool.setBool(false, edgeId, edgeIntAccess, false);
+        assertFalse(bool.getBool(false, edgeId, edgeIntAccess));
+        bool.setBool(false, edgeId, edgeIntAccess, true);
+        assertTrue(bool.getBool(false, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -28,12 +28,12 @@ public class BooleanEncodedValueTest {
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         BooleanEncodedValue bool = new SimpleBooleanEncodedValue("access", true);
         bool.init(config);
-        IntAccess intAccess = new ArrayIntAccess(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
-        bool.setBool(false, edgeId, intAccess, false);
-        bool.setBool(true, edgeId, intAccess, true);
+        bool.setBool(false, edgeId, edgeIntAccess, false);
+        bool.setBool(true, edgeId, edgeIntAccess, true);
 
-        assertFalse(bool.getBool(false, edgeId, intAccess));
-        assertTrue(bool.getBool(true, edgeId, intAccess));
+        assertFalse(bool.getBool(false, edgeId, edgeIntAccess));
+        assertTrue(bool.getBool(true, edgeId, edgeIntAccess));
     }
 }

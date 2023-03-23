@@ -21,7 +21,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Footway;
-import com.graphhopper.routing.ev.IntAccess;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.IntsRef;
 
 /**
@@ -35,8 +35,8 @@ public class OSMFootwayParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         String footway = way.getTag("footway");
-        footwayEnc.setEnum(false, edgeId, intAccess, Footway.find(footway));
+        footwayEnc.setEnum(false, edgeId, edgeIntAccess, Footway.find(footway));
     }
 }

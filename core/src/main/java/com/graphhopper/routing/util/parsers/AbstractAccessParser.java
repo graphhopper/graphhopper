@@ -6,7 +6,7 @@ import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.ConditionalTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.IntAccess;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
@@ -76,23 +76,23 @@ public abstract class AbstractAccessParser implements TagParser {
         return conditionalTagInspector;
     }
 
-    protected void handleBarrierEdge(int edgeId, IntAccess intAccess, Map<String, Object> nodeTags) {
+    protected void handleBarrierEdge(int edgeId, EdgeIntAccess edgeIntAccess, Map<String, Object> nodeTags) {
         // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
         ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
         // block access for barriers
         if (isBarrier(readerNode)) {
             BooleanEncodedValue accessEnc = getAccessEnc();
-            accessEnc.setBool(false, edgeId, intAccess, false);
-            accessEnc.setBool(true, edgeId, intAccess, false);
+            accessEnc.setBool(false, edgeId, edgeIntAccess, false);
+            accessEnc.setBool(true, edgeId, edgeIntAccess, false);
         }
     }
 
     @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
-        handleWayTags(edgeId, intAccess, way);
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+        handleWayTags(edgeId, edgeIntAccess, way);
     }
 
-    public abstract void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way);
+    public abstract void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way);
 
     /**
      * @return true if the given OSM node blocks access for this vehicle, false otherwise

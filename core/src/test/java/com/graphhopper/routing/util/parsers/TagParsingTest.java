@@ -58,7 +58,7 @@ class TagParsingTest {
         BikePriorityParser bike1Parser = new BikePriorityParser(em, new PMap("name=bike1"));
         BikePriorityParser bike2Parser = new BikePriorityParser(em, new PMap("name=bike2")) {
             @Override
-            public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relTags) {
+            public void handleWayTags(int edgeId, EdgeIntAccess intAccess, ReaderWay way, IntsRef relTags) {
                 // accept less relations
                 if (bikeRouteEnc.getEnum(false, edgeId, intAccess) != RouteNetwork.MISSING)
                     priorityEnc.setDecimal(false, edgeId, intAccess, PriorityCode.getFactor(2));
@@ -75,11 +75,11 @@ class TagParsingTest {
         osmRel.setTag("network", "lcn");
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        IntAccess intAccess = new ArrayIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
         int edgeId = 0;
-        osmParsers.handleWayTags(edgeId, intAccess, osmWay, relFlags);
-        assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeId, intAccess));
-        assertTrue(bike1PriorityEnc.getDecimal(false, edgeId, intAccess) > bike2PriorityEnc.getDecimal(false, edgeId, intAccess));
+        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
+        assertEquals(RouteNetwork.LOCAL, bikeNetworkEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertTrue(bike1PriorityEnc.getDecimal(false, edgeId, edgeIntAccess) > bike2PriorityEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -116,12 +116,12 @@ class TagParsingTest {
         osmRel.setTag("network", "rcn");
         IntsRef relFlags = osmParsers.createRelationFlags();
         relFlags = osmParsers.handleRelationTags(osmRel, relFlags);
-        IntAccess intAccess = new ArrayIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
         int edgeId = 0;
-        osmParsers.handleWayTags(edgeId, intAccess, osmWay, relFlags);
+        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
         // bike: uninfluenced speed for grade but via network => NICE
         // mtb: uninfluenced speed only PREFER
-        assertTrue(bikePriorityEnc.getDecimal(false, edgeId, intAccess) > mtbPriorityEnc.getDecimal(false, edgeId, intAccess));
+        assertTrue(bikePriorityEnc.getDecimal(false, edgeId, edgeIntAccess) > mtbPriorityEnc.getDecimal(false, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -156,7 +156,7 @@ class TagParsingTest {
             if (tagParser instanceof AbstractAccessParser)
                 ((AbstractAccessParser) tagParser).init(new DateRangeParser());
 
-        final ArrayIntAccess intAccess = new ArrayIntAccess(manager.getIntsForFlags());
+        final ArrayEdgeIntAccess intAccess = new ArrayEdgeIntAccess(manager.getIntsForFlags());
         int edgeId = 0;
         IntsRef relFlags = manager.createRelationFlags();
         ReaderWay way = new ReaderWay(1);

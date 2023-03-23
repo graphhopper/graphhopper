@@ -142,32 +142,32 @@ public class MotorcycleTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         assertTrue(parser.getAccess(way).isWay());
-        IntAccess intAccess = new ArrayIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
         int edgeId = 0;
-        speedParser.handleWayTags(edgeId, intAccess, way, null);
-        assertEquals(20, speedParser.avgSpeedEnc.getDecimal(false, edgeId, intAccess), .1);
-        assertEquals(20, speedParser.avgSpeedEnc.getDecimal(true, edgeId, intAccess), .1);
+        speedParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertEquals(20, speedParser.avgSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        assertEquals(20, speedParser.avgSpeedEnc.getDecimal(true, edgeId, edgeIntAccess), .1);
     }
 
     @Test
     public void testSetSpeed0_issue367() {
-        IntAccess intAccess = new ArrayIntAccess(em.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
         int edgeId = 0;
-        motorcycleAccessEnc.setBool(false, edgeId, intAccess, true);
-        motorcycleAccessEnc.setBool(true, edgeId, intAccess, true);
-        speedParser.getAverageSpeedEnc().setDecimal(false, edgeId, intAccess, 10);
-        speedParser.getAverageSpeedEnc().setDecimal(true, edgeId, intAccess, 10);
+        motorcycleAccessEnc.setBool(false, edgeId, edgeIntAccess, true);
+        motorcycleAccessEnc.setBool(true, edgeId, edgeIntAccess, true);
+        speedParser.getAverageSpeedEnc().setDecimal(false, edgeId, edgeIntAccess, 10);
+        speedParser.getAverageSpeedEnc().setDecimal(true, edgeId, edgeIntAccess, 10);
 
-        assertEquals(10, speedParser.getAverageSpeedEnc().getDecimal(false, edgeId, intAccess), .1);
-        assertEquals(10, speedParser.getAverageSpeedEnc().getDecimal(true, edgeId, intAccess), .1);
+        assertEquals(10, speedParser.getAverageSpeedEnc().getDecimal(false, edgeId, edgeIntAccess), .1);
+        assertEquals(10, speedParser.getAverageSpeedEnc().getDecimal(true, edgeId, edgeIntAccess), .1);
 
-        speedParser.setSpeed(false, edgeId, intAccess, 0);
-        assertEquals(0, speedParser.avgSpeedEnc.getDecimal(false, edgeId, intAccess), .1);
-        assertEquals(10, speedParser.avgSpeedEnc.getDecimal(true, edgeId, intAccess), .1);
+        speedParser.setSpeed(false, edgeId, edgeIntAccess, 0);
+        assertEquals(0, speedParser.avgSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        assertEquals(10, speedParser.avgSpeedEnc.getDecimal(true, edgeId, edgeIntAccess), .1);
 
         // speed and access are independent
-        assertTrue(motorcycleAccessEnc.getBool(false, edgeId, intAccess));
-        assertTrue(motorcycleAccessEnc.getBool(true, edgeId, intAccess));
+        assertTrue(motorcycleAccessEnc.getBool(false, edgeId, edgeIntAccess));
+        assertTrue(motorcycleAccessEnc.getBool(true, edgeId, edgeIntAccess));
     }
 
     @ParameterizedTest

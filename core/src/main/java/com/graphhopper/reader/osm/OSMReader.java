@@ -32,7 +32,7 @@ import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
-import com.graphhopper.routing.ev.IntAccess;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.OSMParsers;
@@ -77,7 +77,7 @@ public class OSMReader {
 
     private final OSMReaderConfig config;
     private final BaseGraph baseGraph;
-    private final IntAccess intAccess;
+    private final EdgeIntAccess edgeIntAccess;
     private final NodeAccess nodeAccess;
     private final TurnCostStorage turnCostStorage;
     private final OSMParsers osmParsers;
@@ -99,7 +99,7 @@ public class OSMReader {
 
     public OSMReader(BaseGraph baseGraph, OSMParsers osmParsers, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
-        this.intAccess = baseGraph.createIntAccess();
+        this.edgeIntAccess = baseGraph.createIntAccess();
         this.config = config;
         this.nodeAccess = baseGraph.getNodeAccess();
         this.osmParsers = osmParsers;
@@ -350,7 +350,7 @@ public class OSMReader {
         setArtificialWayTags(pointList, way, distance, nodeTags);
         IntsRef relationFlags = getRelFlagsMap(way.getId());
         EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance);
-        osmParsers.handleWayTags(edge.getEdge(), intAccess, way, relationFlags);
+        osmParsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, relationFlags);
         List<KVStorage.KeyValue> list = way.getTag("key_values", Collections.emptyList());
         if (!list.isEmpty())
             edge.setKeyValues(list);

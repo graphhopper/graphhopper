@@ -15,9 +15,9 @@ public interface DecimalEncodedValue extends EncodedValue {
      *
      * @see #getMaxStorableDecimal()
      */
-    void setDecimal(boolean reverse, int edgeId, IntAccess intAccess, double value);
+    void setDecimal(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double value);
 
-    double getDecimal(boolean reverse, int edgeId, IntAccess intAccess);
+    double getDecimal(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess);
 
     /**
      * The maximum double value this EncodedValue accepts for setDecimal without throwing an exception.

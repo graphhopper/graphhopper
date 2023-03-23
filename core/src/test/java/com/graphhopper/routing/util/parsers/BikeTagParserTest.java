@@ -370,164 +370,164 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
     public void testOneway() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "tertiary");
-        IntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
         int edgeId = 0;
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
         way.setTag("oneway", "yes");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertFalse(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertFalse(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("oneway:bicycle", "yes");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertFalse(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertFalse(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");
         way.setTag("oneway:bicycle", "no");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");
         way.setTag("oneway:bicycle", "-1");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");
         way.setTag("cycleway:right:oneway", "no");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");
         way.setTag("cycleway:right:oneway", "-1");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
         way.setTag("vehicle:forward", "no");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
         way.setTag("bicycle:forward", "no");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
         way.setTag("vehicle:backward", "no");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertFalse(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertFalse(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
         way.setTag("motor_vehicle:backward", "no");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
 
         way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");
         way.setTag("bicycle:backward", "no");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertFalse(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertFalse(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
 
         way.setTag("bicycle:backward", "yes");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
 
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("oneway", "yes");
         way.setTag("bicycle:backward", "yes");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
 
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("oneway", "-1");
         way.setTag("bicycle:forward", "yes");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
 
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("bicycle:forward", "use_sidepath");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
 
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("bicycle:forward", "use_sidepath");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
 
         way.clearTags();
         way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");
         way.setTag("cycleway", "opposite");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
 
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("oneway", "yes");
         way.setTag("cycleway:left", "opposite_lane");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, intAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, intAccess));
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
     }
 
     @Test
@@ -609,29 +609,29 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "icn");
         IntsRef relFlags = osmParsers.handleRelationTags(osmRel, osmParsers.createRelationFlags());
-        IntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
         int edgeId = 0;
-        osmParsers.handleWayTags(edgeId, intAccess, osmWay, relFlags);
-        assertEquals(RouteNetwork.INTERNATIONAL, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, intAccess));
-        assertEquals(PriorityCode.getValue(BEST.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), .1);
+        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, relFlags);
+        assertEquals(RouteNetwork.INTERNATIONAL, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(PriorityCode.getValue(BEST.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
 
         // for some highways the priority is UNCHANGED
         osmRel = new ReaderRelation(1);
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        osmParsers.handleWayTags(edgeId, intAccess, osmWay, osmParsers.createRelationFlags());
-        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, intAccess));
-        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), .1);
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, osmParsers.createRelationFlags());
+        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
 
         // unknown highway tags will be excluded but priority will be unchanged
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "whatever");
-        intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
-        osmParsers.handleWayTags(edgeId, intAccess, osmWay, osmParsers.createRelationFlags());
-        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, intAccess));
-        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, intAccess));
-        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), .1);
+        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        osmParsers.handleWayTags(edgeId, edgeIntAccess, osmWay, osmParsers.createRelationFlags());
+        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
+        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
     }
 
     @Test

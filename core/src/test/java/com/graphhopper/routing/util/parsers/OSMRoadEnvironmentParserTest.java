@@ -32,12 +32,12 @@ class OSMRoadEnvironmentParserTest {
         EnumEncodedValue<RoadEnvironment> roadEnvironmentEnc = new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class);
         roadEnvironmentEnc.init(new EncodedValue.InitializerConfig());
         OSMRoadEnvironmentParser parser = new OSMRoadEnvironmentParser(roadEnvironmentEnc);
-        IntAccess intAccess = new ArrayIntAccess(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         ReaderWay way = new ReaderWay(0);
         way.setTag("route", "shuttle_train");
-        parser.handleWayTags(edgeId, intAccess, way, new IntsRef(2));
-        RoadEnvironment roadEnvironment = roadEnvironmentEnc.getEnum(false, edgeId, intAccess);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(2));
+        RoadEnvironment roadEnvironment = roadEnvironmentEnc.getEnum(false, edgeId, edgeIntAccess);
         assertEquals(RoadEnvironment.FERRY, roadEnvironment);
     }
 

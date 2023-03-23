@@ -23,34 +23,34 @@ public class OSMHazmatParserTest {
     @Test
     public void testSimpleTags() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntAccess intAccess = new ArrayIntAccess(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         readerWay.setTag("hazmat", "no");
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(Hazmat.NO, hazEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Hazmat.NO, hazEnc.getEnum(false, edgeId, edgeIntAccess));
 
-        intAccess = new ArrayIntAccess(1);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("hazmat", "yes");
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, edgeIntAccess));
 
-        intAccess = new ArrayIntAccess(1);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("hazmat", "designated");
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, edgeIntAccess));
 
-        intAccess = new ArrayIntAccess(1);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("hazmat", "designated");
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
     @Test
     public void testNoNPE() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntAccess intAccess = new ArrayIntAccess(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Hazmat.YES, hazEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 }

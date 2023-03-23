@@ -25,7 +25,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.IntAccess;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -1136,7 +1136,7 @@ public class GraphHopperTest {
                     if (name.equals("road_environment"))
                         parser = new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
                             @Override
-                            public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay readerWay, IntsRef relationFlags) {
+                            public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
                                 // do not change RoadEnvironment to avoid triggering tunnel interpolation
                             }
                         };

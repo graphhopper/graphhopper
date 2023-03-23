@@ -65,13 +65,13 @@ public final class EnumEncodedValue<E extends Enum> extends IntEncodedValueImpl 
         return arr;
     }
 
-    public final void setEnum(boolean reverse, int edgeId, IntAccess intAccess, E value) {
+    public final void setEnum(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, E value) {
         int intValue = value.ordinal();
-        super.setInt(reverse, edgeId, intAccess, intValue);
+        super.setInt(reverse, edgeId, edgeIntAccess, intValue);
     }
 
-    public final E getEnum(boolean reverse, int edgeId, IntAccess intAccess) {
-        int value = super.getInt(reverse, edgeId, intAccess);
+    public final E getEnum(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
+        int value = super.getInt(reverse, edgeId, edgeIntAccess);
         return arr[value];
     }
 

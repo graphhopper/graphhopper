@@ -24,19 +24,19 @@ public class OSMSurfaceParserTest {
     public void testSimpleTags() {
         IntsRef relFlags = new IntsRef(2);
         ReaderWay readerWay = new ReaderWay(1);
-        IntAccess intAccess = new ArrayIntAccess(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(Surface.MISSING, surfaceEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Surface.MISSING, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
 
         readerWay.setTag("surface", "cobblestone");
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
         assertTrue(Surface.COBBLESTONE.ordinal() > Surface.ASPHALT.ordinal());
 
         readerWay.setTag("surface", "earth");
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(Surface.DIRT, surfaceEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Surface.DIRT, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 }

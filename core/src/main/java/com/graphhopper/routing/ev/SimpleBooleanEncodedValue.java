@@ -53,12 +53,12 @@ public final class SimpleBooleanEncodedValue extends IntEncodedValueImpl impleme
     }
 
     @Override
-    public final void setBool(boolean reverse, int edgeId, IntAccess intAccess, boolean value) {
-        setInt(reverse, edgeId, intAccess, value ? 1 : 0);
+    public final void setBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, boolean value) {
+        setInt(reverse, edgeId, edgeIntAccess, value ? 1 : 0);
     }
 
     @Override
-    public final boolean getBool(boolean reverse, int edgeId, IntAccess intAccess) {
-        return getInt(reverse, edgeId, intAccess) == 1;
+    public final boolean getBool(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
+        return getInt(reverse, edgeId, edgeIntAccess) == 1;
     }
 }

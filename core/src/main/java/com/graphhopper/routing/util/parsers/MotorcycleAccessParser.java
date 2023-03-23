@@ -82,28 +82,28 @@ public class MotorcycleAccessParser extends CarAccessParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
             return;
 
         if (!access.isFerry()) {
 
-            boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, intAccess);
+            boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
             if (way.hasTag("oneway", oneways) || isRoundabout) {
                 if (way.hasTag("oneway", "-1")) {
-                    accessEnc.setBool(true, edgeId, intAccess, true);
+                    accessEnc.setBool(true, edgeId, edgeIntAccess, true);
                 } else {
-                    accessEnc.setBool(false, edgeId, intAccess, true);
+                    accessEnc.setBool(false, edgeId, edgeIntAccess, true);
                 }
             } else {
-                accessEnc.setBool(true, edgeId, intAccess, true);
-                accessEnc.setBool(false, edgeId, intAccess, true);
+                accessEnc.setBool(true, edgeId, edgeIntAccess, true);
+                accessEnc.setBool(false, edgeId, edgeIntAccess, true);
             }
 
         } else {
-            accessEnc.setBool(false, edgeId, intAccess, true);
-            accessEnc.setBool(true, edgeId, intAccess, true);
+            accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+            accessEnc.setBool(true, edgeId, edgeIntAccess, true);
         }
     }
 }

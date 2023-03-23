@@ -57,13 +57,13 @@ class OSMMtbRatingParserTest {
         IntEncodedValue ev = MtbRating.create();
         ev.init(new EncodedValue.InitializerConfig());
         OSMMtbRatingParser parser = new OSMMtbRatingParser(ev);
-        IntAccess intAccess = new ArrayIntAccess(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         ReaderWay way = new ReaderWay(0);
         if (scaleString != null)
             way.setTag("mtb:scale", scaleString);
-        parser.handleWayTags(edgeId, intAccess, way, new IntsRef(2));
-        assertEquals(expectedRating, ev.getInt(false, edgeId, intAccess), "unexpected rating for mtb:scale=" + scaleString);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(2));
+        assertEquals(expectedRating, ev.getInt(false, edgeId, edgeIntAccess), "unexpected rating for mtb:scale=" + scaleString);
     }
 
 }

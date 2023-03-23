@@ -44,24 +44,24 @@ class OSMRoadAccessParserTest {
                 return RoadAccess.DESTINATION;
             }
         });
-        IntAccess intAccess = new ArrayIntAccess(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
-        parser.handleWayTags(edgeId, intAccess, way, relFlags);
-        assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(RoadAccess.DESTINATION, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
         // if there is no country rule we get the default value
-        intAccess = new ArrayIntAccess(1);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         way.removeTag("country_rule");
-        parser.handleWayTags(edgeId, intAccess, way, relFlags);
-        assertEquals(RoadAccess.YES, roadAccessEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(RoadAccess.YES, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
         way.setTag("motor_vehicle", "agricultural;forestry");
-        parser.handleWayTags(edgeId, intAccess, way, relFlags);
-        assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
         way.setTag("motor_vehicle", "forestry;agricultural");
-        parser.handleWayTags(edgeId, intAccess, way, relFlags);
-        assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
     }
 

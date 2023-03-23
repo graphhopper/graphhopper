@@ -2,7 +2,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.IntAccess;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
 
@@ -116,25 +116,25 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
     }
 
     @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
             return;
 
         if (access.isFerry()) {
-            accessEnc.setBool(false, edgeId, intAccess, true);
-            accessEnc.setBool(true, edgeId, intAccess, true);
+            accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+            accessEnc.setBool(true, edgeId, edgeIntAccess, true);
         } else {
-            handleAccess(edgeId, intAccess, way);
+            handleAccess(edgeId, edgeIntAccess, way);
         }
 
         if (way.hasTag("gh:barrier_edge")) {
             List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
-            handleBarrierEdge(edgeId, intAccess, nodeTags.get(0));
+            handleBarrierEdge(edgeId, edgeIntAccess, nodeTags.get(0));
         }
     }
 
-    protected void handleAccess(int edgeId, IntAccess intAccess, ReaderWay way) {
+    protected void handleAccess(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         // handle oneways. The value -1 means it is a oneway but for reverse direction of stored geometry.
         // The tagging oneway:bicycle=no or cycleway:right:oneway=no or cycleway:left:oneway=no lifts the generic oneway restriction of the way for bike
         boolean isOneway = way.hasTag("oneway", oneways) && !way.hasTag("oneway", "-1") && !way.hasTag("bicycle:backward", intendedValues)
@@ -147,7 +147,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                 || way.hasTag("bicycle:forward", restrictedValues)
                 || way.hasTag("bicycle:backward", restrictedValues);
 
-        if ((isOneway || roundaboutEnc.getBool(false, edgeId, intAccess))
+        if ((isOneway || roundaboutEnc.getBool(false, edgeId, edgeIntAccess))
                 && !way.hasTag("oneway:bicycle", "no")
                 && !way.hasTag("cycleway", oppositeLanes)
                 && !way.hasTag("cycleway:left", oppositeLanes)
@@ -160,11 +160,11 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                     || way.hasTag("cycleway:right:oneway", "-1")
                     || way.hasTag("vehicle:forward", restrictedValues)
                     || way.hasTag("bicycle:forward", restrictedValues);
-            accessEnc.setBool(isBackward, edgeId, intAccess, true);
+            accessEnc.setBool(isBackward, edgeId, edgeIntAccess, true);
 
         } else {
-            accessEnc.setBool(false, edgeId, intAccess, true);
-            accessEnc.setBool(true, edgeId, intAccess, true);
+            accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+            accessEnc.setBool(true, edgeId, edgeIntAccess, true);
         }
     }
 }

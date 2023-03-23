@@ -18,8 +18,22 @@
 
 package com.graphhopper.routing.ev;
 
-public interface IntAccess {
-    int getInt(int edgeId, int index);
+import com.graphhopper.storage.IntsRef;
 
-    void setInt(int edgeId, int index, int value);
+public class IntsRefEdgeIntAccess implements EdgeIntAccess {
+    private final IntsRef intsRef;
+
+    public IntsRefEdgeIntAccess(IntsRef intsRef) {
+        this.intsRef = intsRef;
+    }
+
+    @Override
+    public int getInt(int edgeId, int index) {
+        return intsRef.ints[index];
+    }
+
+    @Override
+    public void setInt(int edgeId, int index, int value) {
+        intsRef.ints[index] = value;
+    }
 }

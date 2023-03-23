@@ -2,7 +2,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.IntAccess;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
@@ -54,14 +54,14 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
         return avgSpeedEnc;
     }
 
-    protected void setSpeed(boolean reverse, int edgeId, IntAccess intAccess, double speed) {
+    protected void setSpeed(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double speed) {
         // special case when speed is non-zero but would be "rounded down" to 0 due to the low precision of the EncodedValue
         if (speed > 0.1 && speed < avgSpeedEnc.getSmallestNonZeroValue())
             speed = avgSpeedEnc.getSmallestNonZeroValue();
         if (speed < avgSpeedEnc.getSmallestNonZeroValue()) {
-            avgSpeedEnc.setDecimal(reverse, edgeId, intAccess, 0);
+            avgSpeedEnc.setDecimal(reverse, edgeId, edgeIntAccess, 0);
         } else {
-            avgSpeedEnc.setDecimal(reverse, edgeId, intAccess, Math.min(speed, getMaxSpeed()));
+            avgSpeedEnc.setDecimal(reverse, edgeId, edgeIntAccess, Math.min(speed, getMaxSpeed()));
         }
     }
 
@@ -70,11 +70,11 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
-        handleWayTags(edgeId, intAccess, way);
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+        handleWayTags(edgeId, edgeIntAccess, way);
     }
 
-    public abstract void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way);
+    public abstract void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way);
 
     @Override
     public String toString() {

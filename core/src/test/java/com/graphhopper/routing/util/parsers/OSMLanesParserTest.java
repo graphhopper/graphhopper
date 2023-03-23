@@ -40,20 +40,20 @@ class OSMLanesParserTest {
     @Test
     void basic() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntAccess intAccess = new ArrayIntAccess(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         readerWay.setTag("lanes", "4");
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        Assertions.assertEquals(4, lanesEnc.getInt(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        Assertions.assertEquals(4, lanesEnc.getInt(false, edgeId, edgeIntAccess));
     }
 
     @Test
     void notTagged() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntAccess intAccess = new ArrayIntAccess(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        Assertions.assertEquals(1, lanesEnc.getInt(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        Assertions.assertEquals(1, lanesEnc.getInt(false, edgeId, edgeIntAccess));
     }
 
 }

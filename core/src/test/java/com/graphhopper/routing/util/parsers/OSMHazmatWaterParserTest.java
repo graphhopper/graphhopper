@@ -24,29 +24,29 @@ public class OSMHazmatWaterParserTest {
     @Test
     public void testSimpleTags() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntAccess intAccess = new ArrayIntAccess(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         readerWay.setTag("hazmat:water", "no");
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(HazmatWater.NO, hazWaterEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(HazmatWater.NO, hazWaterEnc.getEnum(false, edgeId, edgeIntAccess));
 
-        intAccess = new ArrayIntAccess(1);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("hazmat:water", "yes");
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(HazmatWater.YES, hazWaterEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(HazmatWater.YES, hazWaterEnc.getEnum(false, edgeId, edgeIntAccess));
 
-        intAccess = new ArrayIntAccess(1);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("hazmat:water", "permissive");
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(HazmatWater.PERMISSIVE, hazWaterEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(HazmatWater.PERMISSIVE, hazWaterEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
     @Test
     public void testNoNPE() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntAccess intAccess = new ArrayIntAccess(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(HazmatWater.YES, hazWaterEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(HazmatWater.YES, hazWaterEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 }

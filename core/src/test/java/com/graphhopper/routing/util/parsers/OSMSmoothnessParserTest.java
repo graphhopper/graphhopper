@@ -25,15 +25,15 @@ public class OSMSmoothnessParserTest {
         IntsRef relFlags = new IntsRef(2);
 
         ReaderWay readerWay = new ReaderWay(1);
-        IntAccess intAccess = new ArrayIntAccess(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         readerWay.setTag("highway", "primary");
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(Smoothness.MISSING, smoothnessEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Smoothness.MISSING, smoothnessEnc.getEnum(false, edgeId, edgeIntAccess));
 
         readerWay.setTag("smoothness", "bad");
-        parser.handleWayTags(edgeId, intAccess, readerWay, relFlags);
-        assertEquals(Smoothness.BAD, smoothnessEnc.getEnum(false, edgeId, intAccess));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Smoothness.BAD, smoothnessEnc.getEnum(false, edgeId, edgeIntAccess));
         assertTrue(Smoothness.BAD.ordinal() < Smoothness.VERY_BAD.ordinal());
     }
 }

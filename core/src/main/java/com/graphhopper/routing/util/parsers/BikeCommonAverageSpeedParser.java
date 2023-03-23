@@ -3,7 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.IntAccess;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.Smoothness;
 import com.graphhopper.util.Helper;
 
@@ -136,27 +136,27 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     }
 
     @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-                avgSpeedEnc.setDecimal(false, edgeId, intAccess, ferrySpeed);
+                avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, ferrySpeed);
                 if (avgSpeedEnc.isStoreTwoDirections())
-                    avgSpeedEnc.setDecimal(true, edgeId, intAccess, ferrySpeed);
+                    avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, ferrySpeed);
             }
             if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
                 return;
         }
 
         double speed = getSpeed(way);
-        Smoothness smoothness = smoothnessEnc.getEnum(false, edgeId, intAccess);
+        Smoothness smoothness = smoothnessEnc.getEnum(false, edgeId, edgeIntAccess);
         speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
         double speedFwd = applyMaxSpeed(way, speed, false);
-        avgSpeedEnc.setDecimal(false, edgeId, intAccess, speedFwd);
+        avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, speedFwd);
         if (avgSpeedEnc.isStoreTwoDirections()) {
             speed = applyMaxSpeed(way, speed, true);
-            avgSpeedEnc.setDecimal(true, edgeId, intAccess, speed);
+            avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, speed);
         }
     }
 

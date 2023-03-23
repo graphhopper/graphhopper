@@ -3,7 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.IntAccess;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
@@ -20,9 +20,9 @@ public class RoadsAccessParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
-        accessEnc.setBool(true, edgeId, intAccess, true);
-        accessEnc.setBool(false, edgeId, intAccess, true);
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+        accessEnc.setBool(true, edgeId, edgeIntAccess, true);
+        accessEnc.setBool(false, edgeId, edgeIntAccess, true);
     }
 
     @Override

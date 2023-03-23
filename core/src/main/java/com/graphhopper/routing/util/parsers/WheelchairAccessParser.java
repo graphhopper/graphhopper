@@ -3,7 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.IntAccess;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.util.PMap;
@@ -132,12 +132,12 @@ public class WheelchairAccessParser extends FootAccessParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
             return;
 
-        accessEnc.setBool(false, edgeId, intAccess, true);
-        accessEnc.setBool(true, edgeId, intAccess, true);
+        accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+        accessEnc.setBool(true, edgeId, edgeIntAccess, true);
     }
 }

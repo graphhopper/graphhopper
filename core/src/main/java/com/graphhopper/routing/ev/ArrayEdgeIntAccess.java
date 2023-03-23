@@ -20,11 +20,11 @@ package com.graphhopper.routing.ev;
 
 import com.carrotsearch.hppc.IntArrayList;
 
-public class ArrayIntAccess implements IntAccess {
+public class ArrayEdgeIntAccess implements EdgeIntAccess {
     private final int intsPerEdge;
     private final IntArrayList arr = new IntArrayList();
 
-    public ArrayIntAccess(int intsPerEdge) {
+    public ArrayEdgeIntAccess(int intsPerEdge) {
         this.intsPerEdge = intsPerEdge;
     }
 

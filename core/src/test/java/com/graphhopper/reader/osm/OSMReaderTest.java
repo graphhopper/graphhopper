@@ -497,7 +497,7 @@ public class OSMReaderTest {
         osmRel.setTag("network", "lcn");
 
         IntsRef relFlags = manager.createRelationFlags();
-        IntsRefIntAccess intAccess = new IntsRefIntAccess(relFlags);
+        IntsRefEdgeIntAccess intAccess = new IntsRefEdgeIntAccess(relFlags);
         int edgeId = 0;
         osmParsers.handleRelationTags(osmRel, relFlags);
         assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));

@@ -19,7 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.IntAccess;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
@@ -34,7 +34,7 @@ public class OSMMaxAxleLoadParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(int edgeId, IntAccess intAccess, ReaderWay way, IntsRef relationFlags) {
-        OSMValueExtractor.extractTons(edgeId, intAccess, way, maxAxleLoadEncoder, Collections.singletonList("maxaxleload"));
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+        OSMValueExtractor.extractTons(edgeId, edgeIntAccess, way, maxAxleLoadEncoder, Collections.singletonList("maxaxleload"));
     }
 }

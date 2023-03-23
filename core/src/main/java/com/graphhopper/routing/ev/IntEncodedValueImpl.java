@@ -149,9 +149,9 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     }
 
     @Override
-    public final void setInt(boolean reverse, int edgeId, IntAccess intAccess, int value) {
+    public final void setInt(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, int value) {
         checkValue(value);
-        uncheckedSet(reverse, edgeId, intAccess, value);
+        uncheckedSet(reverse, edgeId, edgeIntAccess, value);
     }
 
     private void checkValue(int value) {
@@ -163,7 +163,7 @@ public class IntEncodedValueImpl implements IntEncodedValue {
             throw new IllegalArgumentException(name + " value too small for encoding " + value + ", minValue:" + minStorableValue);
     }
 
-    final void uncheckedSet(boolean reverse, int edgeId, IntAccess intAccess, int value) {
+    final void uncheckedSet(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, int value) {
         if (negateReverseDirection) {
             if (reverse) {
                 reverse = false;
@@ -176,26 +176,26 @@ public class IntEncodedValueImpl implements IntEncodedValue {
 
         value -= minStorableValue;
         if (reverse) {
-            int flags = intAccess.getInt(edgeId, bwdDataIndex);
+            int flags = edgeIntAccess.getInt(edgeId, bwdDataIndex);
             // clear value bits
             flags &= ~bwdMask;
-            intAccess.setInt(edgeId, bwdDataIndex, flags | (value << bwdShift));
+            edgeIntAccess.setInt(edgeId, bwdDataIndex, flags | (value << bwdShift));
         } else {
-            int flags = intAccess.getInt(edgeId, fwdDataIndex);
+            int flags = edgeIntAccess.getInt(edgeId, fwdDataIndex);
             flags &= ~fwdMask;
-            intAccess.setInt(edgeId, fwdDataIndex, flags | (value << fwdShift));
+            edgeIntAccess.setInt(edgeId, fwdDataIndex, flags | (value << fwdShift));
         }
     }
 
     @Override
-    public final int getInt(boolean reverse, int edgeId, IntAccess intAccess) {
+    public final int getInt(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess) {
         int flags;
         // if we do not store both directions ignore reverse == true for convenient reading
         if (storeTwoDirections && reverse) {
-            flags = intAccess.getInt(edgeId, bwdDataIndex);
+            flags = edgeIntAccess.getInt(edgeId, bwdDataIndex);
             return minStorableValue + ((flags & bwdMask) >>> bwdShift);
         } else {
-            flags = intAccess.getInt(edgeId, fwdDataIndex);
+            flags = edgeIntAccess.getInt(edgeId, fwdDataIndex);
             if (negateReverseDirection && reverse)
                 return -(minStorableValue + ((flags & fwdMask) >>> fwdShift));
             return minStorableValue + ((flags & fwdMask) >>> fwdShift);

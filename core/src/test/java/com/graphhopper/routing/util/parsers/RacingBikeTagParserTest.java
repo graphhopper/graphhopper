@@ -99,9 +99,9 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Test
     public void testGetSpeed() {
-        IntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
         int edgeId = 0;
-        avgSpeedEnc.setDecimal(false, edgeId, intAccess, 10);
+        avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, 10);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade3");
@@ -274,11 +274,11 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
     private void assertPriorityAndSpeed(EncodingManager encodingManager, DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc,
                                         List<TagParser> parsers, int expectedPrio, double expectedSpeed, ReaderWay way) {
-        IntAccess intAccess = new ArrayIntAccess(encodingManager.getIntsForFlags());
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
         int edgeId = 0;
-        for (TagParser p : parsers) p.handleWayTags(edgeId, intAccess, way, null);
-        assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeId, intAccess), 0.01);
-        assertEquals(expectedSpeed, speedEnc.getDecimal(false, edgeId, intAccess), 0.1);
+        for (TagParser p : parsers) p.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), 0.01);
+        assertEquals(expectedSpeed, speedEnc.getDecimal(false, edgeId, edgeIntAccess), 0.1);
     }
 
     @Test
