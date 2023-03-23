@@ -558,7 +558,7 @@ public class WheelchairTagParserTest {
         ReaderWay way1 = new ReaderWay(1);
         way1.setTag("point_list", edge01.fetchWayGeometry(FetchMode.ALL));
         way1.setTag("edge_distance", edge01.getDistance());
-        EdgeIntAccess edgeIntAccess = graph.createIntAccess();
+        EdgeIntAccess edgeIntAccess = graph.createEdgeIntAccess();
         speedParser.applyWayTags(way1, edge01.getEdge(), edgeIntAccess);
 
         assertTrue(edge01.get(wheelchairAccessEnc));

@@ -363,7 +363,7 @@ public class BaseGraph implements Graph, Closeable {
         }
     }
 
-    public EdgeIntAccess createIntAccess() {
+    public EdgeIntAccess createEdgeIntAccess() {
         return new EdgeIntAccess() {
             @Override
             public int getInt(int edgeId, int index) {
@@ -674,7 +674,7 @@ public class BaseGraph implements Graph, Closeable {
 
         public EdgeIteratorStateImpl(BaseGraph baseGraph) {
             this.baseGraph = baseGraph;
-            edgeIntAccess = baseGraph.createIntAccess();
+            edgeIntAccess = baseGraph.createEdgeIntAccess();
             store = baseGraph.store;
         }
 

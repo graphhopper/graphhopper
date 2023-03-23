@@ -99,7 +99,7 @@ public class OSMReader {
 
     public OSMReader(BaseGraph baseGraph, OSMParsers osmParsers, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
-        this.edgeIntAccess = baseGraph.createIntAccess();
+        this.edgeIntAccess = baseGraph.createEdgeIntAccess();
         this.config = config;
         this.nodeAccess = baseGraph.getNodeAccess();
         this.osmParsers = osmParsers;
