@@ -7,6 +7,13 @@ import com.graphhopper.http.GraphHopperManaged;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
+import org.mapdb.BTreeMap;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+
+import java.io.File;
+import java.util.Collection;
+import java.util.Map;
 
 public class AnalyzeTripTransfersCommand extends ConfiguredCommand<GraphHopperServerConfiguration> {
     public AnalyzeTripTransfersCommand() {
@@ -17,6 +24,9 @@ public class AnalyzeTripTransfersCommand extends ConfiguredCommand<GraphHopperSe
     protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace namespace, GraphHopperServerConfiguration configuration) throws Exception {
         GraphHopperGtfs graphHopper = (GraphHopperGtfs) new GraphHopperManaged(configuration.getGraphHopperConfiguration()).getGraphHopper();
         graphHopper.importOrLoad();
-        Trips.findAllTripTransfers(graphHopper);
+        DB wurst = DBMaker.newFileDB(new File("wurst")).transactionDisable().mmapFileEnable().asyncWriteEnable().make();
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> map = wurst.getHashMap("pups");
+        Trips.findAllTripTransfersInto(graphHopper, map);
+        wurst.close();
     }
 }

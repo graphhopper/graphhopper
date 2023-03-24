@@ -31,10 +31,11 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
+import java.io.*;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AnalysisTest {
 
@@ -96,6 +97,21 @@ public class AnalysisTest {
                 return stopTime;
         }
         return null;
+    }
+
+    @Test
+    public void testSerialize() throws IOException, ClassNotFoundException {
+        Trips.TripAtStopTime origin = new Trips.TripAtStopTime("gtfs_1", GtfsRealtime.TripDescriptor.newBuilder().setTripId("MUSEUM1").setRouteId("COURT2MUSEUM").build(), 2);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ObjectOutputStream objectOutputStream = new ObjectOutputStream(out);
+        objectOutputStream.writeObject(origin);
+        objectOutputStream.close();
+        byte[] bytes = out.toByteArray();
+
+        ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(bytes));
+        Trips.TripAtStopTime tripAtStopTime = (Trips.TripAtStopTime) objectInputStream.readObject();
+
+        assertEquals(origin, tripAtStopTime);
     }
 
 }

@@ -11,6 +11,10 @@ import com.graphhopper.gtfs.GtfsStorage;
 import com.graphhopper.gtfs.PtGraph;
 import com.graphhopper.gtfs.RealtimeFeed;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -122,6 +126,11 @@ public class Trips {
 
     public static Map<TripAtStopTime, Collection<TripAtStopTime>> findAllTripTransfers(GraphHopperGtfs graphHopperGtfs) {
         Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
+        findAllTripTransfersInto(graphHopperGtfs, result);
+        return result;
+    }
+
+    public static void findAllTripTransfersInto(GraphHopperGtfs graphHopperGtfs, Map<TripAtStopTime, Collection<TripAtStopTime>> result) {
         for (Map.Entry<String, GTFSFeed> e : graphHopperGtfs.getGtfsStorage().getGtfsFeeds().entrySet()) {
             String feedKey = e.getKey();
             GTFSFeed feed = e.getValue();
@@ -148,10 +157,9 @@ public class Trips {
                 i++;
             }
         }
-        return result;
     }
 
-    public static class TripAtStopTime {
+    public static class TripAtStopTime implements Serializable {
 
         public String feedId;
         GtfsRealtime.TripDescriptor tripDescriptor;
@@ -174,6 +182,26 @@ public class Trips {
         @Override
         public int hashCode() {
             return Objects.hash(feedId, tripDescriptor, stop_sequence);
+        }
+
+        private void readObject(ObjectInputStream aInputStream) throws ClassNotFoundException, IOException {
+            feedId = aInputStream.readUTF();
+            int size = aInputStream.readInt();
+            byte[] bytes = new byte[size];
+            aInputStream.read(bytes);
+            tripDescriptor = GtfsRealtime.TripDescriptor.parseFrom(bytes);
+            stop_sequence = aInputStream.readInt();
+        }
+
+        /**
+         * This is the default implementation of writeObject. Customize as necessary.
+         */
+        private void writeObject(ObjectOutputStream aOutputStream) throws IOException {
+            aOutputStream.writeUTF(feedId);
+            byte[] bytes = tripDescriptor.toByteArray();
+            aOutputStream.writeInt(bytes.length);
+            aOutputStream.write(bytes);
+            aOutputStream.writeInt(stop_sequence);
         }
 
     }
