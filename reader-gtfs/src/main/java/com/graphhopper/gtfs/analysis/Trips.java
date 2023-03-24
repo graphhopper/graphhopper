@@ -20,7 +20,7 @@ import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 
 public class Trips {
 
-    public static Map<TripAtStopTime, Collection<TripAtStopTime>> reduceTripTransfers(Map<TripAtStopTime, Collection<TripAtStopTime>> tripTransfers, GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, String feedKey) {
+    public static Map<TripAtStopTime, Collection<TripAtStopTime>> reduceTripTransfers(Map<TripAtStopTime, Collection<TripAtStopTime>> tripTransfers, GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, String feedKey, GtfsStorage gtfsStorage) {
         Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
         Iterable<StopTime> orderedStopTimesForTrip = feed.getOrderedStopTimesForTrip(tripDescriptor.getTripId());
         List<StopTime> stopTimesExceptFirst = StreamSupport.stream(orderedStopTimesForTrip.spliterator(), false).skip(1).collect(Collectors.toList());
@@ -32,21 +32,27 @@ public class Trips {
             int arrivalTime = stopTime.arrival_time + (tripDescriptor.hasStartTime() ? LocalTime.parse(tripDescriptor.getStartTime()).toSecondOfDay() : 0);
             arrivalTimes.put(stopId, Math.min(arrivalTime, arrivalTimes.getOrDefault(stopId, Integer.MAX_VALUE)));
             TripAtStopTime origin = new TripAtStopTime(feedKey, tripDescriptor, stopTime.stop_sequence);
-//            System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopTime.stop_id);
+            System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopTime.stop_id);
             Collection<TripAtStopTime> destinations = tripTransfers.get(origin);
-//            System.out.printf("  %d transfers\n", destinations.size());
+            System.out.printf("  %d transfers\n", destinations.size());
+            for (TripAtStopTime destination : destinations) {
+                System.out.printf("    %s %s %d\n", destination.tripDescriptor.getTripId(), destination.tripDescriptor.hasStartTime() ? destination.tripDescriptor.getStartTime() : "", destination.stop_sequence);
+            }
+
             Collection<TripAtStopTime> filteredDestinations = new ArrayList<>();
             for (TripAtStopTime destination : destinations) {
                 boolean keep = false;
-                for (StopTime destinationStopTime : feed.getOrderedStopTimesForTrip(destination.tripDescriptor.getTripId())) {
+                GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(destination.feedId);
+                for (StopTime destinationStopTime : destinationFeed.getOrderedStopTimesForTrip(destination.tripDescriptor.getTripId())) {
                     if (destinationStopTime.stop_sequence > destination.stop_sequence) {
                         int destinationArrivalTime = destinationStopTime.arrival_time + (destination.tripDescriptor.hasStartTime() ? LocalTime.parse(destination.tripDescriptor.getStartTime()).toSecondOfDay() : 0);
                         if (destinationArrivalTime < arrivalTime) {
                             destinationArrivalTime += 24 * 60 * 60;
                         }
                         GtfsStorage.FeedIdWithStopId destinationStopId = new GtfsStorage.FeedIdWithStopId(destination.feedId, destinationStopTime.stop_id);
-                        keep = keep || destinationArrivalTime < arrivalTimes.getOrDefault(destinationStopId, Integer.MAX_VALUE);
-                        arrivalTimes.put(destinationStopId, Math.min(arrivalTimes.get(destinationStopId), arrivalTime));
+                        int oldArrivalTime = arrivalTimes.getOrDefault(destinationStopId, Integer.MAX_VALUE);
+                        keep = keep || destinationArrivalTime < oldArrivalTime;
+                        arrivalTimes.put(destinationStopId, Math.min(oldArrivalTime, destinationArrivalTime));
                     }
                 }
                 if (keep) {
@@ -54,10 +60,10 @@ public class Trips {
                 }
             }
             result.put(origin, filteredDestinations);
-//            System.out.printf("  %d filtered transfers\n", filteredDestinations.size());
-//            for (TripAtStopTime destination : filteredDestinations) {
-//                System.out.printf("    %s %s %d %s\n", destination.tripDescriptor.getTripId(), destination.tripDescriptor.hasStartTime() ? destination.tripDescriptor.getStartTime() : "", destination.stop_sequence, stopTime.stop_id);
-//            }
+            System.out.printf("  %d filtered transfers\n", filteredDestinations.size());
+            for (TripAtStopTime destination : filteredDestinations) {
+                System.out.printf("    %s %s %d\n", destination.tripDescriptor.getTripId(), destination.tripDescriptor.hasStartTime() ? destination.tripDescriptor.getStartTime() : "", destination.stop_sequence);
+            }
         }
         return result;
     }
@@ -97,6 +103,11 @@ public class Trips {
     }
 
     public static Map<TripAtStopTime, Collection<TripAtStopTime>> findReducedTripTransfers(String feedKey, GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, PtGraph ptGraph, GtfsStorage gtfsStorage) {
+        Map<TripAtStopTime, Collection<TripAtStopTime>> tripTransfers = findTripTransfers(feedKey, feed, tripDescriptor, ptGraph, gtfsStorage);
+        return reduceTripTransfers(tripTransfers, feed, tripDescriptor, feedKey, gtfsStorage);
+    }
+
+    public static Map<TripAtStopTime, Collection<TripAtStopTime>> findTripTransfers(String feedKey, GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, PtGraph ptGraph, GtfsStorage gtfsStorage) {
         Map<TripAtStopTime, Collection<TripAtStopTime>> tripTransfers = new HashMap<>();
         int[] alightEdgesForTrip = RealtimeFeed.findAlightEdgesForTrip(gtfsStorage, feedKey, feed, RealtimeFeed.normalize(tripDescriptor));
         for (int edge : alightEdgesForTrip) {
@@ -106,7 +117,7 @@ public class Trips {
             ArrayList<TripAtStopTime> transferTrips = listTransfers(ptGraph, ptEdge.getAdjNode());
             tripTransfers.put(new TripAtStopTime(feedKey, ptEdge.getAttrs().tripDescriptor, ptEdge.getAttrs().stop_sequence), transferTrips);
         }
-        return reduceTripTransfers(tripTransfers, feed, tripDescriptor, feedKey);
+        return tripTransfers;
     }
 
     public static Map<TripAtStopTime, Collection<TripAtStopTime>> findAllTripTransfers(GraphHopperGtfs graphHopperGtfs) {

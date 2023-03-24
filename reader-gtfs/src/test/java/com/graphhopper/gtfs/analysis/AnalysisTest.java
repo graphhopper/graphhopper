@@ -18,6 +18,9 @@
 
 package com.graphhopper.gtfs.analysis;
 
+import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.StopTime;
+import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
@@ -77,7 +80,22 @@ public class AnalysisTest {
 
     @Test
     public void testComputeTransfers() {
-        Trips.findAllTripTransfers(graphHopperGtfs);
+        Trips.TripAtStopTime origin = new Trips.TripAtStopTime("gtfs_1", GtfsRealtime.TripDescriptor.newBuilder().setTripId("MUSEUM1").setRouteId("COURT2MUSEUM").build(), 2);
+        GTFSFeed gtfsFeed = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get("gtfs_1");
+        PtGraph ptGraph = graphHopperGtfs.getPtGraph();
+        GtfsStorage gtfsStorage = graphHopperGtfs.getGtfsStorage();
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = Trips.findTripTransfers("gtfs_1", gtfsFeed, origin.tripDescriptor, ptGraph, gtfsStorage);
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> reducedTripTransfers = Trips.reduceTripTransfers(tripTransfers, gtfsFeed, origin.tripDescriptor, "gtfs_1", gtfsStorage);
+        Collection<Trips.TripAtStopTime> destinations = reducedTripTransfers.get(origin);
+
+    }
+
+    private static StopTime findStoptime(Iterable<StopTime> stopTimes, Trips.TripAtStopTime destination) {
+        for (StopTime stopTime : stopTimes) {
+            if (stopTime.stop_sequence == destination.stop_sequence)
+                return stopTime;
+        }
+        return null;
     }
 
 }
