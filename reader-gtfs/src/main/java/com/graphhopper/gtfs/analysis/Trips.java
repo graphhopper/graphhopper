@@ -27,20 +27,19 @@ public class Trips {
     public static Map<TripAtStopTime, Collection<TripAtStopTime>> reduceTripTransfers(GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, String feedKey, PtGraph ptGraph, GtfsStorage gtfsStorage) {
         int[] alightEdgesForTrip = RealtimeFeed.findAlightEdgesForTrip(gtfsStorage, feedKey, feed, RealtimeFeed.normalize(tripDescriptor));
         Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
-        Iterable<StopTime> orderedStopTimesForTrip = feed.getOrderedStopTimesForTrip(tripDescriptor.getTripId());
-        List<StopTime> stopTimesExceptFirst = StreamSupport.stream(orderedStopTimesForTrip.spliterator(), false).skip(1).collect(Collectors.toList());
-        Collections.reverse(stopTimesExceptFirst);
         ObjectIntHashMap<GtfsStorage.FeedIdWithStopId> arrivalTimes = new ObjectIntHashMap<>();
-        for (StopTime stopTime : stopTimesExceptFirst) {
-            GtfsStorage.FeedIdWithStopId stopId = new GtfsStorage.FeedIdWithStopId(feedKey, stopTime.stop_id);
-            int arrivalTime = stopTime.arrival_time + (tripDescriptor.hasStartTime() ? LocalTime.parse(tripDescriptor.getStartTime()).toSecondOfDay() : 0);
-            arrivalTimes.put(stopId, Math.min(arrivalTime, arrivalTimes.getOrDefault(stopId, Integer.MAX_VALUE)));
-            TripAtStopTime origin = new TripAtStopTime(feedKey, tripDescriptor, stopTime.stop_sequence);
-            PtGraph.PtEdge ptEdge = ptGraph.edge(alightEdgesForTrip[stopTime.stop_sequence]);
-            assert ptEdge.getAttrs().stop_sequence == stopTime.stop_sequence;
+        int i = 0;
+        for (int edge : alightEdgesForTrip) {
+            if (edge == -1)
+                continue;
+            if (i++ == 0)
+                continue;
+            PtGraph.PtEdge ptEdge = ptGraph.edge(edge);
             GtfsStorage.PlatformDescriptor platformForAlight = findStopIdForAlight(ptGraph, ptEdge);
-            assert platformForAlight.stop_id.equals(stopTime.stop_id);
-            assert findTimeForAlight(ptGraph, ptEdge) == arrivalTime;
+            GtfsStorage.FeedIdWithStopId stopId = new GtfsStorage.FeedIdWithStopId(feedKey, platformForAlight.stop_id);
+            int arrivalTime = findTimeForAlight(ptGraph, ptEdge);
+            arrivalTimes.put(stopId, Math.min(arrivalTime, arrivalTimes.getOrDefault(stopId, Integer.MAX_VALUE)));
+            TripAtStopTime origin = new TripAtStopTime(feedKey, tripDescriptor, ptEdge.getAttrs().stop_sequence);
             Collection<TripAtStopTime> destinations = listTransfers(ptGraph, ptEdge.getAdjNode());
             Collection<TripAtStopTime> filteredDestinations = new ArrayList<>();
             for (TripAtStopTime destination : destinations) {
@@ -69,11 +68,12 @@ public class Trips {
                 }
             }
             result.put(origin, filteredDestinations);
-            System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopTime.stop_id);
+            System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopId);
             System.out.printf("  %d filtered transfers\n", filteredDestinations.size());
             for (TripAtStopTime destination : filteredDestinations) {
                 System.out.printf("    %s %s %d\n", destination.tripDescriptor.getTripId(), destination.tripDescriptor.hasStartTime() ? destination.tripDescriptor.getStartTime() : "", destination.stop_sequence);
             }
+            i++;
         }
         return result;
     }
