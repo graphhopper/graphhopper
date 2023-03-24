@@ -18,10 +18,6 @@
 
 package com.graphhopper.gtfs.analysis;
 
-import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.model.Frequency;
-import com.conveyal.gtfs.model.Trip;
-import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
@@ -35,7 +31,6 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.util.*;
 
-import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AnalysisTest {
@@ -82,27 +77,7 @@ public class AnalysisTest {
 
     @Test
     public void testComputeTransfers() {
-        for (Map.Entry<String, GTFSFeed> e : graphHopperGtfs.getGtfsStorage().getGtfsFeeds().entrySet()) {
-            String feedKey = e.getKey();
-            GTFSFeed feed = e.getValue();
-            for (Trip trip : feed.trips.values()) {
-                Collection<Frequency> frequencies = feed.getFrequencies(trip.trip_id);
-                List<GtfsRealtime.TripDescriptor> actualTrips = new ArrayList<>();
-                GtfsRealtime.TripDescriptor.Builder builder = GtfsRealtime.TripDescriptor.newBuilder().setTripId(trip.trip_id).setRouteId(trip.route_id);
-                if (frequencies.isEmpty()) {
-                    actualTrips.add(builder.build());
-                } else {
-                    for (Frequency frequency : frequencies) {
-                        for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
-                            actualTrips.add(builder.setStartTime(convertToGtfsTime(time)).build());
-                        }
-                    }
-                }
-                for (GtfsRealtime.TripDescriptor tripDescriptor : actualTrips) {
-                    Trips.findReducedTripTransfers(feedKey, feed, tripDescriptor, graphHopperGtfs.getPtGraph(), graphHopperGtfs.getGtfsStorage());
-                }
-            }
-        }
+        Trips.findAllTripTransfers(graphHopperGtfs);
     }
 
 }

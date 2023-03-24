@@ -180,6 +180,8 @@ public class MultiCriteriaLabelSetting {
 
     public List<Label> pushedBoardings = new ArrayList<Label>();
 
+    public Predicate<Label> isAllowed = l -> true;
+
     void insertIfNotDominated(Label me) {
         Predicate<Label> filter;
         if (profileQuery && me.departureTime != null) {
@@ -189,7 +191,7 @@ public class MultiCriteriaLabelSetting {
         }
         if (isNotDominatedByAnyOf(me, targetLabels, filter)) {
             List<Label> sptEntries = fromMap.computeIfAbsent(me.node, k -> new ArrayList<>(1));
-            if (isNotDominatedByAnyOf(me, sptEntries, filter)) {
+            if (isAllowed.test(me) && isNotDominatedByAnyOf(me, sptEntries, filter)) {
                 removeDominated(me, sptEntries, filter);
                 sptEntries.add(me);
                 fromHeap.add(me);

@@ -2,8 +2,11 @@ package com.graphhopper.gtfs.analysis;
 
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.StopTime;
+import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
+import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.gtfs.GtfsStorage;
 import com.graphhopper.gtfs.PtGraph;
 import com.graphhopper.gtfs.RealtimeFeed;
@@ -12,6 +15,8 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 
 public class Trips {
 
@@ -27,9 +32,9 @@ public class Trips {
             int arrivalTime = stopTime.arrival_time + (tripDescriptor.hasStartTime() ? LocalTime.parse(tripDescriptor.getStartTime()).toSecondOfDay() : 0);
             arrivalTimes.put(stopId, Math.min(arrivalTime, arrivalTimes.getOrDefault(stopId, Integer.MAX_VALUE)));
             TripAtStopTime origin = new TripAtStopTime(feedKey, tripDescriptor, stopTime.stop_sequence);
-            System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopTime.stop_id);
+//            System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopTime.stop_id);
             Collection<TripAtStopTime> destinations = tripTransfers.get(origin);
-            System.out.printf("  %d transfers\n", destinations.size());
+//            System.out.printf("  %d transfers\n", destinations.size());
             Collection<TripAtStopTime> filteredDestinations = new ArrayList<>();
             for (TripAtStopTime destination : destinations) {
                 boolean keep = false;
@@ -49,10 +54,10 @@ public class Trips {
                 }
             }
             result.put(origin, filteredDestinations);
-            System.out.printf("  %d filtered transfers\n", filteredDestinations.size());
-            for (TripAtStopTime destination : filteredDestinations) {
-                System.out.printf("    %s %s %d %s\n", destination.tripDescriptor.getTripId(), destination.tripDescriptor.hasStartTime() ? destination.tripDescriptor.getStartTime() : "", destination.stop_sequence, stopTime.stop_id);
-            }
+//            System.out.printf("  %d filtered transfers\n", filteredDestinations.size());
+//            for (TripAtStopTime destination : filteredDestinations) {
+//                System.out.printf("    %s %s %d %s\n", destination.tripDescriptor.getTripId(), destination.tripDescriptor.hasStartTime() ? destination.tripDescriptor.getStartTime() : "", destination.stop_sequence, stopTime.stop_id);
+//            }
         }
         return result;
     }
@@ -102,6 +107,37 @@ public class Trips {
             tripTransfers.put(new TripAtStopTime(feedKey, ptEdge.getAttrs().tripDescriptor, ptEdge.getAttrs().stop_sequence), transferTrips);
         }
         return reduceTripTransfers(tripTransfers, feed, tripDescriptor, feedKey);
+    }
+
+    public static Map<TripAtStopTime, Collection<TripAtStopTime>> findAllTripTransfers(GraphHopperGtfs graphHopperGtfs) {
+        Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
+        for (Map.Entry<String, GTFSFeed> e : graphHopperGtfs.getGtfsStorage().getGtfsFeeds().entrySet()) {
+            String feedKey = e.getKey();
+            GTFSFeed feed = e.getValue();
+            int total = feed.trips.size();
+            int i = 0;
+            for (Trip trip : feed.trips.values()) {
+                Collection<Frequency> frequencies = feed.getFrequencies(trip.trip_id);
+                List<GtfsRealtime.TripDescriptor> actualTrips = new ArrayList<>();
+                GtfsRealtime.TripDescriptor.Builder builder = GtfsRealtime.TripDescriptor.newBuilder().setTripId(trip.trip_id).setRouteId(trip.route_id);
+                if (frequencies.isEmpty()) {
+                    actualTrips.add(builder.build());
+                } else {
+                    for (Frequency frequency : frequencies) {
+                        for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
+                            actualTrips.add(builder.setStartTime(convertToGtfsTime(time)).build());
+                        }
+                    }
+                }
+                for (GtfsRealtime.TripDescriptor tripDescriptor : actualTrips) {
+                    Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = findReducedTripTransfers(feedKey, feed, tripDescriptor, graphHopperGtfs.getPtGraph(), graphHopperGtfs.getGtfsStorage());
+                    result.putAll(reducedTripTransfers);
+                }
+                System.out.printf("%d / %d trips processed\n", i, total);
+                i++;
+            }
+        }
+        return result;
     }
 
     public static class TripAtStopTime {

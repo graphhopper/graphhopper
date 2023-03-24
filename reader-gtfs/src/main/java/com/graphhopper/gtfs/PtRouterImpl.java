@@ -321,6 +321,24 @@ public final class PtRouterImpl implements PtRouter {
                     .orElse(Long.MAX_VALUE);
             router.setLimitTripTime(Math.max(0, limitTripTime - smallestStationLabelWalkTime));
             router.setLimitStreetTime(Math.max(0, limitStreetTime - smallestStationLabelWalkTime));
+            router.isAllowed = l -> {
+                if (l.edge.getType() == GtfsStorage.EdgeType.BOARD) {
+                    Label previousAlightLabel = findPreviousAlight(l);
+                    if (previousAlightLabel != null) {
+                        Trips.TripAtStopTime previousAlight = new Trips.TripAtStopTime(findStop(previousAlightLabel).feed_id, previousAlightLabel.edge.getTripDescriptor(), previousAlightLabel.edge.getStopSequence());
+                        Trips.TripAtStopTime boarding = new Trips.TripAtStopTime(findStop(l).feed_id, l.edge.getTripDescriptor(), l.edge.getStopSequence());
+                        if (!tripTransfers.containsKey(previousAlight)) {
+                            tripTransfers.putAll(Trips.findReducedTripTransfers(findStop(previousAlightLabel).feed_id, gtfsStorage.getGtfsFeeds().get(findStop(previousAlightLabel).feed_id), previousAlightLabel.edge.getTripDescriptor(), ptGraph, gtfsStorage));
+                        }
+                        Collection<Trips.TripAtStopTime> previousAlightTripTransfers = tripTransfers.get(previousAlight);
+                        if (!previousAlightTripTransfers.contains(boarding)) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            };
+
             final long smallestStationLabelWeight;
             if (!stationLabels.isEmpty()) {
                 smallestStationLabelWeight = stationRouter.weight(stationLabels.get(0));
@@ -392,29 +410,6 @@ public final class PtRouterImpl implements PtRouter {
 
             System.out.printf("Boardings pushed: %d\n", router.pushedBoardings.size());
             List<TripBoarding> pushedBoardings = router.pushedBoardings.stream().map(t -> new TripBoarding(findStop(t), t.edge.getTripDescriptor())).collect(Collectors.toList());
-            long tripBoardings = pushedBoardings.stream().distinct().count();
-            System.out.printf("Distinct trip boardings among boardings pushed: %d\n", tripBoardings);
-
-            int pushedTransfers = 0;
-            int pushedTransfersThatCouldHaveBeenFiltered = 0;
-            for (Label boardingLabel : router.pushedBoardings) {
-                Label previousAlightLabel = findPreviousAlight(boardingLabel);
-                if (previousAlightLabel != null) {
-                    pushedTransfers++;
-                    Trips.TripAtStopTime previousAlight = new Trips.TripAtStopTime(findStop(previousAlightLabel).feed_id, previousAlightLabel.edge.getTripDescriptor(), previousAlightLabel.edge.getStopSequence());
-                    Trips.TripAtStopTime boarding = new Trips.TripAtStopTime(findStop(boardingLabel).feed_id, boardingLabel.edge.getTripDescriptor(), boardingLabel.edge.getStopSequence());
-                    if (!tripTransfers.containsKey(previousAlight)) {
-                        tripTransfers.putAll(Trips.findReducedTripTransfers(findStop(previousAlightLabel).feed_id, gtfsStorage.getGtfsFeeds().get(findStop(previousAlightLabel).feed_id), previousAlightLabel.edge.getTripDescriptor(), ptGraph, gtfsStorage));
-                    }
-                    Collection<Trips.TripAtStopTime> previousAlightTripTransfers = tripTransfers.get(previousAlight);
-                    if (!previousAlightTripTransfers.contains(boarding)) {
-                        pushedTransfersThatCouldHaveBeenFiltered++;
-                    }
-                }
-            }
-            System.out.printf("Transfers pushed: %d\n", pushedTransfers);
-            System.out.printf("Transfers pushed that could have been filtered: %d\n", pushedTransfersThatCouldHaveBeenFiltered);
-
             List<PatternBoarding> patternBoardings = new ArrayList<>();
             for (TripBoarding pushedBoarding : pushedBoardings) {
                 PatternFinder.Pattern pattern = findPattern(pushedBoarding);
