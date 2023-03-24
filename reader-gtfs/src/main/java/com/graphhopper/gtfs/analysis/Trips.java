@@ -37,6 +37,10 @@ public class Trips {
             arrivalTimes.put(stopId, Math.min(arrivalTime, arrivalTimes.getOrDefault(stopId, Integer.MAX_VALUE)));
             TripAtStopTime origin = new TripAtStopTime(feedKey, tripDescriptor, stopTime.stop_sequence);
             PtGraph.PtEdge ptEdge = ptGraph.edge(alightEdgesForTrip[stopTime.stop_sequence]);
+            assert ptEdge.getAttrs().stop_sequence == stopTime.stop_sequence;
+            GtfsStorage.PlatformDescriptor platformForAlight = findStopIdForAlight(ptGraph, ptEdge);
+            assert platformForAlight.stop_id.equals(stopTime.stop_id);
+            assert findTimeForAlight(ptGraph, ptEdge) == arrivalTime;
             Collection<TripAtStopTime> destinations = listTransfers(ptGraph, ptEdge.getAdjNode());
             Collection<TripAtStopTime> filteredDestinations = new ArrayList<>();
             for (TripAtStopTime destination : destinations) {
@@ -73,6 +77,29 @@ public class Trips {
         }
         return result;
     }
+
+    private static GtfsStorage.PlatformDescriptor findStopIdForAlight(PtGraph ptGraph, PtGraph.PtEdge ptEdge) {
+        for (PtGraph.PtEdge edge : ptGraph.edgesAround(ptEdge.getAdjNode())) {
+            if (edge.getType() == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK) {
+                for (PtGraph.PtEdge ptEdge1 : ptGraph.edgesAround(edge.getAdjNode())) {
+                    if (ptEdge1.getType() == GtfsStorage.EdgeType.EXIT_PT) {
+                        return ptEdge1.getAttrs().platformDescriptor;
+                    }
+                }
+            }
+        }
+        throw new RuntimeException();
+    }
+
+    private static int findTimeForAlight(PtGraph ptGraph, PtGraph.PtEdge ptEdge) {
+        for (PtGraph.PtEdge edge : ptGraph.edgesAround(ptEdge.getAdjNode())) {
+            if (edge.getType() == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK) {
+                return edge.getTime();
+            }
+        }
+        throw new RuntimeException();
+    }
+
 
     public static ArrayList<TripAtStopTime> listTransfers(PtGraph ptGraph, int node) {
         ArrayList<TripAtStopTime> result = new ArrayList<>();
