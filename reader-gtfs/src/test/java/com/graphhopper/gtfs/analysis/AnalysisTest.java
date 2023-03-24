@@ -85,8 +85,7 @@ public class AnalysisTest {
         GTFSFeed gtfsFeed = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get("gtfs_1");
         PtGraph ptGraph = graphHopperGtfs.getPtGraph();
         GtfsStorage gtfsStorage = graphHopperGtfs.getGtfsStorage();
-        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = Trips.findTripTransfers("gtfs_1", gtfsFeed, origin.tripDescriptor, ptGraph, gtfsStorage);
-        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> reducedTripTransfers = Trips.reduceTripTransfers(tripTransfers, gtfsFeed, origin.tripDescriptor, "gtfs_1", gtfsStorage);
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> reducedTripTransfers = Trips.reduceTripTransfers(gtfsFeed, origin.tripDescriptor, "gtfs_1", ptGraph, gtfsStorage);
         Collection<Trips.TripAtStopTime> destinations = reducedTripTransfers.get(origin);
 
     }

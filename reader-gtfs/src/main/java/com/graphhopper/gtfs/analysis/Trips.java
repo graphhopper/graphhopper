@@ -24,7 +24,8 @@ import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 
 public class Trips {
 
-    public static Map<TripAtStopTime, Collection<TripAtStopTime>> reduceTripTransfers(Map<TripAtStopTime, Collection<TripAtStopTime>> tripTransfers, GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, String feedKey, GtfsStorage gtfsStorage) {
+    public static Map<TripAtStopTime, Collection<TripAtStopTime>> reduceTripTransfers(GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, String feedKey, PtGraph ptGraph, GtfsStorage gtfsStorage) {
+        int[] alightEdgesForTrip = RealtimeFeed.findAlightEdgesForTrip(gtfsStorage, feedKey, feed, RealtimeFeed.normalize(tripDescriptor));
         Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
         Iterable<StopTime> orderedStopTimesForTrip = feed.getOrderedStopTimesForTrip(tripDescriptor.getTripId());
         List<StopTime> stopTimesExceptFirst = StreamSupport.stream(orderedStopTimesForTrip.spliterator(), false).skip(1).collect(Collectors.toList());
@@ -35,7 +36,8 @@ public class Trips {
             int arrivalTime = stopTime.arrival_time + (tripDescriptor.hasStartTime() ? LocalTime.parse(tripDescriptor.getStartTime()).toSecondOfDay() : 0);
             arrivalTimes.put(stopId, Math.min(arrivalTime, arrivalTimes.getOrDefault(stopId, Integer.MAX_VALUE)));
             TripAtStopTime origin = new TripAtStopTime(feedKey, tripDescriptor, stopTime.stop_sequence);
-            Collection<TripAtStopTime> destinations = tripTransfers.get(origin);
+            PtGraph.PtEdge ptEdge = ptGraph.edge(alightEdgesForTrip[stopTime.stop_sequence]);
+            Collection<TripAtStopTime> destinations = listTransfers(ptGraph, ptEdge.getAdjNode());
             Collection<TripAtStopTime> filteredDestinations = new ArrayList<>();
             for (TripAtStopTime destination : destinations) {
                 boolean overnight = false;
@@ -107,21 +109,7 @@ public class Trips {
     }
 
     public static Map<TripAtStopTime, Collection<TripAtStopTime>> findReducedTripTransfers(String feedKey, GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, PtGraph ptGraph, GtfsStorage gtfsStorage) {
-        Map<TripAtStopTime, Collection<TripAtStopTime>> tripTransfers = findTripTransfers(feedKey, feed, tripDescriptor, ptGraph, gtfsStorage);
-        return reduceTripTransfers(tripTransfers, feed, tripDescriptor, feedKey, gtfsStorage);
-    }
-
-    public static Map<TripAtStopTime, Collection<TripAtStopTime>> findTripTransfers(String feedKey, GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, PtGraph ptGraph, GtfsStorage gtfsStorage) {
-        Map<TripAtStopTime, Collection<TripAtStopTime>> tripTransfers = new HashMap<>();
-        int[] alightEdgesForTrip = RealtimeFeed.findAlightEdgesForTrip(gtfsStorage, feedKey, feed, RealtimeFeed.normalize(tripDescriptor));
-        for (int edge : alightEdgesForTrip) {
-            if (edge == -1)
-                continue;
-            PtGraph.PtEdge ptEdge = ptGraph.edge(edge);
-            ArrayList<TripAtStopTime> transferTrips = listTransfers(ptGraph, ptEdge.getAdjNode());
-            tripTransfers.put(new TripAtStopTime(feedKey, ptEdge.getAttrs().tripDescriptor, ptEdge.getAttrs().stop_sequence), transferTrips);
-        }
-        return tripTransfers;
+        return reduceTripTransfers(feed, tripDescriptor, feedKey, ptGraph, gtfsStorage);
     }
 
     public static Map<TripAtStopTime, Collection<TripAtStopTime>> findAllTripTransfers(GraphHopperGtfs graphHopperGtfs) {
