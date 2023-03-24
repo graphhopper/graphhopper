@@ -25,16 +25,16 @@ import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 public class Trips {
 
     public static Map<TripAtStopTime, Collection<TripAtStopTime>> reduceTripTransfers(GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, String feedKey, PtGraph ptGraph, GtfsStorage gtfsStorage) {
-        int[] alightEdgesForOrigin = RealtimeFeed.findAlightEdgesForTrip(gtfsStorage, feedKey, feed, RealtimeFeed.normalize(tripDescriptor));
+        int[] alightEdgesForTrip = RealtimeFeed.findAlightEdgesForTrip(gtfsStorage, feedKey, feed, RealtimeFeed.normalize(tripDescriptor));
         Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
         ObjectIntHashMap<GtfsStorage.FeedIdWithStopId> arrivalTimes = new ObjectIntHashMap<>();
         int i = 0;
-        for (int originAlightEdge : alightEdgesForOrigin) {
-            if (originAlightEdge == -1)
+        for (int edge : alightEdgesForTrip) {
+            if (edge == -1)
                 continue;
             if (i++ == 0)
                 continue;
-            PtGraph.PtEdge ptEdge = ptGraph.edge(originAlightEdge);
+            PtGraph.PtEdge ptEdge = ptGraph.edge(edge);
             GtfsStorage.PlatformDescriptor platformForAlight = findStopIdForAlight(ptGraph, ptEdge);
             GtfsStorage.FeedIdWithStopId stopId = new GtfsStorage.FeedIdWithStopId(feedKey, platformForAlight.stop_id);
             int arrivalTime = findTimeForAlight(ptGraph, ptEdge);
@@ -46,22 +46,18 @@ public class Trips {
                 boolean overnight = false;
                 boolean keep = false;
                 GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(destination.feedId);
-                int[] alightEdgesForDestination = RealtimeFeed.findAlightEdgesForTrip(gtfsStorage, destination.feedId, destinationFeed, RealtimeFeed.normalize(destination.tripDescriptor));
-                for (int destinationAlightEdge : alightEdgesForDestination) {
-                    if (destinationAlightEdge == -1)
-                        continue;
-                    PtGraph.PtEdge ptEdge2 = ptGraph.edge(destinationAlightEdge);
-                    if (ptEdge2.getAttrs().stop_sequence == destination.stop_sequence) {
-                        int destinationArrivalTime = findTimeForAlight(ptGraph, ptEdge2);
+                for (StopTime destinationStopTime : destinationFeed.getOrderedStopTimesForTrip(destination.tripDescriptor.getTripId())) {
+                    if (destinationStopTime.stop_sequence == destination.stop_sequence) {
+                        int destinationArrivalTime = destinationStopTime.arrival_time + (destination.tripDescriptor.hasStartTime() ? LocalTime.parse(destination.tripDescriptor.getStartTime()).toSecondOfDay() : 0);
                         if (destinationArrivalTime < arrivalTime) {
                             overnight = true;
                         }
-                    } else if (ptEdge2.getAttrs().stop_sequence > destination.stop_sequence) {
-                        int destinationArrivalTime = findTimeForAlight(ptGraph, ptEdge2);
+                    } else if (destinationStopTime.stop_sequence > destination.stop_sequence) {
+                        int destinationArrivalTime = destinationStopTime.arrival_time + (destination.tripDescriptor.hasStartTime() ? LocalTime.parse(destination.tripDescriptor.getStartTime()).toSecondOfDay() : 0);
                         if (overnight) {
                             destinationArrivalTime += 24 * 60 * 60;
                         }
-                        GtfsStorage.FeedIdWithStopId destinationStopId = new GtfsStorage.FeedIdWithStopId(destination.feedId, findStopIdForAlight(ptGraph, ptEdge2).stop_id);
+                        GtfsStorage.FeedIdWithStopId destinationStopId = new GtfsStorage.FeedIdWithStopId(destination.feedId, destinationStopTime.stop_id);
                         int oldArrivalTime = arrivalTimes.getOrDefault(destinationStopId, Integer.MAX_VALUE);
                         keep = keep || destinationArrivalTime < oldArrivalTime;
                         arrivalTimes.put(destinationStopId, Math.min(oldArrivalTime, destinationArrivalTime));
