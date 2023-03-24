@@ -25,28 +25,27 @@ public class Trips {
         Iterable<StopTime> orderedStopTimesForTrip = feed.getOrderedStopTimesForTrip(tripDescriptor.getTripId());
         List<StopTime> stopTimesExceptFirst = StreamSupport.stream(orderedStopTimesForTrip.spliterator(), false).skip(1).collect(Collectors.toList());
         Collections.reverse(stopTimesExceptFirst);
-
         ObjectIntHashMap<GtfsStorage.FeedIdWithStopId> arrivalTimes = new ObjectIntHashMap<>();
         for (StopTime stopTime : stopTimesExceptFirst) {
             GtfsStorage.FeedIdWithStopId stopId = new GtfsStorage.FeedIdWithStopId(feedKey, stopTime.stop_id);
             int arrivalTime = stopTime.arrival_time + (tripDescriptor.hasStartTime() ? LocalTime.parse(tripDescriptor.getStartTime()).toSecondOfDay() : 0);
             arrivalTimes.put(stopId, Math.min(arrivalTime, arrivalTimes.getOrDefault(stopId, Integer.MAX_VALUE)));
             TripAtStopTime origin = new TripAtStopTime(feedKey, tripDescriptor, stopTime.stop_sequence);
-            System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopTime.stop_id);
             Collection<TripAtStopTime> destinations = tripTransfers.get(origin);
-            System.out.printf("  %d transfers\n", destinations.size());
-            for (TripAtStopTime destination : destinations) {
-                System.out.printf("    %s %s %d\n", destination.tripDescriptor.getTripId(), destination.tripDescriptor.hasStartTime() ? destination.tripDescriptor.getStartTime() : "", destination.stop_sequence);
-            }
-
             Collection<TripAtStopTime> filteredDestinations = new ArrayList<>();
             for (TripAtStopTime destination : destinations) {
+                boolean overnight = false;
                 boolean keep = false;
                 GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(destination.feedId);
                 for (StopTime destinationStopTime : destinationFeed.getOrderedStopTimesForTrip(destination.tripDescriptor.getTripId())) {
-                    if (destinationStopTime.stop_sequence > destination.stop_sequence) {
+                    if (destinationStopTime.stop_sequence == destination.stop_sequence) {
                         int destinationArrivalTime = destinationStopTime.arrival_time + (destination.tripDescriptor.hasStartTime() ? LocalTime.parse(destination.tripDescriptor.getStartTime()).toSecondOfDay() : 0);
                         if (destinationArrivalTime < arrivalTime) {
+                            overnight = true;
+                        }
+                    } else if (destinationStopTime.stop_sequence > destination.stop_sequence) {
+                        int destinationArrivalTime = destinationStopTime.arrival_time + (destination.tripDescriptor.hasStartTime() ? LocalTime.parse(destination.tripDescriptor.getStartTime()).toSecondOfDay() : 0);
+                        if (overnight) {
                             destinationArrivalTime += 24 * 60 * 60;
                         }
                         GtfsStorage.FeedIdWithStopId destinationStopId = new GtfsStorage.FeedIdWithStopId(destination.feedId, destinationStopTime.stop_id);
@@ -60,6 +59,7 @@ public class Trips {
                 }
             }
             result.put(origin, filteredDestinations);
+            System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopTime.stop_id);
             System.out.printf("  %d filtered transfers\n", filteredDestinations.size());
             for (TripAtStopTime destination : filteredDestinations) {
                 System.out.printf("    %s %s %d\n", destination.tripDescriptor.getTripId(), destination.tripDescriptor.hasStartTime() ? destination.tripDescriptor.getStartTime() : "", destination.stop_sequence);
