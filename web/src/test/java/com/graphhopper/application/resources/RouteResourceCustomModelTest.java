@@ -18,12 +18,15 @@
 
 package com.graphhopper.application.resources;
 
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
@@ -41,6 +44,9 @@ import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.Arrays;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
@@ -63,7 +69,7 @@ public class RouteResourceCustomModelTest {
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv,average_slope,max_slope").
-                putObject("custom_models.directory", "../custom_models").
+                putObject("custom_models.directory", "../custom_models/").
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Arrays.asList(
@@ -76,7 +82,7 @@ public class RouteResourceCustomModelTest {
                         new CustomProfile("bus").setVehicle("roads").putHint("custom_model_file", "bus.json"),
                         new CustomProfile("cargo_bike").setVehicle("bike").
                                 putHint("custom_model_file", "cargo_bike.json"),
-                        new CustomProfile("json_bike").setVehicle("bike").
+                        new CustomProfile("json_bike").setVehicle("roads").
                                 putHint("custom_model_file", "bike.json"),
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile("car_no_unclassified").setCustomModel(
@@ -219,14 +225,16 @@ public class RouteResourceCustomModelTest {
 
     @Test
     public void testJsonBike() {
-        String jsonQuery = "{" +
-                " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
-                " \"profile\": \"json_bike\"," +
-                " \"custom_model\": {}," +
-                " \"ch.disable\": true" +
-                "}";
+        String jsonQuery = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
+                " \"profile\": \"json_bike\", \"ch.disable\": true }";
         JsonNode path = getPath(jsonQuery);
         assertEquals(660, path.get("distance").asDouble(), 10);
+
+        // check reverse oneway is allowed for short distances
+        jsonQuery = "{\"points\": [[11.545768,50.020137], [11.545728,50.020115]]," +
+                " \"profile\": \"json_bike\", \"ch.disable\": true }";
+        path = getPath(jsonQuery);
+        assertEquals(4, path.get("distance").asDouble(), 1);
     }
 
     @Test

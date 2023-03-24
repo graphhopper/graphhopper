@@ -27,7 +27,6 @@ import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.application.util.TestUtils;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.json.Statement;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
@@ -46,6 +45,8 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.io.File;
 import java.util.*;
 
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.Instruction.FINISH;
 import static com.graphhopper.util.Instruction.REACHED_VIA;
 import static org.junit.jupiter.api.Assertions.*;
@@ -71,7 +72,7 @@ public class RouteResourceClientHCTest {
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
                         new Profile("car").setVehicle("car").setWeighting("fastest"),
-                        new Profile("bike").setVehicle("bike").setWeighting("fastest"),
+                        new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"),
                         new CustomProfile("my_custom_car").setCustomModel(new CustomModel()).setVehicle("car")
                 ))
                 .setCHProfiles(Arrays.asList(new CHProfile("car"), new CHProfile("bike")));
@@ -368,7 +369,7 @@ public class RouteResourceClientHCTest {
                 addPoint(new GHPoint(42.532022, 1.519504)).
                 setCustomModel(new CustomModel().setDistanceInfluence(70d)
                         // we reduce the speed in the long tunnel
-                        .addToSpeed(Statement.If("road_environment == TUNNEL", Statement.Op.MULTIPLY, "0.1"))).
+                        .addToSpeed(If("road_environment == TUNNEL", MULTIPLY, "0.1"))).
                 setProfile("my_custom_car").
                 putHint("ch.disable", true);
         GHResponse rsp = gh.route(req);
