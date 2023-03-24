@@ -25,6 +25,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
+import com.graphhopper.gtfs.analysis.Trips;
 import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.ev.Subnetwork;
@@ -61,6 +62,7 @@ public final class PtRouterImpl implements PtRouter {
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final WeightingFactory weightingFactory;
     private final Collection<PatternFinder.Pattern> patterns = new ArrayList<>();
+    private final Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers;
 
     @Inject
     public PtRouterImpl(GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
@@ -78,6 +80,8 @@ public final class PtRouterImpl implements PtRouter {
         for (GTFSFeed gtfsFeed : gtfsStorage.getGtfsFeeds().values()) {
             patterns.addAll(gtfsFeed.findPatterns().values());
         }
+
+        tripTransfers = new HashMap<>();
     }
 
     @Override
@@ -391,6 +395,26 @@ public final class PtRouterImpl implements PtRouter {
             long tripBoardings = pushedBoardings.stream().distinct().count();
             System.out.printf("Distinct trip boardings among boardings pushed: %d\n", tripBoardings);
 
+            int pushedTransfers = 0;
+            int pushedTransfersThatCouldHaveBeenFiltered = 0;
+            for (Label boardingLabel : router.pushedBoardings) {
+                Label previousAlightLabel = findPreviousAlight(boardingLabel);
+                if (previousAlightLabel != null) {
+                    pushedTransfers++;
+                    Trips.TripAtStopTime previousAlight = new Trips.TripAtStopTime(findStop(previousAlightLabel).feed_id, previousAlightLabel.edge.getTripDescriptor(), previousAlightLabel.edge.getStopSequence());
+                    Trips.TripAtStopTime boarding = new Trips.TripAtStopTime(findStop(boardingLabel).feed_id, boardingLabel.edge.getTripDescriptor(), boardingLabel.edge.getStopSequence());
+                    if (!tripTransfers.containsKey(previousAlight)) {
+                        tripTransfers.putAll(Trips.findReducedTripTransfers(findStop(previousAlightLabel).feed_id, gtfsStorage.getGtfsFeeds().get(findStop(previousAlightLabel).feed_id), previousAlightLabel.edge.getTripDescriptor(), ptGraph, gtfsStorage));
+                    }
+                    Collection<Trips.TripAtStopTime> previousAlightTripTransfers = tripTransfers.get(previousAlight);
+                    if (!previousAlightTripTransfers.contains(boarding)) {
+                        pushedTransfersThatCouldHaveBeenFiltered++;
+                    }
+                }
+            }
+            System.out.printf("Transfers pushed: %d\n", pushedTransfers);
+            System.out.printf("Transfers pushed that could have been filtered: %d\n", pushedTransfersThatCouldHaveBeenFiltered);
+
             List<PatternBoarding> patternBoardings = new ArrayList<>();
             for (TripBoarding pushedBoarding : pushedBoardings) {
                 PatternFinder.Pattern pattern = findPattern(pushedBoarding);
@@ -436,6 +460,15 @@ public final class PtRouterImpl implements PtRouter {
                 response.addError(new ConnectionNotFoundException("No route found", Collections.emptyMap()));
             }
             return paths;
+        }
+
+        private Label findPreviousAlight(Label t) {
+            while (t.parent != null) {
+                t = t.parent;
+                if (t.edge != null && t.edge.getType() == GtfsStorage.EdgeType.ALIGHT)
+                    return t;
+            }
+            return null;
         }
 
         private PatternFinder.Pattern findPattern(TripBoarding pushedBoarding) {

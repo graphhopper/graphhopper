@@ -27,7 +27,6 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.gtfs.GtfsStorage;
 import com.graphhopper.gtfs.PtGraph;
-import com.graphhopper.gtfs.RealtimeFeed;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -84,6 +83,7 @@ public class AnalysisTest {
     @Test
     public void testComputeTransfers() {
         for (Map.Entry<String, GTFSFeed> e : graphHopperGtfs.getGtfsStorage().getGtfsFeeds().entrySet()) {
+            String feedKey = e.getKey();
             GTFSFeed feed = e.getValue();
             for (Trip trip : feed.trips.values()) {
                 Collection<Frequency> frequencies = feed.getFrequencies(trip.trip_id);
@@ -99,16 +99,7 @@ public class AnalysisTest {
                     }
                 }
                 for (GtfsRealtime.TripDescriptor tripDescriptor : actualTrips) {
-                    Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = new HashMap<>();
-                    int[] alightEdgesForTrip = RealtimeFeed.findAlightEdgesForTrip(graphHopperGtfs.getGtfsStorage(), e.getKey(), e.getValue(), RealtimeFeed.normalize(tripDescriptor));
-                    for (int edge : alightEdgesForTrip) {
-                        if (edge == -1)
-                            continue;
-                        PtGraph.PtEdge ptEdge = graphHopperGtfs.getPtGraph().edge(edge);
-                        ArrayList<Trips.TripAtStopTime> transferTrips = Trips.listTransfers(graphHopperGtfs.getPtGraph(), ptEdge.getAdjNode());
-                        tripTransfers.put(new Trips.TripAtStopTime(e.getKey(), ptEdge.getAttrs().tripDescriptor, ptEdge.getAttrs().stop_sequence), transferTrips);
-                    }
-                    Trips.computeReducedTransfers(tripTransfers, e, feed, tripDescriptor);
+                    Trips.findReducedTripTransfers(feedKey, feed, tripDescriptor, graphHopperGtfs.getPtGraph(), graphHopperGtfs.getGtfsStorage());
                 }
             }
         }

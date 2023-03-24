@@ -6,6 +6,7 @@ import com.conveyal.gtfs.model.StopTime;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.GtfsStorage;
 import com.graphhopper.gtfs.PtGraph;
+import com.graphhopper.gtfs.RealtimeFeed;
 
 import java.time.LocalTime;
 import java.util.*;
@@ -14,17 +15,18 @@ import java.util.stream.StreamSupport;
 
 public class Trips {
 
-    public static void computeReducedTransfers(Map<TripAtStopTime, Collection<TripAtStopTime>> tripTransfers, Map.Entry<String, GTFSFeed> e, GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor) {
+    public static Map<TripAtStopTime, Collection<TripAtStopTime>> reduceTripTransfers(Map<TripAtStopTime, Collection<TripAtStopTime>> tripTransfers, GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, String feedKey) {
+        Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
         Iterable<StopTime> orderedStopTimesForTrip = feed.getOrderedStopTimesForTrip(tripDescriptor.getTripId());
         List<StopTime> stopTimesExceptFirst = StreamSupport.stream(orderedStopTimesForTrip.spliterator(), false).skip(1).collect(Collectors.toList());
         Collections.reverse(stopTimesExceptFirst);
 
         ObjectIntHashMap<GtfsStorage.FeedIdWithStopId> arrivalTimes = new ObjectIntHashMap<>();
         for (StopTime stopTime : stopTimesExceptFirst) {
-            GtfsStorage.FeedIdWithStopId stopId = new GtfsStorage.FeedIdWithStopId(e.getKey(), stopTime.stop_id);
+            GtfsStorage.FeedIdWithStopId stopId = new GtfsStorage.FeedIdWithStopId(feedKey, stopTime.stop_id);
             int arrivalTime = stopTime.arrival_time + (tripDescriptor.hasStartTime() ? LocalTime.parse(tripDescriptor.getStartTime()).toSecondOfDay() : 0);
             arrivalTimes.put(stopId, Math.min(arrivalTime, arrivalTimes.getOrDefault(stopId, Integer.MAX_VALUE)));
-            TripAtStopTime origin = new TripAtStopTime(e.getKey(), tripDescriptor, stopTime.stop_sequence);
+            TripAtStopTime origin = new TripAtStopTime(feedKey, tripDescriptor, stopTime.stop_sequence);
             System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopTime.stop_id);
             Collection<TripAtStopTime> destinations = tripTransfers.get(origin);
             System.out.printf("  %d transfers\n", destinations.size());
@@ -46,11 +48,13 @@ public class Trips {
                     filteredDestinations.add(destination);
                 }
             }
+            result.put(origin, filteredDestinations);
             System.out.printf("  %d filtered transfers\n", filteredDestinations.size());
             for (TripAtStopTime destination : filteredDestinations) {
                 System.out.printf("    %s %s %d %s\n", destination.tripDescriptor.getTripId(), destination.tripDescriptor.hasStartTime() ? destination.tripDescriptor.getStartTime() : "", destination.stop_sequence, stopTime.stop_id);
             }
         }
+        return result;
     }
 
     public static ArrayList<TripAtStopTime> listTransfers(PtGraph ptGraph, int node) {
@@ -85,6 +89,19 @@ public class Trips {
             }
         }
         throw new RuntimeException();
+    }
+
+    public static Map<TripAtStopTime, Collection<TripAtStopTime>> findReducedTripTransfers(String feedKey, GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, PtGraph ptGraph, GtfsStorage gtfsStorage) {
+        Map<TripAtStopTime, Collection<TripAtStopTime>> tripTransfers = new HashMap<>();
+        int[] alightEdgesForTrip = RealtimeFeed.findAlightEdgesForTrip(gtfsStorage, feedKey, feed, RealtimeFeed.normalize(tripDescriptor));
+        for (int edge : alightEdgesForTrip) {
+            if (edge == -1)
+                continue;
+            PtGraph.PtEdge ptEdge = ptGraph.edge(edge);
+            ArrayList<TripAtStopTime> transferTrips = listTransfers(ptGraph, ptEdge.getAdjNode());
+            tripTransfers.put(new TripAtStopTime(feedKey, ptEdge.getAttrs().tripDescriptor, ptEdge.getAttrs().stop_sequence), transferTrips);
+        }
+        return reduceTripTransfers(tripTransfers, feed, tripDescriptor, feedKey);
     }
 
     public static class TripAtStopTime {
