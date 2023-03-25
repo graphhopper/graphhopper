@@ -142,6 +142,8 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                 || way.hasTag("vehicle:forward", restrictedValues) && !way.hasTag("bicycle:backward", INTENDED)
                 || way.hasTag("bicycle:forward", restrictedValues)
                 || way.hasTag("bicycle:backward", restrictedValues);
+        
+        isOneway &= !way.hasTag("cycleway:both");
 
         if ((isOneway || roundaboutEnc.getBool(false, edgeId, edgeIntAccess))
                 && !way.hasTag("oneway:bicycle", "no")

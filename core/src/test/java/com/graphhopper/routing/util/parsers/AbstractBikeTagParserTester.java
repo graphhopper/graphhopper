@@ -645,6 +645,13 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("oneway", "yes");
         way.setTag("cycleway:left", "opposite_lane");
         assertAccess(way, true, true);
+
+        way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("cycleway:left:oneway", "-1");
+        way.setTag("cycleway:both","track");
+        assertAccess(way, true, true);
+
     }
 
     private void assertAccess(ReaderWay way, boolean fwd, boolean bwd) {
