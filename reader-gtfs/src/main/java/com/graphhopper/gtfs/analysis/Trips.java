@@ -2,6 +2,7 @@ package com.graphhopper.gtfs.analysis;
 
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.PatternFinder;
 import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
@@ -17,6 +18,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.LocalTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -39,11 +41,15 @@ public class Trips {
             PtGraph.PtEdge ptEdge = ptGraph.edge(alightEdgesForTrip[stopTime.stop_sequence]);
             Collection<TripAtStopTime> destinations = listTransfers(ptGraph, ptEdge.getAdjNode());
             Collection<TripAtStopTime> filteredDestinations = new ArrayList<>();
+            Set<String> seenPatterns = new HashSet<>();
             for (TripAtStopTime destination : destinations) {
                 boolean overnight = false;
                 boolean keep = false;
                 GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(destination.feedId);
-                for (StopTime destinationStopTime : destinationFeed.getOrderedStopTimesForTrip(destination.tripDescriptor.getTripId())) {
+                GTFSFeed.StopTimesForTripWithTripPatternKey stopTimesForTripWithTripPatternKey = destinationFeed.stopTimes.getUnchecked(destination.tripDescriptor.getTripId());
+                if (!seenPatterns.add(stopTimesForTripWithTripPatternKey.patternId))
+                    continue;
+                for (StopTime destinationStopTime : stopTimesForTripWithTripPatternKey.stopTimes) {
                     if (destinationStopTime.stop_sequence == destination.stop_sequence) {
                         int destinationArrivalTime = destinationStopTime.arrival_time + (destination.tripDescriptor.hasStartTime() ? LocalTime.parse(destination.tripDescriptor.getStartTime()).toSecondOfDay() : 0);
                         if (destinationArrivalTime < arrivalTime) {
@@ -112,19 +118,13 @@ public class Trips {
         return reduceTripTransfers(feed, tripDescriptor, feedKey, ptGraph, gtfsStorage);
     }
 
-    public static Map<TripAtStopTime, Collection<TripAtStopTime>> findAllTripTransfers(GraphHopperGtfs graphHopperGtfs) {
-        Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
-        findAllTripTransfersInto(graphHopperGtfs, result);
-        return result;
-    }
-
     public static void findAllTripTransfersInto(GraphHopperGtfs graphHopperGtfs, Map<TripAtStopTime, Collection<TripAtStopTime>> result) {
         for (Map.Entry<String, GTFSFeed> e : graphHopperGtfs.getGtfsStorage().getGtfsFeeds().entrySet()) {
             String feedKey = e.getKey();
             GTFSFeed feed = e.getValue();
             int total = feed.trips.size();
-            int i = 0;
-            for (Trip trip : feed.trips.values()) {
+            AtomicInteger i = new AtomicInteger();
+            feed.trips.values().parallelStream().forEach(trip -> {
                 Collection<Frequency> frequencies = feed.getFrequencies(trip.trip_id);
                 List<GtfsRealtime.TripDescriptor> actualTrips = new ArrayList<>();
                 GtfsRealtime.TripDescriptor.Builder builder = GtfsRealtime.TripDescriptor.newBuilder().setTripId(trip.trip_id).setRouteId(trip.route_id);
@@ -141,9 +141,8 @@ public class Trips {
                     Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = findReducedTripTransfers(feedKey, feed, tripDescriptor, graphHopperGtfs.getPtGraph(), graphHopperGtfs.getGtfsStorage());
                     result.putAll(reducedTripTransfers);
                 }
-                System.out.printf("%d / %d trips processed\n", i, total);
-                i++;
-            }
+                System.out.printf("%d / %d trips processed\n", i.incrementAndGet(), total);
+            });
         }
     }
 

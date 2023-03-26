@@ -30,6 +30,9 @@ import com.conveyal.gtfs.error.GTFSError;
 import com.conveyal.gtfs.error.GeneralError;
 import com.conveyal.gtfs.model.Calendar;
 import com.conveyal.gtfs.model.*;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateList;
@@ -98,6 +101,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     private GeometryFactory gf = new GeometryFactory();
 
     private boolean loaded = false;
+    private Map<PatternFinder.TripPatternKey, PatternFinder.Pattern> patterns;
 
     /**
      * The order in which we load the tables is important for two reasons.
@@ -173,6 +177,28 @@ public class GTFSFeed implements Cloneable, Closeable {
     public FeedInfo getFeedInfo () {
         return this.hasFeedInfo() ? this.feedInfo.values().iterator().next() : null;
     }
+
+
+    public class StopTimesForTripWithTripPatternKey {
+        public StopTimesForTripWithTripPatternKey(List<StopTime> stopTimes, String patternId) {
+            this.stopTimes = stopTimes;
+            this.patternId = patternId;
+        }
+
+        public List<StopTime> stopTimes;
+        public String patternId;
+    }
+
+    public LoadingCache<String, StopTimesForTripWithTripPatternKey> stopTimes = CacheBuilder.newBuilder().maximumSize(200000).build(new CacheLoader<String, StopTimesForTripWithTripPatternKey>() {
+        public StopTimesForTripWithTripPatternKey load(String key) {
+            PatternFinder.TripPatternKey tripPatternKey = new PatternFinder.TripPatternKey();
+            List<StopTime> orderedStopTimesForTrip = new ArrayList<>();
+            getOrderedStopTimesForTrip(key).forEach(orderedStopTimesForTrip::add);
+            orderedStopTimesForTrip.forEach(tripPatternKey::addStopTime);
+            PatternFinder.Pattern pattern = findPatterns().get(tripPatternKey);
+            return new StopTimesForTripWithTripPatternKey(orderedStopTimesForTrip, pattern.pattern_id);
+        }
+    });
 
     /**
      * For the given trip ID, fetch all the stop times in order of increasing stop_sequence.
@@ -490,14 +516,16 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
 
     public Map<PatternFinder.TripPatternKey, PatternFinder.Pattern> findPatterns () {
-        PatternFinder patternFinder = new PatternFinder();
-        // Iterate over trips and process each trip and its stop times.
-        for (Trip trip : this.trips.values()) {
-            Iterable<StopTime> orderedStopTimesForTrip = this.getOrderedStopTimesForTrip(trip.trip_id);
-            patternFinder.processTrip(trip, orderedStopTimesForTrip);
+        if (patterns == null) {
+            PatternFinder patternFinder = new PatternFinder();
+            // Iterate over trips and process each trip and its stop times.
+            for (Trip trip : this.trips.values()) {
+                Iterable<StopTime> orderedStopTimesForTrip = this.getOrderedStopTimesForTrip(trip.trip_id);
+                patternFinder.processTrip(trip, orderedStopTimesForTrip);
+            }
+            patterns = patternFinder.createPatternObjects();
         }
-        Map<PatternFinder.TripPatternKey, PatternFinder.Pattern> patternObjects = patternFinder.createPatternObjects(this.stops);
-        return patternObjects;
+        return patterns;
     }
 
 }

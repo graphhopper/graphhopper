@@ -30,21 +30,6 @@ public class PatternFinder {
 
     private int nTripsProcessed = 0;
 
-    /**
-     * Bin all trips by the sequence of stops they visit.
-     * @return A map from a list of stop IDs to a list of Trip IDs that visit those stops in that sequence.
-     */
-//    public void findPatterns(Feed feed) {
-//
-//        for (Trip trip : trips) {
-//        }
-//        feed.patterns.stream().forEach(p -> {
-//            feed.patterns.put(p.pattern_id, p);
-//            p.associatedTrips.stream().forEach(t -> feed.tripPatternMap.put(t, p.pattern_id));
-//        });
-//
-//    }
-
     public void processTrip(Trip trip, Iterable<StopTime> orderedStopTimes) {
         if (++nTripsProcessed % 100000 == 0) {
             LOG.info("trip {}", nTripsProcessed);
@@ -62,7 +47,7 @@ public class PatternFinder {
      * unique sequences of stops encountered. Returns map of patterns to their keys so that downstream functions can
      * make use of trip pattern keys for constructing pattern stops or other derivative objects.
      */
-    public Map<TripPatternKey, Pattern> createPatternObjects(Map<String, Stop> stopById) {
+    public Map<TripPatternKey, Pattern> createPatternObjects() {
         // Make pattern ID one-based to avoid any JS type confusion between an ID of zero vs. null value.
         int nextPatternId = 1;
         // Create an in-memory list of Patterns because we will later rename them before inserting them into storage.
@@ -86,19 +71,6 @@ public class PatternFinder {
         }
         LOG.info("Total patterns: {}", tripsForPattern.keySet().size());
         return patterns;
-    }
-
-    /**
-     * Holds information about all pattern names on a particular route,
-     * modeled on https://github.com/opentripplanner/OpenTripPlanner/blob/master/src/main/java/org/opentripplanner/routing/edgetype/TripPattern.java#L379
-     */
-    private static class PatternNamingInfo {
-        // These are all maps from ?
-        // FIXME For type safety and clarity maybe we should have a parameterized ID type, i.e. EntityId<Stop> stopId.
-        Multimap<String, Pattern> fromStops = HashMultimap.create();
-        Multimap<String, Pattern> toStops = HashMultimap.create();
-        Multimap<String, Pattern> vias = HashMultimap.create();
-        List<Pattern> patternsOnRoute = new ArrayList<>();
     }
 
     /**
@@ -184,9 +156,6 @@ public class PatternFinder {
          * @param patternGeometry
          */
         public Pattern (List<String> orderedStops, Collection<Trip> trips, LineString patternGeometry){
-
-            // Temporarily make a random ID for the pattern, which might be overwritten in a later step ?
-            this.pattern_id = UUID.randomUUID().toString();
 
             // Assign ordered list of stop IDs to be the key of this pattern.
             // FIXME what about pickup / dropoff type?
