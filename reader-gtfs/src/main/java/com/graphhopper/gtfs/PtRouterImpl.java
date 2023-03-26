@@ -40,8 +40,11 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
 
 import javax.inject.Inject;
+import java.io.File;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Predicate;
@@ -62,7 +65,9 @@ public final class PtRouterImpl implements PtRouter {
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final WeightingFactory weightingFactory;
     private final Collection<PatternFinder.Pattern> patterns = new ArrayList<>();
-    private final Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers;
+    DB wurst = DBMaker.newFileDB(new File("wurst")).transactionDisable().mmapFileEnable().readOnly().make();
+    private final Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = wurst.getHashMap("pups");
+    private Random random = new Random();
 
     @Inject
     public PtRouterImpl(GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
@@ -80,8 +85,6 @@ public final class PtRouterImpl implements PtRouter {
         for (GTFSFeed gtfsFeed : gtfsStorage.getGtfsFeeds().values()) {
             patterns.addAll(gtfsFeed.findPatterns().values());
         }
-
-        tripTransfers = new HashMap<>();
     }
 
     @Override
@@ -153,6 +156,7 @@ public final class PtRouterImpl implements PtRouter {
         private final Profile egressProfile;
         private final EdgeFilter egressSnapFilter;
         private final Weighting egressWeighting;
+        private boolean filter = random.nextBoolean();
 
         RequestHandler(Request request) {
             maxVisitedNodesForRequest = request.getMaxVisitedNodes();
@@ -179,6 +183,7 @@ public final class PtRouterImpl implements PtRouter {
             egressProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getEgressProfile())).findFirst().get();
             egressWeighting = weightingFactory.createWeighting(egressProfile, new PMap(), false);
             egressSnapFilter = new DefaultSnapFilter(egressWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
+            System.out.println(filter);
         }
 
         GHResponse route() {
@@ -322,17 +327,16 @@ public final class PtRouterImpl implements PtRouter {
             router.setLimitTripTime(Math.max(0, limitTripTime - smallestStationLabelWalkTime));
             router.setLimitStreetTime(Math.max(0, limitStreetTime - smallestStationLabelWalkTime));
             router.isAllowed = l -> {
-                if (l.edge.getType() == GtfsStorage.EdgeType.BOARD) {
-                    Label previousAlightLabel = findPreviousAlight(l);
-                    if (previousAlightLabel != null) {
-                        Trips.TripAtStopTime previousAlight = new Trips.TripAtStopTime(findStop(previousAlightLabel).feed_id, previousAlightLabel.edge.getTripDescriptor(), previousAlightLabel.edge.getStopSequence());
-                        Trips.TripAtStopTime boarding = new Trips.TripAtStopTime(findStop(l).feed_id, l.edge.getTripDescriptor(), l.edge.getStopSequence());
-                        if (!tripTransfers.containsKey(previousAlight)) {
-                            tripTransfers.putAll(Trips.findReducedTripTransfers(findStop(previousAlightLabel).feed_id, gtfsStorage.getGtfsFeeds().get(findStop(previousAlightLabel).feed_id), previousAlightLabel.edge.getTripDescriptor(), ptGraph, gtfsStorage));
-                        }
-                        Collection<Trips.TripAtStopTime> previousAlightTripTransfers = tripTransfers.get(previousAlight);
-                        if (!previousAlightTripTransfers.contains(boarding)) {
-                            return false;
+                if (filter) {
+                    if (l.edge.getType() == GtfsStorage.EdgeType.BOARD) {
+                        Label previousAlightLabel = findPreviousAlight(l);
+                        if (previousAlightLabel != null) {
+                            Trips.TripAtStopTime previousAlight = new Trips.TripAtStopTime(findStop(previousAlightLabel).feed_id, previousAlightLabel.edge.getTripDescriptor(), previousAlightLabel.edge.getStopSequence());
+                            Trips.TripAtStopTime boarding = new Trips.TripAtStopTime(findStop(l).feed_id, l.edge.getTripDescriptor(), l.edge.getStopSequence());
+                            Collection<Trips.TripAtStopTime> previousAlightTripTransfers = tripTransfers.get(previousAlight);
+                            if (!previousAlightTripTransfers.contains(boarding)) {
+                                return false;
+                            }
                         }
                     }
                 }
