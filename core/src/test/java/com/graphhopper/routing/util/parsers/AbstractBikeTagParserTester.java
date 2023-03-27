@@ -652,6 +652,12 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("cycleway:both","track");
         assertAccess(way, true, true);
 
+        way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway:both","no");
+        assertAccess(way, true, false);
+
     }
 
     private void assertAccess(ReaderWay way, boolean fwd, boolean bwd) {
