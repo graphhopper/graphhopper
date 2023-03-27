@@ -17,6 +17,8 @@
  */
 package com.graphhopper.gtfs;
 
+import com.carrotsearch.hppc.IntHashSet;
+
 import java.time.Instant;
 import java.util.*;
 
@@ -54,6 +56,8 @@ public class Label {
 
     final long residualDelay;
     final boolean impossible;
+
+    public final List<String> blockedPatterns = new ArrayList<>();
 
     public final Label parent;
 

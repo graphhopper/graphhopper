@@ -18,6 +18,7 @@
 
 package com.graphhopper.gtfs;
 
+import com.conveyal.gtfs.GTFSFeed;
 import com.google.common.collect.Iterators;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.routing.weighting.Weighting;
@@ -254,6 +255,11 @@ public final class GraphExplorer {
             label = new Label(label.currentTime + multiModalEdge.time, multiModalEdge, new Label.NodeId(e.getAdjNode(), -1), 0, null, 0, 0, 0, false, label);
         }
         return Label.getTransitions(label, false);
+    }
+
+    public String getPatternId(GtfsRealtime.TripDescriptor tripDescriptor) {
+        GTFSFeed.StopTimesForTripWithTripPatternKey s = gtfsStorage.getGtfsFeeds().get("gtfs_0").stopTimes.getUnchecked(tripDescriptor.getTripId());
+        return s.patternId;
     }
 
     public class MultiModalEdge {
