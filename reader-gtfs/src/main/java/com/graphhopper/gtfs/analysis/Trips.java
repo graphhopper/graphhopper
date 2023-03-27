@@ -2,8 +2,8 @@ package com.graphhopper.gtfs.analysis;
 
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.PatternFinder;
 import com.conveyal.gtfs.model.Frequency;
+import com.conveyal.gtfs.model.Service;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
@@ -16,6 +16,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,7 +27,7 @@ import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 
 public class Trips {
 
-    public static Map<TripAtStopTime, Collection<TripAtStopTime>> reduceTripTransfers(GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, String feedKey, PtGraph ptGraph, GtfsStorage gtfsStorage) {
+    public static Map<TripAtStopTime, Collection<TripAtStopTime>> reduceTripTransfers(GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, String feedKey, PtGraph ptGraph, GtfsStorage gtfsStorage, LocalDate trafficDay) {
         int[] alightEdgesForTrip = RealtimeFeed.findAlightEdgesForTrip(gtfsStorage, feedKey, feed, RealtimeFeed.normalize(tripDescriptor));
         Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
         Iterable<StopTime> orderedStopTimesForTrip = feed.getOrderedStopTimesForTrip(tripDescriptor.getTripId());
@@ -46,6 +47,10 @@ public class Trips {
                 boolean overnight = false;
                 boolean keep = false;
                 GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(destination.feedId);
+                Trip destinationTrip = destinationFeed.trips.get(destination.tripDescriptor.getTripId());
+                Service destinationService = destinationFeed.services.get(destinationTrip.service_id);
+                if (!destinationService.activeOn(trafficDay))
+                    continue;
                 GTFSFeed.StopTimesForTripWithTripPatternKey stopTimesForTripWithTripPatternKey = destinationFeed.stopTimes.getUnchecked(destination.tripDescriptor.getTripId());
                 if (!seenPatterns.add(stopTimesForTripWithTripPatternKey.patternId))
                     continue;
@@ -115,7 +120,7 @@ public class Trips {
     }
 
     public static Map<TripAtStopTime, Collection<TripAtStopTime>> findReducedTripTransfers(String feedKey, GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, PtGraph ptGraph, GtfsStorage gtfsStorage) {
-        return reduceTripTransfers(feed, tripDescriptor, feedKey, ptGraph, gtfsStorage);
+        return reduceTripTransfers(feed, tripDescriptor, feedKey, ptGraph, gtfsStorage, LocalDate.parse("2023-03-26"));
     }
 
     public static void findAllTripTransfersInto(GraphHopperGtfs graphHopperGtfs, Map<TripAtStopTime, Collection<TripAtStopTime>> result) {
@@ -146,11 +151,11 @@ public class Trips {
         }
     }
 
-    public static class TripAtStopTime implements Serializable {
+    public static class TripAtStopTime implements Serializable, Comparable<TripAtStopTime> {
 
         public String feedId;
-        GtfsRealtime.TripDescriptor tripDescriptor;
-        int stop_sequence;
+        public GtfsRealtime.TripDescriptor tripDescriptor;
+        public int stop_sequence;
 
         public TripAtStopTime(String feedId, GtfsRealtime.TripDescriptor tripDescriptor, int stop_sequence) {
             this.feedId = feedId;
@@ -191,6 +196,22 @@ public class Trips {
             aOutputStream.writeInt(stop_sequence);
         }
 
+        @Override
+        public String toString() {
+            return "TripAtStopTime{" +
+                    "feedId='" + feedId + '\'' +
+                    ", tripDescriptor=" + tripDescriptor +
+                    ", stop_sequence=" + stop_sequence +
+                    '}';
+        }
+
+        @Override
+        public int compareTo(TripAtStopTime o) {
+            return Comparator.<TripAtStopTime, String>comparing(t1 -> t1.feedId)
+                    .thenComparing(t1 -> t1.tripDescriptor.getTripId())
+                    .thenComparing(t1 -> t1.tripDescriptor.hasStartTime() ? t1.tripDescriptor.getStartTime() : "")
+                    .thenComparingInt(t -> t.stop_sequence).compare(this, o);
+        }
     }
 
 }

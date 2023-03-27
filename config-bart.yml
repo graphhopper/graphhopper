@@ -1,8 +1,8 @@
 # for the usage see the Readme.md
 graphhopper:
   datareader.file: /Users/michaelzilske/Downloads/norcal-latest.osm.pbf
-  #gtfs.file: /Users/michaelzilske/Downloads/bart_20230213-20230813_v4
-  gtfs.file: /Users/michaelzilske/GTFSTransitData_RG
+  gtfs.file: /Users/michaelzilske/Downloads/bart_20230213-20230813_v4
+  #gtfs.file: /Users/michaelzilske/GTFSTransitData_RG
 
 
   graph.location: graph-cache

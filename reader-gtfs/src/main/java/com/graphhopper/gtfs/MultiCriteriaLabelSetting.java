@@ -37,7 +37,7 @@ public class MultiCriteriaLabelSetting {
     private final Comparator<Label> queueComparator;
     private final List<Label> targetLabels;
     private long startTime;
-    private final Map<Label.NodeId, List<Label>> fromMap;
+    public final Map<Label.NodeId, List<Label>> fromMap;
     private final PriorityQueue<Label> fromHeap;
     private final long maxProfileDuration;
     private final boolean reverse;

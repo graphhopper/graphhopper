@@ -33,6 +33,7 @@ public class Trip {
 
     public static class Stop {
         public final String stop_id;
+        public final int stop_sequence;
         public final String stop_name;
         public final Point geometry;
 
@@ -46,8 +47,9 @@ public class Trip {
         public final Date predictedDepartureTime;
         public final boolean departureCancelled;
 
-        public Stop(String stop_id, String name, Point geometry, Date arrivalTime, Date plannedArrivalTime, Date predictedArrivalTime, boolean arrivalCancelled, Date departureTime, Date plannedDepartureTime, Date predictedDepartureTime, boolean departureCancelled) {
+        public Stop(String stop_id, int stop_sequence, String name, Point geometry, Date arrivalTime, Date plannedArrivalTime, Date predictedArrivalTime, boolean arrivalCancelled, Date departureTime, Date plannedDepartureTime, Date predictedDepartureTime, boolean departureCancelled) {
             this.stop_id = stop_id;
+            this.stop_sequence = stop_sequence;
             this.stop_name = name;
             this.geometry = geometry;
             this.arrivalTime = arrivalTime;
@@ -64,6 +66,7 @@ public class Trip {
         public String toString() {
             return "Stop{" +
                     "stop_id='" + stop_id + '\'' +
+                    ", stop_sequence=" + stop_sequence +
                     ", arrivalTime=" + arrivalTime +
                     ", departureTime=" + departureTime +
                     '}';

@@ -50,6 +50,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static com.graphhopper.gtfs.RealtimeFeed.normalize;
 import static java.util.Comparator.comparingLong;
 
 public final class PtRouterImpl implements PtRouter {
@@ -66,8 +67,7 @@ public final class PtRouterImpl implements PtRouter {
     private final WeightingFactory weightingFactory;
     private final Collection<PatternFinder.Pattern> patterns = new ArrayList<>();
     DB wurst = DBMaker.newFileDB(new File("wurst")).transactionDisable().mmapFileEnable().readOnly().make();
-    private final Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = wurst.getHashMap("pups");
-    private Random random = new Random();
+    private final Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = wurst.getTreeMap("pups");
 
     @Inject
     public PtRouterImpl(GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
@@ -156,7 +156,7 @@ public final class PtRouterImpl implements PtRouter {
         private final Profile egressProfile;
         private final EdgeFilter egressSnapFilter;
         private final Weighting egressWeighting;
-        private boolean filter = random.nextBoolean();
+        private boolean filter = false;
 
         RequestHandler(Request request) {
             maxVisitedNodesForRequest = request.getMaxVisitedNodes();
@@ -183,7 +183,7 @@ public final class PtRouterImpl implements PtRouter {
             egressProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getEgressProfile())).findFirst().get();
             egressWeighting = weightingFactory.createWeighting(egressProfile, new PMap(), false);
             egressSnapFilter = new DefaultSnapFilter(egressWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
-            System.out.println(filter);
+            filter = request.isFilter();
         }
 
         GHResponse route() {
@@ -412,6 +412,10 @@ public final class PtRouterImpl implements PtRouter {
                 }
             }
 
+//            router.fromMap.values().stream().flatMap(l -> l.stream()).map(l -> l.edge != null ? l.edge.getType() : null).collect(Collectors.groupingBy(t -> t != null ? t : "pups")).entrySet().forEach(e -> {
+//                System.out.printf("%s %d\n",e.getKey(),e.getValue().size());
+//            });
+//
             System.out.printf("Boardings pushed: %d\n", router.pushedBoardings.size());
             List<TripBoarding> pushedBoardings = router.pushedBoardings.stream().map(t -> new TripBoarding(findStop(t), t.edge.getTripDescriptor())).collect(Collectors.toList());
             List<PatternBoarding> patternBoardings = new ArrayList<>();

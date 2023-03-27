@@ -32,6 +32,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
+import java.time.LocalDate;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -81,11 +82,11 @@ public class AnalysisTest {
 
     @Test
     public void testComputeTransfers() {
-        Trips.TripAtStopTime origin = new Trips.TripAtStopTime("gtfs_1", GtfsRealtime.TripDescriptor.newBuilder().setTripId("MUSEUM1").setRouteId("COURT2MUSEUM").build(), 2);
-        GTFSFeed gtfsFeed = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get("gtfs_1");
         PtGraph ptGraph = graphHopperGtfs.getPtGraph();
         GtfsStorage gtfsStorage = graphHopperGtfs.getGtfsStorage();
-        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> reducedTripTransfers = Trips.reduceTripTransfers(gtfsFeed, origin.tripDescriptor, "gtfs_1", ptGraph, gtfsStorage);
+        Trips.TripAtStopTime origin = new Trips.TripAtStopTime("gtfs_1", GtfsRealtime.TripDescriptor.newBuilder().setTripId("MUSEUM1").setRouteId("COURT2MUSEUM").build(), 2);
+        GTFSFeed gtfsFeed = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get("gtfs_1");
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> reducedTripTransfers = Trips.reduceTripTransfers(gtfsFeed, origin.tripDescriptor, "gtfs_1", ptGraph, gtfsStorage, LocalDate.parse("2023-03-26"));
         Collection<Trips.TripAtStopTime> destinations = reducedTripTransfers.get(origin);
 
     }

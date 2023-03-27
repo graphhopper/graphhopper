@@ -24,8 +24,10 @@ public class AnalyzeTripTransfersCommand extends ConfiguredCommand<GraphHopperSe
         GraphHopperGtfs graphHopper = (GraphHopperGtfs) new GraphHopperManaged(configuration.getGraphHopperConfiguration()).getGraphHopper();
         graphHopper.importOrLoad();
         DB wurst = DBMaker.newFileDB(new File("wurst")).transactionDisable().mmapFileEnable().asyncWriteEnable().make();
-        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> map = wurst.getHashMap("pups");
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> map = wurst.getTreeMap("pups");
         Trips.findAllTripTransfersInto(graphHopper, map);
+        System.out.println(map.size());
         wurst.close();
+        graphHopper.close();
     }
 }

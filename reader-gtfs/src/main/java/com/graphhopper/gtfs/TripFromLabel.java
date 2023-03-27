@@ -233,7 +233,7 @@ class TripFromLabel {
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
                     Optional<Instant> updatedDeparture = getDepartureDelay(stopSequence).map(delay -> plannedDeparture.plus(delay, SECONDS));
                     Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)),
+                    stops.add(new Trip.Stop(stop.stop_id, stopTime.stop_sequence, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)),
                             null, null, null, isArrivalCancelled(stopSequence),
                             updatedDeparture.map(Date::from).orElse(Date.from(plannedDeparture)), Date.from(plannedDeparture),
                             updatedDeparture.map(Date::from).orElse(null), isDepartureCancelled(stopSequence)));
@@ -250,7 +250,7 @@ class TripFromLabel {
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
                     Optional<Instant> updatedDeparture = getDepartureDelay(stopTime.stop_sequence).map(delay -> plannedDeparture.plus(delay, SECONDS));
                     Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)),
+                    stops.add(new Trip.Stop(stop.stop_id, stopTime.stop_sequence, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)),
                             updatedArrival.map(Date::from).orElse(Date.from(arrivalTimeFromHopEdge)), Date.from(arrivalTimeFromHopEdge),
                             updatedArrival.map(Date::from).orElse(null), isArrivalCancelled(stopSequence),
                             updatedDeparture.map(Date::from).orElse(Date.from(plannedDeparture)), Date.from(plannedDeparture),
@@ -301,7 +301,7 @@ class TripFromLabel {
 
         void finish() {
             Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-            stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)),
+            stops.add(new Trip.Stop(stop.stop_id, stopTime.stop_sequence, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)),
                     updatedArrival.map(Date::from).orElse(Date.from(arrivalTimeFromHopEdge)), Date.from(arrivalTimeFromHopEdge),
                     updatedArrival.map(Date::from).orElse(null), isArrivalCancelled(stopSequence), null,
                     null, null, isDepartureCancelled(stopSequence)));

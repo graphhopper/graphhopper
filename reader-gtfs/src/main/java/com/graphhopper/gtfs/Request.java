@@ -202,4 +202,15 @@ public class Request {
     public void setEgressProfile(String egressProfile) {
         this.egressProfile = egressProfile;
     }
+
+    public boolean isFilter() {
+        return filter;
+    }
+
+    public void setFilter(boolean filter) {
+        this.filter = filter;
+    }
+
+    private boolean filter = false;
+
 }
