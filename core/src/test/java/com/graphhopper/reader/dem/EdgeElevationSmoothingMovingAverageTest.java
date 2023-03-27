@@ -127,6 +127,9 @@ public class EdgeElevationSmoothingMovingAverageTest {
 
     @Test
     public void testManyPoints() {
+        /**
+         * used to cross validate this implementation as it was ported from an internal kotlin prototype
+         */
         PointList pl = new PointList(27, true);
         pl.add(10.153564, 47.324976, 1209.5);
         pl.add(10.15365, 47.32499, 1209.3);
