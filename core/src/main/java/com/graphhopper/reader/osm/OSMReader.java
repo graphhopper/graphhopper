@@ -316,9 +316,9 @@ public class OSMReader {
             if (config.getElevationSmoothing().equals("ramer"))
                 EdgeElevationSmoothing.smoothRamer(pointList, config.getElevationSmoothingRamerMax());
             else if (config.getElevationSmoothing().equals("moving_average"))
-                EdgeElevationSmoothing.smoothMovingAverage(pointList);
-            else if (config.getElevationSmoothing().equals("moving_average_adaptive_window"))
-                EdgeElevationSmoothing.smoothMovingAverageAdaptiveWindow(pointList);
+                EdgeElevationSmoothing.smoothMovingAverage(pointList, config.getSmoothElevationAverageWindowSize());
+            else if (!config.getElevationSmoothing().isEmpty())
+                throw new AssertionError("Unsupported elevation smoothing algorithm: '"+config.getElevationSmoothing()+"'");
         }
 
         if (config.getMaxWayPointDistance() > 0 && pointList.size() > 2)

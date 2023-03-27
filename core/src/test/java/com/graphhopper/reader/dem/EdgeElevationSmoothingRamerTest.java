@@ -23,36 +23,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * @author Robin Boldt
+ * @author Peter Karich
  */
-public class EdgeElevationSmoothingTest {
-
-    @Test
-    public void interpolatesElevationOfPillarNodes() {
-
-        PointList pl1 = new PointList(3, true);
-        pl1.add(0, 0, 0);
-        pl1.add(0.0005, 0.0005, 100);
-        pl1.add(0.001, 0.001, 50);
-        EdgeElevationSmoothing.smoothMovingAverage(pl1);
-        assertEquals(3, pl1.size());
-        assertEquals(50, pl1.getEle(1), .1);
-
-        PointList pl2 = new PointList(3, true);
-        pl2.add(0.001, 0.001, 50);
-        pl2.add(0.0015, 0.0015, 160);
-        pl2.add(0.0016, 0.0015, 150);
-        pl2.add(0.0017, 0.0015, 220);
-        pl2.add(0.002, 0.002, 20);
-        EdgeElevationSmoothing.smoothMovingAverage(pl2);
-        assertEquals(5, pl2.size());
-        assertEquals(120, pl2.getEle(1), .1);
-        // This is not 120 anymore, as the point at index 1 was smoothed from 160=>120
-        assertEquals(112, pl2.getEle(2), .1);
-
-        assertEquals(50, pl2.getEle(0), .1);
-    }
-
+public class EdgeElevationSmoothingRamerTest {
     @Test
     public void smoothRamer() {
         PointList pl1 = new PointList(3, true);

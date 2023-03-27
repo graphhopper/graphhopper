@@ -5,149 +5,112 @@ import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.PointList;
 
 import java.util.HashMap;
-import java.util.Map;
 
 /**
- * The ElevationData is read from rectangular tiles. Especially when going along a cliff,
- * valley, or pass, it can happen that a small part of the road contains incorrect elevation data.
- * This is because the elevation data is coarse and sometimes contains errors.
+ * Elevation data is read from DEM tiles that have data points for rectangular tiles usually having an
+ * edge length of 30 or 90 meter. Elevation in between the middle points of those tiles will be
+ * interpolated and weighted by the distance from a node to adjacent tile centers.
+ * <p>
+ * Ways that go along cliffs or ridges are particularly affected by ups and downs that do not reflect
+ * the actual elevation but may be artifacts originated from very accurately mapping when elevation has
+ * a lower resolution.
  *
- * @author Robin Boldt
+ * @author Peter Karich
+ * @author Christoph Lingg
  */
 public class EdgeElevationSmoothing {
-
-    // If the point is farther then this, we stop averaging
-    private final static int MAX_SEARCH_DISTANCE = 150;
-
-    /**
-     * This method smooths the elevation data of a PointList by calculating the average elevation over
-     * multiple points of that PointList.
-     */
-    public static void smoothMovingAverage(PointList geometry) {
-        for (int i = 1; i < geometry.size() - 1; i++) {
-
-            int start = i;
-            for (int j = i - 1; j >= 0; j--) {
-                if (MAX_SEARCH_DISTANCE > DistancePlaneProjection.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
-                    start = j;
-                } else {
-                    break;
-                }
-            }
-
-            int end = i;
-            for (int j = i + 1; j < geometry.size(); j++) {
-                if (MAX_SEARCH_DISTANCE > DistancePlaneProjection.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
-                    // +1 because the end is exclusive
-                    end = j + 1;
-                } else {
-                    break;
-                }
-            }
-
-            // In this case we cannot find any points within the max search distance, so we simply skip this point
-            if (start == end)
-                continue;
-
-            double sum = 0;
-            for (int j = start; j < end; j++) {
-                // We skip points that are too far away, important for motorways
-                if (MAX_SEARCH_DISTANCE > DistancePlaneProjection.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
-                    sum += geometry.getEle(j);
-                }
-            }
-            double smoothed = sum / (end - start);
-            geometry.setElevation(i, smoothed);
+    public static void smoothMovingAverage(PointList geometry, double maxWindowSize) {
+        // calculate the distance between all points once here to avoid repeated calculation.
+        // for n nodes there are always n-1 edges
+        double[] distances = new double[geometry.size() - 1];
+        for (int i = 0; i <= geometry.size() - 2; i++) {
+            distances[i] = DistancePlaneProjection.DIST_PLANE.calcDist(
+                    geometry.getLat(i), geometry.getLon(i),
+                    geometry.getLat(i + 1), geometry.getLon(i + 1)
+            );
         }
-    }
 
-    /**
-     * This method smooths the elevation data of a PointList by calculating the average elevation over
-     * multiple points of that PointList.
-     */
-    public static void smoothMovingAverageAdaptiveWindow(PointList geometry) {
-        Map<Integer, Double> updatedElevations = new HashMap<>(geometry.size() - 2);
-        for (int i = 1; i < geometry.size() - 1; i++) {
-            // the max distance to consider from the geometry point i
-            // converts towards 0 when close to end or start points (tower nodes)
-            double maxSearchDistance = 75; // in meter TODO: extract constant and tune value
+
+        // map that will collect all smoothed elevation values, size is less by 2
+        // because elevation of start and end point (tower nodes) won't be touched
+        HashMap<Integer, Double> averagedElevations = new HashMap<>(geometry.size() - 2);
+
+        // iterate over every pillar node to smooth its elevation
+        // first and last points are left out as they are tower nodes
+        for (int i = 1; i <= geometry.size() - 2; i++) {
+            // first, determine the average window which could be smaller when close to pillar nodes
+            double searchDistance = maxWindowSize / 2.0;
 
             double distanceBack = 0.0;
             for (int j = i - 1; j >= 0; j--) {
-                double dist = DistancePlaneProjection.DIST_PLANE.calcDist(
-                        geometry.getLat(j), geometry.getLon(j),
-                        geometry.getLat(j + 1), geometry.getLon(j + 1)
-                );
-
-                distanceBack += dist;
-                if (distanceBack > maxSearchDistance) {
+                distanceBack += distances[j];
+                if (distanceBack > searchDistance) {
                     break;
                 }
             }
+
+            // update search distance if pillar node is close to START tower node
+            searchDistance = Math.min(searchDistance, distanceBack);
 
             double distanceForward = 0.0;
             for (int j = i; j < geometry.size() - 1; j++) {
-                double dist = DistancePlaneProjection.DIST_PLANE.calcDist(
-                        geometry.getLat(j), geometry.getLon(j),
-                        geometry.getLat(j + 1), geometry.getLon(j + 1)
-                );
-                distanceForward += dist;
-                if (distanceForward > maxSearchDistance) {
-                    // TODO: we could stop earlier if we also take a look at distanceBack,
-                    //  maybe not relevant for performance
+                distanceForward += distances[j];
+                if (distanceForward > searchDistance) {
                     break;
                 }
             }
 
-            double searchDistance = Math.min(
-                    Math.min(distanceBack, distanceForward),
-                    maxSearchDistance
-            );
+            // update search distance if pillar node is close to END tower node
+            searchDistance = Math.min(searchDistance, distanceForward);
 
+            // area under elevation curve
             double elevationArea = 0.0;
+
+            // first going again backwards
             distanceBack = 0.0;
             for (int j = i - 1; j >= 0; j--) {
-                double dist = DistancePlaneProjection.DIST_PLANE.calcDist(
-                        geometry.getLat(j), geometry.getLon(j),
-                        geometry.getLat(j + 1), geometry.getLon(j + 1)
-                );
-
+                double dist = distances[j];
                 double searchDistLeft = searchDistance - distanceBack;
                 distanceBack += dist;
-                if (searchDistance < dist) {
+                if (searchDistLeft < dist) {
+                    // node lies outside averaging window
                     double elevationDelta = geometry.getEle(j) - geometry.getEle(j + 1);
                     double elevationAtSearchDistance = geometry.getEle(j + 1) + searchDistLeft / dist * elevationDelta;
-                    elevationArea += searchDistLeft * (geometry.getEle(j + 1) + elevationAtSearchDistance) / 2;
+                    elevationArea += searchDistLeft * (geometry.getEle(j + 1) + elevationAtSearchDistance) / 2.0;
                     break;
                 } else {
                     elevationArea += dist * (geometry.getEle(j + 1) + geometry.getEle(j)) / 2.0;
                 }
             }
 
+            // now going forward
             distanceForward = 0.0;
             for (int j = i; j < geometry.size() - 1; j++) {
-                double dist = DistancePlaneProjection.DIST_PLANE.calcDist(
-                        geometry.getLat(j), geometry.getLon(j),
-                        geometry.getLat(j + 1), geometry.getLon(j + 1)
-                );
-
+                double dist = distances[j];
                 double searchDistLeft = searchDistance - distanceForward;
                 distanceForward += dist;
                 if (searchDistLeft < dist) {
                     double elevationDelta = geometry.getEle(j + 1) - geometry.getEle(j);
                     double elevationAtSearchDistance = geometry.getEle(j) + searchDistLeft / dist * elevationDelta;
-                    elevationArea += searchDistLeft * (geometry.getEle(j) + elevationAtSearchDistance) / 2;
+                    elevationArea += searchDistLeft * (geometry.getEle(j) + elevationAtSearchDistance) / 2.0;
                     break;
                 } else {
                     elevationArea += dist * (geometry.getEle(j + 1) + geometry.getEle(j)) / 2.0;
                 }
             }
 
-            double elevationAverage = elevationArea / (searchDistance * 2); // TODO: division by zero?
-            updatedElevations.put(i, elevationAverage);
+            if (searchDistance <= 0.0) {
+                // in some edge cases when first or last pillar nodes are duplicates of a tower node,
+                // search distance might be 0 and a division by zero occurs
+                continue;
+            }
+
+            double elevationAverage = elevationArea / (searchDistance * 2);
+            averagedElevations.put(i, elevationAverage);
         }
 
-        updatedElevations.forEach((index, ele) -> {
+        // after all pillar nodes got an averaged elevation, elevations are overwritten
+        averagedElevations.forEach((index, ele) -> {
             geometry.setElevation(index, ele);
         });
     }
