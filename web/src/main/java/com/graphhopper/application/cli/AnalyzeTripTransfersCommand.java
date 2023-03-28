@@ -23,6 +23,11 @@ public class AnalyzeTripTransfersCommand extends ConfiguredCommand<GraphHopperSe
     protected void run(Bootstrap<GraphHopperServerConfiguration> bootstrap, Namespace namespace, GraphHopperServerConfiguration configuration) throws Exception {
         GraphHopperGtfs graphHopper = (GraphHopperGtfs) new GraphHopperManaged(configuration.getGraphHopperConfiguration()).getGraphHopper();
         graphHopper.importOrLoad();
+        graphHopper.close();
+
+        graphHopper = (GraphHopperGtfs) new GraphHopperManaged(configuration.getGraphHopperConfiguration()).getGraphHopper();
+        graphHopper.importOrLoad();
+
         DB wurst = DBMaker.newFileDB(new File("wurst")).transactionDisable().mmapFileEnable().asyncWriteEnable().make();
         Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> map = wurst.getTreeMap("pups");
         Trips.findAllTripTransfersInto(graphHopper, map);
