@@ -377,6 +377,7 @@ public class GraphHopperStorage implements Graph, Closeable {
                     throw new IllegalStateException("Cannot load " + cg);
             });
 
+            // ORS-GH MOD START
             if (this.conditionalAccess != null) {
                 conditionalAccess.loadExisting();
             }
@@ -384,6 +385,7 @@ public class GraphHopperStorage implements Graph, Closeable {
             if (this.conditionalSpeed != null) {
                 conditionalSpeed.loadExisting();
             }
+            // ORS-GH MOD END
 
 // ORS-GH MOD START add ORS hook
             loadExistingORS();
