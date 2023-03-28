@@ -49,13 +49,18 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
         extracted(response);
         System.out.println(response.getHints().getInt("visited_nodes.sum", -1));
 
+        DB wurst = DBMaker.newFileDB(new File("wurst")).transactionDisable().mmapFileEnable().readOnly().make();
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = wurst.getTreeMap("pups");
+
+
+
+
+
 //        request.setFilter(true);
 //        response = ptRouter.route(request);
 //        extracted(response);
 //        System.out.println(response.getHints().getInt("visited_nodes.sum", -1));
 
-//        DB wurst = DBMaker.newFileDB(new File("wurst")).transactionDisable().mmapFileEnable().readOnly().make();
-//        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> map = wurst.getTreeMap("pups");
 //        Collection<Trips.TripAtStopTime> tr = map.get(new Trips.TripAtStopTime("gtfs_0", GtfsRealtime.TripDescriptor.newBuilder().setTripId("1376012").build(), 14));
 //        System.out.println(tr);
 //

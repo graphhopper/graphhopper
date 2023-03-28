@@ -81,11 +81,11 @@ public class Trips {
                 }
             }
             result.put(origin, filteredDestinations);
-            System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopTime.stop_id);
-            System.out.printf("  %d filtered transfers\n", filteredDestinations.size());
-            for (TripAtStopTime destination : filteredDestinations) {
-                System.out.printf("    %s %s %d\n", destination.tripDescriptor.getTripId(), destination.tripDescriptor.hasStartTime() ? destination.tripDescriptor.getStartTime() : "", destination.stop_sequence);
-            }
+//            System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopTime.stop_id);
+//            System.out.printf("  %d filtered transfers\n", filteredDestinations.size());
+//            for (TripAtStopTime destination : filteredDestinations) {
+//                System.out.printf("    %s %s %d\n", destination.tripDescriptor.getTripId(), destination.tripDescriptor.hasStartTime() ? destination.tripDescriptor.getStartTime() : "", destination.stop_sequence);
+//            }
         }
         return result;
     }

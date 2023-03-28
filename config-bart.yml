@@ -6,7 +6,7 @@ graphhopper:
 
 
   graph.location: graph-cache
-  graph.dataaccess.default_type: RAM_STORE
+  graph.dataaccess.default_type: MMAP_STORE
 
   #gtfs.free_walk: true
 

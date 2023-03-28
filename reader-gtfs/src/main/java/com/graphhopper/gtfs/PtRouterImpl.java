@@ -99,7 +99,6 @@ public final class PtRouterImpl implements PtRouter {
         private final EncodingManager encodingManager;
         private final LocationIndex locationIndex;
         private final GtfsStorage gtfsStorage;
-        private final Map<String, Transfers> transfers;
 
         public Factory(GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
             this.config = config;
@@ -108,16 +107,16 @@ public final class PtRouterImpl implements PtRouter {
             this.encodingManager = encodingManager;
             this.locationIndex = locationIndex;
             this.gtfsStorage = gtfsStorage;
-            this.transfers = new HashMap<>();
-            for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
-                this.transfers.put(entry.getKey(), new Transfers(entry.getValue()));
-            }
         }
 
         public PtRouter createWith(GtfsRealtime.FeedMessage realtimeFeed) {
             Map<String, GtfsRealtime.FeedMessage> realtimeFeeds = new HashMap<>();
             realtimeFeeds.put("gtfs_0", realtimeFeed);
-            return new PtRouterImpl(config, translationMap, baseGraph, encodingManager, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
+            Map<String, Transfers> transfers = new HashMap<>();
+            for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
+                transfers.put(entry.getKey(), new Transfers(entry.getValue()));
+            }
+            return new PtRouterImpl(config, translationMap, baseGraph, encodingManager, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(gtfsStorage, transfers, realtimeFeeds), new PathDetailsBuilderFactory());
         }
 
         public PtRouter createWithoutRealtimeFeed() {
