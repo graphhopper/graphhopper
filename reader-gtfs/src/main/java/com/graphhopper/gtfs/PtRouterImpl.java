@@ -82,9 +82,9 @@ public final class PtRouterImpl implements PtRouter {
         this.realtimeFeed = realtimeFeed;
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
 
-        for (GTFSFeed gtfsFeed : gtfsStorage.getGtfsFeeds().values()) {
-            patterns.addAll(gtfsFeed.findPatterns().values());
-        }
+//        for (GTFSFeed gtfsFeed : gtfsStorage.getGtfsFeeds().values()) {
+//            patterns.addAll(gtfsFeed.findPatterns().values());
+//        }
     }
 
     @Override
@@ -412,20 +412,21 @@ public final class PtRouterImpl implements PtRouter {
                 }
             }
 
-            router.fromMap.values().stream().flatMap(l -> l.stream()).map(l -> l.edge != null ? l.edge.getType() : null).collect(Collectors.groupingBy(t -> t != null ? t : "pups")).entrySet().forEach(e -> {
-                System.out.printf("%s %d\n",e.getKey(),e.getValue().size());
-            });
+//            router.fromMap.values().stream().flatMap(l -> l.stream()).map(l -> l.edge != null ? l.edge.getType() : null).collect(Collectors.groupingBy(t -> t != null ? t : "pups")).entrySet().forEach(e -> {
+//                System.out.printf("%s %d\n",e.getKey(),e.getValue().size());
+//            });
+//
+//            System.out.printf("Boardings pushed: %d\n", router.pushedBoardings.size());
+//            List<TripBoarding> pushedBoardings = router.pushedBoardings.stream().map(t -> new TripBoarding(findStop(t), t.edge.getTripDescriptor())).collect(Collectors.toList());
 
-            System.out.printf("Boardings pushed: %d\n", router.pushedBoardings.size());
-            List<TripBoarding> pushedBoardings = router.pushedBoardings.stream().map(t -> new TripBoarding(findStop(t), t.edge.getTripDescriptor())).collect(Collectors.toList());
-            List<PatternBoarding> patternBoardings = new ArrayList<>();
-            for (TripBoarding pushedBoarding : pushedBoardings) {
-                PatternFinder.Pattern pattern = findPattern(pushedBoarding);
-                assert pattern != null;
-                patternBoardings.add(new PatternBoarding(pushedBoarding.platformDescriptor, pattern.getId()));
-            }
-            long nPatternBoardings = patternBoardings.stream().distinct().count();
-            System.out.printf("Distinct pattern boardings among boardings pushed: %d\n", nPatternBoardings);
+//            List<PatternBoarding> patternBoardings = new ArrayList<>();
+//            for (TripBoarding pushedBoarding : pushedBoardings) {
+//                PatternFinder.Pattern pattern = findPattern(pushedBoarding);
+//                assert pattern != null;
+//                patternBoardings.add(new PatternBoarding(pushedBoarding.platformDescriptor, pattern.getId()));
+//            }
+//            long nPatternBoardings = patternBoardings.stream().distinct().count();
+//            System.out.printf("Distinct pattern boardings among boardings pushed: %d\n", nPatternBoardings);
 
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {
