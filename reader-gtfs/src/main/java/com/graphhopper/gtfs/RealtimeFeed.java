@@ -186,17 +186,24 @@ public class RealtimeFeed {
     public static int[] findBoardEdgesForTrip(GtfsStorage staticGtfs, String feedKey, GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor) {
         Trip trip = feed.trips.get(tripDescriptor.getTripId());
         StopTime next = feed.getOrderedStopTimesForTrip(trip.trip_id).iterator().next();
-        int station = staticGtfs.getStationNodes().get(new GtfsStorage.FeedIdWithStopId(feedKey, next.stop_id));
-        Optional<PtGraph.PtEdge> firstBoarding = StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(station).spliterator(), false)
-                .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(e.getAdjNode()).spliterator(), false))
-                .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(e.getAdjNode()).spliterator(), false))
-                .filter(e -> e.getType() == GtfsStorage.EdgeType.BOARD)
+        GtfsStorage.FeedIdWithStopId feedIdWithStopId = new GtfsStorage.FeedIdWithStopId(feedKey, next.stop_id);
+        Stream<PtGraph.PtEdge> boardings = findAllBoardings(staticGtfs, feedIdWithStopId);
+        Optional<PtGraph.PtEdge> firstBoarding = boardings
                 .filter(e -> normalize(e.getAttrs().tripDescriptor).equals(tripDescriptor))
                 .findAny();
         int n = firstBoarding.get().getAdjNode();
         Stream<PtGraph.PtEdge> boardEdges = evenIndexed(nodes(hopDwellChain(staticGtfs, n)))
                 .mapToObj(e -> boardForAdjNode(staticGtfs, e));
         return collectWithPadding(boardEdges);
+    }
+
+    public static Stream<PtGraph.PtEdge> findAllBoardings(GtfsStorage staticGtfs, GtfsStorage.FeedIdWithStopId feedIdWithStopId) {
+        int station = staticGtfs.getStationNodes().get(feedIdWithStopId);
+        Stream<PtGraph.PtEdge> boardings = StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(station).spliterator(), false)
+                .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(e.getAdjNode()).spliterator(), false))
+                .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(e.getAdjNode()).spliterator(), false))
+                .filter(e -> e.getType() == GtfsStorage.EdgeType.BOARD);
+        return boardings;
     }
 
     private static int[] collectWithPadding(Stream<PtGraph.PtEdge> boardEdges) {

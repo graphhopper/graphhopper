@@ -1,6 +1,9 @@
 package com.graphhopper.application.cli;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.Trip;
@@ -11,6 +14,7 @@ import com.graphhopper.http.GraphHopperManaged;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
+import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 
@@ -22,6 +26,7 @@ import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -48,12 +53,20 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
 
         extracted(response);
         System.out.println(response.getHints().getInt("visited_nodes.sum", -1));
-
         DB wurst = DBMaker.newFileDB(new File("wurst")).transactionDisable().mmapFileEnable().readOnly().make();
-        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = wurst.getTreeMap("pups");
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> pups = wurst.getTreeMap("pups");
+        LoadingCache<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = CacheBuilder.newBuilder().maximumSize(20000000).build(new CacheLoader<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>() {
+            public Collection<Trips.TripAtStopTime> load(Trips.TripAtStopTime key) {
+                return pups.get(key);
+            }
+        });
 
 
-
+        long start = System.currentTimeMillis();
+        TripBasedRouter tripBasedRouter = new TripBasedRouter(tripTransfers, graphHopper.getGtfsStorage());
+        tripBasedRouter.route(request);
+        long stop = System.currentTimeMillis();
+        System.out.printf("millis: %d\n", stop - start);
 
 
 //        request.setFilter(true);

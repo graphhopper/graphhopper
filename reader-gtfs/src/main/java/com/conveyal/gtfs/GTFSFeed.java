@@ -180,13 +180,13 @@ public class GTFSFeed implements Cloneable, Closeable {
 
 
     public class StopTimesForTripWithTripPatternKey {
-        public StopTimesForTripWithTripPatternKey(List<StopTime> stopTimes, String patternId) {
+        public StopTimesForTripWithTripPatternKey(List<StopTime> stopTimes, PatternFinder.Pattern pattern) {
             this.stopTimes = stopTimes;
-            this.patternId = patternId;
+            this.pattern = pattern;
         }
 
         public List<StopTime> stopTimes;
-        public String patternId;
+        public PatternFinder.Pattern pattern;
     }
 
     public LoadingCache<String, StopTimesForTripWithTripPatternKey> stopTimes = CacheBuilder.newBuilder().maximumSize(200000).build(new CacheLoader<String, StopTimesForTripWithTripPatternKey>() {
@@ -196,7 +196,7 @@ public class GTFSFeed implements Cloneable, Closeable {
             getOrderedStopTimesForTrip(key).forEach(orderedStopTimesForTrip::add);
             orderedStopTimesForTrip.forEach(tripPatternKey::addStopTime);
             PatternFinder.Pattern pattern = findPatterns().get(tripPatternKey);
-            return new StopTimesForTripWithTripPatternKey(orderedStopTimesForTrip, pattern.pattern_id);
+            return new StopTimesForTripWithTripPatternKey(orderedStopTimesForTrip, pattern);
         }
     });
 

@@ -57,7 +57,7 @@ public class Trips {
                 if (!destinationService.activeOn(trafficDay))
                     continue;
                 GTFSFeed.StopTimesForTripWithTripPatternKey stopTimesForTripWithTripPatternKey = destinationFeed.stopTimes.getUnchecked(destination.tripDescriptor.getTripId());
-                if (!seenPatterns.add(stopTimesForTripWithTripPatternKey.patternId))
+                if (!seenPatterns.add(stopTimesForTripWithTripPatternKey.pattern.pattern_id))
                     continue;
                 for (StopTime destinationStopTime : stopTimesForTripWithTripPatternKey.stopTimes) {
                     if (destinationStopTime.stop_sequence == destination.stop_sequence) {
