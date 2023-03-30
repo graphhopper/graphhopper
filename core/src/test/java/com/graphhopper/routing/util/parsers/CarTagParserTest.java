@@ -41,8 +41,8 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class CarTagParserTest {
     private final EncodingManager em = createEncodingManager("car");
-    final CarAccessParser parser = createParser(em, new PMap("block_fords=true"));
-    final CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em, new PMap("block_fords=true"));
+    final CarAccessParser parser = createParser(em);
+    final CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em, new PMap());
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
     private final DecimalEncodedValue avSpeedEnc = speedParser.getAverageSpeedEnc();
@@ -60,8 +60,8 @@ public class CarTagParserTest {
                 .build();
     }
 
-    CarAccessParser createParser(EncodedValueLookup lookup, PMap properties) {
-        CarAccessParser carTagParser = new CarAccessParser(lookup, properties);
+    CarAccessParser createParser(EncodedValueLookup lookup) {
+        CarAccessParser carTagParser = new CarAccessParser(lookup, new PMap());
         carTagParser.init(new DateRangeParser());
         return carTagParser;
     }
@@ -94,13 +94,6 @@ public class CarTagParserTest {
         way.setTag("highway", "service");
         way.setTag("access", "delivery");
         assertTrue(parser.getAccess(way).canSkip());
-
-        way.clearTags();
-        way.setTag("highway", "unclassified");
-        way.setTag("ford", "yes");
-        assertTrue(parser.getAccess(way).canSkip());
-        way.setTag("motorcar", "yes");
-        assertTrue(parser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("access", "yes");
@@ -183,16 +176,6 @@ public class CarTagParserTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "unclassified");
         way.setTag("ford", "yes");
-
-        // Node and way are initially blocking
-        assertTrue(parser.isBlockFords());
-        assertTrue(parser.getAccess(way).canSkip());
-        assertTrue(parser.isBarrier(node));
-
-        CarAccessParser tmpParser = new CarAccessParser(em, new PMap("block_fords=false"));
-        tmpParser.init(new DateRangeParser());
-        assertTrue(tmpParser.getAccess(way).isWay());
-        assertFalse(tmpParser.isBarrier(node));
     }
 
     @Test
@@ -244,28 +227,6 @@ public class CarTagParserTest {
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(accessEnc.getBool(true, edgeId, edgeIntAccess));
         way.clearTags();
-    }
-
-    @Test
-    public void shouldBlockPrivate() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "primary");
-        way.setTag("access", "private");
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
-        int edgeId = 0;
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertFalse(accessEnc.getBool(false, edgeId, edgeIntAccess));
-
-        final CarAccessParser parser = createParser(em, new PMap("block_private=false"));
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertTrue(parser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-
-        way.setTag("highway", "primary");
-        way.setTag("motor_vehicle", "permit"); // currently handled like "private", see #2712
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
-        parser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertTrue(parser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
     }
 
     @Test

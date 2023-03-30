@@ -132,13 +132,6 @@ public class FootTagParserTest {
         way.setTag("sidewalk", "none");
         assertTrue(accessParser.getAccess(way).canSkip());
 
-        way.clearTags();
-        way.setTag("highway", "tertiary");
-        way.setTag("sidewalk", "left");
-        way.setTag("access", "private");
-        assertTrue(accessParser.getAccess(way).canSkip());
-        way.clearTags();
-
         way.setTag("highway", "pedestrian");
         assertTrue(accessParser.getAccess(way).isWay());
 
@@ -217,10 +210,6 @@ public class FootTagParserTest {
         assertTrue(accessParser.getAccess(way).isFerry());
 
         way.setTag("foot", "no");
-        assertTrue(accessParser.getAccess(way).canSkip());
-
-        way.setTag("foot", "designated");
-        way.setTag("access", "private");
         assertTrue(accessParser.getAccess(way).canSkip());
 
         DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
@@ -496,15 +485,6 @@ public class FootTagParserTest {
         // barrier!
         node.setTag("foot", "no");
         assertTrue(accessParser.isBarrier(node));
-
-        FootAccessParser blockFordsParser = new FootAccessParser(encodingManager, new PMap("block_fords=true"));
-        node = new ReaderNode(1, -1, -1);
-        node.setTag("ford", "no");
-        assertFalse(blockFordsParser.isBarrier(node));
-
-        node = new ReaderNode(1, -1, -1);
-        node.setTag("ford", "yes");
-        assertTrue(blockFordsParser.isBarrier(node));
     }
 
     @Test

@@ -13,13 +13,12 @@ public class MotorcycleAccessParser extends CarAccessParser {
     public MotorcycleAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "motorcycle"))),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
-                properties,
                 TransportationMode.MOTORCYCLE);
     }
 
     public MotorcycleAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc,
-                                  PMap properties, TransportationMode transportationMode) {
-        super(accessEnc, roundaboutEnc, properties, transportationMode);
+                                  TransportationMode transportationMode) {
+        super(accessEnc, roundaboutEnc, transportationMode);
 
         barriers.remove("bus_trap");
         barriers.remove("sump_buster");
@@ -70,10 +69,6 @@ public class MotorcycleAccessParser extends CarAccessParser {
                     return WayAccess.WAY;
             }
         }
-
-        // do not drive street cars into fords
-        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
-            return WayAccess.CAN_SKIP;
 
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
             return WayAccess.CAN_SKIP;

@@ -10,6 +10,7 @@
 {
   "priority": [
     { "if": "true",  "multiply_by": "bike_priority" },
+    { "if": "road_access == PRIVATE",  "multiply_by": "0" },
     { "if": "!bike_access && !backward_bike_access",  "multiply_by": "0" },
     { "else_if": "!bike_access && backward_bike_access && !roundabout",  "multiply_by": "0.2" }
   ],

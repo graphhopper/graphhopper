@@ -9,6 +9,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.PMap;
 
 import java.util.*;
 
@@ -27,20 +28,25 @@ public abstract class AbstractAccessParser implements TagParser {
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
-    private boolean blockFords = true;
     private ConditionalTagInspector conditionalTagInspector;
 
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
         this.accessEnc = accessEnc;
 
+        intendedValues.add("private");
+        intendedValues.add("permit");
+
         restrictedValues.add("no");
         restrictedValues.add("restricted");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
-        restrictedValues.add("private");
-        restrictedValues.add("permit");
 
         restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
+    }
+
+    protected void check(PMap properties) {
+        if (properties.getBool("block_private", false) || properties.getBool("block_fords", false))
+            throw new IllegalArgumentException("block_private and block_fords are no longer supported. Use a custom model as described in #1234");
     }
 
     public AbstractAccessParser init(DateRangeParser dateRangeParser) {
@@ -51,25 +57,6 @@ public abstract class AbstractAccessParser implements TagParser {
 
     protected void setConditionalTagInspector(ConditionalTagInspector inspector) {
         conditionalTagInspector = inspector;
-    }
-
-    public boolean isBlockFords() {
-        return blockFords;
-    }
-
-    protected void blockFords(boolean blockFords) {
-        this.blockFords = blockFords;
-    }
-
-    protected void blockPrivate(boolean blockPrivate) {
-        if (!blockPrivate) {
-            if (!restrictedValues.remove("private"))
-                throw new IllegalStateException("no 'private' found in restrictedValues");
-            if (!restrictedValues.remove("permit"))
-                throw new IllegalStateException("no 'permit' found in restrictedValues");
-            intendedValues.add("private");
-            intendedValues.add("permit");
-        }
     }
 
     public ConditionalTagInspector getConditionalTagInspector() {
@@ -104,10 +91,7 @@ public abstract class AbstractAccessParser implements TagParser {
             return true;
         else if (intendedValues.contains(firstValue))
             return false;
-        else if (node.hasTag("barrier", barriers))
-            return true;
-        else
-            return blockFords && node.hasTag("ford", "yes");
+        return node.hasTag("barrier", barriers);
     }
 
     public final BooleanEncodedValue getAccessEnc() {

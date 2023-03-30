@@ -18,8 +18,7 @@ public class WheelchairAccessParser extends FootAccessParser {
 
     public WheelchairAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(lookup.getBooleanEncodedValue(properties.getString("name", VehicleAccess.key("wheelchair"))));
-        blockPrivate(properties.getBool("block_private", true));
-        blockFords(properties.getBool("block_fords", false));
+        check(properties);
     }
 
     protected WheelchairAccessParser(BooleanEncodedValue accessEnc) {

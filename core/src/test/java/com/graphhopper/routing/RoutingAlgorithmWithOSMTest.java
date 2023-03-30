@@ -426,15 +426,16 @@ public class RoutingAlgorithmWithOSMTest {
         // hard to select between secondary and primary (both are AVOID for mtb)
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1459, 88));
 
-        GraphHopper hopper = createHopper(MONACO, new CustomProfile("mtb").setCustomModel(new CustomModel()).setVehicle("mtb"));
+        Profile profile = new CustomProfile("mtb").
+                setCustomModel(new CustomModel().addToPriority(If("road_access == PRIVATE", MULTIPLY, "0"))).
+                setVehicle("mtb");
+        GraphHopper hopper = createHopper(MONACO, profile);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
 
         Helper.removeDir(new File(GH_LOCATION));
 
-        hopper = createHopper(MONACO,
-                new CustomProfile("mtb").setCustomModel(new CustomModel()).setVehicle("mtb"),
-                new Profile("racingbike").setVehicle("racingbike").setWeighting("fastest"));
+        hopper = createHopper(MONACO, profile, new CustomProfile("racingbike").setCustomModel(new CustomModel()).setVehicle("racingbike"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -447,16 +448,16 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2568, 135));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1490, 84));
 
-        GraphHopper hopper = createHopper(MONACO, new CustomProfile("racingbike").
-                setCustomModel(new CustomModel()).setVehicle("racingbike"));
+        Profile profile = new CustomProfile("racingbike").
+                setCustomModel(new CustomModel().addToPriority(If("road_access == PRIVATE", MULTIPLY, "0"))).
+                setVehicle("racingbike");
+        GraphHopper hopper = createHopper(MONACO, profile);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
 
         Helper.removeDir(new File(GH_LOCATION));
 
-        hopper = createHopper(MONACO, new CustomProfile("racingbike").setCustomModel(new CustomModel()).setVehicle("racingbike"),
-                new Profile("bike").setVehicle("bike").setWeighting("fastest")
-        );
+        hopper = createHopper(MONACO, profile, new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
