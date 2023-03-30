@@ -18,8 +18,8 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
@@ -69,7 +69,7 @@ public class OSMRoadAccessParser implements TagParser {
         if (tagValue != null) {
             String[] complex = tagValue.split(";");
             for (String simple : complex) {
-                tmpAccessValue = RoadAccess.find(simple);
+                tmpAccessValue = simple.equals("permit") ? RoadAccess.PRIVATE : RoadAccess.find(simple);
                 if (tmpAccessValue != null && tmpAccessValue.ordinal() > accessValue.ordinal()) {
                     accessValue = tmpAccessValue;
                 }
