@@ -46,7 +46,7 @@ public abstract class AbstractAccessParser implements TagParser {
 
     protected void check(PMap properties) {
         if (properties.getBool("block_private", false) || properties.getBool("block_fords", false))
-            throw new IllegalArgumentException("block_private and block_fords are no longer supported. Use a custom model as described in #1234");
+            throw new IllegalArgumentException("block_private and block_fords are no longer supported. Use a custom model as described in #2780");
     }
 
     public AbstractAccessParser init(DateRangeParser dateRangeParser) {
