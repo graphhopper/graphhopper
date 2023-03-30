@@ -107,35 +107,17 @@ public class RoutingAlgorithmWithOSMTest {
     }
 
     @Test
-    public void testMonacoMotorcycle() {
-        List<Query> queries = new ArrayList<>();
-        queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2682, 119));
-        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3728, 170));
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 3156, 165));
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
-        queries.add(new Query(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
-        queries.add(new Query(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
-        GraphHopper hopper = createHopper(MONACO,
-                new Profile("motorcycle").setVehicle("motorcycle").setWeighting("fastest"));
-        hopper.setElevationProvider(new SRTMProvider(DIR));
-        hopper.importOrLoad();
-        checkQueries(hopper, queries);
-    }
-
-    @Test
     public void testMonacoMotorcycleCurvature() {
         List<Query> queries = new ArrayList<>();
         queries.add(new Query(43.730729, 7.42135, 43.727697, 7.419199, 2675, 117));
         queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3727, 170));
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 3157, 165));
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
-        queries.add(new Query(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.4277, 2769, 167));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 2373, 137));
+        queries.add(new Query(43.730949, 7.412338, 43.739643, 7.424542, 2203, 116));
         queries.add(new Query(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
-        CustomModel model = new CustomModel().setDistanceInfluence(70d).addToPriority(If("true", MULTIPLY, "curvature"));
-
-        GraphHopper hopper = createHopper(MONACO, new CustomProfile("motorcycle").setCustomModel(model).
-                setVehicle("motorcycle"));
-        hopper.setEncodedValuesString("curvature");
+        CustomModel model = getCustomModel("motorcycle.json");
+        GraphHopper hopper = createHopper(MONACO, new CustomProfile("car").setCustomModel(model).setVehicle("car"));
+        hopper.setEncodedValuesString("curvature,track_type,surface");
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);

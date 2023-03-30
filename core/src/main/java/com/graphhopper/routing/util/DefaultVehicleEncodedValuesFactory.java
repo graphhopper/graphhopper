@@ -51,11 +51,11 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
         if (name.equals(FOOT))
             return VehicleEncodedValues.foot(configuration);
 
-        if (name.equals(HIKE))
+        if (name.equals("hike"))
             throw new IllegalArgumentException("Instead of hike use the foot vehicle and a custom model, see custom_models/hike.json and #2759");
 
-        if (name.equals(MOTORCYCLE))
-            return VehicleEncodedValues.motorcycle(configuration);
+        if (name.equals("motorcycle"))
+            throw new IllegalArgumentException("Instead of motorcycle use the car vehicle and a custom model, see custom_models/motorcycle.json and #1234");
 
         if (name.equals(WHEELCHAIR))
             return VehicleEncodedValues.wheelchair(configuration);
