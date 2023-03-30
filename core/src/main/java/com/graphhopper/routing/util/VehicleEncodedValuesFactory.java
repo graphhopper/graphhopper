@@ -29,7 +29,6 @@ public interface VehicleEncodedValuesFactory {
     String RACINGBIKE = "racingbike";
     String MOUNTAINBIKE = "mtb";
     String FOOT = "foot";
-    String MOTORCYCLE = "motorcycle";
     String WHEELCHAIR = "wheelchair";
 
     VehicleEncodedValues createVehicleEncodedValues(String name, PMap configuration);

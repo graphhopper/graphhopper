@@ -100,7 +100,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
             return WayAccess.CAN_SKIP;
 
-        // multiple restrictions needs special handling, see also motorcycle
+        // multiple restrictions needs special handling
         boolean permittedWayConditionallyRestricted = getConditionalTagInspector().isPermittedWayConditionallyRestricted(way);
         boolean restrictedWayConditionallyPermitted = getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
         if (!firstValue.isEmpty()) {
