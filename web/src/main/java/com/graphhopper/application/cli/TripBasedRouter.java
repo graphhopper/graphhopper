@@ -96,22 +96,13 @@ public class TripBasedRouter {
         for (EnqueuedTripSegment enqueuedTripSegment : queue0) {
             Trips.TripAtStopTime tripAtStopTime = enqueuedTripSegment.tripAtStopTime;
             Iterator<StopTime> iterator = gtfsFeed.stopTimes.getUnchecked(tripAtStopTime.tripDescriptor.getTripId()).stopTimes.iterator();
-            boolean nextDay = false;
             while (iterator.hasNext()) {
                 StopTime stopTime = iterator.next();
-                if (stopTime.stop_sequence == tripAtStopTime.stop_sequence) {
-                    if (stopTime.departure_time < earliestDepartureTime.toLocalTime().toSecondOfDay())
-                        nextDay = true;
-                } else if (stopTime.stop_sequence > tripAtStopTime.stop_sequence && stopTime.stop_sequence < enqueuedTripSegment.toStopSequence && stopTime.arrival_time < earliestArrivalTime) {
+                if (stopTime.stop_sequence > tripAtStopTime.stop_sequence && stopTime.stop_sequence < enqueuedTripSegment.toStopSequence && stopTime.arrival_time < earliestArrivalTime) {
                     Trips.TripAtStopTime t = new Trips.TripAtStopTime("gtfs_0", tripAtStopTime.tripDescriptor, stopTime.stop_sequence);
                     if (destination.stopId.equals(stopTime.stop_id)) {
-                        int arrivalTime = stopTime.arrival_time;
-                        if (nextDay)
-                            arrivalTime += 60 * 60 * 24;
-                        if (arrivalTime < earliestArrivalTime) {
-                            earliestArrivalTime = arrivalTime;
-                            System.out.println(LocalTime.ofSecondOfDay(arrivalTime));
-                        }
+                        earliestArrivalTime = stopTime.arrival_time;
+                        System.out.printf("%s+%d\n", LocalTime.ofSecondOfDay(stopTime.arrival_time % (60 * 60 * 24)), stopTime.arrival_time / (60 * 60 * 24));
                     }
                     Collection<Trips.TripAtStopTime> transfers = null;
                     try {
@@ -122,7 +113,13 @@ public class TripBasedRouter {
                     if (transfers == null)
                         continue; // FIXME: overnight stop bug
                     for (Trips.TripAtStopTime transfer : transfers) {
-                        enqueue(queue1, transfer, enqueuedTripSegment, gtfsFeed, nextDay ? 1 : 0);
+                        GTFSFeed.StopTimesForTripWithTripPatternKey stopTimes = gtfsFeed.stopTimes.getUnchecked(transfer.tripDescriptor.getTripId());
+                        StopTime transferStopTime = stopTimes.stopTimes.stream().filter(s -> s.stop_sequence == transfer.stop_sequence).findFirst().get();
+                        if (transferStopTime.departure_time < stopTime.arrival_time) {
+                            enqueue(queue1, transfer, enqueuedTripSegment, gtfsFeed, 1);
+                        } else {
+                            enqueue(queue1, transfer, enqueuedTripSegment, gtfsFeed, 0);
+                        }
                     }
                 }
             }
@@ -138,16 +135,13 @@ public class TripBasedRouter {
         if (transfer.stop_sequence < thisTripDoneFromIndex) {
             queue1.add(new EnqueuedTripSegment(transfer, thisTripDoneFromIndex, plusDays, parent));
             GTFSFeed.StopTimesForTripWithTripPatternKey stopTimes = gtfsFeed.stopTimes.getUnchecked(tripId);
-            for (String otherTrip : stopTimes.pattern.associatedTrips) {
+            for (String otherTrip : stopTimes.pattern.trips) {
                 GTFSFeed.StopTimesForTripWithTripPatternKey otherStopTimes = gtfsFeed.stopTimes.getUnchecked(otherTrip);
+                // TODO: Instead just sort them by departure time and put those that come after myself
                 int departureTime = stopTimes.stopTimes.get(0).departure_time;
-                if (departureTime < earliestDepartureTime.toLocalTime().toSecondOfDay())
-                    departureTime += 60 * 60 * 24;
                 int otherDepartureTime = otherStopTimes.stopTimes.get(0).departure_time;
-                if (otherDepartureTime < earliestDepartureTime.toLocalTime().toSecondOfDay())
-                    otherDepartureTime += 60 * 60 * 24;
                 if (otherDepartureTime >= departureTime) {
-                    tripDoneFromIndex.put(otherTrip, Math.min(thisTripDoneFromIndex, transfer.stop_sequence));
+                    tripDoneFromIndex.put(otherTrip, transfer.stop_sequence);
                 }
             }
         }

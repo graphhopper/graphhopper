@@ -193,7 +193,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         public StopTimesForTripWithTripPatternKey load(String key) {
             PatternFinder.TripPatternKey tripPatternKey = new PatternFinder.TripPatternKey();
             List<StopTime> orderedStopTimesForTrip = new ArrayList<>();
-            getOrderedStopTimesForTrip(key).forEach(orderedStopTimesForTrip::add);
+            getInterpolatedStopTimesForTrip(key).forEach(orderedStopTimesForTrip::add);
             orderedStopTimesForTrip.forEach(tripPatternKey::addStopTime);
             PatternFinder.Pattern pattern = findPatterns().get(tripPatternKey);
             return new StopTimesForTripWithTripPatternKey(orderedStopTimesForTrip, pattern);

@@ -44,15 +44,6 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
         PtRouterImpl.Factory factory = new PtRouterImpl.Factory(configuration.getGraphHopperConfiguration(), graphHopper.getTranslationMap(), graphHopper.getBaseGraph(), graphHopper.getEncodingManager(), graphHopper.getLocationIndex(), graphHopper.getGtfsStorage());
         PtRouter ptRouter = factory.createWithoutRealtimeFeed();
 
-        Request request = new Request(Arrays.asList(
-                new GHStationLocation("SFIA"),
-                new GHStationLocation("OAKL")), ZonedDateTime.parse("2023-03-26T18:30:00-07:00").toInstant());
-        request.setIgnoreTransfers(true);
-        request.setLimitStreetTime(Duration.ofMinutes(0));
-        GHResponse response = ptRouter.route(request);
-
-        extracted(response);
-        System.out.println(response.getHints().getInt("visited_nodes.sum", -1));
         DB wurst = DBMaker.newFileDB(new File("wurst")).transactionDisable().mmapFileEnable().readOnly().make();
         Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> pups = wurst.getTreeMap("pups");
         LoadingCache<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = CacheBuilder.newBuilder().maximumSize(20000000).build(new CacheLoader<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>() {
@@ -61,13 +52,8 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
             }
         });
 
-
-        long start = System.currentTimeMillis();
-        TripBasedRouter tripBasedRouter = new TripBasedRouter(tripTransfers, graphHopper.getGtfsStorage());
-        tripBasedRouter.route(request);
-        long stop = System.currentTimeMillis();
-        System.out.printf("millis: %d\n", stop - start);
-
+        extracted(graphHopper, ptRouter, tripTransfers, "SFIA", "OAKL", "2023-03-26T08:00:00-07:00");
+        extracted(graphHopper, ptRouter, tripTransfers, "SFIA", "OAKL", "2023-03-26T18:30:00-07:00");
 
 //        request.setFilter(true);
 //        response = ptRouter.route(request);
@@ -96,6 +82,25 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
 
 
         graphHopper.close();
+    }
+
+    private static void extracted(GraphHopperGtfs graphHopper, PtRouter ptRouter, LoadingCache<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers, String origin, String destination, String time) {
+        Request request = new Request(Arrays.asList(
+                new GHStationLocation(origin),
+                new GHStationLocation(destination)), ZonedDateTime.parse(time).toInstant());
+        request.setIgnoreTransfers(true);
+        request.setLimitStreetTime(Duration.ofMinutes(0));
+        GHResponse response = ptRouter.route(request);
+
+        extracted(response);
+        System.out.println(response.getHints().getInt("visited_nodes.sum", -1));
+
+
+        long start = System.currentTimeMillis();
+        TripBasedRouter tripBasedRouter = new TripBasedRouter(tripTransfers, graphHopper.getGtfsStorage());
+        tripBasedRouter.route(request);
+        long stop = System.currentTimeMillis();
+        System.out.printf("millis: %d\n", stop - start);
     }
 
     private static void extracted(GHResponse response) {

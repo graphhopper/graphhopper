@@ -50,7 +50,6 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static com.graphhopper.gtfs.RealtimeFeed.normalize;
 import static java.util.Comparator.comparingLong;
 
 public final class PtRouterImpl implements PtRouter {
@@ -476,7 +475,7 @@ public final class PtRouterImpl implements PtRouter {
 
         private PatternFinder.Pattern findPattern(TripBoarding pushedBoarding) {
             for (PatternFinder.Pattern pattern : patterns) {
-                if (pattern.associatedTrips.contains(pushedBoarding.tripDescriptor.getTripId())) {
+                if (pattern.trips.contains(pushedBoarding.tripDescriptor.getTripId())) {
                     return pattern;
                 }
             }
