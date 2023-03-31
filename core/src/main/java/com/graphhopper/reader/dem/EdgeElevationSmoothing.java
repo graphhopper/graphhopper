@@ -20,6 +20,11 @@ import java.util.HashMap;
  */
 public class EdgeElevationSmoothing {
     public static void smoothMovingAverage(PointList geometry, double maxWindowSize) {
+        if (geometry.size() <= 2) {
+            // geometry consists only of tower nodes, there are no pillar nodes to be smoothed in between
+            return;
+        }
+
         // calculate the distance between all points once here to avoid repeated calculation.
         // for n nodes there are always n-1 edges
         double[] distances = new double[geometry.size() - 1];
@@ -33,7 +38,7 @@ public class EdgeElevationSmoothing {
 
         // map that will collect all smoothed elevation values, size is less by 2
         // because elevation of start and end point (tower nodes) won't be touched
-        HashMap<Integer, Double> averagedElevations = new HashMap<>(geometry.size() - 2);
+        HashMap<Integer, Double> averagedElevations = new HashMap<>((geometry.size() - 1) * 4 / 3);
 
         // iterate over every pillar node to smooth its elevation
         // first and last points are left out as they are tower nodes
@@ -41,33 +46,40 @@ public class EdgeElevationSmoothing {
             // first, determine the average window which could be smaller when close to pillar nodes
             double searchDistance = maxWindowSize / 2.0;
 
-            double distanceBack = 0.0;
+            double searchDistanceBack = 0.0;
             for (int j = i - 1; j >= 0; j--) {
-                distanceBack += distances[j];
-                if (distanceBack > searchDistance) {
+                searchDistanceBack += distances[j];
+                if (searchDistanceBack > searchDistance) {
                     break;
                 }
             }
 
             // update search distance if pillar node is close to START tower node
-            searchDistance = Math.min(searchDistance, distanceBack);
+            searchDistance = Math.min(searchDistance, searchDistanceBack);
 
-            double distanceForward = 0.0;
+            double searchDistanceForward = 0.0;
             for (int j = i; j < geometry.size() - 1; j++) {
-                distanceForward += distances[j];
-                if (distanceForward > searchDistance) {
+                searchDistanceForward += distances[j];
+                if (searchDistanceForward > searchDistance) {
                     break;
                 }
             }
 
             // update search distance if pillar node is close to END tower node
-            searchDistance = Math.min(searchDistance, distanceForward);
+            searchDistance = Math.min(searchDistance, searchDistanceForward);
+
+            if (searchDistance <= 0.0) {
+                // there is nothing to smooth. this is an edge case where pillar nodes share exactly the same location
+                // as a tower node.
+                // by doing so we avoid (at least theoretically) a division by zero later in the function call
+                continue;
+            }
 
             // area under elevation curve
             double elevationArea = 0.0;
 
             // first going again backwards
-            distanceBack = 0.0;
+            double distanceBack = 0.0;
             for (int j = i - 1; j >= 0; j--) {
                 double dist = distances[j];
                 double searchDistLeft = searchDistance - distanceBack;
@@ -84,7 +96,7 @@ public class EdgeElevationSmoothing {
             }
 
             // now going forward
-            distanceForward = 0.0;
+            double distanceForward = 0.0;
             for (int j = i; j < geometry.size() - 1; j++) {
                 double dist = distances[j];
                 double searchDistLeft = searchDistance - distanceForward;
@@ -97,12 +109,6 @@ public class EdgeElevationSmoothing {
                 } else {
                     elevationArea += dist * (geometry.getEle(j + 1) + geometry.getEle(j)) / 2.0;
                 }
-            }
-
-            if (searchDistance <= 0.0) {
-                // in some edge cases when first or last pillar nodes are duplicates of a tower node,
-                // search distance might be 0 and a division by zero occurs
-                continue;
             }
 
             double elevationAverage = elevationArea / (searchDistance * 2);
