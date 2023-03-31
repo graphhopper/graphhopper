@@ -1,10 +1,8 @@
 package com.graphhopper.application.cli;
 
-import com.conveyal.gtfs.GTFSFeed;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.Trip;
 import com.graphhopper.application.GraphHopperServerConfiguration;
@@ -14,20 +12,15 @@ import com.graphhopper.http.GraphHopperManaged;
 import io.dropwizard.cli.ConfiguredCommand;
 import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
-import org.mapdb.BTreeMap;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 
 import java.io.File;
 import java.time.Duration;
-import java.time.Instant;
-import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServerConfiguration> {
@@ -52,8 +45,12 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
             }
         });
 
-        extracted(graphHopper, ptRouter, tripTransfers, "SFIA", "OAKL", "2023-03-26T08:00:00-07:00");
-        extracted(graphHopper, ptRouter, tripTransfers, "SFIA", "OAKL", "2023-03-26T18:30:00-07:00");
+        for (int i = 0; i < 100; i++) {
+            extracted(graphHopper, ptRouter, tripTransfers, "SFIA", "OAKL", "2023-03-26T08:00:00-07:00");
+            extracted(graphHopper, ptRouter, tripTransfers, "SFIA", "OAKL", "2023-03-26T18:30:00-07:00");
+            extracted(graphHopper, ptRouter, tripTransfers, "19TH", "40425", "2023-03-26T08:00:00-07:00");
+        }
+
 
 //        request.setFilter(true);
 //        response = ptRouter.route(request);
@@ -90,10 +87,12 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
                 new GHStationLocation(destination)), ZonedDateTime.parse(time).toInstant());
         request.setIgnoreTransfers(true);
         request.setLimitStreetTime(Duration.ofMinutes(0));
+        long start1 = System.currentTimeMillis();
         GHResponse response = ptRouter.route(request);
-
         extracted(response);
         System.out.println(response.getHints().getInt("visited_nodes.sum", -1));
+        long stop1 = System.currentTimeMillis();
+        System.out.printf("millis: %d\n", stop1 - start1);
 
 
         long start = System.currentTimeMillis();
