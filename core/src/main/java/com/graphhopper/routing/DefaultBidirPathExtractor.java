@@ -67,6 +67,9 @@ public class DefaultBidirPathExtractor implements BidirPathExtractor {
         onFwdTreeRoot(fwdRoot.adjNode);
         // since we followed the fwd path in backward direction we need to reverse the edge ids
         ArrayUtil.reverse(path.getEdges());
+// ORS-GH MOD START
+        ArrayUtil.reverse(path.getTimes());
+// ORS-GH MOD END
     }
 
     protected void extractBwdPath(SPTEntry sptEntry) {

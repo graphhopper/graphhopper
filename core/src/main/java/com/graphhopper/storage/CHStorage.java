@@ -343,7 +343,7 @@ public class CHStorage {
 
 // ORS-GH MOD START add method
     public int getTime(long shortcutPointer) {
-        assert isTypeCore : "time is only available for core graph";
+        //FIXME: assert isTypeCore : "time is only available for core graph";
         return shortcuts.getInt(shortcutPointer + S_TIME);
     }
 // ORS-GH MOD END

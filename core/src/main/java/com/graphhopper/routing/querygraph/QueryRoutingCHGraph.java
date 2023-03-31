@@ -185,11 +185,13 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
                     if (iter.isShortcut()) {
                         virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), NO_EDGE,
                                 iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
-                                iter.getSkippedEdge1(), iter.getSkippedEdge2(), iter.getWeight(false), iter.getWeight(true)));
+                                iter.getSkippedEdge1(), iter.getSkippedEdge2(), iter.getWeight(false), iter.getWeight(true),
+                                iter.getTime(false, -1), iter.getTime(true, -1)));// ORS-GH MOD FIXME: factor out spurious time argument
                     } else if (!edgeChanges.getRemovedEdges().contains(iter.getOrigEdge())) {
                         virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), iter.getOrigEdge(),
                                 iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
-                                NO_EDGE, NO_EDGE, iter.getWeight(false), iter.getWeight(true)));
+                                NO_EDGE, NO_EDGE, iter.getWeight(false), iter.getWeight(true),
+                                iter.getTime(false, -1), iter.getTime(true, -1)));// ORS-GH MOD FIXME: factor out spurious time argument
                     }
                 }
                 virtualEdgesAtRealNodes.put(node, virtualEdges);
@@ -220,8 +222,12 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         int origEdge = edgeState.getEdge();
         double fwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, false);
         double bwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, true);
+// ORS-GH MOD START
+        int fwdTime = (int) weighting.calcEdgeMillisWithAccess(edgeState, false);
+        int bwdTime = (int) weighting.calcEdgeMillisWithAccess(edgeState, true);
         return new VirtualCHEdgeIteratorState(edgeID, origEdge, edgeState.getBaseNode(), edgeState.getAdjNode(),
-                origEdge, origEdge, NO_EDGE, NO_EDGE, fwdWeight, bwdWeight);
+                origEdge, origEdge, NO_EDGE, NO_EDGE, fwdWeight, bwdWeight, fwdTime, bwdTime);
+// ORS-GH MOD END
     }
 
     private int shiftVirtualEdgeIDForCH(int edge) {
@@ -251,8 +257,18 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         private final int skippedEdge2;
         private final double weightFwd;
         private final double weightBwd;
+// ORS-GH MOD START
+        private final int timeFwd;
+        private final int timeBwd;
+// ORS-GH MOD END
 
         public VirtualCHEdgeIteratorState(int edge, int origEdge, int baseNode, int adjNode, int origEdgeFirst, int origEdgeLast, int skippedEdge1, int skippedEdge2, double weightFwd, double weightBwd) {
+// ORS-GH MOD START
+            this(edge, origEdge, baseNode, adjNode, origEdgeFirst, origEdgeLast, skippedEdge1, skippedEdge2, weightFwd, weightBwd, -1, -1);
+        }
+
+        public VirtualCHEdgeIteratorState(int edge, int origEdge, int baseNode, int adjNode, int origEdgeFirst, int origEdgeLast, int skippedEdge1, int skippedEdge2, double weightFwd, double weightBwd, int timeFwd, int timeBwd) {
+// ORS-GH MOD END
             this.edge = edge;
             this.origEdge = origEdge;
             this.baseNode = baseNode;
@@ -263,6 +279,10 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
             this.skippedEdge2 = skippedEdge2;
             this.weightFwd = weightFwd;
             this.weightBwd = weightBwd;
+// ORS-GH MOD START
+            this.timeFwd = timeFwd;
+            this.timeBwd = timeBwd;
+// ORS-GH MOD END
         }
 
         @Override
@@ -318,7 +338,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
 // ORS-GH MOD START add method for TD core routing
         @Override
         public int getTime(boolean reverse, long time) {
-            throw new UnsupportedOperationException("Not supported.");//FIXME
+            return reverse ? timeBwd : timeFwd;
         }
 // ORS-GH MOD END
 

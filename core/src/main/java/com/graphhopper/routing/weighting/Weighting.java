@@ -64,11 +64,6 @@ public interface Weighting {
      */
     long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse);
 
-    // ORS-GH MOD START - additional method
-    // needed for time dependent routing
-    long calcEdgeMillis(EdgeIteratorState edge, boolean reverse, long edgeEnterTime);
-    // ORS-GH MOD END
-
     double calcTurnWeight(int inEdge, int viaNode, int outEdge);
 
     long calcTurnMillis(int inEdge, int viaNode, int outEdge);
@@ -91,12 +86,22 @@ public interface Weighting {
         }
         return calcEdgeWeight(edgeState, reverse);
     }
-    // ORS-GH MOD START - additional methods
+
+    // ORS-GH MOD START - additional methods for time dependent routing
+    long calcEdgeMillis(EdgeIteratorState edge, boolean reverse, long edgeEnterTime);
+
+    default long calcEdgeMillisWithAccess(EdgeIteratorState edgeState, boolean reverse) {
+        BooleanEncodedValue accessEnc = getFlagEncoder().getAccessEnc();
+        if ((!reverse && !edgeState.get(accessEnc)) || (reverse && !edgeState.getReverse(accessEnc))) {
+            return -1;
+        }
+        return calcEdgeMillis(edgeState, reverse);
+    }
+
     boolean isTimeDependent();
 
     SpeedCalculator getSpeedCalculator();
 
     void setSpeedCalculator(SpeedCalculator speedCalculator);
     // ORS-GH MOD END
-
 }

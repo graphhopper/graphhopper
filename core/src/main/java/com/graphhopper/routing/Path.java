@@ -19,7 +19,6 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.graphhopper.coll.GHLongArrayList;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
@@ -47,15 +46,20 @@ public class Path {
     protected double distance;
     // ORS-GH MOD END
     private long time;
-    // ORS-GH MOD START: new field
-    protected GHLongArrayList times = new GHLongArrayList();
-    // ORS-GH MOD END
     private IntArrayList edgeIds = new IntArrayList();
     private int fromNode = -1;
     private int endNode = -1;
     private List<String> description;
     private boolean found;
     private String debugInfo = "";
+
+    // ORS-GH MOD START: new field
+    protected IntArrayList times = new IntArrayList();
+
+    public IntArrayList getTimes() {
+        return times;
+    }
+    // ORS-GH MOD END
 
     public Path(Graph graph) {
         this.graph = graph;
@@ -161,7 +165,7 @@ public class Path {
     public Path addTime(long time) {
         this.time += time;
         // ORS-GH MOD START
-        times.add(time);
+        times.add((int) time);
         // ORS-GH MOD END
         return this;
     }

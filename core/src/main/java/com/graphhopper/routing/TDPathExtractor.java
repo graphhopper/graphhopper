@@ -49,7 +49,10 @@ public class TDPathExtractor extends PathExtractor {
             processEdge(currEntry);
             currEntry = currEntry.parent;
         }
-        if (!reverse) ArrayUtil.reverse(path.getEdges());
+        if (!reverse) {
+            ArrayUtil.reverse(path.getEdges());
+            ArrayUtil.reverse(path.getTimes());
+        }
         setFromToNode(currEntry.adjNode, sptEntry.adjNode);
     }
 
