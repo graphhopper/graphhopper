@@ -19,6 +19,9 @@ import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.is
 
 public abstract class BikeCommonPriorityParser implements TagParser {
 
+    // Bicycle tracks subject to compulsory use in Germany and Poland (https://wiki.openstreetmap.org/wiki/DE:Key:cycleway)
+    private static final List<String> CYCLEWAY_ACCESS_KEYS = Arrays.asList("cycleway:bicycle", "cycleway:both:bicycle", "cycleway:left:bicycle", "cycleway:right:bicycle");
+
     // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
     protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
     protected final Set<String> preferHighwayTags = new HashSet<>();
@@ -147,7 +150,8 @@ public abstract class BikeCommonPriorityParser implements TagParser {
      */
     void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
         String highway = way.getTag("highway");
-        if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official")) {
+        if (way.hasTag("bicycle", "designated") || way.hasTag(CYCLEWAY_ACCESS_KEYS, Arrays.asList("designated"))
+                || way.hasTag("bicycle", "official")) {
             if ("path".equals(highway))
                 weightToPrioMap.put(100d, VERY_NICE.getValue());
             else
