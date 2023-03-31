@@ -48,10 +48,6 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         restrictedValues.add("forestry");
         restrictedValues.add("delivery");
 
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("permissive");
-
         barriers.add("kissing_gate");
         barriers.add("fence");
         barriers.add("bollard");

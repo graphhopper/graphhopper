@@ -23,11 +23,6 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         restrictedValues.add("forestry");
         restrictedValues.add("delivery");
 
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("official");
-        intendedValues.add("permissive");
-
         barriers.add("fence");
 
         allowedHighways.addAll(Arrays.asList("living_street", "steps", "cycleway", "path", "footway", "platform",

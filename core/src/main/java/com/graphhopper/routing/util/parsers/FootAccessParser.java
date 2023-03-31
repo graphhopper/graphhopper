@@ -45,11 +45,6 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
     protected FootAccessParser(BooleanEncodedValue accessEnc) {
         super(accessEnc, TransportationMode.FOOT);
 
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("official");
-        intendedValues.add("permissive");
-
         sidewalkValues.add("yes");
         sidewalkValues.add("both");
         sidewalkValues.add("left");
