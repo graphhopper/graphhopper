@@ -135,12 +135,12 @@ public class TripBasedRouter {
         if (transfer.stop_sequence < thisTripDoneFromIndex) {
             queue1.add(new EnqueuedTripSegment(transfer, thisTripDoneFromIndex, plusDays, parent));
             GTFSFeed.StopTimesForTripWithTripPatternKey stopTimes = gtfsFeed.stopTimes.getUnchecked(tripId);
+            boolean seenMyself = false;
             for (String otherTrip : stopTimes.pattern.trips) {
-                GTFSFeed.StopTimesForTripWithTripPatternKey otherStopTimes = gtfsFeed.stopTimes.getUnchecked(otherTrip);
-                // TODO: Instead just sort them by departure time and put those that come after myself
-                int departureTime = stopTimes.stopTimes.get(0).departure_time;
-                int otherDepartureTime = otherStopTimes.stopTimes.get(0).departure_time;
-                if (otherDepartureTime >= departureTime) {
+                // Trips within a pattern are sorted by start time. All that come after me can be marked as done.
+                if (tripId.equals(otherTrip))
+                    seenMyself = true;
+                if (seenMyself) {
                     tripDoneFromIndex.put(otherTrip, transfer.stop_sequence);
                 }
             }
