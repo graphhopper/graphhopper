@@ -329,6 +329,13 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("oneway", "yes");
         way.setTag("cycleway:left", "opposite_lane");
         assertPriority(AVOID.getValue(), way);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway", "opposite_track");
+        assertPriority(SLIGHT_PREFER.getValue(), way);
+
     }
 
     @Test
