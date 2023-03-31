@@ -11,6 +11,7 @@ import org.mapdb.DB;
 import org.mapdb.DBMaker;
 
 import java.io.File;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Map;
 
@@ -30,7 +31,7 @@ public class AnalyzeTripTransfersCommand extends ConfiguredCommand<GraphHopperSe
 
         DB wurst = DBMaker.newFileDB(new File("wurst")).transactionDisable().mmapFileEnable().asyncWriteEnable().make();
         Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> map = wurst.getTreeMap("pups");
-        Trips.findAllTripTransfersInto(graphHopper, map);
+        Trips.findAllTripTransfersInto(graphHopper, map, LocalDate.parse("2023-03-26"));
         System.out.println(map.size());
         wurst.close();
         graphHopper.close();

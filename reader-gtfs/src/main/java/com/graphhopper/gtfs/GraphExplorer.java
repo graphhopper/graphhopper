@@ -257,11 +257,6 @@ public final class GraphExplorer {
         return Label.getTransitions(label, false);
     }
 
-    public String getPatternId(GtfsRealtime.TripDescriptor tripDescriptor) {
-        GTFSFeed.StopTimesForTripWithTripPatternKey s = gtfsStorage.getGtfsFeeds().get("gtfs_0").stopTimes.getUnchecked(tripDescriptor.getTripId());
-        return s.pattern.pattern_id;
-    }
-
     public class MultiModalEdge {
         private int baseNode;
         private int adjNode;

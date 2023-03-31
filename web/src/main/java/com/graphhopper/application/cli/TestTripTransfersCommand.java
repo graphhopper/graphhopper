@@ -20,6 +20,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -96,8 +97,10 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
 
 
         long start = System.currentTimeMillis();
-        TripBasedRouter tripBasedRouter = new TripBasedRouter(tripTransfers, graphHopper.getGtfsStorage());
-        tripBasedRouter.route(request);
+        TripBasedRouter tripBasedRouter = new TripBasedRouter(graphHopper.getGtfsStorage());
+        GtfsStorage.FeedIdWithStopId origin1 = new GtfsStorage.FeedIdWithStopId("gtfs_0", ((GHStationLocation) request.getPoints().get(0)).stop_id);
+        GtfsStorage.FeedIdWithStopId destination1 = new GtfsStorage.FeedIdWithStopId("gtfs_0", ((GHStationLocation) request.getPoints().get(1)).stop_id);
+        tripBasedRouter.route(Collections.singletonList(new TripBasedRouter.StopWithTimeDelta(origin1, 0)), Collections.singletonList(new TripBasedRouter.StopWithTimeDelta(destination1, 0)), request.getEarliestDepartureTime());
         long stop = System.currentTimeMillis();
         System.out.printf("millis: %d\n", stop - start);
     }

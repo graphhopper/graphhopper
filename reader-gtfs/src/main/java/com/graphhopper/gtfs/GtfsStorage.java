@@ -24,6 +24,7 @@ import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
+import com.graphhopper.gtfs.analysis.Trips;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.index.LineIntIndex;
 import org.mapdb.DB;
@@ -62,6 +63,10 @@ public class GtfsStorage {
 
 	public IntObjectHashMap<int[]> getSkippedEdgesForTransfer() {
 		return skippedEdgesForTransfer;
+	}
+
+	public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfers() {
+		return tripTransfers;
 	}
 
 	public static class Validity implements Serializable {
@@ -149,6 +154,7 @@ public class GtfsStorage {
 	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
 	private Map<String, Map<String, Fare>> faresByFeed;
 	private Map<FeedIdWithStopId, Integer> stationNodes;
+	private Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers;
 	private IntObjectHashMap<int[]> skippedEdgesForTransfer;
 
 	private IntIntHashMap ptToStreet;
@@ -234,6 +240,7 @@ public class GtfsStorage {
     private void init() {
 		this.gtfsFeedIds = data.getHashSet("gtfsFeeds");
 		this.stationNodes = data.getHashMap("stationNodes");
+		this.tripTransfers = data.getHashMap("tripTransfers");
 		this.ptToStreet = new IntIntHashMap();
 		this.streetToPt = new IntIntHashMap();
 		this.skippedEdgesForTransfer = new IntObjectHashMap<>();

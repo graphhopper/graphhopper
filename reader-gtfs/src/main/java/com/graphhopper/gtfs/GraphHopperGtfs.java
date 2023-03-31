@@ -21,6 +21,7 @@ package com.graphhopper.gtfs;
 import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.gtfs.analysis.Trips;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultSnapFilter;
@@ -37,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -66,6 +68,7 @@ public class GraphHopperGtfs extends GraphHopper {
     protected void importPublicTransit() {
         ptGraph = new PtGraph(getBaseGraph().getDirectory(), 100);
         gtfsStorage = new GtfsStorage(getBaseGraph().getDirectory());
+        gtfsStorage.setPtGraph(ptGraph);
         LineIntIndex stopIndex = new LineIntIndex(new BBox(-180.0, 180.0, -90.0, 90.0), getBaseGraph().getDirectory(), "stop_index");
         if (getGtfsStorage().loadExisting()) {
             ptGraph.loadExisting();
@@ -96,6 +99,7 @@ public class GraphHopperGtfs extends GraphHopper {
                     allReaders.put(id, gtfsReader);
                 });
                 interpolateTransfers(allReaders, allTransfers);
+                Trips.findAllTripTransfersInto(this, gtfsStorage.getTripTransfers(), LocalDate.parse("2007-01-06"));
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
@@ -105,7 +109,6 @@ public class GraphHopperGtfs extends GraphHopper {
             stopIndex.flush();
         }
         gtfsStorage.setStopIndex(stopIndex);
-        gtfsStorage.setPtGraph(ptGraph);
     }
 
     private void interpolateTransfers(HashMap<String, GtfsReader> readers, Map<String, Transfers> allTransfers) {

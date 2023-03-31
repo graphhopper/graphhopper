@@ -4,12 +4,15 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.conveyal.gtfs.model.*;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
-import org.locationtech.jts.geom.LineString;
+import com.google.transit.realtime.GtfsRealtime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 
 /**
  * This abstracts out the logic for finding stop sequences ("journey patterns" in Transmodel parlance) based on trips.
@@ -20,6 +23,12 @@ import java.util.stream.Collectors;
  * Created by abyrd on 2017-10-08
  */
 public class PatternFinder {
+
+    private GTFSFeed gtfsFeed;
+
+    public PatternFinder(GTFSFeed gtfsFeed) {
+        this.gtfsFeed = gtfsFeed;
+    }
 
     private static final Logger LOG = LoggerFactory.getLogger(PatternFinder.class);
 
@@ -49,7 +58,24 @@ public class PatternFinder {
         int nextPatternId = 1;
         Map<TripPatternKey, Pattern> patterns = new LinkedHashMap<>();
         for (TripPatternKey key : tripsForPattern.keySet()) {
-            List<String> trips = tripsForPattern.get(key).stream().map(t -> t.trip_id).collect(Collectors.toList());
+            List<GtfsRealtime.TripDescriptor> trips = tripsForPattern.get(key).stream()
+                    .flatMap(t -> {
+                        GtfsRealtime.TripDescriptor.Builder tdBuilder = GtfsRealtime.TripDescriptor.newBuilder().setTripId(t.trip_id);
+                        Collection<Frequency> frequencies = gtfsFeed.getFrequencies(t.trip_id);
+                        if (frequencies.isEmpty()) {
+                            return Stream.of(tdBuilder.build());
+                        } else {
+                            Stream.Builder<GtfsRealtime.TripDescriptor> builder = Stream.builder();
+                            for (Frequency frequency : frequencies) {
+                                for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
+                                    builder.add(tdBuilder.setStartTime(convertToGtfsTime(time)).build());
+                                }
+                            }
+                            return builder.build();
+                        }
+                    })
+                    .collect(Collectors.toList());
+
 
             Pattern pattern = new Pattern(key.stops, trips);
             // Overwrite long UUID with sequential integer pattern ID
@@ -117,17 +143,16 @@ public class PatternFinder {
         public String pattern_id;
 
         public List<String> orderedStops;
-        public List<String> trips;
+        public List<GtfsRealtime.TripDescriptor> trips;
         public String name;
         public String feed_id;
 
-        public Pattern (List<String> orderedStops, List<String> trips) {
+        public Pattern (List<String> orderedStops, List<GtfsRealtime.TripDescriptor> trips) {
 
             // Assign ordered list of stop IDs to be the key of this pattern.
             // FIXME what about pickup / dropoff type?
             this.orderedStops = orderedStops;
 
-            // Save the string IDs of the trips on this pattern.
             this.trips = trips;
 
         }
