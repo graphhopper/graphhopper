@@ -27,9 +27,9 @@ import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.dem.EdgeElevationSmoothing;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.reader.osm.pointlist.*;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.AreaIndex;
@@ -83,6 +83,8 @@ public class OSMReader {
     private final OSMParsers osmParsers;
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final RestrictionSetter restrictionSetter;
+    private PointListProcessor elevationSmoother;
+    private PointListProcessor edgeSimplifier;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private AreaIndex<CustomArea> areaIndex;
     private CountryRuleFactory countryRuleFactory = null;
@@ -105,14 +107,28 @@ public class OSMReader {
         this.osmParsers = osmParsers;
         this.restrictionSetter = new RestrictionSetter(baseGraph);
 
-        simplifyAlgo.setMaxDistance(config.getMaxWayPointDistance());
-        simplifyAlgo.setElevationMaxDistance(config.getElevationMaxWayPointDistance());
         turnCostStorage = baseGraph.getTurnCostStorage();
 
         tempRelFlags = osmParsers.createRelationFlags();
         if (tempRelFlags.length != 2)
             // we use a long to store relation flags currently, so the relation flags ints ref must have length 2
             throw new IllegalArgumentException("OSMReader cannot use relation flags with != 2 integers");
+
+        this.edgeSimplifier = new RamerDouglasPeuckerProcessor(
+                config.getMaxWayPointDistance(),
+                config.getElevationMaxWayPointDistance()
+        );
+
+
+        if (config.getElevationSmoothing().equals("ramer"))
+            this.elevationSmoother = new ElevationSmootherRamer();
+        else if (config.getElevationSmoothing().equals("moving_average"))
+            this.elevationSmoother = new ElevationSmootherAverage();
+        else if (config.getElevationSmoothing().equals(""))
+            this.elevationSmoother = new PointListProcessorNoOp();
+        else {
+            throw new AssertionError("Unsupported elevation smoothing algorithm: '" + config.getElevationSmoothing() + "'");
+        }
     }
 
     /**
@@ -313,14 +329,10 @@ public class OSMReader {
                 pointList = EdgeSampling.sample(pointList, config.getLongEdgeSamplingDistance(), distCalc, eleProvider);
 
             // smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
-            if (config.getElevationSmoothing().equals("ramer"))
-                EdgeElevationSmoothing.smoothRamer(pointList, config.getElevationSmoothingRamerMax());
-            else if (config.getElevationSmoothing().equals("moving_average"))
-                EdgeElevationSmoothing.smoothMovingAverage(pointList);
+            this.elevationSmoother.process(pointList);
         }
 
-        if (config.getMaxWayPointDistance() > 0 && pointList.size() > 2)
-            simplifyAlgo.simplify(pointList);
+        this.edgeSimplifier.process(pointList);
 
         double distance = distCalc.calcDistance(pointList);
 
@@ -632,4 +644,12 @@ public class OSMReader {
         return getClass().getSimpleName();
     }
 
+
+    public void setElevationSmoother(PointListProcessor elevationSmoother) {
+        this.elevationSmoother = elevationSmoother;
+    }
+
+    public void setEdgeSimplifier(PointListProcessor edgeSimplifier) {
+        this.edgeSimplifier = edgeSimplifier;
+    }
 }
