@@ -40,11 +40,8 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
 
 import javax.inject.Inject;
-import java.io.File;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Predicate;
@@ -65,8 +62,6 @@ public final class PtRouterImpl implements PtRouter {
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final WeightingFactory weightingFactory;
     private final Collection<PatternFinder.Pattern> patterns = new ArrayList<>();
-    DB wurst = DBMaker.newFileDB(new File("wurst")).transactionDisable().mmapFileEnable().readOnly().make();
-    private final Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = wurst.getTreeMap("pups");
 
     @Inject
     public PtRouterImpl(GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
@@ -324,23 +319,6 @@ public final class PtRouterImpl implements PtRouter {
                     .orElse(Long.MAX_VALUE);
             router.setLimitTripTime(Math.max(0, limitTripTime - smallestStationLabelWalkTime));
             router.setLimitStreetTime(Math.max(0, limitStreetTime - smallestStationLabelWalkTime));
-            router.isAllowed = l -> {
-                if (filter) {
-                    if (l.edge.getType() == GtfsStorage.EdgeType.BOARD) {
-                        Label previousAlightLabel = findPreviousAlight(l);
-                        if (previousAlightLabel != null) {
-                            Trips.TripAtStopTime previousAlight = new Trips.TripAtStopTime(findStop(previousAlightLabel).feed_id, previousAlightLabel.edge.getTripDescriptor(), previousAlightLabel.edge.getStopSequence());
-                            Trips.TripAtStopTime boarding = new Trips.TripAtStopTime(findStop(l).feed_id, l.edge.getTripDescriptor(), l.edge.getStopSequence());
-                            Collection<Trips.TripAtStopTime> previousAlightTripTransfers = tripTransfers.get(previousAlight);
-                            if (!previousAlightTripTransfers.contains(boarding)) {
-                                return false;
-                            }
-                        }
-                    }
-                }
-                return true;
-            };
-
             final long smallestStationLabelWeight;
             if (!stationLabels.isEmpty()) {
                 smallestStationLabelWeight = stationRouter.weight(stationLabels.get(0));
@@ -462,24 +440,6 @@ public final class PtRouterImpl implements PtRouter {
                 response.addError(new ConnectionNotFoundException("No route found", Collections.emptyMap()));
             }
             return paths;
-        }
-
-        private Label findPreviousAlight(Label t) {
-            while (t.parent != null) {
-                t = t.parent;
-                if (t.edge != null && t.edge.getType() == GtfsStorage.EdgeType.ALIGHT)
-                    return t;
-            }
-            return null;
-        }
-
-        private PatternFinder.Pattern findPattern(TripBoarding pushedBoarding) {
-            for (PatternFinder.Pattern pattern : patterns) {
-                if (pattern.trips.contains(pushedBoarding.tripDescriptor.getTripId())) {
-                    return pattern;
-                }
-            }
-            return null;
         }
 
         private GtfsStorage.PlatformDescriptor findStop(Label t) {
