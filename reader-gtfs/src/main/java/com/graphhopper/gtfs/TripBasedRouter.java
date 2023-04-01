@@ -19,9 +19,9 @@ public class TripBasedRouter {
     private Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers;
     private GtfsStorage gtfsStorage;
     int earliestArrivalTime = Integer.MAX_VALUE;
-    private GtfsStorage.FeedIdWithStopId destination;
     private ObjectIntHashMap<GtfsRealtime.TripDescriptor> tripDoneFromIndex = new ObjectIntHashMap();
     private List<ResultLabel> result = new ArrayList<>();
+    private List<StopWithTimeDelta> egressStations;
 
     public TripBasedRouter(GtfsStorage gtfsStorage) {
         this.tripTransfers = gtfsStorage.getTripTransfers();
@@ -43,10 +43,10 @@ public class TripBasedRouter {
     }
 
     public List<ResultLabel> route(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant initialTime) {
-        destination = egressStations.iterator().next().stopId;
+        this.egressStations = egressStations;
         List<EnqueuedTripSegment> queue0 = new ArrayList<>();
-        GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(accessStations.iterator().next().stopId.feedId);
         for (StopWithTimeDelta accessStation : accessStations) {
+            GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(accessStations.iterator().next().stopId.feedId);
             ZonedDateTime earliestDepartureTime = initialTime.atZone(ZoneId.of("America/Los_Angeles")).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
             Map<String, List<PtGraph.PtEdge>> boardingsByPattern = RealtimeFeed.findAllBoardings(gtfsStorage, accessStation.stopId)
                     .filter(boarding -> {
@@ -70,23 +70,23 @@ public class TripBasedRouter {
         }
         System.out.println();
         System.out.println("0: "+queue0.size());
-        List<EnqueuedTripSegment> queue1 = round(gtfsFeed, queue0);
+        List<EnqueuedTripSegment> queue1 = round(queue0);
         System.out.println("1: "+queue1.size());
-        List<EnqueuedTripSegment> queue2 = round(gtfsFeed, queue1);
+        List<EnqueuedTripSegment> queue2 = round(queue1);
         System.out.println("2: "+queue2.size());
-        List<EnqueuedTripSegment> queue3 = round(gtfsFeed, queue2);
+        List<EnqueuedTripSegment> queue3 = round(queue2);
         System.out.println("3: "+queue3.size());
-        List<EnqueuedTripSegment> queue4 = round(gtfsFeed, queue3);
+        List<EnqueuedTripSegment> queue4 = round(queue3);
         System.out.println("4: "+queue4.size());
-        List<EnqueuedTripSegment> queue5 = round(gtfsFeed, queue4);
+        List<EnqueuedTripSegment> queue5 = round(queue4);
         System.out.println("5: "+queue5.size());
-        List<EnqueuedTripSegment> queue6 = round(gtfsFeed, queue5);
+        List<EnqueuedTripSegment> queue6 = round(queue5);
         System.out.println("6: "+queue6.size());
-        List<EnqueuedTripSegment> queue7 = round(gtfsFeed, queue6);
+        List<EnqueuedTripSegment> queue7 = round(queue6);
         System.out.println("7: "+queue7.size());
-        List<EnqueuedTripSegment> queue8 = round(gtfsFeed, queue7);
+        List<EnqueuedTripSegment> queue8 = round(queue7);
         System.out.println("8: "+queue8.size());
-        List<EnqueuedTripSegment> queue9 = round(gtfsFeed, queue8);
+        List<EnqueuedTripSegment> queue9 = round(queue8);
         System.out.println("9: "+queue9.size());
 
         return result;
@@ -108,19 +108,22 @@ public class TripBasedRouter {
         }
     }
 
-    private List<EnqueuedTripSegment> round(GTFSFeed gtfsFeed, List<EnqueuedTripSegment> queue0) {
+    private List<EnqueuedTripSegment> round(List<EnqueuedTripSegment> queue0) {
         List<EnqueuedTripSegment> queue1 = new ArrayList<>();
         for (EnqueuedTripSegment enqueuedTripSegment : queue0) {
+            GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(enqueuedTripSegment.tripAtStopTime.feedId);
             Trips.TripAtStopTime tripAtStopTime = enqueuedTripSegment.tripAtStopTime;
             Iterator<StopTime> iterator = gtfsFeed.stopTimes.getUnchecked(tripAtStopTime.tripDescriptor).stopTimes.iterator();
             while (iterator.hasNext()) {
                 StopTime stopTime = iterator.next();
                 if (stopTime.stop_sequence > tripAtStopTime.stop_sequence && stopTime.stop_sequence < enqueuedTripSegment.toStopSequence && stopTime.arrival_time < earliestArrivalTime) {
                     Trips.TripAtStopTime t = new Trips.TripAtStopTime("gtfs_0", tripAtStopTime.tripDescriptor, stopTime.stop_sequence);
-                    if (destination.stopId.equals(stopTime.stop_id)) {
-                        earliestArrivalTime = stopTime.arrival_time;
-                        result.add(new ResultLabel(t, enqueuedTripSegment));
-                        System.out.printf("%s+%d\n", LocalTime.ofSecondOfDay(stopTime.arrival_time % (60 * 60 * 24)), stopTime.arrival_time / (60 * 60 * 24));
+                    for (StopWithTimeDelta destination : egressStations) {
+                        if (destination.stopId.equals(stopTime.stop_id)) {
+                            earliestArrivalTime = stopTime.arrival_time;
+                            result.add(new ResultLabel(t, enqueuedTripSegment));
+                            System.out.printf("%s+%d\n", LocalTime.ofSecondOfDay(stopTime.arrival_time % (60 * 60 * 24)), stopTime.arrival_time / (60 * 60 * 24));
+                        }
                     }
                     Collection<Trips.TripAtStopTime> transfers = tripTransfers.get(t);
                     if (transfers == null)
