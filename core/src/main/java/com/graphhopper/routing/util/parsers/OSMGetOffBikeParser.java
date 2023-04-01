@@ -16,8 +16,8 @@ import java.util.List;
 public class OSMGetOffBikeParser implements TagParser {
 
     private final List<String> INTENDED = Arrays.asList("designated", "yes", "official", "permissive");
-    // steps -> special handling
-    private final HashSet<String> GET_OFF_BIKE = new HashSet<>(Arrays.asList("path", "footway", "pedestrian", "platform"));
+    // steps -> special handling, path -> see #2777
+    private final HashSet<String> GET_OFF_BIKE = new HashSet<>(Arrays.asList("footway", "pedestrian", "platform"));
     private final BooleanEncodedValue getOffBikeEnc;
     private final BooleanEncodedValue bikeAccessEnc;
 
@@ -32,8 +32,11 @@ public class OSMGetOffBikeParser implements TagParser {
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         String highway = way.getTag("highway");
-        if (!way.hasTag("bicycle", INTENDED) && (GET_OFF_BIKE.contains(highway) || way.hasTag("railway", "platform"))
-                || "steps".equals(highway) || way.hasTag("bicycle", "dismount")) {
+        boolean notIntended = !way.hasTag("bicycle", INTENDED) &&
+                (GET_OFF_BIKE.contains(highway)
+                        || way.hasTag("railway", "platform")
+                        || "path".equals(highway) && way.hasTag("foot", "designated") && !way.hasTag("segregated", "yes"));
+        if ("steps".equals(highway) || way.hasTag("bicycle", "dismount") || notIntended) {
             getOffBikeEnc.setBool(false, edgeId, edgeIntAccess, true);
             getOffBikeEnc.setBool(true, edgeId, edgeIntAccess, true);
         }

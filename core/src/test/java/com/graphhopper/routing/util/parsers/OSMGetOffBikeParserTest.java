@@ -81,13 +81,18 @@ public class OSMGetOffBikeParserTest {
         assertFalse(isGetOffBike(way));
 
         way = new ReaderWay(1);
+        way.setTag("highway", "track");
+        assertFalse(isGetOffBike(way));
+
+        way = new ReaderWay(1);
         way.setTag("highway", "pedestrian");
         assertTrue(isGetOffBike(way));
 
+        // situation for path is unclear, see #2777, let's mark it only if foot=designated
         way = new ReaderWay(1);
         way.setTag("highway", "path");
         way.setTag("surface", "concrete");
-        assertTrue(isGetOffBike(way));
+        assertFalse(isGetOffBike(way));
         way.setTag("bicycle", "yes");
         assertFalse(isGetOffBike(way));
         way.setTag("bicycle", "designated");
@@ -98,11 +103,9 @@ public class OSMGetOffBikeParserTest {
         assertFalse(isGetOffBike(way));
 
         way = new ReaderWay(1);
-        way.setTag("highway", "track");
-        assertFalse(isGetOffBike(way));
-
-        way = new ReaderWay(1);
         way.setTag("highway", "path");
+        way.setTag("foot", "yes");
+        assertFalse(isGetOffBike(way)); // for now only designated will trigger true
         way.setTag("foot", "designated");
         assertTrue(isGetOffBike(way));
     }
