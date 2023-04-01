@@ -5,7 +5,7 @@
 //    - name: truck
 //      vehicle: roads
 //      weighting: custom
-//      custom_model_file: truck.json
+//      custom_model_files: [truck.json]
 {
   "distance_influence": 1,
   "speed": [

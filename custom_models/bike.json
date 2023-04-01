@@ -1,11 +1,12 @@
 // to use this custom model you need to set the following option in the config.yml
 // graph.vehicles: roads,bike
 // graph.encoded_values: average_slope,max_slope
+// graph.elevation.provider: srtm   # enables elevation
 // profiles:
 //    - name: bike
 //      vehicle: roads
 //      weighting: custom
-//      custom_model_file: bike.json
+//      custom_model_files: [bike.json, elevation_bike.json]
 
 {
   "priority": [
@@ -15,11 +16,6 @@
   ],
   "speed": [
     { "if": "true", "limit_to": "bike_average_speed" },
-    { "if": "!bike_access && backward_bike_access && !roundabout", "limit_to": "5" },
-    { "if": "average_slope >= 10",  "limit_to": "4" },
-    { "if": "average_slope >= 5",   "multiply_by": "0.45" },
-    { "if": "average_slope >= 3.5", "multiply_by": "0.7"  },
-    { "if": "average_slope >= 2",   "multiply_by": "0.9"  },
-    { "if": "average_slope < -5",   "multiply_by": "1.25" }
+    { "if": "!bike_access && backward_bike_access && !roundabout", "limit_to": "5" }
   ]
 }
