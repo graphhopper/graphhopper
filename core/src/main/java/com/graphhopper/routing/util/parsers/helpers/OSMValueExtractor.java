@@ -41,6 +41,29 @@ public class OSMValueExtractor {
 //            logger.warn("Value " + value + " for " + valueEncoder.getName() + " was too large and truncated to " + valueEncoder.getDecimal(false, edgeFlags));
     }
 
+    /**
+     * This parses the weight for a conditional value like "delivery @ (weight > 7.5)"
+     */
+    public static double conditionalWeightToTons(String value) {
+        try {
+            int index = value.indexOf("weight>"); // maxweight or weight
+            if (index < 0) {
+                index = value.indexOf("weight >");
+                if (index > 0) index += "weight >".length();
+            } else {
+                index += "weight>".length();
+            }
+            if (index > 0) {
+                int lastIndex = value.indexOf(')', index); // (value) or value
+                if (lastIndex < 0) lastIndex = value.length() - 1;
+                if(lastIndex > index) return OSMValueExtractor.stringToTons(value.substring(index, lastIndex));
+            }
+            return Double.NaN;
+        } catch (Exception ex) {
+            throw new RuntimeException("value " + value, ex);
+        }
+    }
+
     public static double stringToTons(String value) {
         value = TON_PATTERN.matcher(toLowerCase(value)).replaceAll("t");
         value = MGW_PATTERN.matcher(value).replaceAll("").trim();
