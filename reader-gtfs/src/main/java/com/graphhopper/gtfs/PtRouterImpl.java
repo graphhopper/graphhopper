@@ -45,6 +45,9 @@ import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 
 import javax.inject.Inject;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -201,28 +204,41 @@ public final class PtRouterImpl implements PtRouter {
 
                 List<TripBasedRouter.EnqueuedTripSegment> segments = new ArrayList<>();
                 System.out.println("===");
-                System.out.println(route.t);
                 TripBasedRouter.EnqueuedTripSegment enqueuedTripSegment = route.enqueuedTripSegment;
                 while (enqueuedTripSegment != null) {
                     segments.add(enqueuedTripSegment);
-                    System.out.println(enqueuedTripSegment.tripAtStopTime);
                     enqueuedTripSegment = enqueuedTripSegment.parent;
                 }
                 Collections.reverse(segments);
 
                 ResponsePath responsePath = new ResponsePath();
-                for (TripBasedRouter.EnqueuedTripSegment segment : segments) {
+                for (int i = 0; i < segments.size(); i++) {
+                    TripBasedRouter.EnqueuedTripSegment segment = segments.get(i);
+
                     GTFSFeed feed = gtfsStorage.getGtfsFeeds().get(segment.tripAtStopTime.feedId);
                     com.conveyal.gtfs.model.Trip trip = feed.trips.get(segment.tripAtStopTime.tripDescriptor.getTripId());
-                    List<Trip.Stop> stops = feed.stopTimes.getUnchecked(segment.tripAtStopTime.tripDescriptor).stopTimes.stream().filter(st -> st.stop_sequence >= segment.tripAtStopTime.stop_sequence)
+                    int untilStopSequence;
+                    if (i == segments.size() - 1)
+                        untilStopSequence = route.t.stop_sequence;
+                    else
+                        untilStopSequence = Integer.MAX_VALUE;
+                    List<Trip.Stop> stops = feed.stopTimes.getUnchecked(segment.tripAtStopTime.tripDescriptor).stopTimes.stream().filter(st -> st.stop_sequence >= segment.tripAtStopTime.stop_sequence && st.stop_sequence <= untilStopSequence)
                             .map(st -> {
+                                LocalDate day = initialTime.atZone(ZoneId.of("America/Los_Angeles")).toLocalDate().plusDays(segment.plusDays);
+                                LocalTime departureLocalTime = LocalTime.ofSecondOfDay(st.departure_time);
+                                Instant departureTime = departureLocalTime.atDate(day).atZone(ZoneId.of("America/Los_Angeles")).toInstant();
+                                LocalTime arrivalLocalTime = LocalTime.ofSecondOfDay(st.arrival_time);
+                                Instant arrivalTime = arrivalLocalTime.atDate(day).atZone(ZoneId.of("America/Los_Angeles")).toInstant();
+                                System.out.println(st.stop_id + " " + departureLocalTime);
                                 Stop stop = feed.stops.get(st.stop_id);
-                                return new Trip.Stop(st.stop_id, st.stop_sequence, stop.stop_name, null, null, null, null, false, null, null, null, false);
+                                return new Trip.Stop(st.stop_id, st.stop_sequence, stop.stop_name, null, Date.from(arrivalTime), Date.from(arrivalTime), Date.from(arrivalTime), false, Date.from(departureTime), Date.from(departureTime), Date.from(departureTime), false);
                             })
                             .collect(Collectors.toList());
                     responsePath.getLegs().add(new Trip.PtLeg(segment.tripAtStopTime.feedId, false, segment.tripAtStopTime.tripDescriptor.getTripId(),
                             trip.route_id, trip.trip_headsign, stops, 0, 0, null));
                 }
+                List<Trip.Stop> stops = ((Trip.PtLeg) responsePath.getLegs().get(responsePath.getLegs().size() - 1)).stops;
+                responsePath.setTime(stops.get(stops.size()-1).arrivalTime.toInstant().toEpochMilli() - initialTime.toEpochMilli());
                 response.add(responsePath);
             }
 
