@@ -179,9 +179,9 @@ public abstract class BikeCommonPriorityParser implements TagParser {
                 weightToPrioMap.put(50d, BAD.getValue());
         }
 
-        String cycleway = way.getFirstPriorityTag(Arrays.asList("cycleway", "cycleway:left", "cycleway:right"));
-        if (Arrays.asList("lane", "shared_lane", "share_busway", "shoulder").contains(cycleway)) {
-            weightToPrioMap.put(100d, UNCHANGED.getValue());
+        String cycleway = way.getFirstPriorityTag(Arrays.asList("cycleway", "cycleway:left", "cycleway:right", "cycleway:both"));
+        if (Arrays.asList("lane", "shared_lane", "share_busway", "shoulder").contains(cycleway) || "opposite_track".equals(cycleway)) {
+            weightToPrioMap.put(100d, SLIGHT_PREFER.getValue());
         } else if ("track".equals(cycleway)) {
             weightToPrioMap.put(100d, PREFER.getValue());
         }
