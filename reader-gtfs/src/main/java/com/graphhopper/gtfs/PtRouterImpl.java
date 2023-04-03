@@ -241,7 +241,7 @@ public final class PtRouterImpl implements PtRouter {
                 responsePath.setTime(stops.get(stops.size()-1).arrivalTime.toInstant().toEpochMilli() - initialTime.toEpochMilli());
                 response.add(responsePath);
             }
-
+            response.getAll().sort(Comparator.comparingLong(ResponsePath::getTime));
             response.getHints().putObject("visited_nodes.sum", visitedNodes);
             response.getHints().putObject("visited_nodes.average", visitedNodes);
             if (response.getAll().isEmpty()) {
