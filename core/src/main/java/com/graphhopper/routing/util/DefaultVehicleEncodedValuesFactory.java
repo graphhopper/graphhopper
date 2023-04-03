@@ -34,13 +34,13 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
             return VehicleEncodedValues.car(configuration);
 
         if (name.equals("car4wd"))
-            throw new IllegalArgumentException("Instead of car4wd use the roads vehicle and a custom_model, see custom_models/car4wd.json");
+            throw new IllegalArgumentException("Instead of car4wd use custom_models/car4wd.json");
 
         if (name.equals(BIKE))
             return VehicleEncodedValues.bike(configuration);
 
         if (name.equals("bike2"))
-            throw new IllegalArgumentException("Instead of bike2 use the bike vehicle and a custom model, see custom_models/bike.json and #2668");
+            throw new IllegalArgumentException("Instead of bike2 use custom_models/bike.json, see #2668");
 
         if (name.equals(RACINGBIKE))
             return VehicleEncodedValues.racingbike(configuration);
@@ -52,10 +52,10 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
             return VehicleEncodedValues.foot(configuration);
 
         if (name.equals("hike"))
-            throw new IllegalArgumentException("Instead of hike use the foot vehicle and a custom model, see custom_models/hike.json and #2759");
+            throw new IllegalArgumentException("Instead of hike use custom_models/hike.json, see #2759");
 
         if (name.equals("motorcycle"))
-            throw new IllegalArgumentException("Instead of motorcycle use the car vehicle and a custom model, see custom_models/motorcycle.json and #2781");
+            throw new IllegalArgumentException("Instead of motorcycle use custom_models/motorcycle.json, see #2781");
 
         if (name.equals(WHEELCHAIR))
             return VehicleEncodedValues.wheelchair(configuration);
