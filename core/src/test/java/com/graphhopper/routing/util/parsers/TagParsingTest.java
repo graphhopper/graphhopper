@@ -129,14 +129,12 @@ class TagParsingTest {
         BooleanEncodedValue carAccessEnc = VehicleAccess.create("car");
         BooleanEncodedValue footAccessEnc = VehicleAccess.create("foot");
         BooleanEncodedValue bikeAccessEnc = VehicleAccess.create("bike");
-        BooleanEncodedValue motorcycleAccessEnc = VehicleAccess.create("motorcycle");
         BooleanEncodedValue mtbAccessEnc = VehicleAccess.create("mtb");
-        List<BooleanEncodedValue> accessEncs = Arrays.asList(carAccessEnc, footAccessEnc, bikeAccessEnc, motorcycleAccessEnc, mtbAccessEnc);
+        List<BooleanEncodedValue> accessEncs = Arrays.asList(carAccessEnc, footAccessEnc, bikeAccessEnc, mtbAccessEnc);
         EncodingManager manager = EncodingManager.start()
                 .add(carAccessEnc).add(VehicleSpeed.create("car", 5, 5, true))
                 .add(footAccessEnc).add(VehicleSpeed.create("foot", 4, 1, true)).add(VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false))
                 .add(bikeAccessEnc).add(VehicleSpeed.create("bike", 4, 2, false)).add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
-                .add(motorcycleAccessEnc).add(VehicleSpeed.create("motorcycle", 5, 5, true)).add(VehiclePriority.create("motorcycle", 4, PriorityCode.getFactor(1), false)).add(new DecimalEncodedValueImpl("motorcycle_curvature", 5, 5, true))
                 .add(mtbAccessEnc).add(VehicleSpeed.create("mtb", 4, 2, false)).add(VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false))
                 .add(RouteNetwork.create(FootNetwork.KEY))
                 .add(RouteNetwork.create(BikeNetwork.KEY))
@@ -149,7 +147,6 @@ class TagParsingTest {
                 new CarAccessParser(manager, new PMap()),
                 new FootAccessParser(manager, new PMap()),
                 new BikeAccessParser(manager, new PMap()),
-                new MotorcycleAccessParser(manager, new PMap()),
                 new MountainBikeAccessParser(manager, new PMap())
         );
         for (TagParser tagParser : tagParsers)

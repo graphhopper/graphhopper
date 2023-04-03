@@ -1,8 +1,9 @@
+// prefer curvy roads
 {
   "priority": [
     {
-      "if": "curvature > 0.9",
-      "multiply_by": "0.3"
+      "if": "curvature >= 0.98",
+      "multiply_by": "0.4"
     }
   ]
 }

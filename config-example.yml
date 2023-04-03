@@ -46,7 +46,7 @@ graphhopper:
 #      weighting: custom
 #      custom_model_files: [bike.json, bike_elevation.json]
 
-  # specify the folder where to find the custom model files
+  # specify the folder where to find the custom model files - see this folder for more possibilities
   custom_models.directory: custom_models
 
   # Speed mode:
@@ -72,11 +72,11 @@ graphhopper:
 
   #### Vehicles ####
 
-  # The vehicle defines the base for how the routing of a profile behaves. It can be fine tuned using the options:
-  # name=mycustomvehicle,block_private=true,turn_costs=true,transportation_mode=MOTOR_VEHICLE (only for the roads vehicle)
-  # Still, it is recommended to avoid changing the vehicle settings and change the custom model instead.
-  # graph.vehicles: car|block_fords=true,turn_costs=true,bike|turn_costs=true
-  # Other standard vehicles: foot,bike,mtb,racingbike,motorcycle,wheelchair
+  # The vehicle defines the base for how the routing of a profile behaves. It can be adjusted with the turn_costs=true
+  # option or, only for the roads vehicle, there is the transportation_mode option:
+  # name=mycustomvehicle,turn_costs=true,transportation_mode=MOTOR_VEHICLE
+  # But you should prefer to configure the turn_costs via the profile configuration.
+  # Other standard vehicles: foot,bike,mtb,racingbike,wheelchair
 
 
   #### Encoded Values ####
