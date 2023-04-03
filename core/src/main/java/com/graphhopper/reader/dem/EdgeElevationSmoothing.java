@@ -1,10 +1,12 @@
 package com.graphhopper.reader.dem;
 
+import com.carrotsearch.hppc.IntDoubleHashMap;
+import com.carrotsearch.hppc.cursors.IntDoubleCursor;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.PointList;
 
-import java.util.HashMap;
+import java.util.function.Consumer;
 
 /**
  * Elevation data is read from DEM tiles that have data points for rectangular tiles usually having an
@@ -38,7 +40,7 @@ public class EdgeElevationSmoothing {
 
         // map that will collect all smoothed elevation values, size is less by 2
         // because elevation of start and end point (tower nodes) won't be touched
-        HashMap<Integer, Double> averagedElevations = new HashMap<>((geometry.size() - 1) * 4 / 3);
+        IntDoubleHashMap averagedElevations = new IntDoubleHashMap((geometry.size() - 1) * 4 / 3);
 
         // iterate over every pillar node to smooth its elevation
         // first and last points are left out as they are tower nodes
@@ -116,9 +118,7 @@ public class EdgeElevationSmoothing {
         }
 
         // after all pillar nodes got an averaged elevation, elevations are overwritten
-        averagedElevations.forEach((index, ele) -> {
-            geometry.setElevation(index, ele);
-        });
+        averagedElevations.forEach((Consumer<IntDoubleCursor>) c -> geometry.setElevation(c.key, c.value));
     }
 
     /**
