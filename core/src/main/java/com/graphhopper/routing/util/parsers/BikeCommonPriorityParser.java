@@ -150,7 +150,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
      */
     void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
         String highway = way.getTag("highway");
-        if (way.hasTag("bicycle", "designated") || way.hasTag(CYCLEWAY_ACCESS_KEYS, Arrays.asList("designated"))
+        if (way.hasTag("bicycle", "designated") || way.hasTag(CYCLEWAY_ACCESS_KEYS, "designated")
                 || way.hasTag("bicycle", "official")) {
             if ("path".equals(highway))
                 weightToPrioMap.put(100d, VERY_NICE.getValue());
