@@ -367,7 +367,7 @@ public class RoutingAlgorithmWithOSMTest {
         // atm the custom model is intended to be used with 'roads' vehicle when allowing reverse direction for oneways
         // but tests here still assert that reverse oneways are excluded
         GraphHopper hopper = createHopper(MONACO,
-                new CustomProfile("bike").setCustomModel(getCustomModel("bike.json").
+                new CustomProfile("bike").setCustomModel(CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_elevation.json")).
                         addToPriority(If("!bike_access", MULTIPLY, "0"))).setVehicle("roads"));
         hopper.setVehiclesString("roads,bike");
         hopper.setElevationProvider(new SRTMProvider(DIR));
