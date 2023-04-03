@@ -5,7 +5,7 @@
 //    - name: car4wd
 //      vehicle: roads
 //      weighting: custom
-//      custom_model_file: car4wd.json
+//      custom_model_files: [car4wd.json]
 
 {
   "distance_influence": 1,
@@ -20,9 +20,7 @@
     }
   ],
   "priority": [
-    {
-      "if": "track_type != GRADE4 && track_type != GRADE5 && car_access == false",
-      "multiply_by": "0"
-    }
+    { "if": "road_access == PRIVATE",  "multiply_by": "0" },
+    { "if": "track_type != GRADE4 && track_type != GRADE5 && car_access == false", "multiply_by": "0" }
   ]
 }

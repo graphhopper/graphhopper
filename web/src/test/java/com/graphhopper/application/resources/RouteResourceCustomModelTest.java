@@ -79,11 +79,11 @@ public class RouteResourceCustomModelTest {
                         new CustomProfile("car_with_area").setCustomModel(new CustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
                         new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0d)).setVehicle("bike"),
                         new Profile("bike_fastest").setWeighting("fastest").setVehicle("bike"),
-                        new CustomProfile("bus").setVehicle("roads").putHint("custom_model_file", "bus.json"),
+                        new CustomProfile("bus").setVehicle("roads").putHint("custom_model_files", Arrays.asList("bus.json")),
                         new CustomProfile("cargo_bike").setVehicle("bike").
-                                putHint("custom_model_file", "cargo_bike.json"),
+                                putHint("custom_model_files", Arrays.asList("cargo_bike.json")),
                         new CustomProfile("json_bike").setVehicle("roads").
-                                putHint("custom_model_file", "bike.json"),
+                                putHint("custom_model_files", Arrays.asList("bike.json", "bike_elevation.json")),
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile("car_no_unclassified").setCustomModel(
                                         new CustomModel(new CustomModel().

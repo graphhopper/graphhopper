@@ -5,24 +5,16 @@
 //    - name: bus
 //      vehicle: roads
 //      weighting: custom
-//      custom_model_file: bus.json
+//      custom_model_files: [bus.json]
 
 {
   "distance_influence": 90,
   "speed": [
-    {
-      "if": "true",
-      "limit_to": "car_average_speed * 0.9"
-    },
-    {
-      "if": "true",
-      "limit_to": "120"
-    }
+    { "if": "true", "limit_to": "car_average_speed * 0.9" },
+    { "if": "true", "limit_to": "120" }
   ],
   "priority": [
-    {
-      "if": "car_access == false || max_width < 3 || max_height < 4",
-      "multiply_by": "0"
-    }
+    { "if": "road_access == PRIVATE",  "multiply_by": "0" },
+    { "if": "car_access == false || max_width < 3 || max_height < 4", "multiply_by": "0" }
   ]
 }

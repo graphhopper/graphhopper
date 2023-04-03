@@ -16,15 +16,15 @@ import java.util.*;
 public abstract class AbstractAccessParser implements TagParser {
     static final Collection<String> FERRIES = Arrays.asList("shuttle_train", "ferry");
     static final Collection<String> ONEWAYS = Arrays.asList("yes", "true", "1", "-1");
-    static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official", "permissive");
+    static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official", "permissive", "private", "permit");
 
     // order is important
     protected final List<String> restrictions = new ArrayList<>(5);
     protected final Set<String> restrictedValues = new HashSet<>(5);
 
-    protected final Set<String> intendedValues = new HashSet<>(INTENDED);
-    protected final Set<String> ferries = new HashSet<>(FERRIES);
-    protected final Set<String> oneways = new HashSet<>(ONEWAYS);
+    protected final Set<String> intendedValues = Collections.unmodifiableSet(new HashSet<>(INTENDED));
+    protected final Set<String> ferries = Collections.unmodifiableSet(new HashSet<>(FERRIES));
+    protected final Set<String> oneways = Collections.unmodifiableSet(new HashSet<>(ONEWAYS));
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
@@ -32,9 +32,6 @@ public abstract class AbstractAccessParser implements TagParser {
 
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
         this.accessEnc = accessEnc;
-
-        intendedValues.add("private");
-        intendedValues.add("permit");
 
         restrictedValues.add("no");
         restrictedValues.add("restricted");

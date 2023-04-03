@@ -262,6 +262,11 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "motorway");
         way.setTag("bicycle", "yes");
         assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("cycleway:bicycle", "designated");
+        assertPriority(PREFER.getValue(), way);
     }
 
     @Test
@@ -312,18 +317,30 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("cycleway:left", "lane");
-        assertPriority(UNCHANGED.getValue(), way);
+        assertPriority(SLIGHT_PREFER.getValue(), way);
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("cycleway:right", "lane");
-        assertPriority(UNCHANGED.getValue(), way);
+        assertPriority(SLIGHT_PREFER.getValue(), way);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("cycleway:both", "lane");
+        assertPriority(SLIGHT_PREFER.getValue(), way);
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("oneway", "yes");
         way.setTag("cycleway:left", "opposite_lane");
         assertPriority(AVOID.getValue(), way);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway", "opposite_track");
+        assertPriority(SLIGHT_PREFER.getValue(), way);
+
     }
 
     @Test
