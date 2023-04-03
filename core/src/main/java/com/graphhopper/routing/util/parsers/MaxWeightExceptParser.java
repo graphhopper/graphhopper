@@ -40,7 +40,7 @@ public class MaxWeightExceptParser implements TagParser {
         // For tagging like vehicle:conditional=destination @ (weight>3.5) AND maxweight=3.5
         // For vehicle:conditional=no @ (weight>3.5) => NONE is used, which is consistent with max_weight being set to 3.5 in this case
         for (String restriction : HGV_RESTRICTIONS) {
-            String value = way.getTag(restriction + ":conditional", "");
+            String value = way.getTag(restriction, "");
             int atIndex = value.indexOf("@");
             if (atIndex > 0) {
                 double dec = OSMValueExtractor.conditionalWeightToTons(value);
