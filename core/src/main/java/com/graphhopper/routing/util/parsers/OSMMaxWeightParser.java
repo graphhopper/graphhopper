@@ -26,13 +26,14 @@ import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class OSMMaxWeightParser implements TagParser {
 
     // do not include OSM tag "height" here as it has completely different meaning (height of peak)
     private static final List<String> MAX_WEIGHT_TAGS = Arrays.asList("maxweight", "maxgcweight"/*abandoned*/, "maxweightrating:hgv");
     private static final List<String> HGV_RESTRICTIONS = OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV).stream()
-                .map(e -> e + ":conditional").collect(Collectors.toList());
+            .map(e -> e + ":conditional").collect(Collectors.toList());
     private final DecimalEncodedValue weightEncoder;
 
     public OSMMaxWeightParser(DecimalEncodedValue weightEncoder) {
