@@ -83,7 +83,7 @@ public class RouteResourceCustomModelTest {
                         new CustomProfile("cargo_bike").setVehicle("bike").
                                 putHint("custom_model_files", Arrays.asList("cargo_bike.json")),
                         new CustomProfile("json_bike").setVehicle("roads").
-                                putHint("custom_model_files", Arrays.asList("bike.json", "elevation_bike.json")),
+                                putHint("custom_model_files", Arrays.asList("bike.json", "bike_elevation.json")),
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile("car_no_unclassified").setCustomModel(
                                         new CustomModel(new CustomModel().

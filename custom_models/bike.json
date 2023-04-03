@@ -6,7 +6,7 @@
 //    - name: bike
 //      vehicle: roads
 //      weighting: custom
-//      custom_model_files: [bike.json, elevation_bike.json]
+//      custom_model_files: [bike.json, bike_elevation.json]
 
 {
   "priority": [

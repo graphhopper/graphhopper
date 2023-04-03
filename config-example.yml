@@ -44,7 +44,7 @@ graphhopper:
 #      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
 #      vehicle: bike
 #      weighting: custom
-#      custom_model_files: [bike.json, elevation_bike.json]
+#      custom_model_files: [bike.json, bike_elevation.json]
 
   # specify the folder where to find the custom model files
   custom_models.directory: custom_models

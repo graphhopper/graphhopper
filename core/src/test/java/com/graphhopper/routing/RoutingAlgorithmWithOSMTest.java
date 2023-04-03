@@ -351,7 +351,7 @@ public class RoutingAlgorithmWithOSMTest {
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
         queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2689, 118));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 3712, 167));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4188, 217));
         // 3.
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
         // 4.
@@ -359,15 +359,15 @@ public class RoutingAlgorithmWithOSMTest {
 
         // try reverse direction
         // 1.
-        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2599, 115));
-        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 3978, 181));
+        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2111, 96));
+        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 3903, 199));
         queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2805, 145));
         // 4. avoid tunnel(s)!
-        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1752, 100));
+        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1630, 96));
         // atm the custom model is intended to be used with 'roads' vehicle when allowing reverse direction for oneways
         // but tests here still assert that reverse oneways are excluded
         GraphHopper hopper = createHopper(MONACO,
-                new CustomProfile("bike").setCustomModel(CustomModel.merge(getCustomModel("bike.json"), getCustomModel("elevation_bike.json")).
+                new CustomProfile("bike").setCustomModel(CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_elevation.json")).
                         addToPriority(If("!bike_access", MULTIPLY, "0"))).setVehicle("roads"));
         hopper.setVehiclesString("roads,bike");
         hopper.setElevationProvider(new SRTMProvider(DIR));
