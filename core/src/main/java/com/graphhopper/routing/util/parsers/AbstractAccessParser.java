@@ -9,25 +9,25 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.PMap;
 
 import java.util.*;
 
 public abstract class AbstractAccessParser implements TagParser {
     static final Collection<String> FERRIES = Arrays.asList("shuttle_train", "ferry");
     static final Collection<String> ONEWAYS = Arrays.asList("yes", "true", "1", "-1");
-    static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official", "permissive");
+    static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official", "permissive", "private", "permit");
 
     // order is important
     protected final List<String> restrictions = new ArrayList<>(5);
     protected final Set<String> restrictedValues = new HashSet<>(5);
 
-    protected final Set<String> intendedValues = new HashSet<>(INTENDED);
-    protected final Set<String> ferries = new HashSet<>(FERRIES);
-    protected final Set<String> oneways = new HashSet<>(ONEWAYS);
+    protected final Set<String> intendedValues = Collections.unmodifiableSet(new HashSet<>(INTENDED));
+    protected final Set<String> ferries = Collections.unmodifiableSet(new HashSet<>(FERRIES));
+    protected final Set<String> oneways = Collections.unmodifiableSet(new HashSet<>(ONEWAYS));
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
-    private boolean blockFords = true;
     private ConditionalTagInspector conditionalTagInspector;
 
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
@@ -37,10 +37,13 @@ public abstract class AbstractAccessParser implements TagParser {
         restrictedValues.add("restricted");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
-        restrictedValues.add("private");
-        restrictedValues.add("permit");
 
         restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
+    }
+
+    protected void check(PMap properties) {
+        if (properties.getBool("block_private", false) || properties.getBool("block_fords", false))
+            throw new IllegalArgumentException("block_private and block_fords are no longer supported. Use a custom model as described in #2780");
     }
 
     public AbstractAccessParser init(DateRangeParser dateRangeParser) {
@@ -51,25 +54,6 @@ public abstract class AbstractAccessParser implements TagParser {
 
     protected void setConditionalTagInspector(ConditionalTagInspector inspector) {
         conditionalTagInspector = inspector;
-    }
-
-    public boolean isBlockFords() {
-        return blockFords;
-    }
-
-    protected void blockFords(boolean blockFords) {
-        this.blockFords = blockFords;
-    }
-
-    protected void blockPrivate(boolean blockPrivate) {
-        if (!blockPrivate) {
-            if (!restrictedValues.remove("private"))
-                throw new IllegalStateException("no 'private' found in restrictedValues");
-            if (!restrictedValues.remove("permit"))
-                throw new IllegalStateException("no 'permit' found in restrictedValues");
-            intendedValues.add("private");
-            intendedValues.add("permit");
-        }
     }
 
     public ConditionalTagInspector getConditionalTagInspector() {
@@ -104,10 +88,7 @@ public abstract class AbstractAccessParser implements TagParser {
             return true;
         else if (intendedValues.contains(firstValue))
             return false;
-        else if (node.hasTag("barrier", barriers))
-            return true;
-        else
-            return blockFords && node.hasTag("ford", "yes");
+        return node.hasTag("barrier", barriers);
     }
 
     public final BooleanEncodedValue getAccessEnc() {

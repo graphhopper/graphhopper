@@ -129,12 +129,6 @@ public class WheelchairTagParserTest {
         assertTrue(accessParser.getAccess(way).canSkip());
 
         way.clearTags();
-        way.setTag("highway", "tertiary");
-        way.setTag("sidewalk", "left");
-        way.setTag("access", "private");
-        assertTrue(accessParser.getAccess(way).canSkip());
-        way.clearTags();
-
         way.setTag("highway", "pedestrian");
         assertTrue(accessParser.getAccess(way).isWay());
 
@@ -215,10 +209,6 @@ public class WheelchairTagParserTest {
         assertTrue(accessParser.getAccess(way).isFerry());
 
         way.setTag("foot", "no");
-        assertTrue(accessParser.getAccess(way).canSkip());
-
-        way.setTag("foot", "designated");
-        way.setTag("access", "private");
         assertTrue(accessParser.getAccess(way).canSkip());
 
         DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");

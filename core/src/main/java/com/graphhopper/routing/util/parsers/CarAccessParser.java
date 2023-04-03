@@ -35,26 +35,18 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         this(
                 lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "car"))),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
-                properties,
                 TransportationMode.CAR
         );
+        check(properties);
     }
 
-    public CarAccessParser(BooleanEncodedValue accessEnc,
-                           BooleanEncodedValue roundaboutEnc, PMap properties,
+    public CarAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc,
                            TransportationMode transportationMode) {
         super(accessEnc, transportationMode);
         this.roundaboutEnc = roundaboutEnc;
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("delivery");
-
-        blockPrivate(properties.getBool("block_private", true));
-        blockFords(properties.getBool("block_fords", false));
-
-        intendedValues.add("yes");
-        intendedValues.add("designated");
-        intendedValues.add("permissive");
 
         barriers.add("kissing_gate");
         barriers.add("fence");
@@ -116,9 +108,6 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
                     return WayAccess.WAY;
             }
         }
-
-        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
-            return WayAccess.CAN_SKIP;
 
         if (permittedWayConditionallyRestricted)
             return WayAccess.CAN_SKIP;
