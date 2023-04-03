@@ -27,6 +27,7 @@ import com.google.common.collect.Maps;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.Trip;
+import com.graphhopper.gtfs.fare.Amount;
 import com.graphhopper.gtfs.fare.Fares;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
@@ -152,14 +153,18 @@ class TripFromLabel {
                 .filter(l -> l instanceof Trip.PtLeg)
                 .filter(l -> !((Trip.PtLeg) l).isInSameVehicleAsPrevious)
                 .count() - 1);
-        com.graphhopper.gtfs.fare.Trip faresTrip = new com.graphhopper.gtfs.fare.Trip();
-        path.getLegs().stream()
+        getCheapestFare(gtfsStorage, path.getLegs()).ifPresent(amount -> path.setFare(amount.getAmount()));
+        return path;
+    }
+
+    public static Optional<Amount> getCheapestFare(GtfsStorage gtfsStorage, List<Trip.Leg> pathlegs) {
+        return pathlegs.stream()
                 .filter(leg -> leg instanceof Trip.PtLeg)
                 .map(leg -> (Trip.PtLeg) leg)
-                .findFirst()
-                .ifPresent(firstPtLeg -> {
+                .findFirst().flatMap(firstPtLeg -> {
+                    com.graphhopper.gtfs.fare.Trip faresTrip = new com.graphhopper.gtfs.fare.Trip();
                     LocalDateTime firstPtDepartureTime = GtfsHelper.localDateTimeFromDate(firstPtLeg.getDepartureTime());
-                    path.getLegs().stream()
+                    pathlegs.stream()
                             .filter(leg -> leg instanceof Trip.PtLeg)
                             .map(leg -> (Trip.PtLeg) leg)
                             .map(ptLeg -> {
@@ -170,10 +175,8 @@ class TripFromLabel {
                                         ptLeg.stops.stream().map(s -> gtfsFeed.stops.get(s.stop_id).zone_id).collect(Collectors.toSet()));
                             })
                             .forEach(faresTrip.segments::add);
-                    Fares.cheapestFare(gtfsStorage.getFares(), faresTrip)
-                            .ifPresent(amount -> path.setFare(amount.getAmount()));
+                    return Fares.cheapestFare(gtfsStorage.getFares(), faresTrip);
                 });
-        return path;
     }
 
     private Map<String, List<PathDetail>> shift(Map<String, List<PathDetail>> pathDetailss, int previousPointsCount) {

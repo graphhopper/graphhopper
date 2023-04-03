@@ -28,6 +28,7 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.Trip;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.analysis.Trips;
+import com.graphhopper.gtfs.fare.Amount;
 import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.ev.Subnetwork;
@@ -239,6 +240,7 @@ public final class PtRouterImpl implements PtRouter {
                 }
                 List<Trip.Stop> stops = ((Trip.PtLeg) responsePath.getLegs().get(responsePath.getLegs().size() - 1)).stops;
                 responsePath.setTime(stops.get(stops.size()-1).arrivalTime.toInstant().toEpochMilli() - initialTime.toEpochMilli());
+                responsePath.setFare(TripFromLabel.getCheapestFare(gtfsStorage, responsePath.getLegs()).map(Amount::getAmount).orElse(null));
                 response.add(responsePath);
             }
             response.getAll().sort(Comparator.comparingLong(ResponsePath::getTime));
