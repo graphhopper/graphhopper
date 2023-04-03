@@ -526,22 +526,19 @@ public class GTFSFeed implements Cloneable, Closeable {
         return endDate;
     }
 
-    public Map<PatternFinder.TripPatternKey, PatternFinder.Pattern> findPatterns () {
-        if (patterns == null) {
-            ObjectIntHashMap startTimes = new ObjectIntHashMap();
-            PatternFinder patternFinder = new PatternFinder(this);
-            // Iterate over trips and process each trip and its stop times.
-            for (Trip trip : this.trips.values()) {
-                Iterable<StopTime> orderedStopTimesForTrip = this.getOrderedStopTimesForTrip(trip.trip_id);
-                startTimes.put(trip.trip_id, orderedStopTimesForTrip.iterator().next().departure_time);
-                patternFinder.processTrip(trip, orderedStopTimesForTrip);
-            }
-            patterns = patternFinder.createPatternObjects();
-            for (PatternFinder.Pattern e : patterns.values()) {
-                e.trips.sort(Comparator.comparingInt(t -> startTimes.get(t)));
-            }
+    public void findPatterns () {
+        ObjectIntHashMap startTimes = new ObjectIntHashMap();
+        PatternFinder patternFinder = new PatternFinder(this);
+        // Iterate over trips and process each trip and its stop times.
+        for (Trip trip : this.trips.values()) {
+            Iterable<StopTime> orderedStopTimesForTrip = this.getOrderedStopTimesForTrip(trip.trip_id);
+            startTimes.put(trip.trip_id, orderedStopTimesForTrip.iterator().next().departure_time);
+            patternFinder.processTrip(trip, orderedStopTimesForTrip);
         }
-        return patterns;
+        patterns = patternFinder.createPatternObjects();
+        for (PatternFinder.Pattern e : patterns.values()) {
+            e.trips.sort(Comparator.comparingInt(t -> startTimes.get(t)));
+        }
     }
 
 }
