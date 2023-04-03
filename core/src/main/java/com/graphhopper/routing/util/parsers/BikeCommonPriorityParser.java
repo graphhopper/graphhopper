@@ -150,8 +150,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
      */
     void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
         String highway = way.getTag("highway");
-        if (way.hasTag("bicycle", "designated") || way.hasTag(CYCLEWAY_ACCESS_KEYS, Arrays.asList("designated"))
-                || way.hasTag("bicycle_road", "yes") || way.hasTag("cyclestreet", "yes") || way.hasTag("bicycle", "official")) {
+        if (isDesignated(way)) {
             if ("path".equals(highway))
                 weightToPrioMap.put(100d, VERY_NICE.getValue());
             else
@@ -194,7 +193,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             PriorityCode pushingSectionPrio = SLIGHT_AVOID;
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
                 pushingSectionPrio = PREFER;
-            if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))
+            if (isDesignated(way))
                 pushingSectionPrio = VERY_NICE;
             if (way.hasTag("foot", "yes")) {
                 pushingSectionPrio = PriorityCode.values()[pushingSectionPrio.ordinal() - 1];
@@ -229,6 +228,11 @@ public abstract class BikeCommonPriorityParser implements TagParser {
                 weightToPrioMap.put(110d, PriorityCode.values()[lastEntryIndex + 1].getValue());
             }
         }
+    }
+
+    boolean isDesignated(ReaderWay way) {
+        return way.hasTag("bicycle", "designated") || way.hasTag(CYCLEWAY_ACCESS_KEYS, Arrays.asList("designated"))
+        || way.hasTag("bicycle_road", "yes") || way.hasTag("cyclestreet", "yes") || way.hasTag("bicycle", "official");
     }
 
     // TODO duplicated in average speed
