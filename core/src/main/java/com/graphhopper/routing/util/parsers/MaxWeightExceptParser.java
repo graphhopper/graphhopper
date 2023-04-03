@@ -14,7 +14,8 @@ import static com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor.str
 
 public class MaxWeightExceptParser implements TagParser {
     private final EnumEncodedValue<MaxWeightExcept> mweEnc;
-    private static final List<String> HGV_RESTRICTIONS = OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV);
+    private static final List<String> HGV_RESTRICTIONS = OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV).stream()
+                .map(e -> e + ":conditional").collect(Collectors.toList());
 
     public MaxWeightExceptParser(EnumEncodedValue<MaxWeightExcept> mweEnc) {
         this.mweEnc = mweEnc;
@@ -29,7 +30,7 @@ public class MaxWeightExceptParser implements TagParser {
                 String key = values[0].trim();
                 String value = values[1].trim();
                 if ("no".equals(key) || "none".equals(key)) {
-                    if (value.contains("(") && value.contains(")")) value = value.substring(1, value.length() - 1);
+                    if (value.startsWith("(") && value.endsWith(")")) value = value.substring(1, value.length() - 1);
                     mweEnc.setEnum(false, edgeId, edgeIntAccess, MaxWeightExcept.find(value));
                     return;
                 }
