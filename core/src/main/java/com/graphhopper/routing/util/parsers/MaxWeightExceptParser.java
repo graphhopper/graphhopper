@@ -43,9 +43,10 @@ public class MaxWeightExceptParser implements TagParser {
             int atIndex = value.indexOf("@");
             if (atIndex > 0) {
                 double dec = OSMValueExtractor.conditionalWeightToTons(value);
-                // ensure that the weight value is the same as in maxweight
+                // set it only if the weight value is the same as in max_weight
                 if (!Double.isNaN(dec)
                         && (stringToTons(way.getTag("maxweight", "")) == dec
+                        || stringToTons(way.getTag("maxweightrating:hgv", "")) == dec
                         || stringToTons(way.getTag("maxgcweight", "")) == dec)) {
                     mweEnc.setEnum(false, edgeId, edgeIntAccess, MaxWeightExcept.find(value.substring(0, atIndex).trim()));
                     break;
