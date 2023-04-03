@@ -262,6 +262,11 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "motorway");
         way.setTag("bicycle", "yes");
         assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("cycleway:bicycle", "designated");
+        assertPriority(PREFER.getValue(), way);
     }
 
     @Test
