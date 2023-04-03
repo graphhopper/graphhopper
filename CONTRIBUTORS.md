@@ -16,6 +16,7 @@ Here is an overview:
  * chollemans, fixes like #1482
  * ChristianSeitzer, motorcycle improvements
  * ChristophKaser, agrees to the project's CLA, improved Android compatibility #1207
+ * Christoph Lingg, elevation smoothing #2772
  * chucre, add special JSON output format, see #41
  * daisy1754, fixed usage of graphhopper.sh script
  * dardin88, instructions improved
