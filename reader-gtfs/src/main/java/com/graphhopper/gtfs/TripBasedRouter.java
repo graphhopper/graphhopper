@@ -111,7 +111,8 @@ public class TripBasedRouter {
     private List<EnqueuedTripSegment> round(List<EnqueuedTripSegment> queue0) {
         List<EnqueuedTripSegment> queue1 = new ArrayList<>();
         for (EnqueuedTripSegment enqueuedTripSegment : queue0) {
-            GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(enqueuedTripSegment.tripAtStopTime.feedId);
+            String feedId = enqueuedTripSegment.tripAtStopTime.feedId;
+            GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
             Trips.TripAtStopTime tripAtStopTime = enqueuedTripSegment.tripAtStopTime;
             Iterator<StopTime> iterator = gtfsFeed.stopTimes.getUnchecked(tripAtStopTime.tripDescriptor).stopTimes.iterator();
             while (iterator.hasNext()) {
@@ -119,7 +120,7 @@ public class TripBasedRouter {
                 if (stopTime.stop_sequence > tripAtStopTime.stop_sequence && stopTime.stop_sequence < enqueuedTripSegment.toStopSequence && stopTime.arrival_time < earliestArrivalTime) {
                     Trips.TripAtStopTime t = new Trips.TripAtStopTime("gtfs_0", tripAtStopTime.tripDescriptor, stopTime.stop_sequence);
                     for (StopWithTimeDelta destination : egressStations) {
-                        if (destination.stopId.equals(stopTime.stop_id)) {
+                        if (destination.stopId.stopId.equals(stopTime.stop_id) && destination.stopId.feedId.equals(feedId)) {
                             earliestArrivalTime = stopTime.arrival_time;
                             result.add(new ResultLabel(t, enqueuedTripSegment));
                             System.out.printf("%s+%d\n", LocalTime.ofSecondOfDay(stopTime.arrival_time % (60 * 60 * 24)), stopTime.arrival_time / (60 * 60 * 24));
