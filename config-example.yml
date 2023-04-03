@@ -23,9 +23,10 @@ graphhopper:
   # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
   #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
   #   in seconds, so for example it does not work with shortest weighting.
-  # - custom_model_file: when you specified "weighting: custom" you need to set a json file inside your custom_models.directory
-  #   or working directory that defines the custom_model. If you want an empty model you can also set "custom_model_file: empty".
-  #   You can also use th e`custom_model` field instead and specify your custom model in the profile directly.
+  # - custom_model_files: when you specified "weighting: custom" you need to set one or more json files which are searched in
+  #   custom_models.directory or the working directory that defines the custom_model. If you want an empty model you can
+  #   set "custom_model_files: []
+  #   You can also use the `custom_model` field instead and specify your custom model in the profile directly.
   #
   # To prevent long running routing queries you should usually enable either speed or hybrid mode for all the given
   # profiles (see below). Or at least limit the number of `routing.max_visited_nodes`.
@@ -43,8 +44,7 @@ graphhopper:
 #      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
 #      vehicle: bike
 #      weighting: custom
-#      # the custom model in bike.json is defined to avoid hills
-#      custom_model_file: bike.json
+#      custom_model_files: [bike.json, bike_elevation.json]
 
   # specify the folder where to find the custom model files
   custom_models.directory: custom_models
@@ -83,8 +83,9 @@ graphhopper:
 
   # Add additional information to every edge. Used for path details (#1548) and custom models (docs/core/custom-models.md)
   # Default values are: road_class,road_class_link,road_environment,max_speed,road_access
-  # More are: surface,smoothness,max_width,max_height,max_weight,hgv,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,
-  #           lanes,osm_way_id,toll,track_type,mtb_rating,hike_rating,horse_rating
+  # More are: surface,smoothness,max_width,max_height,max_weight,hgv,max_axle_load,max_length,
+  #           hazmat,hazmat_tunnel,hazmat_water,lanes,osm_way_id,toll,track_type,mtb_rating,hike_rating,horse_rating,
+  #           country,curvature,average_slope,max_slope
   # graph.encoded_values: surface,toll,track_type
 
   #### Speed, hybrid and flexible mode ####
