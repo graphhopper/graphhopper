@@ -22,7 +22,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
-import com.graphhopper.json.Statement;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
@@ -34,8 +33,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.*;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -52,7 +49,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -391,23 +387,23 @@ public class OSMReaderTest {
     @Test
     public void testFords() {
         GraphHopper hopper = new GraphHopper();
-        CustomProfile profile = new CustomProfile("car").setCustomModel(new CustomModel().
-                addToPriority(Statement.If("road_environment == FORD", MULTIPLY, "0")));
-        profile.setVehicle("car");
+        hopper.setVehiclesString("car|block_fords=true");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
-                setProfiles(profile).
+                setProfiles(
+                        new Profile("car").setVehicle("car").setWeighting("fastest")
+                ).
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getBaseGraph();
         // our way is split into five edges, because there are two ford nodes
         assertEquals(5, graph.getEdges());
-        Weighting weighting = hopper.createWeighting(profile, new PMap());
+        BooleanEncodedValue accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(VehicleAccess.key("car"));
         int blocked = 0;
         int notBlocked = 0;
         AllEdgesIterator edge = graph.getAllEdges();
         while (edge.next()) {
-            if (Double.isInfinite(weighting.calcEdgeWeight(edge, false)))
+            if (!edge.get(accessEnc))
                 blocked++;
             else
                 notBlocked++;
@@ -700,7 +696,7 @@ public class OSMReaderTest {
         hopper.setVehicleTagParserFactory((lookup, name, config) -> {
             if (name.equals("truck")) {
                 return new VehicleTagParsers(
-                        new CarAccessParser(lookup.getBooleanEncodedValue(VehicleAccess.key("truck")), lookup.getBooleanEncodedValue(Roundabout.KEY), TransportationMode.HGV)
+                        new CarAccessParser(lookup.getBooleanEncodedValue(VehicleAccess.key("truck")), lookup.getBooleanEncodedValue(Roundabout.KEY), config, TransportationMode.HGV)
                                 .init(config.getObject("date_range_parser", new DateRangeParser())),
                         new CarAverageSpeedParser(lookup.getDecimalEncodedValue(VehicleSpeed.key("truck")), 120),
                         null

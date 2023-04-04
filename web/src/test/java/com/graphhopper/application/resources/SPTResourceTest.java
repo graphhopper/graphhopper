@@ -22,9 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-import com.graphhopper.json.Statement;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
-import com.graphhopper.util.CustomModel;
+import com.graphhopper.config.Profile;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -55,12 +53,8 @@ public class SPTResourceTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new CustomProfile("car_without_turncosts").setCustomModel(new CustomModel().
-                                addToPriority(Statement.If("road_access==PRIVATE", Statement.Op.MULTIPLY, "0"))).
-                                setVehicle("car"),
-                        new CustomProfile("car_with_turncosts").setCustomModel(new CustomModel().
-                                addToPriority(Statement.If("road_access==PRIVATE", Statement.Op.MULTIPLY, "0"))).
-                                setVehicle("car").setTurnCosts(true)
+                        new Profile("car_without_turncosts").setVehicle("car").setWeighting("fastest"),
+                        new Profile("car_with_turncosts").setVehicle("car").setWeighting("fastest").setTurnCosts(true)
                 ));
         return config;
     }
