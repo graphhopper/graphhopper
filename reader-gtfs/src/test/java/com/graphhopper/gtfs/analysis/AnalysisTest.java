@@ -82,11 +82,11 @@ public class AnalysisTest {
 
     @Test
     public void testComputeTransfers() {
-        PtGraph ptGraph = graphHopperGtfs.getPtGraph();
         GtfsStorage gtfsStorage = graphHopperGtfs.getGtfsStorage();
         Trips.TripAtStopTime origin = new Trips.TripAtStopTime("gtfs_1", GtfsRealtime.TripDescriptor.newBuilder().setTripId("MUSEUM1").setRouteId("COURT2MUSEUM").build(), 2);
         GTFSFeed gtfsFeed = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get("gtfs_1");
-        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> reducedTripTransfers = Trips.findTripTransfers(gtfsFeed, origin.tripDescriptor, "gtfs_1", ptGraph, gtfsStorage, LocalDate.parse("2023-03-26"));
+        Trips trips = new Trips(gtfsStorage);
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> reducedTripTransfers = trips.findTripTransfers(gtfsFeed, origin.tripDescriptor, "gtfs_1", LocalDate.parse("2023-03-26"));
         Collection<Trips.TripAtStopTime> destinations = reducedTripTransfers.get(origin);
 
     }

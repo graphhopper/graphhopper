@@ -166,7 +166,7 @@ public class GtfsStorage {
 
 	private DB data;
 
-	GtfsStorage(Directory dir) {
+	public GtfsStorage(Directory dir) {
 		this.dir = dir;
 	}
 
@@ -241,7 +241,7 @@ public class GtfsStorage {
     private void init() {
 		this.gtfsFeedIds = data.getHashSet("gtfsFeeds");
 		this.stationNodes = data.getHashMap("stationNodes");
-		this.tripTransfers = data.getHashMap("tripTransfers");
+		this.tripTransfers = data.getTreeMap("tripTransfers");
 		this.ptToStreet = new IntIntHashMap();
 		this.streetToPt = new IntIntHashMap();
 		this.skippedEdgesForTransfer = new IntObjectHashMap<>();

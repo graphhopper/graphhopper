@@ -20,7 +20,8 @@ package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
-import com.google.common.cache.LoadingCache;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperConfig;
@@ -199,12 +200,15 @@ public final class PtRouterImpl implements PtRouter {
             response.addDebugInfo("access/egress routing:" + stopWatch1.stop().getSeconds() + "s");
 
 
-            TripBasedRouter tripBasedRouter = new TripBasedRouter(gtfsStorage);
+            TripBasedRouter tripBasedRouter = new TripBasedRouter(gtfsStorage, CacheBuilder.newBuilder().build(new CacheLoader<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>() {
+                @Override
+                public Collection<Trips.TripAtStopTime> load(Trips.TripAtStopTime key) throws Exception {
+                    return gtfsStorage.getTripTransfers().get(key);
+                }
+            }));
             List<TripBasedRouter.ResultLabel> routes = tripBasedRouter.route(accessStations, egressStations, initialTime);
             for (TripBasedRouter.ResultLabel route : routes) {
-
                 List<TripBasedRouter.EnqueuedTripSegment> segments = new ArrayList<>();
-                System.out.println("===");
                 TripBasedRouter.EnqueuedTripSegment enqueuedTripSegment = route.enqueuedTripSegment;
                 while (enqueuedTripSegment != null) {
                     segments.add(enqueuedTripSegment);
@@ -222,15 +226,12 @@ public final class PtRouterImpl implements PtRouter {
                     if (i == segments.size() - 1)
                         untilStopSequence = route.t.stop_sequence;
                     else
-                        untilStopSequence = Integer.MAX_VALUE;
+                        untilStopSequence = segments.get(i+1).transferOrigin.stop_sequence;
                     List<Trip.Stop> stops = feed.stopTimes.getUnchecked(segment.tripAtStopTime.tripDescriptor).stopTimes.stream().filter(st -> st.stop_sequence >= segment.tripAtStopTime.stop_sequence && st.stop_sequence <= untilStopSequence)
                             .map(st -> {
                                 LocalDate day = initialTime.atZone(ZoneId.of("America/Los_Angeles")).toLocalDate().plusDays(segment.plusDays);
-                                LocalTime departureLocalTime = LocalTime.ofSecondOfDay(st.departure_time);
-                                Instant departureTime = departureLocalTime.atDate(day).atZone(ZoneId.of("America/Los_Angeles")).toInstant();
-                                LocalTime arrivalLocalTime = LocalTime.ofSecondOfDay(st.arrival_time);
-                                Instant arrivalTime = arrivalLocalTime.atDate(day).atZone(ZoneId.of("America/Los_Angeles")).toInstant();
-                                System.out.println(st.stop_id + " " + departureLocalTime);
+                                Instant departureTime = day.atStartOfDay().plusSeconds(st.departure_time).atZone(ZoneId.of("America/Los_Angeles")).toInstant();
+                                Instant arrivalTime = day.atStartOfDay().plusSeconds(st.arrival_time).atZone(ZoneId.of("America/Los_Angeles")).toInstant();;
                                 Stop stop = feed.stops.get(st.stop_id);
                                 return new Trip.Stop(st.stop_id, st.stop_sequence, stop.stop_name, null, Date.from(arrivalTime), Date.from(arrivalTime), Date.from(arrivalTime), false, Date.from(departureTime), Date.from(departureTime), Date.from(departureTime), false);
                             })
