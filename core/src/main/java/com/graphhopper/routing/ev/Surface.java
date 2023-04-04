@@ -19,6 +19,9 @@ package com.graphhopper.routing.ev;
 
 import com.graphhopper.util.Helper;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * This enum defines the road surface of an edge like unpaved or asphalt. If not tagged the value will be MISSING, which
  * the default and best surface value (as surface is currently often not tagged). All unknown surface tags will get
@@ -33,6 +36,19 @@ public enum Surface {
     OTHER("other");
 
     public static final String KEY = "surface";
+
+    private static final Map<String,Surface> SURFACE_MAP = new HashMap<>();
+    static {
+        for (Surface surface : values()) {
+            if (surface == MISSING || surface == OTHER)
+                continue;
+            SURFACE_MAP.put(surface.name, surface);
+        }
+        SURFACE_MAP.put("metal", PAVED);
+        SURFACE_MAP.put("sett", COBBLESTONE);
+        SURFACE_MAP.put("wood", UNPAVED);
+        SURFACE_MAP.put("earth", DIRT);
+    }
 
     public static EnumEncodedValue<Surface> create() {
         return new EnumEncodedValue<>(KEY, Surface.class);
@@ -52,10 +68,7 @@ public enum Surface {
     public static Surface find(String name) {
         if (Helper.isEmpty(name))
             return MISSING;
-        try {
-            return Surface.valueOf(Helper.toUpperCase(name));
-        } catch (IllegalArgumentException ex) {
-            return OTHER;
-        }
+
+        return SURFACE_MAP.getOrDefault(name, OTHER);
     }
 }
