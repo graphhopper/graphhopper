@@ -107,6 +107,7 @@ public class Trips {
                     return service.activeOn(trafficDay);
                 })
                 .map(boarding -> new TripAtStopTime(feedIdWithStopId.feedId, boarding.getAttrs().tripDescriptor, boarding.getAttrs().stop_sequence))
+                .sorted(Comparator.comparingInt(boarding -> feed.stopTimes.getUnchecked(boarding.tripDescriptor).stopTimes.stream().filter(st -> st.stop_sequence == boarding.stop_sequence).findFirst().get().departure_time))
                 .collect(Collectors.groupingBy(boarding -> feed.stopTimes.getUnchecked(boarding.tripDescriptor).pattern.pattern_id));
         return boardingsByPattern;
     }

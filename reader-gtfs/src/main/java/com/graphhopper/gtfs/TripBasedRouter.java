@@ -169,8 +169,8 @@ public class TripBasedRouter {
     }
 
     public static class ResultLabel {
-        Trips.TripAtStopTime t;
-        EnqueuedTripSegment enqueuedTripSegment;
+        public Trips.TripAtStopTime t;
+        public EnqueuedTripSegment enqueuedTripSegment;
 
         public ResultLabel(Trips.TripAtStopTime t, EnqueuedTripSegment enqueuedTripSegment) {
             this.t = t;
