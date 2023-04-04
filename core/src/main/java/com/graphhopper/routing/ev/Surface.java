@@ -46,6 +46,7 @@ public enum Surface {
         }
         SURFACE_MAP.put("metal", PAVED);
         SURFACE_MAP.put("sett", COBBLESTONE);
+        SURFACE_MAP.put("unhewn_cobblestone", COBBLESTONE);
         SURFACE_MAP.put("wood", UNPAVED);
         SURFACE_MAP.put("earth", DIRT);
     }
