@@ -22,6 +22,7 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperConfig;
@@ -48,7 +49,6 @@ import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 import javax.inject.Inject;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -65,6 +65,8 @@ public final class PtRouterImpl implements PtRouter {
     private final RealtimeFeed realtimeFeed;
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final WeightingFactory weightingFactory;
+    private final LoadingCache<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfersCache;
+    private final Trips trips;
 
     @Inject
     public PtRouterImpl(GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
@@ -82,6 +84,14 @@ public final class PtRouterImpl implements PtRouter {
 //        for (GTFSFeed gtfsFeed : gtfsStorage.getGtfsFeeds().values()) {
 //            patterns.addAll(gtfsFeed.findPatterns().values());
 //        }
+        tripTransfersCache = CacheBuilder.newBuilder().build(new CacheLoader<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>() {
+            @Override
+            public Collection<Trips.TripAtStopTime> load(Trips.TripAtStopTime key) throws Exception {
+                return PtRouterImpl.this.gtfsStorage.getTripTransfers().get(key);
+            }
+        });
+        trips = new Trips(gtfsStorage);
+        trips.setTrafficDay(LocalDate.parse("2023-03-26"));
     }
 
     @Override
@@ -200,12 +210,7 @@ public final class PtRouterImpl implements PtRouter {
             response.addDebugInfo("access/egress routing:" + stopWatch1.stop().getSeconds() + "s");
 
 
-            TripBasedRouter tripBasedRouter = new TripBasedRouter(gtfsStorage, CacheBuilder.newBuilder().build(new CacheLoader<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>() {
-                @Override
-                public Collection<Trips.TripAtStopTime> load(Trips.TripAtStopTime key) throws Exception {
-                    return gtfsStorage.getTripTransfers().get(key);
-                }
-            }));
+            TripBasedRouter tripBasedRouter = new TripBasedRouter(gtfsStorage, tripTransfersCache, trips);
             List<TripBasedRouter.ResultLabel> routes = tripBasedRouter.route(accessStations, egressStations, initialTime);
             for (TripBasedRouter.ResultLabel route : routes) {
                 List<TripBasedRouter.EnqueuedTripSegment> segments = new ArrayList<>();

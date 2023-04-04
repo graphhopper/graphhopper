@@ -14,11 +14,15 @@ import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServerConfiguration> {
+
+    private Trips trips;
+
     public TestTripTransfersCommand() {
         super("testtriptransfers", "Test trip transfers");
     }
@@ -39,12 +43,19 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
         PtRouterImpl.Factory factory = new PtRouterImpl.Factory(configuration.getGraphHopperConfiguration(), graphHopper.getTranslationMap(), graphHopper.getBaseGraph(), graphHopper.getEncodingManager(), graphHopper.getLocationIndex(), graphHopper.getGtfsStorage());
         PtRouter ptRouter = factory.createWithoutRealtimeFeed();
 
+        trips = new Trips(graphHopper.getGtfsStorage());
+        trips.setTrafficDay(LocalDate.parse("2023-03-26"));
 
-        extracted(graphHopper, ptRouter, "19TH", "DBRK", "2023-03-26T08:00:00-07:00");
-        extracted(graphHopper, ptRouter, "SFIA", "COLS", "2023-03-26T08:00:00-07:00");
-        extracted(graphHopper, ptRouter, "SFIA", "OAKL", "2023-03-26T08:00:00-07:00");
-        extracted(graphHopper, ptRouter, "SFIA", "OAKL", "2023-03-26T18:30:00-07:00");
-        extracted(graphHopper, ptRouter, "19TH", "40425", "2023-03-26T08:00:00-07:00");
+
+//        extracted(graphHopper, ptRouter, "19TH", "DBRK", "2023-03-26T08:00:00-07:00");
+//        extracted(graphHopper, ptRouter, "SFIA", "COLS", "2023-03-26T08:00:00-07:00");
+//        extracted(graphHopper, ptRouter, "SFIA", "OAKL", "2023-03-26T08:00:00-07:00");
+//        extracted(graphHopper, ptRouter, "SFIA", "OAKL", "2023-03-26T18:30:00-07:00");
+//        extracted(graphHopper, ptRouter, "19TH", "40425", "2023-03-26T08:00:00-07:00");
+
+        for (int i = 0; i < 500; i++) {
+            extracted(graphHopper, ptRouter, "MONT", "WDUB", "2023-03-26T08:00:00-07:00");
+        }
 
 
 //        request.setFilter(true);
@@ -76,12 +87,12 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
         graphHopper.close();
     }
 
-    private static void extracted(GraphHopperGtfs graphHopper, PtRouter ptRouter, String origin, String destination, String time) {
+    private void extracted(GraphHopperGtfs graphHopper, PtRouter ptRouter, String origin, String destination, String time) {
         Request request = new Request(Arrays.asList(
                 new GHStationLocation(origin),
                 new GHStationLocation(destination)), ZonedDateTime.parse(time).toInstant());
         request.setIgnoreTransfers(true);
-        request.setLimitStreetTime(Duration.ofMinutes(0));
+        request.setLimitStreetTime(Duration.ofMinutes(15));
         long start1 = System.currentTimeMillis();
         GHResponse response = ptRouter.route(request);
         extracted(response);
@@ -96,7 +107,7 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
             public Collection<Trips.TripAtStopTime> load(Trips.TripAtStopTime key) throws Exception {
                 return graphHopper.getGtfsStorage().getTripTransfers().get(key);
             }
-        }));
+        }), trips);
         GtfsStorage.FeedIdWithStopId origin1 = new GtfsStorage.FeedIdWithStopId("gtfs_0", ((GHStationLocation) request.getPoints().get(0)).stop_id);
         GtfsStorage.FeedIdWithStopId destination1 = new GtfsStorage.FeedIdWithStopId("gtfs_0", ((GHStationLocation) request.getPoints().get(1)).stop_id);
         List<TripBasedRouter.ResultLabel> route = tripBasedRouter.route(Collections.singletonList(new TripBasedRouter.StopWithTimeDelta(origin1, 0)), Collections.singletonList(new TripBasedRouter.StopWithTimeDelta(destination1, 0)), request.getEarliestDepartureTime());

@@ -17,15 +17,17 @@ import java.util.function.Predicate;
 
 public class TripBasedRouter {
     private LoadingCache<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers;
+    private final Trips trips;
     private GtfsStorage gtfsStorage;
     int earliestArrivalTime = Integer.MAX_VALUE;
     private ObjectIntHashMap<GtfsRealtime.TripDescriptor> tripDoneFromIndex = new ObjectIntHashMap();
     private List<ResultLabel> result = new ArrayList<>();
     private List<StopWithTimeDelta> egressStations;
 
-    public TripBasedRouter(GtfsStorage gtfsStorage, LoadingCache<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers) {
+    public TripBasedRouter(GtfsStorage gtfsStorage, LoadingCache<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers, Trips trips) {
         this.gtfsStorage = gtfsStorage;
         this.tripTransfers = tripTransfers;
+        this.trips = trips;
     }
 
     public static class StopWithTimeDelta {
@@ -48,16 +50,12 @@ public class TripBasedRouter {
         for (StopWithTimeDelta accessStation : accessStations) {
             GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(accessStations.iterator().next().stopId.feedId);
             ZonedDateTime earliestDepartureTime = initialTime.atZone(ZoneId.of("America/Los_Angeles")).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
-            Map<String, List<Trips.TripAtStopTime>> boardingsByPattern = Trips.boardingsForStopByPattern(gtfsFeed, gtfsStorage, earliestDepartureTime.toLocalDate(), accessStation.stopId);
-
+            Map<String, List<Trips.TripAtStopTime>> boardingsByPattern = trips.boardingsForStopByPattern.getUnchecked(accessStation.stopId);
             boardingsByPattern.forEach((pattern, boardings) -> {
                 boardings.stream()
                         .filter(reachable(gtfsFeed, earliestDepartureTime))
                         .findFirst()
-                        .ifPresent(t -> {
-                            tripDoneFromIndex.put(t.tripDescriptor, Math.min(tripDoneFromIndex.getOrDefault(t.tripDescriptor, Integer.MAX_VALUE), t.stop_sequence));
-                            queue0.add(new EnqueuedTripSegment(t, Integer.MAX_VALUE, 0, null, null));
-                        });
+                        .ifPresent(t -> enqueue(queue0, t, null, null, gtfsFeed, 0));
             });
 
         }

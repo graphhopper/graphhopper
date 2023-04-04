@@ -34,8 +34,7 @@ public class Trips {
     GtfsStorage gtfsStorage;
 
 
-    public Map<TripAtStopTime, Collection<TripAtStopTime>> findTripTransfers(GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, String feedKey, LocalDate trafficDay) {
-        this.trafficDay = trafficDay;
+    public Map<TripAtStopTime, Collection<TripAtStopTime>> findTripTransfers(GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, String feedKey) {
         Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
         Iterable<StopTime> orderedStopTimesForTrip = feed.getOrderedStopTimesForTrip(tripDescriptor.getTripId());
         List<StopTime> stopTimesExceptFirst = StreamSupport.stream(orderedStopTimesForTrip.spliterator(), false).skip(1).collect(Collectors.toList());
@@ -91,8 +90,12 @@ public class Trips {
         return result;
     }
 
+    public void setTrafficDay(LocalDate trafficDay) {
+        this.trafficDay = trafficDay;
+    }
+
     private LocalDate trafficDay;
-    LoadingCache<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>> boardingsForStopByPattern = CacheBuilder.newBuilder().maximumSize(200000).build(new CacheLoader<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>>() {
+    public LoadingCache<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>> boardingsForStopByPattern = CacheBuilder.newBuilder().maximumSize(200000).build(new CacheLoader<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>>() {
         @Override
         public Map<String, List<TripAtStopTime>> load(GtfsStorage.FeedIdWithStopId key) throws Exception {
             return boardingsForStopByPattern(gtfsStorage.getGtfsFeeds().get(key.feedId), gtfsStorage, trafficDay, key);
@@ -100,7 +103,7 @@ public class Trips {
     });
 
     public static Map<String, List<TripAtStopTime>> boardingsForStopByPattern(GTFSFeed feed, GtfsStorage gtfsStorage, LocalDate trafficDay, GtfsStorage.FeedIdWithStopId feedIdWithStopId) {
-        Map<String, List<TripAtStopTime>> boardingsByPattern = RealtimeFeed.findAllBoardings(gtfsStorage, feedIdWithStopId)
+        return RealtimeFeed.findAllBoardings(gtfsStorage, feedIdWithStopId)
                 .filter(boarding -> {
                     String serviceId = feed.trips.get(boarding.getAttrs().tripDescriptor.getTripId()).service_id;
                     Service service = feed.services.get(serviceId);
@@ -109,41 +112,6 @@ public class Trips {
                 .map(boarding -> new TripAtStopTime(feedIdWithStopId.feedId, boarding.getAttrs().tripDescriptor, boarding.getAttrs().stop_sequence))
                 .sorted(Comparator.comparingInt(boarding -> feed.stopTimes.getUnchecked(boarding.tripDescriptor).stopTimes.stream().filter(st -> st.stop_sequence == boarding.stop_sequence).findFirst().get().departure_time))
                 .collect(Collectors.groupingBy(boarding -> feed.stopTimes.getUnchecked(boarding.tripDescriptor).pattern.pattern_id));
-        return boardingsByPattern;
-    }
-
-    public static ArrayList<TripAtStopTime> listTransfers(PtGraph ptGraph, int node) {
-        ArrayList<TripAtStopTime> result = new ArrayList<>();
-        for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(node)) {
-            if (ptEdge.getType() == GtfsStorage.EdgeType.TRANSFER) {
-                listTrips(ptGraph, ptEdge.getAdjNode(), result);
-            }
-        }
-        return result;
-    }
-
-    private static void listTrips(PtGraph ptGraph, final int startNode, ArrayList<TripAtStopTime> acc) {
-        int node = startNode;
-        do {
-            int thisNode = node;
-            node = startNode;
-            for (PtGraph.PtEdge ptEdge : ptGraph.edgesAround(thisNode)) {
-                if (ptEdge.getType() == GtfsStorage.EdgeType.BOARD) {
-                    acc.add(new TripAtStopTime(findFeedIdForBoard(ptGraph, ptEdge), ptEdge.getAttrs().tripDescriptor, ptEdge.getAttrs().stop_sequence));
-                } else if (ptEdge.getType() == GtfsStorage.EdgeType.WAIT || ptEdge.getType() == GtfsStorage.EdgeType.OVERNIGHT) {
-                    node = ptEdge.getAdjNode();
-                }
-            }
-        } while (node != startNode);
-    }
-
-    private static String findFeedIdForBoard(PtGraph ptGraph, PtGraph.PtEdge ptEdge) {
-        for (PtGraph.PtEdge edge : ptGraph.backEdgesAround(ptEdge.getBaseNode())) {
-            if (edge.getAttrs().feedIdWithTimezone != null) {
-                return edge.getAttrs().feedIdWithTimezone.feedId;
-            }
-        }
-        throw new RuntimeException();
     }
 
     public static void findAllTripTransfersInto(GraphHopperGtfs graphHopperGtfs, Map<TripAtStopTime, Collection<TripAtStopTime>> result, LocalDate trafficDay) {
@@ -168,7 +136,7 @@ public class Trips {
                         }
                     }
                     for (GtfsRealtime.TripDescriptor tripDescriptor : actualTrips) {
-                        Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = trips.findTripTransfers(feed, tripDescriptor, feedKey, trafficDay);
+                        Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = trips.findTripTransfers(feed, tripDescriptor, feedKey);
                         result.putAll(reducedTripTransfers);
                     }
                     System.out.printf("%d / %d trips processed\n", i.incrementAndGet(), total);
