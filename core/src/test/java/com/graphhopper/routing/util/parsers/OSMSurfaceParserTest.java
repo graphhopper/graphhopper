@@ -35,6 +35,7 @@ public class OSMSurfaceParserTest {
         assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
         assertTrue(Surface.COBBLESTONE.ordinal() > Surface.ASPHALT.ordinal());
 
+        // synonyms
         readerWay.setTag("surface", "earth");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Surface.DIRT, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
@@ -43,6 +44,11 @@ public class OSMSurfaceParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
 
+        readerWay.setTag("surface", "pebblestone");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Surface.GRAVEL, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        // subtypes
         readerWay.setTag("surface", "concrete:plates");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Surface.CONCRETE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
