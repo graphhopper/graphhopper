@@ -40,11 +40,11 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
         PtRouter ptRouter = factory.createWithoutRealtimeFeed();
 
 
-//        extracted(graphHopper, ptRouter, "19TH", "DBRK", "2023-03-26T08:00:00-07:00");
+        extracted(graphHopper, ptRouter, "19TH", "DBRK", "2023-03-26T08:00:00-07:00");
         extracted(graphHopper, ptRouter, "SFIA", "COLS", "2023-03-26T08:00:00-07:00");
         extracted(graphHopper, ptRouter, "SFIA", "OAKL", "2023-03-26T08:00:00-07:00");
-//        extracted(graphHopper, ptRouter, "SFIA", "OAKL", "2023-03-26T18:30:00-07:00");
-//        extracted(graphHopper, ptRouter, "19TH", "40425", "2023-03-26T08:00:00-07:00");
+        extracted(graphHopper, ptRouter, "SFIA", "OAKL", "2023-03-26T18:30:00-07:00");
+        extracted(graphHopper, ptRouter, "19TH", "40425", "2023-03-26T08:00:00-07:00");
 
 
 //        request.setFilter(true);
@@ -82,12 +82,12 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
                 new GHStationLocation(destination)), ZonedDateTime.parse(time).toInstant());
         request.setIgnoreTransfers(true);
         request.setLimitStreetTime(Duration.ofMinutes(0));
-//        long start1 = System.currentTimeMillis();
-//        GHResponse response = ptRouter.route(request);
-//        extracted(response);
-//        System.out.println(response.getHints().getInt("visited_nodes.sum", -1));
-//        long stop1 = System.currentTimeMillis();
-//        System.out.printf("millis: %d\n", stop1 - start1);
+        long start1 = System.currentTimeMillis();
+        GHResponse response = ptRouter.route(request);
+        extracted(response);
+        System.out.println(response.getHints().getInt("visited_nodes.sum", -1));
+        long stop1 = System.currentTimeMillis();
+        System.out.printf("millis: %d\n", stop1 - start1);
 
 
         long start = System.currentTimeMillis();
