@@ -83,7 +83,7 @@ public class PtRouteResource {
         Optional.ofNullable(egressProfile).ifPresent(request::setEgressProfile);
 
         GHResponse route = ptRouter.route(request);
-        return ResponsePathSerializer.jsonObject(route, true, true, false, false, stopWatch.stop().getMillis());
+        return ResponsePathSerializer.jsonObject(route, false, false, false, false, stopWatch.stop().getMillis());
     }
 
 }
