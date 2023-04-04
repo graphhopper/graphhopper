@@ -42,5 +42,9 @@ public class OSMSurfaceParserTest {
         readerWay.setTag("surface", "unhewn_cobblestone");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        readerWay.setTag("surface", "concrete:plates");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Surface.CONCRETE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 }

@@ -70,6 +70,11 @@ public enum Surface {
         if (Helper.isEmpty(name))
             return MISSING;
 
+        int colonIndex = name.indexOf(":");
+        if (colonIndex != -1) {
+            name = name.substring(0, colonIndex);
+        }
+
         return SURFACE_MAP.getOrDefault(name, OTHER);
     }
 }
