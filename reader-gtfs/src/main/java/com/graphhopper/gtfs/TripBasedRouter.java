@@ -161,6 +161,9 @@ public class TripBasedRouter {
                     tripDoneFromIndex.put(otherTrip, transferDestination.stop_sequence);
                 }
             }
+            if (!seenMyself) {
+                throw new RuntimeException();
+            }
         }
     }
 

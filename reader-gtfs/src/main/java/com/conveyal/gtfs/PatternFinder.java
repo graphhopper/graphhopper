@@ -60,7 +60,7 @@ public class PatternFinder {
         for (TripPatternKey key : tripsForPattern.keySet()) {
             List<GtfsRealtime.TripDescriptor> trips = tripsForPattern.get(key).stream()
                     .flatMap(t -> {
-                        GtfsRealtime.TripDescriptor.Builder tdBuilder = GtfsRealtime.TripDescriptor.newBuilder().setTripId(t.trip_id);
+                        GtfsRealtime.TripDescriptor.Builder tdBuilder = GtfsRealtime.TripDescriptor.newBuilder().setTripId(t.trip_id).setRouteId(t.route_id);
                         Collection<Frequency> frequencies = gtfsFeed.getFrequencies(t.trip_id);
                         if (frequencies.isEmpty()) {
                             return Stream.of(tdBuilder.build());
