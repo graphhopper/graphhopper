@@ -48,6 +48,10 @@ public class OSMSurfaceParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Surface.GRAVEL, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
 
+        readerWay.setTag("surface", "grass_paver");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Surface.GRASS, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+
         // subtypes
         readerWay.setTag("surface", "concrete:plates");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);

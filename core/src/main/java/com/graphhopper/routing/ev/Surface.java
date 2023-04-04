@@ -50,6 +50,7 @@ public enum Surface {
         SURFACE_MAP.put("wood", UNPAVED);
         SURFACE_MAP.put("earth", DIRT);
         SURFACE_MAP.put("pebblestone", GRAVEL);
+        SURFACE_MAP.put("grass_paver", GRASS);
     }
 
     public static EnumEncodedValue<Surface> create() {
