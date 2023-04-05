@@ -24,6 +24,7 @@ import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
+import com.google.common.collect.HashMultimap;
 import com.graphhopper.gtfs.analysis.Trips;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.index.LineIntIndex;
@@ -418,4 +419,33 @@ public class GtfsStorage {
 					'}';
 		}
 	}
+
+	public HashMultimap<FeedIdWithStopId, InterpolatedTransfer> interpolatedTransfers = HashMultimap.create();
+
+
+	public static class InterpolatedTransfer {
+		public final GtfsStorage.PlatformDescriptor fromPlatformDescriptor;
+		public final GtfsStorage.PlatformDescriptor toPlatformDescriptor;
+		public final int streetTime;
+
+		public InterpolatedTransfer(GtfsStorage.PlatformDescriptor fromPlatformDescriptor, GtfsStorage.PlatformDescriptor toPlatformDescriptor, int streetTime) {
+			this.fromPlatformDescriptor = fromPlatformDescriptor;
+			this.toPlatformDescriptor = toPlatformDescriptor;
+			this.streetTime = streetTime;
+		}
+
+		@Override
+		public boolean equals(Object o) {
+			if (this == o) return true;
+			if (o == null || getClass() != o.getClass()) return false;
+			InterpolatedTransfer that = (InterpolatedTransfer) o;
+			return streetTime == that.streetTime && Objects.equals(fromPlatformDescriptor, that.fromPlatformDescriptor) && Objects.equals(toPlatformDescriptor, that.toPlatformDescriptor);
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hash(fromPlatformDescriptor, toPlatformDescriptor, streetTime);
+		}
+	}
+
 }

@@ -132,11 +132,13 @@ public class GraphHopperGtfs extends GraphHopper {
                                 LOGGER.debug(fromPlatformDescriptor + " -> " + toPlatformDescriptor);
                                 if (!toPlatformDescriptor.feed_id.equals(fromPlatformDescriptor.feed_id)) {
                                     LOGGER.debug(" Different feed. Inserting transfer with " + (int) (label.streetTime / 1000L) + " s.");
+                                    insertInterpolatedTripTransfer(fromPlatformDescriptor, toPlatformDescriptor, (int) (label.streetTime / 1000L));
                                     insertInterpolatedTransfer(label, toPlatformDescriptor, readers);
                                 } else {
                                     List<Transfer> transfersToStop = transfers.getTransfersToStop(toPlatformDescriptor.stop_id, routeIdOrNull(toPlatformDescriptor));
                                     if (transfersToStop.stream().noneMatch(t -> t.from_stop_id.equals(fromPlatformDescriptor.stop_id))) {
                                         LOGGER.debug("  Inserting transfer with " + (int) (label.streetTime / 1000L) + " s.");
+                                        insertInterpolatedTripTransfer(fromPlatformDescriptor, toPlatformDescriptor, (int) (label.streetTime / 1000L));
                                         insertInterpolatedTransfer(label, toPlatformDescriptor, readers);
                                     }
                                 }
@@ -146,6 +148,11 @@ public class GraphHopperGtfs extends GraphHopper {
                 }
             }
         });
+    }
+
+
+    private void insertInterpolatedTripTransfer(GtfsStorage.PlatformDescriptor fromPlatformDescriptor, GtfsStorage.PlatformDescriptor toPlatformDescriptor, int streetTime) {
+        gtfsStorage.interpolatedTransfers.put(new GtfsStorage.FeedIdWithStopId(fromPlatformDescriptor.feed_id, fromPlatformDescriptor.stop_id), new GtfsStorage.InterpolatedTransfer(fromPlatformDescriptor, toPlatformDescriptor, streetTime));
     }
 
     private void insertInterpolatedTransfer(Label label, GtfsStorage.PlatformDescriptor toPlatformDescriptor, HashMap<String, GtfsReader> readers) {
@@ -195,4 +202,5 @@ public class GraphHopperGtfs extends GraphHopper {
     public PtGraph getPtGraph() {
         return ptGraph;
     }
+
 }
