@@ -109,27 +109,36 @@ public class TripBasedRouter {
     }
 
     private List<EnqueuedTripSegment> round(List<EnqueuedTripSegment> queue0) {
+        for (EnqueuedTripSegment enqueuedTripSegment : queue0) {
+            String feedId = enqueuedTripSegment.tripAtStopTime.feedId;
+            GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
+            Trips.TripAtStopTime tripAtStopTime = enqueuedTripSegment.tripAtStopTime;
+            List<StopTime> stopTimes = gtfsFeed.stopTimes.getUnchecked(tripAtStopTime.tripDescriptor).stopTimes;
+            for (StopTime stopTime : stopTimes) {
+                if (stopTime.stop_sequence > tripAtStopTime.stop_sequence && stopTime.stop_sequence < enqueuedTripSegment.toStopSequence && stopTime.arrival_time < earliestArrivalTime) {
+                    for (StopWithTimeDelta destination : egressStations) {
+                        if (destination.stopId.stopId.equals(stopTime.stop_id) && destination.stopId.feedId.equals(feedId)) {
+                            earliestArrivalTime = stopTime.arrival_time;
+                            result.add(new ResultLabel(new Trips.TripAtStopTime("gtfs_0", tripAtStopTime.tripDescriptor, stopTime.stop_sequence), enqueuedTripSegment));
+                            System.out.printf("%s+%d\n", LocalTime.ofSecondOfDay(stopTime.arrival_time % (60 * 60 * 24)), stopTime.arrival_time / (60 * 60 * 24));
+                        }
+                    }
+                }
+            }
+        }
         List<EnqueuedTripSegment> queue1 = new ArrayList<>();
         for (EnqueuedTripSegment enqueuedTripSegment : queue0) {
             String feedId = enqueuedTripSegment.tripAtStopTime.feedId;
             GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
             Trips.TripAtStopTime tripAtStopTime = enqueuedTripSegment.tripAtStopTime;
-            Iterator<StopTime> iterator = gtfsFeed.stopTimes.getUnchecked(tripAtStopTime.tripDescriptor).stopTimes.iterator();
-            while (iterator.hasNext()) {
-                StopTime stopTime = iterator.next();
+            List<StopTime> stopTimes = gtfsFeed.stopTimes.getUnchecked(tripAtStopTime.tripDescriptor).stopTimes;
+            for (StopTime stopTime : stopTimes) {
                 if (stopTime.stop_sequence > tripAtStopTime.stop_sequence && stopTime.stop_sequence < enqueuedTripSegment.toStopSequence && stopTime.arrival_time < earliestArrivalTime) {
                     Trips.TripAtStopTime transferOrigin = new Trips.TripAtStopTime("gtfs_0", tripAtStopTime.tripDescriptor, stopTime.stop_sequence);
-                    for (StopWithTimeDelta destination : egressStations) {
-                        if (destination.stopId.stopId.equals(stopTime.stop_id) && destination.stopId.feedId.equals(feedId)) {
-                            earliestArrivalTime = stopTime.arrival_time;
-                            result.add(new ResultLabel(transferOrigin, enqueuedTripSegment));
-                            System.out.printf("%s+%d\n", LocalTime.ofSecondOfDay(stopTime.arrival_time % (60 * 60 * 24)), stopTime.arrival_time / (60 * 60 * 24));
-                        }
-                    }
                     Collection<Trips.TripAtStopTime> transferDestinations = tripTransfers.getUnchecked(transferOrigin);
                     for (Trips.TripAtStopTime transferDestination : transferDestinations) {
-                        GTFSFeed.StopTimesForTripWithTripPatternKey stopTimes = gtfsFeed.stopTimes.getUnchecked(transferDestination.tripDescriptor);
-                        StopTime transferStopTime = stopTimes.stopTimes.stream().filter(s -> s.stop_sequence == transferDestination.stop_sequence).findFirst().get();
+                        GTFSFeed.StopTimesForTripWithTripPatternKey destinationStopTimes = gtfsFeed.stopTimes.getUnchecked(transferDestination.tripDescriptor);
+                        StopTime transferStopTime = destinationStopTimes.stopTimes.stream().filter(s -> s.stop_sequence == transferDestination.stop_sequence).findFirst().get();
                         if (transferStopTime.departure_time < stopTime.arrival_time) {
                             enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, gtfsFeed, 1);
                         } else {
