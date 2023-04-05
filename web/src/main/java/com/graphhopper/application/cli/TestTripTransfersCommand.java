@@ -43,17 +43,15 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
         PtRouterImpl.Factory factory = new PtRouterImpl.Factory(configuration.getGraphHopperConfiguration(), graphHopper.getTranslationMap(), graphHopper.getBaseGraph(), graphHopper.getEncodingManager(), graphHopper.getLocationIndex(), graphHopper.getGtfsStorage());
         PtRouter ptRouter = factory.createWithoutRealtimeFeed();
 
-        trips = new Trips(graphHopper.getGtfsStorage());
-        trips.setTrafficDay(LocalDate.parse("2023-03-26"));
-
-
-//        extracted(graphHopper, ptRouter, "19TH", "DBRK", "2023-03-26T08:00:00-07:00");
-//        extracted(graphHopper, ptRouter, "SFIA", "COLS", "2023-03-26T08:00:00-07:00");
-//        extracted(graphHopper, ptRouter, "SFIA", "OAKL", "2023-03-26T08:00:00-07:00");
-//        extracted(graphHopper, ptRouter, "SFIA", "OAKL", "2023-03-26T18:30:00-07:00");
-//        extracted(graphHopper, ptRouter, "19TH", "40425", "2023-03-26T08:00:00-07:00");
+//        trips = new Trips(graphHopper.getGtfsStorage());
+//        trips.setTrafficDay(LocalDate.parse("2023-03-26"));
 
         for (int i = 0; i < 500; i++) {
+            extracted(graphHopper, ptRouter, "19TH", "DBRK", "2023-03-26T08:00:00-07:00");
+            extracted(graphHopper, ptRouter, "SFIA", "COLS", "2023-03-26T08:00:00-07:00");
+            extracted(graphHopper, ptRouter, "SFIA", "OAKL", "2023-03-26T08:00:00-07:00");
+            extracted(graphHopper, ptRouter, "SFIA", "OAKL", "2023-03-26T18:30:00-07:00");
+            extracted(graphHopper, ptRouter, "19TH", "40425", "2023-03-26T08:00:00-07:00");
             extracted(graphHopper, ptRouter, "MONT", "WDUB", "2023-03-26T08:00:00-07:00");
         }
 
@@ -101,21 +99,21 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
         System.out.printf("millis: %d\n", stop1 - start1);
 
 
-        long start = System.currentTimeMillis();
-        TripBasedRouter tripBasedRouter = new TripBasedRouter(graphHopper.getGtfsStorage(), CacheBuilder.newBuilder().build(new CacheLoader<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>() {
-            @Override
-            public Collection<Trips.TripAtStopTime> load(Trips.TripAtStopTime key) throws Exception {
-                return graphHopper.getGtfsStorage().getTripTransfers().get(key);
-            }
-        }), trips);
-        GtfsStorage.FeedIdWithStopId origin1 = new GtfsStorage.FeedIdWithStopId("gtfs_0", ((GHStationLocation) request.getPoints().get(0)).stop_id);
-        GtfsStorage.FeedIdWithStopId destination1 = new GtfsStorage.FeedIdWithStopId("gtfs_0", ((GHStationLocation) request.getPoints().get(1)).stop_id);
-        List<TripBasedRouter.ResultLabel> route = tripBasedRouter.route(Collections.singletonList(new TripBasedRouter.StopWithTimeDelta(origin1, 0)), Collections.singletonList(new TripBasedRouter.StopWithTimeDelta(destination1, 0)), request.getEarliestDepartureTime());
-        for (TripBasedRouter.ResultLabel resultLabel : route) {
-            System.out.println(resultLabel.t.tripDescriptor.getTripId() + " " + resultLabel.t.stop_sequence);
-        }
-        long stop = System.currentTimeMillis();
-        System.out.printf("millis: %d\n", stop - start);
+//        long start = System.currentTimeMillis();
+//        TripBasedRouter tripBasedRouter = new TripBasedRouter(graphHopper.getGtfsStorage(), CacheBuilder.newBuilder().build(new CacheLoader<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>() {
+//            @Override
+//            public Collection<Trips.TripAtStopTime> load(Trips.TripAtStopTime key) throws Exception {
+//                return graphHopper.getGtfsStorage().getTripTransfers().get(key);
+//            }
+//        }), trips);
+//        GtfsStorage.FeedIdWithStopId origin1 = new GtfsStorage.FeedIdWithStopId("gtfs_0", ((GHStationLocation) request.getPoints().get(0)).stop_id);
+//        GtfsStorage.FeedIdWithStopId destination1 = new GtfsStorage.FeedIdWithStopId("gtfs_0", ((GHStationLocation) request.getPoints().get(1)).stop_id);
+//        List<TripBasedRouter.ResultLabel> route = tripBasedRouter.route(Collections.singletonList(new TripBasedRouter.StopWithTimeDelta(origin1, 0)), Collections.singletonList(new TripBasedRouter.StopWithTimeDelta(destination1, 0)), request.getEarliestDepartureTime());
+//        for (TripBasedRouter.ResultLabel resultLabel : route) {
+//            System.out.println(resultLabel.t.tripDescriptor.getTripId() + " " + resultLabel.t.stop_sequence);
+//        }
+//        long stop = System.currentTimeMillis();
+//        System.out.printf("millis: %d\n", stop - start);
     }
 
     private static void extracted(GHResponse response) {

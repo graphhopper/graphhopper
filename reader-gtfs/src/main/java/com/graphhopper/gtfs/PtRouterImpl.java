@@ -80,18 +80,14 @@ public final class PtRouterImpl implements PtRouter {
         this.ptGraph = gtfsStorage.getPtGraph();
         this.realtimeFeed = realtimeFeed;
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
-
-//        for (GTFSFeed gtfsFeed : gtfsStorage.getGtfsFeeds().values()) {
-//            patterns.addAll(gtfsFeed.findPatterns().values());
-//        }
         tripTransfersCache = CacheBuilder.newBuilder().build(new CacheLoader<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>() {
             @Override
-            public Collection<Trips.TripAtStopTime> load(Trips.TripAtStopTime key) throws Exception {
+            public Collection<Trips.TripAtStopTime> load(Trips.TripAtStopTime key) {
                 return PtRouterImpl.this.gtfsStorage.getTripTransfers().get(key);
             }
         });
         trips = new Trips(gtfsStorage);
-        trips.setTrafficDay(LocalDate.parse("2023-03-26"));
+        trips.setTrafficDay(LocalDate.parse(config.getString("traffic_day", "")));
     }
 
     @Override
@@ -160,7 +156,6 @@ public final class PtRouterImpl implements PtRouter {
         private final Profile egressProfile;
         private final EdgeFilter egressSnapFilter;
         private final Weighting egressWeighting;
-        private boolean filter = false;
 
         RequestHandler(Request request) {
             maxVisitedNodesForRequest = request.getMaxVisitedNodes();
@@ -187,7 +182,6 @@ public final class PtRouterImpl implements PtRouter {
             egressProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getEgressProfile())).findFirst().get();
             egressWeighting = weightingFactory.createWeighting(egressProfile, new PMap(), false);
             egressSnapFilter = new DefaultSnapFilter(egressWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
-            filter = request.isFilter();
         }
 
         GHResponse route() {
@@ -209,44 +203,10 @@ public final class PtRouterImpl implements PtRouter {
                     .collect(Collectors.toList());
             response.addDebugInfo("access/egress routing:" + stopWatch1.stop().getSeconds() + "s");
 
-
             TripBasedRouter tripBasedRouter = new TripBasedRouter(gtfsStorage, tripTransfersCache, trips);
             List<TripBasedRouter.ResultLabel> routes = tripBasedRouter.route(accessStations, egressStations, initialTime);
             for (TripBasedRouter.ResultLabel route : routes) {
-                List<TripBasedRouter.EnqueuedTripSegment> segments = new ArrayList<>();
-                TripBasedRouter.EnqueuedTripSegment enqueuedTripSegment = route.enqueuedTripSegment;
-                while (enqueuedTripSegment != null) {
-                    segments.add(enqueuedTripSegment);
-                    enqueuedTripSegment = enqueuedTripSegment.parent;
-                }
-                Collections.reverse(segments);
-
-                ResponsePath responsePath = new ResponsePath();
-                for (int i = 0; i < segments.size(); i++) {
-                    TripBasedRouter.EnqueuedTripSegment segment = segments.get(i);
-
-                    GTFSFeed feed = gtfsStorage.getGtfsFeeds().get(segment.tripAtStopTime.feedId);
-                    com.conveyal.gtfs.model.Trip trip = feed.trips.get(segment.tripAtStopTime.tripDescriptor.getTripId());
-                    int untilStopSequence;
-                    if (i == segments.size() - 1)
-                        untilStopSequence = route.t.stop_sequence;
-                    else
-                        untilStopSequence = segments.get(i+1).transferOrigin.stop_sequence;
-                    List<Trip.Stop> stops = feed.stopTimes.getUnchecked(segment.tripAtStopTime.tripDescriptor).stopTimes.stream().filter(st -> st.stop_sequence >= segment.tripAtStopTime.stop_sequence && st.stop_sequence <= untilStopSequence)
-                            .map(st -> {
-                                LocalDate day = initialTime.atZone(ZoneId.of("America/Los_Angeles")).toLocalDate().plusDays(segment.plusDays);
-                                Instant departureTime = day.atStartOfDay().plusSeconds(st.departure_time).atZone(ZoneId.of("America/Los_Angeles")).toInstant();
-                                Instant arrivalTime = day.atStartOfDay().plusSeconds(st.arrival_time).atZone(ZoneId.of("America/Los_Angeles")).toInstant();;
-                                Stop stop = feed.stops.get(st.stop_id);
-                                return new Trip.Stop(st.stop_id, st.stop_sequence, stop.stop_name, null, Date.from(arrivalTime), Date.from(arrivalTime), Date.from(arrivalTime), false, Date.from(departureTime), Date.from(departureTime), Date.from(departureTime), false);
-                            })
-                            .collect(Collectors.toList());
-                    responsePath.getLegs().add(new Trip.PtLeg(segment.tripAtStopTime.feedId, false, segment.tripAtStopTime.tripDescriptor.getTripId(),
-                            trip.route_id, trip.trip_headsign, stops, 0, 0, null));
-                }
-                List<Trip.Stop> stops = ((Trip.PtLeg) responsePath.getLegs().get(responsePath.getLegs().size() - 1)).stops;
-                responsePath.setTime(stops.get(stops.size()-1).arrivalTime.toInstant().toEpochMilli() - initialTime.toEpochMilli());
-                responsePath.setFare(TripFromLabel.getCheapestFare(gtfsStorage, responsePath.getLegs()).map(Amount::getAmount).orElse(null));
+                ResponsePath responsePath = extractResponse(route);
                 response.add(responsePath);
             }
             response.getAll().sort(Comparator.comparingLong(ResponsePath::getTime));
@@ -278,6 +238,44 @@ public final class PtRouterImpl implements PtRouter {
                 }
             }
             return stationLabels;
+        }
+
+        private ResponsePath extractResponse(TripBasedRouter.ResultLabel route) {
+            List<TripBasedRouter.EnqueuedTripSegment> segments = new ArrayList<>();
+            TripBasedRouter.EnqueuedTripSegment enqueuedTripSegment = route.enqueuedTripSegment;
+            while (enqueuedTripSegment != null) {
+                segments.add(enqueuedTripSegment);
+                enqueuedTripSegment = enqueuedTripSegment.parent;
+            }
+            Collections.reverse(segments);
+
+            ResponsePath responsePath = new ResponsePath();
+            for (int i = 0; i < segments.size(); i++) {
+                TripBasedRouter.EnqueuedTripSegment segment = segments.get(i);
+
+                GTFSFeed feed = gtfsStorage.getGtfsFeeds().get(segment.tripAtStopTime.feedId);
+                com.conveyal.gtfs.model.Trip trip = feed.trips.get(segment.tripAtStopTime.tripDescriptor.getTripId());
+                int untilStopSequence;
+                if (i == segments.size() - 1)
+                    untilStopSequence = route.t.stop_sequence;
+                else
+                    untilStopSequence = segments.get(i+1).transferOrigin.stop_sequence;
+                List<Trip.Stop> stops = feed.stopTimes.getUnchecked(segment.tripAtStopTime.tripDescriptor).stopTimes.stream().filter(st -> st.stop_sequence >= segment.tripAtStopTime.stop_sequence && st.stop_sequence <= untilStopSequence)
+                        .map(st -> {
+                            LocalDate day = initialTime.atZone(ZoneId.of("America/Los_Angeles")).toLocalDate().plusDays(segment.plusDays);
+                            Instant departureTime = day.atStartOfDay().plusSeconds(st.departure_time).atZone(ZoneId.of("America/Los_Angeles")).toInstant();
+                            Instant arrivalTime = day.atStartOfDay().plusSeconds(st.arrival_time).atZone(ZoneId.of("America/Los_Angeles")).toInstant();;
+                            Stop stop = feed.stops.get(st.stop_id);
+                            return new Trip.Stop(st.stop_id, st.stop_sequence, stop.stop_name, null, Date.from(arrivalTime), Date.from(arrivalTime), Date.from(arrivalTime), false, Date.from(departureTime), Date.from(departureTime), Date.from(departureTime), false);
+                        })
+                        .collect(Collectors.toList());
+                responsePath.getLegs().add(new Trip.PtLeg(segment.tripAtStopTime.feedId, false, segment.tripAtStopTime.tripDescriptor.getTripId(),
+                        trip.route_id, trip.trip_headsign, stops, 0, 0, null));
+            }
+            List<Trip.Stop> stops = ((Trip.PtLeg) responsePath.getLegs().get(responsePath.getLegs().size() - 1)).stops;
+            responsePath.setTime(stops.get(stops.size()-1).arrivalTime.toInstant().toEpochMilli() - initialTime.toEpochMilli());
+            responsePath.setFare(TripFromLabel.getCheapestFare(gtfsStorage, responsePath.getLegs()).map(Amount::getAmount).orElse(null));
+            return responsePath;
         }
 
     }
