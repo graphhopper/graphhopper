@@ -117,10 +117,10 @@ public class TripBasedRouter {
             for (StopTime stopTime : stopTimes) {
                 if (stopTime.stop_sequence > tripAtStopTime.stop_sequence && stopTime.stop_sequence < enqueuedTripSegment.toStopSequence && stopTime.arrival_time < earliestArrivalTime) {
                     for (StopWithTimeDelta destination : egressStations) {
-                        if (destination.stopId.stopId.equals(stopTime.stop_id) && destination.stopId.feedId.equals(feedId)) {
-                            earliestArrivalTime = stopTime.arrival_time;
+                        if (destination.stopId.stopId.equals(stopTime.stop_id) && destination.stopId.feedId.equals(feedId) && stopTime.arrival_time + (int) (destination.timeDelta / 1000) < earliestArrivalTime) {
+                            earliestArrivalTime = stopTime.arrival_time + (int) (destination.timeDelta / 1000);
                             result.add(new ResultLabel(new Trips.TripAtStopTime("gtfs_0", tripAtStopTime.tripDescriptor, stopTime.stop_sequence), enqueuedTripSegment));
-                            System.out.printf("%s+%d\n", LocalTime.ofSecondOfDay(stopTime.arrival_time % (60 * 60 * 24)), stopTime.arrival_time / (60 * 60 * 24));
+                            System.out.printf("%s+%d %s\n", LocalTime.ofSecondOfDay(stopTime.arrival_time % (60 * 60 * 24)), stopTime.arrival_time / (60 * 60 * 24), destination.stopId);
                         }
                     }
                 }

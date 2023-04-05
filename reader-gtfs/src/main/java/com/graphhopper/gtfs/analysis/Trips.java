@@ -116,6 +116,7 @@ public class Trips {
 
     public static void findAllTripTransfersInto(GraphHopperGtfs graphHopperGtfs, Map<TripAtStopTime, Collection<TripAtStopTime>> result, LocalDate trafficDay) {
         Trips trips = new Trips(graphHopperGtfs.getGtfsStorage());
+        trips.setTrafficDay(trafficDay);
         for (Map.Entry<String, GTFSFeed> e : graphHopperGtfs.getGtfsStorage().getGtfsFeeds().entrySet()) {
             String feedKey = e.getKey();
             GTFSFeed feed = e.getValue();
