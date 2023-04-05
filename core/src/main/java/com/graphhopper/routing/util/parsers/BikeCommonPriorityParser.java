@@ -231,7 +231,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     }
 
     boolean isDesignated(ReaderWay way) {
-        return way.hasTag("bicycle", "designated") || way.hasTag(CYCLEWAY_ACCESS_KEYS, Arrays.asList("designated"))
+        return way.hasTag("bicycle", "designated") || way.hasTag(CYCLEWAY_ACCESS_KEYS, "designated")
         || way.hasTag("bicycle_road", "yes") || way.hasTag("cyclestreet", "yes") || way.hasTag("bicycle", "official");
     }
 

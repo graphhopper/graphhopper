@@ -54,7 +54,7 @@ public abstract class AbstractBikeTagParserTester {
     @BeforeEach
     public void setUp() {
         encodingManager = createEncodingManager();
-        VehicleTagParsers parsers = createBikeTagParsers(encodingManager);
+        VehicleTagParsers parsers = createBikeTagParsers(encodingManager, new PMap("block_fords=true"));
         accessParser = (BikeCommonAccessParser) parsers.getAccessParser();
         speedParser = (BikeCommonAverageSpeedParser) parsers.getSpeedParser();
         priorityParser = (BikeCommonPriorityParser) parsers.getPriorityParser();
@@ -69,7 +69,7 @@ public abstract class AbstractBikeTagParserTester {
 
     protected abstract EncodingManager createEncodingManager();
 
-    protected abstract VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup);
+    protected abstract VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap);
 
     protected void assertPriority(int expectedPrio, ReaderWay way) {
         IntsRef relFlags = osmParsers.handleRelationTags(new ReaderRelation(0), osmParsers.createRelationFlags());
@@ -171,6 +171,13 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("highway", "tertiary");
         way.setTag("motorroad", "yes");
         assertTrue(accessParser.getAccess(way).canSkip());
+
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("ford", "yes");
+        assertTrue(accessParser.getAccess(way).canSkip());
+        way.setTag("bicycle", "yes");
+        assertTrue(accessParser.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "secondary");
@@ -453,6 +460,18 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     @Test
+    public void testBarrierAccessFord() {
+        ReaderNode node = new ReaderNode(1, -1, -1);
+        node.setTag("ford", "yes");
+        // barrier!
+        assertTrue(accessParser.isBarrier(node));
+
+        node.setTag("bicycle", "yes");
+        // no barrier!
+        assertFalse(accessParser.isBarrier(node));
+    }
+
+    @Test
     public void testFerries() {
         ReaderWay way = new ReaderWay(1);
 
@@ -466,6 +485,13 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("route", "ferry");
         way.setTag("foot", "yes");
         assertFalse(accessParser.getAccess(way).isFerry());
+
+        // #1122
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("bicycle", "yes");
+        way.setTag("access", "private");
+        assertTrue(accessParser.getAccess(way).canSkip());
 
         // #1562, test if ferry route with bicycle
         way.clearTags();
@@ -485,11 +511,34 @@ public abstract class AbstractBikeTagParserTester {
         way.setTag("bicycle", "no");
         assertTrue(accessParser.getAccess(way).canSkip());
 
+        way.setTag("bicycle", "designated");
+        way.setTag("access", "private");
+        assertTrue(accessParser.getAccess(way).canSkip());
+
         // test if when foot is set is invalid
         way.clearTags();
         way.setTag("route", "ferry");
         way.setTag("foot", "yes");
         assertTrue(accessParser.getAccess(way).canSkip());
+    }
+
+    @Test
+    void privateAndFords() {
+        // defaults: do not block fords, block private
+        BikeCommonAccessParser bike = (BikeCommonAccessParser) createBikeTagParsers(encodingManager, new PMap()).getAccessParser();
+        assertFalse(bike.isBlockFords());
+        assertTrue(bike.restrictedValues.contains("private"));
+        assertFalse(bike.intendedValues.contains("private"));
+        ReaderNode node = new ReaderNode(1, 1, 1);
+        node.setTag("access", "private");
+        assertTrue(bike.isBarrier(node));
+
+        // block fords, unblock private
+        bike = (BikeCommonAccessParser) createBikeTagParsers(encodingManager, new PMap("block_fords=true|block_private=false")).getAccessParser();
+        assertTrue(bike.isBlockFords());
+        assertFalse(bike.restrictedValues.contains("private"));
+        assertTrue(bike.intendedValues.contains("private"));
+        assertFalse(bike.isBarrier(node));
     }
 
     @Test
