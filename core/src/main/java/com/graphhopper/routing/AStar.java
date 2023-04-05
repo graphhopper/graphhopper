@@ -85,12 +85,14 @@ public class AStar extends AbstractRoutingAlgorithm implements EdgeToEdgeRouting
         this.toInEdge = toInEdge;
         checkAlreadyRun();
         this.to = to;
-        weightApprox.setTo(to);
-        double weightToGoal = weightApprox.approximate(from);
-        AStarEntry startEntry = new AStarEntry(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
-        fromHeap.add(startEntry);
         if (fromOutEdge == NO_EDGE || toInEdge == NO_EDGE)
             return extractPath();
+        weightApprox.setTo(to);
+        double weightToGoal = weightApprox.approximate(from);
+        if (Double.isInfinite(weightToGoal))
+            return extractPath();
+        AStarEntry startEntry = new AStarEntry(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
+        fromHeap.add(startEntry);
         if (!traversalMode.isEdgeBased())
             fromMap.put(from, currEdge);
         runAlgo();
@@ -123,6 +125,8 @@ public class AStar extends AbstractRoutingAlgorithm implements EdgeToEdgeRouting
                 if (ase == null || ase.weightOfVisitedPath > tmpWeight) {
                     int neighborNode = iter.getAdjNode();
                     currWeightToGoal = weightApprox.approximate(neighborNode);
+                    if (Double.isInfinite(currWeightToGoal))
+                        continue;
                     estimationFullWeight = tmpWeight + currWeightToGoal;
                     if (ase == null) {
                         ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, tmpWeight, currEdge);
