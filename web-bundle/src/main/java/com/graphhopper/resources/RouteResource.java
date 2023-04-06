@@ -41,6 +41,7 @@ import javax.ws.rs.core.*;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 
 import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
 import static com.graphhopper.util.Parameters.Routing.*;
@@ -98,23 +99,6 @@ public class RouteResource {
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
             @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
             @QueryParam("gpx.millis") String timeString) throws Throwable {
-        ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<Response> task = executor.submit(() ->
-                getResponse(httpReq, uriInfo, minPathPrecision, minPathElevationPrecision, pointParams, type, instructions, calcPoints, enableElevation, pointsEncoded, profileName, algoStr, localeStr, pointHints, curbsides, snapPreventions, pathDetails, headings, withRoute, withTrack, withWayPoints, trackName, timeString));
-        try {
-            return task.get(timeout, TimeUnit.MILLISECONDS);
-        } catch (ExecutionException e) {
-            task.cancel(true);
-            // todo: this is supposed to throw the exception we would have gotten without using the future and separate thread here...
-            throw e.getCause();
-        } catch (InterruptedException | TimeoutException e) {
-            task.cancel(true);
-            throw new IllegalArgumentException("timeout exceeded: " + timeout);
-        }
-
-    }
-
-    private Response getResponse(HttpServletRequest httpReq, UriInfo uriInfo, double minPathPrecision, Double minPathElevationPrecision, List<GHPointParam> pointParams, String type, boolean instructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, String profileName, String algoStr, String localeStr, List<String> pointHints, List<String> curbsides, List<String> snapPreventions, List<String> pathDetails, List<Double> headings, boolean withRoute, boolean withTrack, boolean withWayPoints, String trackName, String timeString) {
         StopWatch sw = new StopWatch().start();
         List<GHPoint> points = pointParams.stream().map(AbstractParam::get).collect(toList());
         boolean writeGPX = "gpx".equalsIgnoreCase(type);
@@ -151,8 +135,8 @@ public class RouteResource {
         removeLegacyParameters(request.getHints());
         request.setProfile(profileName);
 
-        GHResponse ghResponse = graphHopper.route(request);
-
+        final GHRequest req = request;
+        GHResponse ghResponse = runInSeparateThreadWithTimeout(() -> graphHopper.route(req), timeout);
         double took = sw.stop().getMillisDouble();
         String logStr = (httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent")) + " " + points + ", took: " + String.format("%.1f", took) + "ms, algo: " + algoStr + ", profile: " + profileName;
 
@@ -176,6 +160,22 @@ public class RouteResource {
                             header("X-GH-Took", "" + Math.round(took)).
                             type(MediaType.APPLICATION_JSON).
                             build();
+        }
+    }
+
+    private static <T> T runInSeparateThreadWithTimeout(Supplier<T> job, int timeoutMillis) throws Throwable {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<T> task = executor.submit(job::get);
+        try {
+            return task.get(timeoutMillis, TimeUnit.MILLISECONDS);
+        } catch (ExecutionException e) {
+            task.cancel(true);
+            // todo: this is supposed to throw the exception we would have gotten without using the future and separate thread here...
+            throw e.getCause();
+        } catch (InterruptedException | TimeoutException e) {
+            task.cancel(true);
+            // todo: error handling... maybe use a dedicated exception for such timeouts?
+            throw new IllegalArgumentException("timeout exceeded");
         }
     }
 
