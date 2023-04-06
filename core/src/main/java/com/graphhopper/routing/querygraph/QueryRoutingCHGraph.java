@@ -186,12 +186,12 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
                         virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), NO_EDGE,
                                 iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
                                 iter.getSkippedEdge1(), iter.getSkippedEdge2(), iter.getWeight(false), iter.getWeight(true),
-                                iter.getTime(false, -1), iter.getTime(true, -1)));// ORS-GH MOD FIXME: factor out spurious time argument
+                                iter.getTime(false), iter.getTime(true)));// ORS-GH MOD
                     } else if (!edgeChanges.getRemovedEdges().contains(iter.getOrigEdge())) {
                         virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), iter.getOrigEdge(),
                                 iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
                                 NO_EDGE, NO_EDGE, iter.getWeight(false), iter.getWeight(true),
-                                iter.getTime(false, -1), iter.getTime(true, -1)));// ORS-GH MOD FIXME: factor out spurious time argument
+                                iter.getTime(false), iter.getTime(true)));// ORS-GH MOD
                     }
                 }
                 virtualEdgesAtRealNodes.put(node, virtualEdges);
@@ -337,7 +337,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
 
 // ORS-GH MOD START add method for TD core routing
         @Override
-        public int getTime(boolean reverse, long time) {
+        public int getTime(boolean reverse) {
             return reverse ? timeBwd : timeFwd;
         }
 // ORS-GH MOD END
@@ -420,8 +420,8 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
 
 // ORS-GH MOD START add method for TD core routing
         @Override
-        public int getTime(boolean reverse, long time) {
-            return getCurrent().getTime(reverse, time);
+        public int getTime(boolean reverse) {
+            return getCurrent().getTime(reverse);
         }
 // ORS-GH MOD END
 

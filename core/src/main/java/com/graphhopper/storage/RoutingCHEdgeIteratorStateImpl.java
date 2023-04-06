@@ -128,7 +128,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
 
 // ORS-GH MOD START add method for TD core routing
     @Override
-    public int getTime(boolean reverse, long time) {//FIXME: remove time?
+    public int getTime(boolean reverse) {
         if (isShortcut()) {
             return store.getTime(shortcutPointer);
         } else {
