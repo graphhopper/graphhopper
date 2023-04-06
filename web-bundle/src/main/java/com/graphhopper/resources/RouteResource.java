@@ -97,24 +97,24 @@ public class RouteResource {
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
             @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
-            @QueryParam("gpx.millis") String timeString) {
+            @QueryParam("gpx.millis") String timeString) throws Throwable {
         ExecutorService executor = Executors.newSingleThreadExecutor();
-        Future<?> task = executor.submit(() -> {
-            // todo: this is where we should execute the actual route calculation instead
-            try {
-                Thread.sleep(3000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        });
-//
+        Future<Response> task = executor.submit(() ->
+                getResponse(httpReq, uriInfo, minPathPrecision, minPathElevationPrecision, pointParams, type, instructions, calcPoints, enableElevation, pointsEncoded, profileName, algoStr, localeStr, pointHints, curbsides, snapPreventions, pathDetails, headings, withRoute, withTrack, withWayPoints, trackName, timeString));
         try {
-            task.get(timeout, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            return task.get(timeout, TimeUnit.MILLISECONDS);
+        } catch (ExecutionException e) {
+            task.cancel(true);
+            // todo: this is supposed to throw the exception we would have gotten without using the future and separate thread here...
+            throw e.getCause();
+        } catch (InterruptedException | TimeoutException e) {
             task.cancel(true);
             throw new IllegalArgumentException("timeout exceeded: " + timeout);
         }
 
+    }
+
+    private Response getResponse(HttpServletRequest httpReq, UriInfo uriInfo, double minPathPrecision, Double minPathElevationPrecision, List<GHPointParam> pointParams, String type, boolean instructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, String profileName, String algoStr, String localeStr, List<String> pointHints, List<String> curbsides, List<String> snapPreventions, List<String> pathDetails, List<Double> headings, boolean withRoute, boolean withTrack, boolean withWayPoints, String trackName, String timeString) {
         StopWatch sw = new StopWatch().start();
         List<GHPoint> points = pointParams.stream().map(AbstractParam::get).collect(toList());
         boolean writeGPX = "gpx".equalsIgnoreCase(type);

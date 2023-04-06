@@ -107,11 +107,12 @@ public class RouteResourceTest {
         Client client = ClientBuilder.newClient();
         client.property(ClientProperties.CONNECT_TIMEOUT, 10000);
         client.property(ClientProperties.READ_TIMEOUT, 10000);
+        // very short timeout (1ms) to make sure it will timeout
         Response response = client.target("http://localhost:" + app.getLocalPort() +
-                        "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128&timeout=1000")
+                        "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128&timeout=1")
                 .request().buildGet().invoke();
         JsonNode json = response.readEntity(JsonNode.class);
-        assertEquals("timeout exceeded: 1000", json.get("message").asText());
+        assertEquals("timeout exceeded: 1", json.get("message").asText());
         assertEquals(400, response.getStatus());
 
         response = client.target("http://localhost:" + app.getLocalPort() +
