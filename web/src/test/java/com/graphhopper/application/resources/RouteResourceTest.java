@@ -39,6 +39,7 @@ import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.glassfish.jersey.client.ClientProperties;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -46,6 +47,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import javax.ws.rs.client.Client;
+import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -97,6 +100,28 @@ public class RouteResourceTest {
     @AfterAll
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
+    }
+
+    @Test
+    public void timeoutTest() {
+        Client client = ClientBuilder.newClient();
+        client.property(ClientProperties.CONNECT_TIMEOUT, 10000);
+        client.property(ClientProperties.READ_TIMEOUT, 10000);
+        Response response = client.target("http://localhost:" + app.getLocalPort() +
+                        "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128&timeout=1000")
+                .request().buildGet().invoke();
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertEquals("timeout exceeded: 1000", json.get("message").asText());
+        assertEquals(400, response.getStatus());
+
+        response = client.target("http://localhost:" + app.getLocalPort() +
+                        "/route?profile=my_car&point=42.554851,1.536198&point=42.510071,1.548128&timeout=4000")
+                .request().buildGet().invoke();
+        json = response.readEntity(JsonNode.class);
+        JsonNode path = json.get("paths").get(0);
+        double distance = path.get("distance").asDouble();
+        assertEquals(9202, distance, 1);
+        assertEquals(200, response.getStatus());
     }
 
     @Test

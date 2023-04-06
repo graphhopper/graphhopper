@@ -40,6 +40,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.*;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.*;
 
 import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
 import static com.graphhopper.util.Parameters.Routing.*;
@@ -90,12 +91,30 @@ public class RouteResource {
             @QueryParam(CURBSIDE) List<String> curbsides,
             @QueryParam(SNAP_PREVENTION) List<String> snapPreventions,
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
+            @QueryParam("timeout") @DefaultValue("1000") int timeout,
             @QueryParam("heading") @NotNull List<Double> headings,
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute /* default to false for the route part in next API version, see #437 */,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
             @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
             @QueryParam("gpx.millis") String timeString) {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        Future<?> task = executor.submit(() -> {
+            // todo: this is where we should execute the actual route calculation instead
+            try {
+                Thread.sleep(3000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        });
+//
+        try {
+            task.get(timeout, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            task.cancel(true);
+            throw new IllegalArgumentException("timeout exceeded: " + timeout);
+        }
+
         StopWatch sw = new StopWatch().start();
         List<GHPoint> points = pointParams.stream().map(AbstractParam::get).collect(toList());
         boolean writeGPX = "gpx".equalsIgnoreCase(type);
