@@ -25,10 +25,12 @@ import com.graphhopper.util.EdgeIterator;
 import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.concurrent.TimeoutException;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
 public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
+    public static final ThreadLocal<Long> THREAD_CONTEXT = new ThreadLocal<>();
     protected final TraversalMode traversalMode;
     protected int from;
     protected int to;
@@ -146,6 +148,12 @@ public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
     protected abstract void postInitTo();
 
     protected void runAlgo() {
+        // todonow: just for demonstration purposes: make the algorithm run a long time
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         while (!finished() && !isMaxVisitedNodesExceeded()) {
             if (!finishedFrom)
                 finishedFrom = !fillEdgesFrom();
@@ -160,6 +168,9 @@ public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
     // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder
     //    search, update extractPath = μ if df (v) + (v, w) + dr (w) < μ
     protected boolean finished() {
+        if (System.nanoTime() > THREAD_CONTEXT.get())
+            throw new IllegalArgumentException("route search timed out");
+
         if (finishedFrom || finishedTo)
             return true;
 

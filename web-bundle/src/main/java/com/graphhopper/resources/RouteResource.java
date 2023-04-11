@@ -41,6 +41,7 @@ import javax.ws.rs.core.*;
 import java.util.List;
 import java.util.Map;
 
+import static com.graphhopper.routing.AbstractBidirAlgo.THREAD_CONTEXT;
 import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
 import static com.graphhopper.util.Parameters.Routing.*;
 import static java.util.stream.Collectors.toList;
@@ -61,6 +62,8 @@ public class RouteResource {
     private final ProfileResolver profileResolver;
     private final GHRequestTransformer ghRequestTransformer;
     private final Boolean hasElevation;
+
+    private final long timeoutMicros = 300;
 
     @Inject
     public RouteResource(GraphHopper graphHopper, ProfileResolver profileResolver, GHRequestTransformer ghRequestTransformer, @Named("hasElevation") Boolean hasElevation) {
@@ -96,6 +99,7 @@ public class RouteResource {
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
             @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
             @QueryParam("gpx.millis") String timeString) {
+        THREAD_CONTEXT.set(System.nanoTime() + timeoutMicros * 1_000_000L);
         StopWatch sw = new StopWatch().start();
         List<GHPoint> points = pointParams.stream().map(AbstractParam::get).collect(toList());
         boolean writeGPX = "gpx".equalsIgnoreCase(type);
@@ -164,6 +168,7 @@ public class RouteResource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
+        THREAD_CONTEXT.set(System.nanoTime() + timeoutMicros * 1_000_000L);
         StopWatch sw = new StopWatch().start();
         request = ghRequestTransformer.transformRequest(request);
 
