@@ -7,10 +7,7 @@ import com.google.common.cache.LoadingCache;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.analysis.Trips;
 
-import java.time.Instant;
-import java.time.LocalTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Predicate;
@@ -42,6 +39,15 @@ public class TripBasedRouter {
         }
 
 
+    }
+
+    public List<ResultLabel> routeNaiveProfile(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant profileStartTime, Duration profileLength) {
+        while (!profileLength.isNegative()) {
+            Instant initialTime = profileStartTime.plus(profileLength);
+            route(accessStations, egressStations, initialTime);
+            profileLength = profileLength.minus(Duration.ofMinutes(1));
+        }
+        return result;
     }
 
     public List<ResultLabel> route(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant initialTime) {

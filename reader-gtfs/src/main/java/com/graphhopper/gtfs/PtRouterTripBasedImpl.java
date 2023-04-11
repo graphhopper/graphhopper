@@ -50,6 +50,7 @@ import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
 
 import javax.inject.Inject;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -133,7 +134,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
     private class RequestHandler {
         private final int maxVisitedNodesForRequest;
         private final int limitSolutions;
-        private final long maxProfileDuration;
+        private final Duration maxProfileDuration;
         private final Instant initialTime;
         private final boolean profileQuery;
         private final boolean arriveBy;
@@ -168,7 +169,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             betaStreetTime = request.getBetaStreetTime();
             limitSolutions = Optional.ofNullable(request.getLimitSolutions()).orElse(profileQuery ? 50 : ignoreTransfers ? 1 : Integer.MAX_VALUE);
             initialTime = request.getEarliestDepartureTime();
-            maxProfileDuration = request.getMaxProfileDuration().toMillis();
+            maxProfileDuration = request.getMaxProfileDuration();
             arriveBy = request.isArriveBy();
             walkSpeedKmH = request.getWalkSpeedKmH();
             blockedRouteTypes = request.getBlockedRouteTypes();
@@ -207,7 +208,12 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             response.addDebugInfo("access/egress routing:" + stopWatch1.stop().getSeconds() + "s");
 
             TripBasedRouter tripBasedRouter = new TripBasedRouter(gtfsStorage, tripTransfersCache, trips);
-            List<TripBasedRouter.ResultLabel> routes = tripBasedRouter.route(accessStations, egressStations, initialTime);
+            List<TripBasedRouter.ResultLabel> routes;
+            if (profileQuery) {
+                routes = tripBasedRouter.routeNaiveProfile(accessStations, egressStations, initialTime, maxProfileDuration);
+            } else {
+                routes = tripBasedRouter.route(accessStations, egressStations, initialTime);
+            }
             for (TripBasedRouter.ResultLabel route : routes) {
                 ResponsePath responsePath = extractResponse(route);
                 response.add(responsePath);
@@ -228,7 +234,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
         private List<Label> accessEgress(Label.NodeId startNode, Label.NodeId destNode, boolean isEgress) {
             final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, isEgress ? egressWeighting : accessWeighting, gtfsStorage, realtimeFeed, isEgress, true, false, walkSpeedKmH, false, blockedRouteTypes);
             GtfsStorage.EdgeType edgeType = isEgress ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
-            MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, isEgress, false, false, maxProfileDuration, new ArrayList<>());
+            MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, isEgress, false, false, 0, new ArrayList<>());
             stationRouter.setBetaStreetTime(betaStreetTime);
             stationRouter.setLimitStreetTime(limitStreetTime);
             List<Label> stationLabels = new ArrayList<>();
