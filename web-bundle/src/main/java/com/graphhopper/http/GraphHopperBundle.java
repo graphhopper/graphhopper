@@ -293,7 +293,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                     if (configuration.getGraphHopperConfiguration().getBool("gtfs.free_walk", false)) {
                         bind(PtRouterFreeWalkImpl.class).to(PtRouter.class).in(Singleton.class);
                     } else {
-                        bind(PtRouterImpl.class).to(PtRouter.class).in(Singleton.class);
+                        bind(PtRouterTripBasedImpl.class).to(PtRouter.class).in(Singleton.class);
                     }
                 }
             });
