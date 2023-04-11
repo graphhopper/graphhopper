@@ -26,6 +26,7 @@
 
 package com.conveyal.gtfs;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.conveyal.gtfs.error.GTFSError;
 import com.conveyal.gtfs.error.GeneralError;
@@ -207,8 +208,15 @@ public class GTFSFeed implements Cloneable, Closeable {
                 }
             }
             orderedStopTimesForTrip.forEach(tripPatternKey::addStopTime);
+            List<StopTime> orderedStopTimesForTripWithPadding = new ArrayList<>();
+            orderedStopTimesForTrip.forEach(stopTime -> {
+                while (orderedStopTimesForTripWithPadding.size() < stopTime.stop_sequence) {
+                    orderedStopTimesForTripWithPadding.add(null); // Padding, so that index == stop_sequence
+                }
+                orderedStopTimesForTripWithPadding.add(stopTime);
+            });
             PatternFinder.Pattern pattern = patterns.get(tripPatternKey);
-            return new StopTimesForTripWithTripPatternKey(orderedStopTimesForTrip, pattern);
+            return new StopTimesForTripWithTripPatternKey(orderedStopTimesForTripWithPadding, pattern);
         }
     });
 

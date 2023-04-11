@@ -82,14 +82,14 @@ public class Trips {
                             boolean keep = false;
                             GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(destination.feedId);
                             GTFSFeed.StopTimesForTripWithTripPatternKey stopTimesForTripWithTripPatternKey = destinationFeed.stopTimes.getUnchecked(destination.tripDescriptor);
-                            for (StopTime destinationStopTime : stopTimesForTripWithTripPatternKey.stopTimes) {
+                            for (int i = destination.stop_sequence; i < stopTimesForTripWithTripPatternKey.stopTimes.size(); i++) {
+                                StopTime destinationStopTime = stopTimesForTripWithTripPatternKey.stopTimes.get(i);
+                                int destinationArrivalTime = destinationStopTime.arrival_time + (destination.tripDescriptor.hasStartTime() ? LocalTime.parse(destination.tripDescriptor.getStartTime()).toSecondOfDay() : 0);
                                 if (destinationStopTime.stop_sequence == destination.stop_sequence) {
-                                    int destinationArrivalTime = destinationStopTime.arrival_time + (destination.tripDescriptor.hasStartTime() ? LocalTime.parse(destination.tripDescriptor.getStartTime()).toSecondOfDay() : 0);
                                     if (destinationArrivalTime < arrivalTime) {
                                         overnight = true;
                                     }
-                                } else if (destinationStopTime.stop_sequence > destination.stop_sequence) {
-                                    int destinationArrivalTime = destinationStopTime.arrival_time + (destination.tripDescriptor.hasStartTime() ? LocalTime.parse(destination.tripDescriptor.getStartTime()).toSecondOfDay() : 0);
+                                } else {
                                     if (overnight) {
                                         destinationArrivalTime += 24 * 60 * 60;
                                     }
@@ -126,7 +126,7 @@ public class Trips {
                     return service.activeOn(trafficDay);
                 })
                 .map(boarding -> new TripAtStopTime(feedIdWithStopId.feedId, boarding.getAttrs().tripDescriptor, boarding.getAttrs().stop_sequence))
-                .sorted(Comparator.comparingInt(boarding -> feed.stopTimes.getUnchecked(boarding.tripDescriptor).stopTimes.stream().filter(st -> st.stop_sequence == boarding.stop_sequence).findFirst().get().departure_time))
+                .sorted(Comparator.comparingInt(boarding -> feed.stopTimes.getUnchecked(boarding.tripDescriptor).stopTimes.get(boarding.stop_sequence).departure_time))
                 .collect(Collectors.groupingBy(boarding -> feed.stopTimes.getUnchecked(boarding.tripDescriptor).pattern.pattern_id));
     }
 

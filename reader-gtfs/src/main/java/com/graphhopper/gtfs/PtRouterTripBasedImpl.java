@@ -282,7 +282,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                     untilStopSequence = route.t.stop_sequence;
                 else
                     untilStopSequence = segments.get(i+1).transferOrigin.stop_sequence;
-                List<Trip.Stop> stops = feed.stopTimes.getUnchecked(segment.tripAtStopTime.tripDescriptor).stopTimes.stream().filter(st -> st.stop_sequence >= segment.tripAtStopTime.stop_sequence && st.stop_sequence <= untilStopSequence)
+                List<Trip.Stop> stops = feed.stopTimes.getUnchecked(segment.tripAtStopTime.tripDescriptor).stopTimes.stream().filter(st -> st != null && st.stop_sequence >= segment.tripAtStopTime.stop_sequence && st.stop_sequence <= untilStopSequence)
                         .map(st -> {
                             LocalDate day = initialTime.atZone(ZoneId.of("America/Los_Angeles")).toLocalDate().plusDays(segment.plusDays);
                             Instant departureTime = day.atStartOfDay().plusSeconds(st.departure_time).atZone(ZoneId.of("America/Los_Angeles")).toInstant();
