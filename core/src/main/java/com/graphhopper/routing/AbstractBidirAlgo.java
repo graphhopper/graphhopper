@@ -30,7 +30,6 @@ import java.util.PriorityQueue;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
 public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
-    public static final ThreadLocal<Long> THREAD_CONTEXT = new ThreadLocal<>();
     protected final TraversalMode traversalMode;
     protected int from;
     protected int to;

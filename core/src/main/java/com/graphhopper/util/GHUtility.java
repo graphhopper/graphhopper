@@ -23,7 +23,6 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.routing.AbstractBidirAlgo;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Country;
@@ -58,7 +57,6 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import static com.graphhopper.routing.AbstractBidirAlgo.THREAD_CONTEXT;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 
 /**
@@ -70,6 +68,8 @@ import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 public class GHUtility {
     public static final Logger OSM_WARNING_LOGGER = LoggerFactory.getLogger("com.graphhopper.osm_warnings");
     private static final Logger LOGGER = LoggerFactory.getLogger(GHUtility.class);
+
+    public static final ThreadLocal<Long> THREAD_CONTEXT = new ThreadLocal<>();
 
     /**
      * This method could throw an exception if problems like index out of bounds etc
@@ -806,7 +806,7 @@ public class GHUtility {
     }
 
     public static void throwIfMaxTimeForThreadExceeded() {
-        if (System.nanoTime() > AbstractBidirAlgo.THREAD_CONTEXT.get())
+        if (System.nanoTime() > THREAD_CONTEXT.get())
             throw new IllegalArgumentException("route search timed out");
     }
 
