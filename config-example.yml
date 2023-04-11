@@ -233,7 +233,7 @@ logging:
       time_zone: UTC
       log_format: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
   loggers:
-    "com.graphhopper.osm_warning":
+    "com.graphhopper.osm_warnings":
       level: DEBUG
       additive: false
       appenders:
