@@ -124,8 +124,8 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements E
 
     @Override
     public boolean finished() {
-        if (System.nanoTime() > THREAD_CONTEXT.get())
-            throw new IllegalArgumentException("route search timed out");
+        GHUtility.throwIfMaxTimeForThreadExceeded();
+
         // we need to finish BOTH searches for CH!
         if (finishedFrom && finishedTo)
             return true;

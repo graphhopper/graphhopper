@@ -21,11 +21,11 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
-import java.util.concurrent.TimeoutException;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
@@ -168,8 +168,7 @@ public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
     // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder
     //    search, update extractPath = μ if df (v) + (v, w) + dr (w) < μ
     protected boolean finished() {
-        if (System.nanoTime() > THREAD_CONTEXT.get())
-            throw new IllegalArgumentException("route search timed out");
+        GHUtility.throwIfMaxTimeForThreadExceeded();
 
         if (finishedFrom || finishedTo)
             return true;
