@@ -66,6 +66,7 @@ import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
  * @author Peter Karich
  */
 public class GHUtility {
+    public static final Logger OSM_WARNING_LOGGER = LoggerFactory.getLogger("com.graphhopper.osm_warning");
     private static final Logger LOGGER = LoggerFactory.getLogger(GHUtility.class);
 
     /**
