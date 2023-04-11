@@ -137,7 +137,8 @@ public class TripBasedRouter {
                     Trips.TripAtStopTime transferOrigin = new Trips.TripAtStopTime("gtfs_0", tripAtStopTime.tripDescriptor, stopTime.stop_sequence);
                     Collection<Trips.TripAtStopTime> transferDestinations = tripTransfers.getUnchecked(transferOrigin);
                     for (Trips.TripAtStopTime transferDestination : transferDestinations) {
-                        GTFSFeed.StopTimesForTripWithTripPatternKey destinationStopTimes = gtfsFeed.stopTimes.getUnchecked(transferDestination.tripDescriptor);
+                        GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(transferDestination.feedId);
+                        GTFSFeed.StopTimesForTripWithTripPatternKey destinationStopTimes = destinationFeed.stopTimes.getUnchecked(transferDestination.tripDescriptor);
                         StopTime transferStopTime = destinationStopTimes.stopTimes.stream().filter(s -> s.stop_sequence == transferDestination.stop_sequence).findFirst().get();
                         if (transferStopTime.departure_time < stopTime.arrival_time) {
                             enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, gtfsFeed, 1);
