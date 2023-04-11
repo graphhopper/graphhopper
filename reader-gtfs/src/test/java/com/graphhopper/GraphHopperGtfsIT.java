@@ -349,6 +349,7 @@ public class GraphHopperGtfsIT {
                 LocalDateTime.of(2007, 1, 1, 8, 0).atZone(zoneId).toInstant());
         ghRequest.setProfileQuery(true);
         ghRequest.setMaxProfileDuration(Duration.ofSeconds(1));
+        ghRequest.setIgnoreTransfers(true);
         GHResponse response = ptRouter.route(ghRequest);
         assertEquals(time(1, 20), response.getAll().get(0).getTime(), "Expected travel time == scheduled travel time");
         assertEquals(time(7, 20), response.getAll().get(1).getTime(), "Expected travel time == scheduled travel time");

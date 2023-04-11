@@ -164,7 +164,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
         RequestHandler(Request request) {
             maxVisitedNodesForRequest = request.getMaxVisitedNodes();
             profileQuery = request.isProfileQuery();
-            ignoreTransfers = Optional.ofNullable(request.getIgnoreTransfers()).orElse(request.isProfileQuery());
+            ignoreTransfers = Optional.ofNullable(request.getIgnoreTransfers()).orElse(false);
             betaTransfers = request.getBetaTransfers();
             betaStreetTime = request.getBetaStreetTime();
             limitSolutions = Optional.ofNullable(request.getLimitSolutions()).orElse(profileQuery ? 50 : ignoreTransfers ? 1 : Integer.MAX_VALUE);
@@ -219,19 +219,19 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                 response.add(responsePath);
             }
             response.getAll().sort(Comparator.comparingLong(ResponsePath::getTime));
-//            if (ignoreTransfers) {
-//                Instant bestDepartureTime = Instant.MIN;
-//                Iterator<ResponsePath> i = response.getAll().iterator();
-//                while (i.hasNext()) {
-//                    ResponsePath path = i.next();
-//                    Instant departureTime = path.getLegs().get(0).getDepartureTime().toInstant();
-//                    if (!departureTime.isAfter(bestDepartureTime)) {
-//                        i.remove();
-//                    } else {
-//                        bestDepartureTime = departureTime;
-//                    }
-//                }
-//            }
+            if (ignoreTransfers) {
+                Instant bestDepartureTime = Instant.MIN;
+                Iterator<ResponsePath> i = response.getAll().iterator();
+                while (i.hasNext()) {
+                    ResponsePath path = i.next();
+                    Instant departureTime = path.getLegs().get(0).getDepartureTime().toInstant();
+                    if (!departureTime.isAfter(bestDepartureTime)) {
+                        i.remove();
+                    } else {
+                        bestDepartureTime = departureTime;
+                    }
+                }
+            }
             response.getHints().putObject("visited_nodes.sum", visitedNodes);
             response.getHints().putObject("visited_nodes.average", visitedNodes);
             if (response.getAll().isEmpty()) {
