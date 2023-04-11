@@ -47,6 +47,7 @@ public class TripBasedRouter {
             route(accessStations, egressStations, initialTime);
             profileLength = profileLength.minus(Duration.ofMinutes(1));
         }
+        route(accessStations, egressStations, profileStartTime);
         return result;
     }
 
