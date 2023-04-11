@@ -174,6 +174,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         return virtualEdge;
     }
 
+// ORS-GH MOD change access from private to protected
     protected IntObjectMap<List<RoutingCHEdgeIteratorState>> buildVirtualEdgesAtRealNodes(final RoutingCHEdgeExplorer explorer) {
         final IntObjectMap<List<RoutingCHEdgeIteratorState>> virtualEdgesAtRealNodes =
                 new IntObjectHashMap<>(queryOverlay.getEdgeChangesAtRealNodes().size());
@@ -221,12 +222,16 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         return virtualEdgesAtVirtualNodes;
     }
 
+// ORS-GH MOD START change return type from a specific class to its interface
     private RoutingCHEdgeIteratorState buildVirtualCHEdgeState(VirtualEdgeIteratorState virtualEdgeState) {
+// ORS-GH MOD END
         int virtualCHEdge = shiftVirtualEdgeIDForCH(virtualEdgeState.getEdge());
         return buildVirtualCHEdgeState(virtualEdgeState, virtualCHEdge);
     }
 
+// ORS-GH MOD START change access from private to protected and return type from a specific class to its interface
     protected RoutingCHEdgeIteratorState buildVirtualCHEdgeState(EdgeIteratorState edgeState, int edgeID) {
+// ORS-GH MOD END
         int origEdge = edgeState.getEdge();
         double fwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, false);
         double bwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, true);
@@ -234,6 +239,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
                 origEdge, origEdge, NO_EDGE, NO_EDGE, fwdWeight, bwdWeight);
     }
 
+// ORS-GH MOD change access from private to protected
     protected int shiftVirtualEdgeIDForCH(int edge) {
         return edge + routingCHGraph.getEdges() - routingCHGraph.getBaseGraph().getEdges();
     }
@@ -250,6 +256,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         return edge >= routingCHGraph.getEdges();
     }
 
+// ORS-GH MOD change access from private to protected
     protected static class VirtualCHEdgeIteratorState implements RoutingCHEdgeIteratorState {
         private final int edge;
         private final int origEdge;
