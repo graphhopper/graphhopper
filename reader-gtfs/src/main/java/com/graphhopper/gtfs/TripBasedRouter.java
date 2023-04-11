@@ -59,9 +59,7 @@ public class TripBasedRouter {
             ZonedDateTime earliestDepartureTime = initialTime.atZone(ZoneId.of("America/Los_Angeles")).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
             Map<String, List<Trips.TripAtStopTime>> boardingsByPattern = trips.boardingsForStopByPattern.getUnchecked(accessStation.stopId);
             boardingsByPattern.forEach((pattern, boardings) -> {
-                boardings.stream()
-                        .filter(reachable(gtfsFeed, earliestDepartureTime))
-                        .findFirst()
+                findFirstReachableBoarding(gtfsFeed, earliestDepartureTime, boardings)
                         .ifPresent(t -> enqueue(queue0, t, null, null, gtfsFeed, 0));
             });
 
@@ -89,6 +87,12 @@ public class TripBasedRouter {
 
         return result;
 
+    }
+
+    private static Optional<Trips.TripAtStopTime> findFirstReachableBoarding(GTFSFeed gtfsFeed, ZonedDateTime earliestDepartureTime, List<Trips.TripAtStopTime> boardings) {
+        return boardings.stream()
+                .filter(reachable(gtfsFeed, earliestDepartureTime))
+                .findFirst();
     }
 
     public static Predicate<? super Trips.TripAtStopTime> reachable(GTFSFeed gtfsFeed, ZonedDateTime earliestDepartureTime) {
@@ -166,19 +170,23 @@ public class TripBasedRouter {
         int thisTripDoneFromIndex = tripDoneFromIndex.getOrDefault(tripId, Integer.MAX_VALUE);
         if (transferDestination.stop_sequence < thisTripDoneFromIndex) {
             queue1.add(new EnqueuedTripSegment(transferDestination, thisTripDoneFromIndex, plusDays, transferOrigin, parent));
-            GTFSFeed.StopTimesForTripWithTripPatternKey stopTimes = gtfsFeed.stopTimes.getUnchecked(tripId);
-            boolean seenMyself = false;
-            for (GtfsRealtime.TripDescriptor otherTrip : stopTimes.pattern.trips) {
-                // Trips within a pattern are sorted by start time. All that come after me can be marked as done.
-                if (tripId.equals(otherTrip))
-                    seenMyself = true;
-                if (seenMyself) {
-                    tripDoneFromIndex.put(otherTrip, transferDestination.stop_sequence);
-                }
+            markAsDone(transferDestination, gtfsFeed, tripId);
+        }
+    }
+
+    private void markAsDone(Trips.TripAtStopTime transferDestination, GTFSFeed gtfsFeed, GtfsRealtime.TripDescriptor tripId) {
+        GTFSFeed.StopTimesForTripWithTripPatternKey stopTimes = gtfsFeed.stopTimes.getUnchecked(tripId);
+        boolean seenMyself = false;
+        for (GtfsRealtime.TripDescriptor otherTrip : stopTimes.pattern.trips) {
+            // Trips within a pattern are sorted by start time. All that come after me can be marked as done.
+            if (tripId.equals(otherTrip))
+                seenMyself = true;
+            if (seenMyself) {
+                tripDoneFromIndex.put(otherTrip, transferDestination.stop_sequence);
             }
-            if (!seenMyself) {
-                throw new RuntimeException();
-            }
+        }
+        if (!seenMyself) {
+            throw new RuntimeException();
         }
     }
 
