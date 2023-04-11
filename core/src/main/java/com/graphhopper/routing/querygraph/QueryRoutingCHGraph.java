@@ -144,6 +144,16 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         return routingCHGraph.isEdgeBased();
     }
 
+// ORS-GH MOD START add getters
+    public QueryOverlay getQueryOverlay() {
+        return queryOverlay;
+    }
+
+    public QueryGraph getQueryGraph() {
+        return queryGraph;
+    }
+// ORS-GH MOD END
+
     @Override
     public Weighting getWeighting() {
         return weighting;
@@ -164,7 +174,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         return virtualEdge;
     }
 
-    private IntObjectMap<List<RoutingCHEdgeIteratorState>> buildVirtualEdgesAtRealNodes(final RoutingCHEdgeExplorer explorer) {
+    protected IntObjectMap<List<RoutingCHEdgeIteratorState>> buildVirtualEdgesAtRealNodes(final RoutingCHEdgeExplorer explorer) {
         final IntObjectMap<List<RoutingCHEdgeIteratorState>> virtualEdgesAtRealNodes =
                 new IntObjectHashMap<>(queryOverlay.getEdgeChangesAtRealNodes().size());
         queryOverlay.getEdgeChangesAtRealNodes().forEach(new IntObjectProcedure<QueryOverlay.EdgeChanges>() {
@@ -185,13 +195,11 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
                     if (iter.isShortcut()) {
                         virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), NO_EDGE,
                                 iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
-                                iter.getSkippedEdge1(), iter.getSkippedEdge2(), iter.getWeight(false), iter.getWeight(true),
-                                iter.getTime(false), iter.getTime(true)));// ORS-GH MOD
+                                iter.getSkippedEdge1(), iter.getSkippedEdge2(), iter.getWeight(false), iter.getWeight(true)));
                     } else if (!edgeChanges.getRemovedEdges().contains(iter.getOrigEdge())) {
                         virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), iter.getOrigEdge(),
                                 iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
-                                NO_EDGE, NO_EDGE, iter.getWeight(false), iter.getWeight(true),
-                                iter.getTime(false), iter.getTime(true)));// ORS-GH MOD
+                                NO_EDGE, NO_EDGE, iter.getWeight(false), iter.getWeight(true)));
                     }
                 }
                 virtualEdgesAtRealNodes.put(node, virtualEdges);
@@ -213,24 +221,20 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         return virtualEdgesAtVirtualNodes;
     }
 
-    private VirtualCHEdgeIteratorState buildVirtualCHEdgeState(VirtualEdgeIteratorState virtualEdgeState) {
+    private RoutingCHEdgeIteratorState buildVirtualCHEdgeState(VirtualEdgeIteratorState virtualEdgeState) {
         int virtualCHEdge = shiftVirtualEdgeIDForCH(virtualEdgeState.getEdge());
         return buildVirtualCHEdgeState(virtualEdgeState, virtualCHEdge);
     }
 
-    private VirtualCHEdgeIteratorState buildVirtualCHEdgeState(EdgeIteratorState edgeState, int edgeID) {
+    protected RoutingCHEdgeIteratorState buildVirtualCHEdgeState(EdgeIteratorState edgeState, int edgeID) {
         int origEdge = edgeState.getEdge();
         double fwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, false);
         double bwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, true);
-// ORS-GH MOD START
-        int fwdTime = (int) weighting.calcEdgeMillisWithAccess(edgeState, false);
-        int bwdTime = (int) weighting.calcEdgeMillisWithAccess(edgeState, true);
         return new VirtualCHEdgeIteratorState(edgeID, origEdge, edgeState.getBaseNode(), edgeState.getAdjNode(),
-                origEdge, origEdge, NO_EDGE, NO_EDGE, fwdWeight, bwdWeight, fwdTime, bwdTime);
-// ORS-GH MOD END
+                origEdge, origEdge, NO_EDGE, NO_EDGE, fwdWeight, bwdWeight);
     }
 
-    private int shiftVirtualEdgeIDForCH(int edge) {
+    protected int shiftVirtualEdgeIDForCH(int edge) {
         return edge + routingCHGraph.getEdges() - routingCHGraph.getBaseGraph().getEdges();
     }
 
@@ -246,7 +250,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         return edge >= routingCHGraph.getEdges();
     }
 
-    private static class VirtualCHEdgeIteratorState implements RoutingCHEdgeIteratorState {
+    protected static class VirtualCHEdgeIteratorState implements RoutingCHEdgeIteratorState {
         private final int edge;
         private final int origEdge;
         private final int baseNode;
@@ -257,18 +261,8 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         private final int skippedEdge2;
         private final double weightFwd;
         private final double weightBwd;
-// ORS-GH MOD START
-        private final int timeFwd;
-        private final int timeBwd;
-// ORS-GH MOD END
 
         public VirtualCHEdgeIteratorState(int edge, int origEdge, int baseNode, int adjNode, int origEdgeFirst, int origEdgeLast, int skippedEdge1, int skippedEdge2, double weightFwd, double weightBwd) {
-// ORS-GH MOD START
-            this(edge, origEdge, baseNode, adjNode, origEdgeFirst, origEdgeLast, skippedEdge1, skippedEdge2, weightFwd, weightBwd, -1, -1);
-        }
-
-        public VirtualCHEdgeIteratorState(int edge, int origEdge, int baseNode, int adjNode, int origEdgeFirst, int origEdgeLast, int skippedEdge1, int skippedEdge2, double weightFwd, double weightBwd, int timeFwd, int timeBwd) {
-// ORS-GH MOD END
             this.edge = edge;
             this.origEdge = origEdge;
             this.baseNode = baseNode;
@@ -279,10 +273,6 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
             this.skippedEdge2 = skippedEdge2;
             this.weightFwd = weightFwd;
             this.weightBwd = weightBwd;
-// ORS-GH MOD START
-            this.timeFwd = timeFwd;
-            this.timeBwd = timeBwd;
-// ORS-GH MOD END
         }
 
         @Override
@@ -338,7 +328,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
 // ORS-GH MOD START add method for TD core routing
         @Override
         public int getTime(boolean reverse) {
-            return reverse ? timeBwd : timeFwd;
+            throw new UnsupportedOperationException("Not supported.");
         }
 // ORS-GH MOD END
 
