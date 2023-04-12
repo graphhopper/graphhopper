@@ -91,7 +91,6 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             }
         });
         trips = new Trips(gtfsStorage);
-        trips.setTrafficDay(LocalDate.parse(config.getString("traffic_day", "")));
     }
 
     @Override

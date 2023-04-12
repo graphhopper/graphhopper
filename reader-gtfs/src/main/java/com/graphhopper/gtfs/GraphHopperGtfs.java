@@ -22,7 +22,7 @@ import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gtfs.analysis.Trips;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.weighting.Weighting;
@@ -38,7 +38,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -99,7 +98,7 @@ public class GraphHopperGtfs extends GraphHopper {
                     allReaders.put(id, gtfsReader);
                 });
                 interpolateTransfers(allReaders, allTransfers);
-                Trips.findAllTripTransfersInto(this, gtfsStorage.getTripTransfers(), LocalDate.parse(ghConfig.getString("traffic_day", "")));
+                Trips.findAllTripTransfersInto(this, gtfsStorage.getTripTransfers());
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }

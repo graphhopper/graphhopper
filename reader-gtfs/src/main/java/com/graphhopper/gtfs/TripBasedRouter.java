@@ -59,7 +59,7 @@ public class TripBasedRouter {
             ZonedDateTime earliestDepartureTime = initialTime.atZone(ZoneId.of("America/Los_Angeles")).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
             Map<String, List<Trips.TripAtStopTime>> boardingsByPattern = trips.boardingsForStopByPattern.getUnchecked(accessStation.stopId);
             boardingsByPattern.forEach((pattern, boardings) -> {
-                findFirstReachableBoarding(gtfsFeed, earliestDepartureTime, boardings)
+                findFirstReachableBoarding(gtfsFeed, earliestDepartureTime.toLocalTime().toSecondOfDay(), boardings)
                         .ifPresent(t -> enqueue(queue0, t, null, null, gtfsFeed, 0));
             });
         }
@@ -75,16 +75,16 @@ public class TripBasedRouter {
         }
     }
 
-    private static Optional<Trips.TripAtStopTime> findFirstReachableBoarding(GTFSFeed gtfsFeed, ZonedDateTime earliestDepartureTime, List<Trips.TripAtStopTime> boardings) {
+    private static Optional<Trips.TripAtStopTime> findFirstReachableBoarding(GTFSFeed gtfsFeed, int earliestDepartureTime, List<Trips.TripAtStopTime> boardings) {
         return boardings.stream()
                 .filter(reachable(gtfsFeed, earliestDepartureTime))
                 .findFirst();
     }
 
-    public static Predicate<? super Trips.TripAtStopTime> reachable(GTFSFeed gtfsFeed, ZonedDateTime earliestDepartureTime) {
+    public static Predicate<? super Trips.TripAtStopTime> reachable(GTFSFeed gtfsFeed, int earliestDepartureTime) {
         return boarding -> {
             StopTime stopTime = gtfsFeed.stopTimes.getUnchecked(boarding.tripDescriptor).stopTimes.get(boarding.stop_sequence);
-            return stopTime.departure_time >= earliestDepartureTime.toLocalTime().toSecondOfDay();
+            return stopTime.departure_time >= earliestDepartureTime;
         };
     }
 
