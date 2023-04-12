@@ -62,31 +62,17 @@ public class TripBasedRouter {
                 findFirstReachableBoarding(gtfsFeed, earliestDepartureTime, boardings)
                         .ifPresent(t -> enqueue(queue0, t, null, null, gtfsFeed, 0));
             });
-
         }
-        System.out.println();
-        System.out.println("0: "+queue0.size());
-        List<EnqueuedTripSegment> queue1 = round(queue0, 0);
-        System.out.println("1: "+queue1.size());
-        List<EnqueuedTripSegment> queue2 = round(queue1, 1);
-        System.out.println("2: "+queue2.size());
-        List<EnqueuedTripSegment> queue3 = round(queue2, 2);
-        System.out.println("3: "+queue3.size());
-        List<EnqueuedTripSegment> queue4 = round(queue3, 3);
-        System.out.println("4: "+queue4.size());
-        List<EnqueuedTripSegment> queue5 = round(queue4, 4);
-        System.out.println("5: "+queue5.size());
-        List<EnqueuedTripSegment> queue6 = round(queue5, 5);
-        System.out.println("6: "+queue6.size());
-        List<EnqueuedTripSegment> queue7 = round(queue6, 6);
-        System.out.println("7: "+queue7.size());
-        List<EnqueuedTripSegment> queue8 = round(queue7, 7);
-        System.out.println("8: "+queue8.size());
-        List<EnqueuedTripSegment> queue9 = round(queue8, 8);
-        System.out.println("9: "+queue9.size());
-
+        iterate(queue0);
         return result;
+    }
 
+    private void iterate(List<EnqueuedTripSegment> queue0) {
+        int round = 0;
+        while (queue0.size() != 0) {
+            queue0 = round(queue0, round);
+            round = round + 1;
+        }
     }
 
     private static Optional<Trips.TripAtStopTime> findFirstReachableBoarding(GTFSFeed gtfsFeed, ZonedDateTime earliestDepartureTime, List<Trips.TripAtStopTime> boardings) {
