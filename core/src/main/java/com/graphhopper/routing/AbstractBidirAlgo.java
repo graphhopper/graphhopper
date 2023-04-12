@@ -148,7 +148,7 @@ public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
 
     protected void runAlgo() {
         while (!finished() && !isMaxVisitedNodesExceeded()) {
-            dummy += System.nanoTime();
+            dummy += System.currentTimeMillis();
             if (!finishedFrom)
                 finishedFrom = !fillEdgesFrom();
 
