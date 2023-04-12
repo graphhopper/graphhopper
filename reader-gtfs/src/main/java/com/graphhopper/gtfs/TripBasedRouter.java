@@ -141,6 +141,7 @@ public class TripBasedRouter {
                             ResultLabel oldResult = it.next();
                             if (oldResult.getArrivalTime() < newArrivalTime) continue;
                             if (oldResult.getRound() < round) continue;
+                            if (oldResult.getDepartureTime() > newResult.getDepartureTime()) continue;
                             it.remove();
                         }
                         result.add(newResult);
@@ -232,6 +233,16 @@ public class TripBasedRouter {
             GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(t.feedId);
             List<StopTime> stopTimes = gtfsFeed.stopTimes.getUnchecked(t.tripDescriptor).stopTimes;
             return stopTimes.get(t.stop_sequence);
+        }
+
+        int getDepartureTime() {
+            EnqueuedTripSegment i = enqueuedTripSegment;
+            while (i.parent != null)
+                i = i.parent;
+            GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(i.tripAtStopTime.feedId);
+            List<StopTime> stopTimes = gtfsFeed.stopTimes.getUnchecked(i.tripAtStopTime.tripDescriptor).stopTimes;
+            StopTime stopTime = stopTimes.get(i.tripAtStopTime.stop_sequence);
+            return stopTime.departure_time;
         }
 
         int getArrivalTime() {
