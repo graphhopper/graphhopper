@@ -204,8 +204,11 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
     @Override
     protected Path extractPath() {
-        if (finished())
-            return createPathExtractor(graph, weighting).extract(bestFwdEntry, bestBwdEntry, bestWeight);
+        if (finished()) {
+            Path extract = createPathExtractor(graph, weighting).extract(bestFwdEntry, bestBwdEntry, bestWeight);
+            extract.setDebugInfo(String.valueOf(dummy));
+            return extract;
+        }
 
         return createEmptyPath();
     }

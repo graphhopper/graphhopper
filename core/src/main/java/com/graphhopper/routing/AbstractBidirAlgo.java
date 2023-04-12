@@ -51,6 +51,7 @@ public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
     int visitedCountFrom;
     int visitedCountTo;
     private boolean alreadyRun;
+    long dummy = 0;
 
     public AbstractBidirAlgo(TraversalMode traversalMode) {
         this.traversalMode = traversalMode;
@@ -147,6 +148,7 @@ public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
 
     protected void runAlgo() {
         while (!finished() && !isMaxVisitedNodesExceeded()) {
+            dummy += System.nanoTime();
             if (!finishedFrom)
                 finishedFrom = !fillEdgesFrom();
 
