@@ -4,6 +4,7 @@ import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Service;
 import com.conveyal.gtfs.model.StopTime;
+import com.conveyal.gtfs.model.Trip;
 import com.google.common.cache.LoadingCache;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.analysis.Trips;
@@ -119,12 +120,14 @@ public class TripBasedRouter {
                     if (destination.stopId.stopId.equals(stopTime.stop_id) && destination.stopId.feedId.equals(feedId) && newArrivalTime < earliestArrivalTime) {
                         earliestArrivalTime = newArrivalTime;
                         ResultLabel newResult = new ResultLabel(round, destination, new Trips.TripAtStopTime("gtfs_0", tripAtStopTime.tripDescriptor, stopTime.stop_sequence), enqueuedTripSegment);
+                        int newRealTransfers = newResult.getRealTransfers();
+                        int newDepartureTime = newResult.getDepartureTime();
                         Iterator<ResultLabel> it = result.iterator();
                         while (it.hasNext()) {
                             ResultLabel oldResult = it.next();
                             if (oldResult.getArrivalTime() < newArrivalTime) continue;
-                            if (oldResult.getRound() < round) continue;
-                            if (oldResult.getDepartureTime() > newResult.getDepartureTime()) continue;
+                            if (oldResult.getRealTransfers() < newRealTransfers) continue;
+                            if (oldResult.getDepartureTime() > newDepartureTime) continue;
                             it.remove();
                         }
                         result.add(newResult);
@@ -235,6 +238,22 @@ public class TripBasedRouter {
 
         public int getRound() {
             return round;
+        }
+
+        public int getRealTransfers() {
+            int result = 0;
+            EnqueuedTripSegment i = enqueuedTripSegment;
+            while (i.parent != null) {
+                GTFSFeed gtfsFeed1 = gtfsStorage.getGtfsFeeds().get(i.tripAtStopTime.feedId);
+                Trip trip1 = gtfsFeed1.trips.get(i.tripAtStopTime.tripDescriptor.getTripId());
+                GTFSFeed gtfsFeed2 = gtfsStorage.getGtfsFeeds().get(i.transferOrigin.feedId);
+                Trip trip2 = gtfsFeed2.trips.get(i.transferOrigin.tripDescriptor.getTripId());
+                if (trip1.block_id == null || trip2.block_id == null || !trip1.block_id.equals(trip2.block_id)) {
+                    result = result + 1;
+                }
+                i = i.parent;
+            }
+            return result;
         }
     }
 }
