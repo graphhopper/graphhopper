@@ -4,9 +4,13 @@ import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.StopTime;
+import com.conveyal.gtfs.model.Transfer;
+import com.conveyal.gtfs.model.Trip;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.ListMultimap;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.*;
 
@@ -18,7 +22,6 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -26,14 +29,21 @@ import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 
 public class Trips {
 
+    private final Map<String, Transfers> transfers;
+
     public Trips(GtfsStorage gtfsStorage) {
         this.gtfsStorage = gtfsStorage;
+        transfers = new HashMap<>();
+        for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
+            transfers.put(entry.getKey(), new Transfers(entry.getValue()));
+        }
     }
 
     GtfsStorage gtfsStorage;
 
 
     public Map<TripAtStopTime, Collection<TripAtStopTime>> findTripTransfers(GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, String feedKey) {
+        Transfers transfersForFeed = transfers.get(feedKey);
         Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
         Iterable<StopTime> orderedStopTimesForTrip = feed.getOrderedStopTimesForTrip(tripDescriptor.getTripId());
         List<StopTime> stopTimesExceptFirst = StreamSupport.stream(orderedStopTimesForTrip.spliterator(), false).skip(1).collect(Collectors.toList());
@@ -51,13 +61,21 @@ public class Trips {
                 arrivalTimes.put(boardingStop, Math.min(arrivalTimePlusTransferTime, arrivalTimes.getOrDefault(boardingStop, Integer.MAX_VALUE)));
             }
         }
+        Trip trip = feed.trips.get(tripDescriptor.getTripId());
         for (StopTime stopTime : stopTimesExceptFirst) {
             TripAtStopTime origin = new TripAtStopTime(feedKey, tripDescriptor, stopTime.stop_sequence);
             List<TripAtStopTime> destinations = new ArrayList<>();
             GtfsStorage.FeedIdWithStopId stopId = new GtfsStorage.FeedIdWithStopId(feedKey, stopTime.stop_id);
-            insertTripTransfers(feed, tripDescriptor, arrivalTimes, timeZone, stopTime, destinations, stopId, 0);
+            List<Transfer> transfersFromStop = transfersForFeed.getTransfersFromStop(stopId.stopId, trip.route_id);
+            ListMultimap<String, Transfer> multimap = ArrayListMultimap.create();
+            for (Transfer transfer : transfersFromStop) {
+                multimap.put(transfer.to_stop_id, transfer);
+            }
+            for (String toStopId : multimap.keySet()) {
+                insertTripTransfers(feed, tripDescriptor, arrivalTimes, timeZone, stopTime, destinations, new GtfsStorage.FeedIdWithStopId(feedKey, toStopId), 0, multimap.get(toStopId));
+            }
             for (GtfsStorage.InterpolatedTransfer it : gtfsStorage.interpolatedTransfers.get(stopId)) {
-                insertTripTransfers(feed, tripDescriptor, arrivalTimes, timeZone, stopTime, destinations, new GtfsStorage.FeedIdWithStopId(it.toPlatformDescriptor.feed_id, it.toPlatformDescriptor.stop_id), it.streetTime);
+                insertTripTransfers(feed, tripDescriptor, arrivalTimes, timeZone, stopTime, destinations, new GtfsStorage.FeedIdWithStopId(it.toPlatformDescriptor.feed_id, it.toPlatformDescriptor.stop_id), it.streetTime, null);
             }
             result.put(origin, destinations);
 //            System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopTime.stop_id);
@@ -69,13 +87,20 @@ public class Trips {
         return result;
     }
 
-    private void insertTripTransfers(GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, ObjectIntHashMap<GtfsStorage.FeedIdWithStopId> arrivalTimes, ZoneId timeZone, StopTime arrivalStopTime, List<TripAtStopTime> destinations, GtfsStorage.FeedIdWithStopId boardingStop, int streetTime) {
-        int arrivalTime = arrivalStopTime.arrival_time + (tripDescriptor.hasStartTime() ? LocalTime.parse(tripDescriptor.getStartTime()).toSecondOfDay() : 0) + streetTime;
+    private void insertTripTransfers(GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, ObjectIntHashMap<GtfsStorage.FeedIdWithStopId> arrivalTimes, ZoneId timeZone, StopTime arrivalStopTime, List<TripAtStopTime> destinations, GtfsStorage.FeedIdWithStopId boardingStop, int streetTime, List<Transfer> transfers) {
+        int earliestDepartureTime = arrivalStopTime.arrival_time + streetTime + (tripDescriptor.hasStartTime() ? LocalTime.parse(tripDescriptor.getStartTime()).toSecondOfDay() : 0);
         Collection<List<TripAtStopTime>> boardingsForPattern = boardingsForStopByPattern.getUnchecked(boardingStop).values();
         for (List<TripAtStopTime> boardings : boardingsForPattern) {
             for (TripAtStopTime candidate : boardings) {
+                Trip trip = feed.trips.get(candidate.tripDescriptor.getTripId());
+                int earliestDepatureTimeForThisDestination = earliestDepartureTime;
+                for (Transfer transfer : transfers) {
+                    if (trip.route_id.equals(transfer.to_route_id)) {
+                        earliestDepatureTimeForThisDestination += transfer.min_transfer_time;
+                    }
+                }
                 StopTime departureStopTime = feed.stopTimes.getUnchecked(candidate.tripDescriptor).stopTimes.get(candidate.stop_sequence);
-                if (departureStopTime.departure_time >= arrivalTime) {
+                if (departureStopTime.departure_time >= earliestDepatureTimeForThisDestination) {
                     boolean overnight = false;
                     boolean keep = false;
                     GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(candidate.feedId);
@@ -84,7 +109,7 @@ public class Trips {
                         StopTime destinationStopTime = stopTimesForTripWithTripPatternKey.stopTimes.get(i);
                         int destinationArrivalTime = destinationStopTime.arrival_time + (candidate.tripDescriptor.hasStartTime() ? LocalTime.parse(candidate.tripDescriptor.getStartTime()).toSecondOfDay() : 0);
                         if (destinationStopTime.stop_sequence == candidate.stop_sequence) {
-                            if (destinationArrivalTime < arrivalTime) {
+                            if (destinationArrivalTime < earliestDepartureTime) {
                                 overnight = true;
                             }
                         } else {

@@ -76,7 +76,7 @@ public class Transfers {
 
     // Starts implementing the proposed GTFS extension for route and trip specific transfer rules.
     // So far, only the route is supported.
-    List<Transfer> getTransfersToStop(String toStopId, String toRouteId) {
+    public List<Transfer> getTransfersToStop(String toStopId, String toRouteId) {
         final List<Transfer> allInboundTransfers = transfersToStop.getOrDefault(toStopId, Collections.emptyList());
         final Map<String, List<Transfer>> byFromStop = allInboundTransfers.stream()
                 .filter(t -> t.transfer_type == 0 || t.transfer_type == 2)
@@ -118,7 +118,7 @@ public class Transfers {
         return result;
     }
 
-    List<Transfer> getTransfersFromStop(String fromStopId, String fromRouteId) {
+    public List<Transfer> getTransfersFromStop(String fromStopId, String fromRouteId) {
         final List<Transfer> allOutboundTransfers = transfersFromStop.getOrDefault(fromStopId, Collections.emptyList());
         final Map<String, List<Transfer>> byToStop = allOutboundTransfers.stream()
                 .filter(t -> t.transfer_type == 0 || t.transfer_type == 2)
