@@ -71,6 +71,9 @@ public class Trips {
             for (Transfer transfer : transfersFromStop) {
                 multimap.put(transfer.to_stop_id, transfer);
             }
+            if (!multimap.containsKey(stopTime.stop_id)) {
+                insertTripTransfers(feed, tripDescriptor, arrivalTimes, timeZone, stopTime, destinations, new GtfsStorage.FeedIdWithStopId(feedKey, stopTime.stop_id), 0, multimap.get(stopTime.stop_id));
+            }
             for (String toStopId : multimap.keySet()) {
                 insertTripTransfers(feed, tripDescriptor, arrivalTimes, timeZone, stopTime, destinations, new GtfsStorage.FeedIdWithStopId(feedKey, toStopId), 0, multimap.get(toStopId));
             }
@@ -122,7 +125,7 @@ public class Trips {
                             arrivalTimes.put(destinationStopId, Math.min(oldArrivalTime, destinationArrivalTime));
                         }
                     }
-                    if (keep) {
+                    if (true) {
                         destinations.add(candidate);
                     }
                     break; // next pattern
