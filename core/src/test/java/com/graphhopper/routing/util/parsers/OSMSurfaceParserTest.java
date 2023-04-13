@@ -39,14 +39,34 @@ public class OSMSurfaceParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Surface.WOOD, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
 
-        // synonyms
-        readerWay.setTag("surface", "earth");
+        // subtypes
+        readerWay.setTag("surface", "concrete:plates");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Surface.DIRT, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+        assertEquals(Surface.CONCRETE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    public void testSynonyms() {
+        IntsRef relFlags = new IntsRef(2);
+        ReaderWay readerWay = new ReaderWay(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("surface", "metal");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Surface.PAVED, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        readerWay.setTag("surface", "sett");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
 
         readerWay.setTag("surface", "unhewn_cobblestone");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+
+        readerWay.setTag("surface", "earth");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Surface.DIRT, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
 
         readerWay.setTag("surface", "pebblestone");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
@@ -55,10 +75,5 @@ public class OSMSurfaceParserTest {
         readerWay.setTag("surface", "grass_paver");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(Surface.GRASS, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
-
-        // subtypes
-        readerWay.setTag("surface", "concrete:plates");
-        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
-        assertEquals(Surface.CONCRETE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 }
