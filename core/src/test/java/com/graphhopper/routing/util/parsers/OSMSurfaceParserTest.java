@@ -35,6 +35,10 @@ public class OSMSurfaceParserTest {
         assertEquals(Surface.COBBLESTONE, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
         assertTrue(Surface.COBBLESTONE.ordinal() > Surface.ASPHALT.ordinal());
 
+        readerWay.setTag("surface", "wood");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Surface.WOOD, surfaceEnc.getEnum(false, edgeId, edgeIntAccess));
+
         // synonyms
         readerWay.setTag("surface", "earth");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);

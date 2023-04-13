@@ -32,7 +32,7 @@ public enum Surface {
     MISSING("missing"),
     PAVED("paved"), ASPHALT("asphalt"), CONCRETE("concrete"), PAVING_STONES("paving_stones"), COBBLESTONE("cobblestone"),
     UNPAVED("unpaved"), COMPACTED("compacted"), FINE_GRAVEL("fine_gravel"), GRAVEL("gravel"),
-    GROUND("ground"), DIRT("dirt"), GRASS("grass"), SAND("sand"),
+    GROUND("ground"), DIRT("dirt"), GRASS("grass"), SAND("sand"), WOOD("wood"),
     OTHER("other");
 
     public static final String KEY = "surface";
@@ -47,7 +47,6 @@ public enum Surface {
         SURFACE_MAP.put("metal", PAVED);
         SURFACE_MAP.put("sett", COBBLESTONE);
         SURFACE_MAP.put("unhewn_cobblestone", COBBLESTONE);
-        SURFACE_MAP.put("wood", UNPAVED);
         SURFACE_MAP.put("earth", DIRT);
         SURFACE_MAP.put("pebblestone", GRAVEL);
         SURFACE_MAP.put("grass_paver", GRASS);
