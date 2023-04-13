@@ -77,26 +77,25 @@ public class RouteResourceLeipzigTest {
 
     @ParameterizedTest
     @CsvSource(value = {
-            "86,algorithm=" + DIJKSTRA_BI,
-            "110,algorithm=" + ASTAR_BI,
-            "30834,ch.disable=true&algorithm=" + DIJKSTRA,
-            "21137,ch.disable=true&algorithm=" + ASTAR,
-            "14800,ch.disable=true&algorithm=" + DIJKSTRA_BI,
-            "10536,ch.disable=true&algorithm=" + ASTAR_BI
+            "86,-1,algorithm=" + DIJKSTRA_BI,
+            "110,-1,algorithm=" + ASTAR_BI,
+            "30834,1,ch.disable=true&algorithm=" + DIJKSTRA,
+            "21137,1,ch.disable=true&algorithm=" + ASTAR,
+            "14800,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
+            "10536,1,ch.disable=true&algorithm=" + ASTAR_BI
     })
-    void testTimeout(int expectedVisitedNodes, String args) {
+    void testTimeout(int expectedVisitedNodes, int timeout, String args) {
         {
             // for a long timeout the route calculation works
-            long timeout = 10_000;
-            Response response = clientTarget(app, "/route?timeout_ms=" + timeout + "&profile=my_car&point=51.319685,12.335525&point=51.367294,12.434745&" + args).request().buildGet().invoke();
+            long longTimeout = 10_000;
+            Response response = clientTarget(app, "/route?timeout_ms=" + longTimeout + "&profile=my_car&point=51.319685,12.335525&point=51.367294,12.434745&" + args).request().buildGet().invoke();
             assertEquals(200, response.getStatus());
             JsonNode jsonNode = response.readEntity(JsonNode.class);
             // by checking the visited nodes we make sure different algorithms are used
             assertEquals(expectedVisitedNodes, jsonNode.get("hints").get("visited_nodes.sum").asInt());
         }
         {
-            // for a short timeout the route calculation fails
-            long timeout = 1;
+            // for a short timeout the route calculation fails, for CH we need to use a negative number, because it is too fast
             Response response = clientTarget(app, "/route?timeout_ms=" + timeout + "&profile=my_car&point=51.319685,12.335525&point=51.367294,12.434745&" + args).request().buildGet().invoke();
             assertEquals(400, response.getStatus());
             JsonNode jsonNode = response.readEntity(JsonNode.class);
