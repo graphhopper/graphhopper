@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.coll.GHLongArrayList;
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -90,7 +90,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private String prevInstructionName;
 
     private static final int MAX_U_TURN_DISTANCE = 35;
-    protected GHLongArrayList times; // ORS-GH MOD - additional field
+    protected IntArrayList times; // ORS-GH MOD - additional field
     // ORS-GH MOD - additional field
     private PathProcessor mPathProcessor;
 
@@ -104,7 +104,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     //public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
     //                             InstructionList ways) {
     public InstructionsFromEdges(Graph graph, Weighting weighting, EncodedValueLookup evLookup,
-                                 InstructionList ways, GHLongArrayList times, PathProcessor pathProcessor) {
+                                 InstructionList ways, IntArrayList times, PathProcessor pathProcessor) {
         this.mPathProcessor = pathProcessor;
     // ORS-GH MOD END
         this.encoder = weighting.getFlagEncoder();

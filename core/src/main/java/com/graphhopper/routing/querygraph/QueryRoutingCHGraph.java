@@ -144,6 +144,16 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         return routingCHGraph.isEdgeBased();
     }
 
+// ORS-GH MOD START add getters
+    public QueryOverlay getQueryOverlay() {
+        return queryOverlay;
+    }
+
+    public QueryGraph getQueryGraph() {
+        return queryGraph;
+    }
+// ORS-GH MOD END
+
     @Override
     public Weighting getWeighting() {
         return weighting;
@@ -164,7 +174,8 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         return virtualEdge;
     }
 
-    private IntObjectMap<List<RoutingCHEdgeIteratorState>> buildVirtualEdgesAtRealNodes(final RoutingCHEdgeExplorer explorer) {
+// ORS-GH MOD change access from private to protected
+    protected IntObjectMap<List<RoutingCHEdgeIteratorState>> buildVirtualEdgesAtRealNodes(final RoutingCHEdgeExplorer explorer) {
         final IntObjectMap<List<RoutingCHEdgeIteratorState>> virtualEdgesAtRealNodes =
                 new IntObjectHashMap<>(queryOverlay.getEdgeChangesAtRealNodes().size());
         queryOverlay.getEdgeChangesAtRealNodes().forEach(new IntObjectProcedure<QueryOverlay.EdgeChanges>() {
@@ -211,12 +222,16 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         return virtualEdgesAtVirtualNodes;
     }
 
-    private VirtualCHEdgeIteratorState buildVirtualCHEdgeState(VirtualEdgeIteratorState virtualEdgeState) {
+// ORS-GH MOD START change return type from a specific class to its interface
+    private RoutingCHEdgeIteratorState buildVirtualCHEdgeState(VirtualEdgeIteratorState virtualEdgeState) {
+// ORS-GH MOD END
         int virtualCHEdge = shiftVirtualEdgeIDForCH(virtualEdgeState.getEdge());
         return buildVirtualCHEdgeState(virtualEdgeState, virtualCHEdge);
     }
 
-    private VirtualCHEdgeIteratorState buildVirtualCHEdgeState(EdgeIteratorState edgeState, int edgeID) {
+// ORS-GH MOD START change access from private to protected and return type from a specific class to its interface
+    protected RoutingCHEdgeIteratorState buildVirtualCHEdgeState(EdgeIteratorState edgeState, int edgeID) {
+// ORS-GH MOD END
         int origEdge = edgeState.getEdge();
         double fwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, false);
         double bwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, true);
@@ -224,7 +239,8 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
                 origEdge, origEdge, NO_EDGE, NO_EDGE, fwdWeight, bwdWeight);
     }
 
-    private int shiftVirtualEdgeIDForCH(int edge) {
+// ORS-GH MOD change access from private to protected
+    protected int shiftVirtualEdgeIDForCH(int edge) {
         return edge + routingCHGraph.getEdges() - routingCHGraph.getBaseGraph().getEdges();
     }
 
@@ -240,7 +256,8 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         return edge >= routingCHGraph.getEdges();
     }
 
-    private static class VirtualCHEdgeIteratorState implements RoutingCHEdgeIteratorState {
+// ORS-GH MOD change access from private to protected
+    protected static class VirtualCHEdgeIteratorState implements RoutingCHEdgeIteratorState {
         private final int edge;
         private final int origEdge;
         private final int baseNode;
@@ -317,8 +334,8 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
 
 // ORS-GH MOD START add method for TD core routing
         @Override
-        public int getTime(boolean reverse, long time) {
-            throw new UnsupportedOperationException("Not supported.");//FIXME
+        public int getTime(boolean reverse) {
+            throw new UnsupportedOperationException("Not supported.");
         }
 // ORS-GH MOD END
 
@@ -400,8 +417,8 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
 
 // ORS-GH MOD START add method for TD core routing
         @Override
-        public int getTime(boolean reverse, long time) {
-            return getCurrent().getTime(reverse, time);
+        public int getTime(boolean reverse) {
+            return getCurrent().getTime(reverse);
         }
 // ORS-GH MOD END
 

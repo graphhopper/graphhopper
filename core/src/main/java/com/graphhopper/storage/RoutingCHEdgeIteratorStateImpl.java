@@ -128,11 +128,11 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
 
 // ORS-GH MOD START add method for TD core routing
     @Override
-    public int getTime(boolean reverse, long time) {
+    public int getTime(boolean reverse) {
         if (isShortcut()) {
             return store.getTime(shortcutPointer);
         } else {
-            return (int) weighting.calcEdgeMillis(getBaseGraphEdgeState(), reverse, time);
+            return (int) weighting.calcEdgeMillisWithAccess(getBaseGraphEdgeState(), reverse);
         }
     }
 // ORS-GH MOD END
