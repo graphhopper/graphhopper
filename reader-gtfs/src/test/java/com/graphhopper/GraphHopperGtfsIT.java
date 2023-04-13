@@ -336,7 +336,7 @@ public class GraphHopperGtfsIT {
         assertEquals(1, response.getAll().size(), "Only find one solution. If blocks wouldn't work, there would be two. (There is a slower alternative without transfer.)");
         assertEquals(time(1, 20), response.getBest().getTime(), "Expected travel time == scheduled travel time");
         assertEquals(2, response.getBest().getLegs().size(), "Two legs: pt, pt, but the two pt legs are in one vehicle, so...");
-        assertEquals(1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_START_TRIP).count(), "Two legs: pt, pt, but the two pt legs are in one vehicle, so...");
+        assertEquals(1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_START_TRIP).count(), "...one boarding instruction");
         assertEquals(1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_END_TRIP).count(), "...and one alighting instruction");
         assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(200);
     }
