@@ -37,6 +37,8 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected final NodeAccess nodeAccess;
     protected final EdgeExplorer edgeExplorer;
     protected int maxVisitedNodes = Integer.MAX_VALUE;
+    protected long timeoutMillis = Long.MAX_VALUE;
+    private long finishTimeMillis = Long.MAX_VALUE;
     private boolean alreadyRun;
 
     /**
@@ -59,6 +61,11 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
         this.maxVisitedNodes = numberOfNodes;
     }
 
+    @Override
+    public void setTimeoutMillis(long timeoutMillis) {
+        this.timeoutMillis = timeoutMillis;
+    }
+
     protected boolean accept(EdgeIteratorState iter, int prevOrNextEdgeId) {
         // for edge-based traversal we leave it for TurnWeighting to decide whether or not a u-turn is acceptable,
         // but for node-based traversal we exclude such a turn for performance reasons already here
@@ -70,6 +77,14 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
             throw new IllegalStateException("Create a new instance per call");
 
         alreadyRun = true;
+    }
+
+    protected void setupFinishTime() {
+        try {
+            this.finishTimeMillis = Math.addExact(System.currentTimeMillis(), timeoutMillis);
+        } catch (ArithmeticException e) {
+            this.finishTimeMillis = Long.MAX_VALUE;
+        }
     }
 
     @Override
@@ -94,4 +109,9 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected boolean isMaxVisitedNodesExceeded() {
         return maxVisitedNodes < getVisitedNodes();
     }
+
+    protected boolean isTimeoutExceeded() {
+        return finishTimeMillis < Long.MAX_VALUE && System.currentTimeMillis() > finishTimeMillis;
+    }
+
 }

@@ -426,6 +426,10 @@ public class Router {
         int getMaxVisitedNodes(PMap hints) {
             return hints.getInt(Parameters.Routing.MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes());
         }
+
+        long getTimeoutMillis(PMap hints) {
+            return hints.getLong(TIMEOUT_MS, Long.MAX_VALUE);
+        }
     }
 
     private static class CHSolver extends Solver {
@@ -468,6 +472,7 @@ public class Router {
             PMap opts = new PMap(request.getHints());
             opts.putObject(ALGORITHM, request.getAlgorithm());
             opts.putObject(MAX_VISITED_NODES, getMaxVisitedNodes(request.getHints()));
+            opts.putObject(TIMEOUT_MS, getTimeoutMillis(request.getHints()));
             return new CHPathCalculator(new CHRoutingAlgorithmFactory(getRoutingCHGraph(profile.getName()), queryGraph), opts);
         }
 
@@ -520,6 +525,7 @@ public class Router {
                     setAlgorithm(request.getAlgorithm()).
                     setTraversalMode(profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED).
                     setMaxVisitedNodes(getMaxVisitedNodes(request.getHints())).
+                    setTimeoutMillis(getTimeoutMillis(request.getHints())).
                     setHints(request.getHints());
 
             // use A* for round trips

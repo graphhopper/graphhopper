@@ -252,11 +252,8 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements E
 
     @Override
     protected Path extractPath() {
-        if (finished()) {
-            Path extract = createPathExtractor().extract(bestFwdEntry, bestBwdEntry, bestWeight);
-            extract.setDebugInfo(String.valueOf(dummy));
-            return extract;
-        }
+        if (finished())
+            return createPathExtractor().extract(bestFwdEntry, bestBwdEntry, bestWeight);
 
         return createEmptyPath();
     }
