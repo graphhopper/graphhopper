@@ -1018,6 +1018,10 @@ public class GraphHopper {
 
         initLocationIndex();
 
+        // ORS-GH MOD START
+        matchTraffic();
+        // ORS-GH MOD END
+
         importPublicTransit();
 
         if (lmPreparationHandler.isEnabled())
@@ -1041,6 +1045,10 @@ public class GraphHopper {
 
     protected void postProcessingHook(boolean closeEarly) {}
 // ORS-GH MOD END
+
+    // ORS-GH MOD START
+    public void matchTraffic() {};
+    // ORS-GH MOD END
 
     protected void importPublicTransit() {
     }
