@@ -11,7 +11,6 @@ import com.graphhopper.gtfs.analysis.Trips;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Predicate;
 
 public class TripBasedRouter {
     private LoadingCache<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers;
@@ -86,14 +85,6 @@ public class TripBasedRouter {
             round = round + 1;
         }
     }
-
-    public static Predicate<? super Trips.TripAtStopTime> reachable(GTFSFeed gtfsFeed, int earliestDepartureTime) {
-        return boarding -> {
-            StopTime stopTime = gtfsFeed.stopTimes.getUnchecked(boarding.tripDescriptor).stopTimes.get(boarding.stop_sequence);
-            return stopTime.departure_time >= earliestDepartureTime;
-        };
-    }
-
 
     static class EnqueuedTripSegment {
         Trips.TripAtStopTime tripAtStopTime;
@@ -200,10 +191,6 @@ public class TripBasedRouter {
         if (!seenMyself) {
             throw new RuntimeException();
         }
-    }
-
-    private String toString(Trips.TripAtStopTime t) {
-        return t.tripDescriptor.getTripId() + " " + t.stop_sequence;
     }
 
     public class ResultLabel {
