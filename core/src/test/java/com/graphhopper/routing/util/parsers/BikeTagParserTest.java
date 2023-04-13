@@ -46,8 +46,8 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Override
-    protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup) {
-        return VehicleTagParsers.bike(lookup, new PMap());
+    protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap) {
+        return VehicleTagParsers.bike(lookup, pMap);
     }
 
     @Test
@@ -262,11 +262,6 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "motorway");
         way.setTag("bicycle", "yes");
         assertPriorityAndSpeed(AVOID.getValue(), 18, way);
-
-        way.clearTags();
-        way.setTag("highway", "primary");
-        way.setTag("cycleway:bicycle", "designated");
-        assertPriority(PREFER.getValue(), way);
     }
 
     @Test
@@ -341,6 +336,20 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("cycleway", "opposite_track");
         assertPriority(SLIGHT_PREFER.getValue(), way);
 
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("cycleway:bicycle", "designated");
+        assertPriority(PREFER.getValue(), way);
+
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("bicycle_road", "yes");
+        assertPriority(VERY_NICE.getValue(), way);
+
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("cyclestreet", "yes");
+        assertPriority(VERY_NICE.getValue(), way);
     }
 
     @Test

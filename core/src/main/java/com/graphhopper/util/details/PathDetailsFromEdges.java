@@ -24,10 +24,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class calculates a PathDetail list in a similar fashion to the instruction calculation,
@@ -60,6 +58,10 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
                                                             int previousIndex, Graph graph) {
         if (!path.isFound() || requestedPathDetails.isEmpty())
             return Collections.emptyMap();
+        HashSet<String> uniquePD = new HashSet<>(requestedPathDetails.size());
+        Collection<String> res = requestedPathDetails.stream().filter(pd -> !uniquePD.add(pd)).collect(Collectors.toList());
+        if (!res.isEmpty()) throw new IllegalArgumentException("Do not use duplicate path details: " + res);
+
         List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, path, evLookup, weighting, graph);
         if (pathBuilders.isEmpty())
             return Collections.emptyMap();
