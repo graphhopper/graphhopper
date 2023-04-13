@@ -270,6 +270,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
 
             GeometryFactory geometryFactory = new GeometryFactory();
             List<Trip.Leg> legs = new ArrayList<>();
+            String previousBlockId = null;
             for (int i = 0; i < segments.size(); i++) {
                 TripBasedRouter.EnqueuedTripSegment segment = segments.get(i);
 
@@ -289,8 +290,10 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                             return new Trip.Stop(st.stop_id, st.stop_sequence, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(arrivalTime), Date.from(arrivalTime), Date.from(arrivalTime), false, Date.from(departureTime), Date.from(departureTime), Date.from(departureTime), false);
                         })
                         .collect(Collectors.toList());
-                legs.add(new Trip.PtLeg(segment.tripAtStopTime.feedId, false, segment.tripAtStopTime.tripDescriptor.getTripId(),
+                boolean isInSameVehicleAsPrevious = trip.block_id != null && trip.block_id.equals(previousBlockId);
+                legs.add(new Trip.PtLeg(segment.tripAtStopTime.feedId, isInSameVehicleAsPrevious, segment.tripAtStopTime.tripDescriptor.getTripId(),
                         trip.route_id, trip.trip_headsign, stops, 0, stops.get(stops.size() - 1).arrivalTime.toInstant().toEpochMilli() - stops.get(0).departureTime.toInstant().toEpochMilli(), geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
+                previousBlockId = trip.block_id;
             }
             ResponsePath responsePath = TripFromLabel.createResponsePath(gtfsStorage, translation, waypoints, legs);
             List<Trip.Stop> stops = ((Trip.PtLeg) responsePath.getLegs().get(responsePath.getLegs().size() - 1)).stops;

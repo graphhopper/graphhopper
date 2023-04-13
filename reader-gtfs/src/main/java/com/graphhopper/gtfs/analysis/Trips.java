@@ -125,7 +125,7 @@ public class Trips {
                             arrivalTimes.put(destinationStopId, Math.min(oldArrivalTime, destinationArrivalTime));
                         }
                     }
-                    if (true) {
+                    if (keep) {
                         destinations.add(candidate);
                     }
                     break; // next pattern
