@@ -30,7 +30,6 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.Trip;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.analysis.Trips;
-import com.graphhopper.gtfs.fare.Amount;
 import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.ev.Subnetwork;
@@ -41,13 +40,12 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.Translation;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
 
 import javax.inject.Inject;
 import java.time.Duration;
@@ -214,7 +212,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                 routes = tripBasedRouter.route(accessStations, egressStations, initialTime);
             }
             for (TripBasedRouter.ResultLabel route : routes) {
-                ResponsePath responsePath = extractResponse(route);
+                ResponsePath responsePath = extractResponse(route, result.points);
                 response.add(responsePath);
             }
             response.getAll().sort(Comparator.comparingLong(ResponsePath::getTime));
@@ -261,7 +259,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             return stationLabels;
         }
 
-        private ResponsePath extractResponse(TripBasedRouter.ResultLabel route) {
+        private ResponsePath extractResponse(TripBasedRouter.ResultLabel route, PointList waypoints) {
             List<TripBasedRouter.EnqueuedTripSegment> segments = new ArrayList<>();
             TripBasedRouter.EnqueuedTripSegment enqueuedTripSegment = route.enqueuedTripSegment;
             while (enqueuedTripSegment != null) {
@@ -270,7 +268,8 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             }
             Collections.reverse(segments);
 
-            ResponsePath responsePath = new ResponsePath();
+            GeometryFactory geometryFactory = new GeometryFactory();
+            List<Trip.Leg> legs = new ArrayList<>();
             for (int i = 0; i < segments.size(); i++) {
                 TripBasedRouter.EnqueuedTripSegment segment = segments.get(i);
 
@@ -287,15 +286,15 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                             Instant departureTime = day.atStartOfDay().plusSeconds(st.departure_time).atZone(ZoneId.of("America/Los_Angeles")).toInstant();
                             Instant arrivalTime = day.atStartOfDay().plusSeconds(st.arrival_time).atZone(ZoneId.of("America/Los_Angeles")).toInstant();;
                             Stop stop = feed.stops.get(st.stop_id);
-                            return new Trip.Stop(st.stop_id, st.stop_sequence, stop.stop_name, null, Date.from(arrivalTime), Date.from(arrivalTime), Date.from(arrivalTime), false, Date.from(departureTime), Date.from(departureTime), Date.from(departureTime), false);
+                            return new Trip.Stop(st.stop_id, st.stop_sequence, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(arrivalTime), Date.from(arrivalTime), Date.from(arrivalTime), false, Date.from(departureTime), Date.from(departureTime), Date.from(departureTime), false);
                         })
                         .collect(Collectors.toList());
-                responsePath.getLegs().add(new Trip.PtLeg(segment.tripAtStopTime.feedId, false, segment.tripAtStopTime.tripDescriptor.getTripId(),
-                        trip.route_id, trip.trip_headsign, stops, 0, 0, null));
+                legs.add(new Trip.PtLeg(segment.tripAtStopTime.feedId, false, segment.tripAtStopTime.tripDescriptor.getTripId(),
+                        trip.route_id, trip.trip_headsign, stops, 0, stops.get(stops.size() - 1).arrivalTime.toInstant().toEpochMilli() - stops.get(0).departureTime.toInstant().toEpochMilli(), geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
             }
+            ResponsePath responsePath = TripFromLabel.createResponsePath(gtfsStorage, translation, waypoints, legs);
             List<Trip.Stop> stops = ((Trip.PtLeg) responsePath.getLegs().get(responsePath.getLegs().size() - 1)).stops;
             responsePath.setTime(stops.get(stops.size()-1).arrivalTime.toInstant().toEpochMilli() - initialTime.toEpochMilli());
-            responsePath.setFare(TripFromLabel.getCheapestFare(gtfsStorage, responsePath.getLegs()).map(Amount::getAmount).orElse(null));
             return responsePath;
         }
 

@@ -95,6 +95,10 @@ class TripFromLabel {
                     egressLeg.details, new Date(legs.get(legs.size() - 2).getArrivalTime().getTime() + (egressLeg.getArrivalTime().getTime() - egressLeg.getDepartureTime().getTime()))));
         }
 
+        return createResponsePath(gtfsStorage, tr, waypoints, legs);
+    }
+
+    static ResponsePath createResponsePath(GtfsStorage gtfsStorage, Translation tr, PointList waypoints, List<Trip.Leg> legs) {
         ResponsePath path = new ResponsePath();
         path.setWaypoints(waypoints);
         path.getLegs().addAll(legs);
@@ -179,7 +183,7 @@ class TripFromLabel {
                 });
     }
 
-    private Map<String, List<PathDetail>> shift(Map<String, List<PathDetail>> pathDetailss, int previousPointsCount) {
+    private static Map<String, List<PathDetail>> shift(Map<String, List<PathDetail>> pathDetailss, int previousPointsCount) {
         return Maps.transformEntries(pathDetailss, (s, pathDetails) -> pathDetails.stream().map(p -> {
             PathDetail pathDetail = new PathDetail(p.getValue());
             pathDetail.setFirst(p.getFirst() + previousPointsCount);
