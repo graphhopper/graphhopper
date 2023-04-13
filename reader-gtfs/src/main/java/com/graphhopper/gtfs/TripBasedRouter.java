@@ -2,6 +2,7 @@ package com.graphhopper.gtfs;
 
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.Service;
 import com.conveyal.gtfs.model.StopTime;
 import com.google.common.cache.LoadingCache;
 import com.google.transit.realtime.GtfsRealtime;
@@ -58,10 +59,19 @@ public class TripBasedRouter {
             GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(accessStations.iterator().next().stopId.feedId);
             ZonedDateTime earliestDepartureTime = initialTime.atZone(ZoneId.of("America/Los_Angeles")).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
             Map<String, List<Trips.TripAtStopTime>> boardingsByPattern = trips.boardingsForStopByPattern.getUnchecked(accessStation.stopId);
-            boardingsByPattern.forEach((pattern, boardings) -> {
-                findFirstReachableBoarding(gtfsFeed, earliestDepartureTime.toLocalTime().toSecondOfDay(), boardings)
-                        .ifPresent(t -> enqueue(queue0, t, null, null, gtfsFeed, 0));
-            });
+            for (List<Trips.TripAtStopTime> boardings : boardingsByPattern.values()) {
+                for (Trips.TripAtStopTime boarding : boardings) {
+                    StopTime stopTime = gtfsFeed.stopTimes.getUnchecked(boarding.tripDescriptor).stopTimes.get(boarding.stop_sequence);
+                    if (stopTime.departure_time >= earliestDepartureTime.toLocalTime().toSecondOfDay()) {
+                        String serviceId = gtfsFeed.trips.get(boarding.tripDescriptor.getTripId()).service_id;
+                        Service service = gtfsFeed.services.get(serviceId);
+                        if (service.activeOn(earliestDepartureTime.toLocalDate())) {
+                            enqueue(queue0, boarding, null, null, gtfsFeed, 0);
+                            break;
+                        }
+                    }
+                }
+            }
         }
         iterate(queue0);
         return result;
@@ -73,12 +83,6 @@ public class TripBasedRouter {
             queue0 = round(queue0, round);
             round = round + 1;
         }
-    }
-
-    private static Optional<Trips.TripAtStopTime> findFirstReachableBoarding(GTFSFeed gtfsFeed, int earliestDepartureTime, List<Trips.TripAtStopTime> boardings) {
-        return boardings.stream()
-                .filter(reachable(gtfsFeed, earliestDepartureTime))
-                .findFirst();
     }
 
     public static Predicate<? super Trips.TripAtStopTime> reachable(GTFSFeed gtfsFeed, int earliestDepartureTime) {
