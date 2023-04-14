@@ -12,6 +12,7 @@ import io.dropwizard.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -46,7 +47,7 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
         GraphHopperGtfs graphHopper = (GraphHopperGtfs) new GraphHopperManaged(configuration.getGraphHopperConfiguration()).getGraphHopper();
         graphHopper.importOrLoad();
 
-        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = graphHopper.getGtfsStorage().getTripTransfers();
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = graphHopper.getGtfsStorage().getTripTransfers(LocalDate.parse("2023-03-26"));
 
         Collection<Trips.TripAtStopTime> tr = tripTransfers.get(new Trips.TripAtStopTime("gtfs_0", GtfsRealtime.TripDescriptor.newBuilder().setTripId("BA:1376224").build(), 12));
         for (Trips.TripAtStopTime tripAtStopTime : tr) {

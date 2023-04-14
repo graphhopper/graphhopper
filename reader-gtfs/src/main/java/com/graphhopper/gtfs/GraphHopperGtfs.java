@@ -98,7 +98,6 @@ public class GraphHopperGtfs extends GraphHopper {
                     allReaders.put(id, gtfsReader);
                 });
                 interpolateTransfers(allReaders, allTransfers);
-                Trips.findAllTripTransfersInto(this, gtfsStorage.getTripTransfers());
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }

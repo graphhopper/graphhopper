@@ -14,7 +14,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 public class TripBasedRouter {
-    private LoadingCache<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers;
     private final Trips trips;
     private GtfsStorage gtfsStorage;
     int earliestArrivalTime = Integer.MAX_VALUE;
@@ -23,9 +22,8 @@ public class TripBasedRouter {
     private List<StopWithTimeDelta> egressStations;
     private LocalDate trafficDay;
 
-    public TripBasedRouter(GtfsStorage gtfsStorage, LoadingCache<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers, Trips trips) {
+    public TripBasedRouter(GtfsStorage gtfsStorage, Trips trips) {
         this.gtfsStorage = gtfsStorage;
-        this.tripTransfers = tripTransfers;
         this.trips = trips;
     }
 
@@ -63,7 +61,8 @@ public class TripBasedRouter {
             Map<String, List<Trips.TripAtStopTime>> boardingsByPattern = trips.boardingsForStopByPattern.getUnchecked(accessStation.stopId);
             for (List<Trips.TripAtStopTime> boardings : boardingsByPattern.values()) {
                 for (Trips.TripAtStopTime boarding : boardings) {
-                    StopTime stopTime = gtfsFeed.stopTimes.getUnchecked(boarding.tripDescriptor).stopTimes.get(boarding.stop_sequence);
+                    GTFSFeed.StopTimesForTripWithTripPatternKey stopTimesForTripWithTripPatternKey = gtfsFeed.stopTimes.getUnchecked(boarding.tripDescriptor);
+                    StopTime stopTime = stopTimesForTripWithTripPatternKey.stopTimes.get(boarding.stop_sequence);
                     if (stopTime.departure_time >= earliestDepartureTime.toLocalTime().toSecondOfDay()) {
                         String serviceId = gtfsFeed.trips.get(boarding.tripDescriptor.getTripId()).service_id;
                         Service service = gtfsFeed.services.get(serviceId);
@@ -149,7 +148,7 @@ public class TripBasedRouter {
                 if (stopTime.arrival_time >= earliestArrivalTime)
                     break;
                 Trips.TripAtStopTime transferOrigin = new Trips.TripAtStopTime("gtfs_0", tripAtStopTime.tripDescriptor, stopTime.stop_sequence);
-                Collection<Trips.TripAtStopTime> transferDestinations = tripTransfers.getUnchecked(transferOrigin);
+                Collection<Trips.TripAtStopTime> transferDestinations = gtfsStorage.getTripTransfers(trafficDay).get(transferOrigin);
                 for (Trips.TripAtStopTime transferDestination : transferDestinations) {
                     GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(transferDestination.feedId);
                     GTFSFeed.StopTimesForTripWithTripPatternKey destinationStopTimes = destinationFeed.stopTimes.getUnchecked(transferDestination.tripDescriptor);

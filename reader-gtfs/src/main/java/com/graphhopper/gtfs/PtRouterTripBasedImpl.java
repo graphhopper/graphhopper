@@ -67,7 +67,6 @@ public final class PtRouterTripBasedImpl implements PtRouter {
     private final RealtimeFeed realtimeFeed;
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final WeightingFactory weightingFactory;
-    private final LoadingCache<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfersCache;
     private final Trips trips;
 
     @Inject
@@ -82,12 +81,6 @@ public final class PtRouterTripBasedImpl implements PtRouter {
         this.ptGraph = gtfsStorage.getPtGraph();
         this.realtimeFeed = realtimeFeed;
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
-        tripTransfersCache = CacheBuilder.newBuilder().build(new CacheLoader<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>() {
-            @Override
-            public Collection<Trips.TripAtStopTime> load(Trips.TripAtStopTime key) {
-                return PtRouterTripBasedImpl.this.gtfsStorage.getTripTransfers().get(key);
-            }
-        });
         trips = new Trips(gtfsStorage);
     }
 
@@ -204,7 +197,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                     .collect(Collectors.toList());
             response.addDebugInfo("access/egress routing:" + stopWatch1.stop().getSeconds() + "s");
 
-            TripBasedRouter tripBasedRouter = new TripBasedRouter(gtfsStorage, tripTransfersCache, trips);
+            TripBasedRouter tripBasedRouter = new TripBasedRouter(gtfsStorage, trips);
             List<TripBasedRouter.ResultLabel> routes;
             if (profileQuery) {
                 routes = tripBasedRouter.routeNaiveProfile(accessStations, egressStations, initialTime, maxProfileDuration);

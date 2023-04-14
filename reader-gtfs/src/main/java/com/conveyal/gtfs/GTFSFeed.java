@@ -26,7 +26,6 @@
 
 package com.conveyal.gtfs;
 
-import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.conveyal.gtfs.error.GTFSError;
 import com.conveyal.gtfs.error.GeneralError;
@@ -37,7 +36,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.gtfs.analysis.Trips;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.CoordinateList;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -186,19 +184,25 @@ public class GTFSFeed implements Cloneable, Closeable {
 
 
     public class StopTimesForTripWithTripPatternKey {
-        public StopTimesForTripWithTripPatternKey(List<StopTime> stopTimes, PatternFinder.Pattern pattern) {
+        public StopTimesForTripWithTripPatternKey(Trip trip, Service service, List<StopTime> stopTimes, PatternFinder.Pattern pattern) {
+            this.trip = trip;
+            this.service = service;
             this.stopTimes = stopTimes;
             this.pattern = pattern;
         }
 
-        public List<StopTime> stopTimes;
-        public PatternFinder.Pattern pattern;
+        public final Trip trip;
+        public final Service service;
+        public final List<StopTime> stopTimes;
+        public final PatternFinder.Pattern pattern;
     }
 
     public LoadingCache<GtfsRealtime.TripDescriptor, StopTimesForTripWithTripPatternKey> stopTimes = CacheBuilder.newBuilder().maximumSize(200000).build(new CacheLoader<GtfsRealtime.TripDescriptor, StopTimesForTripWithTripPatternKey>() {
         public StopTimesForTripWithTripPatternKey load(GtfsRealtime.TripDescriptor key) {
             PatternFinder.TripPatternKey tripPatternKey = new PatternFinder.TripPatternKey();
             List<StopTime> orderedStopTimesForTrip = new ArrayList<>();
+            Trip trip = trips.get(key.getTripId());
+            Service service = services.get(trip.service_id);
             getInterpolatedStopTimesForTrip(key.getTripId()).forEach(orderedStopTimesForTrip::add);
             if (key.hasStartTime()) {
                 int time = LocalTime.parse(key.getStartTime()).toSecondOfDay();
@@ -216,7 +220,7 @@ public class GTFSFeed implements Cloneable, Closeable {
                 orderedStopTimesForTripWithPadding.add(stopTime);
             });
             PatternFinder.Pattern pattern = patterns.get(tripPatternKey);
-            return new StopTimesForTripWithTripPatternKey(orderedStopTimesForTripWithPadding, pattern);
+            return new StopTimesForTripWithTripPatternKey(trip, service, orderedStopTimesForTripWithPadding, pattern);
         }
     });
 
