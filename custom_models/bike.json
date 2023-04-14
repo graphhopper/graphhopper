@@ -11,8 +11,8 @@
 {
   "priority": [
     { "if": "true",  "multiply_by": "bike_priority" },
-    { "if": "!bike_access && !backward_bike_access",  "multiply_by": "0" },
-    { "else_if": "!bike_access && backward_bike_access && !roundabout",  "multiply_by": "0.2" }
+    { "if": "!bike_access && (!backward_bike_access || roundabout)",  "multiply_by": "0" },
+    { "else_if": "!bike_access && backward_bike_access",  "multiply_by": "0.2" }
   ],
   "speed": [
     { "if": "true", "limit_to": "bike_average_speed" },
