@@ -48,6 +48,8 @@ public class Trips {
         List<StopTime> stopTimesExceptFirst = orderedStopTimesForTrip.stopTimes.subList(1, orderedStopTimesForTrip.stopTimes.size());
         ObjectIntHashMap<GtfsStorage.FeedIdWithStopId> arrivalTimes = new ObjectIntHashMap<>();
         for (StopTime stopTime : Lists.reverse(stopTimesExceptFirst)) {
+            if (stopTime == null)
+                continue;
             GtfsStorage.FeedIdWithStopId stopId = new GtfsStorage.FeedIdWithStopId(feedKey, stopTime.stop_id);
             int arrivalTime = stopTime.arrival_time + (tripDescriptor.hasStartTime() ? LocalTime.parse(tripDescriptor.getStartTime()).toSecondOfDay() : 0);
             arrivalTimes.put(stopId, Math.min(arrivalTime, arrivalTimes.getOrDefault(stopId, Integer.MAX_VALUE)));
@@ -59,6 +61,8 @@ public class Trips {
         }
         Trip trip = feed.trips.get(tripDescriptor.getTripId());
         for (StopTime stopTime : Lists.reverse(stopTimesExceptFirst)) {
+            if (stopTime == null)
+                continue;
             TripAtStopTime origin = new TripAtStopTime(feedKey, tripDescriptor, stopTime.stop_sequence);
             List<TripAtStopTime> destinations = new ArrayList<>();
             GtfsStorage.FeedIdWithStopId stopId = new GtfsStorage.FeedIdWithStopId(feedKey, stopTime.stop_id);
@@ -105,6 +109,8 @@ public class Trips {
                         boolean keep = false;
                         for (int i = candidate.stop_sequence + 1; i < trip.stopTimes.size(); i++) {
                             StopTime destinationStopTime = trip.stopTimes.get(i);
+                            if (destinationStopTime == null)
+                                continue;
                             int destinationArrivalTime = destinationStopTime.arrival_time;
                             GtfsStorage.FeedIdWithStopId destinationStopId = new GtfsStorage.FeedIdWithStopId(candidate.feedId, destinationStopTime.stop_id);
                             int oldArrivalTime = arrivalTimes.getOrDefault(destinationStopId, Integer.MAX_VALUE);
