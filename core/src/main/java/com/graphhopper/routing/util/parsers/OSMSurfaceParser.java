@@ -40,15 +40,6 @@ public class OSMSurfaceParser implements TagParser {
         if (surface == MISSING)
             return;
 
-        if (surfaceTag.equals("metal"))
-            surface = PAVED;
-        else if (surfaceTag.equals("sett"))
-            surface = COBBLESTONE;
-        else if (surfaceTag.equals("wood"))
-            surface = UNPAVED;
-        else if (surfaceTag.equals("earth"))
-            surface = DIRT;
-
         surfaceEnc.setEnum(false, edgeId, edgeIntAccess, surface);
     }
 }
