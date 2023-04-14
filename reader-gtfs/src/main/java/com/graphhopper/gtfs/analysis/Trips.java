@@ -105,24 +105,14 @@ public class Trips {
                 GTFSFeed.StopTimesForTripWithTripPatternKey stopTimesForTripWithTripPatternKey = destinationFeed.stopTimes.getUnchecked(candidate.tripDescriptor);
                 StopTime departureStopTime = stopTimesForTripWithTripPatternKey.stopTimes.get(candidate.stop_sequence);
                 if (departureStopTime.departure_time >= earliestDepatureTimeForThisDestination) {
-                    boolean overnight = false;
                     boolean keep = false;
-                    for (int i = candidate.stop_sequence; i < stopTimesForTripWithTripPatternKey.stopTimes.size(); i++) {
+                    for (int i = candidate.stop_sequence + 1; i < stopTimesForTripWithTripPatternKey.stopTimes.size(); i++) {
                         StopTime destinationStopTime = stopTimesForTripWithTripPatternKey.stopTimes.get(i);
                         int destinationArrivalTime = destinationStopTime.arrival_time + (candidate.tripDescriptor.hasStartTime() ? LocalTime.parse(candidate.tripDescriptor.getStartTime()).toSecondOfDay() : 0);
-                        if (destinationStopTime.stop_sequence == candidate.stop_sequence) {
-                            if (destinationArrivalTime < earliestDepartureTime) {
-                                overnight = true;
-                            }
-                        } else {
-                            if (overnight) {
-                                destinationArrivalTime += 24 * 60 * 60;
-                            }
-                            GtfsStorage.FeedIdWithStopId destinationStopId = new GtfsStorage.FeedIdWithStopId(candidate.feedId, destinationStopTime.stop_id);
-                            int oldArrivalTime = arrivalTimes.getOrDefault(destinationStopId, Integer.MAX_VALUE);
-                            keep = keep || destinationArrivalTime < oldArrivalTime;
-                            arrivalTimes.put(destinationStopId, Math.min(oldArrivalTime, destinationArrivalTime));
-                        }
+                        GtfsStorage.FeedIdWithStopId destinationStopId = new GtfsStorage.FeedIdWithStopId(candidate.feedId, destinationStopTime.stop_id);
+                        int oldArrivalTime = arrivalTimes.getOrDefault(destinationStopId, Integer.MAX_VALUE);
+                        keep = keep || destinationArrivalTime < oldArrivalTime;
+                        arrivalTimes.put(destinationStopId, Math.min(oldArrivalTime, destinationArrivalTime));
                     }
                     if (keep) {
                         destinations.add(candidate);
