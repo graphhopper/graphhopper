@@ -50,8 +50,10 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
         Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = graphHopper.getGtfsStorage().getTripTransfers(LocalDate.parse("2023-03-26"));
 
         Collection<Trips.TripAtStopTime> tr = tripTransfers.get(new Trips.TripAtStopTime("gtfs_0", GtfsRealtime.TripDescriptor.newBuilder().setTripId("BA:1376224").build(), 12));
-        for (Trips.TripAtStopTime tripAtStopTime : tr) {
-            System.out.println(tripAtStopTime);
+        if (tr != null) {
+            for (Trips.TripAtStopTime tripAtStopTime : tr) {
+                System.out.println(tripAtStopTime);
+            }
         }
 
 

@@ -39,6 +39,7 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class GtfsStorage {
 
@@ -68,7 +69,7 @@ public class GtfsStorage {
 
 	public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfers(LocalDate trafficDay) {
 		return tripTransfers.computeIfAbsent(trafficDay, k -> {
-			HashMap<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> result = new HashMap<>();
+			Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> result = new ConcurrentHashMap<>();
 			Trips.findAllTripTransfersInto(result, this, trafficDay);
 			return result;
 		});
