@@ -47,15 +47,13 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
         GraphHopperGtfs graphHopper = (GraphHopperGtfs) new GraphHopperManaged(configuration.getGraphHopperConfiguration()).getGraphHopper();
         graphHopper.importOrLoad();
 
+
+        Trips trips = new Trips(graphHopper.getGtfsStorage());
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> pups = trips.findTripTransfers(graphHopper.getGtfsStorage().getGtfsFeeds().get("gtfs_0"), GtfsRealtime.TripDescriptor.newBuilder().setTripId("BA:1376224").build(), "gtfs_0", LocalDate.parse("2023-03-26"));
+        pups.entrySet().forEach(System.out::println);
+
+
         Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = graphHopper.getGtfsStorage().getTripTransfers(LocalDate.parse("2023-03-26"));
-
-        Collection<Trips.TripAtStopTime> tr = tripTransfers.get(new Trips.TripAtStopTime("gtfs_0", GtfsRealtime.TripDescriptor.newBuilder().setTripId("BA:1376224").build(), 12));
-        if (tr != null) {
-            for (Trips.TripAtStopTime tripAtStopTime : tr) {
-                System.out.println(tripAtStopTime);
-            }
-        }
-
 
         PtRouterImpl.Factory factory = new PtRouterImpl.Factory(configuration.getGraphHopperConfiguration(), graphHopper.getTranslationMap(), graphHopper.getBaseGraph(), graphHopper.getEncodingManager(), graphHopper.getLocationIndex(), graphHopper.getGtfsStorage());
         PtRouter ptRouter = factory.createWithoutRealtimeFeed();

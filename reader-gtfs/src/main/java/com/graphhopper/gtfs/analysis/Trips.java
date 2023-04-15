@@ -51,22 +51,20 @@ public class Trips {
             if (stopTime == null)
                 continue;
             GtfsStorage.FeedIdWithStopId stopId = new GtfsStorage.FeedIdWithStopId(feedKey, stopTime.stop_id);
-            int arrivalTime = stopTime.arrival_time + (tripDescriptor.hasStartTime() ? LocalTime.parse(tripDescriptor.getStartTime()).toSecondOfDay() : 0);
-            arrivalTimes.put(stopId, Math.min(arrivalTime, arrivalTimes.getOrDefault(stopId, Integer.MAX_VALUE)));
+            arrivalTimes.put(stopId, Math.min(stopTime.arrival_time, arrivalTimes.getOrDefault(stopId, Integer.MAX_VALUE)));
             for (GtfsStorage.InterpolatedTransfer it : gtfsStorage.interpolatedTransfers.get(stopId)) {
                 GtfsStorage.FeedIdWithStopId boardingStop = new GtfsStorage.FeedIdWithStopId(it.toPlatformDescriptor.feed_id, it.toPlatformDescriptor.stop_id);
-                int arrivalTimePlusTransferTime = arrivalTime + it.streetTime;
+                int arrivalTimePlusTransferTime = stopTime.arrival_time + it.streetTime;
                 arrivalTimes.put(boardingStop, Math.min(arrivalTimePlusTransferTime, arrivalTimes.getOrDefault(boardingStop, Integer.MAX_VALUE)));
             }
         }
-        Trip trip = feed.trips.get(tripDescriptor.getTripId());
         for (StopTime stopTime : Lists.reverse(stopTimesExceptFirst)) {
             if (stopTime == null)
                 continue;
             TripAtStopTime origin = new TripAtStopTime(feedKey, tripDescriptor, stopTime.stop_sequence);
             List<TripAtStopTime> destinations = new ArrayList<>();
             GtfsStorage.FeedIdWithStopId stopId = new GtfsStorage.FeedIdWithStopId(feedKey, stopTime.stop_id);
-            List<Transfer> transfersFromStop = transfersForFeed.getTransfersFromStop(stopId.stopId, trip.route_id);
+            List<Transfer> transfersFromStop = transfersForFeed.getTransfersFromStop(stopId.stopId, orderedStopTimesForTrip.trip.route_id);
             ListMultimap<String, Transfer> multimap = ArrayListMultimap.create();
             for (Transfer transfer : transfersFromStop) {
                 multimap.put(transfer.to_stop_id, transfer);
@@ -107,15 +105,25 @@ public class Trips {
                     StopTime departureStopTime = trip.stopTimes.get(candidate.stop_sequence);
                     if (departureStopTime.departure_time >= earliestDepatureTimeForThisDestination) {
                         boolean keep = false;
-                        for (int i = candidate.stop_sequence + 1; i < trip.stopTimes.size(); i++) {
+                        boolean overnight = false;
+                        for (int i = candidate.stop_sequence; i < trip.stopTimes.size(); i++) {
                             StopTime destinationStopTime = trip.stopTimes.get(i);
                             if (destinationStopTime == null)
                                 continue;
                             int destinationArrivalTime = destinationStopTime.arrival_time;
-                            GtfsStorage.FeedIdWithStopId destinationStopId = new GtfsStorage.FeedIdWithStopId(candidate.feedId, destinationStopTime.stop_id);
-                            int oldArrivalTime = arrivalTimes.getOrDefault(destinationStopId, Integer.MAX_VALUE);
-                            keep = keep || destinationArrivalTime < oldArrivalTime;
-                            arrivalTimes.put(destinationStopId, Math.min(oldArrivalTime, destinationArrivalTime));
+                            if (i == candidate.stop_sequence) {
+                                if (destinationArrivalTime < earliestDepartureTime) {
+                                    overnight = true;
+                                }
+                            } else {
+                                if (overnight) {
+                                    destinationArrivalTime += 24 * 60 * 60;
+                                }
+                                GtfsStorage.FeedIdWithStopId destinationStopId = new GtfsStorage.FeedIdWithStopId(candidate.feedId, destinationStopTime.stop_id);
+                                int oldArrivalTime = arrivalTimes.getOrDefault(destinationStopId, Integer.MAX_VALUE);
+                                keep = keep || destinationArrivalTime < oldArrivalTime;
+                                arrivalTimes.put(destinationStopId, Math.min(oldArrivalTime, destinationArrivalTime));
+                            }
                         }
                         if (keep) {
                             destinations.add(candidate);
