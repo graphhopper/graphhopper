@@ -157,30 +157,32 @@ public class Trips {
             GTFSFeed feed = e.getValue();
             int total = feed.trips.size();
             AtomicInteger i = new AtomicInteger();
-            feed.trips.values().parallelStream().forEach(trip -> {
-                try {
-                    Collection<Frequency> frequencies = feed.getFrequencies(trip.trip_id);
-                    List<GtfsRealtime.TripDescriptor> actualTrips = new ArrayList<>();
-                    GtfsRealtime.TripDescriptor.Builder builder = GtfsRealtime.TripDescriptor.newBuilder().setTripId(trip.trip_id).setRouteId(trip.route_id);
-                    if (frequencies.isEmpty()) {
-                        actualTrips.add(builder.build());
-                    } else {
-                        for (Frequency frequency : frequencies) {
-                            for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
-                                actualTrips.add(builder.setStartTime(convertToGtfsTime(time)).build());
+            feed.trips.values().parallelStream()
+                    .filter(trip -> feed.services.get(trip.service_id).activeOn(trafficDay))
+                    .forEach(trip -> {
+                        try {
+                            Collection<Frequency> frequencies = feed.getFrequencies(trip.trip_id);
+                            List<GtfsRealtime.TripDescriptor> actualTrips = new ArrayList<>();
+                            GtfsRealtime.TripDescriptor.Builder builder = GtfsRealtime.TripDescriptor.newBuilder().setTripId(trip.trip_id).setRouteId(trip.route_id);
+                            if (frequencies.isEmpty()) {
+                                actualTrips.add(builder.build());
+                            } else {
+                                for (Frequency frequency : frequencies) {
+                                    for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
+                                        actualTrips.add(builder.setStartTime(convertToGtfsTime(time)).build());
+                                    }
+                                }
                             }
+                            for (GtfsRealtime.TripDescriptor tripDescriptor : actualTrips) {
+                                Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = trips.findTripTransfers(feed, tripDescriptor, feedKey, trafficDay);
+                                System.out.println(reducedTripTransfers.size());
+                                result.putAll(reducedTripTransfers);
+                            }
+                            System.out.printf("%d / %d trips processed\n", i.incrementAndGet(), total);
+                        } catch (Exception ex) {
+                            throw new RuntimeException(trip.trip_id, ex);
                         }
-                    }
-                    for (GtfsRealtime.TripDescriptor tripDescriptor : actualTrips) {
-                        Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = trips.findTripTransfers(feed, tripDescriptor, feedKey, trafficDay);
-                        System.out.println(reducedTripTransfers.size());
-                        result.putAll(reducedTripTransfers);
-                    }
-                    System.out.printf("%d / %d trips processed\n", i.incrementAndGet(), total);
-                } catch (Exception ex) {
-                    throw new RuntimeException(trip.trip_id, ex);
-                }
-            });
+                    });
         }
     }
 
