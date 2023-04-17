@@ -1019,7 +1019,7 @@ public class GraphHopper {
         initLocationIndex();
 
         // ORS-GH MOD START add post processing hook
-        postProcessingHook(closeEarly);
+        postProcessingHook();
         // ORS-GH MOD END
 
         importPublicTransit();
@@ -1042,7 +1042,7 @@ public class GraphHopper {
     }
 
 // ORS-GH MOD START add post processing hook
-    protected void postProcessingHook(boolean closeEarly) {}
+    protected void postProcessingHook() {}
 // ORS-GH MOD END
 
     protected void importPublicTransit() {
