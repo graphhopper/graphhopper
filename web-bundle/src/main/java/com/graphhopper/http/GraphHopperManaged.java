@@ -44,6 +44,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class GraphHopperManaged implements Managed {
@@ -96,6 +97,8 @@ public class GraphHopperManaged implements Managed {
             Object cm = profile.getHints().getObject("custom_model", null);
             CustomModel customModel;
             if (cm != null) {
+                if (!profile.getHints().getObject("custom_model_files", Collections.emptyList()).isEmpty())
+                    throw new IllegalArgumentException("Do not use custom_model_files and custom_model together");
                 try {
                     // custom_model can be an object tree (read from config) or an object (e.g. from tests)
                     customModel = jsonOM.readValue(jsonOM.writeValueAsBytes(cm), CustomModel.class);
