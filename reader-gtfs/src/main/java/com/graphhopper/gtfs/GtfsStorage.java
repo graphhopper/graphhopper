@@ -67,8 +67,8 @@ public class GtfsStorage {
 	}
 
 	public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfers(LocalDate trafficDay) {
-//		Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripAtStopTimeCollectionMap = tripTransfersPerDay.computeIfAbsent(trafficDay, k -> new HashMap<>(tripTransfers));
-		Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripAtStopTimeCollectionMap = tripTransfers;
+		Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripAtStopTimeCollectionMap = tripTransfersPerDay.computeIfAbsent(trafficDay, k -> new HashMap<>(tripTransfers));
+//		Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripAtStopTimeCollectionMap = tripTransfers;
 		return tripAtStopTimeCollectionMap;
 	}
 

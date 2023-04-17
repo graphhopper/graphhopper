@@ -5,7 +5,6 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Service;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
-import com.google.common.cache.LoadingCache;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.analysis.Trips;
 
@@ -64,9 +63,7 @@ public class TripBasedRouter {
                     GTFSFeed.StopTimesForTripWithTripPatternKey stopTimesForTripWithTripPatternKey = gtfsFeed.stopTimes.getUnchecked(boarding.tripDescriptor);
                     StopTime stopTime = stopTimesForTripWithTripPatternKey.stopTimes.get(boarding.stop_sequence);
                     if (stopTime.departure_time >= earliestDepartureTime.toLocalTime().toSecondOfDay()) {
-                        String serviceId = gtfsFeed.trips.get(boarding.tripDescriptor.getTripId()).service_id;
-                        Service service = gtfsFeed.services.get(serviceId);
-                        if (service.activeOn(trafficDay)) {
+                        if (stopTimesForTripWithTripPatternKey.service.activeOn(trafficDay)) {
                             enqueue(queue0, boarding, null, null, gtfsFeed, 0);
                             break;
                         }
@@ -153,9 +150,7 @@ public class TripBasedRouter {
                     GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(transferDestination.feedId);
                     GTFSFeed.StopTimesForTripWithTripPatternKey destinationStopTimes = destinationFeed.stopTimes.getUnchecked(transferDestination.tripDescriptor);
                     StopTime transferStopTime = destinationStopTimes.stopTimes.get(transferDestination.stop_sequence);
-                    String serviceId = destinationFeed.trips.get(transferDestination.tripDescriptor.getTripId()).service_id;
-                    Service service = destinationFeed.services.get(serviceId);
-                    if (service.activeOn(trafficDay)) {
+                    if (destinationStopTimes.service.activeOn(trafficDay)) {
                         if (transferStopTime.departure_time < stopTime.arrival_time) {
                             enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, gtfsFeed, 1);
                         } else {
