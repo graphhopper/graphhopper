@@ -53,8 +53,7 @@ public class TripBasedRouter {
         this.egressStations = egressStations;
         List<EnqueuedTripSegment> queue0 = new ArrayList<>();
         for (StopWithTimeDelta accessStation : accessStations) {
-            String feedId = accessStations.iterator().next().stopId.feedId;
-            Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey> tripsForThisFeed = trips.trips.get(feedId);
+            Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey> tripsForThisFeed = trips.trips.get(accessStation.stopId.feedId);
             ZonedDateTime earliestDepartureTime = initialTime.atZone(ZoneId.of("America/Los_Angeles")).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
             trafficDay = earliestDepartureTime.toLocalDate();
             Map<String, List<Trips.TripAtStopTime>> boardingsByPattern = trips.boardingsForStopByPattern.getUnchecked(accessStation.stopId);
@@ -64,7 +63,7 @@ public class TripBasedRouter {
                     StopTime stopTime = stopTimesForTripWithTripPatternKey.stopTimes.get(boarding.stop_sequence);
                     if (stopTime.departure_time >= earliestDepartureTime.toLocalTime().toSecondOfDay()) {
                         if (stopTimesForTripWithTripPatternKey.service.activeOn(trafficDay)) {
-                            enqueue(queue0, boarding, null, null, feedId, 0);
+                            enqueue(queue0, boarding, null, null, accessStation.stopId.feedId, 0);
                             break;
                         }
                     }
