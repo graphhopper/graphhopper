@@ -53,4 +53,12 @@ public enum PriorityCode {
     public static double getValue(int value) {
         return getFactor(value);
     }
+
+    public PriorityCode worse() {
+        return this == EXCLUDE ? EXCLUDE : PriorityCode.values()[ordinal() - 1];
+    }
+
+    public PriorityCode better() {
+        return this == BEST ? BEST : PriorityCode.values()[ordinal() + 1];
+    }
 }

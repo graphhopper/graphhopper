@@ -54,10 +54,10 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
     public void testSpeedAndPriority() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
-        assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(BAD.getValue(), 18, way);
 
         way.setTag("scenic", "yes");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(AVOID_MORE.getValue(), 18, way);
 
         // Pushing section: this is fine as we obey the law!
         way.clearTags();
@@ -236,7 +236,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("surface", "fine_gravel");
-        assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(BAD.getValue(), 18, way);
 
         way.clearTags();
         way.setTag("highway", "track");
@@ -247,11 +247,11 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(BAD.getValue(), 18, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
-        assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(BAD.getValue(), 18, way);
 
         way.clearTags();
         way.setTag("highway", "residential");
@@ -261,7 +261,11 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "motorway");
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(REACH_DESTINATION.getValue(), 18, way);
+
+        way.clearTags();
+        way.setTag("highway", "trunk");
+        assertPriorityAndSpeed(REACH_DESTINATION.getValue(), 18, way);
     }
 
     @Test
@@ -305,7 +309,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("surface", "paved");
-        assertPriority(AVOID.getValue(), way);
+        assertPriority(BAD.getValue(), way);
         way.setTag("cycleway", "track");
         assertPriority(PREFER.getValue(), way);
 
@@ -328,7 +332,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "primary");
         way.setTag("oneway", "yes");
         way.setTag("cycleway:left", "opposite_lane");
-        assertPriority(AVOID.getValue(), way);
+        assertPriority(BAD.getValue(), way);
 
         way.clearTags();
         way.setTag("highway", "primary");
