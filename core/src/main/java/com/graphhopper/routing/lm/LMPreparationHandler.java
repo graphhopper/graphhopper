@@ -23,6 +23,7 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.util.AreaIndex;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
@@ -325,6 +326,10 @@ public class LMPreparationHandler {
     }
 
 // ORS-GH MOD START add methods
+    public List<Weighting> getWeightings() {
+        return lmConfigs.stream().map(lmConfig -> lmConfig.getWeighting()).collect(Collectors.toList());
+    }
+
     public Map<String, Double> getMaximumWeights() {
         return maximumWeights;
     }

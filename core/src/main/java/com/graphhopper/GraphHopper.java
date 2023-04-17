@@ -1018,8 +1018,8 @@ public class GraphHopper {
 
         initLocationIndex();
 
-        // ORS-GH MOD START
-        matchTraffic();
+        // ORS-GH MOD START add post processing hook
+        postProcessingHook();
         // ORS-GH MOD END
 
         importPublicTransit();
@@ -1039,16 +1039,11 @@ public class GraphHopper {
         } else {
             prepareCH(closeEarly);
         }
-// ORS-GH MOD START add post processing hook
-        postProcessingHook(closeEarly);
     }
 
-    protected void postProcessingHook(boolean closeEarly) {}
+// ORS-GH MOD START add post processing hook
+    protected void postProcessingHook() {}
 // ORS-GH MOD END
-
-    // ORS-GH MOD START
-    public void matchTraffic() {};
-    // ORS-GH MOD END
 
     protected void importPublicTransit() {
     }
