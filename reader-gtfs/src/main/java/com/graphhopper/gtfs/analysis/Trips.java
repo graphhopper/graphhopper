@@ -13,23 +13,26 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.gtfs.*;
+import com.graphhopper.gtfs.GtfsStorage;
+import com.graphhopper.gtfs.PtGraph;
+import com.graphhopper.gtfs.RealtimeFeed;
+import com.graphhopper.gtfs.Transfers;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 
 public class Trips {
 
     private final Map<String, Transfers> transfers;
+    public final Map<String, Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey>> trips;
 
     public Trips(GtfsStorage gtfsStorage) {
         this.gtfsStorage = gtfsStorage;
@@ -37,14 +40,21 @@ public class Trips {
         for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
             transfers.put(entry.getKey(), new Transfers(entry.getValue()));
         }
+        trips = new HashMap<>();
+        for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
+            GTFSFeed feed = entry.getValue();
+            trips.put(entry.getKey(), feed.trips.values().stream()
+                    .flatMap(trip -> unfoldFrequencies(feed, trip))
+                    .collect(Collectors.toMap(t -> t, feed::getStopTimesForTripWithTripPatternKey)));
+        }
     }
 
     GtfsStorage gtfsStorage;
 
-    public Map<TripAtStopTime, Collection<TripAtStopTime>> findTripTransfers(GTFSFeed feed, GtfsRealtime.TripDescriptor tripDescriptor, String feedKey, LocalDate trafficDay) {
+    public Map<TripAtStopTime, Collection<TripAtStopTime>> findTripTransfers(GtfsRealtime.TripDescriptor tripDescriptor, String feedKey, LocalDate trafficDay) {
         Transfers transfersForFeed = transfers.get(feedKey);
         Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
-        GTFSFeed.StopTimesForTripWithTripPatternKey orderedStopTimesForTrip = feed.stopTimes.getUnchecked(tripDescriptor);
+        GTFSFeed.StopTimesForTripWithTripPatternKey orderedStopTimesForTrip = trips.get(feedKey).get(tripDescriptor);
         List<StopTime> stopTimesExceptFirst = orderedStopTimesForTrip.stopTimes.subList(1, orderedStopTimesForTrip.stopTimes.size());
         ObjectIntHashMap<GtfsStorage.FeedIdWithStopId> arrivalTimes = new ObjectIntHashMap<>();
         for (StopTime stopTime : Lists.reverse(stopTimesExceptFirst)) {
@@ -93,8 +103,7 @@ public class Trips {
         Collection<List<TripAtStopTime>> boardingsForPattern = boardingsForStopByPattern.getUnchecked(boardingStop).values();
         for (List<TripAtStopTime> boardings : boardingsForPattern) {
             for (TripAtStopTime candidate : boardings) {
-                GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(candidate.feedId);
-                GTFSFeed.StopTimesForTripWithTripPatternKey trip = destinationFeed.stopTimes.getUnchecked(candidate.tripDescriptor);
+                GTFSFeed.StopTimesForTripWithTripPatternKey trip = trips.get(candidate.feedId).get(candidate.tripDescriptor);
                 int earliestDepatureTimeForThisDestination = earliestDepartureTime;
                 for (Transfer transfer : transfers) {
                     if (trip.trip.route_id.equals(transfer.to_route_id)) {
@@ -138,15 +147,11 @@ public class Trips {
     public LoadingCache<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>> boardingsForStopByPattern = CacheBuilder.newBuilder().maximumSize(200000).build(new CacheLoader<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>>() {
         @Override
         public Map<String, List<TripAtStopTime>> load(GtfsStorage.FeedIdWithStopId key) {
-            GTFSFeed feed = gtfsStorage.getGtfsFeeds().get(key.feedId);
             return RealtimeFeed.findAllBoardings(gtfsStorage, key)
                     .map(PtGraph.PtEdge::getAttrs)
                     .map(boarding -> new TripAtStopTime(key.feedId, boarding.tripDescriptor, boarding.stop_sequence))
-                    .sorted(Comparator.comparingInt(boarding -> {
-                        List<StopTime> stopTimes = feed.stopTimes.getUnchecked(boarding.tripDescriptor).stopTimes;
-                        return stopTimes.get(boarding.stop_sequence).departure_time;
-                    }))
-                    .collect(Collectors.groupingBy(boarding -> feed.stopTimes.getUnchecked(boarding.tripDescriptor).pattern.pattern_id));
+                    .sorted(Comparator.comparingInt(boarding -> trips.get(key.feedId).get(boarding.tripDescriptor).stopTimes.get(boarding.stop_sequence).departure_time))
+                    .collect(Collectors.groupingBy(boarding -> trips.get(key.feedId).get(boarding.tripDescriptor).pattern.pattern_id));
         }
     });
 
@@ -155,34 +160,31 @@ public class Trips {
         for (Map.Entry<String, GTFSFeed> e : gtfsStorage.getGtfsFeeds().entrySet()) {
             String feedKey = e.getKey();
             GTFSFeed feed = e.getValue();
-            int total = feed.trips.size();
-            AtomicInteger i = new AtomicInteger();
-            feed.trips.values().parallelStream()
+            feed.trips.values().stream()
                     .filter(trip -> feed.services.get(trip.service_id).activeOn(trafficDay))
-                    .forEach(trip -> {
-                        try {
-                            Collection<Frequency> frequencies = feed.getFrequencies(trip.trip_id);
-                            List<GtfsRealtime.TripDescriptor> actualTrips = new ArrayList<>();
-                            GtfsRealtime.TripDescriptor.Builder builder = GtfsRealtime.TripDescriptor.newBuilder().setTripId(trip.trip_id).setRouteId(trip.route_id);
-                            if (frequencies.isEmpty()) {
-                                actualTrips.add(builder.build());
-                            } else {
-                                for (Frequency frequency : frequencies) {
-                                    for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
-                                        actualTrips.add(builder.setStartTime(convertToGtfsTime(time)).build());
-                                    }
-                                }
-                            }
-                            for (GtfsRealtime.TripDescriptor tripDescriptor : actualTrips) {
-                                Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = trips.findTripTransfers(feed, tripDescriptor, feedKey, trafficDay);
-                                System.out.println(reducedTripTransfers.size());
-                                result.putAll(reducedTripTransfers);
-                            }
-                            System.out.printf("%d / %d trips processed\n", i.incrementAndGet(), total);
-                        } catch (Exception ex) {
-                            throw new RuntimeException(trip.trip_id, ex);
-                        }
+                    .flatMap(trip -> unfoldFrequencies(feed, trip))
+                    .parallel()
+                    .forEach(tripDescriptor -> {
+                        Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = trips.findTripTransfers(tripDescriptor, feedKey, trafficDay);
+                        System.out.println(reducedTripTransfers.size());
+                        result.putAll(reducedTripTransfers);
                     });
+        }
+    }
+
+    private static Stream<GtfsRealtime.TripDescriptor> unfoldFrequencies(GTFSFeed feed, Trip trip) {
+        Collection<Frequency> frequencies = feed.getFrequencies(trip.trip_id);
+        GtfsRealtime.TripDescriptor.Builder builder = GtfsRealtime.TripDescriptor.newBuilder().setTripId(trip.trip_id).setRouteId(trip.route_id);
+        if (frequencies.isEmpty()) {
+            return Stream.of(builder.build());
+        } else {
+            Stream.Builder<GtfsRealtime.TripDescriptor> result = Stream.builder();
+            for (Frequency frequency : frequencies) {
+                for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
+                    result.add(builder.setStartTime(convertToGtfsTime(time)).build());
+                }
+            }
+            return result.build();
         }
     }
 

@@ -2,7 +2,6 @@ package com.graphhopper.gtfs;
 
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.model.Service;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
@@ -54,17 +53,18 @@ public class TripBasedRouter {
         this.egressStations = egressStations;
         List<EnqueuedTripSegment> queue0 = new ArrayList<>();
         for (StopWithTimeDelta accessStation : accessStations) {
-            GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(accessStations.iterator().next().stopId.feedId);
+            String feedId = accessStations.iterator().next().stopId.feedId;
+            Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey> tripsForThisFeed = trips.trips.get(feedId);
             ZonedDateTime earliestDepartureTime = initialTime.atZone(ZoneId.of("America/Los_Angeles")).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
             trafficDay = earliestDepartureTime.toLocalDate();
             Map<String, List<Trips.TripAtStopTime>> boardingsByPattern = trips.boardingsForStopByPattern.getUnchecked(accessStation.stopId);
             for (List<Trips.TripAtStopTime> boardings : boardingsByPattern.values()) {
                 for (Trips.TripAtStopTime boarding : boardings) {
-                    GTFSFeed.StopTimesForTripWithTripPatternKey stopTimesForTripWithTripPatternKey = gtfsFeed.stopTimes.getUnchecked(boarding.tripDescriptor);
+                    GTFSFeed.StopTimesForTripWithTripPatternKey stopTimesForTripWithTripPatternKey = tripsForThisFeed.get(boarding.tripDescriptor);
                     StopTime stopTime = stopTimesForTripWithTripPatternKey.stopTimes.get(boarding.stop_sequence);
                     if (stopTime.departure_time >= earliestDepartureTime.toLocalTime().toSecondOfDay()) {
                         if (stopTimesForTripWithTripPatternKey.service.activeOn(trafficDay)) {
-                            enqueue(queue0, boarding, null, null, gtfsFeed, 0);
+                            enqueue(queue0, boarding, null, null, feedId, 0);
                             break;
                         }
                     }
@@ -102,9 +102,8 @@ public class TripBasedRouter {
     private List<EnqueuedTripSegment> round(List<EnqueuedTripSegment> queue0, int round) {
         for (EnqueuedTripSegment enqueuedTripSegment : queue0) {
             String feedId = enqueuedTripSegment.tripAtStopTime.feedId;
-            GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
             Trips.TripAtStopTime tripAtStopTime = enqueuedTripSegment.tripAtStopTime;
-            List<StopTime> stopTimes = gtfsFeed.stopTimes.getUnchecked(tripAtStopTime.tripDescriptor).stopTimes;
+            List<StopTime> stopTimes = trips.trips.get(feedId).get(tripAtStopTime.tripDescriptor).stopTimes;
             int toStopSequence = Math.min(enqueuedTripSegment.toStopSequence, stopTimes.size());
             for (int i = tripAtStopTime.stop_sequence + 1; i < toStopSequence; i++) {
                 StopTime stopTime = stopTimes.get(i);
@@ -135,9 +134,8 @@ public class TripBasedRouter {
         List<EnqueuedTripSegment> queue1 = new ArrayList<>();
         for (EnqueuedTripSegment enqueuedTripSegment : queue0) {
             String feedId = enqueuedTripSegment.tripAtStopTime.feedId;
-            GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
             Trips.TripAtStopTime tripAtStopTime = enqueuedTripSegment.tripAtStopTime;
-            List<StopTime> stopTimes = gtfsFeed.stopTimes.getUnchecked(tripAtStopTime.tripDescriptor).stopTimes;
+            List<StopTime> stopTimes = trips.trips.get(feedId).get(tripAtStopTime.tripDescriptor).stopTimes;
             int toStopSequence = Math.min(enqueuedTripSegment.toStopSequence, stopTimes.size());
             for (int i = tripAtStopTime.stop_sequence + 1; i < toStopSequence; i++) {
                 StopTime stopTime = stopTimes.get(i);
@@ -147,14 +145,13 @@ public class TripBasedRouter {
                 Trips.TripAtStopTime transferOrigin = new Trips.TripAtStopTime("gtfs_0", tripAtStopTime.tripDescriptor, stopTime.stop_sequence);
                 Collection<Trips.TripAtStopTime> transferDestinations = gtfsStorage.getTripTransfers(trafficDay).get(transferOrigin);
                 for (Trips.TripAtStopTime transferDestination : transferDestinations) {
-                    GTFSFeed destinationFeed = gtfsStorage.getGtfsFeeds().get(transferDestination.feedId);
-                    GTFSFeed.StopTimesForTripWithTripPatternKey destinationStopTimes = destinationFeed.stopTimes.getUnchecked(transferDestination.tripDescriptor);
+                    GTFSFeed.StopTimesForTripWithTripPatternKey destinationStopTimes = trips.trips.get(transferDestination.feedId).get(transferDestination.tripDescriptor);
                     StopTime transferStopTime = destinationStopTimes.stopTimes.get(transferDestination.stop_sequence);
                     if (destinationStopTimes.service.activeOn(trafficDay)) {
                         if (transferStopTime.departure_time < stopTime.arrival_time) {
-                            enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, gtfsFeed, 1);
+                            enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, feedId, 1);
                         } else {
-                            enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, gtfsFeed, 0);
+                            enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, feedId, 0);
                         }
                     }
                 }
@@ -163,7 +160,7 @@ public class TripBasedRouter {
         return queue1;
     }
 
-    private void enqueue(List<EnqueuedTripSegment> queue1, Trips.TripAtStopTime transferDestination, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, GTFSFeed gtfsFeed, int plusDays) {
+    private void enqueue(List<EnqueuedTripSegment> queue1, Trips.TripAtStopTime transferDestination, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, String gtfsFeed, int plusDays) {
         if (plusDays > 0)
             return;
         GtfsRealtime.TripDescriptor tripId = transferDestination.tripDescriptor;
@@ -174,8 +171,8 @@ public class TripBasedRouter {
         }
     }
 
-    private void markAsDone(Trips.TripAtStopTime transferDestination, GTFSFeed gtfsFeed, GtfsRealtime.TripDescriptor tripId) {
-        GTFSFeed.StopTimesForTripWithTripPatternKey stopTimes = gtfsFeed.stopTimes.getUnchecked(tripId);
+    private void markAsDone(Trips.TripAtStopTime transferDestination, String gtfsFeed, GtfsRealtime.TripDescriptor tripId) {
+        GTFSFeed.StopTimesForTripWithTripPatternKey stopTimes = trips.trips.get(gtfsFeed).get(tripId);
         boolean seenMyself = false;
         for (GtfsRealtime.TripDescriptor otherTrip : stopTimes.pattern.trips) {
             // Trips within a pattern are sorted by start time. All that come after me can be marked as done.
@@ -210,8 +207,7 @@ public class TripBasedRouter {
         }
 
         private StopTime getStopTime() {
-            GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(t.feedId);
-            List<StopTime> stopTimes = gtfsFeed.stopTimes.getUnchecked(t.tripDescriptor).stopTimes;
+            List<StopTime> stopTimes = trips.trips.get(t.feedId).get(t.tripDescriptor).stopTimes;
             return stopTimes.get(t.stop_sequence);
         }
 
@@ -219,8 +215,7 @@ public class TripBasedRouter {
             EnqueuedTripSegment i = enqueuedTripSegment;
             while (i.parent != null)
                 i = i.parent;
-            GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(i.tripAtStopTime.feedId);
-            List<StopTime> stopTimes = gtfsFeed.stopTimes.getUnchecked(i.tripAtStopTime.tripDescriptor).stopTimes;
+            List<StopTime> stopTimes = trips.trips.get(i.tripAtStopTime.feedId).get(i.tripAtStopTime.tripDescriptor).stopTimes;
             StopTime stopTime = stopTimes.get(i.tripAtStopTime.stop_sequence);
             return stopTime.departure_time;
         }

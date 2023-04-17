@@ -197,32 +197,30 @@ public class GTFSFeed implements Cloneable, Closeable {
         public final PatternFinder.Pattern pattern;
     }
 
-    public LoadingCache<GtfsRealtime.TripDescriptor, StopTimesForTripWithTripPatternKey> stopTimes = CacheBuilder.newBuilder().maximumSize(200000).build(new CacheLoader<GtfsRealtime.TripDescriptor, StopTimesForTripWithTripPatternKey>() {
-        public StopTimesForTripWithTripPatternKey load(GtfsRealtime.TripDescriptor key) {
-            PatternFinder.TripPatternKey tripPatternKey = new PatternFinder.TripPatternKey();
-            List<StopTime> orderedStopTimesForTrip = new ArrayList<>();
-            Trip trip = trips.get(key.getTripId());
-            Service service = services.get(trip.service_id);
-            getInterpolatedStopTimesForTrip(key.getTripId()).forEach(orderedStopTimesForTrip::add);
-            if (key.hasStartTime()) {
-                int time = LocalTime.parse(key.getStartTime()).toSecondOfDay();
-                for (StopTime stopTime : orderedStopTimesForTrip) {
-                    stopTime.arrival_time += time;
-                    stopTime.departure_time += time;
-                }
+    public StopTimesForTripWithTripPatternKey getStopTimesForTripWithTripPatternKey(GtfsRealtime.TripDescriptor key) {
+        PatternFinder.TripPatternKey tripPatternKey = new PatternFinder.TripPatternKey();
+        List<StopTime> orderedStopTimesForTrip = new ArrayList<>();
+        Trip trip = trips.get(key.getTripId());
+        Service service = services.get(trip.service_id);
+        getInterpolatedStopTimesForTrip(key.getTripId()).forEach(orderedStopTimesForTrip::add);
+        if (key.hasStartTime()) {
+            int time = LocalTime.parse(key.getStartTime()).toSecondOfDay();
+            for (StopTime stopTime : orderedStopTimesForTrip) {
+                stopTime.arrival_time += time;
+                stopTime.departure_time += time;
             }
-            orderedStopTimesForTrip.forEach(tripPatternKey::addStopTime);
-            List<StopTime> orderedStopTimesForTripWithPadding = new ArrayList<>();
-            orderedStopTimesForTrip.forEach(stopTime -> {
-                while (orderedStopTimesForTripWithPadding.size() < stopTime.stop_sequence) {
-                    orderedStopTimesForTripWithPadding.add(null); // Padding, so that index == stop_sequence
-                }
-                orderedStopTimesForTripWithPadding.add(stopTime);
-            });
-            PatternFinder.Pattern pattern = patterns.get(tripPatternKey);
-            return new StopTimesForTripWithTripPatternKey(trip, service, orderedStopTimesForTripWithPadding, pattern);
         }
-    });
+        orderedStopTimesForTrip.forEach(tripPatternKey::addStopTime);
+        List<StopTime> orderedStopTimesForTripWithPadding = new ArrayList<>();
+        orderedStopTimesForTrip.forEach(stopTime -> {
+            while (orderedStopTimesForTripWithPadding.size() < stopTime.stop_sequence) {
+                orderedStopTimesForTripWithPadding.add(null); // Padding, so that index == stop_sequence
+            }
+            orderedStopTimesForTripWithPadding.add(stopTime);
+        });
+        PatternFinder.Pattern pattern = patterns.get(tripPatternKey);
+        return new StopTimesForTripWithTripPatternKey(trip, service, orderedStopTimesForTripWithPadding, pattern);
+    }
 
     /**
      * For the given trip ID, fetch all the stop times in order of increasing stop_sequence.
