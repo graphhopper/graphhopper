@@ -106,7 +106,7 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
                 new GHStationLocation(origin),
                 new GHStationLocation(destination)), ZonedDateTime.parse(time).toInstant());
         request.setIgnoreTransfers(true);
-        request.setLimitStreetTime(Duration.ofMinutes(50));
+        request.setLimitStreetTime(Duration.ofSeconds(1440));
         request.setProfileQuery(true);
         request.setMaxProfileDuration(Duration.ofMinutes(5));
         long start1 = System.currentTimeMillis();
