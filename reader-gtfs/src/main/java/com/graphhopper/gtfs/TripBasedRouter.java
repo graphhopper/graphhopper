@@ -7,6 +7,7 @@ import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.analysis.Trips;
 
+import java.io.Serializable;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -57,15 +58,16 @@ public class TripBasedRouter {
             ZonedDateTime earliestDepartureTime = initialTime.atZone(ZoneId.of("America/Los_Angeles")).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
             trafficDay = earliestDepartureTime.toLocalDate();
             Map<String, List<Trips.TripAtStopTime>> boardingsByPattern = trips.boardingsForStopByPattern.getUnchecked(accessStation.stopId);
+            int targetSecondOfDay = earliestDepartureTime.toLocalTime().toSecondOfDay();
             for (List<Trips.TripAtStopTime> boardings : boardingsByPattern.values()) {
-                for (Trips.TripAtStopTime boarding : boardings) {
-                    GTFSFeed.StopTimesForTripWithTripPatternKey stopTimesForTripWithTripPatternKey = tripsForThisFeed.get(boarding.tripDescriptor);
-                    StopTime stopTime = stopTimesForTripWithTripPatternKey.stopTimes.get(boarding.stop_sequence);
-                    if (stopTime.departure_time >= earliestDepartureTime.toLocalTime().toSecondOfDay()) {
-                        if (stopTimesForTripWithTripPatternKey.service.activeOn(trafficDay)) {
-                            enqueue(queue0, boarding, null, null, accessStation.stopId.feedId, 0);
-                            break;
-                        }
+                int indexx = Collections.binarySearch(boardings, null, (boarding, key) ->
+                        Integer.compare(tripsForThisFeed.get(boarding.tripDescriptor).stopTimes.get(boarding.stop_sequence).departure_time, targetSecondOfDay));
+                int index = indexx >= 0 ? indexx : (- indexx) - 1;
+                for (int i = index; i < boardings.size(); i++) {
+                    Trips.TripAtStopTime boarding = boardings.get(i);
+                    if (tripsForThisFeed.get(boarding.tripDescriptor).service.activeOn(trafficDay)) {
+                        enqueue(queue0, boarding, null, null, accessStation.stopId.feedId, 0);
+                        break;
                     }
                 }
             }
