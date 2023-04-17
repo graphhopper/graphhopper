@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -98,6 +99,9 @@ public class GraphHopperGtfs extends GraphHopper {
                     allReaders.put(id, gtfsReader);
                 });
                 interpolateTransfers(allReaders, allTransfers);
+                String trafficDay = ghConfig.getString("traffic_day", "");
+                LOGGER.info("Traffic day: {}", trafficDay);
+                Trips.findAllTripTransfersInto(gtfsStorage.getTripTransfers(), gtfsStorage, LocalDate.parse(trafficDay));
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
@@ -107,7 +111,6 @@ public class GraphHopperGtfs extends GraphHopper {
             stopIndex.flush();
         }
         gtfsStorage.setStopIndex(stopIndex);
-        LOGGER.info("Traffic day: {}", ghConfig.getString("traffic_day", ""));
     }
 
     private void interpolateTransfers(HashMap<String, GtfsReader> readers, Map<String, Transfers> allTransfers) {

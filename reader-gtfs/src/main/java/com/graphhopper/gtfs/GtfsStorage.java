@@ -39,7 +39,6 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class GtfsStorage {
 
@@ -68,11 +67,13 @@ public class GtfsStorage {
 	}
 
 	public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfers(LocalDate trafficDay) {
-		return tripTransfers.computeIfAbsent(trafficDay, k -> {
-			Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> result = new ConcurrentHashMap<>();
-			Trips.findAllTripTransfersInto(result, this, trafficDay);
-			return result;
-		});
+//		Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripAtStopTimeCollectionMap = tripTransfersPerDay.computeIfAbsent(trafficDay, k -> new HashMap<>(tripTransfers));
+		Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripAtStopTimeCollectionMap = tripTransfers;
+		return tripAtStopTimeCollectionMap;
+	}
+
+	public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfers() {
+		return tripTransfers;
 	}
 
 	public static class Validity implements Serializable {
@@ -160,7 +161,8 @@ public class GtfsStorage {
 	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
 	private Map<String, Map<String, Fare>> faresByFeed;
 	private Map<FeedIdWithStopId, Integer> stationNodes;
-	private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfers = new HashMap<>();
+	private Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers;
+	private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfersPerDay = new HashMap<>();
 	private IntObjectHashMap<int[]> skippedEdgesForTransfer;
 
 	private IntIntHashMap ptToStreet;
@@ -247,6 +249,7 @@ public class GtfsStorage {
     private void init() {
 		this.gtfsFeedIds = data.getHashSet("gtfsFeeds");
 		this.stationNodes = data.getHashMap("stationNodes");
+		this.tripTransfers = data.getTreeMap("tripTransfers");
 		this.ptToStreet = new IntIntHashMap();
 		this.streetToPt = new IntIntHashMap();
 		this.skippedEdgesForTransfer = new IntObjectHashMap<>();

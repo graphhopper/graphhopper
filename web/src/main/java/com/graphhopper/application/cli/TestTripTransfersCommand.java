@@ -53,7 +53,7 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
         pups.entrySet().forEach(System.out::println);
 
 
-        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = graphHopper.getGtfsStorage().getTripTransfers(LocalDate.parse("2023-03-26"));
+//        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = graphHopper.getGtfsStorage().getTripTransfers(LocalDate.parse("2023-03-26"));
 
         PtRouterImpl.Factory factory = new PtRouterImpl.Factory(configuration.getGraphHopperConfiguration(), graphHopper.getTranslationMap(), graphHopper.getBaseGraph(), graphHopper.getEncodingManager(), graphHopper.getLocationIndex(), graphHopper.getGtfsStorage());
         PtRouter ptRouter = factory.createWithoutRealtimeFeed();
@@ -64,12 +64,12 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
 //        trips.setTrafficDay(LocalDate.parse("2023-03-26"));
 
         for (int i = 0; i < 30; i++) {
-            extracted(graphHopper, ptRouter, tripBasedPtRouter, "19TH", "DBRK", "2023-03-26T08:00:00-07:00");
-            extracted(graphHopper, ptRouter, tripBasedPtRouter, "SFIA", "COLS", "2023-03-26T08:00:00-07:00");
-            extracted(graphHopper, ptRouter, tripBasedPtRouter, "SFIA", "OAKL", "2023-03-26T08:00:00-07:00");
-            extracted(graphHopper, ptRouter, tripBasedPtRouter, "SFIA", "OAKL", "2023-03-26T18:30:00-07:00");
-            extracted(graphHopper, ptRouter, tripBasedPtRouter, "19TH", "40425", "2023-03-26T08:00:00-07:00");
-            extracted(graphHopper, ptRouter, tripBasedPtRouter, "MONT", "WDUB", "2023-03-26T08:00:00-07:00");
+            extracted(graphHopper, ptRouter, tripBasedPtRouter, "19TH", "DBRK", "2023-04-05T08:00:00-07:00");
+            extracted(graphHopper, ptRouter, tripBasedPtRouter, "SFIA", "COLS", "2023-04-05T08:00:00-07:00");
+            extracted(graphHopper, ptRouter, tripBasedPtRouter, "SFIA", "OAKL", "2023-04-05T08:00:00-07:00");
+            extracted(graphHopper, ptRouter, tripBasedPtRouter, "SFIA", "OAKL", "2023-04-05T18:30:00-07:00");
+            extracted(graphHopper, ptRouter, tripBasedPtRouter, "19TH", "40425", "2023-04-05T08:00:00-07:00");
+            extracted(graphHopper, ptRouter, tripBasedPtRouter, "MONT", "WDUB", "2023-04-05T08:00:00-07:00");
         }
 
         for (Data datum : data) {
