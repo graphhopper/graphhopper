@@ -361,7 +361,6 @@ public class Router {
         protected void checkRequest() {
             checkProfileSpecified();
             checkMaxVisitedNodes();
-            checkTimeout();
         }
 
         private void checkProfileSpecified() {
@@ -372,11 +371,6 @@ public class Router {
         private void checkMaxVisitedNodes() {
             if (getMaxVisitedNodes(request.getHints()) > routerConfig.getMaxVisitedNodes())
                 throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + routerConfig.getMaxVisitedNodes());
-        }
-
-        private void checkTimeout() {
-            if (getTimeoutMillis(request.getHints()) > routerConfig.getTimeoutMillis())
-                throw new IllegalArgumentException("The timeout_ms parameter has to be below or equal to:" + routerConfig.getTimeoutMillis());
         }
 
         private void init() {
@@ -434,7 +428,9 @@ public class Router {
         }
 
         long getTimeoutMillis(PMap hints) {
-            return hints.getLong(TIMEOUT_MS, routerConfig.getTimeoutMillis());
+            // we silently use the minimum between the requested timeout and the server-side limit
+            // see: https://github.com/graphhopper/graphhopper/pull/2795#discussion_r1168371343
+            return Math.min(routerConfig.getTimeoutMillis(), hints.getLong(TIMEOUT_MS, routerConfig.getTimeoutMillis()));
         }
     }
 
