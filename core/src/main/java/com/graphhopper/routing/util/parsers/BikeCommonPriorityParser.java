@@ -19,6 +19,9 @@ import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.is
 
 public abstract class BikeCommonPriorityParser implements TagParser {
 
+    // Bicycle tracks subject to compulsory use in Germany and Poland (https://wiki.openstreetmap.org/wiki/DE:Key:cycleway)
+    private static final List<String> CYCLEWAY_ACCESS_KEYS = Arrays.asList("cycleway:bicycle", "cycleway:both:bicycle", "cycleway:left:bicycle", "cycleway:right:bicycle");
+
     // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
     protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
     protected final Set<String> preferHighwayTags = new HashSet<>();
@@ -147,7 +150,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
      */
     void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
         String highway = way.getTag("highway");
-        if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official")) {
+        if (isDesignated(way)) {
             if ("path".equals(highway))
                 weightToPrioMap.put(100d, VERY_NICE.getValue());
             else
@@ -175,9 +178,9 @@ public abstract class BikeCommonPriorityParser implements TagParser {
                 weightToPrioMap.put(50d, BAD.getValue());
         }
 
-        String cycleway = way.getFirstPriorityTag(Arrays.asList("cycleway", "cycleway:left", "cycleway:right"));
-        if (Arrays.asList("lane", "shared_lane", "share_busway", "shoulder").contains(cycleway)) {
-            weightToPrioMap.put(100d, UNCHANGED.getValue());
+        String cycleway = way.getFirstPriorityTag(Arrays.asList("cycleway", "cycleway:left", "cycleway:right", "cycleway:both"));
+        if (Arrays.asList("lane", "opposite_track", "shared_lane", "share_busway", "shoulder").contains(cycleway)) {
+            weightToPrioMap.put(100d, SLIGHT_PREFER.getValue());
         } else if ("track".equals(cycleway)) {
             weightToPrioMap.put(100d, PREFER.getValue());
         }
@@ -190,7 +193,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             PriorityCode pushingSectionPrio = SLIGHT_AVOID;
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
                 pushingSectionPrio = PREFER;
-            if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))
+            if (isDesignated(way))
                 pushingSectionPrio = VERY_NICE;
             if (way.hasTag("foot", "yes")) {
                 pushingSectionPrio = PriorityCode.values()[pushingSectionPrio.ordinal() - 1];
@@ -225,6 +228,11 @@ public abstract class BikeCommonPriorityParser implements TagParser {
                 weightToPrioMap.put(110d, PriorityCode.values()[lastEntryIndex + 1].getValue());
             }
         }
+    }
+
+    boolean isDesignated(ReaderWay way) {
+        return way.hasTag("bicycle", "designated") || way.hasTag(CYCLEWAY_ACCESS_KEYS, "designated")
+        || way.hasTag("bicycle_road", "yes") || way.hasTag("cyclestreet", "yes") || way.hasTag("bicycle", "official");
     }
 
     // TODO duplicated in average speed

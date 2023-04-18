@@ -15,7 +15,7 @@ public class OSMSmoothnessParserTest {
 
     @BeforeEach
     public void setUp() {
-        smoothnessEnc = new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class);
+        smoothnessEnc = Smoothness.create();
         smoothnessEnc.init(new EncodedValue.InitializerConfig());
         parser = new OSMSmoothnessParser(smoothnessEnc);
     }

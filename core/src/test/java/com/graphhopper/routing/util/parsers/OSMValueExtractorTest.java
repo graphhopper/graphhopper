@@ -4,6 +4,7 @@ import com.graphhopper.routing.ev.MaxSpeed;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor.conditionalWeightToTons;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -105,5 +106,11 @@ public class OSMValueExtractorTest {
         assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh(null)));
         assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("0")));
         assertTrue(Double.isNaN(OSMValueExtractor.stringToKmh("-20")));
+    }
+
+    @Test
+    public void testConditionalWeightToTons() {
+        assertEquals(7.5, conditionalWeightToTons("no @ (weight>7.5)"));
+        assertEquals(7.5, conditionalWeightToTons("delivery @ (Mo-Sa 06:00-12:00); no @ (weight>7.5); no @ (length>12)"));
     }
 }

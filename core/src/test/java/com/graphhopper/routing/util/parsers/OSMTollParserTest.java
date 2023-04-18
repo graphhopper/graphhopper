@@ -14,7 +14,7 @@ public class OSMTollParserTest {
 
     @BeforeEach
     public void setUp() {
-        tollEnc = new EnumEncodedValue<>(Toll.KEY, Toll.class);
+        tollEnc = Toll.create();
         tollEnc.init(new EncodedValue.InitializerConfig());
         parser = new OSMTollParser(tollEnc);
     }

@@ -27,8 +27,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
-import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
+import static com.graphhopper.util.Parameters.Routing.*;
 
 /**
  * Given a {@link RoutingCHGraph} and possibly a {@link QueryGraph} this class sets up and creates routing
@@ -51,6 +50,8 @@ public class CHRoutingAlgorithmFactory {
                 : createAlgoNodeBased(routingCHGraph, opts);
         if (opts.has(MAX_VISITED_NODES))
             algo.setMaxVisitedNodes(opts.getInt(MAX_VISITED_NODES, Integer.MAX_VALUE));
+        if (opts.has(TIMEOUT_MS))
+            algo.setTimeoutMillis(opts.getLong(TIMEOUT_MS, Long.MAX_VALUE));
         return algo;
     }
 

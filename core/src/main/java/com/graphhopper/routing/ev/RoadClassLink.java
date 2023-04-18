@@ -19,4 +19,8 @@ package com.graphhopper.routing.ev;
 
 public class RoadClassLink {
     public static final String KEY = "road_class_link";
+
+    public static BooleanEncodedValue create() {
+        return new SimpleBooleanEncodedValue(KEY);
+    }
 }

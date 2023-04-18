@@ -80,6 +80,7 @@ encoded values are the following (some of their possible values are given in bra
 - hgv: (MISSING, YES, DESIGNATED, ...)
 - track_type: (MISSING, GRADE1, GRADE2, ..., GRADE5)
 - urban_density: (RURAL, RESIDENTIAL, CITY)
+- max_weight_except: (NONE, DELIVERY, DESTINATION, FORESTRY)
 
 
 To learn about all available encoded values you can query the `/info` endpoint

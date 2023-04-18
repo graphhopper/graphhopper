@@ -218,8 +218,8 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         DecimalEncodedValue priorityEnc = VehiclePriority.create("racingbike", 4, PriorityCode.getValue(1), false);
         EncodingManager encodingManager = EncodingManager.start()
                 .add(accessEnc).add(speedEnc).add(priorityEnc)
-                .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
-                .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
+                .add(RouteNetwork.create(BikeNetwork.KEY))
+                .add(Smoothness.create())
                 .build();
         List<TagParser> parsers = Arrays.asList(
                 new RacingBikeAverageSpeedParser(encodingManager, new PMap()),

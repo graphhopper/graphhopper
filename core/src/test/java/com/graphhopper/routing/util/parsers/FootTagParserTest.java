@@ -47,8 +47,8 @@ public class FootTagParserTest {
     private final BooleanEncodedValue carAccessEnc = VehicleAccess.create("car");
     private final DecimalEncodedValue carAvSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
     private final EncodingManager encodingManager = EncodingManager.start()
-            .add(footAccessEnc).add(footAvgSpeedEnc).add(footPriorityEnc).add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
-            .add(bikeAccessEnc).add(bikeAvgSpeedEnc).add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
+            .add(footAccessEnc).add(footAvgSpeedEnc).add(footPriorityEnc).add(RouteNetwork.create(FootNetwork.KEY))
+            .add(bikeAccessEnc).add(bikeAvgSpeedEnc).add(RouteNetwork.create(BikeNetwork.KEY))
             .add(carAccessEnc).add(carAvSpeedEnc)
             .build();
     private final FootAccessParser accessParser = new FootAccessParser(encodingManager, new PMap());

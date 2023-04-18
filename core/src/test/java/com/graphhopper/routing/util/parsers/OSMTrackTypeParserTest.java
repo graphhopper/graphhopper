@@ -15,7 +15,7 @@ public class OSMTrackTypeParserTest {
 
     @BeforeEach
     public void setUp() {
-        ttEnc = new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
+        ttEnc = TrackType.create();
         ttEnc.init(new EncodedValue.InitializerConfig());
         parser = new OSMTrackTypeParser(ttEnc);
         relFlags = new IntsRef(2);

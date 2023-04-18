@@ -933,7 +933,7 @@ public class OSMReaderTest {
         OSMParsers osmParsers = new OSMParsers();
         osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
+        OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         // there are two edges, both with highway=track, one in Berlin, one in Paris
@@ -958,7 +958,7 @@ public class OSMReaderTest {
     @Test
     public void testCurvedWayAlongBorder() throws IOException {
         // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
-        EnumEncodedValue<Country> countryEnc = new EnumEncodedValue<>(Country.KEY, Country.class);
+        EnumEncodedValue<Country> countryEnc = Country.create();
         EncodingManager em = EncodingManager.start()
                 .add(VehicleEncodedValues.car(new PMap()))
                 .add(countryEnc)
@@ -966,7 +966,7 @@ public class OSMReaderTest {
         OSMParsers osmParsers = new OSMParsers()
                 .addWayTagParser(new CountryParser(countryEnc));
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
+        OSMReader reader = new OSMReader(graph, em, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
         reader.setAreaIndex(createCountryIndex());
         reader.setFile(new File(getClass().getResource("test-osm12.xml").getFile()));

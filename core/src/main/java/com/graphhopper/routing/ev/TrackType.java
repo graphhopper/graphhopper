@@ -32,6 +32,10 @@ public enum TrackType {
 
     public static final String KEY = "track_type";
 
+    public static EnumEncodedValue<TrackType> create() {
+        return new EnumEncodedValue<>(KEY, TrackType.class);
+    }
+
     private final String name;
 
     TrackType(String name) {

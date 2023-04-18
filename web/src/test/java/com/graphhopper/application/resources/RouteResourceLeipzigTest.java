@@ -31,6 +31,8 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
@@ -38,6 +40,7 @@ import java.util.Collections;
 import java.util.Random;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -70,6 +73,34 @@ public class RouteResourceLeipzigTest {
         queryRandomRoutes(100, 51.319685, 51.367294, 12.335525, 12.434745);
         // repeat the same for a very small bounding box to better cover cases where the query points are close together
         queryRandomRoutes(1000, 51.342534, 51.34285, 12.384917, 12.385278);
+    }
+
+    @ParameterizedTest
+    @CsvSource(value = {
+            "86,-1,algorithm=" + DIJKSTRA_BI,
+            "110,-1,algorithm=" + ASTAR_BI,
+            "30834,1,ch.disable=true&algorithm=" + DIJKSTRA,
+            "21137,1,ch.disable=true&algorithm=" + ASTAR,
+            "14800,1,ch.disable=true&algorithm=" + DIJKSTRA_BI,
+            "10536,1,ch.disable=true&algorithm=" + ASTAR_BI
+    })
+    void testTimeout(int expectedVisitedNodes, int timeout, String args) {
+        {
+            // for a long timeout the route calculation works
+            long longTimeout = 10_000;
+            Response response = clientTarget(app, "/route?timeout_ms=" + longTimeout + "&profile=my_car&point=51.319685,12.335525&point=51.367294,12.434745&" + args).request().buildGet().invoke();
+            assertEquals(200, response.getStatus());
+            JsonNode jsonNode = response.readEntity(JsonNode.class);
+            // by checking the visited nodes we make sure different algorithms are used
+            assertEquals(expectedVisitedNodes, jsonNode.get("hints").get("visited_nodes.sum").asInt());
+        }
+        {
+            // for a short timeout the route calculation fails, for CH we need to use a negative number, because it is too fast
+            Response response = clientTarget(app, "/route?timeout_ms=" + timeout + "&profile=my_car&point=51.319685,12.335525&point=51.367294,12.434745&" + args).request().buildGet().invoke();
+            assertEquals(400, response.getStatus());
+            JsonNode jsonNode = response.readEntity(JsonNode.class);
+            assertTrue(jsonNode.get("message").asText().contains("Connection between locations not found"), jsonNode.get("message").asText());
+        }
     }
 
     private static void queryRandomRoutes(int numQueries, double minLat, double maxLat, double minLon, double maxLon) {

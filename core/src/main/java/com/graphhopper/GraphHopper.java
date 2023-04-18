@@ -601,6 +601,7 @@ public class GraphHopper {
 
         // routing
         routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
+        routerConfig.setTimeoutMillis(ghConfig.getLong(Routing.INIT_TIMEOUT_MS, routerConfig.getTimeoutMillis()));
         routerConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routerConfig.getMaxRoundTripRetries()));
         routerConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routerConfig.getNonChMaxWaypointDistance()));
         routerConfig.setInstructionsEnabled(ghConfig.getBool(Routing.INIT_INSTRUCTIONS, routerConfig.isInstructionsEnabled()));
@@ -669,8 +670,6 @@ public class GraphHopper {
                 if (tagParser instanceof BikeCommonAccessParser) {
                     if (encodingManager.hasEncodedValue(BikeNetwork.KEY) && added.add(BikeNetwork.KEY))
                         osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
-                    if (encodingManager.hasEncodedValue(GetOffBike.KEY) && added.add(GetOffBike.KEY))
-                        osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY)));
                     if (encodingManager.hasEncodedValue(Smoothness.KEY) && added.add(Smoothness.KEY))
                         osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
                 } else if (tagParser instanceof FootAccessParser) {
@@ -690,6 +689,9 @@ public class GraphHopper {
             vehicleTagParsers.getTagParsers().forEach(tagParser -> {
                 if (tagParser == null) return;
                 osmParsers.addWayTagParser(tagParser);
+
+                if (tagParser instanceof BikeCommonAccessParser && encodingManager.hasEncodedValue(GetOffBike.KEY) && added.add(GetOffBike.KEY))
+                    osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY), ((BikeCommonAccessParser) tagParser).getAccessEnc()));
             });
         });
         return osmParsers;

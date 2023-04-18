@@ -60,6 +60,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.search.KVStorage.KeyValue.*;
+import static com.graphhopper.util.GHUtility.OSM_WARNING_LOGGER;
 import static com.graphhopper.util.Helper.nf;
 import static java.util.Collections.emptyList;
 
@@ -106,7 +107,7 @@ public class OSMReader {
     public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
         this.encodingManager = encodingManager;
-        this.edgeIntAccess = baseGraph.createIntAccess();
+        this.edgeIntAccess = baseGraph.createEdgeIntAccess();
         this.config = config;
         this.nodeAccess = baseGraph.getNodeAccess();
         this.osmParsers = osmParsers;
@@ -489,14 +490,14 @@ public class OSMReader {
         if (durationTag == null) {
             // no duration tag -> we cannot derive speed. happens very frequently for short ferries, but also for some long ones, see: #2532
             if (isFerry(way) && distance > 500_000)
-                LOGGER.warn("Long ferry OSM way without duration tag: " + way.getId() + ", distance: " + Math.round(distance / 1000.0) + " km");
+                OSM_WARNING_LOGGER.warn("Long ferry OSM way without duration tag: " + way.getId() + ", distance: " + Math.round(distance / 1000.0) + " km");
             return;
         }
         long durationInSeconds;
         try {
             durationInSeconds = OSMReaderUtility.parseDuration(durationTag);
         } catch (Exception e) {
-            LOGGER.warn("Could not parse duration tag '" + durationTag + "' in OSM way: " + way.getId());
+            OSM_WARNING_LOGGER.warn("Could not parse duration tag '" + durationTag + "' in OSM way: " + way.getId());
             return;
         }
 
@@ -504,7 +505,7 @@ public class OSMReader {
         if (speedInKmPerHour < 0.1d) {
             // Often there are mapping errors like duration=30:00 (30h) instead of duration=00:30 (30min). In this case we
             // ignore the duration tag. If no such cases show up anymore, because they were fixed, maybe raise the limit to find some more.
-            LOGGER.warn("Unrealistic low speed calculated from duration. Maybe the duration is too long, or it is applied to a way that only represents a part of the connection? OSM way: "
+            OSM_WARNING_LOGGER.warn("Unrealistic low speed calculated from duration. Maybe the duration is too long, or it is applied to a way that only represents a part of the connection? OSM way: "
                     + way.getId() + ". duration=" + durationTag + " (= " + Math.round(durationInSeconds / 60.0) +
                     " minutes), distance=" + distance + " m");
             return;
@@ -642,7 +643,7 @@ public class OSMReader {
         if (!e.isWithoutWarning()) {
             restrictionRelation.getTags().remove("graphhopper:via_node");
             List<String> members = restrictionRelation.getMembers().stream().map(m -> m.getRole() + " " + m.getType().toString().toLowerCase() + " " + m.getRef()).collect(Collectors.toList());
-            LOGGER.warn("Restriction relation " + restrictionRelation.getId() + " " + e.getMessage() + ". tags: " + restrictionRelation.getTags() + ", members: " + members + ". Relation ignored.");
+            OSM_WARNING_LOGGER.warn("Restriction relation " + restrictionRelation.getId() + " " + e.getMessage() + ". tags: " + restrictionRelation.getTags() + ", members: " + members + ". Relation ignored.");
         }
     }
 

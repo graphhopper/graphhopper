@@ -1,5 +1,11 @@
 ### 8.0 [not yet released]
+
+- routing requests can be configured to timeout after some time, see #2795
+- custom_model_file string changed to custom_model_files array, see #2787
 - renamed EdgeKVStorage to KVStorage as it is (temporarily) used for node tage too, see #2705
+- bike vehicles are now allowed to go in reverse direction of oneways, see custom_models/bike.json #196
+- prefer cycleways, bicycle_road and cyclestreet for bike routing, see #2784 and #2778
+- add support for further surfaces like pebblestones or concrete:lanes, see #2751
 
 ### 7.0 [14 Mar 2023]
 

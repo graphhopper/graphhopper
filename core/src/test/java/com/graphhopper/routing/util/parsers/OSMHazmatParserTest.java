@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class OSMHazmatParserTest {
-    private final EnumEncodedValue<Hazmat> hazEnc = new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class);
+    private final EnumEncodedValue<Hazmat> hazEnc = Hazmat.create();
     private OSMHazmatParser parser;
     private IntsRef relFlags;
 

@@ -26,6 +26,10 @@ public enum Toll {
 
     public static final String KEY = "toll";
 
+    public static EnumEncodedValue<Toll> create() {
+        return new EnumEncodedValue<>(KEY, Toll.class);
+    }
+
     private final String name;
 
     Toll(String name) {

@@ -15,7 +15,7 @@ public class OSMHazmatTunnelParserTest {
 
     @BeforeEach
     public void setUp() {
-        hazTunnelEnc = new EnumEncodedValue<>(HazmatTunnel.KEY, HazmatTunnel.class);
+        hazTunnelEnc = HazmatTunnel.create();
         hazTunnelEnc.init(new EncodedValue.InitializerConfig());
         parser = new OSMHazmatTunnelParser(hazTunnelEnc);
         relFlags = new IntsRef(2);
