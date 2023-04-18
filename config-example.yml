@@ -163,6 +163,10 @@ graphhopper:
   # connection between two points within the given visited nodes. The default is Integer.MAX_VALUE. Useful for flexibility mode
   # routing.max_visited_nodes: 1000000
 
+  # The maximum time in milliseconds after which a routing request will be aborted. This has some routing algorithm
+  # specific caveats, but generally it should allow the prevention of long-running requests. The default is Long.MAX_VALUE
+  # routing.timeout_ms: 300000
+
   # Control how many active landmarks are picked per default, this can improve query performance
   # routing.lm.active_landmarks: 4
 
