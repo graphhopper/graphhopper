@@ -3,18 +3,15 @@ package com.graphhopper.resources;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.http.GHPointParam;
+import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.isochrone.algorithm.ShortestPathTree;
-import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -36,10 +33,10 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.util.*;
 
-import static com.graphhopper.resources.RouteResource.errorIfLegacyParameters;
 import static com.graphhopper.resources.RouteResource.removeLegacyParameters;
 import static com.graphhopper.routing.util.TraversalMode.EDGE_BASED;
 import static com.graphhopper.routing.util.TraversalMode.NODE_BASED;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 
 /**
  * This resource provides the entire shortest path tree as response. In a simple CSV format discussed at #1577.
@@ -85,12 +82,12 @@ public class SPTResource {
         RouteResource.initHints(hintsMap, uriInfo.getQueryParameters());
         hintsMap.putObject(Parameters.CH.DISABLE, true);
         hintsMap.putObject(Parameters.Landmark.DISABLE, true);
-        if (Helper.isEmpty(profileName)) {
-            profileName = profileResolver.resolveProfile(hintsMap).getName();
-            removeLegacyParameters(hintsMap);
-        }
 
-        errorIfLegacyParameters(hintsMap);
+        PMap profileResolverHints = new PMap(hintsMap);
+        profileResolverHints.putObject("profile", profileName);
+        profileName = profileResolver.resolveProfile(profileResolverHints);
+        removeLegacyParameters(hintsMap);
+
         Profile profile = graphHopper.getProfile(profileName);
         if (profile == null)
             throw new IllegalArgumentException("The requested profile '" + profileName + "' does not exist");
@@ -98,11 +95,6 @@ public class SPTResource {
         BaseGraph graph = graphHopper.getBaseGraph();
         Weighting weighting = graphHopper.createWeighting(profile, hintsMap);
         BooleanEncodedValue inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileName));
-        if (hintsMap.has(Parameters.Routing.BLOCK_AREA)) {
-            GraphEdgeIdFinder.BlockArea blockArea = GraphEdgeIdFinder.createBlockArea(graph, locationIndex,
-                    Collections.singletonList(point.get()), hintsMap, new FiniteWeightFilter(weighting));
-            weighting = new BlockAreaWeighting(weighting, blockArea);
-        }
         Snap snap = locationIndex.findClosest(point.get().lat, point.get().lon, new DefaultSnapFilter(weighting, inSubnetworkEnc));
         if (!snap.isValid())
             throw new IllegalArgumentException("Point not found:" + point);
@@ -198,7 +190,7 @@ public class SPTResource {
                         if (edge == null)
                             continue;
 
-                        if (col.equals(Parameters.Details.STREET_NAME)) {
+                        if (col.equals(STREET_NAME)) {
                             sb.append(edge.getName().replaceAll(",", ""));
                             continue;
                         }

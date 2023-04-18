@@ -31,7 +31,7 @@ import javax.xml.stream.XMLStreamReader;
  */
 public class OSMFileHeader extends ReaderElement {
     public OSMFileHeader() {
-        super(0, FILEHEADER);
+        super(0, Type.FILEHEADER);
     }
 
     /**

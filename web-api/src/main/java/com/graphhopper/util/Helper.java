@@ -90,6 +90,18 @@ public class Helper {
         }
     }
 
+    public static String readJSONFileWithoutComments(String file) throws IOException {
+        return Helper.readFile(file).stream().
+                filter(line -> !line.trim().startsWith("//")).
+                reduce((s1, s2) -> s1 + "\n" + s2).orElse("");
+    }
+
+    public static String readJSONFileWithoutComments(InputStreamReader reader) throws IOException {
+        return Helper.readFile(reader).stream().
+                filter(line -> !line.trim().startsWith("//")).
+                reduce((s1, s2) -> s1 + "\n" + s2).orElse("");
+    }
+
     public static List<String> readFile(String file) throws IOException {
         return readFile(new InputStreamReader(new FileInputStream(file), UTF_CS));
     }
@@ -357,7 +369,7 @@ public class Helper {
      * and returns the positive converted long.
      */
     public static long toUnsignedLong(int x) {
-        return ((long) x) & 0xFFFFffffL;
+        return ((long) x) & 0xFFFF_FFFFL;
     }
 
     /**
@@ -475,14 +487,5 @@ public class Helper {
             val = 31 * val + str.charAt(idx);
         }
         return val;
-    }
-
-    /**
-     * This method limits the specified String value to the length currently accepted for values in the EdgeKVStorage.
-     */
-    public static String cutStringForKV(String value) {
-        byte[] bytes = value.getBytes(UTF_CS);
-        // See #2609 and test why we use a value < 255
-        return bytes.length > 250 ? new String(bytes, 0, 250, UTF_CS) : value;
     }
 }

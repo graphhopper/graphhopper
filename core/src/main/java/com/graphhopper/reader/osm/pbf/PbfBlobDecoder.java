@@ -8,6 +8,7 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.OSMFileHeader;
+import com.graphhopper.reader.osm.SkipOptions;
 import com.graphhopper.util.Helper;
 import org.openstreetmap.osmosis.osmbinary.Fileformat;
 import org.openstreetmap.osmosis.osmbinary.Osmformat;
@@ -33,6 +34,7 @@ public class PbfBlobDecoder implements Runnable {
     private final byte[] rawBlob;
     private final PbfBlobDecoderListener listener;
     private List<ReaderElement> decodedEntities;
+    private final SkipOptions skipOptions;
 
     /**
      * Creates a new instance.
@@ -42,10 +44,11 @@ public class PbfBlobDecoder implements Runnable {
      * @param rawBlob  The raw data of the blob.
      * @param listener The listener for receiving decoding results.
      */
-    public PbfBlobDecoder(String blobType, byte[] rawBlob, PbfBlobDecoderListener listener) {
+    public PbfBlobDecoder(String blobType, byte[] rawBlob, PbfBlobDecoderListener listener, SkipOptions skipOptions) {
         this.blobType = blobType;
         this.rawBlob = rawBlob;
         this.listener = listener;
+        this.skipOptions = skipOptions;
     }
 
     private byte[] readBlobContent() throws IOException {
@@ -289,14 +292,14 @@ public class PbfBlobDecoder implements Runnable {
             Osmformat.Relation.MemberType memberType = memberTypeIterator.next();
             refId += memberIdIterator.next();
 
-            int entityType = ReaderRelation.Member.NODE;
+            ReaderElement.Type entityType = ReaderElement.Type.NODE;
             if (memberType == Osmformat.Relation.MemberType.WAY) {
-                entityType = ReaderRelation.Member.WAY;
+                entityType = ReaderElement.Type.WAY;
             } else if (memberType == Osmformat.Relation.MemberType.RELATION) {
-                entityType = ReaderRelation.Member.RELATION;
+                entityType = ReaderElement.Type.RELATION;
             }
             if (checkData) {
-                if (entityType == ReaderRelation.Member.NODE && memberType != Osmformat.Relation.MemberType.NODE) {
+                if (entityType == ReaderElement.Type.NODE && memberType != Osmformat.Relation.MemberType.NODE) {
                     throw new RuntimeException("Member type of " + memberType + " is not supported.");
                 }
             }
@@ -326,10 +329,14 @@ public class PbfBlobDecoder implements Runnable {
         PbfFieldDecoder fieldDecoder = new PbfFieldDecoder(block);
 
         for (Osmformat.PrimitiveGroup primitiveGroup : block.getPrimitivegroupList()) {
-            processNodes(primitiveGroup.getDense(), fieldDecoder);
-            processNodes(primitiveGroup.getNodesList(), fieldDecoder);
-            processWays(primitiveGroup.getWaysList(), fieldDecoder);
-            processRelations(primitiveGroup.getRelationsList(), fieldDecoder);
+            if (!skipOptions.isSkipNodes()) {
+                processNodes(primitiveGroup.getDense(), fieldDecoder);
+                processNodes(primitiveGroup.getNodesList(), fieldDecoder);
+            }
+            if (!skipOptions.isSkipWays())
+                processWays(primitiveGroup.getWaysList(), fieldDecoder);
+            if (!skipOptions.isSkipRelations())
+                processRelations(primitiveGroup.getRelationsList(), fieldDecoder);
         }
     }
 

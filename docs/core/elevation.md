@@ -11,7 +11,13 @@ The default cache directory `/tmp/<provider name>` will be used. For large areas
 use a SSD disc, thus you need to specify the cache directory:
 `graph.elevation.cache_dir: /myssd/ele_cache/`
 
-## What to download and where to store it? 
+## Custom Models
+
+The `average_slope` and `max_slope` attributes of a road segment can be used to make your routing
+elevation-aware, i.e. to prefer or avoid, to speed up or slow down your vehicle based on the elevation
+change. See the [custom model](custom-models.md) feature.
+
+## What to download and where to store it?
 
 All should work automatically but you can tune certain settings like the location where the files are 
 downloaded and e.g. if the servers are not reachable, then you set:

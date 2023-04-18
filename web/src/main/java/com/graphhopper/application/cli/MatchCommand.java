@@ -96,7 +96,7 @@ public class MatchCommand extends ConfiguredCommand<GraphHopperServerConfigurati
 
         PMap hints = new PMap();
         hints.putObject("profile", args.get("profile"));
-        MapMatching mapMatching = new MapMatching(hopper, hints);
+        MapMatching mapMatching = MapMatching.fromGraphHopper(hopper, hints);
         mapMatching.setTransitionProbabilityBeta(args.getDouble("transition_probability_beta"));
         mapMatching.setMeasurementErrorSigma(args.getInt("gps_accuracy"));
 

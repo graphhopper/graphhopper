@@ -20,7 +20,6 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -42,7 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
     static final String IN_AREA_PREFIX = "in_";
-    private static final Set<String> allowedNamesInCondition = new HashSet<>(Arrays.asList("edge", "Math"));
+    static final String BACKWARD_PREFIX = "backward_";
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
     private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
 
@@ -113,9 +112,9 @@ public class CustomModelParser {
         try {
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
-            prio.init(lookup, avgSpeedEnc, priorityEnc, customModel.getAreas());
+            prio.init(lookup, avgSpeedEnc, priorityEnc, CustomModel.getAreasAsMap(customModel.getAreas()));
             return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority, prio.getMaxSpeed(), prio.getMaxPriority(),
-                    customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
+                    customModel.getDistanceInfluence() == null ? 0 : customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
             throw new IllegalArgumentException("Cannot compile expression " + ex.getMessage(), ex);
         }
@@ -164,7 +163,7 @@ public class CustomModelParser {
             //  have the same name and it mixes performance stats. See https://github.com/janino-compiler/janino/issues/137
             long counter = longVal.incrementAndGet();
             String classTemplate = createClassTemplate(counter, priorityVariables, minMaxPriority.max, speedVariables, minMaxSpeed.max,
-                    lookup, customModel.getAreas());
+                    lookup, CustomModel.getAreasAsMap(customModel.getAreas()));
             Java.CompilationUnit cu = (Java.CompilationUnit) new Parser(new Scanner("source", new StringReader(classTemplate))).
                     parseAbstractCompilationUnit();
             cu = injectStatements(priorityStatements, speedStatements, cu);
@@ -183,9 +182,8 @@ public class CustomModelParser {
      */
     private static List<Java.BlockStatement> createGetSpeedStatements(Set<String> speedVariables,
                                                                       CustomModel customModel, EncodedValueLookup lookup) throws Exception {
-        List<Java.BlockStatement> speedStatements = new ArrayList<>();
-        speedStatements.addAll(verifyExpressions(new StringBuilder(), "speed entry", speedVariables,
-                customModel.getSpeed(), lookup));
+        List<Java.BlockStatement> speedStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
+                "speed entry", speedVariables, customModel.getSpeed(), lookup));
         String speedMethodStartBlock = "double value = super.getRawSpeed(edge, reverse);\n";
         // a bit inefficient to possibly define variables twice, but for now we have two separate methods
         for (String arg : speedVariables) {
@@ -203,9 +201,8 @@ public class CustomModelParser {
      */
     private static List<Java.BlockStatement> createGetPriorityStatements(Set<String> priorityVariables,
                                                                          CustomModel customModel, EncodedValueLookup lookup) throws Exception {
-        List<Java.BlockStatement> priorityStatements = new ArrayList<>();
-        priorityStatements.addAll(verifyExpressions(new StringBuilder(), "priority entry, ",
-                priorityVariables, customModel.getPriority(), lookup));
+        List<Java.BlockStatement> priorityStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
+                "priority entry", priorityVariables, customModel.getPriority(), lookup));
         String priorityMethodStartBlock = "double value = super.getRawPriority(edge, reverse);\n";
         for (String arg : priorityVariables) {
             priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
@@ -215,21 +212,27 @@ public class CustomModelParser {
         return priorityStatements;
     }
 
-    static boolean isValidVariableName(String name) {
-        return name.startsWith(IN_AREA_PREFIX) || allowedNamesInCondition.contains(name);
-    }
-
     /**
      * For the methods getSpeed and getPriority we declare variables that contain the encoded value of the current edge
      * or if an area contains the current edge.
      */
-    private static String getVariableDeclaration(EncodedValueLookup lookup, String arg) {
+    private static String getVariableDeclaration(EncodedValueLookup lookup, final String arg) {
         if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             return getReturnType(enc) + " " + arg + " = reverse ? " +
                     "edge.getReverse((" + getInterface(enc) + ") this." + arg + "_enc) : " +
                     "edge.get((" + getInterface(enc) + ") this." + arg + "_enc);\n";
-        } else if (isValidVariableName(arg)) {
+        } else if (arg.startsWith(BACKWARD_PREFIX)) {
+            final String argSubstr = arg.substring(BACKWARD_PREFIX.length());
+            if (lookup.hasEncodedValue(argSubstr)) {
+                EncodedValue enc = lookup.getEncodedValue(argSubstr, EncodedValue.class);
+                return getReturnType(enc) + " " + arg + " = reverse ? " +
+                        "edge.get((" + getInterface(enc) + ") this." + argSubstr + "_enc) : " +
+                        "edge.getReverse((" + getInterface(enc) + ") this." + argSubstr + "_enc);\n";
+            } else {
+                throw new IllegalArgumentException("Not supported for backward: " + argSubstr);
+            }
+        } else if (arg.startsWith(IN_AREA_PREFIX)) {
             return "";
         } else {
             throw new IllegalArgumentException("Not supported " + arg);
@@ -274,13 +277,16 @@ public class CustomModelParser {
 
         final StringBuilder initSourceCode = new StringBuilder("this.avg_speed_enc = avgSpeedEnc;\n");
         initSourceCode.append("this.priority_enc = priorityEnc;\n");
-        Set<String> set = new HashSet<>(priorityVariables);
-        set.addAll(speedVariables);
+        Set<String> set = new HashSet<>();
+        for (String prioVar : priorityVariables)
+            set.add(prioVar.startsWith(BACKWARD_PREFIX) ? prioVar.substring(BACKWARD_PREFIX.length()) : prioVar);
+        for (String speedVar : speedVariables)
+            set.add(speedVar.startsWith(BACKWARD_PREFIX) ? speedVar.substring(BACKWARD_PREFIX.length()) : speedVar);
+
         for (String arg : set) {
             if (lookup.hasEncodedValue(arg)) {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
                 classSourceCode.append("protected " + getInterface(enc) + " " + arg + "_enc;\n");
-                initSourceCode.append("if (lookup.hasEncodedValue(\"" + arg + "\")) ");
                 initSourceCode.append("this." + arg + "_enc = (" + getInterface(enc)
                         + ") lookup.getEncodedValue(\"" + arg + "\", EncodedValue.class);\n");
             } else if (arg.startsWith(IN_AREA_PREFIX)) {
@@ -294,9 +300,9 @@ public class CustomModelParser {
                     includedAreaImports = true;
                 }
 
-                String id = arg.substring(IN_AREA_PREFIX.length());
-                if (!EncodingManager.isValidEncodedValue(id))
+                if (!JsonFeature.isValidId(arg))
                     throw new IllegalArgumentException("Area has invalid name: " + arg);
+                String id = arg.substring(IN_AREA_PREFIX.length());
                 JsonFeature feature = areas.get(id);
                 if (feature == null)
                     throw new IllegalArgumentException("Area '" + id + "' wasn't found");
@@ -304,19 +310,19 @@ public class CustomModelParser {
                     throw new IllegalArgumentException("Area '" + id + "' does not contain a geometry");
                 if (!(feature.getGeometry() instanceof Polygonal))
                     throw new IllegalArgumentException("Currently only type=Polygon is supported for areas but was " + feature.getGeometry().getGeometryType());
-                if (feature.getProperties() != null && !feature.getProperties().isEmpty() || feature.getBBox() != null)
-                    throw new IllegalArgumentException("Bounding box and properties of area " + id + " must be empty");
+                if (feature.getBBox() != null)
+                    throw new IllegalArgumentException("Bounding box of area " + id + " must be empty");
                 classSourceCode.append("protected " + Polygon.class.getSimpleName() + " " + arg + ";\n");
                 initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
                 initSourceCode.append("this." + arg + " = new Polygon(new PreparedPolygon((Polygonal) feature_" + id + ".getGeometry()));\n");
             } else {
-                if (!isValidVariableName(arg))
+                if (!arg.startsWith(IN_AREA_PREFIX))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
             }
         }
 
         return ""
-                + "package com.graphhopper.routing.weighting.custom;"
+                + "package com.graphhopper.routing.weighting.custom;\n"
                 + "import " + CustomWeightingHelper.class.getName() + ";\n"
                 + "import " + EncodedValueLookup.class.getName() + ";\n"
                 + "import " + EdgeIteratorState.class.getName() + ";\n"
@@ -358,16 +364,17 @@ public class CustomModelParser {
      */
     private static List<Java.BlockStatement> verifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
                                                                List<Statement> list, EncodedValueLookup lookup) throws Exception {
-        // allow variables, all encoded values, constants
+        // allow variables, all encoded values, constants and special variables like in_xyarea or backward_car_access
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
-                || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
+                || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX)
+                || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()));
 
-        parseExpressions(expressions, nameInConditionValidator, lookup, info, createObjects, list);
+        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list);
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }
 
-    static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, EncodedValueLookup lookup,
+    static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
                                  String exceptionInfo, Set<String> createObjects, List<Statement> list) {
 
         for (Statement statement : list) {
@@ -376,16 +383,16 @@ public class CustomModelParser {
                 if (!Helper.isEmpty(statement.getCondition()))
                     throw new IllegalArgumentException("condition must be empty but was " + statement.getCondition());
 
-                expressions.append("else {" + statement.getOperation().build(statement.getValue()) + "; }\n");
+                expressions.append("else {").append(statement.getOperation().build(statement.getValue())).append("; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator, lookup);
+                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator);
                 if (!parseResult.ok)
                     throw new IllegalArgumentException(exceptionInfo + " invalid condition \"" + statement.getCondition() + "\"" +
                             (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
                 createObjects.addAll(parseResult.guessedVariables);
                 if (statement.getKeyword() == Statement.Keyword.ELSEIF)
                     expressions.append("else ");
-                expressions.append("if (" + parseResult.converted + ") {" + statement.getOperation().build(statement.getValue()) + "; }\n");
+                expressions.append("if (").append(parseResult.converted).append(") {").append(statement.getOperation().build(statement.getValue())).append("; }\n");
             } else {
                 throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");
             }
@@ -394,7 +401,7 @@ public class CustomModelParser {
     }
 
     /**
-     * Injects the already parsed expressions (converted to BlockStatement) via janinos DeepCopier to the provided
+     * Injects the already parsed expressions (converted to BlockStatement) via Janino's DeepCopier to the provided
      * CompilationUnit cu (a class file).
      */
     private static Java.CompilationUnit injectStatements(List<Java.BlockStatement> priorityStatements,

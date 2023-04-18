@@ -12,6 +12,12 @@
     <way id="1" version="1">
         <nd ref="1"/>
         <nd ref="2"/>
+        <tag k="name" v="str"/>
+        <tag k="highway" v="secondary"/>
+        <tag k="oneway" v="yes"/>
+    </way>
+    <way id="111" version="1">
+        <nd ref="2"/>
         <nd ref="3"/>
         <nd ref="4"/>
         <tag k="name" v="str"/>

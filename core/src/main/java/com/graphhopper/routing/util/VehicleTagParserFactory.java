@@ -22,5 +22,5 @@ import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.PMap;
 
 public interface VehicleTagParserFactory {
-    VehicleTagParser createParser(EncodedValueLookup lookup, String name, PMap configuration);
+    VehicleTagParsers createParsers(EncodedValueLookup lookup, String name, PMap configuration);
 }

@@ -12,7 +12,7 @@ git clone https://github.com/graphhopper/graphhopper
 cd graphhopper
 
 # download GTFS from Berlin & Brandenburg in Germany (VBB) and the 'surrounding' OpenStreetMap data for the walk network
-wget -O gtfs-vbb.zip https://www.vbb.de/fileadmin/user_upload/VBB/Dokumente/API-Datensaetze/GTFS.zip
+wget -O gtfs-vbb.zip https://www.vbb.de/fileadmin/user_upload/VBB/Dokumente/API-Datensaetze/gtfs-mastscharf/GTFS.zip
 wget http://download.geofabrik.de/europe/germany/brandenburg-latest.osm.pbf
 
 mvn clean package -DskipTests

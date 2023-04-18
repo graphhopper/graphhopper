@@ -55,6 +55,7 @@ public class FreeWalkIT {
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
         ghConfig.putObject("gtfs.max_transfer_interpolation_walk_time_seconds", 0);
+        ghConfig.putObject("import.osm.ignored_highways", "");
         // TODO: This setting vv is currently "dead", as in production it switches to PtRouterFreeWalkImpl, but
         // TODO: here it is instantiated directly. Refactor by having only one Router but two Solvers, similar
         // TODO: to the street router.
@@ -97,7 +98,7 @@ public class FreeWalkIT {
         assertEquals("JUSTICE_COURT,MUSEUM", firstLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
         assertEquals("EMSI,DADAN", secondLeg.stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
         assertEquals(LocalDateTime.parse("2007-01-01T10:00:00").atZone(zoneId).toInstant(), transferLeg.getDepartureTime().toInstant());
-        assertEquals(LocalDateTime.parse("2007-01-01T10:08:06.660").atZone(zoneId).toInstant(), transferLeg.getArrivalTime().toInstant());
+        assertEquals(LocalDateTime.parse("2007-01-01T10:08:06.670").atZone(zoneId).toInstant(), transferLeg.getArrivalTime().toInstant());
 
         assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), transitSolution.getLegs().get(1).geometry);
 

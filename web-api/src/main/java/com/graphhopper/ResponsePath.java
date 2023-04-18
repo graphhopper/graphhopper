@@ -42,6 +42,7 @@ public class ResponsePath {
     private String debugInfo = "";
     private InstructionList instructions;
     private PointList waypointList = PointList.EMPTY;
+    private List<Integer> waypointIndices = new ArrayList<>();
     private PointList pointList = PointList.EMPTY;
     private int numChanges;
     private final List<Trip.Leg> legs = new ArrayList<>(5);
@@ -119,11 +120,22 @@ public class ResponsePath {
     /**
      * This method initializes this path with the snapped input points.
      */
-    public void setWaypoints(PointList wpList) {
+    public ResponsePath setWaypoints(PointList wpList) {
         if (waypointList != PointList.EMPTY)
             throw new IllegalStateException("Cannot call setWaypoints twice");
 
         this.waypointList = wpList;
+        return this;
+    }
+
+    public List<Integer> getWaypointIndices() {
+        check("getWaypointIndices");
+        return waypointIndices;
+    }
+
+    public ResponsePath setWaypointIndices(List<Integer> waypointIndices) {
+        this.waypointIndices = waypointIndices;
+        return this;
     }
 
     /**
@@ -254,35 +266,13 @@ public class ResponsePath {
             throw new IllegalStateException("Details have to be the same size");
         }
         for (Map.Entry<String, List<PathDetail>> detailEntry : details.entrySet()) {
-            if (this.pathDetails.containsKey(detailEntry.getKey())) {
-                List<PathDetail> pd = this.pathDetails.get(detailEntry.getKey());
-                merge(pd, detailEntry.getValue());
+            String key = detailEntry.getKey();
+            if (this.pathDetails.containsKey(key)) {
+                this.pathDetails.get(key).addAll(detailEntry.getValue());
             } else {
-                this.pathDetails.put(detailEntry.getKey(), detailEntry.getValue());
+                this.pathDetails.put(key, detailEntry.getValue());
             }
         }
-    }
-
-    /**
-     * Merges <code>otherDetails</code> into the <code>pathDetails</code>.
-     * <p>
-     * This method makes sure that Entry list around via points are merged correctly.
-     * See #1091 and the misplaced PathDetail after waypoints.
-     */
-    public static void merge(List<PathDetail> pathDetails, List<PathDetail> otherDetails) {
-        // Make sure that the PathDetail list is merged correctly at via points
-        if (!pathDetails.isEmpty() && !otherDetails.isEmpty()) {
-            PathDetail lastDetail = pathDetails.get(pathDetails.size() - 1);
-            boolean extend = lastDetail.getValue() != null
-                    ? lastDetail.getValue().equals(otherDetails.get(0).getValue())
-                    : otherDetails.get(0).getValue() != null;
-            if (extend) {
-                lastDetail.setLast(otherDetails.get(0).getLast());
-                otherDetails.remove(0);
-            }
-        }
-
-        pathDetails.addAll(otherDetails);
     }
 
     public Map<String, List<PathDetail>> getPathDetails() {

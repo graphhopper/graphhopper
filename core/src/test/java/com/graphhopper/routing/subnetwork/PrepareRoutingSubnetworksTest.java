@@ -169,16 +169,14 @@ public class PrepareRoutingSubnetworksTest {
         g = createSubnetworkTestStorage(em, accessEnc, speedEnc, null, null);
         edge = GHUtility.getEdge(g, 3, 4);
         GHUtility.setSpeed(10, true, true, accessEnc, speedEnc, edge);
-        g.getTurnCostStorage().set(turnCostEnc, 0, 4, 7, 1);
-        g.getTurnCostStorage().set(turnCostEnc, 0, 4, 9, 1);
+        g.getTurnCostStorage().set(turnCostEnc, 0, 4, 7, Double.POSITIVE_INFINITY);
+        g.getTurnCostStorage().set(turnCostEnc, 0, 4, 9, Double.POSITIVE_INFINITY);
         instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(
                 createJob(subnetworkEnc, accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, g.getTurnCostStorage(), 0))));
         instance.setMinNetworkSize(4);
         assertEquals(3, instance.doWork());
         assertEquals(IntArrayList.from(7, 8, 9), getSubnetworkEdges(g, subnetworkEnc));
-
     }
-
 
     private BaseGraph createSubnetworkTestStorageWithOneWays(EncodingManager em, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         BaseGraph g = new BaseGraph.Builder(em).create();

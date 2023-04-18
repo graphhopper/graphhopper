@@ -107,12 +107,12 @@ public final class CustomWeighting extends AbstractWeighting {
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         final double distance = edgeState.getDistance();
         double seconds = calcSeconds(distance, edgeState, reverse);
-        if (Double.isInfinite(seconds))
-            return Double.POSITIVE_INFINITY;
+        if (Double.isInfinite(seconds)) return Double.POSITIVE_INFINITY;
         double distanceCosts = distance * distanceInfluence;
-        if (Double.isInfinite(distanceCosts))
-            return Double.POSITIVE_INFINITY;
+        if (Double.isInfinite(distanceCosts)) return Double.POSITIVE_INFINITY;
         double priority = edgeToPriorityMapping.get(edgeState, reverse);
+        // special case to avoid NaN for barrier edges (where time is often 0s)
+        if (priority == 0 && seconds == 0) return Double.POSITIVE_INFINITY;
         return seconds / priority + distanceCosts;
     }
 
@@ -140,6 +140,7 @@ public final class CustomWeighting extends AbstractWeighting {
 
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        // we truncate to long here instead of rounding to make it consistent with FastestWeighting, maybe change to rounding later
         return Math.round(calcSeconds(edgeState.getDistance(), edgeState, reverse) * 1000);
     }
 
@@ -153,7 +154,7 @@ public final class CustomWeighting extends AbstractWeighting {
         double get(EdgeIteratorState edge, boolean reverse);
     }
 
-    static class Parameters {
+    public static class Parameters {
         private final EdgeToDoubleMapping edgeToSpeedMapping;
         private final EdgeToDoubleMapping edgeToPriorityMapping;
         private final double maxSpeed;
@@ -161,7 +162,7 @@ public final class CustomWeighting extends AbstractWeighting {
         private final double distanceInfluence;
         private final double headingPenaltySeconds;
 
-        Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
+        public Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
                    double maxSpeed, double maxPriority, double distanceInfluence, double headingPenaltySeconds) {
             this.edgeToSpeedMapping = edgeToSpeedMapping;
             this.edgeToPriorityMapping = edgeToPriorityMapping;

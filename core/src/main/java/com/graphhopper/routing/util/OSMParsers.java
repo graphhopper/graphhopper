@@ -18,49 +18,45 @@
 
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.RestrictionTagParser;
 import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.util.parsers.OSMTurnRelationParser;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.parsers.RelationTagParser;
 import com.graphhopper.routing.util.parsers.TagParser;
-import com.graphhopper.routing.util.parsers.TurnCostParser;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
 public class OSMParsers {
+    private final List<String> ignoredHighways;
     private final List<TagParser> wayTagParsers;
-    private final List<VehicleTagParser> vehicleTagParsers;
     private final List<RelationTagParser> relationTagParsers;
-    private final List<TurnCostParser> turnCostParsers;
+    private final List<RestrictionTagParser> restrictionTagParsers;
     private final EncodedValue.InitializerConfig relConfig = new EncodedValue.InitializerConfig();
 
     public OSMParsers() {
         this(new ArrayList<>(), new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
     }
 
-    public OSMParsers(List<TagParser> wayTagParsers, List<VehicleTagParser> vehicleTagParsers, List<RelationTagParser> relationTagParsers, List<TurnCostParser> turnCostParsers) {
+    public OSMParsers(List<String> ignoredHighways, List<TagParser> wayTagParsers,
+                      List<RelationTagParser> relationTagParsers, List<RestrictionTagParser> restrictionTagParsers) {
+        this.ignoredHighways = ignoredHighways;
         this.wayTagParsers = wayTagParsers;
-        this.vehicleTagParsers = vehicleTagParsers;
         this.relationTagParsers = relationTagParsers;
-        this.turnCostParsers = turnCostParsers;
+        this.restrictionTagParsers = restrictionTagParsers;
+    }
+
+    public OSMParsers addIgnoredHighway(String highway) {
+        ignoredHighways.add(highway);
+        return this;
     }
 
     public OSMParsers addWayTagParser(TagParser tagParser) {
         wayTagParsers.add(tagParser);
-        return this;
-    }
-
-    public OSMParsers addVehicleTagParser(VehicleTagParser vehicleTagParser) {
-        vehicleTagParsers.add(vehicleTagParser);
-        if (vehicleTagParser.supportsTurnCosts())
-            turnCostParsers.add(new OSMTurnRelationParser(vehicleTagParser.getAccessEnc(), vehicleTagParser.getTurnCostEnc(), vehicleTagParser.getRestrictions()));
         return this;
     }
 
@@ -69,13 +65,26 @@ public class OSMParsers {
         return this;
     }
 
-    public OSMParsers addTurnCostTagParser(TurnCostParser turnCostParser) {
-        turnCostParsers.add(turnCostParser);
+    public OSMParsers addRestrictionTagParser(RestrictionTagParser restrictionTagParser) {
+        restrictionTagParsers.add(restrictionTagParser);
         return this;
     }
 
     public boolean acceptWay(ReaderWay way) {
-        return vehicleTagParsers.stream().anyMatch(v -> !v.getAccess(way).equals(WayAccess.CAN_SKIP));
+        String highway = way.getTag("highway");
+        if (highway != null)
+            return !ignoredHighways.contains(highway);
+        else if (way.getTag("route") != null)
+            // we accept *all* ways with a 'route' tag and no 'highway' tag, because most of them are ferries
+            // (route=ferry), which we want, and there aren't so many such ways we do not want
+            // https://github.com/graphhopper/graphhopper/pull/2702#discussion_r1038093050
+            return true;
+        else if ("pier".equals(way.getTag("man_made")))
+            return true;
+        else if ("platform".equals(way.getTag("railway")))
+            return true;
+        else
+            return false;
     }
 
     public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {
@@ -85,22 +94,11 @@ public class OSMParsers {
         return relFlags;
     }
 
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         for (RelationTagParser relParser : relationTagParsers)
-            relParser.handleWayTags(edgeFlags, way, relationFlags);
+            relParser.handleWayTags(edgeId, edgeIntAccess, way, relationFlags);
         for (TagParser parser : wayTagParsers)
-            parser.handleWayTags(edgeFlags, way, relationFlags);
-        for (VehicleTagParser vehicleTagParser : vehicleTagParsers)
-            vehicleTagParser.handleWayTags(edgeFlags, way, relationFlags);
-        return edgeFlags;
-    }
-
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        vehicleTagParsers.forEach(t -> t.applyWayTags(way, edge));
-    }
-
-    public void handleTurnRelationTags(OSMTurnRelation turnRelation, TurnCostParser.ExternalInternalMap map, Graph graph) {
-        turnCostParsers.forEach(t -> t.handleTurnRelationTags(turnRelation, map, graph));
+            parser.handleWayTags(edgeId, edgeIntAccess, way, relationFlags);
     }
 
     public IntsRef createRelationFlags() {
@@ -110,7 +108,19 @@ public class OSMParsers {
         return new IntsRef(2);
     }
 
-    public List<VehicleTagParser> getVehicleTagParsers() {
-        return vehicleTagParsers;
+    public List<String> getIgnoredHighways() {
+        return ignoredHighways;
+    }
+
+    public List<TagParser> getWayTagParsers() {
+        return wayTagParsers;
+    }
+
+    public List<RelationTagParser> getRelationTagParsers() {
+        return relationTagParsers;
+    }
+
+    public List<RestrictionTagParser> getRestrictionTagParsers() {
+        return restrictionTagParsers;
     }
 }

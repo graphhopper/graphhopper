@@ -16,10 +16,10 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.Locale;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class NavigateResponseConverterTest {
 
@@ -248,6 +248,36 @@ public class NavigateResponseConverterTest {
         assertEquals("right", primary.get("modifier").asText());
         assertEquals(222, primary.get("degrees").asDouble(), 1);
 
+    }
+
+    @Test
+    public void intersectionTest() {
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).
+                setProfile(profile).setPathDetails(Collections.singletonList("intersection")));
+
+        ObjectNode json = NavigateResponseConverter.convertFromGHResponse(rsp, trMap, Locale.ENGLISH, distanceConfig);
+
+        JsonNode steps = json.get("routes").get(0).get("legs").get(0).get("steps");
+
+        JsonNode step = steps.get(0);
+
+        JsonNode intersection = step.get("intersections").get(0);
+
+        assertFalse(intersection.has("in"));
+        assertEquals(1, intersection.get("out").asInt());
+
+        JsonNode location = intersection.get("location");
+        // The first intersection to be equal to the first snapped waypoint
+        assertEquals(rsp.getBest().getWaypoints().get(0).lon, location.get(0).asDouble(), .000001);
+        assertEquals(rsp.getBest().getWaypoints().get(0).lat, location.get(1).asDouble(), .000001);
+
+        step = steps.get(4);
+        intersection = step.get("intersections").get(3);
+        assertEquals(2, intersection.get("in").asInt());
+        assertEquals(0, intersection.get("out").asInt());
+        location = intersection.get("location");
+        assertEquals(1.534679, location.get(0).asDouble(), .000001);
+        assertEquals(42.556444, location.get(1).asDouble(), .000001);
     }
 
     @Test

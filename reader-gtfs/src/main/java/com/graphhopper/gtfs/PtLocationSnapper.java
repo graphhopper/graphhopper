@@ -16,7 +16,6 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 public class PtLocationSnapper {
@@ -65,18 +64,18 @@ public class PtLocationSnapper {
                             Stop stop = gtfsStorage.getGtfsFeeds().get(e.getKey().feedId).stops.get(e.getKey().stopId);
                             final Snap stopSnap = new Snap(stop.stop_lat, stop.stop_lon);
                             stopSnap.setClosestNode(stopNodeId.value);
-                            allSnaps.add(() -> new Label.NodeId(Optional.ofNullable(gtfsStorage.getPtToStreet().get(stopSnap.getClosestNode())).orElse(-1), stopSnap.getClosestNode()));
+                            allSnaps.add(() -> new Label.NodeId(gtfsStorage.getPtToStreet().getOrDefault(stopSnap.getClosestNode(), -1), stopSnap.getClosestNode()));
                             points.add(stopSnap.getQueryPoint().lat, stopSnap.getQueryPoint().lon);
                         }
                     }
                 } else {
                     pointSnaps.add(closest);
-                    allSnaps.add(() -> new Label.NodeId(closest.getClosestNode(), Optional.ofNullable(gtfsStorage.getStreetToPt().get(closest.getClosestNode())).orElse(-1)));
+                    allSnaps.add(() -> new Label.NodeId(closest.getClosestNode(), gtfsStorage.getStreetToPt().getOrDefault(closest.getClosestNode(), -1)));
                     points.add(closest.getSnappedPoint());
                 }
             } else if (location instanceof GHStationLocation) {
                 final Snap stopSnap = findByStopId((GHStationLocation) location, i);
-                allSnaps.add(() -> new Label.NodeId(Optional.ofNullable(gtfsStorage.getPtToStreet().get(stopSnap.getClosestNode())).orElse(-1), stopSnap.getClosestNode()));
+                allSnaps.add(() -> new Label.NodeId(gtfsStorage.getPtToStreet().getOrDefault(stopSnap.getClosestNode(), -1), stopSnap.getClosestNode()));
                 points.add(stopSnap.getQueryPoint().lat, stopSnap.getQueryPoint().lon);
             }
         }

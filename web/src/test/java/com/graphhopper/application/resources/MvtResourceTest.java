@@ -22,30 +22,25 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
 import com.graphhopper.util.Helper;
-import com.wdtinc.mapbox_vector_tile.adapt.jts.MvtReader;
-import com.wdtinc.mapbox_vector_tile.adapt.jts.TagKeyValueMapConverter;
-import com.wdtinc.mapbox_vector_tile.adapt.jts.model.JtsLayer;
-import com.wdtinc.mapbox_vector_tile.adapt.jts.model.JtsMvt;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import no.ecc.vectortile.VectorTileDecoder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Geometry;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.MultiLineString;
 
 import javax.ws.rs.core.Response;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.util.Parameters.Details.STREET_NAME;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -58,10 +53,11 @@ public class MvtResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car").
+                putObject("graph.vehicles", "car").
                 putObject("graph.encoded_values", "road_class,road_environment,max_speed,surface").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setWeighting("fastest")));
         return config;
@@ -78,36 +74,37 @@ public class MvtResourceTest {
         final Response response = clientTarget(app, "/mvt/15/16528/12099.mvt").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InputStream is = response.readEntity(InputStream.class);
-        JtsMvt result = MvtReader.loadMvt(is, new GeometryFactory(), new TagKeyValueMapConverter());
-        final Map<String, JtsLayer> layerValues = result.getLayersByName();
-        assertEquals(1, layerValues.size());
-        assertTrue(layerValues.containsKey("roads"));
-        JtsLayer layer = layerValues.values().iterator().next();
-        MultiLineString multiLineString = (MultiLineString) layer.getGeometries().iterator().next();
-        assertEquals(42, multiLineString.getCoordinates().length);
-        Map map = attributes(multiLineString);
-        assertEquals("Camì de les Pardines", map.get("name"));
+        VectorTileDecoder.FeatureIterable features = new VectorTileDecoder().decode(readInputStream(is));
+        assertEquals(Arrays.asList("roads"), new ArrayList<>(features.getLayerNames()));
+        VectorTileDecoder.Feature feature = features.iterator().next();
+        Map<String, Object> attributes = feature.getAttributes();
+        Geometry geometry = feature.getGeometry();
+        assertEquals(48, geometry.getCoordinates().length);
+        assertEquals("Camì de les Pardines", attributes.get(STREET_NAME));
     }
 
     @Test
-    public void testWithDetailsInResponse() throws IOException {
-        final Response response = clientTarget(app, "/mvt/15/16522/12102.mvt?details=max_speed&details=road_class&details=road_environment").request().buildGet().invoke();
+    public void testDetailsInResponse() throws IOException {
+        final Response response = clientTarget(app, "/mvt/15/16522/12102.mvt").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InputStream is = response.readEntity(InputStream.class);
-        JtsMvt result = MvtReader.loadMvt(is, new GeometryFactory(), new TagKeyValueMapConverter());
-        final Map<String, JtsLayer> layerValues = result.getLayersByName();
-        JtsLayer layer = layerValues.values().iterator().next();
-        assertEquals(21, layer.getGeometries().size());
+        List<VectorTileDecoder.Feature> features = new VectorTileDecoder().decode(readInputStream(is)).asList();
+        assertEquals(28, features.size());
 
-        Geometry geometry = layer.getGeometries().stream().
-                filter(g -> attributes(g).get("name").equals("Avinguda de Tarragona"))
+        VectorTileDecoder.Feature feature = features.stream()
+                .filter(f -> "Avinguda de Tarragona".equals(f.getAttributes().get(STREET_NAME)))
                 .findFirst().get();
-        assertEquals("road", attributes(geometry).get("road_environment"));
-        assertEquals(50.0, attributes(geometry).get("max_speed"));
-        assertEquals("primary", attributes(geometry).get("road_class"));
+        assertEquals("road", feature.getAttributes().get("road_environment"));
+        assertEquals("50.0 | 50.0", feature.getAttributes().get("max_speed"));
+        assertEquals("primary", feature.getAttributes().get("road_class"));
     }
 
-    private Map<String, Object> attributes(Geometry g) {
-        return (Map<String, Object>) g.getUserData();
+    private static byte[] readInputStream(InputStream is) throws IOException {
+        ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+        int nRead;
+        byte[] data = new byte[16384];
+        while ((nRead = is.read(data, 0, data.length)) != -1)
+            buffer.write(data, 0, nRead);
+        return buffer.toByteArray();
     }
 }

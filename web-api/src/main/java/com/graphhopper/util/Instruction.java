@@ -20,6 +20,8 @@ package com.graphhopper.util;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.graphhopper.util.Parameters.Details.*;
+
 public class Instruction {
     public static final int UNKNOWN = -99;
     public static final int U_TURN_UNKNOWN = -98;
@@ -87,8 +89,8 @@ public class Instruction {
         if (name != null) this.name = name;
     }
 
-    String getStreetName() {
-        return getName().isEmpty() && extraInfo.get("ref") instanceof String ? (String) extraInfo.get("ref") : getName();
+    String _getName() {
+        return getName().isEmpty() && extraInfo.get(STREET_REF) instanceof String ? (String) extraInfo.get(STREET_REF) : getName();
     }
 
     public Map<String, Object> getExtraInfoJSON() {
@@ -96,7 +98,8 @@ public class Instruction {
     }
 
     public void setExtraInfo(String key, Object value) {
-        extraInfo.put(key, value);
+        if (value != null && key != null)
+            extraInfo.put(key, value);
     }
 
     /**
@@ -165,7 +168,7 @@ public class Instruction {
             return getName();
 
         String str;
-        String streetName = getStreetName();
+        String streetName = _getName();
         int indi = getSign();
         if (indi == Instruction.CONTINUE_ON_STREET) {
             str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
@@ -217,6 +220,14 @@ public class Instruction {
             else
                 str = streetName.isEmpty() ? dir : tr.tr("turn_onto", dir, streetName);
         }
+        String dest = (String) extraInfo.get(STREET_DESTINATION);
+        String destRef = (String) extraInfo.get(STREET_DESTINATION_REF);
+        if (dest != null) {
+            if (destRef != null)
+                return tr.tr("toward_destination_with_ref", str, destRef, dest);
+            return tr.tr("toward_destination", str, dest);
+        } else if (destRef != null)
+            return tr.tr("toward_destination_ref_only", str, destRef);
         return str;
     }
 }

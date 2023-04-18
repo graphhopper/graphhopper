@@ -19,12 +19,12 @@ package com.graphhopper.util;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Locale;
-import java.util.Random;
 
 import static com.graphhopper.util.Helper.UTF_CS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author Peter Karich
@@ -107,19 +107,6 @@ public class HelperTest {
         assertEquals("TestCase_", Helper.underScoreToCamelCase("_test_case_"));
     }
 
-    // @RepeatedTest(1000)
-    public void ignoreRandomString() {
-        String s = "";
-        long seed = new Random().nextLong();
-        Random rand = new Random(seed);
-        for (int i = 0; i < 255; i++) {
-            s += (char) rand.nextInt();
-        }
-
-        s = Helper.cutStringForKV(s);
-        assertTrue(s.getBytes(UTF_CS).length <= 255, s.getBytes(UTF_CS).length + " -> seed " + seed);
-    }
-
     @Test
     public void testIssue2609() {
         String s = "";
@@ -137,12 +124,5 @@ public class HelperTest {
         // force incorrect char:
         bytes[0] = -25;
         assertEquals(3, new String(bytes, 0, 1, UTF_CS).getBytes(UTF_CS).length);
-    }
-
-    @Test
-    public void testCutString() {
-        String s = Helper.cutStringForKV("Бухарестская улица (http://ru.wikipedia.org/wiki/" +
-                "%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))");
-        assertEquals(250, s.getBytes(UTF_CS).length);
     }
 }

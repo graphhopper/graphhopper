@@ -25,6 +25,8 @@ import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -38,6 +40,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
@@ -52,16 +55,17 @@ public class RouteResourceTurnCostsTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car|turn_costs=true").
+                putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/moscow.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
                         new Profile("my_car_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
                         new Profile("my_car_no_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(false),
-                        new Profile("my_custom_car_turn_costs").setVehicle("car").setWeighting("custom").setTurnCosts(true).putHint("custom_model_file", "empty"),
-                        new Profile("my_custom_car_no_turn_costs").setVehicle("car").setWeighting("custom").setTurnCosts(false).putHint("custom_model_file", "empty")
+                        new CustomProfile("my_custom_car_turn_costs").setCustomModel(new CustomModel()).setVehicle("car").setTurnCosts(true),
+                        new CustomProfile("my_custom_car_no_turn_costs").setCustomModel(new CustomModel()).setVehicle("car").setTurnCosts(false)
                 ))
                 .setCHProfiles(Arrays.asList(
                         new CHProfile("my_car_turn_costs"),

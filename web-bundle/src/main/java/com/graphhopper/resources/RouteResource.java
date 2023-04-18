@@ -22,9 +22,10 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.gpx.GpxConversions;
 import com.graphhopper.http.GHPointParam;
+import com.graphhopper.http.GHRequestTransformer;
+import com.graphhopper.http.ProfileResolver;
 import com.graphhopper.jackson.MultiException;
 import com.graphhopper.jackson.ResponsePathSerializer;
-import com.graphhopper.routing.ProfileResolver;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.AbstractParam;
@@ -58,12 +59,14 @@ public class RouteResource {
 
     private final GraphHopper graphHopper;
     private final ProfileResolver profileResolver;
+    private final GHRequestTransformer ghRequestTransformer;
     private final Boolean hasElevation;
 
     @Inject
-    public RouteResource(GraphHopper graphHopper, ProfileResolver profileResolver, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopper graphHopper, ProfileResolver profileResolver, GHRequestTransformer ghRequestTransformer, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
         this.profileResolver = profileResolver;
+        this.ghRequestTransformer = ghRequestTransformer;
         this.hasElevation = hasElevation;
     }
 
@@ -93,22 +96,19 @@ public class RouteResource {
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
             @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
             @QueryParam("gpx.millis") String timeString) {
+        StopWatch sw = new StopWatch().start();
         List<GHPoint> points = pointParams.stream().map(AbstractParam::get).collect(toList());
         boolean writeGPX = "gpx".equalsIgnoreCase(type);
         instructions = writeGPX || instructions;
         if (enableElevation && !hasElevation)
             throw new IllegalArgumentException("Elevation not supported!");
 
-        StopWatch sw = new StopWatch().start();
         GHRequest request = new GHRequest();
         initHints(request.getHints(), uriInfo.getQueryParameters());
-        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "") + ", vehicle: " + request.getHints().getString("vehicle", "");
-        if (Helper.isEmpty(profileName)) {
-            enableEdgeBasedIfThereAreCurbsides(curbsides, request);
-            profileName = profileResolver.resolveProfile(request.getHints()).getName();
-            removeLegacyParameters(request.getHints());
-        }
-        errorIfLegacyParameters(request.getHints());
+
+        if (minPathElevationPrecision != null)
+            request.getHints().putObject(ELEVATION_WAY_POINT_MAX_DISTANCE, minPathElevationPrecision);
+
         request.setPoints(points).
                 setProfile(profileName).
                 setAlgorithm(algoStr).
@@ -123,20 +123,24 @@ public class RouteResource {
                 putObject(INSTRUCTIONS, instructions).
                 putObject(WAY_POINT_MAX_DISTANCE, minPathPrecision);
 
-        if (minPathElevationPrecision != null) {
-            request.getHints().putObject(ELEVATION_WAY_POINT_MAX_DISTANCE, minPathElevationPrecision);
-        }
+        request = ghRequestTransformer.transformRequest(request);
+
+        PMap profileResolverHints = new PMap(request.getHints());
+        profileResolverHints.putObject("profile", profileName);
+        profileResolverHints.putObject("has_curbsides", !curbsides.isEmpty());
+        profileName = profileResolver.resolveProfile(profileResolverHints);
+        removeLegacyParameters(request.getHints());
+        request.setProfile(profileName);
 
         GHResponse ghResponse = graphHopper.route(request);
 
         double took = sw.stop().getMillisDouble();
-        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
-        String logStr = httpReq.getQueryString() + " " + infoStr + " " + points + ", took: "
-                + String.format("%.1f", took) + "ms, algo: " + algoStr + ", profile: " + profileName + ", " + weightingVehicleLogStr;
+        String logStr = (httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent")) + " " + points + ", took: " + String.format("%.1f", took) + "ms, algo: " + algoStr + ", profile: " + profileName;
 
         if (ghResponse.hasErrors()) {
-            logger.error(logStr + ", errors:" + ghResponse.getErrors());
-            throw new MultiException(ghResponse.getErrors());
+            MultiException ex = new MultiException(ghResponse.getErrors());
+            logger.error(logStr, ex);
+            throw ex;
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
                     + ", distance0: " + ghResponse.getBest().getDistance()
@@ -161,19 +165,18 @@ public class RouteResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
         StopWatch sw = new StopWatch().start();
-        if (request.getCustomModel() == null) {
-            if (Helper.isEmpty(request.getProfile())) {
-                // legacy parameter resolution (only used when there is no custom model)
-                enableEdgeBasedIfThereAreCurbsides(request.getCurbsides(), request);
-                request.setProfile(profileResolver.resolveProfile(request.getHints()).getName());
-                removeLegacyParameters(request.getHints());
-            }
-        } else {
-            if (Helper.isEmpty(request.getProfile()))
-                // throw a dedicated exception here, otherwise a missing profile is still caught in Router
-                throw new IllegalArgumentException("The 'profile' parameter is required when you use the `custom_model` parameter");
-        }
-        errorIfLegacyParameters(request.getHints());
+        request = ghRequestTransformer.transformRequest(request);
+
+        if (Helper.isEmpty(request.getProfile()) && request.getCustomModel() != null)
+            // throw a dedicated exception here, otherwise a missing profile is still caught in Router
+            throw new IllegalArgumentException("The 'profile' parameter is required when you use the `custom_model` parameter");
+
+        PMap profileResolverHints = new PMap(request.getHints());
+        profileResolverHints.putObject("profile", request.getProfile());
+        profileResolverHints.putObject("has_curbsides", !request.getCurbsides().isEmpty());
+        request.setProfile(profileResolver.resolveProfile(profileResolverHints));
+        removeLegacyParameters(request.getHints());
+
         GHResponse ghResponse = graphHopper.route(request);
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
         boolean enableElevation = request.getHints().getBool("elevation", false);
@@ -182,18 +185,14 @@ public class RouteResource {
 
         double took = sw.stop().getMillisDouble();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
-        String queryString = httpReq.getQueryString() == null ? "" : (httpReq.getQueryString() + " ");
-        // todo: vehicle/weighting will always be empty at this point...
-        String weightingVehicleLogStr = "weighting: " + request.getHints().getString("weighting", "")
-                + ", vehicle: " + request.getHints().getString("vehicle", "");
-        String logStr = queryString + infoStr + " " + request.getPoints().size() + ", took: "
+        String logStr = infoStr + " " + request.getPoints().size() + ", took: "
                 + String.format("%.1f", took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
-                + ", " + weightingVehicleLogStr
                 + ", custom_model: " + request.getCustomModel();
 
         if (ghResponse.hasErrors()) {
-            logger.error(logStr + ", errors:" + ghResponse.getErrors());
-            throw new MultiException(ghResponse.getErrors());
+            MultiException ex = new MultiException(ghResponse.getErrors());
+            logger.error(logStr, ex);
+            throw ex;
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
                     + ", distance0: " + ghResponse.getBest().getDistance()
@@ -206,31 +205,6 @@ public class RouteResource {
                     type(MediaType.APPLICATION_JSON).
                     build();
         }
-    }
-
-    private void enableEdgeBasedIfThereAreCurbsides(List<String> curbsides, GHRequest request) {
-        if (!curbsides.isEmpty()) {
-            if (!request.getHints().getBool(TURN_COSTS, true))
-                throw new IllegalArgumentException("Disabling '" + TURN_COSTS + "' when using '" + CURBSIDE + "' is not allowed");
-            if (!request.getHints().getBool(EDGE_BASED, true))
-                throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURBSIDE + "' is not allowed");
-            request.getHints().putObject(EDGE_BASED, true);
-        }
-    }
-
-    public static void errorIfLegacyParameters(PMap hints) {
-        if (hints.has("weighting"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'weighting' parameter." +
-                    " You used 'weighting=" + hints.getString("weighting", "") + "'");
-        if (hints.has("vehicle"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'vehicle' parameter." +
-                    " You used 'vehicle=" + hints.getString("vehicle", "") + "'");
-        if (hints.has("edge_based"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'edge_based' parameter." +
-                    " You used 'edge_based=" + hints.getBool("edge_based", false) + "'");
-        if (hints.has("turn_costs"))
-            throw new IllegalArgumentException("Since you are using the 'profile' parameter, do not use the 'turn_costs' parameter." +
-                    " You used 'turn_costs=" + hints.getBool("turn_costs", false) + "'");
     }
 
     public static void removeLegacyParameters(PMap hints) {

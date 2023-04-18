@@ -42,6 +42,7 @@ import java.net.URL;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.graphhopper.util.Helper.*;
 
@@ -146,8 +147,8 @@ public class LMPreparationHandler {
      */
     public List<LandmarkStorage> load(List<LMConfig> lmConfigs, BaseGraph baseGraph, EncodedValueLookup encodedValueLookup) {
         List<LandmarkStorage> loaded = Collections.synchronizedList(new ArrayList<>());
-        List<Callable<String>> loadingCallables = lmConfigs.stream()
-                .map(lmConfig -> (Callable<String>) () -> {
+        Stream<Callable<String>> loadingCallables = lmConfigs.stream()
+                .map(lmConfig -> () -> {
                     // todo: specifying ghStorage and landmarkCount should not be necessary, because all we want to do
                     //       is load the landmark data and these parameters are only needed to calculate the landmarks.
                     //       we should also work towards a separation of the storage and preparation related code in
@@ -164,8 +165,7 @@ public class LMPreparationHandler {
                         baseGraph.getDirectory().remove("landmarks_subnetwork_" + lmConfig.getName());
                     }
                     return lmConfig.getName();
-                })
-                .collect(Collectors.toList());
+                });
         GHUtility.runConcurrently(loadingCallables, preparationThreads);
         return loaded;
     }
@@ -191,7 +191,7 @@ public class LMPreparationHandler {
                 return name;
             });
         }
-        GHUtility.runConcurrently(prepareCallables, preparationThreads);
+        GHUtility.runConcurrently(prepareCallables.stream(), preparationThreads);
         LOGGER.info("Finished LM preparation, {}", getMemInfo());
         return preparations;
     }

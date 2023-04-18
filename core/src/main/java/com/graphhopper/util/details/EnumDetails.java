@@ -23,7 +23,7 @@ import com.graphhopper.util.EdgeIteratorState;
 public class EnumDetails<E extends Enum> extends AbstractPathDetailsBuilder {
 
     private final EnumEncodedValue<E> ev;
-    private Enum objVal = null;
+    private E objVal;
 
     public EnumDetails(String name, EnumEncodedValue<E> ev) {
         super(name);

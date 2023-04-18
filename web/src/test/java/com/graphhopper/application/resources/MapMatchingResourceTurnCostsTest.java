@@ -42,6 +42,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -56,8 +57,9 @@ public class MapMatchingResourceTurnCostsTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "car|turn_costs=true,bike").
+                putObject("graph.vehicles", "car|turn_costs=true,bike").
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
                         new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
@@ -82,13 +84,6 @@ public class MapMatchingResourceTurnCostsTest {
     }
 
     @Test
-    public void useVehicle() {
-        // see map-matching/#178
-        runCar("vehicle=car");
-        runBike("vehicle=bike");
-    }
-
-    @Test
     public void useProfile() {
         runCar("profile=car");
         runBike("profile=bike");
@@ -97,26 +92,26 @@ public class MapMatchingResourceTurnCostsTest {
 
     @Test
     public void disableCHLM() {
-        runCar("vehicle=car&lm.disable=true");
-        runCar("vehicle=car&ch.disable=true");
-        runBike("vehicle=bike&lm.disable=true");
-        runBike("vehicle=bike&ch.disable=true");
+        runCar("profile=car&lm.disable=true");
+        runCar("profile=car&ch.disable=true");
+        runBike("profile=bike&lm.disable=true");
+        runBike("profile=bike&ch.disable=true");
     }
 
     @Test
     public void errorOnUnknownProfile() {
-        final Response response = app.client().target("http://localhost:8080/match?profile=xyz")
+        final Response response = clientTarget(app, "/match?profile=xyz")
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();
         JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("message"), json.toString());
         assertEquals(400, response.getStatus());
-        assertTrue(json.toString().contains("Could not find profile 'xyz', choose one of: [car, car_no_tc, bike]"));
+        assertTrue(json.toString().contains("The requested profile 'xyz' does not exist.\\nAvailable profiles: [car, car_no_tc, bike]"), json.toString());
     }
 
     private void runCar(String urlParams) {
-        final Response response = app.client().target("http://localhost:8080/match?" + urlParams)
+        final Response response = clientTarget(app, "/match?" + urlParams)
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();
@@ -135,7 +130,7 @@ public class MapMatchingResourceTurnCostsTest {
     }
 
     private void runBike(String urlParams) {
-        final Response response = app.client().target("http://localhost:8080/match?" + urlParams)
+        final Response response = clientTarget(app, "/match?" + urlParams)
                 .request()
                 .buildPost(Entity.xml(getClass().getResourceAsStream("another-tour-with-loop.gpx")))
                 .invoke();

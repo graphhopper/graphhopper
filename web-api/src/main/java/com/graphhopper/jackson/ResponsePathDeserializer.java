@@ -83,7 +83,7 @@ public class ResponsePathDeserializer extends JsonDeserializer<ResponsePath> {
                 int viaCount = 1;
                 for (JsonNode jsonObj : instrArr) {
                     double instDist = jsonObj.get("distance").asDouble();
-                    String text = turnDescription ? jsonObj.get("text").asText() : jsonObj.get("street_name").asText();
+                    String text = turnDescription ? jsonObj.get("text").asText() : jsonObj.get(Parameters.Details.STREET_NAME).asText();
                     long instTime = jsonObj.get("time").asLong();
                     int sign = jsonObj.get("sign").asInt();
                     JsonNode iv = jsonObj.get("interval");

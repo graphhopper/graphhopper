@@ -17,7 +17,6 @@
  */
 package com.graphhopper.reader.osm.conditional;
 
-import com.graphhopper.reader.ConditionalTagInspector;
 import com.graphhopper.reader.ReaderWay;
 import org.junit.jupiter.api.Test;
 
@@ -44,10 +43,10 @@ public class ConditionalOSMTagInspectorTest extends CalendarBasedTest {
     }
 
     private static Set<String> getSamplePermissiveValues() {
-        Set<String> restrictedValues = new HashSet<>();
-        restrictedValues.add("yes");
-        restrictedValues.add("permissive");
-        return restrictedValues;
+        Set<String> permissiveValues = new HashSet<>();
+        permissiveValues.add("yes");
+        permissiveValues.add("permissive");
+        return permissiveValues;
     }
 
     private static List<String> getSampleConditionalTags() {

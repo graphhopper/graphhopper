@@ -54,6 +54,7 @@ public class AnotherAgencyIT {
     public static void init() {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.location", GRAPH_LOC);
+        ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
         ghConfig.setProfiles(Arrays.asList(
@@ -171,7 +172,7 @@ public class AnotherAgencyIT {
         assertEquals("10:00", LocalDateTime.ofInstant(walkDepartureTime, zoneId).toLocalTime().toString());
         assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), transitSolution.getLegs().get(1).geometry);
         Instant walkArrivalTime = Instant.ofEpochMilli(transitSolution.getLegs().get(1).getArrivalTime().getTime());
-        assertEquals("10:08:06.660", LocalDateTime.ofInstant(walkArrivalTime, zoneId).toLocalTime().toString());
+        assertEquals("10:08:06.670", LocalDateTime.ofInstant(walkArrivalTime, zoneId).toLocalTime().toString());
         assertEquals("EMSI,DADAN", ((Trip.PtLeg) transitSolution.getLegs().get(2)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
     }
 
@@ -189,7 +190,7 @@ public class AnotherAgencyIT {
         GHResponse route = ptRouter.route(ghRequest);
         ResponsePath walkRoute = route.getBest();
         assertEquals(1, walkRoute.getLegs().size());
-        assertEquals(486660, walkRoute.getTime()); // < 10 min, so the transfer in test above works ^^
+        assertEquals(486670, walkRoute.getTime()); // < 10 min, so the transfer in test above works ^^
         assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), walkRoute.getLegs().get(0).geometry);
         assertFalse(route.hasErrors());
     }

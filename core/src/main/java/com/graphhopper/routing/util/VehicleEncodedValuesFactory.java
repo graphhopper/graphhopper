@@ -25,14 +25,10 @@ import com.graphhopper.util.PMap;
 public interface VehicleEncodedValuesFactory {
     String ROADS = "roads";
     String CAR = "car";
-    String CAR4WD = "car4wd";
     String BIKE = "bike";
-    String BIKE2 = "bike2";
     String RACINGBIKE = "racingbike";
     String MOUNTAINBIKE = "mtb";
     String FOOT = "foot";
-    String HIKE = "hike";
-    String MOTORCYCLE = "motorcycle";
     String WHEELCHAIR = "wheelchair";
 
     VehicleEncodedValues createVehicleEncodedValues(String name, PMap configuration);

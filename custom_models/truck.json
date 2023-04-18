@@ -1,0 +1,20 @@
+// to use this custom model you need to set the following option in the config.yml
+// graph.vehicles: roads|transportation_mode=HGV,car
+// graph.encoded_values: toll,hgv,surface,max_width,max_height
+// profiles:
+//    - name: truck
+//      vehicle: roads
+//      weighting: custom
+//      custom_model_files: [truck.json]
+
+{
+  "distance_influence": 1,
+  "priority": [
+    { "if": "road_access == PRIVATE",  "multiply_by": "0" },
+    { "if": "car_access == false || hgv == NO || max_width < 3 || max_height < 4", "multiply_by": "0" }
+  ],
+  "speed": [
+    { "if": "true", "limit_to": "car_average_speed * 0.9" },
+    { "if": "true", "limit_to": "95" }
+  ]
+}

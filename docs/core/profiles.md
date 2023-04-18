@@ -3,7 +3,7 @@
 GraphHopper lets you customize how different kinds of roads shall be prioritized during its route calculations. For
 example when travelling long distances with a car you typically want to use the highway to minimize your travelling
 time. However, if you are going by bike you certainly do not want to use the highway and rather take some shorter route,
-use designated bike lanes and so on. GraphHopper provides built-in vehicle types that cover some standard vehicles. They
+use designated bike lanes and so on. GraphHopper provides built-in vehicle types that cover some standard use cases. They
 can be used with a few different weightings like the 'fastest' weighting that chooses the fastest route (minimum
 travelling time), or the 'shortest' weighting that chooses the shortest route (minimum travelling distance). The
 selection of a vehicle and weighting is called 'profile', and we refer to these built-in choices as 'standard profiles'
@@ -35,15 +35,11 @@ The vehicle field must correspond to one of GraphHopper's built-in vehicle types
 - wheelchair
 - bike
 - racingbike
-- bike2
 - mtb
 - car
-- car4wd
 - motorcycle
 
 By choosing a vehicle GraphHopper determines the accessibility and a default travel speed for the different road types.
-If you are interested in the low-level Java API note that the vehicles correspond to implementations of the
-`FlagEncoder` interface.
 
 The weighting determines the 'cost function' for the route calculation and must match one of the following built-in
 weightings:
@@ -65,9 +61,9 @@ parameter, for example `/route?point=49.5,11.1&profile=car` or `/route?point=49.
 You can adjust the cost function of GraphHopper's route calculations in much more detail by using so called 'custom'
 profiles. Every custom profile builds on top of a 'base' vehicle from which the profile inherits the road accessibility
 rules and default speeds for the different road types. However, you can specify a set of rules to change these default
-values. For example you can change the speed only for a certain type of road (and much more).
+values. For example, you can change the speed only for a certain type of road (and much more).
 
-Custom profiles are specified like this:
+Custom profiles are specified in the server-side config.yml file like this:
 
 ```yaml
 profiles:
@@ -78,7 +74,7 @@ profiles:
       "speed": [
         {
           "if": "road_class == MOTORWAY",
-          "multiply_by": 0.8
+          "multiply_by": "0.8"
         }
       ]               
     }
@@ -87,7 +83,7 @@ profiles:
 The name and vehicle fields are the same as for standard profiles and the vehicle field is used as the 'base' vehicle
 for the custom profile. The weighting must be always set to `custom` for custom profiles. The custom model itself goes
 into the `custom_model` property. Alternatively, you can also set a path to a custom model file using the
-`custom_model_folder` and `custom_model_file` properties.
+`custom_models.directory` and `custom_model_files` properties.
 
 Using custom profiles for your routing requests works just the same way as for standard profiles. Simply add
 `profile=my_custom_profile` as request parameter to your routing request.
@@ -153,49 +149,41 @@ and the given profile must be a custom profile.
 
 Now you might be wondering which custom model is used, because there is one set for the route request, but there is also
 the one given for the profile that we specify via the `profile` parameter. The answer is "both" as the two custom models
-are merged into one. The two custom models are merged according to the following rules:
+are merged into one. The two custom models are merged by appending all expressions of the query custom model to the
+server-side custom model. The `distance_influence` of the query custom model overwrites the one from the server-side 
+custom model *unless* it is not specified.
 
-* all expressions in the custom model of the query are appended to the existing custom model.
-* for the custom model of the query all values of `multiply_by` need to be within the range of `[0, 1]` otherwise an
-  error will be thrown
-* the `distance_influence` of the query custom model overwrites the one from the server-side custom model *unless*
-  it is not specified. However, the given value must not be smaller than the existing one.
-
-If you're curious about the second rule note that for the Hybrid mode (using Landmarks not just Dijkstra or A*)
-the merge process has to ensure that all weights resulting from the merged custom model are equal or larger than those
-of the base profile that was used during the preparation process. This is necessary to maintain the optimality of the
-underlying routing algorithm.
+And if the hybrid mode is used (using Landmarks not just Dijkstra or A*) the merge process has to ensure that all 
+weights resulting from the merged custom model are equal or larger than those of the base profile that was used during 
+the preparation process (this is necessary to maintain the optimality of the underlying routing algorithm). This leads 
+to two limitations while merging:
+* for the query custom model all values of `multiply_by` need to be within the range of `[0, 1]` otherwise an error will be thrown
+* the `distance_influence` of the query custom model must not be smaller than the existing one.
 
 So say your routing request (POST /route) looks like this:
 
 ```json
 {
   "points": [
-    [
-      11.58199,
-      50.0141
-    ],
-    [
-      11.5865,
-      50.0095
-    ]
+    [ 11.58199, 50.0141 ],
+    [ 11.5865,  50.0095 ]
   ],
   "profile": "my_custom_car",
   "custom_model": {
     "speed": [
       {
         "if": "road_class == MOTORWAY",
-        "multiply_by": 0.8
+        "multiply_by": "0.8"
       },
       {
-        "else": null,
-        "multiply_by": 0.9
+        "else": "",
+        "multiply_by": "0.9"
       }
     ],
     "priority": [
       {
         "if": "road_environment == TUNNEL",
-        "multiply_by": 0.95
+        "multiply_by": "0.95"
       }
     ],
     "distance_influence": 0.7
@@ -206,12 +194,12 @@ So say your routing request (POST /route) looks like this:
 where in `config.yml` we have:
 
 ```yaml
-custom_model_file: path/to/my/custom/models
+custom_models.directory: path/to/my/custom/models
 profiles:
   - name: my_custom_car
     vehicle: car
     weighting: custom
-    custom_model_file: my_custom_car.json
+    custom_model_files: [my_custom_car.json]
 ```
 
 and `my_custom_car.json` looks like this:
@@ -221,7 +209,7 @@ and `my_custom_car.json` looks like this:
   "speed": [
     {
       "if": "surface == GRAVEL",
-      "limit_to": 100
+      "limit_to": "100"
     }
   ]
 }
@@ -234,21 +222,21 @@ then the resulting custom model used for your request will look like this:
   "speed": [
     {
       "if": "surface == GRAVEL",
-      "limit_to": 100
+      "limit_to": "100"
     },
     {
       "if": "road_class == MOTORWAY",
-      "multiply_by": 0.8
+      "multiply_by": "0.8"
     },
     {
       "else": "",
-      "multiply_by": 0.9
+      "multiply_by": "0.9"
     }
   ],
   "priority": [
     {
       "if": "road_environment == TUNNEL",
-      "multiply_by": 0.95
+      "multiply_by": "0.95"
     }
   ],
   "distance_influence": 0.7
@@ -256,7 +244,7 @@ then the resulting custom model used for your request will look like this:
 ```
 
 You do not necessarily need to define a proper custom model on the server side, but you can also use the special
-value `custom_model_file: empty` or simply `custom_model: {}`, which means an empty custom model containing no
+value `custom_model_files: []` or `custom_model: {}`, which means an empty custom model containing no
 statements will be used on the server-side. This way you can leave it entirely up to the user/client how the custom
 model shall look like.
 

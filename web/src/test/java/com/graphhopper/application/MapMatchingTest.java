@@ -33,6 +33,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -99,7 +100,7 @@ public class MapMatchingTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testDoWork(PMap hints) {
-        MapMatching mapMatching = new MapMatching(graphHopper, hints);
+        MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
         ResponsePath route2 = graphHopper.route(new GHRequest(
                 new GHPoint(51.358735, 12.360574),
                 new GHPoint(51.358594, 12.360032))
@@ -134,20 +135,20 @@ public class MapMatchingTest {
                 new GHPoint(51.323317, 12.387085))
                 .setProfile("my_profile")).getBest();
         inputGPXEntries = createRandomGPXEntriesAlongRoute(route);
-        mapMatching = new MapMatching(graphHopper, hints);
+        mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
         mapMatching.setMeasurementErrorSigma(20);
         mr = mapMatching.match(inputGPXEntries);
 
         assertEquals(route.getDistance(), mr.getMatchLength(), 0.5);
         // GraphHopper travel times aren't exactly additive
         assertThat(Math.abs(route.getTime() - mr.getMatchMillis()), is(lessThan(1000L)));
-        assertEquals(142, mr.getEdgeMatches().size());
+        assertEquals(208, mr.getEdgeMatches().size());
     }
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testLongTrackWithLotsOfPoints(PMap hints) {
-        MapMatching mapMatching = new MapMatching(graphHopper, hints);
+        MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
         ResponsePath route = graphHopper.route(new GHRequest(
                 new GHPoint(51.23, 12.18),
                 new GHPoint(51.45, 12.59))
@@ -163,7 +164,7 @@ public class MapMatchingTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testLongTrackWithTwoPoints(PMap hints) {
-        MapMatching mapMatching = new MapMatching(graphHopper, hints);
+        MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
         List<Observation> inputGPXEntries = Arrays.asList(
                 new Observation(new GHPoint(51.23, 12.18)),
                 new Observation(new GHPoint(51.45, 12.59)));
@@ -174,7 +175,7 @@ public class MapMatchingTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testClosePoints(PMap hints) {
-        MapMatching mapMatching = new MapMatching(graphHopper, hints);
+        MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
         ResponsePath route = graphHopper.route(new GHRequest(
                 new GHPoint(51.342422, 12.3613358),
                 new GHPoint(51.342328, 12.3613358))
@@ -192,7 +193,7 @@ public class MapMatchingTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testTour3WithLongEdge(PMap hints) throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour3-with-long-edge.gpx"), Gpx.class);
-        MapMatching mapMatching = new MapMatching(graphHopper, hints);
+        MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
         mapMatching.setMeasurementErrorSigma(20);
         MatchResult mr = mapMatching.match(GpxConversions.getEntries(gpx.trk.get(0)));
         assertEquals(Arrays.asList("Marbachstraße", "Weinligstraße", "Fechnerstraße"), fetchStreets(mr.getEdgeMatches()));
@@ -203,7 +204,7 @@ public class MapMatchingTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testSimplification(PMap hints) throws IOException {
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour3-with-long-edge.gpx"), Gpx.class);
-        MapMatching mapMatching = new MapMatching(graphHopper, hints);
+        MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
         mapMatching.setMeasurementErrorSigma(20);
         List<Observation> observations = GpxConversions.getEntries(gpx.trk.get(0));
         // Warning, this has to be calculated before filtering, because (of course) observations
@@ -241,7 +242,7 @@ public class MapMatchingTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testLoop(PMap hints) throws IOException {
-        MapMatching mapMatching = new MapMatching(graphHopper, hints);
+        MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
 
         // Need to reduce GPS accuracy because too many GPX are filtered out otherwise.
         mapMatching.setMeasurementErrorSigma(40);
@@ -261,7 +262,7 @@ public class MapMatchingTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testLoop2(PMap hints) throws IOException {
-        MapMatching mapMatching = new MapMatching(graphHopper, hints);
+        MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
         // TODO smaller sigma like 40m leads to U-turn at Tschaikowskistraße
         mapMatching.setMeasurementErrorSigma(50);
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour-with-loop.gpx"), Gpx.class);
@@ -284,7 +285,7 @@ public class MapMatchingTest {
                 // Reduce penalty to allow U-turns
                 .putObject(Parameters.Routing.HEADING_PENALTY, 50);
 
-        MapMatching mapMatching = new MapMatching(graphHopper, hints);
+        MapMatching mapMatching = MapMatching.fromGraphHopper(graphHopper, hints);
         Gpx gpx = xmlMapper.readValue(getClass().getResourceAsStream("/tour4-with-uturn.gpx"), Gpx.class);
 
         // with large measurement error, we expect no U-turn

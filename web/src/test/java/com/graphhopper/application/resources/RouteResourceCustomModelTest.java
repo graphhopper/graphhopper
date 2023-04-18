@@ -19,8 +19,6 @@
 package com.graphhopper.application.resources;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
@@ -59,24 +57,26 @@ public class RouteResourceCustomModelTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.flag_encoders", "bike,car,foot,wheelchair,roads").
+                putObject("graph.vehicles", "bike,car,foot,wheelchair,roads").
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
-                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type").
-                putObject("custom_model_folder", "./src/test/resources/com/graphhopper/application/resources").
+                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv,average_slope,max_slope").
+                putObject("custom_models.directory", "../custom_models/").
+                putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
+                putObject("import.osm.ignored_highways", "").
                 setProfiles(Arrays.asList(
                         new Profile("wheelchair"),
                         new CustomProfile("roads").setCustomModel(new CustomModel()).setVehicle("roads"),
-                        new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
-                        new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0)).setVehicle("bike"),
+                        new CustomProfile("car").setCustomModel(new CustomModel().setDistanceInfluence(70d)).setVehicle("car"),
+                        new CustomProfile("car_with_area").setCustomModel(new CustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
+                        new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0d)).setVehicle("bike"),
                         new Profile("bike_fastest").setWeighting("fastest").setVehicle("bike"),
-                        new CustomProfile("truck").setVehicle("car").
-                                putHint("custom_model_file", "truck.yml"),
+                        new CustomProfile("bus").setVehicle("roads").putHint("custom_model_files", Arrays.asList("bus.json")),
                         new CustomProfile("cargo_bike").setVehicle("bike").
-                                putHint("custom_model_file", "cargo_bike.yml"),
-                        new CustomProfile("json_bike").setVehicle("bike").
-                                putHint("custom_model_file", "json_bike.json"),
+                                putHint("custom_model_files", Arrays.asList("cargo_bike.json")),
+                        new CustomProfile("json_bike").setVehicle("roads").
+                                putHint("custom_model_files", Arrays.asList("bike.json", "bike_elevation.json")),
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
                         new CustomProfile("car_no_unclassified").setCustomModel(
                                         new CustomModel(new CustomModel().
@@ -88,7 +88,7 @@ public class RouteResourceCustomModelTest {
                                         addToPriority(If("max_width < 1.2", MULTIPLY, "0"))).
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike2").setCustomModel(
-                                        new CustomModel(new CustomModel().
+                                        new CustomModel(new CustomModel().setDistanceInfluence(70d).
                                                 addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0")))).
                                 setVehicle("bike"),
                         new CustomProfile("custom_bike3").setCustomModel(
@@ -96,7 +96,7 @@ public class RouteResourceCustomModelTest {
                                                 addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "10")).
                                                 addToSpeed(If("true", LIMIT, "40")))).
                                 setVehicle("bike"))).
-                setCHProfiles(Arrays.asList(new CHProfile("truck"), new CHProfile("car_no_unclassified")));
+                setCHProfiles(Arrays.asList(new CHProfile("bus"), new CHProfile("car_no_unclassified")));
         return config;
     }
 
@@ -108,39 +108,18 @@ public class RouteResourceCustomModelTest {
 
     @Test
     public void testBlockAreaNotAllowed() {
-        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car\", \"custom_model\": {}, \"block_area\": \"abc\", \"ch.disable\": true}";
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car\", \"block_area\": \"abc\", \"ch.disable\": true}";
         JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertMessageStartsWith(jsonNode, "When using `custom_model` do not use `block_area`. Use `areas` in the custom model instead");
+        assertMessageStartsWith(jsonNode, "The `block_area` parameter is no longer supported. Use a custom model with `areas` instead.");
     }
 
     @Test
-    public void testCHPossibleWithoutCustomModel() {
-        // the truck profile is a custom profile and we can use its CH preparation as long as we do not add a custom model
-        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\"}";
+    public void testBus() {
+        // the bus profile is a custom profile and we can use its CH preparation as long as we do not add a custom model
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bus\"}";
         JsonNode path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 1500, 10);
-        assertEquals(path.get("time").asLong(), 151_000, 1_000);
-    }
-
-    @Test
-    public void testDisableCHAndUseCustomModel() {
-        // If we specify a custom model we get an error, because it does not work with CH.
-        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\", \"custom_model\": {" +
-                "\"speed\": [{\"if\": \"road_class == PRIMARY\", \"multiply_by\": 0.9}]" +
-                "}}";
-        JsonNode json = query(body, 400).readEntity(JsonNode.class);
-        assertMessageStartsWith(json, "The 'custom_model' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`.");
-
-        // ... even when the custom model is just an empty object
-        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\", \"custom_model\": {}}";
-        json = query(body, 400).readEntity(JsonNode.class);
-        assertMessageStartsWith(json, "The 'custom_model' parameter is currently not supported for speed mode, you need to disable speed mode with `ch.disable=true`.");
-
-        // ... but when we disable CH it works of course
-        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\", \"custom_model\": {}, \"ch.disable\": true}";
-        JsonNode path = getPath(body);
-        assertEquals(path.get("distance").asDouble(), 1500, 10);
-        assertEquals(path.get("time").asLong(), 151_000, 1_000);
+        assertEquals(path.get("time").asLong(), 168_000, 1_000);
     }
 
     @Test
@@ -178,16 +157,14 @@ public class RouteResourceCustomModelTest {
     }
 
     @Test
-    public void testWeightingAndVehicleNotAllowed() {
-        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\"," +
-                " \"custom_model\": {}, \"ch.disable\": true, \"vehicle\": \"truck\"}";
+    public void testVehicleAndWeightingNotAllowed() {
+        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\",\"custom_model\": {}, \"ch.disable\": true, \"vehicle\": \"truck\"}";
         JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertEquals("Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=truck'", jsonNode.get("message").asText());
+        assertEquals("The 'vehicle' parameter is no longer supported. You used 'vehicle=truck'", jsonNode.get("message").asText());
 
-        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\"," +
-                " \"custom_model\": {}, \"ch.disable\": true, \"weighting\": \"custom\"}";
+        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\",\"custom_model\": {}, \"ch.disable\": true, \"weighting\": \"custom\"}";
         jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertEquals("Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=custom'", jsonNode.get("message").asText());
+        assertEquals("The 'weighting' parameter is no longer supported. You used 'weighting=custom'", jsonNode.get("message").asText());
     }
 
     @ParameterizedTest
@@ -217,13 +194,19 @@ public class RouteResourceCustomModelTest {
     }
 
     @Test
+    public void testAvoidArea() {
+        JsonNode path = getPath("{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"car_with_area\", \"ch.disable\": true, \"custom_model\": {}}");
+        assertEquals(path.get("distance").asDouble(), 3073, 10);
+    }
+
+    @Test
     public void testCargoBike() throws IOException {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", \"custom_model\": {}, \"ch.disable\": true}";
         JsonNode path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 661, 5);
 
-        String jsonFromYamlFile = yamlToJson(Helper.isToString(getClass().getResourceAsStream("cargo_bike.yml")));
-        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", \"custom_model\":" + jsonFromYamlFile + ", \"ch.disable\": true}";
+        String json = Helper.readJSONFileWithoutComments(new File("../custom_models/cargo_bike.json").getAbsolutePath());
+        body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", \"custom_model\":" + json + ", \"ch.disable\": true}";
         path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 1007, 5);
 
@@ -235,14 +218,16 @@ public class RouteResourceCustomModelTest {
 
     @Test
     public void testJsonBike() {
-        String jsonQuery = "{" +
-                " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
-                " \"profile\": \"json_bike\"," +
-                " \"custom_model\": {}," +
-                " \"ch.disable\": true" +
-                "}";
+        String jsonQuery = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
+                " \"profile\": \"json_bike\", \"ch.disable\": true }";
         JsonNode path = getPath(jsonQuery);
         assertEquals(660, path.get("distance").asDouble(), 10);
+
+        // check reverse oneway is allowed for short distances
+        jsonQuery = "{\"points\": [[11.545768,50.020137], [11.545728,50.020115]]," +
+                " \"profile\": \"json_bike\", \"ch.disable\": true }";
+        path = getPath(jsonQuery);
+        assertEquals(4, path.get("distance").asDouble(), 1);
     }
 
     @Test
@@ -351,6 +336,17 @@ public class RouteResourceCustomModelTest {
         assertEquals(1500, path.get("distance").asDouble(), 10);
     }
 
+    @Test
+    public void testHgv() {
+        String body = "{\"points\": [[11.603998, 50.014554], [11.594095, 50.023334]], \"profile\": \"roads\", \"ch.disable\":true," +
+                "\"custom_model\": {" +
+                "   \"speed\": [{\"if\":\"true\", \"limit_to\":\"car_average_speed * 0.9\"}], \n" +
+                "   \"priority\": [{\"if\": \"car_access == false || hgv == NO || max_width < 3 || max_height < 4\", \"multiply_by\": \"0\"}]}}";
+        JsonNode path = getPath(body);
+        assertEquals(7314, path.get("distance").asDouble(), 10);
+        assertEquals(957 * 1000, path.get("time").asLong(), 1_000);
+    }
+
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {
         assertNotNull(jsonNode.get("message"));
         assertTrue(jsonNode.get("message").asText().startsWith(message), "Expected error message to start with:\n" +
@@ -370,17 +366,5 @@ public class RouteResourceCustomModelTest {
         JsonNode jsonNode = response.readEntity(JsonNode.class);
         assertEquals(code, response.getStatus(), jsonNode.has("message") ? jsonNode.get("message").toString() : "no error message");
         return response;
-    }
-
-    private static String yamlToJson(String yaml) {
-        try {
-            ObjectMapper yamlReader = new ObjectMapper(new YAMLFactory());
-            Object obj = yamlReader.readValue(yaml, Object.class);
-
-            ObjectMapper jsonWriter = new ObjectMapper();
-            return jsonWriter.writeValueAsString(obj);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
     }
 }

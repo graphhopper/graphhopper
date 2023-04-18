@@ -19,16 +19,12 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
-
-import static com.graphhopper.util.Helper.toLowerCase;
+import com.graphhopper.util.PMap;
 
 public class DefaultTagParserFactory implements TagParserFactory {
-    @Override
-    public TagParser create(EncodedValueLookup lookup, String name) {
-        name = name.trim();
-        if (!name.equals(toLowerCase(name)))
-            throw new IllegalArgumentException("Use lower case for TagParsers: " + name);
 
+    @Override
+    public TagParser create(EncodedValueLookup lookup, String name, PMap properties) {
         if (Roundabout.KEY.equals(name))
             return new OSMRoundaboutParser(lookup.getBooleanEncodedValue(Roundabout.KEY));
         else if (name.equals(RoadClass.KEY))
@@ -43,6 +39,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMMaxSpeedParser(lookup.getDecimalEncodedValue(MaxSpeed.KEY));
         else if (name.equals(MaxWeight.KEY))
             return new OSMMaxWeightParser(lookup.getDecimalEncodedValue(MaxWeight.KEY));
+        else if (name.equals(MaxWeightExcept.KEY))
+            return new MaxWeightExceptParser(lookup.getEnumEncodedValue(MaxWeightExcept.KEY, MaxWeightExcept.class));
         else if (name.equals(MaxHeight.KEY))
             return new OSMMaxHeightParser(lookup.getDecimalEncodedValue(MaxHeight.KEY));
         else if (name.equals(MaxWidth.KEY))
@@ -59,6 +57,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMTollParser(lookup.getEnumEncodedValue(Toll.KEY, Toll.class));
         else if (name.equals(TrackType.KEY))
             return new OSMTrackTypeParser(lookup.getEnumEncodedValue(TrackType.KEY, TrackType.class));
+        else if (name.equals(Hgv.KEY))
+            return new OSMHgvParser(lookup.getEnumEncodedValue(Hgv.KEY, Hgv.class));
         else if (name.equals(Hazmat.KEY))
             return new OSMHazmatParser(lookup.getEnumEncodedValue(Hazmat.KEY, Hazmat.class));
         else if (name.equals(HazmatTunnel.KEY))
@@ -67,14 +67,20 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMHazmatWaterParser(lookup.getEnumEncodedValue(HazmatWater.KEY, HazmatWater.class));
         else if (name.equals(Lanes.KEY))
             return new OSMLanesParser(lookup.getIntEncodedValue(Lanes.KEY));
+        else if (name.equals(OSMWayID.KEY))
+            return new OSMWayIDParser(lookup.getIntEncodedValue(OSMWayID.KEY));
         else if (name.equals(MtbRating.KEY))
             return new OSMMtbRatingParser(lookup.getIntEncodedValue(MtbRating.KEY));
         else if (name.equals(HikeRating.KEY))
             return new OSMHikeRatingParser(lookup.getIntEncodedValue(HikeRating.KEY));
         else if (name.equals(HorseRating.KEY))
             return new OSMHorseRatingParser(lookup.getIntEncodedValue(HorseRating.KEY));
+        else if (name.equals(Footway.KEY))
+            return new OSMFootwayParser(lookup.getEnumEncodedValue(Footway.KEY, Footway.class));
         else if (name.equals(Country.KEY))
             return new CountryParser(lookup.getEnumEncodedValue(Country.KEY, Country.class));
+        else if (name.equals(Crossing.KEY))
+            return new OSMCrossingParser(lookup.getEnumEncodedValue(Crossing.KEY, Crossing.class));
         return null;
     }
 }

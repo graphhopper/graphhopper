@@ -30,13 +30,13 @@ public class ReaderNode extends ReaderElement {
     private final double lon;
 
     public ReaderNode(long id, double lat, double lon) {
-        super(id, NODE);
+        super(id, Type.NODE);
         this.lat = lat;
         this.lon = lon;
     }
 
     public ReaderNode(long id, double lat, double lon, Map<String, Object> tags) {
-        super(id, NODE, tags);
+        super(id, Type.NODE, tags);
         this.lat = lat;
         this.lon = lon;
     }

@@ -40,7 +40,7 @@ public class DistanceCalcEarth implements DistanceCalc {
     public final static double C = 2 * PI * R;
     public final static double KM_MILE = 1.609344;
     public final static double METERS_PER_DEGREE = C / 360.0;
-    public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
+    public static final DistanceCalcEarth DIST_EARTH = new DistanceCalcEarth();
 
     /**
      * Calculates distance of (from, to) in meter.
@@ -298,33 +298,41 @@ public class DistanceCalcEarth implements DistanceCalc {
         double sinHalfDeltaLon = sin(deltaLon / 2);
 
         double a = sinHalfDeltaLat * sinHalfDeltaLat + cosLat1 * cosLat2 * sinHalfDeltaLon * sinHalfDeltaLon;
-        double angularDistance =  2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        double angularDistance = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         double sinDistance = sin(angularDistance);
 
         if (angularDistance == 0) return new GHPoint(lat1, lon1);
 
-        double A = Math.sin((1-f)*angularDistance) / sinDistance;
-        double B = Math.sin(f*angularDistance) / sinDistance;
+        double A = Math.sin((1 - f) * angularDistance) / sinDistance;
+        double B = Math.sin(f * angularDistance) / sinDistance;
 
         double x = A * cosLat1 * cos(lon1radians) + B * cosLat2 * cos(lon2radians);
         double y = A * cosLat1 * sin(lon1radians) + B * cosLat2 * sin(lon2radians);
         double z = A * sin(lat1radians) + B * sin(lat2radians);
 
-        double midLat = Math.toDegrees(Math.atan2(z, Math.sqrt(x*x + y*y)));
+        double midLat = Math.toDegrees(Math.atan2(z, Math.sqrt(x * x + y * y)));
         double midLon = Math.toDegrees(Math.atan2(y, x));
 
         return new GHPoint(midLat, midLon);
     }
 
     @Override
-    public final double calcDistance(PointList pointList) {
+    public double calcDistance(PointList pointList) {
+        return internCalcDistance(pointList, pointList.is3D());
+    }
+
+    public static double calcDistance(PointList pointList, boolean is3d) {
+        return DistanceCalcEarth.DIST_EARTH.internCalcDistance(pointList, is3d);
+    }
+
+    private double internCalcDistance(PointList pointList, boolean is3d) {
         double prevLat = Double.NaN;
         double prevLon = Double.NaN;
         double prevEle = Double.NaN;
         double dist = 0;
         for (int i = 0; i < pointList.size(); i++) {
             if (i > 0) {
-                if (pointList.is3D())
+                if (is3d)
                     dist += calcDist3D(prevLat, prevLon, prevEle, pointList.getLat(i), pointList.getLon(i), pointList.getEle(i));
                 else
                     dist += calcDist(prevLat, prevLon, pointList.getLat(i), pointList.getLon(i));

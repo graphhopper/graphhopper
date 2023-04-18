@@ -24,7 +24,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * One rectangle of height data from Shuttle Radar Topography Mission.
@@ -81,7 +80,7 @@ public class HeightTile {
 
     private short getHeightSample(int x, int y) {
         // always keep in mind factor 2 because of short value
-        return heights.getShort(2 * (y * width + x));
+        return heights.getShort(2L * ((long) y * width + x));
     }
 
     private boolean isValidElevation(double elevation) {

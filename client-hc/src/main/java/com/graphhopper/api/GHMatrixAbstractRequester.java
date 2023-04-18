@@ -33,6 +33,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.api.GraphHopperMatrixWeb.*;
+import static com.graphhopper.api.GraphHopperWeb.X_GH_CLIENT_VERSION;
 
 /**
  * @author Peter Karich
@@ -82,6 +83,8 @@ public abstract class GHMatrixAbstractRequester {
     protected JsonNode createPostRequest(GHMRequest ghRequest) {
         if (ghRequest.getHints().getObject("profile", null) != null)
             throw new IllegalArgumentException("use setProfile instead of hint 'profile'");
+        if (ghRequest.getProfile() == null)
+            throw new IllegalArgumentException("profile cannot be empty");
         if (ghRequest.getHints().getObject("fail_fast", null) != null)
             throw new IllegalArgumentException("use setFailFast instead of hint 'fail_fast'");
 
@@ -114,6 +117,7 @@ public abstract class GHMatrixAbstractRequester {
         putStrings(requestJson, "snap_preventions", ghRequest.getSnapPreventions());
         putStrings(requestJson, "out_arrays", ghRequest.getOutArrays());
         requestJson.put("fail_fast", ghRequest.getFailFast());
+        requestJson.put("profile", ghRequest.getProfile());
 
         Map<String, Object> hintsMap = ghRequest.getHints().toMap();
         for (String hintKey : hintsMap.keySet()) {
@@ -305,6 +309,7 @@ public abstract class GHMatrixAbstractRequester {
     protected String postJson(String url, JsonNode data) throws IOException {
         String stringData = data.toString();
         Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
+        builder.header(X_GH_CLIENT_VERSION, Version.GH_VERSION_FROM_MAVEN);
         // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
         if (stringData.length() < maxUnzippedLength)
             builder.header("Content-Encoding", "identity");

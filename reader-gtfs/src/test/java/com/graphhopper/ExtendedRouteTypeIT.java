@@ -50,6 +50,7 @@ public class ExtendedRouteTypeIT {
         GraphHopperConfig ghConfig = new GraphHopperConfig();
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.putObject("gtfs.file", "files/another-sample-feed-extended-route-type.zip");
+        ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                 new Profile("car").setVehicle("car").setWeighting("fastest")));

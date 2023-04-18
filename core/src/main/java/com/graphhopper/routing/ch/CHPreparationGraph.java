@@ -125,7 +125,7 @@ public class CHPreparationGraph {
         DoubleArrayList turnCosts = new DoubleArrayList();
         // for each node we store the index of the first turn cost entry/triple in the list
         final int[] turnCostNodes = new int[graph.getNodes() + 1];
-        TurnCostStorage.TurnRelationIterator tcIter = turnCostStorage.getAllTurnRelations();
+        TurnCostStorage.Iterator tcIter = turnCostStorage.getAllTurnCosts();
         int lastNode = -1;
         while (tcIter.next()) {
             int viaNode = tcIter.getViaNode();

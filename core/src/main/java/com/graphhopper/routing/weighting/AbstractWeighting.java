@@ -71,7 +71,7 @@ public abstract class AbstractWeighting implements Weighting {
         if (speed == 0)
             throw new IllegalStateException("Speed cannot be 0 for unblocked edge, use access properties to mark edge blocked! Should only occur for shortest path calculation. See #242.");
 
-        return (long) (edgeState.getDistance() * 3600 / speed);
+        return Math.round(edgeState.getDistance() / speed * 3.6 * 1000);
     }
 
     @Override

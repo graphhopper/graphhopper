@@ -52,8 +52,6 @@ public class DefaultWeightingFactory implements WeightingFactory {
         // Merge profile hints with request hints, the request hints take precedence.
         // Note that so far we do not check if overwriting the profile hints actually works with the preparation
         // for LM/CH. Later we should also limit the number of parameters that can be used to modify the profile.
-        // todo: since we are not dealing with block_area here yet we cannot really apply any merging rules
-        // for it, see discussion here: https://github.com/graphhopper/graphhopper/pull/1958#discussion_r395462901
         PMap hints = new PMap();
         hints.putAll(profile.getHints());
         hints.putAll(requestHints);
@@ -99,25 +97,18 @@ public class DefaultWeightingFactory implements WeightingFactory {
             weighting = new ShortestWeighting(accessEnc, speedEnc, turnCostProvider);
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {
             if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
-                throw new IllegalArgumentException("fastest weighting requires road_access");
+                throw new IllegalArgumentException("The fastest weighting requires road_access");
             EnumEncodedValue<RoadAccess> roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
             if (priorityEnc != null)
                 weighting = new PriorityWeighting(accessEnc, speedEnc, priorityEnc, roadAccessEnc, hints, turnCostProvider);
             else
                 weighting = new FastestWeighting(accessEnc, speedEnc, roadAccessEnc, hints, turnCostProvider);
         } else if ("curvature".equalsIgnoreCase(weightingStr)) {
-            DecimalEncodedValue curvatureEnc = encodingManager.hasEncodedValue(EncodingManager.getKey(vehicle, "curvature"))
-                    ? encodingManager.getDecimalEncodedValue(EncodingManager.getKey(vehicle, "curvature"))
-                    : null;
-            if (curvatureEnc == null || priorityEnc == null)
-                throw new IllegalArgumentException("curvature weighting requires curvature and priority, but not found for " + vehicle);
-            if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
-                throw new IllegalArgumentException("curvature weighting requires road_access");
-            EnumEncodedValue<RoadAccess> roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
-            weighting = new CurvatureWeighting(accessEnc, speedEnc, priorityEnc, curvatureEnc, roadAccessEnc, hints, turnCostProvider);
+            throw new IllegalArgumentException("The curvature weighting is no longer supported since 7.0. Use a custom " +
+                    "model with the EncodedValue 'curvature' instead");
         } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
             if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
-                throw new IllegalArgumentException("curvature weighting requires road_access");
+                throw new IllegalArgumentException("The short_fastest weighting requires road_access");
             EnumEncodedValue<RoadAccess> roadAccessEnc = encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
             weighting = new ShortFastestWeighting(accessEnc, speedEnc, roadAccessEnc, hints, turnCostProvider);
         }

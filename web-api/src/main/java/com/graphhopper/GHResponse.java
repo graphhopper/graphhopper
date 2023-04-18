@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class GHResponse {
     private final List<Throwable> errors = new ArrayList<>(4);
-    private final PMap hintsMap = new PMap();
+    private PMap hintsMap = new PMap();
     private final List<ResponsePath> responsePaths = new ArrayList<>(5);
     private String debugInfo = "";
 
@@ -138,6 +138,10 @@ public class GHResponse {
             str += ", main errors: " + errors.toString();
 
         return str;
+    }
+
+    public void setHints(PMap hints) {
+        this.hintsMap = hints;
     }
 
     public PMap getHints() {
