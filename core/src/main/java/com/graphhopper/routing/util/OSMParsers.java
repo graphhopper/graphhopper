@@ -36,6 +36,7 @@ public class OSMParsers {
     private final List<TagParser> wayTagParsers;
     private final List<RelationTagParser> relationTagParsers;
     private final List<RestrictionTagParser> restrictionTagParsers;
+    private final List<String> acceptedRailways = new ArrayList<>();
     private final EncodedValue.InitializerConfig relConfig = new EncodedValue.InitializerConfig();
 
     public OSMParsers() {
@@ -48,6 +49,7 @@ public class OSMParsers {
         this.wayTagParsers = wayTagParsers;
         this.relationTagParsers = relationTagParsers;
         this.restrictionTagParsers = restrictionTagParsers;
+        this.initAcceptedRailways();
     }
 
     public OSMParsers addIgnoredHighway(String highway) {
@@ -81,7 +83,7 @@ public class OSMParsers {
             return true;
         else if ("pier".equals(way.getTag("man_made")))
             return true;
-        else if ("platform".equals(way.getTag("railway")))
+        else if (acceptedRailways.contains(way.getTag("railway")))
             return true;
         else
             return false;
@@ -122,5 +124,13 @@ public class OSMParsers {
 
     public List<RestrictionTagParser> getRestrictionTagParsers() {
         return restrictionTagParsers;
+    }
+
+    private void initAcceptedRailways() {
+        this.acceptedRailways.add("platform");
+        this.acceptedRailways.add("narrow_gauge");
+        this.acceptedRailways.add("tram");
+        this.acceptedRailways.add("subway");
+        this.acceptedRailways.add("light_rail");
     }
 }
