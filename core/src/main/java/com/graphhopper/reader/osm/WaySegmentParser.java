@@ -389,7 +389,7 @@ public class WaySegmentParser {
                 handledRelations = true;
             }
 
-            relationProcessor.processRelation(relation, this::getTowerNodeIdOfOSMNode);
+            relationProcessor.processRelation(relation, this::getInternalNodeIdOfOSMNode);
         }
 
         @Override
@@ -398,7 +398,7 @@ public class WaySegmentParser {
                     nf(wayCounter), nf(acceptedNodes), nf(nodeData.getTaggedNodeCount()), nf(ignoredSplitNodes));
         }
 
-        public int getTowerNodeIdOfOSMNode(long nodeOsmId) {
+        public int getInternalNodeIdOfOSMNode(long nodeOsmId) {
             int id = nodeData.getId(nodeOsmId);
             if (isTowerNode(id))
                 return -id - 3;
@@ -529,7 +529,7 @@ public class WaySegmentParser {
         /**
          * @param relationPreprocessor callback function that receives OSM relations during the first pass
          */
-        public Builder setRelationPreprocessor(RelationPreprocessor relationPreprocessor) {
+        public Builder setRelationPreprocessor(Consumer<ReaderRelation> relationPreprocessor) {
             this.relationPreprocessor = relationPreprocessor;
             return this;
         }
@@ -611,12 +611,13 @@ public class WaySegmentParser {
         void handleEdge(int from, int to, PointList pointList, ReaderWay way, Map<String, Object> nodeTags);
     }
 
-    public interface RelationPreprocessor {
-        void processRelation(ReaderRelation relation);
-    }
+    // todonow: use this instead of consumer?
+//    public interface RelationPreprocessor {
+//        void processRelation(ReaderRelation relation);
+//    }
 
     public interface RelationProcessor {
-        void processRelation(ReaderRelation relation, LongToIntFunction getTowerNodeIdForOSMNodeId);
+        void processRelation(ReaderRelation relation, LongToIntFunction getNodeIdForOSMNodeId);
     }
 
     public interface RelationPostProcessor {
@@ -632,6 +633,11 @@ public class WaySegmentParser {
     }
 
     public interface WayPreprocessor {
+        /**
+         * @param coordinateSupplier maps an OSM node ID (as it can be obtained by way.getNodes()) to the coordinates
+         *                           of this node. If elevation is disabled it will be NaN. Returns null if no such OSM
+         *                           node exists.
+         */
         void preprocessWay(ReaderWay way, LongToIntFunction getInternalIdForOSMNodeId, CoordinateSupplier coordinateSupplier);
     }
 

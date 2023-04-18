@@ -94,7 +94,8 @@ public class OSMReader {
 
     private GHLongLongHashMap osmWayIdToRelationFlagsMap = new GHLongLongHashMap(200, .5f);
     // stores osm way ids used by turn restriction
-    private GHLongHashSet osmWayIdSetForTurnRestriction = new GHLongHashSet();
+    // todonow: rename to osmWayIdsForTurnRestrictions again?
+    private GHLongHashSet osmWayIdSet = new GHLongHashSet();
     private LongObjectMap<LongArrayList> waysForRelations = new LongObjectHashMap<>();
     private IntLongMap edgeIdToOsmWayIdMap;
     private final static LongArrayList EMPTY_LIST = new LongArrayList();
@@ -363,7 +364,7 @@ public class OSMReader {
         osmParsers.applyWayTags(way, edge);
 
         checkDistance(edge);
-        if (osmWayIdSetForTurnRestriction.contains(way.getId()))
+        if (osmWayIdSet.contains(way.getId()))
             getEdgeIdToOsmWayIdMap().put(edge.getEdge(), way.getId());
     }
 
@@ -564,8 +565,8 @@ public class OSMReader {
             // id.
             List<OSMTurnRelation> turnRelations = createTurnRelations(relation);
             for (OSMTurnRelation turnRelation : turnRelations) {
-                osmWayIdSetForTurnRestriction.add(turnRelation.getOsmIdFrom());
-                osmWayIdSetForTurnRestriction.add(turnRelation.getOsmIdTo());
+                osmWayIdSet.add(turnRelation.getOsmIdFrom());
+                osmWayIdSet.add(turnRelation.getOsmIdTo());
             }
         }
     }
@@ -578,12 +579,12 @@ public class OSMReader {
      * This method is called for each relation during the second pass of {@link WaySegmentParser}
      * We use it to set turn restrictions.
      */
-    protected void processRelation(ReaderRelation relation, LongToIntFunction getTowerNodeIdForOSMNodeId) {
+    protected void processRelation(ReaderRelation relation, LongToIntFunction getIdForOSMNodeId) {
         if (turnCostStorage != null && relation.hasTag("type", "restriction")) {
             TurnCostParser.ExternalInternalMap map = new TurnCostParser.ExternalInternalMap() {
                 @Override
                 public int getInternalNodeIdOfOsmNode(long nodeOsmId) {
-                    return getTowerNodeIdForOSMNodeId.applyAsInt(nodeOsmId);
+                    return getIdForOSMNodeId.applyAsInt(nodeOsmId);
                 }
 
                 @Override
@@ -655,7 +656,7 @@ public class OSMReader {
     private IntLongMap getEdgeIdToOsmWayIdMap() {
         // todo: is this lazy initialization really advantageous?
         if (edgeIdToOsmWayIdMap == null)
-            edgeIdToOsmWayIdMap = new GHIntLongHashMap(osmWayIdSetForTurnRestriction.size(), 0.5f);
+            edgeIdToOsmWayIdMap = new GHIntLongHashMap(osmWayIdSet.size(), 0.5f);
 
         return edgeIdToOsmWayIdMap;
     }
@@ -728,13 +729,13 @@ public class OSMReader {
     private void finishedReading() {
         eleProvider.release();
         osmWayIdToRelationFlagsMap = null;
-        osmWayIdSetForTurnRestriction = null;
+        osmWayIdSet = null;
         waysForRelations = null;
         edgeIdToOsmWayIdMap = null;
     }
 
-    IntsRef getRelFlagsMap(long osmWayId) {
-        long relFlagsAsLong = osmWayIdToRelationFlagsMap.get(osmWayId);
+    IntsRef getRelFlagsMap(long osmId) {
+        long relFlagsAsLong = osmWayIdToRelationFlagsMap.get(osmId);
         tempRelFlags.ints[0] = (int) relFlagsAsLong;
         tempRelFlags.ints[1] = (int) (relFlagsAsLong >> 32);
         return tempRelFlags;
@@ -749,4 +750,5 @@ public class OSMReader {
     public String toString() {
         return getClass().getSimpleName();
     }
+
 }
