@@ -132,5 +132,7 @@ public class OSMParsers {
         this.acceptedRailways.add("tram");
         this.acceptedRailways.add("subway");
         this.acceptedRailways.add("light_rail");
+        this.acceptedRailways.add("monorail");
+        this.acceptedRailways.add("funicular");
     }
 }
