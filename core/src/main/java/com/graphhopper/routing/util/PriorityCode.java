@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
+import java.util.Collections;
+import java.util.TreeSet;
+
 /**
  * Used to store a priority value in the way flags of an edge. Used in combination with
  * PriorityWeighting
@@ -36,7 +39,13 @@ public enum PriorityCode {
     PREFER(12),
     VERY_NICE(13),
     BEST(15);
+
     private final int value;
+    public static final TreeSet<PriorityCode> VALUES = new TreeSet<>();
+
+    static {
+        Collections.addAll(VALUES, values());
+    }
 
     PriorityCode(int value) {
         this.value = value;
@@ -52,5 +61,15 @@ public enum PriorityCode {
 
     public static double getValue(int value) {
         return getFactor(value);
+    }
+
+    public PriorityCode worse() {
+        PriorityCode ret = VALUES.lower(this);
+        return ret == null ? EXCLUDE : ret;
+    }
+
+    public PriorityCode better() {
+        PriorityCode ret = VALUES.higher(this);
+        return ret == null ? BEST : ret;
     }
 }

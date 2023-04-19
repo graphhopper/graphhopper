@@ -48,7 +48,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testSpeedAndPriority() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
-        assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(BAD.getValue(), 18, way);
 
         way.setTag("highway", "residential");
         assertPriorityAndSpeed(PREFER.getValue(), 16, way);

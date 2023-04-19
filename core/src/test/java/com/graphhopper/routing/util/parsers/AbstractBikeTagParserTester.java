@@ -401,7 +401,7 @@ public abstract class AbstractBikeTagParserTester {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "motorway");
         osmWay.setTag("bicycle", "yes");
-        assertPriority(AVOID.getValue(), osmWay);
+        assertPriority(REACH_DESTINATION.getValue(), osmWay);
     }
 
     @Test

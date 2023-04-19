@@ -26,11 +26,6 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
         routeMap.put(REGIONAL, PREFER.getValue());
         routeMap.put(LOCAL, BEST.getValue());
 
-        avoidHighwayTags.add("primary");
-        avoidHighwayTags.add("primary_link");
-        avoidHighwayTags.add("secondary");
-        avoidHighwayTags.add("secondary_link");
-
         preferHighwayTags.add("road");
         preferHighwayTags.add("track");
         preferHighwayTags.add("path");
