@@ -85,7 +85,7 @@
         <dependency>
             <groupId>org.openstreetmap.osmosis</groupId>
             <artifactId>osmosis-osm-binary</artifactId>
-            <version>0.47.3</version>
+            <version>0.48.3</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
