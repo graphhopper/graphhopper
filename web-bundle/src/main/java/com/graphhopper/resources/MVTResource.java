@@ -5,10 +5,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import no.ecc.vectortile.VectorTileEncoder;
 import org.locationtech.jts.geom.Coordinate;
@@ -128,7 +125,7 @@ public class MVTResource {
             map.put("distance", edge.getDistance());
             encodingManager.getEncodedValues().forEach(ev -> {
                 if (ev instanceof EnumEncodedValue)
-                    map.put(ev.getName(), edge.get((EnumEncodedValue) ev).toString() + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((EnumEncodedValue) ev).toString() : ""));
+                    map.put(ev.getName(), Helper.toLowerCase(edge.get((EnumEncodedValue) ev).toString() + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((EnumEncodedValue) ev).toString() : "")));
                 else if (ev instanceof DecimalEncodedValue)
                     map.put(ev.getName(), edge.get((DecimalEncodedValue) ev) + (ev.isStoreTwoDirections() ? " | " + edge.getReverse((DecimalEncodedValue) ev) : ""));
                 else if (ev instanceof BooleanEncodedValue)

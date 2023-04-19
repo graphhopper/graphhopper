@@ -1,5 +1,7 @@
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.Helper;
+
 /**
  * Defines the degree of restriction for the transport of hazardous goods through tunnels.<br>
  * If not tagged it will be {@link #A}
@@ -10,38 +12,27 @@ public enum HazmatTunnel {
     /**
      * driving with any dangerous goods allowed
      */
-    A("A"),
+    A,
     /**
      * no goods with very large explosion range
      */
-    B("B"),
+    B,
     /**
      * no goods with large explosion or poisoning range
      */
-    C("C"),
+    C,
     /**
      * no goods which threaten a large explosion, poisoning or fire
      */
-    D("D"),
+    D,
     /**
      * forbids all dangerous goods except: UN 2919,3291, 3331, 3359, 3373
      */
-    E("E");
+    E;
 
     public static final String KEY = "hazmat_tunnel";
 
     public static EnumEncodedValue<HazmatTunnel> create() {
         return new EnumEncodedValue<>(KEY, HazmatTunnel.class);
-    }
-
-    private final String name;
-
-    HazmatTunnel(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public String toString() {
-        return name;
     }
 }

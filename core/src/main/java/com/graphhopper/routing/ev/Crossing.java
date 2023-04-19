@@ -13,11 +13,6 @@ public enum Crossing {
     NO; // crossing is impossible or illegal
     public static final String KEY = "crossing";
 
-    @Override
-    public String toString() {
-        return Helper.toLowerCase(name());
-    }
-
     public static Crossing find(String name) {
         if (name == null)
             return MISSING;

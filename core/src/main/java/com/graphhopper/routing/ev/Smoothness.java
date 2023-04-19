@@ -20,31 +20,17 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.util.Helper;
 
 /**
- * This enum defines the road smoothness of an edge. If not tagged the value will be MISSING, which is the default. 
+ * This enum defines the road smoothness of an edge. If not tagged the value will be MISSING, which is the default.
  * All unknown smoothness tags will get OTHER .
  */
 public enum Smoothness {
     // Order is important to make it roughly comparable
-    MISSING("missing"),
-    EXCELLENT("excellent"), GOOD("good"), INTERMEDIATE("intermediate"), BAD("bad"), VERY_BAD("very_bad"),
-    HORRIBLE("horrible"), VERY_HORRIBLE("very_horrible"), IMPASSABLE("impassable"),
-    OTHER("other");
+    MISSING, EXCELLENT, GOOD, INTERMEDIATE, BAD, VERY_BAD, HORRIBLE, VERY_HORRIBLE, IMPASSABLE, OTHER;
 
     public static final String KEY = "smoothness";
 
     public static EnumEncodedValue<Smoothness> create() {
         return new EnumEncodedValue<>(KEY, Smoothness.class);
-    }
-
-    private final String name;
-
-    Smoothness(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public String toString() {
-        return name;
     }
 
     public static Smoothness find(String name) {

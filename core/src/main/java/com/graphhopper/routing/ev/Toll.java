@@ -22,22 +22,11 @@ package com.graphhopper.routing.ev;
  * (toll for heavy goods vehicles) and ALL (all vehicles)
  */
 public enum Toll {
-    MISSING("missing"), NO("no"), HGV("hgv"), ALL("all");
+    MISSING, NO, HGV, ALL;
 
     public static final String KEY = "toll";
 
     public static EnumEncodedValue<Toll> create() {
         return new EnumEncodedValue<>(KEY, Toll.class);
-    }
-
-    private final String name;
-
-    Toll(String name) {
-        this.name = name;
-    }
-
-    @Override
-    public String toString() {
-        return name;
     }
 }
