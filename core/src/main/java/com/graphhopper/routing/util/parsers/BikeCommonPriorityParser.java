@@ -228,7 +228,8 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         if (way.hasTag("scenic", "yes") || maxSpeed > 0 && maxSpeed <= wayTypeSpeed) {
             int lastEntryValue = weightToPrioMap.lastEntry().getValue();
             if (lastEntryValue < BEST.getValue()) {
-                PriorityCode priorityCode = Arrays.stream(PriorityCode.values()).filter(pc -> pc.getValue() == lastEntryValue).findFirst().orElse(UNCHANGED);
+                // TODO migrate weightToPrioMap to Map<Integer, PriorityCode>
+                PriorityCode priorityCode = PriorityCode.VALUES.stream().filter(pc -> pc.getValue() == lastEntryValue).findFirst().orElse(UNCHANGED);
                 // Increase the PriorityCode by one step
                 weightToPrioMap.put(110d, priorityCode.better().getValue());
             }
