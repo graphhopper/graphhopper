@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
-import java.util.Collections;
-import java.util.TreeSet;
+import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Used to store a priority value in the way flags of an edge. Used in combination with
@@ -41,10 +41,13 @@ public enum PriorityCode {
     BEST(15);
 
     private final int value;
-    public static final TreeSet<PriorityCode> VALUES = new TreeSet<>();
+    public static final TreeMap<Integer, PriorityCode> VALUES = new TreeMap<>();
 
     static {
-        Collections.addAll(VALUES, values());
+        PriorityCode[] v = values();
+        for (PriorityCode priorityCode : v) {
+            VALUES.put(priorityCode.getValue(), priorityCode);
+        }
     }
 
     PriorityCode(int value) {
@@ -64,12 +67,17 @@ public enum PriorityCode {
     }
 
     public PriorityCode worse() {
-        PriorityCode ret = VALUES.lower(this);
-        return ret == null ? EXCLUDE : ret;
+        Map.Entry<Integer, PriorityCode> ret = VALUES.lowerEntry(this.getValue());
+        return ret == null ? EXCLUDE : ret.getValue();
+    }
+
+    public static PriorityCode valueOf(int integ) {
+        Map.Entry<Integer, PriorityCode> ret = VALUES.ceilingEntry(integ);
+        return ret == null ? BEST : ret.getValue();
     }
 
     public PriorityCode better() {
-        PriorityCode ret = VALUES.higher(this);
-        return ret == null ? BEST : ret;
+        Map.Entry<Integer, PriorityCode> ret = VALUES.higherEntry(this.getValue());
+        return ret == null ? BEST : ret.getValue();
     }
 }
