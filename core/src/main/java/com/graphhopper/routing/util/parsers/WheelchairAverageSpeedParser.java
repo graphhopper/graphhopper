@@ -3,8 +3,8 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.VehicleSpeed;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
@@ -34,24 +34,22 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
         allowedHighwayTags.add("cycleway");
         allowedHighwayTags.add("unclassified");
         allowedHighwayTags.add("road");
-
-        allowedSacScale.clear();
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-                setSpeed(edgeFlags, true, true, ferrySpeed);
+                setSpeed(edgeId, edgeIntAccess, true, true, ferrySpeed);
             }
             if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
                 return;
         }
 
-        setSpeed(edgeFlags, true, true, MEAN_SPEED);
-        applyWayTags(way, edgeFlags);
+        setSpeed(edgeId, edgeIntAccess, true, true, MEAN_SPEED);
+        applyWayTags(way, edgeId, edgeIntAccess);
     }
 
     /**
@@ -59,7 +57,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
      * and maxInclinePercent will reduce speed to SLOW_SPEED. In-/declines above maxInclinePercent will result in zero
      * speed.
      */
-    public void applyWayTags(ReaderWay way, IntsRef edgeFlags) {
+    public void applyWayTags(ReaderWay way, int edgeId, EdgeIntAccess edgeIntAccess) {
         PointList pl = way.getTag("point_list", null);
         if (pl == null)
             throw new IllegalArgumentException("The artificial point_list tag is missing");
@@ -69,7 +67,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
         if (Double.isInfinite(fullDist2D))
             throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
 
-        // skip elevation data adjustment for too short segments, TODO improve the elevation data handling and/or use the same mechanism as we used to do in bike2
+        // skip elevation data adjustment for too short segments, TODO use custom model for elevation handling
         if (fullDist2D < 20 || !pl.is3D())
             return;
 
@@ -88,8 +86,8 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
             // it can be problematic to exclude roads due to potential bad elevation data (e.g.delta for narrow nodes could be too high)
             // so exclude only when we are certain
             if (fullDist2D > 50) {
-                setSpeed(edgeFlags, true, false, 0);
-                setSpeed(edgeFlags, true, true, 0);
+                setSpeed(edgeId, edgeIntAccess, true, false, 0);
+                setSpeed(edgeId, edgeIntAccess, true, true, 0);
                 return;
             }
 
@@ -97,7 +95,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
             bwdSpeed = SLOW_SPEED;
         }
 
-        if (fwdSpeed > 0) setSpeed(edgeFlags, true, false, fwdSpeed);
-        if (bwdSpeed > 0) setSpeed(edgeFlags, false, true, bwdSpeed);
+        if (fwdSpeed > 0) setSpeed(edgeId, edgeIntAccess, true, false, fwdSpeed);
+        if (bwdSpeed > 0) setSpeed(edgeId, edgeIntAccess, false, true, bwdSpeed);
     }
 }

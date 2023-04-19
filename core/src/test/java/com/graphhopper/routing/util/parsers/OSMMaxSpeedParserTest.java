@@ -18,9 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.MaxSpeed;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
@@ -44,15 +42,16 @@ class OSMMaxSpeedParserTest {
                 return 5;
             }
         });
-        IntsRef edgeFlags = new IntsRef(1);
-        parser.handleWayTags(edgeFlags, way, relFlags);
-        assertEquals(5, maxSpeedEnc.getDecimal(false, edgeFlags), .1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(5, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
 
         // without a country_rule we get the default value
-        edgeFlags = new IntsRef(1);
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         way.removeTag("country_rule");
-        parser.handleWayTags(edgeFlags, way, relFlags);
-        assertEquals(MaxSpeed.UNSET_SPEED, maxSpeedEnc.getDecimal(false, edgeFlags), .1);
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(MaxSpeed.UNSET_SPEED, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
     }
 
 }

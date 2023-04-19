@@ -18,19 +18,12 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.RouteNetwork;
-import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
@@ -52,12 +45,6 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
 
     protected FootAccessParser(BooleanEncodedValue accessEnc) {
         super(accessEnc, TransportationMode.FOOT);
-
-        restrictedValues.add("no");
-        restrictedValues.add("restricted");
-        restrictedValues.add("military");
-        restrictedValues.add("emergency");
-        restrictedValues.add("private");
 
         intendedValues.add("yes");
         intendedValues.add("designated");
@@ -142,13 +129,18 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if (way.getTag("sac_scale") != null && !way.hasTag("sac_scale", allowedSacScale))
             return WayAccess.CAN_SKIP;
 
-        // no need to evaluate ferries or fords - already included here
-        if (way.hasTag("foot", intendedValues))
-            return WayAccess.WAY;
-
-        // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-            return WayAccess.CAN_SKIP;
+        boolean permittedWayConditionallyRestricted = getConditionalTagInspector().isPermittedWayConditionallyRestricted(way);
+        boolean restrictedWayConditionallyPermitted = getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
+        String firstValue = way.getFirstPriorityTag(restrictions);
+        if (!firstValue.isEmpty()) {
+            String[] restrict = firstValue.split(";");
+            for (String value : restrict) {
+                if (restrictedValues.contains(value) && !restrictedWayConditionallyPermitted)
+                    return WayAccess.CAN_SKIP;
+                if (intendedValues.contains(value) && !permittedWayConditionallyRestricted)
+                    return WayAccess.WAY;
+            }
+        }
 
         if (way.hasTag("sidewalk", sidewalkValues))
             return WayAccess.WAY;
@@ -159,18 +151,17 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if (way.hasTag("motorroad", "yes"))
             return WayAccess.CAN_SKIP;
 
-        // do not get our feet wet, "yes" is already included above
-        if (isBlockFords() && (way.hasTag("highway", "ford") || way.hasTag("ford")))
+        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return WayAccess.CAN_SKIP;
 
-        if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
+        if (permittedWayConditionallyRestricted)
             return WayAccess.CAN_SKIP;
 
         return WayAccess.WAY;
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         WayAccess access = getAccess(way);
         if (access.canSkip())
             return;
@@ -179,10 +170,15 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
                 || way.hasTag("oneway", oneways) && way.hasTag("highway", "steps") // outdated mapping style
         ) {
             boolean reverse = way.hasTag("oneway:foot", "-1") || way.hasTag("foot:backward", "yes") || way.hasTag("foot:forward", "no");
-            accessEnc.setBool(reverse, edgeFlags, true);
+            accessEnc.setBool(reverse, edgeId, edgeIntAccess, true);
         } else {
-            accessEnc.setBool(false, edgeFlags, true);
-            accessEnc.setBool(true, edgeFlags, true);
+            accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+            accessEnc.setBool(true, edgeId, edgeIntAccess, true);
+        }
+
+        if (way.hasTag("gh:barrier_edge")) {
+            List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
+            handleBarrierEdge(edgeId, edgeIntAccess, nodeTags.get(0));
         }
     }
 }

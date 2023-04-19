@@ -97,6 +97,8 @@ public class Parameters {
         public static final String U_TURN_COSTS = "u_turn_costs";
         public static final String MAX_VISITED_NODES = "max_visited_nodes";
         public static final String INIT_MAX_VISITED_NODES = ROUTING_INIT_PREFIX + "max_visited_nodes";
+        public static final String TIMEOUT_MS = "timeout_ms";
+        public static final String INIT_TIMEOUT_MS = ROUTING_INIT_PREFIX + "timeout_ms";
         /**
          * if true the response will contain turn instructions
          */
@@ -192,7 +194,7 @@ public class Parameters {
 
         public static final String PATH_DETAILS = "details";
 
-        // these details are directly accessing the EdgeKVStorage and the names have to be identical
+        // these details are directly accessing the KVStorage for edges and the names have to be identical
         public static final String STREET_NAME = "street_name";
         public static final String STREET_REF = "street_ref";
         public static final String STREET_DESTINATION = "street_destination";
@@ -205,6 +207,10 @@ public class Parameters {
         public static final String WEIGHT = "weight";
         public static final String DISTANCE = "distance";
         public static final String INTERSECTION = "intersection";
+
+        public static final String LEG_TIME = "leg_time";
+        public static final String LEG_DISTANCE = "leg_distance";
+        public static final String LEG_WEIGHT = "leg_weight";
     }
 
 }

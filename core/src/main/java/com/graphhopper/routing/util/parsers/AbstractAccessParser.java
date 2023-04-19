@@ -6,6 +6,7 @@ import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.ConditionalTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.storage.IntsRef;
 
@@ -32,6 +33,13 @@ public abstract class AbstractAccessParser implements TagParser {
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
         this.accessEnc = accessEnc;
 
+        restrictedValues.add("no");
+        restrictedValues.add("restricted");
+        restrictedValues.add("military");
+        restrictedValues.add("emergency");
+        restrictedValues.add("private");
+        restrictedValues.add("permit");
+
         restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
     }
 
@@ -57,7 +65,10 @@ public abstract class AbstractAccessParser implements TagParser {
         if (!blockPrivate) {
             if (!restrictedValues.remove("private"))
                 throw new IllegalStateException("no 'private' found in restrictedValues");
+            if (!restrictedValues.remove("permit"))
+                throw new IllegalStateException("no 'permit' found in restrictedValues");
             intendedValues.add("private");
+            intendedValues.add("permit");
         }
     }
 
@@ -65,28 +76,23 @@ public abstract class AbstractAccessParser implements TagParser {
         return conditionalTagInspector;
     }
 
-    /**
-     * Updates the given edge flags based on node tags
-     */
-    protected void handleNodeTags(IntsRef edgeFlags, Map<String, Object> nodeTags) {
-        if (!nodeTags.isEmpty()) {
-            // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
-            ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
-            // block access for barriers
-            if (isBarrier(readerNode)) {
-                BooleanEncodedValue accessEnc = getAccessEnc();
-                accessEnc.setBool(false, edgeFlags, false);
-                accessEnc.setBool(true, edgeFlags, false);
-            }
+    protected void handleBarrierEdge(int edgeId, EdgeIntAccess edgeIntAccess, Map<String, Object> nodeTags) {
+        // for now we just create a dummy reader node, because our encoders do not make use of the coordinates anyway
+        ReaderNode readerNode = new ReaderNode(0, 0, 0, nodeTags);
+        // block access for barriers
+        if (isBarrier(readerNode)) {
+            BooleanEncodedValue accessEnc = getAccessEnc();
+            accessEnc.setBool(false, edgeId, edgeIntAccess, false);
+            accessEnc.setBool(true, edgeId, edgeIntAccess, false);
         }
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
-        handleWayTags(edgeFlags, way);
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+        handleWayTags(edgeId, edgeIntAccess, way);
     }
 
-    public abstract void handleWayTags(IntsRef edgeFlags, ReaderWay way);
+    public abstract void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way);
 
     /**
      * @return true if the given OSM node blocks access for this vehicle, false otherwise

@@ -32,14 +32,14 @@ import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.RestrictionSetter;
-import com.graphhopper.search.EdgeKVStorage;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
@@ -57,7 +57,8 @@ import java.util.function.LongToIntFunction;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.*;
+import static com.graphhopper.search.KVStorage.KeyValue.*;
+import static com.graphhopper.util.GHUtility.OSM_WARNING_LOGGER;
 import static com.graphhopper.util.Helper.nf;
 import static java.util.Collections.emptyList;
 
@@ -77,9 +78,9 @@ public class OSMReader {
 
     private final OSMReaderConfig config;
     private final BaseGraph baseGraph;
+    private final EdgeIntAccess edgeIntAccess;
     private final NodeAccess nodeAccess;
     private final TurnCostStorage turnCostStorage;
-    private final EncodingManager encodingManager;
     private final OSMParsers osmParsers;
     private final DistanceCalc distCalc = DistanceCalcEarth.DIST_EARTH;
     private final RestrictionSetter restrictionSetter;
@@ -97,9 +98,9 @@ public class OSMReader {
     private WayToEdgesMap restrictedWaysToEdgesMap = new WayToEdgesMap();
     private List<ReaderRelation> restrictionRelations = new ArrayList<>();
 
-    public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
+    public OSMReader(BaseGraph baseGraph, OSMParsers osmParsers, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
-        this.encodingManager = encodingManager;
+        this.edgeIntAccess = baseGraph.createEdgeIntAccess();
         this.config = config;
         this.nodeAccess = baseGraph.getNodeAccess();
         this.osmParsers = osmParsers;
@@ -228,7 +229,7 @@ public class OSMReader {
      * This method is called during the second pass of {@link WaySegmentParser} and provides an entry point to enrich
      * the given OSM way with additional tags before it is passed on to the tag parsers.
      */
-    protected void setArtificialWayTags(PointList pointList, ReaderWay way, double distance, Map<String, Object> nodeTags) {
+    protected void setArtificialWayTags(PointList pointList, ReaderWay way, double distance, List<Map<String, Object>> nodeTags) {
         way.setTag("node_tags", nodeTags);
         way.setTag("edge_distance", distance);
         way.setTag("point_list", pointList);
@@ -293,14 +294,16 @@ public class OSMReader {
      * @param toIndex   a unique integer id for the last node of this segment
      * @param pointList coordinates of this segment
      * @param way       the OSM way this segment was taken from
-     * @param nodeTags  node tags of this segment if it is an artificial edge, empty otherwise
+     * @param nodeTags  node tags of this segment. there is one map of tags for each point.
      */
-    protected void addEdge(int fromIndex, int toIndex, PointList pointList, ReaderWay way, Map<String, Object> nodeTags) {
+    protected void addEdge(int fromIndex, int toIndex, PointList pointList, ReaderWay way, List<Map<String, Object>> nodeTags) {
         // sanity checks
         if (fromIndex < 0 || toIndex < 0)
             throw new AssertionError("to or from index is invalid for this edge " + fromIndex + "->" + toIndex + ", points:" + pointList);
         if (pointList.getDimension() != nodeAccess.getDimension())
             throw new AssertionError("Dimension does not match for pointList vs. nodeAccess " + pointList.getDimension() + " <-> " + nodeAccess.getDimension());
+        if (pointList.size() != nodeTags.size())
+            throw new AssertionError("there should be as many maps of node tags as there are points. node tags: " + nodeTags.size() + ", points: " + pointList.size());
 
         // todo: in principle it should be possible to delay elevation calculation so we do not need to store
         // elevations during import (saves memory in pillar info during import). also note that we already need to
@@ -347,10 +350,9 @@ public class OSMReader {
 
         setArtificialWayTags(pointList, way, distance, nodeTags);
         IntsRef relationFlags = getRelFlagsMap(way.getId());
-        IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        osmParsers.handleWayTags(edgeFlags, way, relationFlags);
-        EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance).setFlags(edgeFlags);
-        List<EdgeKVStorage.KeyValue> list = way.getTag("key_values", Collections.emptyList());
+        EdgeIteratorState edge = baseGraph.edge(fromIndex, toIndex).setDistance(distance);
+        osmParsers.handleWayTags(edge.getEdge(), edgeIntAccess, way, relationFlags);
+        List<KVStorage.KeyValue> list = way.getTag("key_values", Collections.emptyList());
         if (!list.isEmpty())
             edge.setKeyValues(list);
 
@@ -394,7 +396,7 @@ public class OSMReader {
      */
     protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
         // storing the road name does not yet depend on the flagEncoder so manage it directly
-        List<EdgeKVStorage.KeyValue> list = new ArrayList<>();
+        List<KVStorage.KeyValue> list = new ArrayList<>();
         if (config.isParseWayNames()) {
             // http://wiki.openstreetmap.org/wiki/Key:name
             String name = "";
@@ -403,28 +405,28 @@ public class OSMReader {
             if (name.isEmpty())
                 name = fixWayName(way.getTag("name"));
             if (!name.isEmpty())
-                list.add(new EdgeKVStorage.KeyValue(STREET_NAME, name));
+                list.add(new KVStorage.KeyValue(STREET_NAME, name));
 
             // http://wiki.openstreetmap.org/wiki/Key:ref
             String refName = fixWayName(way.getTag("ref"));
             if (!refName.isEmpty())
-                list.add(new EdgeKVStorage.KeyValue(STREET_REF, refName));
+                list.add(new KVStorage.KeyValue(STREET_REF, refName));
 
             if (way.hasTag("destination:ref")) {
-                list.add(new EdgeKVStorage.KeyValue(STREET_DESTINATION_REF, fixWayName(way.getTag("destination:ref"))));
+                list.add(new KVStorage.KeyValue(STREET_DESTINATION_REF, fixWayName(way.getTag("destination:ref"))));
             } else {
                 if (way.hasTag("destination:ref:forward"))
-                    list.add(new EdgeKVStorage.KeyValue(STREET_DESTINATION_REF, fixWayName(way.getTag("destination:ref:forward")), true, false));
+                    list.add(new KVStorage.KeyValue(STREET_DESTINATION_REF, fixWayName(way.getTag("destination:ref:forward")), true, false));
                 if (way.hasTag("destination:ref:backward"))
-                    list.add(new EdgeKVStorage.KeyValue(STREET_DESTINATION_REF, fixWayName(way.getTag("destination:ref:backward")), false, true));
+                    list.add(new KVStorage.KeyValue(STREET_DESTINATION_REF, fixWayName(way.getTag("destination:ref:backward")), false, true));
             }
             if (way.hasTag("destination")) {
-                list.add(new EdgeKVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination"))));
+                list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination"))));
             } else {
                 if (way.hasTag("destination:forward"))
-                    list.add(new EdgeKVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:forward")), true, false));
+                    list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:forward")), true, false));
                 if (way.hasTag("destination:backward"))
-                    list.add(new EdgeKVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:backward")), false, true));
+                    list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:backward")), false, true));
             }
         }
         way.setTag("key_values", list);
@@ -448,14 +450,14 @@ public class OSMReader {
         if (durationTag == null) {
             // no duration tag -> we cannot derive speed. happens very frequently for short ferries, but also for some long ones, see: #2532
             if (isFerry(way) && distance > 500_000)
-                LOGGER.warn("Long ferry OSM way without duration tag: " + way.getId() + ", distance: " + Math.round(distance / 1000.0) + " km");
+                OSM_WARNING_LOGGER.warn("Long ferry OSM way without duration tag: " + way.getId() + ", distance: " + Math.round(distance / 1000.0) + " km");
             return;
         }
         long durationInSeconds;
         try {
             durationInSeconds = OSMReaderUtility.parseDuration(durationTag);
         } catch (Exception e) {
-            LOGGER.warn("Could not parse duration tag '" + durationTag + "' in OSM way: " + way.getId());
+            OSM_WARNING_LOGGER.warn("Could not parse duration tag '" + durationTag + "' in OSM way: " + way.getId());
             return;
         }
 
@@ -463,7 +465,7 @@ public class OSMReader {
         if (speedInKmPerHour < 0.1d) {
             // Often there are mapping errors like duration=30:00 (30h) instead of duration=00:30 (30min). In this case we
             // ignore the duration tag. If no such cases show up anymore, because they were fixed, maybe raise the limit to find some more.
-            LOGGER.warn("Unrealistic low speed calculated from duration. Maybe the duration is too long, or it is applied to a way that only represents a part of the connection? OSM way: "
+            OSM_WARNING_LOGGER.warn("Unrealistic low speed calculated from duration. Maybe the duration is too long, or it is applied to a way that only represents a part of the connection? OSM way: "
                     + way.getId() + ". duration=" + durationTag + " (= " + Math.round(durationInSeconds / 60.0) +
                     " minutes), distance=" + distance + " m");
             return;
@@ -478,8 +480,8 @@ public class OSMReader {
     static String fixWayName(String str) {
         if (str == null)
             return "";
-        // the EdgeKVStorage does not accept too long strings -> Helper.cutStringForKV
-        return EdgeKVStorage.cutString(WAY_NAME_PATTERN.matcher(str).replaceAll(", "));
+        // the KVStorage does not accept too long strings -> Helper.cutStringForKV
+        return KVStorage.cutString(WAY_NAME_PATTERN.matcher(str).replaceAll(", "));
     }
 
     /**
@@ -601,7 +603,7 @@ public class OSMReader {
         if (!e.isWithoutWarning()) {
             restrictionRelation.getTags().remove("graphhopper:via_node");
             List<String> members = restrictionRelation.getMembers().stream().map(m -> m.getRole() + " " + m.getType().toString().toLowerCase() + " " + m.getRef()).collect(Collectors.toList());
-            LOGGER.warn("Restriction relation " + restrictionRelation.getId() + " " + e.getMessage() + ". tags: " + restrictionRelation.getTags() + ", members: " + members + ". Relation ignored.");
+            OSM_WARNING_LOGGER.warn("Restriction relation " + restrictionRelation.getId() + " " + e.getMessage() + ". tags: " + restrictionRelation.getTags() + ", members: " + members + ". Relation ignored.");
         }
     }
 

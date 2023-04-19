@@ -20,19 +20,20 @@ import java.util.Set;
  */
 public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exception> {
 
+    private static final Set<String> allowedMethodParents = new HashSet<>(Arrays.asList("Math"));
+    private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("sqrt"));
     private final ParseResult result;
-    private final NameValidator nameValidator;
-    private final Set<String> allowedMethods = new HashSet<>(Arrays.asList("sqrt", "abs"));
+    private final NameValidator variableValidator;
     private String invalidMessage;
 
-    public ValueExpressionVisitor(ParseResult result, NameValidator nameValidator) {
+    public ValueExpressionVisitor(ParseResult result, NameValidator variableValidator) {
         this.result = result;
-        this.nameValidator = nameValidator;
+        this.variableValidator = variableValidator;
     }
 
     // allow only methods and other identifiers (constants and encoded values)
     boolean isValidIdentifier(String identifier) {
-        if (nameValidator.isValid(identifier)) {
+        if (variableValidator.isValid(identifier)) {
             if (!Character.isUpperCase(identifier.charAt(0)))
                 result.guessedVariables.add(identifier);
             return true;
@@ -65,14 +66,27 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         } else if (rv instanceof Java.MethodInvocation) {
             Java.MethodInvocation mi = (Java.MethodInvocation) rv;
             if (allowedMethods.contains(mi.methodName)) {
-                // skip methods like this.in() for now
+                // skip methods like this.in()
                 if (mi.target != null) {
-                    // edge.getDistance, Math.sqrt => check target name (edge or Math)
+                    // edge.getDistance(), Math.sqrt(2) => check target name (edge or Math)
                     Java.AmbiguousName n = (Java.AmbiguousName) mi.target.toRvalue();
-                    if (n.identifiers.length == 2 && isValidIdentifier(n.identifiers[0])) return true;
+                    if (n.identifiers.length == 2) {
+                        if (allowedMethodParents.contains(n.identifiers[0])) {
+                            // edge.getDistance(), Math.sqrt(x) => check target name i.e. edge or Math
+                            if (mi.arguments.length == 0) {
+                                result.guessedVariables.add(n.identifiers[0]); // return "edge"
+                                return true;
+                            } else if (mi.arguments.length == 1) {
+                                // return "x" but verify before
+                                return mi.arguments[0].accept(this);
+                            }
+                        }
+                        // TODO unlike in ConditionalExpressionVisitor we don't support a call like road_class.ordinal()
+                        //  as this is currently unsupported in FindMinMax
+                    }
                 }
             }
-            invalidMessage = mi.methodName + " is an illegal method";
+            invalidMessage = mi.methodName + " is an illegal method in a value expression";
             return false;
         } else if (rv instanceof Java.ParenthesizedExpression) {
             return ((Java.ParenthesizedExpression) rv).value.accept(this);
@@ -104,7 +118,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return false;
     }
 
-    static ParseResult parse(String expression, NameValidator validator) {
+    static ParseResult parse(String expression, NameValidator variableValidator) {
         ParseResult result = new ParseResult();
         try {
             Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
@@ -112,7 +126,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             if (parser.peek().type == TokenType.END_OF_INPUT) {
                 result.guessedVariables = new LinkedHashSet<>();
                 result.operators = new LinkedHashSet<>();
-                ValueExpressionVisitor visitor = new ValueExpressionVisitor(result, validator);
+                ValueExpressionVisitor visitor = new ValueExpressionVisitor(result, variableValidator);
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;
             }

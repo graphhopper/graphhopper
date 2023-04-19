@@ -104,7 +104,7 @@ public class MiniGraphUI {
                         .setVehicle("car")
                         .setTurnCosts(true)
                         .setWeighting("fastest")
-        ));
+        )).putObject("import.osm.ignored_highways", "");
         ghConfig.setCHProfiles(Arrays.asList(
                 new CHProfile("profile")
         ));

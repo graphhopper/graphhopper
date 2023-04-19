@@ -31,6 +31,10 @@ public enum RoadAccess {
 
     public static final String KEY = "road_access";
 
+    public static EnumEncodedValue<RoadAccess> create() {
+        return new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
+    }
+
     private final String name;
 
     RoadAccess(String name) {

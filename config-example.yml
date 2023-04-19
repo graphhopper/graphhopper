@@ -23,9 +23,10 @@ graphhopper:
   # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
   #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
   #   in seconds, so for example it does not work with shortest weighting.
-  # - custom_model_file: when you specified "weighting: custom" you need to set a json file inside your custom_models.directory
-  #   or working directory that defines the custom_model. If you want an empty model you can also set "custom_model_file: empty".
-  #   You can also use th e`custom_model` field instead and specify your custom model in the profile directly.
+  # - custom_model_files: when you specified "weighting: custom" you need to set one or more json files which are searched in
+  #   custom_models.directory or the working directory that defines the custom_model. If you want an empty model you can
+  #   set "custom_model_files: []
+  #   You can also use the `custom_model` field instead and specify your custom model in the profile directly.
   #
   # To prevent long running routing queries you should usually enable either speed or hybrid mode for all the given
   # profiles (see below). Or at least limit the number of `routing.max_visited_nodes`.
@@ -36,17 +37,16 @@ graphhopper:
       weighting: custom
       custom_model:
         distance_influence: 70
-  #   turn_costs: true
-  #   u_turn_costs: 60
+#      turn_costs: true
+#      u_turn_costs: 60
 
-  # - name: bike
-      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
-  #   vehicle: bike
-  #   weighting: custom
-  #   # the custom model in bike2.json is defined to avoid hills
-  #   custom_model_file: bike2.json
+#    - name: bike
+#      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
+#      vehicle: bike
+#      weighting: custom
+#      custom_model_files: [bike.json, bike_elevation.json]
 
-  # specify the folder where to find the custom model files
+  # specify the folder where to find the custom model files - see this folder for more possibilities
   custom_models.directory: custom_models
 
   # Speed mode:
@@ -72,19 +72,20 @@ graphhopper:
 
   #### Vehicles ####
 
-  # The vehicle defines the base for how the routing of a profile behaves. It can be fine tuned using the options:
-  # name=mycustomvehicle,block_private=true,turn_costs=true,transportation_mode=MOTOR_VEHICLE (only for the roads vehicle)
-  # Still, it is recommended to avoid changing the vehicle settings and change the custom model instead.
-  # graph.vehicles: car|block_fords=true,turn_costs=true,bike|turn_costs=true
-  # Other standard vehicles: foot,bike,mtb,racingbike,motorcycle,wheelchair
+  # The vehicle defines the base for how the routing of a profile behaves. It can be adjusted with the turn_costs=true
+  # option or, only for the roads vehicle, there is the transportation_mode option:
+  # name=mycustomvehicle,turn_costs=true,transportation_mode=MOTOR_VEHICLE
+  # But you should prefer to configure the turn_costs via the profile configuration.
+  # Other standard vehicles: foot,bike,mtb,racingbike,wheelchair
 
 
   #### Encoded Values ####
 
   # Add additional information to every edge. Used for path details (#1548) and custom models (docs/core/custom-models.md)
   # Default values are: road_class,road_class_link,road_environment,max_speed,road_access
-  # More are: surface,smoothness,max_width,max_height,max_weight,hgv,max_axle_load,max_length,hazmat,hazmat_tunnel,hazmat_water,
-  #           lanes,osm_way_id,toll,track_type,mtb_rating,hike_rating,horse_rating
+  # More are: surface,smoothness,max_width,max_height,max_weight,max_weight_except,hgv,max_axle_load,max_length,
+  #           hazmat,hazmat_tunnel,hazmat_water,lanes,osm_way_id,toll,track_type,mtb_rating,hike_rating,horse_rating,
+  #           country,curvature,average_slope,max_slope
   # graph.encoded_values: surface,toll,track_type
 
   #### Speed, hybrid and flexible mode ####
@@ -162,6 +163,10 @@ graphhopper:
   # connection between two points within the given visited nodes. The default is Integer.MAX_VALUE. Useful for flexibility mode
   # routing.max_visited_nodes: 1000000
 
+  # The maximum time in milliseconds after which a routing request will be aborted. This has some routing algorithm
+  # specific caveats, but generally it should allow the prevention of long-running requests. The default is Long.MAX_VALUE
+  # routing.timeout_ms: 300000
+
   # Control how many active landmarks are picked per default, this can improve query performance
   # routing.lm.active_landmarks: 4
 
@@ -211,6 +216,8 @@ server:
     port: 8989
     # for security reasons bind to localhost
     bind_host: localhost
+    # increase GET request limit - not necessary if /maps UI is not used or used without custom models
+    max_request_header_size: 50k
   request_log:
       appenders: []
   admin_connectors:
@@ -220,14 +227,23 @@ server:
 # See https://www.dropwizard.io/en/latest/manual/core.html#logging
 logging:
   appenders:
-  - type: file
-    time_zone: UTC
-    current_log_filename: logs/graphhopper.log
-    log_format: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
-    archive: true
-    archived_log_filename_pattern: ./logs/graphhopper-%d.log.gz
-    archived_file_count: 30
-    never_block: true
-  - type: console
-    time_zone: UTC
-    log_format: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    - type: file
+      time_zone: UTC
+      current_log_filename: logs/graphhopper.log
+      log_format: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+      archive: true
+      archived_log_filename_pattern: ./logs/graphhopper-%d.log.gz
+      archived_file_count: 30
+      never_block: true
+    - type: console
+      time_zone: UTC
+      log_format: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  loggers:
+    "com.graphhopper.osm_warnings":
+      level: DEBUG
+      additive: false
+      appenders:
+        - type: file
+          currentLogFilename: logs/osm_warnings.log
+          archive: false
+          logFormat: '[%level] %msg%n'

@@ -9,6 +9,10 @@ public enum HazmatWater {
 
     public static final String KEY = "hazmat_water";
 
+    public static EnumEncodedValue<HazmatWater> create() {
+        return new EnumEncodedValue<>(KEY, HazmatWater.class);
+    }
+
     private final String name;
 
     HazmatWater(String name) {

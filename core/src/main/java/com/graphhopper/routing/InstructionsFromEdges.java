@@ -24,7 +24,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.*;
+import static com.graphhopper.search.KVStorage.KeyValue.*;
 
 /**
  * This class calculates instructions from the edges in a Path.
@@ -332,6 +332,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     }
 
     private int getTurn(EdgeIteratorState edge, int baseNode, int prevNode, int adjNode, String name, String destinationAndRef) {
+        if (edge.getEdge() == prevEdge.getEdge())
+            // this is the simplest turn to recognize, a plain u-turn.
+            return Instruction.U_TURN_UNKNOWN;
         GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
         double lat = point.getLat();
         double lon = point.getLon();

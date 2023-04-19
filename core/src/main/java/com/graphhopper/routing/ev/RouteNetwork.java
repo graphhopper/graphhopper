@@ -32,6 +32,10 @@ public enum RouteNetwork {
         return prefix + "_network";
     }
 
+    public static EnumEncodedValue<RouteNetwork> create(String name) {
+        return new EnumEncodedValue<>(name, RouteNetwork.class);
+    }
+
     private final String name;
 
     RouteNetwork(String name) {

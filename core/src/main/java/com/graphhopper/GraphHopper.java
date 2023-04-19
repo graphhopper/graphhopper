@@ -601,6 +601,7 @@ public class GraphHopper {
 
         // routing
         routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
+        routerConfig.setTimeoutMillis(ghConfig.getLong(Routing.INIT_TIMEOUT_MS, routerConfig.getTimeoutMillis()));
         routerConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routerConfig.getMaxRoundTripRetries()));
         routerConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routerConfig.getNonChMaxWaypointDistance()));
         routerConfig.setInstructionsEnabled(ghConfig.getBool(Routing.INIT_INSTRUCTIONS, routerConfig.isInstructionsEnabled()));
@@ -658,6 +659,7 @@ public class GraphHopper {
             osmParsers.addWayTagParser(new CurvatureCalculator(encodingManager.getDecimalEncodedValue(Curvature.KEY)));
 
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
+        Set<String> added = new HashSet<>();
         vehiclesByName.forEach((name, vehicleStr) -> {
             VehicleTagParsers vehicleTagParsers = vehicleTagParserFactory.createParsers(encodingManager, name,
                     new PMap(vehicleStr).putObject("date_range_parser", dateRangeParser));
@@ -666,14 +668,12 @@ public class GraphHopper {
             vehicleTagParsers.getTagParsers().forEach(tagParser -> {
                 if (tagParser == null) return;
                 if (tagParser instanceof BikeCommonAccessParser) {
-                    if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
+                    if (encodingManager.hasEncodedValue(BikeNetwork.KEY) && added.add(BikeNetwork.KEY))
                         osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
-                    if (encodingManager.hasEncodedValue(GetOffBike.KEY))
-                        osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY)));
-                    if (encodingManager.hasEncodedValue(Smoothness.KEY))
+                    if (encodingManager.hasEncodedValue(Smoothness.KEY) && added.add(Smoothness.KEY))
                         osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
                 } else if (tagParser instanceof FootAccessParser) {
-                    if (encodingManager.hasEncodedValue(FootNetwork.KEY))
+                    if (encodingManager.hasEncodedValue(FootNetwork.KEY) && added.add(FootNetwork.KEY))
                         osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
                 }
                 String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
@@ -689,6 +689,9 @@ public class GraphHopper {
             vehicleTagParsers.getTagParsers().forEach(tagParser -> {
                 if (tagParser == null) return;
                 osmParsers.addWayTagParser(tagParser);
+
+                if (tagParser instanceof BikeCommonAccessParser && encodingManager.hasEncodedValue(GetOffBike.KEY) && added.add(GetOffBike.KEY))
+                    osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY), ((BikeCommonAccessParser) tagParser).getAccessEnc()));
             });
         });
         return osmParsers;
@@ -795,7 +798,7 @@ public class GraphHopper {
                 ",edges:" + Constants.VERSION_EDGE +
                 ",geometry:" + Constants.VERSION_GEOMETRY +
                 ",location_index:" + Constants.VERSION_LOCATION_IDX +
-                ",string_index:" + Constants.VERSION_EDGEKV_STORAGE +
+                ",string_index:" + Constants.VERSION_KV_STORAGE +
                 ",nodesCH:" + Constants.VERSION_NODE_CH +
                 ",shortcuts:" + Constants.VERSION_SHORTCUT;
     }
@@ -919,7 +922,7 @@ public class GraphHopper {
         }
 
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(baseGraph.getBaseGraph(), encodingManager, osmParsers, osmReaderConfig).setFile(_getOSMFile()).
+        OSMReader reader = new OSMReader(baseGraph.getBaseGraph(), osmParsers, osmReaderConfig).setFile(_getOSMFile()).
                 setAreaIndex(areaIndex).
                 setElevationProvider(eleProvider).
                 setCountryRuleFactory(countryRuleFactory);
@@ -1035,7 +1038,6 @@ public class GraphHopper {
                     .setSegmentSize(defaultSegmentSize)
                     .build();
             baseGraph.loadExisting();
-            checkProfilesConsistency();
             String storedProfiles = properties.get("profiles");
             String configuredProfiles = getProfilesString();
             if (!storedProfiles.equals(configuredProfiles))
@@ -1043,6 +1045,7 @@ public class GraphHopper {
                         + "\nGraphhopper config: " + configuredProfiles
                         + "\nGraph: " + storedProfiles
                         + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
+            checkProfilesConsistency();
 
             postProcessing(false);
             directory.loadMMap();
@@ -1175,7 +1178,7 @@ public class GraphHopper {
         if (closeEarly) {
             boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> p instanceof CustomProfile);
             if (!includesCustomProfiles)
-                // when there are custom profiles we must not close way geometry or EdgeKVStorage, because
+                // when there are custom profiles we must not close way geometry or KVStorage, because
                 // they might be needed to evaluate the custom weightings for the following preparations
                 baseGraph.flushAndCloseGeometryAndNameStorage();
         }

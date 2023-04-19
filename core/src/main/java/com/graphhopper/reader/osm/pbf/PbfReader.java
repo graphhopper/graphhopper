@@ -1,6 +1,8 @@
 // This software is released into the Public Domain.  See copying.txt for details.
 package com.graphhopper.reader.osm.pbf;
 
+import com.graphhopper.reader.osm.SkipOptions;
+
 import java.io.DataInputStream;
 import java.io.InputStream;
 import java.util.concurrent.ExecutorService;
@@ -14,9 +16,10 @@ import java.util.concurrent.Executors;
  */
 public class PbfReader implements Runnable {
     private Throwable throwable;
-    private InputStream inputStream;
-    private Sink sink;
-    private int workers;
+    private final InputStream inputStream;
+    private final Sink sink;
+    private final int workers;
+    private final SkipOptions skipOptions;
 
     /**
      * Creates a new instance.
@@ -25,10 +28,11 @@ public class PbfReader implements Runnable {
      * @param in      The file to read.
      * @param workers The number of worker threads for decoding PBF blocks.
      */
-    public PbfReader(InputStream in, Sink sink, int workers) {
+    public PbfReader(InputStream in, Sink sink, int workers, SkipOptions skipOptions) {
         this.inputStream = in;
         this.sink = sink;
         this.workers = workers;
+        this.skipOptions = skipOptions;
     }
 
     @Override
@@ -44,7 +48,7 @@ public class PbfReader implements Runnable {
             // immediately ready for processing when a worker thread completes.
             // The main thread is responsible for splitting blobs from the
             // request stream, and sending decoded entities to the sink.
-            PbfDecoder pbfDecoder = new PbfDecoder(streamSplitter, executorService, workers + 1, sink);
+            PbfDecoder pbfDecoder = new PbfDecoder(streamSplitter, executorService, workers + 1, sink, skipOptions);
             pbfDecoder.run();
 
         } catch (Throwable t) {

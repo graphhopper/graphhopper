@@ -24,7 +24,6 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.routing.util.VehicleTagParsers;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -58,14 +57,14 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "residential");
         osmWay.setTag("tunnel", "yes");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 18, osmWay);
+        assertPriorityAndSpeed(SLIGHT_AVOID, 18, osmWay);
 
         osmWay.setTag("highway", "secondary");
         osmWay.setTag("tunnel", "yes");
-        assertPriorityAndSpeed(UNCHANGED.getValue(), 20, osmWay);
+        assertPriorityAndSpeed(UNCHANGED, 20, osmWay);
 
         osmWay.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(PREFER.getValue(), 20, osmWay);
+        assertPriorityAndSpeed(PREFER, 20, osmWay);
     }
 
     @Test
@@ -73,10 +72,10 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testService() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 12, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, 12, way);
 
         way.setTag("service", "parking_aisle");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 4, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, 4, way);
     }
 
     @Test
@@ -100,8 +99,9 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Test
     public void testGetSpeed() {
-        IntsRef intsRef = encodingManager.createEdgeFlags();
-        avgSpeedEnc.setDecimal(false, intsRef, 10);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        int edgeId = 0;
+        avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, 10);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade3");
@@ -179,34 +179,34 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(AVOID_MORE.getValue(), 2, osmWay, osmRel);
+        assertPriorityAndSpeed(AVOID_MORE, 2, osmWay, osmRel);
         // relation code is OUTSTANDING NICE but as unpaved, the speed is still PUSHING_SECTION_SPEED/2
         osmRel.setTag("network", "icn");
-        assertPriorityAndSpeed(AVOID_MORE.getValue(), 2, osmWay, osmRel);
+        assertPriorityAndSpeed(AVOID_MORE, 2, osmWay, osmRel);
 
         // Now we assume bicycle=yes, anyhow still unpaved
         osmWay.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(AVOID_MORE.getValue(), 2, osmWay, osmRel);
+        assertPriorityAndSpeed(AVOID_MORE, 2, osmWay, osmRel);
 
         // Now we assume bicycle=yes, and paved
         osmWay.setTag("tracktype", "grade1");
-        assertPriorityAndSpeed(PREFER.getValue(), 20, osmWay, osmRel);
+        assertPriorityAndSpeed(PREFER, 20, osmWay, osmRel);
 
         // Now we assume bicycle=yes, and unpaved as part of a cycle relation
         osmWay.setTag("tracktype", "grade2");
         osmWay.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(AVOID_MORE.getValue(), 10, osmWay, osmRel);
+        assertPriorityAndSpeed(AVOID_MORE, 10, osmWay, osmRel);
 
         // Now we assume bicycle=yes, and unpaved not part of a cycle relation
         osmWay.clearTags();
         osmWay.setTag("highway", "track");
         osmWay.setTag("tracktype", "grade3");
-        assertPriorityAndSpeed(AVOID_MORE.getValue(), PUSHING_SECTION_SPEED, osmWay);
+        assertPriorityAndSpeed(AVOID_MORE, PUSHING_SECTION_SPEED, osmWay);
 
         // Now we assume bicycle=yes, and tracktype = null
         osmWay.clearTags();
         osmWay.setTag("highway", "track");
-        assertPriorityAndSpeed(AVOID_MORE.getValue(), 2, osmWay);
+        assertPriorityAndSpeed(AVOID_MORE, 2, osmWay);
     }
 
     @Test
@@ -218,8 +218,8 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         DecimalEncodedValue priorityEnc = VehiclePriority.create("racingbike", 4, PriorityCode.getValue(1), false);
         EncodingManager encodingManager = EncodingManager.start()
                 .add(accessEnc).add(speedEnc).add(priorityEnc)
-                .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
-                .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
+                .add(RouteNetwork.create(BikeNetwork.KEY))
+                .add(Smoothness.create())
                 .build();
         List<TagParser> parsers = Arrays.asList(
                 new RacingBikeAverageSpeedParser(encodingManager, new PMap()),
@@ -228,56 +228,57 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
         osmWay.setTag("maxspeed", "50");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER.getValue(), 20, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER, 20, osmWay);
 
         osmWay.setTag("maxspeed", "60");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER.getValue(), 20, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER, 20, osmWay);
 
         osmWay.setTag("maxspeed", "80");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER.getValue(), 20, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, PREFER, 20, osmWay);
 
         osmWay.setTag("maxspeed", "90");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED.getValue(), 20, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, 20, osmWay);
 
         osmWay.setTag("maxspeed", "120");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED.getValue(), 20, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, 20, osmWay);
 
         osmWay.setTag("highway", "motorway");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, AVOID.getValue(), 18, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, REACH_DESTINATION, 18, osmWay);
 
         osmWay.setTag("tunnel", "yes");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD.getValue(), 18, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, REACH_DESTINATION, 18, osmWay);
 
         osmWay.clearTags();
         osmWay.setTag("highway", "motorway");
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("maxspeed", "80");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD.getValue(), 18, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, REACH_DESTINATION, 18, osmWay);
 
         osmWay.clearTags();
         osmWay.setTag("highway", "motorway");
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("maxspeed", "120");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD.getValue(), 18, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, REACH_DESTINATION, 18, osmWay);
 
         osmWay.clearTags();
         osmWay.setTag("highway", "notdefined");
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("maxspeed", "120");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD.getValue(), PUSHING_SECTION_SPEED, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD, PUSHING_SECTION_SPEED, osmWay);
 
         osmWay.clearTags();
         osmWay.setTag("highway", "notdefined");
         osmWay.setTag("maxspeed", "50");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED.getValue(), PUSHING_SECTION_SPEED, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, PUSHING_SECTION_SPEED, osmWay);
     }
 
     private void assertPriorityAndSpeed(EncodingManager encodingManager, DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc,
-                                        List<TagParser> parsers, int expectedPrio, double expectedSpeed, ReaderWay way) {
-        IntsRef edgeFlags = encodingManager.createEdgeFlags();
-        for (TagParser p : parsers) p.handleWayTags(edgeFlags, way, null);
-        assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeFlags), 0.01);
-        assertEquals(expectedSpeed, speedEnc.getDecimal(false, edgeFlags), 0.1);
+                                        List<TagParser> parsers, PriorityCode expectedPrio, double expectedSpeed, ReaderWay way) {
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
+        int edgeId = 0;
+        for (TagParser p : parsers) p.handleWayTags(edgeId, edgeIntAccess, way, null);
+        assertEquals(PriorityCode.getValue(expectedPrio.getValue()), priorityEnc.getDecimal(false, edgeId, edgeIntAccess), 0.01);
+        assertEquals(expectedSpeed, speedEnc.getDecimal(false, edgeId, edgeIntAccess), 0.1);
     }
 
     @Test
@@ -285,9 +286,9 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "tertiary");
         way.setTag("class:bicycle:roadcycling", "3");
-        assertPriority(BEST.getValue(), way);
+        assertPriority(BEST, way);
 
         way.setTag("class:bicycle", "-2");
-        assertPriority(BEST.getValue(), way);
+        assertPriority(BEST, way);
     }
 }

@@ -1,10 +1,11 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.Smoothness;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
 import java.util.HashMap;
@@ -136,27 +137,27 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-                avgSpeedEnc.setDecimal(false, edgeFlags, ferrySpeed);
+                avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, ferrySpeed);
                 if (avgSpeedEnc.isStoreTwoDirections())
-                    avgSpeedEnc.setDecimal(true, edgeFlags, ferrySpeed);
+                    avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, ferrySpeed);
             }
             if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
                 return;
         }
 
         double speed = getSpeed(way);
-        Smoothness smoothness = smoothnessEnc.getEnum(false, edgeFlags);
+        Smoothness smoothness = smoothnessEnc.getEnum(false, edgeId, edgeIntAccess);
         speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
         double speedFwd = applyMaxSpeed(way, speed, false);
-        avgSpeedEnc.setDecimal(false, edgeFlags, speedFwd);
+        avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, speedFwd);
         if (avgSpeedEnc.isStoreTwoDirections()) {
-            speed = applyMaxSpeed(way, speed, true);
-            avgSpeedEnc.setDecimal(true, edgeFlags, speed);
+            double bwdSpeed = applyMaxSpeed(way, speed, true);
+            avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, bwdSpeed);
         }
     }
 
@@ -167,7 +168,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
 
         if (way.hasTag("railway", "platform"))
             highwaySpeed = PUSHING_SECTION_SPEED;
-        // Under certain conditions we need to increase the speed of pushing sections to the speed of a "highway=cycleway"
+            // Under certain conditions we need to increase the speed of pushing sections to the speed of a "highway=cycleway"
         else if (way.hasTag("highway", pushingSectionsHighways)
                 && ((way.hasTag("foot", "yes") && way.hasTag("segregated", "yes"))
                 || (way.hasTag("bicycle", intendedValues))))
@@ -180,12 +181,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
             if (surfaceSpeed != null) {
                 speed = surfaceSpeed;
                 // boost handling for good surfaces but avoid boosting if pushing section
-                if (highwaySpeed != null && surfaceSpeed > highwaySpeed) {
-                    if (pushingSectionsHighways.contains(highwayTag))
-                        speed = highwaySpeed;
-                    else
-                        speed = surfaceSpeed;
-                }
+                if (highwaySpeed != null && surfaceSpeed > highwaySpeed && pushingSectionsHighways.contains(highwayTag))
+                    speed = highwaySpeed;
             }
         } else {
             String tt = way.getTag("tracktype");

@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.storage.IntsRef;
 
@@ -35,7 +36,7 @@ public class OSMHikeRatingParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         String scale = readerWay.getTag("sac_scale");
         int rating = 0;
         if (scale != null) {
@@ -47,6 +48,6 @@ public class OSMHikeRatingParser implements TagParser {
             else if (scale.equals("difficult_alpine_hiking")) rating = 6;
         }
         if (rating != 0)
-            sacScaleEnc.setInt(false, edgeFlags, rating);
+            sacScaleEnc.setInt(false, edgeId, edgeIntAccess, rating);
     }
 }

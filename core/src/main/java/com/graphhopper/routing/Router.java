@@ -56,18 +56,18 @@ import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
 import static com.graphhopper.util.Parameters.Routing.*;
 
 public class Router {
-    private final BaseGraph graph;
-    private final EncodingManager encodingManager;
-    private final LocationIndex locationIndex;
-    private final Map<String, Profile> profilesByName;
-    private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
-    private final TranslationMap translationMap;
-    private final RouterConfig routerConfig;
-    private final WeightingFactory weightingFactory;
-    private final Map<String, RoutingCHGraph> chGraphs;
-    private final Map<String, LandmarkStorage> landmarks;
-    private final boolean chEnabled;
-    private final boolean lmEnabled;
+    protected final BaseGraph graph;
+    protected final EncodingManager encodingManager;
+    protected final LocationIndex locationIndex;
+    protected final Map<String, Profile> profilesByName;
+    protected final PathDetailsBuilderFactory pathDetailsBuilderFactory;
+    protected final TranslationMap translationMap;
+    protected final RouterConfig routerConfig;
+    protected final WeightingFactory weightingFactory;
+    protected final Map<String, RoutingCHGraph> chGraphs;
+    protected final Map<String, LandmarkStorage> landmarks;
+    protected final boolean chEnabled;
+    protected final boolean lmEnabled;
 
     public Router(BaseGraph graph, EncodingManager encodingManager, LocationIndex locationIndex,
                   Map<String, Profile> profilesByName, PathDetailsBuilderFactory pathDetailsBuilderFactory,
@@ -184,12 +184,29 @@ public class Router {
         final boolean disableCH = getDisableCH(request.getHints());
         final boolean disableLM = getDisableLM(request.getHints());
         if (chEnabled && !disableCH) {
-            return new CHSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
+            return createCHSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
         } else if (lmEnabled && !disableLM) {
-            return new LMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex, landmarks);
+            return createLMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex, landmarks);
         } else {
-            return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex);
+            return createFlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, graph, locationIndex);
         }
+    }
+
+    protected Solver createCHSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig,
+                                    EncodingManager encodingManager, Map<String, RoutingCHGraph> chGraphs) {
+        return new CHSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
+    }
+
+    protected Solver createLMSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig,
+                                    EncodingManager encodingManager, WeightingFactory weightingFactory, BaseGraph baseGraph,
+                                    LocationIndex locationIndex, Map<String, LandmarkStorage> landmarks) {
+        return new LMSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, baseGraph, locationIndex, landmarks);
+    }
+
+    protected Solver createFlexSolver(GHRequest request, Map<String, Profile> profilesByName, RouterConfig routerConfig,
+                                      EncodingManager encodingManager, WeightingFactory weightingFactory, BaseGraph baseGraph,
+                                      LocationIndex locationIndex) {
+        return new FlexSolver(request, profilesByName, routerConfig, encodingManager, weightingFactory, baseGraph, locationIndex);
     }
 
     protected GHResponse routeRoundTrip(GHRequest request, FlexSolver solver) {
@@ -409,6 +426,12 @@ public class Router {
         int getMaxVisitedNodes(PMap hints) {
             return hints.getInt(Parameters.Routing.MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes());
         }
+
+        long getTimeoutMillis(PMap hints) {
+            // we silently use the minimum between the requested timeout and the server-side limit
+            // see: https://github.com/graphhopper/graphhopper/pull/2795#discussion_r1168371343
+            return Math.min(routerConfig.getTimeoutMillis(), hints.getLong(TIMEOUT_MS, routerConfig.getTimeoutMillis()));
+        }
     }
 
     private static class CHSolver extends Solver {
@@ -451,6 +474,7 @@ public class Router {
             PMap opts = new PMap(request.getHints());
             opts.putObject(ALGORITHM, request.getAlgorithm());
             opts.putObject(MAX_VISITED_NODES, getMaxVisitedNodes(request.getHints()));
+            opts.putObject(TIMEOUT_MS, getTimeoutMillis(request.getHints()));
             return new CHPathCalculator(new CHRoutingAlgorithmFactory(getRoutingCHGraph(profile.getName()), queryGraph), opts);
         }
 
@@ -503,6 +527,7 @@ public class Router {
                     setAlgorithm(request.getAlgorithm()).
                     setTraversalMode(profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED).
                     setMaxVisitedNodes(getMaxVisitedNodes(request.getHints())).
+                    setTimeoutMillis(getTimeoutMillis(request.getHints())).
                     setHints(request.getHints());
 
             // use A* for round trips

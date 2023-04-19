@@ -705,7 +705,6 @@ public class GraphHopperOSMTest {
                     setStoreOnFlush(false).
                     setProfiles(
                             new Profile("car_profile").setVehicle("car").setWeighting("fastest"),
-                            new Profile("moto_profile").setVehicle("motorcycle").setWeighting("fastest"),
                             new Profile("mtb_profile").setVehicle("mtb").setWeighting("fastest"),
                             new Profile("bike_profile").setVehicle("racingbike").setWeighting("fastest"),
                             new Profile("foot_profile").setVehicle("foot").setWeighting("fastest")
@@ -715,7 +714,6 @@ public class GraphHopperOSMTest {
             hopper.getCHPreparationHandler()
                     .setCHProfiles(
                             new CHProfile("car_profile"),
-                            new CHProfile("moto_profile"),
                             new CHProfile("mtb_profile"),
                             new CHProfile("bike_profile"),
                             new CHProfile("foot_profile")
@@ -724,7 +722,7 @@ public class GraphHopperOSMTest {
 
             hopper.importOrLoad();
 
-            assertEquals(5, hopper.getCHGraphs().size());
+            assertEquals(4, hopper.getCHGraphs().size());
             for (Map.Entry<String, RoutingCHGraph> chGraph : hopper.getCHGraphs().entrySet()) {
                 String name = chGraph.getKey();
                 Integer shortcutCount = shortcutCountMap.get(name);
@@ -754,7 +752,6 @@ public class GraphHopperOSMTest {
                     setStoreOnFlush(false).
                     setProfiles(Arrays.asList(
                             new Profile("car_profile").setVehicle("car").setWeighting("fastest"),
-                            new Profile("moto_profile").setVehicle("motorcycle").setWeighting("fastest"),
                             new Profile("mtb_profile").setVehicle("mtb").setWeighting("fastest"),
                             new Profile("bike_profile").setVehicle("racingbike").setWeighting("fastest"),
                             new Profile("foot_profile").setVehicle("foot").setWeighting("fastest")
@@ -764,7 +761,6 @@ public class GraphHopperOSMTest {
             hopper.getLMPreparationHandler().
                     setLMProfiles(
                             new LMProfile("car_profile"),
-                            new LMProfile("moto_profile"),
                             new LMProfile("mtb_profile"),
                             new LMProfile("bike_profile"),
                             new LMProfile("foot_profile")
@@ -773,7 +769,7 @@ public class GraphHopperOSMTest {
 
             hopper.importOrLoad();
 
-            assertEquals(5, hopper.getLandmarks().size());
+            assertEquals(4, hopper.getLandmarks().size());
             for (Map.Entry<String, LandmarkStorage> landmarks : hopper.getLandmarks().entrySet()) {
                 String name = landmarks.getKey();
                 Integer landmarksCount = landmarkCount.get(name);
@@ -828,6 +824,16 @@ public class GraphHopperOSMTest {
                     new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3d)).setVehicle("car")
             ));
             hopper.importOrLoad();
+            hopper.close();
+        }
+        {
+            // problem: the vehicle was changed. this is not allowed.
+            GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
+                    new Profile("car").setVehicle("bike").setWeighting("fastest"),
+                    new CustomProfile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3d)).setVehicle("car")
+            ));
+            IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
+            assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
             hopper.close();
         }
         {

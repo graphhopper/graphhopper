@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
     static final String IN_AREA_PREFIX = "in_";
-    private static final Set<String> allowedNamesInCondition = new HashSet<>(Arrays.asList("edge", "Math"));
+    static final String BACKWARD_PREFIX = "backward_";
     private static final boolean JANINO_DEBUG = Boolean.getBoolean(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
     private static final String SCRIPT_FILE_DIR = System.getProperty(Scanner.SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR, "./src/main/java/com/graphhopper/routing/weighting/custom");
 
@@ -212,21 +212,27 @@ public class CustomModelParser {
         return priorityStatements;
     }
 
-    static boolean isValidVariableName(String name) {
-        return name.startsWith(IN_AREA_PREFIX) || allowedNamesInCondition.contains(name);
-    }
-
     /**
      * For the methods getSpeed and getPriority we declare variables that contain the encoded value of the current edge
      * or if an area contains the current edge.
      */
-    private static String getVariableDeclaration(EncodedValueLookup lookup, String arg) {
+    private static String getVariableDeclaration(EncodedValueLookup lookup, final String arg) {
         if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             return getReturnType(enc) + " " + arg + " = reverse ? " +
                     "edge.getReverse((" + getInterface(enc) + ") this." + arg + "_enc) : " +
                     "edge.get((" + getInterface(enc) + ") this." + arg + "_enc);\n";
-        } else if (isValidVariableName(arg)) {
+        } else if (arg.startsWith(BACKWARD_PREFIX)) {
+            final String argSubstr = arg.substring(BACKWARD_PREFIX.length());
+            if (lookup.hasEncodedValue(argSubstr)) {
+                EncodedValue enc = lookup.getEncodedValue(argSubstr, EncodedValue.class);
+                return getReturnType(enc) + " " + arg + " = reverse ? " +
+                        "edge.get((" + getInterface(enc) + ") this." + argSubstr + "_enc) : " +
+                        "edge.getReverse((" + getInterface(enc) + ") this." + argSubstr + "_enc);\n";
+            } else {
+                throw new IllegalArgumentException("Not supported for backward: " + argSubstr);
+            }
+        } else if (arg.startsWith(IN_AREA_PREFIX)) {
             return "";
         } else {
             throw new IllegalArgumentException("Not supported " + arg);
@@ -271,13 +277,16 @@ public class CustomModelParser {
 
         final StringBuilder initSourceCode = new StringBuilder("this.avg_speed_enc = avgSpeedEnc;\n");
         initSourceCode.append("this.priority_enc = priorityEnc;\n");
-        Set<String> set = new HashSet<>(priorityVariables);
-        set.addAll(speedVariables);
+        Set<String> set = new HashSet<>();
+        for (String prioVar : priorityVariables)
+            set.add(prioVar.startsWith(BACKWARD_PREFIX) ? prioVar.substring(BACKWARD_PREFIX.length()) : prioVar);
+        for (String speedVar : speedVariables)
+            set.add(speedVar.startsWith(BACKWARD_PREFIX) ? speedVar.substring(BACKWARD_PREFIX.length()) : speedVar);
+
         for (String arg : set) {
             if (lookup.hasEncodedValue(arg)) {
                 EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
                 classSourceCode.append("protected " + getInterface(enc) + " " + arg + "_enc;\n");
-                initSourceCode.append("if (lookup.hasEncodedValue(\"" + arg + "\")) ");
                 initSourceCode.append("this." + arg + "_enc = (" + getInterface(enc)
                         + ") lookup.getEncodedValue(\"" + arg + "\", EncodedValue.class);\n");
             } else if (arg.startsWith(IN_AREA_PREFIX)) {
@@ -307,7 +316,7 @@ public class CustomModelParser {
                 initSourceCode.append("JsonFeature feature_" + id + " = (JsonFeature) areas.get(\"" + id + "\");\n");
                 initSourceCode.append("this." + arg + " = new Polygon(new PreparedPolygon((Polygonal) feature_" + id + ".getGeometry()));\n");
             } else {
-                if (!isValidVariableName(arg))
+                if (!arg.startsWith(IN_AREA_PREFIX))
                     throw new IllegalArgumentException("Variable not supported: " + arg);
             }
         }
@@ -355,16 +364,17 @@ public class CustomModelParser {
      */
     private static List<Java.BlockStatement> verifyExpressions(StringBuilder expressions, String info, Set<String> createObjects,
                                                                List<Statement> list, EncodedValueLookup lookup) throws Exception {
-        // allow variables, all encoded values, constants
+        // allow variables, all encoded values, constants and special variables like in_xyarea or backward_car_access
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
-                || name.toUpperCase(Locale.ROOT).equals(name) || isValidVariableName(name);
+                || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX)
+                || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()));
 
-        parseExpressions(expressions, nameInConditionValidator, lookup, info, createObjects, list);
+        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list);
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }
 
-    static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator, EncodedValueLookup lookup,
+    static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
                                  String exceptionInfo, Set<String> createObjects, List<Statement> list) {
 
         for (Statement statement : list) {
@@ -375,7 +385,7 @@ public class CustomModelParser {
 
                 expressions.append("else {").append(statement.getOperation().build(statement.getValue())).append("; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator, lookup);
+                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator);
                 if (!parseResult.ok)
                     throw new IllegalArgumentException(exceptionInfo + " invalid condition \"" + statement.getCondition() + "\"" +
                             (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));

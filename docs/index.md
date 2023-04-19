@@ -79,8 +79,10 @@ See the necessary changes for modern iOS and GraphHopper 1.0 in [this pull reque
 
 #### Windows
 
-Install the Windows Subsystem for Linux (WSL) or cygwin and follow the
-[normal installation steps](../README.md#installation).
+Install the Windows Subsystem for Linux (WSL) or cygwin and follow the [normal installation steps](../README.md#installation).
+
+When using Powershell or `cmd` the easiest way is to download all files manually (see the `wget` parameters) and then run the `java`
+command but replace the wildcard (`-jar graphhopper*.jar`) with the exact jar file.
 
 #### Eclipse
 
