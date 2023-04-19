@@ -18,7 +18,7 @@ public class EdgeElevationSmoothingMovingAverageTest {
         PointList pl = new PointList(2, true);
         pl.add(0, 0, -1);
         pl.add(1, 1, 100);
-        EdgeElevationSmoothing.smoothMovingAverage(pl, 150.0);
+        EdgeElevationSmoothingMovingAverage.smooth(pl, 150.0);
         assertEquals(2, pl.size());
         assertEquals(-1.0, pl.getEle(0), 0.000001);
         assertEquals(100.0, pl.getEle(1), 0.000001);
@@ -30,7 +30,7 @@ public class EdgeElevationSmoothingMovingAverageTest {
         pl.add(0, 0, 1);
         pl.add(1, 1, 1);
         pl.add(2, 2, 1);
-        EdgeElevationSmoothing.smoothMovingAverage(pl, 150.0);
+        EdgeElevationSmoothingMovingAverage.smooth(pl, 150.0);
         assertEquals(3, pl.size());
         assertEquals(1.0, pl.getEle(0), 0.000001);
         assertEquals(1.0, pl.getEle(1), 0.000001);
@@ -44,7 +44,7 @@ public class EdgeElevationSmoothingMovingAverageTest {
         pl.add(47.3298073615309, 10.15798541322701, 100);
         pl.add(47.3316055451794, 10.158042110691866, 200);
 
-        EdgeElevationSmoothing.smoothMovingAverage(pl, 150.0);
+        EdgeElevationSmoothingMovingAverage.smooth(pl, 150.0);
 
         assertEquals(3, pl.size());
         assertEquals(0, pl.getEle(0), 0.000001);
@@ -59,7 +59,7 @@ public class EdgeElevationSmoothingMovingAverageTest {
         pl.add(47.33088752836167, 10.157333651129761, -50);
         pl.add(47.33091499107897, 10.157482223121235, -200);
 
-        EdgeElevationSmoothing.smoothMovingAverage(pl, 150.0);
+        EdgeElevationSmoothingMovingAverage.smooth(pl, 150.0);
 
         assertEquals(3, pl.size());
         assertEquals(-100, pl.getEle(0), 0.000001);
@@ -77,7 +77,7 @@ public class EdgeElevationSmoothingMovingAverageTest {
         pl.add(47.32935875031157, 10.159197557162912, 200);
         pl.add(47.330136877623886, 10.159850373485142, 300);
 
-        EdgeElevationSmoothing.smoothMovingAverage(pl, 150.0);
+        EdgeElevationSmoothingMovingAverage.smooth(pl, 150.0);
 
         assertEquals(5, pl.size());
         assertEquals(30, pl.getEle(0), 0.000001);
@@ -96,7 +96,7 @@ public class EdgeElevationSmoothingMovingAverageTest {
         pl.add(1.0, 1.0, 3.0);
         pl.add(2.0, 2.0, 4.0);
 
-        EdgeElevationSmoothing.smoothMovingAverage(pl, 150.0);
+        EdgeElevationSmoothingMovingAverage.smooth(pl, 150.0);
 
         assertEquals(5, pl.size());
         assertEquals(1.0, pl.getEle(0), 0.000001);
@@ -115,7 +115,7 @@ public class EdgeElevationSmoothingMovingAverageTest {
         pl.add(1.0, 1.0, 3.0);
         pl.add(2.0, 2.0, 4.0);
 
-        EdgeElevationSmoothing.smoothMovingAverage(pl, 150.0);
+        EdgeElevationSmoothingMovingAverage.smooth(pl, 150.0);
 
         assertEquals(5, pl.size());
         assertEquals(1.0, pl.getEle(0), 0.000001);
@@ -159,7 +159,7 @@ public class EdgeElevationSmoothingMovingAverageTest {
         pl.add(10.149504, 47.324455, 1248.6);
         pl.add(10.149392, 47.324333, 1248);
 
-        EdgeElevationSmoothing.smoothMovingAverage(pl, 150.0);
+        EdgeElevationSmoothingMovingAverage.smooth(pl, 150.0);
 
         double[] expectedElevations = {
                 1209.5, 1209.8259124400417, 1212.16778770315, 1212.4695940128302,

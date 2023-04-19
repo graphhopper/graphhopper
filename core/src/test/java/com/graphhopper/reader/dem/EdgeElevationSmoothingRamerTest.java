@@ -32,10 +32,10 @@ public class EdgeElevationSmoothingRamerTest {
         pl1.add(0, 0, 0);
         pl1.add(0.0005, 0.0005, 100);
         pl1.add(0.001, 0.001, 50);
-        EdgeElevationSmoothing.smoothRamer(pl1, 70);
+        EdgeElevationSmoothingRamer.smooth(pl1, 70);
         assertEquals(3, pl1.size());
         assertEquals(100, pl1.getEle(1), .1);
-        EdgeElevationSmoothing.smoothRamer(pl1, 75);
+        EdgeElevationSmoothingRamer.smooth(pl1, 75);
         assertEquals(3, pl1.size());
         assertEquals(25, pl1.getEle(1), .1);
     }
@@ -48,7 +48,7 @@ public class EdgeElevationSmoothingRamerTest {
         pl2.add(0.0016, 0.0015, 150);
         pl2.add(0.0017, 0.0015, 220);
         pl2.add(0.002, 0.002, 20);
-        EdgeElevationSmoothing.smoothRamer(pl2, 100);
+        EdgeElevationSmoothingRamer.smooth(pl2, 100);
         assertEquals(5, pl2.size());
         assertEquals(190, pl2.getEle(1), 1); // modify as too small in interval [0,4]
         assertEquals(210, pl2.getEle(2), 1); // modify as too small in interval [0,4]
@@ -61,7 +61,7 @@ public class EdgeElevationSmoothingRamerTest {
         pl2.add(60.03307, 20.82262, 5.35);
         pl2.add(60.03309, 20.82269, 5.42);
         pl2.add(60.03307, 20.82262, 5.35);
-        EdgeElevationSmoothing.smoothRamer(pl2, 10);
+        EdgeElevationSmoothingRamer.smooth(pl2, 10);
         assertEquals(3, pl2.size());
         assertEquals(5.35, pl2.getEle(0), 0.01);
         assertEquals(5.35, pl2.getEle(1), 0.01);
