@@ -1,7 +1,7 @@
 version: '{build}'
 skip_tags: true
 clone_depth: 10
-image: Visual Studio 2019
+image: Visual Studio 2022
 environment:
   MAVEN_OPTS: -Xmx1g
   JAVA_OPTS: -Xmx1g
@@ -9,6 +9,7 @@ environment:
 install:
   - java -version
   - mvn --version
+build: off
 branches:
   only:
     - master      
