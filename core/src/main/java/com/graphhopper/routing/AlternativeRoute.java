@@ -122,11 +122,6 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
         return weightInfluence * weight + shareInfluence * shareWeight + plateauInfluence * plateauWeight;
     }
 
-    @Override
-    public void setMaxVisitedNodes(int numberOfNodes) {
-        this.maxVisitedNodes = numberOfNodes;
-    }
-
     public List<AlternativeInfo> calcAlternatives(int from, int to) {
         Path bestPath = searchBest(from, to);
         return calcAlternatives(bestPath, maxPaths,
@@ -201,7 +196,7 @@ public class AlternativeRoute extends AStarBidirection implements RoutingAlgorit
         if (finishedFrom && finishedTo)
             return true;
 
-        if (isMaxVisitedNodesExceeded())
+        if (isMaxVisitedNodesExceeded() || isTimeoutExceeded())
             return true;
 
         // The following condition is necessary to avoid traversing the full graph if areas are disconnected

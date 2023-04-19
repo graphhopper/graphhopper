@@ -84,6 +84,7 @@ public class AStar extends AbstractRoutingAlgorithm implements EdgeToEdgeRouting
         this.fromOutEdge = fromOutEdge;
         this.toInEdge = toInEdge;
         checkAlreadyRun();
+        setupFinishTime();
         this.to = to;
         if (fromOutEdge == NO_EDGE || toInEdge == NO_EDGE)
             return extractPath();
@@ -106,7 +107,7 @@ public class AStar extends AbstractRoutingAlgorithm implements EdgeToEdgeRouting
             if (currEdge.isDeleted())
                 continue;
             visitedNodes++;
-            if (isMaxVisitedNodesExceeded() || finished())
+            if (isMaxVisitedNodesExceeded() || finished() || isTimeoutExceeded())
                 break;
 
             int currNode = currEdge.adjNode;

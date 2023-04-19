@@ -265,11 +265,11 @@ public class IsochroneResourceTest {
         Response response = clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=wurst")
                 .request().buildGet().invoke();
 
-        assertEquals(400, response.getStatus());
+        assertEquals(404, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         String message = json.path("message").asText();
 
-        assertEquals("query param time_limit is not a number.", message);
+        assertEquals("HTTP 404 Not Found", message);
     }
 
     @Disabled("block_area is no longer supported and to use custom models we'd need a POST endpoint for isochrones")

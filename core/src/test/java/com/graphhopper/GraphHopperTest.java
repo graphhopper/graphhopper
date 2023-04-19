@@ -71,6 +71,7 @@ import static com.graphhopper.util.GHUtility.createCircle;
 import static com.graphhopper.util.GHUtility.createRectangle;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Curbsides.*;
+import static com.graphhopper.util.Parameters.Routing.TIMEOUT_MS;
 import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
@@ -137,6 +138,12 @@ public class GraphHopperTest {
 
         assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
         assertEquals(43.7495432, res.getWaypoints().getLat(1), 1e-7);
+
+        // when we set a timeout no route is found, at least as long as it is negative
+        req.putHint(TIMEOUT_MS, -1);
+        rsp = hopper.route(req);
+        assertTrue(rsp.hasErrors());
+        assertTrue(rsp.getErrors().toString().contains("ConnectionNotFoundException"), rsp.getErrors().toString());
     }
 
     @Test
