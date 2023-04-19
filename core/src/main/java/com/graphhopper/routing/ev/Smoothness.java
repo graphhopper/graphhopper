@@ -32,6 +32,10 @@ public enum Smoothness {
 
     public static final String KEY = "smoothness";
 
+    public static EnumEncodedValue<Smoothness> create() {
+        return new EnumEncodedValue<>(KEY, Smoothness.class);
+    }
+
     private final String name;
 
     Smoothness(String name) {

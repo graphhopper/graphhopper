@@ -54,6 +54,7 @@ public class RouteResourceWithEleTest {
                 putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("graph.location", dir).
+                putObject("import.osm.ignored_highways", "").
                 setProfiles(Collections.singletonList(
                         new Profile("profile").setVehicle("car").setWeighting("fastest")
                 ));

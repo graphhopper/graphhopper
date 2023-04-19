@@ -32,6 +32,10 @@ public enum RoadClass {
 
     public static final String KEY = "road_class";
 
+    public static EnumEncodedValue<RoadClass> create() {
+        return new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
+    }
+
     private final String name;
 
     RoadClass(String name) {

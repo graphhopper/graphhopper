@@ -18,6 +18,8 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.IntsRefEdgeIntAccess;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.util.EdgeIterator;
 
@@ -45,8 +47,8 @@ public class TurnCostStorage {
     private static final int TC_NEXT = 12;
     private static final int BYTES_PER_ENTRY = 16;
 
-    private BaseGraph baseGraph;
-    private DataAccess turnCosts;
+    private final BaseGraph baseGraph;
+    private final DataAccess turnCosts;
     private int turnCostsCount;
 
     public TurnCostStorage(BaseGraph baseGraph, DataAccess turnCosts) {
@@ -92,7 +94,8 @@ public class TurnCostStorage {
      */
     public void set(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge, double cost) {
         IntsRef tcFlags = TurnCost.createFlags();
-        turnCostEnc.setDecimal(false, tcFlags, cost);
+        IntsRefEdgeIntAccess intAccess = new IntsRefEdgeIntAccess(tcFlags);
+        turnCostEnc.setDecimal(false, -1, intAccess, cost);
         merge(tcFlags, fromEdge, viaNode, toEdge);
     }
 
@@ -156,7 +159,8 @@ public class TurnCostStorage {
      */
     public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
         IntsRef flags = readFlags(fromEdge, viaNode, toEdge);
-        return turnCostEnc.getDecimal(false, flags);
+        IntsRefEdgeIntAccess intAccess = new IntsRefEdgeIntAccess(flags);
+        return turnCostEnc.getDecimal(false, -1, intAccess);
     }
 
     /**
@@ -240,6 +244,7 @@ public class TurnCostStorage {
         private int viaNode = -1;
         private int turnCostIndex = -1;
         private final IntsRef intsRef = TurnCost.createFlags();
+        private final EdgeIntAccess edgeIntAccess = new IntsRefEdgeIntAccess(intsRef);
 
         private long turnCostPtr() {
             return (long) turnCostIndex * BYTES_PER_ENTRY;
@@ -263,7 +268,7 @@ public class TurnCostStorage {
         @Override
         public double getCost(DecimalEncodedValue encodedValue) {
             intsRef.ints[0] = turnCosts.getInt(turnCostPtr() + TC_FLAGS);
-            return encodedValue.getDecimal(false, intsRef);
+            return encodedValue.getDecimal(false, -1, edgeIntAccess);
         }
 
         @Override

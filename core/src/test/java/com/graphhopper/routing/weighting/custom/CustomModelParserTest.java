@@ -24,6 +24,7 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.JsonFeatureCollection;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
@@ -32,7 +33,6 @@ import org.locationtech.jts.geom.GeometryFactory;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
@@ -56,7 +56,7 @@ class CustomModelParserTest {
         avgSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
         countryEnc = new StringEncodedValue("country", 10);
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avgSpeedEnc)
-                .add(countryEnc).add(MaxSpeed.create()).add(new EnumEncodedValue<>(Surface.KEY, Surface.class)).build();
+                .add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).build();
         graph = new BaseGraph.Builder(encodingManager).create();
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         maxSpeed = 140;
@@ -150,23 +150,6 @@ class CustomModelParserTest {
     }
 
     @Test
-    public void testString() {
-        EdgeIteratorState deu = graph.edge(0, 1).setDistance(10).
-                set(countryEnc, "DEU").set(avgSpeedEnc, 80).set(accessEnc, true, true);
-        EdgeIteratorState blup = graph.edge(1, 2).setDistance(10).
-                set(countryEnc, "blup").set(avgSpeedEnc, 70).set(accessEnc, true, true);
-
-        CustomModel customModel = new CustomModel();
-        customModel.addToPriority(If("country == \"DEU\"", MULTIPLY, "0.9"));
-        customModel.addToPriority(ElseIf("country == \"blup\"", MULTIPLY, "0.7"));
-        customModel.addToPriority(Else(MULTIPLY, "0.5"));
-        CustomWeighting.EdgeToDoubleMapping priorityMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
-                avgSpeedEnc, maxSpeed, null).getEdgeToPriorityMapping();
-        assertEquals(0.9, priorityMapping.get(deu, false), 0.01);
-        assertEquals(0.7, priorityMapping.get(blup, false), 0.01);
-    }
-
-    @Test
     void testIllegalOrder() {
         CustomModel customModel = new CustomModel();
         customModel.addToPriority(Else(MULTIPLY, "0.9"));
@@ -184,7 +167,7 @@ class CustomModelParserTest {
     @Test
     public void multipleAreas() {
         CustomModel customModel = new CustomModel();
-        Map<String, JsonFeature> areas = new HashMap<>();
+        JsonFeatureCollection areas = new JsonFeatureCollection();
         Coordinate[] area_1_coordinates = new Coordinate[]{
                 new Coordinate(48.019324184801185, 11.28021240234375),
                 new Coordinate(48.019324184801185, 11.53564453125),
@@ -199,12 +182,12 @@ class CustomModelParserTest {
                 new Coordinate(48.281365151571755, 11.53289794921875),
                 new Coordinate(48.15509285476017, 11.53289794921875),
         };
-        areas.put("area_1", new JsonFeature("area_1",
+        areas.getFeatures().add(new JsonFeature("area_1",
                 "Feature",
                 null,
                 new GeometryFactory().createPolygon(area_1_coordinates),
                 new HashMap<>()));
-        areas.put("area_2", new JsonFeature("area_2",
+        areas.getFeatures().add(new JsonFeature("area_2",
                 "Feature",
                 null,
                 new GeometryFactory().createPolygon(area_2_coordinates),
@@ -283,22 +266,38 @@ class CustomModelParserTest {
         // existing encoded value but not added
         IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
                 () -> parseExpressions(new StringBuilder(),
-                        validVariable, encodingManager, "[HERE]", new HashSet<>(),
+                        validVariable, "[HERE]", new HashSet<>(),
                         Arrays.asList(If("max_weight > 10", MULTIPLY, "0"))));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"max_weight > 10\": 'max_weight' not available"), ret.getMessage());
 
         // invalid variable or constant (NameValidator returns false)
         ret = assertThrows(IllegalArgumentException.class,
                 () -> parseExpressions(new StringBuilder(),
-                        validVariable, encodingManager, "[HERE]", new HashSet<>(),
+                        validVariable, "[HERE]", new HashSet<>(),
                         Arrays.asList(If("country == GERMANY", MULTIPLY, "0"))));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"country == GERMANY\": 'GERMANY' not available"), ret.getMessage());
 
         // not whitelisted method
         ret = assertThrows(IllegalArgumentException.class,
                 () -> parseExpressions(new StringBuilder(),
-                        validVariable, encodingManager, "[HERE]", new HashSet<>(),
+                        validVariable, "[HERE]", new HashSet<>(),
                         Arrays.asList(If("edge.fetchWayGeometry().size() > 2", MULTIPLY, "0"))));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"edge.fetchWayGeometry().size() > 2\": size is an illegal method"), ret.getMessage());
     }
+
+    @Test
+    void testBackwardFunction() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("backward_car_access != car_access", MULTIPLY, "0.5"));
+        CustomWeighting.EdgeToDoubleMapping priorityMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
+                avgSpeedEnc, maxSpeed, null).getEdgeToPriorityMapping();
+
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
+        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(accessEnc, true, false);
+        EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100).set(accessEnc, true, true);
+
+        assertEquals(0.5, priorityMapping.get(edge1, false), 1.e-6);
+        assertEquals(1.0, priorityMapping.get(edge2, false), 1.e-6);
+    }
+
 }

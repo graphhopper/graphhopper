@@ -2,6 +2,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalcEarth;
@@ -16,19 +17,18 @@ public class CurvatureCalculator implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         PointList pointList = way.getTag("point_list", null);
-        double edgeDistance = way.getTag("edge_distance", null);
-        if (pointList != null && !pointList.isEmpty()) {
+        Double edgeDistance = way.getTag("edge_distance", null);
+        if (pointList != null && edgeDistance != null && !pointList.isEmpty()) {
             double beeline = DistanceCalcEarth.DIST_EARTH.calcDist(pointList.getLat(0), pointList.getLon(0),
                     pointList.getLat(pointList.size() - 1), pointList.getLon(pointList.size() - 1));
             // For now keep the formula simple. Maybe later use quadratic value as it might improve the "resolution"
             double curvature = beeline / edgeDistance;
-            curvatureEnc.setDecimal(false, edgeFlags, Math.max(curvatureEnc.getMinStorableDecimal(), Math.min(curvatureEnc.getMaxStorableDecimal(),
+            curvatureEnc.setDecimal(false, edgeId, edgeIntAccess, Math.max(curvatureEnc.getMinStorableDecimal(), Math.min(curvatureEnc.getMaxStorableDecimal(),
                     curvature)));
         } else {
-            curvatureEnc.setDecimal(false, edgeFlags, 1.0);
+            curvatureEnc.setDecimal(false, edgeId, edgeIntAccess, 1.0);
         }
-        return edgeFlags;
     }
 }

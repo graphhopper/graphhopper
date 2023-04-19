@@ -24,28 +24,22 @@ import com.graphhopper.util.PMap;
 import static com.graphhopper.routing.util.VehicleEncodedValuesFactory.*;
 
 public class DefaultVehicleTagParserFactory implements VehicleTagParserFactory {
-    public VehicleTagParser createParser(EncodedValueLookup lookup, String name, PMap configuration) {
+    public VehicleTagParsers createParsers(EncodedValueLookup lookup, String name, PMap configuration) {
         if (name.equals(ROADS))
-            return new RoadsTagParser(lookup, configuration);
+            return VehicleTagParsers.roads(lookup, configuration);
         if (name.equals(CAR))
-            return new CarTagParser(lookup, configuration);
+            return VehicleTagParsers.car(lookup, configuration);
         if (name.equals(BIKE))
-            return new BikeTagParser(lookup, configuration);
-        if (name.equals(BIKE2))
-            return new Bike2WeightTagParser(lookup, configuration);
+            return VehicleTagParsers.bike(lookup, configuration);
         if (name.equals(RACINGBIKE))
-            return new RacingBikeTagParser(lookup, configuration);
+            return VehicleTagParsers.racingbike(lookup, configuration);
         if (name.equals(MOUNTAINBIKE))
-            return new MountainBikeTagParser(lookup, configuration);
+            return VehicleTagParsers.mtb(lookup, configuration);
         if (name.equals(FOOT))
-            return new FootTagParser(lookup, configuration);
-        if (name.equals(HIKE))
-            return new HikeTagParser(lookup, configuration);
-        if (name.equals(MOTORCYCLE))
-            return new MotorcycleTagParser(lookup, configuration);
+            return VehicleTagParsers.foot(lookup, configuration);
         if (name.equals(WHEELCHAIR))
-            return new WheelchairTagParser(lookup, configuration);
+            return VehicleTagParsers.wheelchair(lookup, configuration);
 
-        throw new IllegalArgumentException("Unknown name for vehicle tag parser: " + name);
+        throw new IllegalArgumentException("Unknown name for vehicle tag parsers: " + name);
     }
 }

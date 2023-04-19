@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>graphhopper-web-bundle</artifactId>
     <packaging>jar</packaging>
-    <version>7.0-SNAPSHOT</version>
+    <version>8.0-SNAPSHOT</version>
     <properties>
-        <graphhopper-maps.version>0.0.0-644f0dd5d37146024608d930f385d6cb0ab389d8</graphhopper-maps.version>
+        <graphhopper-maps.version>0.0.0-65144ede0dfbb1b0484ee3558e23d35a032204b7</graphhopper-maps.version>
     </properties>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
@@ -15,7 +15,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>7.0-SNAPSHOT</version>
+        <version>8.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -66,8 +66,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.wdtinc</groupId>
-            <artifactId>mapbox-vector-tile</artifactId>
+            <groupId>org.locationtech.jts</groupId>
+            <artifactId>jts-core</artifactId>
+            <version>1.19.0</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.jaxrs</groupId>

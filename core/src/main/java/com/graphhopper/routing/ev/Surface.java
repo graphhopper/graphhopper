@@ -19,6 +19,9 @@ package com.graphhopper.routing.ev;
 
 import com.graphhopper.util.Helper;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * This enum defines the road surface of an edge like unpaved or asphalt. If not tagged the value will be MISSING, which
  * the default and best surface value (as surface is currently often not tagged). All unknown surface tags will get
@@ -29,10 +32,29 @@ public enum Surface {
     MISSING("missing"),
     PAVED("paved"), ASPHALT("asphalt"), CONCRETE("concrete"), PAVING_STONES("paving_stones"), COBBLESTONE("cobblestone"),
     UNPAVED("unpaved"), COMPACTED("compacted"), FINE_GRAVEL("fine_gravel"), GRAVEL("gravel"),
-    GROUND("ground"), DIRT("dirt"), GRASS("grass"), SAND("sand"),
+    GROUND("ground"), DIRT("dirt"), GRASS("grass"), SAND("sand"), WOOD("wood"),
     OTHER("other");
 
     public static final String KEY = "surface";
+
+    private static final Map<String,Surface> SURFACE_MAP = new HashMap<>();
+    static {
+        for (Surface surface : values()) {
+            if (surface == MISSING || surface == OTHER)
+                continue;
+            SURFACE_MAP.put(surface.name, surface);
+        }
+        SURFACE_MAP.put("metal", PAVED);
+        SURFACE_MAP.put("sett", COBBLESTONE);
+        SURFACE_MAP.put("unhewn_cobblestone", COBBLESTONE);
+        SURFACE_MAP.put("earth", DIRT);
+        SURFACE_MAP.put("pebblestone", GRAVEL);
+        SURFACE_MAP.put("grass_paver", GRASS);
+    }
+
+    public static EnumEncodedValue<Surface> create() {
+        return new EnumEncodedValue<>(KEY, Surface.class);
+    }
 
     private final String name;
 
@@ -48,10 +70,12 @@ public enum Surface {
     public static Surface find(String name) {
         if (Helper.isEmpty(name))
             return MISSING;
-        try {
-            return Surface.valueOf(Helper.toUpperCase(name));
-        } catch (IllegalArgumentException ex) {
-            return OTHER;
+
+        int colonIndex = name.indexOf(":");
+        if (colonIndex != -1) {
+            name = name.substring(0, colonIndex);
         }
+
+        return SURFACE_MAP.getOrDefault(name, OTHER);
     }
 }

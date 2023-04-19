@@ -37,8 +37,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
+import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
+import static com.graphhopper.search.KVStorage.KeyValue.createKV;
 import static com.graphhopper.util.Parameters.Details.AVERAGE_SPEED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -114,12 +114,20 @@ public class PathSimplificationTest {
         Map<String, List<PathDetail>> details = PathDetailsFromEdges.calcDetails(p, carManager, weighting,
                 Arrays.asList(AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0, g);
 
+        PointList points = p.calcPoints();
+        PointList waypoints = new PointList(2, g.getNodeAccess().is3D());
+        waypoints.add(g.getNodeAccess(), 0);
+        waypoints.add(g.getNodeAccess(), 10);
+        List<Integer> waypointIndices = Arrays.asList(0, points.size() - 1);
+
         ResponsePath responsePath = new ResponsePath();
         responsePath.setInstructions(wayList);
         responsePath.addPathDetails(details);
-        responsePath.setPoints(p.calcPoints());
+        responsePath.setPoints(points);
+        responsePath.setWaypoints(waypoints);
+        responsePath.setWaypointIndices(waypointIndices);
 
-        int numberOfPoints = p.calcPoints().size();
+        int numberOfPoints = points.size();
 
         RamerDouglasPeucker ramerDouglasPeucker = new RamerDouglasPeucker();
         // Do not simplify anything
@@ -133,6 +141,8 @@ public class PathSimplificationTest {
         responsePath.setInstructions(wayList);
         responsePath.addPathDetails(details);
         responsePath.setPoints(p.calcPoints());
+        responsePath.setWaypoints(waypoints);
+        responsePath.setWaypointIndices(waypointIndices);
 
         ramerDouglasPeucker.setMaxDistance(100000000);
         PathSimplification.simplify(responsePath, ramerDouglasPeucker, true);
@@ -190,7 +200,7 @@ public class PathSimplificationTest {
     public void testMultiplePartitions() {
         // points are chosen such that DP will remove those marked with an x
         // got this data from running a request like this:
-        // http://localhost:8989/maps/?point=48.891273%2C9.325418&point=48.891005%2C9.322865&point=48.889877%2C9.32102&point=48.88975%2C9.31999&vehicle=car&weighting=fastest&elevation=true&debug=true&details=max_speed&details=street_name&
+        // http://localhost:8989/maps/?point=48.891273%2C9.325418&point=48.891005%2C9.322865&point=48.889877%2C9.32102&point=48.88975%2C9.31999&profile=car&weighting=fastest&elevation=true&debug=true&details=max_speed&details=street_name&
         PointList points = new PointList(20, true);
         points.add(48.89089, 9.32538, 270.0); // 0    -> 0
         points.add(48.89090, 9.32527, 269.0); // 1 x

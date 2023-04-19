@@ -302,8 +302,8 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         if (closestMatch.isValid()) {
-            closestMatch.setQueryDistance(DIST_PLANE.calcDenormalizedDist(closestMatch.getQueryDistance()));
             closestMatch.calcSnappedPoint(DIST_PLANE);
+            closestMatch.setQueryDistance(DIST_PLANE.calcDist(closestMatch.getSnappedPoint().lat, closestMatch.getSnappedPoint().lon, queryLat, queryLon));
         }
         return closestMatch;
     }

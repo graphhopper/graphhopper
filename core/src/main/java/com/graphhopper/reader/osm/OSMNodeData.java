@@ -18,22 +18,23 @@
 
 package com.graphhopper.reader.osm;
 
+import com.carrotsearch.hppc.LongScatterSet;
+import com.carrotsearch.hppc.LongSet;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint3D;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
 import java.util.function.IntUnaryOperator;
-
-import static java.util.Collections.emptyMap;
+import java.util.stream.Collectors;
 
 /**
  * This class stores OSM node data while reading an OSM file in {@link WaySegmentParser}. It is not trivial to do this
@@ -67,12 +68,13 @@ class OSMNodeData {
     private final PillarInfo pillarNodes;
     private final PointAccess towerNodes;
 
-    // this map stores an index for each OSM node we keep the node tags of. a value of -1 means there is no entry
-    // yet and a value of -2 means there was an entry but it was removed again
+    // this map stores an index for each OSM node we keep the node tags of. a value of -1 means there is no entry yet.
     private final LongIntMap nodeTagIndicesByOsmNodeIds;
 
     // stores node tags
-    private final List<Map<String, Object>> nodeTags;
+    private final KVStorage nodeKVStorage;
+    // collect all nodes that should be split and a barrier edge should be created between them.
+    private final LongSet nodesToBeSplit;
 
     private int nextTowerId = 0;
     private int nextPillarId = 0;
@@ -80,15 +82,16 @@ class OSMNodeData {
     private long nextArtificialOSMNodeId = -Long.MAX_VALUE;
 
     public OSMNodeData(PointAccess nodeAccess, Directory directory) {
-        // we use GHLongIntBTree, because it is based on a tree, not an array, so it can store as many entries as there
-        // are longs. this also makes it memory efficient, because there is no need to pre-allocate memory for empty
-        // entries.
+        // We use GHLongIntBTree, because it is based on a tree, not an array, so it can store as many entries as there
+        // are longs. This also makes it memory efficient, because there is no need to pre-allocate memory for empty
+        // entries, and it also avoids allocating a new array and copying into it when increasing the size.
         idsByOsmNodeIds = new GHLongIntBTree(200);
         towerNodes = nodeAccess;
         pillarNodes = new PillarInfo(towerNodes.is3D(), directory);
 
         nodeTagIndicesByOsmNodeIds = new GHLongIntBTree(200);
-        nodeTags = new ArrayList<>();
+        nodesToBeSplit = new LongScatterSet();
+        nodeKVStorage = new KVStorage(directory, false);
     }
 
     public boolean is3D() {
@@ -132,11 +135,15 @@ class OSMNodeData {
         return idsByOsmNodeIds.getSize();
     }
 
+    public long getTaggedNodeCount() {
+        return nodeTagIndicesByOsmNodeIds.getSize();
+    }
+
     /**
      * @return the number of nodes for which we store tags
      */
-    public long getTaggedNodeCount() {
-        return nodeTags.size();
+    public long getNodeTagCapacity() {
+        return nodeKVStorage.getCapacity();
     }
 
     /**
@@ -187,7 +194,7 @@ class OSMNodeData {
         if (idsByOsmNodeIds.put(newOsmId, INTERMEDIATE_NODE) != EMPTY_NODE)
             throw new IllegalStateException("Artificial osm node id already exists: " + newOsmId);
         int id = addPillarNode(newOsmId, point.getLat(), point.getLon(), point.getEle());
-        return new SegmentNode(newOsmId, id);
+        return new SegmentNode(newOsmId, id, node.tags);
     }
 
     int convertPillarToTowerNode(int id, long osmNodeId) {
@@ -241,11 +248,13 @@ class OSMNodeData {
 
     public void setTags(ReaderNode node) {
         int tagIndex = nodeTagIndicesByOsmNodeIds.get(node.getId());
-        if (tagIndex == -2)
-            throw new IllegalStateException("Cannot add tags after they were removed");
-        else if (tagIndex == -1) {
-            nodeTagIndicesByOsmNodeIds.put(node.getId(), nodeTags.size());
-            nodeTags.add(node.getTags());
+        if (tagIndex == -1) {
+            long pointer = nodeKVStorage.add(node.getTags().entrySet().stream().map(m -> new KVStorage.KeyValue(m.getKey(),
+                            m.getValue() instanceof String ? KVStorage.cutString((String) m.getValue()) : m.getValue())).
+                    collect(Collectors.toList()));
+            if (pointer > Integer.MAX_VALUE)
+                throw new IllegalStateException("Too many key value pairs are stored in node tags, was " + pointer);
+            nodeTagIndicesByOsmNodeIds.put(node.getId(), (int) pointer);
         } else {
             throw new IllegalStateException("Cannot add tags twice, duplicate node OSM ID: " + node.getId());
         }
@@ -255,16 +264,12 @@ class OSMNodeData {
         int tagIndex = nodeTagIndicesByOsmNodeIds.get(osmNodeId);
         if (tagIndex < 0)
             return Collections.emptyMap();
-        return nodeTags.get(tagIndex);
-    }
-
-    public void removeTags(long osmNodeId) {
-        int prev = nodeTagIndicesByOsmNodeIds.put(osmNodeId, -2);
-        nodeTags.set(prev, emptyMap());
+        return nodeKVStorage.getMap(tagIndex);
     }
 
     public void release() {
         pillarNodes.clear();
+        nodeKVStorage.clear();
     }
 
     public int towerNodeToId(int towerId) {
@@ -281,5 +286,19 @@ class OSMNodeData {
 
     public int idToPillarNode(int id) {
         return id - 3;
+    }
+
+    public boolean setSplitNode(long osmNodeId) {
+        return nodesToBeSplit.add(osmNodeId);
+    }
+
+    public void unsetSplitNode(long osmNodeId) {
+        int removed = nodesToBeSplit.removeAll(osmNodeId);
+        if (removed == 0)
+            throw new IllegalStateException("Node " + osmNodeId + " was not a split node");
+    }
+
+    public boolean isSplitNode(long osmNodeId) {
+        return nodesToBeSplit.contains(osmNodeId);
     }
 }

@@ -26,8 +26,6 @@ import com.conveyal.gtfs.model.Frequency;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.BaseGraph;
 import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +66,7 @@ public class RealtimeFeed {
         return new RealtimeFeed(Collections.emptyMap(), new IntHashSet(), new IntLongHashMap(), new IntLongHashMap(), Collections.emptyList());
     }
 
-    public static RealtimeFeed fromProtobuf(BaseGraph baseGraph, EncodingManager encodingManager, GtfsStorage staticGtfs, Map<String, Transfers> transfers, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
+    public static RealtimeFeed fromProtobuf(GtfsStorage staticGtfs, Map<String, Transfers> transfers, Map<String, GtfsRealtime.FeedMessage> feedMessages) {
         final IntHashSet blockedEdges = new IntHashSet();
         final IntLongHashMap delaysForBoardEdges = new IntLongHashMap();
         final IntLongHashMap delaysForAlightEdges = new IntLongHashMap();
@@ -95,7 +93,7 @@ public class RealtimeFeed {
             GTFSFeed feed = staticGtfs.getGtfsFeeds().get(feedKey);
             ZoneId timezone = ZoneId.of(feed.agency.values().stream().findFirst().get().agency_timezone);
             PtGraph ptGraphNodesAndEdges = staticGtfs.getPtGraph();
-            final GtfsReader gtfsReader = new GtfsReader(feedKey, baseGraph, encodingManager, ptGraphNodesAndEdges, overlayGraph, staticGtfs, null, transfers.get(feedKey), null);
+            final GtfsReader gtfsReader = new GtfsReader(feedKey, ptGraphNodesAndEdges, overlayGraph, staticGtfs, null, transfers.get(feedKey), null);
             Instant timestamp = Instant.ofEpochSecond(feedMessage.getHeader().getTimestamp());
             LocalDate dateToChange = timestamp.atZone(timezone).toLocalDate(); //FIXME
             BitSet validOnDay = new BitSet();
@@ -381,9 +379,9 @@ public class RealtimeFeed {
                 stopTimes.add(stopTime);
                 logger.trace("Number of stop times: {}", stopTimes.size());
             } else {
-                // http://localhost:3000/route?point=45.51043713898763%2C-122.68381118774415&point=45.522104713562825%2C-122.6455307006836&weighting=fastest&pt.earliest_departure_time=2018-08-24T16%3A56%3A17Z&arrive_by=false&pt.max_walk_distance_per_leg=1000&pt.limit_solutions=5&locale=en-US&vehicle=pt&elevation=false&use_miles=false&points_encoded=false&pt.profile=true
+                // http://localhost:3000/route?point=45.51043713898763%2C-122.68381118774415&point=45.522104713562825%2C-122.6455307006836&weighting=fastest&pt.earliest_departure_time=2018-08-24T16%3A56%3A17Z&arrive_by=false&pt.max_walk_distance_per_leg=1000&pt.limit_solutions=5&locale=en-US&profile=pt&elevation=false&use_miles=false&points_encoded=false&pt.profile=true
                 // long query:
-                // http://localhost:3000/route?point=45.518526513612244%2C-122.68612861633302&point=45.52908004573869%2C-122.6862144470215&weighting=fastest&pt.earliest_departure_time=2018-08-24T16%3A51%3A20Z&arrive_by=false&pt.max_walk_distance_per_leg=10000&pt.limit_solutions=4&locale=en-US&vehicle=pt&elevation=false&use_miles=false&points_encoded=false&pt.profile=true
+                // http://localhost:3000/route?point=45.518526513612244%2C-122.68612861633302&point=45.52908004573869%2C-122.6862144470215&weighting=fastest&pt.earliest_departure_time=2018-08-24T16%3A51%3A20Z&arrive_by=false&pt.max_walk_distance_per_leg=10000&pt.limit_solutions=4&locale=en-US&profile=pt&elevation=false&use_miles=false&points_encoded=false&pt.profile=true
                 throw new RuntimeException();
             }
         }

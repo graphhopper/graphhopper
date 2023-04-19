@@ -42,8 +42,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
+import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
+import static com.graphhopper.search.KVStorage.KeyValue.createKV;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -414,7 +414,7 @@ public class InstructionListTest {
 
         Weighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
                 priorityEnc, tmpEM, DefaultTurnCostProvider.NO_TURN_COST_PROVIDER,
-                new CustomModel().setDistanceInfluence(0));
+                new CustomModel().setDistanceInfluence(0d));
         Path p = new Dijkstra(g, weighting, tMode).calcPath(4, 3);
         assertTrue(p.isFound());
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);

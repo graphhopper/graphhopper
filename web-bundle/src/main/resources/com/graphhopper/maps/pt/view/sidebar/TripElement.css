@@ -1,0 +1,117 @@
+.tripElement {
+  display: flex;
+  flex-direction: row;
+  align-content: stretch;
+}
+
+.tripElementLeftColumn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 4.5rem;
+  padding-right: 1rem;
+}
+
+.tripElementContent {
+  display: flex;
+  flex-direction: row;
+  flex: 5;
+}
+
+.tripElementDetails {
+  margin-left: 1rem;
+}
+
+.legRowDescription {
+  margin: 1rem 0 1rem 0;
+}
+
+.legDescriptionIcon {
+  padding-top: 2px; /*better get fitting icons*/
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.tripDescriptionButton {
+  background-color: transparent;
+  width: 100%;
+  border: none;
+  font-family: inherit;
+  padding: 0;
+  margin: 0;
+  text-align: inherit;
+  font-size: inherit;
+  transition-duration: 0.2s;
+  cursor: pointer;
+}
+
+.line {
+  background-color: #015eaf;
+  flex: 1;
+  width: 4px;
+  position: relative;
+  top: 7px;
+}
+
+.waypointName {
+  font-weight: bold;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.waypointNameImpossible {
+  font-weight: bold;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-decoration: line-through;
+}
+
+.waypointCircle {
+  border-radius: 50%;
+  background-color: white;
+  border: 2px solid black;
+  height: 8px;
+  width: 8px;
+  top: 7px;
+  position: relative;
+}
+
+.stopOnLegCircle {
+  border-radius: 50%;
+  background-color: white;
+  border: 2px solid #015eaf;
+  height: 8px;
+  width: 8px;
+  top: 7px;
+  position: relative;
+}
+
+.stopOnLegImpossible {
+  text-decoration: line-through;
+}
+
+.tripElementDecoration {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 8px;
+  flex: 0 0 auto;
+}
+
+.delay {
+  color: rgb(249, 119, 119);
+}
+
+.negativeDelay {
+  color: #417900;
+}
+
+.arrivalTime {
+  font-size: 0.8rem;
+}
+
+.padding {
+  min-height: 1rem;
+}

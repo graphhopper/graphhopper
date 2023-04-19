@@ -27,13 +27,10 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.ev.VehicleAccess;
-import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;
@@ -66,10 +63,8 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
     public PtRouterFreeWalkImpl(GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
         this.config = config;
         this.weightingFactory = new DefaultWeightingFactory(baseGraph.getBaseGraph(), encodingManager);
-        this.accessEgressWeighting = new FastestWeighting(
-                encodingManager.getBooleanEncodedValue(VehicleAccess.key("foot")),
-                encodingManager.getDecimalEncodedValue(VehicleSpeed.key("foot"))
-        );
+        Profile accessEgressProfile = config.getProfiles().stream().filter(p -> p.getName().equals("foot")).findFirst().get();
+        this.accessEgressWeighting = weightingFactory.createWeighting(accessEgressProfile, new PMap(), false);
         this.translationMap = translationMap;
         this.baseGraph = baseGraph;
         this.encodingManager = encodingManager;
@@ -110,7 +105,7 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
         public PtRouter createWith(GtfsRealtime.FeedMessage realtimeFeed) {
             Map<String, GtfsRealtime.FeedMessage> realtimeFeeds = new HashMap<>();
             realtimeFeeds.put("gtfs_0", realtimeFeed);
-            return new PtRouterFreeWalkImpl(config, translationMap, baseGraph, encodingManager, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(baseGraph, encodingManager, gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
+            return new PtRouterFreeWalkImpl(config, translationMap, baseGraph, encodingManager, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(gtfsStorage, this.transfers, realtimeFeeds), new PathDetailsBuilderFactory());
         }
 
         public PtRouter createWithoutRealtimeFeed() {
@@ -171,16 +166,10 @@ public final class PtRouterFreeWalkImpl implements PtRouter {
             requestedPathDetails = request.getPathDetails();
             accessProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getAccessProfile())).findFirst().get();
             accessWeighting = weightingFactory.createWeighting(accessProfile, new PMap(), false);
-            accessSnapFilter = new DefaultSnapFilter(new FastestWeighting(
-                    encodingManager.getBooleanEncodedValue(VehicleAccess.key(accessProfile.getVehicle())),
-                    encodingManager.getDecimalEncodedValue(VehicleSpeed.key(accessProfile.getVehicle()))
-            ), encodingManager.getBooleanEncodedValue(Subnetwork.key(accessProfile.getVehicle())));
+            accessSnapFilter = new DefaultSnapFilter(accessWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(accessProfile.getVehicle())));
             egressProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getEgressProfile())).findFirst().get();
             egressWeighting = weightingFactory.createWeighting(egressProfile, new PMap(), false);
-            egressSnapFilter = new DefaultSnapFilter(new FastestWeighting(
-                    encodingManager.getBooleanEncodedValue(VehicleAccess.key(egressProfile.getVehicle())),
-                    encodingManager.getDecimalEncodedValue(VehicleSpeed.key(egressProfile.getVehicle()))
-            ), encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
+            egressSnapFilter = new DefaultSnapFilter(egressWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
         }
 
         GHResponse route() {

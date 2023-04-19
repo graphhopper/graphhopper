@@ -29,6 +29,7 @@ import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Coordinate;
@@ -42,7 +43,6 @@ import java.io.File;
 import java.util.Arrays;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
-import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -55,6 +55,7 @@ public class IsochroneResourceTest {
         config.getGraphHopperConfiguration().
                 putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
                         new Profile("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
@@ -199,18 +200,8 @@ public class IsochroneResourceTest {
 
     @Test
     public void profileWithLegacyParametersNotAllowed() {
-        assertNotAllowed("&profile=fast_car&weighting=fastest", "Since you are using the 'profile' parameter, do not use the 'weighting' parameter. You used 'weighting=fastest'");
-        assertNotAllowed("&profile=fast_car&vehicle=car", "Since you are using the 'profile' parameter, do not use the 'vehicle' parameter. You used 'vehicle=car'");
-    }
-
-    @Test
-    public void queryWithLegacyParameter() {
-        Response rsp = clientTarget(app, "/isochrone")
-                .queryParam("point", "42.508932,1.528516")
-                .queryParam("turn_costs", "false")
-                .queryParam("type", "geojson")
-                .request().buildGet().invoke();
-        assertEquals(200, rsp.getStatus());
+        assertNotAllowed("&profile=fast_car&weighting=fastest", "The 'weighting' parameter is no longer supported. You used 'weighting=fastest'");
+        assertNotAllowed("&vehicle=car", "profile parameter required");
     }
 
     @Test
@@ -281,6 +272,7 @@ public class IsochroneResourceTest {
         assertEquals("HTTP 404 Not Found", message);
     }
 
+    @Disabled("block_area is no longer supported and to use custom models we'd need a POST endpoint for isochrones")
     @Test
     public void requestWithBlockArea() {
         Response rsp = clientTarget(app, "/isochrone")
@@ -289,7 +281,7 @@ public class IsochroneResourceTest {
                 .queryParam("time_limit", 5 * 60)
                 .queryParam("buckets", 2)
                 .queryParam("type", "geojson")
-                .queryParam(BLOCK_AREA, "42.558067,1.589429,100")
+                .queryParam("block_area", "42.558067,1.589429,100")
                 .request().buildGet().invoke();
         JsonFeatureCollection featureCollection = rsp.readEntity(JsonFeatureCollection.class);
 

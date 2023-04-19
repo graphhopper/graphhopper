@@ -43,6 +43,7 @@ import org.locationtech.jts.geom.Envelope;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
 
@@ -139,20 +140,21 @@ public class MapMatching {
             }
 
             private Path calcOnePath(QueryGraph queryGraph, int fromNode, int toNode, int fromOutEdge, int toInEdge) {
+                Weighting queryGraphWeighting = queryGraph.wrapWeighting(weighting);
                 if (landmarks != null) {
-                    AStarBidirection aStarBidirection = new AStarBidirection(queryGraph, queryGraph.wrapWeighting(weighting), TraversalMode.EDGE_BASED) {
+                    AStarBidirection aStarBidirection = new AStarBidirection(queryGraph, queryGraphWeighting, TraversalMode.EDGE_BASED) {
                         @Override
                         protected void initCollections(int size) {
                             super.initCollections(50);
                         }
                     };
                     int activeLM = Math.min(8, landmarks.getLandmarkCount());
-                    LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, landmarks, activeLM);
+                    LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, queryGraphWeighting, landmarks, activeLM);
                     aStarBidirection.setApproximation(lmApproximator);
                     aStarBidirection.setMaxVisitedNodes(maxVisitedNodes);
                     return aStarBidirection.calcPath(fromNode, toNode, fromOutEdge, toInEdge);
                 } else {
-                    DijkstraBidirectionRef dijkstraBidirectionRef = new DijkstraBidirectionRef(queryGraph, queryGraph.wrapWeighting(weighting), TraversalMode.EDGE_BASED) {
+                    DijkstraBidirectionRef dijkstraBidirectionRef = new DijkstraBidirectionRef(queryGraph, queryGraphWeighting, TraversalMode.EDGE_BASED) {
                         @Override
                         protected void initCollections(int size) {
                             super.initCollections(50);
@@ -198,7 +200,7 @@ public class MapMatching {
         statistics.put("filteredObservations", filteredObservations.size());
 
         // Snap observations to links. Generates multiple candidate snaps per observation.
-        List<Collection<Snap>> snapsPerObservation = filteredObservations.stream()
+        List<List<Snap>> snapsPerObservation = filteredObservations.stream()
                 .map(o -> findCandidateSnaps(o.getPoint().lat, o.getPoint().lon))
                 .collect(Collectors.toList());
         statistics.put("snapsPerObservation", snapsPerObservation.stream().mapToInt(Collection::size).toArray());
@@ -214,6 +216,10 @@ public class MapMatching {
         // Compute the most likely sequence of map matching candidates:
         List<SequenceState<State, Observation, Path>> seq = computeViterbiSequence(timeSteps);
         statistics.put("transitionDistances", seq.stream().filter(s -> s.transitionDescriptor != null).mapToLong(s -> Math.round(s.transitionDescriptor.getDistance())).toArray());
+        statistics.put("visitedNodes", router.getVisitedNodes());
+        statistics.put("snapDistanceRanks", IntStream.range(0, seq.size()).map(i -> snapsPerObservation.get(i).indexOf(seq.get(i).state.getSnap())).toArray());
+        statistics.put("snapDistances", seq.stream().mapToDouble(s -> s.state.getSnap().getQueryDistance()).toArray());
+        statistics.put("maxSnapDistances", IntStream.range(0, seq.size()).mapToDouble(i -> snapsPerObservation.get(i).stream().mapToDouble(Snap::getQueryDistance).max().orElse(-1.0)).toArray());
 
         List<EdgeIteratorState> path = seq.stream().filter(s1 -> s1.transitionDescriptor != null).flatMap(s1 -> s1.transitionDescriptor.calcEdges().stream()).collect(Collectors.toList());
 
@@ -311,6 +317,7 @@ public class MapMatching {
                 }
             }
         });
+        snaps.sort(Comparator.comparingDouble(Snap::getQueryDistance));
         return snaps;
     }
 
@@ -319,7 +326,7 @@ public class MapMatching {
      * transition probabilities. Creates directed candidates for virtual nodes and undirected
      * candidates for real nodes.
      */
-    private List<ObservationWithCandidateStates> createTimeSteps(List<Observation> filteredObservations, List<Collection<Snap>> splitsPerObservation) {
+    private List<ObservationWithCandidateStates> createTimeSteps(List<Observation> filteredObservations, List<List<Snap>> splitsPerObservation) {
         if (splitsPerObservation.size() != filteredObservations.size()) {
             throw new IllegalArgumentException(
                     "filteredGPXEntries and queriesPerEntry must have same size.");
@@ -426,6 +433,13 @@ public class MapMatching {
                     }
                 }
             }
+        }
+        if (qe == null) {
+            throw new IllegalArgumentException("Sequence is broken for submitted track at initial time step.");
+        }
+        if (qe.timeStep != timeSteps.size() - 1) {
+            throw new IllegalArgumentException("Sequence is broken for submitted track at time step "
+                    + qe.timeStep + ". observation:" + qe.state.getEntry());
         }
         ArrayList<SequenceState<State, Observation, Path>> result = new ArrayList<>();
         while (qe != null) {
@@ -552,6 +566,10 @@ public class MapMatching {
         List<Path> calcPaths(QueryGraph queryGraph, int fromNode, int fromOutEdge, int[] toNodes, int[] toInEdges);
 
         Weighting getWeighting();
+
+        default long getVisitedNodes() {
+            return 0L;
+        }
     }
 
 }

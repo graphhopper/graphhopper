@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.storage.IntsRef;
 
@@ -33,16 +34,15 @@ public class OSMRoadClassParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         String roadClassTag = readerWay.getTag("highway");
         if (roadClassTag == null)
-            return edgeFlags;
+            return;
         RoadClass roadClass = RoadClass.find(roadClassTag);
         if (roadClass == OTHER && roadClassTag.endsWith("_link"))
             roadClass = RoadClass.find(roadClassTag.substring(0, roadClassTag.length() - 5));
 
         if (roadClass != OTHER)
-            roadClassEnc.setEnum(false, edgeFlags, roadClass);
-        return edgeFlags;
+            roadClassEnc.setEnum(false, edgeId, edgeIntAccess, roadClass);
     }
 }

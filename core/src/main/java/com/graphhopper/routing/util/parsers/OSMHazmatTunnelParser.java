@@ -3,6 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.HazmatTunnel;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.IntsRef;
 
 public class OSMHazmatTunnelParser implements TagParser {
@@ -24,23 +25,21 @@ public class OSMHazmatTunnelParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         if (readerWay.hasTag("hazmat:adr_tunnel_cat", TUNNEL_CATEGORY_NAMES)) {
             HazmatTunnel code = HazmatTunnel.valueOf(readerWay.getTag("hazmat:adr_tunnel_cat"));
-            hazTunnelEnc.setEnum(false, edgeFlags, code);
+            hazTunnelEnc.setEnum(false, edgeId, edgeIntAccess, code);
         } else if (readerWay.hasTag("hazmat:tunnel_cat", TUNNEL_CATEGORY_NAMES)) {
             HazmatTunnel code = HazmatTunnel.valueOf(readerWay.getTag("hazmat:tunnel_cat"));
-            hazTunnelEnc.setEnum(false, edgeFlags, code);
+            hazTunnelEnc.setEnum(false, edgeId, edgeIntAccess, code);
         } else if (readerWay.hasTag("tunnel", "yes")) {
             HazmatTunnel[] codes = HazmatTunnel.values();
             for (int i = codes.length - 1; i >= 0; i--) {
                 if (readerWay.hasTag("hazmat:" + codes[i].name(), "no")) {
-                    hazTunnelEnc.setEnum(false, edgeFlags, codes[i]);
+                    hazTunnelEnc.setEnum(false, edgeId, edgeIntAccess, codes[i]);
                     break;
                 }
             }
         }
-
-        return edgeFlags;
     }
 }

@@ -1,0 +1,81 @@
+<!--
+  ~  Licensed to GraphHopper GmbH under one or more contributor
+  ~  license agreements. See the NOTICE file distributed with this work for
+  ~  additional information regarding copyright ownership.
+  ~
+  ~  GraphHopper GmbH licenses this file to you under the Apache License,
+  ~  Version 2.0 (the "License"); you may not use this file except in
+  ~  compliance with the License. You may obtain a copy of the License at
+  ~
+  ~       http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~  Unless required by applicable law or agreed to in writing, software
+  ~  distributed under the License is distributed on an "AS IS" BASIS,
+  ~  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~  See the License for the specific language governing permissions and
+  ~  limitations under the License.
+  -->
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="author" content="Janek Laudan, Michael Zilske">
+    <style>
+        html,
+        body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <title>Graphhoper PT-Maps</title>
+</head>
+
+<body>
+</body>
+
+<!-- Required for loading React -- it (controversially) assumes that Node conventions are met, -->
+<!-- but then it works just fine, without bundling! -->
+<script>
+    process = {
+        env: {
+            NODE_ENV: 'development' // or production
+        }
+    }
+</script>
+
+<!-- Use Webjars for dependencies. They are just JS libraries packaged as JARs, managed by Maven. -->
+<script src="/webjars/react/16.10.2/umd/react.development.js"></script>
+<script src="/webjars/react-dom/16.10.2/umd/react-dom.development.js"></script>
+<script src='/webjars/mapbox-gl/1.13.0/dist/mapbox-gl.js'></script>
+<link href='/webjars/mapbox-gl/1.13.0/dist/mapbox-gl.css' rel='stylesheet'/>
+<script src="/webjars/momentjs/2.24.0/moment.js"></script>
+
+<link rel="stylesheet" href="view/App.css" />
+<link rel="stylesheet" href="view/map/Map.css" />
+<link rel="stylesheet" href="view/components/Inputs.css" />
+<link rel="stylesheet" href="view/components/SecondaryText.css" />
+<link rel="stylesheet" href="view/sidebar/Sidebar.css" />
+<link rel="stylesheet" href="view/sidebar/TripDisplay.css" />
+<link rel="stylesheet" href="view/sidebar/TripElement.css" />
+<link rel="stylesheet" href="view/sidebar/SearchInput.css" />
+<link rel="stylesheet" href="view/sidebar/Leg.css" />
+
+<!-- Yes, plain ES6. No bundling, no Webpack, no Babel. This is just a demo GUI, please -->
+<!-- use a browser that understands this.  -->
+<script type="module">
+    import App from "./view/App.js";
+    let root = document.createElement("div");
+    root.id = "root";
+    root.style.height = "100%";
+    document.body.appendChild(root);
+    ReactDOM.render(React.createElement(App), root);
+</script>
+
+</html>

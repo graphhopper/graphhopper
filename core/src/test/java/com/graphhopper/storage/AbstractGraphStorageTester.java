@@ -32,8 +32,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
+import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
+import static com.graphhopper.search.KVStorage.KeyValue.createKV;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -652,7 +652,7 @@ public abstract class AbstractGraphStorageTester {
     }
 
     @Test
-    public void testEdgeKVStorage() {
+    public void testKVStorage() {
         graph = createGHStorage();
         EdgeIteratorState iter1 = graph.edge(0, 1).setDistance(10).set(carAccessEnc, true, true);
         iter1.setKeyValues(createKV(STREET_NAME, "named street1"));

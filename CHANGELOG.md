@@ -1,13 +1,35 @@
-### 7.0 [not yet released]
+### 8.0 [not yet released]
 
+- routing requests can be configured to timeout after some time, see #2795
+- custom_model_file string changed to custom_model_files array, see #2787
+- renamed EdgeKVStorage to KVStorage as it is (temporarily) used for node tage too, see #2705
+- bike vehicles are now allowed to go in reverse direction of oneways, see custom_models/bike.json #196
+- prefer cycleways, bicycle_road and cyclestreet for bike routing, see #2784 and #2778
+- add support for further surfaces like pebblestones or concrete:lanes, see #2751
+
+### 7.0 [14 Mar 2023]
+
+- access node tags via List instead of Map: List<Map<String, Object>> nodeTags = way.getTag("node_tags", emptyList()), see #2705
+- remove StringEncodedValue support from custom model due to insufficient usage/testing
+- handle also node_tags in handleWayTags, when extending AbstractAccessParser call handleNodeTags, #2738
+- Format of 'areas' in CustomModel changed to 'FeatureCollection'. The old format is deprecated and will be removed in a later version, #2734
+- TagParser#handleWayTags no longer returns an IntsRef. We assume it never returned anything other than the input IntsRef.
+- there is no longer a default value for the distanceInfluence parameter in custom models sent via client-hc. Previously it was 70. Not setting it explicitly now means the server-side value will be used. getDistanceInfluence can now be null. Server-side profiles with custom weighting now use distance_influence: 0 by default (previously it was 70). see #2716
+- there is a new, required 'import.osm.ignored_highways' configuration option that must be used to not increase the graph size and decrease performance for motorized-only routing compared to previous versions, #2702
+- new osm_way_id encoded value, #2701
+- the parameters vehicle, weighting, edge_based and turn_costs are no longer supported, use the profile parameter instead
+- removed motorroad to road_class conversion, #2329
 - removed YAML support for custom models on the server-side. Only allow JSON with // comments.
-- Bike2WeightTagParser was removed. Use the bike vehicle with a custom model, see custom_models/bike2.json
-- Car4WDTagParser was removed. Use the roads vehicle with a custom model, see custom_models/car4wd.json
+- Bike2WeightTagParser was removed. Use the bike vehicle with a custom model, see custom_models/bike.json
 - CurvatureWeighting was removed. Use a custom model with 'curvature' instead, see custom_models/curvature.json (#2665)
-- internal keys for EdgeKVStorage changed to contain the street_ prefix like the path details too. Similarly, the extra_info in the instructions of the API response, see #2661
+- internal keys for EdgeKVStorage changed to contain the street_ prefix like the path details too. Similarly, the
+  extra_info in the instructions of the API response, see #2661
+- subnetwork preparation can now be run in parallel to slightly speed up the base graph import (#2737)
+- The block_area parameter was removed. Use custom model areas instead.
 
 ### 6.0 [13 Sep 2022]
 
+- Car4WDTagParser was removed. Use the roads vehicle with a custom model, see custom_models/car4wd.json see #2651
 - When using a DecimalEncodedValue with useMaximumAsInfinity=true and a single bit of space make sure you always use 
   Double.POSITIVE_INFINITY to set the value, see #2646
 - renamed DouglasPeucker to RamerDouglasPeucker

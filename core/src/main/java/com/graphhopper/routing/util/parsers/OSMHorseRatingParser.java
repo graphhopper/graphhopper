@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.storage.IntsRef;
 
@@ -35,7 +36,7 @@ public class OSMHorseRatingParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         String scale = readerWay.getTag("horse_scale");
         int rating = 0;
         if (scale != null) {
@@ -47,7 +48,6 @@ public class OSMHorseRatingParser implements TagParser {
             else if (scale.equals("impossible")) rating = 6;
         }
         if (rating != 0)
-            horseScale.setInt(false, edgeFlags, rating);
-        return edgeFlags;
+            horseScale.setInt(false, edgeId, edgeIntAccess, rating);
     }
 }

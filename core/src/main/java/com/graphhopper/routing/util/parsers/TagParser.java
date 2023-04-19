@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.IntsRef;
 
 /**
@@ -26,5 +27,5 @@ import com.graphhopper.storage.IntsRef;
  */
 public interface TagParser {
 
-    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, IntsRef relationFlags);
+    void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags);
 }
