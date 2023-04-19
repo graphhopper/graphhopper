@@ -9,7 +9,6 @@ environment:
 install:
   - java -version
   - mvn --version
-build: off
 branches:
   only:
     - master      
