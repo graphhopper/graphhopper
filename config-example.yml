@@ -122,7 +122,7 @@ graphhopper:
   # Using an averaging approach for smoothing will reveal values not affected by outliers and realistic slopes and total altitude values (up and down)
   # graph.elevation.edge_smoothing: moving_average
   # window size in meter along a way used for averaging a node's elevation
-  # graph.elevation.moving_average.window_size: 150
+  # graph.elevation.edge_smoothing.moving_average.window_size: 150
 
 
   # To increase elevation profile resolution, use the following two parameters to tune the extra resolution you need
