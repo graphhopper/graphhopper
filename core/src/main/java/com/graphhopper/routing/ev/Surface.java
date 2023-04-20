@@ -42,7 +42,7 @@ public enum Surface {
         for (Surface surface : values()) {
             if (surface == MISSING || surface == OTHER)
                 continue;
-            SURFACE_MAP.put(Helper.toLowerCase(surface.toString()), surface);
+            SURFACE_MAP.put(Helper.toLowerCase(surface.name()), surface);
         }
         SURFACE_MAP.put("metal", PAVED);
         SURFACE_MAP.put("sett", COBBLESTONE);

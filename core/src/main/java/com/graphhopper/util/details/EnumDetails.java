@@ -19,6 +19,7 @@ package com.graphhopper.util.details;
 
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 
 public class EnumDetails<E extends Enum> extends AbstractPathDetailsBuilder {
 
@@ -32,7 +33,7 @@ public class EnumDetails<E extends Enum> extends AbstractPathDetailsBuilder {
 
     @Override
     protected Object getCurrentValue() {
-        return objVal.toString();
+        return Helper.toLowerCase(objVal.name());
     }
 
     @Override
