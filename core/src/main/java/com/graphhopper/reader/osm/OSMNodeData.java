@@ -18,6 +18,8 @@
 
 package com.graphhopper.reader.osm;
 
+import com.carrotsearch.hppc.IntScatterSet;
+import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.LongScatterSet;
 import com.carrotsearch.hppc.LongSet;
 import com.graphhopper.coll.GHLongIntBTree;
@@ -30,7 +32,6 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint3D;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
 import java.util.function.IntUnaryOperator;
@@ -81,6 +82,9 @@ class OSMNodeData {
     // we use negative ids to create artificial OSM node ids
     private long nextArtificialOSMNodeId = -Long.MAX_VALUE;
 
+    // we use this set to store which tower nodes are only connecting two ways
+    private final IntSet connectionTowerNodes;
+
     public OSMNodeData(PointAccess nodeAccess, Directory directory) {
         // We use GHLongIntBTree, because it is based on a tree, not an array, so it can store as many entries as there
         // are longs. This also makes it memory efficient, because there is no need to pre-allocate memory for empty
@@ -92,6 +96,7 @@ class OSMNodeData {
         nodeTagIndicesByOsmNodeIds = new GHLongIntBTree(200);
         nodesToBeSplit = new LongScatterSet();
         nodeKVStorage = new KVStorage(directory, false);
+        connectionTowerNodes = new IntScatterSet();
     }
 
     public boolean is3D() {
@@ -114,6 +119,10 @@ class OSMNodeData {
     public static boolean isPillarNode(int id) {
         // pillar nodes are indexed 3, 4, 5, ..
         return id > CONNECTION_NODE;
+    }
+
+    public boolean isConnectionTowerNode(int id) {
+        return connectionTowerNodes.contains(id);
     }
 
     public static boolean isNodeId(int id) {
@@ -168,7 +177,9 @@ class OSMNodeData {
     private int addTowerNode(long osmId, double lat, double lon, double ele) {
         towerNodes.setNode(nextTowerId, lat, lon, ele);
         int id = towerNodeToId(nextTowerId);
-        idsByOsmNodeIds.put(osmId, id);
+        int prevId = idsByOsmNodeIds.put(osmId, id);
+        if (prevId == CONNECTION_NODE)
+            connectionTowerNodes.add(id);
         nextTowerId++;
         return id;
     }

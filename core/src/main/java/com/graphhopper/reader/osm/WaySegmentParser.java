@@ -379,13 +379,13 @@ public class WaySegmentParser {
             PreparedPolygon areaPolygon = new PreparedPolygon(GEOMETRY_FACTORY.createPolygon(new PackedCoordinateSequence.Double(polygonCoordinates, 2)));
             // leave out the last node, because it is the same as the first
             for (int i = 0; i < segment.size() - 1; i++) {
-                // TODO NOW can we count the number of involved edges somehow? because areas are often mapped so that
-                //  the start and end are only "unnecessary" tower nodes -> CONNECTION_NODE
-                if (!isTowerNode(segment.get(i).id))
+                // we skip tower nodes that aren't really linked to other edges, but only were created to connect the beginning
+                // and end of the (closed-ring) area way
+                if (!isTowerNode(segment.get(i).id) || nodeData.isConnectionTowerNode(segment.get(i).id))
                     continue;
                 // we can skip the direct neighbor and the last node (because it's equal to the first)
                 for (int j = i + 2; j < segment.size() - 1; j++) {
-                    if (!isTowerNode(segment.get(j).id))
+                    if (!isTowerNode(segment.get(j).id) || nodeData.isConnectionTowerNode(segment.get(j).id))
                         continue;
 
                     GHPoint3D from = nodeData.getCoordinates(segment.get(i).id);
