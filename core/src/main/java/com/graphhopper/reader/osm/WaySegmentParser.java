@@ -31,6 +31,11 @@ import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
+import org.locationtech.jts.geom.prep.PreparedPolygon;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -77,6 +82,8 @@ public class WaySegmentParser {
 
     private final OSMNodeData nodeData;
     private Date timestamp;
+
+    private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
 
     private WaySegmentParser(PointAccess nodeAccess, Directory directory, ElevationProvider eleProvider,
                              Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
@@ -263,6 +270,7 @@ public class WaySegmentParser {
                 segment.add(new SegmentNode(node.value, nodeData.getId(node.value), nodeData.getTags(node.value)));
             wayPreprocessor.preprocessWay(way, osmNodeId -> nodeData.getCoordinates(nodeData.getId(osmNodeId)));
             splitWayAtJunctionsAndEmptySections(segment, way);
+            handleAreaWay(segment, way);
         }
 
         private void splitWayAtJunctionsAndEmptySections(List<SegmentNode> fullSegment, ReaderWay way) {
@@ -348,6 +356,58 @@ public class WaySegmentParser {
             }
             if (segment.size() > 1)
                 handleSegment(segment, way);
+        }
+
+        void handleAreaWay(List<SegmentNode> segment, ReaderWay way) {
+            if (segment.size() <= 3 || !way.hasTag("area", "yes") ||
+                    (!way.hasTag("highway", "pedestrian") && !way.hasTag("highway", "footway")))
+                return;
+            if (segment.get(0).osmNodeId != segment.get(segment.size() - 1).osmNodeId) {
+                // not a closed ring
+                // todonow: we could fix these by simply connecting the ends
+                return;
+            }
+
+            // we connect all the junction nodes appearing in the area way with each other, but only if the connecting
+            // path lies completely within the area
+            Coordinate[] polygonCoordinates = new Coordinate[segment.size()];
+            for (int i = 0; i < segment.size(); i++) {
+                int id = segment.get(i).id;
+                GHPoint3D c = nodeData.getCoordinates(id);
+                polygonCoordinates[i] = new Coordinate(c.lon, c.lat);
+            }
+            PreparedPolygon areaPolygon = new PreparedPolygon(GEOMETRY_FACTORY.createPolygon(new PackedCoordinateSequence.Double(polygonCoordinates, 2)));
+            // leave out the last node, because it is the same as the first
+            for (int i = 0; i < segment.size() - 1; i++) {
+                // TODO NOW can we count the number of involved edges somehow? because areas are often mapped so that
+                //  the start and end are only "unnecessary" tower nodes -> CONNECTION_NODE
+                if (!isTowerNode(segment.get(i).id))
+                    continue;
+                // we can skip the direct neighbor and the last node (because it's equal to the first)
+                for (int j = i + 2; j < segment.size() - 1; j++) {
+                    if (!isTowerNode(segment.get(j).id))
+                        continue;
+
+                    GHPoint3D from = nodeData.getCoordinates(segment.get(i).id);
+                    GHPoint3D to = nodeData.getCoordinates(segment.get(j).id);
+                    Coordinate[] lineCoordinates = new Coordinate[]{
+                            new Coordinate(from.lon, from.lat),
+                            new Coordinate(to.lon, to.lat)
+                    };
+                    LineString lineString = GEOMETRY_FACTORY.createLineString(new PackedCoordinateSequence.Double(lineCoordinates, 2));
+                    if (!areaPolygon.contains(lineString))
+                        continue;
+                    PointList pointList = new PointList(2, nodeData.is3D());
+                    pointList.add(from.lat, from.lon, from.ele);
+                    pointList.add(to.lat, to.lon, to.ele);
+                    List<Map<String, Object>> nodeTags = new ArrayList<>(2);
+                    nodeTags.add(segment.get(i).tags);
+                    nodeTags.add(segment.get(j).tags);
+                    // note that the area edges inherit the tags from the area way. in some odd (?) cases this could go wrong,
+                    // like when area is tagged as oneway?
+                    edgeHandler.handleEdge(nodeData.idToTowerNode(segment.get(i).id), nodeData.idToTowerNode(segment.get(j).id), pointList, way, nodeTags);
+                }
+            }
         }
 
         void handleSegment(List<SegmentNode> segment, ReaderWay way) {
