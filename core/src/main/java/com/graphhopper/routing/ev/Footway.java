@@ -29,6 +29,11 @@ public enum Footway {
         return new EnumEncodedValue<>(KEY, Footway.class);
     }
 
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
+    }
+
     public static Footway find(String name) {
         if (name == null || name.isEmpty())
             return MISSING;

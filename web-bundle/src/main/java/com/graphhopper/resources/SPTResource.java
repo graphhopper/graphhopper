@@ -201,7 +201,7 @@ public class SPTResource {
                             sb.append(reverseFlow ? edge.getReverse(dev) : edge.get(dev));
                         } else if (ev instanceof EnumEncodedValue) {
                             EnumEncodedValue eev = (EnumEncodedValue) ev;
-                            sb.append(Helper.toLowerCase(reverseFlow ? edge.getReverse(eev).toString() : edge.get(eev).toString()));
+                            sb.append(reverseFlow ? edge.getReverse(eev) : edge.get(eev));
                         } else if (ev instanceof BooleanEncodedValue) {
                             BooleanEncodedValue eev = (BooleanEncodedValue) ev;
                             sb.append(reverseFlow ? edge.getReverse(eev) : edge.get(eev));

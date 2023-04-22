@@ -32,6 +32,11 @@ public enum RoadEnvironment {
         return new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class);
     }
 
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
+    }
+
     public static RoadEnvironment find(String name) {
         if (name == null)
             return OTHER;

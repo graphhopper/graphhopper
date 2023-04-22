@@ -16,6 +16,11 @@ public enum MaxWeightExcept {
         return new EnumEncodedValue<>(MaxWeightExcept.KEY, MaxWeightExcept.class);
     }
 
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
+    }
+
     public static MaxWeightExcept find(String name) {
         if (name == null || name.isEmpty())
             return NONE;

@@ -35,6 +35,11 @@ public enum RouteNetwork {
         return new EnumEncodedValue<>(name, RouteNetwork.class);
     }
 
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
+    }
+
     public static RouteNetwork find(String name) {
         if (Helper.isEmpty(name))
             return MISSING;

@@ -33,6 +33,11 @@ public enum Smoothness {
         return new EnumEncodedValue<>(KEY, Smoothness.class);
     }
 
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
+    }
+
     public static Smoothness find(String name) {
         if (Helper.isEmpty(name))
             return MISSING;

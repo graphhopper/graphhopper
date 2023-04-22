@@ -1,5 +1,7 @@
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.Helper;
+
 /**
  * Defines general restrictions for the transport of goods through water protection areas.<br>
  * If not tagged it will be {@link #YES}
@@ -11,5 +13,10 @@ public enum HazmatWater {
 
     public static EnumEncodedValue<HazmatWater> create() {
         return new EnumEncodedValue<>(KEY, HazmatWater.class);
+    }
+
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
     }
 }

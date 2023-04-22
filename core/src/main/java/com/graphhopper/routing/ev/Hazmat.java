@@ -14,4 +14,9 @@ public enum Hazmat {
     public static EnumEncodedValue<Hazmat> create() {
         return new EnumEncodedValue<>(KEY, Hazmat.class);
     }
+
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
+    }
 }

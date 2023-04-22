@@ -33,7 +33,7 @@ public class EnumDetails<E extends Enum> extends AbstractPathDetailsBuilder {
 
     @Override
     protected Object getCurrentValue() {
-        return Helper.toLowerCase(objVal.name());
+        return objVal.toString();
     }
 
     @Override

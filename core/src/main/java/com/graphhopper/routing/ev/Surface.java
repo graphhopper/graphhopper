@@ -42,7 +42,7 @@ public enum Surface {
         for (Surface surface : values()) {
             if (surface == MISSING || surface == OTHER)
                 continue;
-            SURFACE_MAP.put(Helper.toLowerCase(surface.name()), surface);
+            SURFACE_MAP.put(surface.toString(), surface);
         }
         SURFACE_MAP.put("metal", PAVED);
         SURFACE_MAP.put("sett", COBBLESTONE);
@@ -54,6 +54,11 @@ public enum Surface {
 
     public static EnumEncodedValue<Surface> create() {
         return new EnumEncodedValue<>(KEY, Surface.class);
+    }
+
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
     }
 
     public static Surface find(String name) {

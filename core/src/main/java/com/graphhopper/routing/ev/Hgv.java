@@ -33,6 +33,11 @@ public enum Hgv {
         return new EnumEncodedValue<>(Hgv.KEY, Hgv.class);
     }
 
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
+    }
+
     public static Hgv find(String name) {
         if (name == null)
             return MISSING;

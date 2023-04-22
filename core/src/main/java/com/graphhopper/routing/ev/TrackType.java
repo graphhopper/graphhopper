@@ -35,6 +35,11 @@ public enum TrackType {
         return new EnumEncodedValue<>(KEY, TrackType.class);
     }
 
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
+    }
+
     public static TrackType find(String name) {
         if (Helper.isEmpty(name))
             return MISSING;

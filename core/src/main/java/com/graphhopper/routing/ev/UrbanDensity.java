@@ -18,12 +18,19 @@
 
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.Helper;
+
 public enum UrbanDensity {
     RURAL, RESIDENTIAL, CITY;
+
+    public static final String KEY = "urban_density";
 
     public static EnumEncodedValue<UrbanDensity> create() {
         return new EnumEncodedValue<>(KEY, UrbanDensity.class);
     }
 
-    public static final String KEY = "urban_density";
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
+    }
 }

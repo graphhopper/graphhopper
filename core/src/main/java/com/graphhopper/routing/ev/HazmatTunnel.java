@@ -1,7 +1,5 @@
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.util.Helper;
-
 /**
  * Defines the degree of restriction for the transport of hazardous goods through tunnels.<br>
  * If not tagged it will be {@link #A}
@@ -35,4 +33,6 @@ public enum HazmatTunnel {
     public static EnumEncodedValue<HazmatTunnel> create() {
         return new EnumEncodedValue<>(KEY, HazmatTunnel.class);
     }
+
+    // for backward compatibility: no custom toString()
 }

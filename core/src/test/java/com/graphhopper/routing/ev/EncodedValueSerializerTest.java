@@ -59,7 +59,7 @@ class EncodedValueSerializerTest {
         BooleanEncodedValue deserializedGetOffBike = (BooleanEncodedValue) deserializedEVs.get(3);
         StringEncodedValue deserializedNames = (StringEncodedValue) deserializedEVs.get(4);
         assertEquals("road_class", deserializedRoadClass.getName());
-        assertTrue(Arrays.toString(deserializedRoadClass.getValues()).contains("MOTORWAY"));
+        assertTrue(Arrays.toString(deserializedRoadClass.getValues()).contains("motorway"));
         assertEquals("lanes", deserializedLanes.getName());
         assertEquals("max_width", deserializedMaxWidth.getName());
         assertEquals("get_off_bike", deserializedGetOffBike.getName());

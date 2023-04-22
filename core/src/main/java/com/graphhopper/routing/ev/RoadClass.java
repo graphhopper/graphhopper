@@ -33,6 +33,11 @@ public enum RoadClass {
         return new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
     }
 
+    @Override
+    public String toString() {
+        return Helper.toLowerCase(super.toString());
+    }
+
     public static RoadClass find(String name) {
         if (name == null || name.isEmpty())
             return OTHER;
