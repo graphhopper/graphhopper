@@ -31,6 +31,13 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
 
+        avoidHighwayTags.put("motorway", BAD);
+        avoidHighwayTags.put("motorway_link", BAD);
+        avoidHighwayTags.put("trunk", BAD);
+        avoidHighwayTags.put("trunk_link", BAD);
+        avoidHighwayTags.put("primary", AVOID_MORE);
+        avoidHighwayTags.put("primary_link", AVOID_MORE);
+
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());
         routeMap.put(REGIONAL, VERY_NICE.getValue());

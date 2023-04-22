@@ -243,7 +243,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED, 20, osmWay);
 
         osmWay.setTag("highway", "motorway");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, REACH_DESTINATION, 18, osmWay);
+        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD, 18, osmWay);
 
         osmWay.setTag("tunnel", "yes");
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, REACH_DESTINATION, 18, osmWay);
