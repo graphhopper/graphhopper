@@ -267,13 +267,13 @@ public class RouteResourceTest {
         GHResponse rsp = client.route(request);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(4, rsp.getBest().getPathDetails().get(RoadClass.KEY).size());
-        assertEquals(RoadClass.PRIMARY.toString(), rsp.getBest().getPathDetails().get(RoadClass.KEY).get(3).getValue());
+        assertEquals("primary", rsp.getBest().getPathDetails().get(RoadClass.KEY).get(3).getValue());
         assertFalse((Boolean) rsp.getBest().getPathDetails().get(RoadClassLink.KEY).get(0).getValue());
 
         List<PathDetail> roadEnvList = rsp.getBest().getPathDetails().get(RoadEnvironment.KEY);
         assertEquals(10, roadEnvList.size());
-        assertEquals(RoadEnvironment.ROAD.toString(), roadEnvList.get(0).getValue());
-        assertEquals(RoadEnvironment.TUNNEL.toString(), roadEnvList.get(6).getValue());
+        assertEquals("road", roadEnvList.get(0).getValue());
+        assertEquals("tunnel", roadEnvList.get(6).getValue());
     }
 
     @Test

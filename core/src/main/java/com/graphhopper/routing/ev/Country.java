@@ -269,4 +269,6 @@ public enum Country {
     public static EnumEncodedValue<Country> create() {
         return new EnumEncodedValue<>(Country.KEY, Country.class);
     }
+
+    // for backward compatibility: no custom toString()
 }
