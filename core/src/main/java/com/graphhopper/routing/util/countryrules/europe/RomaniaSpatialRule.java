@@ -28,21 +28,21 @@ import com.graphhopper.routing.util.countryrules.CountryRule;
  * @author Thomas Butz
  */
 public class RomaniaSpatialRule implements CountryRule {
-    
+
     @Override
     public Toll getToll(ReaderWay readerWay, Toll currentToll) {
         if (currentToll != Toll.MISSING) {
             return currentToll;
         }
 
-        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));        
+        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
         switch (roadClass) {
-        case MOTORWAY:
-        case TRUNK:
-        case PRIMARY:
-            return Toll.ALL;
-        default:
-            return currentToll;
+            case MOTORWAY:
+            case TRUNK:
+            case PRIMARY:
+                return Toll.ALL;
+            default:
+                return currentToll;
         }
     }
 }
