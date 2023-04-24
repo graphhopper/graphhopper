@@ -34,7 +34,7 @@ public interface CountryRule {
     default RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
         return currentRoadAccess;
     }
-    
+
     default Toll getToll(ReaderWay readerWay, Toll currentToll) {
         return currentToll;
     }

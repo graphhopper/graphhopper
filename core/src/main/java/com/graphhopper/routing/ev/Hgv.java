@@ -25,8 +25,7 @@ import com.graphhopper.util.Helper;
  * value OTHER. The NO value does not permit any access.
  */
 public enum Hgv {
-    MISSING("missing"), YES("yes"), DESIGNATED("designated"), DESTINATION("destination"),
-    DELIVERY("delivery"), DISCOURAGED("discouraged"), AGRICULTURAL("agricultural"), NO("no");
+    MISSING, YES, DESIGNATED, DESTINATION, DELIVERY, DISCOURAGED, AGRICULTURAL, NO;
 
     public static final String KEY = "hgv";
 
@@ -34,15 +33,9 @@ public enum Hgv {
         return new EnumEncodedValue<>(Hgv.KEY, Hgv.class);
     }
 
-    private final String name;
-
-    Hgv(String name) {
-        this.name = name;
-    }
-
     @Override
     public String toString() {
-        return name;
+        return Helper.toLowerCase(super.toString());
     }
 
     public static Hgv find(String name) {

@@ -73,7 +73,7 @@ public class AustriaCountryRule implements CountryRule {
                 return RoadAccess.YES;
         }
     }
-    
+
     @Override
     public Toll getToll(ReaderWay readerWay, Toll currentToll) {
         if (currentToll != Toll.MISSING) {
@@ -84,7 +84,7 @@ public class AustriaCountryRule implements CountryRule {
         if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK) {
             return Toll.ALL;
         }
-        
+
         return currentToll;
     }
 }
