@@ -404,10 +404,10 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> queries = new ArrayList<>();
         // for mtb it is also ok to go over steps (43.7318,7.423) -> 1900m vs 2600m (in latest OSM data all bikes are forbidden and steps aren't taken)
         queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2323, 111));
-        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3655, 179));
+        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3655, 185));
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2629, 152));
         // hard to select between secondary and primary (both are AVOID for mtb)
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1496, 92));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1540, 85));
 
         GraphHopper hopper = createHopper(MONACO, new CustomProfile("mtb").setCustomModel(new CustomModel()).setVehicle("mtb"));
         hopper.importOrLoad();

@@ -200,7 +200,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             PriorityCode pushingSectionPrio = SLIGHT_AVOID;
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
                 pushingSectionPrio = PREFER;
-            if (isDesignated(way))
+            if (isDesignated(way) && (!way.hasTag("highway","steps")))
                 pushingSectionPrio = VERY_NICE;
             if (way.hasTag("foot", "yes")) {
                 pushingSectionPrio = pushingSectionPrio.worse();
