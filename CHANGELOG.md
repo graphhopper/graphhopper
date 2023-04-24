@@ -1,5 +1,6 @@
 ### 8.0 [not yet released]
 
+- bike routing better avoids dangerous roads, see #2796 and #2802
 - routing requests can be configured to timeout after some time, see #2795
 - custom_model_file string changed to custom_model_files array, see #2787
 - renamed EdgeKVStorage to KVStorage as it is (temporarily) used for node tage too, see #2705
