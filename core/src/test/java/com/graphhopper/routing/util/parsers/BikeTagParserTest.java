@@ -592,4 +592,13 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("maxspeed", "15");
         assertPriority(BEST, way);
     }
+
+    @Test
+    public void testAvoidMotorway() {
+        ReaderWay osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "motorway");
+        osmWay.setTag("bicycle", "yes");
+        assertPriority(REACH_DESTINATION, osmWay);
+    }
+
 }
