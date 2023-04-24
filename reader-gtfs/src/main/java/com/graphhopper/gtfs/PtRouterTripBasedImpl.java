@@ -106,16 +106,6 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             this.gtfsStorage = gtfsStorage;
         }
 
-        public PtRouter createWith(GtfsRealtime.FeedMessage realtimeFeed) {
-            Map<String, GtfsRealtime.FeedMessage> realtimeFeeds = new HashMap<>();
-            realtimeFeeds.put("gtfs_0", realtimeFeed);
-            Map<String, Transfers> transfers = new HashMap<>();
-            for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
-                transfers.put(entry.getKey(), new Transfers(entry.getValue()));
-            }
-            return new PtRouterTripBasedImpl(config, translationMap, baseGraph, encodingManager, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(gtfsStorage, transfers, realtimeFeeds), new PathDetailsBuilderFactory());
-        }
-
         public PtRouter createWithoutRealtimeFeed() {
             return new PtRouterTripBasedImpl(config, translationMap, baseGraph, encodingManager, locationIndex, gtfsStorage, RealtimeFeed.empty(), new PathDetailsBuilderFactory());
         }
@@ -150,6 +140,11 @@ public final class PtRouterTripBasedImpl implements PtRouter {
         private final Profile egressProfile;
         private final EdgeFilter egressSnapFilter;
         private final Weighting egressWeighting;
+        private TripFromLabel tripFromLabel;
+        private List<Label> accessStationLabels;
+        private List<TripBasedRouter.StopWithTimeDelta> accessStations;
+        private List<Label> egressStationLabels;
+        private List<TripBasedRouter.StopWithTimeDelta> egressStations;
 
         RequestHandler(Request request) {
             maxVisitedNodesForRequest = request.getMaxVisitedNodes();
@@ -189,10 +184,12 @@ public final class PtRouterTripBasedImpl implements PtRouter {
 
             StopWatch stopWatch1 = new StopWatch().start();
 
-            List<TripBasedRouter.StopWithTimeDelta> accessStations = accessEgress(startNode, destNode, false).stream()
+            accessStationLabels = accessEgress(startNode, destNode, false);
+            accessStations = accessStationLabels.stream()
                     .map(l -> new TripBasedRouter.StopWithTimeDelta(new GtfsStorage.FeedIdWithStopId("gtfs_0", l.edge.getPlatformDescriptor().stop_id), l.currentTime - initialTime.toEpochMilli()))
                     .collect(Collectors.toList());
-            List<TripBasedRouter.StopWithTimeDelta> egressStations = accessEgress(startNode, destNode, true).stream()
+            egressStationLabels = accessEgress(startNode, destNode, true);
+            egressStations = egressStationLabels.stream()
                     .map(l -> new TripBasedRouter.StopWithTimeDelta(new GtfsStorage.FeedIdWithStopId("gtfs_0", l.edge.getPlatformDescriptor().stop_id), initialTime.toEpochMilli() - l.currentTime))
                     .collect(Collectors.toList());
             response.addDebugInfo("access/egress routing:" + stopWatch1.stop().getSeconds() + "s");
@@ -204,8 +201,10 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             } else {
                 routes = tripBasedRouter.route(accessStations, egressStations, initialTime);
             }
+
+            tripFromLabel = new TripFromLabel(queryGraph, encodingManager, gtfsStorage, RealtimeFeed.empty(), pathDetailsBuilderFactory, walkSpeedKmH);
             for (TripBasedRouter.ResultLabel route : routes) {
-                ResponsePath responsePath = extractResponse(route, result.points);
+                ResponsePath responsePath = extractResponse(route, result);
                 response.add(responsePath);
             }
             response.getAll().sort(Comparator.comparingLong(ResponsePath::getTime));
@@ -252,7 +251,16 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             return stationLabels;
         }
 
-        private ResponsePath extractResponse(TripBasedRouter.ResultLabel route, PointList waypoints) {
+        private ResponsePath extractResponse(TripBasedRouter.ResultLabel route, PtLocationSnapper.Result snapResult) {
+            Label accessLabel = accessStationLabels.get(accessStations.indexOf(route.getAccessStop()));
+            Label egressLabel = egressStationLabels.get(egressStations.indexOf(route.destination));
+
+            List<Label.Transition> accessTransitions = Label.getTransitions(accessLabel, false);
+            List<Label.Transition> egressTransitions = Label.getTransitions(egressLabel, true);
+
+            List<Trip.Leg> accessPath = tripFromLabel.parsePartitionToLegs(tripFromLabel.parsePathToPartitions(accessTransitions).get(0), snapResult.queryGraph, encodingManager, accessWeighting, translation, requestedPathDetails);
+            List<Trip.Leg> egressPath = tripFromLabel.parsePartitionToLegs(tripFromLabel.parsePathToPartitions(egressTransitions).get(1), snapResult.queryGraph, encodingManager, egressWeighting, translation, requestedPathDetails);
+
             List<TripBasedRouter.EnqueuedTripSegment> segments = new ArrayList<>();
             TripBasedRouter.EnqueuedTripSegment enqueuedTripSegment = route.enqueuedTripSegment;
             while (enqueuedTripSegment != null) {
@@ -261,8 +269,9 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             }
             Collections.reverse(segments);
 
-            GeometryFactory geometryFactory = new GeometryFactory();
             List<Trip.Leg> legs = new ArrayList<>();
+            legs.add(accessPath.get(0));
+            GeometryFactory geometryFactory = new GeometryFactory();
             String previousBlockId = null;
             for (int i = 0; i < segments.size(); i++) {
                 TripBasedRouter.EnqueuedTripSegment segment = segments.get(i);
@@ -288,9 +297,11 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                         trip.route_id, trip.trip_headsign, stops, 0, stops.get(stops.size() - 1).arrivalTime.toInstant().toEpochMilli() - stops.get(0).departureTime.toInstant().toEpochMilli(), geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
                 previousBlockId = trip.block_id;
             }
-            ResponsePath responsePath = TripFromLabel.createResponsePath(gtfsStorage, translation, waypoints, legs);
-            List<Trip.Stop> stops = ((Trip.PtLeg) responsePath.getLegs().get(responsePath.getLegs().size() - 1)).stops;
-            responsePath.setTime(stops.get(stops.size()-1).arrivalTime.toInstant().toEpochMilli() - initialTime.toEpochMilli());
+            legs.add(egressPath.get(0));
+
+            ResponsePath responsePath = TripFromLabel.createResponsePath(gtfsStorage, translation, snapResult.points, legs);
+            responsePath.setTime(Duration.between(responsePath.getLegs().get(0).getDepartureTime().toInstant(),
+                    responsePath.getLegs().get(responsePath.getLegs().size() - 1).getArrivalTime().toInstant()).toMillis());
             return responsePath;
         }
 

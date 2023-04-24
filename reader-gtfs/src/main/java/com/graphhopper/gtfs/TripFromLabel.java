@@ -192,7 +192,7 @@ class TripFromLabel {
         }).collect(Collectors.toList()));
     }
 
-    private List<List<Label.Transition>> parsePathToPartitions(List<Label.Transition> path) {
+    List<List<Label.Transition>> parsePathToPartitions(List<Label.Transition> path) {
         List<List<Label.Transition>> partitions = new ArrayList<>();
         partitions.add(new ArrayList<>());
         final Iterator<Label.Transition> iterator = path.iterator();
@@ -336,7 +336,7 @@ class TripFromLabel {
     // One could argue that one should never write a parser
     // by hand, because it is always ugly, but use a parser library.
     // The code would then read like a specification of what paths through the graph mean.
-    private List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, Graph graph, EncodedValueLookup encodedValueLookup, Weighting weighting, Translation tr, List<String> requestedPathDetails) {
+    List<Trip.Leg> parsePartitionToLegs(List<Label.Transition> path, Graph graph, EncodedValueLookup encodedValueLookup, Weighting weighting, Translation tr, List<String> requestedPathDetails) {
         if (path.size() <= 1) {
             return Collections.emptyList();
         }
