@@ -831,6 +831,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                         int newEndNode = -handlePillarNode(lastGHNodeId, lastOsmNodeId, pointList, true) - 3;
                         newEdges.add(addEdge(firstNode, newEndNode, pointList, flags, wayOsmId));
                         pointList.clear();
+                        lastInBoundsPillarNode = -1;
                         pointList.add(nodeAccess, newEndNode);
                         firstNode = newEndNode;
                     }
@@ -839,6 +840,7 @@ public class OSMReader implements TurnCostParser.ExternalInternalMap {
                     if (firstNode >= 0) {
                         newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
                         pointList.clear();
+                        lastInBoundsPillarNode = -1;
                         pointList.add(nodeAccess, tmpNode);
                     }
                     firstNode = tmpNode;
