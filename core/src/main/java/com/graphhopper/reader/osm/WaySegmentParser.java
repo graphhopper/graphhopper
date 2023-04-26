@@ -169,7 +169,12 @@ public class WaySegmentParser {
             for (ReaderRelation.Member member : relation.getMembers()) {
                 if (member.getType() != ReaderElement.Type.WAY)
                     continue;
-                // add relation lazily, so we do not add relations without way members
+                if ("inner".equals(member.getRole()))
+                    // in many cases the inner polygon won't be connected to the road network, which
+                    // wouldn't even be a big deal, because of the subnetwork 'removal', but sometimes
+                    // it is connected at one point only which can lead to strange detours
+                    continue;
+                // add relation only if there is at least one accepted way member
                 if (acceptedRelationsBefore == acceptedRelations) {
                     relationsWithWays.add(relation);
                     acceptedRelations++;
@@ -317,8 +322,8 @@ public class WaySegmentParser {
                 if (relationWithWaysIndex == -1)
                     return;
                 // We only accept this way because it is part of an accepted relation. So we use the
-                // tags of this relation. e.g. ways without tags contained in a relation tagged as
-                // highway=pedestrian
+                // tags of this relation. Typical common example are ways without tags that are members
+                // of a relation carrying the highway=pedestrian tag.
                 ReaderRelation relation = relationsWithWays.get(relationWithWaysIndex);
                 way.setTags(relation.getTags());
             }
