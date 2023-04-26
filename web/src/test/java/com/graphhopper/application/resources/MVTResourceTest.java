@@ -46,7 +46,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  * @author Peter Karich
  */
 @ExtendWith(DropwizardExtensionsSupport.class)
-public class MvtResourceTest {
+public class MVTResourceTest {
     private static final String DIR = "./target/andorra-gh/";
     private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 

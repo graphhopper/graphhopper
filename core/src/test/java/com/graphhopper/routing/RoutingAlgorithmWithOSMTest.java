@@ -332,21 +332,21 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoBike3D() {
         List<Query> queries = new ArrayList<>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2689, 118));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2670, 118));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4188, 217));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4250, 220));
         // 3.
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
         // 4.
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1544, 84));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1557, 87));
 
         // try reverse direction
         // 1.
         queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2111, 96));
-        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 3903, 199));
+        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4132, 194));
         queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2805, 145));
         // 4. avoid tunnel(s)!
-        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1630, 96));
+        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1723, 96));
         // atm the custom model is intended to be used with 'roads' vehicle when allowing reverse direction for oneways
         // but tests here still assert that reverse oneways are excluded
         GraphHopper hopper = createHopper(MONACO,
@@ -403,11 +403,11 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoMountainBike() {
         List<Query> queries = new ArrayList<>();
         // for mtb it is also ok to go over steps (43.7318,7.423) -> 1900m vs 2600m (in latest OSM data all bikes are forbidden and steps aren't taken)
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2594, 111));
-        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3655, 176));
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2331, 121));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2323, 111));
+        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3655, 179));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2629, 152));
         // hard to select between secondary and primary (both are AVOID for mtb)
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1459, 88));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1496, 92));
 
         GraphHopper hopper = createHopper(MONACO, new CustomProfile("mtb").setCustomModel(new CustomModel()).setVehicle("mtb"));
         hopper.importOrLoad();
@@ -425,10 +425,10 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoRacingBike() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2597, 118));
-        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3589, 170));
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2568, 135));
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1490, 84));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2594, 111));
+        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 4022, 207));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2651, 167));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1516, 86));
 
         GraphHopper hopper = createHopper(MONACO, new CustomProfile("racingbike").
                 setCustomModel(new CustomModel()).setVehicle("racingbike"));
@@ -564,7 +564,7 @@ public class RoutingAlgorithmWithOSMTest {
     public void testHarsdorf() {
         List<Query> queries = new ArrayList<>();
         // TODO somehow the bigger road is take even if we make it less preferred (e.g. introduce AVOID AT ALL costs for lanes=2&&maxspeed>50)
-        queries.add(new Query(50.004333, 11.600254, 50.044449, 11.543434, 6952, 190));
+        queries.add(new Query(50.004333, 11.600254, 50.044449, 11.543434, 6951, 190));
 
         // choose Unterloher Weg and the following residential + cycleway
         // list.add(new OneRun(50.004333, 11.600254, 50.044449, 11.543434, 6931, 184));

@@ -1,16 +1,15 @@
 package com.graphhopper.example;
 
-import java.io.File;
-
+import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.Test;
 
-import com.graphhopper.util.Helper;
+import java.io.File;
 
 public class HeadingExampleTest {
-  
-  @Test
-  public void main() {
-      Helper.removeDir(new File("target/heading-graph-cache"));
-      HeadingExample.main(new String[]{"../"});
-  }
+
+    @Test
+    public void main() {
+        Helper.removeDir(new File("target/heading-graph-cache"));
+        HeadingExample.main(new String[]{"../"});
+    }
 }

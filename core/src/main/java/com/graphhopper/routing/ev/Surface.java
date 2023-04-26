@@ -28,21 +28,21 @@ import java.util.Map;
  * OTHER (the worst surface).
  */
 public enum Surface {
-    // Order is important to make it roughly comparable
-    MISSING("missing"),
-    PAVED("paved"), ASPHALT("asphalt"), CONCRETE("concrete"), PAVING_STONES("paving_stones"), COBBLESTONE("cobblestone"),
-    UNPAVED("unpaved"), COMPACTED("compacted"), FINE_GRAVEL("fine_gravel"), GRAVEL("gravel"),
-    GROUND("ground"), DIRT("dirt"), GRASS("grass"), SAND("sand"), WOOD("wood"),
-    OTHER("other");
+    // Order is important to make ordinal roughly comparable
+    MISSING,
+    PAVED, ASPHALT, CONCRETE, PAVING_STONES, COBBLESTONE,
+    UNPAVED, COMPACTED, FINE_GRAVEL, GRAVEL, GROUND, DIRT, GRASS, SAND, WOOD,
+    OTHER;
 
     public static final String KEY = "surface";
 
-    private static final Map<String,Surface> SURFACE_MAP = new HashMap<>();
+    private static final Map<String, Surface> SURFACE_MAP = new HashMap<>();
+
     static {
         for (Surface surface : values()) {
             if (surface == MISSING || surface == OTHER)
                 continue;
-            SURFACE_MAP.put(surface.name, surface);
+            SURFACE_MAP.put(surface.toString(), surface);
         }
         SURFACE_MAP.put("metal", PAVED);
         SURFACE_MAP.put("sett", COBBLESTONE);
@@ -56,15 +56,9 @@ public enum Surface {
         return new EnumEncodedValue<>(KEY, Surface.class);
     }
 
-    private final String name;
-
-    Surface(String name) {
-        this.name = name;
-    }
-
     @Override
     public String toString() {
-        return name;
+        return Helper.toLowerCase(super.toString());
     }
 
     public static Surface find(String name) {

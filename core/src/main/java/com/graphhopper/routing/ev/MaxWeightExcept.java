@@ -1,6 +1,6 @@
 package com.graphhopper.routing.ev;
 
-import java.util.Locale;
+import com.graphhopper.util.Helper;
 
 /**
  * When the max_weight EncodedValue is not legally binding. E.g. if there is a sign that a delivery vehicle can access
@@ -18,18 +18,17 @@ public enum MaxWeightExcept {
 
     @Override
     public String toString() {
-        return name().toLowerCase(Locale.ROOT);
+        return Helper.toLowerCase(super.toString());
     }
 
     public static MaxWeightExcept find(String name) {
         if (name == null || name.isEmpty())
             return NONE;
 
-        for (MaxWeightExcept mwe : values()) {
-            if (mwe.name().equalsIgnoreCase(name))
-                return mwe;
+        try {
+            return MaxWeightExcept.valueOf(Helper.toUpperCase(name));
+        } catch (IllegalArgumentException ex) {
+            return NONE;
         }
-
-        return NONE;
     }
 }
