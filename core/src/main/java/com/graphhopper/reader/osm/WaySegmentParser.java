@@ -69,6 +69,7 @@ public class WaySegmentParser {
     private final ElevationProvider eleProvider;
     private final Predicate<ReaderWay> wayFilter;
     private final Predicate<ReaderNode> splitNodeFilter;
+    private final Predicate<Map<String, Object>> addLoopNodeFilter;
     private final WayPreprocessor wayPreprocessor;
     private final Consumer<ReaderRelation> relationPreprocessor;
     private final RelationProcessor relationProcessor;
@@ -79,12 +80,14 @@ public class WaySegmentParser {
     private Date timestamp;
 
     private WaySegmentParser(PointAccess nodeAccess, Directory directory, ElevationProvider eleProvider,
-                             Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
+                             Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, Predicate<Map<String, Object>> addLoopNodeFilter,
+                             WayPreprocessor wayPreprocessor,
                              Consumer<ReaderRelation> relationPreprocessor, RelationProcessor relationProcessor,
                              EdgeHandler edgeHandler, int workerThreads) {
         this.eleProvider = eleProvider;
         this.wayFilter = wayFilter;
         this.splitNodeFilter = splitNodeFilter;
+        this.addLoopNodeFilter = addLoopNodeFilter;
         this.wayPreprocessor = wayPreprocessor;
         this.relationPreprocessor = relationPreprocessor;
         this.relationProcessor = relationProcessor;
@@ -342,6 +345,24 @@ public class WaySegmentParser {
 
                     segment = new ArrayList<>();
                     segment.add(barrierTo);
+                } else if (addLoopNodeFilter.test(node.tags)) {
+                    // Create an extra loop edge at this node using the parent way's tags.
+                    // Note that quite often the node connects two or more ways with different tags, like a turning_circle
+                    // at the end of a residential road that is connected to some path or footway. To make sure we add
+                    // a loop with the right tags we simply create a loop for every such way.
+
+                    // if the node is not located at a junction or a dead-end we finish the current segment here.
+                    if (i > 0 && i < parentSegment.size() - 1) {
+                        segment.add(node);
+                        handleSegment(segment, way);
+                        segment = new ArrayList<>();
+                    }
+                    // instead of creating a real loop edge we add an artificial extra node and two edges for each loop
+                    SegmentNode copy = nodeData.addCopyOfNode(node);
+                    handleSegment(Arrays.asList(node, copy), way);
+                    handleSegment(Arrays.asList(copy, node), way);
+
+                    segment.add(node);
                 } else {
                     segment.add(node);
                 }
@@ -426,6 +447,7 @@ public class WaySegmentParser {
         private ElevationProvider elevationProvider = ElevationProvider.NOOP;
         private Predicate<ReaderWay> wayFilter = way -> true;
         private Predicate<ReaderNode> splitNodeFilter = node -> false;
+        private Predicate<Map<String, Object>> addLoopNodeFilter = node -> false;
         private WayPreprocessor wayPreprocessor = (way, supplier) -> {
         };
         private Consumer<ReaderRelation> relationPreprocessor = relation -> {
@@ -477,6 +499,15 @@ public class WaySegmentParser {
         }
 
         /**
+         * @param addLoopNodeFilter return true if a loop edge should be added at the given OSM node, in the unlikely
+         *                          case that the same node is a split node no loop will be created
+         */
+        public Builder setAddLoopNodeFilter(Predicate<Map<String, Object>> addLoopNodeFilter) {
+            this.addLoopNodeFilter = addLoopNodeFilter;
+            return this;
+        }
+
+        /**
          * @param wayPreprocessor callback function that is called for each accepted OSM way during the second pass
          */
         public Builder setWayPreprocessor(WayPreprocessor wayPreprocessor) {
@@ -518,7 +549,7 @@ public class WaySegmentParser {
 
         public WaySegmentParser build() {
             return new WaySegmentParser(
-                    nodeAccess, directory, elevationProvider, wayFilter, splitNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
+                    nodeAccess, directory, elevationProvider, wayFilter, splitNodeFilter, addLoopNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
                     edgeHandler, workerThreads
             );
         }

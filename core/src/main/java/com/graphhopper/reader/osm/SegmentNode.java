@@ -30,4 +30,9 @@ class SegmentNode {
         this.id = id;
         this.tags = tags;
     }
+
+    @Override
+    public String toString() {
+        return "id: " + id + ", osm-node-id: " + osmNodeId;
+    }
 }

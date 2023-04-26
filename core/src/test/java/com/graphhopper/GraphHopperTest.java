@@ -2522,6 +2522,31 @@ public class GraphHopperTest {
     }
 
     @Test
+    public void turningCircles() {
+        final String profile = "profile";
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
+                setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest").setTurnCosts(true).putHint("u_turn_costs", 80)).
+                setMinNetworkSize(200);
+        hopper.importOrLoad();
+        GHRequest req = new GHRequest(51.360382, 12.288217, 51.359849, 12.290267).setProfile(profile).setCurbsides(asList("right", "any"));
+        GHResponse res = hopper.route(req);
+        assertFalse(res.hasErrors(), res.getErrors().toString());
+        // we want the route to continue until the end of Parkweg to turn around at the turning circle, *not* the junction before
+        assertEquals(456, res.getBest().getDistance(), 1);
+        // todonow: there should be a single instruction for the u-turn
+        System.out.println(res.getBest().getInstructions());
+
+        req = new GHRequest(51.272279, 12.313779, 51.272202, 12.312342).setProfile(profile).setCurbsides(asList("right", "any"));
+        res = hopper.route(req);
+        assertFalse(res.hasErrors(), res.getErrors().toString());
+        assertEquals(479, res.getBest().getDistance(), 1);
+        // todonow: there should be a single instruction for the u-turn
+        System.out.println(res.getBest().getInstructions());
+    }
+
+    @Test
     public void testBarriers() {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
