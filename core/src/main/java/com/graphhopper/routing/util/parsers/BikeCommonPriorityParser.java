@@ -207,6 +207,9 @@ public abstract class BikeCommonPriorityParser implements TagParser {
                 if (way.hasTag("segregated", "yes"))
                     pushingSectionPrio = pushingSectionPrio.better();
             }
+            if (way.hasTag("highway","steps")) {
+                pushingSectionPrio = BAD;
+            }
             weightToPrioMap.put(100d, pushingSectionPrio);
         }
 

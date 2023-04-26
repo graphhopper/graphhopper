@@ -363,10 +363,10 @@ public abstract class AbstractBikeTagParserTester {
     public void testSteps() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "steps");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 2, way);
+        assertPriorityAndSpeed(BAD, 2, way);
 
         way.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 2, way);
+        assertPriorityAndSpeed(BAD, 2, way);
     }
 
     @Test
