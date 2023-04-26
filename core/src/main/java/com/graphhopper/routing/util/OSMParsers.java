@@ -21,8 +21,8 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.RestrictionTagParser;
-import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.util.parsers.RelationTagParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.storage.IntsRef;
@@ -30,6 +30,7 @@ import com.graphhopper.storage.IntsRef;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class OSMParsers {
     private final List<String> ignoredHighways;
@@ -85,6 +86,17 @@ public class OSMParsers {
             return true;
         else
             return false;
+    }
+
+    public Predicate<ReaderRelation> getRelationFilterForWays() {
+        if (ignoredHighways.contains("pedestrian") && ignoredHighways.contains("footway"))
+            // if are both ignored we can skip pass0 altogether
+            return null;
+        else
+            return relation -> {
+                String highway = relation.getTag("highway");
+                return highway != null && !ignoredHighways.contains(highway);
+            };
     }
 
     public IntsRef handleRelationTags(ReaderRelation relation, IntsRef relFlags) {

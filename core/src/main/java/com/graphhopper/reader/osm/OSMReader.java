@@ -166,6 +166,7 @@ public class OSMReader {
                 .setElevationProvider(eleProvider)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
+                .setRelationFilterForWays(osmParsers.getRelationFilterForWays())
                 .setWayPreprocessor(this::preprocessWay)
                 .setRelationPreprocessor(this::preprocessRelations)
                 .setRelationProcessor(this::processRelation)
