@@ -19,6 +19,8 @@
 package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.cursors.LongCursor;
+import com.graphhopper.coll.GHLongIntBTree;
+import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
@@ -68,22 +70,26 @@ public class WaySegmentParser {
 
     private final ElevationProvider eleProvider;
     private final Predicate<ReaderWay> wayFilter;
+    private final Predicate<ReaderRelation> relationFilterForWays;
     private final Predicate<ReaderNode> splitNodeFilter;
     private final WayPreprocessor wayPreprocessor;
     private final Consumer<ReaderRelation> relationPreprocessor;
     private final RelationProcessor relationProcessor;
     private final EdgeHandler edgeHandler;
     private final int workerThreads;
-
+    private final List<ReaderRelation> relationsWithWays;
+    private final LongIntMap relationWithWaysIndexByOSMWayId;
     private final OSMNodeData nodeData;
     private Date timestamp;
 
     private WaySegmentParser(PointAccess nodeAccess, Directory directory, ElevationProvider eleProvider,
-                             Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
+                             Predicate<ReaderWay> wayFilter, Predicate<ReaderRelation> relationFilterForWays,
+                             Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
                              Consumer<ReaderRelation> relationPreprocessor, RelationProcessor relationProcessor,
                              EdgeHandler edgeHandler, int workerThreads) {
         this.eleProvider = eleProvider;
         this.wayFilter = wayFilter;
+        this.relationFilterForWays = relationFilterForWays;
         this.splitNodeFilter = splitNodeFilter;
         this.wayPreprocessor = wayPreprocessor;
         this.relationPreprocessor = relationPreprocessor;
@@ -91,6 +97,8 @@ public class WaySegmentParser {
         this.edgeHandler = edgeHandler;
         this.workerThreads = workerThreads;
 
+        relationsWithWays = new ArrayList<>();
+        relationWithWaysIndexByOSMWayId = new GHLongIntBTree(200);
         this.nodeData = new OSMNodeData(nodeAccess, directory);
     }
 
@@ -100,6 +108,13 @@ public class WaySegmentParser {
     public void readOSM(File osmFile) {
         if (nodeData.getNodeCount() > 0)
             throw new IllegalStateException("You can only run way segment parser once");
+
+        LOGGER.info("Start reading OSM file: '" + osmFile + "'");
+        LOGGER.info("pass0 - start");
+        StopWatch sw0 = StopWatch.started();
+        if (relationFilterForWays != null)
+            readOSM(osmFile, new Pass0Handler(), new SkipOptions(true, true, false));
+        LOGGER.info("pass0 - finished, took: {}", sw0.stop().getTimeString());
 
         LOGGER.info("Start reading OSM file: '" + osmFile + "'");
         LOGGER.info("pass1 - start");
@@ -119,9 +134,10 @@ public class WaySegmentParser {
         nodeData.release();
 
         LOGGER.info("Finished reading OSM file." +
+                " pass0: " + (int) sw0.getSeconds() + "s, " +
                 " pass1: " + (int) sw1.getSeconds() + "s, " +
                 " pass2: " + (int) sw2.getSeconds() + "s, " +
-                " total: " + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
+                " total: " + (int) (sw0.getSeconds() + sw1.getSeconds() + sw2.getSeconds()) + "s");
     }
 
     /**
@@ -129,6 +145,46 @@ public class WaySegmentParser {
      */
     public Date getTimeStamp() {
         return timestamp;
+    }
+
+    private class Pass0Handler implements ReaderElementHandler {
+        private boolean handledRelations;
+        private long acceptedRelations = 0;
+        private long relationsCounter = 0;
+
+        @Override
+        public void handleRelation(ReaderRelation relation) {
+            if (!handledRelations) {
+                LOGGER.info("pass0 - start reading OSM relations");
+                handledRelations = true;
+            }
+
+            if (++relationsCounter % 1_000_000 == 0)
+                LOGGER.info("pass0 - processed relations: " + nf(relationsCounter) + ", " + Helper.getMemInfo());
+
+            if (!relationFilterForWays.test(relation))
+                return;
+
+            long acceptedRelationsBefore = acceptedRelations;
+            for (ReaderRelation.Member member : relation.getMembers()) {
+                if (member.getType() != ReaderElement.Type.WAY)
+                    continue;
+                // add relation lazily, so we do not add relations without way members
+                if (acceptedRelationsBefore == acceptedRelations) {
+                    relationsWithWays.add(relation);
+                    acceptedRelations++;
+                }
+                // note that we simply ignore the possibility of ways being contained in multiple highway relations
+                // and use the tags of the last such relation for each way
+                relationWithWaysIndexByOSMWayId.put(member.getRef(), relationsWithWays.size() - 1);
+            }
+        }
+
+        @Override
+        public void onFinish() {
+            LOGGER.info("pass0 - finished, processed relations: " + nf(relationsCounter) + ", accepted relations with ways: " +
+                    nf(acceptedRelations) + ", " + Helper.getMemInfo());
+        }
     }
 
     private class Pass1Handler implements ReaderElementHandler {
@@ -151,7 +207,7 @@ public class WaySegmentParser {
                 LOGGER.info("pass1 - processed ways: " + nf(wayCounter) + ", accepted ways: " + nf(acceptedWays) +
                         ", way nodes: " + nf(nodeData.getNodeCount()) + ", " + Helper.getMemInfo());
 
-            if (!wayFilter.test(way))
+            if (!wayFilter.test(way) && relationWithWaysIndexByOSMWayId.get(way.getId()) == -1)
                 return;
             acceptedWays++;
 
@@ -256,8 +312,16 @@ public class WaySegmentParser {
             if (++wayCounter % 10_000_000 == 0)
                 LOGGER.info("pass2 - processed ways: " + nf(wayCounter) + ", " + Helper.getMemInfo());
 
-            if (!wayFilter.test(way))
-                return;
+            if (!wayFilter.test(way)) {
+                int relationWithWaysIndex = relationWithWaysIndexByOSMWayId.get(way.getId());
+                if (relationWithWaysIndex == -1)
+                    return;
+                // We only accept this way because it is part of an accepted relation. So we use the
+                // tags of this relation. e.g. ways without tags contained in a relation tagged as
+                // highway=pedestrian
+                ReaderRelation relation = relationsWithWays.get(relationWithWaysIndex);
+                way.setTags(relation.getTags());
+            }
             List<SegmentNode> segment = new ArrayList<>(way.getNodes().size());
             for (LongCursor node : way.getNodes())
                 segment.add(new SegmentNode(node.value, nodeData.getId(node.value), nodeData.getTags(node.value)));
@@ -425,6 +489,7 @@ public class WaySegmentParser {
         private Directory directory = new RAMDirectory();
         private ElevationProvider elevationProvider = ElevationProvider.NOOP;
         private Predicate<ReaderWay> wayFilter = way -> true;
+        private Predicate<ReaderRelation> relationFilterForWays = null;
         private Predicate<ReaderNode> splitNodeFilter = node -> false;
         private WayPreprocessor wayPreprocessor = (way, supplier) -> {
         };
@@ -465,6 +530,16 @@ public class WaySegmentParser {
          */
         public Builder setWayFilter(Predicate<ReaderWay> wayFilter) {
             this.wayFilter = wayFilter;
+            return this;
+        }
+
+        /**
+         * @param relationFilterForWays return true for OSM relations for which the corresponding member ways
+         *                              should be considered as part of the road network and false otherwise
+         *                              when set to null (default) pass0 will be skipped entirely
+         */
+        public Builder setRelationFilterForWays(Predicate<ReaderRelation> relationFilterForWays) {
+            this.relationFilterForWays = relationFilterForWays;
             return this;
         }
 
@@ -518,7 +593,8 @@ public class WaySegmentParser {
 
         public WaySegmentParser build() {
             return new WaySegmentParser(
-                    nodeAccess, directory, elevationProvider, wayFilter, splitNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
+                    nodeAccess, directory, elevationProvider, wayFilter, relationFilterForWays,
+                    splitNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
                     edgeHandler, workerThreads
             );
         }
