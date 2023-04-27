@@ -83,6 +83,17 @@
             </exclusions>
         </dependency>
         <dependency>
+            <groupId>de.westnordost</groupId>
+            <artifactId>osm-legal-default-speeds-jvm</artifactId>
+            <version>1.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains.kotlin</groupId>
+            <artifactId>kotlin-stdlib</artifactId>
+            <version>1.8.21</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.openstreetmap.osmosis</groupId>
             <artifactId>osmosis-osm-binary</artifactId>
             <version>0.48.3</version>

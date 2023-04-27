@@ -897,6 +897,21 @@ public class GraphHopper {
             BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
             UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, roadClassEnc, roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
         }
+
+        if (encodingManager.hasEncodedValue(Country.KEY)
+                && encodingManager.hasEncodedValue(UrbanDensity.KEY)
+                && encodingManager.hasEncodedValue(MaxSpeed.KEY)) {
+            EnumEncodedValue<UrbanDensity> urbanDensityEnc = encodingManager.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
+            if (!encodingManager.hasEncodedValue(RoadClass.KEY))
+                throw new IllegalArgumentException("MaxSpeedCalculator requires " + RoadClass.KEY);
+            if (!encodingManager.hasEncodedValue(RoadClassLink.KEY))
+                throw new IllegalArgumentException("MaxSpeedCalculator requires " + RoadClassLink.KEY);
+            EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+            BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
+            MaxSpeedCalculator.fillMaxSpeed(getBaseGraph(), urbanDensityEnc, roadClassEnc,
+                    roadClassLinkEnc, encodingManager.getEnumEncodedValue(Country.KEY, Country.class),
+                    encodingManager.getDecimalEncodedValue(MaxSpeed.KEY));
+        }
     }
 
     protected void importOSM() {
