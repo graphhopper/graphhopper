@@ -52,7 +52,7 @@ public class MaxSpeedCalculator {
             tags.put("highway", iter.get(roadClassEnc).toString() + (iter.get(roadClassLinkEnc) ? "_link" : ""));
             double currentCarMax = iter.get(maxSpeedEnc);
             if (currentCarMax != MaxSpeed.UNSET_SPEED)
-                tags.put("max_speed", "" + Math.round(currentCarMax));
+                tags.put("maxspeed", "" + Math.round(currentCarMax));
 
             LegalDefaultSpeeds.Result result = spLimit.getSpeedLimits(countryCode, tags, relTags, replacerFunction);
             if (result != null) {
