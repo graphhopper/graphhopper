@@ -75,7 +75,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         avoidHighwayTags.put("primary_link", BAD);
         avoidHighwayTags.put("secondary", AVOID);
         avoidHighwayTags.put("secondary_link", AVOID);
-        avoidHighwayTags.put("steps", AVOID);
+        avoidHighwayTags.put("steps", BAD);
         avoidHighwayTags.put("bridleway", AVOID);
 
         routeMap.put(INTERNATIONAL, BEST.getValue());
