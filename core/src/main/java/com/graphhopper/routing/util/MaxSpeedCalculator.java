@@ -34,8 +34,6 @@ public class MaxSpeedCalculator {
             throw new RuntimeException(e);
         }
 
-        System.out.println(data.roadTypesByName);
-        System.out.println(data.speedLimitsByCountryCode);
         LegalDefaultSpeeds spLimit = new LegalDefaultSpeeds(data.roadTypesByName, data.speedLimitsByCountryCode);
 
         List<Map<String, String>> relTags = new ArrayList<>();
@@ -51,17 +49,19 @@ public class MaxSpeedCalculator {
             tags.put("rural", iter.get(urbanDensityEnc) == UrbanDensity.RURAL ? "yes" : "no");
             tags.put("highway", iter.get(roadClassEnc).toString() + (iter.get(roadClassLinkEnc) ? "_link" : ""));
             double currentCarMax = iter.get(maxSpeedEnc);
+            // it seems once we already have the max_speed the usage of getSpeedLimits could be skipped
             if (currentCarMax != MaxSpeed.UNSET_SPEED)
                 tags.put("maxspeed", "" + Math.round(currentCarMax));
 
             LegalDefaultSpeeds.Result result = spLimit.getSpeedLimits(countryCode, tags, relTags, replacerFunction);
             if (result != null) {
                 double resultCarMax = OSMValueExtractor.stringToKmh(result.getTags().get("maxspeed"));
-                if (currentCarMax != MaxSpeed.UNSET_SPEED && resultCarMax != currentCarMax)
-                    System.out.println("current max: " + currentCarMax + ", result: " + resultCarMax);
+                if (!Double.isNaN(resultCarMax)) {
+                    if (currentCarMax != MaxSpeed.UNSET_SPEED && resultCarMax != currentCarMax)
+                        System.out.println("current max: " + currentCarMax + ", result: " + resultCarMax);
 
-                if (!Double.isNaN(resultCarMax))
                     iter.set(maxSpeedEnc, resultCarMax);
+                }
             }
         }
     }
