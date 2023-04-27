@@ -35,32 +35,26 @@ public class MaxSpeedCalculator {
         }
 
         LegalDefaultSpeeds spLimit = new LegalDefaultSpeeds(data.roadTypesByName, data.speedLimitsByCountryCode);
-
         List<Map<String, String>> relTags = new ArrayList<>();
-        // You can replace the result of any number of placeholders in a tag filter here (e.g. for name = "urban"),
-        // for example if you have another data source to acquire whether a road is in a built-up area or not.
-        // For those you do not want to replace, simply pass on the result of evaluate as result
-        Function2<String, Function0<Boolean>, Boolean> replacerFunction = (name, eval) -> eval.invoke();
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             // ISO 3166-1 alpha-2 code optionally concatenated with a ISO 3166-2 code, e.g. "DE", "US" or "BE-VLG"
             String countryCode = iter.get(countryEnumEncodedValue).getAlpha2();
             Map<String, String> tags = new HashMap<>();
-            tags.put("rural", iter.get(urbanDensityEnc) == UrbanDensity.RURAL ? "yes" : "no");
-            tags.put("highway", iter.get(roadClassEnc).toString() + (iter.get(roadClassLinkEnc) ? "_link" : ""));
+            tags.put("highway", iter.get(roadClassEnc).toString());
             double currentCarMax = iter.get(maxSpeedEnc);
-            // it seems once we already have the max_speed the usage of getSpeedLimits could be skipped
-            if (currentCarMax != MaxSpeed.UNSET_SPEED)
-                tags.put("maxspeed", "" + Math.round(currentCarMax));
-
-            LegalDefaultSpeeds.Result result = spLimit.getSpeedLimits(countryCode, tags, relTags, replacerFunction);
-            if (result != null) {
-                double resultCarMax = OSMValueExtractor.stringToKmh(result.getTags().get("maxspeed"));
-                if (!Double.isNaN(resultCarMax)) {
-                    if (currentCarMax != MaxSpeed.UNSET_SPEED && resultCarMax != currentCarMax)
-                        System.out.println("current max: " + currentCarMax + ", result: " + resultCarMax);
-
-                    iter.set(maxSpeedEnc, resultCarMax);
+            if (currentCarMax == MaxSpeed.UNSET_SPEED) {
+                LegalDefaultSpeeds.Result result = spLimit.getSpeedLimits(countryCode, tags, relTags, (name, eval) -> {
+                    if (eval.invoke()) return true;
+                    if ("urban".equals(name))
+                        return iter.get(urbanDensityEnc) != UrbanDensity.RURAL;
+                    if ("rural".equals(name))
+                        return iter.get(urbanDensityEnc) == UrbanDensity.RURAL;
+                    return false;
+                });
+                if (result != null) {
+                    double resultCarMax = OSMValueExtractor.stringToKmh(result.getTags().get("maxspeed"));
+                    if (!Double.isNaN(resultCarMax)) iter.set(maxSpeedEnc, resultCarMax);
                 }
             }
         }
