@@ -57,7 +57,7 @@ public class MaxSpeedCalculator {
             LegalDefaultSpeeds.Result result = spLimit.getSpeedLimits(countryCode, tags, relTags, replacerFunction);
             if (result != null) {
                 double resultCarMax = OSMValueExtractor.stringToKmh(result.getTags().get("maxspeed"));
-                if (resultCarMax != currentCarMax)
+                if (currentCarMax != MaxSpeed.UNSET_SPEED && resultCarMax != currentCarMax)
                     System.out.println("current max: " + currentCarMax + ", result: " + resultCarMax);
 
                 if (!Double.isNaN(resultCarMax))
