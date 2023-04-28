@@ -19,37 +19,34 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.routing.util.countryrules.CountryRule;
+import com.graphhopper.routing.util.MaxSpeedCalculator;
 import com.graphhopper.storage.IntsRef;
+import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class OSMMaxSpeedParserTest {
 
+    private LegalDefaultSpeeds defaultSpeeds = MaxSpeedCalculator.createLegalDefaultSpeeds();
+
     @Test
     void countryRule() {
         DecimalEncodedValue maxSpeedEnc = MaxSpeed.create();
         maxSpeedEnc.init(new EncodedValue.InitializerConfig());
-        OSMMaxSpeedParser parser = new OSMMaxSpeedParser(maxSpeedEnc);
+        OSMMaxSpeedParser parser = new OSMMaxSpeedParser(maxSpeedEnc, defaultSpeeds);
         IntsRef relFlags = new IntsRef(2);
         ReaderWay way = new ReaderWay(29L);
         way.setTag("highway", "living_street");
-        way.setTag("country_rule", new CountryRule() {
-            @Override
-            public double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
-                return 5;
-            }
-        });
+        way.setTag("country", Country.DEU);
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
         assertEquals(5, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
 
-        // without a country_rule we get the default value
+        // without a country we get the default value
         edgeIntAccess = new ArrayEdgeIntAccess(1);
-        way.removeTag("country_rule");
+        way.removeTag("country");
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
         assertEquals(MaxSpeed.UNSET_SPEED, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
     }

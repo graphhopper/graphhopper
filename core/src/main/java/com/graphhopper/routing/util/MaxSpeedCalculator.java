@@ -22,16 +22,16 @@ import java.util.Map;
 public class MaxSpeedCalculator {
 
     private final Graph graph;
-    private final LegalDefaultSpeeds spLimit;
+    private final LegalDefaultSpeeds defaultSpeeds;
     private final EnumEncodedValue<UrbanDensity> urbanDensityEnc;
     private final EnumEncodedValue<RoadClass> roadClassEnc;
     private final EnumEncodedValue<Country> countryEnumEncodedValue;
     private final DecimalEncodedValue maxSpeedEnc;
     private final BooleanEncodedValue roundaboutEnc;
 
-    public MaxSpeedCalculator(Graph graph, EncodingManager em) {
+    public MaxSpeedCalculator(LegalDefaultSpeeds defaultSpeeds, Graph graph, EncodingManager em) {
         this.graph = graph;
-        spLimit = createLegalDefaultSpeeds();
+        this.defaultSpeeds = defaultSpeeds;
         urbanDensityEnc = em.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
         roadClassEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         countryEnumEncodedValue = em.getEnumEncodedValue(Country.KEY, Country.class);
@@ -39,7 +39,7 @@ public class MaxSpeedCalculator {
         roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     }
 
-    static LegalDefaultSpeeds createLegalDefaultSpeeds() {
+    public static LegalDefaultSpeeds createLegalDefaultSpeeds() {
         SpeedLimitsJson data;
         try {
             data = new ObjectMapper().readValue(MaxSpeedCalculator.class.getResource("legal_default_speeds.json"), SpeedLimitsJson.class);
@@ -66,7 +66,7 @@ public class MaxSpeedCalculator {
 
             double currentCarMax = iter.get(maxSpeedEnc);
             if (currentCarMax == MaxSpeed.UNSET_SPEED) {
-                LegalDefaultSpeeds.Result result = spLimit.getSpeedLimits(countryCode, tags, relTags, (name, eval) -> {
+                LegalDefaultSpeeds.Result result = defaultSpeeds.getSpeedLimits(countryCode, tags, relTags, (name, eval) -> {
                     if (eval.invoke()) return true;
                     if ("urban".equals(name))
                         return iter.get(urbanDensityEnc) != UrbanDensity.RURAL;
@@ -84,7 +84,7 @@ public class MaxSpeedCalculator {
         LoggerFactory.getLogger(getClass()).info("filled max_speed from LegalDefaultSpeeds, took: " + sw.stop().getSeconds());
     }
 
-    public static class SpeedLimitsJson {
+    static class SpeedLimitsJson {
         @JsonProperty
         private Map<String, String> meta;
         @JsonProperty
@@ -95,7 +95,7 @@ public class MaxSpeedCalculator {
         private List<String> warnings;
     }
 
-    public static class RoadTypeFilterImpl implements RoadTypeFilter {
+    static class RoadTypeFilterImpl implements RoadTypeFilter {
 
         private String filter, fuzzyFilter, relationFilter;
 
@@ -130,7 +130,7 @@ public class MaxSpeedCalculator {
         }
     }
 
-    public static class RoadTypeImpl implements RoadType {
+    static class RoadTypeImpl implements RoadType {
 
         private String name;
         private Map<String, String> tags;

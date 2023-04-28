@@ -1,11 +1,8 @@
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MaxSpeedCalculatorTest {
 
+    private final LegalDefaultSpeeds defaultSpeeds = MaxSpeedCalculator.createLegalDefaultSpeeds();
     private MaxSpeedCalculator calc;
     private Graph graph;
     private EnumEncodedValue<UrbanDensity> urbanDensity;
@@ -41,7 +39,7 @@ class MaxSpeedCalculatorTest {
         EncodingManager em = EncodingManager.start().add(urbanDensity).add(countryEnc).add(roundaboutEnc).
                 add(roadClassEnc).add(roadClassLinkEnc).add(maxSpeedEnc).add(accessEnc).add(speedEnc).build();
         graph = new BaseGraph.Builder(em).create();
-        calc = new MaxSpeedCalculator(graph, em);
+        calc = new MaxSpeedCalculator(defaultSpeeds, graph, em);
     }
 
     @Test
@@ -97,10 +95,9 @@ class MaxSpeedCalculatorTest {
 
     @Test
     public void testRawAccess_RuralIsDefault_IfNoUrbanDensityWasSet() {
-        LegalDefaultSpeeds speeds = MaxSpeedCalculator.createLegalDefaultSpeeds();
         Map<String, String> tags = new HashMap<>();
         tags.put("highway", "primary");
-        LegalDefaultSpeeds.Result res = speeds.getSpeedLimits(Country.DEU.getAlpha2(), tags, new ArrayList<>(), (name, eval) -> eval.invoke());
+        LegalDefaultSpeeds.Result res = defaultSpeeds.getSpeedLimits(Country.DEU.getAlpha2(), tags, new ArrayList<>(), (name, eval) -> eval.invoke());
 
         assertEquals("100", res.getTags().get("maxspeed").toString());
     }

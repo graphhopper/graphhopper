@@ -49,6 +49,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -76,6 +77,7 @@ import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
  */
 public class GraphHopper {
     private static final Logger logger = LoggerFactory.getLogger(GraphHopper.class);
+    private LegalDefaultSpeeds defaultSpeeds = MaxSpeedCalculator.createLegalDefaultSpeeds();
     private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
@@ -128,7 +130,7 @@ public class GraphHopper {
     private VehicleEncodedValuesFactory vehicleEncodedValuesFactory = new DefaultVehicleEncodedValuesFactory();
     private VehicleTagParserFactory vehicleTagParserFactory = new DefaultVehicleTagParserFactory();
     private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
-    private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
+    private TagParserFactory tagParserFactory = new DefaultTagParserFactory(defaultSpeeds);
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     private String dateRangeParserString = "";
@@ -646,7 +648,7 @@ public class GraphHopper {
         if (!encodedValueStrings.contains(RoadEnvironment.KEY))
             osmParsers.addWayTagParser(new OSMRoadEnvironmentParser(encodingManager.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)));
         if (!encodedValueStrings.contains(MaxSpeed.KEY))
-            osmParsers.addWayTagParser(new OSMMaxSpeedParser(encodingManager.getDecimalEncodedValue(MaxSpeed.KEY)));
+            osmParsers.addWayTagParser(new OSMMaxSpeedParser(encodingManager.getDecimalEncodedValue(MaxSpeed.KEY), defaultSpeeds));
         if (!encodedValueStrings.contains(RoadAccess.KEY))
             osmParsers.addWayTagParser(new OSMRoadAccessParser(encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
         if (encodingManager.hasEncodedValue(AverageSlope.KEY) || encodingManager.hasEncodedValue(MaxSlope.KEY)) {
@@ -906,7 +908,7 @@ public class GraphHopper {
                 if (!encodingManager.hasEncodedValue(key))
                     throw new IllegalArgumentException("MaxSpeedCalculator requires " + key);
 
-            new MaxSpeedCalculator(getBaseGraph(), encodingManager).fillMaxSpeed();
+            new MaxSpeedCalculator(defaultSpeeds, getBaseGraph(), encodingManager).fillMaxSpeed();
         }
     }
 
