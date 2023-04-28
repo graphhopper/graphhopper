@@ -54,6 +54,11 @@ class MaxSpeedCalculatorTest {
         edge.set(roadClassEnc, RoadClass.MOTORWAY);
         calc.fillMaxSpeed();
         assertEquals(MaxSpeed.UNSET_SPEED, edge.get(maxSpeedEnc), 1);
+
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(roadClassEnc, RoadClass.RESIDENTIAL);
+        calc.fillMaxSpeed();
+        assertEquals(50, edge.get(maxSpeedEnc), 1);
     }
 
     @Test
@@ -71,6 +76,11 @@ class MaxSpeedCalculatorTest {
         edge.set(roadClassEnc, RoadClass.MOTORWAY);
         calc.fillMaxSpeed();
         assertEquals(MaxSpeed.UNSET_SPEED, edge.get(maxSpeedEnc), 1);
+
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(roadClassEnc, RoadClass.RESIDENTIAL);
+        calc.fillMaxSpeed();
+        assertEquals(100, edge.get(maxSpeedEnc), 1);
     }
 
     @Test
