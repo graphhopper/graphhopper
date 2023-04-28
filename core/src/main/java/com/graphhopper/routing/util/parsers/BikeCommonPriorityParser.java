@@ -25,7 +25,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
     protected final HashSet<String> pushingSectionsHighways = new HashSet<>();
     protected final Set<String> preferHighwayTags = new HashSet<>();
-    private final Map<String, PriorityCode> avoidHighwayTags = new HashMap<>();
+    protected final Map<String, PriorityCode> avoidHighwayTags = new HashMap<>();
     protected final Set<String> unpavedSurfaceTags = new HashSet<>();
     protected final Set<String> ferries = new HashSet<>(FERRIES);
     protected final Set<String> intendedValues = new HashSet<>(INTENDED);

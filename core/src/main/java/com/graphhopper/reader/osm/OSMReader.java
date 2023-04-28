@@ -170,8 +170,7 @@ public class OSMReader {
         if (!baseGraph.isInitialized())
             throw new IllegalStateException("BaseGraph must be initialize before we can read OSM");
 
-        WaySegmentParser.Builder waySegmentParserBuilder = new WaySegmentParser.Builder(baseGraph.getNodeAccess())
-                .setDirectory(baseGraph.getDirectory())
+        WaySegmentParser.Builder waySegmentParserBuilder = new WaySegmentParser.Builder(baseGraph.getNodeAccess(), baseGraph.getDirectory())
                 .setElevationProvider(eleProvider)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
