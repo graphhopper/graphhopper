@@ -28,6 +28,7 @@ public class MaxSpeedCalculator {
     private final EnumEncodedValue<Country> countryEnumEncodedValue;
     private final DecimalEncodedValue maxSpeedEnc;
     private final BooleanEncodedValue roundaboutEnc;
+    private final IntEncodedValue lanesEnc;
 
     public MaxSpeedCalculator(LegalDefaultSpeeds defaultSpeeds, Graph graph, EncodingManager em) {
         this.graph = graph;
@@ -37,6 +38,7 @@ public class MaxSpeedCalculator {
         countryEnumEncodedValue = em.getEnumEncodedValue(Country.KEY, Country.class);
         maxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
         roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
+        lanesEnc = em.hasEncodedValue(Lanes.KEY) ? em.getIntEncodedValue(Lanes.KEY) : null;
     }
 
     public static LegalDefaultSpeeds createLegalDefaultSpeeds() {
@@ -63,23 +65,24 @@ public class MaxSpeedCalculator {
             Map<String, String> tags = new HashMap<>();
             tags.put("highway", iter.get(roadClassEnc).toString());
             if (iter.get(roundaboutEnc)) tags.put("junction", "roundabout");
+            if (lanesEnc != null) tags.put("lanes", "" + iter.get(lanesEnc));
+
+            // this is tricky as it could be a highly customized (car) profile
+            // if (isOneway(iter)) tags.put("oneway", "yes");
 
             double currentCarMax = iter.get(maxSpeedEnc);
 
-            // TODO NOW
-            //  We have to overwrite the max speed but the information from certain tags like source:maxspeed=DE:urban
-            //  is missing here unlike in OSMMaxSpeedParser but in OSMMaxSpeedParser we don't know the
-            //  urban_density and so it is unclear if the max_speed should be overwritten
-
-            //  As default is rural we could at least overwrite all CITY speeds?
-            if (iter.get(urbanDensityEnc) != UrbanDensity.RURAL) {
+            // In OSMMaxSpeedParser we set the max_speed value based on country and many OSM tags
+            // but the urban_density is missing, and we use the default speed (for rural). Here we
+            // do not have all the information (as OSM tags to encoded values is not yet lossless),
+            // and so we should not overwrite the max_speed in case urban_density == RURAL.
+            if (currentCarMax == MaxSpeed.UNSET_SPEED || iter.get(urbanDensityEnc) != UrbanDensity.RURAL) {
                 LegalDefaultSpeeds.Result result = defaultSpeeds.getSpeedLimits(countryCode, tags, relTags, (name, eval) -> {
                     if (eval.invoke()) return true;
-                    if ("urban".equals(name)) return true;
-//                    if ("urban".equals(name))
-//                        return iter.get(urbanDensityEnc) != UrbanDensity.RURAL;
-//                    if ("rural".equals(name))
-//                        return iter.get(urbanDensityEnc) == UrbanDensity.RURAL;
+                    if ("urban".equals(name))
+                        return iter.get(urbanDensityEnc) != UrbanDensity.RURAL;
+                    if ("rural".equals(name))
+                        return iter.get(urbanDensityEnc) == UrbanDensity.RURAL;
                     return false;
                 });
                 if (result != null) {

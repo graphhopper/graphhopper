@@ -19,25 +19,22 @@ class MaxSpeedCalculatorTest {
     private final LegalDefaultSpeeds defaultSpeeds = MaxSpeedCalculator.createLegalDefaultSpeeds();
     private MaxSpeedCalculator calc;
     private Graph graph;
+    private EncodingManager em;
     private EnumEncodedValue<UrbanDensity> urbanDensity;
     private EnumEncodedValue<Country> countryEnc;
     private EnumEncodedValue<RoadClass> roadClassEnc;
-    private BooleanEncodedValue roadClassLinkEnc;
     private DecimalEncodedValue maxSpeedEnc;
-    private BooleanEncodedValue roundaboutEnc;
 
     @BeforeEach
     public void setup() {
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
         roadClassEnc = RoadClass.create();
-        roadClassLinkEnc = RoadClassLink.create();
         urbanDensity = UrbanDensity.create();
         countryEnc = Country.create();
         maxSpeedEnc = MaxSpeed.create();
-        roundaboutEnc = Roundabout.create();
-        EncodingManager em = EncodingManager.start().add(urbanDensity).add(countryEnc).add(roundaboutEnc).
-                add(roadClassEnc).add(roadClassLinkEnc).add(maxSpeedEnc).add(accessEnc).add(speedEnc).build();
+        em = EncodingManager.start().add(urbanDensity).add(countryEnc).add(Roundabout.create()).
+                add(Lanes.create()).add(roadClassEnc).add(maxSpeedEnc).add(accessEnc).add(speedEnc).build();
         graph = new BaseGraph.Builder(em).create();
         calc = new MaxSpeedCalculator(defaultSpeeds, graph, em);
     }
@@ -88,10 +85,28 @@ class MaxSpeedCalculatorTest {
         assertEquals(50, edge.get(maxSpeedEnc), 1);
 
         edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
-        edge.set(roundaboutEnc, true);
+        edge.set(em.getBooleanEncodedValue(Roundabout.KEY), true);
         calc.fillMaxSpeed();
         assertEquals(30, edge.get(maxSpeedEnc), 1);
     }
+
+    @Test
+    public void testLanes() {
+        EdgeIteratorState edge = graph.edge(0, 1);
+        edge.set(countryEnc, Country.CHL);
+        edge.set(urbanDensity, UrbanDensity.RURAL);
+        edge.set(roadClassEnc, RoadClass.PRIMARY);
+
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        calc.fillMaxSpeed();
+        assertEquals(100, edge.get(maxSpeedEnc), 1);
+
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(em.getIntEncodedValue(Lanes.KEY), 4); // 2 in each direction!
+        calc.fillMaxSpeed();
+        assertEquals(120, edge.get(maxSpeedEnc), 1);
+    }
+
 
     @Test
     public void testRawAccess_RuralIsDefault_IfNoUrbanDensityWasSet() {
