@@ -92,7 +92,8 @@ public class MaxSpeedCalculator {
                 });
                 if (result != null) {
                     double resultCarMax = OSMValueExtractor.stringToKmh(result.getTags().get("maxspeed"));
-                    if (!Double.isNaN(resultCarMax)) iter.set(maxSpeedEnc, resultCarMax);
+                    if (!Double.isNaN(resultCarMax))
+                        iter.set(maxSpeedEnc, resultCarMax, resultCarMax);
                 }
             }
         }

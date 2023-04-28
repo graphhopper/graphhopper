@@ -45,17 +45,17 @@ class MaxSpeedCalculatorTest {
         edge.set(countryEnc, Country.DEU);
         edge.set(urbanDensity, UrbanDensity.CITY);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
         edge.set(roadClassEnc, RoadClass.PRIMARY);
         calc.fillMaxSpeed();
         assertEquals(50, edge.get(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
         edge.set(roadClassEnc, RoadClass.MOTORWAY);
         calc.fillMaxSpeed();
         assertEquals(MaxSpeed.UNSET_SPEED, edge.get(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
         edge.set(roadClassEnc, RoadClass.RESIDENTIAL);
         calc.fillMaxSpeed();
         assertEquals(50, edge.get(maxSpeedEnc), 1);
@@ -67,17 +67,18 @@ class MaxSpeedCalculatorTest {
         edge.set(countryEnc, Country.DEU);
         edge.set(urbanDensity, UrbanDensity.RURAL);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
         edge.set(roadClassEnc, RoadClass.PRIMARY);
         calc.fillMaxSpeed();
         assertEquals(100, edge.get(maxSpeedEnc), 1);
+        assertEquals(100, edge.getReverse(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
         edge.set(roadClassEnc, RoadClass.MOTORWAY);
         calc.fillMaxSpeed();
         assertEquals(MaxSpeed.UNSET_SPEED, edge.get(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
         edge.set(roadClassEnc, RoadClass.RESIDENTIAL);
         calc.fillMaxSpeed();
         assertEquals(100, edge.get(maxSpeedEnc), 1);
@@ -90,11 +91,11 @@ class MaxSpeedCalculatorTest {
         edge.set(urbanDensity, UrbanDensity.CITY);
         edge.set(roadClassEnc, RoadClass.PRIMARY);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
         calc.fillMaxSpeed();
         assertEquals(50, edge.get(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
         edge.set(em.getBooleanEncodedValue(Roundabout.KEY), true);
         calc.fillMaxSpeed();
         assertEquals(30, edge.get(maxSpeedEnc), 1);
@@ -107,11 +108,11 @@ class MaxSpeedCalculatorTest {
         edge.set(urbanDensity, UrbanDensity.RURAL);
         edge.set(roadClassEnc, RoadClass.PRIMARY);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
         calc.fillMaxSpeed();
         assertEquals(100, edge.get(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
         edge.set(em.getIntEncodedValue(Lanes.KEY), 4); // 2 in each direction!
         calc.fillMaxSpeed();
         assertEquals(120, edge.get(maxSpeedEnc), 1);
@@ -124,11 +125,11 @@ class MaxSpeedCalculatorTest {
         edge.set(urbanDensity, UrbanDensity.RURAL);
         edge.set(roadClassEnc, RoadClass.PRIMARY);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
         calc.fillMaxSpeed();
         assertEquals(90, edge.get(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
         edge.set(em.getEnumEncodedValue(Surface.KEY, Surface.class), Surface.COMPACTED);
         calc.fillMaxSpeed();
         assertEquals(70, edge.get(maxSpeedEnc), 1);
