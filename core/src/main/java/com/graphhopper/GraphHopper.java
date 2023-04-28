@@ -901,16 +901,12 @@ public class GraphHopper {
         if (encodingManager.hasEncodedValue(Country.KEY)
                 && encodingManager.hasEncodedValue(UrbanDensity.KEY)
                 && encodingManager.hasEncodedValue(MaxSpeed.KEY)) {
-            EnumEncodedValue<UrbanDensity> urbanDensityEnc = encodingManager.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
-            if (!encodingManager.hasEncodedValue(RoadClass.KEY))
-                throw new IllegalArgumentException("MaxSpeedCalculator requires " + RoadClass.KEY);
-            if (!encodingManager.hasEncodedValue(RoadClassLink.KEY))
-                throw new IllegalArgumentException("MaxSpeedCalculator requires " + RoadClassLink.KEY);
-            EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
-            BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
-            MaxSpeedCalculator.fillMaxSpeed(getBaseGraph(), urbanDensityEnc, roadClassEnc,
-                    roadClassLinkEnc, encodingManager.getEnumEncodedValue(Country.KEY, Country.class),
-                    encodingManager.getDecimalEncodedValue(MaxSpeed.KEY));
+
+            for (String key : Arrays.asList(RoadClass.KEY, RoadClassLink.KEY, Roundabout.KEY))
+                if (!encodingManager.hasEncodedValue(key))
+                    throw new IllegalArgumentException("MaxSpeedCalculator requires " + key);
+
+            new MaxSpeedCalculator(getBaseGraph(), encodingManager).fillMaxSpeed();
         }
     }
 

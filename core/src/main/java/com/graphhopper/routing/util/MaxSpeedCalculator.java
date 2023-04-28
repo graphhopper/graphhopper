@@ -1,16 +1,17 @@
 package com.graphhopper.routing.util;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.StopWatch;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 import de.westnordost.osm_legal_default_speeds.RoadType;
 import de.westnordost.osm_legal_default_speeds.RoadTypeFilter;
-import kotlin.jvm.functions.Function0;
-import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -20,21 +21,40 @@ import java.util.Map;
 
 public class MaxSpeedCalculator {
 
-    public static void fillMaxSpeed(Graph graph,
-                                    EnumEncodedValue<UrbanDensity> urbanDensityEnc,
-                                    EnumEncodedValue<RoadClass> roadClassEnc,
-                                    BooleanEncodedValue roadClassLinkEnc,
-                                    EnumEncodedValue<Country> countryEnumEncodedValue,
-                                    DecimalEncodedValue maxSpeedEnc) {
+    private final Graph graph;
+    private final LegalDefaultSpeeds spLimit;
+    private final EnumEncodedValue<UrbanDensity> urbanDensityEnc;
+    private final EnumEncodedValue<RoadClass> roadClassEnc;
+    private final EnumEncodedValue<Country> countryEnumEncodedValue;
+    private final DecimalEncodedValue maxSpeedEnc;
+    private final BooleanEncodedValue roundaboutEnc;
 
+    public MaxSpeedCalculator(Graph graph, EncodingManager em) {
+        this.graph = graph;
+        spLimit = createLegalDefaultSpeeds();
+        urbanDensityEnc = em.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
+        roadClassEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        countryEnumEncodedValue = em.getEnumEncodedValue(Country.KEY, Country.class);
+        maxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
+        roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
+    }
+
+    static LegalDefaultSpeeds createLegalDefaultSpeeds() {
         SpeedLimitsJson data;
         try {
             data = new ObjectMapper().readValue(MaxSpeedCalculator.class.getResource("legal_default_speeds.json"), SpeedLimitsJson.class);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return new LegalDefaultSpeeds(data.roadTypesByName, data.speedLimitsByCountryCode);
+    }
 
-        LegalDefaultSpeeds spLimit = new LegalDefaultSpeeds(data.roadTypesByName, data.speedLimitsByCountryCode);
+    /**
+     * This method sets max_speed values without a value (UNSET_SPEED) to a value depending on
+     * the country, road_class etc.
+     */
+    public void fillMaxSpeed() {
+        StopWatch sw = new StopWatch().start();
         List<Map<String, String>> relTags = new ArrayList<>();
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
@@ -42,6 +62,8 @@ public class MaxSpeedCalculator {
             String countryCode = iter.get(countryEnumEncodedValue).getAlpha2();
             Map<String, String> tags = new HashMap<>();
             tags.put("highway", iter.get(roadClassEnc).toString());
+            if (iter.get(roundaboutEnc)) tags.put("junction", "roundabout");
+
             double currentCarMax = iter.get(maxSpeedEnc);
             if (currentCarMax == MaxSpeed.UNSET_SPEED) {
                 LegalDefaultSpeeds.Result result = spLimit.getSpeedLimits(countryCode, tags, relTags, (name, eval) -> {
@@ -58,29 +80,19 @@ public class MaxSpeedCalculator {
                 }
             }
         }
+
+        LoggerFactory.getLogger(getClass()).info("filled max_speed from LegalDefaultSpeeds, took: " + sw.stop().getSeconds());
     }
 
     public static class SpeedLimitsJson {
-        Map<String, String> meta;
-        Map<String, RoadTypeFilterImpl> roadTypesByName;
-        Map<String, List<RoadTypeImpl>> speedLimitsByCountryCode;
-        List<String> warnings;
-
-        public void setMeta(Map<String, String> meta) {
-            this.meta = meta;
-        }
-
-        public void setRoadTypesByName(Map<String, RoadTypeFilterImpl> roadTypesByName) {
-            this.roadTypesByName = roadTypesByName;
-        }
-
-        public void setSpeedLimitsByCountryCode(Map<String, List<RoadTypeImpl>> speedLimitsByCountryCode) {
-            this.speedLimitsByCountryCode = speedLimitsByCountryCode;
-        }
-
-        public void setWarnings(List<String> warnings) {
-            this.warnings = warnings;
-        }
+        @JsonProperty
+        private Map<String, String> meta;
+        @JsonProperty
+        private Map<String, RoadTypeFilterImpl> roadTypesByName;
+        @JsonProperty
+        private Map<String, List<RoadTypeImpl>> speedLimitsByCountryCode;
+        @JsonProperty
+        private List<String> warnings;
     }
 
     public static class RoadTypeFilterImpl implements RoadTypeFilter {
@@ -108,13 +120,13 @@ public class MaxSpeedCalculator {
         @Nullable
         @Override
         public String getFuzzyFilter() {
-            return null;
+            return fuzzyFilter;
         }
 
         @Nullable
         @Override
         public String getRelationFilter() {
-            return null;
+            return relationFilter;
         }
     }
 
