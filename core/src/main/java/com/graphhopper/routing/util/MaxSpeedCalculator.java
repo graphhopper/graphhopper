@@ -65,13 +65,21 @@ public class MaxSpeedCalculator {
             if (iter.get(roundaboutEnc)) tags.put("junction", "roundabout");
 
             double currentCarMax = iter.get(maxSpeedEnc);
-            if (currentCarMax == MaxSpeed.UNSET_SPEED) {
+
+            // TODO NOW
+            //  We have to overwrite the max speed but the information from certain tags like source:maxspeed=DE:urban
+            //  is missing here unlike in OSMMaxSpeedParser but in OSMMaxSpeedParser we don't know the
+            //  urban_density and so it is unclear if the max_speed should be overwritten
+
+            //  As default is rural we could at least overwrite all CITY speeds?
+            if (iter.get(urbanDensityEnc) != UrbanDensity.RURAL) {
                 LegalDefaultSpeeds.Result result = defaultSpeeds.getSpeedLimits(countryCode, tags, relTags, (name, eval) -> {
                     if (eval.invoke()) return true;
-                    if ("urban".equals(name))
-                        return iter.get(urbanDensityEnc) != UrbanDensity.RURAL;
-                    if ("rural".equals(name))
-                        return iter.get(urbanDensityEnc) == UrbanDensity.RURAL;
+                    if ("urban".equals(name)) return true;
+//                    if ("urban".equals(name))
+//                        return iter.get(urbanDensityEnc) != UrbanDensity.RURAL;
+//                    if ("rural".equals(name))
+//                        return iter.get(urbanDensityEnc) == UrbanDensity.RURAL;
                     return false;
                 });
                 if (result != null) {
