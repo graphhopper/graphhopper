@@ -86,14 +86,23 @@
             <groupId>de.westnordost</groupId>
             <artifactId>osm-legal-default-speeds-jvm</artifactId>
             <version>1.2</version>
+            <!-- to avoid problems force kotlin 1.8.0 like we do for client-hc (used for client-hc which is used in dropwizard tests) -->
+            <exclusions>
+                <exclusion>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-stdlib-common</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.jetbrains.kotlin</groupId>
+                    <artifactId>kotlin-stdlib-jdk8</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-        <!-- somehow we need an explicit dependency here, otherwise we get NoSuchMethodError in our dropwizard tests.
-             synchronize with version that is used from osm-legal-default-speeds-jvm to avoid further issues.
-        -->
+        <!-- see kotlin exclusion above -->
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
-            <version>1.7.10</version>
+            <version>1.8.0</version>
         </dependency>
 
         <dependency>
