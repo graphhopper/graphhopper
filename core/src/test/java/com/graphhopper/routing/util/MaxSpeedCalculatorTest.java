@@ -33,7 +33,7 @@ class MaxSpeedCalculatorTest {
         urbanDensity = UrbanDensity.create();
         countryEnc = Country.create();
         maxSpeedEnc = MaxSpeed.create();
-        em = EncodingManager.start().add(urbanDensity).add(countryEnc).add(Roundabout.create()).
+        em = EncodingManager.start().add(urbanDensity).add(countryEnc).add(Roundabout.create()).add(Surface.create()).
                 add(Lanes.create()).add(roadClassEnc).add(maxSpeedEnc).add(accessEnc).add(speedEnc).build();
         graph = new BaseGraph.Builder(em).create();
         calc = new MaxSpeedCalculator(defaultSpeeds, graph, em);
@@ -107,6 +107,22 @@ class MaxSpeedCalculatorTest {
         assertEquals(120, edge.get(maxSpeedEnc), 1);
     }
 
+    @Test
+    public void testSurface() {
+        EdgeIteratorState edge = graph.edge(0, 1);
+        edge.set(countryEnc, Country.LTU);
+        edge.set(urbanDensity, UrbanDensity.RURAL);
+        edge.set(roadClassEnc, RoadClass.PRIMARY);
+
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        calc.fillMaxSpeed();
+        assertEquals(90, edge.get(maxSpeedEnc), 1);
+
+        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED);
+        edge.set(em.getEnumEncodedValue(Surface.KEY, Surface.class), Surface.COMPACTED);
+        calc.fillMaxSpeed();
+        assertEquals(70, edge.get(maxSpeedEnc), 1);
+    }
 
     @Test
     public void testRawAccess_RuralIsDefault_IfNoUrbanDensityWasSet() {

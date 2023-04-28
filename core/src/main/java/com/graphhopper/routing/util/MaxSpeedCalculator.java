@@ -29,6 +29,7 @@ public class MaxSpeedCalculator {
     private final DecimalEncodedValue maxSpeedEnc;
     private final BooleanEncodedValue roundaboutEnc;
     private final IntEncodedValue lanesEnc;
+    private final EnumEncodedValue<Surface> surfaceEnc;
 
     public MaxSpeedCalculator(LegalDefaultSpeeds defaultSpeeds, Graph graph, EncodingManager em) {
         this.graph = graph;
@@ -39,6 +40,7 @@ public class MaxSpeedCalculator {
         maxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
         roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
         lanesEnc = em.hasEncodedValue(Lanes.KEY) ? em.getIntEncodedValue(Lanes.KEY) : null;
+        surfaceEnc = em.hasEncodedValue(Surface.KEY) ? em.getEnumEncodedValue(Surface.KEY, Surface.class) : null;
     }
 
     public static LegalDefaultSpeeds createLegalDefaultSpeeds() {
@@ -52,8 +54,13 @@ public class MaxSpeedCalculator {
     }
 
     /**
-     * This method sets max_speed values without a value (UNSET_SPEED) to a value depending on
-     * the country, road_class etc.
+     * This method sets max_speed values without a value (UNSET_SPEED) to a value or overwrites the
+     * max_speed for non RURAL roads depending on the country, road_class etc.
+     * <p>
+     * In OSMMaxSpeedParser we set the max_speed value based on country and many OSM tags
+     * but the urban_density is missing, and we use the default speed (for rural). Here we
+     * do not have all the information (as OSM tags to encoded values is not yet lossless),
+     * and so we do not overwrite the max_speed in case urban_density == RURAL.
      */
     public void fillMaxSpeed() {
         StopWatch sw = new StopWatch().start();
@@ -66,16 +73,14 @@ public class MaxSpeedCalculator {
             tags.put("highway", iter.get(roadClassEnc).toString());
             if (iter.get(roundaboutEnc)) tags.put("junction", "roundabout");
             if (lanesEnc != null) tags.put("lanes", "" + iter.get(lanesEnc));
+            if (surfaceEnc != null && iter.get(surfaceEnc) != Surface.MISSING)
+                tags.put("surface", iter.get(surfaceEnc).toString());
 
             // this is tricky as it could be a highly customized (car) profile
             // if (isOneway(iter)) tags.put("oneway", "yes");
 
             double currentCarMax = iter.get(maxSpeedEnc);
 
-            // In OSMMaxSpeedParser we set the max_speed value based on country and many OSM tags
-            // but the urban_density is missing, and we use the default speed (for rural). Here we
-            // do not have all the information (as OSM tags to encoded values is not yet lossless),
-            // and so we should not overwrite the max_speed in case urban_density == RURAL.
             if (currentCarMax == MaxSpeed.UNSET_SPEED || iter.get(urbanDensityEnc) != UrbanDensity.RURAL) {
                 LegalDefaultSpeeds.Result result = defaultSpeeds.getSpeedLimits(countryCode, tags, relTags, (name, eval) -> {
                     if (eval.invoke()) return true;
