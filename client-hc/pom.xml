@@ -42,20 +42,13 @@
             <groupId>com.squareup.okhttp3</groupId>
             <artifactId>okhttp</artifactId>
             <version>4.10.0</version>
-            <!-- instead of kotlin 1.4.10 we use most recent kotlin 1.8.0 via including latest okio
-                 to avoid issues with osm-legal-default-speeds-jvm (uses kotlin 1.7.10 but we also force 1.8.0) -->
-            <exclusions>
-                <exclusion>
-                    <groupId>org.jetbrains.kotlin</groupId>
-                    <artifactId>kotlin-stdlib</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
-        <!-- see exclusion above -->
+        <!-- okhttp uses kotlin-stdlib:1.6.20 but they also depend on okio 3.0.0 which uses kotlin-stdlib-jdk8:1.5.31 !?
+             => force okio 3.2.0 which uses same kotlin 1.6.20 as okhttp -->
         <dependency>
             <groupId>com.squareup.okio</groupId>
             <artifactId>okio-jvm</artifactId>
-            <version>3.3.0</version>
+            <version>3.2.0</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

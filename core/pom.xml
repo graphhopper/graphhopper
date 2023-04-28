@@ -86,7 +86,7 @@
             <groupId>de.westnordost</groupId>
             <artifactId>osm-legal-default-speeds-jvm</artifactId>
             <version>1.2</version>
-            <!-- to avoid problems force kotlin 1.8.0 like we do for client-hc (used for client-hc which is used in dropwizard tests) -->
+            <!-- to avoid problems force older but same kotlin like we use for client-hc -->
             <exclusions>
                 <exclusion>
                     <groupId>org.jetbrains.kotlin</groupId>
@@ -98,11 +98,11 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        <!-- see kotlin exclusion above -->
+        <!-- use same kotlin version as okhttp uses in client-hc -->
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
             <artifactId>kotlin-stdlib</artifactId>
-            <version>1.8.0</version>
+            <version>1.6.20</version>
         </dependency>
 
         <dependency>
