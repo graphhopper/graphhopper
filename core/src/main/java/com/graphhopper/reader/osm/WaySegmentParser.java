@@ -25,7 +25,6 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointAccess;
 import com.graphhopper.util.PointList;
@@ -49,7 +48,7 @@ import static com.graphhopper.util.Helper.nf;
 /**
  * This class parses a given OSM file and splits OSM ways into 'segments' at all intersections (or 'junctions').
  * Intersections can be either crossings of different OSM ways or duplicate appearances of the same node within one
- * way (when the way contains a loop). Furthermore, this class creates artificial segments at certain nodes. This class
+ * way (when the way contains a loop). Furthermore, this class creates artificial segments at certain nodes. It
  * also provides several hooks/callbacks to customize the processing of nodes, ways and relations.
  * <p>
  * The OSM file is read twice. The first time we ignore OSM nodes and only determine the OSM node IDs at which accepted
@@ -66,32 +65,24 @@ public class WaySegmentParser {
     private static final Logger LOGGER = LoggerFactory.getLogger(WaySegmentParser.class);
     private static final Set<String> INCLUDE_IF_NODE_TAGS = new HashSet<>(Arrays.asList("barrier", "highway", "railway", "crossing", "ford"));
 
-    private final ElevationProvider eleProvider;
-    private final Predicate<ReaderWay> wayFilter;
-    private final Predicate<ReaderNode> splitNodeFilter;
-    private final WayPreprocessor wayPreprocessor;
-    private final Consumer<ReaderRelation> relationPreprocessor;
-    private final RelationProcessor relationProcessor;
-    private final EdgeHandler edgeHandler;
-    private final int workerThreads;
+    private ElevationProvider elevationProvider = ElevationProvider.NOOP;
+    private Predicate<ReaderWay> wayFilter = way -> true;
+    private Predicate<ReaderNode> splitNodeFilter = node -> false;
+    private WayPreprocessor wayPreprocessor = (way, supplier) -> {
+    };
+    private Consumer<ReaderRelation> relationPreprocessor = relation -> {
+    };
+    private RelationProcessor relationProcessor = (relation, map) -> {
+    };
+    private EdgeHandler edgeHandler = (from, to, pointList, way, nodeTags) ->
+            System.out.println("edge " + from + "->" + to + " (" + pointList.size() + " points)");
+    private int workerThreads = 2;
 
     private final OSMNodeData nodeData;
     private Date timestamp;
 
-    private WaySegmentParser(PointAccess nodeAccess, Directory directory, ElevationProvider eleProvider,
-                             Predicate<ReaderWay> wayFilter, Predicate<ReaderNode> splitNodeFilter, WayPreprocessor wayPreprocessor,
-                             Consumer<ReaderRelation> relationPreprocessor, RelationProcessor relationProcessor,
-                             EdgeHandler edgeHandler, int workerThreads) {
-        this.eleProvider = eleProvider;
-        this.wayFilter = wayFilter;
-        this.splitNodeFilter = splitNodeFilter;
-        this.wayPreprocessor = wayPreprocessor;
-        this.relationPreprocessor = relationPreprocessor;
-        this.relationProcessor = relationProcessor;
-        this.edgeHandler = edgeHandler;
-        this.workerThreads = workerThreads;
-
-        this.nodeData = new OSMNodeData(nodeAccess, directory);
+    private WaySegmentParser(OSMNodeData nodeData) {
+        this.nodeData = nodeData;
     }
 
     /**
@@ -215,7 +206,7 @@ public class WaySegmentParser {
                 LOGGER.info("pass2 - processed nodes: " + nf(nodeCounter) + ", accepted nodes: " + nf(acceptedNodes) +
                         ", " + Helper.getMemInfo());
 
-            int nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), () -> eleProvider.getEle(node));
+            int nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), () -> elevationProvider.getEle(node));
             if (nodeType == EMPTY_NODE)
                 return;
 
@@ -421,42 +412,21 @@ public class WaySegmentParser {
     }
 
     public static class Builder {
-        private final PointAccess nodeAccess;
-        private Directory directory = new RAMDirectory();
-        private ElevationProvider elevationProvider = ElevationProvider.NOOP;
-        private Predicate<ReaderWay> wayFilter = way -> true;
-        private Predicate<ReaderNode> splitNodeFilter = node -> false;
-        private WayPreprocessor wayPreprocessor = (way, supplier) -> {
-        };
-        private Consumer<ReaderRelation> relationPreprocessor = relation -> {
-        };
-        private RelationProcessor relationProcessor = (relation, map) -> {
-        };
-        private EdgeHandler edgeHandler = (from, to, pointList, way, nodeTags) ->
-                System.out.println("edge " + from + "->" + to + " (" + pointList.size() + " points)");
-        private int workerThreads = 2;
+        private final WaySegmentParser waySegmentParser;
 
         /**
-         * @param nodeAccess used to store tower node coordinates while parsing the ways
+         * @param pointAccess used to store tower node coordinates while parsing the ways
+         * @param directory   the directory to be used to store temporary data
          */
-        public Builder(PointAccess nodeAccess) {
-            // instead of requiring a PointAccess here we could also just use some temporary in-memory storage by default
-            this.nodeAccess = nodeAccess;
-        }
-
-        /**
-         * @param directory the directory to be used to store temporary data
-         */
-        public Builder setDirectory(Directory directory) {
-            this.directory = directory;
-            return this;
+        public Builder(PointAccess pointAccess, Directory directory) {
+            waySegmentParser = new WaySegmentParser(new OSMNodeData(pointAccess, directory));
         }
 
         /**
          * @param elevationProvider used to determine the elevation of an OSM node
          */
         public Builder setElevationProvider(ElevationProvider elevationProvider) {
-            this.elevationProvider = elevationProvider;
+            waySegmentParser.elevationProvider = elevationProvider;
             return this;
         }
 
@@ -464,7 +434,7 @@ public class WaySegmentParser {
          * @param wayFilter return true for OSM ways that should be considered and false otherwise
          */
         public Builder setWayFilter(Predicate<ReaderWay> wayFilter) {
-            this.wayFilter = wayFilter;
+            waySegmentParser.wayFilter = wayFilter;
             return this;
         }
 
@@ -472,7 +442,7 @@ public class WaySegmentParser {
          * @param splitNodeFilter return true if the given OSM node should be duplicated to create an artificial edge
          */
         public Builder setSplitNodeFilter(Predicate<ReaderNode> splitNodeFilter) {
-            this.splitNodeFilter = splitNodeFilter;
+            waySegmentParser.splitNodeFilter = splitNodeFilter;
             return this;
         }
 
@@ -480,7 +450,7 @@ public class WaySegmentParser {
          * @param wayPreprocessor callback function that is called for each accepted OSM way during the second pass
          */
         public Builder setWayPreprocessor(WayPreprocessor wayPreprocessor) {
-            this.wayPreprocessor = wayPreprocessor;
+            waySegmentParser.wayPreprocessor = wayPreprocessor;
             return this;
         }
 
@@ -488,7 +458,7 @@ public class WaySegmentParser {
          * @param relationPreprocessor callback function that receives OSM relations during the first pass
          */
         public Builder setRelationPreprocessor(Consumer<ReaderRelation> relationPreprocessor) {
-            this.relationPreprocessor = relationPreprocessor;
+            waySegmentParser.relationPreprocessor = relationPreprocessor;
             return this;
         }
 
@@ -496,7 +466,7 @@ public class WaySegmentParser {
          * @param relationProcessor callback function that receives OSM relations during the second pass
          */
         public Builder setRelationProcessor(RelationProcessor relationProcessor) {
-            this.relationProcessor = relationProcessor;
+            waySegmentParser.relationProcessor = relationProcessor;
             return this;
         }
 
@@ -504,7 +474,7 @@ public class WaySegmentParser {
          * @param edgeHandler callback function that is called for each edge (way segment)
          */
         public Builder setEdgeHandler(EdgeHandler edgeHandler) {
-            this.edgeHandler = edgeHandler;
+            waySegmentParser.edgeHandler = edgeHandler;
             return this;
         }
 
@@ -512,15 +482,12 @@ public class WaySegmentParser {
          * @param workerThreads the number of threads used for the low level reading of the OSM file
          */
         public Builder setWorkerThreads(int workerThreads) {
-            this.workerThreads = workerThreads;
+            waySegmentParser.workerThreads = workerThreads;
             return this;
         }
 
         public WaySegmentParser build() {
-            return new WaySegmentParser(
-                    nodeAccess, directory, elevationProvider, wayFilter, splitNodeFilter, wayPreprocessor, relationPreprocessor, relationProcessor,
-                    edgeHandler, workerThreads
-            );
+            return waySegmentParser;
         }
     }
 
