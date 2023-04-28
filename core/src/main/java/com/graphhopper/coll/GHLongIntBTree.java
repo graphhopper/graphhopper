@@ -131,7 +131,8 @@ public class GHLongIntBTree implements LongIntMap {
         return Math.round(root.getCapacity() / Helper.MB);
     }
 
-    void clear() {
+    @Override
+    public void clear() {
         size = 0;
         height = 1;
         root = new BTreeEntry(initLeafSize, true);

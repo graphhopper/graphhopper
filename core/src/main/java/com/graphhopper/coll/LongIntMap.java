@@ -30,4 +30,6 @@ public interface LongIntMap {
     void optimize();
 
     int getMemoryUsage();
+
+    void clear();
 }
