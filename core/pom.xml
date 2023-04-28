@@ -131,6 +131,17 @@
             <groupId>us.dustinj.timezonemap</groupId>
             <artifactId>timezonemap</artifactId>
             <version>4.5</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-compress</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.23.0</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
