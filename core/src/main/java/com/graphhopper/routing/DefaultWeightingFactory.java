@@ -19,17 +19,14 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.util.ConditionalSpeedCalculator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
-import com.graphhopper.storage.ConditionalEdges;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
@@ -38,8 +35,8 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
-    protected final GraphHopperStorage ghStorage;
-    protected final EncodingManager encodingManager;
+    private final GraphHopperStorage ghStorage;
+    private final EncodingManager encodingManager;
 
     public DefaultWeightingFactory(GraphHopperStorage ghStorage, EncodingManager encodingManager) {
         this.ghStorage = ghStorage;
@@ -68,11 +65,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
             turnCostProvider = NO_TURN_COST_PROVIDER;
         }
 
-        // ORS-GH MOD START - use weighting method determined by ORS
-        String weightingStr = hints.getString("weighting_method", "").toLowerCase();
-        if (Helper.isEmpty(weightingStr))
-            weightingStr = toLowerCase(profile.getWeighting());
-        // ORS-GH MOD END
+        String weightingStr = toLowerCase(profile.getWeighting());
         if (weightingStr.isEmpty())
             throw new IllegalArgumentException("You have to specify a weighting");
 
@@ -101,68 +94,10 @@ public class DefaultWeightingFactory implements WeightingFactory {
         } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortFastestWeighting(encoder, hints, turnCostProvider);
         }
-        // ORS-GH MOD START - hook for ORS-specific weightings
-        else {
-            weighting = handleOrsWeightings(weightingStr, hints, encoder, turnCostProvider);
-        }
-
-        weighting = applySoftWeightings(hints, encoder, weighting);
-        // ORS-GH MOD END
 
         if (weighting == null)
             throw new IllegalArgumentException("Weighting '" + weightingStr + "' not supported");
 
-        // ORS-GH MOD START - hook for attaching speed calculators
-        setSpeedCalculator(weighting, hints);
-
-        if (isRequestTimeDependent(hints))
-            weighting = createTimeDependentAccessWeighting(weighting);
-        // ORS-GH MOD END
-
         return weighting;
     }
-
-    // ORS-GH MOD START - additional methods
-    protected void setSpeedCalculator(Weighting weighting, PMap hints) {
-        FlagEncoder encoder = weighting.getFlagEncoder();
-        if (encodingManager.hasEncodedValue(EncodingManager.getKey(encoder, ConditionalEdges.SPEED)) && isRequestTimeDependent(hints))
-            weighting.setSpeedCalculator(new ConditionalSpeedCalculator(weighting.getSpeedCalculator(), ghStorage, encoder));
-    }
-
-    private Weighting handleOrsWeightings(String weightingStr, PMap hints, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        if ("td_fastest".equalsIgnoreCase(weightingStr)) {
-            return new FastestWeighting(encoder, hints);
-        } else {
-            return handleExternalOrsWeightings(weightingStr, hints, encoder, turnCostProvider);
-        }
-    }
-
-    /**
-     * Potentially wraps the specified weighting into a TimeDependentAccessWeighting.
-     */
-    private Weighting createTimeDependentAccessWeighting(Weighting weighting) {
-        FlagEncoder flagEncoder = weighting.getFlagEncoder();
-        if (encodingManager.hasEncodedValue(EncodingManager.getKey(flagEncoder, ConditionalEdges.ACCESS)))
-            return new TimeDependentAccessWeighting(weighting, ghStorage, flagEncoder);
-        else
-            return weighting;
-    }
-
-    protected boolean isRequestTimeDependent(PMap hints) {
-        return false;//only time-dependent requests coming from ORS are supported
-    }
-    // ORS-GH MOD END
-
-    // Note: this method is only needed because ORS is split into two
-    // codebases (graphHopper fork and main code base)
-    protected Weighting handleExternalOrsWeightings(String weightingStr, PMap hints, FlagEncoder encoder, TurnCostProvider turnCostProvider) {
-        return null; // Override in external ORS code base
-    }
-
-    // Note: this method is only needed because ORS is split into two
-    // codebases (graphHopper fork and main code base)
-     protected Weighting applySoftWeightings(PMap hints, FlagEncoder encoder, Weighting weighting) {
-       return weighting;
-    }
-    // ORS-GH MOD END
 }
