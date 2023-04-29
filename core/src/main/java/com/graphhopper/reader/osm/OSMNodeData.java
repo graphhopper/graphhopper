@@ -269,10 +269,9 @@ class OSMNodeData {
     public void release() {
         idsByOsmNodeIds.clear();
         pillarNodes.clear();
-        nodeKVStorage.clear();
         nodeTagIndicesByOsmNodeIds.clear();
-        nodesToBeSplit.clear();
         nodeKVStorage.clear();
+        nodesToBeSplit.clear();
     }
 
     public int towerNodeToId(int towerId) {
