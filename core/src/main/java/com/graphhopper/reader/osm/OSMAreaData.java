@@ -18,86 +18,88 @@
 
 package com.graphhopper.reader.osm;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
-import com.graphhopper.storage.Directory;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.Polygon;
-import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
-import org.openjdk.jol.info.GraphLayout;
+import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.util.BitUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 public class OSMAreaData {
-    private final List<OSMAreaInternal> osmAreas;
-    private final LongIntMap nodeIndexByOSMNodeId;
-    private final PillarInfo coordinates;
+    // todonow: private
+    final List<OSMArea> osmAreas = new ArrayList<>();
+    final LongToTwoIntsMap osmAreaNodeIndicesByOSMNodeIds = new LongToTwoIntsMap();
 
-    public OSMAreaData(Directory directory) {
-        osmAreas = new ArrayList<>();
-        nodeIndexByOSMNodeId = new GHLongIntBTree(200);
-        coordinates = new PillarInfo(false, directory, "_osm_area");
+    public void addOSMAreaWithoutCoordinates(LongArrayList osmNodeIds, Map<String, Object> tags) {
+        OSMArea osmArea = new OSMArea(osmNodeIds.size(), tags);
+        osmAreas.add(osmArea);
+        for (LongCursor node : osmNodeIds)
+            osmAreaNodeIndicesByOSMNodeIds.put(node.value, osmAreas.size() - 1, node.index);
     }
 
-    public void addArea(Map<String, Object> tags, LongArrayList nodes) {
-        osmAreas.add(new OSMAreaInternal(tags, nodes));
-        for (LongCursor node : nodes)
-            if (nodeIndexByOSMNodeId.get(node.value) < 0)
-                nodeIndexByOSMNodeId.put(node.value, Math.toIntExact(nodeIndexByOSMNodeId.getSize()));
+    public void fillOSMAreaNodeCoordinates(ReaderNode node) {
+        long index = osmAreaNodeIndicesByOSMNodeIds.get(node.getId());
+        if (index >= 0) {
+            int osmAreaIndex = BitUtil.LITTLE.getIntLow(index);
+            int nodeIndex = BitUtil.LITTLE.getIntHigh(index);
+            OSMArea osmArea = osmAreas.get(osmAreaIndex);
+            // Note that we set the coordinates only for one particular node for one particular
+            // osm area, even though the same osm node might be used in multiple such areas. We will
+            // fix the next time we get to see the osm area ways.
+            osmArea.setCoordinate(nodeIndex, node.getLat(), node.getLon());
+        }
     }
 
-    public void setCoordinate(long osmNodeId, double lat, double lon) {
-        int nodeIndex = nodeIndexByOSMNodeId.get(osmNodeId);
-        if (nodeIndex >= 0)
-            coordinates.setNode(nodeIndex, lat, lon);
+    public void fixOSMArea(int osmAreaWayIndex, ReaderWay way) {
+        // The problem we solve here is that some osm nodes are used by multiple landuse/area ways.
+        // At the very least this is the case for the first and last nodes of the closed-ring ways,
+        // but there are also many areas that really share common nodes. Since we only store one
+        // index into the coordinate array of the area polygons, the coordinates for some polygon
+        // nodes won't be set. Therefore we need to make up for this here where we get to see the
+        // ways a second time. If this wasn't the case we could read the area ways&nodes in pass1
+        // instead of pass0 which would allow us to skip nodes and ways in pass0 (faster import).
+        OSMArea actual = osmAreas.get(osmAreaWayIndex);
+        for (LongCursor node : way.getNodes()) {
+            long index = osmAreaNodeIndicesByOSMNodeIds.get(node.value);
+            int osmAreaIndex = BitUtil.LITTLE.getIntLow(index);
+            int nodeIndex = BitUtil.LITTLE.getIntHigh(index);
+            OSMArea osmArea = osmAreas.get(osmAreaIndex);
+            actual.border.setX(node.index, osmArea.border.getX(nodeIndex));
+            actual.border.setY(node.index, osmArea.border.getY(nodeIndex));
+        }
     }
 
-    public List<OSMArea> buildOSMAreas() {
-        // todonow: remove later
-        System.out.println(GraphLayout.parseInstance(this).toFootprint());
-        System.out.println(GraphLayout.parseInstance(osmAreas).toFootprint());
-        System.out.println(GraphLayout.parseInstance(nodeIndexByOSMNodeId).toFootprint());
-        System.out.println(GraphLayout.parseInstance(coordinates).toFootprint());
-        AtomicInteger invalidGeometries = new AtomicInteger();
-        GeometryFactory geometryFactory = new GeometryFactory();
-        List<OSMArea> result = osmAreas.stream().map(a -> {
-                    float[] coords = new float[a.nodes.size() * 2];
-                    PackedCoordinateSequence.Float coordSequence = new PackedCoordinateSequence.Float(coords, 2, 0);
-                    for (LongCursor node : a.nodes) {
-                        int nodeIndex = nodeIndexByOSMNodeId.get(node.value);
-                        // todonow: precision/double->float cast?
-                        coordSequence.setX(node.index, coordinates.getLon(nodeIndex));
-                        coordSequence.setY(node.index, coordinates.getLat(nodeIndex));
-                    }
-                    try {
-                        Polygon polygon = geometryFactory.createPolygon(coordSequence);
-                        return new OSMArea(a.tags, polygon);
-                    } catch (IllegalArgumentException e) {
-                        // todonow: apparently, some areas do not form a closed ring or something, looks like these are tagging errors in OSM!
-                        invalidGeometries.incrementAndGet();
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-        System.out.println("Warning: There were " + invalidGeometries.get() + " invalid geometries among the " + osmAreas.size() + " osm areas");
-        return result;
+    public List<OSMArea> getOSMAreas() {
+        return osmAreas;
     }
 
-    public static class OSMAreaInternal {
-        Map<String, Object> tags;
-        LongArrayList nodes;
+    public static class LongToTwoIntsMap {
+        private final LongIntMap internalIdsByKey = new GHLongIntBTree(200);
+        private final IntArrayList vals1 = new IntArrayList();
+        private final IntArrayList vals2 = new IntArrayList();
 
-        public OSMAreaInternal(Map<String, Object> tags, LongArrayList nodes) {
-            this.tags = tags;
-            this.nodes = nodes;
+        public void put(long key, int val1, int val2) {
+            vals1.add(val1);
+            vals2.add(val2);
+            internalIdsByKey.put(key, vals1.size() - 1);
+        }
+
+        public long get(long key) {
+            int id = internalIdsByKey.get(key);
+            if (id < 0) return -1;
+            return BitUtil.LITTLE.combineIntsToLong(vals1.get(id), vals2.get(id));
+        }
+
+        public void clear() {
+            internalIdsByKey.clear();
+            vals1.clear();
+            vals2.clear();
         }
     }
 }

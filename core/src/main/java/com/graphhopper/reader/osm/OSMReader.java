@@ -32,8 +32,8 @@ import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
-import com.graphhopper.routing.ev.Landuse;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.Landuse;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.EncodingManager;
@@ -101,7 +101,7 @@ public class OSMReader {
     private WayToEdgesMap restrictedWaysToEdgesMap = new WayToEdgesMap();
     private List<ReaderRelation> restrictionRelations = new ArrayList<>();
 
-    private OSMAreaData osmAreaData;
+    private final OSMAreaData osmAreaData;
     private AreaIndex<OSMArea> osmAreaIndex;
     private final EncodingManager encodingManager;
 
@@ -123,7 +123,7 @@ public class OSMReader {
             // we use a long to store relation flags currently, so the relation flags ints ref must have length 2
             throw new IllegalArgumentException("OSMReader cannot use relation flags with != 2 integers");
 
-        osmAreaData = new OSMAreaData(baseGraph.getDirectory());
+        osmAreaData = new OSMAreaData();
     }
 
     /**
@@ -182,8 +182,13 @@ public class OSMReader {
                 .setWorkerThreads(config.getWorkerThreads());
         if (encodingManager.hasEncodedValue(Landuse.KEY)) {
             waySegmentParserBuilder
-                    .setPass1WayPreHook(this::keepOSMAreas)
-                    .setPass2NodePreHook(this::resolveOSMAreaCoordinates)
+                    .setPass0WayPreHook(this::handleOSMArea)
+                    .setPass1NodePreHook(osmAreaData::fillOSMAreaNodeCoordinates)
+                    .setPass1WayPreHook(this::handleOSMAreaAgain)
+                    .setPass1FinishHook(() -> {
+                        System.out.println(GraphLayout.parseInstance(osmAreaData.osmAreaNodeIndicesByOSMNodeIds).toFootprint());
+                        osmAreaData.osmAreaNodeIndicesByOSMNodeIds.clear();
+                    })
                     .setPass2AfterNodesHook(this::buildOSMAreaIndex);
         }
         WaySegmentParser waySegmentParser = waySegmentParserBuilder.build();
@@ -205,21 +210,36 @@ public class OSMReader {
         return osmDataDate;
     }
 
-    void keepOSMAreas(ReaderWay way) {
+    void handleOSMArea(ReaderWay way) {
         if (way.hasTag("landuse"))
-            osmAreaData.addArea(way.getTags(), way.getNodes());
+            osmAreaData.addOSMAreaWithoutCoordinates(way.getNodes(), way.getTags());
     }
 
-    void resolveOSMAreaCoordinates(ReaderNode node) {
-        osmAreaData.setCoordinate(node.getId(), node.getLat(), node.getLon());
+
+    int osmAreaWayIndex = -1;
+
+    void handleOSMAreaAgain(ReaderWay way) {
+        if (way.hasTag("landuse")) {
+            osmAreaWayIndex++;
+            osmAreaData.fixOSMArea(osmAreaWayIndex, way);
+        }
     }
 
     void buildOSMAreaIndex() {
-        List<OSMArea> osmAreas = osmAreaData.buildOSMAreas();
-        osmAreaIndex = new AreaIndex<>(osmAreas);
-        // todonow: remove later
+        System.out.println(GraphLayout.parseInstance(osmAreaData.osmAreas).toFootprint());
+        List<OSMArea> validAreas = osmAreaData.getOSMAreas().stream().filter(a -> {
+            if (!a.isValid()) {
+                OSM_WARNING_LOGGER.warn("invalid OSM area: " + a.border);
+                return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+        LOGGER.info("Building area index for {} OSM areas (invalid: {})", validAreas.size(), (osmAreaData.getOSMAreas().size() - validAreas.size()));
+        osmAreaIndex = new AreaIndex<>(validAreas);
         System.out.println(GraphLayout.parseInstance(osmAreaIndex).toFootprint());
-        osmAreaData = null;
+        // they partly overlap
+        System.out.println(GraphLayout.parseInstance(new Pair<>(osmAreaIndex, osmAreaData.osmAreas)).toFootprint());
+        osmAreaData.osmAreas.clear();
     }
 
     /**

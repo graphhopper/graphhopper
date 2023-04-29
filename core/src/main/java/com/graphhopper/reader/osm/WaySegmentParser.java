@@ -66,9 +66,13 @@ public class WaySegmentParser {
     private static final Set<String> INCLUDE_IF_NODE_TAGS = new HashSet<>(Arrays.asList("barrier", "highway", "railway", "crossing", "ford"));
 
     private ElevationProvider elevationProvider = ElevationProvider.NOOP;
-    private Consumer<ReaderRelation> pass0RelationHook = rel -> {
+    private Consumer<ReaderWay> pass0WayPreHook = way -> {
+    };
+    private Consumer<ReaderNode> pass1NodePreHook = node -> {
     };
     private Consumer<ReaderWay> pass1WayPreHook = way -> {
+    };
+    private Runnable pass1FinishHook = () -> {
     };
     private Predicate<ReaderWay> wayFilter = way -> true;
     private Consumer<ReaderNode> pass2NodePreHook = node -> {
@@ -100,16 +104,16 @@ public class WaySegmentParser {
         if (nodeData.getNodeCount() > 0)
             throw new IllegalStateException("You can only run way segment parser once");
 
-//        LOGGER.info("Start reading OSM file: '" + osmFile + "'");
-//        LOGGER.info("pass0 - start");
-//        StopWatch sw0 = StopWatch.started();
-//        readOSM(osmFile, new Pass0Handler(), new SkipOptions(true, true, false));
-//        LOGGER.info("pass0 - finished, took: {}", sw0.stop().getTimeString());
-
         LOGGER.info("Start reading OSM file: '" + osmFile + "'");
+        LOGGER.info("pass0 - start");
+        StopWatch sw0 = StopWatch.started();
+        // todonow: skip options
+        readOSM(osmFile, new Pass0Handler(), new SkipOptions(true, false, true));
+        LOGGER.info("pass0 - finished, took: {}", sw0.stop().getTimeString());
+
         LOGGER.info("pass1 - start");
         StopWatch sw1 = StopWatch.started();
-        readOSM(osmFile, new Pass1Handler(), new SkipOptions(true, false, false));
+        readOSM(osmFile, new Pass1Handler(), new SkipOptions(false, false, false));
         LOGGER.info("pass1 - finished, took: {}", sw1.stop().getTimeString());
 
         long nodes = nodeData.getNodeCount();
@@ -124,10 +128,10 @@ public class WaySegmentParser {
         nodeData.release();
 
         LOGGER.info("Finished reading OSM file." +
-//                " pass0: " + (int) sw0.getSeconds() + "s, " +
+                " pass0: " + (int) sw0.getSeconds() + "s, " +
                 " pass1: " + (int) sw1.getSeconds() + "s, " +
                 " pass2: " + (int) sw2.getSeconds() + "s, " +
-                " total: " + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
+                " total: " + (int) (sw0.getSeconds() + sw1.getSeconds() + sw2.getSeconds()) + "s");
     }
 
     /**
@@ -139,8 +143,8 @@ public class WaySegmentParser {
 
     private class Pass0Handler implements ReaderElementHandler {
         @Override
-        public void handleRelation(ReaderRelation relation) {
-            pass0RelationHook.accept(relation);
+        public void handleWay(ReaderWay way) {
+            pass0WayPreHook.accept(way);
         }
     }
 
@@ -150,6 +154,11 @@ public class WaySegmentParser {
         private long wayCounter = 0;
         private long acceptedWays = 0;
         private long relationsCounter = 0;
+
+        @Override
+        public void handleNode(ReaderNode node) {
+            pass1NodePreHook.accept(node);
+        }
 
         @Override
         public void handleWay(ReaderWay way) {
@@ -200,6 +209,7 @@ public class WaySegmentParser {
 
         @Override
         public void onFinish() {
+            pass1FinishHook.run();
             LOGGER.info("pass1 - finished, processed ways: " + nf(wayCounter) + ", accepted ways: " +
                     nf(acceptedWays) + ", way nodes: " + nf(nodeData.getNodeCount()) + ", relations: " +
                     nf(relationsCounter) + ", " + Helper.getMemInfo());
@@ -457,13 +467,24 @@ public class WaySegmentParser {
             return this;
         }
 
-        public Builder setPass0RelationHook(Consumer<ReaderRelation> pass0RelationHook) {
-            waySegmentParser.pass0RelationHook = pass0RelationHook;
+        public Builder setPass0WayPreHook(Consumer<ReaderWay> pass0WayPreHook) {
+            waySegmentParser.pass0WayPreHook = pass0WayPreHook;
+            return this;
+        }
+
+
+        public Builder setPass1NodePreHook(Consumer<ReaderNode> pass1NodePreHook) {
+            waySegmentParser.pass1NodePreHook = pass1NodePreHook;
             return this;
         }
 
         public Builder setPass1WayPreHook(Consumer<ReaderWay> pass1WayPreHook) {
             waySegmentParser.pass1WayPreHook = pass1WayPreHook;
+            return this;
+        }
+
+        public Builder setPass1FinishHook(Runnable pass1FinishHook) {
+            waySegmentParser.pass1FinishHook = pass1FinishHook;
             return this;
         }
 

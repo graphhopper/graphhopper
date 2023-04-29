@@ -19,19 +19,41 @@
 package com.graphhopper.reader.osm;
 
 import com.graphhopper.routing.util.AreaIndex;
+import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
 
+import java.util.Arrays;
 import java.util.Map;
 
 public class OSMArea implements AreaIndex.Area {
+    private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
+    final PackedCoordinateSequence.Float border;
     private final Map<String, Object> tags;
-    private final Polygon border;
-    private final double area;
+    private double area = -1;
 
-    public OSMArea(Map<String, Object> tags, Polygon border) {
+    public OSMArea(int numNodes, Map<String, Object> tags) {
+        float[] coords = new float[numNodes * 2];
+        Arrays.fill(coords, Float.NaN);
+        border = new PackedCoordinateSequence.Float(coords, 2, 0);
         this.tags = tags;
-        this.border = border;
-        this.area = border.getArea();
+    }
+
+    public void setCoordinate(int index, double lat, double lon) {
+        if (area >= 0)
+            throw new IllegalStateException("Cannot modify coordinates after getBorder() was called");
+        // todonow: precision/double->float cast?
+        border.setX(index, (float) lon);
+        border.setY(index, (float) lat);
+    }
+
+    public boolean isValid() {
+        float[] coords = border.getRawCoordinates();
+        for (float f : coords)
+            if (Float.isNaN(f))
+                return false;
+        // todonow: print warnings for non-closed geometries and missing coordinates?
+        return coords.length >= 8 && coords[0] == coords[coords.length - 2] && coords[1] == coords[coords.length - 1];
     }
 
     public Map<String, Object> getTags() {
@@ -44,6 +66,8 @@ public class OSMArea implements AreaIndex.Area {
 
     @Override
     public Polygon getBorder() {
+        Polygon border = GEOMETRY_FACTORY.createPolygon(this.border);
+        area = border.getArea();
         return border;
     }
 }
