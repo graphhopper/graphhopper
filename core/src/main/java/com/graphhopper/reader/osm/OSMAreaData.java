@@ -22,14 +22,12 @@ import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
-import com.graphhopper.reader.ReaderRelation;
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.storage.Directory;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
 import org.locationtech.jts.geom.Polygon;
+import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
 import org.openjdk.jol.info.GraphLayout;
 
 import java.util.*;
@@ -39,15 +37,11 @@ import java.util.stream.Collectors;
 public class OSMAreaData {
     private final List<OSMArea> osmAreas;
     private final LongIntMap nodeIndexByOSMNodeId;
-    private final List<ReaderRelation> osmAreaRelations;
-    private final LongIntMap relationIndexByOSMWayId;
     private final PillarInfo coordinates;
 
     public OSMAreaData(Directory directory) {
         osmAreas = new ArrayList<>();
         nodeIndexByOSMNodeId = new GHLongIntBTree(200);
-        osmAreaRelations = new ArrayList<>();
-        relationIndexByOSMWayId = new GHLongIntBTree(200);
         coordinates = new PillarInfo(false, directory, "_osm_area");
     }
 
@@ -56,17 +50,6 @@ public class OSMAreaData {
         for (LongCursor node : nodes)
             if (nodeIndexByOSMNodeId.get(node.value) < 0)
                 nodeIndexByOSMNodeId.put(node.value, Math.toIntExact(nodeIndexByOSMNodeId.getSize()));
-    }
-
-    public void handleWay(ReaderWay way) {
-        int relationIndex = relationIndexByOSMWayId.get(way.getId());
-        if (relationIndex >= 0) {
-            ReaderRelation relation = osmAreaRelations.get(relationIndex);
-            osmAreas.add(new OSMArea(relation.getTags(), way.getNodes()));
-            for (LongCursor node : way.getNodes())
-                if (nodeIndexByOSMNodeId.get(node.value) < 0)
-                    nodeIndexByOSMNodeId.put(node.value, Math.toIntExact(nodeIndexByOSMNodeId.getSize()));
-        }
     }
 
     public void setCoordinate(long osmNodeId, double lat, double lon) {
@@ -80,8 +63,6 @@ public class OSMAreaData {
         System.out.println(GraphLayout.parseInstance(this).toFootprint());
         System.out.println(GraphLayout.parseInstance(osmAreas).toFootprint());
         System.out.println(GraphLayout.parseInstance(nodeIndexByOSMNodeId).toFootprint());
-        System.out.println(GraphLayout.parseInstance(osmAreaRelations).toFootprint());
-        System.out.println(GraphLayout.parseInstance(relationIndexByOSMWayId).toFootprint());
         System.out.println(GraphLayout.parseInstance(coordinates).toFootprint());
         AtomicInteger invalidGeometries = new AtomicInteger();
         GeometryFactory geometryFactory = new GeometryFactory();
@@ -104,15 +85,6 @@ public class OSMAreaData {
                 .collect(Collectors.toList());
         System.out.println("Warning: There were " + invalidGeometries.get() + " invalid geometries among the " + osmAreas.size() + " osm areas");
         return result;
-    }
-
-    public void addRelation(ReaderRelation relation) {
-        osmAreaRelations.add(relation);
-        for (ReaderRelation.Member member : relation.getMembers())
-            // todonow: we keep it simple for now and just consider the outer polygons. for the holes there might be other landuse areas anyway.
-            if ("outer".equals(member.getRole()))
-                // todonow: so far we simply ignore the possibility of ways being contained in multiple landuse relations
-                relationIndexByOSMWayId.put(member.getRef(), osmAreaRelations.size() - 1);
     }
 
     public static class OSMArea {

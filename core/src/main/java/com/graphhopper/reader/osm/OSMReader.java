@@ -182,7 +182,6 @@ public class OSMReader {
                 .setWorkerThreads(config.getWorkerThreads());
         if (encodingManager.hasEncodedValue(Landuse.KEY)) {
             waySegmentParserBuilder
-                    .setPass0RelationHook(this::keepOSMAreasFromRelations)
                     .setPass1WayPreHook(this::keepOSMAreas)
                     .setPass2NodePreHook(this::resolveOSMAreaCoordinates)
                     .setPass2AfterNodesHook(this::buildOSMAreaIndex);
@@ -206,16 +205,9 @@ public class OSMReader {
         return osmDataDate;
     }
 
-    void keepOSMAreasFromRelations(ReaderRelation relation) {
-        if (relation.hasTag("landuse") && relation.hasTag("type", "multipolygon"))
-            osmAreaData.addRelation(relation);
-    }
-
     void keepOSMAreas(ReaderWay way) {
         if (way.hasTag("landuse"))
             osmAreaData.addArea(way.getTags(), way.getNodes());
-
-        osmAreaData.handleWay(way);
     }
 
     void resolveOSMAreaCoordinates(ReaderNode node) {
