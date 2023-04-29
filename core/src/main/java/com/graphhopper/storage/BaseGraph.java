@@ -62,7 +62,7 @@ public class BaseGraph implements Graph, Closeable {
         this.dir = dir;
         this.bitUtil = BitUtil.LITTLE;
         this.wayGeometry = dir.create("geometry", segmentSize);
-        this.edgeKVStorage = new KVStorage(dir, "edgekv_");
+        this.edgeKVStorage = new KVStorage(dir, true);
         this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;

@@ -123,7 +123,7 @@ public class OSMReader {
             // we use a long to store relation flags currently, so the relation flags ints ref must have length 2
             throw new IllegalArgumentException("OSMReader cannot use relation flags with != 2 integers");
 
-        osmAreaData = new OSMAreaData(baseGraph.getDirectory());
+        osmAreaData = new OSMAreaData();
     }
 
     /**
@@ -182,8 +182,6 @@ public class OSMReader {
                 .setWorkerThreads(config.getWorkerThreads());
         if (encodingManager.hasEncodedValue(Landuse.KEY)) {
             waySegmentParserBuilder
-                    // todonow: we could move the pass1 way handling and the pass2 node handling of the standard way segment parser to pass0/1,
-                    //          then we could skip nodes in pass2 to speed up the import
                     .setPass0WayPreHook(this::handleOSMArea)
                     .setPass1NodePreHook(osmAreaData::fillOSMAreaNodeCoordinates)
                     .setPass1WayPreHook(this::handleOSMAreaAgain)
@@ -341,12 +339,7 @@ public class OSMReader {
 
         // also add all custom areas as artificial tag
         way.setTag("custom_areas", customAreas);
-
-        List<Map<String, Object>> osmAreaTags = osmAreas.stream()
-                .map(a -> osmAreaData.osmAreaTagStorage.getAll(a.getTagPointer())
-                        .stream().collect(Collectors.toMap(kv -> kv.key, kv -> kv.value)))
-                .collect(Collectors.toList());
-        way.setTag("gh:osm_areas", osmAreaTags);
+        way.setTag("gh:osm_areas", osmAreas);
     }
 
     /**

@@ -25,7 +25,6 @@ import com.graphhopper.routing.ev.Landuse;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.List;
-import java.util.Map;
 
 import static com.graphhopper.routing.ev.Landuse.OTHER;
 
@@ -39,11 +38,11 @@ public class OSMLanduseParser implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
-        List<Map<String, Object>> osmAreaTagsList = readerWay.getTag("gh:osm_areas", null);
-        if (!osmAreaTagsList.isEmpty()) {
+        List<OSMArea> osmAreas = readerWay.getTag("gh:osm_areas", null);
+        if (!osmAreas.isEmpty()) {
             // todonow: we simply use the smallest one for now, they are already sorted by size
-            Map<String, Object> osmAreaTags = osmAreaTagsList.get(0);
-            String landuseStr = (String) osmAreaTags.get("landuse");
+            OSMArea osmArea = osmAreas.get(0);
+            String landuseStr = (String) osmArea.getTags().get("landuse");
             Landuse landuse = Landuse.find(landuseStr);
             if (landuse != OTHER)
                 landuseEnc.setEnum(false, edgeId, edgeIntAccess, landuse);
