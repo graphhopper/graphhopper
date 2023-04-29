@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class OSMAreaData {
-    private final List<OSMArea> osmAreas;
+    private final List<OSMAreaInternal> osmAreas;
     private final LongIntMap nodeIndexByOSMNodeId;
     private final PillarInfo coordinates;
 
@@ -46,7 +46,7 @@ public class OSMAreaData {
     }
 
     public void addArea(Map<String, Object> tags, LongArrayList nodes) {
-        osmAreas.add(new OSMArea(tags, nodes));
+        osmAreas.add(new OSMAreaInternal(tags, nodes));
         for (LongCursor node : nodes)
             if (nodeIndexByOSMNodeId.get(node.value) < 0)
                 nodeIndexByOSMNodeId.put(node.value, Math.toIntExact(nodeIndexByOSMNodeId.getSize()));
@@ -58,7 +58,7 @@ public class OSMAreaData {
             coordinates.setNode(nodeIndex, lat, lon);
     }
 
-    public List<CustomArea> buildOSMAreas() {
+    public List<OSMArea> buildOSMAreas() {
         // todonow: remove later
         System.out.println(GraphLayout.parseInstance(this).toFootprint());
         System.out.println(GraphLayout.parseInstance(osmAreas).toFootprint());
@@ -66,15 +66,15 @@ public class OSMAreaData {
         System.out.println(GraphLayout.parseInstance(coordinates).toFootprint());
         AtomicInteger invalidGeometries = new AtomicInteger();
         GeometryFactory geometryFactory = new GeometryFactory();
-        List<CustomArea> result = osmAreas.stream().map(a -> {
+        List<OSMArea> result = osmAreas.stream().map(a -> {
                     Coordinate[] cs = new Coordinate[a.nodes.size()];
                     for (LongCursor node : a.nodes) {
                         int nodeIndex = nodeIndexByOSMNodeId.get(node.value);
                         cs[node.index] = new Coordinate(coordinates.getLon(nodeIndex), coordinates.getLat(nodeIndex));
                     }
                     try {
-                        List<Polygon> polygons = Collections.singletonList(geometryFactory.createPolygon(new PackedCoordinateSequence.Double(cs, 2)));
-                        return new CustomArea(a.tags, polygons);
+                        Polygon polygon = geometryFactory.createPolygon(new PackedCoordinateSequence.Double(cs, 2));
+                        return new OSMArea(a.tags, polygon);
                     } catch (IllegalArgumentException e) {
                         // todonow: apparently, some areas do not form a closed ring or something, looks like these are tagging errors in OSM!
                         invalidGeometries.incrementAndGet();
@@ -87,11 +87,11 @@ public class OSMAreaData {
         return result;
     }
 
-    public static class OSMArea {
+    public static class OSMAreaInternal {
         Map<String, Object> tags;
         LongArrayList nodes;
 
-        public OSMArea(Map<String, Object> tags, LongArrayList nodes) {
+        public OSMAreaInternal(Map<String, Object> tags, LongArrayList nodes) {
             this.tags = tags;
             this.nodes = nodes;
         }

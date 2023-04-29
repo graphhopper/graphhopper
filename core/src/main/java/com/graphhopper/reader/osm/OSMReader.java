@@ -102,7 +102,7 @@ public class OSMReader {
     private List<ReaderRelation> restrictionRelations = new ArrayList<>();
 
     private OSMAreaData osmAreaData;
-    private AreaIndex<CustomArea> osmAreaIndex;
+    private AreaIndex<OSMArea> osmAreaIndex;
     private final EncodingManager encodingManager;
 
     public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
@@ -215,7 +215,7 @@ public class OSMReader {
     }
 
     void buildOSMAreaIndex() {
-        List<CustomArea> osmAreas = osmAreaData.buildOSMAreas();
+        List<OSMArea> osmAreas = osmAreaData.buildOSMAreas();
         osmAreaIndex = new AreaIndex<>(osmAreas);
         // todonow: remove later
         System.out.println(GraphLayout.parseInstance(osmAreaIndex).toFootprint());
@@ -275,7 +275,7 @@ public class OSMReader {
         way.removeTag("gh:osm_areas");
 
         List<CustomArea> customAreas = emptyList();
-        List<CustomArea> osmAreas = emptyList();
+        List<OSMArea> osmAreas = emptyList();
         if (areaIndex != null || osmAreaIndex != null) {
             double middleLat;
             double middleLon;
@@ -291,6 +291,7 @@ public class OSMReader {
             if (areaIndex != null) customAreas = areaIndex.query(middleLat, middleLon);
             if (osmAreaIndex != null) osmAreas = osmAreaIndex.query(middleLat, middleLon);
         }
+        osmAreas.sort(Comparator.comparing(OSMArea::getArea));
 
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the EncodingManager
         Country country = Country.MISSING;

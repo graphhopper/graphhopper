@@ -18,13 +18,12 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.OSMArea;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Landuse;
-import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Comparator;
 import java.util.List;
 
 import static com.graphhopper.routing.ev.Landuse.OTHER;
@@ -39,12 +38,11 @@ public class OSMLanduseParser implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
-        List<CustomArea> osmAreas = readerWay.getTag("gh:osm_areas", null);
+        List<OSMArea> osmAreas = readerWay.getTag("gh:osm_areas", null);
         if (!osmAreas.isEmpty()) {
-            osmAreas.sort(Comparator.comparing(CustomArea::getArea));
-            // todonow: we simply use the smallest one for now
-            CustomArea osmArea = osmAreas.get(0);
-            String landuseStr = (String) osmArea.getProperties().get("landuse");
+            // todonow: we simply use the smallest one for now, they are already sorted by size
+            OSMArea osmArea = osmAreas.get(0);
+            String landuseStr = (String) osmArea.getTags().get("landuse");
             Landuse landuse = Landuse.find(landuseStr);
             if (landuse != OTHER)
                 landuseEnc.setEnum(false, edgeId, edgeIntAccess, landuse);

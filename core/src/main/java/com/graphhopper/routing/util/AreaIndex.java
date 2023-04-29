@@ -21,16 +21,22 @@ package com.graphhopper.routing.util;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
-import org.locationtech.jts.geom.prep.PreparedPolygon;
 import org.locationtech.jts.index.strtree.STRtree;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class AreaIndex<T extends AreaIndex.Area> {
 
     public interface Area {
-        List<Polygon> getBorders();
+        default List<Polygon> getBorders() {
+            return Collections.emptyList();
+        }
+
+        default Polygon getBorder() {
+            return null;
+        }
     }
 
     private final GeometryFactory gf;
@@ -41,12 +47,17 @@ public class AreaIndex<T extends AreaIndex.Area> {
         index = new STRtree();
         PreparedGeometryFactory pgf = new PreparedGeometryFactory();
         for (T area : areas) {
-            for (Polygon border : area.getBorders()) {
-                IndexedCustomArea<T> indexedCustomArea = new IndexedCustomArea<>(area, pgf.create(border));
-                index.insert(border.getEnvelopeInternal(), indexedCustomArea);
-            }
+            for (Polygon border : area.getBorders())
+                addBorder(pgf, area, border);
+            if (area.getBorder() != null)
+                addBorder(pgf, area, area.getBorder());
         }
         index.build();
+    }
+
+    private void addBorder(PreparedGeometryFactory pgf, T area, Polygon border) {
+        IndexedCustomArea<T> indexedCustomArea = new IndexedCustomArea<>(area, pgf.create(border));
+        index.insert(border.getEnvelopeInternal(), indexedCustomArea);
     }
 
     public List<T> query(double lat, double lon) {
