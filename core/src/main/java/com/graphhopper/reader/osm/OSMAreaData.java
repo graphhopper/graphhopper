@@ -22,15 +22,16 @@ import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.cursors.LongCursor;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
-import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.storage.Directory;
-import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
 import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
 import org.openjdk.jol.info.GraphLayout;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
@@ -67,13 +68,15 @@ public class OSMAreaData {
         AtomicInteger invalidGeometries = new AtomicInteger();
         GeometryFactory geometryFactory = new GeometryFactory();
         List<OSMArea> result = osmAreas.stream().map(a -> {
-                    Coordinate[] cs = new Coordinate[a.nodes.size()];
+                    double[] coords = new double[a.nodes.size() * 2];
+                    PackedCoordinateSequence.Double coordSequence = new PackedCoordinateSequence.Double(coords, 2, 0);
                     for (LongCursor node : a.nodes) {
                         int nodeIndex = nodeIndexByOSMNodeId.get(node.value);
-                        cs[node.index] = new Coordinate(coordinates.getLon(nodeIndex), coordinates.getLat(nodeIndex));
+                        coordSequence.setX(node.index, coordinates.getLon(nodeIndex));
+                        coordSequence.setY(node.index, coordinates.getLat(nodeIndex));
                     }
                     try {
-                        Polygon polygon = geometryFactory.createPolygon(new PackedCoordinateSequence.Double(cs, 2));
+                        Polygon polygon = geometryFactory.createPolygon(coordSequence);
                         return new OSMArea(a.tags, polygon);
                     } catch (IllegalArgumentException e) {
                         // todonow: apparently, some areas do not form a closed ring or something, looks like these are tagging errors in OSM!
