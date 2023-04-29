@@ -132,7 +132,7 @@ public abstract class BitUtil {
         return toLong(b, 0);
     }
 
-    public abstract long toLong(int high, int low);
+    public abstract long toLong(int low, int high);
 
     public abstract long toLong(byte[] b, int offset);
 

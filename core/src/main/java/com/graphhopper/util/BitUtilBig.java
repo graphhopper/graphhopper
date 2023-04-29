@@ -54,7 +54,7 @@ public class BitUtilBig extends BitUtil {
 
     @Override
     public final long toLong(int int0, int int1) {
-        return ((long) int0 << 32) | (int1 & 0xFFFFFFFFL);
+        return ((long) int1 << 32) | (int0 & 0xFFFFFFFFL);
     }
 
     @Override
