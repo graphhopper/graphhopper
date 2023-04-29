@@ -100,11 +100,11 @@ public class WaySegmentParser {
         if (nodeData.getNodeCount() > 0)
             throw new IllegalStateException("You can only run way segment parser once");
 
-        LOGGER.info("Start reading OSM file: '" + osmFile + "'");
-        LOGGER.info("pass0 - start");
-        StopWatch sw0 = StopWatch.started();
-        readOSM(osmFile, new Pass0Handler(), new SkipOptions(true, true, false));
-        LOGGER.info("pass0 - finished, took: {}", sw0.stop().getTimeString());
+//        LOGGER.info("Start reading OSM file: '" + osmFile + "'");
+//        LOGGER.info("pass0 - start");
+//        StopWatch sw0 = StopWatch.started();
+//        readOSM(osmFile, new Pass0Handler(), new SkipOptions(true, true, false));
+//        LOGGER.info("pass0 - finished, took: {}", sw0.stop().getTimeString());
 
         LOGGER.info("Start reading OSM file: '" + osmFile + "'");
         LOGGER.info("pass1 - start");
@@ -124,10 +124,10 @@ public class WaySegmentParser {
         nodeData.release();
 
         LOGGER.info("Finished reading OSM file." +
-                " pass0: " + (int) sw0.getSeconds() + "s, " +
+//                " pass0: " + (int) sw0.getSeconds() + "s, " +
                 " pass1: " + (int) sw1.getSeconds() + "s, " +
                 " pass2: " + (int) sw2.getSeconds() + "s, " +
-                " total: " + (int) (sw0.getSeconds() + sw1.getSeconds() + sw2.getSeconds()) + "s");
+                " total: " + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
     }
 
     /**
