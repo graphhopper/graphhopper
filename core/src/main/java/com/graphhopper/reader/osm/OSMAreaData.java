@@ -28,6 +28,7 @@ import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.storage.Directory;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.impl.PackedCoordinateSequence;
 import org.locationtech.jts.geom.Polygon;
 import org.openjdk.jol.info.GraphLayout;
 
@@ -91,7 +92,7 @@ public class OSMAreaData {
                         cs[node.index] = new Coordinate(coordinates.getLon(nodeIndex), coordinates.getLat(nodeIndex));
                     }
                     try {
-                        List<Polygon> polygons = Collections.singletonList(geometryFactory.createPolygon(cs));
+                        List<Polygon> polygons = Collections.singletonList(geometryFactory.createPolygon(new PackedCoordinateSequence.Double(cs, 2)));
                         return new CustomArea(a.tags, polygons);
                     } catch (IllegalArgumentException e) {
                         // todonow: apparently, some areas do not form a closed ring or something, looks like these are tagging errors in OSM!
