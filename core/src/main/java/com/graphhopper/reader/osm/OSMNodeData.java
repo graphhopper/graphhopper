@@ -30,7 +30,6 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint3D;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
 import java.util.function.IntUnaryOperator;
@@ -268,8 +267,11 @@ class OSMNodeData {
     }
 
     public void release() {
+        idsByOsmNodeIds.clear();
         pillarNodes.clear();
+        nodeTagIndicesByOsmNodeIds.clear();
         nodeKVStorage.clear();
+        nodesToBeSplit.clear();
     }
 
     public int towerNodeToId(int towerId) {
