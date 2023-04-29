@@ -114,8 +114,8 @@ public class OSMAreaData {
 
         public void clear() {
             internalIdsByKey.clear();
-            vals1.clear();
-            vals2.clear();
+            vals1.release();
+            vals2.release();
         }
     }
 }
