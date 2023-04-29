@@ -21,7 +21,7 @@ public class KVStorageTest {
     private final static String location = "./target/edge-kv-storage";
 
     private KVStorage create() {
-        return new KVStorage(new RAMDirectory(), true).create(1000);
+        return new KVStorage(new RAMDirectory(), "edgekv_").create(1000);
     }
 
     List<KeyValue> createList(Object... keyValues) {
@@ -217,12 +217,12 @@ public class KVStorageTest {
     public void testFlush() {
         Helper.removeDir(new File(location));
 
-        KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), true);
+        KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), "edgekv_");
         long pointer = index.add(createList("", "test"));
         index.flush();
         index.close();
 
-        index = new KVStorage(new RAMDirectory(location, true), true);
+        index = new KVStorage(new RAMDirectory(location, true), "edgekv_");
         assertTrue(index.loadExisting());
         assertEquals("test", index.get(pointer, "", false));
         // make sure bytePointer is correctly set after loadExisting
@@ -237,7 +237,7 @@ public class KVStorageTest {
     public void testLoadKeys() {
         Helper.removeDir(new File(location));
 
-        KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), true).create(1000);
+        KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), "edgekv_").create(1000);
         long pointerA = index.add(createList("c", "test value"));
         assertEquals(2, index.getKeys().size());
         long pointerB = index.add(createList("a", "value", "b", "another value"));
@@ -246,7 +246,7 @@ public class KVStorageTest {
         index.flush();
         index.close();
 
-        index = new KVStorage(new RAMDirectory(location, true), true);
+        index = new KVStorage(new RAMDirectory(location, true), "edgekv_");
         assertTrue(index.loadExisting());
         assertEquals("[, c, a, b]", index.getKeys().toString());
         assertEquals("test value", index.get(pointerA, "c", false));
@@ -299,7 +299,7 @@ public class KVStorageTest {
     public void testRandom() {
         final long seed = new Random().nextLong();
         try {
-            KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), true).create(1000);
+            KVStorage index = new KVStorage(new RAMDirectory(location, true).create(), "edgekv_").create(1000);
             Random random = new Random(seed);
             List<String> keys = createRandomStringList(random, "_key", 100);
             List<Integer> values = createRandomList(random, 500);
@@ -328,7 +328,7 @@ public class KVStorageTest {
             index.flush();
             index.close();
 
-            index = new KVStorage(new RAMDirectory(location, true).create(), true);
+            index = new KVStorage(new RAMDirectory(location, true).create(), "edgekv_");
             assertTrue(index.loadExisting());
             for (int i = 0; i < size; i++) {
                 List<KeyValue> list = index.getAll(pointers.get(i));

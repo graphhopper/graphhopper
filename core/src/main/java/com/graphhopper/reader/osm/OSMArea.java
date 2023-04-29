@@ -29,14 +29,14 @@ import java.util.Map;
 public class OSMArea implements AreaIndex.Area {
     private static final GeometryFactory GEOMETRY_FACTORY = new GeometryFactory();
     final PackedCoordinateSequence.Float border;
-    private final Map<String, Object> tags;
+    private final long tagPointer;
     private double area = -1;
 
-    public OSMArea(int numNodes, Map<String, Object> tags) {
+    public OSMArea(int numNodes, long tagPointer) {
         float[] coords = new float[numNodes * 2];
         Arrays.fill(coords, Float.NaN);
         border = new PackedCoordinateSequence.Float(coords, 2, 0);
-        this.tags = tags;
+        this.tagPointer = tagPointer;
     }
 
     public void setCoordinate(int index, double lat, double lon) {
@@ -56,8 +56,8 @@ public class OSMArea implements AreaIndex.Area {
         return coords.length >= 8 && coords[0] == coords[coords.length - 2] && coords[1] == coords[coords.length - 1];
     }
 
-    public Map<String, Object> getTags() {
-        return tags;
+    public long getTagPointer() {
+        return tagPointer;
     }
 
     public double getArea() {

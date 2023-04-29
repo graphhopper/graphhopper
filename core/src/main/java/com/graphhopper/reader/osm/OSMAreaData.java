@@ -25,20 +25,34 @@ import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.search.KVStorage;
+import com.graphhopper.storage.Directory;
 import com.graphhopper.util.BitUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class OSMAreaData {
     // todonow: private
-    final List<OSMArea> osmAreas = new ArrayList<>();
-    final LongToTwoIntsMap osmAreaNodeIndicesByOSMNodeIds = new LongToTwoIntsMap();
+    final List<OSMArea> osmAreas;
+    final LongToTwoIntsMap osmAreaNodeIndicesByOSMNodeIds;
+    final KVStorage osmAreaTagStorage;
+
+    public OSMAreaData(Directory directory) {
+        osmAreas = new ArrayList<>();
+        osmAreaNodeIndicesByOSMNodeIds = new LongToTwoIntsMap();
+        osmAreaTagStorage = new KVStorage(directory, "osm_area_tags_");
+    }
 
     public void addOSMAreaWithoutCoordinates(LongArrayList osmNodeIds, Map<String, Object> tags) {
-        OSMArea osmArea = new OSMArea(osmNodeIds.size(), tags);
-        osmAreas.add(osmArea);
+        long tagPointer = osmAreaTagStorage.add(tags.entrySet().stream().map(m -> new KVStorage.KeyValue(m.getKey(),
+                        m.getValue() instanceof String ? KVStorage.cutString((String) m.getValue()) : m.getValue()))
+                .collect(Collectors.toList()));
+        if (tagPointer > Integer.MAX_VALUE)
+            throw new IllegalStateException("Too many tags are stored for OSM areas " + tagPointer);
+        osmAreas.add(new OSMArea(osmNodeIds.size(), tagPointer));
         for (LongCursor node : osmNodeIds)
             osmAreaNodeIndicesByOSMNodeIds.put(node.value, osmAreas.size() - 1, node.index);
     }
