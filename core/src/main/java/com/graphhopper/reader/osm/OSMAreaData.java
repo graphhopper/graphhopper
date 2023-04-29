@@ -68,10 +68,11 @@ public class OSMAreaData {
         AtomicInteger invalidGeometries = new AtomicInteger();
         GeometryFactory geometryFactory = new GeometryFactory();
         List<OSMArea> result = osmAreas.stream().map(a -> {
-                    double[] coords = new double[a.nodes.size() * 2];
-                    PackedCoordinateSequence.Double coordSequence = new PackedCoordinateSequence.Double(coords, 2, 0);
+                    float[] coords = new float[a.nodes.size() * 2];
+                    PackedCoordinateSequence.Float coordSequence = new PackedCoordinateSequence.Float(coords, 2, 0);
                     for (LongCursor node : a.nodes) {
                         int nodeIndex = nodeIndexByOSMNodeId.get(node.value);
+                        // todonow: precision/double->float cast?
                         coordSequence.setX(node.index, coordinates.getLon(nodeIndex));
                         coordSequence.setY(node.index, coordinates.getLat(nodeIndex));
                     }
