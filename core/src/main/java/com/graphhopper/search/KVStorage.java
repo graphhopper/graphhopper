@@ -86,15 +86,10 @@ public class KVStorage {
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
-    public KVStorage(Directory dir, boolean edge) {
+    public KVStorage(Directory dir, String prefix) {
         this.dir = dir;
-        if (edge) {
-            this.keys = dir.create("edgekv_keys", 10 * 1024);
-            this.vals = dir.create("edgekv_vals");
-        } else {
-            this.keys = dir.create("nodekv_keys", 10 * 1024);
-            this.vals = dir.create("nodekv_vals");
-        }
+        this.keys = dir.create(prefix + "keys", 10 * 1024);
+        this.vals = dir.create(prefix + "vals");
     }
 
     public KVStorage create(long initBytes) {

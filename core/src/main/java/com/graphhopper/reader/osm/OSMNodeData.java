@@ -90,7 +90,7 @@ class OSMNodeData {
 
         nodeTagIndicesByOsmNodeIds = new GHLongIntBTree(200);
         nodesToBeSplit = new LongScatterSet();
-        nodeKVStorage = new KVStorage(directory, false);
+        nodeKVStorage = new KVStorage(directory, "nodekv_");
     }
 
     public boolean is3D() {
