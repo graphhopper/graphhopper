@@ -29,6 +29,7 @@ import com.graphhopper.storage.Directory;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.Polygon;
+import org.openjdk.jol.info.GraphLayout;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -74,6 +75,13 @@ public class OSMAreaData {
     }
 
     public List<CustomArea> buildOSMAreas() {
+        // todonow: remove later
+        System.out.println(GraphLayout.parseInstance(this).toFootprint());
+        System.out.println(GraphLayout.parseInstance(osmAreas).toFootprint());
+        System.out.println(GraphLayout.parseInstance(nodeIndexByOSMNodeId).toFootprint());
+        System.out.println(GraphLayout.parseInstance(osmAreaRelations).toFootprint());
+        System.out.println(GraphLayout.parseInstance(relationIndexByOSMWayId).toFootprint());
+        System.out.println(GraphLayout.parseInstance(coordinates).toFootprint());
         AtomicInteger invalidGeometries = new AtomicInteger();
         GeometryFactory geometryFactory = new GeometryFactory();
         List<CustomArea> result = osmAreas.stream().map(a -> {

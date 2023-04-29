@@ -49,6 +49,7 @@ import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.openjdk.jol.info.GraphLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -224,6 +225,8 @@ public class OSMReader {
     void buildOSMAreaIndex() {
         List<CustomArea> osmAreas = osmAreaData.buildOSMAreas();
         osmAreaIndex = new AreaIndex<>(osmAreas);
+        // todonow: remove later
+        System.out.println(GraphLayout.parseInstance(osmAreaIndex).toFootprint());
         osmAreaData = null;
     }
 
