@@ -228,7 +228,7 @@ public class OSMReader {
     }
 
     void buildOSMAreaIndex() {
-        System.out.println(GraphLayout.parseInstance(osmAreaData.osmAreas).toFootprint());
+        System.out.println(GraphLayout.parseInstance(osmAreaData.getOSMAreas()).toFootprint());
         List<OSMArea> validAreas = osmAreaData.getOSMAreas().stream().filter(a -> {
             if (!a.isValid()) {
                 OSM_WARNING_LOGGER.warn("invalid OSM area: " + a.border);
@@ -236,12 +236,12 @@ public class OSMReader {
             }
             return true;
         }).collect(Collectors.toList());
+        osmAreaData.getOSMAreas().clear();
         LOGGER.info("Building area index for {} OSM areas (invalid: {})", validAreas.size(), (osmAreaData.getOSMAreas().size() - validAreas.size()));
         osmAreaIndex = new AreaIndex<>(validAreas);
         System.out.println(GraphLayout.parseInstance(osmAreaIndex).toFootprint());
         // they partly overlap
-        System.out.println(GraphLayout.parseInstance(new Pair<>(osmAreaIndex, osmAreaData.osmAreas)).toFootprint());
-        osmAreaData.osmAreas.clear();
+        System.out.println(GraphLayout.parseInstance(Arrays.asList(osmAreaIndex, osmAreaData.osmAreas, osmAreaData.osmAreaTagStorage)).toFootprint());
     }
 
     /**

@@ -27,6 +27,7 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.BitUtil;
 
 import java.util.ArrayList;
@@ -43,7 +44,8 @@ public class OSMAreaData {
     public OSMAreaData(Directory directory) {
         osmAreas = new ArrayList<>();
         osmAreaNodeIndicesByOSMNodeIds = new LongToTwoIntsMap();
-        osmAreaTagStorage = new KVStorage(directory, "osm_area_tags_");
+        // todonow: using a separate ram directory, because otherwise it is harder to measure memory (bc the kv storage keeps a reference to the directory)
+        osmAreaTagStorage = new KVStorage(new RAMDirectory(), "osm_area_tags_");
     }
 
     public void addOSMAreaWithoutCoordinates(LongArrayList osmNodeIds, Map<String, Object> tags) {
