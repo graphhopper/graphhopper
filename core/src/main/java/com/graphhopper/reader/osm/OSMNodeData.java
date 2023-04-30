@@ -20,8 +20,8 @@ package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.LongScatterSet;
 import com.carrotsearch.hppc.LongSet;
-import com.graphhopper.coll.GHLongIntBTree;
-import com.graphhopper.coll.LongIntMap;
+import com.graphhopper.coll.GHLongLongBTree;
+import com.graphhopper.coll.LongLongMap;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.Directory;
@@ -61,14 +61,14 @@ class OSMNodeData {
     static final int CONNECTION_NODE = 2;
 
     // this map stores our internal node id for each OSM node
-    private final LongIntMap idsByOsmNodeIds;
+    private final LongLongMap idsByOsmNodeIds;
 
     // here we store node coordinates, separated for pillar and tower nodes
     private final PillarInfo pillarNodes;
     private final PointAccess towerNodes;
 
     // this map stores an index for each OSM node we keep the node tags of. a value of -1 means there is no entry yet.
-    private final LongIntMap nodeTagIndicesByOsmNodeIds;
+    private final LongLongMap nodeTagIndicesByOsmNodeIds;
 
     // stores node tags
     private final KVStorage nodeKVStorage;
@@ -84,11 +84,11 @@ class OSMNodeData {
         // We use GHLongIntBTree, because it is based on a tree, not an array, so it can store as many entries as there
         // are longs. This also makes it memory efficient, because there is no need to pre-allocate memory for empty
         // entries, and it also avoids allocating a new array and copying into it when increasing the size.
-        idsByOsmNodeIds = new GHLongIntBTree(200);
+        idsByOsmNodeIds = new GHLongLongBTree(200, 4);
         towerNodes = nodeAccess;
         pillarNodes = new PillarInfo(towerNodes.is3D(), directory);
 
-        nodeTagIndicesByOsmNodeIds = new GHLongIntBTree(200);
+        nodeTagIndicesByOsmNodeIds = new GHLongLongBTree(200, 4);
         nodesToBeSplit = new LongScatterSet();
         nodeKVStorage = new KVStorage(directory, false);
     }
@@ -102,7 +102,7 @@ class OSMNodeData {
      * id means
      */
     public int getId(long osmNodeId) {
-        return idsByOsmNodeIds.get(osmNodeId);
+        return (int) idsByOsmNodeIds.get(osmNodeId);
     }
 
     public static boolean isTowerNode(int id) {
@@ -120,7 +120,7 @@ class OSMNodeData {
     }
 
     public void setOrUpdateNodeType(long osmNodeId, int newNodeType, IntUnaryOperator nodeTypeUpdate) {
-        int curr = idsByOsmNodeIds.get(osmNodeId);
+        int curr = (int) idsByOsmNodeIds.get(osmNodeId);
         if (curr == EMPTY_NODE)
             idsByOsmNodeIds.put(osmNodeId, newNodeType);
         else
@@ -152,7 +152,7 @@ class OSMNodeData {
      * @return the node type this OSM node was associated with before this method was called
      */
     public int addCoordinatesIfMapped(long osmNodeId, double lat, double lon, DoubleSupplier getEle) {
-        int nodeType = idsByOsmNodeIds.get(osmNodeId);
+        int nodeType = (int) idsByOsmNodeIds.get(osmNodeId);
         if (nodeType == EMPTY_NODE)
             return nodeType;
         else if (nodeType == JUNCTION_NODE || nodeType == CONNECTION_NODE)
@@ -246,7 +246,7 @@ class OSMNodeData {
     }
 
     public void setTags(ReaderNode node) {
-        int tagIndex = nodeTagIndicesByOsmNodeIds.get(node.getId());
+        int tagIndex = (int) nodeTagIndicesByOsmNodeIds.get(node.getId());
         if (tagIndex == -1) {
             long pointer = nodeKVStorage.add(node.getTags().entrySet().stream().map(m -> new KVStorage.KeyValue(m.getKey(),
                             m.getValue() instanceof String ? KVStorage.cutString((String) m.getValue()) : m.getValue())).
@@ -260,7 +260,7 @@ class OSMNodeData {
     }
 
     public Map<String, Object> getTags(long osmNodeId) {
-        int tagIndex = nodeTagIndicesByOsmNodeIds.get(osmNodeId);
+        int tagIndex = (int) nodeTagIndicesByOsmNodeIds.get(osmNodeId);
         if (tagIndex < 0)
             return Collections.emptyMap();
         return nodeKVStorage.getMap(tagIndex);

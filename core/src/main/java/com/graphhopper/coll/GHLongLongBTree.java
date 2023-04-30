@@ -30,8 +30,8 @@ import java.util.Arrays;
  *
  * @author Peter Karich
  */
-public class GHLongIntBTree implements LongIntMap {
-    private final static Logger logger = LoggerFactory.getLogger(GHLongIntBTree.class);
+public class GHLongLongBTree implements LongLongMap {
+    private final static Logger logger = LoggerFactory.getLogger(GHLongLongBTree.class);
     private final int noNumberValue = -1;
     private final int maxLeafEntries;
     private final int initLeafSize;
@@ -40,15 +40,22 @@ public class GHLongIntBTree implements LongIntMap {
     private long size;
     private int height;
     private BTreeEntry root;
+    private final int bytesPerValue;
+    private final long maxValue;
 
-    public GHLongIntBTree(int maxLeafEntries) {
+    public GHLongLongBTree(int maxLeafEntries, int bytesPerValue) {
         this.maxLeafEntries = maxLeafEntries;
-        if (maxLeafEntries < 1) {
+        this.bytesPerValue = bytesPerValue;
+        if (bytesPerValue > 8)
+            throw new IllegalArgumentException("Values can have 8 bytes maximum but requested was " + bytesPerValue);
+
+        // reserve one bit for negative values
+        this.maxValue = (1L << (bytesPerValue * 8 - 1)) - 1;
+        if (maxLeafEntries < 1)
             throw new IllegalArgumentException("illegal maxLeafEntries:" + maxLeafEntries);
-        }
-        if (maxLeafEntries % 2 == 0) {
+
+        if (maxLeafEntries % 2 == 0)
             maxLeafEntries++;
-        }
 
         splitIndex = maxLeafEntries / 2;
         if (maxLeafEntries < 10) {
@@ -90,27 +97,28 @@ public class GHLongIntBTree implements LongIntMap {
     }
 
     @Override
-    public int put(long key, int value) {
-        if (key == noNumberValue) {
-            throw new IllegalArgumentException("Illegal key " + key);
-        }
-
+    public long put(long key, long value) {
+        if (value > maxValue)
+            throw new IllegalArgumentException("Value " + value + " exceeded max value: " + maxValue
+                    + ". Increase bytesPerValue (" + bytesPerValue + ")");
+        if (key < 0)
+            throw new IllegalArgumentException("Negative keys not supported.");
         ReturnValue rv = root.put(key, value);
         if (rv.tree != null) {
             height++;
             root = rv.tree;
         }
-        if (rv.oldValue == noNumberValue) {
+        if (rv.oldValue == null) {
             // successfully inserted
             size++;
             if (size % 1000000 == 0)
                 optimize();
         }
-        return rv.oldValue;
+        return rv.oldValue == null ? noNumberValue : toLong(rv.oldValue);
     }
 
     @Override
-    public int get(long key) {
+    public long get(long key) {
         return root.get(key);
     }
 
@@ -142,10 +150,6 @@ public class GHLongIntBTree implements LongIntMap {
         return noNumberValue;
     }
 
-    void flush() {
-        throw new IllegalStateException("not supported yet");
-    }
-
     private int getEntries() {
         return root.getEntries();
     }
@@ -166,33 +170,78 @@ public class GHLongIntBTree implements LongIntMap {
         return "Height:" + height() + ", entries:" + getEntries();
     }
 
+    long getMaxValue() {
+        return maxValue;
+    }
+
     void print() {
         logger.info(root.toString(1));
     }
 
     static class ReturnValue {
-        int oldValue;
+        byte[] oldValue;
         BTreeEntry tree;
 
-        public ReturnValue() {
-        }
-
-        public ReturnValue(int oldValue) {
+        public ReturnValue(byte[] oldValue) {
             this.oldValue = oldValue;
         }
+    }
+
+    long toLong(byte[] b) {
+        return toLong(b, 0);
+    }
+
+    long toLong(byte[] b, int offset) {
+        return ((long) toInt(b, offset + 4, bytesPerValue - 4) << 32) | (toInt(b, offset, bytesPerValue) & 0xFFFFFFFFL);
+    }
+
+    int toInt(byte[] b, int offset, int length) {
+        if (length > 3)
+            return (b[offset + 3] & 0xFF) << 24 | (b[offset + 2] & 0xFF) << 16 | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
+        if (length > 2)
+            return (b[offset + 2] & 0xFF) << 16 | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
+        if (length > 1)
+            return (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
+        if (length > 0)
+            return b[offset] & 0xFF;
+        return 0;
+    }
+
+    final byte[] fromLong(long value) {
+        byte[] bytes = new byte[bytesPerValue];
+        fromLong(bytes, value, 0);
+        return bytes;
+    }
+
+    final void fromLong(byte[] bytes, long value, int offset) {
+        if (bytesPerValue > 7)
+            bytes[offset + 7] = (byte) (value >> 56);
+        if (bytesPerValue > 6)
+            bytes[offset + 6] = (byte) (value >> 48);
+        if (bytesPerValue > 5)
+            bytes[offset + 5] = (byte) (value >> 40);
+        if (bytesPerValue > 4)
+            bytes[offset + 4] = (byte) (value >> 32);
+        if (bytesPerValue > 3)
+            bytes[offset + 3] = (byte) (value >> 24);
+        if (bytesPerValue > 2)
+            bytes[offset + 2] = (byte) (value >> 16);
+        if (bytesPerValue > 1)
+            bytes[offset + 1] = (byte) (value >> 8);
+        bytes[offset] = (byte) (value);
     }
 
     class BTreeEntry {
         int entrySize;
         long[] keys;
-        int[] values;
+        byte[] values;
         BTreeEntry[] children;
         boolean isLeaf;
 
         public BTreeEntry(int tmpSize, boolean leaf) {
             this.isLeaf = leaf;
             keys = new long[tmpSize];
-            values = new int[tmpSize];
+            values = new byte[tmpSize * bytesPerValue];
 
             if (!isLeaf) {
                 // in a b-tree we need one more entry to point to all children!
@@ -204,12 +253,14 @@ public class GHLongIntBTree implements LongIntMap {
          * @return the old value which was associated with the specified key or if no update it
          * returns noNumberValue
          */
-        ReturnValue put(long key, int newValue) {
+        ReturnValue put(long key, long newValue) {
             int index = binarySearch(keys, 0, entrySize, key);
             if (index >= 0) {
                 // update
-                int oldValue = values[index];
-                values[index] = newValue;
+                byte[] oldValue = new byte[bytesPerValue];
+                System.arraycopy(values, index * bytesPerValue, oldValue, 0, bytesPerValue);
+                // copy newValue to values
+                fromLong(values, newValue, index * bytesPerValue);
                 return new ReturnValue(oldValue);
             }
 
@@ -217,23 +268,21 @@ public class GHLongIntBTree implements LongIntMap {
             ReturnValue downTreeRV;
             if (isLeaf || children[index] == null) {
                 // insert
-                downTreeRV = new ReturnValue(noNumberValue);
+                downTreeRV = new ReturnValue(null);
                 downTreeRV.tree = checkSplitEntry();
                 if (downTreeRV.tree == null) {
-                    insertKeyValue(index, key, newValue);
+                    insertKeyValue(index, key, fromLong(newValue));
                 } else if (index <= splitIndex) {
-                    downTreeRV.tree.children[0].insertKeyValue(index, key, newValue);
+                    downTreeRV.tree.children[0].insertKeyValue(index, key, fromLong(newValue));
                 } else {
-                    downTreeRV.tree.children[1].insertKeyValue(index - splitIndex - 1, key, newValue);
+                    downTreeRV.tree.children[1].insertKeyValue(index - splitIndex - 1, key, fromLong(newValue));
                 }
                 return downTreeRV;
             }
 
             downTreeRV = children[index].put(key, newValue);
-            if (downTreeRV.oldValue != noNumberValue) // only update
-            {
+            if (downTreeRV.oldValue != null) // only update
                 return downTreeRV;
-            }
 
             if (downTreeRV.tree != null) {
                 // split this treeEntry if it is too big
@@ -274,7 +323,8 @@ public class GHLongIntBTree implements LongIntMap {
             BTreeEntry newTree = new BTreeEntry(1, false);
             newTree.entrySize = 1;
             newTree.keys[0] = this.keys[splitIndex];
-            newTree.values[0] = this.values[splitIndex];
+
+            System.arraycopy(this.values, splitIndex * bytesPerValue, newTree.values, 0, bytesPerValue);
             newTree.children[0] = newLeftChild;
             newTree.children[1] = newRightChild;
             return newTree;
@@ -282,7 +332,7 @@ public class GHLongIntBTree implements LongIntMap {
 
         void copy(BTreeEntry fromChild, BTreeEntry toChild, int from, int count) {
             System.arraycopy(fromChild.keys, from, toChild.keys, 0, count);
-            System.arraycopy(fromChild.values, from, toChild.values, 0, count);
+            System.arraycopy(fromChild.values, from * bytesPerValue, toChild.values, 0, count * bytesPerValue);
             if (!fromChild.isLeaf) {
                 System.arraycopy(fromChild.children, from, toChild.children, 0, count + 1);
             }
@@ -290,24 +340,24 @@ public class GHLongIntBTree implements LongIntMap {
             toChild.entrySize = count;
         }
 
-        void insertKeyValue(int index, long key, int newValue) {
+        void insertKeyValue(int index, long key, byte[] newValueFromIdx0) {
             ensureSize(entrySize + 1);
             int count = entrySize - index;
             if (count > 0) {
                 System.arraycopy(keys, index, keys, index + 1, count);
-                System.arraycopy(values, index, values, index + 1, count);
+                System.arraycopy(values, index * bytesPerValue, values, index * bytesPerValue + bytesPerValue, count * bytesPerValue);
                 if (!isLeaf) {
                     System.arraycopy(children, index + 1, children, index + 2, count);
                 }
             }
 
             keys[index] = key;
-            values[index] = newValue;
+            System.arraycopy(newValueFromIdx0, 0, values, index * bytesPerValue, bytesPerValue);
             entrySize++;
         }
 
         void insertTree(int index, BTreeEntry tree) {
-            insertKeyValue(index, tree.keys[0], tree.values[0]);
+            insertKeyValue(index, tree.keys[0], tree.values);
             if (!isLeaf) {
                 // overwrite children
                 children[index] = tree.children[0];
@@ -316,10 +366,10 @@ public class GHLongIntBTree implements LongIntMap {
             }
         }
 
-        int get(long key) {
+        long get(long key) {
             int index = binarySearch(keys, 0, entrySize, key);
             if (index >= 0) {
-                return values[index];
+                return toLong(values, index * bytesPerValue);
             }
             index = ~index;
             if (isLeaf || children[index] == null) {
@@ -362,7 +412,7 @@ public class GHLongIntBTree implements LongIntMap {
             }
             int newSize = Math.min(maxLeafEntries, Math.max(size + 1, Math.round(size * factor)));
             keys = Arrays.copyOf(keys, newSize);
-            values = Arrays.copyOf(values, newSize);
+            values = Arrays.copyOf(values, newSize * bytesPerValue);
             if (!isLeaf) {
                 children = Arrays.copyOf(children, newSize + 1);
             }
@@ -372,7 +422,7 @@ public class GHLongIntBTree implements LongIntMap {
             int tolerance = 1;
             if (entrySize + tolerance < keys.length) {
                 keys = Arrays.copyOf(keys, entrySize);
-                values = Arrays.copyOf(values, entrySize);
+                values = Arrays.copyOf(values, entrySize * bytesPerValue);
                 if (!isLeaf) {
                     children = Arrays.copyOf(children, entrySize + 1);
                 }
@@ -393,11 +443,7 @@ public class GHLongIntBTree implements LongIntMap {
                 if (i > 0) {
                     str += ",";
                 }
-                if (keys[i] == noNumberValue) {
-                    str += "-";
-                } else {
-                    str += keys[i];
-                }
+                str += keys[i];
             }
             str += "\n";
             if (!isLeaf) {
