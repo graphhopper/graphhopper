@@ -191,20 +191,17 @@ public class GHLongLongBTree implements LongLongMap {
         return toLong(b, 0);
     }
 
-    long toLong(byte[] b, int offset) {
-        return ((long) toInt(b, offset + 4, bytesPerValue - 4) << 32) | (toInt(b, offset, bytesPerValue) & 0xFFFFFFFFL);
-    }
-
-    int toInt(byte[] b, int offset, int length) {
-        if (length > 3)
-            return (b[offset + 3] & 0xFF) << 24 | (b[offset + 2] & 0xFF) << 16 | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
-        if (length > 2)
-            return (b[offset + 2] & 0xFF) << 16 | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
-        if (length > 1)
-            return (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
-        if (length > 0)
-            return b[offset] & 0xFF;
-        return 0;
+    long toLong(byte[] bytes, int offset) {
+        long res = 0;
+        if (bytesPerValue > 7) res |= ((long) bytes[offset + 7] << 56);
+        if (bytesPerValue > 6) res |= ((long) bytes[offset + 6] & 0xFF) << 48;
+        if (bytesPerValue > 5) res |= ((long) bytes[offset + 5] & 0xFF) << 40;
+        if (bytesPerValue > 4) res |= ((long) bytes[offset + 4] & 0xFF) << 32;
+        if (bytesPerValue > 3) res |= ((long) bytes[offset + 3] & 0xFF) << 24;
+        if (bytesPerValue > 2) res |= ((long) bytes[offset + 2] & 0xFF) << 16;
+        if (bytesPerValue > 1) res |= ((long) bytes[offset + 1] & 0xFF) << 8;
+        res |= ((long) bytes[offset] & 0xff);
+        return res;
     }
 
     final byte[] fromLong(long value) {
@@ -214,20 +211,13 @@ public class GHLongLongBTree implements LongLongMap {
     }
 
     final void fromLong(byte[] bytes, long value, int offset) {
-        if (bytesPerValue > 7)
-            bytes[offset + 7] = (byte) (value >> 56);
-        if (bytesPerValue > 6)
-            bytes[offset + 6] = (byte) (value >> 48);
-        if (bytesPerValue > 5)
-            bytes[offset + 5] = (byte) (value >> 40);
-        if (bytesPerValue > 4)
-            bytes[offset + 4] = (byte) (value >> 32);
-        if (bytesPerValue > 3)
-            bytes[offset + 3] = (byte) (value >> 24);
-        if (bytesPerValue > 2)
-            bytes[offset + 2] = (byte) (value >> 16);
-        if (bytesPerValue > 1)
-            bytes[offset + 1] = (byte) (value >> 8);
+        if (bytesPerValue > 7) bytes[offset + 7] = (byte) (value >> 56);
+        if (bytesPerValue > 6) bytes[offset + 6] = (byte) (value >> 48);
+        if (bytesPerValue > 5) bytes[offset + 5] = (byte) (value >> 40);
+        if (bytesPerValue > 4) bytes[offset + 4] = (byte) (value >> 32);
+        if (bytesPerValue > 3) bytes[offset + 3] = (byte) (value >> 24);
+        if (bytesPerValue > 2) bytes[offset + 2] = (byte) (value >> 16);
+        if (bytesPerValue > 1) bytes[offset + 1] = (byte) (value >> 8);
         bytes[offset] = (byte) (value);
     }
 
