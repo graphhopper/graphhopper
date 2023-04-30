@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.DistanceCalcEarth;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
@@ -56,18 +57,28 @@ public class AreaIndex<T extends AreaIndex.Area> {
     }
 
     private void addBorder(PreparedGeometryFactory pgf, T area, Polygon border) {
-        // todonow: do we really need the prepared geometry for osm areas?
         IndexedCustomArea<T> indexedCustomArea = new IndexedCustomArea<>(area, pgf.create(border));
         index.insert(border.getEnvelopeInternal(), indexedCustomArea);
     }
 
     public List<T> query(double lat, double lon) {
         Envelope searchEnv = new Envelope(lon, lon, lat, lat);
+        double bufferDistance = 10; // meters
+        double rLon = (bufferDistance * 360.0 / DistanceCalcEarth.DIST_EARTH.calcCircumference(lat));
+        double rLat = bufferDistance / DistanceCalcEarth.METERS_PER_DEGREE;
+        searchEnv.expandBy(rLon, rLat);
         @SuppressWarnings("unchecked")
         List<IndexedCustomArea<T>> result = index.query(searchEnv);
-        Point point = gf.createPoint(new Coordinate(lon, lat));
+        Coordinate[] coordinates = {
+            new Coordinate(lon-rLon,lat-rLat),
+            new Coordinate(lon-rLon,lat+rLat),
+            new Coordinate(lon+rLon,lat+rLat),
+            new Coordinate(lon+rLon,lat-rLat),
+            new Coordinate(lon-rLon,lat-rLat)
+        };
+        Polygon poly = gf.createPolygon(coordinates);
         return result.stream()
-                .filter(c -> c.intersects(point))
+                .filter(c -> c.intersects(poly))
                 .map(c -> c.area)
                 .collect(Collectors.toList());
     }
@@ -81,9 +92,10 @@ public class AreaIndex<T extends AreaIndex.Area> {
             this.preparedGeometry = preparedGeometry;
         }
 
-        boolean intersects(Point point) {
-            return preparedGeometry.intersects(point);
+        boolean intersects(Polygon poly) {
+            return preparedGeometry.intersects(poly);
         }
+
     }
 
 }
