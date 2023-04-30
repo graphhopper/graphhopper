@@ -188,7 +188,7 @@ public class OSMReader {
                     .setPass1NodePreHook(osmAreaData::fillOSMAreaNodeCoordinates)
                     .setPass1WayPreHook(this::handleOSMAreaAgain)
                     .setPass1FinishHook(() -> {
-                        System.out.println(GraphLayout.parseInstance(osmAreaData.osmAreaNodeIndicesByOSMNodeIds).toFootprint());
+//                        System.out.println(GraphLayout.parseInstance(osmAreaData.osmAreaNodeIndicesByOSMNodeIds).toFootprint());
                         osmAreaData.osmAreaNodeIndicesByOSMNodeIds.clear();
                     })
                     .setPass2AfterNodesHook(this::buildOSMAreaIndex);
@@ -228,7 +228,7 @@ public class OSMReader {
     }
 
     void buildOSMAreaIndex() {
-        System.out.println(GraphLayout.parseInstance(osmAreaData).toFootprint());
+//        System.out.println(GraphLayout.parseInstance(osmAreaData).toFootprint());
         List<OSMArea> validAreas = osmAreaData.getOSMAreas().stream().filter(a -> {
             if (!a.isValid()) {
                 OSM_WARNING_LOGGER.warn("invalid OSM area: " + a.border);
@@ -236,13 +236,13 @@ public class OSMReader {
             }
             return true;
         }).collect(Collectors.toList());
-        System.out.println(GraphLayout.parseInstance(osmAreaData, validAreas).toFootprint());
+//        System.out.println(GraphLayout.parseInstance(osmAreaData, validAreas).toFootprint());
         osmAreaData.getOSMAreas().clear();
         LOGGER.info("Building area index for {} OSM areas (invalid: {})", validAreas.size(), (osmAreaData.getOSMAreas().size() - validAreas.size()));
         osmAreaIndex = new AreaIndex<>(validAreas);
-        System.out.println(GraphLayout.parseInstance(osmAreaIndex).toFootprint());
+//        System.out.println(GraphLayout.parseInstance(osmAreaIndex).toFootprint());
         // they partly overlap
-        System.out.println(GraphLayout.parseInstance(osmAreaData, osmAreaIndex, validAreas).toFootprint());
+//        System.out.println(GraphLayout.parseInstance(osmAreaData, osmAreaIndex, validAreas).toFootprint());
     }
 
     /**
