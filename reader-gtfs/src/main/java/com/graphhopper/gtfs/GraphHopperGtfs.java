@@ -49,6 +49,7 @@ public class GraphHopperGtfs extends GraphHopper {
     private final GraphHopperConfig ghConfig;
     private GtfsStorage gtfsStorage;
     private PtGraph ptGraph;
+    private LocalDate trafficDay1;
 
     public GraphHopperGtfs(GraphHopperConfig ghConfig) {
         this.ghConfig = ghConfig;
@@ -99,12 +100,15 @@ public class GraphHopperGtfs extends GraphHopper {
                     allReaders.put(id, gtfsReader);
                 });
                 interpolateTransfers(allReaders, allTransfers);
-                String trafficDay = ghConfig.getString("traffic_day", "");
-                LOGGER.info("Traffic day: {}", trafficDay);
-                Trips.findAllTripTransfersInto(gtfsStorage.getTripTransfers(), gtfsStorage, LocalDate.parse(trafficDay));
+                if (ghConfig.getBool("gtfs.trip_based", false)) {
+                    String trafficDay = ghConfig.getString("gtfs.traffic_day", null);
+                    LOGGER.info("Traffic day for trip-based pt router: {}", trafficDay);
+                    Trips.findAllTripTransfersInto(gtfsStorage.getTripTransfers(), gtfsStorage, LocalDate.parse(trafficDay));
+                }
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
+
             ptGraph.flush();
             getGtfsStorage().flush();
             stopIndex.store(indexBuilder);
