@@ -186,7 +186,7 @@ public class GHLongLongBTreeTest {
         for (int byteCnt = 4; byteCnt < 9; byteCnt++) {
             for (int i = 0; i < 1000; i++) {
                 GHLongLongBTree instance = new GHLongLongBTree(2, byteCnt);
-                long val = rand.nextLong(instance.getMaxValue());
+                long val = rand.nextLong() % instance.getMaxValue();
                 byte[] bytes = instance.fromLong(val);
                 assertEquals(val, instance.toLong(bytes));
             }
