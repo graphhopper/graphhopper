@@ -43,7 +43,6 @@ import org.glassfish.hk2.api.Factory;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
-import javax.inject.Singleton;
 
 public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConfiguration> {
 
@@ -291,9 +290,9 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 @Override
                 protected void configure() {
                     if (configuration.getGraphHopperConfiguration().getBool("gtfs.free_walk", false)) {
-                        bind(PtRouterFreeWalkImpl.class).to(PtRouter.class).in(Singleton.class);
+                        bind(PtRouterFreeWalkImpl.class).to(PtRouter.class);
                     } else {
-                        bind(PtRouterTripBasedImpl.class).to(PtRouter.class).in(Singleton.class);
+                        bind(PtRouterTripBasedImpl.class).to(PtRouter.class);
                     }
                 }
             });
