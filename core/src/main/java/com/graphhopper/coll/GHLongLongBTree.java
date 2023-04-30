@@ -101,8 +101,9 @@ public class GHLongLongBTree implements LongLongMap {
         if (value > maxValue)
             throw new IllegalArgumentException("Value " + value + " exceeded max value: " + maxValue
                     + ". Increase bytesPerValue (" + bytesPerValue + ")");
-        if (key < 0)
-            throw new IllegalArgumentException("Negative keys not supported.");
+        if (value == noNumberValue)
+            throw new IllegalArgumentException("Value cannot be no_number_value " + noNumberValue);
+
         ReturnValue rv = root.put(key, value);
         if (rv.tree != null) {
             height++;
@@ -193,13 +194,27 @@ public class GHLongLongBTree implements LongLongMap {
 
     long toLong(byte[] bytes, int offset) {
         long res = 0;
-        if (bytesPerValue > 7) res |= ((long) bytes[offset + 7] << 56);
-        if (bytesPerValue > 6) res |= ((long) bytes[offset + 6] & 0xFF) << 48;
-        if (bytesPerValue > 5) res |= ((long) bytes[offset + 5] & 0xFF) << 40;
-        if (bytesPerValue > 4) res |= ((long) bytes[offset + 4] & 0xFF) << 32;
-        if (bytesPerValue > 3) res |= ((long) bytes[offset + 3] & 0xFF) << 24;
-        if (bytesPerValue > 2) res |= ((long) bytes[offset + 2] & 0xFF) << 16;
-        if (bytesPerValue > 1) res |= ((long) bytes[offset + 1] & 0xFF) << 8;
+        if (bytesPerValue == 8) res |= (long) bytes[offset + 7] << 56;
+        else if (bytesPerValue > 7) res |= ((long) bytes[offset + 7] << 56);
+
+        if (bytesPerValue == 7) res |= (long) bytes[offset + 6] << 48;
+        else if (bytesPerValue > 6) res |= ((long) bytes[offset + 6] & 0xFF) << 48;
+
+        if (bytesPerValue == 6) res |= (long) bytes[offset + 5] << 40;
+        else if (bytesPerValue > 5) res |= ((long) bytes[offset + 5] & 0xFF) << 40;
+
+        if (bytesPerValue == 5) res |= (long) bytes[offset + 4] << 32;
+        else if (bytesPerValue > 4) res |= ((long) bytes[offset + 4] & 0xFF) << 32;
+
+        if (bytesPerValue == 4) res |= (long) bytes[offset + 3] << 24;
+        else if (bytesPerValue > 3) res |= ((long) bytes[offset + 3] & 0xFF) << 24;
+
+        if (bytesPerValue == 3) res |= (long) bytes[offset + 2] << 16;
+        else if (bytesPerValue > 2) res |= ((long) bytes[offset + 2] & 0xFF) << 16;
+
+        if (bytesPerValue == 2) res |= (long) bytes[offset + 1] << 8;
+        else if (bytesPerValue > 1) res |= ((long) bytes[offset + 1] & 0xFF) << 8;
+
         res |= ((long) bytes[offset] & 0xff);
         return res;
     }

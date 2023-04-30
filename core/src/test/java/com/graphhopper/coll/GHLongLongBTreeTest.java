@@ -33,8 +33,8 @@ public class GHLongLongBTreeTest {
     @Test
     public void testThrowException_IfPutting_NoNumber() {
         GHLongLongBTree instance = new GHLongLongBTree(2, 4);
-        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> instance.put(-1, 1));
-        assertTrue(ex.getMessage().contains("Negative keys not supported"));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> instance.put(1, -1));
+        assertTrue(ex.getMessage().contains("Value cannot be no_number_value -1"));
     }
 
     @Test
@@ -143,10 +143,13 @@ public class GHLongLongBTreeTest {
     }
 
     @Test
-    public void testNegative() {
+    public void testNegativeValues() {
         GHLongLongBTree instance = new GHLongLongBTree(2, 5);
 
-        // TODO NOW use highest bit of largest byte to support negative numbers
+        // negative => two's complement
+        byte[] bytes = instance.fromLong(-3);
+        assertEquals(-3, instance.toLong(bytes));
+
         instance.put(0, -3);
         instance.put(4, -2);
         instance.put(3, Integer.MIN_VALUE);
@@ -161,9 +164,25 @@ public class GHLongLongBTreeTest {
     }
 
     @Test
+    public void testNegativeKey() {
+        GHLongLongBTree instance = new GHLongLongBTree(2, 5);
+
+        instance.put(-3, 0);
+        instance.put(-2, 4);
+        instance.put(Integer.MIN_VALUE, 3);
+        instance.put(2L * Integer.MIN_VALUE, 2);
+        instance.put(4L * Integer.MIN_VALUE, 1);
+
+        assertEquals(0, instance.get(-3));
+        assertEquals(4, instance.get(-2));
+        assertEquals(1, instance.get(4L * Integer.MIN_VALUE));
+        assertEquals(2, instance.get(2L * Integer.MIN_VALUE));
+        assertEquals(3, instance.get(Integer.MIN_VALUE));
+    }
+
+    @Test
     public void testInternalFromToLong() {
         Random rand = new Random(0);
-
         for (int byteCnt = 4; byteCnt < 9; byteCnt++) {
             for (int i = 0; i < 1000; i++) {
                 GHLongLongBTree instance = new GHLongLongBTree(2, byteCnt);
@@ -176,7 +195,6 @@ public class GHLongLongBTreeTest {
 
     @Test
     public void testLargeValue() {
-        System.out.println((1L << (8*8 - 1)) - 1);
         GHLongLongBTree instance = new GHLongLongBTree(2, 5);
         for (int key = 0; key < 100; key++) {
             long val = 1L << 32 - 1;
@@ -192,13 +210,13 @@ public class GHLongLongBTreeTest {
     public void testRandom() {
         final long seed = System.nanoTime();
         Random rand = new Random(seed);
-        final int size = 1_000;
+        final int size = 10_000;
         for (int bytesPerValue = 4; bytesPerValue <= 8; bytesPerValue++) {
             for (int j = 3; j < 12; j += 4) {
                 GHLongLongBTree instance = new GHLongLongBTree(j, bytesPerValue);
                 Set<Integer> addedValues = new LinkedHashSet<>(size);
                 for (int i = 0; i < size; i++) {
-                    int val = Math.abs(rand.nextInt());
+                    int val = rand.nextInt();
                     addedValues.add(val);
                     try {
                         instance.put(val, val);
