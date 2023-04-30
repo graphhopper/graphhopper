@@ -92,7 +92,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
         } else if (Crossing.KEY.equals(name)) {
             return new EnumEncodedValue<>(Crossing.KEY, Crossing.class);
         } else if (Landuse.KEY.equals(name)) {
-            return new EnumEncodedValue<>(Landuse.KEY, Landuse.class);
+            return Landuse.create();
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }

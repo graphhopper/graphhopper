@@ -21,22 +21,20 @@ package com.graphhopper.routing.ev;
 import com.graphhopper.util.Helper;
 
 public enum Landuse {
-    OTHER("other"), FARMLAND("farmland"), RESIDENTIAL("residential"),
-    GRASS("grass"), FOREST("forest"), MEADOW("meadow"), ORCHARD("orchard"), FARMYARD("farmyard"),
-    INDUSTRIAL("industrial"), VINEYARD("vineyard"), CEMETRY("cemetry"), COMMERCIAL("commercial"), ALLOTMENTS("allotments"),
-    RETAIL("retail"), BASIN("basin"), RESERVOIR("reservoir"), CONSTRUCTION("construction"), QUARRY("quarry");
+    OTHER, FARMLAND, RESIDENTIAL,
+    GRASS, FOREST, MEADOW, ORCHARD, FARMYARD,
+    INDUSTRIAL, VINEYARD, CEMETERY, COMMERCIAL, ALLOTMENTS,
+    RETAIL, BASIN, RESERVOIR, CONSTRUCTION, QUARRY;
 
     public static final String KEY = "landuse";
 
-    private final String name;
-
-    Landuse(String name) {
-        this.name = name;
+    public static EnumEncodedValue<Landuse> create() {
+        return new EnumEncodedValue<>(KEY, Landuse.class);
     }
 
     @Override
     public String toString() {
-        return name;
+        return Helper.toLowerCase(super.toString());
     }
 
     public static Landuse find(String name) {
