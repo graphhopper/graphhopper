@@ -23,7 +23,7 @@ import com.graphhopper.util.Helper;
 public enum Landuse {
     OTHER("other"), FARMLAND("farmland"), RESIDENTIAL("residential"),
     GRASS("grass"), FOREST("forest"), MEADOW("meadow"), ORCHARD("orchard"), FARMYARD("farmyard"),
-    INDUSTRIAL("industrial"), VINEYARD("vineyard"), CEMETRY("cemetry"), COMMERCIAL("commercial"), ALLOTMENTS("allotments"),
+    INDUSTRIAL("industrial"), VINEYARD("vineyard"), CEMETERY("cemetery"), COMMERCIAL("commercial"), ALLOTMENTS("allotments"),
     RETAIL("retail"), BASIN("basin"), RESERVOIR("reservoir"), CONSTRUCTION("construction"), QUARRY("quarry");
 
     public static final String KEY = "landuse";
