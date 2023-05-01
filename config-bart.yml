@@ -8,7 +8,8 @@ graphhopper:
   graph.location: graph-cache
   graph.dataaccess.default_type: RAM_STORE
 
-  traffic_day: 2023-04-05
+  gtfs.trip_based: true
+  gtfs.traffic_day: 2023-04-05
 
   gtfs.max_transfer_interpolation_walk_time_seconds: 300
 

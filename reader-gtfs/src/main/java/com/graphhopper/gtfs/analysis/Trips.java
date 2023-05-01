@@ -33,9 +33,12 @@ public class Trips {
 
     private final Map<String, Transfers> transfers;
     public final Map<String, Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey>> trips;
+    private Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers;
+    private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfersPerDay = new HashMap<>();
 
     public Trips(GtfsStorage gtfsStorage) {
         this.gtfsStorage = gtfsStorage;
+        this.tripTransfers = gtfsStorage.data.getTreeMap("tripTransfers");
         transfers = new HashMap<>();
         for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
             transfers.put(entry.getKey(), new Transfers(entry.getValue()));
@@ -156,7 +159,7 @@ public class Trips {
     });
 
     public static void findAllTripTransfersInto(Map<TripAtStopTime, Collection<TripAtStopTime>> result, GtfsStorage gtfsStorage, LocalDate trafficDay) {
-        Trips trips = new Trips(gtfsStorage);
+        Trips tripTransfers = new Trips(gtfsStorage);
         for (Map.Entry<String, GTFSFeed> e : gtfsStorage.getGtfsFeeds().entrySet()) {
             String feedKey = e.getKey();
             GTFSFeed feed = e.getValue();
@@ -165,7 +168,7 @@ public class Trips {
                     .flatMap(trip -> unfoldFrequencies(feed, trip))
                     .parallel()
                     .forEach(tripDescriptor -> {
-                        Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = trips.findTripTransfers(tripDescriptor, feedKey, trafficDay);
+                        Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = tripTransfers.findTripTransfers(tripDescriptor, feedKey, trafficDay);
                         System.out.println(reducedTripTransfers.size());
                         result.putAll(reducedTripTransfers);
                     });
@@ -187,6 +190,17 @@ public class Trips {
             return result.build();
         }
     }
+
+    public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfers(LocalDate trafficDay) {
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripAtStopTimeCollectionMap = tripTransfersPerDay.computeIfAbsent(trafficDay, k -> new HashMap<>(tripTransfers));
+//		Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripAtStopTimeCollectionMap = tripTransfers;
+        return tripAtStopTimeCollectionMap;
+    }
+
+    public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfers() {
+        return tripTransfers;
+    }
+
 
     public static class TripAtStopTime implements Serializable, Comparable<TripAtStopTime> {
 

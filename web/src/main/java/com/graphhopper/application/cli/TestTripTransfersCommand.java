@@ -1,6 +1,5 @@
 package com.graphhopper.application.cli;
 
-import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.Trip;
 import com.graphhopper.application.GraphHopperServerConfiguration;
@@ -19,7 +18,7 @@ import java.util.stream.Collectors;
 
 public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServerConfiguration> {
 
-    private Trips trips;
+    private Trips tripTransfers;
 
     public TestTripTransfersCommand() {
         super("testtriptransfers", "Test trip transfers");
@@ -48,7 +47,7 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
         graphHopper.importOrLoad();
 
 
-        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = graphHopper.getGtfsStorage().getTripTransfers(LocalDate.parse("2023-04-05"));
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers = graphHopper.getGtfsStorage().tripTransfers.getTripTransfers(LocalDate.parse("2023-04-05"));
 
         PtRouterImpl.Factory factory = new PtRouterImpl.Factory(configuration.getGraphHopperConfiguration(), graphHopper.getTranslationMap(), graphHopper.getBaseGraph(), graphHopper.getEncodingManager(), graphHopper.getLocationIndex(), graphHopper.getGtfsStorage());
         PtRouter ptRouter = factory.createWithoutRealtimeFeed();

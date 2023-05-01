@@ -45,6 +45,7 @@ public class GtfsStorage {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GtfsStorage.class);
 	private LineIntIndex stopIndex;
 	private PtGraph ptGraph;
+	public Trips tripTransfers;
 
 	public void setStopIndex(LineIntIndex stopIndex) {
 		this.stopIndex = stopIndex;
@@ -64,16 +65,6 @@ public class GtfsStorage {
 
 	public IntObjectHashMap<int[]> getSkippedEdgesForTransfer() {
 		return skippedEdgesForTransfer;
-	}
-
-	public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfers(LocalDate trafficDay) {
-		Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripAtStopTimeCollectionMap = tripTransfersPerDay.computeIfAbsent(trafficDay, k -> new HashMap<>(tripTransfers));
-//		Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripAtStopTimeCollectionMap = tripTransfers;
-		return tripAtStopTimeCollectionMap;
-	}
-
-	public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfers() {
-		return tripTransfers;
 	}
 
 	public static class Validity implements Serializable {
@@ -161,8 +152,6 @@ public class GtfsStorage {
 	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
 	private Map<String, Map<String, Fare>> faresByFeed;
 	private Map<FeedIdWithStopId, Integer> stationNodes;
-	private Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers;
-	private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfersPerDay = new HashMap<>();
 	private IntObjectHashMap<int[]> skippedEdgesForTransfer;
 
 	private IntIntHashMap ptToStreet;
@@ -172,7 +161,7 @@ public class GtfsStorage {
 		HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, ALIGHT, OVERNIGHT, TRANSFER, WAIT, WAIT_ARRIVAL
     }
 
-	private DB data;
+	public DB data;
 
 	public GtfsStorage(Directory dir) {
 		this.dir = dir;
@@ -249,7 +238,6 @@ public class GtfsStorage {
     private void init() {
 		this.gtfsFeedIds = data.getHashSet("gtfsFeeds");
 		this.stationNodes = data.getHashMap("stationNodes");
-		this.tripTransfers = data.getTreeMap("tripTransfers");
 		this.ptToStreet = new IntIntHashMap();
 		this.streetToPt = new IntIntHashMap();
 		this.skippedEdgesForTransfer = new IntObjectHashMap<>();
@@ -275,6 +263,7 @@ public class GtfsStorage {
 		LOGGER.info("Calendar range covered by all feeds: {} till {}", latestStartDate, earliestEndDate);
 		faresByFeed = new HashMap<>();
 		this.gtfsFeeds.forEach((feed_id, feed) -> faresByFeed.put(feed_id, feed.fares));
+		tripTransfers = new Trips(this);
 	}
 
 	public void close() {

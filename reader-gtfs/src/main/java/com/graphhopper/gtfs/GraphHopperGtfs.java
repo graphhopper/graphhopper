@@ -103,7 +103,7 @@ public class GraphHopperGtfs extends GraphHopper {
                 if (ghConfig.getBool("gtfs.trip_based", false)) {
                     String trafficDay = ghConfig.getString("gtfs.traffic_day", null);
                     LOGGER.info("Traffic day for trip-based pt router: {}", trafficDay);
-                    Trips.findAllTripTransfersInto(gtfsStorage.getTripTransfers(), gtfsStorage, LocalDate.parse(trafficDay));
+                    Trips.findAllTripTransfersInto(gtfsStorage.tripTransfers.getTripTransfers(), gtfsStorage, LocalDate.parse(trafficDay));
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);

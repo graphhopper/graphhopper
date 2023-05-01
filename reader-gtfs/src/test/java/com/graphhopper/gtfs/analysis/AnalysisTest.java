@@ -85,8 +85,8 @@ public class AnalysisTest {
         GtfsStorage gtfsStorage = graphHopperGtfs.getGtfsStorage();
         Trips.TripAtStopTime origin = new Trips.TripAtStopTime("gtfs_1", GtfsRealtime.TripDescriptor.newBuilder().setTripId("MUSEUM1").setRouteId("COURT2MUSEUM").build(), 2);
         GTFSFeed gtfsFeed = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get("gtfs_1");
-        Trips trips = new Trips(gtfsStorage);
-        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> reducedTripTransfers = trips.findTripTransfers(origin.tripDescriptor, "gtfs_1", LocalDate.parse("2023-03-26"));
+        Trips tripTransfers = new Trips(gtfsStorage);
+        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> reducedTripTransfers = tripTransfers.findTripTransfers(origin.tripDescriptor, "gtfs_1", LocalDate.parse("2023-03-26"));
         Collection<Trips.TripAtStopTime> destinations = reducedTripTransfers.get(origin);
 
     }

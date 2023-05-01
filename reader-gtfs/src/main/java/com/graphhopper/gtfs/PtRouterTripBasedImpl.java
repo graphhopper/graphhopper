@@ -25,7 +25,6 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.Trip;
 import com.graphhopper.config.Profile;
-import com.graphhopper.gtfs.analysis.Trips;
 import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.ev.Subnetwork;
@@ -66,7 +65,6 @@ public final class PtRouterTripBasedImpl implements PtRouter {
     private final RealtimeFeed realtimeFeed;
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final WeightingFactory weightingFactory;
-    private final Trips trips;
 
     @Inject
     public PtRouterTripBasedImpl(GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
@@ -80,7 +78,6 @@ public final class PtRouterTripBasedImpl implements PtRouter {
         this.ptGraph = gtfsStorage.getPtGraph();
         this.realtimeFeed = realtimeFeed;
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
-        trips = new Trips(gtfsStorage);
     }
 
     @Override
@@ -193,7 +190,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                     .collect(Collectors.toList());
             response.addDebugInfo("access/egress routing:" + stopWatch1.stop().getSeconds() + "s");
 
-            TripBasedRouter tripBasedRouter = new TripBasedRouter(gtfsStorage, trips);
+            TripBasedRouter tripBasedRouter = new TripBasedRouter(gtfsStorage, gtfsStorage.tripTransfers);
             List<TripBasedRouter.ResultLabel> routes;
             if (profileQuery) {
                 routes = tripBasedRouter.routeNaiveProfile(accessStations, egressStations, initialTime, maxProfileDuration);
@@ -274,7 +271,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                     untilStopSequence = route.t.stop_sequence;
                 else
                     untilStopSequence = segments.get(i+1).transferOrigin.stop_sequence;
-                List<Trip.Stop> stops = trips.trips.get(segment.tripAtStopTime.feedId).get(segment.tripAtStopTime.tripDescriptor).stopTimes.stream().filter(st -> st != null && st.stop_sequence >= segment.tripAtStopTime.stop_sequence && st.stop_sequence <= untilStopSequence)
+                List<Trip.Stop> stops = gtfsStorage.tripTransfers.trips.get(segment.tripAtStopTime.feedId).get(segment.tripAtStopTime.tripDescriptor).stopTimes.stream().filter(st -> st != null && st.stop_sequence >= segment.tripAtStopTime.stop_sequence && st.stop_sequence <= untilStopSequence)
                         .map(st -> {
                             LocalDate day = initialTime.atZone(ZoneId.of("America/Los_Angeles")).toLocalDate().plusDays(segment.plusDays);
                             Instant departureTime = day.atStartOfDay().plusSeconds(st.departure_time).atZone(ZoneId.of("America/Los_Angeles")).toInstant();
