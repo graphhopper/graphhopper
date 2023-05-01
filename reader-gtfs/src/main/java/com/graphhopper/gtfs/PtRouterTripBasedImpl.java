@@ -20,10 +20,6 @@ package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.ResponsePath;
@@ -40,7 +36,10 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.*;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.Translation;
+import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
@@ -252,14 +251,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
         }
 
         private ResponsePath extractResponse(TripBasedRouter.ResultLabel route, PtLocationSnapper.Result snapResult) {
-            Label accessLabel = accessStationLabels.get(accessStations.indexOf(route.getAccessStop()));
-            Label egressLabel = egressStationLabels.get(egressStations.indexOf(route.destination));
-
-            List<Label.Transition> accessTransitions = Label.getTransitions(accessLabel, false);
-            List<Label.Transition> egressTransitions = Label.getTransitions(egressLabel, true);
-
-            List<Trip.Leg> accessPath = tripFromLabel.parsePartitionToLegs(tripFromLabel.parsePathToPartitions(accessTransitions).get(0), snapResult.queryGraph, encodingManager, accessWeighting, translation, requestedPathDetails);
-            List<Trip.Leg> egressPath = tripFromLabel.parsePartitionToLegs(tripFromLabel.parsePathToPartitions(egressTransitions).get(1), snapResult.queryGraph, encodingManager, egressWeighting, translation, requestedPathDetails);
+            GeometryFactory geometryFactory = new GeometryFactory();
 
             List<TripBasedRouter.EnqueuedTripSegment> segments = new ArrayList<>();
             TripBasedRouter.EnqueuedTripSegment enqueuedTripSegment = route.enqueuedTripSegment;
@@ -270,8 +262,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             Collections.reverse(segments);
 
             List<Trip.Leg> legs = new ArrayList<>();
-            legs.add(accessPath.get(0));
-            GeometryFactory geometryFactory = new GeometryFactory();
+            extractAccessLeg(route, snapResult).ifPresent(legs::add);
             String previousBlockId = null;
             for (int i = 0; i < segments.size(); i++) {
                 TripBasedRouter.EnqueuedTripSegment segment = segments.get(i);
@@ -297,7 +288,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                         trip.route_id, trip.trip_headsign, stops, 0, stops.get(stops.size() - 1).arrivalTime.toInstant().toEpochMilli() - stops.get(0).departureTime.toInstant().toEpochMilli(), geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
                 previousBlockId = trip.block_id;
             }
-            legs.add(egressPath.get(0));
+            extractEgressLeg(route, snapResult).ifPresent(legs::add);
 
             ResponsePath responsePath = TripFromLabel.createResponsePath(gtfsStorage, translation, snapResult.points, legs);
             responsePath.setTime(Duration.between(responsePath.getLegs().get(0).getDepartureTime().toInstant(),
@@ -305,6 +296,29 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             return responsePath;
         }
 
+        private Optional<Trip.Leg> extractAccessLeg(TripBasedRouter.ResultLabel route, PtLocationSnapper.Result snapResult) {
+            Label accessLabel = accessStationLabels.get(accessStations.indexOf(route.getAccessStop()));
+            List<Label.Transition> accessTransitions = Label.getTransitions(accessLabel, false);
+            List<List<Label.Transition>> accessPartitions = tripFromLabel.parsePathToPartitions(accessTransitions);
+            List<Trip.Leg> accessPath = tripFromLabel.parsePartitionToLegs(accessPartitions.get(0), snapResult.queryGraph, encodingManager, accessWeighting, translation, requestedPathDetails);
+            if (accessPath.isEmpty()) {
+                return Optional.empty();
+            } else {
+                return Optional.of(accessPath.get(0));
+            }
+        }
+
+        private Optional<Trip.Leg> extractEgressLeg(TripBasedRouter.ResultLabel route, PtLocationSnapper.Result snapResult) {
+            Label egressLabel = egressStationLabels.get(egressStations.indexOf(route.destination));
+            List<Label.Transition> egressTransitions = Label.getTransitions(egressLabel, true);
+            List<List<Label.Transition>> egressPartitions = tripFromLabel.parsePathToPartitions(egressTransitions);
+            if (egressPartitions.size() < 2) {
+                return Optional.empty();
+            } else {
+                List<Trip.Leg> egressPath = tripFromLabel.parsePartitionToLegs(egressPartitions.get(1), snapResult.queryGraph, encodingManager, egressWeighting, translation, requestedPathDetails);
+                return Optional.of(egressPath.get(0));
+            }
+        }
     }
 
 }

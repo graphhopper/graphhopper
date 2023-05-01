@@ -103,6 +103,7 @@ public class PtRouteResourceTripBasedTest {
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode jsonNode = response.readEntity(JsonNode.class);
+        System.out.println(jsonNode.toPrettyString());
         assertEquals(1, jsonNode.at("/paths/0/legs").size());
     }
 
