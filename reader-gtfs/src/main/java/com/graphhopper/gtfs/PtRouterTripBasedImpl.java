@@ -291,7 +291,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             extractEgressLeg(route, snapResult).ifPresent(legs::add);
 
             ResponsePath responsePath = TripFromLabel.createResponsePath(gtfsStorage, translation, snapResult.points, legs);
-            responsePath.setTime(Duration.between(responsePath.getLegs().get(0).getDepartureTime().toInstant(),
+            responsePath.setTime(Duration.between(initialTime,
                     responsePath.getLegs().get(responsePath.getLegs().size() - 1).getArrivalTime().toInstant()).toMillis());
             return responsePath;
         }
