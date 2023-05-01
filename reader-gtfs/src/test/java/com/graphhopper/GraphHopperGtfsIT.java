@@ -58,7 +58,8 @@ public class GraphHopperGtfsIT {
         ghConfig.putObject("graph.location", GRAPH_LOC);
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("gtfs.file", "files/sample-feed");
-        ghConfig.putObject("traffic_day", "2007-01-01");
+        ghConfig.putObject("gtfs.trip_based", true);
+        ghConfig.putObject("gtfs.traffic_day", "2007-01-01");
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                 new Profile("car").setVehicle("car").setWeighting("fastest")));
