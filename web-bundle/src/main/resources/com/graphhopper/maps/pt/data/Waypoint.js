@@ -157,7 +157,21 @@ export default class Waypoint {
   }
 
   _findWalkLocation(apiLeg, isArrival) {
-    return "pups";
+    let instructionIndex = 0;
+    let coordIndex = 0;
+    let result = "";
+
+    if (isArrival) {
+      instructionIndex = apiLeg.instructions.length - 1;
+      coordIndex = apiLeg.geometry.coordinates.length - 1;
+    }
+    if (apiLeg.instructions[instructionIndex].street_name != "")
+      result = apiLeg.instructions[instructionIndex].street_name;
+    else {
+      const coord = apiLeg.geometry.coordinates[coordIndex];
+      result = coord[0] + ", " + coord[1];
+    }
+    return result;
   }
 
   _checkIfPossible(prevApiLeg, nextApiLeg) {
