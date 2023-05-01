@@ -115,6 +115,10 @@ public class GraphHopperGtfs extends GraphHopper {
             stopIndex.flush();
         }
         gtfsStorage.setStopIndex(stopIndex);
+        if (ghConfig.getBool("gtfs.trip_based", false)) {
+            String trafficDay = ghConfig.getString("gtfs.traffic_day", null);
+            gtfsStorage.tripTransfers.getTripTransfers(LocalDate.parse(trafficDay));
+        }
     }
 
     private void interpolateTransfers(HashMap<String, GtfsReader> readers, Map<String, Transfers> allTransfers) {
