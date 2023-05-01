@@ -348,7 +348,7 @@ public class WaySegmentParser {
             int to = -1;
             for (int i = 0; i < segment.size(); i++) {
                 SegmentNode node = segment.get(i);
-                int id = node.id;
+                long id = node.id;
                 if (!isNodeId(id))
                     throw new IllegalStateException("Invalid id for node: " + node.osmNodeId + " when handling segment " + segment + " for way: " + way.getId());
                 if (isPillarNode(id) && (i == 0 || i == segment.size() - 1)) {

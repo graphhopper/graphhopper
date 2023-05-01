@@ -76,7 +76,7 @@ class OSMNodeData {
     private final LongSet nodesToBeSplit;
 
     private int nextTowerId = 0;
-    private int nextPillarId = 0;
+    private long nextPillarId = 0;
     // we use negative ids to create artificial OSM node ids
     private long nextArtificialOSMNodeId = -Long.MAX_VALUE;
 
@@ -105,17 +105,17 @@ class OSMNodeData {
         return idsByOsmNodeIds.get(osmNodeId);
     }
 
-    public static boolean isTowerNode(int id) {
+    public static boolean isTowerNode(long id) {
         // tower nodes are indexed -3, -4, -5, ...
         return id < JUNCTION_NODE;
     }
 
-    public static boolean isPillarNode(int id) {
+    public static boolean isPillarNode(long id) {
         // pillar nodes are indexed 3, 4, 5, ..
         return id > CONNECTION_NODE;
     }
 
-    public static boolean isNodeId(int id) {
+    public static boolean isNodeId(long id) {
         return id > CONNECTION_NODE || id < JUNCTION_NODE;
     }
 
@@ -172,12 +172,14 @@ class OSMNodeData {
         return id;
     }
 
-    private int addPillarNode(long osmId, double lat, double lon, double ele) {
-        if (nextPillarId < 0)
+    private long addPillarNode(long osmId, double lat, double lon, double ele) {
+        if (nextPillarId + 1 > Integer.MAX_VALUE)
             throw new IllegalStateException("Pillar node id overflow, too many pillar nodes");
         pillarNodes.setNode(nextPillarId, lat, lon, ele);
-        int id = pillarNodeToId(nextPillarId);
-        idsByOsmNodeIds.put(osmId, id);
+        long id = pillarNodeToId(nextPillarId);
+        if (id > Integer.MAX_VALUE)
+            throw new IllegalStateException("id overflow");
+        idsByOsmNodeIds.put(osmId, Math.toIntExact(id));
         nextPillarId++;
         return id;
     }
@@ -194,14 +196,14 @@ class OSMNodeData {
         final long newOsmId = nextArtificialOSMNodeId++;
         if (idsByOsmNodeIds.put(newOsmId, INTERMEDIATE_NODE) != EMPTY_NODE)
             throw new IllegalStateException("Artificial osm node id already exists: " + newOsmId);
-        int id = addPillarNode(newOsmId, point.getLat(), point.getLon(), point.getEle());
+        long id = addPillarNode(newOsmId, point.getLat(), point.getLon(), point.getEle());
         return new SegmentNode(newOsmId, id, node.tags);
     }
 
-    int convertPillarToTowerNode(int id, long osmNodeId) {
+    int convertPillarToTowerNode(long id, long osmNodeId) {
         if (!isPillarNode(id))
             throw new IllegalArgumentException("Not a pillar node: " + id);
-        int pillar = idToPillarNode(id);
+        long pillar = idToPillarNode(id);
         double lat = pillarNodes.getLat(pillar);
         double lon = pillarNodes.getLon(pillar);
         double ele = pillarNodes.getEle(pillar);
@@ -212,14 +214,14 @@ class OSMNodeData {
         return addTowerNode(osmNodeId, lat, lon, ele);
     }
 
-    public GHPoint3D getCoordinates(int id) {
+    public GHPoint3D getCoordinates(long id) {
         if (isTowerNode(id)) {
             int tower = idToTowerNode(id);
             return towerNodes.is3D()
                     ? new GHPoint3D(towerNodes.getLat(tower), towerNodes.getLon(tower), towerNodes.getEle(tower))
                     : new GHPoint3D(towerNodes.getLat(tower), towerNodes.getLon(tower), Double.NaN);
         } else if (isPillarNode(id)) {
-            int pillar = idToPillarNode(id);
+            long pillar = idToPillarNode(id);
             return pillarNodes.is3D()
                     ? new GHPoint3D(pillarNodes.getLat(pillar), pillarNodes.getLon(pillar), pillarNodes.getEle(pillar))
                     : new GHPoint3D(pillarNodes.getLat(pillar), pillarNodes.getLon(pillar), Double.NaN);
@@ -227,7 +229,7 @@ class OSMNodeData {
             return null;
     }
 
-    public void addCoordinatesToPointList(int id, PointList pointList) {
+    public void addCoordinatesToPointList(long id, PointList pointList) {
         double lat, lon;
         double ele = Double.NaN;
         if (isTowerNode(id)) {
@@ -237,7 +239,7 @@ class OSMNodeData {
             if (towerNodes.is3D())
                 ele = towerNodes.getEle(tower);
         } else if (isPillarNode(id)) {
-            int pillar = idToPillarNode(id);
+            long pillar = idToPillarNode(id);
             lat = pillarNodes.getLat(pillar);
             lon = pillarNodes.getLon(pillar);
             if (pillarNodes.is3D())
@@ -280,15 +282,17 @@ class OSMNodeData {
         return -towerId - 3;
     }
 
-    public int idToTowerNode(int id) {
-        return -id - 3;
+    public int idToTowerNode(long id) {
+        if (-id - 3L > Integer.MAX_VALUE)
+            throw new IllegalStateException("Invalid tower node id: " + id + ", limit exceeded");
+        return Math.toIntExact(-id - 3);
     }
 
-    public int pillarNodeToId(int pillarId) {
+    public long pillarNodeToId(long pillarId) {
         return pillarId + 3;
     }
 
-    public int idToPillarNode(int id) {
+    public long idToPillarNode(long id) {
         return id - 3;
     }
 
