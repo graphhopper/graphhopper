@@ -57,6 +57,7 @@ public class AreaIndex<T extends AreaIndex.Area> {
     }
 
     private void addBorder(PreparedGeometryFactory pgf, T area, Polygon border) {
+        // todonow: do we really need the prepared geometry for osm areas?
         IndexedCustomArea<T> indexedCustomArea = new IndexedCustomArea<>(area, pgf.create(border));
         index.insert(border.getEnvelopeInternal(), indexedCustomArea);
     }
