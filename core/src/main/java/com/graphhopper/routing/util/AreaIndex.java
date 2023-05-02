@@ -18,6 +18,9 @@
 
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.shapes.BBox;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
@@ -42,48 +45,54 @@ public class AreaIndex<T extends AreaIndex.Area> {
     private final GeometryFactory gf;
     private final STRtree index;
 
+    private final PreparedGeometryFactory pgf;
+
+    private final DistanceCalc dc;
+
     public AreaIndex(List<T> areas) {
         gf = new GeometryFactory();
+        pgf = new PreparedGeometryFactory();
+        dc = new DistanceCalcEarth();
         index = new STRtree();
-        PreparedGeometryFactory pgf = new PreparedGeometryFactory();
         for (T area : areas) {
             for (Polygon border : area.getBorders())
-                addBorder(pgf, area, border);
+                addBorder( area, border);
             if (area.getBorder() != null)
-                addBorder(pgf, area, area.getBorder());
+                addBorder( area, area.getBorder());
         }
         index.build();
     }
 
-    private void addBorder(PreparedGeometryFactory pgf, T area, Polygon border) {
-        // todonow: do we really need the prepared geometry for osm areas?
-        IndexedCustomArea<T> indexedCustomArea = new IndexedCustomArea<>(area, pgf.create(border));
-        index.insert(border.getEnvelopeInternal(), indexedCustomArea);
+    private void addBorder( T area, Polygon border) {
+        IndexedArea<T> indexedOsmArea = new IndexedArea<>(area, border);
+        index.insert(border.getEnvelopeInternal(), indexedOsmArea);
     }
 
     public List<T> query(double lat, double lon) {
-        Envelope searchEnv = new Envelope(lon, lon, lat, lat);
+        BBox bbox = dc.createBBox(lon, lat, 10);
+        Envelope searchEnv = new Envelope(bbox.minLon, bbox.maxLon, bbox.minLat, bbox.maxLat);
         @SuppressWarnings("unchecked")
-        List<IndexedCustomArea<T>> result = index.query(searchEnv);
-        Point point = gf.createPoint(new Coordinate(lon, lat));
+        List<IndexedArea<T>> result = index.query(searchEnv);
+        PreparedGeometry poly = pgf.create(gf.toGeometry(searchEnv));
         return result.stream()
-                .filter(c -> c.intersects(point))
+                .filter(c -> c.intersects(poly))
                 .map(c -> c.area)
                 .collect(Collectors.toList());
     }
 
-    private static class IndexedCustomArea<T extends Area> {
+    private static class IndexedArea<T extends Area> {
         final T area;
-        final PreparedGeometry preparedGeometry;
+        final Geometry geometry;
 
-        IndexedCustomArea(T area, PreparedGeometry preparedGeometry) {
+        IndexedArea(T area, Geometry geometry) {
             this.area = area;
-            this.preparedGeometry = preparedGeometry;
+            this.geometry = geometry;
         }
 
-        boolean intersects(Point point) {
-            return preparedGeometry.intersects(point);
+        boolean intersects(PreparedGeometry poly) {
+            return poly.intersects(geometry);
         }
+
     }
 
 }
