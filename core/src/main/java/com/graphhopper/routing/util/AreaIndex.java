@@ -18,7 +18,9 @@
 
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.shapes.BBox;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
@@ -43,8 +45,11 @@ public class AreaIndex<T extends AreaIndex.Area> {
     private final GeometryFactory gf;
     private final STRtree index;
 
+    private final DistanceCalc dc;
+
     public AreaIndex(List<T> areas) {
         gf = new GeometryFactory();
+        dc = new DistanceCalcEarth();
         index = new STRtree();
         PreparedGeometryFactory pgf = new PreparedGeometryFactory();
         for (T area : areas) {
@@ -63,21 +68,11 @@ public class AreaIndex<T extends AreaIndex.Area> {
     }
 
     public List<T> query(double lat, double lon) {
-        Envelope searchEnv = new Envelope(lon, lon, lat, lat);
-        double bufferDistance = 10; // meters
-        double rLon = (bufferDistance * 360.0 / DistanceCalcEarth.DIST_EARTH.calcCircumference(lat));
-        double rLat = bufferDistance / DistanceCalcEarth.METERS_PER_DEGREE;
-        searchEnv.expandBy(rLon, rLat);
+        BBox bbox = dc.createBBox(lon, lat, 10);
+        Envelope searchEnv = new Envelope(bbox.minLon, bbox.maxLon, bbox.minLat, bbox.maxLat);
         @SuppressWarnings("unchecked")
         List<IndexedCustomArea<T>> result = index.query(searchEnv);
-        Coordinate[] coordinates = {
-            new Coordinate(lon-rLon,lat-rLat),
-            new Coordinate(lon-rLon,lat+rLat),
-            new Coordinate(lon+rLon,lat+rLat),
-            new Coordinate(lon+rLon,lat-rLat),
-            new Coordinate(lon-rLon,lat-rLat)
-        };
-        Polygon poly = gf.createPolygon(coordinates);
+        Polygon poly = (Polygon) gf.toGeometry(searchEnv);
         return result.stream()
                 .filter(c -> c.intersects(poly))
                 .map(c -> c.area)
