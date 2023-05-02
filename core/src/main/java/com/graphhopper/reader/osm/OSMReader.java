@@ -33,8 +33,10 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.Landuse;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
@@ -47,6 +49,7 @@ import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.openjdk.jol.info.GraphLayout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -98,8 +101,13 @@ public class OSMReader {
     private WayToEdgesMap restrictedWaysToEdgesMap = new WayToEdgesMap();
     private List<ReaderRelation> restrictionRelations = new ArrayList<>();
 
-    public OSMReader(BaseGraph baseGraph, OSMParsers osmParsers, OSMReaderConfig config) {
+    private final OSMAreaData osmAreaData;
+    private AreaIndex<OSMArea> osmAreaIndex;
+    private final EncodingManager encodingManager;
+
+    public OSMReader(BaseGraph baseGraph, EncodingManager encodingManager, OSMParsers osmParsers, OSMReaderConfig config) {
         this.baseGraph = baseGraph;
+        this.encodingManager = encodingManager;
         this.edgeIntAccess = baseGraph.createEdgeIntAccess();
         this.config = config;
         this.nodeAccess = baseGraph.getNodeAccess();
@@ -114,6 +122,8 @@ public class OSMReader {
         if (tempRelFlags.length != 2)
             // we use a long to store relation flags currently, so the relation flags ints ref must have length 2
             throw new IllegalArgumentException("OSMReader cannot use relation flags with != 2 integers");
+
+        osmAreaData = new OSMAreaData(baseGraph.getDirectory());
     }
 
     /**
@@ -161,7 +171,7 @@ public class OSMReader {
         if (!baseGraph.isInitialized())
             throw new IllegalStateException("BaseGraph must be initialize before we can read OSM");
 
-        WaySegmentParser waySegmentParser = new WaySegmentParser.Builder(baseGraph.getNodeAccess(), baseGraph.getDirectory())
+        WaySegmentParser.Builder waySegmentParserBuilder = new WaySegmentParser.Builder(baseGraph.getNodeAccess(), baseGraph.getDirectory())
                 .setElevationProvider(eleProvider)
                 .setWayFilter(this::acceptWay)
                 .setSplitNodeFilter(this::isBarrierNode)
@@ -169,8 +179,21 @@ public class OSMReader {
                 .setRelationPreprocessor(this::preprocessRelations)
                 .setRelationProcessor(this::processRelation)
                 .setEdgeHandler(this::addEdge)
-                .setWorkerThreads(config.getWorkerThreads())
-                .build();
+                .setWorkerThreads(config.getWorkerThreads());
+        if (encodingManager.hasEncodedValue(Landuse.KEY)) {
+            waySegmentParserBuilder
+                    // todonow: we could move the pass1 way handling and the pass2 node handling of the standard way segment parser to pass0/1,
+                    //          then we could skip nodes in pass2 to speed up the import
+                    .setPass0WayPreHook(this::handleOSMArea)
+                    .setPass1NodePreHook(osmAreaData::fillOSMAreaNodeCoordinates)
+                    .setPass1WayPreHook(this::handleOSMAreaAgain)
+                    .setPass1FinishHook(() -> {
+//                        System.out.println(GraphLayout.parseInstance(osmAreaData.osmAreaNodeIndicesByOSMNodeIds).toFootprint());
+                        osmAreaData.osmAreaNodeIndicesByOSMNodeIds.clear();
+                    })
+                    .setPass2AfterNodesHook(this::buildOSMAreaIndex);
+        }
+        WaySegmentParser waySegmentParser = waySegmentParserBuilder.build();
         waySegmentParser.readOSM(osmFile);
         osmDataDate = waySegmentParser.getTimeStamp();
         if (baseGraph.getNodes() == 0)
@@ -187,6 +210,39 @@ public class OSMReader {
      */
     public Date getDataDate() {
         return osmDataDate;
+    }
+
+    void handleOSMArea(ReaderWay way) {
+        if (way.hasTag("landuse"))
+            osmAreaData.addOSMAreaWithoutCoordinates(way.getNodes(), way.getTags());
+    }
+
+
+    int osmAreaWayIndex = -1;
+
+    void handleOSMAreaAgain(ReaderWay way) {
+        if (way.hasTag("landuse")) {
+            osmAreaWayIndex++;
+            osmAreaData.fixOSMArea(osmAreaWayIndex, way);
+        }
+    }
+
+    void buildOSMAreaIndex() {
+//        System.out.println(GraphLayout.parseInstance(osmAreaData).toFootprint());
+        List<OSMArea> validAreas = osmAreaData.getOSMAreas().stream().filter(a -> {
+            if (!a.isValid()) {
+                OSM_WARNING_LOGGER.warn("invalid OSM area: " + a.border);
+                return false;
+            }
+            return true;
+        }).collect(Collectors.toList());
+//        System.out.println(GraphLayout.parseInstance(osmAreaData, validAreas).toFootprint());
+        osmAreaData.getOSMAreas().clear();
+        LOGGER.info("Building area index for {} OSM areas (invalid: {})", validAreas.size(), (osmAreaData.getOSMAreas().size() - validAreas.size()));
+        osmAreaIndex = new AreaIndex<>(validAreas);
+//        System.out.println(GraphLayout.parseInstance(osmAreaIndex).toFootprint());
+        // they partly overlap
+//        System.out.println(GraphLayout.parseInstance(osmAreaData, osmAreaIndex, validAreas).toFootprint());
     }
 
     /**
@@ -239,9 +295,11 @@ public class OSMReader {
         way.removeTag("country");
         way.removeTag("country_rule");
         way.removeTag("custom_areas");
+        way.removeTag("gh:osm_areas");
 
-        List<CustomArea> customAreas;
-        if (areaIndex != null) {
+        List<CustomArea> customAreas = emptyList();
+        List<OSMArea> osmAreas = emptyList();
+        if (areaIndex != null || osmAreaIndex != null) {
             double middleLat;
             double middleLon;
             if (pointList.size() > 2) {
@@ -253,10 +311,10 @@ public class OSMReader {
                 middleLat = (firstLat + lastLat) / 2;
                 middleLon = (firstLon + lastLon) / 2;
             }
-            customAreas = areaIndex.query(middleLat, middleLon);
-        } else {
-            customAreas = emptyList();
+            if (areaIndex != null) customAreas = areaIndex.query(middleLat, middleLon);
+            if (osmAreaIndex != null) osmAreas = osmAreaIndex.query(middleLat, middleLon);
         }
+        osmAreas.sort(Comparator.comparing(OSMArea::getArea));
 
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the EncodingManager
         Country country = Country.MISSING;
@@ -284,6 +342,12 @@ public class OSMReader {
 
         // also add all custom areas as artificial tag
         way.setTag("custom_areas", customAreas);
+
+        List<Map<String, Object>> osmAreaTags = osmAreas.stream()
+                .map(a -> osmAreaData.osmAreaTagStorage.getAll(a.getTagPointer())
+                        .stream().collect(Collectors.toMap(kv -> kv.key, kv -> kv.value)))
+                .collect(Collectors.toList());
+        way.setTag("gh:osm_areas", osmAreaTags);
     }
 
     /**

@@ -35,10 +35,10 @@ public class PillarInfo implements PointAccess {
     private final int rowSizeInBytes;
     private final Directory dir;
 
-    public PillarInfo(boolean enabled3D, Directory dir) {
+    public PillarInfo(boolean enabled3D, Directory dir, String suffix) {
         this.enabled3D = enabled3D;
         this.dir = dir;
-        this.da = dir.create("tmp_pillar_info").create(100);
+        this.da = dir.create("tmp_pillar_info" + suffix).create(100);
         this.rowSizeInBytes = getDimension() * 4;
     }
 

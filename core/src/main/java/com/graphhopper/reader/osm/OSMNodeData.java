@@ -86,11 +86,11 @@ class OSMNodeData {
         // entries, and it also avoids allocating a new array and copying into it when increasing the size.
         idsByOsmNodeIds = new GHLongIntBTree(200);
         towerNodes = nodeAccess;
-        pillarNodes = new PillarInfo(towerNodes.is3D(), directory);
+        pillarNodes = new PillarInfo(towerNodes.is3D(), directory, "");
 
         nodeTagIndicesByOsmNodeIds = new GHLongIntBTree(200);
         nodesToBeSplit = new LongScatterSet();
-        nodeKVStorage = new KVStorage(directory, false);
+        nodeKVStorage = new KVStorage(directory, "nodekv_");
     }
 
     public boolean is3D() {
