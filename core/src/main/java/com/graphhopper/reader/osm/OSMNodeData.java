@@ -75,7 +75,7 @@ class OSMNodeData {
     private final LongSet nodesToBeSplit;
 
     private int nextTowerId = 0;
-    private long nextPillarId = 0;
+    private long nextPillarId = Integer.MAX_VALUE - 10;
     // we use negative ids to create artificial OSM node ids
     private long nextArtificialOSMNodeId = -Long.MAX_VALUE;
 
