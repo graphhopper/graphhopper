@@ -24,9 +24,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Arrays;
 
 /**
- * An in-memory simple B-Tree. Later we'll use DataAccess to allow on-disc storage for very large
- * data sets. Delete not supported.
- * <p>
+ * An in-memory B-Tree with configurable value size (1-8 bytes). Delete not supported.
+ * (Later we could use DataAccess to allow on-disc storage for very large data sets.)
  *
  * @author Peter Karich
  */
