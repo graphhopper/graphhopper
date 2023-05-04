@@ -27,6 +27,8 @@ public interface LongLongMap {
 
     long getSize();
 
+    long getMaxValue();
+
     void optimize();
 
     int getMemoryUsage();

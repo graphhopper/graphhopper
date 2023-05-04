@@ -32,17 +32,16 @@ import com.graphhopper.util.shapes.GHPoint3D;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
-import java.util.function.IntUnaryOperator;
+import java.util.function.LongUnaryOperator;
 import java.util.stream.Collectors;
 
 /**
  * This class stores OSM node data while reading an OSM file in {@link WaySegmentParser}. It is not trivial to do this
  * in a memory-efficient way. We use the following approach:
  * <pre>
- * - For each OSM node we store an integer id that points to the nodes coordinates. We use both positive and negative
- *   ids to make use of the full integer range (~4 billion nodes). We separate nodes into (potential) tower nodes and
- *   pillar nodes. We use the negative ids for tower nodes and positive ids for pillar nodes. In the future we might
- *   have to consider the fact that there are more pillar nodes than tower nodes and use a different separation.
+ * - For each OSM node we store an id that points to the nodes coordinates. We separate nodes into
+ *   (potential) tower nodes and pillar nodes. We use the negative ids for tower nodes and positive
+ *   ids for pillar nodes. The tower nodes are limited to ~2 billion nodes as we later use the ID as positive integer.
  * - We reserve a few special ids like {@link #JUNCTION_NODE} to distinguish the different node types when we read the
  *   OSM file for the first time (pass1) in {@link WaySegmentParser}. We then assign actual ids in the second pass.
  * - We store the node coordinates for tower and pillar nodes in different places. The pillar node storage is only
@@ -54,11 +53,11 @@ import java.util.stream.Collectors;
  * </pre>
  */
 class OSMNodeData {
-    static final int JUNCTION_NODE = -2;
-    static final int EMPTY_NODE = -1;
-    static final int END_NODE = 0;
-    static final int INTERMEDIATE_NODE = 1;
-    static final int CONNECTION_NODE = 2;
+    static final long JUNCTION_NODE = -2;
+    static final long EMPTY_NODE = -1;
+    static final long END_NODE = 0;
+    static final long INTERMEDIATE_NODE = 1;
+    static final long CONNECTION_NODE = 2;
 
     // this map stores our internal node id for each OSM node
     private final LongLongMap idsByOsmNodeIds;
@@ -81,10 +80,10 @@ class OSMNodeData {
     private long nextArtificialOSMNodeId = -Long.MAX_VALUE;
 
     public OSMNodeData(PointAccess nodeAccess, Directory directory) {
-        // We use GHLongIntBTree, because it is based on a tree, not an array, so it can store as many entries as there
+        // We use a b-tree, because it is based on a tree, not an array, so it can store as many entries as there
         // are longs. This also makes it memory efficient, because there is no need to pre-allocate memory for empty
         // entries, and it also avoids allocating a new array and copying into it when increasing the size.
-        idsByOsmNodeIds = new GHLongLongBTree(200, 4);
+        idsByOsmNodeIds = new GHLongLongBTree(200, 5);
         towerNodes = nodeAccess;
         pillarNodes = new PillarInfo(towerNodes.is3D(), directory);
 
@@ -101,8 +100,8 @@ class OSMNodeData {
      * @return the internal id stored for the given OSM node id. use {@link #isTowerNode} etc. to find out what this
      * id means
      */
-    public int getId(long osmNodeId) {
-        return (int) idsByOsmNodeIds.get(osmNodeId);
+    public long getId(long osmNodeId) {
+        return idsByOsmNodeIds.get(osmNodeId);
     }
 
     public static boolean isTowerNode(long id) {
@@ -119,12 +118,12 @@ class OSMNodeData {
         return id > CONNECTION_NODE || id < JUNCTION_NODE;
     }
 
-    public void setOrUpdateNodeType(long osmNodeId, int newNodeType, IntUnaryOperator nodeTypeUpdate) {
-        int curr = (int) idsByOsmNodeIds.get(osmNodeId);
+    public void setOrUpdateNodeType(long osmNodeId, long newNodeType, LongUnaryOperator nodeTypeUpdate) {
+        long curr = idsByOsmNodeIds.get(osmNodeId);
         if (curr == EMPTY_NODE)
             idsByOsmNodeIds.put(osmNodeId, newNodeType);
         else
-            idsByOsmNodeIds.put(osmNodeId, nodeTypeUpdate.applyAsInt(curr));
+            idsByOsmNodeIds.put(osmNodeId, nodeTypeUpdate.applyAsLong(curr));
     }
 
     /**
@@ -151,8 +150,8 @@ class OSMNodeData {
      *
      * @return the node type this OSM node was associated with before this method was called
      */
-    public int addCoordinatesIfMapped(long osmNodeId, double lat, double lon, DoubleSupplier getEle) {
-        int nodeType = (int) idsByOsmNodeIds.get(osmNodeId);
+    public long addCoordinatesIfMapped(long osmNodeId, double lat, double lon, DoubleSupplier getEle) {
+        long nodeType = idsByOsmNodeIds.get(osmNodeId);
         if (nodeType == EMPTY_NODE)
             return nodeType;
         else if (nodeType == JUNCTION_NODE || nodeType == CONNECTION_NODE)
@@ -164,11 +163,13 @@ class OSMNodeData {
         return nodeType;
     }
 
-    private int addTowerNode(long osmId, double lat, double lon, double ele) {
+    private long addTowerNode(long osmId, double lat, double lon, double ele) {
         towerNodes.setNode(nextTowerId, lat, lon, ele);
-        int id = towerNodeToId(nextTowerId);
+        long id = towerNodeToId(nextTowerId);
         idsByOsmNodeIds.put(osmId, id);
         nextTowerId++;
+        if (nextTowerId == Integer.MAX_VALUE)
+            throw new IllegalStateException("Tower node id overflow, too many tower nodes");
         return id;
     }
 
@@ -177,9 +178,9 @@ class OSMNodeData {
             throw new IllegalStateException("Pillar node id overflow, too many pillar nodes");
         pillarNodes.setNode(nextPillarId, lat, lon, ele);
         long id = pillarNodeToId(nextPillarId);
-        if (id > Integer.MAX_VALUE)
-            throw new IllegalStateException("id overflow");
-        idsByOsmNodeIds.put(osmId, Math.toIntExact(id));
+        if (id > idsByOsmNodeIds.getMaxValue())
+            throw new IllegalStateException("id cannot be bigger than " + idsByOsmNodeIds.getMaxValue());
+        idsByOsmNodeIds.put(osmId, id);
         nextPillarId++;
         return id;
     }
@@ -200,7 +201,7 @@ class OSMNodeData {
         return new SegmentNode(newOsmId, id, node.tags);
     }
 
-    int convertPillarToTowerNode(long id, long osmNodeId) {
+    long convertPillarToTowerNode(long id, long osmNodeId) {
         if (!isPillarNode(id))
             throw new IllegalArgumentException("Not a pillar node: " + id);
         long pillar = idToPillarNode(id);
@@ -278,7 +279,7 @@ class OSMNodeData {
         nodesToBeSplit.clear();
     }
 
-    public int towerNodeToId(int towerId) {
+    public long towerNodeToId(long towerId) {
         return -towerId - 3;
     }
 

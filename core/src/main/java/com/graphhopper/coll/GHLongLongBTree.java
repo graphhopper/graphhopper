@@ -170,7 +170,8 @@ public class GHLongLongBTree implements LongLongMap {
         return "Height:" + height() + ", entries:" + getEntries();
     }
 
-    long getMaxValue() {
+    @Override
+    public long getMaxValue() {
         return maxValue;
     }
 
