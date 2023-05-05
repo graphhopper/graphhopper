@@ -30,7 +30,6 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint3D;
 
 import java.util.Collections;
-import java.util.Date;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
 import java.util.function.LongUnaryOperator;
@@ -76,7 +75,7 @@ class OSMNodeData {
     private final LongSet nodesToBeSplit;
 
     private int nextTowerId = 0;
-    private long nextPillarId = Integer.MAX_VALUE - 10;
+    private long nextPillarId = 0;
     // we use negative ids to create artificial OSM node ids
     private long nextArtificialOSMNodeId = -Long.MAX_VALUE;
 
