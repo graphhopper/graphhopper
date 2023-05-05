@@ -30,6 +30,7 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint3D;
 
 import java.util.Collections;
+import java.util.Date;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
 import java.util.function.LongUnaryOperator;
@@ -89,7 +90,7 @@ class OSMNodeData {
 
         nodeTagIndicesByOsmNodeIds = new GHLongLongBTree(200, 4);
         nodesToBeSplit = new LongScatterSet();
-        nodeKVStorage = new KVStorage(directory, false);
+        nodeKVStorage = new KVStorage(directory, false).create(100);
     }
 
     public boolean is3D() {
@@ -174,12 +175,11 @@ class OSMNodeData {
     }
 
     private long addPillarNode(long osmId, double lat, double lon, double ele) {
-        if (nextPillarId + 1 > Integer.MAX_VALUE)
-            throw new IllegalStateException("Pillar node id overflow, too many pillar nodes");
-        pillarNodes.setNode(nextPillarId, lat, lon, ele);
         long id = pillarNodeToId(nextPillarId);
         if (id > idsByOsmNodeIds.getMaxValue())
-            throw new IllegalStateException("id cannot be bigger than " + idsByOsmNodeIds.getMaxValue());
+            throw new IllegalStateException("id for pillar node cannot be bigger than " + idsByOsmNodeIds.getMaxValue());
+
+        pillarNodes.setNode(nextPillarId, lat, lon, ele);
         idsByOsmNodeIds.put(osmId, id);
         nextPillarId++;
         return id;
