@@ -23,7 +23,9 @@ import com.graphhopper.gtfs.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.details.PathDetail;
@@ -60,9 +62,14 @@ public class GraphHopperMultimodalIT {
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("gtfs.file", "files/sample-feed");
         ghConfig.putObject("graph.location", GRAPH_LOC);
+        CustomProfile carLocal = new CustomProfile("car_custom");
+        carLocal.setVehicle("car");
+        carLocal.setWeighting("custom");
+        carLocal.setCustomModel(new CustomModel());
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                new Profile("car").setVehicle("car").setWeighting("fastest")));
+                new Profile("car_default").setVehicle("car").setWeighting("fastest"),
+                carLocal));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
@@ -320,6 +327,17 @@ public class GraphHopperMultimodalIT {
         Geometry legGeometry = response.getAll().get(0).getLegs().get(0).geometry;
         assertThat(routeGeometry).isEqualTo(readWktLineString("LINESTRING (-116.765169 36.906693, -116.764614 36.907243, -116.763438 36.908382, -116.762615 36.907825, -116.762241 36.908175)"));
         assertThat(legGeometry).isEqualTo(readWktLineString("LINESTRING (-116.765169 36.906693, -116.764614 36.907243, -116.763438 36.908382, -116.762615 36.907825, -116.762241 36.908175)"));
+    }
+
+    @Test
+    public void testCustomProfileAccess() {
+        Request ghRequest = new Request(
+                36.91311729030539, -116.76769495010377,
+                36.91260259593356, -116.76149368286134
+        );
+        ghRequest.setAccessProfile("car_custom");
+        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007, 1, 1, 6, 40, 0).atZone(zoneId).toInstant());
+        GHResponse response = graphHopper.route(ghRequest);
     }
 
     private Duration legDuration(Trip.Leg leg) {

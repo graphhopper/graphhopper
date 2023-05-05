@@ -90,7 +90,7 @@ class OSMNodeData {
 
         nodeTagIndicesByOsmNodeIds = new GHLongIntBTree(200);
         nodesToBeSplit = new LongScatterSet();
-        nodeKVStorage = new KVStorage(directory, false);
+        nodeKVStorage = new KVStorage(directory, false).create(100);
     }
 
     public boolean is3D() {
@@ -173,6 +173,8 @@ class OSMNodeData {
     }
 
     private int addPillarNode(long osmId, double lat, double lon, double ele) {
+        if (nextPillarId < 0)
+            throw new IllegalStateException("Pillar node id overflow, too many pillar nodes");
         pillarNodes.setNode(nextPillarId, lat, lon, ele);
         int id = pillarNodeToId(nextPillarId);
         idsByOsmNodeIds.put(osmId, id);
