@@ -177,6 +177,23 @@ public class PtRouteResourceTripBasedTest {
     }
 
     @Test
+    public void testProfileQuery() {
+        final Response response = clientTarget(app, "/route").queryParam("pt.algorithm", "trip_based")
+                .queryParam("point", "36.91311729030539,-116.76769495010377")
+                .queryParam("point", "36.91260259593356,-116.76149368286134")
+                .queryParam("profile", "pt")
+                .queryParam("pt.earliest_departure_time", "2007-01-01T06:40:00-08:00")
+                .queryParam("pt.profile", true)
+                .queryParam("pt.profile_duration", "PT180M")
+                .request().buildGet().invoke();
+
+        JsonNode json = response.readEntity(JsonNode.class);
+        for (JsonNode path : json.at("/paths")) {
+            System.out.printf("%s %s %s %s\n", path.at("/time"), path.at("/legs/0/departure_time"), path.at("/legs/1/stops/0/stop_id"), path.at("/legs/2/arrival_time"));
+        }
+    }
+
+    @Test
     public void testInfo() {
         final Response response = clientTarget(app, "/info")
                 .request().buildGet().invoke();

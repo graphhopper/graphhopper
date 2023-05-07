@@ -83,6 +83,10 @@ class TripFromLabel {
             legs.addAll(parsePartitionToLegs(partitions.get(i), queryGraph, encodedValueLookup, i == partitions.size() - 1 ? egressWeighting : accessWeighting, tr, requestedPathDetails));
         }
 
+        return createResponsePath(gtfsStorage, tr, waypoints, legs);
+    }
+
+    static ResponsePath createResponsePath(GtfsStorage gtfsStorage, Translation tr, PointList waypoints, List<Trip.Leg> legs) {
         if (legs.size() > 1 && legs.get(0) instanceof Trip.WalkLeg) {
             final Trip.WalkLeg accessLeg = (Trip.WalkLeg) legs.get(0);
             legs.set(0, new Trip.WalkLeg(accessLeg.departureLocation, new Date(legs.get(1).getDepartureTime().getTime() - (accessLeg.getArrivalTime().getTime() - accessLeg.getDepartureTime().getTime())),
@@ -95,10 +99,6 @@ class TripFromLabel {
                     egressLeg.details, new Date(legs.get(legs.size() - 2).getArrivalTime().getTime() + (egressLeg.getArrivalTime().getTime() - egressLeg.getDepartureTime().getTime()))));
         }
 
-        return createResponsePath(gtfsStorage, tr, waypoints, legs);
-    }
-
-    static ResponsePath createResponsePath(GtfsStorage gtfsStorage, Translation tr, PointList waypoints, List<Trip.Leg> legs) {
         ResponsePath path = new ResponsePath();
         path.setWaypoints(waypoints);
         path.getLegs().addAll(legs);
