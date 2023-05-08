@@ -83,7 +83,7 @@ class OSMNodeData {
         // We use a b-tree that can store as many entries as there are longs. A tree is also more
         // memory efficient, because there is no waste for empty entries, and it also avoids
         // allocating big arrays when growing the size.
-        idsByOsmNodeIds = new GHLongLongBTree(200, 5, -1);
+        idsByOsmNodeIds = new GHLongLongBTree(200, 5, EMPTY_NODE);
         towerNodes = nodeAccess;
         pillarNodes = new PillarInfo(towerNodes.is3D(), directory);
 
@@ -250,7 +250,7 @@ class OSMNodeData {
     }
 
     public void setTags(ReaderNode node) {
-        int tagIndex = (int) nodeTagIndicesByOsmNodeIds.get(node.getId());
+        int tagIndex = Math.toIntExact(nodeTagIndicesByOsmNodeIds.get(node.getId()));
         if (tagIndex == -1) {
             long pointer = nodeKVStorage.add(node.getTags().entrySet().stream().map(m -> new KVStorage.KeyValue(m.getKey(),
                             m.getValue() instanceof String ? KVStorage.cutString((String) m.getValue()) : m.getValue())).
@@ -264,7 +264,7 @@ class OSMNodeData {
     }
 
     public Map<String, Object> getTags(long osmNodeId) {
-        int tagIndex = (int) nodeTagIndicesByOsmNodeIds.get(osmNodeId);
+        int tagIndex = Math.toIntExact(nodeTagIndicesByOsmNodeIds.get(osmNodeId));
         if (tagIndex < 0)
             return Collections.emptyMap();
         return nodeKVStorage.getMap(tagIndex);
