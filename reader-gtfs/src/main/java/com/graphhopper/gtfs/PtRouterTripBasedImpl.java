@@ -182,11 +182,11 @@ public final class PtRouterTripBasedImpl implements PtRouter {
 
             accessStationLabels = accessEgress(startNode, destNode, false);
             accessStations = accessStationLabels.stream()
-                    .map(l -> new TripBasedRouter.StopWithTimeDelta(new GtfsStorage.FeedIdWithStopId("gtfs_0", l.edge.getPlatformDescriptor().stop_id), l.currentTime - initialTime.toEpochMilli()))
+                    .map(l -> new TripBasedRouter.StopWithTimeDelta(new GtfsStorage.FeedIdWithStopId(l.edge.getPlatformDescriptor().feed_id, l.edge.getPlatformDescriptor().stop_id), l.currentTime - initialTime.toEpochMilli()))
                     .collect(Collectors.toList());
             egressStationLabels = accessEgress(startNode, destNode, true);
             egressStations = egressStationLabels.stream()
-                    .map(l -> new TripBasedRouter.StopWithTimeDelta(new GtfsStorage.FeedIdWithStopId("gtfs_0", l.edge.getPlatformDescriptor().stop_id), initialTime.toEpochMilli() - l.currentTime))
+                    .map(l -> new TripBasedRouter.StopWithTimeDelta(new GtfsStorage.FeedIdWithStopId(l.edge.getPlatformDescriptor().feed_id, l.edge.getPlatformDescriptor().stop_id), initialTime.toEpochMilli() - l.currentTime))
                     .collect(Collectors.toList());
             response.addDebugInfo("access/egress routing:" + stopWatch1.stop().getSeconds() + "s");
 

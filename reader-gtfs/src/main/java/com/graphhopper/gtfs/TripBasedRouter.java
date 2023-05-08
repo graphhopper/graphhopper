@@ -116,7 +116,7 @@ public class TripBasedRouter {
                     int newArrivalTime = stopTime.arrival_time + (int) (destination.timeDelta / 1000);
                     if (destination.stopId.stopId.equals(stopTime.stop_id) && destination.stopId.feedId.equals(feedId) && newArrivalTime < earliestArrivalTime) {
                         earliestArrivalTime = newArrivalTime;
-                        ResultLabel newResult = new ResultLabel(round, destination, new Trips.TripAtStopTime("gtfs_0", tripAtStopTime.tripDescriptor, stopTime.stop_sequence), enqueuedTripSegment);
+                        ResultLabel newResult = new ResultLabel(round, destination, new Trips.TripAtStopTime(feedId, tripAtStopTime.tripDescriptor, stopTime.stop_sequence), enqueuedTripSegment);
                         int newRealTransfers = newResult.getRealTransfers();
                         int newDepartureTime = newResult.getDepartureTime();
                         Iterator<ResultLabel> it = result.iterator();
@@ -144,7 +144,7 @@ public class TripBasedRouter {
                 if (stopTime == null) continue;
                 if (stopTime.arrival_time >= earliestArrivalTime)
                     break;
-                Trips.TripAtStopTime transferOrigin = new Trips.TripAtStopTime("gtfs_0", tripAtStopTime.tripDescriptor, stopTime.stop_sequence);
+                Trips.TripAtStopTime transferOrigin = new Trips.TripAtStopTime(feedId, tripAtStopTime.tripDescriptor, stopTime.stop_sequence);
                 Collection<Trips.TripAtStopTime> transferDestinations = gtfsStorage.tripTransfers.getTripTransfers(trafficDay).get(transferOrigin);
                 for (Trips.TripAtStopTime transferDestination : transferDestinations) {
                     GTFSFeed.StopTimesForTripWithTripPatternKey destinationStopTimes = tripTransfers.trips.get(transferDestination.feedId).get(transferDestination.tripDescriptor);
