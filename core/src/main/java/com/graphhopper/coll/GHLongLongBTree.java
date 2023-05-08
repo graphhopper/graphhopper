@@ -31,7 +31,7 @@ import java.util.Arrays;
  */
 public class GHLongLongBTree implements LongLongMap {
     private final static Logger logger = LoggerFactory.getLogger(GHLongLongBTree.class);
-    private final int noNumberValue = -1;
+    private final long emptyValue;
     private final int maxLeafEntries;
     private final int initLeafSize;
     private final int splitIndex;
@@ -42,11 +42,12 @@ public class GHLongLongBTree implements LongLongMap {
     private final int bytesPerValue;
     private final long maxValue;
 
-    public GHLongLongBTree(int maxLeafEntries, int bytesPerValue) {
+    public GHLongLongBTree(int maxLeafEntries, int bytesPerValue, long emptyValue) {
         this.maxLeafEntries = maxLeafEntries;
         this.bytesPerValue = bytesPerValue;
         if (bytesPerValue > 8)
             throw new IllegalArgumentException("Values can have 8 bytes maximum but requested was " + bytesPerValue);
+        this.emptyValue = emptyValue;
 
         // reserve one bit for negative values
         this.maxValue = (1L << (bytesPerValue * 8 - 1)) - 1;
@@ -100,8 +101,8 @@ public class GHLongLongBTree implements LongLongMap {
         if (value > maxValue)
             throw new IllegalArgumentException("Value " + value + " exceeded max value: " + maxValue
                     + ". Increase bytesPerValue (" + bytesPerValue + ")");
-        if (value == noNumberValue)
-            throw new IllegalArgumentException("Value cannot be no_number_value " + noNumberValue);
+        if (value == emptyValue)
+            throw new IllegalArgumentException("Value cannot be the 'empty value' " + emptyValue);
 
         ReturnValue rv = root.put(key, value);
         if (rv.tree != null) {
@@ -114,7 +115,7 @@ public class GHLongLongBTree implements LongLongMap {
             if (size % 1000000 == 0)
                 optimize();
         }
-        return rv.oldValue == null ? noNumberValue : toLong(rv.oldValue);
+        return rv.oldValue == null ? emptyValue : toLong(rv.oldValue);
     }
 
     @Override
@@ -146,8 +147,8 @@ public class GHLongLongBTree implements LongLongMap {
         root = new BTreeEntry(initLeafSize, true);
     }
 
-    int getNoNumberValue() {
-        return noNumberValue;
+    public long getEmptyValue() {
+        return emptyValue;
     }
 
     private int getEntries() {
@@ -378,7 +379,7 @@ public class GHLongLongBTree implements LongLongMap {
             }
             index = ~index;
             if (isLeaf || children[index] == null) {
-                return noNumberValue;
+                return emptyValue;
             }
             return children[index].get(key);
         }

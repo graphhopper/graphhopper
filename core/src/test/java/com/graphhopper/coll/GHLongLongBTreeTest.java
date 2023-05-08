@@ -32,14 +32,14 @@ public class GHLongLongBTreeTest {
 
     @Test
     public void testThrowException_IfPutting_NoNumber() {
-        GHLongLongBTree instance = new GHLongLongBTree(2, 4);
+        GHLongLongBTree instance = new GHLongLongBTree(2, 4, -1);
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> instance.put(1, -1));
-        assertTrue(ex.getMessage().contains("Value cannot be no_number_value -1"));
+        assertTrue(ex.getMessage().contains("Value cannot be the 'empty value' -1"));
     }
 
     @Test
     public void testEmptyValueIfMissing() {
-        GHLongLongBTree instance = new GHLongLongBTree(2, 4);
+        GHLongLongBTree instance = new GHLongLongBTree(2, 4, -1);
         long key = 9485854858458484L;
         assertEquals(-1, instance.put(key, 21));
         assertEquals(21, instance.get(key));
@@ -48,7 +48,7 @@ public class GHLongLongBTreeTest {
 
     @Test
     public void testTwoSplits() {
-        GHLongLongBTree instance = new GHLongLongBTree(3, 4);
+        GHLongLongBTree instance = new GHLongLongBTree(3, 4, -1);
         instance.put(1, 2);
         instance.put(2, 4);
         instance.put(3, 6);
@@ -76,7 +76,7 @@ public class GHLongLongBTreeTest {
 
     @Test
     public void testSplitAndOverwrite() {
-        GHLongLongBTree instance = new GHLongLongBTree(3, 4);
+        GHLongLongBTree instance = new GHLongLongBTree(3, 4, -1);
         instance.put(1, 2);
         instance.put(2, 4);
         instance.put(3, 6);
@@ -97,7 +97,7 @@ public class GHLongLongBTreeTest {
 
     @Test
     public void testPut() {
-        GHLongLongBTree instance = new GHLongLongBTree(3, 4);
+        GHLongLongBTree instance = new GHLongLongBTree(3, 4, -1);
         instance.put(2, 4);
         assertEquals(4, instance.get(2));
 
@@ -128,9 +128,9 @@ public class GHLongLongBTreeTest {
 
     @Test
     public void testUpdate() {
-        GHLongLongBTree instance = new GHLongLongBTree(2, 4);
+        GHLongLongBTree instance = new GHLongLongBTree(2, 4, -1);
         long result = instance.put(100, 10);
-        assertEquals(instance.getNoNumberValue(), result);
+        assertEquals(instance.getEmptyValue(), result);
 
         result = instance.get(100);
         assertEquals(10, result);
@@ -144,7 +144,7 @@ public class GHLongLongBTreeTest {
 
     @Test
     public void testNegativeValues() {
-        GHLongLongBTree instance = new GHLongLongBTree(2, 5);
+        GHLongLongBTree instance = new GHLongLongBTree(2, 5, -1);
 
         // negative => two's complement
         byte[] bytes = instance.fromLong(-3);
@@ -165,7 +165,7 @@ public class GHLongLongBTreeTest {
 
     @Test
     public void testNegativeKey() {
-        GHLongLongBTree instance = new GHLongLongBTree(2, 5);
+        GHLongLongBTree instance = new GHLongLongBTree(2, 5, -1);
 
         instance.put(-3, 0);
         instance.put(-2, 4);
@@ -185,7 +185,7 @@ public class GHLongLongBTreeTest {
         Random rand = new Random(0);
         for (int byteCnt = 4; byteCnt < 9; byteCnt++) {
             for (int i = 0; i < 1000; i++) {
-                GHLongLongBTree instance = new GHLongLongBTree(2, byteCnt);
+                GHLongLongBTree instance = new GHLongLongBTree(2, byteCnt, -1);
                 long val = rand.nextLong() % instance.getMaxValue();
                 byte[] bytes = instance.fromLong(val);
                 assertEquals(val, instance.toLong(bytes));
@@ -194,8 +194,18 @@ public class GHLongLongBTreeTest {
     }
 
     @Test
+    public void testDifferentEmptyValue() {
+        GHLongLongBTree instance = new GHLongLongBTree(2, 3, -2);
+        instance.put(123, -1);
+        instance.put(12, 2);
+        assertEquals(-2, instance.get(1234));
+        assertEquals(-1, instance.get(123));
+        assertEquals(2, instance.get(12));
+    }
+
+    @Test
     public void testLargeValue() {
-        GHLongLongBTree instance = new GHLongLongBTree(2, 5);
+        GHLongLongBTree instance = new GHLongLongBTree(2, 5, -1);
         for (int key = 0; key < 100; key++) {
             long val = 1L << 32 - 1;
             for (int i = 0; i < 8; i++) {
@@ -213,7 +223,7 @@ public class GHLongLongBTreeTest {
         final int size = 10_000;
         for (int bytesPerValue = 4; bytesPerValue <= 8; bytesPerValue++) {
             for (int j = 3; j < 12; j += 4) {
-                GHLongLongBTree instance = new GHLongLongBTree(j, bytesPerValue);
+                GHLongLongBTree instance = new GHLongLongBTree(j, bytesPerValue, -1);
                 Set<Integer> addedValues = new LinkedHashSet<>(size);
                 for (int i = 0; i < size; i++) {
                     int val = rand.nextInt();

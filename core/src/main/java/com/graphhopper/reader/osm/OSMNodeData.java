@@ -83,11 +83,11 @@ class OSMNodeData {
         // We use a b-tree that can store as many entries as there are longs. A tree is also more
         // memory efficient, because there is no waste for empty entries, and it also avoids
         // allocating big arrays when growing the size.
-        idsByOsmNodeIds = new GHLongLongBTree(200, 5);
+        idsByOsmNodeIds = new GHLongLongBTree(200, 5, -1);
         towerNodes = nodeAccess;
         pillarNodes = new PillarInfo(towerNodes.is3D(), directory);
 
-        nodeTagIndicesByOsmNodeIds = new GHLongLongBTree(200, 4);
+        nodeTagIndicesByOsmNodeIds = new GHLongLongBTree(200, 4, -1);
         nodesToBeSplit = new LongScatterSet();
         nodeKVStorage = new KVStorage(directory, false).create(100);
     }
