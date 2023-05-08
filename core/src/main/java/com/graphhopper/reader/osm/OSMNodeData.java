@@ -80,9 +80,9 @@ class OSMNodeData {
     private long nextArtificialOSMNodeId = -Long.MAX_VALUE;
 
     public OSMNodeData(PointAccess nodeAccess, Directory directory) {
-        // We use a b-tree, because it is based on a tree, not an array, so it can store as many entries as there
-        // are longs. This also makes it memory efficient, because there is no need to pre-allocate memory for empty
-        // entries, and it also avoids allocating a new array and copying into it when increasing the size.
+        // We use a b-tree that can store as many entries as there are longs. A tree is also more
+        // memory efficient, because there is no waste for empty entries, and it also avoids
+        // allocating big arrays when growing the size.
         idsByOsmNodeIds = new GHLongLongBTree(200, 5);
         towerNodes = nodeAccess;
         pillarNodes = new PillarInfo(towerNodes.is3D(), directory);
