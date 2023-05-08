@@ -27,16 +27,14 @@ public class TripBasedRouter {
 
     public static class StopWithTimeDelta {
         GtfsStorage.FeedIdWithStopId stopId;
-
+        ZoneId zoneId;
         long timeDelta;
 
-
-        public StopWithTimeDelta(GtfsStorage.FeedIdWithStopId stopId, long timeDelta) {
+        public StopWithTimeDelta(GtfsStorage.FeedIdWithStopId stopId, ZoneId zoneId, long timeDelta) {
             this.stopId = stopId;
+            this.zoneId = zoneId;
             this.timeDelta = timeDelta;
         }
-
-
     }
 
     public List<ResultLabel> routeNaiveProfile(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant profileStartTime, Duration profileLength) {
@@ -54,8 +52,8 @@ public class TripBasedRouter {
         List<EnqueuedTripSegment> queue0 = new ArrayList<>();
         for (StopWithTimeDelta accessStation : accessStations) {
             Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey> tripsForThisFeed = tripTransfers.trips.get(accessStation.stopId.feedId);
-            ZonedDateTime earliestDepartureTime = initialTime.atZone(ZoneId.of("America/Los_Angeles")).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
-            trafficDay = earliestDepartureTime.toLocalDate();
+            ZonedDateTime earliestDepartureTime = initialTime.atZone(accessStation.zoneId).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
+            trafficDay = earliestDepartureTime.toLocalDate(); // FIXME traffic day across timezones
             Map<String, List<Trips.TripAtStopTime>> boardingsByPattern = tripTransfers.boardingsForStopByPattern.getUnchecked(accessStation.stopId);
             int targetSecondOfDay = earliestDepartureTime.toLocalTime().toSecondOfDay();
             for (List<Trips.TripAtStopTime> boardings : boardingsByPattern.values()) {

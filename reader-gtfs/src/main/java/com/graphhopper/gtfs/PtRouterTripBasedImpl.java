@@ -51,6 +51,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public final class PtRouterTripBasedImpl implements PtRouter {
@@ -65,6 +66,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
     private final RealtimeFeed realtimeFeed;
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final WeightingFactory weightingFactory;
+    private final Map<String, ZoneId> feedZoneIds = new ConcurrentHashMap<>(); // ad-hoc cache for timezone field of gtfs feed
 
     @Inject
     public PtRouterTripBasedImpl(GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
@@ -182,11 +184,11 @@ public final class PtRouterTripBasedImpl implements PtRouter {
 
             accessStationLabels = accessEgress(startNode, destNode, false);
             accessStations = accessStationLabels.stream()
-                    .map(l -> new TripBasedRouter.StopWithTimeDelta(new GtfsStorage.FeedIdWithStopId(l.edge.getPlatformDescriptor().feed_id, l.edge.getPlatformDescriptor().stop_id), l.currentTime - initialTime.toEpochMilli()))
+                    .map(l -> stopWithTimeDelta(l.edge.getPlatformDescriptor(), l.currentTime - initialTime.toEpochMilli()))
                     .collect(Collectors.toList());
             egressStationLabels = accessEgress(startNode, destNode, true);
             egressStations = egressStationLabels.stream()
-                    .map(l -> new TripBasedRouter.StopWithTimeDelta(new GtfsStorage.FeedIdWithStopId(l.edge.getPlatformDescriptor().feed_id, l.edge.getPlatformDescriptor().stop_id), initialTime.toEpochMilli() - l.currentTime))
+                    .map(l -> stopWithTimeDelta(l.edge.getPlatformDescriptor(), initialTime.toEpochMilli() - l.currentTime))
                     .collect(Collectors.toList());
             response.addDebugInfo("access/egress routing:" + stopWatch1.stop().getSeconds() + "s");
 
@@ -263,8 +265,9 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             String previousBlockId = null;
             for (int i = 0; i < segments.size(); i++) {
                 TripBasedRouter.EnqueuedTripSegment segment = segments.get(i);
-
                 GTFSFeed feed = gtfsStorage.getGtfsFeeds().get(segment.tripAtStopTime.feedId);
+                ZoneId zoneId = ZoneId.of(feed.agency.values().stream().findFirst().get().agency_timezone);
+                LocalDate day = initialTime.atZone(zoneId).toLocalDate().plusDays(segment.plusDays);
                 com.conveyal.gtfs.model.Trip trip = feed.trips.get(segment.tripAtStopTime.tripDescriptor.getTripId());
                 int untilStopSequence;
                 if (i == segments.size() - 1)
@@ -273,9 +276,8 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                     untilStopSequence = segments.get(i+1).transferOrigin.stop_sequence;
                 List<Trip.Stop> stops = gtfsStorage.tripTransfers.trips.get(segment.tripAtStopTime.feedId).get(segment.tripAtStopTime.tripDescriptor).stopTimes.stream().filter(st -> st != null && st.stop_sequence >= segment.tripAtStopTime.stop_sequence && st.stop_sequence <= untilStopSequence)
                         .map(st -> {
-                            LocalDate day = initialTime.atZone(ZoneId.of("America/Los_Angeles")).toLocalDate().plusDays(segment.plusDays);
-                            Instant departureTime = day.atStartOfDay().plusSeconds(st.departure_time).atZone(ZoneId.of("America/Los_Angeles")).toInstant();
-                            Instant arrivalTime = day.atStartOfDay().plusSeconds(st.arrival_time).atZone(ZoneId.of("America/Los_Angeles")).toInstant();;
+                            Instant departureTime = day.atStartOfDay().plusSeconds(st.departure_time).atZone(zoneId).toInstant();
+                            Instant arrivalTime = day.atStartOfDay().plusSeconds(st.arrival_time).atZone(zoneId).toInstant();
                             Stop stop = feed.stops.get(st.stop_id);
                             return new Trip.Stop(st.stop_id, st.stop_sequence, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(arrivalTime), Date.from(arrivalTime), Date.from(arrivalTime), false, Date.from(departureTime), Date.from(departureTime), Date.from(departureTime), false);
                         })
@@ -316,6 +318,11 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                 return Optional.of(egressPath.get(0));
             }
         }
+    }
+
+    private TripBasedRouter.StopWithTimeDelta stopWithTimeDelta(GtfsStorage.PlatformDescriptor platformDescriptor, long timeDelta) {
+        ZoneId zoneId = feedZoneIds.computeIfAbsent(platformDescriptor.feed_id, feedId -> ZoneId.of(gtfsStorage.getGtfsFeeds().get(feedId).agency.values().stream().findFirst().get().agency_timezone));
+        return new TripBasedRouter.StopWithTimeDelta(new GtfsStorage.FeedIdWithStopId(platformDescriptor.feed_id, platformDescriptor.stop_id), zoneId, timeDelta);
     }
 
 }
