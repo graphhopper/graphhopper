@@ -360,6 +360,16 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     @Test
+    public void testSteps() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "steps");
+        assertPriorityAndSpeed(BAD, 2, way);
+
+        way.setTag("bicycle", "designated");
+        assertPriorityAndSpeed(BAD, 2, way);
+    }
+
+    @Test
     public void testSacScale() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");

@@ -338,11 +338,11 @@ public class RoutingAlgorithmWithOSMTest {
         // 3.
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
         // 4.
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1557, 87));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1593, 85));
 
         // try reverse direction
         // 1.
-        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2111, 96));
+        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2788, 116));
         queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4132, 194));
         queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2805, 145));
         // 4. avoid tunnel(s)!
@@ -392,7 +392,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 1642, 87));
         queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3580, 168));
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2323, 121));
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1434, 89));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1446, 91));
         GraphHopper hopper = createHopper(MONACO, new CustomProfile("bike").
                 setCustomModel(new CustomModel().setDistanceInfluence(7000d)/*shortest*/).setVehicle("bike"));
         hopper.importOrLoad();
@@ -403,11 +403,11 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoMountainBike() {
         List<Query> queries = new ArrayList<>();
         // for mtb it is also ok to go over steps (43.7318,7.423) -> 1900m vs 2600m (in latest OSM data all bikes are forbidden and steps aren't taken)
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2323, 111));
-        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3655, 179));
-        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2629, 152));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2594, 111));
+        queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3655, 185));
+        queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2651, 167));
         // hard to select between secondary and primary (both are AVOID for mtb)
-        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1496, 92));
+        queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1867, 107));
 
         GraphHopper hopper = createHopper(MONACO, new CustomProfile("mtb").setCustomModel(new CustomModel()).setVehicle("mtb"));
         hopper.importOrLoad();
