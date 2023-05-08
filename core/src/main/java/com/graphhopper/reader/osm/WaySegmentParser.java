@@ -206,7 +206,7 @@ public class WaySegmentParser {
                 LOGGER.info("pass2 - processed nodes: " + nf(nodeCounter) + ", accepted nodes: " + nf(acceptedNodes) +
                         ", " + Helper.getMemInfo());
 
-            int nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), () -> elevationProvider.getEle(node));
+            long nodeType = nodeData.addCoordinatesIfMapped(node.getId(), node.getLat(), node.getLon(), () -> elevationProvider.getEle(node));
             if (nodeType == EMPTY_NODE)
                 return;
 
@@ -348,7 +348,7 @@ public class WaySegmentParser {
             int to = -1;
             for (int i = 0; i < segment.size(); i++) {
                 SegmentNode node = segment.get(i);
-                int id = node.id;
+                long id = node.id;
                 if (!isNodeId(id))
                     throw new IllegalStateException("Invalid id for node: " + node.osmNodeId + " when handling segment " + segment + " for way: " + way.getId());
                 if (isPillarNode(id) && (i == 0 || i == segment.size() - 1)) {
@@ -387,9 +387,9 @@ public class WaySegmentParser {
         }
 
         public int getInternalNodeIdOfOSMNode(long nodeOsmId) {
-            int id = nodeData.getId(nodeOsmId);
+            long id = nodeData.getId(nodeOsmId);
             if (isTowerNode(id))
-                return -id - 3;
+                return -((int) id) - 3;
             return -1;
         }
     }
