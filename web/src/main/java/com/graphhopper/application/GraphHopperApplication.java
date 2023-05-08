@@ -17,7 +17,6 @@
  */
 package com.graphhopper.application;
 
-import com.graphhopper.application.cli.AnalyzeTripTransfersCommand;
 import com.graphhopper.application.cli.ImportCommand;
 import com.graphhopper.application.cli.MatchCommand;
 import com.graphhopper.application.cli.TestTripTransfersCommand;
@@ -46,7 +45,6 @@ public final class GraphHopperApplication extends Application<GraphHopperServerC
         bootstrap.addBundle(new RealtimeBundle());
         bootstrap.addCommand(new ImportCommand());
         bootstrap.addCommand(new MatchCommand());
-        bootstrap.addCommand(new AnalyzeTripTransfersCommand());
         bootstrap.addCommand(new TestTripTransfersCommand());
         bootstrap.addBundle(new AssetsBundle("/com/graphhopper/maps/", "/maps/", "index.html"));
         // see this link even though its outdated?! // https://www.webjars.org/documentation#dropwizard
