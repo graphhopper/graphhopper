@@ -58,12 +58,12 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
 //        trips.setTrafficDay(LocalDate.parse("2023-03-26"));
 
         for (int i = 0; i < 30; i++) {
-            extracted(graphHopper, ptRouter, tripBasedPtRouter, "19TH", "DBRK", "2023-04-05T08:00:00-07:00");
-            extracted(graphHopper, ptRouter, tripBasedPtRouter, "SFIA", "COLS", "2023-04-05T08:00:00-07:00");
-            extracted(graphHopper, ptRouter, tripBasedPtRouter, "SFIA", "OAKL", "2023-04-05T08:00:00-07:00");
-            extracted(graphHopper, ptRouter, tripBasedPtRouter, "SFIA", "OAKL", "2023-04-05T18:30:00-07:00");
-            extracted(graphHopper, ptRouter, tripBasedPtRouter, "19TH", "40425", "2023-04-05T08:00:00-07:00");
-            extracted(graphHopper, ptRouter, tripBasedPtRouter, "MONT", "WDUB", "2023-04-05T08:00:00-07:00");
+            extracted(ptRouter, tripBasedPtRouter, "19TH", "DBRK", "2023-04-05T08:00:00-07:00");
+            extracted(ptRouter, tripBasedPtRouter, "SFIA", "COLS", "2023-04-05T08:00:00-07:00");
+            extracted(ptRouter, tripBasedPtRouter, "SFIA", "OAKL", "2023-04-05T08:00:00-07:00");
+            extracted(ptRouter, tripBasedPtRouter, "SFIA", "OAKL", "2023-04-05T18:30:00-07:00");
+            extracted(ptRouter, tripBasedPtRouter, "19TH", "40425", "2023-04-05T08:00:00-07:00");
+            extracted(ptRouter, tripBasedPtRouter, "MONT", "WDUB", "2023-04-05T08:00:00-07:00");
         }
 
         for (Data datum : data) {
@@ -100,7 +100,7 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
         graphHopper.close();
     }
 
-    private void extracted(GraphHopperGtfs graphHopper, PtRouter ptRouter, PtRouter tripBasedPtRouter, String origin, String destination, String time) {
+    private void extracted(PtRouter ptRouter, PtRouter tripBasedPtRouter, String origin, String destination, String time) {
         Request request = new Request(Arrays.asList(
                 new GHStationLocation(origin),
                 new GHStationLocation(destination)), ZonedDateTime.parse(time).toInstant());
@@ -123,10 +123,10 @@ public class TestTripTransfersCommand extends ConfiguredCommand<GraphHopperServe
 
     private static void extracted(GHResponse response) {
         System.out.println(response.getBest().getLegs().stream().filter(l -> l instanceof Trip.PtLeg).map(l -> {
-            StringBuilder dildo = new StringBuilder();
-            dildo.append(((Trip.PtLeg) l).trip_id+"\n");
-            dildo.append(((Trip.PtLeg) l).stops.stream().map(s -> s.toString()).collect(Collectors.joining("\n")));
-            return dildo;
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append(((Trip.PtLeg) l).trip_id+"\n");
+            stringBuilder.append(((Trip.PtLeg) l).stops.stream().map(s -> s.toString()).collect(Collectors.joining("\n")));
+            return stringBuilder;
         }).collect(Collectors.toList()));
     }
 }

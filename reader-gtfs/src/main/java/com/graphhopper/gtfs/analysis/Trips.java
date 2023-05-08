@@ -92,11 +92,6 @@ public class Trips {
                 insertTripTransfers(trafficDay, arrivalTimes, stopTime, destinations, new GtfsStorage.FeedIdWithStopId(it.toPlatformDescriptor.feed_id, it.toPlatformDescriptor.stop_id), it.streetTime, Collections.emptyList());
             }
             result.put(origin, destinations);
-//            System.out.printf("%s %s %d %s\n", origin.tripDescriptor.getTripId(), origin.tripDescriptor.hasStartTime() ? origin.tripDescriptor.getStartTime() : "", origin.stop_sequence, stopTime.stop_id);
-//            System.out.printf("  %d filtered transfers\n", destinations.size());
-//            for (TripAtStopTime destination : destinations) {
-//                System.out.printf("    %s %s %d\n", destination.tripDescriptor.getTripId(), destination.tripDescriptor.hasStartTime() ? destination.tripDescriptor.getStartTime() : "", destination.stop_sequence);
-//            }
         }
         return result;
     }
@@ -169,7 +164,6 @@ public class Trips {
                     .parallel()
                     .forEach(tripDescriptor -> {
                         Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = tripTransfers.findTripTransfers(tripDescriptor, feedKey, trafficDay);
-                        System.out.println(reducedTripTransfers.size());
                         result.putAll(reducedTripTransfers);
                     });
         }
@@ -192,9 +186,7 @@ public class Trips {
     }
 
     public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfers(LocalDate trafficDay) {
-        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripAtStopTimeCollectionMap = tripTransfersPerDay.computeIfAbsent(trafficDay, k -> new HashMap<>(tripTransfers));
-//		Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripAtStopTimeCollectionMap = tripTransfers;
-        return tripAtStopTimeCollectionMap;
+        return tripTransfersPerDay.computeIfAbsent(trafficDay, k -> new HashMap<>(tripTransfers));
     }
 
     public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfers() {

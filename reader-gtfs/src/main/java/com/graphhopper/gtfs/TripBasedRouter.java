@@ -126,7 +126,6 @@ public class TripBasedRouter {
                             it.remove();
                         }
                         result.add(newResult);
-                        System.out.println(newResult);
                     }
                 }
             }
