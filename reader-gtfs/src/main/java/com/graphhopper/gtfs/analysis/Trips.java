@@ -31,6 +31,7 @@ import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 
 public class Trips {
 
+    private static final int MAXIMUM_TRANSFER_DURATION = 45 * 60;
     private final Map<String, Transfers> transfers;
     public final Map<String, Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey>> trips;
     private Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers;
@@ -108,8 +109,11 @@ public class Trips {
                         earliestDepatureTimeForThisDestination += transfer.min_transfer_time;
                     }
                 }
+                StopTime departureStopTime = trip.stopTimes.get(candidate.stop_sequence);
+                if (departureStopTime.departure_time >= arrivalStopTime.arrival_time + MAXIMUM_TRANSFER_DURATION) {
+                    break; // next pattern
+                }
                 if (trip.service.activeOn(trafficDay)) {
-                    StopTime departureStopTime = trip.stopTimes.get(candidate.stop_sequence);
                     if (departureStopTime.departure_time >= earliestDepatureTimeForThisDestination) {
                         boolean keep = false;
                         boolean overnight = false;
