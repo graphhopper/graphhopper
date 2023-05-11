@@ -49,7 +49,6 @@ public class GraphHopperGtfs extends GraphHopper {
     private final GraphHopperConfig ghConfig;
     private GtfsStorage gtfsStorage;
     private PtGraph ptGraph;
-    private LocalDate trafficDay1;
 
     public GraphHopperGtfs(GraphHopperConfig ghConfig) {
         this.ghConfig = ghConfig;
@@ -74,6 +73,13 @@ public class GraphHopperGtfs extends GraphHopper {
         if (getGtfsStorage().loadExisting()) {
             ptGraph.loadExisting();
             stopIndex.loadExisting();
+            if (ghConfig.getBool("gtfs.trip_based", false)) {
+                for (String trafficDayString : ghConfig.getString("gtfs.schedule_day", null).split(",")) {
+                    LocalDate trafficDay = LocalDate.parse(trafficDayString);
+                    LOGGER.info("Caching trip-based transfers for pt router. Schedule day: {}", trafficDay);
+                    gtfsStorage.tripTransfers.getTripTransfers(trafficDay);
+                }
+            }
         } else {
             ensureWriteAccess();
             getGtfsStorage().create();
@@ -101,10 +107,12 @@ public class GraphHopperGtfs extends GraphHopper {
                 });
                 interpolateTransfers(allReaders, allTransfers);
                 if (ghConfig.getBool("gtfs.trip_based", false)) {
-                    String trafficDay = ghConfig.getString("gtfs.traffic_day", null);
-                    LOGGER.info("Traffic day for trip-based pt router: {}", trafficDay);
-                    Trips.findAllTripTransfersInto(gtfsStorage.tripTransfers.getTripTransfers(), gtfsStorage, LocalDate.parse(trafficDay));
-                    gtfsStorage.tripTransfers.getTripTransfers(LocalDate.parse(trafficDay));
+                    for (String trafficDayString : ghConfig.getString("gtfs.schedule_day", null).split(",")) {
+                        LocalDate trafficDay = LocalDate.parse(trafficDayString);
+                        LOGGER.info("Computing trip-based transfers for pt router. Schedule day: {}", trafficDay);
+                        Trips.findAllTripTransfersInto(gtfsStorage.tripTransfers.getTripTransfersDB(trafficDay), gtfsStorage, trafficDay);
+                        gtfsStorage.tripTransfers.getTripTransfers(trafficDay);
+                    }
                 }
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);

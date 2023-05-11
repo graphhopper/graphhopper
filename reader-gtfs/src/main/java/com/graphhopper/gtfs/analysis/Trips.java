@@ -24,6 +24,7 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -34,12 +35,12 @@ public class Trips {
     private static final int MAXIMUM_TRANSFER_DURATION = 45 * 60;
     private final Map<String, Transfers> transfers;
     public final Map<String, Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey>> trips;
-    private Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfers;
-    private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfersPerDay = new HashMap<>();
+    private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfersPerDay = new ConcurrentHashMap<>();
+    private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfersPerDayCache = new ConcurrentHashMap<>();
 
     public Trips(GtfsStorage gtfsStorage) {
         this.gtfsStorage = gtfsStorage;
-        this.tripTransfers = gtfsStorage.data.getTreeMap("tripTransfers");
+
         transfers = new HashMap<>();
         for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
             transfers.put(entry.getKey(), new Transfers(entry.getValue()));
@@ -190,11 +191,11 @@ public class Trips {
     }
 
     public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfers(LocalDate trafficDay) {
-        return tripTransfersPerDay.computeIfAbsent(trafficDay, k -> new HashMap<>(tripTransfers));
+        return tripTransfersPerDayCache.computeIfAbsent(trafficDay, k -> new HashMap<>(getTripTransfersDB(trafficDay)));
     }
 
-    public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfers() {
-        return tripTransfers;
+    public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> getTripTransfersDB(LocalDate trafficDay) {
+        return tripTransfersPerDay.computeIfAbsent(trafficDay, k -> gtfsStorage.data.getTreeMap("tripTransfers_" + trafficDay));
     }
 
 
