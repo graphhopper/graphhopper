@@ -82,12 +82,24 @@ class SearchInput extends React.Component {
                 onChange: this.handleInputChange,
                 actionType: "accessProfile"
             }),
+            React.createElement(TextInput, {
+                value: this.props.search.betaAccessTime,
+                label: "Access time beta",
+                onChange: this.handleInputChange,
+                actionType: "betaAccessTime"
+            }),
             React.createElement(Select, {
                 value: this.props.search.egressProfile,
                 label: "Egress profile",
                 options: this.accessEgressProfileOptions(),
                 onChange: this.handleInputChange,
                 actionType: "egressProfile"
+            }),
+            React.createElement(TextInput, {
+                value: this.props.search.betaEgressTime,
+                label: "Egress time beta",
+                onChange: this.handleInputChange,
+                actionType: "betaEgressTime"
             }),
             React.createElement(
                 TextInput,

@@ -121,7 +121,8 @@ public final class PtRouterImpl implements PtRouter {
         private final boolean arriveBy;
         private final boolean ignoreTransfers;
         private final double betaTransfers;
-        private final double betaStreetTime;
+        private final double betaAccessTime;
+        private final double betaEgressTime;
         private final double walkSpeedKmH;
         private final int blockedRouteTypes;
         private final Map<Integer, Long> transferPenaltiesByRouteType;
@@ -140,6 +141,8 @@ public final class PtRouterImpl implements PtRouter {
         private final Profile accessProfile;
         private final EdgeFilter accessSnapFilter;
         private final Weighting accessWeighting;
+        private final Profile transferProfile;
+        private final Weighting transferWeighting;
         private final Profile egressProfile;
         private final EdgeFilter egressSnapFilter;
         private final Weighting egressWeighting;
@@ -149,7 +152,8 @@ public final class PtRouterImpl implements PtRouter {
             profileQuery = request.isProfileQuery();
             ignoreTransfers = Optional.ofNullable(request.getIgnoreTransfers()).orElse(request.isProfileQuery());
             betaTransfers = request.getBetaTransfers();
-            betaStreetTime = request.getBetaStreetTime();
+            betaAccessTime = request.getBetaAccessTime();
+            betaEgressTime = request.getBetaEgressTime();
             limitSolutions = Optional.ofNullable(request.getLimitSolutions()).orElse(profileQuery ? 50 : ignoreTransfers ? 1 : Integer.MAX_VALUE);
             initialTime = request.getEarliestDepartureTime();
             maxProfileDuration = request.getMaxProfileDuration().toMillis();
@@ -166,6 +170,8 @@ public final class PtRouterImpl implements PtRouter {
             accessProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getAccessProfile())).findFirst().get();
             accessWeighting = weightingFactory.createWeighting(accessProfile, new PMap(), false);
             accessSnapFilter = new DefaultSnapFilter(accessWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(accessProfile.getName())));
+            transferProfile = config.getProfiles().stream().filter(p -> p.getName().equals("foot")).findFirst().get();
+            transferWeighting = weightingFactory.createWeighting(transferProfile, new PMap(), false);
             egressProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getEgressProfile())).findFirst().get();
             egressWeighting = weightingFactory.createWeighting(egressProfile, new PMap(), false);
             egressSnapFilter = new DefaultSnapFilter(egressWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getName())));
@@ -194,7 +200,7 @@ public final class PtRouterImpl implements PtRouter {
         private void parseSolutionsAndAddToResponse(List<List<Label.Transition>> solutions, PointList waypoints) {
             TripFromLabel tripFromLabel = new TripFromLabel(queryGraph, encodingManager, gtfsStorage, realtimeFeed, pathDetailsBuilderFactory, walkSpeedKmH);
             for (List<Label.Transition> solution : solutions) {
-                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, queryGraph, accessWeighting, egressWeighting, solution, requestedPathDetails);
+                final ResponsePath responsePath = tripFromLabel.createResponsePath(translation, waypoints, queryGraph, accessWeighting, egressWeighting, transferWeighting, solution, requestedPathDetails);
                 responsePath.setImpossible(solution.stream().anyMatch(t -> t.label.impossible));
                 responsePath.setTime((solution.get(solution.size() - 1).label.currentTime - solution.get(0).label.currentTime));
                 responsePath.setRouteWeight(router.weight(solution.get(solution.size() - 1).label));
@@ -211,7 +217,7 @@ public final class PtRouterImpl implements PtRouter {
             final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, isEgress ? egressWeighting : accessWeighting, gtfsStorage, realtimeFeed, isEgress, true, false, walkSpeedKmH, false, blockedRouteTypes);
             GtfsStorage.EdgeType edgeType = isEgress ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, isEgress, false, false, maxProfileDuration, new ArrayList<>());
-            stationRouter.setBetaStreetTime(betaStreetTime);
+            stationRouter.setBetaStreetTime(isEgress ? betaEgressTime : betaAccessTime);
             stationRouter.setLimitStreetTime(limitStreetTime);
             List<Label> stationLabels = new ArrayList<>();
             for (Label label : stationRouter.calcLabels(destNode, initialTime)) {
@@ -233,7 +239,7 @@ public final class PtRouterImpl implements PtRouter {
             List<Label> discoveredSolutions = new ArrayList<>();
             router = new MultiCriteriaLabelSetting(graphExplorer, arriveBy, !ignoreTransfers, profileQuery, maxProfileDuration, discoveredSolutions);
             router.setBetaTransfers(betaTransfers);
-            router.setBetaStreetTime(betaStreetTime);
+            router.setBetaStreetTime(arriveBy ? betaEgressTime : betaAccessTime);
             router.setBoardingPenaltyByRouteType(routeType -> transferPenaltiesByRouteType.getOrDefault(routeType, 0L));
             final long smallestStationLabelWalkTime = stationLabels.stream()
                     .mapToLong(l -> l.streetTime).min()
@@ -274,7 +280,12 @@ public final class PtRouterImpl implements PtRouter {
                 }
                 Label reverseLabel = reverseSettledSet.get(label.node);
                 if (reverseLabel != null) {
-                    Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), null, label.node, label.nTransfers + reverseLabel.nTransfers, label.departureTime, label.streetTime + reverseLabel.streetTime, label.extraWeight + reverseLabel.extraWeight, 0, label.impossible, null);
+                    long accessTime = label.streetTime;
+                    long egressTime = reverseLabel.streetTime;
+                    long disutilityOfAccessTime = (long) (accessTime * (betaAccessTime - 1.0));
+                    long disutilityOfEgressTime = (long) (egressTime * (betaEgressTime - 1.0));
+                    long disutilityOfStreetTime = disutilityOfAccessTime + disutilityOfEgressTime;
+                    Label combinedSolution = new Label(label.currentTime - reverseLabel.currentTime + initialTime.toEpochMilli(), null, label.node, label.nTransfers + reverseLabel.nTransfers, label.departureTime, 0, label.extraWeight + reverseLabel.extraWeight + disutilityOfStreetTime, 0, label.impossible, null);
                     Predicate<Label> filter;
                     if (profileQuery && combinedSolution.departureTime != null)
                         filter = targetLabel -> (!arriveBy ? router.prc(combinedSolution, targetLabel) : router.rprc(combinedSolution, targetLabel));
