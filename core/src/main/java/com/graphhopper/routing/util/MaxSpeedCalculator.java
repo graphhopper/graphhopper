@@ -9,8 +9,6 @@ import com.graphhopper.util.StopWatch;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 import de.westnordost.osm_legal_default_speeds.RoadType;
 import de.westnordost.osm_legal_default_speeds.RoadTypeFilter;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
@@ -128,19 +126,16 @@ public class MaxSpeedCalculator {
             this.relationFilter = relationFilter;
         }
 
-        @Nullable
         @Override
         public String getFilter() {
             return filter;
         }
 
-        @Nullable
         @Override
         public String getFuzzyFilter() {
             return fuzzyFilter;
         }
 
-        @Nullable
         @Override
         public String getRelationFilter() {
             return relationFilter;
@@ -160,13 +155,11 @@ public class MaxSpeedCalculator {
             this.tags = tags;
         }
 
-        @Nullable
         @Override
         public String getName() {
             return name;
         }
 
-        @NotNull
         @Override
         public Map<String, String> getTags() {
             return tags;

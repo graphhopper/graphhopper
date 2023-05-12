@@ -81,7 +81,7 @@ public class CustomModelParser {
      *
      * @param priorityEnc can be null
      */
-    static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup,
+    public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup,
                                                                 DecimalEncodedValue avgSpeedEnc, double globalMaxSpeed,
                                                                 DecimalEncodedValue priorityEnc) {
 

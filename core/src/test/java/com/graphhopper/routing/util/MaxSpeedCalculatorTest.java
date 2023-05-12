@@ -143,4 +143,15 @@ class MaxSpeedCalculatorTest {
 
         assertEquals("100", res.getTags().get("maxspeed").toString());
     }
+
+    @Test
+    public void testLivingStreet() {
+        EdgeIteratorState edge = graph.edge(0, 1);
+        edge.set(countryEnc, Country.DEU);
+        edge.set(maxSpeedEnc, 30, 30);
+        edge.set(roadClassEnc, RoadClass.LIVING_STREET);
+        calc.fillMaxSpeed();
+        assertEquals(30, edge.get(maxSpeedEnc), 1);
+        assertEquals(30, edge.getReverse(maxSpeedEnc), 1);
+    }
 }
