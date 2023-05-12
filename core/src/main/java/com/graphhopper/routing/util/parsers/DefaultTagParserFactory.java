@@ -20,14 +20,10 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.util.PMap;
-import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 
 public class DefaultTagParserFactory implements TagParserFactory {
 
-    private final LegalDefaultSpeeds defaultSpeeds;
-
-    public DefaultTagParserFactory(LegalDefaultSpeeds defaultSpeeds) {
-        this.defaultSpeeds = defaultSpeeds;
+    public DefaultTagParserFactory() {
     }
 
     @Override
@@ -43,7 +39,7 @@ public class DefaultTagParserFactory implements TagParserFactory {
         else if (name.equals(RoadAccess.KEY))
             return new OSMRoadAccessParser(lookup.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
         else if (name.equals(MaxSpeed.KEY))
-            return new OSMMaxSpeedParser(lookup.getDecimalEncodedValue(MaxSpeed.KEY), defaultSpeeds);
+            return new OSMMaxSpeedParser(lookup.getDecimalEncodedValue(MaxSpeed.KEY));
         else if (name.equals(MaxWeight.KEY))
             return new OSMMaxWeightParser(lookup.getDecimalEncodedValue(MaxWeight.KEY));
         else if (name.equals(MaxWeightExcept.KEY))

@@ -83,7 +83,10 @@ public class RouteResourceTest {
                 putObject("graph.vehicles", "car").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
-                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed,country").
+                putObject("max_speed_calculator.enabled", true).
+                putObject("graph.urban_density.threads", 1). // for max_speed_calculator
+                putObject("graph.urban_density.city_radius", 0).
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 // adding this so the corresponding check is not just skipped...
@@ -337,7 +340,7 @@ public class RouteResourceTest {
     @Test
     public void testPathDetailsWithoutGraphHopperWeb() {
         final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id&details=max_speed").request().buildGet().invoke();
+                "point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id&details=max_speed&details=urban_density").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -359,8 +362,12 @@ public class RouteResourceTest {
         assertEquals(1584, lastLink);
 
         JsonNode maxSpeed = details.get("max_speed");
-        assertEquals(50, maxSpeed.get(0).get(2).asDouble(-1), .01);
-        assertEquals(60, maxSpeed.get(1).get(2).asDouble(-1), .01);
+        assertEquals("[0,53,50.0]", maxSpeed.get(0).toString());
+        assertEquals("[53,68,90.0]", maxSpeed.get(1).toString());
+
+        JsonNode urbanDensityNode = details.get("urban_density");
+        assertEquals("[0,53,\"residential\"]", urbanDensityNode.get(0).toString());
+        assertEquals("[53,68,\"rural\"]", urbanDensityNode.get(1).toString());
     }
 
     @Test

@@ -1137,7 +1137,7 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
 
         if (!withTunnelInterpolation) {
-            hopper.setTagParserFactory(new DefaultTagParserFactory(null) {
+            hopper.setTagParserFactory(new DefaultTagParserFactory() {
                 @Override
                 public TagParser create(EncodedValueLookup lookup, String name, PMap properties) {
                     TagParser parser = super.create(lookup, name, properties);
@@ -2331,14 +2331,14 @@ public class GraphHopperTest {
 
         // check max speeds
         List<PathDetail> speeds = path.getPathDetails().get("max_speed");
-        assertDetail(speeds.get(0), "100.0 [0, 4]");
+        assertDetail(speeds.get(0), "null [0, 4]");
         assertDetail(speeds.get(1), "70.0 [4, 6]");
         assertDetail(speeds.get(2), "100.0 [6, 16]");
         assertDetail(speeds.get(3), "100.0 [16, 31]"); // we do not merge path details at via points
         assertDetail(speeds.get(4), "80.0 [31, 32]");
-        assertDetail(speeds.get(5), "100.0 [32, 37]");
+        assertDetail(speeds.get(5), "null [32, 37]");
         assertDetail(speeds.get(6), "50.0 [37, 38]");
-        assertDetail(speeds.get(7), "100.0 [38, 40]");
+        assertDetail(speeds.get(7), "null [38, 40]");
 
         // check street names
         List<PathDetail> streetNames = path.getPathDetails().get(KVStorage.KeyValue.STREET_REF);

@@ -28,13 +28,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class OSMMaxSpeedParserTest {
 
-    private LegalDefaultSpeeds defaultSpeeds = MaxSpeedCalculator.createLegalDefaultSpeeds();
-
     @Test
     void countryRule() {
         DecimalEncodedValue maxSpeedEnc = MaxSpeed.create();
         maxSpeedEnc.init(new EncodedValue.InitializerConfig());
-        OSMMaxSpeedParser parser = new OSMMaxSpeedParser(maxSpeedEnc, defaultSpeeds);
+        OSMMaxSpeedParser parser = new OSMMaxSpeedParser(maxSpeedEnc);
         IntsRef relFlags = new IntsRef(2);
         ReaderWay way = new ReaderWay(29L);
         way.setTag("highway", "living_street");
@@ -42,7 +40,7 @@ class OSMMaxSpeedParserTest {
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
-        assertEquals(5, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        assertEquals(Double.POSITIVE_INFINITY, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
 
         way.setTag("maxspeed", "30");
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);

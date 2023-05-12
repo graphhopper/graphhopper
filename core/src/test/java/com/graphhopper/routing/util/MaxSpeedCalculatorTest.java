@@ -3,6 +3,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,6 +13,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
+import static com.graphhopper.routing.ev.RoadClass.*;
+import static com.graphhopper.routing.ev.UrbanDensity.CITY;
+import static com.graphhopper.routing.ev.UrbanDensity.RURAL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class MaxSpeedCalculatorTest {
@@ -36,102 +41,124 @@ class MaxSpeedCalculatorTest {
         em = EncodingManager.start().add(urbanDensity).add(countryEnc).add(Roundabout.create()).add(Surface.create()).
                 add(Lanes.create()).add(roadClassEnc).add(maxSpeedEnc).add(accessEnc).add(speedEnc).build();
         graph = new BaseGraph.Builder(em).create();
-        calc = new MaxSpeedCalculator(defaultSpeeds, graph, em);
+        calc = new MaxSpeedCalculator(defaultSpeeds, new RAMDirectory());
+    }
+
+    @Test
+    public void internalMaxSpeed() {
+        DecimalEncodedValue enc = calc.getInternalMaxSpeedEnc();
+        enc.setDecimal(false, 0, calc.getInternalMaxSpeedStorage(), UNSET_SPEED);
+        assertEquals(UNSET_SPEED, enc.getDecimal(false, 0, calc.getInternalMaxSpeedStorage()));
+
+        enc.setDecimal(false, 1, calc.getInternalMaxSpeedStorage(), 33);
+        assertEquals(35, enc.getDecimal(false, 1, calc.getInternalMaxSpeedStorage()));
+    }
+
+    EdgeIteratorState createEdge() {
+        EdgeIteratorState edge = graph.edge(0, 1);
+        edge.set(maxSpeedEnc, UNSET_SPEED, UNSET_SPEED);
+        calc.getInternalMaxSpeedEnc().setDecimal(false, edge.getEdge(), calc.getInternalMaxSpeedStorage(), UNSET_SPEED);
+        return edge;
     }
 
     @Test
     public void testCityGermany() {
-        EdgeIteratorState edge = graph.edge(0, 1);
+        EdgeIteratorState edge = createEdge();
         edge.set(countryEnc, Country.DEU);
-        edge.set(urbanDensity, UrbanDensity.CITY);
-
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
-        edge.set(roadClassEnc, RoadClass.PRIMARY);
-        calc.fillMaxSpeed();
+        edge.set(urbanDensity, CITY);
+        edge.set(roadClassEnc, PRIMARY);
+        calc.fillMaxSpeed(graph, em);
         assertEquals(50, edge.get(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
-        edge.set(roadClassEnc, RoadClass.MOTORWAY);
-        calc.fillMaxSpeed();
-        assertEquals(MaxSpeed.UNSET_SPEED, edge.get(maxSpeedEnc), 1);
+        edge = createEdge();
+        edge.set(countryEnc, Country.DEU);
+        edge.set(urbanDensity, RURAL);
+        edge.set(roadClassEnc, MOTORWAY);
+        calc.fillMaxSpeed(graph, em);
+        assertEquals(UNSET_SPEED, edge.get(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
-        edge.set(roadClassEnc, RoadClass.RESIDENTIAL);
-        calc.fillMaxSpeed();
+        edge = createEdge();
+        edge.set(countryEnc, Country.DEU);
+        edge.set(urbanDensity, CITY);
+        edge.set(roadClassEnc, RESIDENTIAL);
+        calc.fillMaxSpeed(graph, em);
         assertEquals(50, edge.get(maxSpeedEnc), 1);
     }
 
     @Test
     public void testRuralGermany() {
-        EdgeIteratorState edge = graph.edge(0, 1);
+        EdgeIteratorState edge = createEdge();
         edge.set(countryEnc, Country.DEU);
-        edge.set(urbanDensity, UrbanDensity.RURAL);
-
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
-        edge.set(roadClassEnc, RoadClass.PRIMARY);
-        calc.fillMaxSpeed();
+        edge.set(urbanDensity, RURAL);
+        edge.set(roadClassEnc, PRIMARY);
+        calc.fillMaxSpeed(graph, em);
         assertEquals(100, edge.get(maxSpeedEnc), 1);
         assertEquals(100, edge.getReverse(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
-        edge.set(roadClassEnc, RoadClass.MOTORWAY);
-        calc.fillMaxSpeed();
-        assertEquals(MaxSpeed.UNSET_SPEED, edge.get(maxSpeedEnc), 1);
+        edge = createEdge();
+        edge.set(countryEnc, Country.DEU);
+        edge.set(urbanDensity, RURAL);
+        edge.set(roadClassEnc, MOTORWAY);
+        calc.fillMaxSpeed(graph, em);
+        assertEquals(UNSET_SPEED, edge.get(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
-        edge.set(roadClassEnc, RoadClass.RESIDENTIAL);
-        calc.fillMaxSpeed();
+        edge = createEdge();
+        edge.set(countryEnc, Country.DEU);
+        edge.set(urbanDensity, RURAL);
+        edge.set(roadClassEnc, RESIDENTIAL);
+        calc.fillMaxSpeed(graph, em);
         assertEquals(100, edge.get(maxSpeedEnc), 1);
     }
 
     @Test
     public void testRoundabout() {
-        EdgeIteratorState edge = graph.edge(0, 1);
+        EdgeIteratorState edge = createEdge();
         edge.set(countryEnc, Country.CRI);
-        edge.set(urbanDensity, UrbanDensity.CITY);
-        edge.set(roadClassEnc, RoadClass.PRIMARY);
-
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
-        calc.fillMaxSpeed();
+        edge.set(urbanDensity, CITY);
+        edge.set(roadClassEnc, PRIMARY);
+        calc.fillMaxSpeed(graph, em);
         assertEquals(50, edge.get(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
+        edge = createEdge();
+        edge.set(countryEnc, Country.CRI);
+        edge.set(urbanDensity, CITY);
         edge.set(em.getBooleanEncodedValue(Roundabout.KEY), true);
-        calc.fillMaxSpeed();
+        calc.fillMaxSpeed(graph, em);
         assertEquals(30, edge.get(maxSpeedEnc), 1);
     }
 
     @Test
     public void testLanes() {
-        EdgeIteratorState edge = graph.edge(0, 1);
+        EdgeIteratorState edge = createEdge();
         edge.set(countryEnc, Country.CHL);
-        edge.set(urbanDensity, UrbanDensity.RURAL);
-        edge.set(roadClassEnc, RoadClass.PRIMARY);
-
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
-        calc.fillMaxSpeed();
+        edge.set(urbanDensity, RURAL);
+        edge.set(roadClassEnc, PRIMARY);
+        calc.fillMaxSpeed(graph, em);
         assertEquals(100, edge.get(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
+        edge = createEdge();
+        edge.set(countryEnc, Country.CHL);
+        edge.set(roadClassEnc, PRIMARY);
         edge.set(em.getIntEncodedValue(Lanes.KEY), 4); // 2 in each direction!
-        calc.fillMaxSpeed();
+        calc.fillMaxSpeed(graph, em);
         assertEquals(120, edge.get(maxSpeedEnc), 1);
     }
 
     @Test
     public void testSurface() {
-        EdgeIteratorState edge = graph.edge(0, 1);
+        EdgeIteratorState edge = createEdge();
         edge.set(countryEnc, Country.LTU);
-        edge.set(urbanDensity, UrbanDensity.RURAL);
-        edge.set(roadClassEnc, RoadClass.PRIMARY);
-
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
-        calc.fillMaxSpeed();
+        edge.set(urbanDensity, RURAL);
+        edge.set(roadClassEnc, PRIMARY);
+        calc.fillMaxSpeed(graph, em);
         assertEquals(90, edge.get(maxSpeedEnc), 1);
 
-        edge.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
+        edge = createEdge();
+        edge.set(countryEnc, Country.LTU);
+        edge.set(urbanDensity, RURAL);
+        edge.set(roadClassEnc, PRIMARY);
         edge.set(em.getEnumEncodedValue(Surface.KEY, Surface.class), Surface.COMPACTED);
-        calc.fillMaxSpeed();
+        calc.fillMaxSpeed(graph, em);
         assertEquals(70, edge.get(maxSpeedEnc), 1);
     }
 
@@ -145,12 +172,14 @@ class MaxSpeedCalculatorTest {
     }
 
     @Test
-    public void testLivingStreet() {
-        EdgeIteratorState edge = graph.edge(0, 1);
+    public void testLivingStreetWithMaxSpeed() {
+        EdgeIteratorState edge = createEdge();
         edge.set(countryEnc, Country.DEU);
+        edge.set(roadClassEnc, LIVING_STREET);
+        edge.set(urbanDensity, CITY);
         edge.set(maxSpeedEnc, 30, 30);
-        edge.set(roadClassEnc, RoadClass.LIVING_STREET);
-        calc.fillMaxSpeed();
+        calc.getInternalMaxSpeedEnc().setDecimal(false, edge.getEdge(), calc.getInternalMaxSpeedStorage(), 5);
+        calc.fillMaxSpeed(graph, em);
         assertEquals(30, edge.get(maxSpeedEnc), 1);
         assertEquals(30, edge.getReverse(maxSpeedEnc), 1);
     }
