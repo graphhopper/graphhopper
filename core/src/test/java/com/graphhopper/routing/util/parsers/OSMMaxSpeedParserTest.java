@@ -40,7 +40,7 @@ class OSMMaxSpeedParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
         assertEquals(30, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
 
-        // without a country we get the default value
+        // different direction
         edgeIntAccess = new ArrayEdgeIntAccess(1);
         way = new ReaderWay(29L);
         way.setTag("highway", "primary");
