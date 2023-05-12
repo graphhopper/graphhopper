@@ -911,8 +911,10 @@ public class GraphHopper {
             UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, roadClassEnc, roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
         }
 
-        if (maxSpeedCalculator != null)
+        if (maxSpeedCalculator != null) {
             maxSpeedCalculator.fillMaxSpeed(getBaseGraph(), encodingManager);
+            maxSpeedCalculator.close();
+        }
     }
 
     protected void importOSM() {

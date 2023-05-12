@@ -153,8 +153,11 @@ public class MaxSpeedCalculator {
             }
         }
 
-        dataAccess.close();
         LoggerFactory.getLogger(getClass()).info("filled max_speed from LegalDefaultSpeeds, took: " + sw.stop().getSeconds());
+    }
+
+    public void close() {
+        dataAccess.close();
     }
 
     Integer parseInt(String str) {
