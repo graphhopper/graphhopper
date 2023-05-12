@@ -109,46 +109,39 @@ public class MaxSpeedCalculator {
             if (surfaceEnc != null && iter.get(surfaceEnc) != Surface.MISSING)
                 tags.put("surface", iter.get(surfaceEnc).toString());
 
-            // this is tricky as it could be a highly customized (car) profile
+            // This is tricky as it could be a highly customized (car) profile.
             // if (isOneway(iter)) tags.put("oneway", "yes");
 
             double fwdMaxSpeedPureOSM = iter.get(maxSpeedEnc);
             double bwdMaxSpeedPureOSM = iter.getReverse(maxSpeedEnc);
 
-            // in DefaultMaxSpeedParser and in OSMMaxSpeedParser we don't have the rural/urban info
-            // so we have to wait until fillMaxSpeed to determine final country-dependent max_speed value
-            if (fwdMaxSpeedPureOSM == MaxSpeed.UNSET_SPEED || bwdMaxSpeedPureOSM == MaxSpeed.UNSET_SPEED) {
-                UrbanDensity urbanDensity = iter.get(urbanDensityEnc);
+            // In DefaultMaxSpeedParser and in OSMMaxSpeedParser we don't have the rural/urban info.
+            // So we have to wait until fillMaxSpeed to determine final country-dependent max_speed value.
 
-                // if RURAL fill gaps of OSM max_speed with lib value (determined while *all* OSM tags were available)
-                double maxSpeedRuralDefault = internalMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
-                if (urbanDensity == UrbanDensity.RURAL && maxSpeedRuralDefault != MaxSpeed.UNSET_SPEED) {
-                    iter.set(maxSpeedEnc, maxSpeedRuralDefault, maxSpeedRuralDefault);
-                } else {
-                    if (fwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED)
-                        tags.put("maxspeed:forward", "" + Math.round(fwdMaxSpeedPureOSM));
-                    if (bwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED)
-                        tags.put("maxspeed:backward", "" + Math.round(bwdMaxSpeedPureOSM));
-                    LegalDefaultSpeeds.Result result = defaultSpeeds.getSpeedLimits(countryCode, tags, relTags, (name, eval) -> {
-                        if (eval.invoke()) return true;
-                        if ("urban".equals(name))
-                            return urbanDensity != UrbanDensity.RURAL;
-                        if ("rural".equals(name))
-                            return urbanDensity == UrbanDensity.RURAL;
-                        return false;
-                    });
-                    if (result != null) {
-                        Integer max = parseInt(result.getTags().get("maxspeed"));
-                        if (max != null) {
-                            iter.set(maxSpeedEnc, max, max);
-                        } else {
-                            Integer maxFwd = parseInt(result.getTags().get("maxspeed:forward"));
-                            if (maxFwd != null) iter.set(maxSpeedEnc, maxFwd);
+            UrbanDensity urbanDensity = iter.get(urbanDensityEnc);
+            // if RURAL fill gaps of OSM max_speed with lib value (determined while *all* OSM tags were available)
+            double maxSpeedRuralDefault = internalMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
+            if (maxSpeedRuralDefault != MaxSpeed.UNSET_SPEED && urbanDensity == UrbanDensity.RURAL) {
+                iter.set(maxSpeedEnc, maxSpeedRuralDefault, maxSpeedRuralDefault);
+            } else if (bwdMaxSpeedPureOSM == fwdMaxSpeedPureOSM) {
+                // Here either fwd and bwd are UNSET or both have same value.
+                // The library does not support forward and backward so do not call it in that case.
 
-                            Integer maxBwd = parseInt(result.getTags().get("maxspeed:backward"));
-                            if (maxBwd != null) iter.setReverse(maxSpeedEnc, maxBwd);
-                        }
-                    }
+                if (fwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED)
+                    tags.put("maxspeed", "" + Math.round(fwdMaxSpeedPureOSM));
+
+                LegalDefaultSpeeds.Result result = defaultSpeeds.getSpeedLimits(countryCode, tags, relTags, (name, eval) -> {
+                    if (eval.invoke()) return true;
+                    if ("urban".equals(name))
+                        return urbanDensity != UrbanDensity.RURAL;
+                    if ("rural".equals(name))
+                        return urbanDensity == UrbanDensity.RURAL;
+                    return false;
+                });
+                if (result != null) {
+                    Integer max = parseInt(result.getTags().get("maxspeed"));
+                    if (max != null)
+                        iter.set(maxSpeedEnc, max, max);
                 }
             }
         }
