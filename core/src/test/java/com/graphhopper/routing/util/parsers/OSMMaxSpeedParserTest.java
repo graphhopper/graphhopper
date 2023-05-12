@@ -19,9 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.MaxSpeedCalculator;
 import com.graphhopper.storage.IntsRef;
-import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,13 +33,9 @@ class OSMMaxSpeedParserTest {
         OSMMaxSpeedParser parser = new OSMMaxSpeedParser(maxSpeedEnc);
         IntsRef relFlags = new IntsRef(2);
         ReaderWay way = new ReaderWay(29L);
-        way.setTag("highway", "living_street");
-        way.setTag("country", Country.DEU);
+        way.setTag("highway", "primary");
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
-        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
-        assertEquals(Double.POSITIVE_INFINITY, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
-
         way.setTag("maxspeed", "30");
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
         assertEquals(30, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
@@ -49,9 +43,12 @@ class OSMMaxSpeedParserTest {
         // without a country we get the default value
         edgeIntAccess = new ArrayEdgeIntAccess(1);
         way = new ReaderWay(29L);
-        way.setTag("highway", "living_street");
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed:forward", "30");
+        way.setTag("maxspeed:backward", "40");
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
-        assertEquals(MaxSpeed.UNSET_SPEED, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        assertEquals(30, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        assertEquals(40, maxSpeedEnc.getDecimal(true, edgeId, edgeIntAccess), .1);
     }
 
 }

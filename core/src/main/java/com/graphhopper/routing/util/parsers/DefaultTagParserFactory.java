@@ -23,9 +23,6 @@ import com.graphhopper.util.PMap;
 
 public class DefaultTagParserFactory implements TagParserFactory {
 
-    public DefaultTagParserFactory() {
-    }
-
     @Override
     public TagParser create(EncodedValueLookup lookup, String name, PMap properties) {
         if (Roundabout.KEY.equals(name))
