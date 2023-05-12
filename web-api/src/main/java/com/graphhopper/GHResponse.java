@@ -31,6 +31,8 @@ import java.util.List;
 public class GHResponse {
     private final List<Throwable> errors = new ArrayList<>(4);
     private PMap hintsMap = new PMap();
+    private String dataSourceDate;
+    private String dataImportDate;
     private final List<ResponsePath> responsePaths = new ArrayList<>(5);
     private String debugInfo = "";
 
@@ -146,5 +148,21 @@ public class GHResponse {
 
     public PMap getHints() {
         return hintsMap;
+    }
+
+    public String getDataSourceDate () {
+        return this.dataSourceDate;
+    }
+
+    public void setDataSourceDate (String date) {
+        this.dataSourceDate = date;
+    }
+
+    public String getDataImportDate() {
+        return dataImportDate;
+    }
+
+    public void setDataImportDate(String dataImportDate) {
+        this.dataImportDate = dataImportDate;
     }
 }

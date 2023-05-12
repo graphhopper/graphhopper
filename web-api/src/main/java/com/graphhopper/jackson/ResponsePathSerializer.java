@@ -91,6 +91,10 @@ public class ResponsePathSerializer {
         json.putPOJO("hints", ghRsp.getHints().toMap());
         final ObjectNode info = json.putObject("info");
         info.putPOJO("copyrights", COPYRIGHTS);
+        info.put("data_import_date", ghRsp.getDataImportDate());
+        String dataSourceDate = ghRsp.getDataSourceDate();
+        if (!dataSourceDate.equals(""))
+            info.put("data_source_date", dataSourceDate);
         info.put("took", Math.round(took));
         ArrayNode jsonPathList = json.putArray("paths");
         for (ResponsePath p : ghRsp.getAll()) {

@@ -176,8 +176,9 @@ public class RouteResource {
         profileResolverHints.putObject("has_curbsides", !request.getCurbsides().isEmpty());
         request.setProfile(profileResolver.resolveProfile(profileResolverHints));
         removeLegacyParameters(request.getHints());
-
         GHResponse ghResponse = graphHopper.route(request);
+        ghResponse.setDataSourceDate(graphHopper.getProperties().get("datareader.data.date"));
+        ghResponse.setDataImportDate(graphHopper.getProperties().get("datareader.import.date"));
         boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
         boolean enableElevation = request.getHints().getBool("elevation", false);
         boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
