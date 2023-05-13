@@ -9,7 +9,6 @@ import com.graphhopper.storage.IntsRef;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 
 import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
@@ -35,7 +34,8 @@ public class DefaultMaxSpeedParser implements TagParser {
         if (Double.isNaN(maxSpeed)) {
             Country country = way.getTag("country", null);
             if (country != null) {
-                Map<String, String> tags = fixType(way.getTags());
+                // currently the library is fine with objects => force the type instead of copying
+                Map<String, String> tags = (Map) way.getTags();
                 LegalDefaultSpeeds.Result result = speeds.getSpeedLimits(country.getAlpha2(),
                         tags, Collections.emptyList(), (name, eval) -> eval.invoke() || "rural".equals(name));
                 if (result != null) ruralSpeedInt = parseInt(result.getTags().get("maxspeed"));
@@ -57,14 +57,5 @@ public class DefaultMaxSpeedParser implements TagParser {
         } catch (NumberFormatException ex) {
             return null;
         }
-    }
-
-    Map<String, String> fixType(Map<String, Object> tags) {
-        Map<String, String> map = new HashMap<>(tags.size());
-        for (Map.Entry<String, Object> entry : tags.entrySet()) {
-            if (entry.getValue() instanceof String)
-                map.put(entry.getKey(), (String) entry.getValue());
-        }
-        return map;
     }
 }
