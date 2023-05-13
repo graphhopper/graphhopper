@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -24,19 +23,29 @@ public class MaxSpeedCalculator {
 
     private final LegalDefaultSpeeds defaultSpeeds;
     private final EdgeIntAccess internalMaxSpeedStorage;
-    private final DecimalEncodedValue internalMaxSpeedEnc;
+    private final DecimalEncodedValue ruralMaxSpeedEnc;
+    private final DecimalEncodedValue urbanMaxSpeedEnc;
     private final DataAccess dataAccess;
 
     public MaxSpeedCalculator(LegalDefaultSpeeds defaultSpeeds, Directory directory) {
         this.defaultSpeeds = defaultSpeeds;
         this.dataAccess = directory.create("max_speed_storage_tmp").create(1000);
         this.internalMaxSpeedStorage = createMaxSpeedStorage(this.dataAccess);
-        this.internalMaxSpeedEnc = new DecimalEncodedValueImpl("tmp", 5, 0, 5, false, false, true);
-        internalMaxSpeedEnc.init(new EncodedValue.InitializerConfig());
+        this.ruralMaxSpeedEnc = new DecimalEncodedValueImpl("tmp_rural", 7, 0, 2, false, false, true);
+        this.urbanMaxSpeedEnc = new DecimalEncodedValueImpl("tmp_urban", 7, 0, 2, false, false, true);
+        EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
+        ruralMaxSpeedEnc.init(config);
+        urbanMaxSpeedEnc.init(config);
+        if (config.getRequiredBits() > 16)
+            throw new IllegalStateException("bits are not sufficient " + config.getRequiredBits());
     }
 
-    DecimalEncodedValue getInternalMaxSpeedEnc() {
-        return internalMaxSpeedEnc;
+    DecimalEncodedValue getRuralMaxSpeedEnc() {
+        return ruralMaxSpeedEnc;
+    }
+
+    public DecimalEncodedValue getUrbanMaxSpeedEnc() {
+        return urbanMaxSpeedEnc;
     }
 
     EdgeIntAccess getInternalMaxSpeedStorage() {
@@ -64,87 +73,56 @@ public class MaxSpeedCalculator {
         return new EdgeIntAccess() {
 
             public int getInt(int edgeId, int index) {
-                return dataAccess.getByte(edgeId);
+                return dataAccess.getShort(edgeId * 2L);
             }
 
             public void setInt(int edgeId, int index, int value) {
-                dataAccess.ensureCapacity(edgeId);
-                dataAccess.setByte(edgeId, (byte) value);
+                dataAccess.ensureCapacity(edgeId * 2L);
+                if (value > Short.MAX_VALUE)
+                    throw new IllegalStateException("value too large for short: " + value);
+                dataAccess.setShort(edgeId * 2L, (short) value);
             }
         };
     }
 
     public TagParser createParser() {
-        return new DefaultMaxSpeedParser(defaultSpeeds, internalMaxSpeedEnc, internalMaxSpeedStorage);
+        return new DefaultMaxSpeedParser(defaultSpeeds, ruralMaxSpeedEnc, urbanMaxSpeedEnc, internalMaxSpeedStorage);
     }
 
     /**
      * This method sets max_speed values where the value is UNSET_SPEED to a value determined by
-     * the default speed library which is country-dependent. The rural max_speed is based on all
-     * OSM tags. However, the ciy max_speed is currently only based on the information in the
-     * encoded values: road_class, surface, lanes and roundabout.
+     * the default speed library which is country-dependent.
      */
     public void fillMaxSpeed(Graph graph, EncodingManager em) {
         EnumEncodedValue<UrbanDensity> urbanDensityEnc = em.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
-        EnumEncodedValue<RoadClass> roadClassEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
-        EnumEncodedValue<Country> countryEnumEncodedValue = em.getEnumEncodedValue(Country.KEY, Country.class);
         DecimalEncodedValue maxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
-        BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
-        IntEncodedValue lanesEnc = em.hasEncodedValue(Lanes.KEY) ? em.getIntEncodedValue(Lanes.KEY) : null;
-        EnumEncodedValue<Surface> surfaceEnc = em.hasEncodedValue(Surface.KEY) ? em.getEnumEncodedValue(Surface.KEY, Surface.class) : null;
 
         StopWatch sw = new StopWatch().start();
         List<Map<String, String>> relTags = new ArrayList<>();
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            // ISO 3166-1 alpha-2 code optionally concatenated with a ISO 3166-2 code, e.g. "DE", "US" or "BE-VLG"
-            String countryCode = iter.get(countryEnumEncodedValue).getAlpha2();
-            Map<String, String> tags = new HashMap<>();
-            tags.put("highway", iter.get(roadClassEnc).toString());
-            if (iter.get(roundaboutEnc))
-                tags.put("junction", "roundabout");
-            if (lanesEnc != null && iter.get(lanesEnc) > 0)
-                tags.put("lanes", "" + iter.get(lanesEnc));
-            if (surfaceEnc != null && iter.get(surfaceEnc) != Surface.MISSING)
-                tags.put("surface", iter.get(surfaceEnc).toString());
-
             // This is tricky as it could be a highly customized (car) profile.
             // if (isOneway(iter)) tags.put("oneway", "yes");
 
             double fwdMaxSpeedPureOSM = iter.get(maxSpeedEnc);
             double bwdMaxSpeedPureOSM = iter.getReverse(maxSpeedEnc);
 
+            // skip library if max_speed is known
+            if (fwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED) continue;
             // library does not work for the case that forward/backward are different
             if (fwdMaxSpeedPureOSM != bwdMaxSpeedPureOSM) continue;
 
             // In DefaultMaxSpeedParser and in OSMMaxSpeedParser we don't have the rural/urban info,
             // but now we have and can fill the country-dependent max_speed value.
-
             UrbanDensity urbanDensity = iter.get(urbanDensityEnc);
-            // if RURAL fill gaps of OSM max_speed with lib value (determined while *all* OSM tags were available)
-            double maxSpeedRuralDefault = internalMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
-            if (maxSpeedRuralDefault != MaxSpeed.UNSET_SPEED && urbanDensity == UrbanDensity.RURAL) {
-                iter.set(maxSpeedEnc, maxSpeedRuralDefault, maxSpeedRuralDefault);
+            if (urbanDensity == UrbanDensity.RURAL) {
+                double maxSpeedRuralDefault = ruralMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
+                if (maxSpeedRuralDefault != MaxSpeed.UNSET_SPEED)
+                    iter.set(maxSpeedEnc, maxSpeedRuralDefault, maxSpeedRuralDefault);
             } else {
-                // Here either fwd and bwd are UNSET or both have same value.
-                // The library does not support forward and backward so do not call it in that case.
-
-                if (fwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED)
-                    tags.put("maxspeed", "" + Math.round(fwdMaxSpeedPureOSM));
-
-                LegalDefaultSpeeds.Result result = defaultSpeeds.getSpeedLimits(countryCode, tags, relTags, (name, eval) -> {
-                    if (eval.invoke()) return true;
-                    if ("urban".equals(name))
-                        return urbanDensity != UrbanDensity.RURAL;
-                    if ("rural".equals(name))
-                        return urbanDensity == UrbanDensity.RURAL;
-                    return false;
-                });
-                if (result != null) {
-                    Integer max = parseInt(result.getTags().get("maxspeed"));
-                    if (max != null)
-                        iter.set(maxSpeedEnc, max, max);
-                }
+                double maxSpeedUrbanDefault = urbanMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
+                if (maxSpeedUrbanDefault != MaxSpeed.UNSET_SPEED)
+                    iter.set(maxSpeedEnc, maxSpeedUrbanDefault, maxSpeedUrbanDefault);
             }
         }
 
@@ -153,15 +131,6 @@ public class MaxSpeedCalculator {
 
     public void close() {
         dataAccess.close();
-    }
-
-    Integer parseInt(String str) {
-        if (str == null) return null;
-        try {
-            return Integer.parseInt(str);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
     }
 
     static class SpeedLimitsJson {
