@@ -73,12 +73,12 @@ public class MaxSpeedCalculator {
         return new EdgeIntAccess() {
 
             public int getInt(int edgeId, int index) {
-                dataAccess.ensureCapacity(edgeId * 2L);
+                dataAccess.ensureCapacity(edgeId * 2L + 2L);
                 return dataAccess.getShort(edgeId * 2L);
             }
 
             public void setInt(int edgeId, int index, int value) {
-                dataAccess.ensureCapacity(edgeId * 2L);
+                dataAccess.ensureCapacity(edgeId * 2L + 2L);
                 if (value > Short.MAX_VALUE)
                     throw new IllegalStateException("value too large for short: " + value);
                 dataAccess.setShort(edgeId * 2L, (short) value);
