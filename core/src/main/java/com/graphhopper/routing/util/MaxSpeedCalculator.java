@@ -73,6 +73,7 @@ public class MaxSpeedCalculator {
         return new EdgeIntAccess() {
 
             public int getInt(int edgeId, int index) {
+                dataAccess.ensureCapacity(edgeId * 2L);
                 return dataAccess.getShort(edgeId * 2L);
             }
 
