@@ -662,9 +662,9 @@ public class GraphHopper {
 
         if (maxSpeedCalculator != null) {
             if (!encodingManager.hasEncodedValue(Country.KEY))
-                throw new IllegalArgumentException("MaxSpeedCalculator needs country");
+                throw new IllegalArgumentException("max_speed_calculator needs country");
             if (!encodingManager.hasEncodedValue(UrbanDensity.KEY))
-                throw new IllegalArgumentException("MaxSpeedCalculator needs urban_density");
+                throw new IllegalArgumentException("max_speed_calculator needs urban_density");
             osmParsers.addWayTagParser(maxSpeedCalculator.createParser());
         }
 

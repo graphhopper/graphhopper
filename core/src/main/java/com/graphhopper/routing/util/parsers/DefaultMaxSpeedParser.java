@@ -30,14 +30,16 @@ public class DefaultMaxSpeedParser implements TagParser {
         if (Double.isNaN(maxSpeed)) {
             Country country = way.getTag("country", null);
             if (country != null) {
+                Map<String, String> tags = fixType(way.getTags());
                 LegalDefaultSpeeds.Result result = speeds.getSpeedLimits(country.getAlpha2(),
-                        fixType(way.getTags()), Collections.emptyList(), (name, eval) -> eval.invoke());
+                        tags, Collections.emptyList(), (name, eval) -> eval.invoke());
                 if (result != null)
                     maxSpeed = OSMValueExtractor.stringToKmh(result.getTags().get("maxspeed"));
             }
         }
 
-        carMaxSpeedEnc.setDecimal(false, edgeId, externalAccess, maxSpeed);
+        if (!Double.isNaN(maxSpeed))
+            carMaxSpeedEnc.setDecimal(false, edgeId, externalAccess, maxSpeed);
     }
 
     Map<String, String> fixType(Map<String, Object> tags) {

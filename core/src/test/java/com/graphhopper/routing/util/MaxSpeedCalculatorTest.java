@@ -18,6 +18,7 @@ import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.ev.UrbanDensity.CITY;
 import static com.graphhopper.routing.ev.UrbanDensity.RURAL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class MaxSpeedCalculatorTest {
 
@@ -163,15 +164,6 @@ class MaxSpeedCalculatorTest {
     }
 
     @Test
-    public void testRawAccess_RuralIsDefault_IfNoUrbanDensityWasSet() {
-        Map<String, String> tags = new HashMap<>();
-        tags.put("highway", "primary");
-        LegalDefaultSpeeds.Result res = defaultSpeeds.getSpeedLimits(Country.DEU.getAlpha2(), tags, new ArrayList<>(), (name, eval) -> eval.invoke());
-
-        assertEquals("100", res.getTags().get("maxspeed").toString());
-    }
-
-    @Test
     public void testLivingStreetWithMaxSpeed() {
         EdgeIteratorState edge = createEdge();
         edge.set(countryEnc, Country.DEU);
@@ -182,5 +174,39 @@ class MaxSpeedCalculatorTest {
         calc.fillMaxSpeed(graph, em);
         assertEquals(30, edge.get(maxSpeedEnc), 1);
         assertEquals(30, edge.getReverse(maxSpeedEnc), 1);
+    }
+
+    @Test
+    public void testFwdBwd() {
+        EdgeIteratorState edge = createEdge();
+        edge.set(countryEnc, Country.DEU);
+        edge.set(roadClassEnc, PRIMARY);
+        edge.set(maxSpeedEnc, 50, 70);
+        calc.getInternalMaxSpeedEnc().setDecimal(false, edge.getEdge(), calc.getInternalMaxSpeedStorage(), 100);
+        calc.fillMaxSpeed(graph, em);
+        // internal max speed must be ignored as library currently ignores forward/backward
+        assertEquals(50, edge.get(maxSpeedEnc), 1);
+        assertEquals(70, edge.getReverse(maxSpeedEnc), 1);
+    }
+
+    @Test
+    public void testRawAccess_RuralIsDefault_IfNoUrbanDensityWasSet() {
+        Map<String, String> tags = new HashMap<>();
+        tags.put("highway", "primary");
+        LegalDefaultSpeeds.Result res = defaultSpeeds.getSpeedLimits(Country.DEU.getAlpha2(), tags, new ArrayList<>(), (name, eval) -> eval.invoke());
+
+        assertEquals("100", res.getTags().get("maxspeed").toString());
+    }
+
+    @Test
+    public void testRawAccess_FwdBwdSpeedsAreIgnored() {
+        Map<String, String> tags = new HashMap<>();
+        tags.put("highway", "primary");
+        tags.put("maxspeed:forward", "70");
+        tags.put("maxspeed:backward", "30");
+        LegalDefaultSpeeds.Result res = defaultSpeeds.getSpeedLimits(Country.DEU.getAlpha2(), tags, new ArrayList<>(), (name, eval) -> eval.invoke());
+
+        assertNull(res.getTags().get("maxspeed:forward"));
+        assertEquals("100", res.getTags().get("maxspeed").toString());
     }
 }

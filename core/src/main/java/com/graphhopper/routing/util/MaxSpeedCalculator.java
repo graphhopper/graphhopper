@@ -79,13 +79,10 @@ public class MaxSpeedCalculator {
     }
 
     /**
-     * This method sets max_speed values without a value (UNSET_SPEED) to a value or overwrites the
-     * max_speed for non RURAL roads depending on the country, road_class etc.
-     * <p>
-     * In OSMMaxSpeedParser we set the max_speed value based on country and many OSM tags
-     * but the urban_density is missing, and we use the default speed (for rural). Here we
-     * do not have all the information (as OSM tags to encoded values is not yet lossless),
-     * and so we do not overwrite the max_speed in case urban_density == RURAL.
+     * This method sets max_speed values where the value is UNSET_SPEED to a value determined by
+     * the default speed library which is country-dependent. The rural max_speed is based on all
+     * OSM tags. However, the ciy max_speed is currently only based on the information in the
+     * encoded values: road_class, surface, lanes and roundabout.
      */
     public void fillMaxSpeed(Graph graph, EncodingManager em) {
         EnumEncodedValue<UrbanDensity> urbanDensityEnc = em.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
@@ -104,8 +101,10 @@ public class MaxSpeedCalculator {
             String countryCode = iter.get(countryEnumEncodedValue).getAlpha2();
             Map<String, String> tags = new HashMap<>();
             tags.put("highway", iter.get(roadClassEnc).toString());
-            if (iter.get(roundaboutEnc)) tags.put("junction", "roundabout");
-            if (lanesEnc != null) tags.put("lanes", "" + iter.get(lanesEnc));
+            if (iter.get(roundaboutEnc))
+                tags.put("junction", "roundabout");
+            if (lanesEnc != null && iter.get(lanesEnc) > 0)
+                tags.put("lanes", "" + iter.get(lanesEnc));
             if (surfaceEnc != null && iter.get(surfaceEnc) != Surface.MISSING)
                 tags.put("surface", iter.get(surfaceEnc).toString());
 
@@ -115,15 +114,18 @@ public class MaxSpeedCalculator {
             double fwdMaxSpeedPureOSM = iter.get(maxSpeedEnc);
             double bwdMaxSpeedPureOSM = iter.getReverse(maxSpeedEnc);
 
-            // In DefaultMaxSpeedParser and in OSMMaxSpeedParser we don't have the rural/urban info.
-            // So we have to wait until fillMaxSpeed to determine final country-dependent max_speed value.
+            // library does not work for the case that forward/backward are different
+            if (fwdMaxSpeedPureOSM != bwdMaxSpeedPureOSM) continue;
+
+            // In DefaultMaxSpeedParser and in OSMMaxSpeedParser we don't have the rural/urban info,
+            // but now we have and can fill the country-dependent max_speed value.
 
             UrbanDensity urbanDensity = iter.get(urbanDensityEnc);
             // if RURAL fill gaps of OSM max_speed with lib value (determined while *all* OSM tags were available)
             double maxSpeedRuralDefault = internalMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
             if (maxSpeedRuralDefault != MaxSpeed.UNSET_SPEED && urbanDensity == UrbanDensity.RURAL) {
                 iter.set(maxSpeedEnc, maxSpeedRuralDefault, maxSpeedRuralDefault);
-            } else if (bwdMaxSpeedPureOSM == fwdMaxSpeedPureOSM) {
+            } else {
                 // Here either fwd and bwd are UNSET or both have same value.
                 // The library does not support forward and backward so do not call it in that case.
 
@@ -146,7 +148,7 @@ public class MaxSpeedCalculator {
             }
         }
 
-        LoggerFactory.getLogger(getClass()).info("filled max_speed from LegalDefaultSpeeds, took: " + sw.stop().getSeconds());
+        LoggerFactory.getLogger(getClass()).info("max_speed_calculator took: " + sw.stop().getSeconds());
     }
 
     public void close() {
