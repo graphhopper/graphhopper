@@ -25,9 +25,7 @@ import com.graphhopper.util.Helper;
  * value OTHER. The NO value does not permit any access.
  */
 public enum RoadAccess {
-    YES("yes"), DESTINATION("destination"), CUSTOMERS("customers"), DELIVERY("delivery"),
-    FORESTRY("forestry"), AGRICULTURAL("agricultural"),
-    PRIVATE("private"), OTHER("other"), NO("no");
+    YES, DESTINATION, CUSTOMERS, DELIVERY, FORESTRY, AGRICULTURAL, PRIVATE, OTHER, NO;
 
     public static final String KEY = "road_access";
 
@@ -35,15 +33,9 @@ public enum RoadAccess {
         return new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class);
     }
 
-    private final String name;
-
-    RoadAccess(String name) {
-        this.name = name;
-    }
-
     @Override
     public String toString() {
-        return name;
+        return Helper.toLowerCase(super.toString());
     }
 
     public static RoadAccess find(String name) {

@@ -85,15 +85,16 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
                     return WayAccess.CAN_SKIP;
                 if (intendedValues.contains(firstValue) ||
                         // implied default is allowed only if foot and bicycle is not specified:
-                        firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle"))
+                        firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle") ||
+                        // if hgv is allowed than smaller trucks and cars are allowed too
+                        way.hasTag("hgv", "yes"))
                     return WayAccess.FERRY;
             }
             return WayAccess.CAN_SKIP;
         }
 
-        if ("service".equals(highwayValue) && "emergency_access".equals(way.getTag("service"))) {
+        if ("service".equals(highwayValue) && "emergency_access".equals(way.getTag("service")))
             return WayAccess.CAN_SKIP;
-        }
 
         if ("track".equals(highwayValue) && !trackTypeValues.contains(way.getTag("tracktype")))
             return WayAccess.CAN_SKIP;

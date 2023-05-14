@@ -15,7 +15,7 @@ public enum Crossing {
 
     @Override
     public String toString() {
-        return Helper.toLowerCase(name());
+        return Helper.toLowerCase(super.toString());
     }
 
     public static Crossing find(String name) {

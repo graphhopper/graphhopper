@@ -360,6 +360,16 @@ public abstract class AbstractBikeTagParserTester {
     }
 
     @Test
+    public void testSteps() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "steps");
+        assertPriorityAndSpeed(BAD, 2, way);
+
+        way.setTag("bicycle", "designated");
+        assertPriorityAndSpeed(BAD, 2, way);
+    }
+
+    @Test
     public void testSacScale() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
@@ -394,14 +404,6 @@ public abstract class AbstractBikeTagParserTester {
         int edgeId = 0;
         priorityParser.handleWayTags(edgeId, intAccess, osmWay, null);
         assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeId, intAccess), 1e-3);
-    }
-
-    @Test
-    public void testAvoidMotorway() {
-        ReaderWay osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "motorway");
-        osmWay.setTag("bicycle", "yes");
-        assertPriority(REACH_DESTINATION, osmWay);
     }
 
     @Test

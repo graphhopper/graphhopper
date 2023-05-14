@@ -25,8 +25,7 @@ import com.graphhopper.util.Helper;
  */
 public enum RouteNetwork {
 
-    MISSING("missing"), INTERNATIONAL("international"), NATIONAL("national"), REGIONAL("regional"),
-    LOCAL("local"), OTHER("other");
+    MISSING, INTERNATIONAL, NATIONAL, REGIONAL, LOCAL, OTHER;
 
     public static String key(String prefix) {
         return prefix + "_network";
@@ -36,15 +35,9 @@ public enum RouteNetwork {
         return new EnumEncodedValue<>(name, RouteNetwork.class);
     }
 
-    private final String name;
-
-    RouteNetwork(String name) {
-        this.name = name;
-    }
-
     @Override
     public String toString() {
-        return name;
+        return Helper.toLowerCase(super.toString());
     }
 
     public static RouteNetwork find(String name) {
