@@ -106,7 +106,7 @@ public class VehicleTagParsers {
     }
 
     public List<TagParser> getTagParsers() {
-        return Arrays.asList(accessParser, speedParser, priorityParser);
+        return priorityParser == null ? Arrays.asList(accessParser, speedParser) : Arrays.asList(accessParser, speedParser, priorityParser);
     }
 
 }
