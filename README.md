@@ -177,8 +177,7 @@ Read more about the technical details [here](./docs/core/technical.md).
 ## License
 
 We chose the Apache License to make it easy for you to embed GraphHopper in your products, even closed source.
-We suggest that you contribute back your changes, as GraphHopper evolves fast,
-but of course this is not necessary.
+We suggest that you contribute back your changes, as GraphHopper evolves fast.
 
 ## OpenStreetMap Support
 
@@ -209,7 +208,7 @@ See [our example application](./example/src/main/java/com/graphhopper/example/Ro
 
 You can customize GraphHopper with Java knowledge (with a high and low level API) and also without Java knowledge using the [custom models](./docs/core/custom-models.md).
 
-### Web UI and API
+### Web API
 
 With the web module, we provide code to query GraphHopper over HTTP and decrease bandwidth usage as much as possible.
 For that we use an efficient polyline encoding, the Ramer–Douglas–Peucker algorithm, and a simple 
@@ -229,26 +228,25 @@ A fast and production ready map visualization for the Desktop can be implemented
 
 Here is a list of the more detailed features:
 
- * Based on Java and simple start for developers via Maven.
  * Works out of the box with OpenStreetMap (osm/xml and pbf) and can be adapted to custom data
  * OpenStreetMap integration: stores and considers road type, speed limit, the surface, barriers, access restrictions, ferries, [conditional access restrictions](https://github.com/graphhopper/graphhopper/pull/621), ...
  * GraphHopper is fast. And with the so called "Contraction Hierarchies" it can be even faster (enabled by default).
  * Memory efficient data structures, algorithms and [the low and high level API](./docs/core/low-level-api.md) is tuned towards ease of use and efficiency
- * Provides a simple [web API](./docs/web/api-doc.md) including JavaScript and Java clients
  * Multiple weightings (fastest/shortest/custom/...) and pre-built routing profiles: car, bike, racing bike, mountain bike, foot, hike, motorcycle, wheelchair, ...
  * [Customization of these profiles](./docs/core/profiles.md#custom-profiles) are possible and e.g. get truck routing or support for cargo bikes and [many other changes](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/)
+ * Provides a powerful [web API](./docs/web/api-doc.md) that exposes the data from OpenStreetMap and allows customizing the vehicle profiles per request. With JavaScript and Java clients.
  * Does [map matching](./map-matching)
  * Supports public transit routing and [GTFS](./reader-gtfs/README.md).
- * Offers turn instructions in more than 42 languages, contribute or improve [here](./docs/core/translations.md)
+ * Offers turn instructions in more than 45 languages, contribute or improve [here](./docs/core/translations.md)
  * Displays and takes into account [elevation data](./docs/core/elevation.md)
- * Can apply [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexible and hybrid mode only)
  * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424)
  * [Turn costs and restrictions](./docs/core/turn-restrictions.md)
  * Country specific routing via country rules
- * Allows customizing routing behavior using custom areas  
+ * Allows customizing routing behavior using custom areas
  * The core uses only a few dependencies (hppc, jts, janino and slf4j)
  * Scales from small indoor-sized to world-wide-sized graphs
  * Finds nearest point on street e.g. to get elevation or 'snap to road' or being used as spatial index (see [#1485](https://github.com/graphhopper/graphhopper/pull/1485))
  * Calculates isochrones and [shortest path trees](https://github.com/graphhopper/graphhopper/pull/1577)
  * Shows the whole road network in the browser for debugging purposes ("vector tile support") [#1572](https://github.com/graphhopper/graphhopper/pull/1572)
  * Shows details along a route like road_class or max_speed ("path details") [#1142](https://github.com/graphhopper/graphhopper/pull/1142)
+ * Written Java and simple start for developers via Maven.
