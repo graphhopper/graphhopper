@@ -93,6 +93,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         oppositeLanes.add("opposite");
         oppositeLanes.add("opposite_lane");
         oppositeLanes.add("opposite_track");
+        oppositeLanes.add("opposite_share_busway");
 
         barriers.add("fence");
 
@@ -586,11 +587,20 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     }
 
     protected void handleAccess(IntsRef edgeFlags, ReaderWay way) {
+        boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
+        boolean isOnewayForCars = isRoundabout || way.hasTag("oneway", oneways);
+        boolean isBackwardOnewayForCars = way.hasTag("oneway", "-1");
+        boolean hasBikeExceptionToOneway = (
+            way.hasTag("oneway:bicycle", "no")
+            || way.hasTag("cycleway", oppositeLanes)
+            || way.hasTag("cycleway:left:oneway", "-1", "no")
+            || way.hasTag("cycleway:right:oneway", "-1", "no")
+        );
 
-        if (isOneway(way) || roundaboutEnc.getBool(false, edgeFlags)) {
-            boolean isBackward = isBackwardOneway(way);
-            accessEnc.setBool(isBackward, edgeFlags, true);
+        if (isOnewayForCars && !hasBikeExceptionToOneway) {
+            accessEnc.setBool(isBackwardOnewayForCars, edgeFlags, true);
         } else {
+            // Two-way for bikes
             accessEnc.setBool(false, edgeFlags, true);
             accessEnc.setBool(true, edgeFlags, true);
         }
@@ -634,21 +644,6 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     void setSpecificClassBicycle(String subkey) {
         classBicycleKey = "class:bicycle:" + subkey;
-    }
-
-    /**
-     * make sure that isOneway is called before
-     */
-    protected boolean isBackwardOneway(ReaderWay way) {
-        return way.hasTag("oneway", "-1")
-                || way.hasTag("oneway:bicycle", "-1")
-                || way.hasTag("cycleway:left:oneway", "-1")
-                || way.hasTag("cycleway:right:oneway", "-1")
-                || way.hasTag("vehicle:forward", restrictedValues)
-                || way.hasTag("bicycle:forward", restrictedValues)
-                || way.hasTag("cycleway", oppositeLanes)
-                || way.hasTag("cycleway:left", oppositeLanes)
-                || way.hasTag("cycleway:right", oppositeLanes);
     }
 
     protected boolean isOneway(ReaderWay way) {
