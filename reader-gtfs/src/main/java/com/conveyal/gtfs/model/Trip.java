@@ -75,14 +75,19 @@ public class Trip extends Entity {
             t.feed = feed;
             t.feed_id = feed.feedId;
 
-            // Bikes are not allowed on MUNI Metro, LRVs, cable cars, and historic vehicles
+            // Hardcoded workarounds for incomplete/wrong SF Bay Area data we've seen.
+            // We also want to look up the associated route to check referential integrity
+            // (but not store a reference; see below).
             // TODO: no longer hardcode these
-            if (Arrays.asList("SF:J", "SF:K", "SF:T", "SF:L", "SF:M", "SF:N", "SF:F", "SF:E", "SF:PH", "SF:C", "SF:PM", "SF:S")
-                    .contains(t.route_id)) {
+            Route route = getRefField("route_id", true, feed.routes);
+
+            // Bikes are only allowed on SFMTA/Muni buses including trolleybuses,
+            // not on any other trip types (LRV, cable car, etc.) operated by the agency.
+            if (route.agency_id.equals("SF") && route.route_type != 3 && route.route_type != 11) {
                 t.bikes_allowed = 2;
             }
-            // Bikes are allowed on County Connection busses but the data is wrong
-            if (t.route_id.startsWith("CC:")) {
+            // Bikes are allowed on County Connection busses but the data is wrong (May 2023)
+            if (route.agency_id.equals("CC")) {
                 t.bikes_allowed = 1;
             }
 
@@ -94,7 +99,7 @@ public class Trip extends Entity {
              */
             // TODO confirm existence of shape ID
             getRefField("service_id", true, feed.services);
-            getRefField("route_id", true, feed.routes);
+            // Route existence confirmed above
         }
 
     }
