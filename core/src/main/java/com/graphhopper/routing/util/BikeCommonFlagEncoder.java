@@ -62,6 +62,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     private int avoidSpeedLimit;
     EnumEncodedValue<RouteNetwork> bikeRouteEnc;
     EnumEncodedValue<Smoothness> smoothnessEnc;
+    EnumEncodedValue<Cycleway> cyclewayEnc;
     Map<RouteNetwork, Double> routeMap = new HashMap<>();
     Map<Cycleway, Double> cyclewayMap = new EnumMap<>(Cycleway.class);
     Map<String, Double> highwayMap = new HashMap<>();
@@ -241,6 +242,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
         bikeRouteEnc = getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
         smoothnessEnc = getEnumEncodedValue(Smoothness.KEY, Smoothness.class);
+        // For assigning penalties based on type of bike infra, use the forward and
+        // backward cycleway values already computed by OSMCyclewayParser.
+        cyclewayEnc = getEnumEncodedValue(Cycleway.KEY, Cycleway.class);
     }
 
     @Override
@@ -536,42 +540,22 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             penaltyMap.put(CYCLE_INFRA_KEY, cyclewayMap.get(SHARED_LANE));
         }
 
-        DrivingSide drivingSide = DrivingSide.find(way.getTag("driving_side"));
-        CountryRule countryRule = way.getTag("country_rule", null);
-        if (countryRule != null) {
-            drivingSide = countryRule.getDrivingSide(way, drivingSide);
-        }
+        Cycleway cyclewayForward = cyclewayEnc.getEnum(false, edgeFlags),
+                cyclewayBackward = cyclewayEnc.getEnum(true, edgeFlags);
 
-        Cycleway cycleway = Cycleway.find(way.getFirstPriorityTag(Arrays.asList("cycleway", "cycleway:both"))),
-                cyclewayForward = Cycleway.find(way.getTag("cycleway:" + drivingSide.toString())),
-                cyclewayBackward = Cycleway.find(way.getTag("cycleway:" + DrivingSide.reverse(drivingSide).toString()));
-
-        Double cyclewayPenalty = cyclewayMap.get(cycleway),
-                cyclewayForwardPenalty = cyclewayMap.get(cyclewayForward),
+        Double cyclewayForwardPenalty = cyclewayMap.get(cyclewayForward),
                 cyclewayBackwardPenalty = cyclewayMap.get(cyclewayBackward);
 
-        if (withTrafficCyclewayTags.contains(cycleway))
-            cyclewayPenalty = PenaltyCode.from(highwayPenalty).tickDownBy(1).getValue();
         if (withTrafficCyclewayTags.contains(cyclewayForward))
             cyclewayForwardPenalty = PenaltyCode.from(highwayPenalty).tickDownBy(1).getValue();
         if (withTrafficCyclewayTags.contains(cyclewayBackward))
             cyclewayBackwardPenalty = PenaltyCode.from(highwayPenalty).tickDownBy(1).getValue();
 
-        if (Objects.nonNull(cyclewayPenalty)) {
-            penaltyMap.put(CYCLE_INFRA_KEY, cyclewayPenalty);
+        if (Objects.nonNull(cyclewayForwardPenalty)) {
+            penaltyMap.put(false, CYCLE_INFRA_KEY, cyclewayForwardPenalty);
         }
-        if (isOneway(way) || roundaboutEnc.getBool(false, edgeFlags)) {
-            // On oneway streets, any accessible infrastructure works
-            Stream.of(cyclewayForwardPenalty, cyclewayBackwardPenalty)
-                    .filter(Objects::nonNull)
-                    .forEach(p -> penaltyMap.put(CYCLE_INFRA_KEY, p));
-        } else {
-            if (Objects.nonNull(cyclewayForwardPenalty)) {
-                penaltyMap.put(false, CYCLE_INFRA_KEY, cyclewayForwardPenalty);
-            }
-            if (Objects.nonNull(cyclewayBackwardPenalty)) {
-                penaltyMap.put(true, CYCLE_INFRA_KEY, cyclewayBackwardPenalty);
-            }
+        if (Objects.nonNull(cyclewayBackwardPenalty)) {
+            penaltyMap.put(true, CYCLE_INFRA_KEY, cyclewayBackwardPenalty);
         }
 
         String classBicycleValue = way.getTag(classBicycleKey);
@@ -644,16 +628,5 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     void setSpecificClassBicycle(String subkey) {
         classBicycleKey = "class:bicycle:" + subkey;
-    }
-
-    protected boolean isOneway(ReaderWay way) {
-        return way.hasTag("oneway", oneways)
-                || way.hasTag("oneway:bicycle", oneways)
-                || way.hasTag("cycleway:left:oneway", oneways)
-                || way.hasTag("cycleway:right:oneway", oneways)
-                || way.hasTag("vehicle:backward", restrictedValues)
-                || way.hasTag("vehicle:forward", restrictedValues)
-                || way.hasTag("bicycle:backward", restrictedValues)
-                || way.hasTag("bicycle:forward", restrictedValues);
     }
 }
