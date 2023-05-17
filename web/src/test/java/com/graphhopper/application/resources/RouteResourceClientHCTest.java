@@ -72,8 +72,8 @@ public class RouteResourceClientHCTest {
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
                         new Profile("car").setVehicle("car").setWeighting("fastest"),
-                        new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"),
-                        new CustomProfile("my_custom_car").setCustomModel(new CustomModel()).setVehicle("car")
+                        new CustomProfile("bike").setVehicle("bike"),
+                        new CustomProfile("my_custom_car").setVehicle("car")
                 ))
                 .setCHProfiles(Arrays.asList(new CHProfile("car"), new CHProfile("bike")));
         return config;
