@@ -34,6 +34,7 @@ public class CustomProfile extends Profile {
     public CustomProfile(String name) {
         super(name);
         setWeighting(CustomWeighting.NAME);
+        setCustomModel(new CustomModel());
     }
 
     public CustomProfile setCustomModel(CustomModel customModel) {
