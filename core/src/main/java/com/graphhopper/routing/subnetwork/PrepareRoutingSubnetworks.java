@@ -168,12 +168,12 @@ public class PrepareRoutingSubnetworks {
         }
 
         int allowedMarked = graph.getEdges() / 2;
-        if (markedEdges / 2 > allowedMarked)
-            throw new IllegalStateException("Too many total (directed) edges were marked as subnetwork edges: " + markedEdges + " out of " + (2 * graph.getEdges()) + "\n" +
-                    "The maximum number of subnetwork edges is: " + (2 * allowedMarked));
+        if (markedEdges > allowedMarked)
+            throw new IllegalStateException("Too many edges were marked as subnetwork edges: " + markedEdges + " out of " + graph.getEdges() + "\n" +
+                    "The maximum number of subnetwork edges is: " + allowedMarked);
 
-        logger.info(jobName + " - Marked " + subnetworks + " subnetworks (biggest: " + biggestSubnetwork + " edges) -> " +
-                (ccs.getTotalComponents() - subnetworks) + " components(s) remain (smallest: " + smallestNonSubnetwork + ", biggest: " + ccs.getBiggestComponent().size() + " edges)"
+        logger.info(jobName + " - Marked " + subnetworks + " subnetworks (biggest: " + biggestSubnetwork + " edge keys) -> " +
+                (ccs.getTotalComponents() - subnetworks) + " components(s) remain (smallest: " + smallestNonSubnetwork + ", biggest: " + ccs.getBiggestComponent().size() + " edge keys)"
                 + ", total marked edges: " + markedEdges + ", took: " + sw.stop().getSeconds() + "s");
         return markedEdges;
     }
