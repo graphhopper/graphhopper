@@ -176,6 +176,8 @@ public class WaySegmentParser {
 
         @Override
         public void onFinish() {
+            LOGGER.info("end: {}, junction: {}, connection: {}, intermediate: {}, all: {}",
+                    nodeData.endNodes, nodeData.junctionNodes, nodeData.connectionNodes, nodeData.intermediateNodes, nodeData.idsByOsmNodeIds.getSize());
             LOGGER.info("pass1 - finished, processed ways: " + nf(wayCounter) + ", accepted ways: " +
                     nf(acceptedWays) + ", way nodes: " + nf(nodeData.getNodeCount()) + ", relations: " +
                     nf(relationsCounter) + ", " + Helper.getMemInfo());

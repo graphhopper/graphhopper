@@ -60,7 +60,7 @@ class OSMNodeData {
     static final long CONNECTION_NODE = 2;
 
     // this map stores our internal node id for each OSM node
-    private final LongLongMap idsByOsmNodeIds;
+    public final LongLongMap idsByOsmNodeIds;
 
     // here we store node coordinates, separated for pillar and tower nodes
     private final PillarInfo pillarNodes;
@@ -118,12 +118,35 @@ class OSMNodeData {
         return id > CONNECTION_NODE || id < JUNCTION_NODE;
     }
 
+    long connectionNodes = 0;
+    long junctionNodes = 0;
+    long endNodes = 0;
+    long intermediateNodes = 0;
+
     public void setOrUpdateNodeType(long osmNodeId, long newNodeType, LongUnaryOperator nodeTypeUpdate) {
         long curr = idsByOsmNodeIds.get(osmNodeId);
-        if (curr == EMPTY_NODE)
+        if (curr == EMPTY_NODE) {
+            if (newNodeType == CONNECTION_NODE) connectionNodes++;
+            else if (newNodeType == JUNCTION_NODE) junctionNodes++;
+            else if (newNodeType == END_NODE) endNodes++;
+            else if (newNodeType == INTERMEDIATE_NODE) intermediateNodes++;
+            else throw new IllegalArgumentException("unexpected node type: " + newNodeType);
             idsByOsmNodeIds.put(osmNodeId, newNodeType);
-        else
-            idsByOsmNodeIds.put(osmNodeId, nodeTypeUpdate.applyAsLong(curr));
+        } else {
+            if (curr == CONNECTION_NODE) connectionNodes--;
+            else if (curr == JUNCTION_NODE) junctionNodes--;
+            else if (curr == END_NODE) endNodes--;
+            else if (curr == INTERMEDIATE_NODE) intermediateNodes--;
+            else throw new IllegalArgumentException("unexpected node type: " + curr);
+
+            long nodeType = nodeTypeUpdate.applyAsLong(curr);
+            if (nodeType == CONNECTION_NODE) connectionNodes++;
+            else if (nodeType == JUNCTION_NODE) junctionNodes++;
+            else if (nodeType == END_NODE) endNodes++;
+            else if (nodeType == INTERMEDIATE_NODE) intermediateNodes++;
+            else throw new IllegalArgumentException("unexpected node type: " + nodeType);
+            idsByOsmNodeIds.put(osmNodeId, nodeType);
+        }
     }
 
     /**
