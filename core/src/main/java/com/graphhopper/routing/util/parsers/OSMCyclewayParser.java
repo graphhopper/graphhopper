@@ -84,7 +84,7 @@ public class OSMCyclewayParser implements TagParser {
             String cyclewayLeftOnewayTag = readerWay.getTag("cycleway:left:oneway", "");
             boolean cyclewayLeftTwoway = cyclewayLeftOnewayTag.equals("no");
             boolean cyclewayLeftBackward = cyclewayLeftOnewayTag.equals("-1") || (
-                cyclewayLeftOnewayTag == "" && drivingSide == DrivingSide.RIGHT
+                cyclewayLeftOnewayTag.equals("") && drivingSide == DrivingSide.RIGHT
                 && !isOnewayForCars
             );
             if (cyclewayLeftTwoway || cyclewayLeftBackward)
@@ -97,7 +97,7 @@ public class OSMCyclewayParser implements TagParser {
             String cyclewayRightOnewayTag = readerWay.getTag("cycleway:right:oneway", "");
             boolean cyclewayRightTwoway = cyclewayRightOnewayTag.equals("no");
             boolean cyclewayRightBackward = cyclewayRightOnewayTag.equals("-1") || (
-                cyclewayRightOnewayTag == "" && drivingSide == DrivingSide.LEFT
+                cyclewayRightOnewayTag.equals("") && drivingSide == DrivingSide.LEFT
                 && !isOnewayForCars
             );
             if (cyclewayRightTwoway || cyclewayRightBackward)
