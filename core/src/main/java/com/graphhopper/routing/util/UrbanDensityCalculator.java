@@ -28,6 +28,7 @@ import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.BitSet;
 import java.util.function.ToDoubleFunction;
 
 public class UrbanDensityCalculator {
@@ -92,24 +93,26 @@ public class UrbanDensityCalculator {
             }
         };
         // temporarily write results to an external array for thread-safety
-        boolean[] isResidential = new boolean[graph.getEdges()];
+        BitSet isResidential = new BitSet(graph.getEdges());
         RoadDensityCalculator.calcRoadDensities(graph, (calculator, edge) -> {
             RoadClass roadClass = edge.get(roadClassEnc);
             if (roadClass == RoadClass.RESIDENTIAL || roadClass == RoadClass.LIVING_STREET) {
-                isResidential[edge.getEdge()] = true;
+                isResidential.set(edge.getEdge());
                 return;
             }
             double roadDensity = calculator.calcRoadDensity(edge, radius, calcRoadFactor);
-            isResidential[edge.getEdge()] = roadDensity * sensitivity >= 1.0;
+            if (roadDensity * sensitivity >= 1.0)
+                isResidential.set(edge.getEdge());
         }, threads);
-        for (int edge = 0; edge < isResidential.length; edge++)
-            graph.getEdgeIteratorState(edge, Integer.MIN_VALUE).set(urbanDensityEnc, isResidential[edge] ? UrbanDensity.RESIDENTIAL : UrbanDensity.RURAL);
+        for (int edge = 0; edge < isResidential.size(); edge++)
+            graph.getEdgeIteratorState(edge, Integer.MIN_VALUE).
+                    set(urbanDensityEnc, isResidential.get(edge) ? UrbanDensity.RESIDENTIAL : UrbanDensity.RURAL);
     }
 
     private static void calcCity(Graph graph, EnumEncodedValue<UrbanDensity> urbanDensityEnc,
                                  double radius, double sensitivity, int threads) {
         // do not modify the urban density values as long as we are still reading them -> store city flags in this array first
-        boolean[] isCity = new boolean[graph.getEdges()];
+        BitSet isCity = new BitSet(graph.getEdges());
         final ToDoubleFunction<EdgeIteratorState> calcRoadFactor = edge -> edge.get(urbanDensityEnc) == UrbanDensity.RESIDENTIAL ? 1 : 0;
         RoadDensityCalculator.calcRoadDensities(graph, (calculator, edge) -> {
             UrbanDensity urbanDensity = edge.get(urbanDensityEnc);
@@ -117,10 +120,10 @@ public class UrbanDensityCalculator {
                 return;
             double roadDensity = calculator.calcRoadDensity(edge, radius, calcRoadFactor);
             if (roadDensity * sensitivity >= 1.0)
-                isCity[edge.getEdge()] = true;
+                isCity.set(edge.getEdge());
         }, threads);
-        for (int edge = 0; edge < isCity.length; edge++)
-            if (isCity[edge])
+        for (int edge = 0; edge < isCity.size(); edge++)
+            if (isCity.get(edge))
                 graph.getEdgeIteratorState(edge, Integer.MIN_VALUE).set(urbanDensityEnc, UrbanDensity.CITY);
     }
 }
