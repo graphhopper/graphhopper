@@ -65,8 +65,10 @@ public class OSMCyclewayParser implements TagParser {
 
         // If we find opposite_* tags, normalize them, and treat that as the final word
         // (discounting any contradictory left/right tags which would be a tagging error).
+        // Note: in this case it's ambiguous what forward infrastructure exists, so we
+        // set to missing. This is why this kind of tagging is deprecated in OSM.
         if (oppositeLanes.containsKey(cycleway)) {
-            cyclewayForward = Cycleway.SHARED_LANE;
+            cyclewayForward = Cycleway.MISSING;
             cyclewayBackward = oppositeLanes.get(cycleway);
         } else {
             // Driving side is needed to compute default directionality of cycleway:left/right.
