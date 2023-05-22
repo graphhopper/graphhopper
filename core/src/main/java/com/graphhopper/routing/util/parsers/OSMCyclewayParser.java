@@ -73,9 +73,16 @@ public class OSMCyclewayParser implements TagParser {
             // See defaults described in wiki:
             // https://wiki.openstreetmap.org/wiki/Key:cycleway:right:oneway
             DrivingSide drivingSide = DrivingSide.find(readerWay.getTag("driving_side"));
-            CountryRule countryRule = readerWay.getTag("country_rule", null);
-            if (countryRule != null) {
-                drivingSide = countryRule.getDrivingSide(readerWay, drivingSide);
+            if (drivingSide == DrivingSide.MISSING) {
+              // Note: This code will run in almost all cases. It's very
+              // uncommon for a way to have an exception to the driving side.
+              //
+              // Note also: country rules have to be turned on in the
+              // GraphHopper config file for this to work!
+              CountryRule countryRule = readerWay.getTag("country_rule", null);
+              if (countryRule != null) {
+                  drivingSide = countryRule.getDrivingSide(readerWay, drivingSide);
+              }
             }
             boolean isOnewayForCars = readerWay.hasTag("oneway", oneways);
 
