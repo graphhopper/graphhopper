@@ -91,6 +91,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         intendedValues.add("official");
         intendedValues.add("permissive");
 
+        // Now discouraged, cycleway=opposite_* tags mean a one-way road has some sort of
+        // accommodation for bicycles in the reverse direction. See:
+        // https://wiki.openstreetmap.org/wiki/Key:cycleway#Problems_with_opposite*_values
         oppositeLanes.add("opposite");
         oppositeLanes.add("opposite_lane");
         oppositeLanes.add("opposite_track");
@@ -574,6 +577,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         boolean isRoundabout = roundaboutEnc.getBool(false, edgeFlags);
         boolean isOnewayForCars = isRoundabout || way.hasTag("oneway", oneways);
         boolean isBackwardOnewayForCars = way.hasTag("oneway", "-1");
+        // Bike exceptions may include oneway:bicycle=no,
+        // the deprecated cycleway=opposite_* tags,
+        // or a left or right cycleway either backwards (-1) or two-way.
         boolean hasBikeExceptionToOneway = (
             way.hasTag("oneway:bicycle", "no")
             || way.hasTag("cycleway", oppositeLanes)
