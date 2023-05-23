@@ -63,7 +63,9 @@ public class MaxSpeedCalculator {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        return new LegalDefaultSpeeds(data.roadTypesByName, data.speedLimitsByCountryCode);
+        LegalDefaultSpeeds speeds = new LegalDefaultSpeeds(data.roadTypesByName, data.speedLimitsByCountryCode);
+//        speeds.setLimitOtherSpeeds(false);
+        return speeds;
     }
 
     /**
