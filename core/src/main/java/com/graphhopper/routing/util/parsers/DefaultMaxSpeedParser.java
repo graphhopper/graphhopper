@@ -63,7 +63,8 @@ public class DefaultMaxSpeedParser implements TagParser {
             "abutters", "bicycle_road", "bridge", "cyclestreet",
             "designation", "dual_carriageway", "expressway", "frontage_road",
             "hazard", "highway", "junction",
-            "lane_markings", "lanes", "lit", "motorroad", "oneway", "playground_zone",
+            "lane_markings", "lanes", "lit",
+            "maxweight", "maxgcweight"/*abandoned*/, "motorroad", "oneway", "playground_zone",
             "ref", "restriction", "rural",
             "school_zone", "service", "shoulder", "side_road", "sidewalk", "silver_zone", "surface",
             "tracktype", "tunnel", "width"));
