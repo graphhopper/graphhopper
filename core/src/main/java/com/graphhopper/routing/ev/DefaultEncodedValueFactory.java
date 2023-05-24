@@ -39,6 +39,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return MaxSpeed.create();
         } else if (MaxWeight.KEY.equals(name)) {
             return MaxWeight.create();
+        } else if (MaxWeightExcept.KEY.equals(name)) {
+            return MaxWeightExcept.create();
         } else if (MaxHeight.KEY.equals(name)) {
             return MaxHeight.create();
         } else if (MaxWidth.KEY.equals(name)) {

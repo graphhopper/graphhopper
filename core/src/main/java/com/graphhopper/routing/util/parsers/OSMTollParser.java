@@ -42,7 +42,7 @@ public class OSMTollParser implements TagParser {
         Toll toll;
         if (readerWay.hasTag("toll", "yes")) {
             toll = Toll.ALL;
-        } else if (readerWay.hasTag(HGV_TAGS, Collections.singletonList("yes"))) {
+        } else if (readerWay.hasTag(HGV_TAGS, "yes")) {
             toll = Toll.HGV;
         } else if (readerWay.hasTag("toll", "no")) {
             toll = Toll.NO;

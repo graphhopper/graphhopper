@@ -23,18 +23,23 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class OSMRoadAccessParserTest {
 
+    EnumEncodedValue<RoadAccess> roadAccessEnc = RoadAccess.create();
+    private OSMRoadAccessParser parser;
+
+    @BeforeEach
+    public void setup() {
+        roadAccessEnc.init(new EncodedValue.InitializerConfig());
+        parser = new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
+    }
     @Test
     void countryRule() {
-        EnumEncodedValue<RoadAccess> roadAccessEnc = RoadAccess.create();
-        roadAccessEnc.init(new EncodedValue.InitializerConfig());
-
-        OSMRoadAccessParser parser = new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR));
         IntsRef relFlags = new IntsRef(2);
         ReaderWay way = new ReaderWay(27L);
         way.setTag("highway", "track");
@@ -63,6 +68,16 @@ class OSMRoadAccessParserTest {
         parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
         assertEquals(RoadAccess.AGRICULTURAL, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
 
+    }
+
+    @Test
+    public void testPermit() {
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(27L);
+        way.setTag("motor_vehicle", "permit");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, new IntsRef(1));
+        assertEquals(RoadAccess.PRIVATE, roadAccessEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 
 }

@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class OSMMaxWeightParserTest {
+    private final int edgeId = 0;
     private DecimalEncodedValue mwEnc;
     private OSMMaxWeightParser parser;
     private IntsRef relFlags;
@@ -23,9 +24,8 @@ public class OSMMaxWeightParserTest {
 
     @Test
     public void testSimpleTags() {
-        ReaderWay readerWay = new ReaderWay(1);
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
-        int edgeId = 0;
+        ReaderWay readerWay = new ReaderWay(1);
         readerWay.setTag("highway", "primary");
         readerWay.setTag("maxweight", "5");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
@@ -36,5 +36,30 @@ public class OSMMaxWeightParserTest {
         readerWay.setTag("maxweight", "50");
         parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
         assertEquals(25.4, mwEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
+    }
+
+    @Test
+    public void testConditionalTags() {
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        ReaderWay readerWay = new ReaderWay(1);
+        readerWay.setTag("highway", "primary");
+        readerWay.setTag("hgv:conditional", "no @ (weight > 7.5)");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(7.5, mwEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay.setTag("hgv:conditional", "none @ (weight > 10t)");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(10, mwEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay.setTag("hgv:conditional", "no@ (weight > 7)");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(7, mwEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        readerWay.setTag("hgv:conditional", "no @ (maxweight > 6)"); // allow different tagging
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(6, mwEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
     }
 }

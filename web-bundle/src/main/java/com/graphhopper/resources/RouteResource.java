@@ -139,7 +139,7 @@ public class RouteResource {
 
         if (ghResponse.hasErrors()) {
             MultiException ex = new MultiException(ghResponse.getErrors());
-            logger.error(logStr, ex);
+            logger.info(logStr, ex);
             throw ex;
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()

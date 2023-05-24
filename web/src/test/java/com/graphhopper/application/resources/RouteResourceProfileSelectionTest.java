@@ -25,6 +25,8 @@ import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -40,6 +42,8 @@ import java.io.File;
 import java.util.Arrays;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -58,7 +62,7 @@ public class RouteResourceProfileSelectionTest {
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
                         new Profile("my_car").setVehicle("car").setWeighting("fastest"),
-                        new Profile("my_bike").setVehicle("bike").setWeighting("short_fastest"),
+                        new CustomProfile("my_bike").setCustomModel(new CustomModel().setDistanceInfluence(200d)).setVehicle("bike"),
                         new Profile("my_feet").setVehicle("foot").setWeighting("shortest")
                 ))
                 .setCHProfiles(Arrays.asList(
@@ -84,7 +88,7 @@ public class RouteResourceProfileSelectionTest {
     @ValueSource(strings = {"CH", "LM", "flex"})
     public void selectUsingProfile(String mode) {
         assertDistance("my_car", mode, 3563);
-        assertDistance("my_bike", mode, 3085);
+        assertDistance("my_bike", mode, 3296);
         assertDistance("my_feet", mode, 2935);
         assertError("my_pink_car", mode, "The requested profile 'my_pink_car' does not exist");
     }

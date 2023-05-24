@@ -34,9 +34,10 @@ public class TranslationMap {
     // ISO codes (639-1), use 'en_US' as reference
     private static final List<String> LOCALES = Arrays.asList("ar", "ast", "bg", "bn_BN", "ca",
             "cs_CZ", "da_DK", "de_DE", "el", "eo", "es", "en_US", "fa", "fil", "fi",
-            "fr_FR", "fr_CH", "gl", "he", "hr_HR", "hsb", "hu_HU", "in_ID", "it", "ja", "ko", "lt_LT", "nb_NO", "ne",
-            "nl", "pl_PL", "pt_BR", "pt_PT", "ro", "ru", "sk", "sl_SI", "sr_RS", "sv_SE", "tr", "uk",
-            "vi_VN", "zh_CN", "zh_HK", "zh_TW");
+            "fr_FR", "fr_CH", "gl", "he", "hr_HR", "hsb", "hu_HU", "in_ID", "it", "ja", "ko",
+            "kz", "lt_LT", "nb_NO", "ne", "nl", "pl_PL", "pt_BR", "pt_PT", "ro", "ru", "sk",
+            "sl_SI", "sr_RS", "sv_SE", "tr", "uk", "vi_VN", "zh_CN", "zh_HK", "zh_TW");
+
     private final Map<String, Translation> translations = new HashMap<>();
 
     public static int countOccurence(String phrase, String splitter) {

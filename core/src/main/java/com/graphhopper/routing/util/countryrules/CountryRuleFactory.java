@@ -28,11 +28,11 @@ import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.util.countryrules.europe.*;
 
 public class CountryRuleFactory {
-    
+
     private final Map<Country, CountryRule> rules = new EnumMap<>(Country.class);
-    
+
     public CountryRuleFactory() {
-        
+
         // Europe
         rules.put(ALB, new AlbaniaCountryRule());
         rules.put(AND, new AndorraCountryRule());
@@ -88,7 +88,7 @@ public class CountryRuleFactory {
     public CountryRule getCountryRule(Country country) {
         return rules.get(country);
     }
-    
+
     public Map<Country, CountryRule> getCountryToRuleMap() {
         return rules;
     }

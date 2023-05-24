@@ -54,214 +54,218 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
     public void testSpeedAndPriority() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
-        assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(BAD, 18, way);
 
         way.setTag("scenic", "yes");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(AVOID_MORE, 18, way);
 
         // Pushing section: this is fine as we obey the law!
         way.clearTags();
         way.setTag("highway", "footway");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
 
         // Use pushing section irrespective of the pavement
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
 
         way.clearTags();
         way.setTag("highway", "path");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
 
         way.clearTags();
         way.setTag("highway", "secondary");
         way.setTag("bicycle", "dismount");
-        assertPriorityAndSpeed(AVOID.getValue(), PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(AVOID, PUSHING_SECTION_SPEED, way);
 
         way.clearTags();
         way.setTag("highway", "secondary");
         way.setTag("hazmat", "designated");
-        assertPriorityAndSpeed(BAD.getValue(), 18, way);
+        assertPriorityAndSpeed(BAD, 18, way);
 
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(PREFER.getValue(), 10, way);
+        assertPriorityAndSpeed(PREFER, 10, way);
         way.setTag("segregated", "no");
-        assertPriorityAndSpeed(PREFER.getValue(), 10, way);
+        assertPriorityAndSpeed(PREFER, 10, way);
         way.setTag("segregated", "yes");
-        assertPriorityAndSpeed(PREFER.getValue(), 18, way);
+        assertPriorityAndSpeed(PREFER, 18, way);
 
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("surface", "paved");
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(PREFER.getValue(), 10, way);
+        assertPriorityAndSpeed(PREFER, 10, way);
         way.setTag("surface", "cobblestone");
-        assertPriorityAndSpeed(PREFER.getValue(), 8, way);
+        assertPriorityAndSpeed(PREFER, 8, way);
         way.setTag("segregated", "yes");
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(PREFER.getValue(), 18, way);
+        assertPriorityAndSpeed(PREFER, 18, way);
 
         way.clearTags();
         way.setTag("highway", "platform");
         way.setTag("surface", "paved");
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(PREFER.getValue(), 10, way);
+        assertPriorityAndSpeed(PREFER, 10, way);
         way.setTag("segregated", "yes");
-        assertPriorityAndSpeed(PREFER.getValue(), 18, way);
+        assertPriorityAndSpeed(PREFER, 18, way);
 
         way.clearTags();
         way.setTag("highway", "cycleway");
-        assertPriorityAndSpeed(VERY_NICE.getValue(), 18, way);
+        assertPriorityAndSpeed(VERY_NICE, 18, way);
         int cyclewaySpeed = 18;
         way.setTag("foot", "yes");
         way.setTag("segregated", "yes");
-        assertPriorityAndSpeed(VERY_NICE.getValue(), cyclewaySpeed, way);
+        assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
         way.setTag("segregated", "no");
-        assertPriorityAndSpeed(PREFER.getValue(), cyclewaySpeed, way);
+        assertPriorityAndSpeed(PREFER, cyclewaySpeed, way);
 
         // Make sure that "highway=cycleway" and "highway=path" with "bicycle=designated" give the same result
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("bicycle", "designated");
         // Assume foot=no for designated in absence of a foot tag
-        assertPriorityAndSpeed(VERY_NICE.getValue(), cyclewaySpeed, way);
+        assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
         way.setTag("foot", "yes");
-        assertPriorityAndSpeed(PREFER.getValue(), cyclewaySpeed, way);
+        assertPriorityAndSpeed(PREFER, cyclewaySpeed, way);
 
         way.setTag("foot", "no");
-        assertPriorityAndSpeed(VERY_NICE.getValue(), cyclewaySpeed, way);
+        assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
 
         way.setTag("segregated", "yes");
-        assertPriorityAndSpeed(VERY_NICE.getValue(), cyclewaySpeed, way);
+        assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
 
         way.setTag("segregated", "no");
-        assertPriorityAndSpeed(VERY_NICE.getValue(), cyclewaySpeed, way);
+        assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
 
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(PREFER.getValue(), 10, way);
+        assertPriorityAndSpeed(PREFER, 10, way);
 
         way.setTag("segregated", "yes");
-        assertPriorityAndSpeed(PREFER.getValue(), cyclewaySpeed, way);
+        assertPriorityAndSpeed(PREFER, cyclewaySpeed, way);
 
         way.setTag("surface", "unpaved");
-        assertPriorityAndSpeed(PREFER.getValue(), 12, way);
+        assertPriorityAndSpeed(PREFER, 12, way);
 
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(PREFER.getValue(), 18, way);
+        assertPriorityAndSpeed(PREFER, 18, way);
 
         way.clearTags();
         way.setTag("highway", "path");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
 
         // use pushing section
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "ground");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
 
         way.clearTags();
         way.setTag("highway", "platform");
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
 
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("surface", "paved");
         way.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(VERY_NICE.getValue(), cyclewaySpeed, way);
+        assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
 
         way.clearTags();
         way.setTag("highway", "platform");
         way.setTag("surface", "paved");
         way.setTag("bicycle", "designated");
-        assertPriorityAndSpeed(VERY_NICE.getValue(), cyclewaySpeed, way);
+        assertPriorityAndSpeed(VERY_NICE, cyclewaySpeed, way);
 
         way.clearTags();
         way.setTag("highway", "track");
-        assertPriorityAndSpeed(UNCHANGED.getValue(), 12, way);
+        assertPriorityAndSpeed(UNCHANGED, 12, way);
 
         way.setTag("tracktype", "grade1");
-        assertPriorityAndSpeed(UNCHANGED.getValue(), 18, way);
+        assertPriorityAndSpeed(UNCHANGED, 18, way);
 
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade2");
-        assertPriorityAndSpeed(UNCHANGED.getValue(), 12, way);
+        assertPriorityAndSpeed(UNCHANGED, 12, way);
 
         // test speed for allowed get off the bike types
         way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(UNCHANGED.getValue(), 12, way);
+        assertPriorityAndSpeed(UNCHANGED, 12, way);
 
         way.clearTags();
         way.setTag("highway", "steps");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), 2, way);
+        assertPriorityAndSpeed(BAD, 2, way);
 
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("bicycle", "use_sidepath");
-        assertPriorityAndSpeed(REACH_DESTINATION.getValue(), 18, way);
+        assertPriorityAndSpeed(REACH_DESTINATION, 18, way);
 
         way.clearTags();
         way.setTag("highway", "steps");
         way.setTag("surface", "wood");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), MIN_SPEED, way);
+        assertPriorityAndSpeed(BAD, MIN_SPEED, way);
         way.setTag("maxspeed", "20");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), MIN_SPEED, way);
+        assertPriorityAndSpeed(BAD, MIN_SPEED, way);
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(UNCHANGED.getValue(), 18, way);
+        assertPriorityAndSpeed(UNCHANGED, 18, way);
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "ground");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
         way.setTag("surface", "fine_gravel");
-        assertPriorityAndSpeed(UNCHANGED.getValue(), 18, way);
+        assertPriorityAndSpeed(UNCHANGED, 18, way);
 
         way.setTag("surface", "unknown_surface");
-        assertPriorityAndSpeed(UNCHANGED.getValue(), PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(UNCHANGED, PUSHING_SECTION_SPEED, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("surface", "fine_gravel");
-        assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(BAD, 18, way);
 
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("surface", "gravel");
         way.setTag("tracktype", "grade2");
-        assertPriorityAndSpeed(UNCHANGED.getValue(), 12, way);
+        assertPriorityAndSpeed(UNCHANGED, 12, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(BAD, 18, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
-        assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(BAD, 18, way);
 
         way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("surface", "asphalt");
-        assertPriorityAndSpeed(PREFER.getValue(), 18, way);
+        assertPriorityAndSpeed(PREFER, 18, way);
 
         way.clearTags();
         way.setTag("highway", "motorway");
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(REACH_DESTINATION, 18, way);
+
+        way.clearTags();
+        way.setTag("highway", "trunk");
+        assertPriorityAndSpeed(REACH_DESTINATION, 18, way);
     }
 
     @Test
@@ -305,25 +309,57 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("surface", "paved");
-        assertPriority(AVOID.getValue(), way);
+        assertPriority(BAD, way);
         way.setTag("cycleway", "track");
-        assertPriority(PREFER.getValue(), way);
+        assertPriority(PREFER, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("cycleway:left", "lane");
-        assertPriority(UNCHANGED.getValue(), way);
+        assertPriority(SLIGHT_PREFER, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("cycleway:right", "lane");
-        assertPriority(UNCHANGED.getValue(), way);
+        assertPriority(SLIGHT_PREFER, way);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("cycleway:both", "lane");
+        assertPriority(SLIGHT_PREFER, way);
 
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("oneway", "yes");
         way.setTag("cycleway:left", "opposite_lane");
-        assertPriority(AVOID.getValue(), way);
+        assertPriority(BAD, way);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway", "opposite_track");
+        assertPriority(SLIGHT_PREFER, way);
+
+        way.clearTags();
+        way.setTag("highway", "primary");
+        way.setTag("cycleway:bicycle", "designated");
+        assertPriority(PREFER, way);
+
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("bicycle_road", "yes");
+        assertPriority(VERY_NICE, way);
+
+        way.clearTags();
+        way.setTag("highway", "path");
+        way.setTag("cyclestreet", "yes");
+        assertPriority(VERY_NICE, way);
+
+        way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("cycleway", "lane");
+        way.setTag("cycleway:lane", "advisory");
+        assertPriority(SLIGHT_PREFER, way);
     }
 
     @Test
@@ -367,206 +403,42 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Test
-    public void testOneway() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "tertiary");
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        int edgeId = 0;
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-        way.setTag("oneway", "yes");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertFalse(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-        way.clearTags();
-        way.setTag("highway", "tertiary");
-        way.setTag("oneway:bicycle", "yes");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertFalse(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-        way.clearTags();
-        way.setTag("highway", "tertiary");
-        way.setTag("oneway", "yes");
-        way.setTag("oneway:bicycle", "no");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-        way.clearTags();
-
-        way.setTag("highway", "tertiary");
-        way.setTag("oneway", "yes");
-        way.setTag("oneway:bicycle", "-1");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-        way.clearTags();
-
-        way.setTag("highway", "tertiary");
-        way.setTag("oneway", "yes");
-        way.setTag("cycleway:right:oneway", "no");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-        way.clearTags();
-
-        way.setTag("highway", "tertiary");
-        way.setTag("oneway", "yes");
-        way.setTag("cycleway:right:oneway", "-1");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-        way.clearTags();
-
-        way.setTag("highway", "tertiary");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-        way.clearTags();
-
-        way.setTag("highway", "tertiary");
-        way.setTag("vehicle:forward", "no");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-        way.clearTags();
-
-        way.setTag("highway", "tertiary");
-        way.setTag("bicycle:forward", "no");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertFalse(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-        way.clearTags();
-
-        way.setTag("highway", "tertiary");
-        way.setTag("vehicle:backward", "no");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertFalse(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-        way.clearTags();
-
-        way.setTag("highway", "tertiary");
-        way.setTag("motor_vehicle:backward", "no");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-        way.clearTags();
-
-        way.setTag("highway", "tertiary");
-        way.setTag("oneway", "yes");
-        way.setTag("bicycle:backward", "no");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertFalse(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-
-        way.setTag("bicycle:backward", "yes");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-
-        way.clearTags();
-        way.setTag("highway", "residential");
-        way.setTag("oneway", "yes");
-        way.setTag("bicycle:backward", "yes");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-
-        way.clearTags();
-        way.setTag("highway", "residential");
-        way.setTag("oneway", "-1");
-        way.setTag("bicycle:forward", "yes");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-
-        way.clearTags();
-        way.setTag("highway", "tertiary");
-        way.setTag("bicycle:forward", "use_sidepath");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-
-        way.clearTags();
-        way.setTag("highway", "tertiary");
-        way.setTag("bicycle:forward", "use_sidepath");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-
-        way.clearTags();
-        way.setTag("highway", "tertiary");
-        way.setTag("oneway", "yes");
-        way.setTag("cycleway", "opposite");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-
-        way.clearTags();
-        way.setTag("highway", "residential");
-        way.setTag("oneway", "yes");
-        way.setTag("cycleway:left", "opposite_lane");
-        edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        accessParser.handleWayTags(edgeId, edgeIntAccess, way, null);
-        assertTrue(accessParser.getAccessEnc().getBool(false, edgeId, edgeIntAccess));
-        assertTrue(accessParser.getAccessEnc().getBool(true, edgeId, edgeIntAccess));
-    }
-
-    @Test
     public void testHandleWayTagsInfluencedByRelation() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "road");
 
         // unchanged
-        assertPriorityAndSpeed(UNCHANGED.getValue(), 12, osmWay);
+        assertPriorityAndSpeed(UNCHANGED, 12, osmWay);
 
         // "lcn=yes" is in fact no relation, but shall be treated the same like a relation with "network=lcn"
         osmWay.setTag("lcn", "yes");
-        assertPriorityAndSpeed(PREFER.getValue(), 12, osmWay);
+        assertPriorityAndSpeed(PREFER, 12, osmWay);
         osmWay.removeTag("lcn");
 
         // relation code is PREFER
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.setTag("route", "bicycle");
-        assertPriorityAndSpeed(PREFER.getValue(), 12, osmWay, osmRel);
+        assertPriorityAndSpeed(PREFER, 12, osmWay, osmRel);
 
         osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(PREFER.getValue(), 12, osmWay, osmRel);
+        assertPriorityAndSpeed(PREFER, 12, osmWay, osmRel);
 
         // relation code is NICE
         osmRel.setTag("network", "rcn");
-        assertPriorityAndSpeed(VERY_NICE.getValue(), 12, osmWay, osmRel);
+        assertPriorityAndSpeed(VERY_NICE, 12, osmWay, osmRel);
         osmWay.setTag("lcn", "yes");
-        assertPriorityAndSpeed(VERY_NICE.getValue(), 12, osmWay, osmRel);
+        assertPriorityAndSpeed(VERY_NICE, 12, osmWay, osmRel);
 
         // relation code is BEST
         osmRel.setTag("network", "ncn");
-        assertPriorityAndSpeed(BEST.getValue(), 12, osmWay, osmRel);
+        assertPriorityAndSpeed(BEST, 12, osmWay, osmRel);
 
         // PREFER relation, but tertiary road => no get off the bike but road wayTypeCode and faster
         osmWay.clearTags();
         osmWay.setTag("highway", "tertiary");
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(PREFER.getValue(), 18, osmWay, osmRel);
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
     }
 
     @Test
@@ -576,7 +448,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.setTag("description", "something");
-        assertPriorityAndSpeed(AVOID.getValue(), 18, osmWay, osmRel);
+        assertPriorityAndSpeed(AVOID, 18, osmWay, osmRel);
     }
 
     @Test
@@ -640,24 +512,24 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "tertiary");
         way.setTag("maxspeed", "90");
-        assertPriorityAndSpeed(UNCHANGED.getValue(), 18, way);
+        assertPriorityAndSpeed(UNCHANGED, 18, way);
 
         way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("maxspeed", "90");
-        assertPriorityAndSpeed(UNCHANGED.getValue(), 12, way);
+        assertPriorityAndSpeed(UNCHANGED, 12, way);
 
         // here we are limited by the maxspeed
         way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("maxspeed", "10");
-        assertPriorityAndSpeed(VERY_NICE.getValue(), 10, way);
+        assertPriorityAndSpeed(VERY_NICE, 10, way);
 
         way = new ReaderWay(1);
         way.setTag("highway", "residential");
         way.setTag("maxspeed", "15");
         // todo: speed is larger than maxspeed tag due to rounding and storable max speed is 30
-        assertPriorityAndSpeed(VERY_NICE.getValue(), 16, way);
+        assertPriorityAndSpeed(VERY_NICE, 16, way);
     }
 
     // Issue 407 : Always block kissing_gate except for mountainbikes
@@ -688,36 +560,45 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "tertiary");
         way.setTag("class:bicycle", "3");
-        assertPriority(BEST.getValue(), way);
+        assertPriority(BEST, way);
         // Test that priority cannot get better than best
         way.setTag("scenic", "yes");
-        assertPriority(BEST.getValue(), way);
+        assertPriority(BEST, way);
         way.setTag("scenic", "no");
         way.setTag("class:bicycle", "2");
-        assertPriority(VERY_NICE.getValue(), way);
+        assertPriority(VERY_NICE, way);
         way.setTag("class:bicycle", "1");
-        assertPriority(PREFER.getValue(), way);
+        assertPriority(PREFER, way);
         way.setTag("class:bicycle", "0");
-        assertPriority(UNCHANGED.getValue(), way);
+        assertPriority(UNCHANGED, way);
         way.setTag("class:bicycle", "invalidvalue");
-        assertPriority(UNCHANGED.getValue(), way);
+        assertPriority(UNCHANGED, way);
         way.setTag("class:bicycle", "-1");
-        assertPriority(SLIGHT_AVOID.getValue(), way);
+        assertPriority(SLIGHT_AVOID, way);
         way.setTag("class:bicycle", "-2");
-        assertPriority(AVOID.getValue(), way);
+        assertPriority(AVOID, way);
         way.setTag("class:bicycle", "-3");
-        assertPriority(AVOID_MORE.getValue(), way);
+        assertPriority(AVOID_MORE, way);
 
         way.setTag("highway", "residential");
         way.setTag("bicycle", "designated");
         way.setTag("class:bicycle", "3");
-        assertPriority(BEST.getValue(), way);
+        assertPriority(BEST, way);
 
         // Now we test overriding by a specific class subtype
         way.setTag("class:bicycle:touring", "2");
-        assertPriority(VERY_NICE.getValue(), way);
+        assertPriority(VERY_NICE, way);
 
         way.setTag("maxspeed", "15");
-        assertPriority(BEST.getValue(), way);
+        assertPriority(BEST, way);
     }
+
+    @Test
+    public void testAvoidMotorway() {
+        ReaderWay osmWay = new ReaderWay(1);
+        osmWay.setTag("highway", "motorway");
+        osmWay.setTag("bicycle", "yes");
+        assertPriority(REACH_DESTINATION, osmWay);
+    }
+
 }

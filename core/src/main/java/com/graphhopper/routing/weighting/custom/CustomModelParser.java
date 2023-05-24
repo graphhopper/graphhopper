@@ -81,7 +81,7 @@ public class CustomModelParser {
      *
      * @param priorityEnc can be null
      */
-    static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup,
+    public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup,
                                                                 DecimalEncodedValue avgSpeedEnc, double globalMaxSpeed,
                                                                 DecimalEncodedValue priorityEnc) {
 
@@ -410,14 +410,6 @@ public class CustomModelParser {
         cu = new DeepCopier() {
             boolean speedInjected = false;
             boolean priorityInjected = false;
-
-            @Override
-            public Java.FieldDeclaration copyFieldDeclaration(Java.FieldDeclaration subject) throws CompileException {
-                // for https://github.com/janino-compiler/janino/issues/135
-                Java.FieldDeclaration fd = super.copyFieldDeclaration(subject);
-                fd.setEnclosingScope(subject.getEnclosingScope());
-                return fd;
-            }
 
             @Override
             public Java.MethodDeclarator copyMethodDeclarator(Java.MethodDeclarator subject) throws CompileException {

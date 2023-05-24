@@ -46,6 +46,11 @@ public interface RoutingAlgorithm {
     void setMaxVisitedNodes(int numberOfNodes);
 
     /**
+     * Limit the search to the given time in milliseconds
+     */
+    void setTimeoutMillis(long timeoutMillis);
+
+    /**
      * @return name of this algorithm
      */
     String getName();

@@ -53,18 +53,21 @@ public class LMRoutingAlgorithmFactory implements RoutingAlgorithmFactory {
             AStar algo = new AStar(g, weighting, opts.getTraversalMode());
             algo.setApproximation(getApproximator(g, weighting, activeLM, epsilon));
             algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+            algo.setTimeoutMillis(opts.getTimeoutMillis());
             return algo;
         } else if (ASTAR_BI.equalsIgnoreCase(algoStr) || Helper.isEmpty(algoStr)) {
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
             AStarBidirection algo = new AStarBidirection(g, weighting, opts.getTraversalMode());
             algo.setApproximation(getApproximator(g, weighting, activeLM, epsilon));
             algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+            algo.setTimeoutMillis(opts.getTimeoutMillis());
             return algo;
         } else if (ALT_ROUTE.equalsIgnoreCase(algoStr)) {
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
             AlternativeRoute algo = new AlternativeRoute(g, weighting, opts.getTraversalMode(), opts.getHints());
             algo.setApproximation(getApproximator(g, weighting, activeLM, epsilon));
             algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+            algo.setTimeoutMillis(opts.getTimeoutMillis());
             return algo;
         } else {
             throw new IllegalArgumentException("Landmarks algorithm only supports algorithm="

@@ -33,22 +33,8 @@ public class WheelchairAccessParser extends FootAccessParser {
         barriers.add("kissing_gate");
         barriers.add("stile");
 
-        safeHighwayTags.add("footway");
-        safeHighwayTags.add("pedestrian");
-        safeHighwayTags.add("living_street");
-        safeHighwayTags.add("residential");
-        safeHighwayTags.add("service");
-        safeHighwayTags.add("platform");
-
-        safeHighwayTags.remove("steps");
-        safeHighwayTags.remove("track");
-
-        allowedHighwayTags.clear();
-        allowedHighwayTags.addAll(safeHighwayTags);
-        allowedHighwayTags.addAll(avoidHighwayTags);
-        allowedHighwayTags.add("cycleway");
-        allowedHighwayTags.add("unclassified");
-        allowedHighwayTags.add("road");
+        allowedHighwayTags.remove("steps");
+        allowedHighwayTags.remove("track");
 
         excludeSurfaces.add("cobblestone");
         excludeSurfaces.add("gravel");
