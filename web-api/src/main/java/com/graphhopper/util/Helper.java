@@ -305,10 +305,8 @@ public class Helper {
     }
 
     public static String nf(long no) {
-        // I like french localization the most: 123654 will be 123 654 instead
-        // of comma vs. point confusion for English/German people.
         // NumberFormat is not thread safe => but getInstance looks like it's cached
-        return NumberFormat.getInstance(Locale.FRANCE).format(no);
+        return NumberFormat.getInstance(Locale.ENGLISH).format(no);
     }
 
     public static String firstBig(String sayText) {
