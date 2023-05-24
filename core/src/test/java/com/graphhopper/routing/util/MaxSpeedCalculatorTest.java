@@ -2,8 +2,9 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.parsers.*;
+import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
 import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,8 @@ class MaxSpeedCalculatorTest {
     private BaseGraph graph;
     private EncodingManager em;
     private EnumEncodedValue<UrbanDensity> urbanDensity;
+    private EnumEncodedValue<Country> countryEnc;
+    private EnumEncodedValue<RoadClass> roadClassEnc;
     private DecimalEncodedValue maxSpeedEnc;
     private OSMParsers parsers;
 
@@ -33,25 +36,39 @@ class MaxSpeedCalculatorTest {
     public void setup() {
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
-        EnumEncodedValue<RoadClass> roadClassEnc = RoadClass.create();
+        roadClassEnc = RoadClass.create();
         urbanDensity = UrbanDensity.create();
-        EnumEncodedValue<Country> countryEnc = Country.create();
+        countryEnc = Country.create();
         maxSpeedEnc = MaxSpeed.create();
-        EnumEncodedValue<Surface> surfaceEnc = Surface.create();
-        IntEncodedValue lanesEnc = Lanes.create();
-        BooleanEncodedValue roundaboutEnc = Roundabout.create();
-        em = EncodingManager.start().add(urbanDensity).add(countryEnc).add(roundaboutEnc).
-                add(surfaceEnc).add(lanesEnc).add(roadClassEnc).add(maxSpeedEnc).add(accessEnc).
-                add(speedEnc).build();
+        em = EncodingManager.start().add(urbanDensity).add(countryEnc).add(Roundabout.create()).add(Surface.create()).
+                add(Lanes.create()).add(roadClassEnc).add(maxSpeedEnc).add(accessEnc).add(speedEnc).build();
         graph = new BaseGraph.Builder(em).create();
-        calc = new MaxSpeedCalculator(defaultSpeeds);
+        calc = new MaxSpeedCalculator(defaultSpeeds, new RAMDirectory());
         parsers = new OSMParsers();
-        parsers.addWayTagParser(new CountryParser(countryEnc));
-        parsers.addWayTagParser(new OSMRoundaboutParser(roundaboutEnc));
-        parsers.addWayTagParser(new OSMRoadClassParser(roadClassEnc));
         parsers.addWayTagParser(new OSMMaxSpeedParser(maxSpeedEnc));
-        parsers.addWayTagParser(new OSMSurfaceParser(surfaceEnc));
-        parsers.addWayTagParser(new OSMLanesParser(lanesEnc));
+        parsers.addWayTagParser(calc.createParser());
+    }
+
+    @Test
+    public void internalMaxSpeed() {
+        EdgeIntAccess storage = calc.getInternalMaxSpeedStorage();
+        DecimalEncodedValue ruralEnc = calc.getRuralMaxSpeedEnc();
+        ruralEnc.setDecimal(false, 0, storage, UNSET_SPEED);
+        assertEquals(UNSET_SPEED, ruralEnc.getDecimal(false, 0, storage));
+
+        ruralEnc.setDecimal(false, 1, storage, 33);
+        assertEquals(34, ruralEnc.getDecimal(false, 1, storage));
+
+        DecimalEncodedValue urbanEnc = calc.getUrbanMaxSpeedEnc();
+        urbanEnc.setDecimal(false, 1, storage, UNSET_SPEED);
+        assertEquals(UNSET_SPEED, urbanEnc.getDecimal(false, 1, storage));
+
+        urbanEnc.setDecimal(false, 0, storage, 46);
+        assertEquals(46, urbanEnc.getDecimal(false, 0, storage));
+
+        // check that they are not modified
+        assertEquals(UNSET_SPEED, ruralEnc.getDecimal(false, 0, storage));
+        assertEquals(34, ruralEnc.getDecimal(false, 1, storage));
     }
 
     EdgeIteratorState createEdge(ReaderWay way) {
