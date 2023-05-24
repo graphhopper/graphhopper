@@ -21,23 +21,16 @@ import java.util.Map;
 
 public class MaxSpeedCalculator {
 
+    private final DefaultMaxSpeedParser parser;
     private final LegalDefaultSpeeds defaultSpeeds;
-    private final EdgeIntAccess internalMaxSpeedStorage;
-    private final DecimalEncodedValue ruralMaxSpeedEnc;
-    private final DecimalEncodedValue urbanMaxSpeedEnc;
-    private final DataAccess dataAccess;
+    private EdgeIntAccess internalMaxSpeedStorage;
+    private DecimalEncodedValue ruralMaxSpeedEnc;
+    private DecimalEncodedValue urbanMaxSpeedEnc;
+    private DataAccess dataAccess;
 
-    public MaxSpeedCalculator(LegalDefaultSpeeds defaultSpeeds, Directory directory) {
+    public MaxSpeedCalculator(LegalDefaultSpeeds defaultSpeeds) {
         this.defaultSpeeds = defaultSpeeds;
-        this.dataAccess = directory.create("max_speed_storage_tmp").create(1000);
-        this.internalMaxSpeedStorage = createMaxSpeedStorage(this.dataAccess);
-        this.ruralMaxSpeedEnc = new DecimalEncodedValueImpl("tmp_rural", 7, 0, 2, false, false, true);
-        this.urbanMaxSpeedEnc = new DecimalEncodedValueImpl("tmp_urban", 7, 0, 2, false, false, true);
-        EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
-        ruralMaxSpeedEnc.init(config);
-        urbanMaxSpeedEnc.init(config);
-        if (config.getRequiredBits() > 16)
-            throw new IllegalStateException("bits are not sufficient " + config.getRequiredBits());
+        parser = new DefaultMaxSpeedParser(defaultSpeeds);
     }
 
     DecimalEncodedValue getRuralMaxSpeedEnc() {
@@ -88,8 +81,22 @@ public class MaxSpeedCalculator {
         };
     }
 
-    public TagParser createParser() {
-        return new DefaultMaxSpeedParser(defaultSpeeds, ruralMaxSpeedEnc, urbanMaxSpeedEnc, internalMaxSpeedStorage);
+    public TagParser getParser() {
+        return parser;
+    }
+
+    public void createDataAccessForParser(Directory directory) {
+        this.dataAccess = directory.create("max_speed_storage_tmp").create(1000);
+        this.internalMaxSpeedStorage = createMaxSpeedStorage(this.dataAccess);
+        this.ruralMaxSpeedEnc = new DecimalEncodedValueImpl("tmp_rural", 7, 0, 2, false, false, true);
+        this.urbanMaxSpeedEnc = new DecimalEncodedValueImpl("tmp_urban", 7, 0, 2, false, false, true);
+        EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
+        ruralMaxSpeedEnc.init(config);
+        urbanMaxSpeedEnc.init(config);
+        if (config.getRequiredBits() > 16)
+            throw new IllegalStateException("bits are not sufficient " + config.getRequiredBits());
+
+        parser.init(ruralMaxSpeedEnc, urbanMaxSpeedEnc, internalMaxSpeedStorage);
     }
 
     /**

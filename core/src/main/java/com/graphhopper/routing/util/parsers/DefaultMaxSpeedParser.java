@@ -14,13 +14,15 @@ import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
 
 public class DefaultMaxSpeedParser implements TagParser {
     private final LegalDefaultSpeeds speeds;
-    private final DecimalEncodedValue ruralMaxSpeedEnc;
-    private final DecimalEncodedValue urbanMaxSpeedEnc;
-    private final EdgeIntAccess externalAccess;
+    private DecimalEncodedValue ruralMaxSpeedEnc;
+    private DecimalEncodedValue urbanMaxSpeedEnc;
+    private EdgeIntAccess externalAccess;
 
-    public DefaultMaxSpeedParser(LegalDefaultSpeeds speeds, DecimalEncodedValue ruralMaxSpeedEnc,
-                                 DecimalEncodedValue urbanMaxSpeedEnc, EdgeIntAccess externalAccess) {
+    public DefaultMaxSpeedParser(LegalDefaultSpeeds speeds) {
         this.speeds = speeds;
+    }
+
+    public void init(DecimalEncodedValue ruralMaxSpeedEnc, DecimalEncodedValue urbanMaxSpeedEnc, EdgeIntAccess externalAccess) {
         this.ruralMaxSpeedEnc = ruralMaxSpeedEnc;
         this.urbanMaxSpeedEnc = urbanMaxSpeedEnc;
         this.externalAccess = externalAccess;
@@ -28,6 +30,8 @@ public class DefaultMaxSpeedParser implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess _ignoreAccess, ReaderWay way, IntsRef relationFlags) {
+        if (externalAccess == null)
+            throw new IllegalArgumentException("Call init before using " + getClass().getName());
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
         Integer ruralSpeedInt = null, urbanSpeedInt = null;
         if (Double.isNaN(maxSpeed)) {

@@ -27,8 +27,6 @@ class MaxSpeedCalculatorTest {
     private BaseGraph graph;
     private EncodingManager em;
     private EnumEncodedValue<UrbanDensity> urbanDensity;
-    private EnumEncodedValue<Country> countryEnc;
-    private EnumEncodedValue<RoadClass> roadClassEnc;
     private DecimalEncodedValue maxSpeedEnc;
     private OSMParsers parsers;
 
@@ -36,17 +34,19 @@ class MaxSpeedCalculatorTest {
     public void setup() {
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
-        roadClassEnc = RoadClass.create();
+        EnumEncodedValue<RoadClass> roadClassEnc = RoadClass.create();
         urbanDensity = UrbanDensity.create();
-        countryEnc = Country.create();
+        EnumEncodedValue<Country> countryEnc = Country.create();
         maxSpeedEnc = MaxSpeed.create();
         em = EncodingManager.start().add(urbanDensity).add(countryEnc).add(Roundabout.create()).add(Surface.create()).
                 add(Lanes.create()).add(roadClassEnc).add(maxSpeedEnc).add(accessEnc).add(speedEnc).build();
         graph = new BaseGraph.Builder(em).create();
-        calc = new MaxSpeedCalculator(defaultSpeeds, new RAMDirectory());
+        calc = new MaxSpeedCalculator(defaultSpeeds);
         parsers = new OSMParsers();
         parsers.addWayTagParser(new OSMMaxSpeedParser(maxSpeedEnc));
-        parsers.addWayTagParser(calc.createParser());
+        parsers.addWayTagParser(calc.getParser());
+
+        calc.createDataAccessForParser(new RAMDirectory());
     }
 
     @Test

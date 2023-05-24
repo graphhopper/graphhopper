@@ -76,7 +76,7 @@ import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
  */
 public class GraphHopper {
     private static final Logger logger = LoggerFactory.getLogger(GraphHopper.class);
-    private MaxSpeedCalculator maxSpeedCalculator = null;
+    private MaxSpeedCalculator maxSpeedCalculator;
     private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
@@ -523,8 +523,7 @@ public class GraphHopper {
         }
 
         if (ghConfig.getBool("max_speed_calculator.enabled", false))
-            maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds(), new GHDirectory(ghLocation, dataAccessDefaultType).
-                    configure(dataAccessConfig));
+            maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds());
 
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
@@ -666,7 +665,7 @@ public class GraphHopper {
                 throw new IllegalArgumentException("max_speed_calculator needs country");
             if (!encodingManager.hasEncodedValue(UrbanDensity.KEY))
                 throw new IllegalArgumentException("max_speed_calculator needs urban_density");
-            osmParsers.addWayTagParser(maxSpeedCalculator.createParser());
+            osmParsers.addWayTagParser(maxSpeedCalculator.getParser());
         }
 
         if (encodingManager.hasEncodedValue(Curvature.KEY))
@@ -966,6 +965,8 @@ public class GraphHopper {
         baseGraph.getDirectory().create();
         baseGraph.create(100);
         properties.create(100);
+        if (maxSpeedCalculator != null)
+            maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
     }
 
     protected void writeEncodingManagerToProperties() {
