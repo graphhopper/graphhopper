@@ -523,7 +523,8 @@ public class GraphHopper {
         }
 
         if (ghConfig.getBool("max_speed_calculator.enabled", false))
-            maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds(), new GHDirectory(ghLocation, dataAccessDefaultType));
+            maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds(), new GHDirectory(ghLocation, dataAccessDefaultType).
+                    configure(dataAccessConfig));
 
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
