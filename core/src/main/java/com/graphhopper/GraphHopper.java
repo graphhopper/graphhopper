@@ -522,10 +522,6 @@ public class GraphHopper {
                 dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.mmap.".length()), entry.getValue().toString());
         }
 
-        if (ghConfig.getBool("max_speed_calculator.enabled", false))
-            maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds(), new GHDirectory(ghLocation, dataAccessDefaultType).
-                    configure(dataAccessConfig));
-
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
 
@@ -604,6 +600,14 @@ public class GraphHopper {
         cityAreaSensitivity = ghConfig.getDouble("graph.urban_density.city_sensitivity", cityAreaSensitivity);
         urbanDensityCalculationThreads = ghConfig.getInt("graph.urban_density.threads", urbanDensityCalculationThreads);
 
+        if (ghConfig.getBool("max_speed_calculator.enabled", false)) {
+            if (urbanDensityCalculationThreads <= 0)
+                throw new IllegalArgumentException("max_speed_calculator requires config of at least graph.urban_density.threads: 1");
+            if (!encodedValuesString.contains("country"))
+                throw new IllegalArgumentException("max_speed_calculator requires 'country' in graph.encoded_values");
+            maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds());
+        }
+
         // routing
         routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
         routerConfig.setTimeoutMillis(ghConfig.getLong(Routing.INIT_TIMEOUT_MS, routerConfig.getTimeoutMillis()));
@@ -659,14 +663,6 @@ public class GraphHopper {
                 throw new IllegalArgumentException("Enable both, average_slope and max_slope");
             osmParsers.addWayTagParser(new SlopeCalculator(encodingManager.getDecimalEncodedValue(MaxSlope.KEY),
                     encodingManager.getDecimalEncodedValue(AverageSlope.KEY)));
-        }
-
-        if (maxSpeedCalculator != null) {
-            if (!encodingManager.hasEncodedValue(Country.KEY))
-                throw new IllegalArgumentException("max_speed_calculator needs country");
-            if (!encodingManager.hasEncodedValue(UrbanDensity.KEY))
-                throw new IllegalArgumentException("max_speed_calculator needs urban_density");
-            osmParsers.addWayTagParser(maxSpeedCalculator.createParser());
         }
 
         if (encodingManager.hasEncodedValue(Curvature.KEY))
@@ -912,10 +908,8 @@ public class GraphHopper {
             UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, roadClassEnc, roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
         }
 
-        if (maxSpeedCalculator != null) {
+        if (maxSpeedCalculator != null)
             maxSpeedCalculator.fillMaxSpeed(getBaseGraph(), encodingManager);
-            maxSpeedCalculator.close();
-        }
     }
 
     protected void importOSM() {
