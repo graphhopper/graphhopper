@@ -178,15 +178,6 @@ public class OSMValueExtractor {
         if ("none".equals(str))
             return MaxSpeed.UNLIMITED_SIGN_SPEED;
 
-        if (str.endsWith(":rural") || str.endsWith(":trunk"))
-            return 80;
-
-        if (str.endsWith(":urban"))
-            return 50;
-
-        if (str.equals("walk") || str.endsWith(":living_street"))
-            return 6;
-
         int mpInteger = str.indexOf("mp");
         int knotInteger = str.indexOf("knots");
         int kmInteger = str.indexOf("km");
