@@ -47,11 +47,11 @@ public class DefaultMaxSpeedParser implements TagParser {
                 } else {
                     LegalDefaultSpeeds.Result result = speeds.getSpeedLimits(country.getAlpha2(),
                             tags, Collections.emptyList(), (name, eval) -> eval.invoke() || "rural".equals(name));
-                    if (result != null) ruralSpeedInt = parseInt(result.getTags().get("maxspeed"));
+                    if (result != null) ruralSpeedInt = parseMaxSpeed(result.getTags());
 
                     result = speeds.getSpeedLimits(country.getAlpha2(),
                             tags, Collections.emptyList(), (name, eval) -> eval.invoke() || "urban".equals(name));
-                    if (result != null) urbanSpeedInt = parseInt(result.getTags().get("maxspeed"));
+                    if (result != null) urbanSpeedInt = parseMaxSpeed(result.getTags());
                     if (urbanSpeedInt != null || ruralSpeedInt != null)
                         cache.put(cacheKey, new Result(urbanSpeedInt, ruralSpeedInt));
                 }
@@ -68,7 +68,7 @@ public class DefaultMaxSpeedParser implements TagParser {
             "designation", "dual_carriageway", "expressway", "frontage_road",
             "hazard", "highway", "junction",
             "lane_markings", "lanes", "lit",
-            "maxweight", "maxgcweight"/*abandoned*/, "motorroad", "oneway", "playground_zone",
+            "motorroad", "oneway", "playground_zone",
             "ref", "restriction", "rural",
             "school_zone", "service", "shoulder", "side_road", "sidewalk", "silver_zone", "surface",
             "tracktype", "tunnel", "width"));
@@ -77,6 +77,7 @@ public class DefaultMaxSpeedParser implements TagParser {
         Map<String, String> map = new HashMap<>(tags.size());
         for (Map.Entry<String, Object> entry : tags.entrySet()) {
             String key = entry.getKey();
+            if (key.contains("description")) continue;
             if (allowedKeys.contains(key)
                     || key.startsWith("shoulder:")
                     || key.startsWith("sidewalk:")
@@ -84,7 +85,7 @@ public class DefaultMaxSpeedParser implements TagParser {
                     // the :conditional tags are not yet necessary for us and expensive in the speeds library
                     // see https://github.com/westnordost/osm-legal-default-speeds/issues/7
                     || key.startsWith("maxspeed:") && !key.endsWith(":conditional"))
-                map.put(key, entry.getValue().toString());
+                map.put(key, (String) entry.getValue());
         }
         return map;
     }
@@ -105,8 +106,11 @@ public class DefaultMaxSpeedParser implements TagParser {
         }
     };
 
-    public static Integer parseInt(String str) {
-        if (str == null) return null;
+    private static Integer parseMaxSpeed(Map<String, String> tags) {
+        String str = tags.get("maxspeed");
+        // ignore this and keep Infinity
+        // if (str == null) str = tags.get("maxspeed:advisory");
+        if ("walk".equals(str)) return 6;
         try {
             return Integer.parseInt(str);
         } catch (NumberFormatException ex) {
