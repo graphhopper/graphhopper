@@ -56,7 +56,8 @@ public class OSMValueExtractor {
             if (index > 0) {
                 int lastIndex = value.indexOf(')', index); // (value) or value
                 if (lastIndex < 0) lastIndex = value.length() - 1;
-                if(lastIndex > index) return OSMValueExtractor.stringToTons(value.substring(index, lastIndex));
+                if (lastIndex > index)
+                    return OSMValueExtractor.stringToTons(value.substring(index, lastIndex));
             }
             return Double.NaN;
         } catch (Exception ex) {
@@ -173,6 +174,9 @@ public class OSMValueExtractor {
     public static double stringToKmh(String str) {
         if (Helper.isEmpty(str))
             return Double.NaN;
+
+        if ("walk".equals(str))
+            return 6;
 
         // on some German autobahns and a very few other places
         if ("none".equals(str))

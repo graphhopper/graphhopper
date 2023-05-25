@@ -182,6 +182,16 @@ class MaxSpeedCalculatorTest {
     }
 
     @Test
+    public void testLivingStreetWithWalk() {
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("country", Country.AUT);
+        way.setTag("highway", "living_street");
+        EdgeIteratorState edge = createEdge(way).set(urbanDensity, CITY);
+        calc.fillMaxSpeed(graph, em);
+        assertEquals(6, edge.get(maxSpeedEnc), 1);
+    }
+
+    @Test
     public void testLivingStreetWithMaxSpeed() {
         ReaderWay way = new ReaderWay(0L);
         way.setTag("country", Country.DEU);

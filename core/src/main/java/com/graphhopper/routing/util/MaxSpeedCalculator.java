@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.parsers.DefaultMaxSpeedParser;
 import com.graphhopper.routing.util.parsers.TagParser;
+import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -15,9 +16,7 @@ import de.westnordost.osm_legal_default_speeds.RoadTypeFilter;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MaxSpeedCalculator {
 
@@ -56,9 +55,31 @@ public class MaxSpeedCalculator {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+
+        // pre-converts kmh, mph and "walk" into kmh
+        convertMaxspeed(data.speedLimitsByCountryCode.entrySet());
+
         LegalDefaultSpeeds speeds = new LegalDefaultSpeeds(data.roadTypesByName, data.speedLimitsByCountryCode);
-//        speeds.setLimitOtherSpeeds(false);
         return speeds;
+    }
+
+    private static void convertMaxspeed(Set<Map.Entry<String, List<RoadTypeImpl>>> entrySet) {
+        for (Map.Entry<String, List<RoadTypeImpl>> entry : entrySet) {
+            for (RoadTypeImpl roadType : entry.getValue()) {
+                Map<String, String> newTags = new HashMap<>(roadType.getTags().size());
+                for (Map.Entry<String, String> tags : roadType.getTags().entrySet()) {
+                    // note, we could remove conditional tags here to reduce load a bit at import
+
+                    if ("maxspeed".equals(tags.getKey())) {
+                        double tmp = OSMValueExtractor.stringToKmh(tags.getValue());
+                        if (Double.isNaN(tmp))
+                            throw new IllegalStateException("illegal maxspeed " + tags.getValue());
+                        newTags.put("maxspeed", "" + Math.round(tmp));
+                    }
+                }
+                roadType.setTags(newTags);
+            }
+        }
     }
 
     /**
