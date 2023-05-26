@@ -132,15 +132,12 @@ public class MaxSpeedCalculator {
         List<Map<String, String>> relTags = new ArrayList<>();
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            // This is tricky as it could be a highly customized (car) profile.
-            // if (isOneway(iter)) tags.put("oneway", "yes");
-
             double fwdMaxSpeedPureOSM = iter.get(maxSpeedEnc);
             double bwdMaxSpeedPureOSM = iter.getReverse(maxSpeedEnc);
 
-            // skip library if max_speed is known
+            // skip speeds-library if max_speed is known
             if (fwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED) continue;
-            // library does not work for the case that forward/backward are different
+            // speeds-library does not work for the case that forward/backward are different
             if (fwdMaxSpeedPureOSM != bwdMaxSpeedPureOSM) continue;
 
             // In DefaultMaxSpeedParser and in OSMMaxSpeedParser we don't have the rural/urban info,
