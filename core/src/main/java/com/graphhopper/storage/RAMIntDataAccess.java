@@ -165,7 +165,7 @@ class RAMIntDataAccess extends AbstractDataAccess {
 
     @Override
     public void flushAndCloseExceptLatest(int count) {
-        for (int i = segments.length - 1; i >= count && segments[i - count] != null; i--) {
+        for (int i = segments.length - count; i >= 0 && segments[i] != null; i--) {
             segments[i] = null;
         }
     }
