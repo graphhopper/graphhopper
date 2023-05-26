@@ -156,6 +156,13 @@ public class RAMDataAccess extends AbstractDataAccess {
     }
 
     @Override
+    public void flushAndCloseExceptLatest(int count) {
+        for (int i = segments.length - 1; i >= count && segments[i - count] != null; i--) {
+            segments[i] = null;
+        }
+    }
+
+    @Override
     public final void setInt(long bytePos, int value) {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
@@ -274,12 +281,5 @@ public class RAMDataAccess extends AbstractDataAccess {
         if (isStoring())
             return DAType.RAM_STORE;
         return DAType.RAM;
-    }
-
-    @Override
-    public void flushAndCloseExceptLatest(int count) {
-        for (int i = segments.length - 1; i >= count && segments[i - count] != null; i--) {
-            segments[i] = null;
-        }
     }
 }
