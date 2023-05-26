@@ -441,20 +441,6 @@ public class Helper {
     }
 
     /**
-     * Equivalent to java 8 String#join
-     */
-    public static String join(String delimiter, List<String> strings) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < strings.size(); i++) {
-            if (i > 0) {
-                sb.append(delimiter);
-            }
-            sb.append(strings.get(i));
-        }
-        return sb.toString();
-    }
-
-    /**
      * parses a string like [a,b,c]
      */
     public static List<String> parseList(String listStr) {
