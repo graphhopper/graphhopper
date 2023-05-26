@@ -275,4 +275,11 @@ public class RAMDataAccess extends AbstractDataAccess {
             return DAType.RAM_STORE;
         return DAType.RAM;
     }
+
+    @Override
+    public void flushAndCloseExceptLatest(int count) {
+        for (int i = segments.length - 1; i >= count && segments[i - count] != null; i--) {
+            segments[i] = null;
+        }
+    }
 }

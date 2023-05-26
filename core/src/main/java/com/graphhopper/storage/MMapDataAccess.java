@@ -497,4 +497,9 @@ public final class MMapDataAccess extends AbstractDataAccess {
     public DAType getType() {
         return DAType.MMAP;
     }
+
+    @Override
+    public void flushAndCloseExceptLatest(int count) {
+        throw new RuntimeException("flushAndCloseExceptLatest not yet supported");
+    }
 }

@@ -126,7 +126,7 @@ class BaseGraphNodesAndEdges {
         return true;
     }
 
-    public void flush() {
+    private void setHeader() {
         nodes.setHeader(0 * 4, Constants.VERSION_NODE);
         nodes.setHeader(1 * 4, nodeEntryBytes);
         nodes.setHeader(2 * 4, nodeCount);
@@ -144,9 +144,16 @@ class BaseGraphNodesAndEdges {
         edges.setHeader(0 * 4, Constants.VERSION_EDGE);
         edges.setHeader(1 * 4, edgeEntryBytes);
         edges.setHeader(2 * 4, edgeCount);
+    }
 
+    public void flush() {
+        setHeader();
         edges.flush();
         nodes.flush();
+    }
+
+    public void flushAndCloseExceptLatest(int count) {
+        edges.flushAndCloseExceptLatest(count);
     }
 
     public void close() {

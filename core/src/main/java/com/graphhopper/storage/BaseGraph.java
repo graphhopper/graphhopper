@@ -196,6 +196,12 @@ public class BaseGraph implements Graph, Closeable {
         edgeKVStorage.close();
     }
 
+    public void flushAndCloseExceptLatest(int count) {
+        // TODO NOW ensure that flush skips null segments and sets header
+        wayGeometry.flushAndCloseExceptLatest(count);
+        store.flushAndCloseExceptLatest(count);
+    }
+
     public void flush() {
         if (!wayGeometry.isClosed()) {
             setWayGeometryHeader();

@@ -133,4 +133,6 @@ public interface DataAccess extends Closeable {
      * @return the data access type of this object.
      */
     DAType getType();
+
+    void flushAndCloseExceptLatest(int count);
 }
