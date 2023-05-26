@@ -43,17 +43,9 @@ public class Constants {
      */
     public static final boolean LINUX = OS_NAME.startsWith("Linux");
     /**
-     * True iff running on Android.
-     */
-    public static final boolean ANDROID = System.getProperty("java.vendor").contains("Android");
-    /**
      * True iff running on Windows.
      */
     public static final boolean WINDOWS = OS_NAME.startsWith("Windows");
-    /**
-     * True iff running on SunOS.
-     */
-    public static final boolean SUN_OS = OS_NAME.startsWith("SunOS");
     /**
      * True iff running on Mac OS X
      */
