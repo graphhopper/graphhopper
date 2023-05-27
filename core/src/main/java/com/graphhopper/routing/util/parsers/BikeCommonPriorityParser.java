@@ -75,7 +75,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         avoidHighwayTags.put("primary_link", BAD);
         avoidHighwayTags.put("secondary", AVOID);
         avoidHighwayTags.put("secondary_link", AVOID);
-        avoidHighwayTags.put("steps", AVOID);
         avoidHighwayTags.put("bridleway", AVOID);
 
         routeMap.put(INTERNATIONAL, BEST.getValue());
@@ -200,12 +199,15 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             PriorityCode pushingSectionPrio = SLIGHT_AVOID;
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
                 pushingSectionPrio = PREFER;
-            if (isDesignated(way))
+            if (isDesignated(way) && (!way.hasTag("highway","steps")))
                 pushingSectionPrio = VERY_NICE;
             if (way.hasTag("foot", "yes")) {
                 pushingSectionPrio = pushingSectionPrio.worse();
                 if (way.hasTag("segregated", "yes"))
                     pushingSectionPrio = pushingSectionPrio.better();
+            }
+            if (way.hasTag("highway","steps")) {
+                pushingSectionPrio = BAD;
             }
             weightToPrioMap.put(100d, pushingSectionPrio);
         }

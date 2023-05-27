@@ -64,8 +64,8 @@ public class RouteResourceTurnCostsTest {
                 .setProfiles(Arrays.asList(
                         new Profile("my_car_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
                         new Profile("my_car_no_turn_costs").setVehicle("car").setWeighting("fastest").setTurnCosts(false),
-                        new CustomProfile("my_custom_car_turn_costs").setCustomModel(new CustomModel()).setVehicle("car").setTurnCosts(true),
-                        new CustomProfile("my_custom_car_no_turn_costs").setCustomModel(new CustomModel()).setVehicle("car").setTurnCosts(false)
+                        new CustomProfile("my_custom_car_turn_costs").setVehicle("car").setTurnCosts(true),
+                        new CustomProfile("my_custom_car_no_turn_costs").setVehicle("car").setTurnCosts(false)
                 ))
                 .setCHProfiles(Arrays.asList(
                         new CHProfile("my_car_turn_costs"),

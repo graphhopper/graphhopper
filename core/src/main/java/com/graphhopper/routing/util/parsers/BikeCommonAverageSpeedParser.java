@@ -73,8 +73,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         setHighwaySpeed("living_street", PUSHING_SECTION_SPEED);
         setHighwaySpeed("steps", MIN_SPEED);
 
-        final int CYCLEWAY_SPEED = 18;  // Make sure cycleway and path use same speed value, see #634
-        setHighwaySpeed("cycleway", CYCLEWAY_SPEED);
+        setHighwaySpeed("cycleway", 18);
         setHighwaySpeed("path", 10);
         setHighwaySpeed("footway", 6);
         setHighwaySpeed("platform", PUSHING_SECTION_SPEED);
@@ -171,7 +170,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
             // Under certain conditions we need to increase the speed of pushing sections to the speed of a "highway=cycleway"
         else if (way.hasTag("highway", pushingSectionsHighways)
                 && ((way.hasTag("foot", "yes") && way.hasTag("segregated", "yes"))
-                || (way.hasTag("bicycle", intendedValues))))
+                || (way.hasTag("bicycle", intendedValues)) && !way.hasTag("highway", "steps")))
             highwaySpeed = getHighwaySpeed("cycleway");
 
         String s = way.getTag("surface");

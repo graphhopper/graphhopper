@@ -200,7 +200,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
         way.clearTags();
         way.setTag("highway", "steps");
-        assertPriorityAndSpeed(SLIGHT_AVOID, 2, way);
+        assertPriorityAndSpeed(BAD, 2, way);
 
         way.clearTags();
         way.setTag("highway", "residential");
@@ -210,9 +210,9 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.clearTags();
         way.setTag("highway", "steps");
         way.setTag("surface", "wood");
-        assertPriorityAndSpeed(SLIGHT_AVOID, MIN_SPEED, way);
+        assertPriorityAndSpeed(BAD, MIN_SPEED, way);
         way.setTag("maxspeed", "20");
-        assertPriorityAndSpeed(SLIGHT_AVOID, MIN_SPEED, way);
+        assertPriorityAndSpeed(BAD, MIN_SPEED, way);
 
         way.clearTags();
         way.setTag("highway", "track");
