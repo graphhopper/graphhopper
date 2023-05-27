@@ -659,8 +659,23 @@ public class GHUtility {
     public static void runConcurrently(Stream<Callable<String>> callables, int threads) {
         ExecutorService executorService = Executors.newFixedThreadPool(threads);
         ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
-        AtomicInteger count = new AtomicInteger();
+        // process callables in batches, because otherwise we require lots of memory for all the Future objects
+        // that will be returned
+        final int batchSize = 100_000;
+        List<Callable<String>> batch = new ArrayList<>(batchSize);
         callables.forEach(c -> {
+            batch.add(c);
+            if (batch.size() == batchSize) {
+                processBatch(batch, executorService, completionService);
+                batch.clear();
+            }
+        });
+        processBatch(batch, executorService, completionService);
+    }
+
+    private static void processBatch(List<Callable<String>> batch, ExecutorService executorService, ExecutorCompletionService<String> completionService) {
+        AtomicInteger count = new AtomicInteger();
+        batch.forEach(c -> {
             count.incrementAndGet();
             completionService.submit(c);
         });
