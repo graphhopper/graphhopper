@@ -27,6 +27,30 @@ public class BitUtilBig extends BitUtil {
     BitUtilBig() {
     }
 
+    public byte getByte(short value, int pos) {
+        return (byte) (value >>> (8 - 8 * pos));
+    }
+
+    public byte getByte(int value, int pos) {
+        return (byte) (value >>> (24 - 8 * pos));
+    }
+
+    public byte getByte(long value, int pos) {
+        return (byte) (value >>> (56 - 8 * pos));
+    }
+
+    public short getShort(byte b0, byte b1) {
+        return (short) ((b0 & 0xFF) << 8 | (b1 & 0xFF));
+    }
+
+    public int getInt(byte b0, byte b1, byte b2, byte b3) {
+        return (b0 & 0xFF) << 24 | (b1 & 0xFF) << 16 | (b2 & 0xFF) << 8 | (b3 & 0xFF);
+    }
+
+    public long getLong(byte b0, byte b1, byte b2, byte b3, byte b4, byte b5, byte b6, byte b7) {
+        return (long) getInt(b0, b1, b2, b3) << 32 | (getInt(b4, b5, b6, b7) & 0xFFFFFFFFL);
+    }
+
     @Override
     public final short toShort(byte[] b, int offset) {
         return (short) ((b[offset] & 0xFF) << 8 | (b[offset + 1] & 0xFF));
