@@ -617,8 +617,7 @@ public class GHUtility {
 
         Map<String, Country> mapEnums = new HashMap<>(Country.values().length);
         for (Country c : Country.values()) {
-            mapEnums.put(c.getAlpha2(), c);
-            mapEnums.put(c.getAlpha2() + (c.hasSubdivision() ? "-" + c.getSubdivisionCode() : ""), c);
+            mapEnums.put(c.getAlpha2AndSubdivision(), c);
         }
 
         try (Reader reader = new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {
@@ -630,7 +629,6 @@ public class GHUtility {
                         CustomArea ca = CustomArea.fromJsonFeature(f);
                         // the Feature does not include "id" but we expect it
                         if (f.getId() == null) f.setId(getIdOrPropertiesId(f));
-                        Country country = mapEnums.get(f.getId());
                         ca.getProperties().put(Country.ISO_3166_2, f.getId());
                         return ca;
                     })
