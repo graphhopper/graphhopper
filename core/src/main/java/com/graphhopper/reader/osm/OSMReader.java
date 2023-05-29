@@ -263,16 +263,26 @@ public class OSMReader {
         CustomArea prevCustomArea = null;
         for (CustomArea customArea : customAreas) {
             if (customArea.getProperties() == null) continue;
-            Object alpha3 = customArea.getProperties().get(Country.ISO_ALPHA3);
-            if (alpha3 == null)
+            String alpha2WithSubdivision = (String) customArea.getProperties().get(Country.ISO_3166_2);
+            if (alpha2WithSubdivision == null)
                 continue;
 
-            // multiple countries are available -> pick the smaller one, see #2663
-            if (prevCustomArea != null && prevCustomArea.getArea() < customArea.getArea())
-                break;
+            alpha2WithSubdivision = alpha2WithSubdivision.replace("-", "_");
+            if (prevCustomArea != null) {
+                if (alpha2WithSubdivision.contains("_") && !country.hasSubdivision()) {
+                    // overwrite variable with subdivision
+                } else if (!alpha2WithSubdivision.contains("_") && country.hasSubdivision()) {
+                    // keep variable with subdivision
+                    break;
+                } else if (prevCustomArea.getArea() < customArea.getArea()) {
+                    // multiple countries are available -> pick the smaller one, see #2663
+                    // TODO remove this via adding all subdivisions to Country enum (?)
+                    break;
+                }
+            }
 
             prevCustomArea = customArea;
-            country = Country.valueOf((String) alpha3);
+            country = Country.valueOf(alpha2WithSubdivision);
         }
         way.setTag("country", country);
 
