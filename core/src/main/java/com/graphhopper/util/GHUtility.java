@@ -645,16 +645,10 @@ public class GHUtility {
         return null;
     }
 
-    public static void runConcurrently(Stream<Callable<String>> callables, int threads) {
+    public static void runConcurrently(Stream<Runnable> runnables, int threads) {
         ForkJoinPool pool = new ForkJoinPool(threads);
         try {
-            pool.submit(() -> callables.parallel().forEach(c -> {
-                try {
-                    c.call();
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
-                }
-            })).get();
+            pool.submit(() -> runnables.parallel().forEach(Runnable::run)).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         } finally {

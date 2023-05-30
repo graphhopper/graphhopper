@@ -57,11 +57,10 @@ public class RoadDensityCalculator {
      */
     public static void calcRoadDensities(Graph graph, BiConsumer<RoadDensityCalculator, EdgeIteratorState> edgeHandler, int threads) {
         ThreadLocal<RoadDensityCalculator> calculator = ThreadLocal.withInitial(() -> new RoadDensityCalculator(graph));
-        Stream<Callable<String>> roadDensityWorkers = IntStream.range(0, graph.getEdges())
+        Stream<Runnable> roadDensityWorkers = IntStream.range(0, graph.getEdges())
                 .mapToObj(i -> () -> {
                     EdgeIteratorState edge = graph.getEdgeIteratorState(i, Integer.MIN_VALUE);
                     edgeHandler.accept(calculator.get(), edge);
-                    return "road_density_calc";
                 });
         GHUtility.runConcurrently(roadDensityWorkers, threads);
     }
