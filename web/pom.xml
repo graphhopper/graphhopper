@@ -47,12 +47,12 @@
         <dependency>
             <groupId>ch.poole</groupId>
             <artifactId>ConditionalRestrictionParser</artifactId>
-            <version>${crparser.version}</version>
+            <version>0.3.1</version>
         </dependency>
         <dependency>
             <groupId>ch.poole</groupId>
             <artifactId>OpeningHoursParser</artifactId>
-            <version>${ohparser.version}</version>
+            <version>0.25.0</version>
         </dependency>
 
         <dependency>
