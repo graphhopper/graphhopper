@@ -18,10 +18,11 @@
 package com.graphhopper.routing.ev;
 
 /**
- * The enum constants correspond to the ISO3166-1 code (alpha2) of the corresponding country.
- * For a few countries like the USA there are separate instances for each subdivision and these
- * enum ends with their ISO 3166-2 code like US_WY. The toString returns the alpha3 string like
- * "USA" which is used for path details or use {@link #getAlpha3()}.
+ * The enum constants correspond of two parts, separated by a hyphen identical to ISO 3166-2:
+ * The first part is the ISO 3166-1 alpha-2 code of the country. The second part is a string
+ * of up to three alphanumeric characters.
+ * E.g. DE for Germany or US for the USA. For the USA there are also separate instances for each
+ * subdivision like US_WY.
  */
 public enum Country {
 
@@ -330,11 +331,9 @@ public enum Country {
     public static final String KEY = "country", ISO_3166_2 = "ISO3166-2";
 
     private final String countryName;
-    // ISO 3166-1
     private final String alpha2;
     // ISO 3166-1 alpha3
     private final String alpha3;
-    // ISO 3166-2 code
     private final String subdivisionCode;
     private final String subdivisionName;
 
@@ -362,9 +361,9 @@ public enum Country {
     }
 
     /**
-     * @return the ISO3166-1:alpha2 code of this country
+     * @return the ISO 3166-1:alpha2 code (or the first two letters of ISO 3166-2 code) of this country.
      */
-    public String getAlpha2WithoutSubdivision() {
+    public String getAlpha2() {
         return alpha2;
     }
 
@@ -373,9 +372,10 @@ public enum Country {
     }
 
     /**
-     * Alpha2 and if available appends the subdivision. If only alpha2 is required see {@link #getAlpha2WithoutSubdivision()}.
+     * The ISO 3166-2 code consists of two parts: the alpha2 and a second part with up to 3 letters for
+     * the subdivision. See also {@link #ISO_3166_2}.
      */
-    public String getAlpha2() {
+    public String getISO_3166_2() {
         return alpha2 + (hasSubdivision() ? "-" + getSubdivisionCode() : "");
     }
 
