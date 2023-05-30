@@ -117,7 +117,7 @@ class CustomModelParserTest {
                 set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 70).set(accessEnc, true, true).set(countryEnc, Country.DE);
 
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(If("country.getAlpha3() == \"USA\"", MULTIPLY, "0.5"));
+        customModel.addToPriority(If("country.getAlpha2() == \"US\"", MULTIPLY, "0.5"));
         customModel.addToPriority(If("country == DE", MULTIPLY, "0.8"));
 
         CustomWeighting.EdgeToDoubleMapping priorityMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,

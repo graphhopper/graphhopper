@@ -361,7 +361,7 @@ public enum Country {
     }
 
     /**
-     * @return the ISO 3166-1:alpha2 code (or the first two letters of ISO 3166-2 code) of this country.
+     * @return the ISO 3166-1:alpha2 code of this country and only this without subdivision.
      */
     public String getAlpha2() {
         return alpha2;

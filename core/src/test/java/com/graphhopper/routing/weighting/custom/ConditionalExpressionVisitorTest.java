@@ -119,7 +119,7 @@ public class ConditionalExpressionVisitorTest {
         assertTrue(result.ok);
         assertEquals("[backward_my_speed]", result.guessedVariables.toString());
 
-        assertTrue(parse("country.getAlpha3() == \"USA\"", validVariable).ok);
+        assertTrue(parse("country.getAlpha2() == \"US\"", validVariable).ok);
     }
 
     @Test
