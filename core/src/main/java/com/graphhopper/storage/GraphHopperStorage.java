@@ -28,7 +28,6 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import us.dustinj.timezonemap.TimeZoneMap;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -84,16 +83,6 @@ public class GraphHopperStorage implements Graph, Closeable {
         return conditionalSpeed.getConditionalEdgesMap(encoderName);
     }
 
-    // FIXME: temporal solution until an external storage for time zones is introduced.
-    private TimeZoneMap timeZoneMap;
-
-    public TimeZoneMap getTimeZoneMap() {
-        return timeZoneMap;
-    }
-
-    public void setTimeZoneMap(TimeZoneMap timeZoneMap) {
-        this.timeZoneMap = timeZoneMap;
-    }
     // ORS-GH MOD END
 
     // same flush order etc

@@ -23,9 +23,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
-import org.junit.Ignore;
 import org.junit.Test;
-import us.dustinj.timezonemap.TimeZoneMap;
 
 import java.time.Month;
 import java.time.ZonedDateTime;
@@ -40,8 +38,6 @@ import static org.junit.Assert.*;
  */
 
 public class TimeDependentAccessEdgeFilterTest {
-    private static final TimeZoneMap timeZoneMap = TimeZoneMap.forRegion(52, 13, 53, 14);
-
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = EncodingManager.create(encoder);
     private final GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
@@ -51,7 +47,6 @@ public class TimeDependentAccessEdgeFilterTest {
     public TimeDependentAccessEdgeFilterTest() {
         nodeAccess.setNode(0, 52, 13);
         nodeAccess.setNode(1, 53, 14);
-        graph.setTimeZoneMap(timeZoneMap);
         filter = new TimeDependentAccessEdgeFilter(graph, encoder);
     }
 
