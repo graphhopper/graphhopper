@@ -25,10 +25,14 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import org.locationtech.jts.geom.Envelope;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
 
@@ -308,6 +312,53 @@ public class LocationIndexTree implements LocationIndex {
         }
         return closestMatch;
     }
+
+    private double measurementErrorSigma = 50.0;
+
+    public List<Snap> findCandidateSnaps(final double queryLat, final double queryLon, final EdgeFilter edgeFilter) {
+        double rLon = (measurementErrorSigma * 360.0 / DistanceCalcEarth.DIST_EARTH.calcCircumference(queryLat));
+        double rLat = measurementErrorSigma / DistanceCalcEarth.METERS_PER_DEGREE;
+        Envelope envelope = new Envelope(queryLon, queryLon, queryLat, queryLat);
+        for (int i = 0; i < 50; i++) {
+            envelope.expandBy(rLon, rLat);
+            List<Snap> snaps = findCandidateSnapsInBBox(queryLat, queryLon, BBox.fromEnvelope(envelope), edgeFilter);
+            if (!snaps.isEmpty()) {
+                return snaps;
+            }
+        }
+        return Collections.emptyList();
+    }
+
+    private List<Snap> findCandidateSnapsInBBox(double queryLat, double queryLon, BBox queryShape, final EdgeFilter edgeFilter) {
+        List<Snap> snaps = new ArrayList<>();
+        IntHashSet seenEdges = new IntHashSet();
+        IntHashSet seenNodes = new IntHashSet();
+        query(queryShape, edgeId -> {
+            EdgeIteratorState edge = graph.getEdgeIteratorStateForKey(edgeId * 2);
+            if (seenEdges.add(edgeId) && edgeFilter.accept(edge)) {
+                Snap snap = new Snap(queryLat, queryLon);
+                traverseEdge(queryLat, queryLon, edge, (node, normedDist, wayIndex, pos) -> {
+                    if (normedDist < snap.getQueryDistance()) {
+                        snap.setQueryDistance(normedDist);
+                        snap.setClosestNode(node);
+                        snap.setWayIndex(wayIndex);
+                        snap.setSnappedPosition(pos);
+                    }
+                });
+                double dist = DIST_PLANE.calcDenormalizedDist(snap.getQueryDistance());
+                snap.setClosestEdge(edge);
+                snap.setQueryDistance(dist);
+                if (snap.isValid() && (snap.getSnappedPosition() != Snap.Position.TOWER || seenNodes.add(snap.getClosestNode()))) {
+                    snap.calcSnappedPoint(DistanceCalcEarth.DIST_EARTH);
+                    if (queryShape.contains(snap.getSnappedPoint().lat, snap.getSnappedPoint().lon)) {
+                        snaps.add(snap);
+                    }
+                }
+            }
+        });
+        return snaps;
+    }
+
 
     @Override
     public void query(BBox queryBBox, Visitor function) {
