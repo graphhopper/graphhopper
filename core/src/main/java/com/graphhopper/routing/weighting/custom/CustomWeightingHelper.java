@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.EdgeIteratorState;

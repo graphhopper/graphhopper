@@ -617,7 +617,7 @@ public class GHUtility {
 
         Map<String, Country> mapEnums = new HashMap<>(Country.values().length);
         for (Country c : Country.values()) {
-            mapEnums.put(c.getAlpha2AndSubdivision(), c);
+            mapEnums.put(c.getAlpha2(), c);
         }
 
         try (Reader reader = new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {

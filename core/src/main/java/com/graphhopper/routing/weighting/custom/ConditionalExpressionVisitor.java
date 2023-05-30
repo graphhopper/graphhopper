@@ -17,9 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.RouteNetwork;
-import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.util.Helper;
 import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
@@ -36,7 +34,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
 
     private static final Set<String> allowedMethodParents = new HashSet<>(Arrays.asList("edge", "Math"));
     private static final Set<String> allowedMethods = new HashSet<>(Arrays.asList("ordinal", "getDistance", "getName",
-            "contains", "sqrt", "abs"));
+            "contains", "sqrt", "abs", "getAlpha3"));
     private final ParseResult result;
     private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
     private final NameValidator variableValidator;
@@ -88,26 +86,23 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             return false;
         } else if (rv instanceof Java.MethodInvocation) {
             Java.MethodInvocation mi = (Java.MethodInvocation) rv;
-            if (allowedMethods.contains(mi.methodName)) {
-                // skip methods like this.in()
-                if (mi.target != null) {
-                    Java.AmbiguousName n = (Java.AmbiguousName) mi.target.toRvalue();
-                    if (n.identifiers.length == 2) {
-                        if (allowedMethodParents.contains(n.identifiers[0])) {
-                            // edge.getDistance(), Math.sqrt(x) => check target name i.e. edge or Math
-                            if (mi.arguments.length == 0) {
-                                result.guessedVariables.add(n.identifiers[0]); // return "edge"
-                                return true;
-                            } else if (mi.arguments.length == 1) {
-                                // return "x" but verify before
-                                return mi.arguments[0].accept(this);
-                            }
-                        } else if (variableValidator.isValid(n.identifiers[0])) {
-                            // road_class.ordinal()
-                            if (mi.arguments.length == 0) {
-                                result.guessedVariables.add(n.identifiers[0]); // return road_class
-                                return true;
-                            }
+            if (allowedMethods.contains(mi.methodName) && mi.target != null) {
+                Java.AmbiguousName n = (Java.AmbiguousName) mi.target.toRvalue();
+                if (n.identifiers.length == 2) {
+                    if (allowedMethodParents.contains(n.identifiers[0])) {
+                        // edge.getDistance(), Math.sqrt(x) => check target name i.e. edge or Math
+                        if (mi.arguments.length == 0) {
+                            result.guessedVariables.add(n.identifiers[0]); // return "edge"
+                            return true;
+                        } else if (mi.arguments.length == 1) {
+                            // return "x" but verify before
+                            return mi.arguments[0].accept(this);
+                        }
+                    } else if (variableValidator.isValid(n.identifiers[0])) {
+                        // road_class.ordinal()
+                        if (mi.arguments.length == 0) {
+                            result.guessedVariables.add(n.identifiers[0]); // return road_class
+                            return true;
                         }
                     }
                 }

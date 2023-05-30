@@ -364,14 +364,18 @@ public enum Country {
     /**
      * @return the ISO3166-1:alpha2 code of this country
      */
-    public String getAlpha2() {
+    public String getAlpha2WithoutSubdivision() {
         return alpha2;
     }
 
+    public String getAlpha3() {
+        return alpha3;
+    }
+
     /**
-     * e.g. US-WY
+     * Alpha2 and if available appends the subdivision. If only alpha2 is required see {@link #getAlpha2WithoutSubdivision()}.
      */
-    public String getAlpha2AndSubdivision() {
+    public String getAlpha2() {
         return alpha2 + (hasSubdivision() ? "-" + getSubdivisionCode() : "");
     }
 

@@ -1,6 +1,7 @@
 ### 8.0 [not yet released]
 
 - the Country enum changed from alpha3 to alpha2 constants to include subdivisions like US states, see #2830.
+  Adapt your custom models to use country.name().startsWith(\"US\")
 - bike routing better avoids dangerous roads, see #2796 and #2802
 - routing requests can be configured to timeout after some time, see #2795
 - custom_model_file string changed to custom_model_files array, see #2787
