@@ -252,6 +252,7 @@ public class CustomModelParser {
     }
 
     private static String getReturnType(EncodedValue encodedValue) {
+        // order is important
         if (encodedValue instanceof EnumEncodedValue)
             return ((EnumEncodedValue) encodedValue).getEnumSimpleName();
         if (encodedValue instanceof StringEncodedValue) return "int"; // we use indexOf

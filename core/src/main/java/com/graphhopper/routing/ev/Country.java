@@ -4,7 +4,7 @@
  *  additional information regarding copyright ownership.
  *
  *  GraphHopper GmbH licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"),; you may not use this file except in
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
  *
  *       http://www.apache.org/licenses/LICENSE-2.0
@@ -19,9 +19,9 @@ package com.graphhopper.routing.ev;
 
 /**
  * The enum constants correspond to the ISO3166-1 code (alpha2) of the corresponding country.
- * For a few countries like the USA there are separate instances for each subdivision and their
- * enum ends with their ISO 3166-2 code like US_WY. The toString returns the alpha3 string like "USA".
- * To get the alpha2 code with the subdivision combined with a minus you use getAlpha2AndSubdivision().
+ * For a few countries like the USA there are separate instances for each subdivision and these
+ * enum ends with their ISO 3166-2 code like US_WY. The toString returns the alpha3 string like
+ * "USA" which is used for path details or use {@link #getAlpha3()}.
  */
 public enum Country {
 

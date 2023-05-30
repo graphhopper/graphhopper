@@ -110,7 +110,7 @@ class CustomModelParserTest {
     }
 
     @Test
-    void test() {
+    public void testCountry() {
         EdgeIteratorState usRoad = graph.edge(0, 1).setDistance(10).
                 set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 80).set(accessEnc, true, true).set(countryEnc, Country.US_AK);
         EdgeIteratorState deRoad = graph.edge(1, 2).setDistance(10).
