@@ -75,7 +75,7 @@ encoded values are the following (some of their possible values are given in bra
 - smoothness: (EXCELLENT, GOOD, INTERMEDIATE, ...)
 - toll: (MISSING, NO, HGV, ALL)
 - bike_network, foot_network: (MISSING, INTERNATIONAL, NATIONAL, REGIONAL, LOCAL, OTHER)
-- country: (`MISSING` or the country as a `ISO 3166-2` code e.g. `DE` or with a subdivision `US_TX`)
+- country: (`MISSING` or the country as a `ISO 3166-2` code e.g. `DE` or with a subdivision `US_CA`)
 - hazmat: (YES, NO), hazmat_tunnel: (A, B, .., E), hazmat_water: (YES, PERMISSIVE, NO)
 - hgv: (MISSING, YES, DESIGNATED, ...)
 - track_type: (MISSING, GRADE1, GRADE2, ..., GRADE5)
@@ -266,7 +266,7 @@ which means that for all edges with `max_width` smaller than `2.5m` the speed is
 
 ##### Country
 
-Exclude a country with the help of the alpha2 codes and escape the value with escaped quotes `\"\"`:
+Exclude a country with the help of the alpha2 code and escape the value with escaped quotes `\"\"`:
 
 ```json
 {
@@ -589,7 +589,7 @@ should be 10% slower and the maximum should be 100km/h:
 {
   "speed": [
     { "if": "true", "limit_to": "100" },
-    { "if": "car_average_speed > 50", "limit_to": "car_average_speed * 0.9" }
+    { "if": "car_average_speed > 50", "limit_to": "car_average_speed * 0.9" },
     { "else": "", "limit_to": "car_average_speed" }
   ]
 }

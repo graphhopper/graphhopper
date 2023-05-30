@@ -54,7 +54,7 @@ class CustomModelParserTest {
     void setup() {
         accessEnc = VehicleAccess.create("car");
         avgSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
-        countryEnc = new EnumEncodedValue<Country>("country", Country.class);
+        countryEnc = new EnumEncodedValue<Country>(Country.KEY, Country.class);
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avgSpeedEnc)
                 .add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).build();
         graph = new BaseGraph.Builder(encodingManager).create();
