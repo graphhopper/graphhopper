@@ -974,7 +974,7 @@ public class OSMReaderTest {
         assertEquals(1, graph.getEdges());
         AllEdgesIterator iter = graph.getAllEdges();
         iter.next();
-        assertEquals(Country.BG, iter.get(countryEnc));
+        assertEquals(Country.BGR, iter.get(countryEnc));
     }
 
     @Test

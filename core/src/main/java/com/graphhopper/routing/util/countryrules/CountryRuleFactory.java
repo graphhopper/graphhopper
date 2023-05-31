@@ -19,13 +19,13 @@
 package com.graphhopper.routing.util.countryrules;
 
 
-import static com.graphhopper.routing.ev.Country.*;
+import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.util.countryrules.europe.*;
 
 import java.util.EnumMap;
 import java.util.Map;
 
-import com.graphhopper.routing.ev.Country;
-import com.graphhopper.routing.util.countryrules.europe.*;
+import static com.graphhopper.routing.ev.Country.*;
 
 public class CountryRuleFactory {
 
@@ -34,55 +34,55 @@ public class CountryRuleFactory {
     public CountryRuleFactory() {
 
         // Europe
-        rules.put(AL, new AlbaniaCountryRule());
-        rules.put(AD, new AndorraCountryRule());
-        rules.put(AT, new AustriaCountryRule());
-        rules.put(BE, new BelgiumCountryRule());
-        rules.put(BG, new BulgariaCountryRule());
-        rules.put(BA, new BosniaHerzegovinaCountryRule());
-        rules.put(BY, new BelarusCountryRule());
-        rules.put(CH, new SwitzerlandCountryRule());
-        rules.put(CZ, new CzechiaCountryRule());
-        rules.put(DE, new GermanyCountryRule());
-        rules.put(DK, new DenmarkCountryRule());
-        rules.put(ES, new SpainCountryRule());
-        rules.put(EE, new EstoniaCountryRule());
-        rules.put(FI, new FinlandCountryRule());
-        rules.put(FR, new FranceCountryRule());
-        rules.put(FO, new FaroeIslandsCountryRule());
-        rules.put(GG, new GuernseyCountryRule());
-        rules.put(GI, new GibraltarCountryRule());
-        rules.put(GB, new UnitedKingdomCountryRule());
-        rules.put(GR, new GreeceCountryRule());
-        rules.put(HR, new CroatiaCountryRule());
-        rules.put(HU, new HungaryCountryRule());
-        rules.put(IM, new IsleOfManCountryRule());
-        rules.put(IE, new IrelandCountryRule());
-        rules.put(IS, new IcelandCountryRule());
-        rules.put(IT, new ItalyCountryRule());
-        rules.put(JE, new JerseyCountryRule());
-        rules.put(LI, new LiechtensteinCountryRule());
-        rules.put(LT, new LithuaniaCountryRule());
-        rules.put(LU, new LuxembourgCountryRule());
-        rules.put(LV, new LatviaCountryRule());
-        rules.put(MC, new MonacoCountryRule());
-        rules.put(MD, new MoldovaCountryRule());
-        rules.put(MK, new NorthMacedoniaCountryRule());
-        rules.put(ML, new MaltaCountryRule());
-        rules.put(ME, new MontenegroCountryRule());
-        rules.put(NL, new NetherlandsCountryRule());
-        rules.put(NO, new NorwayCountryRule());
-        rules.put(PL, new PolandCountryRule());
-        rules.put(PT, new PortugalCountryRule());
-        rules.put(RO, new RomaniaCountryRule());
-        rules.put(RU, new RussiaCountryRule());
-        rules.put(SM, new SanMarinoCountryRule());
-        rules.put(RS, new SerbiaCountryRule());
-        rules.put(SK, new SlovakiaCountryRule());
-        rules.put(SI, new SloveniaCountryRule());
-        rules.put(SE, new SwedenCountryRule());
-        rules.put(UA, new UkraineCountryRule());
-        rules.put(VA, new VaticanCityCountryRule());
+        rules.put(ALB, new AlbaniaCountryRule());
+        rules.put(AND, new AndorraCountryRule());
+        rules.put(AUT, new AustriaCountryRule());
+        rules.put(BEL, new BelgiumCountryRule());
+        rules.put(BGR, new BulgariaCountryRule());
+        rules.put(BIH, new BosniaHerzegovinaCountryRule());
+        rules.put(BLR, new BelarusCountryRule());
+        rules.put(CHE, new SwitzerlandCountryRule());
+        rules.put(CZE, new CzechiaCountryRule());
+        rules.put(DEU, new GermanyCountryRule());
+        rules.put(DNK, new DenmarkCountryRule());
+        rules.put(ESP, new SpainCountryRule());
+        rules.put(EST, new EstoniaCountryRule());
+        rules.put(FIN, new FinlandCountryRule());
+        rules.put(FRA, new FranceCountryRule());
+        rules.put(FRO, new FaroeIslandsCountryRule());
+        rules.put(GGY, new GuernseyCountryRule());
+        rules.put(GIB, new GibraltarCountryRule());
+        rules.put(GBR, new UnitedKingdomCountryRule());
+        rules.put(GRC, new GreeceCountryRule());
+        rules.put(HRV, new CroatiaCountryRule());
+        rules.put(HUN, new HungaryCountryRule());
+        rules.put(IMN, new IsleOfManCountryRule());
+        rules.put(IRL, new IrelandCountryRule());
+        rules.put(ISL, new IcelandCountryRule());
+        rules.put(ITA, new ItalyCountryRule());
+        rules.put(JEY, new JerseyCountryRule());
+        rules.put(LIE, new LiechtensteinCountryRule());
+        rules.put(LTU, new LithuaniaCountryRule());
+        rules.put(LUX, new LuxembourgCountryRule());
+        rules.put(LVA, new LatviaCountryRule());
+        rules.put(MCO, new MonacoCountryRule());
+        rules.put(MDA, new MoldovaCountryRule());
+        rules.put(MKD, new NorthMacedoniaCountryRule());
+        rules.put(MLT, new MaltaCountryRule());
+        rules.put(MNE, new MontenegroCountryRule());
+        rules.put(NLD, new NetherlandsCountryRule());
+        rules.put(NOR, new NorwayCountryRule());
+        rules.put(POL, new PolandCountryRule());
+        rules.put(PRT, new PortugalCountryRule());
+        rules.put(ROU, new RomaniaCountryRule());
+        rules.put(RUS, new RussiaCountryRule());
+        rules.put(SMR, new SanMarinoCountryRule());
+        rules.put(SRB, new SerbiaCountryRule());
+        rules.put(SVK, new SlovakiaCountryRule());
+        rules.put(SVN, new SloveniaCountryRule());
+        rules.put(SWE, new SwedenCountryRule());
+        rules.put(UKR, new UkraineCountryRule());
+        rules.put(VAT, new VaticanCityCountryRule());
     }
 
     public CountryRule getCountryRule(Country country) {

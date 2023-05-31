@@ -33,6 +33,7 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.State;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.OSMParsers;
@@ -260,18 +261,20 @@ public class OSMReader {
 
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the EncodingManager
         Country country = Country.MISSING;
+        State state = State.MISSING;
         CustomArea prevCustomArea = null;
         for (CustomArea customArea : customAreas) {
             if (customArea.getProperties() == null) continue;
-            String alpha2WithSubdivision = (String) customArea.getProperties().get(Country.ISO_3166_2);
+            String alpha2WithSubdivision = (String) customArea.getProperties().get(State.ISO_3166_2);
             if (alpha2WithSubdivision == null)
                 continue;
 
-            alpha2WithSubdivision = alpha2WithSubdivision.replace("-", "_");
+            String[] strs = alpha2WithSubdivision.split("-");
+            if (strs.length == 0) continue;
             if (prevCustomArea != null) {
-                if (alpha2WithSubdivision.contains("_") && !country.hasSubdivision()) {
+                if (strs.length == 2 && state == State.MISSING) {
                     // overwrite variable with subdivision
-                } else if (!alpha2WithSubdivision.contains("_") && country.hasSubdivision()) {
+                } else if (strs.length == 1 && state != State.MISSING) {
                     // keep variable with subdivision
                     break;
                 } else if (prevCustomArea.getArea() < customArea.getArea()) {
@@ -282,9 +285,11 @@ public class OSMReader {
             }
 
             prevCustomArea = customArea;
-            country = Country.valueOf(alpha2WithSubdivision);
+            if (strs.length == 2) state = State.find(alpha2WithSubdivision);
+            country = Country.find(strs[0]);
         }
         way.setTag("country", country);
+        way.setTag("country_state", state);
 
         if (countryRuleFactory != null) {
             CountryRule countryRule = countryRuleFactory.getCountryRule(country);

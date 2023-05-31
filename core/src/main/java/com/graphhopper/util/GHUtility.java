@@ -57,6 +57,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.graphhopper.routing.ev.State.ISO_3166_2;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 
 /**
@@ -615,9 +616,12 @@ public class GHUtility {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
 
-        Map<String, Country> mapEnums = new HashMap<>(Country.values().length);
+        Map<String, Country> mapEnums = new HashMap<>(Country.values().length * 2);
         for (Country c : Country.values()) {
-            mapEnums.put(c.getISO_3166_2(), c);
+            if (c == Country.MISSING) continue;
+            for (String code : c.createISO31662Codes()) {
+                mapEnums.put(code, c);
+            }
         }
 
         try (Reader reader = new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {
@@ -629,7 +633,7 @@ public class GHUtility {
                         CustomArea ca = CustomArea.fromJsonFeature(f);
                         // the Feature does not include "id" but we expect it
                         if (f.getId() == null) f.setId(getIdOrPropertiesId(f));
-                        ca.getProperties().put(Country.ISO_3166_2, f.getId());
+                        ca.getProperties().put(ISO_3166_2, f.getId());
                         return ca;
                     })
                     .collect(Collectors.toList());

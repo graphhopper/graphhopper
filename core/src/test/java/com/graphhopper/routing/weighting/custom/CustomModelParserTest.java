@@ -48,15 +48,17 @@ class CustomModelParserTest {
     BooleanEncodedValue accessEnc;
     DecimalEncodedValue avgSpeedEnc;
     EnumEncodedValue<Country> countryEnc;
+    EnumEncodedValue<State> stateEnc;
     double maxSpeed;
 
     @BeforeEach
     void setup() {
         accessEnc = VehicleAccess.create("car");
         avgSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
-        countryEnc = new EnumEncodedValue<Country>(Country.KEY, Country.class);
+        countryEnc = Country.create();
+        stateEnc = State.create();
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avgSpeedEnc)
-                .add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).build();
+                .add(stateEnc).add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).build();
         graph = new BaseGraph.Builder(encodingManager).create();
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         maxSpeed = 140;
@@ -112,18 +114,25 @@ class CustomModelParserTest {
     @Test
     public void testCountry() {
         EdgeIteratorState usRoad = graph.edge(0, 1).setDistance(10).
-                set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 80).set(accessEnc, true, true).set(countryEnc, Country.US_AK);
+                set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 80).set(accessEnc, true, true).
+                set(countryEnc, Country.USA).set(stateEnc, State.US_AK);
+        EdgeIteratorState us2Road = graph.edge(0, 1).setDistance(10).
+                set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 80).set(accessEnc, true, true).
+                set(countryEnc, Country.USA);
         EdgeIteratorState deRoad = graph.edge(1, 2).setDistance(10).
-                set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 70).set(accessEnc, true, true).set(countryEnc, Country.DE);
+                set(roadClassEnc, PRIMARY).set(avgSpeedEnc, 70).set(accessEnc, true, true).
+                set(countryEnc, Country.DEU);
 
         CustomModel customModel = new CustomModel();
-        customModel.addToPriority(If("country.getAlpha2() == \"US\"", MULTIPLY, "0.5"));
-        customModel.addToPriority(If("country == DE", MULTIPLY, "0.8"));
+        customModel.addToPriority(If("country == USA", MULTIPLY, "0.5"));
+        customModel.addToPriority(If("country == USA && state == US_AK", MULTIPLY, "0.6"));
+        customModel.addToPriority(If("country == DEU", MULTIPLY, "0.8"));
 
         CustomWeighting.EdgeToDoubleMapping priorityMapping = CustomModelParser.createWeightingParameters(customModel, encodingManager,
                 avgSpeedEnc, maxSpeed, null).getEdgeToPriorityMapping();
 
-        assertEquals(0.5, priorityMapping.get(usRoad, false), 0.01);
+        assertEquals(0.6 * 0.5, priorityMapping.get(usRoad, false), 0.01);
+        assertEquals(0.5, priorityMapping.get(us2Road, false), 0.01);
         assertEquals(0.8, priorityMapping.get(deRoad, false), 0.01);
     }
 

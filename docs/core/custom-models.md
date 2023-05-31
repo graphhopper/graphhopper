@@ -75,7 +75,8 @@ encoded values are the following (some of their possible values are given in bra
 - smoothness: (EXCELLENT, GOOD, INTERMEDIATE, ...)
 - toll: (MISSING, NO, HGV, ALL)
 - bike_network, foot_network: (MISSING, INTERNATIONAL, NATIONAL, REGIONAL, LOCAL, OTHER)
-- country: (`MISSING` or the country as a `ISO 3166-2` code e.g. `DE` or with a subdivision `US_CA`)
+- country: (`MISSING` or the country as a `ISO3166-1:alpha3` code e.g. `DEU`)
+- state: (`MISSING` or the state as `ISO3166-2` code e.g. `US_CA`)
 - hazmat: (YES, NO), hazmat_tunnel: (A, B, .., E), hazmat_water: (YES, PERMISSIVE, NO)
 - hgv: (MISSING, YES, DESIGNATED, ...)
 - track_type: (MISSING, GRADE1, GRADE2, ..., GRADE5)
@@ -266,28 +267,27 @@ which means that for all edges with `max_width` smaller than `2.5m` the speed is
 
 ##### Country
 
-Exclude a country with the help of the alpha2 code and escape the value with escaped quotes `\"\"`:
+Reduce speed for a country:
 
 ```json
 {
   "speed": [
     {
-      "if": "country.getAlpha2() == \"US\"",
-      "multiply_by": "0"
+      "if": "country == USA",
+      "multiply_by": "0.9"
     }
   ]
 }
 ```
 
-To differentiate between the subdivisions, like the different states of the USA, you use the 
-`country` attribute directly without quotes:
+You can also differentiate between the states:
 
 ```json
 {
   "speed": [
     {
-      "if": "country == US_CA",
-      "multiply_by": "0"
+      "if": "state == US_CA",
+      "multiply_by": "0.9"
     }
   ]
 }
