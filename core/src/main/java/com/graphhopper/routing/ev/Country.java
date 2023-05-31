@@ -320,6 +320,6 @@ public enum Country {
      */
     public List<String> createISO31662Codes() {
         if (states.isEmpty()) return Collections.singletonList(alpha2);
-        return states.stream().map(sd -> alpha2 + "-" + sd.getStateCode()).collect(Collectors.toList());
+        return states.stream().map(State::getStateCode).collect(Collectors.toList());
     }
 }
