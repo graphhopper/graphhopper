@@ -74,7 +74,7 @@ public class UrbanDensityCalculator {
                 // we're interested in the road density of urban roads, so residential areas are particularly interesting
                 case RESIDENTIAL:
                     // https://github.com/graphhopper/graphhopper/issues/2829
-                    return "US".equals(edge.get(countryEnc).getAlpha2()) ? 0 : 2;
+                    return edge.get(countryEnc) == Country.USA ? 0 : 2;
                 case LIVING_STREET:
                 case FOOTWAY:
                 case CYCLEWAY:
@@ -97,7 +97,7 @@ public class UrbanDensityCalculator {
         RoadDensityCalculator.calcRoadDensities(graph, (calculator, edge) -> {
             RoadClass roadClass = edge.get(roadClassEnc);
             if (roadClass == RoadClass.LIVING_STREET
-                    || roadClass == RoadClass.RESIDENTIAL && !"US".equals(edge.get(countryEnc).getAlpha2())) {
+                    || roadClass == RoadClass.RESIDENTIAL && edge.get(countryEnc) != Country.USA) {
                 isResidential[edge.getEdge()] = true;
                 return;
             }
