@@ -894,9 +894,13 @@ public class GraphHopper {
                 throw new IllegalArgumentException("Urban density calculation requires " + RoadClass.KEY);
             if (!encodingManager.hasEncodedValue(RoadClassLink.KEY))
                 throw new IllegalArgumentException("Urban density calculation requires " + RoadClassLink.KEY);
+            if (!encodingManager.hasEncodedValue(Country.KEY))
+                throw new IllegalArgumentException("Urban density calculation requires " + Country.KEY);
+            EnumEncodedValue<Country> countryEnc = encodingManager.getEnumEncodedValue(Country.KEY, Country.class);
             EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
             BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
-            UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, roadClassEnc, roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
+            UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, countryEnc, roadClassEnc,
+                    roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
         }
     }
 
