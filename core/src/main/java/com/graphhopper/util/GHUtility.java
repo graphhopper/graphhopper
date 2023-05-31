@@ -616,19 +616,17 @@ public class GHUtility {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
 
-        Map<String, Country> mapEnums = new HashMap<>(Country.values().length * 2);
+        Set<String> mapEnums = new HashSet<>(Country.values().length * 2);
         for (Country c : Country.values()) {
             if (c == Country.MISSING) continue;
-            for (String code : c.createISO31662Codes()) {
-                mapEnums.put(code, c);
-            }
+            mapEnums.addAll(c.createISO31662Codes());
         }
 
         try (Reader reader = new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {
             JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
             return jsonFeatureCollection.getFeatures().stream()
                     // exclude areas not in the list of Country enums like FX => Metropolitan France
-                    .filter(customArea -> mapEnums.get(getIdOrPropertiesId(customArea)) != null)
+                    .filter(customArea -> mapEnums.contains(getIdOrPropertiesId(customArea)))
                     .map((f) -> {
                         CustomArea ca = CustomArea.fromJsonFeature(f);
                         // the Feature does not include "id" but we expect it
