@@ -552,6 +552,7 @@ public class GraphHopper {
         if (ghConfig.has("graph.elevation.smoothing"))
             throw new IllegalArgumentException("Use 'graph.elevation.edge_smoothing: moving_average' or the new 'graph.elevation.edge_smoothing: ramer'. See #2634.");
         osmReaderConfig.setElevationSmoothing(ghConfig.getString("graph.elevation.edge_smoothing", osmReaderConfig.getElevationSmoothing()));
+        osmReaderConfig.setSmoothElevationAverageWindowSize(ghConfig.getDouble("graph.elevation.edge_smoothing.moving_average.window_size", osmReaderConfig.getSmoothElevationAverageWindowSize()));
         osmReaderConfig.setElevationSmoothingRamerMax(ghConfig.getInt("graph.elevation.edge_smoothing.ramer.max_elevation", osmReaderConfig.getElevationSmoothingRamerMax()));
         osmReaderConfig.setLongEdgeSamplingDistance(ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", osmReaderConfig.getLongEdgeSamplingDistance()));
         osmReaderConfig.setElevationMaxWayPointDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", osmReaderConfig.getElevationMaxWayPointDistance()));
@@ -893,9 +894,13 @@ public class GraphHopper {
                 throw new IllegalArgumentException("Urban density calculation requires " + RoadClass.KEY);
             if (!encodingManager.hasEncodedValue(RoadClassLink.KEY))
                 throw new IllegalArgumentException("Urban density calculation requires " + RoadClassLink.KEY);
+            if (!encodingManager.hasEncodedValue(Country.KEY))
+                throw new IllegalArgumentException("Urban density calculation requires " + Country.KEY);
+            EnumEncodedValue<Country> countryEnc = encodingManager.getEnumEncodedValue(Country.KEY, Country.class);
             EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
             BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
-            UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, roadClassEnc, roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
+            UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, countryEnc, roadClassEnc,
+                    roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
         }
     }
 

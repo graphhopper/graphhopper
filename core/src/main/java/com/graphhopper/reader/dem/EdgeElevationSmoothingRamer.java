@@ -1,63 +1,20 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.PointList;
 
 /**
- * The ElevationData is read from rectangular tiles. Especially when going along a cliff,
- * valley, or pass, it can happen that a small part of the road contains incorrect elevation data.
- * This is because the elevation data is coarse and sometimes contains errors.
+ * Elevation data is read from DEM tiles that have data points for rectangular tiles usually having an
+ * edge length of 30 or 90 meter. Elevation in between the middle points of those tiles will be
+ * interpolated and weighted by the distance from a node to adjacent tile centers.
+ * <p>
+ * Ways that go along cliffs or ridges are particularly affected by ups and downs that do not reflect
+ * the actual elevation but may be artifacts originated from very accurately mapping when elevation has
+ * a lower resolution.
  *
- * @author Robin Boldt
+ * @author Peter Karich
  */
-public class EdgeElevationSmoothing {
-
-    // If the point is farther then this, we stop averaging
-    private final static int MAX_SEARCH_DISTANCE = 150;
-
-    /**
-     * This method smooths the elevation data of a PointList by calculating the average elevation over
-     * multiple points of that PointList.
-     */
-    public static void smoothMovingAverage(PointList geometry) {
-        for (int i = 1; i < geometry.size() - 1; i++) {
-
-            int start = i;
-            for (int j = i - 1; j >= 0; j--) {
-                if (MAX_SEARCH_DISTANCE > DistancePlaneProjection.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
-                    start = j;
-                } else {
-                    break;
-                }
-            }
-
-            int end = i;
-            for (int j = i + 1; j < geometry.size(); j++) {
-                if (MAX_SEARCH_DISTANCE > DistancePlaneProjection.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
-                    // +1 because the end is exclusive
-                    end = j + 1;
-                } else {
-                    break;
-                }
-            }
-
-            // In this case we cannot find any points within the max search distance, so we simply skip this point
-            if (start == end)
-                continue;
-
-            double sum = 0;
-            for (int j = start; j < end; j++) {
-                // We skip points that are too far away, important for motorways
-                if (MAX_SEARCH_DISTANCE > DistancePlaneProjection.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
-                    sum += geometry.getEle(j);
-                }
-            }
-            double smoothed = sum / (end - start);
-            geometry.setElevation(i, smoothed);
-        }
-    }
-
+public class EdgeElevationSmoothingRamer {
     /**
      * This method removes elevation fluctuations up to maxElevationDelta. Compared to the smoothMovingAverage function
      * this method has the advantage that the maximum slope of a PointList never increases (max(abs(slope_i))).
@@ -69,11 +26,11 @@ public class EdgeElevationSmoothing {
      * 2. instead of removing the point the elevation will be calculated from the average slope of the first and last
      * point of the specified pointList
      */
-    public static void smoothRamer(PointList pointList, double maxElevationDelta) {
-        internSmoothRamer(pointList, 0, pointList.size() - 1, maxElevationDelta);
+    public static void smooth(PointList pointList, double maxElevationDelta) {
+        internSmooth(pointList, 0, pointList.size() - 1, maxElevationDelta);
     }
 
-    static void internSmoothRamer(PointList pointList, int fromIndex, int lastIndex, double maxElevationDelta) {
+    static void internSmooth(PointList pointList, int fromIndex, int lastIndex, double maxElevationDelta) {
         if (lastIndex - fromIndex < 2)
             return;
 
@@ -119,8 +76,8 @@ public class EdgeElevationSmoothing {
                 prevLon = lon;
             }
         } else {
-            internSmoothRamer(pointList, fromIndex, indexWithMaxDelta, maxElevationDelta);
-            internSmoothRamer(pointList, indexWithMaxDelta, lastIndex, maxElevationDelta);
+            internSmooth(pointList, fromIndex, indexWithMaxDelta, maxElevationDelta);
+            internSmooth(pointList, indexWithMaxDelta, lastIndex, maxElevationDelta);
         }
     }
 }
