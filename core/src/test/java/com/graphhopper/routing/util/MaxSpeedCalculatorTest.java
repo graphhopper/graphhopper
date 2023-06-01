@@ -17,8 +17,7 @@ import java.util.Map;
 import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
 import static com.graphhopper.routing.ev.UrbanDensity.CITY;
 import static com.graphhopper.routing.ev.UrbanDensity.RURAL;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MaxSpeedCalculatorTest {
 
@@ -28,6 +27,7 @@ class MaxSpeedCalculatorTest {
     private EncodingManager em;
     private EnumEncodedValue<UrbanDensity> urbanDensity;
     private DecimalEncodedValue maxSpeedEnc;
+    private BooleanEncodedValue maxSpeedEstEnc;
     private OSMParsers parsers;
 
     @BeforeEach
@@ -38,8 +38,9 @@ class MaxSpeedCalculatorTest {
         urbanDensity = UrbanDensity.create();
         EnumEncodedValue<Country> countryEnc = Country.create();
         maxSpeedEnc = MaxSpeed.create();
+        maxSpeedEstEnc = MaxSpeedEstimated.create();
         em = EncodingManager.start().add(urbanDensity).add(countryEnc).add(Roundabout.create()).add(Surface.create()).
-                add(Lanes.create()).add(roadClassEnc).add(maxSpeedEnc).add(accessEnc).add(speedEnc).build();
+                add(Lanes.create()).add(roadClassEnc).add(maxSpeedEnc).add(maxSpeedEstEnc).add(accessEnc).add(speedEnc).build();
         graph = new BaseGraph.Builder(em).create();
         calc = new MaxSpeedCalculator(defaultSpeeds);
         parsers = new OSMParsers();
@@ -86,6 +87,7 @@ class MaxSpeedCalculatorTest {
         EdgeIteratorState edge = createEdge(way).set(urbanDensity, CITY);
         calc.fillMaxSpeed(graph, em);
         assertEquals(50, edge.get(maxSpeedEnc), 1);
+        assertTrue(edge.get(maxSpeedEstEnc));
 
         way = new ReaderWay(0L);
         way.setTag("country", Country.DEU);
@@ -100,6 +102,15 @@ class MaxSpeedCalculatorTest {
         edge = createEdge(way).set(urbanDensity, CITY);
         calc.fillMaxSpeed(graph, em);
         assertEquals(50, edge.get(maxSpeedEnc), 1);
+
+        way = new ReaderWay(0L);
+        way.setTag("country", Country.DEU);
+        way.setTag("highway", "residential");
+        way.setTag("maxspeed", "70");
+        edge = createEdge(way);
+        calc.fillMaxSpeed(graph, em);
+        assertEquals(70, edge.get(maxSpeedEnc), 1);
+        assertFalse(edge.get(maxSpeedEstEnc));
     }
 
     @Test

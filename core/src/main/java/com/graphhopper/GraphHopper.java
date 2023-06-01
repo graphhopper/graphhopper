@@ -619,10 +619,12 @@ public class GraphHopper {
     }
 
     protected EncodingManager buildEncodingManager(Map<String, String> vehiclesByName, List<String> encodedValueStrings,
-                                                   boolean withUrbanDensity, Collection<Profile> profiles) {
+                                                   boolean withUrbanDensity, boolean withMaxSpeedEst, Collection<Profile> profiles) {
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         vehiclesByName.forEach((name, vehicleStr) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, new PMap(vehicleStr))));
         profiles.forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
+        if (withMaxSpeedEst)
+            emBuilder.add(MaxSpeedEstimated.create());
         if (withUrbanDensity)
             emBuilder.add(UrbanDensity.create());
         encodedValueStrings.forEach(s -> emBuilder.add(encodedValueFactory.create(s, new PMap())));
@@ -852,9 +854,11 @@ public class GraphHopper {
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
         boolean withUrbanDensity = urbanDensityCalculationThreads > 0;
+        boolean withMaxSpeedEstimation = maxSpeedCalculator != null;
         Map<String, String> vehiclesByName = getVehiclesByName(vehiclesString, profilesByName.values());
         List<String> encodedValueStrings = getEncodedValueStrings(encodedValuesString);
-        encodingManager = buildEncodingManager(vehiclesByName, encodedValueStrings, withUrbanDensity, profilesByName.values());
+        encodingManager = buildEncodingManager(vehiclesByName, encodedValueStrings, withUrbanDensity,
+                withMaxSpeedEstimation, profilesByName.values());
         osmParsers = buildOSMParsers(vehiclesByName, encodedValueStrings, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)

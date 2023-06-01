@@ -93,6 +93,21 @@ public class DefaultMaxSpeedParser implements TagParser {
         return map;
     }
 
+    // TODO can only be used with the release after 1.2
+//    private Map<String, String> filterNew(Map<String, Object> tags) {
+//        Map<String, String> map = new HashMap<>(tags.size());
+//        for (Map.Entry<String, Object> entry : tags.entrySet()) {
+//            String key = entry.getKey();
+//            if (speeds.isRelevantTagKey(key)
+//                    || key.equals("country")
+//                    // the :conditional tags are not yet necessary for us and expensive in the speeds library
+//                    // see https://github.com/westnordost/osm-legal-default-speeds/issues/7
+//                    || key.startsWith("maxspeed:") && !key.endsWith(":conditional"))
+//                map.put(key, entry.getValue().toString());
+//        }
+//        return map;
+//    }
+
     private static class Result {
         Integer urban, rural;
     }

@@ -16,7 +16,10 @@ import de.westnordost.osm_legal_default_speeds.RoadTypeFilter;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class MaxSpeedCalculator {
 
@@ -127,9 +130,9 @@ public class MaxSpeedCalculator {
     public void fillMaxSpeed(Graph graph, EncodingManager em) {
         EnumEncodedValue<UrbanDensity> urbanDensityEnc = em.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
         DecimalEncodedValue maxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
+        BooleanEncodedValue maxSpeedEstEnc = em.getBooleanEncodedValue(MaxSpeedEstimated.KEY);
 
         StopWatch sw = new StopWatch().start();
-        List<Map<String, String>> relTags = new ArrayList<>();
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             double fwdMaxSpeedPureOSM = iter.get(maxSpeedEnc);
@@ -145,12 +148,16 @@ public class MaxSpeedCalculator {
             UrbanDensity urbanDensity = iter.get(urbanDensityEnc);
             if (urbanDensity == UrbanDensity.RURAL) {
                 double maxSpeedRuralDefault = ruralMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
-                if (maxSpeedRuralDefault != MaxSpeed.UNSET_SPEED)
+                if (maxSpeedRuralDefault != MaxSpeed.UNSET_SPEED) {
                     iter.set(maxSpeedEnc, maxSpeedRuralDefault, maxSpeedRuralDefault);
+                    iter.set(maxSpeedEstEnc, true);
+                }
             } else {
                 double maxSpeedUrbanDefault = urbanMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
-                if (maxSpeedUrbanDefault != MaxSpeed.UNSET_SPEED)
+                if (maxSpeedUrbanDefault != MaxSpeed.UNSET_SPEED) {
                     iter.set(maxSpeedEnc, maxSpeedUrbanDefault, maxSpeedUrbanDefault);
+                    iter.set(maxSpeedEstEnc, true);
+                }
             }
         }
 
