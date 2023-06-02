@@ -9,7 +9,8 @@ graphhopper:
   graph.dataaccess.default_type: RAM_STORE
 
   gtfs.trip_based: true
-  gtfs.schedule_day: 2023-04-05,2023-05-10
+  #gtfs.schedule_day: 2023-04-05,2023-05-10
+  gtfs.schedule_day: 2023-04-05
 
   gtfs.max_transfer_interpolation_walk_time_seconds: 300
 
