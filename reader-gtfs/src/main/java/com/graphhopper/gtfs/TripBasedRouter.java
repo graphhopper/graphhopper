@@ -75,7 +75,7 @@ public class TripBasedRouter {
 
     private void iterate(List<EnqueuedTripSegment> queue0) {
         int round = 0;
-        while (queue0.size() != 0) {
+        while (queue0.size() != 0 && round < 3) {
             queue0 = round(queue0, round);
             round = round + 1;
         }
