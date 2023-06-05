@@ -269,16 +269,12 @@ public enum Country {
     // ISO 3166-1 alpha3
     private final String alpha3;
     private final List<State> states;
-    private final List<String> iso31662Codes;
 
     Country(String countryName, String alpha3, String alpha2, State... states) {
         this.countryName = countryName;
         this.alpha2 = alpha2;
         this.alpha3 = alpha3;
         this.states = Arrays.asList(states);
-        iso31662Codes = this.states.isEmpty()
-                ? Collections.singletonList(alpha2)
-                : this.states.stream().map(State::getStateCode).collect(Collectors.toList());
     }
 
     /**
@@ -317,12 +313,5 @@ public enum Country {
     @Override
     public String toString() {
         return alpha3; // for background compatibility
-    }
-
-    /**
-     * @return all ISO 3166-2 i.e. including subdivisions (List of States as String) if any.
-     */
-    public List<String> getISO31662Codes() {
-        return iso31662Codes;
     }
 }

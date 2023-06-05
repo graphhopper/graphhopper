@@ -27,6 +27,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.State;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CustomArea;
@@ -616,17 +617,19 @@ public class GHUtility {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
 
-        Set<String> mapEnums = new HashSet<>(Country.values().length * 2);
+        Set<String> enumSet = new HashSet<>(Country.values().length * 2);
         for (Country c : Country.values()) {
             if (c == Country.MISSING) continue;
-            mapEnums.addAll(c.getISO31662Codes());
+            if (c.getStates().isEmpty()) enumSet.add(c.getAlpha2());
+            else
+                enumSet.addAll(c.getStates().stream().map(State::getStateCode).collect(Collectors.toList()));
         }
 
         try (Reader reader = new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {
             JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
             return jsonFeatureCollection.getFeatures().stream()
                     // exclude areas not in the list of Country enums like FX => Metropolitan France
-                    .filter(customArea -> mapEnums.contains(getIdOrPropertiesId(customArea)))
+                    .filter(customArea -> enumSet.contains(getIdOrPropertiesId(customArea)))
                     .map((f) -> {
                         CustomArea ca = CustomArea.fromJsonFeature(f);
                         // the Feature does not include "id" but we expect it
