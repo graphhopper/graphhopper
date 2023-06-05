@@ -431,7 +431,7 @@ public class OSMReader {
                     list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:backward")), false, true));
             }
         }
-        if ("no".equals(way.getTag("tiger:reviewed", "no")))
+        if ("no".equals(way.getTag("tiger:reviewed", "")))
             list.add(new KVStorage.KeyValue("tiger:reviewed", "no"));
 
         way.setTag("key_values", list);
