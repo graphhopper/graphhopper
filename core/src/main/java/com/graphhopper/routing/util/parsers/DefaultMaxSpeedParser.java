@@ -7,7 +7,10 @@ import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.IntsRef;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
 import static com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor.stringToKmh;
@@ -62,29 +65,12 @@ public class DefaultMaxSpeedParser implements TagParser {
         ruralMaxSpeedEnc.setDecimal(false, edgeId, externalAccess, ruralSpeedInt == null ? UNSET_SPEED : ruralSpeedInt);
     }
 
-    // keys from roadTypesByName in legal_default_speeds.json but ignore relationFilter
-    private static final Collection<String> allowedKeys = new HashSet<>(Arrays.asList(
-            "abutters", "bicycle_road", "bridge", "cyclestreet",
-            "designation", "dual_carriageway", "expressway", "frontage_road",
-            "hazard", "highway", "junction",
-            "lane_markings", "lanes", "lit",
-            "motorroad", "oneway", "playground_zone",
-            "ref", "restriction", "rural",
-            "school_zone", "service", "shoulder", "side_road", "sidewalk", "silver_zone", "surface",
-            "tracktype", "tunnel", "width",
-
-            // pseudo tag for cache key "tags"
-            "country"
-    ));
-
-    private static Map<String, String> filter(Map<String, Object> tags) {
+    private Map<String, String> filter(Map<String, Object> tags) {
         Map<String, String> map = new HashMap<>(tags.size());
         for (Map.Entry<String, Object> entry : tags.entrySet()) {
             String key = entry.getKey();
-            if (allowedKeys.contains(key)
-                    || key.startsWith("shoulder:")
-                    || key.startsWith("sidewalk:")
-                    || key.startsWith("zone:")
+            if (speeds.isRelevantTagKey(key)
+                    || key.equals("country")
                     // the :conditional tags are not yet necessary for us and expensive in the speeds library
                     // see https://github.com/westnordost/osm-legal-default-speeds/issues/7
                     || key.startsWith("maxspeed:") && !key.endsWith(":conditional"))
@@ -92,21 +78,6 @@ public class DefaultMaxSpeedParser implements TagParser {
         }
         return map;
     }
-
-    // TODO can only be used with the release after 1.2
-//    private Map<String, String> filterNew(Map<String, Object> tags) {
-//        Map<String, String> map = new HashMap<>(tags.size());
-//        for (Map.Entry<String, Object> entry : tags.entrySet()) {
-//            String key = entry.getKey();
-//            if (speeds.isRelevantTagKey(key)
-//                    || key.equals("country")
-//                    // the :conditional tags are not yet necessary for us and expensive in the speeds library
-//                    // see https://github.com/westnordost/osm-legal-default-speeds/issues/7
-//                    || key.startsWith("maxspeed:") && !key.endsWith(":conditional"))
-//                map.put(key, entry.getValue().toString());
-//        }
-//        return map;
-//    }
 
     private static class Result {
         Integer urban, rural;
