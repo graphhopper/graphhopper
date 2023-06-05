@@ -140,7 +140,7 @@ public class RouteResource {
         if (ghResponse.hasErrors()) {
             MultiException ex = new MultiException(ghResponse.getErrors());
             logger.info(logStr, ex);
-            throw ex;
+            throw new WebApplicationException(ex, Response.Status.BAD_REQUEST);
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
                     + ", distance0: " + ghResponse.getBest().getDistance()
