@@ -2,6 +2,9 @@ package com.graphhopper.routing.ev;
 
 import static com.graphhopper.routing.ev.Country.*;
 
+/**
+ * The country subdivision is stored in this EncodedValue. E.g. US-CA is the enum US_CA.
+ */
 public enum State {
     MISSING("-", Country.MISSING),
 

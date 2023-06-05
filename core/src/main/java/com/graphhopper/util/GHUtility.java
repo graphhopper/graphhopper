@@ -619,7 +619,7 @@ public class GHUtility {
         Set<String> mapEnums = new HashSet<>(Country.values().length * 2);
         for (Country c : Country.values()) {
             if (c == Country.MISSING) continue;
-            mapEnums.addAll(c.createISO31662Codes());
+            mapEnums.addAll(c.getISO31662Codes());
         }
 
         try (Reader reader = new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {
