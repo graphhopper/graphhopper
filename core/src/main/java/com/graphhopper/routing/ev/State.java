@@ -125,8 +125,7 @@ public enum State {
         try {
             return State.valueOf(iso.replace('-', '_'));
         } catch (IllegalArgumentException ex) {
-            throw new RuntimeException(ex); // TODO NOW REMOVE
-            // return State.MISSING;
+            return State.MISSING;
         }
     }
 
