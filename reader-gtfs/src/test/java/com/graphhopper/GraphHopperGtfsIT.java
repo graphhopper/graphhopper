@@ -18,6 +18,8 @@
 
 package com.graphhopper;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import com.conveyal.gtfs.model.Stop;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
@@ -28,6 +30,7 @@ import org.assertj.core.util.Maps;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.math.BigDecimal;

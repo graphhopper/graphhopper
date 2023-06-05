@@ -57,6 +57,8 @@ public class AnotherAgencyIT {
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("datareader.file", "files/beatty.osm");
         ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
+        ghConfig.putObject("gtfs.trip_based", true);
+        ghConfig.putObject("gtfs.schedule_day", "2007-01-01,2007-01-02,2007-01-06,2007-01-07");
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                 new Profile("car").setVehicle("car").setWeighting("fastest")));

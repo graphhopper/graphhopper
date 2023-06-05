@@ -11,6 +11,7 @@ import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.function.ToIntFunction;
 
 public class TripBasedRouter {
     private final Trips tripTransfers;
@@ -60,9 +61,7 @@ public class TripBasedRouter {
             Map<String, List<Trips.TripAtStopTime>> boardingsByPattern = tripTransfers.boardingsForStopByPattern.getUnchecked(accessStation.stopId);
             int targetSecondOfDay = earliestDepartureTime.toLocalTime().toSecondOfDay();
             for (List<Trips.TripAtStopTime> boardings : boardingsByPattern.values()) {
-                int indexx = Collections.binarySearch(boardings, null, (boarding, key) ->
-                        Integer.compare(tripsForThisFeed.get(boarding.tripDescriptor).stopTimes.get(boarding.stop_sequence).departure_time, targetSecondOfDay));
-                int index = indexx >= 0 ? indexx : (- indexx) - 1;
+                int index = binarySearch(targetSecondOfDay, boardings, boarding -> tripsForThisFeed.get(boarding.tripDescriptor).stopTimes.get(boarding.stop_sequence).departure_time);
                 for (int i = index; i < boardings.size(); i++) {
                     Trips.TripAtStopTime boarding = boardings.get(i);
                     GTFSFeed.StopTimesForTripWithTripPatternKey trip = tripsForThisFeed.get(boarding.tripDescriptor);
@@ -75,6 +74,14 @@ public class TripBasedRouter {
         }
         iterate(queue0);
         return result;
+    }
+
+    private static int binarySearch(int targetSecondOfDay, List<Trips.TripAtStopTime> boardings, ToIntFunction<Trips.TripAtStopTime> tripAtStopTimeToIntFunction) {
+        int indexx = Collections.binarySearch(boardings, null, (boarding, key) -> {
+            int x = tripAtStopTimeToIntFunction.applyAsInt(boarding);
+            return x >= targetSecondOfDay ? 1 : -1;
+        });
+        return indexx >= 0 ? indexx : (- indexx) - 1;
     }
 
     private void iterate(List<EnqueuedTripSegment> queue0) {

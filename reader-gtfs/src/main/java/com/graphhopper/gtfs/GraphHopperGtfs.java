@@ -105,7 +105,7 @@ public class GraphHopperGtfs extends GraphHopper {
                     gtfsReader.buildPtNetwork();
                     allReaders.put(id, gtfsReader);
                 });
-                interpolateTransfers(allReaders, allTransfers);
+                //interpolateTransfers(allReaders, allTransfers);
                 if (ghConfig.getBool("gtfs.trip_based", false)) {
                     for (String trafficDayString : ghConfig.getString("gtfs.schedule_day", null).split(",")) {
                         LocalDate trafficDay = LocalDate.parse(trafficDayString);

@@ -51,6 +51,15 @@ public class StopTime extends Entity implements Cloneable, Serializable {
     public double shape_dist_traveled;
     public int    timepoint = INT_MISSING;
 
+    @Override
+    public String toString() {
+        return "StopTime{" +
+                "arrival_time=" + arrival_time +
+                ", departure_time=" + departure_time +
+                ", stop_id='" + stop_id + '\'' +
+                '}';
+    }
+
     public static class Loader extends Entity.Loader<StopTime> {
 
         public Loader(GTFSFeed feed) {

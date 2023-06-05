@@ -166,7 +166,6 @@ public class Trips {
             feed.trips.values().stream()
                     .filter(trip -> feed.services.get(trip.service_id).activeOn(trafficDay))
                     .flatMap(trip -> unfoldFrequencies(feed, trip))
-                    .parallel()
                     .forEach(tripDescriptor -> {
                         Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = tripTransfers.findTripTransfers(tripDescriptor, feedKey, trafficDay);
                         result.putAll(reducedTripTransfers);
@@ -248,9 +247,13 @@ public class Trips {
         public String toString() {
             return "TripAtStopTime{" +
                     "feedId='" + feedId + '\'' +
-                    ", tripDescriptor=" + tripDescriptor +
+                    ", tripDescriptor=" + print(tripDescriptor) +
                     ", stop_sequence=" + stop_sequence +
                     '}';
+        }
+
+        public static String print(GtfsRealtime.TripDescriptor tripDescriptor) {
+            return "TripDescriptor{tripId='"+tripDescriptor.getTripId()+"', startTime='"+tripDescriptor.getStartTime()+"'}";
         }
 
         @Override
