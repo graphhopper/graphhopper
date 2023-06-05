@@ -83,6 +83,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return HorseRating.create();
         } else if (Country.KEY.equals(name)) {
             return Country.create();
+        } else if (State.KEY.equals(name)) {
+            return State.create();
         } else if (name.endsWith(Subnetwork.key(""))) {
             return Subnetwork.create(name);
         } else if (MaxSlope.KEY.equals(name)) {

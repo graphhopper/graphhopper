@@ -28,6 +28,8 @@ public class OSMReaderConfig {
     private double maxWayPointDistance = 1;
     private double elevationMaxWayPointDistance = Double.MAX_VALUE;
     private String smoothElevation = "";
+
+    private double smoothElevationAverageWindowSize = 150.0;
     private int ramerElevationSmoothingMax = 5;
     private double longEdgeSamplingDistance = Double.MAX_VALUE;
     private int workerThreads = 2;
@@ -120,6 +122,14 @@ public class OSMReaderConfig {
     public OSMReaderConfig setElevationSmoothingRamerMax(int max) {
         this.ramerElevationSmoothingMax = max;
         return this;
+    }
+
+    public double getSmoothElevationAverageWindowSize() {
+        return smoothElevationAverageWindowSize;
+    }
+
+    public void setSmoothElevationAverageWindowSize(double smoothElevationAverageWindowSize) {
+        this.smoothElevationAverageWindowSize = smoothElevationAverageWindowSize;
     }
 
     public double getLongEdgeSamplingDistance() {

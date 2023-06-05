@@ -27,6 +27,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.State;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CustomArea;
@@ -57,6 +58,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.graphhopper.routing.ev.State.ISO_3166_2;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 
 /**
@@ -615,20 +617,23 @@ public class GHUtility {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
 
-        Map<String, Country> map = new HashMap<>(Country.values().length);
-        for (Country c : Country.values()) map.put(c.getAlpha2(), c);
+        Set<String> enumSet = new HashSet<>(Country.values().length * 2);
+        for (Country c : Country.values()) {
+            if (c == Country.MISSING) continue;
+            if (c.getStates().isEmpty()) enumSet.add(c.getAlpha2());
+            else for (State s : c.getStates()) enumSet.add(s.getStateCode());
+        }
 
         try (Reader reader = new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {
             JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
             return jsonFeatureCollection.getFeatures().stream()
                     // exclude areas not in the list of Country enums like FX => Metropolitan France
-                    .filter(customArea -> map.get(getIdOrPropertiesId(customArea)) != null)
+                    .filter(customArea -> enumSet.contains(getIdOrPropertiesId(customArea)))
                     .map((f) -> {
                         CustomArea ca = CustomArea.fromJsonFeature(f);
                         // the Feature does not include "id" but we expect it
                         if (f.getId() == null) f.setId(getIdOrPropertiesId(f));
-                        Country country = map.get(f.getId());
-                        ca.getProperties().put(Country.ISO_ALPHA3, country.name());
+                        ca.getProperties().put(ISO_3166_2, f.getId());
                         return ca;
                     })
                     .collect(Collectors.toList());
@@ -640,19 +645,6 @@ public class GHUtility {
     private static String getIdOrPropertiesId(JsonFeature feature) {
         if (feature.getId() != null) return feature.getId();
         if (feature.getProperties() != null) return (String) feature.getProperties().get("id");
-        return null;
-    }
-
-    public static CustomArea getFirstDuplicateArea(List<CustomArea> areas, String id) {
-        Set<String> result = new HashSet<>(areas.size());
-        for (CustomArea area : areas) {
-            if (area.getProperties() == null) continue;
-            String countryCode = (String) area.getProperties().get(id);
-            // in our country file there are not only countries but "subareas" (with ISO3166-2) or other unnamed areas
-            // like Metropolitan Netherlands
-            if (countryCode != null && !result.add(countryCode))
-                return area;
-        }
         return null;
     }
 
