@@ -22,6 +22,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.UrbanDensity;
+import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.StopWatch;
@@ -52,7 +53,18 @@ public class UrbanDensityCalculator {
                                         int threads) {
         logger.info("Calculating residential areas ..., radius={}, sensitivity={}, threads={}", residentialAreaRadius, residentialAreaSensitivity, threads);
         StopWatch sw = StopWatch.started();
-        calcResidential(graph, urbanDensityEnc, roadClassEnc, roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, threads);
+
+        // workaround for incorrectly tagged residentials in the USA. Grab KeyValue and store in faster accessible boolean
+        boolean[] ignoreResidentials = new boolean[graph.getEdges()];
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            for (KVStorage.KeyValue kv : iter.getKeyValues()) {
+                ignoreResidentials[iter.getEdge()] = "tiger:reviewed".equals(kv.getKey()) && "no".equals(kv.getValue());
+            }
+        }
+
+        calcResidential(graph, urbanDensityEnc, ignoreResidentials, roadClassEnc, roadClassLinkEnc,
+                residentialAreaRadius, residentialAreaSensitivity, threads);
         logger.info("Finished calculating residential areas, took: " + sw.stop().getSeconds() + "s");
         if (cityAreaRadius > 1) {
             logger.info("Calculating city areas ..., radius={}, sensitivity={}, threads={}", cityAreaRadius, cityAreaSensitivity, threads);
@@ -63,6 +75,7 @@ public class UrbanDensityCalculator {
     }
 
     private static void calcResidential(Graph graph, EnumEncodedValue<UrbanDensity> urbanDensityEnc,
+                                        boolean[] ignoreResidential,
                                         EnumEncodedValue<RoadClass> roadClassEnc, BooleanEncodedValue roadClassLinkEnc,
                                         double radius, double sensitivity, int threads) {
         final ToDoubleFunction<EdgeIteratorState> calcRoadFactor = edge -> {
@@ -74,6 +87,8 @@ public class UrbanDensityCalculator {
             switch (roadClass) {
                 // we're interested in the road density of urban roads, so residential areas are particularly interesting
                 case RESIDENTIAL:
+                    // https://github.com/graphhopper/graphhopper/issues/2829
+                    return ignoreResidential[edge.getEdge()] ? 0 : 2;
                 case LIVING_STREET:
                 case FOOTWAY:
                 case CYCLEWAY:
@@ -95,7 +110,8 @@ public class UrbanDensityCalculator {
         boolean[] isResidential = new boolean[graph.getEdges()];
         RoadDensityCalculator.calcRoadDensities(graph, (calculator, edge) -> {
             RoadClass roadClass = edge.get(roadClassEnc);
-            if (roadClass == RoadClass.RESIDENTIAL || roadClass == RoadClass.LIVING_STREET) {
+            if (roadClass == RoadClass.LIVING_STREET
+                    || roadClass == RoadClass.RESIDENTIAL && !ignoreResidential[edge.getEdge()]) {
                 isResidential[edge.getEdge()] = true;
                 return;
             }

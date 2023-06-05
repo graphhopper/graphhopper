@@ -27,8 +27,8 @@ import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.dem.EdgeElevationSmoothingRamer;
 import com.graphhopper.reader.dem.EdgeElevationSmoothingMovingAverage;
+import com.graphhopper.reader.dem.EdgeElevationSmoothingRamer;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.OSMReaderConfig;
@@ -431,6 +431,9 @@ public class OSMReader {
                     list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:backward")), false, true));
             }
         }
+        if ("no".equals(way.getTag("tiger:reviewed", "no")))
+            list.add(new KVStorage.KeyValue("tiger:reviewed", "no"));
+
         way.setTag("key_values", list);
 
         if (!isCalculateWayDistance(way))
