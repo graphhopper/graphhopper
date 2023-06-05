@@ -74,7 +74,8 @@ public class ConditionalExpressionVisitorTest {
 
     @Test
     public void isValidAndSimpleCondition() {
-        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("toll") || s.equals("my_speed") || s.equals("backward_my_speed");
+        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s)
+                || s.equals("road_class") || s.equals("toll") || s.equals("my_speed") || s.equals("backward_my_speed");
 
         ParseResult result = parse("in_something", validVariable);
         assertTrue(result.ok);

@@ -34,6 +34,7 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.State;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
 import com.graphhopper.routing.util.OSMParsers;
@@ -261,21 +262,35 @@ public class OSMReader {
 
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the EncodingManager
         Country country = Country.MISSING;
+        State state = State.MISSING;
         CustomArea prevCustomArea = null;
         for (CustomArea customArea : customAreas) {
             if (customArea.getProperties() == null) continue;
-            Object alpha3 = customArea.getProperties().get(Country.ISO_ALPHA3);
-            if (alpha3 == null)
+            String alpha2WithSubdivision = (String) customArea.getProperties().get(State.ISO_3166_2);
+            if (alpha2WithSubdivision == null)
                 continue;
 
-            // multiple countries are available -> pick the smaller one, see #2663
-            if (prevCustomArea != null && prevCustomArea.getArea() < customArea.getArea())
-                break;
+            String[] strs = alpha2WithSubdivision.split("-");
+            if (strs.length == 0) continue;
+            if (prevCustomArea != null) {
+                if (strs.length == 2 && state == State.MISSING) {
+                    // overwrite variable with subdivision
+                } else if (strs.length == 1 && state != State.MISSING) {
+                    // keep variable with subdivision
+                    break;
+                } else if (prevCustomArea.getArea() < customArea.getArea()) {
+                    // multiple countries are available -> pick the smaller one, see #2663
+                    // TODO remove this via adding all subdivisions to Country enum (?)
+                    break;
+                }
+            }
 
             prevCustomArea = customArea;
-            country = Country.valueOf((String) alpha3);
+            if (strs.length == 2) state = State.find(alpha2WithSubdivision);
+            country = Country.find(strs[0]);
         }
         way.setTag("country", country);
+        way.setTag("country_state", state);
 
         if (countryRuleFactory != null) {
             CountryRule countryRule = countryRuleFactory.getCountryRule(country);

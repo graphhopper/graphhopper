@@ -82,14 +82,15 @@ public class CustomModelParser {
      * @param priorityEnc can be null
      */
     public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup,
-                                                                DecimalEncodedValue avgSpeedEnc, double globalMaxSpeed,
-                                                                DecimalEncodedValue priorityEnc) {
+                                                                       DecimalEncodedValue avgSpeedEnc, double globalMaxSpeed,
+                                                                       DecimalEncodedValue priorityEnc) {
 
         double globalMaxPriority = priorityEnc == null ? 1 : priorityEnc.getMaxStorableDecimal();
         // if the same custom model is used with a different base profile we cannot use the cached version
         String key = customModel + ",speed:" + avgSpeedEnc.getName() + ",global_max_speed:" + globalMaxSpeed
                 + (priorityEnc == null ? "" : "prio:" + priorityEnc.getName() + ",global_max_priority:" + globalMaxPriority);
-        if (key.length() > 100_000) throw new IllegalArgumentException("Custom Model too big: " + key.length());
+        if (key.length() > 100_000)
+            throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
         Class<?> clazz = customModel.isInternal() ? INTERNAL_CACHE.get(key) : null;
         if (CACHE_SIZE > 0 && clazz == null)
@@ -219,16 +220,16 @@ public class CustomModelParser {
     private static String getVariableDeclaration(EncodedValueLookup lookup, final String arg) {
         if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
-            return getReturnType(enc) + " " + arg + " = reverse ? " +
+            return getReturnType(enc) + " " + arg + " = (" + getReturnType(enc) + ") (reverse ? " +
                     "edge.getReverse((" + getInterface(enc) + ") this." + arg + "_enc) : " +
-                    "edge.get((" + getInterface(enc) + ") this." + arg + "_enc);\n";
+                    "edge.get((" + getInterface(enc) + ") this." + arg + "_enc));\n";
         } else if (arg.startsWith(BACKWARD_PREFIX)) {
             final String argSubstr = arg.substring(BACKWARD_PREFIX.length());
             if (lookup.hasEncodedValue(argSubstr)) {
                 EncodedValue enc = lookup.getEncodedValue(argSubstr, EncodedValue.class);
-                return getReturnType(enc) + " " + arg + " = reverse ? " +
+                return getReturnType(enc) + " " + arg + " = (" + getReturnType(enc) + ") (reverse ? " +
                         "edge.get((" + getInterface(enc) + ") this." + argSubstr + "_enc) : " +
-                        "edge.getReverse((" + getInterface(enc) + ") this." + argSubstr + "_enc);\n";
+                        "edge.getReverse((" + getInterface(enc) + ") this." + argSubstr + "_enc));\n";
             } else {
                 throw new IllegalArgumentException("Not supported for backward: " + argSubstr);
             }
@@ -251,12 +252,13 @@ public class CustomModelParser {
     }
 
     private static String getReturnType(EncodedValue encodedValue) {
-        String name = encodedValue.getClass().getSimpleName();
-        if (name.contains("Enum")) return "Enum";
-        if (name.contains("String")) return "int"; // we use indexOf
-        if (name.contains("Decimal")) return "double";
-        if (name.contains("Int")) return "int";
-        if (name.contains("Boolean")) return "boolean";
+        // order is important
+        if (encodedValue instanceof EnumEncodedValue)
+            return ((EnumEncodedValue) encodedValue).getEnumSimpleName();
+        if (encodedValue instanceof StringEncodedValue) return "int"; // we use indexOf
+        if (encodedValue instanceof DecimalEncodedValue) return "double";
+        if (encodedValue instanceof BooleanEncodedValue) return "boolean";
+        if (encodedValue instanceof IntEncodedValue) return "int";
         throw new IllegalArgumentException("Unsupported EncodedValue: " + encodedValue.getClass());
     }
 
@@ -392,7 +394,7 @@ public class CustomModelParser {
                 createObjects.addAll(parseResult.guessedVariables);
                 if (statement.getKeyword() == Statement.Keyword.ELSEIF)
                     expressions.append("else ");
-                expressions.append("if (").append(parseResult.converted).append(") {").append(statement.getOperation().build(statement.getValue())).append("; }\n");
+                expressions.append("if (").append(parseResult.converted).append(") {").append(statement.getOperation().build(statement.getValue())).append(";}\n");
             } else {
                 throw new IllegalArgumentException("The statement must be either 'if', 'else_if' or 'else'");
             }
