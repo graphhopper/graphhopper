@@ -4,6 +4,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.State;
 import com.graphhopper.storage.IntsRef;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 
@@ -38,18 +39,20 @@ public class DefaultMaxSpeedParser implements TagParser {
         double maxSpeed = stringToKmh(way.getTag("maxspeed"));
         Integer ruralSpeedInt = null, urbanSpeedInt = null;
         if (Double.isNaN(maxSpeed)) {
-            Country country = way.getTag("country", null);
-            if (country != null) {
+            Country country = way.getTag("country", Country.MISSING);
+            State state = way.getTag("country_state", State.MISSING);
+            if (country != Country.MISSING) {
+                String code = state == State.MISSING ? country.getAlpha2() : state.getStateCode();
                 Map<String, String> tags = filter(way.getTags());
                 // with computeIfAbsent we calculate the expensive hashCode of the key only once
                 Result result = cache.computeIfAbsent(tags, (key) -> {
                     Result internRes = new Result();
-                    LegalDefaultSpeeds.Result tmpResult = speeds.getSpeedLimits(country.getAlpha2(),
+                    LegalDefaultSpeeds.Result tmpResult = speeds.getSpeedLimits(code,
                             tags, Collections.emptyList(), (name, eval) -> eval.invoke() || "rural".equals(name));
                     if (tmpResult != null)
                         internRes.rural = parseInt(tmpResult.getTags().get("maxspeed"));
 
-                    tmpResult = speeds.getSpeedLimits(country.getAlpha2(),
+                    tmpResult = speeds.getSpeedLimits(code,
                             tags, Collections.emptyList(), (name, eval) -> eval.invoke() || "urban".equals(name));
                     if (tmpResult != null)
                         internRes.urban = parseInt(tmpResult.getTags().get("maxspeed"));
