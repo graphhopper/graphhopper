@@ -59,7 +59,7 @@ public class GraphHopperGtfsIT {
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("gtfs.file", "files/sample-feed");
         ghConfig.putObject("gtfs.trip_based", true);
-        ghConfig.putObject("gtfs.traffic_day", "2007-01-01");
+        ghConfig.putObject("gtfs.schedule_day", "2007-01-01,2007-01-02,2007-01-06,2007-01-07");
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                 new Profile("car").setVehicle("car").setWeighting("fastest")));
@@ -209,6 +209,7 @@ public class GraphHopperGtfsIT {
                 LocalDateTime.of(2007, 1, 1, 13, 0).atZone(zoneId).toInstant());
         ghRequest.setArriveBy(true);
         ghRequest.setProfileQuery(true);
+        ghRequest.setMaxProfileDuration(Duration.ofDays(1));
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setLimitSolutions(4);
 
@@ -358,7 +359,7 @@ public class GraphHopperGtfsIT {
     }
 
     @Test
-    public void testBlockRouteTypes() {
+    public void testBlockedRouteTypes() {
         Request ghRequest = new Request(Arrays.asList(
                 new GHStationLocation("AMV"),
                 new GHStationLocation("FUR_CREEK_RES")),

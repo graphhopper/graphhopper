@@ -32,7 +32,7 @@ import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 
 public class Trips {
 
-    private static final int MAXIMUM_TRANSFER_DURATION = 45 * 60;
+    private static final int MAXIMUM_TRANSFER_DURATION = 24 * 60 * 60;
     private final Map<String, Transfers> transfers;
     public final Map<String, Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey>> trips;
     private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfersPerDay = new ConcurrentHashMap<>();

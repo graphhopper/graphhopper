@@ -41,7 +41,7 @@ public class Request {
     private Locale locale = Helper.getLocale("en");
     private Duration limitTripTime;
     private Duration limitStreetTime;
-    private Duration maxProfileDuration = Duration.ofDays(1);
+    private Duration maxProfileDuration = Duration.ZERO;
     private List<String> pathDetails = new ArrayList<>();
     private String accessProfile = "foot";
     private String egressProfile = "foot";

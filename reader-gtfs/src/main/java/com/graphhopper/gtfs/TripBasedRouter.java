@@ -10,6 +10,7 @@ import com.graphhopper.gtfs.analysis.Trips;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Predicate;
 
 public class TripBasedRouter {
     private final Trips tripTransfers;
@@ -19,6 +20,7 @@ public class TripBasedRouter {
     private List<ResultLabel> result = new ArrayList<>();
     private List<StopWithTimeDelta> egressStations;
     private LocalDate trafficDay;
+    private Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter;
 
     public TripBasedRouter(GtfsStorage gtfsStorage, Trips tripTransfers) {
         this.gtfsStorage = gtfsStorage;
@@ -37,18 +39,19 @@ public class TripBasedRouter {
         }
     }
 
-    public List<ResultLabel> routeNaiveProfile(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant profileStartTime, Duration profileLength) {
+    public List<ResultLabel> routeNaiveProfile(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant profileStartTime, Duration profileLength, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter) {
         while (!profileLength.isNegative()) {
             Instant initialTime = profileStartTime.plus(profileLength);
-            route(accessStations, egressStations, initialTime);
+            route(accessStations, egressStations, initialTime, tripFilter);
             profileLength = profileLength.minus(Duration.ofMinutes(1));
         }
-        route(accessStations, egressStations, profileStartTime);
+        route(accessStations, egressStations, profileStartTime, tripFilter);
         return result;
     }
 
-    public List<ResultLabel> route(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant initialTime) {
+    public List<ResultLabel> route(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant initialTime, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter) {
         this.egressStations = egressStations;
+        this.tripFilter = tripFilter;
         List<EnqueuedTripSegment> queue0 = new ArrayList<>();
         for (StopWithTimeDelta accessStation : accessStations) {
             Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey> tripsForThisFeed = tripTransfers.trips.get(accessStation.stopId.feedId);
@@ -62,7 +65,8 @@ public class TripBasedRouter {
                 int index = indexx >= 0 ? indexx : (- indexx) - 1;
                 for (int i = index; i < boardings.size(); i++) {
                     Trips.TripAtStopTime boarding = boardings.get(i);
-                    if (tripsForThisFeed.get(boarding.tripDescriptor).service.activeOn(trafficDay)) {
+                    GTFSFeed.StopTimesForTripWithTripPatternKey trip = tripsForThisFeed.get(boarding.tripDescriptor);
+                    if (trip.service.activeOn(trafficDay) && tripFilter.test(trip)) {
                         enqueue(queue0, boarding, null, null, accessStation.stopId.feedId, 0, accessStation);
                         break;
                     }
@@ -146,7 +150,7 @@ public class TripBasedRouter {
                 for (Trips.TripAtStopTime transferDestination : transferDestinations) {
                     GTFSFeed.StopTimesForTripWithTripPatternKey destinationStopTimes = tripTransfers.trips.get(transferDestination.feedId).get(transferDestination.tripDescriptor);
                     StopTime transferStopTime = destinationStopTimes.stopTimes.get(transferDestination.stop_sequence);
-                    if (destinationStopTimes.service.activeOn(trafficDay)) {
+                    if (destinationStopTimes.service.activeOn(trafficDay) && tripFilter.test(destinationStopTimes)) {
                         if (transferStopTime.departure_time < stopTime.arrival_time) {
                             enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, feedId, 1, null);
                         } else {

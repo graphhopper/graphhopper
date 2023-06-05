@@ -31,9 +31,6 @@ import com.conveyal.gtfs.error.GTFSError;
 import com.conveyal.gtfs.error.GeneralError;
 import com.conveyal.gtfs.model.Calendar;
 import com.conveyal.gtfs.model.*;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Iterables;
 import com.google.transit.realtime.GtfsRealtime;
 import org.locationtech.jts.geom.Coordinate;
@@ -184,15 +181,17 @@ public class GTFSFeed implements Cloneable, Closeable {
 
 
     public class StopTimesForTripWithTripPatternKey {
-        public StopTimesForTripWithTripPatternKey(Trip trip, Service service, List<StopTime> stopTimes, PatternFinder.Pattern pattern) {
+        public StopTimesForTripWithTripPatternKey(Trip trip, Service service, int routeType, List<StopTime> stopTimes, PatternFinder.Pattern pattern) {
             this.trip = trip;
             this.service = service;
+            this.routeType = routeType;
             this.stopTimes = stopTimes;
             this.pattern = pattern;
         }
 
         public final Trip trip;
         public final Service service;
+        public final int routeType;
         public final List<StopTime> stopTimes;
         public final PatternFinder.Pattern pattern;
     }
@@ -201,6 +200,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         PatternFinder.TripPatternKey tripPatternKey = new PatternFinder.TripPatternKey();
         List<StopTime> orderedStopTimesForTrip = new ArrayList<>();
         Trip trip = trips.get(key.getTripId());
+        Route route = routes.get(trip.route_id);
         Service service = services.get(trip.service_id);
         getInterpolatedStopTimesForTrip(key.getTripId()).forEach(orderedStopTimesForTrip::add);
         if (key.hasStartTime()) {
@@ -219,7 +219,7 @@ public class GTFSFeed implements Cloneable, Closeable {
             orderedStopTimesForTripWithPadding.add(stopTime);
         });
         PatternFinder.Pattern pattern = patterns.get(tripPatternKey);
-        return new StopTimesForTripWithTripPatternKey(trip, service, orderedStopTimesForTripWithPadding, pattern);
+        return new StopTimesForTripWithTripPatternKey(trip, service, route.route_type, orderedStopTimesForTripWithPadding, pattern);
     }
 
     /**
