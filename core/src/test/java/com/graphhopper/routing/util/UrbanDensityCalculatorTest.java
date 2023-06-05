@@ -7,6 +7,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -22,7 +23,7 @@ class UrbanDensityCalculatorTest {
 
         EdgeIteratorState e01 = baseGraph.edge(0, 1).set(roadClassEnc, RoadClass.RESIDENTIAL);
         EdgeIteratorState e12 = baseGraph.edge(1, 2).set(roadClassEnc, RoadClass.RESIDENTIAL).
-                setKeyValues(Arrays.asList(new KVStorage.KeyValue("tiger:reviewed", "no")));
+                setKeyValues(Collections.singletonList(new KVStorage.KeyValue("tiger:reviewed", "no")));
 
         UrbanDensityCalculator.calcUrbanDensity(baseGraph, ud, roadClassEnc, roadClassLinkEnc, 300, 60, 0, 0, 1);
 

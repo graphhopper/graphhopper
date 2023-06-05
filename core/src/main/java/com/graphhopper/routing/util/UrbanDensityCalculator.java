@@ -29,6 +29,7 @@ import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.BitSet;
 import java.util.function.ToDoubleFunction;
 
 public class UrbanDensityCalculator {
@@ -54,12 +55,13 @@ public class UrbanDensityCalculator {
         logger.info("Calculating residential areas ..., radius={}, sensitivity={}, threads={}", residentialAreaRadius, residentialAreaSensitivity, threads);
         StopWatch sw = StopWatch.started();
 
-        // workaround for incorrectly tagged residentials in the USA. Grab KeyValue and store in faster accessible boolean
-        boolean[] ignoreResidentials = new boolean[graph.getEdges()];
+        // workaround for incorrectly tagged residentials in the USA. Grab KeyValue and store in faster accessible (readonly) BitSet
+        BitSet ignoreResidentials = new BitSet(graph.getEdges());
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             for (KVStorage.KeyValue kv : iter.getKeyValues()) {
-                ignoreResidentials[iter.getEdge()] = "tiger:reviewed".equals(kv.getKey()) && "no".equals(kv.getValue());
+                if ("tiger:reviewed".equals(kv.getKey()) && "no".equals(kv.getValue()))
+                    ignoreResidentials.set(iter.getEdge());
             }
         }
 
@@ -75,7 +77,7 @@ public class UrbanDensityCalculator {
     }
 
     private static void calcResidential(Graph graph, EnumEncodedValue<UrbanDensity> urbanDensityEnc,
-                                        boolean[] ignoreResidential,
+                                        BitSet ignoreResidential,
                                         EnumEncodedValue<RoadClass> roadClassEnc, BooleanEncodedValue roadClassLinkEnc,
                                         double radius, double sensitivity, int threads) {
         final ToDoubleFunction<EdgeIteratorState> calcRoadFactor = edge -> {
@@ -88,7 +90,7 @@ public class UrbanDensityCalculator {
                 // we're interested in the road density of urban roads, so residential areas are particularly interesting
                 case RESIDENTIAL:
                     // https://github.com/graphhopper/graphhopper/issues/2829
-                    return ignoreResidential[edge.getEdge()] ? 0 : 2;
+                    return ignoreResidential.get(edge.getEdge()) ? 0 : 2;
                 case LIVING_STREET:
                 case FOOTWAY:
                 case CYCLEWAY:
@@ -111,7 +113,7 @@ public class UrbanDensityCalculator {
         RoadDensityCalculator.calcRoadDensities(graph, (calculator, edge) -> {
             RoadClass roadClass = edge.get(roadClassEnc);
             if (roadClass == RoadClass.LIVING_STREET
-                    || roadClass == RoadClass.RESIDENTIAL && !ignoreResidential[edge.getEdge()]) {
+                    || roadClass == RoadClass.RESIDENTIAL && !ignoreResidential.get(edge.getEdge())) {
                 isResidential[edge.getEdge()] = true;
                 return;
             }
