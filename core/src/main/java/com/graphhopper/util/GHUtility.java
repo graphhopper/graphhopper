@@ -621,8 +621,7 @@ public class GHUtility {
         for (Country c : Country.values()) {
             if (c == Country.MISSING) continue;
             if (c.getStates().isEmpty()) enumSet.add(c.getAlpha2());
-            else
-                enumSet.addAll(c.getStates().stream().map(State::getStateCode).collect(Collectors.toList()));
+            else for (State s : c.getStates()) enumSet.add(s.getStateCode());
         }
 
         try (Reader reader = new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {
