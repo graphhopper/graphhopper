@@ -139,7 +139,9 @@ public class AnotherAgencyIT {
         ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
         ResponsePath transitSolution = ptRouter.route(ghRequest).getBest();
         List<Trip.Leg> ptLegs = transitSolution.getLegs().stream().filter(l -> l instanceof Trip.PtLeg).collect(Collectors.toList());
+        assertEquals("MUSEUMAIRPORT1", ((Trip.PtLeg) ptLegs.get(0)).trip_id);
         assertEquals("NEXT_TO_MUSEUM,AIRPORT", ((Trip.PtLeg) ptLegs.get(0)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        assertEquals("AB3_NO_BLOCK", ((Trip.PtLeg) ptLegs.get(1)).trip_id);
         assertEquals("BEATTY_AIRPORT,BULLFROG", ((Trip.PtLeg) ptLegs.get(1)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
         Instant arrivalTime = Instant.ofEpochMilli(transitSolution.getLegs().get(1).getArrivalTime().getTime());
         assertEquals("14:10", LocalDateTime.ofInstant(arrivalTime, zoneId).toLocalTime().toString());
