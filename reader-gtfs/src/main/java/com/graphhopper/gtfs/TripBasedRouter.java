@@ -24,7 +24,7 @@ public class TripBasedRouter {
     private final Trips tripTransfers;
     private GtfsStorage gtfsStorage;
     int earliestArrivalTime = Integer.MAX_VALUE;
-    private ObjectIntHashMap<GtfsRealtime.TripDescriptor> tripDoneFromIndex = new ObjectIntHashMap();
+    private ObjectIntHashMap<Trips.TripKey> tripDoneFromIndex = new ObjectIntHashMap();
     private List<ResultLabel> result = new ArrayList<>();
     private List<StopWithTimeDelta> egressStations;
     private Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter;
@@ -194,22 +194,26 @@ public class TripBasedRouter {
 
     private void enqueue(List<EnqueuedTripSegment> queue1, Trips.TripAtStopTime transferDestination, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, String gtfsFeed, LocalDate serviceDay, StopWithTimeDelta accessStation) {
         GtfsRealtime.TripDescriptor tripId = transferDestination.tripDescriptor;
-        int thisTripDoneFromIndex = tripDoneFromIndex.getOrDefault(tripId, Integer.MAX_VALUE);
+        Trips.TripKey tripKey = new Trips.TripKey(gtfsFeed, tripId.getTripId(), tripId.getStartTime().isEmpty() ? 0 : LocalTime.parse(tripId.getStartTime()).toSecondOfDay(), serviceDay);
+        int thisTripDoneFromIndex = tripDoneFromIndex.getOrDefault(tripKey, Integer.MAX_VALUE);
         if (transferDestination.stop_sequence < thisTripDoneFromIndex) {
             queue1.add(new EnqueuedTripSegment(transferDestination, thisTripDoneFromIndex, serviceDay, transferOrigin, parent, accessStation));
-            markAsDone(transferDestination, gtfsFeed, tripId);
+            markAsDone(transferDestination, tripId, serviceDay);
         }
     }
 
-    private void markAsDone(Trips.TripAtStopTime transferDestination, String gtfsFeed, GtfsRealtime.TripDescriptor tripId) {
-        GTFSFeed.StopTimesForTripWithTripPatternKey stopTimes = tripTransfers.trips.get(gtfsFeed).get(tripId);
+    private void markAsDone(Trips.TripAtStopTime transferDestination, GtfsRealtime.TripDescriptor tripId, LocalDate serviceDay) {
+        GTFSFeed.StopTimesForTripWithTripPatternKey stopTimes = tripTransfers.trips.get(transferDestination.feedId).get(tripId);
         boolean seenMyself = false;
         for (GtfsRealtime.TripDescriptor otherTrip : stopTimes.pattern.trips) {
             // Trips within a pattern are sorted by start time. All that come after me can be marked as done.
             if (tripId.equals(otherTrip))
                 seenMyself = true;
             if (seenMyself) {
-                tripDoneFromIndex.put(otherTrip, transferDestination.stop_sequence);
+                Trips.TripKey otherTripKey = new Trips.TripKey(transferDestination.feedId, otherTrip.getTripId(), otherTrip.getStartTime().isEmpty() ? 0 : LocalTime.parse(otherTrip.getStartTime()).toSecondOfDay(), serviceDay);
+                tripDoneFromIndex.put(otherTripKey, transferDestination.stop_sequence);
+                // TODO: and on later service days, in principle, otherwise we may do much too much work.
+                // alternative: keep labels only for today, and just don't check it off for trips that are not today?
             }
         }
         if (!seenMyself) {
@@ -285,4 +289,5 @@ public class TripBasedRouter {
         StopTime stopTime = stopTimes.get(i.tripAtStopTime.stop_sequence);
         return stopTime.departure_time;
     }
+
 }

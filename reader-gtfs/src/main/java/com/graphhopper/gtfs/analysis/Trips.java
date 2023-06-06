@@ -265,4 +265,31 @@ public class Trips {
         }
     }
 
+    public static class TripKey {
+
+        public final String feedId;
+        public final String tripId;
+        public final int startTime;
+        public final LocalDate serviceDate;
+
+        public TripKey(String feedId, String tripId, int startTime, LocalDate serviceDate) {
+            this.feedId = feedId;
+            this.tripId = tripId;
+            this.startTime = startTime;
+            this.serviceDate = serviceDate;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            TripKey tripKey = (TripKey) o;
+            return startTime == tripKey.startTime && Objects.equals(feedId, tripKey.feedId) && Objects.equals(tripId, tripKey.tripId) && Objects.equals(serviceDate, tripKey.serviceDate);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(feedId, tripId, startTime, serviceDate);
+        }
+    }
 }
