@@ -16,6 +16,8 @@ const config = {
             'road_environment',
             'max_speed',
             'average_speed',
+            'country',
+            'state'
         ],
         snapPreventions: ['ferry'],
     },

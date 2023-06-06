@@ -888,6 +888,10 @@ public class GraphHopper {
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
 
+        calcUrbanDensity();
+    }
+
+    private void calcUrbanDensity() {
         if (encodingManager.hasEncodedValue(UrbanDensity.KEY)) {
             EnumEncodedValue<UrbanDensity> urbanDensityEnc = encodingManager.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
             if (!encodingManager.hasEncodedValue(RoadClass.KEY))
@@ -1049,6 +1053,8 @@ public class GraphHopper {
                         + "\nGraph: " + storedProfiles
                         + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
             checkProfilesConsistency();
+
+            calcUrbanDensity();
 
             postProcessing(false);
             directory.loadMMap();
