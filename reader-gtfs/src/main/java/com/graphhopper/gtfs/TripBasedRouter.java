@@ -23,7 +23,7 @@ public class TripBasedRouter {
 
     private final Trips tripTransfers;
     private GtfsStorage gtfsStorage;
-    int earliestArrivalTime = Integer.MAX_VALUE;
+    Instant earliestArrivalTime = Instant.MAX;
     private ObjectIntHashMap<Trips.TripKey> tripDoneFromIndex = new ObjectIntHashMap();
     private List<ResultLabel> result = new ArrayList<>();
     private List<StopWithTimeDelta> egressStations;
@@ -135,11 +135,11 @@ public class TripBasedRouter {
             for (int i = tripAtStopTime.stop_sequence + 1; i < toStopSequence; i++) {
                 StopTime stopTime = stopTimes.get(i);
                 if (stopTime == null) continue;
-                if (stopTime.arrival_time >= earliestArrivalTime)
+                if (!getArrivalTime(enqueuedTripSegment, stopTime).toInstant().isBefore(earliestArrivalTime))
                     break;
                 for (StopWithTimeDelta destination : egressStations) {
-                    int newArrivalTime = stopTime.arrival_time + (int) (destination.timeDelta / 1000);
-                    if (destination.stopId.stopId.equals(stopTime.stop_id) && destination.stopId.feedId.equals(feedId) && newArrivalTime < earliestArrivalTime) {
+                    Instant newArrivalTime = getArrivalTime(enqueuedTripSegment, stopTime).toInstant().plusMillis(destination.timeDelta);
+                    if (destination.stopId.stopId.equals(stopTime.stop_id) && destination.stopId.feedId.equals(feedId) && newArrivalTime.isBefore(earliestArrivalTime)) {
                         earliestArrivalTime = newArrivalTime;
                         ResultLabel newResult = new ResultLabel(round, destination, new Trips.TripAtStopTime(feedId, tripAtStopTime.tripDescriptor, stopTime.stop_sequence), enqueuedTripSegment);
                         int newRealTransfers = newResult.getRealTransfers();
@@ -147,7 +147,7 @@ public class TripBasedRouter {
                         Iterator<ResultLabel> it = result.iterator();
                         while (it.hasNext()) {
                             ResultLabel oldResult = it.next();
-                            if (oldResult.getArrivalTime() < newArrivalTime) continue;
+                            if (oldResult.getArrivalTime().isBefore(newArrivalTime)) continue;
                             if (oldResult.getRealTransfers() < newRealTransfers) continue;
                             if (oldResult.getDepartureTime() > newDepartureTime) continue;
                             it.remove();
@@ -167,7 +167,7 @@ public class TripBasedRouter {
             for (int i = tripAtStopTime.stop_sequence + 1; i < toStopSequence; i++) {
                 StopTime stopTime = stopTimes.get(i);
                 if (stopTime == null) continue;
-                if (stopTime.arrival_time >= earliestArrivalTime)
+                if (!getArrivalTime(enqueuedTripSegment, stopTime).toInstant().isBefore(earliestArrivalTime))
                     break;
                 Trips.TripAtStopTime transferOrigin = new Trips.TripAtStopTime(feedId, tripAtStopTime.tripDescriptor, stopTime.stop_sequence);
                 logger.trace("  {}", stopTime);
@@ -181,15 +181,19 @@ public class TripBasedRouter {
                     if (destinationStopTimes.service.activeOn(enqueuedTripSegment.serviceDay) && tripFilter.test(destinationStopTimes)) {
                         logger.trace("    {}", transferDestination);
                         if (transferStopTime.departure_time < stopTime.arrival_time) {
-                            enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, feedId, enqueuedTripSegment.serviceDay, null);
+                            enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, feedId, enqueuedTripSegment.serviceDay, enqueuedTripSegment.accessStation);
                         } else {
-                            enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, feedId, enqueuedTripSegment.serviceDay, null);
+                            enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, feedId, enqueuedTripSegment.serviceDay, enqueuedTripSegment.accessStation);
                         }
                     }
                 }
             }
         }
         return queue1;
+    }
+
+    private static ZonedDateTime getArrivalTime(EnqueuedTripSegment enqueuedTripSegment, StopTime stopTime) {
+        return enqueuedTripSegment.serviceDay.atStartOfDay(enqueuedTripSegment.accessStation.zoneId).plusSeconds(stopTime.arrival_time);
     }
 
     private void enqueue(List<EnqueuedTripSegment> queue1, Trips.TripAtStopTime transferDestination, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, String gtfsFeed, LocalDate serviceDay, StopWithTimeDelta accessStation) {
@@ -256,9 +260,9 @@ public class TripBasedRouter {
             return i.accessStation;
         }
 
-        int getArrivalTime() {
+        Instant getArrivalTime() {
             StopTime stopTime = getStopTime();
-            return stopTime.arrival_time + (int) (destination.timeDelta / 1000L);
+            return enqueuedTripSegment.serviceDay.atStartOfDay(getAccessStop().zoneId).plusSeconds(stopTime.arrival_time + (int) (destination.timeDelta / 1000L)).toInstant();
         }
 
         public int getRound() {
