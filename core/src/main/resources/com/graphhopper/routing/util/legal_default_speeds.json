@@ -2,9 +2,9 @@
     "meta": {
         "license": "Creative Commons Attribution-ShareAlike 2.0 license",
         "licenseUrl": "https://wiki.openstreetmap.org/wiki/Wiki_content_license",
-        "revisionId": "2507093",
+        "revisionId": "2538588",
         "source": "https://wiki.openstreetmap.org/wiki/Default_speed_limits",
-        "timestamp": "2023-04-21T20:30:17"
+        "timestamp": "2023-06-06T11:55:04"
     },
     "roadTypesByName": {
         "Alabama: rural highway": {
@@ -300,7 +300,8 @@
             "filter": "bicycle_road=yes or cyclestreet=yes"
         },
         "dual carriageway": {
-            "filter": "{oneway} and dual_carriageway!=no"
+            "filter": "dual_carriageway=yes or maxspeed:type~\".*nsl_dual\"",
+            "fuzzyFilter": "oneway~yes|-1 and junction!~roundabout|circular and dual_carriageway!=no"
         },
         "dual carriageway in residential district": {
             "filter": "{dual carriageway} and {residential district}"
@@ -431,6 +432,9 @@
         "rural residential district": {
             "filter": "{rural} and {residential district}"
         },
+        "rural road with 1 lane in each direction": {
+            "filter": "{rural} and {road with 1 lane in each direction}"
+        },
         "rural road with 2 lanes in each direction": {
             "filter": "{rural} and {road with 2 lanes in each direction}"
         },
@@ -468,7 +472,8 @@
             "filter": "highway=service"
         },
         "single carriageway": {
-            "filter": "!{oneway} or dual_carriageway=no"
+            "filter": "dual_carriageway=no or maxspeed:type~\".*nsl_single\"",
+            "fuzzyFilter": "oneway!~yes|-1 or junction~roundabout|circular or dual_carriageway=no"
         },
         "single carriageway in residential district": {
             "filter": "{single carriageway} and {residential district}"
@@ -2609,7 +2614,7 @@
             {
                 "name": "urban",
                 "tags": {
-                    "maxspeed": "60",
+                    "maxspeed": "70",
                     "maxspeed:bus": "50",
                     "maxspeed:hgv": "50"
                 }
@@ -2618,8 +2623,8 @@
                 "tags": {
                     "maxspeed": "110",
                     "maxspeed:bus": "90",
-                    "maxspeed:hgv": "80",
-                    "maxspeed:hgv:conditional": "70 @ (weightrating>16)"
+                    "maxspeed:hgv": "90",
+                    "maxspeed:hgv:conditional": "80 @ (weightrating>16)"
                 }
             },
             {
@@ -2627,8 +2632,8 @@
                 "tags": {
                     "maxspeed": "110",
                     "maxspeed:bus": "90",
-                    "maxspeed:hgv": "80",
-                    "maxspeed:hgv:conditional": "70 @ (weightrating>16)"
+                    "maxspeed:hgv": "90",
+                    "maxspeed:hgv:conditional": "80 @ (weightrating>16)"
                 }
             },
             {
@@ -2636,8 +2641,8 @@
                 "tags": {
                     "maxspeed": "120",
                     "maxspeed:bus": "90",
-                    "maxspeed:hgv": "80",
-                    "maxspeed:hgv:conditional": "70 @ (weightrating>16)"
+                    "maxspeed:hgv": "90",
+                    "maxspeed:hgv:conditional": "80 @ (weightrating>16)"
                 }
             }
         ],
@@ -4176,6 +4181,12 @@
         ],
         "HR": [
             {
+                "name": "living street",
+                "tags": {
+                    "maxspeed": "walk"
+                }
+            },
+            {
                 "name": "urban",
                 "tags": {
                     "maxspeed": "50"
@@ -4305,6 +4316,40 @@
                     "maxspeed:bus": "100",
                     "maxspeed:conditional": "80 @ (weightrating>3.5); 80 @ (trailer)",
                     "maxspeed:hgv": "80",
+                    "minspeed": "60"
+                }
+            }
+        ],
+        "ID": [
+            {
+                "tags": {
+                    "maxspeed": "80",
+                    "minspeed": "40"
+                }
+            },
+            {
+                "name": "residential district",
+                "tags": {
+                    "maxspeed": "30"
+                }
+            },
+            {
+                "name": "urban",
+                "tags": {
+                    "maxspeed": "50"
+                }
+            },
+            {
+                "name": "urban motorway",
+                "tags": {
+                    "maxspeed": "80",
+                    "minspeed": "60"
+                }
+            },
+            {
+                "name": "rural motorway",
+                "tags": {
+                    "maxspeed": "100",
                     "minspeed": "60"
                 }
             }
@@ -7854,80 +7899,49 @@
             {
                 "name": "school zone",
                 "tags": {
-                    "maxspeed": "25 mph",
-                    "maxspeed:bus:conditional": "55 mph @ (articulated)",
-                    "maxspeed:hazmat": "55 mph",
-                    "maxspeed:hgv:conditional": "55 mph @ (articulated)",
-                    "maxspeed:school_bus": "55 mph",
-                    "maxspeed:truck_bus": "55 mph"
+                    "maxspeed": "25 mph"
                 }
             },
             {
                 "name": "residential district",
                 "tags": {
-                    "maxspeed": "25 mph",
-                    "maxspeed:bus:conditional": "55 mph @ (articulated)",
-                    "maxspeed:hazmat": "55 mph",
-                    "maxspeed:hgv:conditional": "55 mph @ (articulated)",
-                    "maxspeed:school_bus": "55 mph",
-                    "maxspeed:truck_bus": "55 mph"
+                    "maxspeed": "25 mph"
                 }
             },
             {
                 "name": "business district",
                 "tags": {
-                    "maxspeed": "25 mph",
-                    "maxspeed:bus:conditional": "55 mph @ (articulated)",
-                    "maxspeed:hazmat": "55 mph",
-                    "maxspeed:hgv:conditional": "55 mph @ (articulated)",
-                    "maxspeed:school_bus": "55 mph",
-                    "maxspeed:truck_bus": "55 mph"
+                    "maxspeed": "25 mph"
                 }
             },
             {
                 "name": "urban",
                 "tags": {
-                    "maxspeed": "25 mph",
-                    "maxspeed:bus:conditional": "55 mph @ (articulated)",
-                    "maxspeed:hazmat": "55 mph",
-                    "maxspeed:hgv:conditional": "55 mph @ (articulated)",
-                    "maxspeed:school_bus": "55 mph",
-                    "maxspeed:truck_bus": "55 mph"
+                    "maxspeed": "25 mph"
                 }
             },
             {
                 "tags": {
                     "maxspeed": "55 mph",
-                    "maxspeed:bus:conditional": "55 mph @ (articulated)",
-                    "maxspeed:conditional": "55 mph @ (trailer)",
-                    "maxspeed:hazmat": "55 mph",
-                    "maxspeed:hgv:conditional": "55 mph @ (articulated)",
-                    "maxspeed:school_bus": "55 mph",
-                    "maxspeed:truck_bus": "55 mph"
+                    "maxspeed:conditional": "55 mph @ (trailer)"
                 }
             },
             {
                 "name": "rural",
                 "tags": {
                     "maxspeed": "55 mph",
-                    "maxspeed:bus:conditional": "55 mph @ (articulated)",
-                    "maxspeed:conditional": "55 mph @ (trailer)",
-                    "maxspeed:hazmat": "55 mph",
-                    "maxspeed:hgv:conditional": "55 mph @ (articulated)",
-                    "maxspeed:school_bus": "55 mph",
-                    "maxspeed:truck_bus": "55 mph"
+                    "maxspeed:conditional": "55 mph @ (trailer)"
                 }
             },
             {
-                "name": "rural road with 2 or more lanes in each direction",
+                "name": "rural road with 1 lane in each direction",
                 "tags": {
                     "maxspeed": "65 mph",
-                    "maxspeed:bus:conditional": "55 mph @ (articulated)",
+                    "maxspeed:bus:conditional": "55 mph @ (articulated); 55 mph @ (agricultural)",
                     "maxspeed:conditional": "55 mph @ (trailer)",
                     "maxspeed:hazmat": "55 mph",
                     "maxspeed:hgv:conditional": "55 mph @ (articulated)",
-                    "maxspeed:school_bus": "55 mph",
-                    "maxspeed:truck_bus": "55 mph"
+                    "maxspeed:school_bus": "55 mph"
                 }
             }
         ],
@@ -8028,7 +8042,8 @@
             },
             {
                 "tags": {
-                    "maxspeed": "20 mph"
+                    "maxspeed": "20 mph",
+                    "maxspeed:horse": "8 mph"
                 }
             }
         ],
