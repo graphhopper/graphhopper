@@ -13,6 +13,8 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
+import static java.util.Comparator.comparingInt;
+
 public class TripBasedRouter {
     private final Trips tripTransfers;
     private GtfsStorage gtfsStorage;
@@ -53,7 +55,7 @@ public class TripBasedRouter {
     public List<ResultLabel> route(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant initialTime, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter) {
         this.egressStations = egressStations;
         this.tripFilter = tripFilter;
-        List<EnqueuedTripSegment> queue0 = new ArrayList<>();
+        List<EnqueuedTripSegment> queue = new ArrayList<>();
         for (StopWithTimeDelta accessStation : accessStations) {
             Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey> tripsForThisFeed = tripTransfers.trips.get(accessStation.stopId.feedId);
             ZonedDateTime earliestDepartureTime = initialTime.atZone(accessStation.zoneId).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
@@ -66,28 +68,29 @@ public class TripBasedRouter {
                     Trips.TripAtStopTime boarding = boardings.get(i);
                     GTFSFeed.StopTimesForTripWithTripPatternKey trip = tripsForThisFeed.get(boarding.tripDescriptor);
                     if (trip.service.activeOn(trafficDay) && tripFilter.test(trip)) {
-                        enqueue(queue0, boarding, null, null, accessStation.stopId.feedId, 0, accessStation);
+                        enqueue(queue, boarding, null, null, accessStation.stopId.feedId, 0, accessStation);
                         break;
                     }
                 }
             }
         }
-        iterate(queue0);
+        queue.sort(comparingInt(this::getDepartureTime));
+        iterate(queue);
         return result;
     }
 
     private static int binarySearch(int targetSecondOfDay, List<Trips.TripAtStopTime> boardings, ToIntFunction<Trips.TripAtStopTime> tripAtStopTimeToIntFunction) {
-        int indexx = Collections.binarySearch(boardings, null, (boarding, key) -> {
+        int index = Collections.binarySearch(boardings, null, (boarding, key) -> {
             int x = tripAtStopTimeToIntFunction.applyAsInt(boarding);
             return x >= targetSecondOfDay ? 1 : -1;
         });
-        return indexx >= 0 ? indexx : (- indexx) - 1;
+        return index >= 0 ? index : (- index) - 1;
     }
 
-    private void iterate(List<EnqueuedTripSegment> queue0) {
+    private void iterate(List<EnqueuedTripSegment> queue) {
         int round = 0;
-        while (queue0.size() != 0 && round < 3) {
-            queue0 = round(queue0, round);
+        while (queue.size() != 0 && round < 3) {
+            queue = round(queue, round);
             round = round + 1;
         }
     }
@@ -154,6 +157,9 @@ public class TripBasedRouter {
                     break;
                 Trips.TripAtStopTime transferOrigin = new Trips.TripAtStopTime(feedId, tripAtStopTime.tripDescriptor, stopTime.stop_sequence);
                 Collection<Trips.TripAtStopTime> transferDestinations = gtfsStorage.tripTransfers.getTripTransfers(trafficDay).get(transferOrigin);
+                if (transferDestinations == null) {
+                    continue; // schedule day not prepared
+                }
                 for (Trips.TripAtStopTime transferDestination : transferDestinations) {
                     GTFSFeed.StopTimesForTripWithTripPatternKey destinationStopTimes = tripTransfers.trips.get(transferDestination.feedId).get(transferDestination.tripDescriptor);
                     StopTime transferStopTime = destinationStopTimes.stopTimes.get(transferDestination.stop_sequence);
@@ -222,12 +228,7 @@ public class TripBasedRouter {
         }
 
         int getDepartureTime() {
-            EnqueuedTripSegment i = enqueuedTripSegment;
-            while (i.parent != null)
-                i = i.parent;
-            List<StopTime> stopTimes = tripTransfers.trips.get(i.tripAtStopTime.feedId).get(i.tripAtStopTime.tripDescriptor).stopTimes;
-            StopTime stopTime = stopTimes.get(i.tripAtStopTime.stop_sequence);
-            return stopTime.departure_time;
+            return TripBasedRouter.this.getDepartureTime(enqueuedTripSegment);
         }
 
         public StopWithTimeDelta getAccessStop() {
@@ -261,5 +262,13 @@ public class TripBasedRouter {
             }
             return result;
         }
+    }
+
+    private int getDepartureTime(EnqueuedTripSegment i) {
+        while (i.parent != null)
+            i = i.parent;
+        List<StopTime> stopTimes = tripTransfers.trips.get(i.tripAtStopTime.feedId).get(i.tripAtStopTime.tripDescriptor).stopTimes;
+        StopTime stopTime = stopTimes.get(i.tripAtStopTime.stop_sequence);
+        return stopTime.departure_time;
     }
 }
