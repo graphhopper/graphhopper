@@ -6,6 +6,8 @@ import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.analysis.Trips;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.*;
 import java.time.temporal.ChronoUnit;
@@ -16,6 +18,9 @@ import java.util.function.ToIntFunction;
 import static java.util.Comparator.comparingInt;
 
 public class TripBasedRouter {
+
+    private static final Logger logger = LoggerFactory.getLogger(TripBasedRouter.class);
+
     private final Trips tripTransfers;
     private GtfsStorage gtfsStorage;
     int earliestArrivalTime = Integer.MAX_VALUE;
@@ -110,9 +115,18 @@ public class TripBasedRouter {
             this.parent = parent;
             this.accessStation = accessStation;
         }
+
+        @Override
+        public String toString() {
+            return "EnqueuedTripSegment{" +
+                    "tripAtStopTime=" + tripAtStopTime +
+                    ", serviceDay=" + serviceDay +
+                    '}';
+        }
     }
 
     private List<EnqueuedTripSegment> round(List<EnqueuedTripSegment> queue0, int round) {
+        logger.trace("Round {}", round);
         for (EnqueuedTripSegment enqueuedTripSegment : queue0) {
             String feedId = enqueuedTripSegment.tripAtStopTime.feedId;
             Trips.TripAtStopTime tripAtStopTime = enqueuedTripSegment.tripAtStopTime;
@@ -145,6 +159,7 @@ public class TripBasedRouter {
         }
         List<EnqueuedTripSegment> queue1 = new ArrayList<>();
         for (EnqueuedTripSegment enqueuedTripSegment : queue0) {
+            logger.trace("{}", enqueuedTripSegment);
             String feedId = enqueuedTripSegment.tripAtStopTime.feedId;
             Trips.TripAtStopTime tripAtStopTime = enqueuedTripSegment.tripAtStopTime;
             List<StopTime> stopTimes = tripTransfers.trips.get(feedId).get(tripAtStopTime.tripDescriptor).stopTimes;
@@ -155,6 +170,7 @@ public class TripBasedRouter {
                 if (stopTime.arrival_time >= earliestArrivalTime)
                     break;
                 Trips.TripAtStopTime transferOrigin = new Trips.TripAtStopTime(feedId, tripAtStopTime.tripDescriptor, stopTime.stop_sequence);
+                logger.trace("  {}", stopTime);
                 Collection<Trips.TripAtStopTime> transferDestinations = gtfsStorage.tripTransfers.getTripTransfers(enqueuedTripSegment.serviceDay).get(transferOrigin);
                 if (transferDestinations == null) {
                     continue; // schedule day not prepared
@@ -163,6 +179,7 @@ public class TripBasedRouter {
                     GTFSFeed.StopTimesForTripWithTripPatternKey destinationStopTimes = tripTransfers.trips.get(transferDestination.feedId).get(transferDestination.tripDescriptor);
                     StopTime transferStopTime = destinationStopTimes.stopTimes.get(transferDestination.stop_sequence);
                     if (destinationStopTimes.service.activeOn(enqueuedTripSegment.serviceDay) && tripFilter.test(destinationStopTimes)) {
+                        logger.trace("    {}", transferDestination);
                         if (transferStopTime.departure_time < stopTime.arrival_time) {
                             enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, feedId, enqueuedTripSegment.serviceDay, null);
                         } else {

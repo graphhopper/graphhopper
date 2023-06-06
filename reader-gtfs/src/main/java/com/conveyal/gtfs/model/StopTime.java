@@ -54,7 +54,8 @@ public class StopTime extends Entity implements Cloneable, Serializable {
     @Override
     public String toString() {
         return "StopTime{" +
-                "arrival_time=" + arrival_time +
+                "stop_sequence=" + stop_sequence +
+                ", arrival_time=" + arrival_time +
                 ", departure_time=" + departure_time +
                 ", stop_id='" + stop_id + '\'' +
                 '}';
