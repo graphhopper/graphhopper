@@ -262,7 +262,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                 TripBasedRouter.EnqueuedTripSegment segment = segments.get(i);
                 GTFSFeed feed = gtfsStorage.getGtfsFeeds().get(segment.tripAtStopTime.feedId);
                 ZoneId zoneId = ZoneId.of(feed.agency.values().stream().findFirst().get().agency_timezone);
-                LocalDate day = initialTime.atZone(zoneId).toLocalDate().plusDays(segment.plusDays);
+                LocalDate day = segment.serviceDay;
                 com.conveyal.gtfs.model.Trip trip = feed.trips.get(segment.tripAtStopTime.tripDescriptor.getTripId());
                 int untilStopSequence;
                 if (i == segments.size() - 1)
