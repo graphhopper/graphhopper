@@ -109,6 +109,7 @@ class TripFromLabel {
         final InstructionList instructions = new InstructionList(tr);
         final PointList pointsList = new PointList(PointList.CAP_DEFAULT, includeElevation);
         Map<String, List<PathDetail>> pathDetails = new HashMap<>();
+        double totalAscend = 0, totalDescend = 0;
         for (int i = 0; i < path.getLegs().size(); ++i) {
             Trip.Leg leg = path.getLegs().get(i);
             if (leg instanceof Trip.ConnectingLeg) {
@@ -121,6 +122,8 @@ class TripFromLabel {
                 instructions.addAll(theseInstructions);
                 Map<String, List<PathDetail>> shiftedLegPathDetails = shift(((Trip.ConnectingLeg) leg).details, previousPointsCount);
                 shiftedLegPathDetails.forEach((k, v) -> pathDetails.merge(k, shiftedLegPathDetails.get(k), (a,b) -> Lists.newArrayList(Iterables.concat(a, b))));
+                totalAscend += connectingLeg.ascend;
+                totalDescend += connectingLeg.descend;
             } else if (leg instanceof Trip.PtLeg) {
                 final Trip.PtLeg ptLeg = ((Trip.PtLeg) leg);
                 final PointList pl;
@@ -153,7 +156,12 @@ class TripFromLabel {
         }
         path.setInstructions(instructions);
         path.setPoints(pointsList);
-        calcAscendDescend(path, pointsList);
+
+        if (!Double.isNaN(totalAscend))
+            path.setAscend(totalAscend);
+        if (!Double.isNaN(totalDescend))
+            path.setDescend(totalDescend);
+
         path.addPathDetails(pathDetails);
         path.setDistance(path.getLegs().stream().mapToDouble(Trip.Leg::getDistance).sum());
         path.setTime((legs.get(legs.size() - 1).getArrivalTime().toInstant().toEpochMilli() - legs.get(0).getDepartureTime().toInstant().toEpochMilli()));
@@ -512,31 +520,4 @@ class TripFromLabel {
 
         return descendMeters;
     }
-
-    private void calcAscendDescend(final ResponsePath responsePath, final PointList pointList) {
-        if (!pointList.is3D())
-            return;
-        double ascendMeters = 0;
-        double descendMeters = 0;
-        double lastEle = pointList.getEle(0);
-        for (int i = 1; i < pointList.size(); ++i) {
-            double ele = pointList.getEle(i);
-            if (Double.isNaN(ele))
-                continue;
-            double diff = Math.abs(ele - lastEle);
-
-            if (ele > lastEle)
-                ascendMeters += diff;
-            else
-                descendMeters += diff;
-
-            lastEle = ele;
-
-        }
-        if (!Double.isNaN(ascendMeters))
-            responsePath.setAscend(ascendMeters);
-        if (!Double.isNaN(descendMeters))
-            responsePath.setDescend(descendMeters);
-    }
-
 }
