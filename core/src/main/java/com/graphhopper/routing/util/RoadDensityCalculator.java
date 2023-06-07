@@ -112,7 +112,7 @@ public class RoadDensityCalculator {
                 double length = 1;
 //                double length = circle.intersection(lineString).getLength();
                 visited.add(iter.getAdjNode());
-                totalRoadWeight += length * calcRoadFactor.applyAsDouble(edge);
+                totalRoadWeight += length * calcRoadFactor.applyAsDouble(iter);
                 deque.addLast(iter.getAdjNode());
             }
         }
