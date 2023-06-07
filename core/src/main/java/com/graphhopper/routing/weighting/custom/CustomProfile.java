@@ -34,12 +34,13 @@ public class CustomProfile extends Profile {
     public CustomProfile(String name) {
         super(name);
         setWeighting(CustomWeighting.NAME);
+        setCustomModel(new CustomModel());
     }
 
     public CustomProfile setCustomModel(CustomModel customModel) {
-        customModel.internal();
+        if (customModel != null)
+            customModel.internal();
         getHints().putObject(CustomModel.KEY, customModel);
-        getHints().putObject("custom_model_files", Collections.emptyList());
         return this;
     }
 

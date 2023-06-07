@@ -10,9 +10,8 @@
 
 {
   "priority": [
-    { "if": "road_access == PRIVATE",  "multiply_by": "0" },
+    { "if": "!foot_access && (hike_rating < 4 || road_access == PRIVATE)", "multiply_by": "0"},
     { "if": "true", "multiply_by": "foot_priority"},
-    { "if": "!foot_access && hike_rating < 4", "multiply_by": "0"},
     { "if": "foot_network == INTERNATIONAL || foot_network == NATIONAL", "multiply_by": "1.7"},
     { "else_if": "foot_network == REGIONAL || foot_network == LOCAL", "multiply_by": "1.5"}
   ],

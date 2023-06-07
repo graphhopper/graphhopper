@@ -241,7 +241,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
-                setProfiles(new CustomProfile(profile).setCustomModel(new CustomModel()).setVehicle(vehicle).setTurnCosts(true).putHint(U_TURN_COSTS, 20));
+                setProfiles(new CustomProfile(profile).setVehicle(vehicle).setTurnCosts(true).putHint(U_TURN_COSTS, 20));
         hopper.importOrLoad();
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
 
@@ -607,7 +607,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
-                setProfiles(new CustomProfile(profile).setCustomModel(new CustomModel()).setVehicle(vehicle));
+                setProfiles(new CustomProfile(profile).setVehicle(vehicle));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
@@ -1277,7 +1277,7 @@ public class GraphHopperTest {
                 setOSMFile(KREMS).
                 setProfiles(
                         new Profile(footProfile).setVehicle("foot").setWeighting("fastest"),
-                        new CustomProfile(bikeProfile).setCustomModel(new CustomModel()).setVehicle("bike")).
+                        new CustomProfile(bikeProfile).setVehicle("bike")).
                 setStoreOnFlush(true).
                 importOrLoad();
 
@@ -1399,7 +1399,7 @@ public class GraphHopperTest {
         final String bikeProfile = "bike_profile";
         final String carProfile = "car_profile";
         List<Profile> profiles = asList(
-                new CustomProfile(bikeProfile).setCustomModel(new CustomModel()).setVehicle("bike"),
+                new CustomProfile(bikeProfile).setVehicle("bike"),
                 new Profile(carProfile).setVehicle("car").setWeighting("fastest")
         );
         GraphHopper hopper = new GraphHopper().
@@ -2112,7 +2112,7 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
                 setMinNetworkSize(0).
-                setProfiles(new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"));
+                setProfiles(new CustomProfile("bike").setVehicle("bike"));
 
         hopper.importOrLoad();
         GHRequest req = new GHRequest(new GHPoint(49.98021, 11.50730), new GHPoint(49.98026, 11.50795));
@@ -2528,9 +2528,9 @@ public class GraphHopperTest {
                 setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
                 setVehiclesString("car|block_private=false").
                 setProfiles(
-                        new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
-                        new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"),
-                        new CustomProfile("foot").setCustomModel(new CustomModel()).setVehicle("foot")
+                        new CustomProfile("car").setVehicle("car"),
+                        new CustomProfile("bike").setVehicle("bike"),
+                        new CustomProfile("foot").setVehicle("foot")
                 ).
                 setMinNetworkSize(0);
         hopper.importOrLoad();

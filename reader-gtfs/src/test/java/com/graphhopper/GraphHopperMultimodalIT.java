@@ -65,7 +65,6 @@ public class GraphHopperMultimodalIT {
         CustomProfile carLocal = new CustomProfile("car_custom");
         carLocal.setVehicle("car");
         carLocal.setWeighting("custom");
-        carLocal.setCustomModel(new CustomModel());
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("foot").setVehicle("foot").setWeighting("fastest"),
                 new Profile("car_default").setVehicle("car").setWeighting("fastest"),

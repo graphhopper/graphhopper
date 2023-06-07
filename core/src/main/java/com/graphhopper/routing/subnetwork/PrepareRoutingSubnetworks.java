@@ -104,12 +104,11 @@ public class PrepareRoutingSubnetworks {
                 Helper.nf(graph.getNodes()) + ", edges: " + Helper.nf(graph.getEdges()) + ", jobs: " + prepareJobs + ", " + Helper.getMemInfo());
         AtomicInteger total = new AtomicInteger(0);
         List<BitSet> flags = Stream.generate(() -> new BitSet(graph.getEdges())).limit(prepareJobs.size()).collect(Collectors.toList());
-        Stream<Callable<String>> callables = IntStream.range(0, prepareJobs.size()).mapToObj(i -> () -> {
+        Stream<Runnable> runnables = IntStream.range(0, prepareJobs.size()).mapToObj(i -> () -> {
             PrepareJob job = prepareJobs.get(i);
             total.addAndGet(setSubnetworks(job.weighting, job.subnetworkEnc.getName().replaceAll("_subnetwork", ""), flags.get(i)));
-            return job.toString();
         });
-        GHUtility.runConcurrently(callables, threads);
+        GHUtility.runConcurrently(runnables, threads);
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             for (int i = 0; i < prepareJobs.size(); i++) {

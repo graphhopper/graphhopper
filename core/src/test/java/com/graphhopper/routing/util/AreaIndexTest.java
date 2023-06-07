@@ -18,7 +18,7 @@
 
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.ev.State;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -135,10 +135,10 @@ class AreaIndexTest {
     @Test
     public void testCountries() {
         AreaIndex<CustomArea> countryIndex = createCountryIndex();
-        assertEquals("DEU", countryIndex.query(52.52437, 13.41053).get(0).getProperties().get(Country.ISO_ALPHA3));
-        assertEquals("FRA", countryIndex.query(48.86471, 2.349014).get(0).getProperties().get(Country.ISO_ALPHA3));
-        assertEquals("USA", countryIndex.query(35.67514, -105.94665).get(0).getProperties().get(Country.ISO_ALPHA3));
-        assertEquals("AUT", countryIndex.query(48.20448, 16.10788).get(0).getProperties().get(Country.ISO_ALPHA3));
+        assertEquals("DE", countryIndex.query(52.52437, 13.41053).get(0).getProperties().get(State.ISO_3166_2));
+        assertEquals("FR", countryIndex.query(48.86471, 2.349014).get(0).getProperties().get(State.ISO_3166_2));
+        assertEquals("US-NM", countryIndex.query(35.67514, -105.94665).get(0).getProperties().get(State.ISO_3166_2));
+        assertEquals("AT", countryIndex.query(48.20448, 16.10788).get(0).getProperties().get(State.ISO_3166_2));
     }
 
     private AreaIndex<CustomArea> createCountryIndex() {

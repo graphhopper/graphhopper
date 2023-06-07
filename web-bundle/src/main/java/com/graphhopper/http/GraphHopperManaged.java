@@ -94,7 +94,7 @@ public class GraphHopperManaged implements Managed {
                 newProfiles.add(profile);
                 continue;
             }
-            Object cm = profile.getHints().getObject("custom_model", null);
+            Object cm = profile.getHints().getObject(CustomModel.KEY, null);
             CustomModel customModel;
             if (cm != null) {
                 if (!profile.getHints().getObject("custom_model_files", Collections.emptyList()).isEmpty())

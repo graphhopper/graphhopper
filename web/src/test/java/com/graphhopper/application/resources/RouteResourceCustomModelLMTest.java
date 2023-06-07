@@ -61,7 +61,7 @@ public class RouteResourceCustomModelLMTest {
                 setProfiles(Arrays.asList(
                         new CustomProfile("car_custom").setCustomModel(new CustomModel().setDistanceInfluence(15d)).setVehicle("car"),
                         new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
-                        new CustomProfile("foot_custom").setCustomModel(new CustomModel()).setVehicle("foot"))).
+                        new CustomProfile("foot_custom").setVehicle("foot"))).
                 setLMProfiles(Arrays.asList(new LMProfile("car_custom"), new LMProfile("foot_custom")));
         return config;
     }

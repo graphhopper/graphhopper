@@ -40,6 +40,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.graphhopper.storage.index.Snap.Position.*;
 import static com.graphhopper.util.EdgeIteratorState.UNFAVORED_EDGE;
@@ -861,7 +863,7 @@ public class QueryGraphTest {
         Snap snap = createLocationResult(50.00, 10.15, edge, 0, EDGE);
         QueryGraph queryGraph = QueryGraph.create(g, snap);
         assertEquals(3, queryGraph.getNodes());
-        assertEquals(5, queryGraph.getEdges());
+        assertEquals(3, queryGraph.getEdges());
         assertEquals(4, queryGraph.getVirtualEdges().size());
 
         EdgeIteratorState edge_0x = queryGraph.getEdgeIteratorState(1, 2);
@@ -935,7 +937,7 @@ public class QueryGraphTest {
         Snap snap = createLocationResult(50.00, 10.15, edge, 0, EDGE);
         QueryGraph queryGraph = QueryGraph.create(g, snap);
         assertEquals(3, queryGraph.getNodes());
-        assertEquals(5, queryGraph.getEdges());
+        assertEquals(3, queryGraph.getEdges());
         assertEquals(4, queryGraph.getVirtualEdges().size());
 
         EdgeIteratorState edge_0x = queryGraph.getEdgeIteratorState(1, 2);
@@ -991,6 +993,41 @@ public class QueryGraphTest {
     private void assertNodes(EdgeIteratorState edge, int base, int adj) {
         assertEquals(base, edge.getBaseNode());
         assertEquals(adj, edge.getAdjNode());
+    }
+
+    @Test
+    public void testTotalEdgeCount() {
+        // virtual nodes:     2     3
+        //                0 - x --- x - 1
+        // virtual edges:   1   2/3 4
+        BaseGraph g = new BaseGraph.Builder(1).create();
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 50.00, 10.00);
+        na.setNode(1, 50.00, 10.30);
+        g.edge(0, 1);
+
+        LocationIndexTree locationIndex = new LocationIndexTree(g, g.getDirectory());
+        locationIndex.prepareIndex();
+
+        // query graph
+        Snap snap1 = locationIndex.findClosest(50.00, 10.10, EdgeFilter.ALL_EDGES);
+        Snap snap2 = locationIndex.findClosest(50.00, 10.20, EdgeFilter.ALL_EDGES);
+
+        QueryGraph queryGraph = QueryGraph.create(g, snap1, snap2);
+        assertEquals(4, queryGraph.getNodes());
+        assertEquals(8, queryGraph.getVirtualEdges().size());
+        assertEquals(1 + 8 / 2, queryGraph.getEdges());
+
+        // internally the QueryGraph reserves edge IDs 2 and 3 for the edges between 2 and three,
+        // but the edge iterator only reveals edge 2
+        assertEquals("[1],[4],[1, 2],[2, 4]",
+                IntStream.range(0, queryGraph.getNodes()).mapToObj(i ->
+                        GHUtility.getEdgeIds(queryGraph.createEdgeExplorer().setBaseNode(i)).toString()).collect(Collectors.joining(",")));
+
+        // by iterating up to the total edge count we get all edges
+        assertEquals("0 0-1,0->2,2->3,2->3,3->1",
+                IntStream.range(0, queryGraph.getEdges()).mapToObj(i ->
+                        queryGraph.getEdgeIteratorState(i, Integer.MIN_VALUE).toString()).collect(Collectors.joining(",")));
     }
 
     private QueryGraph lookup(Snap res) {
