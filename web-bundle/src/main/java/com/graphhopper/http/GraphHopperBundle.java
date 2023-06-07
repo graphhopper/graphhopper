@@ -278,6 +278,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
         });
 
         environment.jersey().register(MVTResource.class);
+        environment.jersey().register(UrbanDensityResource.class);
         environment.jersey().register(NearestResource.class);
         environment.jersey().register(RouteResource.class);
         environment.jersey().register(IsochroneResource.class);
