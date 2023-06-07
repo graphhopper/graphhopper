@@ -64,7 +64,13 @@ public class UrbanDensityCalculator {
                                         EnumEncodedValue<Country> countryEnc,
                                         EnumEncodedValue<RoadClass> roadClassEnc, BooleanEncodedValue roadClassLinkEnc,
                                         double radius, double sensitivity, int threads) {
-        final ToDoubleFunction<EdgeIteratorState> calcRoadFactor = edge -> 1;
+        final ToDoubleFunction<EdgeIteratorState> calcRoadFactor = edge -> {
+            if (edge.get(roadClassLinkEnc) || edge.get(roadClassEnc) == RoadClass.TRACK
+                    || edge.get(roadClassEnc) == RoadClass.PATH || edge.get(roadClassEnc) == RoadClass.BRIDLEWAY)
+                return 0;
+            else
+                return 1;
+        };
         // temporarily write results to an external array for thread-safety
         boolean[] isResidential = new boolean[graph.getEdges()];
         RoadDensityCalculator.calcRoadDensities(graph, (calculator, edge) -> {

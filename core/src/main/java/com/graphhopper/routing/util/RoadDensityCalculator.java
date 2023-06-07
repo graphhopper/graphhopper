@@ -94,7 +94,7 @@ public class RoadDensityCalculator {
                 if (visited.contains(iter.getAdjNode()))
                     continue;
                 visited.add(iter.getAdjNode());
-                totalRoadWeight++;
+                totalRoadWeight += 1.0 * calcRoadFactor.applyAsDouble(edge);
                 deque.addLast(iter.getAdjNode());
             }
         }
