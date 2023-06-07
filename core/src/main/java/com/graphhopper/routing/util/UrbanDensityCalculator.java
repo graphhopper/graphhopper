@@ -74,7 +74,7 @@ public class UrbanDensityCalculator {
                 // we're interested in the road density of urban roads, so residential areas are particularly interesting
                 case RESIDENTIAL:
                     // https://github.com/graphhopper/graphhopper/issues/2829
-                    return edge.get(countryEnc) == Country.USA ? 0 : 2;
+                    return edge.get(countryEnc) == Country.USA ? 1 : 2;
                 case LIVING_STREET:
                 case FOOTWAY:
                 case CYCLEWAY:
