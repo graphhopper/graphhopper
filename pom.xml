@@ -81,7 +81,7 @@
         <module>reader-gtfs</module>
         <!-- ORS-GH MOD<module>tools</module> -->
         <!-- ORS-GH MOD<module>hmm-lib</module> -->
-        <!-- ORS-GH MOD<module>map-matching</module> -->
+        <module>map-matching</module>
         <!-- ORS-GH MOD<module>web-bundle</module> -->
         <module>web-api</module>
         <!-- ORS-GH MOD<module>web</module> -->
