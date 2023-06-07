@@ -86,16 +86,15 @@ public class RoadDensityCalculator {
         final double radiusNormalized = DIST_PLANE.calcNormalizedDist(radius);
         while (!deque.isEmpty()) {
             int node = deque.removeFirst();
+            double distance = DIST_PLANE.calcNormalizedDist(center.lat, center.lon, na.getLat(node), na.getLon(node));
+            if (distance > radiusNormalized)
+                continue;
             EdgeIterator iter = edgeExplorer.setBaseNode(node);
             while (iter.next()) {
                 if (visited.contains(iter.getAdjNode()))
                     continue;
                 visited.add(iter.getAdjNode());
-                double distance = DIST_PLANE.calcNormalizedDist(center.lat, center.lon, getLat(na, iter.getBaseNode(), iter.getAdjNode()), getLon(na, iter.getBaseNode(), iter.getAdjNode()));
-                if (distance > radiusNormalized)
-                    continue;
-                double roadLength = Math.min(2 * radius, iter.getDistance());
-                totalRoadWeight += roadLength * calcRoadFactor.applyAsDouble(iter);
+                totalRoadWeight++;
                 deque.addLast(iter.getAdjNode());
             }
         }
