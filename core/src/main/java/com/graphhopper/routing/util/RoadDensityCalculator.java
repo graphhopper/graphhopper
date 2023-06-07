@@ -21,15 +21,19 @@ package com.graphhopper.routing.util;
 import com.carrotsearch.hppc.IntArrayDeque;
 import com.carrotsearch.hppc.IntScatterSet;
 import com.carrotsearch.hppc.IntSet;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.prep.PreparedGeometry;
+import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 
-import java.util.concurrent.Callable;
 import java.util.function.BiConsumer;
 import java.util.function.ToDoubleFunction;
 import java.util.stream.IntStream;
@@ -78,6 +82,12 @@ public class RoadDensityCalculator {
         int baseNode = edge.getBaseNode();
         int adjNode = edge.getAdjNode();
         GHPoint center = new GHPoint(getLat(na, baseNode, adjNode), getLon(na, baseNode, adjNode));
+//        double dlat = radius / 111100;
+//        double dlon = radius / (111100 * Math.cos(Math.toRadians(center.lat)));
+//        double latlonradius = Math.sqrt(dlat * dlat + dlon * dlon);
+//        Geometry circle = new GeometryFactory().createPoint(new Coordinate(center.lon, center.lat)).buffer(latlonradius);
+//        Geometry circle = new GeometryFactory().createPolygon(generateApproximatePolygon(center.lon, center.lat, latlonradius, 4));
+//        PreparedGeometry preparedCircle = new PreparedGeometryFactory().create(circle);
         deque.addLast(baseNode);
         deque.addLast(adjNode);
         visited.add(baseNode);
@@ -93,12 +103,21 @@ public class RoadDensityCalculator {
             while (iter.next()) {
                 if (visited.contains(iter.getAdjNode()))
                     continue;
+//                LineString lineString = iter.fetchWayGeometry(FetchMode.ALL).toLineString(false);
+//                if (!preparedCircle.intersects(lineString))
+//                    continue;
+//                if (!preparedCircle.contains(lineString))
+//                    continue;
+//                double length = iter.getDistance();
+                double length = 1;
+//                double length = circle.intersection(lineString).getLength();
                 visited.add(iter.getAdjNode());
-                totalRoadWeight += 1.0 * calcRoadFactor.applyAsDouble(edge);
+                totalRoadWeight += length * calcRoadFactor.applyAsDouble(edge);
                 deque.addLast(iter.getAdjNode());
             }
         }
         return totalRoadWeight / radius / radius;
+//        return totalRoadWeight / latlonradius / latlonradius;
     }
 
     private static double getLat(NodeAccess na, int baseNode, int adjNode) {
@@ -107,6 +126,23 @@ public class RoadDensityCalculator {
 
     private static double getLon(NodeAccess na, int baseNode, int adjNode) {
         return (na.getLon(baseNode) + na.getLon(adjNode)) / 2;
+    }
+
+    private static Coordinate[] generateApproximatePolygon(double centerX, double centerY, double radius, int numPoints) {
+        Coordinate[] coords = new Coordinate[numPoints + 1];
+        double angleIncrement = 2 * Math.PI / numPoints;
+
+        for (int i = 0; i < numPoints; i++) {
+            double angle = i * angleIncrement;
+            double x = centerX + radius * Math.cos(angle);
+            double y = centerY + radius * Math.sin(angle);
+            coords[i] = new Coordinate(x, y);
+        }
+
+        // Close the polygon by adding the first point as the last point
+        coords[numPoints] = coords[0];
+
+        return coords;
     }
 
 }
