@@ -72,8 +72,8 @@ public class UrbanDensityResource {
         List<Map<String, Object>> features = edgeIds.parallelStream().map(edgeId -> {
             EdgeIteratorState edge = graphHopper.getBaseGraph().getEdgeIteratorStateForKey(edgeId * 2);
             double roadDensity = calculator.get().calcRoadDensity(edge, radius, e -> {
-                if (edge.get(roadClassLinkEnc) || edge.get(roadClassEnc) == RoadClass.TRACK || edge.get(roadClassEnc) == RoadClass.SERVICE
-                        || edge.get(roadClassEnc) == RoadClass.PATH || edge.get(roadClassEnc) == RoadClass.BRIDLEWAY)
+                if (e.get(roadClassLinkEnc) || e.get(roadClassEnc) == RoadClass.TRACK || e.get(roadClassEnc) == RoadClass.SERVICE
+                        || e.get(roadClassEnc) == RoadClass.PATH || e.get(roadClassEnc) == RoadClass.BRIDLEWAY)
                     return 0;
                 else
                     return 1;
