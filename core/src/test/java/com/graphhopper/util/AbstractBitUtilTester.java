@@ -85,7 +85,6 @@ public abstract class AbstractBitUtilTester {
         int high = 2565;
         int low = 9421;
         long l = bitUtil.toLong(low, high);
-        assertEquals(l, bitUtil.combineIntsToLong(low, high));
         assertEquals(high, bitUtil.getIntHigh(l));
         assertEquals(low, bitUtil.getIntLow(l));
     }

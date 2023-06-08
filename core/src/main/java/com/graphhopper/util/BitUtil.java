@@ -120,12 +120,15 @@ public class BitUtil {
         bytes[offset] = (byte) (value);
     }
 
+    /**
+     * See the counterpart {@link #fromLong(long)}
+     */
     public final long toLong(byte[] b) {
         return toLong(b, 0);
     }
 
-    public final long toLong(int int0, int int1) {
-        return ((long) int1 << 32) | (int0 & 0xFFFFFFFFL);
+    public final long toLong(int intLow, int intHigh) {
+        return ((long) intHigh << 32) | (intLow & 0xFFFFFFFFL);
     }
 
     public final long toLong(byte[] b, int offset) {
@@ -253,7 +256,30 @@ public class BitUtil {
         return (int) (longValue >> 32);
     }
 
-    public final long combineIntsToLong(int intLow, int intHigh) {
-        return ((long) intHigh << 32) | (intLow & 0xFFFFFFFFL);
+    public static int countBitValue(int maxTurnCosts) {
+        if (maxTurnCosts < 0)
+            throw new IllegalArgumentException("maxTurnCosts cannot be negative " + maxTurnCosts);
+
+        int counter = 0;
+        while (maxTurnCosts > 0) {
+            maxTurnCosts >>= 1;
+            counter++;
+        }
+        return counter;
+    }
+
+    /**
+     * This method handles the specified (potentially negative) int as unsigned bit representation
+     * and returns the positive converted long.
+     */
+    public static long toUnsignedLong(int x) {
+        return ((long) x) & 0xFFFF_FFFFL;
+    }
+
+    /**
+     * Converts the specified long back into a signed int (reverse method for toUnsignedLong)
+     */
+    public static int toSignedInt(long x) {
+        return (int) x;
     }
 }
