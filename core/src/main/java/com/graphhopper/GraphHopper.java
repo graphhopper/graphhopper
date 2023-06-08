@@ -135,6 +135,8 @@ public class GraphHopper {
     private String encodedValuesString = "";
     private String vehiclesString = "";
 
+    private boolean calcUrbanDensityOnLoad = false;
+
     public GraphHopper setEncodedValuesString(String encodedValuesString) {
         this.encodedValuesString = encodedValuesString;
         return this;
@@ -599,6 +601,7 @@ public class GraphHopper {
         cityAreaRadius = ghConfig.getDouble("graph.urban_density.city_radius", cityAreaRadius);
         cityAreaSensitivity = ghConfig.getDouble("graph.urban_density.city_sensitivity", cityAreaSensitivity);
         urbanDensityCalculationThreads = ghConfig.getInt("graph.urban_density.threads", urbanDensityCalculationThreads);
+        calcUrbanDensityOnLoad = ghConfig.getBool("graph.urban_density.calc_on_load", calcUrbanDensityOnLoad);
 
         // routing
         routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
@@ -1054,7 +1057,8 @@ public class GraphHopper {
                         + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
             checkProfilesConsistency();
 
-            calcUrbanDensity();
+            if (calcUrbanDensityOnLoad)
+                calcUrbanDensity();
 
             postProcessing(false);
             directory.loadMMap();
