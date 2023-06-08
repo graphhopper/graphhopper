@@ -324,4 +324,28 @@ public class ShortestPathTreeTest {
         );
     }
 
+    @Test
+    public void testSearchByDistanceWithOverextendedEdges() {
+        List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
+        List<ShortestPathTree.IsoLabel> result1 = new ArrayList<>();
+        ShortestPathTree instance = new ShortestPathTree(graph, new FastestWeighting(accessEnc, speedEnc), false, TraversalMode.NODE_BASED);
+
+        instance.setIncludeOverextendedEdges(false);
+        instance.setDistanceLimit(100);
+        instance.search(0, result::add);
+
+        ShortestPathTree instance1 = new ShortestPathTree(graph, new FastestWeighting(accessEnc, speedEnc), false, TraversalMode.NODE_BASED);
+        instance1.setIncludeOverextendedEdges(true);
+        instance1.setDistanceLimit(100);
+        instance1.search(0, result1::add);
+
+        assertEquals(4, result.size());
+        assertEquals(6, result1.size());
+
+        assertTrue(result.stream().noneMatch(l -> l.consumed_part.isPresent()));
+
+        // Test that the 2 additional edges returned are only partially consumed
+        assertEquals(2, result1.stream().filter(l -> l.consumed_part.isPresent()).count());
+    }
+
 }

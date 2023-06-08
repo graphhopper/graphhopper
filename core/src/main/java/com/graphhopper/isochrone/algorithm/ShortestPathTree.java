@@ -28,9 +28,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.PriorityQueue;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static com.graphhopper.isochrone.algorithm.ShortestPathTree.ExploreType.*;
@@ -65,6 +63,10 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
         }
 
         public boolean deleted = false;
+
+        // How much of the edge is consumed
+        // In cases where an edge exceeds the limit, then consumed will be less than edge length
+        public OptionalDouble consumed_part = OptionalDouble.empty();
         public int node;
         public int edge;
         public double weight;
@@ -80,6 +82,7 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
                     ", weight=" + weight +
                     ", time=" + time +
                     ", distance=" + distance +
+                    ", consumed=" + consumed_part +
                     '}';
         }
     }
@@ -91,6 +94,9 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
     private ExploreType exploreType = TIME;
     private final boolean reverseFlow;
 
+    // Whether to include edges that extend over the `limit`
+    private boolean includeOverextendedEdges = false;
+
     public ShortestPathTree(Graph g, Weighting weighting, boolean reverseFlow, TraversalMode traversalMode) {
         super(g, weighting, traversalMode);
         queueByWeighting = new PriorityQueue<>(1000, comparingDouble(l -> l.weight));
@@ -101,6 +107,10 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
     @Override
     public Path calcPath(int from, int to) {
         throw new IllegalStateException("call search instead");
+    }
+
+    public void setIncludeOverextendedEdges(boolean over) {
+        this.includeOverextendedEdges = over;
     }
 
     /**
@@ -158,6 +168,13 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
                     fromMap.put(nextTraversalId, label);
                     if (getExploreValue(label) <= limit) {
                         queueByWeighting.add(label);
+                    } else if (includeOverextendedEdges) {
+                        // Overextended case
+                        double consumed = limit - getExploreValue(currentLabel);
+                        if (consumed > 0) {
+                            label.consumed_part = OptionalDouble.of(consumed);
+                            consumer.accept(label);
+                        }
                     }
                 } else if (label.weight > nextWeight) {
                     label.deleted = true;
@@ -165,8 +182,17 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
                     fromMap.put(nextTraversalId, label);
                     if (getExploreValue(label) <= limit) {
                         queueByWeighting.add(label);
+                    } else if (includeOverextendedEdges) {
+                        // Overextended case
+                        double consumed = limit - getExploreValue(currentLabel);
+                        if (consumed > 0) {
+                            label.consumed_part = OptionalDouble.of(consumed);
+                            consumer.accept(label);
+                        }
                     }
                 }
+
+
             }
         }
     }
