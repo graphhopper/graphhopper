@@ -83,7 +83,10 @@ public class RouteResourceTest {
                 putObject("graph.vehicles", "car").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
-                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed,country").
+                putObject("max_speed_calculator.enabled", true).
+                putObject("graph.urban_density.threads", 1). // for max_speed_calculator
+                putObject("graph.urban_density.city_radius", 0).
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 // adding this so the corresponding check is not just skipped...
@@ -252,11 +255,11 @@ public class RouteResourceTest {
         assertTrue(res.getDistance() < 21000, "distance wasn't correct:" + res.getDistance());
 
         InstructionList instructions = res.getInstructions();
-        assertEquals(24, instructions.size());
+        assertEquals(25, instructions.size());
         assertEquals("Continue onto la Callisa", instructions.get(0).getTurnDescription(null));
         assertEquals("At roundabout, take exit 2", instructions.get(4).getTurnDescription(null));
         assertEquals(true, instructions.get(4).getExtraInfoJSON().get("exited"));
-        assertEquals(false, instructions.get(22).getExtraInfoJSON().get("exited"));
+        assertEquals(false, instructions.get(23).getExtraInfoJSON().get("exited"));
     }
 
     @Test
@@ -337,7 +340,7 @@ public class RouteResourceTest {
     @Test
     public void testPathDetailsWithoutGraphHopperWeb() {
         final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id&details=max_speed").request().buildGet().invoke();
+                "point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id&details=max_speed&details=urban_density").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -359,8 +362,16 @@ public class RouteResourceTest {
         assertEquals(1584, lastLink);
 
         JsonNode maxSpeed = details.get("max_speed");
-        assertEquals(-1, maxSpeed.get(0).get(2).asDouble(-1), .01);
-        assertEquals(50, maxSpeed.get(1).get(2).asDouble(-1), .01);
+        assertEquals("[0,33,50.0]", maxSpeed.get(0).toString());
+        assertEquals("[33,34,60.0]", maxSpeed.get(1).toString());
+        assertEquals("[34,38,50.0]", maxSpeed.get(2).toString());
+        assertEquals("[38,50,90.0]", maxSpeed.get(3).toString());
+        assertEquals("[50,52,50.0]", maxSpeed.get(4).toString());
+        assertEquals("[52,78,90.0]", maxSpeed.get(5).toString());
+
+        JsonNode urbanDensityNode = details.get("urban_density");
+        assertEquals("[0,53,\"residential\"]", urbanDensityNode.get(0).toString());
+        assertEquals("[53,68,\"rural\"]", urbanDensityNode.get(1).toString());
     }
 
     @Test

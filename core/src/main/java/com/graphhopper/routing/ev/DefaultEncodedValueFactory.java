@@ -37,6 +37,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return RoadAccess.create();
         } else if (MaxSpeed.KEY.equals(name)) {
             return MaxSpeed.create();
+        } else if (MaxSpeedEstimated.KEY.equals(name)) {
+            return MaxSpeedEstimated.create();
         } else if (MaxWeight.KEY.equals(name)) {
             return MaxWeight.create();
         } else if (MaxWeightExcept.KEY.equals(name)) {

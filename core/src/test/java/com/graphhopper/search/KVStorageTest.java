@@ -3,6 +3,7 @@ package com.graphhopper.search;
 import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.search.KVStorage.KeyValue;
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
@@ -399,6 +400,6 @@ public class KVStorageTest {
         long pointer = Integer.MAX_VALUE;
         int storedPointer = (int) (pointer + 100);
         assertTrue(storedPointer < 0);
-        assertEquals(pointer + 100, Helper.toUnsignedLong(storedPointer));
+        assertEquals(pointer + 100, BitUtil.toUnsignedLong(storedPointer));
     }
 }

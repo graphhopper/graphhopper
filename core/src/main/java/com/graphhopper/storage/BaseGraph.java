@@ -106,7 +106,7 @@ public class BaseGraph implements Graph, Closeable {
     private void loadWayGeometryHeader() {
         int geometryVersion = wayGeometry.getHeader(0);
         GHUtility.checkDAVersion(wayGeometry.getName(), Constants.VERSION_GEOMETRY, geometryVersion);
-        maxGeoRef = bitUtil.combineIntsToLong(
+        maxGeoRef = bitUtil.toLong(
                 wayGeometry.getHeader(4),
                 wayGeometry.getHeader(8)
         );
@@ -344,7 +344,7 @@ public class BaseGraph implements Graph, Closeable {
                 throw new IllegalArgumentException("Cannot use pointlist which is " + pillarNodes.getDimension()
                         + "D for graph which is " + nodeAccess.getDimension() + "D");
 
-            long existingGeoRef = Helper.toUnsignedLong(store.getGeoRef(edgePointer));
+            long existingGeoRef = BitUtil.toUnsignedLong(store.getGeoRef(edgePointer));
 
             int len = pillarNodes.size();
             int dim = nodeAccess.getDimension();
@@ -387,7 +387,7 @@ public class BaseGraph implements Graph, Closeable {
         ensureGeometry(geoRefPosition, totalLen);
         byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
         wayGeometry.setBytes(geoRefPosition, wayGeometryBytes, wayGeometryBytes.length);
-        store.setGeoRef(edgePointer, Helper.toSignedInt(geoRef));
+        store.setGeoRef(edgePointer, BitUtil.toSignedInt(geoRef));
     }
 
     private byte[] createWayGeometryBytes(PointList pillarNodes, boolean reverse) {
@@ -424,7 +424,7 @@ public class BaseGraph implements Graph, Closeable {
             pillarNodes.add(nodeAccess, adjNode);
             return pillarNodes;
         }
-        long geoRef = Helper.toUnsignedLong(store.getGeoRef(edgePointer));
+        long geoRef = BitUtil.toUnsignedLong(store.getGeoRef(edgePointer));
         int count = 0;
         byte[] bytes = null;
         if (geoRef > 0) {
@@ -949,19 +949,19 @@ public class BaseGraph implements Graph, Closeable {
             long pointer = baseGraph.edgeKVStorage.add(entries);
             if (pointer > MAX_UNSIGNED_INT)
                 throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + MAX_UNSIGNED_INT + " was " + pointer);
-            store.setKeyValuesRef(edgePointer, Helper.toSignedInt(pointer));
+            store.setKeyValuesRef(edgePointer, BitUtil.toSignedInt(pointer));
             return this;
         }
 
         @Override
         public List<KVStorage.KeyValue> getKeyValues() {
-            long kvEntryRef = Helper.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            long kvEntryRef = BitUtil.toUnsignedLong(store.getKeyValuesRef(edgePointer));
             return baseGraph.edgeKVStorage.getAll(kvEntryRef);
         }
 
         @Override
         public Object getValue(String key) {
-            long kvEntryRef = Helper.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            long kvEntryRef = BitUtil.toUnsignedLong(store.getKeyValuesRef(edgePointer));
             return baseGraph.edgeKVStorage.get(kvEntryRef, key, reverse);
         }
 

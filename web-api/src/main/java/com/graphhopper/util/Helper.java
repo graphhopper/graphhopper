@@ -64,18 +64,6 @@ public class Helper {
         return string.toUpperCase(Locale.ROOT);
     }
 
-    public static int countBitValue(int maxTurnCosts) {
-        if (maxTurnCosts < 0)
-            throw new IllegalArgumentException("maxTurnCosts cannot be negative " + maxTurnCosts);
-
-        int counter = 0;
-        while (maxTurnCosts > 0) {
-            maxTurnCosts >>= 1;
-            counter++;
-        }
-        return counter;
-    }
-
     public static void saveProperties(Map<String, String> map, Writer tmpWriter) throws IOException {
         BufferedWriter writer = new BufferedWriter(tmpWriter);
         try {
@@ -360,21 +348,6 @@ public class Helper {
         DateFormat df = new SimpleDateFormat(str, Locale.ENGLISH);
         df.setTimeZone(UTC);
         return df;
-    }
-
-    /**
-     * This method handles the specified (potentially negative) int as unsigned bit representation
-     * and returns the positive converted long.
-     */
-    public static long toUnsignedLong(int x) {
-        return ((long) x) & 0xFFFF_FFFFL;
-    }
-
-    /**
-     * Converts the specified long back into a signed int (reverse method for toUnsignedLong)
-     */
-    public static int toSignedInt(long x) {
-        return (int) x;
     }
 
     /**
