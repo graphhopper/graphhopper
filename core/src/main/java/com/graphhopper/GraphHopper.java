@@ -112,9 +112,9 @@ public class GraphHopper {
     private int subnetworksThreads = 1;
     // residential areas
     private double residentialAreaRadius = 300;
-    private double residentialAreaSensitivity = 60;
+    private double residentialAreaSensitivity = 8000;
     private double cityAreaRadius = 2000;
-    private double cityAreaSensitivity = 30;
+    private double cityAreaSensitivity = 500;
     private int urbanDensityCalculationThreads = 0;
 
     // preparation handlers
