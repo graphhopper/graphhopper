@@ -140,7 +140,7 @@ graphhopper:
 
   # This features sets a maximum speed in 'max_speed' encoded value if no maxspeed tag was found. It is country-dependent
   # and based on several rules. See https://github.com/westnordost/osm-legal-default-speeds
-  # To use it uncomment the following, then enable urban density and add 'country' to graph.encoded_values
+  # To use it uncomment the following, then enable urban density below and add 'country' to graph.encoded_values
   # max_speed_calculator.enabled: true
 
 
