@@ -65,8 +65,9 @@ public class UrbanDensityCalculator {
                                         EnumEncodedValue<RoadClass> roadClassEnc, BooleanEncodedValue roadClassLinkEnc,
                                         double radius, double sensitivity, int threads) {
         final ToDoubleFunction<EdgeIteratorState> calcRoadFactor = edge -> {
-            if (edge.get(roadClassLinkEnc) || edge.get(roadClassEnc) == RoadClass.TRACK || edge.get(roadClassEnc) == RoadClass.SERVICE
-                    || edge.get(roadClassEnc) == RoadClass.PATH || edge.get(roadClassEnc) == RoadClass.BRIDLEWAY)
+            RoadClass roadClass = edge.get(roadClassEnc);
+            if (edge.get(roadClassLinkEnc) || roadClass == RoadClass.TRACK || roadClass == RoadClass.SERVICE
+                    || roadClass == RoadClass.PATH || roadClass == RoadClass.BRIDLEWAY)
                 return 0;
             else
                 return 1;
