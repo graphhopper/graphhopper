@@ -76,6 +76,7 @@ import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
  */
 public class GraphHopper {
     private static final Logger logger = LoggerFactory.getLogger(GraphHopper.class);
+    private MaxSpeedCalculator maxSpeedCalculator;
     private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
@@ -521,6 +522,9 @@ public class GraphHopper {
                 dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.mmap.".length()), entry.getValue().toString());
         }
 
+        if (ghConfig.getBool("max_speed_calculator.enabled", false))
+            maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds());
+
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
 
@@ -616,10 +620,12 @@ public class GraphHopper {
     }
 
     protected EncodingManager buildEncodingManager(Map<String, String> vehiclesByName, List<String> encodedValueStrings,
-                                                   boolean withUrbanDensity, Collection<Profile> profiles) {
+                                                   boolean withUrbanDensity, boolean withMaxSpeedEst, Collection<Profile> profiles) {
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         vehiclesByName.forEach((name, vehicleStr) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, new PMap(vehicleStr))));
         profiles.forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
+        if (withMaxSpeedEst)
+            emBuilder.add(MaxSpeedEstimated.create());
         if (withUrbanDensity)
             emBuilder.add(UrbanDensity.create());
         encodedValueStrings.forEach(s -> emBuilder.add(encodedValueFactory.create(s, new PMap())));
@@ -656,6 +662,15 @@ public class GraphHopper {
             osmParsers.addWayTagParser(new SlopeCalculator(encodingManager.getDecimalEncodedValue(MaxSlope.KEY),
                     encodingManager.getDecimalEncodedValue(AverageSlope.KEY)));
         }
+
+        if (maxSpeedCalculator != null) {
+            if (!encodingManager.hasEncodedValue(Country.KEY))
+                throw new IllegalArgumentException("max_speed_calculator needs country");
+            if (!encodingManager.hasEncodedValue(UrbanDensity.KEY))
+                throw new IllegalArgumentException("max_speed_calculator needs urban_density");
+            osmParsers.addWayTagParser(maxSpeedCalculator.getParser());
+        }
+
         if (encodingManager.hasEncodedValue(Curvature.KEY))
             osmParsers.addWayTagParser(new CurvatureCalculator(encodingManager.getDecimalEncodedValue(Curvature.KEY)));
 
@@ -840,9 +855,11 @@ public class GraphHopper {
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
         boolean withUrbanDensity = urbanDensityCalculationThreads > 0;
+        boolean withMaxSpeedEstimation = maxSpeedCalculator != null;
         Map<String, String> vehiclesByName = getVehiclesByName(vehiclesString, profilesByName.values());
         List<String> encodedValueStrings = getEncodedValueStrings(encodedValuesString);
-        encodingManager = buildEncodingManager(vehiclesByName, encodedValueStrings, withUrbanDensity, profilesByName.values());
+        encodingManager = buildEncodingManager(vehiclesByName, encodedValueStrings, withUrbanDensity,
+                withMaxSpeedEstimation, profilesByName.values());
         osmParsers = buildOSMParsers(vehiclesByName, encodedValueStrings, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
@@ -902,6 +919,11 @@ public class GraphHopper {
             UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, countryEnc, roadClassEnc,
                     roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
         }
+
+        if (maxSpeedCalculator != null) {
+            maxSpeedCalculator.fillMaxSpeed(getBaseGraph(), encodingManager);
+            maxSpeedCalculator.close();
+        }
     }
 
     protected void importOSM() {
@@ -950,6 +972,8 @@ public class GraphHopper {
         baseGraph.getDirectory().create();
         baseGraph.create(100);
         properties.create(100);
+        if (maxSpeedCalculator != null)
+            maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
     }
 
     protected void writeEncodingManagerToProperties() {

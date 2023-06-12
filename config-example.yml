@@ -136,6 +136,14 @@ graphhopper:
   # graph.elevation.way_point_max_distance: 10
 
 
+  #### Country-dependent defaults for max speeds ####
+
+  # This features sets a maximum speed in 'max_speed' encoded value if no maxspeed tag was found. It is country-dependent
+  # and based on several rules. See https://github.com/westnordost/osm-legal-default-speeds
+  # To use it uncomment the following, then enable urban density below and add 'country' to graph.encoded_values
+  # max_speed_calculator.enabled: true
+
+
   #### Urban density (built-up areas) ####
 
   # This feature allows classifying roads into 'rural', 'residential' and 'city' areas (encoded value 'urban_density')
