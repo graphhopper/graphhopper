@@ -89,13 +89,16 @@ class TripFromLabel {
         if (legs.size() > 1 && legs.get(0) instanceof Trip.ConnectingLeg) {
             final Trip.ConnectingLeg accessLeg = (Trip.ConnectingLeg) legs.get(0);
             legs.set(0, new Trip.ConnectingLeg(accessLeg.type, accessLeg.departureLocation, new Date(legs.get(1).getDepartureTime().getTime() - (accessLeg.getArrivalTime().getTime() - accessLeg.getDepartureTime().getTime())),
-                    accessLeg.geometry, accessLeg.distance, accessLeg.weight, accessLeg.instructions, accessLeg.details, legs.get(1).getDepartureTime()));
+                    accessLeg.geometry, accessLeg.distance, accessLeg.weight, accessLeg.instructions, accessLeg.details,
+                    legs.get(1).getDepartureTime(), accessLeg.ascend, accessLeg.descend));
         }
         if (legs.size() > 1 && legs.get(legs.size() - 1) instanceof Trip.ConnectingLeg) {
             final Trip.ConnectingLeg egressLeg = (Trip.ConnectingLeg) legs.get(legs.size() - 1);
             legs.set(legs.size() - 1, new Trip.ConnectingLeg(egressLeg.type, egressLeg.departureLocation, legs.get(legs.size() - 2).getArrivalTime(),
                     egressLeg.geometry, egressLeg.distance, egressLeg.weight, egressLeg.instructions,
-                    egressLeg.details, new Date(legs.get(legs.size() - 2).getArrivalTime().getTime() + (egressLeg.getArrivalTime().getTime() - egressLeg.getDepartureTime().getTime()))));
+                    egressLeg.details, new Date(legs.get(legs.size() - 2).getArrivalTime().getTime()
+                            + (egressLeg.getArrivalTime().getTime() - egressLeg.getDepartureTime().getTime())),
+                    egressLeg.ascend, egressLeg.descend));
         }
 
         ResponsePath path = new ResponsePath();
@@ -106,6 +109,7 @@ class TripFromLabel {
         final InstructionList instructions = new InstructionList(tr);
         final PointList pointsList = new PointList(PointList.CAP_DEFAULT, includeElevation);
         Map<String, List<PathDetail>> pathDetails = new HashMap<>();
+        double totalAscend = 0, totalDescend = 0;
         for (int i = 0; i < path.getLegs().size(); ++i) {
             Trip.Leg leg = path.getLegs().get(i);
             if (leg instanceof Trip.ConnectingLeg) {
@@ -118,6 +122,8 @@ class TripFromLabel {
                 instructions.addAll(theseInstructions);
                 Map<String, List<PathDetail>> shiftedLegPathDetails = shift(((Trip.ConnectingLeg) leg).details, previousPointsCount);
                 shiftedLegPathDetails.forEach((k, v) -> pathDetails.merge(k, shiftedLegPathDetails.get(k), (a,b) -> Lists.newArrayList(Iterables.concat(a, b))));
+                totalAscend += connectingLeg.ascend;
+                totalDescend += connectingLeg.descend;
             } else if (leg instanceof Trip.PtLeg) {
                 final Trip.PtLeg ptLeg = ((Trip.PtLeg) leg);
                 final PointList pl;
@@ -150,6 +156,12 @@ class TripFromLabel {
         }
         path.setInstructions(instructions);
         path.setPoints(pointsList);
+
+        if (!Double.isNaN(totalAscend))
+            path.setAscend(totalAscend);
+        if (!Double.isNaN(totalDescend))
+            path.setDescend(totalDescend);
+
         path.addPathDetails(pathDetails);
         path.setDistance(path.getLegs().stream().mapToDouble(Trip.Leg::getDistance).sum());
         path.setTime((legs.get(legs.size() - 1).getArrivalTime().toInstant().toEpochMilli() - legs.get(0).getDepartureTime().toInstant().toEpochMilli()));
@@ -432,16 +444,21 @@ class TripFromLabel {
 
             final Instant departureTime = Instant.ofEpochMilli(path.get(0).label.currentTime);
             final Instant arrivalTime = Instant.ofEpochMilli(path.get(path.size() - 1).label.currentTime);
+            final Geometry geometry = lineStringFromInstructions(instructions, includeElevation);
+            final double ascend = calcAscend(geometry);
+            final double descend = calcDescend(geometry);
             return Collections.singletonList(new Trip.ConnectingLeg(
                     connectingVehicle,
                     connectingVehicle,
                     Date.from(departureTime),
-                    lineStringFromInstructions(instructions, includeElevation),
+                    geometry,
                     edges(path).mapToDouble(edgeLabel -> edgeLabel.getDistance()).sum(),
                     router.weight(path.get(path.size()-1).label) - router.weight(path.get(0).label),
                     instructions,
                     pathDetails,
-                    Date.from(arrivalTime)));
+                    Date.from(arrivalTime),
+                    ascend,
+                    descend));
         }
     }
 
@@ -462,4 +479,45 @@ class TripFromLabel {
         return pointsList.toLineString(includeElevation);
     }
 
+    private double calcAscend(final Geometry geometry) {
+        double ascendMeters = 0;
+
+        final List<Coordinate> coordinates = Arrays.asList(geometry.getCoordinates());
+
+        double lastZ = coordinates.get(0).z;
+        for (int i = 1; i < coordinates.size(); i++) {
+            double z = coordinates.get(i).z;
+            if (Double.isNaN(z))
+                continue;
+            double diff = Math.abs(z - lastZ);
+
+            if (z > lastZ)
+                ascendMeters += diff;
+
+            lastZ = z;
+        }
+
+        return ascendMeters;
+    }
+
+    private double calcDescend(final Geometry geometry) {
+        double descendMeters = 0;
+
+        final List<Coordinate> coordinates = Arrays.asList(geometry.getCoordinates());
+
+        double lastZ = coordinates.get(0).z;
+        for (int i = 1; i < coordinates.size(); i++) {
+            double z = coordinates.get(i).z;
+            if (Double.isNaN(z))
+                continue;
+            double diff = Math.abs(z - lastZ);
+
+            if (z < lastZ)
+                descendMeters += diff;
+
+            lastZ = z;
+        }
+
+        return descendMeters;
+    }
 }
