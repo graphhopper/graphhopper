@@ -164,7 +164,7 @@ public class RoundTripRouting {
             this.pathCalculator = pathCalculator;
             // we make the path calculator use our avoid edges weighting
             AvoidEdgesWeighting avoidPreviousPathsWeighting = new AvoidEdgesWeighting(pathCalculator.getWeighting())
-                    .setEdgePenaltyFactor(50);
+                    .setEdgePenaltyFactor(1000);
             avoidPreviousPathsWeighting.setAvoidedEdges(previousEdges);
             pathCalculator.setWeighting(avoidPreviousPathsWeighting);
         }
