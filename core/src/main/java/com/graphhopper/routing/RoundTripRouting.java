@@ -92,8 +92,7 @@ public class RoundTripRouting {
 
             snaps.add(startSnap);
         }else {
-            for (int i = 0; i < points.size(); i++) {
-                final GHPoint point = points.get(i);
+            for (final GHPoint point : points) {
                 Snap pointSnap = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
                 snaps.add(pointSnap);
             }
