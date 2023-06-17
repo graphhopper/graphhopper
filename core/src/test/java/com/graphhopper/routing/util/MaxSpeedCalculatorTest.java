@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.graphhopper.routing.ev.MaxSpeed.UNLIMITED_SIGN_SPEED;
 import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
 import static com.graphhopper.routing.ev.UrbanDensity.CITY;
 import static com.graphhopper.routing.ev.UrbanDensity.RURAL;
@@ -247,5 +248,34 @@ class MaxSpeedCalculatorTest {
 
         assertNull(res.getTags().get("maxspeed:forward"));
         assertEquals("100", res.getTags().get("maxspeed").toString());
+    }
+
+    @Test
+    public void testGBR() {
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("country", Country.GBR);
+        way.setTag("highway", "primary");
+        EdgeIteratorState edge = createEdge(way).set(urbanDensity, CITY);
+        calc.fillMaxSpeed(graph, em);
+        assertEquals(48, edge.get(maxSpeedEnc), 1);
+
+        edge = createEdge(way).set(urbanDensity, RURAL);
+        calc.fillMaxSpeed(graph, em);
+        assertEquals(98, edge.get(maxSpeedEnc), 1);
+
+        way.setTag("highway", "motorway");
+        edge = createEdge(way).set(urbanDensity, RURAL);
+        calc.fillMaxSpeed(graph, em);
+        assertEquals(114, edge.get(maxSpeedEnc), 1);
+    }
+
+    @Test
+    public void testUnsupportedCountry() {
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("country", Country.AIA);
+        way.setTag("highway", "primary");
+        EdgeIteratorState edge = createEdge(way).set(urbanDensity, CITY);
+        calc.fillMaxSpeed(graph, em);
+        assertEquals(UNSET_SPEED, edge.get(maxSpeedEnc), 1);
     }
 }

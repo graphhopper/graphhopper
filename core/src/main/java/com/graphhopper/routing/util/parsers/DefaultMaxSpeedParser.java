@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.graphhopper.routing.ev.MaxSpeed.UNLIMITED_SIGN_SPEED;
 import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
 import static com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor.stringToKmh;
 
@@ -44,6 +45,9 @@ public class DefaultMaxSpeedParser implements TagParser {
             if (country != Country.MISSING) {
                 String code = state == State.MISSING ? country.getAlpha2() : state.getStateCode();
                 Map<String, String> tags = filter(way.getTags());
+                // Workaround for GBR. Default is used for "urban" but ignored for "rural".
+                if (country == Country.GBR) tags.put("lit", "yes");
+
                 // with computeIfAbsent we calculate the expensive hashCode of the key only once
                 Result result = cache.computeIfAbsent(tags, (key) -> {
                     Result internRes = new Result();

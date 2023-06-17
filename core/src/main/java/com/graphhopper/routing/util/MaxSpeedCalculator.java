@@ -77,7 +77,7 @@ public class MaxSpeedCalculator {
                         double tmp = OSMValueExtractor.stringToKmh(tags.getValue());
                         if (Double.isNaN(tmp))
                             throw new IllegalStateException("illegal maxspeed " + tags.getValue());
-                        newTags.put("maxspeed", "" + Math.round(tmp));
+                        newTags.put(tags.getKey(), "" + Math.round(tmp));
                     }
                 }
                 roadType.setTags(newTags);

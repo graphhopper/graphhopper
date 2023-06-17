@@ -17,8 +17,10 @@
  */
 package com.graphhopper.routing.ev;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.routing.ev.State.*;
 
@@ -95,7 +97,7 @@ public enum Country {
     FRO("Faroe Islands", "FRO", "FO"),
     FSM("Federated States of Micronesia", "FSM", "FM", FM_KSA, FM_PNI, FM_TRK, FM_YAP),
     GAB("Gabon", "GAB", "GA"),
-    GBR("United Kingdom", "GBR", "GB", GB_SCT),
+    GBR("United Kingdom", "GBR", "GB"),
     GEO("Georgia", "GEO", "GE"),
     GGY("Guernsey", "GGY", "GG"),
     GHA("Ghana", "GHA", "GH"),
