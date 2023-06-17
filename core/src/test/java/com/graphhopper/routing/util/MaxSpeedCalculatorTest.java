@@ -95,7 +95,7 @@ class MaxSpeedCalculatorTest {
         way.setTag("highway", "motorway");
         edge = createEdge(way).set(urbanDensity, CITY);
         calc.fillMaxSpeed(graph, em);
-        assertEquals(UNSET_SPEED, edge.get(maxSpeedEnc), 1);
+        assertEquals(UNLIMITED_SIGN_SPEED, edge.get(maxSpeedEnc), 1);
 
         way = new ReaderWay(0L);
         way.setTag("country", Country.DEU);
@@ -129,7 +129,7 @@ class MaxSpeedCalculatorTest {
         way.setTag("highway", "motorway");
         edge = createEdge(way).set(urbanDensity, RURAL);
         calc.fillMaxSpeed(graph, em);
-        assertEquals(UNSET_SPEED, edge.get(maxSpeedEnc), 1);
+        assertEquals(UNLIMITED_SIGN_SPEED, edge.get(maxSpeedEnc), 1);
 
         way = new ReaderWay(0L);
         way.setTag("country", Country.DEU);

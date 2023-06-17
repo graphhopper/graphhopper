@@ -73,7 +73,8 @@ public class MaxSpeedCalculator {
                 for (Map.Entry<String, String> tags : roadType.getTags().entrySet()) {
                     // note, we could remove conditional tags here to reduce load a bit at import
 
-                    if ("maxspeed".equals(tags.getKey())) {
+                    if ("maxspeed".equals(tags.getKey())
+                            || "maxspeed:advisory".equals(tags.getKey())) {
                         double tmp = OSMValueExtractor.stringToKmh(tags.getValue());
                         if (Double.isNaN(tmp))
                             throw new IllegalStateException("illegal maxspeed " + tags.getValue());

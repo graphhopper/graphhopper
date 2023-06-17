@@ -53,13 +53,19 @@ public class DefaultMaxSpeedParser implements TagParser {
                     Result internRes = new Result();
                     LegalDefaultSpeeds.Result tmpResult = speeds.getSpeedLimits(code,
                             tags, Collections.emptyList(), (name, eval) -> eval.invoke() || "rural".equals(name));
-                    if (tmpResult != null)
+                    if (tmpResult != null) {
                         internRes.rural = parseInt(tmpResult.getTags().get("maxspeed"));
+                        if (internRes.rural == null && "130".equals(tmpResult.getTags().get("maxspeed:advisory")))
+                            internRes.rural = (int) UNLIMITED_SIGN_SPEED;
+                    }
 
                     tmpResult = speeds.getSpeedLimits(code,
                             tags, Collections.emptyList(), (name, eval) -> eval.invoke() || "urban".equals(name));
-                    if (tmpResult != null)
+                    if (tmpResult != null) {
                         internRes.urban = parseInt(tmpResult.getTags().get("maxspeed"));
+                        if (internRes.urban == null && "130".equals(tmpResult.getTags().get("maxspeed:advisory")))
+                            internRes.urban = (int) UNLIMITED_SIGN_SPEED;
+                    }
                     return internRes;
                 });
 
