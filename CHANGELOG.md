@@ -10,7 +10,7 @@
 - add support for further surfaces like pebblestones or concrete:lanes, see #2751
 - reduced memory usage for urban density calculation, see #2828
 - urban density is now based on road junctions, so the according parameters need adjustment in case
-  the config file does not use the defaults, see #3000
+  the config file does not use the defaults, see #2842
 
 ### 7.0 [14 Mar 2023]
 
