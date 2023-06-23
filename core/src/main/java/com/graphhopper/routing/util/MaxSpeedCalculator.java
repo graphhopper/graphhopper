@@ -139,26 +139,20 @@ public class MaxSpeedCalculator {
             double fwdMaxSpeedPureOSM = iter.get(maxSpeedEnc);
             double bwdMaxSpeedPureOSM = iter.getReverse(maxSpeedEnc);
 
-            // skip speeds-library if max_speed is known
-            if (fwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED) continue;
-            // speeds-library does not work for the case that forward/backward are different
-            if (fwdMaxSpeedPureOSM != bwdMaxSpeedPureOSM) continue;
+            // skip speeds-library if max_speed is known for both directions
+            if (fwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED
+                    && bwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED) continue;
 
             // In DefaultMaxSpeedParser and in OSMMaxSpeedParser we don't have the rural/urban info,
-            // but now we have and can fill the country-dependent max_speed value.
-            UrbanDensity urbanDensity = iter.get(urbanDensityEnc);
-            if (urbanDensity == UrbanDensity.RURAL) {
-                double maxSpeedRuralDefault = ruralMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
-                if (maxSpeedRuralDefault != MaxSpeed.UNSET_SPEED) {
-                    iter.set(maxSpeedEnc, maxSpeedRuralDefault, maxSpeedRuralDefault);
-                    iter.set(maxSpeedEstEnc, true);
-                }
-            } else {
-                double maxSpeedUrbanDefault = urbanMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
-                if (maxSpeedUrbanDefault != MaxSpeed.UNSET_SPEED) {
-                    iter.set(maxSpeedEnc, maxSpeedUrbanDefault, maxSpeedUrbanDefault);
-                    iter.set(maxSpeedEstEnc, true);
-                }
+            // but now we have and can fill the country-dependent max_speed value where missing.
+            double maxSpeed = iter.get(urbanDensityEnc) == UrbanDensity.RURAL
+                    ? ruralMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage)
+                    : urbanMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
+            if (maxSpeed != MaxSpeed.UNSET_SPEED) {
+                iter.set(maxSpeedEnc,
+                        fwdMaxSpeedPureOSM == MaxSpeed.UNSET_SPEED ? maxSpeed : fwdMaxSpeedPureOSM,
+                        bwdMaxSpeedPureOSM == MaxSpeed.UNSET_SPEED ? maxSpeed : bwdMaxSpeedPureOSM);
+                iter.set(maxSpeedEstEnc, true);
             }
         }
 

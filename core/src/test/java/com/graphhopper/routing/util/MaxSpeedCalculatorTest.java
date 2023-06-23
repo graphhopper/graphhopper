@@ -230,6 +230,18 @@ class MaxSpeedCalculatorTest {
     }
 
     @Test
+    public void testFwdOnly() {
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("country", Country.DEU);
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed:forward", "50");
+        EdgeIteratorState edge = createEdge(way);
+        calc.fillMaxSpeed(graph, em);
+        assertEquals(50, edge.get(maxSpeedEnc), 1);
+        assertEquals(100, edge.getReverse(maxSpeedEnc), 1);
+    }
+
+    @Test
     public void testRawAccess_RuralIsDefault_IfNoUrbanDensityWasSet() {
         Map<String, String> tags = new HashMap<>();
         tags.put("highway", "primary");
