@@ -446,6 +446,12 @@ public class OSMReader {
                     list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:backward")), false, true));
             }
         }
+        if (way.getTags().size() > 1) // at least highway tag
+            for (Map.Entry<String, Object> entry : way.getTags().entrySet()) {
+                if (entry.getKey().endsWith(":conditional"))
+                    list.add(new KVStorage.KeyValue(entry.getKey(), entry.getValue()));
+            }
+
         way.setTag("key_values", list);
 
         if (!isCalculateWayDistance(way))
