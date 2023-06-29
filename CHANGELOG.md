@@ -1,5 +1,6 @@
 ### 8.0 [not yet released]
 
+- conditional access tags are no longer considered from vehicle tag parsers and instead a new conditional_access encoded value is created and could be used e.g. to restrict temporary constructions in a custom model but still allow to pass seasonal restrictions like in #2477
 - Country rules no longer contain maxspeed handling, enable a much better alternative via `max_speed_calculator.enabled: true`. On the client side use `max_speed_estimated` to determine if max_speed is from OSM or an estimation. See #2810
 - bike routing better avoids dangerous roads, see #2796 and #2802
 - routing requests can be configured to timeout after some time, see #2795

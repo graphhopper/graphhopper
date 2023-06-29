@@ -38,7 +38,7 @@ import static com.graphhopper.util.Helper.createFormatter;
  *
  * @author Robin Boldt
  */
-class DateRangeParser implements ConditionalValueParser {
+public class DateRangeParser implements ConditionalValueParser {
     private static final DateFormat YEAR_MONTH_DAY_DF = create3CharMonthFormatter("yyyy MMM dd");
     private static final DateFormat MONTH_DAY_DF = create3CharMonthFormatter("MMM dd");
     private static final DateFormat MONTH_DAY2_DF = createFormatter("dd.MM");
@@ -137,7 +137,7 @@ class DateRangeParser implements ConditionalValueParser {
             return ConditionState.FALSE;
     }
 
-    static DateRangeParser createInstance(String day) {
+    public static DateRangeParser createInstance(String day) {
         Calendar calendar = createCalendar();
         try {
             if (!day.isEmpty())
