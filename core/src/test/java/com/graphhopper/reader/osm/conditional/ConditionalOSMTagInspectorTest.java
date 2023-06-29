@@ -61,6 +61,7 @@ public class ConditionalOSMTagInspectorTest extends CalendarBasedTest {
         Calendar cal = getCalendar(2014, Calendar.MARCH, 10);
         ConditionalTagInspector acceptor = new ConditionalOSMTagInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
         way.setTag("vehicle:conditional", "no @ (Aug 10-Aug 14)");
         assertFalse(acceptor.isPermittedWayConditionallyRestricted(way));
     }
@@ -70,6 +71,7 @@ public class ConditionalOSMTagInspectorTest extends CalendarBasedTest {
         Calendar cal = getCalendar(2014, Calendar.MARCH, 10);
         ConditionalTagInspector acceptor = new ConditionalOSMTagInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
         way.setTag("vehicle:conditional", "no @ (2013 Mar 1-2013 Mar 31)");
         assertFalse(acceptor.isPermittedWayConditionallyRestricted(way));
     }
@@ -79,6 +81,7 @@ public class ConditionalOSMTagInspectorTest extends CalendarBasedTest {
         Calendar cal = getCalendar(2014, Calendar.MARCH, 10);
         ConditionalTagInspector acceptor = new ConditionalOSMTagInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
         way.setTag("vehicle:conditional", "no @ (Mar 10-Aug 14)");
         assertTrue(acceptor.isPermittedWayConditionallyRestricted(way));
     }
@@ -88,6 +91,7 @@ public class ConditionalOSMTagInspectorTest extends CalendarBasedTest {
         Calendar cal = getCalendar(2014, Calendar.MARCH, 10);
         ConditionalTagInspector acceptor = new ConditionalOSMTagInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
         way.setTag("vehicle:conditional", "yes @ (Mar 10-Aug 14)");
         assertTrue(acceptor.isRestrictedWayConditionallyPermitted(way));
     }
@@ -97,6 +101,7 @@ public class ConditionalOSMTagInspectorTest extends CalendarBasedTest {
         Calendar cal = getCalendar(2014, Calendar.MARCH, 10);
         ConditionalTagInspector acceptor = new ConditionalOSMTagInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
         way.setTag("vehicle:conditional", "no @ (Mar 10-Aug 14)");
         assertTrue(acceptor.isPermittedWayConditionallyRestricted(way));
     }
@@ -106,6 +111,7 @@ public class ConditionalOSMTagInspectorTest extends CalendarBasedTest {
         Calendar cal = getCalendar(2015, Calendar.DECEMBER, 27);
         ConditionalTagInspector acceptor = new ConditionalOSMTagInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
         way.setTag("vehicle:conditional", "no @ (Su)");
         assertTrue(acceptor.isPermittedWayConditionallyRestricted(way));
     }
@@ -115,6 +121,7 @@ public class ConditionalOSMTagInspectorTest extends CalendarBasedTest {
         Calendar cal = getCalendar(2015, Calendar.DECEMBER, 27);
         ConditionalTagInspector acceptor = new ConditionalOSMTagInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "primary");
         way.setTag("vehicle:conditional", "yes @ (Su)");
         assertTrue(acceptor.isRestrictedWayConditionallyPermitted(way));
     }
