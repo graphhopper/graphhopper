@@ -19,13 +19,19 @@ package com.graphhopper.routing.ev;
 
 import com.graphhopper.util.Helper;
 
-public enum ConditionalAccess {
-    MISSING, YES, NO;
+/**
+ * This encoded value detects only the access tags valid for one day or more and uses the import
+ * time as a reference. E.g. access:conditional=no @ (Su 20:00 - 06:00) will be considered as NO_MATCH
+ * and e.g. access:conditional=no @ ( 2023 Mar 23 ) will return NO only on 23. March 2023 and otherwise
+ * NO_MATCH.
+ */
+public enum CoarseConditionalAccess {
+    NO_MATCH, YES, NO;
 
-    public static final String KEY = "conditional_access";
+    public static final String KEY = "coarse_conditional_access";
 
-    public static EnumEncodedValue<ConditionalAccess> create() {
-        return new EnumEncodedValue<>(KEY, ConditionalAccess.class);
+    public static EnumEncodedValue<CoarseConditionalAccess> create() {
+        return new EnumEncodedValue<>(KEY, CoarseConditionalAccess.class);
     }
 
     @Override

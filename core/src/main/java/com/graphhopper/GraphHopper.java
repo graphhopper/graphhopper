@@ -636,16 +636,13 @@ public class GraphHopper {
         OSMParsers osmParsers = new OSMParsers();
         ignoredHighways.forEach(osmParsers::addIgnoredHighway);
         for (String s : encodedValueStrings) {
-            TagParser tagParser = tagParserFactory.create(encodingManager, s, new PMap());
+            TagParser tagParser = tagParserFactory.create(encodingManager, s, new PMap().putObject("date_range_parser_day", dateRangeParserString));
             if (tagParser != null)
                 osmParsers.addWayTagParser(tagParser);
         }
 
         // this needs to be in sync with the default EVs added in EncodingManager.Builder#build. ideally I would like to remove
         // all these defaults and just use the config as the single source of truth
-        if (!Helper.isEmpty(dateRangeParserString))
-            osmParsers.addWayTagParser(new OSMConditionalAccessParser(OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR),
-                    encodingManager.getEnumEncodedValue(ConditionalAccess.KEY, ConditionalAccess.class), dateRangeParserString));
         if (!encodedValueStrings.contains(Roundabout.KEY))
             osmParsers.addWayTagParser(new OSMRoundaboutParser(encodingManager.getBooleanEncodedValue(Roundabout.KEY)));
         if (!encodedValueStrings.contains(RoadClass.KEY))
