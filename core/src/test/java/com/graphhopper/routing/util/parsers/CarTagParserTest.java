@@ -19,7 +19,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
@@ -61,9 +60,7 @@ public class CarTagParserTest {
     }
 
     CarAccessParser createParser(EncodedValueLookup lookup, PMap properties) {
-        CarAccessParser carTagParser = new CarAccessParser(lookup, properties);
-        carTagParser.init(new DateRangeParser());
-        return carTagParser;
+        return new CarAccessParser(lookup, properties);
     }
 
     @Test
@@ -142,25 +139,6 @@ public class CarTagParserTest {
         way.setTag("motor_vehicle", "emergency");
         assertTrue(parser.getAccess(way).canSkip());
 
-        DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
-
-        way.clearTags();
-        way.setTag("highway", "road");
-        way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(parser.getAccess(way).canSkip());
-
-        way.clearTags();
-        way.setTag("highway", "road");
-        way.setTag("access", "no");
-        way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(parser.getAccess(way).isWay());
-
-        way.clearTags();
-        way.setTag("highway", "road");
-        way.setTag("access", "yes");
-        way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(parser.getAccess(way).canSkip());
-
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("service", "emergency_access");
@@ -190,7 +168,6 @@ public class CarTagParserTest {
         assertTrue(parser.isBarrier(node));
 
         CarAccessParser tmpParser = new CarAccessParser(em, new PMap("block_fords=false"));
-        tmpParser.init(new DateRangeParser());
         assertTrue(tmpParser.getAccess(way).isWay());
         assertFalse(tmpParser.isBarrier(node));
     }
@@ -673,7 +650,6 @@ public class CarTagParserTest {
         way.setTag("sac_scale", "hiking");
 
         BikeAccessParser bikeParser = new BikeAccessParser(em, new PMap());
-        bikeParser.init(new DateRangeParser());
         assertEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
         assertNotEquals(WayAccess.CAN_SKIP, bikeParser.getAccess(way));
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());

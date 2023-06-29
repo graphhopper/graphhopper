@@ -56,7 +56,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
                 access = WayAccess.WAY;
 
             if (!access.canSkip()) {
-                if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
+                if (way.hasTag(restrictions, restrictedValues))
                     return WayAccess.CAN_SKIP;
                 return access;
             }
@@ -77,15 +77,13 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (way.hasTag("bicycle", "dismount") || way.hasTag("highway", "cycleway"))
             return WayAccess.WAY;
 
-        boolean permittedWayConditionallyRestricted = getConditionalTagInspector().isPermittedWayConditionallyRestricted(way);
-        boolean restrictedWayConditionallyPermitted = getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (!firstValue.isEmpty()) {
             String[] restrict = firstValue.split(";");
             for (String value : restrict) {
-                if (restrictedValues.contains(value) && !restrictedWayConditionallyPermitted)
+                if (restrictedValues.contains(value))
                     return WayAccess.CAN_SKIP;
-                if (intendedValues.contains(value) && !permittedWayConditionallyRestricted)
+                if (intendedValues.contains(value))
                     return WayAccess.WAY;
             }
         }
@@ -98,9 +96,6 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
             return WayAccess.CAN_SKIP;
 
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
-            return WayAccess.CAN_SKIP;
-
-        if (permittedWayConditionallyRestricted)
             return WayAccess.CAN_SKIP;
 
         return WayAccess.WAY;

@@ -60,11 +60,6 @@ public class ConditionalOSMTagInspector implements ConditionalTagInspector {
         }
     }
 
-    public void addValueParser(ConditionalValueParser vp) {
-        permitParser.addConditionalValueParser(vp);
-        restrictiveParser.addConditionalValueParser(vp);
-    }
-
     @Override
     public boolean isRestrictedWayConditionallyPermitted(ReaderWay way) {
         return applies(way, true);

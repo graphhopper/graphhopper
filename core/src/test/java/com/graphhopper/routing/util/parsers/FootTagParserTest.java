@@ -19,7 +19,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -56,7 +55,6 @@ public class FootTagParserTest {
     private final FootPriorityParser prioParser = new FootPriorityParser(encodingManager, new PMap());
 
     public FootTagParserTest() {
-        accessParser.init(new DateRangeParser());
     }
 
     @Test
@@ -222,22 +220,6 @@ public class FootTagParserTest {
         way.setTag("foot", "designated");
         way.setTag("access", "private");
         assertTrue(accessParser.getAccess(way).canSkip());
-
-        DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
-
-        way.clearTags();
-        way.setTag("highway", "footway");
-        way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(accessParser.getAccess(way).canSkip());
-
-        way.setTag("foot", "yes"); // the conditional tag even overrules "yes"
-        assertTrue(accessParser.getAccess(way).canSkip());
-
-        way.clearTags();
-        way.setTag("highway", "footway");
-        way.setTag("access", "no");
-        way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(accessParser.getAccess(way).isWay());
     }
 
     @Test

@@ -2,9 +2,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.ConditionalTagInspector;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.TransportationMode;
@@ -28,7 +26,6 @@ public abstract class AbstractAccessParser implements TagParser {
     protected final Set<String> barriers = new HashSet<>(5);
     protected final BooleanEncodedValue accessEnc;
     private boolean blockFords = true;
-    private ConditionalTagInspector conditionalTagInspector;
 
     protected AbstractAccessParser(BooleanEncodedValue accessEnc, TransportationMode transportationMode) {
         this.accessEnc = accessEnc;
@@ -41,16 +38,6 @@ public abstract class AbstractAccessParser implements TagParser {
         restrictedValues.add("permit");
 
         restrictions.addAll(OSMRoadAccessParser.toOSMRestrictions(transportationMode));
-    }
-
-    public AbstractAccessParser init(DateRangeParser dateRangeParser) {
-        setConditionalTagInspector(new ConditionalOSMTagInspector(Collections.singletonList(dateRangeParser),
-                restrictions, restrictedValues, intendedValues, false));
-        return this;
-    }
-
-    protected void setConditionalTagInspector(ConditionalTagInspector inspector) {
-        conditionalTagInspector = inspector;
     }
 
     public boolean isBlockFords() {
@@ -70,10 +57,6 @@ public abstract class AbstractAccessParser implements TagParser {
             intendedValues.add("private");
             intendedValues.add("permit");
         }
-    }
-
-    public ConditionalTagInspector getConditionalTagInspector() {
-        return conditionalTagInspector;
     }
 
     protected void handleBarrierEdge(int edgeId, EdgeIntAccess edgeIntAccess, Map<String, Object> nodeTags) {

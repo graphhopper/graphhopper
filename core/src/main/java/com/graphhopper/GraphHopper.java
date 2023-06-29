@@ -25,7 +25,6 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.RestrictionTagParser;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -674,11 +673,10 @@ public class GraphHopper {
         if (encodingManager.hasEncodedValue(Curvature.KEY))
             osmParsers.addWayTagParser(new CurvatureCalculator(encodingManager.getDecimalEncodedValue(Curvature.KEY)));
 
-        DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         Set<String> added = new HashSet<>();
         vehiclesByName.forEach((name, vehicleStr) -> {
             VehicleTagParsers vehicleTagParsers = vehicleTagParserFactory.createParsers(encodingManager, name,
-                    new PMap(vehicleStr).putObject("date_range_parser", dateRangeParser));
+                    new PMap(vehicleStr));
             if (vehicleTagParsers == null)
                 return;
             vehicleTagParsers.getTagParsers().forEach(tagParser -> {

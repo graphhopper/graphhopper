@@ -38,7 +38,7 @@ import static com.graphhopper.util.Helper.createFormatter;
  *
  * @author Robin Boldt
  */
-public class DateRangeParser implements ConditionalValueParser {
+class DateRangeParser implements ConditionalValueParser {
     private static final DateFormat YEAR_MONTH_DAY_DF = create3CharMonthFormatter("yyyy MMM dd");
     private static final DateFormat MONTH_DAY_DF = create3CharMonthFormatter("MMM dd");
     private static final DateFormat MONTH_DAY2_DF = createFormatter("dd.MM");
@@ -48,15 +48,15 @@ public class DateRangeParser implements ConditionalValueParser {
 
     private Calendar date;
 
-    public DateRangeParser() {
+    DateRangeParser() {
         this(createCalendar());
     }
 
-    public DateRangeParser(Calendar date) {
+    DateRangeParser(Calendar date) {
         this.date = date;
     }
 
-    public static Calendar createCalendar() {
+    static Calendar createCalendar() {
         // Use locale US as exception here (instead of UK) to match week order "Su-Sa" used in Calendar for day_of_week.
         // Inconsistent but we should not use US for other date handling stuff like strange default formatting, related to #647.
         return Calendar.getInstance(Helper.UTC, Locale.US);
@@ -104,7 +104,7 @@ public class DateRangeParser implements ConditionalValueParser {
         return parsedCalendar;
     }
 
-    public DateRange getRange(String dateRangeString) throws ParseException {
+    DateRange getRange(String dateRangeString) throws ParseException {
         if (dateRangeString == null || dateRangeString.isEmpty())
             throw new IllegalArgumentException("Passing empty Strings is not allowed");
 
@@ -137,7 +137,7 @@ public class DateRangeParser implements ConditionalValueParser {
             return ConditionState.FALSE;
     }
 
-    public static DateRangeParser createInstance(String day) {
+    static DateRangeParser createInstance(String day) {
         Calendar calendar = createCalendar();
         try {
             if (!day.isEmpty())

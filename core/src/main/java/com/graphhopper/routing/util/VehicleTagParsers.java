@@ -18,7 +18,6 @@
 
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.util.PMap;
@@ -41,7 +40,7 @@ public class VehicleTagParsers {
 
     public static VehicleTagParsers car(EncodedValueLookup lookup, PMap properties) {
         return new VehicleTagParsers(
-                new CarAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
+                new CarAccessParser(lookup, properties),
                 new CarAverageSpeedParser(lookup, properties),
                 null
         );
@@ -49,7 +48,7 @@ public class VehicleTagParsers {
 
     public static VehicleTagParsers bike(EncodedValueLookup lookup, PMap properties) {
         return new VehicleTagParsers(
-                new BikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
+                new BikeAccessParser(lookup, properties),
                 new BikeAverageSpeedParser(lookup, properties),
                 new BikePriorityParser(lookup, properties)
         );
@@ -57,7 +56,7 @@ public class VehicleTagParsers {
 
     public static VehicleTagParsers racingbike(EncodedValueLookup lookup, PMap properties) {
         return new VehicleTagParsers(
-                new RacingBikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
+                new RacingBikeAccessParser(lookup, properties),
                 new RacingBikeAverageSpeedParser(lookup, properties),
                 new RacingBikePriorityParser(lookup, properties)
         );
@@ -65,7 +64,7 @@ public class VehicleTagParsers {
 
     public static VehicleTagParsers mtb(EncodedValueLookup lookup, PMap properties) {
         return new VehicleTagParsers(
-                new MountainBikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
+                new MountainBikeAccessParser(lookup, properties),
                 new MountainBikeAverageSpeedParser(lookup, properties),
                 new MountainBikePriorityParser(lookup, properties)
         );
@@ -73,7 +72,7 @@ public class VehicleTagParsers {
 
     public static VehicleTagParsers foot(EncodedValueLookup lookup, PMap properties) {
         return new VehicleTagParsers(
-                new FootAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
+                new FootAccessParser(lookup, properties),
                 new FootAverageSpeedParser(lookup, properties),
                 new FootPriorityParser(lookup, properties)
         );
@@ -81,7 +80,7 @@ public class VehicleTagParsers {
 
     public static VehicleTagParsers wheelchair(EncodedValueLookup lookup, PMap properties) {
         return new VehicleTagParsers(
-                new WheelchairAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
+                new WheelchairAccessParser(lookup, properties),
                 new WheelchairAverageSpeedParser(lookup, properties),
                 new WheelchairPriorityParser(lookup, properties)
         );

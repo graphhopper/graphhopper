@@ -1,7 +1,6 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
@@ -23,7 +22,6 @@ public class OSMGetOffBikeParserTest {
     public OSMGetOffBikeParserTest() {
         EncodingManager em = new EncodingManager.Builder().add(offBikeEnc).add(VehicleEncodedValues.bike(new PMap()).getAccessEnc()).build();
         accessParser = new BikeAccessParser(em, new PMap());
-        accessParser.init(new DateRangeParser());
         getOffParser = new OSMGetOffBikeParser(offBikeEnc, accessParser.getAccessEnc());
     }
 
