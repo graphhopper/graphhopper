@@ -12,9 +12,8 @@ import java.util.*;
 
 public class OSMConditionalAccessParser implements TagParser {
 
-    private final static Set<String> restrictedValues = new HashSet<>(Arrays.asList("no", "restricted",
-            "military", "emergency", "private", "permit"));
-    static final Set<String> INTENDED = new HashSet<>(Arrays.asList("yes", "designated", "official", "permissive"));
+    private static final Set<String> RESTRICTED = new HashSet<>(Arrays.asList("no", "restricted", "private", "permit"));
+    private static final Set<String> INTENDED = new HashSet<>(Arrays.asList("yes", "designated", "permissive"));
 
     private final EnumEncodedValue<ConditionalAccess> restrictedEnc;
     private final ConditionalOSMTagInspector conditionalOSMTagInspector;
@@ -22,7 +21,7 @@ public class OSMConditionalAccessParser implements TagParser {
     public OSMConditionalAccessParser(List<String> restrictions, EnumEncodedValue<ConditionalAccess> restrictedEnc, String dateRangeParserString) {
         this.restrictedEnc = restrictedEnc;
         conditionalOSMTagInspector = new ConditionalOSMTagInspector(Collections.singletonList(DateRangeParser.createInstance(dateRangeParserString)),
-                restrictions, restrictedValues, INTENDED, false);
+                restrictions, RESTRICTED, INTENDED, false);
     }
 
     @Override

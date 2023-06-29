@@ -71,6 +71,7 @@ public class ConditionalOSMTagInspector implements ConditionalTagInspector {
     }
 
     protected boolean applies(ReaderWay way, boolean checkPermissiveValues) {
+        if (way.getTags().size() < 2) return false; // minor speed up when only highway tag
         for (int index = 0; index < tagsToCheck.size(); index++) {
             String tagToCheck = tagsToCheck.get(index);
             String val = way.getTag(tagToCheck);
