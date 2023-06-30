@@ -2,7 +2,6 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.ConditionalTagInspector;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.TransportationMode;

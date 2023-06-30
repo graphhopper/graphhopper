@@ -95,8 +95,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return Curvature.create();
         } else if (Crossing.KEY.equals(name)) {
             return new EnumEncodedValue<>(Crossing.KEY, Crossing.class);
-        } else if (CoarseConditionalAccess.KEY.equals(name)) {
-            return new EnumEncodedValue<>(CoarseConditionalAccess.KEY, CoarseConditionalAccess.class);
+        } else if (ConstructionRestriction.KEY.equals(name)) {
+            return ConstructionRestriction.create();
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }
