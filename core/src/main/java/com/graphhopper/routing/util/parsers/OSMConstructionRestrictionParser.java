@@ -32,15 +32,10 @@ public class OSMConstructionRestrictionParser implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        List<Map<String, Object>> nodeTags = way.getTag("node_tags", null);
-        if (nodeTags != null)
-            for (Map<String, Object> tags : nodeTags) {
-                if (hasConstructionInTags(tags)) {
-                    constructionRestriction.setBool(false, edgeId, edgeIntAccess, true);
-                    return;
-                }
-            }
-        else if (hasConstructionInTags(way.getTags()))
+        // TODO for now the node tag overhead is not worth the effort due to very few data points
+        // List<Map<String, Object>> nodeTags = way.getTag("node_tags", null);
+
+        if (hasConstructionInTags(way.getTags()))
             constructionRestriction.setBool(false, edgeId, edgeIntAccess, true);
     }
 
