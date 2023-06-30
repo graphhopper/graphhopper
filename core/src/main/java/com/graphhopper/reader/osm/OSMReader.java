@@ -412,9 +412,8 @@ public class OSMReader {
      * refers to the duration of the entire way.
      */
     protected void preprocessWay(ReaderWay way, WaySegmentParser.CoordinateSupplier coordinateSupplier) {
-        // storing the road name does not yet depend on the flagEncoder so manage it directly
-        List<KVStorage.KeyValue> list = new ArrayList<>();
         if (config.isParseWayNames()) {
+            List<KVStorage.KeyValue> list = new ArrayList<>();
             // http://wiki.openstreetmap.org/wiki/Key:name
             String name = "";
             if (!config.getPreferredLanguage().isEmpty())
@@ -445,14 +444,14 @@ public class OSMReader {
                 if (way.hasTag("destination:backward"))
                     list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:backward")), false, true));
             }
-        }
-        if (way.getTags().size() > 1) // at least highway tag
-            for (Map.Entry<String, Object> entry : way.getTags().entrySet()) {
-                if (entry.getKey().endsWith(":conditional"))
-                    list.add(new KVStorage.KeyValue(entry.getKey(), entry.getValue()));
-            }
+            if (way.getTags().size() > 1) // at least highway tag
+                for (Map.Entry<String, Object> entry : way.getTags().entrySet()) {
+                    if (entry.getKey().endsWith(":conditional"))
+                        list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), entry.getValue()));
+                }
 
-        way.setTag("key_values", list);
+            way.setTag("key_values", list);
+        }
 
         if (!isCalculateWayDistance(way))
             return;

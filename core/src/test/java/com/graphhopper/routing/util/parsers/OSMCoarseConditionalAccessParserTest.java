@@ -19,8 +19,7 @@ class OSMCoarseConditionalAccessParserTest {
     private final EnumEncodedValue<CoarseConditionalAccess> restricted = CoarseConditionalAccess.create();
     private final EncodingManager em = new EncodingManager.Builder().add(restricted).build();
     private final String today = Helper.createFormatter("yyyy MMM dd").format(new Date().getTime());
-    private final OSMCoarseConditionalAccessParser parser = new OSMCoarseConditionalAccessParser(
-            OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR), restricted, "");
+    private final OSMCoarseConditionalAccessParser parser = new OSMCoarseConditionalAccessParser(restricted, "");
 
     @Test
     public void testBasics() {
