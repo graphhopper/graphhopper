@@ -13,17 +13,17 @@ import org.slf4j.LoggerFactory;
 import java.text.ParseException;
 import java.util.*;
 
-public class OSMConstructionRestrictionParser implements TagParser {
+public class OSMTemporaryRestrictionParser implements TagParser {
 
-    private static final Logger logger = LoggerFactory.getLogger(OSMConstructionRestrictionParser.class);
+    private static final Logger logger = LoggerFactory.getLogger(OSMTemporaryRestrictionParser.class);
     private static final Collection<String> CONDITIONALS = new HashSet<>(Arrays.asList("access:conditional",
             "vehicle:conditional", "motor_vehicle:conditional", "motorcar:conditional"));
-    private final BooleanEncodedValue constructionRestriction;
+    private final BooleanEncodedValue temporaryRestriction;
     private final DateRangeParser parser;
     private final boolean enabledLogs = false;
 
-    public OSMConstructionRestrictionParser(BooleanEncodedValue constructionRestriction, String dateRangeParserDate) {
-        this.constructionRestriction = constructionRestriction;
+    public OSMTemporaryRestrictionParser(BooleanEncodedValue temporaryRestriction, String dateRangeParserDate) {
+        this.temporaryRestriction = temporaryRestriction;
         if (dateRangeParserDate.isEmpty())
             dateRangeParserDate = Helper.createFormatter("yyyy-MM-dd").format(new Date().getTime());
 
@@ -36,7 +36,7 @@ public class OSMConstructionRestrictionParser implements TagParser {
         // List<Map<String, Object>> nodeTags = way.getTag("node_tags", null);
 
         if (hasConstructionInTags(way.getTags()))
-            constructionRestriction.setBool(false, edgeId, edgeIntAccess, true);
+            temporaryRestriction.setBool(false, edgeId, edgeIntAccess, true);
     }
 
     boolean hasConstructionInTags(Map<String, Object> tags) {

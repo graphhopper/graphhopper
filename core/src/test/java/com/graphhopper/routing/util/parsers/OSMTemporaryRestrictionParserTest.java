@@ -3,7 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.ConstructionRestriction;
+import com.graphhopper.routing.ev.TemporaryRestriction;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
@@ -14,12 +14,12 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class OSMConstructionRestrictionParserTest {
+class OSMTemporaryRestrictionParserTest {
 
-    private final BooleanEncodedValue restricted = ConstructionRestriction.create();
+    private final BooleanEncodedValue restricted = TemporaryRestriction.create();
     private final EncodingManager em = new EncodingManager.Builder().add(restricted).build();
     private final String today = Helper.createFormatter("yyyy MMM dd").format(new Date().getTime());
-    private final OSMConstructionRestrictionParser parser = new OSMConstructionRestrictionParser(restricted, "");
+    private final OSMTemporaryRestrictionParser parser = new OSMTemporaryRestrictionParser(restricted, "");
 
     @Test
     public void testBasics() {
@@ -50,7 +50,7 @@ class OSMConstructionRestrictionParserTest {
         way.setTag("access", "no");
         way.setTag("access:conditional", "yes @ (" + today + ")");
         parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
-        // unsupported
+        // yes is unsupported
         assertFalse(restricted.getBool(false, edgeId, edgeIntAccess));
     }
 }
