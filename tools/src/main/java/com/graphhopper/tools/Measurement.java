@@ -569,7 +569,8 @@ public class Measurement {
                 req.setAlgorithm(ALT_ROUTE);
 
             if (querySettings.pathDetails)
-                req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED, Parameters.Details.EDGE_ID, Parameters.Details.STREET_NAME));
+                req.setPathDetails(Arrays.asList(Parameters.Details.AVERAGE_SPEED, Parameters.Details.EDGE_ID,
+                        Parameters.Details.STREET_NAME, "access:conditional", "vehicle:conditional", "motor_vehicle:conditional"));
 
             if (!querySettings.simplify)
                 req.getHints().putObject(Parameters.Routing.WAY_POINT_MAX_DISTANCE, 0);
