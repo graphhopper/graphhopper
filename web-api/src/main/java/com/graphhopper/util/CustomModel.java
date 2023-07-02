@@ -140,8 +140,9 @@ public class CustomModel {
     }
 
     @JsonProperty("turn_cost")
-    public void setTurnCostConfig(TurnCostConfig turnCostConfig) {
+    public CustomModel setTurnCostConfig(TurnCostConfig turnCostConfig) {
         this.turnCostConfig = turnCostConfig;
+        return this;
     }
 
     public TurnCostConfig getTurnCostConfig() {
