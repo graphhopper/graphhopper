@@ -94,8 +94,25 @@ public class QueryGraphWeighting implements Weighting {
 
     @Override
     public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-        // todo: here we do not allow calculating turn weights that aren't turn times, also see #1590
-        return (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
+        if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge)) {
+            return 0;
+        }
+        if (isVirtualNode(viaNode)) {
+            if (isUTurn(inEdge, outEdge)) {
+                throw new IllegalStateException("Turn cannot be illegal for calcTurnMillis");
+            } else {
+                return 0;
+            }
+        }
+        // to calculate the actual turn costs or detect u-turns we need to look at the original edge of each virtual
+        // edge, see #1593
+        if (isVirtualEdge(inEdge)) {
+            inEdge = getOriginalEdge(inEdge);
+        }
+        if (isVirtualEdge(outEdge)) {
+            outEdge = getOriginalEdge(outEdge);
+        }
+        return weighting.calcTurnMillis(inEdge, viaNode, outEdge);
     }
 
     @Override

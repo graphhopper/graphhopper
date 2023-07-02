@@ -166,8 +166,6 @@ public final class CustomWeighting extends AbstractWeighting {
         private final double maxPriority;
         private final double distanceInfluence;
         private final double headingPenaltySeconds;
-        private final TurnCostConfig turnCostConfig;
-
 
         public Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
                           double maxSpeed, double maxPriority, double distanceInfluence, double headingPenaltySeconds,
@@ -190,7 +188,6 @@ public final class CustomWeighting extends AbstractWeighting {
 
             if (turnCostConfig.getMaxLeftAngle() <= 0 || turnCostConfig.getMaxLeftAngle() > 180)
                 throw new IllegalArgumentException("Illegal max_left_angle " + turnCostConfig.getMaxLeftAngle());
-            this.turnCostConfig = turnCostConfig;
         }
 
         public EdgeToDoubleMapping getEdgeToSpeedMapping() {
@@ -216,35 +213,59 @@ public final class CustomWeighting extends AbstractWeighting {
         public double getMaxPriority() {
             return maxPriority;
         }
+    }
 
-        public double calcTurnWeight(int inEdge, int viaNode, int outEdge, Graph graph, DecimalEncodedValue orientationEnc) {
-            EdgeIteratorState prevEdge = graph.getEdgeIteratorState(inEdge, viaNode);
-            EdgeIteratorState edge = graph.getEdgeIteratorState(outEdge, viaNode);
-            if (prevEdge == null || edge == null) {
-                EdgeIteratorState in = graph.getEdgeIteratorState(inEdge, Integer.MIN_VALUE);
-                EdgeIteratorState out = graph.getEdgeIteratorState(outEdge, Integer.MIN_VALUE);
-                throw new IllegalStateException(inEdge + "->" + viaNode + "->" + outEdge
-                        + " || " + in + ": " + in.fetchWayGeometry(FetchMode.ALL)
-                        + " || " + out + ": " + out.fetchWayGeometry(FetchMode.ALL));
+    public static TurnCostProvider createFromTurnCostConfig(TurnCostProvider turnCostProvider, DecimalEncodedValue orientationEnc, Graph graph, TurnCostConfig tcConfig) {
+        final double minRightInRad, maxRightInRad, minLeftInRad, maxLeftInRad;
+        minRightInRad = Math.toRadians(tcConfig.getMinRightAngle());
+        maxRightInRad = Math.toRadians(tcConfig.getMaxRightAngle());
+        minLeftInRad = Math.toRadians(tcConfig.getMinLeftAngle());
+        maxLeftInRad = Math.toRadians(tcConfig.getMaxLeftAngle());
+
+        return new TurnCostProvider() {
+
+            @Override
+            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                double weight = turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
+                if (Double.isInfinite(weight)) return weight;
+                double changeAngle = calcChangeAngle(inEdge, viaNode, outEdge, graph, orientationEnc);
+                if (changeAngle > minRightInRad && changeAngle < minLeftInRad)
+                    return tcConfig.getStraightCost();
+                else if (changeAngle >= minLeftInRad && changeAngle <= maxLeftInRad)
+                    return tcConfig.getLeftCost();
+                else if (changeAngle <= minRightInRad && changeAngle >= maxRightInRad)
+                    return tcConfig.getRightCost();
+                else return Double.POSITIVE_INFINITY; // too sharp turn
             }
 
-            double prevOrientation = prevEdge.get(orientationEnc);
-            double orientation = edge.get(orientationEnc);
-            // bring parallel to prevOrientation
-            if (orientation >= 0) orientation -= Math.PI;
-            else orientation += Math.PI;
-            prevOrientation = ANGLE_CALC.alignOrientation(orientation, prevOrientation);
-            double changeAngle = Math.toDegrees(orientation - prevOrientation);
-            if (changeAngle > 180) changeAngle -= 360;
-            else if (changeAngle < -180) changeAngle += 360;
+            @Override
+            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+                long millis = (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
+                return millis;
+            }
+        };
+    }
 
-            if (changeAngle > turnCostConfig.getMinRightAngle() && changeAngle < turnCostConfig.getMinLeftAngle())
-                return turnCostConfig.getStraightCost();
-            else if (changeAngle >= turnCostConfig.getMinLeftAngle() && changeAngle <= turnCostConfig.getMaxLeftAngle())
-                return turnCostConfig.getLeftCost();
-            else if (changeAngle <= turnCostConfig.getMinRightAngle() && changeAngle >= turnCostConfig.getMaxRightAngle())
-                return turnCostConfig.getRightCost();
-            else return Double.POSITIVE_INFINITY;
+    static double calcChangeAngle(int inEdge, int viaNode, int outEdge, Graph graph, DecimalEncodedValue orientationEnc) {
+        EdgeIteratorState prevEdge = graph.getEdgeIteratorState(inEdge, viaNode);
+        EdgeIteratorState edge = graph.getEdgeIteratorState(outEdge, viaNode);
+        if (prevEdge == null || edge == null) {
+            EdgeIteratorState in = graph.getEdgeIteratorState(inEdge, Integer.MIN_VALUE);
+            EdgeIteratorState out = graph.getEdgeIteratorState(outEdge, Integer.MIN_VALUE);
+            throw new IllegalStateException(inEdge + "->" + viaNode + "->" + outEdge
+                    + " || " + in + ": " + in.fetchWayGeometry(FetchMode.ALL)
+                    + " || " + out + ": " + out.fetchWayGeometry(FetchMode.ALL));
         }
+
+        double prevOrientation = prevEdge.get(orientationEnc);
+        double orientation = edge.get(orientationEnc);
+        // bring parallel to prevOrientation
+        if (orientation >= 0) orientation -= Math.PI;
+        else orientation += Math.PI;
+        prevOrientation = ANGLE_CALC.alignOrientation(orientation, prevOrientation);
+        double changeAngle = orientation - prevOrientation;
+        if (changeAngle > Math.PI) changeAngle -= 2 * Math.PI;
+        else if (changeAngle < -Math.PI) changeAngle += 2 * Math.PI;
+        return changeAngle;
     }
 }

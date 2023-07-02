@@ -67,32 +67,14 @@ public class CustomModelParser {
         // utility class
     }
 
-    public static CustomWeighting createWeighting(Graph graph, DecimalEncodedValue orientationEnc, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc,
+    public static CustomWeighting createWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc,
                                                   DecimalEncodedValue priorityEnc, EncodedValueLookup lookup,
                                                   TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
         double maxSpeed = speedEnc.getMaxOrMaxStorableDecimal();
         CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, speedEnc, maxSpeed, priorityEnc);
-
-        if (turnCostProvider == TurnCostProvider.NO_TURN_COST_PROVIDER || orientationEnc == null)
-            return new CustomWeighting(accessEnc, speedEnc, turnCostProvider, parameters);
-
-        TurnCostProvider tcProviderMain = new TurnCostProvider() {
-
-            @Override
-            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-                double weight = turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
-                if (Double.isInfinite(weight)) return weight;
-                return parameters.calcTurnWeight(inEdge, viaNode, outEdge, graph, orientationEnc);
-            }
-
-            @Override
-            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-                return (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
-            }
-        };
-        return new CustomWeighting(accessEnc, speedEnc, tcProviderMain, parameters);
+        return new CustomWeighting(accessEnc, speedEnc, turnCostProvider, parameters);
     }
 
     /**

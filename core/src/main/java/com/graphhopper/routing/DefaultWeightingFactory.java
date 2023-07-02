@@ -91,8 +91,10 @@ public class DefaultWeightingFactory implements WeightingFactory {
             CustomProfile customProfile = (CustomProfile) profile;
 
             queryCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
-            DecimalEncodedValue orientationEnc = encodingManager.hasEncodedValue(Orientation.KEY) ? encodingManager.getDecimalEncodedValue(Orientation.KEY) : null;
-            weighting = CustomModelParser.createWeighting(graph, orientationEnc, accessEnc, speedEnc,
+            if (encodingManager.hasEncodedValue(Orientation.KEY))
+                turnCostProvider = CustomWeighting.createFromTurnCostConfig(turnCostProvider,
+                        encodingManager.getDecimalEncodedValue(Orientation.KEY), graph, queryCustomModel.getTurnCostConfig());
+            weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
                     priorityEnc, encodingManager, turnCostProvider, queryCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(accessEnc, speedEnc, turnCostProvider);

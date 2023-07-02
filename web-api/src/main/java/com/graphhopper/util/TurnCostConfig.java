@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 
 public class TurnCostConfig {
-    private double leftCost = 3;
+    private double leftCost = 3; // in seconds
     private double rightCost = 0.5;
     private double straightCost = 0;
     private double minLeftAngle = 17, maxLeftAngle = 180;
@@ -28,6 +28,7 @@ public class TurnCostConfig {
         this.leftCost = leftCost;
     }
 
+    @JsonProperty("left")
     public double getLeftCost() {
         return leftCost;
     }
@@ -36,8 +37,18 @@ public class TurnCostConfig {
         this.rightCost = rightCost;
     }
 
+    @JsonProperty("right")
     public double getRightCost() {
         return rightCost;
+    }
+
+    public void setStraightCost(double straightCost) {
+        this.straightCost = straightCost;
+    }
+
+    @JsonProperty("straight")
+    public double getStraightCost() {
+        return straightCost;
     }
 
     public void setMinLeftAngle(double minLeftAngle) {
@@ -70,14 +81,6 @@ public class TurnCostConfig {
 
     public double getMaxRightAngle() {
         return maxRightAngle;
-    }
-
-    public void setStraightCost(double straightCost) {
-        this.straightCost = straightCost;
-    }
-
-    public double getStraightCost() {
-        return straightCost;
     }
 
     @Override

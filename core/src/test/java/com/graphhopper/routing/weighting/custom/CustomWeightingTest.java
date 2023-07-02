@@ -4,14 +4,13 @@ import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.json.Statement;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.parsers.OrientationCalculator;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +24,7 @@ import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
+import static com.graphhopper.routing.weighting.custom.CustomWeighting.calcChangeAngle;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CustomWeightingTest {
@@ -133,13 +133,11 @@ class CustomWeightingTest {
                 set(avSpeedEnc, 15).set(specialEnc, false).setReverse(specialEnc, true).setDistance(10);
 
         CustomModel vehicleModel = new CustomModel().setDistanceInfluence(70d);
-        Weighting weighting = CustomModelParser.createWeighting(graph, orientationEnc,
-                accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        Weighting weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(3.1, weighting.calcEdgeWeight(edge, false), 0.01);
         vehicleModel.addToPriority(If("special == true", MULTIPLY, "0.8"));
         vehicleModel.addToPriority(If("special == false", MULTIPLY, "0.4"));
-        weighting = CustomModelParser.createWeighting(graph, orientationEnc, accessEnc, avSpeedEnc, null,
-                encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(6.7, weighting.calcEdgeWeight(edge, false), 0.01);
         assertEquals(3.7, weighting.calcEdgeWeight(edge, true), 0.01);
     }
@@ -348,16 +346,15 @@ class CustomWeightingTest {
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {
-        return CustomModelParser.createWeighting(graph, encodingManager.getDecimalEncodedValue(Orientation.KEY),
-                accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        return CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
     }
 
-    private static TurnCostConfig tcConfig = new TurnCostConfig();
+    private static final TurnCostConfig tcConfig = new TurnCostConfig();
 
     @Test
     public void testRawTurnWeight() {
         DecimalEncodedValue orientationEnc = encodingManager.getDecimalEncodedValue(Orientation.KEY);
-        OrientationCalculator calc = new OrientationCalculator(encodingManager.getDecimalEncodedValue(Orientation.KEY));
+        OrientationCalculator calc = new OrientationCalculator(orientationEnc);
         graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         graph.getNodeAccess().setNode(1, 0.030, 0.011);
         graph.getNodeAccess().setNode(2, 0.020, 0.009);
@@ -378,14 +375,16 @@ class CustomWeightingTest {
         CustomWeighting.Parameters parameters = new CustomWeighting.Parameters(null, null, 0, 0, 0, 0,
                 tcConfig);
 
-        assertEquals(tcConfig.getStraightCost(), parameters.calcTurnWeight(edge12.getEdge(), 2, edge24.getEdge(), graph, orientationEnc));
-        assertEquals(tcConfig.getStraightCost(), parameters.calcTurnWeight(edge23down.getEdge(), 2, edge12.getEdge(), graph, orientationEnc));
+        assertEquals(0, Math.toDegrees(calcChangeAngle(edge12.getEdge(), 2, edge24.getEdge(), graph, orientationEnc)), 1);
+        assertEquals(12, Math.toDegrees(calcChangeAngle(edge23down.getEdge(), 2, edge12.getEdge(), graph, orientationEnc)), 1);
 
-        assertEquals(tcConfig.getLeftCost(), parameters.calcTurnWeight(edge24.getEdge(), 2, edge23.getEdge(), graph, orientationEnc));
-        assertEquals(tcConfig.getLeftCost(), parameters.calcTurnWeight(edge23.getEdge(), 2, edge12.getEdge(), graph, orientationEnc));
+        // left
+        assertEquals(96, Math.toDegrees(calcChangeAngle(edge24.getEdge(), 2, edge23.getEdge(), graph, orientationEnc)), 1);
+        assertEquals(84, Math.toDegrees(calcChangeAngle(edge23.getEdge(), 2, edge12.getEdge(), graph, orientationEnc)), 1);
 
-        assertEquals(tcConfig.getRightCost(), parameters.calcTurnWeight(edge23down.getEdge(), 3, edge23.getEdge(), graph, orientationEnc));
-        assertEquals(tcConfig.getRightCost(), parameters.calcTurnWeight(edge12.getEdge(), 2, edge23.getEdge(), graph, orientationEnc));
+        // right
+        assertEquals(-96, Math.toDegrees(calcChangeAngle(edge23down.getEdge(), 3, edge23.getEdge(), graph, orientationEnc)), 1);
+        assertEquals(-84, Math.toDegrees(calcChangeAngle(edge12.getEdge(), 2, edge23.getEdge(), graph, orientationEnc)), 1);
     }
 
     EdgeIteratorState handleWayTags(EdgeIntAccess edgeIntAccess, OrientationCalculator calc, EdgeIteratorState edge) {
@@ -430,9 +429,7 @@ class CustomWeightingTest {
         turnGraph.getNodeAccess().setNode(5, 51.0366, 13.726);
         turnGraph.getNodeAccess().setNode(6, 51.0358, 13.726);
 
-        DecimalEncodedValue turnCostEnc = TurnCost.create("car", 1);
-        CustomWeighting weighting = CustomModelParser.createWeighting(turnGraph, orientEnc, tcAccessEnc, tcAvgSpeedEnc,
-                null, em, new DefaultTurnCostProvider(turnCostEnc, turnGraph.getTurnCostStorage()), vehicleModel);
+        Weighting weighting = new DefaultWeightingFactory(turnGraph, em).createWeighting(new CustomProfile("car"), new PMap(), false);
         OrientationCalculator calc = new OrientationCalculator(orientEnc);
         EdgeIntAccess edgeIntAccess = turnGraph.createEdgeIntAccess();
         EdgeIteratorState edge01 = handleWayTags(edgeIntAccess, calc, turnGraph.edge(0, 1).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
