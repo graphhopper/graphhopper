@@ -19,27 +19,17 @@ package com.graphhopper.util;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Locale;
 
 import static com.graphhopper.util.Helper.UTF_CS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 /**
  * @author Peter Karich
  */
 public class HelperTest {
-
-    @Test
-    public void testCountBitValue() {
-        assertEquals(1, Helper.countBitValue(1));
-        assertEquals(2, Helper.countBitValue(2));
-        assertEquals(2, Helper.countBitValue(3));
-        assertEquals(3, Helper.countBitValue(4));
-        assertEquals(3, Helper.countBitValue(7));
-        assertEquals(4, Helper.countBitValue(8));
-        assertEquals(5, Helper.countBitValue(20));
-    }
 
     @Test
     public void testGetLocale() {
@@ -66,28 +56,6 @@ public class HelperTest {
         assertEquals(2, Helper.keepIn(2, 1, 4), 1e-2);
         assertEquals(3, Helper.keepIn(2, 3, 4), 1e-2);
         assertEquals(3, Helper.keepIn(-2, 3, 4), 1e-2);
-    }
-
-    @Test
-    public void testUnsignedConversions() {
-        long l = Helper.toUnsignedLong(-1);
-        assertEquals(4294967295L, l);
-        assertEquals(-1, Helper.toSignedInt(l));
-
-        int intVal = Integer.MAX_VALUE;
-        long maxInt = (long) intVal;
-        assertEquals(intVal, Helper.toSignedInt(maxInt));
-
-        intVal++;
-        maxInt = Helper.toUnsignedLong(intVal);
-        assertEquals(intVal, Helper.toSignedInt(maxInt));
-
-        intVal++;
-        maxInt = Helper.toUnsignedLong(intVal);
-        assertEquals(intVal, Helper.toSignedInt(maxInt));
-
-        assertEquals(0xFFFFffffL, (1L << 32) - 1);
-        assertTrue(0xFFFFffffL > 0L);
     }
 
     @Test

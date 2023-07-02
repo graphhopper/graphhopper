@@ -33,6 +33,8 @@ public class Request {
     private Boolean ignoreTransfers;
     private double betaTransfers = 0.0;
     private double betaStreetTime = 1.0;
+    private double betaAccessTime = 1.0;
+    private double betaEgressTime = 1.0;
     private Integer limitSolutions;
     private boolean arriveBy;
     private double walkSpeedKmH = 5.0;
@@ -201,5 +203,21 @@ public class Request {
 
     public void setEgressProfile(String egressProfile) {
         this.egressProfile = egressProfile;
+    }
+
+    public double getBetaAccessTime() {
+        return betaAccessTime;
+    }
+
+    public void setBetaAccessTime(double betaAccessTime) {
+        this.betaAccessTime = betaAccessTime;
+    }
+
+    public double getBetaEgressTime() {
+        return betaEgressTime;
+    }
+
+    public void setBetaEgressTime(double betaEgressTime) {
+        this.betaEgressTime = betaEgressTime;
     }
 }

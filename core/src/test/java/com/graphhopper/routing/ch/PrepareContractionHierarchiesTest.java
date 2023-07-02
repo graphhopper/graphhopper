@@ -369,7 +369,7 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(2, routingCHGraph.getEdges() - g.getEdges(), "there should be exactly two (bidirectional) shortcuts (2-3) and (3-4)");
 
         // insert virtual node and edges
-        Snap snap = new Snap(0.0001, 0.0015);
+        Snap snap = new Snap(0.001, 0.00015); // between 3 and 1
         snap.setClosestEdge(edge31);
         snap.setSnappedPosition(Snap.Position.EDGE);
         snap.setClosestNode(8);

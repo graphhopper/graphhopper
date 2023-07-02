@@ -28,30 +28,6 @@ import com.graphhopper.routing.util.countryrules.CountryRule;
 public class AustriaCountryRule implements CountryRule {
 
     @Override
-    public double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
-        if (!Double.isNaN(currentMaxSpeed) || !transportationMode.isMotorVehicle())
-            return currentMaxSpeed;
-
-        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
-        switch (roadClass) {
-            case MOTORWAY:
-                return 130;
-            case TRUNK:
-            case PRIMARY:
-            case SECONDARY:
-            case TERTIARY:
-            case UNCLASSIFIED:
-                return 100;
-            case RESIDENTIAL:
-                return 50;
-            case LIVING_STREET:
-                return 20;
-            default:
-                return Double.NaN;
-        }
-    }
-
-    @Override
     public RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
         if (currentRoadAccess != RoadAccess.YES)
             return currentRoadAccess;
@@ -73,7 +49,7 @@ public class AustriaCountryRule implements CountryRule {
                 return RoadAccess.YES;
         }
     }
-    
+
     @Override
     public Toll getToll(ReaderWay readerWay, Toll currentToll) {
         if (currentToll != Toll.MISSING) {
@@ -84,7 +60,7 @@ public class AustriaCountryRule implements CountryRule {
         if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK) {
             return Toll.ALL;
         }
-        
+
         return currentToll;
     }
 }

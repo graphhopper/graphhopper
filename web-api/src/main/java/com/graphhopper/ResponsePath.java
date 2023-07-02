@@ -42,6 +42,7 @@ public class ResponsePath {
     private String debugInfo = "";
     private InstructionList instructions;
     private PointList waypointList = PointList.EMPTY;
+    private List<Integer> waypointIndices = new ArrayList<>();
     private PointList pointList = PointList.EMPTY;
     private int numChanges;
     private final List<Trip.Leg> legs = new ArrayList<>(5);
@@ -119,11 +120,22 @@ public class ResponsePath {
     /**
      * This method initializes this path with the snapped input points.
      */
-    public void setWaypoints(PointList wpList) {
+    public ResponsePath setWaypoints(PointList wpList) {
         if (waypointList != PointList.EMPTY)
             throw new IllegalStateException("Cannot call setWaypoints twice");
 
         this.waypointList = wpList;
+        return this;
+    }
+
+    public List<Integer> getWaypointIndices() {
+        check("getWaypointIndices");
+        return waypointIndices;
+    }
+
+    public ResponsePath setWaypointIndices(List<Integer> waypointIndices) {
+        this.waypointIndices = waypointIndices;
+        return this;
     }
 
     /**

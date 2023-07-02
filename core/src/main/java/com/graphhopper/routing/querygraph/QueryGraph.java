@@ -157,7 +157,7 @@ public class QueryGraph implements Graph {
 
     @Override
     public int getEdges() {
-        return queryOverlay.getNumVirtualEdges() + baseEdges;
+        return queryOverlay.getNumVirtualEdges() / 2 + baseEdges;
     }
 
     @Override

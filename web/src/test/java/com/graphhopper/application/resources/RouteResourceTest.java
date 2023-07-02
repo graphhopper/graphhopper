@@ -54,6 +54,8 @@ import java.util.*;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static com.graphhopper.application.util.TestUtils.clientUrl;
+import static com.graphhopper.util.Instruction.FINISH;
+import static com.graphhopper.util.Instruction.REACHED_VIA;
 import static com.graphhopper.util.Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -81,7 +83,10 @@ public class RouteResourceTest {
                 putObject("graph.vehicles", "car").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
-                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
+                putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed,country").
+                putObject("max_speed_calculator.enabled", true).
+                putObject("graph.urban_density.threads", 1). // for max_speed_calculator
+                putObject("graph.urban_density.city_radius", 0).
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 // adding this so the corresponding check is not just skipped...
@@ -250,11 +255,11 @@ public class RouteResourceTest {
         assertTrue(res.getDistance() < 21000, "distance wasn't correct:" + res.getDistance());
 
         InstructionList instructions = res.getInstructions();
-        assertEquals(24, instructions.size());
+        assertEquals(25, instructions.size());
         assertEquals("Continue onto la Callisa", instructions.get(0).getTurnDescription(null));
         assertEquals("At roundabout, take exit 2", instructions.get(4).getTurnDescription(null));
         assertEquals(true, instructions.get(4).getExtraInfoJSON().get("exited"));
-        assertEquals(false, instructions.get(22).getExtraInfoJSON().get("exited"));
+        assertEquals(false, instructions.get(23).getExtraInfoJSON().get("exited"));
     }
 
     @Test
@@ -265,13 +270,13 @@ public class RouteResourceTest {
         GHResponse rsp = client.route(request);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(4, rsp.getBest().getPathDetails().get(RoadClass.KEY).size());
-        assertEquals(RoadClass.PRIMARY.toString(), rsp.getBest().getPathDetails().get(RoadClass.KEY).get(3).getValue());
+        assertEquals("primary", rsp.getBest().getPathDetails().get(RoadClass.KEY).get(3).getValue());
         assertFalse((Boolean) rsp.getBest().getPathDetails().get(RoadClassLink.KEY).get(0).getValue());
 
         List<PathDetail> roadEnvList = rsp.getBest().getPathDetails().get(RoadEnvironment.KEY);
         assertEquals(10, roadEnvList.size());
-        assertEquals(RoadEnvironment.ROAD.toString(), roadEnvList.get(0).getValue());
-        assertEquals(RoadEnvironment.TUNNEL.toString(), roadEnvList.get(6).getValue());
+        assertEquals("road", roadEnvList.get(0).getValue());
+        assertEquals("tunnel", roadEnvList.get(6).getValue());
     }
 
     @Test
@@ -335,7 +340,7 @@ public class RouteResourceTest {
     @Test
     public void testPathDetailsWithoutGraphHopperWeb() {
         final Response response = clientTarget(app, "/route?profile=my_car&" +
-                "point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id&details=max_speed").request().buildGet().invoke();
+                "point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed&details=edge_id&details=max_speed&details=urban_density").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
@@ -357,8 +362,26 @@ public class RouteResourceTest {
         assertEquals(1584, lastLink);
 
         JsonNode maxSpeed = details.get("max_speed");
-        assertEquals(-1, maxSpeed.get(0).get(2).asDouble(-1), .01);
-        assertEquals(50, maxSpeed.get(1).get(2).asDouble(-1), .01);
+        assertEquals("[0,33,50.0]", maxSpeed.get(0).toString());
+        assertEquals("[33,34,60.0]", maxSpeed.get(1).toString());
+        assertEquals("[34,38,50.0]", maxSpeed.get(2).toString());
+        assertEquals("[38,50,90.0]", maxSpeed.get(3).toString());
+        assertEquals("[50,52,50.0]", maxSpeed.get(4).toString());
+        assertEquals("[52,60,90.0]", maxSpeed.get(5).toString());
+
+        JsonNode urbanDensityNode = details.get("urban_density");
+        assertEquals("[0,53,\"residential\"]", urbanDensityNode.get(0).toString());
+        assertEquals("[53,57,\"rural\"]", urbanDensityNode.get(1).toString());
+        assertEquals("[57,63,\"residential\"]", urbanDensityNode.get(2).toString());
+        assertEquals("[63,68,\"rural\"]", urbanDensityNode.get(3).toString());
+        assertEquals("[68,71,\"residential\"]", urbanDensityNode.get(4).toString());
+        assertEquals("[71,75,\"rural\"]", urbanDensityNode.get(5).toString());
+        assertEquals("[75,106,\"residential\"]", urbanDensityNode.get(6).toString());
+        assertEquals("[106,128,\"rural\"]", urbanDensityNode.get(7).toString());
+        assertEquals("[128,163,\"residential\"]", urbanDensityNode.get(8).toString());
+        assertEquals("[163,170,\"rural\"]", urbanDensityNode.get(9).toString());
+        assertEquals("[170,183,\"residential\"]", urbanDensityNode.get(10).toString());
+        assertEquals("[183,213,\"rural\"]", urbanDensityNode.get(11).toString());
     }
 
     @Test
@@ -622,5 +645,87 @@ public class RouteResourceTest {
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         assertEquals("The number of 'heading' parameters must be zero, one or equal to the number of points (1)", json.get("message").asText());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void legDetailsAndPointIndices(boolean instructions) {
+        final long seed = 123L;
+        Random rnd = new Random(seed);
+        List<String> legDetails = Arrays.asList("leg_time", "leg_distance", "leg_weight");
+        int errors = 0;
+        for (int numPoints = 2; numPoints < 10; numPoints++) {
+            String url = "/route?profile=my_car&points_encoded=false&instructions=" + instructions;
+            for (int i = 0; i < numPoints; i++) {
+                double lat = 42.493748 + rnd.nextDouble() * (42.565155 - 42.493748);
+                double lon = 1.487522 + rnd.nextDouble() * (1.557285 - 1.487522);
+                url += "&point=" + lat + "," + lon;
+            }
+            for (String legDetail : legDetails)
+                url += "&details=" + legDetail;
+            final Response response = clientTarget(app, url).request().buildGet().invoke();
+            JsonNode json = response.readEntity(JsonNode.class);
+            if (response.getStatus() != 200) {
+                // sometimes there can be connection-not-found for example, also because we set min_network_size to 0 in this test
+                errors++;
+                continue;
+            }
+            assertFalse(json.has("message"));
+            JsonNode path = json.get("paths").get(0);
+            JsonNode points = path.get("points");
+            JsonNode snappedWaypoints = path.get("snapped_waypoints");
+            assertEquals(numPoints, snappedWaypoints.get("coordinates").size());
+
+            assertEquals(path.get("time").asDouble(), sumDetail(path.get("details").get("leg_time")), 1);
+            assertEquals(path.get("distance").asDouble(), sumDetail(path.get("details").get("leg_distance")), 1);
+            assertEquals(path.get("weight").asDouble(), sumDetail(path.get("details").get("leg_weight")), 1);
+
+            for (String detail : legDetails) {
+                JsonNode legDetail = path.get("details").get(detail);
+                assertEquals(numPoints - 1, legDetail.size());
+                assertEquals(snappedWaypoints.get("coordinates").get(0), points.get("coordinates").get(legDetail.get(0).get(0).asInt()));
+                for (int i = 1; i < numPoints; i++)
+                    // we make sure that the intervals defined by the leg details start/end at the snapped waypoints
+                    assertEquals(snappedWaypoints.get("coordinates").get(i), points.get("coordinates").get(legDetail.get(i - 1).get(1).asInt()));
+
+                if (instructions) {
+                    // we can find the way point indices also from the instructions, so we check if this yields the same
+                    List<Integer> waypointIndicesFromInstructions = getWaypointIndicesFromInstructions(path.get("instructions"));
+                    List<Integer> waypointIndicesFromLegDetails = getWaypointIndicesFromLegDetails(legDetail);
+                    assertEquals(waypointIndicesFromInstructions, waypointIndicesFromLegDetails);
+                }
+            }
+        }
+        if (errors > 3)
+            fail("too many errors");
+    }
+
+    private static List<Integer> getWaypointIndicesFromInstructions(JsonNode instructions) {
+        List<Integer> result = new ArrayList<>();
+        result.add(instructions.get(0).get("interval").get(0).asInt());
+        for (int i = 0; i < instructions.size(); i++) {
+            int sign = instructions.get(i).get("sign").asInt();
+            if (sign == REACHED_VIA || sign == FINISH)
+                result.add(instructions.get(i).get("interval").get(1).asInt());
+        }
+        return result;
+    }
+
+    private static List<Integer> getWaypointIndicesFromLegDetails(JsonNode detail) {
+        List<Integer> result = new ArrayList<>();
+        result.add(detail.get(0).get(0).asInt());
+        for (int i = 0; i < detail.size(); i++) {
+            if (i > 0)
+                assertEquals(detail.get(i - 1).get(1).asInt(), detail.get(i).get(0).asInt());
+            result.add(detail.get(i).get(1).asInt());
+        }
+        return result;
+    }
+
+    private double sumDetail(JsonNode detail) {
+        double result = 0;
+        for (int i = 0; i < detail.size(); i++)
+            result += detail.get(i).get(2).asDouble();
+        return result;
     }
 }

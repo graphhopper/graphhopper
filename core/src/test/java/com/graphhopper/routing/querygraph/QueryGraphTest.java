@@ -40,6 +40,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static com.graphhopper.storage.index.Snap.Position.*;
 import static com.graphhopper.util.EdgeIteratorState.UNFAVORED_EDGE;
@@ -391,9 +393,10 @@ public class QueryGraphTest {
         assertEquals(3, res1.getClosestNode());
         assertEquals(3, res2.getClosestNode());
 
-        // force skip due to **tower** node snapping in phase 2, but no virtual edges should be created for res1
+        // force skip due to **tower** node snapping in phase 2 (QueryOverlayBuilder.buildVirtualEdges -> Snap.considerEqual)
+        // and no virtual edges should be created for res1
         edgeState = GHUtility.getEdge(g, 0, 1);
-        res1 = createLocationResult(1, 0, edgeState, 0, EDGE);
+        res1 = createLocationResult(1, 0, edgeState, 0, TOWER);
         // now create virtual edges
         edgeState = GHUtility.getEdge(g, 0, 2);
         res2 = createLocationResult(0.5, 0, edgeState, 0, EDGE);
@@ -402,6 +405,24 @@ public class QueryGraphTest {
         assertEquals(queryGraph.getNodes(), g.getNodes() + 1);
         EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(0);
         assertEquals(GHUtility.asSet(1, 3), GHUtility.getNeighbors(iter));
+    }
+
+    @Test
+    void towerSnapWhenCrossingPointIsOnEdgeButCloseToTower() {
+        g.getNodeAccess().setNode(0, 49.000000, 11.00100);
+        g.getNodeAccess().setNode(1, 49.000000, 11.00200);
+        g.getNodeAccess().setNode(2, 49.000300, 11.00200);
+        g.edge(0, 1).set(accessEnc, true, true);
+        g.edge(1, 2).set(accessEnc, true, true);
+        LocationIndexTree locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        locationIndex.prepareIndex();
+        Snap snap = locationIndex.findClosest(49.0000010, 11.00800, EdgeFilter.ALL_EDGES);
+        // Our query point is quite far away from the edge and further away from the tower node than from the crossing
+        // point along the edge. But since the crossing point is very near to the tower node we still want it to be a
+        // tower-snap to prevent a virtual node with a very short virtual edge
+        assertEquals(Snap.Position.TOWER, snap.getSnappedPosition());
+        QueryGraph queryGraph = QueryGraph.create(g, snap);
+        assertEquals(g.getNodes(), queryGraph.getNodes());
     }
 
     @Test
@@ -461,8 +482,8 @@ public class QueryGraphTest {
 
         // setup snaps
         EdgeIteratorState it = GHUtility.getEdge(g, nodeA, nodeB);
-        Snap snap1 = createLocationResult(1.5, 3, it, 1, Snap.Position.EDGE);
-        Snap snap2 = createLocationResult(1.5, 7, it, 2, Snap.Position.EDGE);
+        Snap snap1 = createLocationResult(1.5, 3, it, 1, PILLAR);
+        Snap snap2 = createLocationResult(1.5, 7, it, 2, PILLAR);
 
         QueryGraph q = lookup(Arrays.asList(snap1, snap2));
         int nodeC = snap1.getClosestNode();
@@ -842,7 +863,7 @@ public class QueryGraphTest {
         Snap snap = createLocationResult(50.00, 10.15, edge, 0, EDGE);
         QueryGraph queryGraph = QueryGraph.create(g, snap);
         assertEquals(3, queryGraph.getNodes());
-        assertEquals(5, queryGraph.getEdges());
+        assertEquals(3, queryGraph.getEdges());
         assertEquals(4, queryGraph.getVirtualEdges().size());
 
         EdgeIteratorState edge_0x = queryGraph.getEdgeIteratorState(1, 2);
@@ -916,7 +937,7 @@ public class QueryGraphTest {
         Snap snap = createLocationResult(50.00, 10.15, edge, 0, EDGE);
         QueryGraph queryGraph = QueryGraph.create(g, snap);
         assertEquals(3, queryGraph.getNodes());
-        assertEquals(5, queryGraph.getEdges());
+        assertEquals(3, queryGraph.getEdges());
         assertEquals(4, queryGraph.getVirtualEdges().size());
 
         EdgeIteratorState edge_0x = queryGraph.getEdgeIteratorState(1, 2);
@@ -972,6 +993,41 @@ public class QueryGraphTest {
     private void assertNodes(EdgeIteratorState edge, int base, int adj) {
         assertEquals(base, edge.getBaseNode());
         assertEquals(adj, edge.getAdjNode());
+    }
+
+    @Test
+    public void testTotalEdgeCount() {
+        // virtual nodes:     2     3
+        //                0 - x --- x - 1
+        // virtual edges:   1   2/3 4
+        BaseGraph g = new BaseGraph.Builder(1).create();
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 50.00, 10.00);
+        na.setNode(1, 50.00, 10.30);
+        g.edge(0, 1);
+
+        LocationIndexTree locationIndex = new LocationIndexTree(g, g.getDirectory());
+        locationIndex.prepareIndex();
+
+        // query graph
+        Snap snap1 = locationIndex.findClosest(50.00, 10.10, EdgeFilter.ALL_EDGES);
+        Snap snap2 = locationIndex.findClosest(50.00, 10.20, EdgeFilter.ALL_EDGES);
+
+        QueryGraph queryGraph = QueryGraph.create(g, snap1, snap2);
+        assertEquals(4, queryGraph.getNodes());
+        assertEquals(8, queryGraph.getVirtualEdges().size());
+        assertEquals(1 + 8 / 2, queryGraph.getEdges());
+
+        // internally the QueryGraph reserves edge IDs 2 and 3 for the edges between 2 and three,
+        // but the edge iterator only reveals edge 2
+        assertEquals("[1],[4],[1, 2],[2, 4]",
+                IntStream.range(0, queryGraph.getNodes()).mapToObj(i ->
+                        GHUtility.getEdgeIds(queryGraph.createEdgeExplorer().setBaseNode(i)).toString()).collect(Collectors.joining(",")));
+
+        // by iterating up to the total edge count we get all edges
+        assertEquals("0 0-1,0->2,2->3,2->3,3->1",
+                IntStream.range(0, queryGraph.getEdges()).mapToObj(i ->
+                        queryGraph.getEdgeIteratorState(i, Integer.MIN_VALUE).toString()).collect(Collectors.joining(",")));
     }
 
     private QueryGraph lookup(Snap res) {

@@ -18,9 +18,12 @@
 package com.graphhopper.util;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.graphhopper.jackson.CustomModelAreasDeserializer;
 import com.graphhopper.json.Statement;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class is used in combination with CustomProfile.
@@ -35,8 +38,8 @@ public class CustomModel {
     private boolean internal;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
-    private Map<String, JsonFeature> areas = new HashMap<>();
     private TurnCostConfig turnCostConfig = new TurnCostConfig();
+    private JsonFeatureCollection areas = new JsonFeatureCollection();
 
     public CustomModel() {
     }
@@ -50,7 +53,28 @@ public class CustomModel {
         priorityStatements = deepCopy(toCopy.getPriority());
         turnCostConfig = new TurnCostConfig(toCopy.turnCostConfig);
 
-        areas.putAll(toCopy.getAreas());
+        addAreas(toCopy.getAreas());
+    }
+
+    public static Map<String, JsonFeature> getAreasAsMap(JsonFeatureCollection areas) {
+        Map<String, JsonFeature> map = new HashMap<>(areas.getFeatures().size());
+        areas.getFeatures().forEach(f -> {
+            if (map.put(f.getId(), f) != null)
+                throw new IllegalArgumentException("Cannot handle duplicate area " + f.getId());
+        });
+        return map;
+    }
+
+    public void addAreas(JsonFeatureCollection externalAreas) {
+        Set<String> indexed = areas.getFeatures().stream().map(JsonFeature::getId).collect(Collectors.toSet());
+        for (JsonFeature ext : externalAreas.getFeatures()) {
+            if (!JsonFeature.isValidId("in_" + ext.getId()))
+                throw new IllegalArgumentException("The area '" + ext.getId() + "' has an invalid id. Only letters, numbers and underscore are allowed.");
+            if (indexed.contains(ext.getId()))
+                throw new IllegalArgumentException("area " + ext.getId() + " already exists");
+            areas.getFeatures().add(ext);
+            indexed.add(ext.getId());
+        }
     }
 
     /**
@@ -105,12 +129,13 @@ public class CustomModel {
         return this;
     }
 
-    public CustomModel setAreas(Map<String, JsonFeature> areas) {
+    @JsonDeserialize(using = CustomModelAreasDeserializer.class)
+    public CustomModel setAreas(JsonFeatureCollection areas) {
         this.areas = areas;
         return this;
     }
 
-    public Map<String, JsonFeature> getAreas() {
+    public JsonFeatureCollection getAreas() {
         return areas;
     }
 
@@ -173,12 +198,7 @@ public class CustomModel {
 //            throw new IllegalArgumentException("TurnCostConfig must be identical but was " + queryModel.turnCostConfig + " vs " + baseModel.turnCostConfig);
         mergedCM.setTurnCostConfig(new TurnCostConfig(queryModel.getTurnCostConfig()));
 
-        for (Map.Entry<String, JsonFeature> entry : queryModel.getAreas().entrySet()) {
-            if (mergedCM.areas.containsKey(entry.getKey()))
-                throw new IllegalArgumentException("area " + entry.getKey() + " already exists");
-            mergedCM.areas.put(entry.getKey(), entry.getValue());
-        }
-
+        mergedCM.addAreas(queryModel.getAreas());
         return mergedCM;
     }
 }

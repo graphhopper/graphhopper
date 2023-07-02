@@ -18,8 +18,6 @@
 
 package com.graphhopper.routing;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.*;
@@ -71,25 +69,45 @@ public class RandomizedRoutingTest {
     private static class FixtureProvider implements ArgumentsProvider {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
-            return Stream.<Supplier<Fixture>>of(
-                    () -> new Fixture(Algo.DIJKSTRA, false, false, NODE_BASED),
-                    () -> new Fixture(Algo.ASTAR_UNIDIR, false, false, NODE_BASED),
-                    () -> new Fixture(Algo.ASTAR_BIDIR, false, false, NODE_BASED),
-                    () -> new Fixture(Algo.CH_ASTAR, true, false, NODE_BASED),
-                    () -> new Fixture(Algo.CH_DIJKSTRA, true, false, NODE_BASED),
-                    () -> new Fixture(Algo.LM_UNIDIR, false, true, NODE_BASED),
-                    () -> new Fixture(Algo.LM_BIDIR, false, true, NODE_BASED),
-                    () -> new Fixture(Algo.DIJKSTRA, false, false, EDGE_BASED),
-                    () -> new Fixture(Algo.ASTAR_UNIDIR, false, false, EDGE_BASED),
-                    () -> new Fixture(Algo.ASTAR_BIDIR, false, false, EDGE_BASED),
-                    () -> new Fixture(Algo.CH_ASTAR, true, false, EDGE_BASED),
-                    () -> new Fixture(Algo.CH_DIJKSTRA, true, false, EDGE_BASED),
-                    () -> new Fixture(Algo.LM_UNIDIR, false, true, EDGE_BASED),
-                    () -> new Fixture(Algo.LM_BIDIR, false, true, EDGE_BASED),
-                    () -> new Fixture(Algo.PERFECT_ASTAR, false, false, NODE_BASED)
+            return Stream.of(
+                    FixtureSupplier.create(Algo.DIJKSTRA, false, false, NODE_BASED),
+                    FixtureSupplier.create(Algo.ASTAR_UNIDIR, false, false, NODE_BASED),
+                    FixtureSupplier.create(Algo.ASTAR_BIDIR, false, false, NODE_BASED),
+                    FixtureSupplier.create(Algo.CH_ASTAR, true, false, NODE_BASED),
+                    FixtureSupplier.create(Algo.CH_DIJKSTRA, true, false, NODE_BASED),
+                    FixtureSupplier.create(Algo.LM_UNIDIR, false, true, NODE_BASED),
+                    FixtureSupplier.create(Algo.LM_BIDIR, false, true, NODE_BASED),
+                    FixtureSupplier.create(Algo.DIJKSTRA, false, false, EDGE_BASED),
+                    FixtureSupplier.create(Algo.ASTAR_UNIDIR, false, false, EDGE_BASED),
+                    FixtureSupplier.create(Algo.ASTAR_BIDIR, false, false, EDGE_BASED),
+                    FixtureSupplier.create(Algo.CH_ASTAR, true, false, EDGE_BASED),
+                    FixtureSupplier.create(Algo.CH_DIJKSTRA, true, false, EDGE_BASED),
+                    FixtureSupplier.create(Algo.LM_UNIDIR, false, true, EDGE_BASED),
+                    FixtureSupplier.create(Algo.LM_BIDIR, false, true, EDGE_BASED),
+                    FixtureSupplier.create(Algo.PERFECT_ASTAR, false, false, NODE_BASED)
             ).map(Arguments::of);
         }
     }
+
+    private static class FixtureSupplier {
+        private final Supplier<Fixture> supplier;
+        private final String name;
+
+        static FixtureSupplier create(Algo algo, boolean prepareCH, boolean prepareLM, TraversalMode traversalMode) {
+            return new FixtureSupplier(() -> new Fixture(algo, prepareCH, prepareLM, traversalMode), algo.toString());
+        }
+
+        public FixtureSupplier(Supplier<Fixture> supplier, String name) {
+            this.supplier = supplier;
+            this.name = name;
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
 
     private static class Fixture {
         private final Algo algo;
@@ -190,90 +208,6 @@ public class RandomizedRoutingTest {
             }
         }
 
-        private List<String> comparePaths(Path refPath, Path path, int source, int target, long seed) {
-            List<String> strictViolations = new ArrayList<>();
-            double refWeight = refPath.getWeight();
-            double weight = path.getWeight();
-            if (Math.abs(refWeight - weight) > 1.e-2) {
-                LOGGER.warn("expected: " + refPath.calcNodes());
-                LOGGER.warn("given:    " + path.calcNodes());
-                LOGGER.warn("seed: " + seed);
-                fail("wrong weight: " + source + "->" + target + "\nexpected: " + refWeight + "\ngiven:    " + weight + "\nseed: " + seed);
-            }
-            if (Math.abs(path.getDistance() - refPath.getDistance()) > 1.e-1) {
-                strictViolations.add("wrong distance " + source + "->" + target + ", expected: " + refPath.getDistance() + ", given: " + path.getDistance());
-            }
-            if (Math.abs(path.getTime() - refPath.getTime()) > 50) {
-                strictViolations.add("wrong time " + source + "->" + target + ", expected: " + refPath.getTime() + ", given: " + path.getTime());
-            }
-            IntIndexedContainer refNodes = refPath.calcNodes();
-            IntIndexedContainer pathNodes = path.calcNodes();
-            if (!refNodes.equals(pathNodes)) {
-                // sometimes paths are only different because of a zero weight loop. we do not consider these as strict
-                // violations, see: #1864
-                boolean isStrictViolation = !ArrayUtil.withoutConsecutiveDuplicates(refNodes).equals(ArrayUtil.withoutConsecutiveDuplicates(pathNodes));
-                // sometimes there are paths including an edge a-c that has the same distance as the two edges a-b-c. in this
-                // case both options are valid best paths. we only check for this most simple and frequent case here...
-                if (pathsEqualExceptOneEdge(refNodes, pathNodes))
-                    isStrictViolation = false;
-                if (isStrictViolation)
-                    strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refNodes + "\ngiven:    " + pathNodes);
-            }
-            return strictViolations;
-        }
-
-        /**
-         * Sometimes the graph can contain edges like this:
-         * A--C
-         * \-B|
-         * where A-C is the same distance as A-B-C. In this case the shortest path is not well defined in terms of nodes.
-         * This method checks if two node-paths are equal except for such an edge.
-         */
-        private boolean pathsEqualExceptOneEdge(IntIndexedContainer p1, IntIndexedContainer p2) {
-            if (p1.equals(p2))
-                throw new IllegalArgumentException("paths are equal");
-            if (Math.abs(p1.size() - p2.size()) != 1)
-                return false;
-            IntIndexedContainer shorterPath = p1.size() < p2.size() ? p1 : p2;
-            IntIndexedContainer longerPath = p1.size() < p2.size() ? p2 : p1;
-            if (shorterPath.size() < 2)
-                return false;
-            IntArrayList indicesWithDifferentNodes = new IntArrayList();
-            for (int i = 1; i < shorterPath.size(); i++) {
-                if (shorterPath.get(i - indicesWithDifferentNodes.size()) != longerPath.get(i)) {
-                    indicesWithDifferentNodes.add(i);
-                }
-            }
-            if (indicesWithDifferentNodes.size() != 1)
-                return false;
-            int b = indicesWithDifferentNodes.get(0);
-            int a = b - 1;
-            int c = b + 1;
-            assert shorterPath.get(a) == longerPath.get(a);
-            assert shorterPath.get(b) != longerPath.get(b);
-            if (shorterPath.get(b) != longerPath.get(c))
-                return false;
-            double distABC = getMinDist(longerPath.get(a), longerPath.get(b)) + getMinDist(longerPath.get(b), longerPath.get(c));
-
-            double distAC = getMinDist(shorterPath.get(a), longerPath.get(c));
-            if (Math.abs(distABC - distAC) > 0.1)
-                return false;
-            LOGGER.info("Distance " + shorterPath.get(a) + "-" + longerPath.get(c) + " is the same as distance " +
-                    longerPath.get(a) + "-" + longerPath.get(b) + "-" + longerPath.get(c) + " -> there are multiple possibilities " +
-                    "for shortest paths");
-            return true;
-        }
-
-        private double getMinDist(int p, int q) {
-            EdgeExplorer explorer = graph.createEdgeExplorer();
-            EdgeIterator iter = explorer.setBaseNode(p);
-            double distance = Double.MAX_VALUE;
-            while (iter.next())
-                if (iter.getAdjNode() == q)
-                    distance = Math.min(distance, iter.getDistance());
-            return distance;
-        }
-
     }
 
     private enum Algo {
@@ -296,8 +230,8 @@ public class RandomizedRoutingTest {
 
     @ParameterizedTest
     @ArgumentsSource(RepeatedFixtureProvider.class)
-    public void randomGraph(Supplier<Fixture> fixtureSupplier) {
-        Fixture f = fixtureSupplier.get();
+    public void randomGraph(FixtureSupplier fixtureSupplier) {
+        Fixture f = fixtureSupplier.supplier.get();
         final long seed = System.nanoTime();
         final int numQueries = 50;
         Random rnd = new Random(seed);
@@ -315,7 +249,7 @@ public class RandomizedRoutingTest {
                     .calcPath(source, target);
             Path path = f.createAlgo()
                     .calcPath(source, target);
-            strictViolations.addAll(f.comparePaths(refPath, path, source, target, seed));
+            strictViolations.addAll(GHUtility.comparePaths(refPath, path, source, target, seed));
         }
         if (strictViolations.size() > 3) {
             for (String strictViolation : strictViolations) {
@@ -330,8 +264,8 @@ public class RandomizedRoutingTest {
      */
     @ParameterizedTest
     @ArgumentsSource(RepeatedFixtureProvider.class)
-    public void randomGraph_withQueryGraph(Supplier<Fixture> fixtureSupplier) {
-        Fixture f = fixtureSupplier.get();
+    public void randomGraph_withQueryGraph(FixtureSupplier fixtureSupplier) {
+        Fixture f = fixtureSupplier.supplier.get();
         final long seed = System.nanoTime();
         final int numQueries = 50;
 
@@ -356,7 +290,7 @@ public class RandomizedRoutingTest {
 
             Path refPath = new DijkstraBidirectionRef(queryGraph, queryGraph.wrapWeighting(f.weighting), f.traversalMode).calcPath(source, target);
             Path path = f.createAlgo(queryGraph).calcPath(source, target);
-            strictViolations.addAll(f.comparePaths(refPath, path, source, target, seed));
+            strictViolations.addAll(GHUtility.comparePaths(refPath, path, source, target, seed));
         }
         // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
         // however, when there are too many deviations we fail

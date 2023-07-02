@@ -27,7 +27,6 @@ import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.application.util.TestUtils;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.json.Statement;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
@@ -46,6 +45,10 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.io.File;
 import java.util.*;
 
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
+import static com.graphhopper.util.Instruction.FINISH;
+import static com.graphhopper.util.Instruction.REACHED_VIA;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -69,8 +72,8 @@ public class RouteResourceClientHCTest {
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
                         new Profile("car").setVehicle("car").setWeighting("fastest"),
-                        new Profile("bike").setVehicle("bike").setWeighting("fastest"),
-                        new CustomProfile("my_custom_car").setCustomModel(new CustomModel()).setVehicle("car")
+                        new CustomProfile("bike").setVehicle("bike"),
+                        new CustomProfile("my_custom_car").setVehicle("car")
                 ))
                 .setCHProfiles(Arrays.asList(new CHProfile("car"), new CHProfile("bike")));
         return config;
@@ -366,7 +369,7 @@ public class RouteResourceClientHCTest {
                 addPoint(new GHPoint(42.532022, 1.519504)).
                 setCustomModel(new CustomModel().setDistanceInfluence(70d)
                         // we reduce the speed in the long tunnel
-                        .addToSpeed(Statement.If("road_environment == TUNNEL", Statement.Op.MULTIPLY, "0.1"))).
+                        .addToSpeed(If("road_environment == TUNNEL", MULTIPLY, "0.1"))).
                 setProfile("my_custom_car").
                 putHint("ch.disable", true);
         GHResponse rsp = gh.route(req);
@@ -378,5 +381,87 @@ public class RouteResourceClientHCTest {
         rsp = gh.route(req);
         assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
         assertEquals(218_000, rsp.getBest().getTime(), 1000);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = TestParam.class)
+    public void testWaypointIndicesAndLegDetails(TestParam p) {
+        GraphHopperWeb gh = createGH(p);
+        List<String> legDetails = Arrays.asList("leg_time", "leg_distance", "leg_weight");
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(42.509141, 1.546063)).
+                addPoint(new GHPoint(42.507173, 1.531902)).
+                addPoint(new GHPoint(42.505435, 1.515943)).
+                addPoint(new GHPoint(42.499062, 1.506067)).
+                addPoint(new GHPoint(42.498801, 1.505568)).
+                addPoint(new GHPoint(42.498465, 1.504898)).
+                addPoint(new GHPoint(42.49833, 1.504619)).
+                addPoint(new GHPoint(42.498217, 1.504377)).
+                addPoint(new GHPoint(42.495611, 1.498368)).
+                setPathDetails(legDetails).
+                setProfile("bike");
+
+        GHResponse response = gh.route(req);
+        ResponsePath path = response.getBest();
+        assertEquals(5428, path.getDistance(), 5);
+        assertEquals(9, path.getWaypoints().size());
+
+        assertEquals(path.getTime(), path.getPathDetails().get("leg_time").stream().mapToLong(d -> (long) d.getValue()).sum(), 1);
+        assertEquals(path.getDistance(), path.getPathDetails().get("leg_distance").stream().mapToDouble(d -> (double) d.getValue()).sum(), 1);
+        assertEquals(path.getRouteWeight(), path.getPathDetails().get("leg_weight").stream().mapToDouble(d -> (double) d.getValue()).sum(), 1);
+
+        List<PointList> pointListFromInstructions = getPointListFromInstructions(path);
+        for (String detail : legDetails) {
+            List<PathDetail> pathDetails = path.getPathDetails().get(detail);
+
+            // explicitly check one of the waypoints
+            assertEquals(42.50539, path.getWaypoints().get(2).lat);
+            assertEquals(42.50539, path.getPoints().get(pathDetails.get(1).getLast()).getLat());
+            assertEquals(42.50539, path.getPoints().get(pathDetails.get(2).getFirst()).getLat());
+            // check all the waypoints
+            assertEquals(path.getWaypoints().get(0), path.getPoints().get(pathDetails.get(0).getFirst()));
+            for (int i = 1; i < path.getWaypoints().size(); ++i)
+                assertEquals(path.getWaypoints().get(i), path.getPoints().get(pathDetails.get(i - 1).getLast()));
+
+            List<PointList> pointListFromLegDetails = getPointListFromLegDetails(path, detail);
+            assertEquals(8, pointListFromLegDetails.size());
+            assertPointListsEquals(pointListFromInstructions, pointListFromLegDetails);
+        }
+    }
+
+    private List<PointList> getPointListFromInstructions(ResponsePath path) {
+        List<PointList> legs = new ArrayList<>();
+        PointList perLeg = new PointList();
+        for (Instruction instruction : path.getInstructions()) {
+            perLeg.add(instruction.getPoints());
+            if (instruction.getSign() == REACHED_VIA || instruction.getSign() == FINISH) {
+                legs.add(perLeg);
+                perLeg = new PointList();
+            } else {
+                perLeg.removeLastPoint();
+            }
+        }
+        return legs;
+    }
+
+    private List<PointList> getPointListFromLegDetails(ResponsePath path, String detail) {
+        List<PointList> legs = new ArrayList<>();
+        List<PathDetail> legDetails = path.getPathDetails().get(detail);
+        for (PathDetail legDetail : legDetails) {
+            PointList leg = new PointList(legDetail.getLast() - legDetail.getFirst() + 1, path.getPoints().is3D());
+            for (int j = legDetail.getFirst(); j <= legDetail.getLast(); j++)
+                leg.add(path.getPoints(), j);
+            legs.add(leg);
+        }
+        return legs;
+    }
+
+    private static void assertPointListsEquals(List<PointList> p, List<PointList> q) {
+        assertEquals(p.size(), q.size());
+        for (int i = 0; i < q.size(); i++) {
+            assertEquals(p.get(i).size(), q.get(i).size());
+            for (int j = 0; j < q.get(i).size(); j++)
+                assertEquals(p.get(i).get(j), q.get(i).get(j));
+        }
     }
 }

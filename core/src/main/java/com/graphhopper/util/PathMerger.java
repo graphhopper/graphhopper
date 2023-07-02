@@ -99,6 +99,7 @@ public class PathMerger {
         InstructionList fullInstructions = new InstructionList(tr);
         PointList fullPoints = PointList.EMPTY;
         List<String> description = new ArrayList<>();
+        List<Integer> wayPointIndices = new ArrayList<>();
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++) {
             Path path = paths.get(pathIndex);
             if (!path.isFound()) {
@@ -136,17 +137,17 @@ public class PathMerger {
 
                 fullPoints.add(tmpPoints);
                 responsePath.addPathDetails(PathDetailsFromEdges.calcDetails(path, evLookup, weighting, requestedPathDetails, pathBuilderFactory, origPoints, graph));
+                wayPointIndices.add(origPoints);
+                if (pathIndex == paths.size() - 1)
+                    wayPointIndices.add(fullPoints.size() - 1);
                 origPoints = fullPoints.size();
             }
 
             allFound = allFound && path.isFound();
         }
 
-        if (!fullPoints.isEmpty()) {
-            responsePath.addDebugInfo("simplify (" + origPoints + "->" + fullPoints.size() + ")");
-            if (fullPoints.is3D)
-                calcAscendDescend(responsePath, fullPoints);
-        }
+        if (!fullPoints.isEmpty() && fullPoints.is3D)
+            calcAscendDescend(responsePath, fullPoints);
 
         if (enableInstructions) {
             fullInstructions = updateInstructionsWithContext(fullInstructions);
@@ -154,7 +155,16 @@ public class PathMerger {
         }
 
         if (!allFound) {
-            responsePath.addError(new ConnectionNotFoundException("Connection between locations not found", Collections.<String, Object>emptyMap()));
+            responsePath.addError(new ConnectionNotFoundException("Connection between locations not found", Collections.emptyMap()));
+        }
+
+        // make sure the way point indices actually point to the points in waypoints...
+        if (allFound && !waypoints.isEmpty()) { // we use empty waypoints for map-matching...
+            for (int i = 0; i < wayPointIndices.size(); i++) {
+                int index = wayPointIndices.get(i);
+                if (waypoints.getLat(i) != fullPoints.getLat(index) || waypoints.getLon(i) != fullPoints.getLon(index))
+                    throw new IllegalStateException("waypoints are not included in points, or waypoint indices are wrong");
+            }
         }
 
         responsePath.setDescription(description).
@@ -162,7 +172,8 @@ public class PathMerger {
                 setRouteWeight(fullWeight).
                 setDistance(fullDistance).
                 setTime(fullTimeInMillis).
-                setWaypoints(waypoints);
+                setWaypoints(waypoints).
+                setWaypointIndices(wayPointIndices);
 
         if (allFound && simplifyResponse && (calcPoints || enableInstructions)) {
             PathSimplification.simplify(responsePath, ramerDouglasPeucker, enableInstructions);

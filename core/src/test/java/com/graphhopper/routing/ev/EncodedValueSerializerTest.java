@@ -18,6 +18,7 @@
 
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -34,10 +35,10 @@ class EncodedValueSerializerTest {
         List<EncodedValue> encodedValues = new ArrayList<>();
         // add enum, int, decimal and boolean encoded values
         DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
-        encodedValues.add(evFactory.create(RoadClass.KEY));
-        encodedValues.add(evFactory.create(Lanes.KEY));
-        encodedValues.add(evFactory.create(MaxWidth.KEY));
-        encodedValues.add(evFactory.create(GetOffBike.KEY));
+        encodedValues.add(evFactory.create(RoadClass.KEY, new PMap()));
+        encodedValues.add(evFactory.create(Lanes.KEY, new PMap()));
+        encodedValues.add(evFactory.create(MaxWidth.KEY, new PMap()));
+        encodedValues.add(evFactory.create(GetOffBike.KEY, new PMap()));
         StringEncodedValue namesEnc = new StringEncodedValue("names", 3, Arrays.asList("jim", "joe", "kate"), false);
         encodedValues.add(namesEnc);
 
@@ -71,9 +72,9 @@ class EncodedValueSerializerTest {
         EncodedValue.InitializerConfig initializerConfig = new EncodedValue.InitializerConfig();
         DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
         List<EncodedValue> evs = Arrays.asList(
-                evFactory.create(Lanes.KEY),
-                evFactory.create(MaxWidth.KEY),
-                evFactory.create(GetOffBike.KEY)
+                evFactory.create(Lanes.KEY, new PMap()),
+                evFactory.create(MaxWidth.KEY, new PMap()),
+                evFactory.create(GetOffBike.KEY, new PMap())
         );
         evs.forEach(ev -> ev.init(initializerConfig));
 
@@ -86,8 +87,8 @@ class EncodedValueSerializerTest {
                 "\"fwd_data_index\":0,\"bwd_data_index\":0,\"fwd_shift\":3,\"bwd_shift\":-1,\"fwd_mask\":1016,\"bwd_mask\":0," +
                 "\"factor\":0.1,\"use_maximum_as_infinity\":true}", serialized.get(1));
         assertEquals("{\"className\":\"com.graphhopper.routing.ev.SimpleBooleanEncodedValue\",\"name\":\"get_off_bike\",\"bits\":1," +
-                "\"min_storable_value\":0,\"max_storable_value\":1,\"max_value\":-2147483648,\"negate_reverse_direction\":false,\"store_two_directions\":false,\"fwd_data_index\":0," +
-                "\"bwd_data_index\":0,\"fwd_shift\":10,\"bwd_shift\":-1,\"fwd_mask\":1024,\"bwd_mask\":0}", serialized.get(2));
+                "\"min_storable_value\":0,\"max_storable_value\":1,\"max_value\":-2147483648,\"negate_reverse_direction\":false,\"store_two_directions\":true,\"fwd_data_index\":0," +
+                "\"bwd_data_index\":0,\"fwd_shift\":10,\"bwd_shift\":11,\"fwd_mask\":1024,\"bwd_mask\":2048}", serialized.get(2));
 
         EncodedValue ev0 = EncodedValueSerializer.deserializeEncodedValue(serialized.get(0));
         assertEquals("lanes", ev0.getName());

@@ -28,7 +28,7 @@ import com.graphhopper.routing.util.countryrules.CountryRule;
  * @author Thomas Butz
  */
 public class SloveniaCountryRule implements CountryRule {
-    
+
     @Override
     public Toll getToll(ReaderWay readerWay, Toll currentToll) {
         if (currentToll != Toll.MISSING) {
@@ -37,11 +37,11 @@ public class SloveniaCountryRule implements CountryRule {
 
         RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
         switch (roadClass) {
-        case MOTORWAY:
-        case TRUNK:
-            return Toll.ALL;
-        default:
-            return currentToll;
+            case MOTORWAY:
+            case TRUNK:
+                return Toll.ALL;
+            default:
+                return currentToll;
         }
     }
 }

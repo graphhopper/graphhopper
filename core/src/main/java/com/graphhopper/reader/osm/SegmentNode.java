@@ -18,12 +18,16 @@
 
 package com.graphhopper.reader.osm;
 
+import java.util.Map;
+
 class SegmentNode {
     long osmNodeId;
-    int id;
+    long id;
+    Map<String, Object> tags;
 
-    public SegmentNode(long osmNodeId, int id) {
+    public SegmentNode(long osmNodeId, long id, Map<String, Object> tags) {
         this.osmNodeId = osmNodeId;
         this.id = id;
+        this.tags = tags;
     }
 }

@@ -27,7 +27,9 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.jackson.ResponsePathDeserializer;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
@@ -202,11 +204,15 @@ public class GraphHopperWeb {
                 return res;
 
             JsonNode paths = json.get("paths");
-
             for (JsonNode path : paths) {
                 ResponsePath altRsp = ResponsePathDeserializer.createResponsePath(objectMapper, path, tmpElevation, tmpTurnDescription);
                 res.add(altRsp);
             }
+
+            JsonNode b = json.get("hints");
+            PMap hints = new PMap();
+            b.fields().forEachRemaining(f -> hints.putObject(f.getKey(), Helper.toObject(f.getValue().asText())));
+            res.setHints(hints);
 
             return res;
 
@@ -277,7 +283,7 @@ public class GraphHopperWeb {
         requestJson.put("elevation", ghRequest.getHints().getBool("elevation", elevation));
         requestJson.put("optimize", ghRequest.getHints().getString("optimize", optimize));
         if (ghRequest.getCustomModel() != null)
-            requestJson.putPOJO("custom_model", ghRequest.getCustomModel());
+            requestJson.putPOJO(CustomModel.KEY, ghRequest.getCustomModel());
 
         Map<String, Object> hintsMap = ghRequest.getHints().toMap();
         for (Map.Entry<String, Object> entry : hintsMap.entrySet()) {

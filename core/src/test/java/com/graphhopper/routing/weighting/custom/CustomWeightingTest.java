@@ -12,7 +12,6 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,10 +40,10 @@ class CustomWeightingTest {
         accessEnc = VehicleAccess.create("car");
         avSpeedEnc = VehicleSpeed.create("car", 5, 5, true);
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avSpeedEnc)
-                .add(new EnumEncodedValue<>(Toll.KEY, Toll.class))
-                .add(new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class))
-                .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
                 .add(Orientation.create())
+                .add(Toll.create())
+                .add(Hazmat.create())
+                .add(RouteNetwork.create(BikeNetwork.KEY))
                 .build();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
@@ -245,7 +244,8 @@ class CustomWeightingTest {
         ObjectMapper om = new ObjectMapper().registerModule(new JtsModule());
         JsonFeature json = om.readValue("{ \"geometry\":{ \"type\": \"Polygon\", \"coordinates\": " +
                 "[[[11.5818,50.0126], [11.5818,50.0119], [11.5861,50.0119], [11.5861,50.0126], [11.5818,50.0126]]] }}", JsonFeature.class);
-        vehicleModel.getAreas().put("custom1", json);
+        json.setId("custom1");
+        vehicleModel.getAreas().getFeatures().add(json);
 
         // edge1 is located within the area custom1, edge2 is not
         assertEquals(1.6, createWeighting(vehicleModel).calcEdgeWeight(edge1, false), 0.01);
@@ -364,15 +364,16 @@ class CustomWeightingTest {
         graph.getNodeAccess().setNode(3, 0.010, 0.000);
         graph.getNodeAccess().setNode(4, 0.000, 0.008);
 
+        EdgeIntAccess edgeIntAccess = graph.createEdgeIntAccess();
         //      1
         //      |
         //   /--2
         //   3-/|
         //      4
-        EdgeIteratorState edge12 = setPointList(calc, graph.edge(1, 2));
-        EdgeIteratorState edge24 = setPointList(calc, graph.edge(2, 4));
-        EdgeIteratorState edge23 = setPointList(calc, graph.edge(2, 3), Arrays.asList(0.020, 0.002));
-        EdgeIteratorState edge23down = setPointList(calc, graph.edge(2, 3), Arrays.asList(0.010, 0.005));
+        EdgeIteratorState edge12 = handleWayTags(edgeIntAccess, calc, graph.edge(1, 2));
+        EdgeIteratorState edge24 = handleWayTags(edgeIntAccess, calc, graph.edge(2, 4));
+        EdgeIteratorState edge23 = handleWayTags(edgeIntAccess, calc, graph.edge(2, 3), Arrays.asList(0.020, 0.002));
+        EdgeIteratorState edge23down = handleWayTags(edgeIntAccess, calc, graph.edge(2, 3), Arrays.asList(0.010, 0.005));
 
         CustomWeighting.Parameters parameters = new CustomWeighting.Parameters(null, null, 0, 0, 0, 0,
                 tcConfig);
@@ -387,11 +388,11 @@ class CustomWeightingTest {
         assertEquals(tcConfig.getRightCost(), parameters.calcTurnWeight(edge12.getEdge(), 2, edge23.getEdge(), graph, orientationEnc));
     }
 
-    EdgeIteratorState setPointList(OrientationCalculator calc, EdgeIteratorState edge) {
-        return setPointList(calc, edge, Arrays.asList());
+    EdgeIteratorState handleWayTags(EdgeIntAccess edgeIntAccess, OrientationCalculator calc, EdgeIteratorState edge) {
+        return handleWayTags(edgeIntAccess, calc, edge, Arrays.asList());
     }
 
-    EdgeIteratorState setPointList(OrientationCalculator calc, EdgeIteratorState edge, List<Double> rawPointList) {
+    EdgeIteratorState handleWayTags(EdgeIntAccess edgeIntAccess, OrientationCalculator calc, EdgeIteratorState edge, List<Double> rawPointList) {
         if (rawPointList.size() % 2 != 0) throw new IllegalArgumentException();
         if (!rawPointList.isEmpty()) {
             PointList list = new PointList();
@@ -403,9 +404,7 @@ class CustomWeightingTest {
 
         ReaderWay way = new ReaderWay(1);
         way.setTag("point_list", edge.fetchWayGeometry(FetchMode.ALL));
-        IntsRef intsRef = edge.getFlags();
-        calc.handleWayTags(intsRef, way, null);
-        edge.setFlags(intsRef);
+        calc.handleWayTags(edge.getEdge(), edgeIntAccess, way, null);
         return edge;
     }
 
@@ -415,7 +414,7 @@ class CustomWeightingTest {
         DecimalEncodedValue tcAvgSpeedEnc = VehicleSpeed.create("car", 5, 5, true);
         DecimalEncodedValue orientEnc = Orientation.create();
         EncodingManager em = new EncodingManager.Builder().add(tcAccessEnc).add(tcAvgSpeedEnc).add(orientEnc).build();
-        Graph turnGraph = new BaseGraph.Builder(em).withTurnCosts(true).create();
+        BaseGraph turnGraph = new BaseGraph.Builder(em).withTurnCosts(true).create();
 
         CustomModel vehicleModel = new CustomModel();
 
@@ -435,12 +434,13 @@ class CustomWeightingTest {
         CustomWeighting weighting = CustomModelParser.createWeighting(turnGraph, orientEnc, tcAccessEnc, tcAvgSpeedEnc,
                 null, em, new DefaultTurnCostProvider(turnCostEnc, turnGraph.getTurnCostStorage()), vehicleModel);
         OrientationCalculator calc = new OrientationCalculator(orientEnc);
-        EdgeIteratorState edge01 = setPointList(calc, turnGraph.edge(0, 1).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
-        EdgeIteratorState edge13 = setPointList(calc, turnGraph.edge(1, 3).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
-        EdgeIteratorState edge14 = setPointList(calc, turnGraph.edge(1, 4).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
-        EdgeIteratorState edge26 = setPointList(calc, turnGraph.edge(2, 6).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
-        EdgeIteratorState edge25 = setPointList(calc, turnGraph.edge(2, 5).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
-        EdgeIteratorState edge12 = setPointList(calc, turnGraph.edge(1, 2).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
+        EdgeIntAccess edgeIntAccess = turnGraph.createEdgeIntAccess();
+        EdgeIteratorState edge01 = handleWayTags(edgeIntAccess, calc, turnGraph.edge(0, 1).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
+        EdgeIteratorState edge13 = handleWayTags(edgeIntAccess, calc, turnGraph.edge(1, 3).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
+        EdgeIteratorState edge14 = handleWayTags(edgeIntAccess, calc, turnGraph.edge(1, 4).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
+        EdgeIteratorState edge26 = handleWayTags(edgeIntAccess, calc, turnGraph.edge(2, 6).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
+        EdgeIteratorState edge25 = handleWayTags(edgeIntAccess, calc, turnGraph.edge(2, 5).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
+        EdgeIteratorState edge12 = handleWayTags(edgeIntAccess, calc, turnGraph.edge(1, 2).setDistance(500).set(tcAvgSpeedEnc, 15).set(tcAccessEnc, true, true));
 
         // from top to left => right turn
         assertEquals(0.5, weighting.calcTurnWeight(edge14.getEdge(), 1, edge01.getEdge()), 0.01);

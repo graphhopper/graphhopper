@@ -17,42 +17,34 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.Helper;
+
 /**
  * This enum defines the road class of an edge. It is heavily influenced from the highway tag in OSM that can be
  * primary, cycleway etc. All edges that do not fit get OTHER as value.
  */
 public enum RoadClass {
-    OTHER("other"), MOTORWAY("motorway"),
-    TRUNK("trunk"), PRIMARY("primary"), SECONDARY("secondary"),
-    TERTIARY("tertiary"), RESIDENTIAL("residential"), UNCLASSIFIED("unclassified"),
-    SERVICE("service"), ROAD("road"), TRACK("track"),
-    BRIDLEWAY("bridleway"), STEPS("steps"), CYCLEWAY("cycleway"),
-    PATH("path"), LIVING_STREET("living_street"), FOOTWAY("footway"),
-    PEDESTRIAN("pedestrian"), PLATFORM("platform"), CORRIDOR("corridor");
+    OTHER, MOTORWAY, TRUNK, PRIMARY, SECONDARY, TERTIARY, RESIDENTIAL, UNCLASSIFIED,
+    SERVICE, ROAD, TRACK, BRIDLEWAY, STEPS, CYCLEWAY, PATH, LIVING_STREET, FOOTWAY, PEDESTRIAN, PLATFORM, CORRIDOR;
 
     public static final String KEY = "road_class";
 
-    private final String name;
-
-    RoadClass(String name) {
-        this.name = name;
+    public static EnumEncodedValue<RoadClass> create() {
+        return new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
     }
 
     @Override
     public String toString() {
-        return name;
+        return Helper.toLowerCase(super.toString());
     }
 
     public static RoadClass find(String name) {
         if (name == null || name.isEmpty())
             return OTHER;
-
-        for (RoadClass roadClass : values()) {
-            if (roadClass.name().equalsIgnoreCase(name)) {
-                return roadClass;
-            }
+        try {
+            return RoadClass.valueOf(Helper.toUpperCase(name));
+        } catch (IllegalArgumentException ex) {
+            return OTHER;
         }
-
-        return OTHER;
     }
 }

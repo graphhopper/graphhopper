@@ -30,8 +30,6 @@ import java.io.UncheckedIOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.graphhopper.util.Helper.toLowerCase;
-
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
  * during parsing. Create one via:
@@ -45,26 +43,6 @@ public class EncodingManager implements EncodedValueLookup {
     private final LinkedHashMap<String, EncodedValue> encodedValueMap;
     private int intsForFlags;
     private int intsForTurnCostFlags;
-
-    /**
-     * Instantiate manager with the given list of encoders. The manager knows several default
-     * encoders using DefaultVehicleEncodedValuesFactory.
-     */
-    public static EncodingManager create(String flagEncodersStr) {
-        return create(new DefaultVehicleEncodedValuesFactory(), flagEncodersStr);
-    }
-
-    public static EncodingManager create(VehicleEncodedValuesFactory factory, String flagEncodersStr) {
-        return createBuilder(Arrays.stream(flagEncodersStr.split(",")).filter(s -> !s.trim().isEmpty()).
-                map(s -> parseEncoderString(factory, s)).collect(Collectors.toList())).build();
-    }
-
-    private static EncodingManager.Builder createBuilder(List<? extends VehicleEncodedValues> vehicleEncodedValues) {
-        Builder builder = new Builder();
-        for (VehicleEncodedValues v : vehicleEncodedValues)
-            builder.add(v);
-        return builder;
-    }
 
     public static void putEncodingManagerIntoProperties(EncodingManager encodingManager, StorableProperties properties) {
         properties.put("graph.em.version", Constants.VERSION_EM);
@@ -192,7 +170,7 @@ public class EncodingManager implements EncodedValueLookup {
                     MaxSpeed.KEY,
                     RoadAccess.KEY
             ));
-            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("bike") || vehicle.contains("mtb"))) {
+            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("bike") || vehicle.contains("mtb") || vehicle.contains("racingbike"))) {
                 keys.add(BikeNetwork.KEY);
                 keys.add(GetOffBike.KEY);
                 keys.add(Smoothness.KEY);
@@ -203,25 +181,8 @@ public class EncodingManager implements EncodedValueLookup {
             DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
             for (String key : keys)
                 if (!em.hasEncodedValue(key))
-                    add(evFactory.create(key));
+                    add(evFactory.create(key, new PMap()));
         }
-    }
-
-    static VehicleEncodedValues parseEncoderString(VehicleEncodedValuesFactory factory, String encoderString) {
-        if (!encoderString.equals(toLowerCase(encoderString)))
-            throw new IllegalArgumentException("An upper case name for the vehicle is not allowed: " + encoderString);
-
-        encoderString = encoderString.trim();
-        if (encoderString.isEmpty())
-            throw new IllegalArgumentException("vehicle cannot be empty. " + encoderString);
-
-        String entryVal = "";
-        if (encoderString.contains("|")) {
-            entryVal = encoderString;
-            encoderString = encoderString.split("\\|")[0];
-        }
-        PMap configuration = new PMap(entryVal);
-        return factory.createVehicleEncodedValues(encoderString, configuration);
     }
 
     public int getIntsForFlags() {

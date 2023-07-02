@@ -29,6 +29,7 @@ public class AlgorithmOptions {
     private String algorithm = Parameters.Algorithms.DIJKSTRA_BI;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
+    private long timeoutMillis = Long.MAX_VALUE;
 
     public AlgorithmOptions() {
     }
@@ -55,6 +56,11 @@ public class AlgorithmOptions {
         return this;
     }
 
+    public AlgorithmOptions setTimeoutMillis(long timeoutMillis) {
+        this.timeoutMillis = timeoutMillis;
+        return this;
+    }
+
     public AlgorithmOptions setHints(PMap pMap) {
         this.hints = new PMap(pMap);
         return this;
@@ -70,6 +76,10 @@ public class AlgorithmOptions {
 
     public int getMaxVisitedNodes() {
         return maxVisitedNodes;
+    }
+
+    public long getTimeoutMillis() {
+        return timeoutMillis;
     }
 
     public PMap getHints() {
