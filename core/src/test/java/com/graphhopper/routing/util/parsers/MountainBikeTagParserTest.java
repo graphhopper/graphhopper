@@ -22,7 +22,6 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.util.PMap;
@@ -48,39 +47,35 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     public void testSpeedAndPriority() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
-        assertPriorityAndSpeed(AVOID.getValue(), 18, way);
+        assertPriorityAndSpeed(BAD, 18, way);
 
         way.setTag("highway", "residential");
-        assertPriorityAndSpeed(PREFER.getValue(), 16, way);
+        assertPriorityAndSpeed(PREFER, 16, way);
 
         // Test pushing section speeds
         way.setTag("highway", "footway");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
+        assertPriorityAndSpeed(SLIGHT_AVOID, PUSHING_SECTION_SPEED, way);
 
         way.setTag("highway", "track");
-        assertPriorityAndSpeed(PREFER.getValue(), 18, way);
-
-        way.setTag("highway", "steps");
-        assertPriorityAndSpeed(SLIGHT_AVOID.getValue(), PUSHING_SECTION_SPEED, way);
-        way.clearTags();
+        assertPriorityAndSpeed(PREFER, 18, way);
 
         // test speed for allowed pushing section types
         way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
-        assertPriorityAndSpeed(PREFER.getValue(), 18, way);
+        assertPriorityAndSpeed(PREFER, 18, way);
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "yes");
         way.setTag("tracktype", "grade3");
-        assertPriorityAndSpeed(VERY_NICE.getValue(), 12, way);
+        assertPriorityAndSpeed(VERY_NICE, 12, way);
 
         way.setTag("surface", "paved");
-        assertPriorityAndSpeed(VERY_NICE.getValue(), 18, way);
+        assertPriorityAndSpeed(VERY_NICE, 18, way);
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "ground");
-        assertPriorityAndSpeed(PREFER.getValue(), 16, way);
+        assertPriorityAndSpeed(PREFER, 16, way);
     }
 
     @Test
@@ -145,20 +140,20 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
         ReaderRelation osmRel = new ReaderRelation(1);
         // unchanged
-        assertPriorityAndSpeed(PriorityCode.PREFER.getValue(), 18, osmWay);
+        assertPriorityAndSpeed(PREFER, 18, osmWay);
 
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(PriorityCode.PREFER.getValue(), 18, osmWay);
+        assertPriorityAndSpeed(PREFER, 18, osmWay);
 
         // relation code is PREFER
         osmRel.setTag("network", "rcn");
-        assertPriorityAndSpeed(PriorityCode.PREFER.getValue(), 18, osmWay);
+        assertPriorityAndSpeed(PREFER, 18, osmWay);
 
         // relation code is PREFER
         osmRel.setTag("network", "ncn");
-        assertPriorityAndSpeed(PriorityCode.PREFER.getValue(), 18, osmWay);
+        assertPriorityAndSpeed(PREFER, 18, osmWay);
 
         // PREFER relation, but tertiary road
         // => no pushing section but road wayTypeCode and faster
@@ -167,7 +162,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(PriorityCode.PREFER.getValue(), 18, osmWay);
+        assertPriorityAndSpeed(PREFER, 18, osmWay);
     }
 
     // Issue 407 : Always block kissing_gate execpt for mountainbikes

@@ -37,7 +37,7 @@ public class RouteResourceTruckTest {
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,hgv").
                 putObject("import.osm.ignored_highways", "").
                 putObject("custom_models.directory", "./src/test/resources/com/graphhopper/application/resources").
-                setProfiles(Arrays.asList(new CustomProfile("truck").setVehicle("roads").putHint("custom_model_file", "truck.json"))).
+                setProfiles(Arrays.asList(new CustomProfile("truck").setCustomModel(null).setVehicle("roads").putHint("custom_model_files", Arrays.asList("truck.json")))).
                 setCHProfiles(Arrays.asList(new CHProfile("truck")));
         return config;
     }
@@ -65,8 +65,8 @@ public class RouteResourceTruckTest {
         // ... but when we disable CH it works
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"truck\", \"custom_model\": {}, \"ch.disable\": true}";
         JsonNode path = query(body, 200).readEntity(JsonNode.class).get("paths").get(0);
-        assertEquals(path.get("distance").asDouble(), 1008, 10);
-        assertEquals(path.get("time").asLong(), 49_000, 1_000);
+        assertEquals(1008, path.get("distance").asDouble(), 10);
+        assertEquals(49_000, path.get("time").asLong(), 1_000);
     }
 
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {

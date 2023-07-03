@@ -1,8 +1,8 @@
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
 import com.graphhopper.routing.ev.StringEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,7 +18,7 @@ public class ConditionalExpressionVisitorTest {
     public void before() {
         StringEncodedValue sev = new StringEncodedValue("country", 10);
         new EncodingManager.Builder().add(sev).build();
-        sev.setString(false, new IntsRef(1), "DEU");
+        sev.setString(false, 0, new ArrayEdgeIntAccess(1), "DEU");
     }
 
     @Test
@@ -74,7 +74,8 @@ public class ConditionalExpressionVisitorTest {
 
     @Test
     public void isValidAndSimpleCondition() {
-        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s) || s.equals("road_class") || s.equals("toll") || s.equals("my_speed") || s.equals("backward_my_speed");
+        NameValidator validVariable = s -> Helper.toUpperCase(s).equals(s)
+                || s.equals("road_class") || s.equals("toll") || s.equals("my_speed") || s.equals("backward_my_speed");
 
         ParseResult result = parse("in_something", validVariable);
         assertTrue(result.ok);

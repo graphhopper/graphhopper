@@ -69,7 +69,9 @@ public class PtRouteResource {
                             @QueryParam("pt.limit_trip_time") DurationParam limitTripTime,
                             @QueryParam("pt.limit_street_time") DurationParam limitStreetTime,
                             @QueryParam("pt.access_profile") String accessProfile,
+                            @QueryParam("pt.beta_access_time") Double betaAccessTime,
                             @QueryParam("pt.egress_profile") String egressProfile,
+                            @QueryParam("pt.beta_egress_time") Double betaEgressTime,
                             @QueryParam("pt.algorithm") String algorithm) {
         PtRouter ptRouter = serviceLocator.getService(PtRouter.class, algorithm);
 
@@ -87,7 +89,9 @@ public class PtRouteResource {
         Optional.ofNullable(limitTripTime.get()).ifPresent(request::setLimitTripTime);
         Optional.ofNullable(limitStreetTime.get()).ifPresent(request::setLimitStreetTime);
         Optional.ofNullable(accessProfile).ifPresent(request::setAccessProfile);
+        Optional.ofNullable(betaAccessTime).ifPresent(request::setBetaAccessTime);
         Optional.ofNullable(egressProfile).ifPresent(request::setEgressProfile);
+        Optional.ofNullable(betaEgressTime).ifPresent(request::setBetaEgressTime);
 
         GHResponse route = ptRouter.route(request);
         return ResponsePathSerializer.jsonObject(route, false, false, false, false, stopWatch.stop().getMillis());

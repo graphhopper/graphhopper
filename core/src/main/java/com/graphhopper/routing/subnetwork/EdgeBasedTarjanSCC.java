@@ -321,25 +321,25 @@ public class EdgeBasedTarjanSCC {
 
     private void pushUpdateLowLinks(int p, int q) {
         assert p >= 0 && q >= 0;
-        dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, q));
+        dfsStackPQ.addLast(bitUtil.toLong(p, q));
         dfsStackAdj.addLast(-1);
     }
 
     private void pushBuildComponent(int p) {
         assert p >= 0;
-        dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, -2));
+        dfsStackPQ.addLast(bitUtil.toLong(p, -2));
         dfsStackAdj.addLast(-2);
     }
 
     private void pushFindComponentForEdgeKey(int p, int adj) {
         assert p >= 0 && adj >= 0;
-        dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, -1));
+        dfsStackPQ.addLast(bitUtil.toLong(p, -1));
         dfsStackAdj.addLast(adj);
     }
 
     private void pushHandleNeighbor(int p, int q, int adj) {
         assert p >= 0 && q >= 0 && adj >= 0;
-        dfsStackPQ.addLast(bitUtil.combineIntsToLong(p, q));
+        dfsStackPQ.addLast(bitUtil.toLong(p, q));
         dfsStackAdj.addLast(adj);
     }
 

@@ -43,7 +43,7 @@ public final class GraphExplorer {
     private final RealtimeFeed realtimeFeed;
     private final boolean reverse;
     private final Weighting accessEgressWeighting;
-    private final boolean walkOnly;
+    private final boolean streetOnly;
     private final boolean ptOnly;
     private final double walkSpeedKmH;
     private final boolean ignoreValidities;
@@ -51,7 +51,7 @@ public final class GraphExplorer {
     private final PtGraph ptGraph;
     private final Graph graph;
 
-    public GraphExplorer(Graph graph, PtGraph ptGraph, Weighting accessEgressWeighting, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean walkOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities, int blockedRouteTypes) {
+    public GraphExplorer(Graph graph, PtGraph ptGraph, Weighting accessEgressWeighting, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, boolean streetOnly, boolean ptOnly, double walkSpeedKmh, boolean ignoreValidities, int blockedRouteTypes) {
         this.graph = graph;
         this.ptGraph = ptGraph;
         this.accessEgressWeighting = accessEgressWeighting;
@@ -61,7 +61,7 @@ public final class GraphExplorer {
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
         this.reverse = reverse;
-        this.walkOnly = walkOnly;
+        this.streetOnly = streetOnly;
         this.ptOnly = ptOnly;
         this.walkSpeedKmH = walkSpeedKmh;
     }
@@ -106,14 +106,14 @@ public final class GraphExplorer {
                     // off the priority queue. Additionally, when only walking,
                     // don't bother finding the enterEdge, because we are not going to enter.
                     if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
-                        if (walkOnly) {
+                        if (streetOnly) {
                             return false;
                         } else {
                             action.accept(new MultiModalEdge(findEnterEdge(edge))); // fully consumes edgeIterator
                             return true;
                         }
                     }
-                    if (walkOnly && edgeType != (reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT)) {
+                    if (streetOnly && edgeType != (reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT)) {
                         continue;
                     }
                     if (!(ignoreValidities || isValidOn(edge, currentTime))) {

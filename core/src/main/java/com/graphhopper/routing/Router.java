@@ -426,6 +426,12 @@ public class Router {
         int getMaxVisitedNodes(PMap hints) {
             return hints.getInt(Parameters.Routing.MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes());
         }
+
+        long getTimeoutMillis(PMap hints) {
+            // we silently use the minimum between the requested timeout and the server-side limit
+            // see: https://github.com/graphhopper/graphhopper/pull/2795#discussion_r1168371343
+            return Math.min(routerConfig.getTimeoutMillis(), hints.getLong(TIMEOUT_MS, routerConfig.getTimeoutMillis()));
+        }
     }
 
     private static class CHSolver extends Solver {
@@ -468,6 +474,7 @@ public class Router {
             PMap opts = new PMap(request.getHints());
             opts.putObject(ALGORITHM, request.getAlgorithm());
             opts.putObject(MAX_VISITED_NODES, getMaxVisitedNodes(request.getHints()));
+            opts.putObject(TIMEOUT_MS, getTimeoutMillis(request.getHints()));
             return new CHPathCalculator(new CHRoutingAlgorithmFactory(getRoutingCHGraph(profile.getName()), queryGraph), opts);
         }
 
@@ -520,6 +527,7 @@ public class Router {
                     setAlgorithm(request.getAlgorithm()).
                     setTraversalMode(profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED).
                     setMaxVisitedNodes(getMaxVisitedNodes(request.getHints())).
+                    setTimeoutMillis(getTimeoutMillis(request.getHints())).
                     setHints(request.getHints());
 
             // use A* for round trips

@@ -28,7 +28,7 @@ import com.graphhopper.util.PointAccess;
  *
  * @author Peter Karich
  */
-public class PillarInfo implements PointAccess {
+public class PillarInfo {
     private static final int LAT = 0 * 4, LON = 1 * 4, ELE = 2 * 4;
     private final boolean enabled3D;
     private final DataAccess da;
@@ -42,26 +42,22 @@ public class PillarInfo implements PointAccess {
         this.rowSizeInBytes = getDimension() * 4;
     }
 
-    @Override
     public boolean is3D() {
         return enabled3D;
     }
 
-    @Override
     public int getDimension() {
         return enabled3D ? 3 : 2;
     }
 
-    @Override
-    public void ensureNode(int nodeId) {
-        long tmp = (long) nodeId * rowSizeInBytes;
+    public void ensureNode(long nodeId) {
+        long tmp = nodeId * rowSizeInBytes;
         da.ensureCapacity(tmp + rowSizeInBytes);
     }
 
-    @Override
-    public void setNode(int nodeId, double lat, double lon, double ele) {
+    public void setNode(long nodeId, double lat, double lon, double ele) {
         ensureNode(nodeId);
-        long tmp = (long) nodeId * rowSizeInBytes;
+        long tmp = nodeId * rowSizeInBytes;
         da.setInt(tmp + LAT, Helper.degreeToInt(lat));
         da.setInt(tmp + LON, Helper.degreeToInt(lon));
 
@@ -69,24 +65,21 @@ public class PillarInfo implements PointAccess {
             da.setInt(tmp + ELE, Helper.eleToInt(ele));
     }
 
-    @Override
-    public double getLat(int id) {
-        int intVal = da.getInt((long) id * rowSizeInBytes + LAT);
+    public double getLat(long id) {
+        int intVal = da.getInt(id * rowSizeInBytes + LAT);
         return Helper.intToDegree(intVal);
     }
 
-    @Override
-    public double getLon(int id) {
-        int intVal = da.getInt((long) id * rowSizeInBytes + LON);
+    public double getLon(long id) {
+        int intVal = da.getInt(id * rowSizeInBytes + LON);
         return Helper.intToDegree(intVal);
     }
 
-    @Override
-    public double getEle(int id) {
+    public double getEle(long id) {
         if (!is3D())
             return Double.NaN;
 
-        int intVal = da.getInt((long) id * rowSizeInBytes + ELE);
+        int intVal = da.getInt(id * rowSizeInBytes + ELE);
         return Helper.intToEle(intVal);
     }
 

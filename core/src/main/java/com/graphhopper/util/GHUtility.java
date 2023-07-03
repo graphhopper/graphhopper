@@ -27,6 +27,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.State;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.CustomArea;
@@ -48,15 +49,13 @@ import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import static com.graphhopper.routing.ev.State.ISO_3166_2;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 
 /**
@@ -66,6 +65,7 @@ import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
  * @author Peter Karich
  */
 public class GHUtility {
+    public static final Logger OSM_WARNING_LOGGER = LoggerFactory.getLogger("com.graphhopper.osm_warnings");
     private static final Logger LOGGER = LoggerFactory.getLogger(GHUtility.class);
 
     /**
@@ -614,20 +614,23 @@ public class GHUtility {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JtsModule());
 
-        Map<String, Country> map = new HashMap<>(Country.values().length);
-        for (Country c : Country.values()) map.put(c.getAlpha2(), c);
+        Set<String> enumSet = new HashSet<>(Country.values().length * 2);
+        for (Country c : Country.values()) {
+            if (c == Country.MISSING) continue;
+            if (c.getStates().isEmpty()) enumSet.add(c.getAlpha2());
+            else for (State s : c.getStates()) enumSet.add(s.getStateCode());
+        }
 
         try (Reader reader = new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/countries/countries.geojson"), StandardCharsets.UTF_8)) {
             JsonFeatureCollection jsonFeatureCollection = objectMapper.readValue(reader, JsonFeatureCollection.class);
             return jsonFeatureCollection.getFeatures().stream()
                     // exclude areas not in the list of Country enums like FX => Metropolitan France
-                    .filter(customArea -> map.get(getIdOrPropertiesId(customArea)) != null)
+                    .filter(customArea -> enumSet.contains(getIdOrPropertiesId(customArea)))
                     .map((f) -> {
                         CustomArea ca = CustomArea.fromJsonFeature(f);
                         // the Feature does not include "id" but we expect it
                         if (f.getId() == null) f.setId(getIdOrPropertiesId(f));
-                        Country country = map.get(f.getId());
-                        ca.getProperties().put(Country.ISO_ALPHA3, country.name());
+                        ca.getProperties().put(ISO_3166_2, f.getId());
                         return ca;
                     })
                     .collect(Collectors.toList());
@@ -642,34 +645,14 @@ public class GHUtility {
         return null;
     }
 
-    public static CustomArea getFirstDuplicateArea(List<CustomArea> areas, String id) {
-        Set<String> result = new HashSet<>(areas.size());
-        for (CustomArea area : areas) {
-            if (area.getProperties() == null) continue;
-            String countryCode = (String) area.getProperties().get(id);
-            // in our country file there are not only countries but "subareas" (with ISO3166-2) or other unnamed areas
-            // like Metropolitan Netherlands
-            if (countryCode != null && !result.add(countryCode))
-                return area;
-        }
-        return null;
-    }
-
-    public static void runConcurrently(Stream<Callable<String>> callables, int threads) {
-        ExecutorService executorService = Executors.newFixedThreadPool(threads);
-        ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
-        AtomicInteger count = new AtomicInteger();
-        callables.forEach(c -> {
-            count.incrementAndGet();
-            completionService.submit(c);
-        });
-        executorService.shutdown();
+    public static void runConcurrently(Stream<Runnable> runnables, int threads) {
+        ForkJoinPool pool = new ForkJoinPool(threads);
         try {
-            for (int i = 0; i < count.get(); i++)
-                completionService.take().get();
-        } catch (Exception e) {
-            executorService.shutdownNow();
+            pool.submit(() -> runnables.parallel().forEach(Runnable::run)).get();
+        } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
+        } finally {
+            pool.shutdown();
         }
     }
 

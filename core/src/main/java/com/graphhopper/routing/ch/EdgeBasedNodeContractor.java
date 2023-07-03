@@ -213,7 +213,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
                         root = root.getParent();
                     // we make sure to add each shortcut only once. when we are actually adding shortcuts we check for existing
                     // shortcuts anyway, but at least this is important when we *count* shortcuts.
-                    long addedShortcutKey = BitUtil.LITTLE.combineIntsToLong(root.firstEdgeKey, bridgePath.value.chEntry.incEdgeKey);
+                    long addedShortcutKey = BitUtil.LITTLE.toLong(root.firstEdgeKey, bridgePath.value.chEntry.incEdgeKey);
                     if (!addedShortcuts.add(addedShortcutKey))
                         continue;
                     double initialTurnCost = prepareGraph.getTurnWeight(origInKey, sourceNode, root.firstEdgeKey);

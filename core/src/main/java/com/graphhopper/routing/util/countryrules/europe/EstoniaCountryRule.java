@@ -24,7 +24,7 @@ import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 
 public class EstoniaCountryRule implements CountryRule {
-    
+
     @Override
     public Toll getToll(ReaderWay readerWay, Toll currentToll) {
         if (currentToll != Toll.MISSING) {
@@ -35,7 +35,7 @@ public class EstoniaCountryRule implements CountryRule {
         if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK || roadClass == RoadClass.PRIMARY) {
             return Toll.HGV;
         }
-        
+
         return currentToll;
     }
 }

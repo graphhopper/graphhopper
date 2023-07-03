@@ -19,20 +19,20 @@
 package com.graphhopper.routing.util.countryrules;
 
 
-import static com.graphhopper.routing.ev.Country.*;
+import com.graphhopper.routing.ev.Country;
+import com.graphhopper.routing.util.countryrules.europe.*;
 
 import java.util.EnumMap;
 import java.util.Map;
 
-import com.graphhopper.routing.ev.Country;
-import com.graphhopper.routing.util.countryrules.europe.*;
+import static com.graphhopper.routing.ev.Country.*;
 
 public class CountryRuleFactory {
-    
+
     private final Map<Country, CountryRule> rules = new EnumMap<>(Country.class);
-    
+
     public CountryRuleFactory() {
-        
+
         // Europe
         rules.put(ALB, new AlbaniaCountryRule());
         rules.put(AND, new AndorraCountryRule());
@@ -88,7 +88,7 @@ public class CountryRuleFactory {
     public CountryRule getCountryRule(Country country) {
         return rules.get(country);
     }
-    
+
     public Map<Country, CountryRule> getCountryToRuleMap() {
         return rules;
     }

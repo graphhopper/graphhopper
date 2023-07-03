@@ -2,8 +2,8 @@ package com.graphhopper.routing.util.parsers.helpers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.MaxSpeed;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
@@ -29,16 +29,40 @@ public class OSMValueExtractor {
         // utility class
     }
 
-    public static void extractTons(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
+    public static void extractTons(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
         final String rawValue = way.getFirstPriorityTag(keys);
         double value = stringToTons(rawValue);
 
         if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
 
-        valueEncoder.setDecimal(false, edgeFlags, value);
+        valueEncoder.setDecimal(false, edgeId, edgeIntAccess, value);
         // too many
 //        if (value - valueEncoder.getDecimal(false, edgeFlags) > 2)
 //            logger.warn("Value " + value + " for " + valueEncoder.getName() + " was too large and truncated to " + valueEncoder.getDecimal(false, edgeFlags));
+    }
+
+    /**
+     * This parses the weight for a conditional value like "delivery @ (weight > 7.5)"
+     */
+    public static double conditionalWeightToTons(String value) {
+        try {
+            int index = value.indexOf("weight>"); // maxweight or weight
+            if (index < 0) {
+                index = value.indexOf("weight >");
+                if (index > 0) index += "weight >".length();
+            } else {
+                index += "weight>".length();
+            }
+            if (index > 0) {
+                int lastIndex = value.indexOf(')', index); // (value) or value
+                if (lastIndex < 0) lastIndex = value.length() - 1;
+                if (lastIndex > index)
+                    return OSMValueExtractor.stringToTons(value.substring(index, lastIndex));
+            }
+            return Double.NaN;
+        } catch (Exception ex) {
+            throw new RuntimeException("value " + value, ex);
+        }
     }
 
     public static double stringToTons(String value) {
@@ -68,13 +92,13 @@ public class OSMValueExtractor {
         }
     }
 
-    public static void extractMeter(IntsRef edgeFlags, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
+    public static void extractMeter(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, DecimalEncodedValue valueEncoder, List<String> keys) {
         final String rawValue = way.getFirstPriorityTag(keys);
         double value = stringToMeter(rawValue);
 
         if (Double.isNaN(value)) value = Double.POSITIVE_INFINITY;
 
-        valueEncoder.setDecimal(false, edgeFlags, value);
+        valueEncoder.setDecimal(false, edgeId, edgeIntAccess, value);
         // too many
 //        if (value - valueEncoder.getDecimal(false, edgeFlags) > 2)
 //            logger.warn("Value " + value + " for " + valueEncoder.getName() + " was too large and truncated to " + valueEncoder.getDecimal(false, edgeFlags));
@@ -151,18 +175,12 @@ public class OSMValueExtractor {
         if (Helper.isEmpty(str))
             return Double.NaN;
 
+        if ("walk".equals(str))
+            return 6;
+
         // on some German autobahns and a very few other places
         if ("none".equals(str))
             return MaxSpeed.UNLIMITED_SIGN_SPEED;
-
-        if (str.endsWith(":rural") || str.endsWith(":trunk"))
-            return 80;
-
-        if (str.endsWith(":urban"))
-            return 50;
-
-        if (str.equals("walk") || str.endsWith(":living_street"))
-            return 6;
 
         int mpInteger = str.indexOf("mp");
         int knotInteger = str.indexOf("knots");

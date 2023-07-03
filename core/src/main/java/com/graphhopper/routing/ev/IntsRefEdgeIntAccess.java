@@ -15,19 +15,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.coll;
 
-/**
- * @author Peter Karich
- */
-public interface LongIntMap {
-    int put(long key, int value);
+package com.graphhopper.routing.ev;
 
-    int get(long key);
+import com.graphhopper.storage.IntsRef;
 
-    long getSize();
+public class IntsRefEdgeIntAccess implements EdgeIntAccess {
+    private final IntsRef intsRef;
 
-    void optimize();
+    public IntsRefEdgeIntAccess(IntsRef intsRef) {
+        this.intsRef = intsRef;
+    }
 
-    int getMemoryUsage();
+    @Override
+    public int getInt(int edgeId, int index) {
+        return intsRef.ints[index];
+    }
+
+    @Override
+    public void setInt(int edgeId, int index, int value) {
+        intsRef.ints[index] = value;
+    }
 }

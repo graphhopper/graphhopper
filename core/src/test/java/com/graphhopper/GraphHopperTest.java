@@ -20,11 +20,11 @@ package com.graphhopper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.json.Statement;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -65,10 +65,13 @@ import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.GHUtility.createCircle;
 import static com.graphhopper.util.GHUtility.createRectangle;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Curbsides.*;
+import static com.graphhopper.util.Parameters.Routing.TIMEOUT_MS;
 import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
@@ -135,6 +138,12 @@ public class GraphHopperTest {
 
         assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
         assertEquals(43.7495432, res.getWaypoints().getLat(1), 1e-7);
+
+        // when we set a timeout no route is found, at least as long as it is negative
+        req.putHint(TIMEOUT_MS, -1);
+        rsp = hopper.route(req);
+        assertTrue(rsp.hasErrors());
+        assertTrue(rsp.getErrors().toString().contains("ConnectionNotFoundException"), rsp.getErrors().toString());
     }
 
     @Test
@@ -232,7 +241,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
-                setProfiles(new CustomProfile(profile).setCustomModel(new CustomModel()).setVehicle(vehicle).setTurnCosts(true).putHint(U_TURN_COSTS, 20));
+                setProfiles(new CustomProfile(profile).setVehicle(vehicle).setTurnCosts(true).putHint(U_TURN_COSTS, 20));
         hopper.importOrLoad();
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
 
@@ -302,7 +311,7 @@ public class GraphHopperTest {
                     new Coordinate(7.4207, 43.7344),
                     new Coordinate(7.4174, 43.7345)}));
             CustomModel customModel = new CustomModel().setDistanceInfluence(0d);
-            customModel.getPriority().add(Statement.If("in_area51", Statement.Op.MULTIPLY, "0.1"));
+            customModel.getPriority().add(If("in_area51", MULTIPLY, "0.1"));
             customModel.getAreas().getFeatures().add(area51Feature);
             profile = new CustomProfile(profileName).setCustomModel(customModel).setVehicle(vehicle);
         }
@@ -473,11 +482,11 @@ public class GraphHopperTest {
 
         assertEquals(3, rsp.getAll().size());
         // via ramsenthal
-        assertEquals(2865, rsp.getAll().get(0).getTime() / 1000);
+        assertEquals(2888, rsp.getAll().get(0).getTime() / 1000);
         // via unterwaiz
         assertEquals(3318, rsp.getAll().get(1).getTime() / 1000);
         // via eselslohe -> theta; BTW: here smaller time as 2nd alternative due to priority influences time order
-        assertEquals(3093, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(3116, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -598,7 +607,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
-                setProfiles(new CustomProfile(profile).setCustomModel(new CustomModel()).setVehicle(vehicle));
+                setProfiles(new CustomProfile(profile).setVehicle(vehicle));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
@@ -609,7 +618,7 @@ public class GraphHopperTest {
         assertEquals(122, rsp.getBest().getDistance(), 1);
 
         // block road at 49.985759,11.50687
-        CustomModel customModel = new CustomModel().addToPriority(Statement.If("in_blocked_area", Statement.Op.MULTIPLY, "0"));
+        CustomModel customModel = new CustomModel().addToPriority(If("in_blocked_area", MULTIPLY, "0"));
         customModel.getAreas().getFeatures().add(createCircle("blocked_area", 49.985759, 11.50687, 5));
         req.setCustomModel(customModel);
         rsp = hopper.route(req);
@@ -633,13 +642,13 @@ public class GraphHopperTest {
 
         // Add blocked point to above area, to increase detour
         customModel.getAreas().getFeatures().add(createCircle("blocked_point", 50.017578, 11.547527, 5));
-        customModel.addToPriority(Statement.If("in_blocked_point", Statement.Op.MULTIPLY, "0"));
+        customModel.addToPriority(If("in_blocked_point", MULTIPLY, "0"));
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(14601, rsp.getBest().getDistance(), 1);
 
         // block by edge IDs -> i.e. use small circular area
-        customModel = new CustomModel().addToPriority(Statement.If("in_blocked_area", Statement.Op.MULTIPLY, "0"));
+        customModel = new CustomModel().addToPriority(If("in_blocked_area", MULTIPLY, "0"));
         customModel.getAreas().getFeatures().add(createCircle("blocked_area", 49.979929, 11.520066, 200));
         req.setCustomModel(customModel);
         rsp = hopper.route(req);
@@ -710,7 +719,7 @@ public class GraphHopperTest {
         final String customCar = "custom_car";
         final String emptyCar = "empty_car";
         CustomModel customModel = new CustomModel();
-        customModel.addToSpeed(Statement.If("road_class == TERTIARY || road_class == TRACK", Statement.Op.MULTIPLY, "0.1"));
+        customModel.addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0.1"));
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
@@ -728,11 +737,11 @@ public class GraphHopperTest {
         assertDistance(hopper, emptyCar, new CustomModel(customModel), 13223);
         // now we prevent using unclassified roads as well and the route goes even further north
         CustomModel strictCustomModel = new CustomModel().addToSpeed(
-                Statement.If("road_class == TERTIARY || road_class == TRACK || road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, "0.1"));
+                If("road_class == TERTIARY || road_class == TRACK || road_class == UNCLASSIFIED", MULTIPLY, "0.1"));
         assertDistance(hopper, emptyCar, strictCustomModel, 19289);
         // we can achieve the same by 'adding' a rule to the server-side custom model
         CustomModel customModelWithUnclassifiedRule = new CustomModel().addToSpeed(
-                Statement.If("road_class == UNCLASSIFIED", Statement.Op.MULTIPLY, "0.1")
+                If("road_class == UNCLASSIFIED", MULTIPLY, "0.1")
         );
         assertDistance(hopper, customCar, customModelWithUnclassifiedRule, 19289);
         // now we use distance influence to avoid the detour
@@ -1135,7 +1144,7 @@ public class GraphHopperTest {
                     if (name.equals("road_environment"))
                         parser = new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
                             @Override
-                            public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+                            public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
                                 // do not change RoadEnvironment to avoid triggering tunnel interpolation
                             }
                         };
@@ -1260,24 +1269,21 @@ public class GraphHopperTest {
 
     @Test
     public void testKremsCyclewayInstructionsWithWayTypeInfo() {
-        final String profile1 = "foot_profile";
-        final String profile2 = "bike_profile";
-        final String vehicle1 = "foot";
-        final String vehicle2 = "bike";
-        final String weighting = "fastest";
+        final String footProfile = "foot_profile";
+        final String bikeProfile = "bike_profile";
 
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(KREMS).
                 setProfiles(
-                        new Profile(profile1).setVehicle(vehicle1).setWeighting(weighting),
-                        new Profile(profile2).setVehicle(vehicle2).setWeighting(weighting)).
+                        new Profile(footProfile).setVehicle("foot").setWeighting("fastest"),
+                        new CustomProfile(bikeProfile).setVehicle("bike")).
                 setStoreOnFlush(true).
                 importOrLoad();
 
         Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
         GHResponse rsp = hopper.route(new GHRequest(48.410987, 15.599492, 48.383419, 15.659294).
-                setProfile(profile2));
+                setProfile(bikeProfile));
         assertFalse(rsp.hasErrors());
         ResponsePath res = rsp.getBest();
         assertEquals(6931.8, res.getDistance(), .1);
@@ -1302,9 +1308,8 @@ public class GraphHopperTest {
         //..
         assertEquals("turn right onto Treppelweg", il.get(15).getTurnDescription(tr));
 
-        // do not return 'get off bike' for foot
         rsp = hopper.route(new GHRequest(48.410987, 15.599492, 48.411172, 15.600371).
-                setAlgorithm(ASTAR).setProfile(profile1));
+                setAlgorithm(ASTAR).setProfile(footProfile));
         assertFalse(rsp.hasErrors());
         il = rsp.getBest().getInstructions();
         assertEquals("continue onto Obere Landstraße", il.get(0).getTurnDescription(tr));
@@ -1393,10 +1398,9 @@ public class GraphHopperTest {
     public void testMultipleVehiclesWithCH() {
         final String bikeProfile = "bike_profile";
         final String carProfile = "car_profile";
-        final String weighting = "fastest";
         List<Profile> profiles = asList(
-                new Profile(bikeProfile).setVehicle("bike").setWeighting(weighting),
-                new Profile(carProfile).setVehicle("car").setWeighting(weighting)
+                new CustomProfile(bikeProfile).setVehicle("bike"),
+                new Profile(carProfile).setVehicle("car").setWeighting("fastest")
         );
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
@@ -1419,8 +1423,8 @@ public class GraphHopperTest {
                 .setProfile(bikeProfile));
         res = rsp.getBest();
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(511, res.getTime() / 1000f, 1);
-        assertEquals(2481, res.getDistance(), 1);
+        assertEquals(536, res.getTime() / 1000f, 1);
+        assertEquals(2521, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile3"));
@@ -2100,6 +2104,33 @@ public class GraphHopperTest {
     }
 
     @Test
+    public void testTagParserProcessingOrder() {
+        // it does not matter when the OSMBikeNetworkTagParser is added (before or even after BikeCommonPriorityParser)
+        // as it is a different type but it is important that OSMSmoothnessParser is added before smoothnessEnc is used
+        // in BikeCommonAverageSpeedParser
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(BAYREUTH).
+                setMinNetworkSize(0).
+                setProfiles(new CustomProfile("bike").setVehicle("bike"));
+
+        hopper.importOrLoad();
+        GHRequest req = new GHRequest(new GHPoint(49.98021, 11.50730), new GHPoint(49.98026, 11.50795));
+        req.setProfile("bike");
+        GHResponse rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        // due to smoothness=bad => 7 seconds longer
+        assertEquals(21, rsp.getBest().getTime() / 1000.0, 1);
+
+        req = new GHRequest(new GHPoint(50.015067, 11.502093), new GHPoint(50.014694, 11.499748));
+        req.setProfile("bike");
+        rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        // due to bike network (relation 2247905) a lower route weight => otherwise 29.0
+        assertEquals(23.2, rsp.getBest().getRouteWeight(), .1);
+    }
+
+    @Test
     public void testEdgeCount() {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
@@ -2497,9 +2528,9 @@ public class GraphHopperTest {
                 setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
                 setVehiclesString("car|block_private=false").
                 setProfiles(
-                        new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("car"),
-                        new CustomProfile("bike").setCustomModel(new CustomModel()).setVehicle("bike"),
-                        new CustomProfile("foot").setCustomModel(new CustomModel()).setVehicle("foot")
+                        new CustomProfile("car").setVehicle("car"),
+                        new CustomProfile("bike").setVehicle("bike"),
+                        new CustomProfile("foot").setVehicle("foot")
                 ).
                 setMinNetworkSize(0);
         hopper.importOrLoad();
@@ -2568,7 +2599,7 @@ public class GraphHopperTest {
             assertEquals(105, footRsp.getBest().getDistance(), 1);
 
             footRsp = hopper.route(new GHRequest(51.290141, 12.365849, 51.290996, 12.366155).
-                    setCustomModel(new CustomModel().addToPriority(Statement.If("road_environment == FORD", Statement.Op.MULTIPLY, "0"))).setProfile("foot"));
+                    setCustomModel(new CustomModel().addToPriority(If("road_environment == FORD", MULTIPLY, "0"))).setProfile("foot"));
             assertEquals(330, footRsp.getBest().getDistance(), 1);
         }
 
@@ -2578,7 +2609,7 @@ public class GraphHopperTest {
             assertEquals(39, rsp.getBest().getDistance(), 1);
 
             rsp = hopper.route(new GHRequest(51.327411, 12.429598, 51.32723, 12.429979).
-                    setCustomModel(new CustomModel().addToPriority(Statement.If("road_access == PRIVATE", Statement.Op.MULTIPLY, "0"))).
+                    setCustomModel(new CustomModel().addToPriority(If("road_access == PRIVATE", MULTIPLY, "0"))).
                     setProfile("car"));
             assertFalse(rsp.hasErrors());
             assertEquals(20, rsp.getBest().getDistance(), 1);

@@ -18,31 +18,30 @@
 
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.Helper;
+
 public enum Footway {
-    MISSING("missing"), SIDEWALK("sidewalk"), CROSSING("crossing"), ACCESS_AISLE("access_aisle"),
-    LINK("link"), TRAFFIC_ISLAND("traffic_island"), ALLEY("alley");
+    MISSING, SIDEWALK, CROSSING, ACCESS_AISLE, LINK, TRAFFIC_ISLAND, ALLEY;
 
     public static final String KEY = "footway";
 
-    private final String name;
-
-    Footway(String name) {
-        this.name = name;
+    public static EnumEncodedValue<Footway> create() {
+        return new EnumEncodedValue<>(KEY, Footway.class);
     }
 
     @Override
     public String toString() {
-        return name;
+        return Helper.toLowerCase(super.toString());
     }
 
     public static Footway find(String name) {
         if (name == null || name.isEmpty())
             return MISSING;
 
-        for (Footway footway : values())
-            if (footway.name().equalsIgnoreCase(name))
-                return footway;
-
-        return MISSING;
+        try {
+            return Footway.valueOf(Helper.toUpperCase(name));
+        } catch (IllegalArgumentException ex) {
+            return MISSING;
+        }
     }
 }

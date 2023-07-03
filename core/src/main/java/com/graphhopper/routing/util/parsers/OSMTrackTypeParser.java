@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.TrackType;
 import com.graphhopper.storage.IntsRef;
 
@@ -33,11 +34,11 @@ public class OSMTrackTypeParser implements TagParser {
     }
 
     @Override
-    public void handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         String trackTypeTag = readerWay.getTag("tracktype");
         TrackType trackType = TrackType.find(trackTypeTag);
         if (trackType != MISSING)
-            trackTypeEnc.setEnum(false, edgeFlags, trackType);
+            trackTypeEnc.setEnum(false, edgeId, edgeIntAccess, trackType);
     }
 
 }

@@ -252,23 +252,23 @@ public class TarjanSCC {
     private void pushHandleNeighbor(int v, int w) {
         assert v >= 0 && v < Integer.MAX_VALUE;
         assert w >= 0 && w < Integer.MAX_VALUE;
-        dfsStack.addLast(bitUtil.combineIntsToLong(v + 1, w + 1));
+        dfsStack.addLast(bitUtil.toLong(v + 1, w + 1));
     }
 
     private void pushUpdateLowLinks(int v, int w) {
         assert v >= 0 && v < Integer.MAX_VALUE;
         assert w >= 0 && w < Integer.MAX_VALUE;
-        dfsStack.addLast(bitUtil.combineIntsToLong(v + 1, -(w + 1)));
+        dfsStack.addLast(bitUtil.toLong(v + 1, -(w + 1)));
     }
 
     private void pushBuildComponent(int v) {
         assert v >= 0 && v < Integer.MAX_VALUE;
-        dfsStack.addLast(bitUtil.combineIntsToLong(0, v + 1));
+        dfsStack.addLast(bitUtil.toLong(0, v + 1));
     }
 
     private void pushFindComponentForNode(int v) {
         assert v >= 0 && v < Integer.MAX_VALUE;
-        dfsStack.addLast(bitUtil.combineIntsToLong(v + 1, 0));
+        dfsStack.addLast(bitUtil.toLong(v + 1, 0));
     }
 
     public static class ConnectedComponents {

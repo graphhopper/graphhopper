@@ -23,6 +23,8 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gtfs.analysis.Trips;
 import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.config.Profile;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.weighting.Weighting;
@@ -99,8 +101,16 @@ public class GraphHopperGtfs extends GraphHopper {
                     Transfers transfers = new Transfers(gtfsFeed);
                     allTransfers.put(id, transfers);
                     GtfsReader gtfsReader = new GtfsReader(id, ptGraph, ptGraph, getGtfsStorage(), getLocationIndex(), transfers, indexBuilder);
-                    Weighting weighting = createWeighting(getProfile("foot"), new PMap());
-                    gtfsReader.connectStopsToStreetNetwork(new DefaultSnapFilter(weighting, getEncodingManager().getBooleanEncodedValue(Subnetwork.key("foot"))));
+                    // Stops must be connected to the networks of all the modes
+                    List<DefaultSnapFilter> snapFilters = getProfiles().stream().map(p ->
+                            new DefaultSnapFilter(createWeighting(p, new PMap()), getEncodingManager().getBooleanEncodedValue(Subnetwork.key(p.getName())))).collect(Collectors.toList());
+                    gtfsReader.connectStopsToStreetNetwork(e -> {
+                        for (DefaultSnapFilter snapFilter : snapFilters) {
+                            if (!snapFilter.accept(e))
+                                return false;
+                        }
+                        return true;
+                    });
                     LOGGER.info("Building transit graph for feed {}", gtfsFeed.feedId);
                     gtfsReader.buildPtNetwork();
                     allReaders.put(id, gtfsReader);
@@ -117,7 +127,6 @@ public class GraphHopperGtfs extends GraphHopper {
             } catch (Exception e) {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
-
             ptGraph.flush();
             getGtfsStorage().flush();
             stopIndex.store(indexBuilder);
@@ -192,6 +201,8 @@ public class GraphHopperGtfs extends GraphHopper {
             if (edges.get(i).getBaseNode() != edges.get(i-1).getAdjNode())
                 return false;
         }
+        TripFromLabel tripFromLabel = new TripFromLabel(getBaseGraph(), getEncodingManager(), gtfsStorage, RealtimeFeed.empty(), getPathDetailsBuilderFactory(), 6.0);
+        tripFromLabel.transferPath(edgeKeys, createWeighting(getProfile("foot"), new PMap()), 0L);
         return true;
     }
 
@@ -216,5 +227,4 @@ public class GraphHopperGtfs extends GraphHopper {
     public PtGraph getPtGraph() {
         return ptGraph;
     }
-
 }

@@ -2,6 +2,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.util.PMap;
 
 import java.util.TreeMap;
@@ -30,6 +31,13 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
         preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
 
+        avoidHighwayTags.put("motorway", BAD);
+        avoidHighwayTags.put("motorway_link", BAD);
+        avoidHighwayTags.put("trunk", BAD);
+        avoidHighwayTags.put("trunk_link", BAD);
+        avoidHighwayTags.put("primary", AVOID_MORE);
+        avoidHighwayTags.put("primary_link", AVOID_MORE);
+
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());
         routeMap.put(REGIONAL, VERY_NICE.getValue());
@@ -41,18 +49,18 @@ public class RacingBikePriorityParser extends BikeCommonPriorityParser {
     }
 
     @Override
-    void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
+    void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, PriorityCode> weightToPrioMap) {
         super.collect(way, wayTypeSpeed, weightToPrioMap);
 
         String highway = way.getTag("highway");
         if ("service".equals(highway) || "residential".equals(highway)) {
-            weightToPrioMap.put(40d, SLIGHT_AVOID.getValue());
+            weightToPrioMap.put(40d, SLIGHT_AVOID);
         } else if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
             if ("grade1".equals(trackType))
-                weightToPrioMap.put(110d, PREFER.getValue());
+                weightToPrioMap.put(110d, PREFER);
             else if (trackType == null || trackType.startsWith("grade"))
-                weightToPrioMap.put(110d, AVOID_MORE.getValue());
+                weightToPrioMap.put(110d, AVOID_MORE);
         }
     }
 }

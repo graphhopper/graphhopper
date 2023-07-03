@@ -61,14 +61,14 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
             ra = aStar;
 
         } else if (ALT_ROUTE.equalsIgnoreCase(algoStr)) {
-            AlternativeRoute altRouteAlgo = new AlternativeRoute(g, weighting, opts.getTraversalMode(), opts.getHints());
-            ra = altRouteAlgo;
+            ra = new AlternativeRoute(g, weighting, opts.getTraversalMode(), opts.getHints());
 
         } else {
             throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());
         }
 
         ra.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+        ra.setTimeoutMillis(opts.getTimeoutMillis());
         return ra;
     }
 

@@ -23,13 +23,13 @@ import com.graphhopper.routing.ev.Toll;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 
 public class MonacoCountryRule implements CountryRule {
-    
+
     @Override
     public Toll getToll(ReaderWay readerWay, Toll currentToll) {
         if (currentToll != Toll.MISSING) {
             return currentToll;
         }
-        
+
         return Toll.NO;
     }
 }
