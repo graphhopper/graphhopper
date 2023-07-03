@@ -25,7 +25,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.TurnCostConfig;
+import com.graphhopper.util.TurnCostsConfig;
 
 import static com.graphhopper.util.AngleCalc.ANGLE_CALC;
 
@@ -169,7 +169,7 @@ public final class CustomWeighting extends AbstractWeighting {
 
         public Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
                           double maxSpeed, double maxPriority, double distanceInfluence, double headingPenaltySeconds,
-                          TurnCostConfig turnCostConfig) {
+                          TurnCostsConfig turnCostsConfig) {
             this.edgeToSpeedMapping = edgeToSpeedMapping;
             this.edgeToPriorityMapping = edgeToPriorityMapping;
             this.maxSpeed = maxSpeed;
@@ -177,17 +177,17 @@ public final class CustomWeighting extends AbstractWeighting {
             this.distanceInfluence = distanceInfluence;
             this.headingPenaltySeconds = headingPenaltySeconds;
 
-            if (turnCostConfig.getMinRightAngle() >= 0 || turnCostConfig.getMinRightAngle() < turnCostConfig.getMaxRightAngle())
-                throw new IllegalArgumentException("Illegal min_right_angle " + turnCostConfig.getMinRightAngle());
+            if (turnCostsConfig.getMinRightAngle() >= 0 || turnCostsConfig.getMinRightAngle() < turnCostsConfig.getMaxRightAngle())
+                throw new IllegalArgumentException("Illegal min_right_angle " + turnCostsConfig.getMinRightAngle());
 
-            if (turnCostConfig.getMaxRightAngle() >= 0 || turnCostConfig.getMaxRightAngle() < -180)
-                throw new IllegalArgumentException("Illegal max_right_angle " + turnCostConfig.getMaxRightAngle());
+            if (turnCostsConfig.getMaxRightAngle() >= 0 || turnCostsConfig.getMaxRightAngle() < -180)
+                throw new IllegalArgumentException("Illegal max_right_angle " + turnCostsConfig.getMaxRightAngle());
 
-            if (turnCostConfig.getMinLeftAngle() <= 0 || turnCostConfig.getMinLeftAngle() > turnCostConfig.getMaxLeftAngle())
-                throw new IllegalArgumentException("Illegal min_left_angle " + turnCostConfig.getMinLeftAngle());
+            if (turnCostsConfig.getMinLeftAngle() <= 0 || turnCostsConfig.getMinLeftAngle() > turnCostsConfig.getMaxLeftAngle())
+                throw new IllegalArgumentException("Illegal min_left_angle " + turnCostsConfig.getMinLeftAngle());
 
-            if (turnCostConfig.getMaxLeftAngle() <= 0 || turnCostConfig.getMaxLeftAngle() > 180)
-                throw new IllegalArgumentException("Illegal max_left_angle " + turnCostConfig.getMaxLeftAngle());
+            if (turnCostsConfig.getMaxLeftAngle() <= 0 || turnCostsConfig.getMaxLeftAngle() > 180)
+                throw new IllegalArgumentException("Illegal max_left_angle " + turnCostsConfig.getMaxLeftAngle());
         }
 
         public EdgeToDoubleMapping getEdgeToSpeedMapping() {
@@ -215,7 +215,7 @@ public final class CustomWeighting extends AbstractWeighting {
         }
     }
 
-    public static TurnCostProvider createFromTurnCostConfig(TurnCostProvider turnCostProvider, DecimalEncodedValue orientationEnc, Graph graph, TurnCostConfig tcConfig) {
+    public static TurnCostProvider createFromTurnCostConfig(TurnCostProvider turnCostProvider, DecimalEncodedValue orientationEnc, Graph graph, TurnCostsConfig tcConfig) {
         final double minRightInRad, maxRightInRad, minLeftInRad, maxLeftInRad;
         minRightInRad = Math.toRadians(tcConfig.getMinRightAngle());
         maxRightInRad = Math.toRadians(tcConfig.getMaxRightAngle());
@@ -266,6 +266,8 @@ public final class CustomWeighting extends AbstractWeighting {
         double changeAngle = orientation - prevOrientation;
         if (changeAngle > Math.PI) changeAngle -= 2 * Math.PI;
         else if (changeAngle < -Math.PI) changeAngle += 2 * Math.PI;
+
+        // System.out.println(changeAngle + " " + graph.getEdgeIteratorState(inEdge, viaNode).getName() + " -> " +graph.getEdgeIteratorState(outEdge, viaNode).getName());
         return changeAngle;
     }
 }

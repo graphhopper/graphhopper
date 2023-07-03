@@ -423,9 +423,9 @@ class CustomWeightingTest {
         turnGraph.getNodeAccess().setNode(6, 51.0358, 13.726);
 
         CustomProfile profile = new CustomProfile("car");
-        TurnCostConfig config = new TurnCostConfig();
+        TurnCostsConfig config = new TurnCostsConfig();
         config.setLeftCost(6);
-        profile.setCustomModel(new CustomModel().setTurnCostConfig(config));
+        profile.setCustomModel(new CustomModel().setTurnCostsConfig(config));
         Weighting weighting = new DefaultWeightingFactory(turnGraph, em).createWeighting(profile, new PMap(), false);
         OrientationCalculator calc = new OrientationCalculator(orientEnc);
         EdgeIntAccess edgeIntAccess = turnGraph.createEdgeIntAccess();

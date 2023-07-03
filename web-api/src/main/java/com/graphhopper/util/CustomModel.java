@@ -38,7 +38,7 @@ public class CustomModel {
     private boolean internal;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
-    private TurnCostConfig turnCostConfig = new TurnCostConfig();
+    private TurnCostsConfig turnCostsConfig = new TurnCostsConfig();
     private JsonFeatureCollection areas = new JsonFeatureCollection();
 
     public CustomModel() {
@@ -51,7 +51,7 @@ public class CustomModel {
 
         speedStatements = deepCopy(toCopy.getSpeed());
         priorityStatements = deepCopy(toCopy.getPriority());
-        turnCostConfig = new TurnCostConfig(toCopy.turnCostConfig);
+        turnCostsConfig = new TurnCostsConfig(toCopy.turnCostsConfig);
 
         addAreas(toCopy.getAreas());
     }
@@ -139,14 +139,14 @@ public class CustomModel {
         return areas;
     }
 
-    @JsonProperty("turn_cost")
-    public CustomModel setTurnCostConfig(TurnCostConfig turnCostConfig) {
-        this.turnCostConfig = turnCostConfig;
+    @JsonProperty("turn_costs")
+    public CustomModel setTurnCostsConfig(TurnCostsConfig turnCostsConfig) {
+        this.turnCostsConfig = turnCostsConfig;
         return this;
     }
 
-    public TurnCostConfig getTurnCostConfig() {
-        return turnCostConfig;
+    public TurnCostsConfig getTurnCostsConfig() {
+        return turnCostsConfig;
     }
 
     public CustomModel setDistanceInfluence(Double distanceFactor) {
@@ -176,7 +176,7 @@ public class CustomModel {
         // used to check against stored custom models, see #2026
         return "distanceInfluence=" + distanceInfluence + "|headingPenalty=" + headingPenalty
                 + "|speedStatements=" + speedStatements + "|priorityStatements=" + priorityStatements
-                + "|areas=" + areas + "|turnCostConfig=" + turnCostConfig;
+                + "|areas=" + areas + "|turnCostConfig=" + turnCostsConfig;
     }
 
     /**
@@ -194,27 +194,27 @@ public class CustomModel {
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
 
-        mergedCM.setTurnCostConfig(new TurnCostConfig(queryModel.getTurnCostConfig()));
+        mergedCM.setTurnCostsConfig(new TurnCostsConfig(queryModel.getTurnCostsConfig()));
         mergedCM.addAreas(queryModel.getAreas());
         return mergedCM;
     }
 
-    public void compareTurnCostConfig(TurnCostConfig baseModelTCConfig) {
-        if (turnCostConfig.getLeftCost() < baseModelTCConfig.getLeftCost())
-            throw new IllegalArgumentException("left turn cost can only increase but was " + turnCostConfig.getLeftCost() + " < " + baseModelTCConfig.getLeftCost());
-        if (turnCostConfig.getRightCost() < baseModelTCConfig.getRightCost())
-            throw new IllegalArgumentException("right turn cost can only increase but was " + turnCostConfig.getRightCost() + " < " + baseModelTCConfig.getRightCost());
-        if (turnCostConfig.getStraightCost() < baseModelTCConfig.getStraightCost())
-            throw new IllegalArgumentException("straight costs can only increase but was " + turnCostConfig.getStraightCost() + " < " + baseModelTCConfig.getStraightCost());
+    public void compareTurnCostConfig(TurnCostsConfig baseModelTCConfig) {
+        if (turnCostsConfig.getLeftCost() < baseModelTCConfig.getLeftCost())
+            throw new IllegalArgumentException("left turn cost can only increase but was " + turnCostsConfig.getLeftCost() + " < " + baseModelTCConfig.getLeftCost());
+        if (turnCostsConfig.getRightCost() < baseModelTCConfig.getRightCost())
+            throw new IllegalArgumentException("right turn cost can only increase but was " + turnCostsConfig.getRightCost() + " < " + baseModelTCConfig.getRightCost());
+        if (turnCostsConfig.getStraightCost() < baseModelTCConfig.getStraightCost())
+            throw new IllegalArgumentException("straight costs can only increase but was " + turnCostsConfig.getStraightCost() + " < " + baseModelTCConfig.getStraightCost());
 
-        if (turnCostConfig.getMaxLeftAngle() != baseModelTCConfig.getMaxLeftAngle())
-            throw new IllegalArgumentException("max left angle must be identical but was " + turnCostConfig.getMaxLeftAngle() + "!=" + baseModelTCConfig.getMaxLeftAngle());
-        if (turnCostConfig.getMinLeftAngle() != baseModelTCConfig.getMinLeftAngle())
-            throw new IllegalArgumentException("min left angle must be identical but was " + turnCostConfig.getMinLeftAngle() + "!=" + baseModelTCConfig.getMinLeftAngle());
-        if (turnCostConfig.getMaxRightAngle() != baseModelTCConfig.getMaxRightAngle())
-            throw new IllegalArgumentException("max right angle must be identical but was " + turnCostConfig.getMaxRightAngle() + "!=" + baseModelTCConfig.getMaxRightAngle());
-        if (turnCostConfig.getMinRightAngle() != baseModelTCConfig.getMinRightAngle())
-            throw new IllegalArgumentException("max right angle must be identical but was " + turnCostConfig.getMinRightAngle() + "!=" + baseModelTCConfig.getMinRightAngle());
+        if (turnCostsConfig.getMaxLeftAngle() != baseModelTCConfig.getMaxLeftAngle())
+            throw new IllegalArgumentException("max left angle must be identical but was " + turnCostsConfig.getMaxLeftAngle() + "!=" + baseModelTCConfig.getMaxLeftAngle());
+        if (turnCostsConfig.getMinLeftAngle() != baseModelTCConfig.getMinLeftAngle())
+            throw new IllegalArgumentException("min left angle must be identical but was " + turnCostsConfig.getMinLeftAngle() + "!=" + baseModelTCConfig.getMinLeftAngle());
+        if (turnCostsConfig.getMaxRightAngle() != baseModelTCConfig.getMaxRightAngle())
+            throw new IllegalArgumentException("max right angle must be identical but was " + turnCostsConfig.getMaxRightAngle() + "!=" + baseModelTCConfig.getMaxRightAngle());
+        if (turnCostsConfig.getMinRightAngle() != baseModelTCConfig.getMinRightAngle())
+            throw new IllegalArgumentException("max right angle must be identical but was " + turnCostsConfig.getMinRightAngle() + "!=" + baseModelTCConfig.getMinRightAngle());
 
     }
 }

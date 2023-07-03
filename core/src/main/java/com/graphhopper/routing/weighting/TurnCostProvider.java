@@ -18,14 +18,6 @@
 
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.TurnCostConfig;
-
-import static com.graphhopper.util.AngleCalc.ANGLE_CALC;
-
 /**
  * Implementations of this interface define how turn costs and turn times are calculated.
  */

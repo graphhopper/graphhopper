@@ -114,7 +114,7 @@ public class GraphHopperWebTest {
                 "{\"id\":\"area_2\",\"type\":\"Feature\",\"geometry\":{\"type\":\"Polygon\",\"coordinates\":[[[48.15509285476017,11.53289794921875],[48.15509285476017,11.8212890625],[48.281365151571755,11.8212890625],[48.281365151571755,11.53289794921875],[48.15509285476017,11.53289794921875]]]},\"properties\":{}}]}," +
                 "\"priority\":[{\"if\":\"surface == DIRT\",\"multiply_by\":\"0.7\"},{\"if\":\"surface == SAND\",\"multiply_by\":\"0.6\"}]," +
                 "\"speed\":[{\"if\":\"road_class == MOTORWAY\",\"limit_to\":\"80\"}]," +
-                "\"turn_cost\":{\"min_left_angle\":17.0,\"max_left_angle\":180.0,\"min_right_angle\":-17.0,\"max_right_angle\":-180.0,\"left\":3.0,\"right\":0.5,\"straight\":0.0}}");
+                "\"turn_costs\":{\"min_left_angle\":25.0,\"max_left_angle\":180.0,\"min_right_angle\":-25.0,\"max_right_angle\":-180.0,\"left\":3.0,\"right\":0.5,\"straight\":0.0}}");
         assertEquals(expected, objectMapper.valueToTree(customModelJson));
 
         CustomModel cm = objectMapper.readValue("{\"distance_influence\":null}", CustomModel.class);

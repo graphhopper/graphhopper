@@ -4,17 +4,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
-public class TurnCostConfig {
+public class TurnCostsConfig {
     private double leftCost = 3; // in seconds
     private double rightCost = 0.5;
     private double straightCost = 0;
-    private double minLeftAngle = 17, maxLeftAngle = 180;
-    private double minRightAngle = -17, maxRightAngle = -180;
+    private double minLeftAngle = 25, maxLeftAngle = 180;
+    private double minRightAngle = -25, maxRightAngle = -180;
 
-    public TurnCostConfig() {
+    public TurnCostsConfig() {
     }
 
-    public TurnCostConfig(TurnCostConfig copy) {
+    public TurnCostsConfig(TurnCostsConfig copy) {
         leftCost = copy.leftCost;
         rightCost = copy.rightCost;
         straightCost = copy.straightCost;
@@ -87,7 +87,7 @@ public class TurnCostConfig {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        TurnCostConfig that = (TurnCostConfig) o;
+        TurnCostsConfig that = (TurnCostsConfig) o;
         return Double.compare(that.leftCost, leftCost) == 0 && Double.compare(that.rightCost, rightCost) == 0
                 && Double.compare(that.straightCost, straightCost) == 0 && Double.compare(that.minLeftAngle, minLeftAngle) == 0
                 && Double.compare(that.maxLeftAngle, maxLeftAngle) == 0 && Double.compare(that.minRightAngle, minRightAngle) == 0

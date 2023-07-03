@@ -72,8 +72,12 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(INTERSECTION))
             builders.add(new IntersectionDetails(graph, weighting));
 
+        if (requestedPathDetails.contains("turn_costs"))
+            builders.add(new TurnCostsDetails(weighting));
+
         for (String pathDetail : requestedPathDetails) {
-            if (!evl.hasEncodedValue(pathDetail)) continue; // path details like "time" won't be found
+            if (!evl.hasEncodedValue(pathDetail))
+                continue; // path details like "time" won't be found
 
             EncodedValue ev = evl.getEncodedValue(pathDetail, EncodedValue.class);
             if (ev instanceof DecimalEncodedValue)
@@ -86,7 +90,8 @@ public class PathDetailsBuilderFactory {
                 builders.add(new StringDetails(pathDetail, (StringEncodedValue) ev));
             else if (ev instanceof IntEncodedValue)
                 builders.add(new IntDetails(pathDetail, (IntEncodedValue) ev));
-            else throw new IllegalArgumentException("unknown EncodedValue class " + ev.getClass().getName());
+            else
+                throw new IllegalArgumentException("unknown EncodedValue class " + ev.getClass().getName());
         }
 
         if (requestedPathDetails.size() > builders.size()) {
