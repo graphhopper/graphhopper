@@ -194,12 +194,27 @@ public class CustomModel {
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
 
-        // TODO NOW
-//        if (!baseModel.turnCostConfig.equals(queryModel.turnCostConfig))
-//            throw new IllegalArgumentException("TurnCostConfig must be identical but was " + queryModel.turnCostConfig + " vs " + baseModel.turnCostConfig);
         mergedCM.setTurnCostConfig(new TurnCostConfig(queryModel.getTurnCostConfig()));
-
         mergedCM.addAreas(queryModel.getAreas());
         return mergedCM;
+    }
+
+    public void compareTurnCostConfig(TurnCostConfig baseModelTCConfig) {
+        if (turnCostConfig.getLeftCost() < baseModelTCConfig.getLeftCost())
+            throw new IllegalArgumentException("left turn cost can only increase but was " + turnCostConfig.getLeftCost() + " < " + baseModelTCConfig.getLeftCost());
+        if (turnCostConfig.getRightCost() < baseModelTCConfig.getRightCost())
+            throw new IllegalArgumentException("right turn cost can only increase but was " + turnCostConfig.getRightCost() + " < " + baseModelTCConfig.getRightCost());
+        if (turnCostConfig.getStraightCost() < baseModelTCConfig.getStraightCost())
+            throw new IllegalArgumentException("straight costs can only increase but was " + turnCostConfig.getStraightCost() + " < " + baseModelTCConfig.getStraightCost());
+
+        if (turnCostConfig.getMaxLeftAngle() != baseModelTCConfig.getMaxLeftAngle())
+            throw new IllegalArgumentException("max left angle must be identical but was " + turnCostConfig.getMaxLeftAngle() + "!=" + baseModelTCConfig.getMaxLeftAngle());
+        if (turnCostConfig.getMinLeftAngle() != baseModelTCConfig.getMinLeftAngle())
+            throw new IllegalArgumentException("min left angle must be identical but was " + turnCostConfig.getMinLeftAngle() + "!=" + baseModelTCConfig.getMinLeftAngle());
+        if (turnCostConfig.getMaxRightAngle() != baseModelTCConfig.getMaxRightAngle())
+            throw new IllegalArgumentException("max right angle must be identical but was " + turnCostConfig.getMaxRightAngle() + "!=" + baseModelTCConfig.getMaxRightAngle());
+        if (turnCostConfig.getMinRightAngle() != baseModelTCConfig.getMinRightAngle())
+            throw new IllegalArgumentException("max right angle must be identical but was " + turnCostConfig.getMinRightAngle() + "!=" + baseModelTCConfig.getMinRightAngle());
+
     }
 }
