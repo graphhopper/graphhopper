@@ -93,17 +93,15 @@ public class TurnCostStorage {
      * (The implementation below ORs the new bits into the existing bits.)
      */
     public void set(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge, double cost) {
-        IntsRef tcFlags = TurnCost.createFlags();
-        IntsRefEdgeIntAccess intAccess = new IntsRefEdgeIntAccess(tcFlags);
+        EdgeIntAccessImpl intAccess = new EdgeIntAccessImpl();
         turnCostEnc.setDecimal(false, -1, intAccess, cost);
-        merge(tcFlags, fromEdge, viaNode, toEdge);
+        merge(intAccess.getVal(), fromEdge, viaNode, toEdge);
     }
 
-    private void merge(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
+    private void merge(int newFlags, int fromEdge, int viaNode, int toEdge) {
         int newEntryIndex = turnCostsCount;
         ensureTurnCostIndex(newEntryIndex);
         boolean oldEntryFound = false;
-        int newFlags = tcFlags.ints[0];
         int next = NO_TURN_ENTRY;
 
         // determine if we already have a cost entry for this node
@@ -158,26 +156,46 @@ public class TurnCostStorage {
      * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
      */
     public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
-        IntsRef flags = readFlags(fromEdge, viaNode, toEdge);
-        IntsRefEdgeIntAccess intAccess = new IntsRefEdgeIntAccess(flags);
-        return turnCostEnc.getDecimal(false, -1, intAccess);
+        int val = readFlagsInt(fromEdge, viaNode, toEdge);
+        return turnCostEnc.getDecimal(false, -1, new EdgeIntAccessImpl(val));
+    }
+
+    private static class EdgeIntAccessImpl implements EdgeIntAccess {
+
+        private int val;
+
+        EdgeIntAccessImpl() {
+        }
+
+        EdgeIntAccessImpl(int val) {
+            this.val = val;
+        }
+
+        @Override
+        public int getInt(int edgeId, int index) {
+            return val;
+        }
+
+        @Override
+        public void setInt(int edgeId, int index, int value) {
+            if (index > 0) throw new IllegalArgumentException("TurnCostStorage: more than 1 int not supported");
+            this.val = value;
+        }
+
+        public int getVal() {
+            return val;
+        }
     }
 
     /**
      * @return turn cost flags of the specified triple "from edge", "via node" and "to edge"
      */
-    private IntsRef readFlags(int fromEdge, int viaNode, int toEdge) {
+    private int readFlagsInt(int fromEdge, int viaNode, int toEdge) {
         if (!EdgeIterator.Edge.isValid(fromEdge) || !EdgeIterator.Edge.isValid(toEdge))
             throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
         if (viaNode < 0)
             throw new IllegalArgumentException("via node cannot be negative");
 
-        IntsRef flags = TurnCost.createFlags();
-        readFlags(flags, fromEdge, viaNode, toEdge);
-        return flags;
-    }
-
-    private void readFlags(IntsRef tcFlags, int fromEdge, int viaNode, int toEdge) {
         int turnCostIndex = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
         int i = 0;
         for (; i < 1000; i++) {
@@ -185,10 +203,8 @@ public class TurnCostStorage {
                 break;
             long turnCostPtr = (long) turnCostIndex * BYTES_PER_ENTRY;
             if (fromEdge == turnCosts.getInt(turnCostPtr + TC_FROM)) {
-                if (toEdge == turnCosts.getInt(turnCostPtr + TC_TO)) {
-                    tcFlags.ints[0] = turnCosts.getInt(turnCostPtr + TC_FLAGS);
-                    return;
-                }
+                if (toEdge == turnCosts.getInt(turnCostPtr + TC_TO))
+                    return turnCosts.getInt(turnCostPtr + TC_FLAGS);
             }
 
             int nextTurnCostIndex = turnCosts.getInt(turnCostPtr + TC_NEXT);
@@ -200,7 +216,7 @@ public class TurnCostStorage {
         // so many turn restrictions on one node? here is something wrong
         if (i >= 1000)
             throw new IllegalStateException("something went wrong: there seems to be no end of the turn cost-list!?");
-        tcFlags.ints[0] = EMPTY_FLAGS;
+        return 0;
     }
 
     private void ensureTurnCostIndex(int nodeIndex) {
@@ -243,7 +259,7 @@ public class TurnCostStorage {
     private class Itr implements Iterator {
         private int viaNode = -1;
         private int turnCostIndex = -1;
-        private final IntsRef intsRef = TurnCost.createFlags();
+        private final IntsRef intsRef = new IntsRef(1);
         private final EdgeIntAccess edgeIntAccess = new IntsRefEdgeIntAccess(intsRef);
 
         private long turnCostPtr() {
