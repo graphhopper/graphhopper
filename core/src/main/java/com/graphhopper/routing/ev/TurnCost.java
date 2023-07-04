@@ -18,8 +18,4 @@ public class TurnCost {
         int turnBits = BitUtil.countBitValue(maxTurnCosts);
         return new DecimalEncodedValueImpl(key(name), turnBits, 0, 1, false, false, true);
     }
-
-    public static IntsRef createFlags() {
-        return new IntsRef(1);
-    }
 }
