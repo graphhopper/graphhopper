@@ -166,6 +166,7 @@ public class Trips {
             feed.trips.values().stream()
                     .filter(trip -> feed.services.get(trip.service_id).activeOn(trafficDay))
                     .flatMap(trip -> unfoldFrequencies(feed, trip))
+                    .parallel()
                     .forEach(tripDescriptor -> {
                         Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = tripTransfers.findTripTransfers(tripDescriptor, feedKey, trafficDay);
                         result.putAll(reducedTripTransfers);
