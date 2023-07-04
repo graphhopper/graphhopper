@@ -1,7 +1,6 @@
 # for the usage see the Readme.md
 graphhopper:
   datareader.file: /Users/michaelzilske/Downloads/norcal-latest.osm.pbf
-  #gtfs.file: /Users/michaelzilske/Downloads/bart_20230213-20230813_v4
   gtfs.file: /Users/michaelzilske/GTFSTransitData_RG
 
 
@@ -10,7 +9,7 @@ graphhopper:
 
   gtfs.trip_based: true
   #gtfs.schedule_day: 2023-04-05,2023-05-10
-  gtfs.schedule_day: 2023-04-05
+  gtfs.schedule_day: 2023-07-04
 
   gtfs.max_transfer_interpolation_walk_time_seconds: 300
 
