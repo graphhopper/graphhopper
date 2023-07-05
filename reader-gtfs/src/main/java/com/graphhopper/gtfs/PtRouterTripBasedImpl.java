@@ -197,7 +197,12 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             response.addDebugInfo("access/egress routing:" + stopWatch1.stop().getSeconds() + "s");
 
             TripBasedRouter tripBasedRouter = new TripBasedRouter(gtfsStorage, gtfsStorage.tripTransfers);
-            List<TripBasedRouter.ResultLabel> routes = tripBasedRouter.routeNaiveProfile(new TripBasedRouter.Parameters(accessStations, egressStations, initialTime, maxProfileDuration, trip -> (blockedRouteTypes & (1 << trip.routeType)) == 0, betaAccessTime, betaEgressTime));
+            List<TripBasedRouter.ResultLabel> routes;
+            if (betaAccessTime == 1.0 && betaEgressTime == 1.0) {
+                routes = tripBasedRouter.routeNaiveProfile(new TripBasedRouter.Parameters(accessStations, egressStations, initialTime, maxProfileDuration, trip -> (blockedRouteTypes & (1 << trip.routeType)) == 0, betaAccessTime, betaEgressTime));
+            } else {
+                routes = tripBasedRouter.routeNaiveProfileWithNaiveBetas(new TripBasedRouter.Parameters(accessStations, egressStations, initialTime, maxProfileDuration, trip -> (blockedRouteTypes & (1 << trip.routeType)) == 0, betaAccessTime, betaEgressTime));
+            }
 
             tripFromLabel = new TripFromLabel(queryGraph, encodingManager, gtfsStorage, RealtimeFeed.empty(), pathDetailsBuilderFactory, walkSpeedKmH);
             for (TripBasedRouter.ResultLabel route : routes) {

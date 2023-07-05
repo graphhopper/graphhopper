@@ -45,6 +45,14 @@ public class TripBasedRouter {
         }
     }
 
+    public List<ResultLabel> routeNaiveProfileWithNaiveBetas(Parameters parameters) {
+        for (StopWithTimeDelta accessStation : parameters.getAccessStations()) {
+            Parameters newParameters = new Parameters(Collections.singletonList(accessStation), parameters.getEgressStations(), parameters.getProfileStartTime(), parameters.getProfileLength(), parameters.getTripFilter(), parameters.getBetaAccessTime(), parameters.getBetaEgressTime());
+            routeNaiveProfile(newParameters);
+        }
+        return result;
+    }
+
     public List<ResultLabel> routeNaiveProfile(Parameters parameters) {
         this.parameters = parameters;
         while (!parameters.getProfileLength().isNegative()) {
