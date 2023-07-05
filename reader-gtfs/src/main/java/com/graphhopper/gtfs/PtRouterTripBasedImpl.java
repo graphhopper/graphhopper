@@ -130,6 +130,8 @@ public final class PtRouterTripBasedImpl implements PtRouter {
         private final GHResponse response = new GHResponse();
         private final long limitTripTime;
         private final long limitStreetTime;
+        private final double betaAccessTime;
+        private final double betaEgressTime;
         private QueryGraph queryGraph;
         private int visitedNodes;
         private final Profile accessProfile;
@@ -164,9 +166,11 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             limitStreetTime = request.getLimitStreetTime() != null ? request.getLimitStreetTime().toMillis() : Long.MAX_VALUE;
             requestedPathDetails = request.getPathDetails();
             accessProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getAccessProfile())).findFirst().get();
+            betaAccessTime = request.getBetaAccessTime();
             accessWeighting = weightingFactory.createWeighting(accessProfile, new PMap(), false);
             accessSnapFilter = new DefaultSnapFilter(accessWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(accessProfile.getVehicle())));
             egressProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getEgressProfile())).findFirst().get();
+            betaEgressTime = request.getBetaEgressTime();
             egressWeighting = weightingFactory.createWeighting(egressProfile, new PMap(), false);
             egressSnapFilter = new DefaultSnapFilter(egressWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getVehicle())));
         }
@@ -193,7 +197,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             response.addDebugInfo("access/egress routing:" + stopWatch1.stop().getSeconds() + "s");
 
             TripBasedRouter tripBasedRouter = new TripBasedRouter(gtfsStorage, gtfsStorage.tripTransfers);
-            List<TripBasedRouter.ResultLabel> routes = tripBasedRouter.routeNaiveProfile(accessStations, egressStations, initialTime, maxProfileDuration, trip -> (blockedRouteTypes & (1 << trip.routeType)) == 0);
+            List<TripBasedRouter.ResultLabel> routes = tripBasedRouter.routeNaiveProfile(new TripBasedRouter.Parameters(accessStations, egressStations, initialTime, maxProfileDuration, trip -> (blockedRouteTypes & (1 << trip.routeType)) == 0, betaAccessTime, betaEgressTime));
 
             tripFromLabel = new TripFromLabel(queryGraph, encodingManager, gtfsStorage, RealtimeFeed.empty(), pathDetailsBuilderFactory, walkSpeedKmH);
             for (TripBasedRouter.ResultLabel route : routes) {

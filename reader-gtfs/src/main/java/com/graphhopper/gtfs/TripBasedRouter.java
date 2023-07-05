@@ -26,8 +26,7 @@ public class TripBasedRouter {
     Instant earliestArrivalTime = Instant.MAX;
     private ObjectIntHashMap<Trips.TripKey> tripDoneFromIndex = new ObjectIntHashMap();
     private List<ResultLabel> result = new ArrayList<>();
-    private List<StopWithTimeDelta> egressStations;
-    private Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter;
+    private Parameters parameters;
 
     public TripBasedRouter(GtfsStorage gtfsStorage, Trips tripTransfers) {
         this.gtfsStorage = gtfsStorage;
@@ -46,19 +45,18 @@ public class TripBasedRouter {
         }
     }
 
-    public List<ResultLabel> routeNaiveProfile(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant profileStartTime, Duration profileLength, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter) {
-        while (!profileLength.isNegative()) {
-            Instant initialTime = profileStartTime.plus(profileLength);
-            route(accessStations, egressStations, initialTime, tripFilter);
-            profileLength = profileLength.minus(Duration.ofMinutes(1));
+    public List<ResultLabel> routeNaiveProfile(Parameters parameters) {
+        this.parameters = parameters;
+        while (!parameters.getProfileLength().isNegative()) {
+            Instant initialTime = parameters.getProfileStartTime().plus(parameters.getProfileLength());
+            route(parameters.getAccessStations(), parameters.getEgressStations(), initialTime, parameters.getTripFilter());
+            parameters.setProfileLength(parameters.getProfileLength().minus(Duration.ofMinutes(1)));
         }
-        route(accessStations, egressStations, profileStartTime, tripFilter);
+        route(parameters.getAccessStations(), parameters.getEgressStations(), parameters.getProfileStartTime(), parameters.getTripFilter());
         return result;
     }
 
     public List<ResultLabel> route(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant initialTime, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter) {
-        this.egressStations = egressStations;
-        this.tripFilter = tripFilter;
         List<EnqueuedTripSegment> queue = new ArrayList<>();
         for (StopWithTimeDelta accessStation : accessStations) {
             Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey> tripsForThisFeed = tripTransfers.trips.get(accessStation.stopId.feedId);
@@ -135,9 +133,7 @@ public class TripBasedRouter {
             for (int i = tripAtStopTime.stop_sequence + 1; i < toStopSequence; i++) {
                 StopTime stopTime = stopTimes.get(i);
                 if (stopTime == null) continue;
-                if (!getArrivalTime(enqueuedTripSegment, stopTime).toInstant().isBefore(earliestArrivalTime))
-                    break;
-                for (StopWithTimeDelta destination : egressStations) {
+                for (StopWithTimeDelta destination : parameters.getEgressStations()) {
                     Instant newArrivalTime = getArrivalTime(enqueuedTripSegment, stopTime).toInstant().plusMillis(destination.timeDelta);
                     if (destination.stopId.stopId.equals(stopTime.stop_id) && destination.stopId.feedId.equals(feedId) && newArrivalTime.isBefore(earliestArrivalTime)) {
                         earliestArrivalTime = newArrivalTime;
@@ -178,7 +174,7 @@ public class TripBasedRouter {
                 for (Trips.TripAtStopTime transferDestination : transferDestinations) {
                     GTFSFeed.StopTimesForTripWithTripPatternKey destinationStopTimes = tripTransfers.trips.get(transferDestination.feedId).get(transferDestination.tripDescriptor);
                     StopTime transferStopTime = destinationStopTimes.stopTimes.get(transferDestination.stop_sequence);
-                    if (destinationStopTimes.service.activeOn(enqueuedTripSegment.serviceDay) && tripFilter.test(destinationStopTimes)) {
+                    if (destinationStopTimes.service.activeOn(enqueuedTripSegment.serviceDay) && parameters.getTripFilter().test(destinationStopTimes)) {
                         logger.trace("    {}", transferDestination);
                         if (transferStopTime.departure_time < stopTime.arrival_time) {
                             enqueue(queue1, transferDestination, transferOrigin, enqueuedTripSegment, feedId, enqueuedTripSegment.serviceDay, enqueuedTripSegment.accessStation);
@@ -294,4 +290,55 @@ public class TripBasedRouter {
         return stopTime.departure_time;
     }
 
+    static class Parameters {
+        private final List<StopWithTimeDelta> accessStations;
+        private final List<StopWithTimeDelta> egressStations;
+        private final Instant profileStartTime;
+        private Duration profileLength;
+        private final Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter;
+        private final double betaAccessTime;
+        private final double betaEgressTime;
+
+        Parameters(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant profileStartTime, Duration profileLength, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter, double betaAccessTime, double betaEgressTime) {
+            this.accessStations = accessStations;
+            this.egressStations = egressStations;
+            this.profileStartTime = profileStartTime;
+            this.profileLength = profileLength;
+            this.tripFilter = tripFilter;
+            this.betaAccessTime = betaAccessTime;
+            this.betaEgressTime = betaEgressTime;
+        }
+
+        public List<StopWithTimeDelta> getAccessStations() {
+            return accessStations;
+        }
+
+        public List<StopWithTimeDelta> getEgressStations() {
+            return egressStations;
+        }
+
+        public Instant getProfileStartTime() {
+            return profileStartTime;
+        }
+
+        public Duration getProfileLength() {
+            return profileLength;
+        }
+
+        public Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> getTripFilter() {
+            return tripFilter;
+        }
+
+        public void setProfileLength(Duration profileLength) {
+            this.profileLength = profileLength;
+        }
+
+        public double getBetaAccessTime() {
+            return betaAccessTime;
+        }
+
+        public double getBetaEgressTime() {
+            return betaEgressTime;
+        }
+    }
 }

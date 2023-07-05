@@ -24,6 +24,9 @@ graphhopper:
     - name: foot
       vehicle: foot
       weighting: fastest
+    - name: car
+      vehicle: car
+      weighting: fastest
 
   import.osm.ignored_highways: ''
 
