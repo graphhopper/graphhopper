@@ -39,27 +39,19 @@ public class OSMMaxSpeedParser implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
-        double fwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:forward"));
-        if (!isValidSpeed(fwdSpeed) && isValidSpeed(maxSpeed))
-            fwdSpeed = maxSpeed;
-        double maxPossibleSpeed = MaxSpeed.UNLIMITED_SIGN_SPEED;
-        if (isValidSpeed(fwdSpeed) && fwdSpeed > maxPossibleSpeed)
-            fwdSpeed = maxPossibleSpeed;
+        carMaxSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, getMaxSpeed(way, false));
+        carMaxSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, getMaxSpeed(way, true));
+    }
 
-        double bwdSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:backward"));
-        if (!isValidSpeed(bwdSpeed) && isValidSpeed(maxSpeed))
-            bwdSpeed = maxSpeed;
-        if (isValidSpeed(bwdSpeed) && bwdSpeed > maxPossibleSpeed)
-            bwdSpeed = maxPossibleSpeed;
-
-        if (!isValidSpeed(fwdSpeed))
-            fwdSpeed = UNSET_SPEED;
-        carMaxSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, fwdSpeed);
-
-        if (!isValidSpeed(bwdSpeed))
-            bwdSpeed = UNSET_SPEED;
-        carMaxSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, bwdSpeed);
+    private double getMaxSpeed(ReaderWay way, boolean reverse) {
+        final double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
+        final double directedMaxSpeed = OSMValueExtractor.stringToKmh(way.getTag(reverse ? "maxspeed:backward" : "maxspeed:forward"));
+        double result = isValidSpeed(directedMaxSpeed)
+                ? directedMaxSpeed
+                : isValidSpeed(maxSpeed)
+                ? maxSpeed
+                : UNSET_SPEED;
+        return Math.min(result, MaxSpeed.UNLIMITED_SIGN_SPEED);
     }
 
     /**
