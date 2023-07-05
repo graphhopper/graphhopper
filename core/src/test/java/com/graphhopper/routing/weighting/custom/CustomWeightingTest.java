@@ -407,7 +407,8 @@ class CustomWeightingTest {
         BooleanEncodedValue tcAccessEnc = VehicleAccess.create("car");
         DecimalEncodedValue tcAvgSpeedEnc = VehicleSpeed.create("car", 5, 5, true);
         DecimalEncodedValue orientEnc = Orientation.create();
-        EncodingManager em = new EncodingManager.Builder().add(tcAccessEnc).add(tcAvgSpeedEnc).add(orientEnc).build();
+        EncodingManager em = new EncodingManager.Builder().add(tcAccessEnc).add(tcAvgSpeedEnc).
+                add(orientEnc).add(TurnCost.create("car", 1)).build();
         BaseGraph turnGraph = new BaseGraph.Builder(em).withTurnCosts(true).create();
 
         //       4   5
@@ -425,7 +426,8 @@ class CustomWeightingTest {
         CustomProfile profile = new CustomProfile("car");
         TurnCostsConfig config = new TurnCostsConfig();
         config.setLeftCost(6);
-        profile.setCustomModel(new CustomModel().setTurnCostsConfig(config));
+        profile.setCustomModel(new CustomModel().setTurnCostsConfig(config)).
+                setTurnCosts(true);
         Weighting weighting = new DefaultWeightingFactory(turnGraph, em).createWeighting(profile, new PMap(), false);
         OrientationCalculator calc = new OrientationCalculator(orientEnc);
         EdgeIntAccess edgeIntAccess = turnGraph.createEdgeIntAccess();

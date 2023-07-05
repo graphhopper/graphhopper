@@ -24,8 +24,9 @@ public class TurnCostsConfig {
         maxRightAngle = copy.maxRightAngle;
     }
 
-    public void setLeftCost(double leftCost) {
+    public TurnCostsConfig setLeftCost(double leftCost) {
         this.leftCost = leftCost;
+        return this;
     }
 
     @JsonProperty("left")
@@ -33,8 +34,9 @@ public class TurnCostsConfig {
         return leftCost;
     }
 
-    public void setRightCost(double rightCost) {
+    public TurnCostsConfig setRightCost(double rightCost) {
         this.rightCost = rightCost;
+        return this;
     }
 
     @JsonProperty("right")
@@ -42,8 +44,9 @@ public class TurnCostsConfig {
         return rightCost;
     }
 
-    public void setStraightCost(double straightCost) {
+    public TurnCostsConfig setStraightCost(double straightCost) {
         this.straightCost = straightCost;
+        return this;
     }
 
     @JsonProperty("straight")

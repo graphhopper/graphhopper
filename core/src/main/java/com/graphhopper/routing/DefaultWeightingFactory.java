@@ -91,7 +91,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
             CustomProfile customProfile = (CustomProfile) profile;
 
             queryCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
-            if (encodingManager.hasEncodedValue(Orientation.KEY))
+            if (turnCostProvider != NO_TURN_COST_PROVIDER && encodingManager.hasEncodedValue(Orientation.KEY))
                 turnCostProvider = CustomWeighting.createFromTurnCostConfig(turnCostProvider,
                         encodingManager.getDecimalEncodedValue(Orientation.KEY), graph, queryCustomModel.getTurnCostsConfig());
             weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,

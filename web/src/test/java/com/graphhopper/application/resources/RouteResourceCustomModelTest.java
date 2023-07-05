@@ -57,18 +57,18 @@ public class RouteResourceCustomModelTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "bike,car,foot,wheelchair,roads").
+                putObject("graph.vehicles", "bike,car|turn_costs=true,foot,wheelchair,roads").
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
-                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv,average_slope,max_slope").
+                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv,average_slope,max_slope,orientation").
                 putObject("custom_models.directory", "../custom_models/").
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Arrays.asList(
                         new Profile("wheelchair"),
                         new CustomProfile("roads").setCustomModel(new CustomModel()).setVehicle("roads"),
-                        new CustomProfile("car").setCustomModel(new CustomModel().setDistanceInfluence(70d)).setVehicle("car"),
+                        new CustomProfile("car").setCustomModel(new CustomModel().setDistanceInfluence(70d)).setVehicle("car").setTurnCosts(true),
                         new CustomProfile("car_with_area").setCustomModel(new CustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
                         new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0d)).setVehicle("bike"),
                         new Profile("bike_fastest").setWeighting("fastest").setVehicle("bike"),
@@ -345,6 +345,34 @@ public class RouteResourceCustomModelTest {
         JsonNode path = getPath(body);
         assertEquals(7314, path.get("distance").asDouble(), 10);
         assertEquals(957 * 1000, path.get("time").asLong(), 1_000);
+    }
+
+    @Test
+    public void testTurnCost() {
+        String body = "{\"points\": [[11.508198,50.015441], [11.505063,50.01737]], \"profile\": \"car\", \"ch.disable\":true," +
+                "\"custom_model\": {" +
+                "   \"turn_costs\": {\"left\": 100 } }}";
+        JsonNode path = getPath(body);
+        assertEquals(1067, path.get("distance").asDouble(), 10);
+    }
+
+    @Test
+    public void testTurnCostAlternativeBug() {
+        String body = "{\"points\": [[11.503027,49.987546], [11.503149,49.986786]], \"profile\": \"car\", \"ch.disable\":true," +
+                "\"custom_model\": {" +
+                "   \"turn_costs\": {\"left\": 100 } }}";
+        JsonNode path = getPath(body);
+        assertEquals(545, path.get("distance").asDouble(), 10);
+
+        body = "{\"points\": [[11.503027,49.987546], [11.503149,49.986786]], \"profile\": \"car\", \"ch.disable\":true," +
+                "\"algorithm\":\"alternative_route\"," +
+                "\"custom_model\": {" +
+                "   \"turn_costs\": {\"left\": 100 } }}";
+        final Response response = query(body, 200);
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertFalse(json.get("info").has("errors"));
+        assertEquals(545, json.get("paths").get(0).get("distance").asDouble(), 10);
+        // TODO assertEquals(124, json.get("paths").get(1).get("distance").asDouble(), 10);
     }
 
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {
