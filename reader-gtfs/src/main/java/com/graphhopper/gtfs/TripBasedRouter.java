@@ -188,8 +188,9 @@ public class TripBasedRouter {
         return queue1;
     }
 
-    private static ZonedDateTime getArrivalTime(EnqueuedTripSegment enqueuedTripSegment, StopTime stopTime) {
-        return enqueuedTripSegment.serviceDay.atStartOfDay(enqueuedTripSegment.accessStation.zoneId).plusSeconds(stopTime.arrival_time);
+    private ZonedDateTime getArrivalTime(EnqueuedTripSegment enqueuedTripSegment, StopTime stopTime) {
+        long extraDisutilityOfAccessSeconds = ((long) (enqueuedTripSegment.accessStation.timeDelta * (parameters.getBetaAccessTime() - 1.0))) / 1000L;
+        return enqueuedTripSegment.serviceDay.atStartOfDay(enqueuedTripSegment.accessStation.zoneId).plusSeconds(stopTime.arrival_time).plusSeconds(extraDisutilityOfAccessSeconds);
     }
 
     private void enqueue(List<EnqueuedTripSegment> queue1, Trips.TripAtStopTime transferDestination, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, String gtfsFeed, LocalDate serviceDay, StopWithTimeDelta accessStation) {
@@ -257,8 +258,7 @@ public class TripBasedRouter {
         }
 
         Instant getArrivalTime() {
-            StopTime stopTime = getStopTime();
-            return enqueuedTripSegment.serviceDay.atStartOfDay(getAccessStop().zoneId).plusSeconds(stopTime.arrival_time + (int) (destination.timeDelta / 1000L)).toInstant();
+            return TripBasedRouter.this.getArrivalTime(enqueuedTripSegment, getStopTime()).plusSeconds((long) ((destination.timeDelta / 1000L) * parameters.getBetaEgressTime())).toInstant();
         }
 
         public int getRound() {
