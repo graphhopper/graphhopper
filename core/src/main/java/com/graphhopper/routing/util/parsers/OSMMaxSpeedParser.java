@@ -46,12 +46,11 @@ public class OSMMaxSpeedParser implements TagParser {
     private double getMaxSpeed(ReaderWay way, boolean reverse) {
         final double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
         final double directedMaxSpeed = OSMValueExtractor.stringToKmh(way.getTag(reverse ? "maxspeed:backward" : "maxspeed:forward"));
-        double result = isValidSpeed(directedMaxSpeed)
-                ? directedMaxSpeed
+        return isValidSpeed(directedMaxSpeed)
+                ? Math.min(directedMaxSpeed, MaxSpeed.UNLIMITED_SIGN_SPEED)
                 : isValidSpeed(maxSpeed)
-                ? maxSpeed
+                ? Math.min(maxSpeed, MaxSpeed.UNLIMITED_SIGN_SPEED)
                 : UNSET_SPEED;
-        return Math.min(result, MaxSpeed.UNLIMITED_SIGN_SPEED);
     }
 
     /**
