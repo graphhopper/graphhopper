@@ -56,11 +56,15 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
         super(speedEnc, maxPossibleSpeed);
 
         badSurfaceSpeedMap.add("cobblestone");
+        badSurfaceSpeedMap.add("unhewn_cobblestone");
+        badSurfaceSpeedMap.add("sett");
         badSurfaceSpeedMap.add("grass_paver");
         badSurfaceSpeedMap.add("gravel");
+        badSurfaceSpeedMap.add("pebblestone");
         badSurfaceSpeedMap.add("sand");
         badSurfaceSpeedMap.add("paving_stones");
         badSurfaceSpeedMap.add("dirt");
+        badSurfaceSpeedMap.add("earth");
         badSurfaceSpeedMap.add("ground");
         badSurfaceSpeedMap.add("grass");
         badSurfaceSpeedMap.add("unpaved");
