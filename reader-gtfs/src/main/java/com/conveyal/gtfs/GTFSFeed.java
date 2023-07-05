@@ -538,7 +538,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
 
     public void findPatterns () {
-        ObjectIntHashMap startTimes = new ObjectIntHashMap();
+        ObjectIntHashMap<String> startTimes = new ObjectIntHashMap<>();
         PatternFinder patternFinder = new PatternFinder(this);
         // Iterate over trips and process each trip and its stop times.
         for (Trip trip : this.trips.values()) {
@@ -548,7 +548,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         }
         patterns = patternFinder.createPatternObjects();
         for (PatternFinder.Pattern e : patterns.values()) {
-            e.trips.sort(Comparator.comparingInt(t -> startTimes.get(t)));
+            e.trips.sort(Comparator.comparingInt(t -> startTimes.get(t.getTripId())));
         }
     }
 
