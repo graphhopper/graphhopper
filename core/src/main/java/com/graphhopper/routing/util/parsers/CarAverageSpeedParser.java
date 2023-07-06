@@ -19,8 +19,8 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -161,8 +161,14 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      */
     protected double applyBadSurfaceSpeed(ReaderWay way, double speed) {
         // limit speed if bad surface
-        if (badSurfaceSpeed > 0 && isValidSpeed(speed) && speed > badSurfaceSpeed && way.hasTag("surface", badSurfaceSpeedMap))
-            speed = badSurfaceSpeed;
+        if (badSurfaceSpeed > 0 && isValidSpeed(speed) && speed > badSurfaceSpeed) {
+            String surface = way.getTag("surface", "");
+            int colonIndex = surface.indexOf(":");
+            if (colonIndex != -1)
+                surface = surface.substring(0, colonIndex);
+            if (badSurfaceSpeedMap.contains(surface))
+                speed = badSurfaceSpeed;
+        }
         return speed;
     }
 }
