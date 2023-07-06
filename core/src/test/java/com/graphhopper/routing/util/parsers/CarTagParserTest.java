@@ -753,5 +753,12 @@ public class CarTagParserTest {
         way.setTag("highway", "abandoned");
         speedParser.handleWayTags(0, edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags()), way);
         assertEquals(10, avSpeedEnc.getDecimal(false, 0, edgeIntAccess), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "construction");
+        way.setTag("maxspeed", "100");
+        speedParser.handleWayTags(0, edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags()), way);
+        // unknown highways can be quite fast in combination with maxspeed!?
+        assertEquals(90, avSpeedEnc.getDecimal(false, 0, edgeIntAccess), 1e-1);
     }
 }
