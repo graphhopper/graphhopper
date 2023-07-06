@@ -105,7 +105,7 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
     }
 
     protected double getSpeed(ReaderWay way) {
-        String highwayValue = way.getTag("highway");
+        String highwayValue = way.getTag("highway", "");
         Integer speed = defaultSpeedMap.get(highwayValue);
 
         // even inaccessible edges get a speed assigned
@@ -126,13 +126,11 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway");
-        if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
-                double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-                setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
-                if (avgSpeedEnc.isStoreTwoDirections())
-                    setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
-            }
+        if (highwayValue == null && way.hasTag("route", ferries)) {
+            double ferrySpeed = ferrySpeedCalc.getSpeed(way);
+            setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
+            if (avgSpeedEnc.isStoreTwoDirections())
+                setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
             return;
         }
 
