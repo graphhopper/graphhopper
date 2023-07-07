@@ -3,7 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.CarTemporaryRestriction;
+import com.graphhopper.routing.ev.CarConditionalRestriction;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
@@ -14,12 +14,12 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class OSMCarTemporaryRestrictionParserTest {
+class OSMCarConditionalRestrictionParserTest {
 
-    private final BooleanEncodedValue restricted = CarTemporaryRestriction.create();
+    private final BooleanEncodedValue restricted = CarConditionalRestriction.create();
     private final EncodingManager em = new EncodingManager.Builder().add(restricted).build();
     private final String today = Helper.createFormatter("yyyy MMM dd").format(new Date().getTime());
-    private final OSMTemporaryRestrictionParser parser = new OSMTemporaryRestrictionParser(restricted, "");
+    private final OSMConditionalRestrictionParser parser = new OSMConditionalRestrictionParser(restricted, "");
 
     @Test
     public void testBasics() {
