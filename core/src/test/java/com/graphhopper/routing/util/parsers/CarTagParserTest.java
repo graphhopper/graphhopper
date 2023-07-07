@@ -730,4 +730,35 @@ public class CarTagParserTest {
             assertEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
         }
     }
+
+    @Test
+    void nonHighwaysFallbackSpeed_issue2845() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("man_made", "pier");
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
+        speedParser.handleWayTags(0, edgeIntAccess, way);
+        assertEquals(10, avSpeedEnc.getDecimal(false, 0, edgeIntAccess), 1e-1);
+
+        way.clearTags();
+        way.setTag("railway", "platform");
+        speedParser.handleWayTags(0, edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags()), way);
+        assertEquals(10, avSpeedEnc.getDecimal(false, 0, edgeIntAccess), 1e-1);
+
+        way.clearTags();
+        way.setTag("route", "ski");
+        speedParser.handleWayTags(0, edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags()), way);
+        assertEquals(10, avSpeedEnc.getDecimal(false, 0, edgeIntAccess), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "abandoned");
+        speedParser.handleWayTags(0, edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags()), way);
+        assertEquals(10, avSpeedEnc.getDecimal(false, 0, edgeIntAccess), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "construction");
+        way.setTag("maxspeed", "100");
+        speedParser.handleWayTags(0, edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags()), way);
+        // unknown highways can be quite fast in combination with maxspeed!?
+        assertEquals(90, avSpeedEnc.getDecimal(false, 0, edgeIntAccess), 1e-1);
+    }
 }
