@@ -192,7 +192,6 @@ public class RouteResource {
                 + ", custom_model: " + request.getCustomModel();
 
         if (ghResponse.hasErrors()) {
-            logger.info(logStr + " " + ghResponse);
             throw new MultiException(ghResponse.getErrors());
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
