@@ -140,7 +140,7 @@ public class RouteResource {
         if (ghResponse.hasErrors()) {
             return Response.status(Response.Status.BAD_REQUEST).
                     entity(new MultiException(ghResponse.getErrors())).
-                    type(writeGPX ? MediaType.APPLICATION_XML : MediaType.APPLICATION_JSON).
+                    type(writeGPX ? "application/gpx+xml" : MediaType.APPLICATION_JSON).
                     build();
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
