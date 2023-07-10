@@ -332,9 +332,9 @@ public class RoutingAlgorithmWithOSMTest {
     public void testMonacoBike3D() {
         List<Query> queries = new ArrayList<>();
         // 1. alternative: go over steps 'Rampe Major' => 1.7km vs. around 2.7km
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2670, 118));
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2702, 111));
         // 2.
-        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4250, 220));
+        queries.add(new Query(43.728499, 7.417907, 43.74958, 7.436566, 4208, 228));
         // 3.
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2776, 167));
         // 4.
@@ -342,11 +342,11 @@ public class RoutingAlgorithmWithOSMTest {
 
         // try reverse direction
         // 1.
-        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2788, 116));
-        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4132, 194));
-        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2805, 145));
+        queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2598, 115));
+        queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4250, 165));
+        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2806, 145));
         // 4. avoid tunnel(s)!
-        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1723, 96));
+        queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 1901, 116));
         // atm the custom model is intended to be used with 'roads' vehicle when allowing reverse direction for oneways
         // but tests here still assert that reverse oneways are excluded
         GraphHopper hopper = createHopper(MONACO,
@@ -590,10 +590,22 @@ public class RoutingAlgorithmWithOSMTest {
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, list);
-
     }
 
     @Test
+    public void testBikeBayreuth_UseBikeNetwork() {
+        List<Query> list = new ArrayList<>();
+        list.add(new Query(49.979667,11.521019, 49.987415,11.510577, 1288, 45));
+
+        GraphHopper hopper = createHopper(BAYREUTH, new CustomProfile("bike").setCustomModel(
+                        CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_elevation.json"))).setVehicle("roads"));
+        hopper.setVehiclesString("bike,roads");
+        hopper.setElevationProvider(new SRTMProvider(DIR));
+        hopper.importOrLoad();
+        checkQueries(hopper, list);
+    }
+
+        @Test
     public void testDisconnectedAreaAndMultiplePoints() {
         Query query = new Query();
         query.add(53.753177, 9.435968, 10, 10);

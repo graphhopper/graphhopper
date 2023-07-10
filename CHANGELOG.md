@@ -1,5 +1,7 @@
 ### 8.0 [not yet released]
 
+- /info endpoint does no longer return the vehicle used per profile and won't return encoded value of vehicles like car_average_speed
+- Country rules no longer contain maxspeed handling, enable a much better alternative via `max_speed_calculator.enabled: true`. On the client side use `max_speed_estimated` to determine if max_speed is from OSM or an estimation. See #2810
 - bike routing better avoids dangerous roads, see #2796 and #2802
 - routing requests can be configured to timeout after some time, see #2795
 - custom_model_file string changed to custom_model_files array, see #2787
@@ -8,6 +10,8 @@
 - prefer cycleways, bicycle_road and cyclestreet for bike routing, see #2784 and #2778
 - add support for further surfaces like pebblestones or concrete:lanes, see #2751
 - reduced memory usage for urban density calculation, see #2828
+- urban density is now based on road junctions, so the according parameters need adjustment in case
+  the config file does not use the defaults, see #2842
 
 ### 7.0 [14 Mar 2023]
 

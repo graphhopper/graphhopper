@@ -19,8 +19,8 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -56,11 +56,15 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
         super(speedEnc, maxPossibleSpeed);
 
         badSurfaceSpeedMap.add("cobblestone");
+        badSurfaceSpeedMap.add("unhewn_cobblestone");
+        badSurfaceSpeedMap.add("sett");
         badSurfaceSpeedMap.add("grass_paver");
         badSurfaceSpeedMap.add("gravel");
+        badSurfaceSpeedMap.add("pebblestone");
         badSurfaceSpeedMap.add("sand");
         badSurfaceSpeedMap.add("paving_stones");
         badSurfaceSpeedMap.add("dirt");
+        badSurfaceSpeedMap.add("earth");
         badSurfaceSpeedMap.add("ground");
         badSurfaceSpeedMap.add("grass");
         badSurfaceSpeedMap.add("unpaved");
@@ -101,7 +105,7 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
     }
 
     protected double getSpeed(ReaderWay way) {
-        String highwayValue = way.getTag("highway");
+        String highwayValue = way.getTag("highway", "");
         Integer speed = defaultSpeedMap.get(highwayValue);
 
         // even inaccessible edges get a speed assigned
@@ -122,13 +126,11 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway");
-        if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
-                double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-                setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
-                if (avgSpeedEnc.isStoreTwoDirections())
-                    setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
-            }
+        if (highwayValue == null && way.hasTag("route", ferries)) {
+            double ferrySpeed = ferrySpeedCalc.getSpeed(way);
+            setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
+            if (avgSpeedEnc.isStoreTwoDirections())
+                setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
             return;
         }
 
@@ -157,8 +159,14 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      */
     protected double applyBadSurfaceSpeed(ReaderWay way, double speed) {
         // limit speed if bad surface
-        if (badSurfaceSpeed > 0 && isValidSpeed(speed) && speed > badSurfaceSpeed && way.hasTag("surface", badSurfaceSpeedMap))
-            speed = badSurfaceSpeed;
+        if (badSurfaceSpeed > 0 && isValidSpeed(speed) && speed > badSurfaceSpeed) {
+            String surface = way.getTag("surface", "");
+            int colonIndex = surface.indexOf(":");
+            if (colonIndex != -1)
+                surface = surface.substring(0, colonIndex);
+            if (badSurfaceSpeedMap.contains(surface))
+                speed = badSurfaceSpeed;
+        }
         return speed;
     }
 }

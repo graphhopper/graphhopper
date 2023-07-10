@@ -49,10 +49,7 @@ import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorCompletionService;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -648,36 +645,14 @@ public class GHUtility {
         return null;
     }
 
-    public static void runConcurrently(Stream<Callable<String>> callables, int threads) {
-        // process callables in batches, because otherwise we require lots of memory for all the Future objects
-        // that will be returned
-        final int batchSize = 100_000;
-        List<Callable<String>> batch = new ArrayList<>(batchSize);
-        callables.forEach(c -> {
-            batch.add(c);
-            if (batch.size() == batchSize) {
-                processBatch(batch, threads);
-                batch.clear();
-            }
-        });
-        processBatch(batch, threads);
-    }
-
-    private static void processBatch(List<Callable<String>> batch, int threads) {
-        ExecutorService executorService = Executors.newFixedThreadPool(threads);
-        ExecutorCompletionService<String> completionService = new ExecutorCompletionService<>(executorService);
-        AtomicInteger count = new AtomicInteger();
-        batch.forEach(c -> {
-            count.incrementAndGet();
-            completionService.submit(c);
-        });
-        executorService.shutdown();
+    public static void runConcurrently(Stream<Runnable> runnables, int threads) {
+        ForkJoinPool pool = new ForkJoinPool(threads);
         try {
-            for (int i = 0; i < count.get(); i++)
-                completionService.take().get();
-        } catch (Exception e) {
-            executorService.shutdownNow();
+            pool.submit(() -> runnables.parallel().forEach(Runnable::run)).get();
+        } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
+        } finally {
+            pool.shutdown();
         }
     }
 

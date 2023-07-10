@@ -20,6 +20,7 @@ package com.graphhopper.util;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -51,5 +52,38 @@ public class BitUtilLittleTest extends AbstractBitUtilTester {
 
         str = "0101111001011100000011111100011";
         assertEquals(str + "0", bitUtil.toBitString(bitUtil.fromBitString(str)));
+    }
+
+    @Test
+    public void testCountBitValue() {
+        assertEquals(1, BitUtil.countBitValue(1));
+        assertEquals(2, BitUtil.countBitValue(2));
+        assertEquals(2, BitUtil.countBitValue(3));
+        assertEquals(3, BitUtil.countBitValue(4));
+        assertEquals(3, BitUtil.countBitValue(7));
+        assertEquals(4, BitUtil.countBitValue(8));
+        assertEquals(5, BitUtil.countBitValue(20));
+    }
+
+    @Test
+    public void testUnsignedConversions() {
+        long l = BitUtil.toUnsignedLong(-1);
+        assertEquals(4294967295L, l);
+        assertEquals(-1, BitUtil.toSignedInt(l));
+
+        int intVal = Integer.MAX_VALUE;
+        long maxInt = (long) intVal;
+        assertEquals(intVal, BitUtil.toSignedInt(maxInt));
+
+        intVal++;
+        maxInt = BitUtil.toUnsignedLong(intVal);
+        assertEquals(intVal, BitUtil.toSignedInt(maxInt));
+
+        intVal++;
+        maxInt = BitUtil.toUnsignedLong(intVal);
+        assertEquals(intVal, BitUtil.toSignedInt(maxInt));
+
+        assertEquals(0xFFFFffffL, (1L << 32) - 1);
+        assertTrue(0xFFFFffffL > 0L);
     }
 }

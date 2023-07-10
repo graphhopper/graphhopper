@@ -38,9 +38,7 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
     public static double getMaxSpeed(ReaderWay way, boolean bwd) {
         double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
         double directedMaxSpeed = OSMValueExtractor.stringToKmh(way.getTag(bwd ? "maxspeed:backward" : "maxspeed:forward"));
-        if (isValidSpeed(directedMaxSpeed) && (!isValidSpeed(maxSpeed) || directedMaxSpeed < maxSpeed))
-            maxSpeed = directedMaxSpeed;
-        return maxSpeed;
+        return isValidSpeed(directedMaxSpeed) ? directedMaxSpeed : maxSpeed;
     }
 
     /**
