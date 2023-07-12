@@ -59,12 +59,14 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
         badSurfaceSpeedMap.add("sett");
         badSurfaceSpeedMap.add("grass_paver");
         badSurfaceSpeedMap.add("gravel");
+        badSurfaceSpeedMap.add("fine_gravel");
         badSurfaceSpeedMap.add("pebblestone");
         badSurfaceSpeedMap.add("sand");
         badSurfaceSpeedMap.add("paving_stones");
         badSurfaceSpeedMap.add("dirt");
         badSurfaceSpeedMap.add("earth");
         badSurfaceSpeedMap.add("ground");
+        badSurfaceSpeedMap.add("wood");
         badSurfaceSpeedMap.add("grass");
         badSurfaceSpeedMap.add("unpaved");
         badSurfaceSpeedMap.add("compacted");
