@@ -32,11 +32,11 @@ import java.util.Set;
 
 public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
-    public static final double CAR_MAX_SPEED = 140;
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
     // This value determines the maximal possible on roads with bad surfaces
     private final int badSurfaceSpeed;
+    private final double maxPossibleSpeed;
 
     /**
      * A map which associates string to speed. Get some impression:
@@ -46,15 +46,14 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
 
     public CarAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(
-                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))),
-                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))).getNextStorableValue(CAR_MAX_SPEED)
-        );
+        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))).getNextStorableValue(140));
     }
 
     public CarAverageSpeedParser(DecimalEncodedValue speedEnc, double maxPossibleSpeed) {
-        super(speedEnc, maxPossibleSpeed);
+        super(speedEnc);
 
+        this.maxPossibleSpeed = maxPossibleSpeed;
         badSurfaceSpeedMap.add("cobblestone");
         badSurfaceSpeedMap.add("unhewn_cobblestone");
         badSurfaceSpeedMap.add("sett");
@@ -139,6 +138,17 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
 
         setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
         setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
+    }
+
+    protected void setSpeed(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double speed) {
+        // special case when speed is non-zero but would be "rounded down" to 0 due to the low precision of the EncodedValue
+        if (speed > 0.1 && speed < avgSpeedEnc.getSmallestNonZeroValue())
+            speed = avgSpeedEnc.getSmallestNonZeroValue();
+        if (speed < avgSpeedEnc.getSmallestNonZeroValue()) {
+            avgSpeedEnc.setDecimal(reverse, edgeId, edgeIntAccess, 0);
+        } else {
+            avgSpeedEnc.setDecimal(reverse, edgeId, edgeIntAccess, Math.min(speed, maxPossibleSpeed));
+        }
     }
 
     /**

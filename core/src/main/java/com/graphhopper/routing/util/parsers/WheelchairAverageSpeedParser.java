@@ -2,8 +2,8 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
@@ -42,13 +42,15 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-                setSpeed(edgeId, edgeIntAccess, true, true, ferrySpeed);
+                avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, ferrySpeed);
+                avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, ferrySpeed);
             }
             if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
                 return;
         }
 
-        setSpeed(edgeId, edgeIntAccess, true, true, MEAN_SPEED);
+        avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, MEAN_SPEED);
+        avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, MEAN_SPEED);
         applyWayTags(way, edgeId, edgeIntAccess);
     }
 
@@ -86,8 +88,8 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
             // it can be problematic to exclude roads due to potential bad elevation data (e.g.delta for narrow nodes could be too high)
             // so exclude only when we are certain
             if (fullDist2D > 50) {
-                setSpeed(edgeId, edgeIntAccess, true, false, 0);
-                setSpeed(edgeId, edgeIntAccess, true, true, 0);
+                avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, 0);
+                avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, 0);
                 return;
             }
 
@@ -95,7 +97,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
             bwdSpeed = SLOW_SPEED;
         }
 
-        if (fwdSpeed > 0) setSpeed(edgeId, edgeIntAccess, true, false, fwdSpeed);
-        if (bwdSpeed > 0) setSpeed(edgeId, edgeIntAccess, false, true, bwdSpeed);
+        if (fwdSpeed > 0) avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, fwdSpeed);
+        if (bwdSpeed > 0) avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, bwdSpeed);
     }
 }

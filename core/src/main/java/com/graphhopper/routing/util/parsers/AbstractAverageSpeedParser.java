@@ -15,21 +15,13 @@ import static com.graphhopper.routing.util.parsers.AbstractAccessParser.FERRIES;
 public abstract class AbstractAverageSpeedParser implements TagParser {
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final DecimalEncodedValue avgSpeedEnc;
-    // This value determines the maximal possible speed of any road regardless of the maxspeed value
-    // lower values allow more compact representation of the routing graph
-    protected final double maxPossibleSpeed;
     protected final Set<String> ferries = new HashSet<>(FERRIES);
     protected final FerrySpeedCalculator ferrySpeedCalc;
 
-    protected AbstractAverageSpeedParser(DecimalEncodedValue speedEnc, double maxPossibleSpeed) {
-        this.maxPossibleSpeed = maxPossibleSpeed;
+    protected AbstractAverageSpeedParser(DecimalEncodedValue speedEnc) {
         this.avgSpeedEnc = speedEnc;
 
-        ferrySpeedCalc = new FerrySpeedCalculator(speedEnc.getSmallestNonZeroValue(), maxPossibleSpeed, 5);
-    }
-
-    public double getMaxSpeed() {
-        return maxPossibleSpeed;
+        ferrySpeedCalc = new FerrySpeedCalculator(speedEnc.getSmallestNonZeroValue(), speedEnc.getMaxStorableDecimal(), 5);
     }
 
     /**
@@ -50,17 +42,6 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
 
     public final DecimalEncodedValue getAverageSpeedEnc() {
         return avgSpeedEnc;
-    }
-
-    protected void setSpeed(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double speed) {
-        // special case when speed is non-zero but would be "rounded down" to 0 due to the low precision of the EncodedValue
-        if (speed > 0.1 && speed < avgSpeedEnc.getSmallestNonZeroValue())
-            speed = avgSpeedEnc.getSmallestNonZeroValue();
-        if (speed < avgSpeedEnc.getSmallestNonZeroValue()) {
-            avgSpeedEnc.setDecimal(reverse, edgeId, edgeIntAccess, 0);
-        } else {
-            avgSpeedEnc.setDecimal(reverse, edgeId, edgeIntAccess, Math.min(speed, getMaxSpeed()));
-        }
     }
 
     public final String getName() {

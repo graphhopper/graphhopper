@@ -4,10 +4,13 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.util.PriorityCode.*;
+import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
 
 public class FootAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
     static final int SLOW_SPEED = 2;
@@ -26,7 +29,7 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
     }
 
     protected FootAverageSpeedParser(DecimalEncodedValue speedEnc) {
-        super(speedEnc, speedEnc.getNextStorableValue(FERRY_SPEED));
+        super(speedEnc);
 
         sidewalksNoValues.add("no");
         sidewalksNoValues.add("none");
@@ -77,7 +80,9 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-                setSpeed(edgeId, edgeIntAccess, true, true, ferrySpeed);
+                avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, ferrySpeed);
+                if (avgSpeedEnc.isStoreTwoDirections())
+                    avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, ferrySpeed);
             }
             if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
                 return;
@@ -85,18 +90,13 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
 
         String sacScale = way.getTag("sac_scale");
         if (sacScale != null) {
-            setSpeed(edgeId, edgeIntAccess, true, true, "hiking".equals(sacScale) ? MEAN_SPEED : SLOW_SPEED);
+            avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, "hiking".equals(sacScale) ? MEAN_SPEED : SLOW_SPEED);
+            if (avgSpeedEnc.isStoreTwoDirections())
+                avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, "hiking".equals(sacScale) ? MEAN_SPEED : SLOW_SPEED);
         } else {
-            setSpeed(edgeId, edgeIntAccess, true, true, way.hasTag("highway", "steps") ? MEAN_SPEED - 2 : MEAN_SPEED);
+            avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, way.hasTag("highway", "steps") ? MEAN_SPEED - 2 : MEAN_SPEED);
+            if (avgSpeedEnc.isStoreTwoDirections())
+                avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, way.hasTag("highway", "steps") ? MEAN_SPEED - 2 : MEAN_SPEED);
         }
-    }
-
-    void setSpeed(int edgeId, EdgeIntAccess edgeIntAccess, boolean fwd, boolean bwd, double speed) {
-        if (speed > getMaxSpeed())
-            speed = getMaxSpeed();
-        if (fwd)
-            avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, speed);
-        if (bwd && avgSpeedEnc.isStoreTwoDirections())
-            avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, speed);
     }
 }
