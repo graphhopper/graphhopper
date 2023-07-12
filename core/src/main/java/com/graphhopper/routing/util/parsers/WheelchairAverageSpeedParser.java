@@ -9,7 +9,6 @@ import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
 public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
-    private final int maxInclinePercent = 6;
 
     public WheelchairAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
         this(lookup.getDecimalEncodedValue(properties.getString("name", VehicleSpeed.key("wheelchair"))));
@@ -17,23 +16,6 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
 
     protected WheelchairAverageSpeedParser(DecimalEncodedValue speedEnc) {
         super(speedEnc);
-
-        safeHighwayTags.add("footway");
-        safeHighwayTags.add("pedestrian");
-        safeHighwayTags.add("living_street");
-        safeHighwayTags.add("residential");
-        safeHighwayTags.add("service");
-        safeHighwayTags.add("platform");
-
-        safeHighwayTags.remove("steps");
-        safeHighwayTags.remove("track");
-
-        allowedHighwayTags.clear();
-        allowedHighwayTags.addAll(safeHighwayTags);
-        allowedHighwayTags.addAll(avoidHighwayTags);
-        allowedHighwayTags.add("cycleway");
-        allowedHighwayTags.add("unclassified");
-        allowedHighwayTags.add("road");
     }
 
     @Override
@@ -76,6 +58,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
         double elePercent = eleDelta / fullDist2D * 100;
         int smallInclinePercent = 3;
         double fwdSpeed = 0, bwdSpeed = 0;
+        final int maxInclinePercent = 6;
         if (elePercent > smallInclinePercent && elePercent < maxInclinePercent) {
             fwdSpeed = SLOW_SPEED;
             bwdSpeed = MEAN_SPEED;
