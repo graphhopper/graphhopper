@@ -218,13 +218,13 @@ public class OSMReaderTest {
         int n80 = AbstractGraphStorageTester.getIdOf(graph, 54.1);
         EdgeIterator iter = carOutExplorer.setBaseNode(n80);
         iter.next();
-        assertEquals(5, iter.get(carSpeedEnc), 1e-1);
+        assertEquals(6, iter.get(carSpeedEnc), 1e-1);
 
         // duration 01:10 is given => more precise speed calculation!
         // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 71km/h
         iter = carOutExplorer.setBaseNode(n40);
         iter.next();
-        assertEquals(70, iter.get(carSpeedEnc), 1e-1);
+        assertEquals(68, iter.get(carSpeedEnc), 1e-1);
     }
 
     @Test
@@ -239,7 +239,7 @@ public class OSMReaderTest {
         int n60 = AbstractGraphStorageTester.getIdOf(graph, 56.0);
         EdgeIterator iter = carOutExplorer.setBaseNode(n60);
         iter.next();
-        assertEquals(35, iter.get(carSpeedEnc), 1e-1);
+        assertEquals(36, iter.get(carSpeedEnc), 1e-1);
     }
 
     @Test

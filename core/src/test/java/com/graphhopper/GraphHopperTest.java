@@ -104,9 +104,9 @@ public class GraphHopperTest {
 
     @ParameterizedTest
     @CsvSource({
-            DIJKSTRA + ",false,708",
-            ASTAR + ",false,363",
-            DIJKSTRA_BI + ",false,346",
+            DIJKSTRA + ",false,705",
+            ASTAR + ",false,361",
+            DIJKSTRA_BI + ",false,340",
             ASTAR_BI + ",false,192",
             ASTAR_BI + ",true,46",
             DIJKSTRA_BI + ",true,51"
@@ -133,7 +133,7 @@ public class GraphHopperTest {
 
         ResponsePath res = rsp.getBest();
         assertEquals(3586.9, res.getDistance(), .1);
-        assertEquals(277115, res.getTime(), 10);
+        assertEquals(274209, res.getTime(), 10);
         assertEquals(91, res.getPoints().size());
 
         assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
@@ -510,11 +510,11 @@ public class GraphHopperTest {
 
         assertEquals(3, rsp.getAll().size());
         // directly via obergräfenthal
-        assertEquals(870, rsp.getAll().get(0).getTime() / 1000);
+        assertEquals(855, rsp.getAll().get(0).getTime() / 1000);
         // via ramsenthal -> lerchenhof
-        assertEquals(913, rsp.getAll().get(1).getTime() / 1000);
+        assertEquals(910, rsp.getAll().get(1).getTime() / 1000);
         // via neudrossenfeld
-        assertEquals(958, rsp.getAll().get(2).getTime() / 1000);
+        assertEquals(955, rsp.getAll().get(2).getTime() / 1000);
     }
 
     @Test
@@ -1416,7 +1416,7 @@ public class GraphHopperTest {
                 .setProfile(carProfile));
         ResponsePath res = rsp.getBest();
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(207, res.getTime() / 1000f, 1);
+        assertEquals(205, res.getTime() / 1000f, 1);
         assertEquals(2837, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
@@ -1651,17 +1651,14 @@ public class GraphHopperTest {
         hopper.importOrLoad();
 
         // flex
-        testCrossQueryAssert(profile1, hopper, 528.3, 196, true);
-        testCrossQueryAssert(profile2, hopper, 635.8, 198, true);
-        testCrossQueryAssert(profile3, hopper, 815.2, 198, true);
+        testCrossQueryAssert(profile1, hopper, 525.3, 196, true);
+        testCrossQueryAssert(profile2, hopper, 632.9, 198, true);
+        testCrossQueryAssert(profile3, hopper, 812.2, 198, true);
 
         // LM (should be the same as flex, but with less visited nodes!)
-        testCrossQueryAssert(profile1, hopper, 528.3, 108, false);
-        testCrossQueryAssert(profile2, hopper, 635.8, 162, false);
-        // this is actually interesting: the number of visited nodes increases: cross-querying 'works',
-        // but can even perform *worse*, because the landmarks were not customized for the weighting in use.
-        // Creating a separate LM preparation for profile3 yields 108 (not shown)
-        testCrossQueryAssert(profile3, hopper, 815.2, 202, false);
+        testCrossQueryAssert(profile1, hopper, 525.3, 108, false);
+        testCrossQueryAssert(profile2, hopper, 632.9, 126, false);
+        testCrossQueryAssert(profile3, hopper, 812.2, 192, false);
     }
 
     private void testCrossQueryAssert(String profile, GraphHopper hopper, double expectedWeight, int expectedVisitedNodes, boolean disableLM) {
@@ -2280,7 +2277,7 @@ public class GraphHopperTest {
         req.setCurbsides(Arrays.asList("right", "right"));
         GHResponse res = h.route(req);
         assertFalse(res.hasErrors(), "routing should not fail");
-        assertEquals(242.9, res.getBest().getRouteWeight(), 0.1);
+        assertEquals(242.5, res.getBest().getRouteWeight(), 0.1);
         assertEquals(1917, res.getBest().getDistance(), 1);
         assertEquals(243000, res.getBest().getTime(), 1000);
     }

@@ -905,18 +905,6 @@ public class GraphHopper {
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
 
-        if (encodingManager.hasEncodedValue(UrbanDensity.KEY)) {
-            EnumEncodedValue<UrbanDensity> urbanDensityEnc = encodingManager.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
-            if (!encodingManager.hasEncodedValue(RoadClass.KEY))
-                throw new IllegalArgumentException("Urban density calculation requires " + RoadClass.KEY);
-            if (!encodingManager.hasEncodedValue(RoadClassLink.KEY))
-                throw new IllegalArgumentException("Urban density calculation requires " + RoadClassLink.KEY);
-            EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
-            BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
-            UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, roadClassEnc,
-                    roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
-        }
-
         if (maxSpeedCalculator != null) {
             maxSpeedCalculator.fillMaxSpeed(getBaseGraph(), encodingManager);
             maxSpeedCalculator.close();
@@ -962,6 +950,7 @@ public class GraphHopper {
         if (reader.getDataDate() != null)
             properties.put("datareader.data.date", f.format(reader.getDataDate()));
 
+        calculateUrbanDensity();
         writeEncodingManagerToProperties();
     }
 
@@ -971,6 +960,20 @@ public class GraphHopper {
         properties.create(100);
         if (maxSpeedCalculator != null)
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
+    }
+
+    protected void calculateUrbanDensity() {
+        if (encodingManager.hasEncodedValue(UrbanDensity.KEY)) {
+            EnumEncodedValue<UrbanDensity> urbanDensityEnc = encodingManager.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
+            if (!encodingManager.hasEncodedValue(RoadClass.KEY))
+                throw new IllegalArgumentException("Urban density calculation requires " + RoadClass.KEY);
+            if (!encodingManager.hasEncodedValue(RoadClassLink.KEY))
+                throw new IllegalArgumentException("Urban density calculation requires " + RoadClassLink.KEY);
+            EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+            BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
+            UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, roadClassEnc,
+                    roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
+        }
     }
 
     protected void writeEncodingManagerToProperties() {

@@ -374,13 +374,13 @@ public class RouteResourceClientHCTest {
                 putHint("ch.disable", true);
         GHResponse rsp = gh.route(req);
         assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
-        assertEquals(1_638_000, rsp.getBest().getTime(), 1000);
+        assertEquals(1_614_000, rsp.getBest().getTime(), 1000);
 
         // ... and again without the custom model, using the tunnel -> we are much faster
         req.setCustomModel(null);
         rsp = gh.route(req);
         assertFalse(rsp.hasErrors(), "errors:" + rsp.getErrors().toString());
-        assertEquals(218_000, rsp.getBest().getTime(), 1000);
+        assertEquals(215_000, rsp.getBest().getTime(), 1000);
     }
 
     @ParameterizedTest
