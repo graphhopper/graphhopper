@@ -526,7 +526,7 @@ public class CarTagParserTest {
         way.setTag("speed_from_duration", 0.1 / (12.0 / 60));
         // accept
         assertTrue(parser.getAccess(way).isFerry());
-        // We can't store 0.5km/h, but we expect the lowest possible speed (5km/h)
+        // We can't store 0.5km/h, but we expect the lowest possible speed
         edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertEquals(2, speedParser.getAverageSpeedEnc().getDecimal(false, edgeId, edgeIntAccess));
@@ -700,7 +700,6 @@ public class CarTagParserTest {
         way.setTag("route", "ferry");
         way.setTag("edge_distance", 257.0);
 
-        // default is 5km/h minimum speed for car
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
         int edgeId = 0;
         speedParser.handleWayTags(edgeId, edgeIntAccess, way);
