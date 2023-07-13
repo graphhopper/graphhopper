@@ -17,24 +17,10 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
     protected final DecimalEncodedValue avgSpeedEnc;
     protected final Set<String> ferries = new HashSet<>(FERRIES);
     protected final FerrySpeedCalculator ferrySpeedCalc;
-    private final double maxPossibleSpeed;
 
     protected AbstractAverageSpeedParser(DecimalEncodedValue speedEnc) {
-        this(speedEnc, speedEnc.getMaxStorableDecimal());
-    }
-
-    protected AbstractAverageSpeedParser(DecimalEncodedValue speedEnc, double maxPossibleSpeed) {
         this.avgSpeedEnc = speedEnc;
-        this.maxPossibleSpeed = maxPossibleSpeed;
-        this.ferrySpeedCalc = new FerrySpeedCalculator(speedEnc.getSmallestNonZeroValue(), maxPossibleSpeed, 5);
-    }
-
-    protected void setSpeed(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double speed) {
-        if (speed < avgSpeedEnc.getSmallestNonZeroValue() / 2) {
-            throw new IllegalArgumentException("Speed cannot be lower than " + avgSpeedEnc.getSmallestNonZeroValue());
-        } else {
-            avgSpeedEnc.setDecimal(reverse, edgeId, edgeIntAccess, Math.min(speed, maxPossibleSpeed));
-        }
+        this.ferrySpeedCalc = new FerrySpeedCalculator(speedEnc.getSmallestNonZeroValue(), speedEnc.getMaxStorableDecimal(), 6);
     }
 
     /**
@@ -55,6 +41,14 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
 
     public final DecimalEncodedValue getAverageSpeedEnc() {
         return avgSpeedEnc;
+    }
+
+    protected void setSpeed(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double speed) {
+        if (speed < avgSpeedEnc.getSmallestNonZeroValue() / 2) {
+            throw new IllegalArgumentException("Speed cannot be lower than " + avgSpeedEnc.getSmallestNonZeroValue());
+        } else {
+            avgSpeedEnc.setDecimal(reverse, edgeId, edgeIntAccess, speed);
+        }
     }
 
     public final String getName() {

@@ -9,7 +9,6 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 public class RoadsAverageSpeedParser implements TagParser {
-    public static final double ROADS_MAX_SPEED = 254;
     private final DecimalEncodedValue avgSpeedEnc;
     private final double maxPossibleSpeed;
 
