@@ -118,8 +118,8 @@ public class RouteResourceCustomModelTest {
         // the bus profile is a custom profile and we can use its CH preparation as long as we do not add a custom model
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bus\"}";
         JsonNode path = getPath(body);
-        assertEquals(path.get("distance").asDouble(), 1500, 10);
-        assertEquals(path.get("time").asLong(), 168_000, 1_000);
+        assertEquals(1500, path.get("distance").asDouble(), 10);
+        assertEquals(162_000, path.get("time").asLong(), 1_000);
     }
 
     @Test
@@ -344,7 +344,7 @@ public class RouteResourceCustomModelTest {
                 "   \"priority\": [{\"if\": \"car_access == false || hgv == NO || max_width < 3 || max_height < 4\", \"multiply_by\": \"0\"}]}}";
         JsonNode path = getPath(body);
         assertEquals(7314, path.get("distance").asDouble(), 10);
-        assertEquals(957 * 1000, path.get("time").asLong(), 1_000);
+        assertEquals(943 * 1000, path.get("time").asLong(), 1_000);
     }
 
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {

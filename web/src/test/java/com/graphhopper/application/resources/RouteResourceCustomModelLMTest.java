@@ -83,8 +83,8 @@ public class RouteResourceCustomModelLMTest {
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
-        assertEquals(path.get("distance").asDouble(), 3180, 10);
-        assertEquals(path.get("time").asLong(), 182_000, 1_000);
+        assertEquals(3180, path.get("distance").asDouble(), 10);
+        assertEquals(180_000, path.get("time").asLong(), 1_000);
     }
 
     @Test

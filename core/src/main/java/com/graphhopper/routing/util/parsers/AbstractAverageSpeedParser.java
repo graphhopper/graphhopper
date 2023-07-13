@@ -25,7 +25,7 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
         this.maxPossibleSpeed = maxPossibleSpeed;
         this.avgSpeedEnc = speedEnc;
 
-        ferrySpeedCalc = new FerrySpeedCalculator(speedEnc.getSmallestNonZeroValue(), maxPossibleSpeed, 5);
+        ferrySpeedCalc = new FerrySpeedCalculator(speedEnc.getSmallestNonZeroValue(), maxPossibleSpeed, 6);
     }
 
     public double getMaxSpeed() {
