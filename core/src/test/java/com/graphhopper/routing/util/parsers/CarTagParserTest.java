@@ -50,7 +50,7 @@ public class CarTagParserTest {
     private EncodingManager createEncodingManager(String carName) {
         return new EncodingManager.Builder()
                 .add(VehicleAccess.create(carName))
-                .add(VehicleSpeed.create(carName, 5, 5, true))
+                .add(VehicleSpeed.create(carName, 7, 2, true))
                 .addTurnCostEncodedValue(TurnCost.create(carName, 1))
                 .add(VehicleAccess.create("bike"))
                 .add(VehicleSpeed.create("bike", 4, 2, false))
@@ -426,9 +426,8 @@ public class CarTagParserTest {
         speedParser.setSpeed(false, edgeId, edgeIntAccess, 30);
         speedParser.setSpeed(true, edgeId, edgeIntAccess, 40);
 
-        // round down only for very low speed values
-        speedParser.setSpeed(false, edgeId, edgeIntAccess, 0.09);
-        assertEquals(0, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        // exception for very low speed values
+        assertThrows(IllegalArgumentException.class, () -> speedParser.setSpeed(false, edgeId, edgeIntAccess, 0.09));
 
         // this is independent from the speed
         assertTrue(accessEnc.getBool(false, edgeId, edgeIntAccess));

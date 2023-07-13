@@ -134,9 +134,9 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-                avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, ferrySpeed);
+                setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
                 if (avgSpeedEnc.isStoreTwoDirections())
-                    avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, ferrySpeed);
+                    setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
             }
             if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
                 return;
@@ -145,9 +145,9 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         double speed = getSpeed(way);
         Smoothness smoothness = smoothnessEnc.getEnum(false, edgeId, edgeIntAccess);
         speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
-        avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
+        setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
         if (avgSpeedEnc.isStoreTwoDirections())
-            avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
+            setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
     }
 
     int getSpeed(ReaderWay way) {

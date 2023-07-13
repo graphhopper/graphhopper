@@ -24,15 +24,15 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-                avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, ferrySpeed);
-                avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, ferrySpeed);
+                setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
+                setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
             }
             if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
                 return;
         }
 
-        avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, MEAN_SPEED);
-        avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, MEAN_SPEED);
+        setSpeed(false, edgeId, edgeIntAccess, MEAN_SPEED);
+        setSpeed(true, edgeId, edgeIntAccess, MEAN_SPEED);
         applyWayTags(way, edgeId, edgeIntAccess);
     }
 
@@ -80,7 +80,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
             bwdSpeed = SLOW_SPEED;
         }
 
-        if (fwdSpeed > 0) avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, fwdSpeed);
-        if (bwdSpeed > 0) avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, bwdSpeed);
+        if (fwdSpeed > 0) setSpeed(false, edgeId, edgeIntAccess, fwdSpeed);
+        if (bwdSpeed > 0) setSpeed(true, edgeId, edgeIntAccess, bwdSpeed);
     }
 }

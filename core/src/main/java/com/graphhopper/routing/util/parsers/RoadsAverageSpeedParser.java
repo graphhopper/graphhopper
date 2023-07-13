@@ -19,7 +19,7 @@ public class RoadsAverageSpeedParser implements TagParser {
 
     public RoadsAverageSpeedParser(DecimalEncodedValue avgSpeedEnc) {
         this.avgSpeedEnc = avgSpeedEnc;
-        this.maxPossibleSpeed = this.avgSpeedEnc.getNextStorableValue(ROADS_MAX_SPEED);
+        this.maxPossibleSpeed = this.avgSpeedEnc.getMaxStorableDecimal();
     }
 
     @Override
