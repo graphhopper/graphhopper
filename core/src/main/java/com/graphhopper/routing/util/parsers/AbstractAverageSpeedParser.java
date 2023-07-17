@@ -45,7 +45,7 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
 
     protected void setSpeed(boolean reverse, int edgeId, EdgeIntAccess edgeIntAccess, double speed) {
         if (speed < avgSpeedEnc.getSmallestNonZeroValue() / 2) {
-            throw new IllegalArgumentException("Speed cannot be lower than " + avgSpeedEnc.getSmallestNonZeroValue() / 2);
+            throw new IllegalArgumentException("Speed was " + speed + " but cannot be lower than " + avgSpeedEnc.getSmallestNonZeroValue() / 2);
         } else {
             avgSpeedEnc.setDecimal(reverse, edgeId, edgeIntAccess, speed);
         }
