@@ -132,12 +132,13 @@
             <artifactId>commons-compress</artifactId>
             <version>1.23.0</version>
         </dependency>
+        <!--   was included in old dropwizard dependency. Not anymore in 4+. Until tests are migrated to junit 5 it needs this package.   -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
+            <version>4.13.2</version>
         </dependency>
-
     </dependencies>
 
     <build>
