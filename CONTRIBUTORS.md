@@ -32,6 +32,7 @@ Here is an overview:
  * florent-morel, improvements regarding fords, #320
  * fredao, translations 
  * gberaudo, improvements regarding elevation
+ * globalgig, buffer endpoint
  * GProbo, fixes like #2241
  * HarelM, improvements regarding elevation
  * HelgeKrueger, modularization of javascript, #590
