@@ -1,5 +1,5 @@
 name: Publish to GitHub Packages
-on: push
+#on: push
 jobs:
   publish:
     runs-on: ubuntu-18.04
