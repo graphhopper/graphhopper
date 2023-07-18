@@ -32,7 +32,6 @@ import java.util.Set;
 
 public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
-    public static final double CAR_MAX_SPEED = 140;
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
     // This value determines the maximal possible on roads with bad surfaces
@@ -46,14 +45,11 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
 
     public CarAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(
-                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))),
-                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))).getNextStorableValue(CAR_MAX_SPEED)
-        );
+        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))));
     }
 
-    public CarAverageSpeedParser(DecimalEncodedValue speedEnc, double maxPossibleSpeed) {
-        super(speedEnc, maxPossibleSpeed);
+    public CarAverageSpeedParser(DecimalEncodedValue speedEnc) {
+        super(speedEnc);
 
         badSurfaceSpeedMap.add("cobblestone");
         badSurfaceSpeedMap.add("unhewn_cobblestone");
@@ -150,7 +146,7 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      */
     protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
         double maxSpeed = getMaxSpeed(way, bwd);
-        return isValidSpeed(maxSpeed) ? maxSpeed * 0.9 : speed;
+        return Math.min(140, isValidSpeed(maxSpeed) ? maxSpeed * 0.9 : speed);
     }
 
     /**

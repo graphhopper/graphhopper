@@ -2799,7 +2799,7 @@ public class GraphHopperTest {
     void testLoadingWithAnotherSpeedFactorWorks() {
         {
             GraphHopper hopper = new GraphHopper()
-                    .setVehiclesString("car|speed_factor=7")
+                    .setVehiclesString("car|speed_factor=3")
                     .setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"))
                     .setGraphHopperLocation(GH_LOCATION)
                     .setOSMFile(BAYREUTH);

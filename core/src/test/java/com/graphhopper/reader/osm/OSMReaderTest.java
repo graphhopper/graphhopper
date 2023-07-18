@@ -221,7 +221,7 @@ public class OSMReaderTest {
         assertEquals(6, iter.get(carSpeedEnc), 1e-1);
 
         // duration 01:10 is given => more precise speed calculation!
-        // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 71km/h
+        // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 68km/h
         iter = carOutExplorer.setBaseNode(n40);
         iter.next();
         assertEquals(68, iter.get(carSpeedEnc), 1e-1);
@@ -698,7 +698,7 @@ public class OSMReaderTest {
                 return new VehicleTagParsers(
                         new CarAccessParser(lookup.getBooleanEncodedValue(VehicleAccess.key("truck")), lookup.getBooleanEncodedValue(Roundabout.KEY), config, TransportationMode.HGV)
                                 .init(config.getObject("date_range_parser", new DateRangeParser())),
-                        new CarAverageSpeedParser(lookup.getDecimalEncodedValue(VehicleSpeed.key("truck")), 120),
+                        new CarAverageSpeedParser(lookup.getDecimalEncodedValue(VehicleSpeed.key("truck"))),
                         null
                 );
             }
