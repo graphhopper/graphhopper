@@ -14,12 +14,12 @@ import java.util.Date;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class OSMCarConditionalRestrictionParserTest {
+class OSMConditionalRestrictionParserTest {
 
     private final BooleanEncodedValue restricted = CarConditionalRestriction.create();
     private final EncodingManager em = new EncodingManager.Builder().add(restricted).build();
     private final String today = Helper.createFormatter("yyyy MMM dd").format(new Date().getTime());
-    private final OSMConditionalRestrictionParser parser = new OSMConditionalRestrictionParser(restricted, "");
+    private final OSMConditionalRestrictionParser parser = new OSMConditionalRestrictionParser(CarConditionalRestriction.CONDITIONALS, restricted, "");
 
     @Test
     public void testBasics() {

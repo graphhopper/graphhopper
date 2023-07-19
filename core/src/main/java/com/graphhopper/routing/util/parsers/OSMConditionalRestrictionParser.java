@@ -16,13 +16,13 @@ import java.util.*;
 public class OSMConditionalRestrictionParser implements TagParser {
 
     private static final Logger logger = LoggerFactory.getLogger(OSMConditionalRestrictionParser.class);
-    private static final Collection<String> CONDITIONALS = new HashSet<>(Arrays.asList("access:conditional",
-            "vehicle:conditional", "motor_vehicle:conditional", "motorcar:conditional"));
+    private final Collection<String> conditionals;
     private final BooleanEncodedValue conditionalRestriction;
     private final DateRangeParser parser;
     private final boolean enabledLogs = false;
 
-    public OSMConditionalRestrictionParser(BooleanEncodedValue condRestriction, String dateRangeParserDate) {
+    public OSMConditionalRestrictionParser(Collection<String> conditionals, BooleanEncodedValue condRestriction, String dateRangeParserDate) {
+        this.conditionals = conditionals;
         this.conditionalRestriction = condRestriction;
         if (dateRangeParserDate.isEmpty())
             dateRangeParserDate = Helper.createFormatter("yyyy-MM-dd").format(new Date().getTime());
@@ -35,13 +35,13 @@ public class OSMConditionalRestrictionParser implements TagParser {
         // TODO for now the node tag overhead is not worth the effort due to very few data points
         // List<Map<String, Object>> nodeTags = way.getTag("node_tags", null);
 
-        if (hasConstructionInTags(way.getTags()))
+        if (isBlocked(way.getTags()))
             conditionalRestriction.setBool(false, edgeId, edgeIntAccess, true);
     }
 
-    boolean hasConstructionInTags(Map<String, Object> tags) {
+    boolean isBlocked(Map<String, Object> tags) {
         for (Map.Entry<String, Object> entry : tags.entrySet()) {
-            if (!CONDITIONALS.contains(entry.getKey())) continue;
+            if (!conditionals.contains(entry.getKey())) continue;
 
             String value = (String) entry.getValue();
             String[] strs = value.split("@");
