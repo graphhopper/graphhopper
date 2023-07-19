@@ -3,25 +3,28 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalValueParser;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.CarConditionalRestriction;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Map;
 
 public class OSMConditionalRestrictionParser implements TagParser {
 
     private static final Logger logger = LoggerFactory.getLogger(OSMConditionalRestrictionParser.class);
     private final Collection<String> conditionals;
-    private final BooleanEncodedValue conditionalRestriction;
+    private final EnumEncodedValue<CarConditionalRestriction> conditionalRestriction;
     private final DateRangeParser parser;
     private final boolean enabledLogs = false;
 
-    public OSMConditionalRestrictionParser(Collection<String> conditionals, BooleanEncodedValue condRestriction, String dateRangeParserDate) {
+    public OSMConditionalRestrictionParser(Collection<String> conditionals, EnumEncodedValue<CarConditionalRestriction> condRestriction, String dateRangeParserDate) {
         this.conditionals = conditionals;
         this.conditionalRestriction = condRestriction;
         if (dateRangeParserDate.isEmpty())
@@ -35,20 +38,23 @@ public class OSMConditionalRestrictionParser implements TagParser {
         // TODO for now the node tag overhead is not worth the effort due to very few data points
         // List<Map<String, Object>> nodeTags = way.getTag("node_tags", null);
 
-        if (isBlocked(way.getTags()))
-            conditionalRestriction.setBool(false, edgeId, edgeIntAccess, true);
+        CarConditionalRestriction cond = getConditional(way.getTags());
+        conditionalRestriction.setEnum(false, edgeId, edgeIntAccess, cond);
     }
 
-    boolean isBlocked(Map<String, Object> tags) {
+    CarConditionalRestriction getConditional(Map<String, Object> tags) {
         for (Map.Entry<String, Object> entry : tags.entrySet()) {
             if (!conditionals.contains(entry.getKey())) continue;
 
             String value = (String) entry.getValue();
             String[] strs = value.split("@");
-            if (strs.length == 2 && strs[0].trim().equals("no") && isInRange(strs[1].trim()))
-                return true;
+            if (strs.length == 2 && isInRange(strs[1].trim())) {
+                if (strs[0].trim().equals("no")) return CarConditionalRestriction.NO;
+                if (strs[0].trim().equals("yes")) return CarConditionalRestriction.YES;
+            }
+
         }
-        return false;
+        return CarConditionalRestriction.MISSING;
     }
 
     private boolean isInRange(final String value) {

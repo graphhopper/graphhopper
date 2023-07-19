@@ -85,7 +85,7 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMCrossingParser(lookup.getEnumEncodedValue(Crossing.KEY, Crossing.class));
         else if (name.equals(CarConditionalRestriction.KEY))
             return new OSMConditionalRestrictionParser(CarConditionalRestriction.CONDITIONALS,
-                    lookup.getBooleanEncodedValue(CarConditionalRestriction.KEY),
+                    lookup.getEnumEncodedValue(CarConditionalRestriction.KEY, CarConditionalRestriction.class),
                     properties.getString("date_range_parser_day", ""));
         return null;
     }
