@@ -80,8 +80,8 @@ public class VehicleEncodedValues {
 
     public static VehicleEncodedValues car(PMap properties) {
         String name = properties.getString("name", "car");
-        int speedBits = properties.getInt("speed_bits", 5);
-        double speedFactor = properties.getDouble("speed_factor", 5);
+        int speedBits = properties.getInt("speed_bits", 7);
+        double speedFactor = properties.getDouble("speed_factor", 2);
         int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, true);

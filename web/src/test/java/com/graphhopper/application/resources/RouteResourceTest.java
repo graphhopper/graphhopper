@@ -293,7 +293,7 @@ public class RouteResourceTest {
         assertTrue(pathDetails.containsKey("edge_id"));
         assertTrue(pathDetails.containsKey("time"));
         List<PathDetail> averageSpeedList = pathDetails.get("average_speed");
-        assertEquals(11, averageSpeedList.size());
+        assertEquals(13, averageSpeedList.size());
         assertEquals(30.0, averageSpeedList.get(0).getValue());
         assertEquals(14, averageSpeedList.get(0).getLength());
         assertEquals(60.0, averageSpeedList.get(1).getValue());
@@ -370,18 +370,16 @@ public class RouteResourceTest {
         assertEquals("[52,60,90.0]", maxSpeed.get(5).toString());
 
         JsonNode urbanDensityNode = details.get("urban_density");
-        assertEquals("[0,53,\"residential\"]", urbanDensityNode.get(0).toString());
-        assertEquals("[53,57,\"rural\"]", urbanDensityNode.get(1).toString());
-        assertEquals("[57,63,\"residential\"]", urbanDensityNode.get(2).toString());
-        assertEquals("[63,68,\"rural\"]", urbanDensityNode.get(3).toString());
-        assertEquals("[68,71,\"residential\"]", urbanDensityNode.get(4).toString());
-        assertEquals("[71,75,\"rural\"]", urbanDensityNode.get(5).toString());
-        assertEquals("[75,106,\"residential\"]", urbanDensityNode.get(6).toString());
-        assertEquals("[106,128,\"rural\"]", urbanDensityNode.get(7).toString());
-        assertEquals("[128,163,\"residential\"]", urbanDensityNode.get(8).toString());
-        assertEquals("[163,170,\"rural\"]", urbanDensityNode.get(9).toString());
-        assertEquals("[170,183,\"residential\"]", urbanDensityNode.get(10).toString());
-        assertEquals("[183,213,\"rural\"]", urbanDensityNode.get(11).toString());
+        assertEquals("[0,63,\"residential\"]", urbanDensityNode.get(0).toString());
+        assertEquals("[63,68,\"rural\"]", urbanDensityNode.get(1).toString());
+        assertEquals("[68,71,\"residential\"]", urbanDensityNode.get(2).toString());
+        assertEquals("[71,75,\"rural\"]", urbanDensityNode.get(3).toString());
+        assertEquals("[75,106,\"residential\"]", urbanDensityNode.get(4).toString());
+        assertEquals("[106,128,\"rural\"]", urbanDensityNode.get(5).toString());
+        assertEquals("[128,166,\"residential\"]", urbanDensityNode.get(6).toString());
+        assertEquals("[166,171,\"rural\"]", urbanDensityNode.get(7).toString());
+        assertEquals("[171,183,\"residential\"]", urbanDensityNode.get(8).toString());
+        assertEquals("[183,213,\"rural\"]", urbanDensityNode.get(9).toString());
     }
 
     @Test
