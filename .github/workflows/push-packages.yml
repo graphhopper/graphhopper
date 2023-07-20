@@ -32,11 +32,7 @@ jobs:
       - name: Build and publish package
         run: |
           mvn -B versions:set -DnewVersion=$GITHUB_SHA -DgenerateBackupPoms=false
-          mvn -B -DskipTests -Pskip-shaded-web-jar -Pskip-tools-jar source:jar verify
-      - name: publish to artifactory
-        uses: advancedcsg-open/action-jfrog-cli@master
-        with:
-          url: 'https://repo.heigit.org/'
-          credentials type: 'accesstoken'
-          apikey: ${{ secrets.ARTIFACTORY_ACCESSTOKEN }}
-          args: u "*/target/*" "/com/github/GIScience/graphhopper" --recursive=true --build-name=graphhopper
+          mvn -B -DskipTests -Pskip-shaded-web-jar -Pskip-tools-jar source:jar deploy
+        env:
+          RT_USERNAME: github-pipeline
+          RT_TOKEN: ${{ secrets.ARTIFACTORY_ACCESSTOKEN }}

@@ -342,15 +342,32 @@
                         </executions>
                     </plugin>
                     <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.8</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                        </configuration>
+                        <groupId>org.jfrog.buildinfo</groupId>
+                        <artifactId>artifactory-maven-plugin</artifactId>
+                        <version>3.6.1</version>
+                        <executions>
+                            <execution>
+                                <id>build-info</id>
+                                <goals>
+                                    <goal>publish</goal>
+                                </goals>
+                                <configuration>
+                                    <artifactory>
+                                        <includeEnvVars>true</includeEnvVars>
+                                        <envVarsExcludePatterns>*password*,*secret*,*key*,*token*,*passphrase*</envVarsExcludePatterns>
+                                        <timeoutSec>60</timeoutSec>
+                                    </artifactory>
+                                    <publisher>
+                                        <contextUrl>https://repo.heigit.org/artifactory</contextUrl>
+                                        <username>${env.RT_USERNAME}</username>
+                                        <password>${env.RT_TOKEN}</password>
+                                        <excludePatterns>*-tests.jar</excludePatterns>
+                                        <repoKey>libs-release-local</repoKey>
+                                        <snapshotRepoKey>libs-snapshot-local</snapshotRepoKey>
+                                    </publisher>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
 
                     <plugin>
