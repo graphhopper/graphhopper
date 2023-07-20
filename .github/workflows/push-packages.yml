@@ -39,4 +39,4 @@ jobs:
           url: 'https://repo.heigit.org/'
           credentials type: 'accesstoken'
           apikey: ${{ secrets.ARTIFACTORY_ACCESSTOKEN }}
-          args: u "dist/*" "/com/github/GIScience/graphhopper" --recursive=true --build-name=graphhopper
+          args: u "*/target/*" "/com/github/GIScience/graphhopper" --recursive=true --build-name=graphhopper
