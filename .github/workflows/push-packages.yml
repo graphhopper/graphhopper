@@ -34,5 +34,5 @@ jobs:
           mvn -B versions:set -DnewVersion=$GITHUB_SHA -DgenerateBackupPoms=false
           mvn -B -DskipTests -Pskip-shaded-web-jar -Pskip-tools-jar source:jar deploy
         env:
-          RT_USERNAME: github-pipeline
-          RT_TOKEN: ${{ secrets.ARTIFACTORY_ACCESSTOKEN }}
+          RT_USERNAME: ${{ secrets.RT_USERNAME }}
+          RT_PASSWORD: ${{ secrets.RT_PASSWORD }}
