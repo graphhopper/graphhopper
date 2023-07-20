@@ -1,21 +1,20 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.VehicleSpeed;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
 public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
 
     public WheelchairAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(properties.getString("name", VehicleSpeed.key("wheelchair"))));
+        this(lookup.getDecimalEncodedValue(properties.getString("name", VehicleSpeed.key("wheelchair"))),
+                lookup.getDecimalEncodedValue(FerrySpeed.KEY));
     }
 
-    protected WheelchairAverageSpeedParser(DecimalEncodedValue speedEnc) {
-        super(speedEnc);
+    protected WheelchairAverageSpeedParser(DecimalEncodedValue speedEnc, DecimalEncodedValue ferrySpeedEnc) {
+        super(speedEnc, ferrySpeedEnc);
     }
 
     @Override
@@ -23,7 +22,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
-                double ferrySpeed = ferrySpeedCalc.getSpeed(way);
+                double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
                 setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
                 setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
             }

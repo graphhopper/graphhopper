@@ -8,6 +8,8 @@ import com.graphhopper.routing.util.WayAccess;
 
 import java.util.*;
 
+import static com.graphhopper.routing.util.FerrySpeedCalculator.FERRIES;
+
 public abstract class BikeCommonAccessParser extends AbstractAccessParser implements TagParser {
 
     private static final Set<String> OPP_LANES = new HashSet<>(Arrays.asList("opposite", "opposite_lane", "opposite_track"));
@@ -41,7 +43,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (highwayValue == null) {
             WayAccess access = WayAccess.CAN_SKIP;
 
-            if (way.hasTag("route", ferries)) {
+            if (way.hasTag("route", FERRIES)) {
                 // if bike is NOT explicitly tagged allow bike but only if foot is not specified either
                 String bikeTag = way.getTag("bicycle");
                 if (bikeTag == null && !way.hasTag("foot") || intendedValues.contains(bikeTag))

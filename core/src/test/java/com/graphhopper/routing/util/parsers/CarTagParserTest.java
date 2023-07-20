@@ -22,8 +22,10 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.WayAccess;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -507,44 +509,22 @@ public class CarTagParserTest {
         // Provide the duration value in seconds:
         way.setTag("way_distance", 50000.0);
         way.setTag("speed_from_duration", 50 / (35.0 / 60));
-        way.setTag("duration:seconds", 35L * 60);
-        // accept
         assertTrue(parser.getAccess(way).isFerry());
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
-        int edgeId = 0;
-        // calculate speed from tags: speed_from_duration * 1.4 (+ rounded using the speed factor)
-        speedParser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertEquals(62, speedParser.getAverageSpeedEnc().getDecimal(false, edgeId, edgeIntAccess));
 
-        //Test for very short and slow 0.5km/h still realistic ferry
+        // test for very short and slow 0.5km/h still realistic ferry
         way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
-        // Provide the duration of 12 minutes in seconds:
-        way.setTag("duration:seconds", 12L * 60);
         way.setTag("way_distance", 100.0);
         way.setTag("speed_from_duration", 0.1 / (12.0 / 60));
-        // accept
         assertTrue(parser.getAccess(way).isFerry());
-        // We can't store 0.5km/h, but we expect the lowest possible speed
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
-        speedParser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertEquals(2, speedParser.getAverageSpeedEnc().getDecimal(false, edgeId, edgeIntAccess));
 
-        edgeIntAccess = new ArrayEdgeIntAccess(em.getIntsForFlags());
-        avSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, 2.5);
-        assertEquals(2, avSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), 1e-1);
-
-        //Test for missing duration
+        // test for missing duration
         way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
         way.setTag("edge_distance", 100.0);
-        // accept
         assertTrue(parser.getAccess(way).isFerry());
-        speedParser.handleWayTags(edgeId, edgeIntAccess, way);
-        // We use the unknown speed
-        assertEquals(2, speedParser.getAverageSpeedEnc().getDecimal(false, edgeId, edgeIntAccess));
 
         way.clearTags();
         way.setTag("route", "ferry");

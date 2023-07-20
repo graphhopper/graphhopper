@@ -18,10 +18,8 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.VehicleSpeed;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
@@ -45,11 +43,12 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
 
     public CarAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))));
+        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))),
+                lookup.getDecimalEncodedValue(FerrySpeed.KEY));
     }
 
-    public CarAverageSpeedParser(DecimalEncodedValue speedEnc) {
-        super(speedEnc);
+    public CarAverageSpeedParser(DecimalEncodedValue speedEnc, DecimalEncodedValue ferrySpeed) {
+        super(speedEnc, ferrySpeed);
 
         badSurfaceSpeedMap.add("cobblestone");
         badSurfaceSpeedMap.add("unhewn_cobblestone");
@@ -124,7 +123,7 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         if (way.hasTag("route", ferries)) {
-            double ferrySpeed = ferrySpeedCalc.getSpeed(way);
+            double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
             setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
             if (avgSpeedEnc.isStoreTwoDirections())
                 setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);

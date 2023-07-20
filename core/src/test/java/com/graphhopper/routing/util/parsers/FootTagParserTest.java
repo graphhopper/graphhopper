@@ -23,8 +23,10 @@ import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.Test;
 
@@ -300,20 +302,6 @@ public class FootTagParserTest {
         accessParser.handleWayTags(edgeId, edgeIntAccess, way);
         assertFalse(footAccessEnc.getBool(false, edgeId, edgeIntAccess));
         assertTrue(footAccessEnc.getBool(true, edgeId, edgeIntAccess));
-    }
-
-    @Test
-    public void testFerrySpeed() {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("route", "ferry");
-        way.setTag("duration:seconds", 1800L);
-        way.setTag("edge_distance", 30000.0);
-        way.setTag("speed_from_duration", 30 / 0.5);
-        // the speed is truncated to maxspeed (=15)
-        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(encodingManager.getIntsForFlags());
-        int edgeId = 0;
-        speedParser.handleWayTags(edgeId, edgeIntAccess, way);
-        assertEquals(15, speedParser.getAverageSpeedEnc().getDecimal(false, edgeId, edgeIntAccess));
     }
 
     @Test

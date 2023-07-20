@@ -9,8 +9,8 @@ import com.graphhopper.util.PMap;
 import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
+import static com.graphhopper.routing.util.FerrySpeedCalculator.FERRIES;
 import static com.graphhopper.routing.util.PriorityCode.*;
-import static com.graphhopper.routing.util.parsers.AbstractAccessParser.FERRIES;
 import static com.graphhopper.routing.util.parsers.AbstractAccessParser.INTENDED;
 import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.getMaxSpeed;
 import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.isValidSpeed;
