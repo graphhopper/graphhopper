@@ -51,20 +51,22 @@ public class BufferResource {
     private final LocationIndex locationIndex;
     private final NodeAccess nodeAccess;
     private final EdgeExplorer edgeExplorer;
-    private final FlagEncoder carFlagEncoder;
+    private final BooleanEncodedValue roundaboutEnc;
+    private final BooleanEncodedValue carEnc;
     private final Graph graph;
 
     private final GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(1E8));
 
     @Inject
     public BufferResource(GraphHopper graphHopper) {
-        this.graph = graphHopper.getGraphHopperStorage().getBaseGraph();
+        this.graph = graphHopper.getBaseGraph();
         this.locationIndex = graphHopper.getLocationIndex();
         this.nodeAccess = graph.getNodeAccess();
         this.edgeExplorer = graph.createEdgeExplorer();
 
         EncodingManager encodingManager = graphHopper.getEncodingManager();
-        this.carFlagEncoder = encodingManager.getEncoder("car");
+        this.roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
+        this.carEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key("car"));
     }
 
     @GET
@@ -372,7 +374,7 @@ public class BufferResource {
                     // Temp has proper road name, isn't part of a roundabout, and bidirectional.
                     // Higher priority escape.
                     if (Arrays.stream(roadNames).anyMatch(x -> x.contains(roadName))
-                            && !tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))
+                            && !tempState.get(this.roundaboutEnc)
                             && isBidirectional(tempState)) {
                         currentEdge = tempEdge;
                         usedEdges.add(tempEdge);
@@ -382,18 +384,18 @@ public class BufferResource {
                     // Temp has proper road name and isn't part of a roundabout. Lower priority
                     // escape.
                     else if (Arrays.stream(roadNames).anyMatch(x -> x.contains(roadName))
-                            && !tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))) {
+                            && !tempState.get(this.roundaboutEnc)) {
                         potentialEdges.add(tempEdge);
                     }
 
                     // Temp has proper road name and is part of a roundabout. Higher entry priority.
                     else if (Arrays.stream(roadNames).anyMatch(x -> x.contains(roadName))
-                            && tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))) {
+                            && tempState.get(this.roundaboutEnc)) {
                         potentialRoundaboutEdges.add(tempEdge);
                     }
 
                     // Temp is part of a roundabout. Lower entry priority.
-                    else if (tempState.get(carFlagEncoder.getBooleanEncodedValue("roundabout"))) {
+                    else if (tempState.get(this.roundaboutEnc)) {
                         potentialRoundaboutEdgesWithoutName.add(tempEdge);
                     }
                 }
