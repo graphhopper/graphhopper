@@ -1,8 +1,8 @@
 name: Publish to GitHub Packages
-#on: push
+on: push
 jobs:
   publish:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-java@v1
@@ -31,7 +31,7 @@ jobs:
             ${{ runner.os}}-node_modules-
       - name: Build and publish package
         run: |
-          mvn -B versions:set -DnewVersion=$GITHUB_SHA -DgenerateBackupPoms=false
           mvn -B -DskipTests -Pskip-shaded-web-jar -Pskip-tools-jar source:jar deploy
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RT_USERNAME: ${{ secrets.RT_USERNAME }}
+          RT_PASSWORD: ${{ secrets.RT_PASSWORD }}

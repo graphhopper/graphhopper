@@ -307,15 +307,53 @@
                     </excludes>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.jfrog.buildinfo</groupId>
+                <artifactId>artifactory-maven-plugin</artifactId>
+                <version>3.6.1</version>
+                <executions>
+                    <execution>
+                        <id>build-info</id>
+                        <goals>
+                            <goal>publish</goal>
+                        </goals>
+                        <configuration>
+                            <artifactory>
+                                <includeEnvVars>true</includeEnvVars>
+                                <envVarsExcludePatterns>*password*,*secret*,*key*,*token*,*passphrase*</envVarsExcludePatterns>
+                                <timeoutSec>60</timeoutSec>
+                            </artifactory>
+                            <publisher>
+                                <contextUrl>https://repo.heigit.org/artifactory</contextUrl>
+                                <username>${env.RT_USERNAME}</username>
+                                <password>${env.RT_PASSWORD}</password>
+                                <excludePatterns>*-tests.jar</excludePatterns>
+                                <repoKey>libs-release-local</repoKey>
+                                <snapshotRepoKey>libs-snapshot-local</snapshotRepoKey>
+                            </publisher>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
     <distributionManagement>
+        <downloadUrl>https://repo.heigit.org/artifactory/</downloadUrl>
         <repository>
-            <id>github</id>
-            <name>GitHub GraphHopper Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/graphhopper/graphhopper</url>
+            <id>releases</id>
+            <name>HeiGIT repository</name>
+            <uniqueVersion>false</uniqueVersion>
+            <url>https://repo.heigit.org/artifactory/libs-release-local</url>
+            <layout>default</layout>
         </repository>
+        <snapshotRepository>
+            <id>snapshots</id>
+            <name>HeiGIT repository (snapshots)</name>
+            <uniqueVersion>true</uniqueVersion>
+            <url>https://repo.heigit.org/artifactory/libs-snapshot-local</url>
+            <layout>default</layout>
+        </snapshotRepository>
     </distributionManagement>
 
     <!-- mvn clean deploy -P release -->
@@ -341,18 +379,6 @@
                             </execution>
                         </executions>
                     </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.8</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                        </configuration>
-                    </plugin>
-
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
