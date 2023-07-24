@@ -50,9 +50,5 @@ jobs:
           mvn versions:set -DnewVersion=${{ github.event.release.tag_name }} -DgenerateBackupPoms=false
           mvn -B -DskipTests -Pskip-shaded-web-jar -Pskip-tools-jar source:jar deploy
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
-          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
-          MAVEN_REPOSITORY_URL: ${{ secrets.MAVEN_REPOSITORY_URL }}
-          MAVEN_REPOSITORY_ID: ${{ secrets.MAVEN_REPOSITORY_ID }}
-          MAVEN_REPOSITORY_NAME: ${{ secrets.MAVEN_REPOSITORY_N
+          RT_USERNAME: ${{ secrets.RT_USERNAME }}
+          RT_PASSWORD: ${{ secrets.RT_PASSWORD }}
