@@ -25,9 +25,10 @@ import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
@@ -69,7 +70,7 @@ class AStarBidirectionTest {
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 10).setDistance(100));
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(10, 2).setDistance(100));
 
-        Weighting weighting = new ShortestWeighting(accessEnc, speedEnc);
+        Weighting weighting = new InternalShortestWeighting(accessEnc, speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
         AStarBidirection algo = new AStarBidirection(graph, weighting, TraversalMode.NODE_BASED);
         algo.setApproximation(new InfeasibleApproximator());
         Path path = algo.calcPath(0, 9);

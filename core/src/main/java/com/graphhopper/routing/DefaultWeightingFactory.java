@@ -94,7 +94,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
             weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
                     priorityEnc, encodingManager, turnCostProvider, queryCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
-            weighting = new ShortestWeighting(accessEnc, speedEnc, turnCostProvider);
+            throw new IllegalArgumentException("Instead of weighting=shortest use weighting=custom with a high distance_influence");
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {
             if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
                 throw new IllegalArgumentException("The fastest weighting requires road_access");

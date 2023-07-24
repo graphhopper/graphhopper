@@ -26,8 +26,8 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
@@ -46,7 +46,7 @@ public class PrepareContractionHierarchiesTest {
     private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
     private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-    private final Weighting weighting = new ShortestWeighting(accessEnc, speedEnc);
+    private final Weighting weighting = CustomModelParser.createShortestWeighting(accessEnc, speedEnc, encodingManager);
     private final CHConfig chConfig = CHConfig.nodeBased("c", weighting);
     private BaseGraph g;
 
@@ -475,8 +475,8 @@ public class PrepareContractionHierarchiesTest {
                 .build();
 
         // FastestWeighting would lead to different shortcuts due to different default speeds for bike and car
-        CHConfig carProfile = CHConfig.nodeBased("c1", new ShortestWeighting(carAccessEnc, carSpeedEnc));
-        CHConfig bikeProfile = CHConfig.nodeBased("c2", new ShortestWeighting(bikeAccessEnc, bikeSpeedEnc));
+        CHConfig carProfile = CHConfig.nodeBased("c1", CustomModelParser.createShortestWeighting(carAccessEnc, carSpeedEnc, tmpEncodingManager));
+        CHConfig bikeProfile = CHConfig.nodeBased("c2", CustomModelParser.createShortestWeighting(bikeAccessEnc, bikeSpeedEnc, tmpEncodingManager));
 
         BaseGraph graph = new BaseGraph.Builder(tmpEncodingManager).create();
         initShortcutsGraph(graph, carAccessEnc, carSpeedEnc);

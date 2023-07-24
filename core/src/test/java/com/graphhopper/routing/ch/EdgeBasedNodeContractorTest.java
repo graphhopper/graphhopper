@@ -18,10 +18,10 @@
 
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.routing.InternalShortestWeighting;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
@@ -67,9 +67,9 @@ public class EdgeBasedNodeContractorTest {
         EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
         graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         chConfigs = Arrays.asList(
-                CHConfig.edgeBased("p1", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()))),
-                CHConfig.edgeBased("p2", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 60))),
-                CHConfig.edgeBased("p3", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 0)))
+                CHConfig.edgeBased("p1", new InternalShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()))),
+                CHConfig.edgeBased("p2", new InternalShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 60))),
+                CHConfig.edgeBased("p3", new InternalShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 0)))
         );
     }
 

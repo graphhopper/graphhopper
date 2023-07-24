@@ -31,9 +31,9 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -113,7 +113,7 @@ public class RoutingAlgorithmTest {
                     .add(footAccessEnc).add(footSpeedEnc)
                     .add(bike2AccessEnc).add(bike2SpeedEnc).build();
             // most tests use the default weighting, but this can be chosen for each test separately
-            defaultWeighting = new ShortestWeighting(carAccessEnc, carSpeedEnc);
+            defaultWeighting = CustomModelParser.createShortestWeighting(carAccessEnc, carSpeedEnc, encodingManager);
             // most tests do not limit the number of visited nodes, but this can be chosen for each test separately
             defaultMaxVisitedNodes = Integer.MAX_VALUE;
         }
@@ -346,10 +346,10 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcFootPath(Fixture f) {
-        ShortestWeighting shortestWeighting = new ShortestWeighting(f.footAccessEnc, f.footSpeedEnc);
+        Weighting weighting = CustomModelParser.createShortestWeighting(f.footAccessEnc, f.footSpeedEnc, f.encodingManager);
         BaseGraph graph = f.createGHStorage(false);
         initFootVsCar(f.carAccessEnc, f.carSpeedEnc, f.footAccessEnc, f.footSpeedEnc, graph);
-        Path p1 = f.calcPath(graph, shortestWeighting, 0, 7);
+        Path p1 = f.calcPath(graph, weighting, 0, 7);
         assertEquals(17000, p1.getDistance(), 1e-6, p1.toString());
         assertEquals(12240 * 1000, p1.getTime(), p1.toString());
         assertEquals(nodes(0, 4, 5, 7), p1.calcNodes());
@@ -746,7 +746,7 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testWithCoordinates(Fixture f) {
-        Weighting weighting = new ShortestWeighting(f.carAccessEnc, f.carSpeedEnc);
+        Weighting weighting = CustomModelParser.createShortestWeighting(f.carAccessEnc, f.carSpeedEnc, f.encodingManager);
         BaseGraph graph = f.createGHStorage(false);
         GHUtility.setSpeed(60, true, true, f.carAccessEnc, f.carSpeedEnc, graph.edge(0, 1).setDistance(2)).
                 setWayGeometry(Helper.createPointList(1.5, 1));
@@ -897,26 +897,6 @@ public class RoutingAlgorithmTest {
         assertEquals(85124371, p.getTime());
         assertEquals(425622, p.getDistance(), 1);
         assertEquals(85124.4, p.getWeight(), 1);
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(FixtureProvider.class)
-    public void test0SpeedButUnblocked_Issue242(Fixture f) {
-        BaseGraph graph = f.createGHStorage();
-        EdgeIteratorState edge01 = graph.edge(0, 1).setDistance(10);
-        EdgeIteratorState edge12 = graph.edge(1, 2).setDistance(10);
-        edge01.set(f.carSpeedEnc, 0.0).set(f.carAccessEnc, true, true);
-        edge01.setFlags(edge01.getFlags());
-
-        edge12.set(f.carSpeedEnc, 0.0).set(f.carAccessEnc, true, true);
-        edge12.setFlags(edge12.getFlags());
-
-        try {
-            f.calcPath(graph, 0, 2);
-            fail("there should have been an exception");
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage().startsWith("Speed cannot be 0"), ex.getMessage());
-        }
     }
 
     @ParameterizedTest

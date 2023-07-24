@@ -248,7 +248,7 @@ public class GraphHopper {
      * <pre>
      * {@code
      *   hopper.setProfiles(
-     *     new Profile("my_car").setVehicle("car").setWeighting("shortest"),
+     *     new CustomProfile("my_car").setVehicle("car"),
      *     new Profile("your_bike").setVehicle("bike").setWeighting("fastest")
      *   );
      *   hopper.getCHPreparationHandler().setCHProfiles(

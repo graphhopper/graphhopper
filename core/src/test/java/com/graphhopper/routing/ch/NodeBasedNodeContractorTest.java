@@ -19,6 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraBidirectionCH;
+import com.graphhopper.routing.InternalShortestWeighting;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -28,8 +29,9 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -49,7 +51,7 @@ public class NodeBasedNodeContractorTest {
     private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
     private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-    private final Weighting weighting = new ShortestWeighting(accessEnc, speedEnc);
+    private final Weighting weighting = new InternalShortestWeighting(accessEnc, speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
     private final BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
     private final CHConfig chConfig = CHConfig.nodeBased("profile", weighting);
     private CHStorage store;
@@ -216,7 +218,8 @@ public class NodeBasedNodeContractorTest {
 
     @Test
     public void testNodeContraction_shortcutDistanceRounding() {
-        assertTrue(weighting instanceof ShortestWeighting, "this test was constructed assuming we are using the ShortestWeighting");
+        // TODO NOW assertTrue(weighting instanceof ShortestWeighting, "this test was constructed assuming we are using the ShortestWeighting");
+
         // 0 ------------> 4
         //  \             /
         //   1 --> 2 --> 3

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.weighting.AbstractWeighting;

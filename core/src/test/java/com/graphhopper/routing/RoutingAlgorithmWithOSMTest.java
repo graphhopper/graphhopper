@@ -73,7 +73,7 @@ public class RoutingAlgorithmWithOSMTest {
 
     @Test
     public void testMonaco() {
-        GraphHopper hopper = createHopper(MONACO, new Profile("car").setVehicle("car").setWeighting("shortest"));
+        GraphHopper hopper = createHopper(MONACO, new CustomProfile("car").setCustomModel(new CustomModel().setDistanceInfluence(10_000d)).setVehicle("car"));
         hopper.importOrLoad();
         checkQueries(hopper, createMonacoCarQueries());
         Graph g = hopper.getBaseGraph();
@@ -147,7 +147,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(51.376509, -0.530863, 51.376197, -0.531576, 75, 15));
 
         GraphHopper hopper = createHopper(DIR + "/circle-bug.osm.gz",
-                new Profile("car").setVehicle("car").setWeighting("shortest"));
+                new CustomProfile("car").setVehicle("car"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -165,8 +165,7 @@ public class RoutingAlgorithmWithOSMTest {
         // respect one way!
         // http://localhost:8989/?point=55.819066%2C37.596374&point=55.818898%2C37.59661
         queries.add(new Query(55.818702, 37.595564, 55.818536, 37.595848, 1114, 23));
-        GraphHopper hopper = createHopper(MOSCOW,
-                new Profile("car").setVehicle("car").setWeighting("fastest"));
+        GraphHopper hopper = createHopper(MOSCOW, new CustomProfile("car").setVehicle("car"));
         hopper.setMinNetworkSize(200);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -178,7 +177,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
         queries.add(new Query(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
         GraphHopper hopper = createHopper(MOSCOW,
-                new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true));
+                new CustomProfile("car").setVehicle("car").setTurnCosts(true));
         hopper.setMinNetworkSize(200);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -189,7 +188,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> list = new ArrayList<>();
         list.add(new Query(-0.49, 0.0, 0.0, -0.49, 298792.107, 6));
         GraphHopper hopper = createHopper(DIR + "/test_simple_turncosts.osm.xml",
-                new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true));
+                new CustomProfile("car").setVehicle("car").setTurnCosts(true));
         hopper.importOrLoad();
         checkQueries(hopper, list);
     }
@@ -199,7 +198,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> list = new ArrayList<>();
         list.add(new Query(0, 0.00099, -0.00099, 0, 664, 6));
         GraphHopper hopper = createHopper(DIR + "/test_simple_pturn.osm.xml",
-                new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true));
+                new CustomProfile("car").setVehicle("car").setTurnCosts(true));
         hopper.importOrLoad();
         checkQueries(hopper, list);
     }
@@ -221,7 +220,7 @@ public class RoutingAlgorithmWithOSMTest {
         // longer path should go through tertiary, see discussion in #476
         queries.add(new Query(57.154888, -2.101822, 57.147299, -2.096286, 1118, 68));
 
-        Profile profile = new Profile("hike").setWeighting("fastest").setVehicle("foot");
+        Profile profile = new CustomProfile("hike").setVehicle("foot");
         GraphHopper hopper = createHopper(DIR + "/map-sidewalk-no.osm.gz", profile);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -236,7 +235,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.get(3).getPoints().get(1).expectedPoints = 141;
         queries.get(4).getPoints().get(1).expectedDistance = 2149;
         queries.get(4).getPoints().get(1).expectedPoints = 120;
-        GraphHopper hopper = createHopper(MONACO, new Profile("car").setVehicle("car").setWeighting("fastest"));
+        GraphHopper hopper = createHopper(MONACO, new CustomProfile("car").setVehicle("car"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -253,16 +252,15 @@ public class RoutingAlgorithmWithOSMTest {
         queries.get(4).getPoints().get(1).expectedPoints = 116;
 
         GraphHopper hopper = createHopper(MONACO,
-                new Profile("car").setVehicle("car").setWeighting("shortest"),
-                new Profile("foot").setVehicle("foot").setWeighting("shortest"));
+                new CustomProfile("car").setCustomModel(new CustomModel().setDistanceInfluence(10_000d)).setVehicle("car"),
+                new CustomProfile("foot").setCustomModel(new CustomModel().setDistanceInfluence(10_000d)).setVehicle("foot"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
 
     @Test
     public void testMonacoFoot() {
-        GraphHopper hopper = createHopper(MONACO,
-                new Profile("foot").setVehicle("foot").setWeighting("shortest"));
+        GraphHopper hopper = createHopper(MONACO, new CustomProfile("foot").setCustomModel(new CustomModel().setDistanceInfluence(10_000d)).setVehicle("foot"));
         hopper.importOrLoad();
         checkQueries(hopper, createMonacoFoot());
         Graph g = hopper.getBaseGraph();
@@ -288,7 +286,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.get(1).getPoints().get(1).expectedDistance = 3573;
         queries.get(1).getPoints().get(1).expectedPoints = 149;
 
-        GraphHopper hopper = createHopper(MONACO, new Profile("foot").setVehicle("foot").setWeighting("shortest"));
+        GraphHopper hopper = createHopper(MONACO, new CustomProfile("foot").setCustomModel(new CustomModel().setDistanceInfluence(10_000d)).setVehicle("foot"));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -367,7 +365,7 @@ public class RoutingAlgorithmWithOSMTest {
         run.add(50.023623, 11.56929, 7069, 178);
         queries.add(run);
 
-        GraphHopper hopper = createHopper(BAYREUTH, new Profile("bike").setVehicle("bike").setWeighting("fastest"));
+        GraphHopper hopper = createHopper(BAYREUTH, new CustomProfile("bike").setVehicle("bike"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -381,7 +379,7 @@ public class RoutingAlgorithmWithOSMTest {
         query.add(50.023623, 11.56929, 6777, 175);
         queries.add(query);
 
-        GraphHopper hopper = createHopper(BAYREUTH, new Profile("bike").setVehicle("bike").setWeighting("fastest"));
+        GraphHopper hopper = createHopper(BAYREUTH, new CustomProfile("bike").setVehicle("bike"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -394,7 +392,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2323, 121));
         queries.add(new Query(43.733802, 7.413433, 43.739662, 7.424355, 1446, 91));
         GraphHopper hopper = createHopper(MONACO, new CustomProfile("bike").
-                setCustomModel(new CustomModel().setDistanceInfluence(7000d)/*shortest*/).setVehicle("bike"));
+                setCustomModel(new CustomModel().setDistanceInfluence(7000d)).setVehicle("bike"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -417,7 +415,7 @@ public class RoutingAlgorithmWithOSMTest {
 
         hopper = createHopper(MONACO,
                 new CustomProfile("mtb").setVehicle("mtb"),
-                new Profile("racingbike").setVehicle("racingbike").setWeighting("fastest"));
+                new CustomProfile("racingbike").setVehicle("racingbike"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -438,7 +436,7 @@ public class RoutingAlgorithmWithOSMTest {
 
         hopper = createHopper(MONACO,
                 new CustomProfile("racingbike").setVehicle("racingbike"),
-                new Profile("bike").setVehicle("bike").setWeighting("fastest")
+                new CustomProfile("bike").setVehicle("bike")
         );
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -463,7 +461,7 @@ public class RoutingAlgorithmWithOSMTest {
         hopper = createHopper(KREMS,
                 new CustomProfile("bike").
                         setCustomModel(new CustomModel().setDistanceInfluence(70d)).setVehicle("bike"),
-                new Profile("car").setVehicle("car").setWeighting("fastest"));
+                new CustomProfile("car").setVehicle("car"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -485,7 +483,7 @@ public class RoutingAlgorithmWithOSMTest {
         hopper = createHopper(KREMS,
                 new CustomProfile("mtb").
                         setCustomModel(new CustomModel().setDistanceInfluence(70d)).setVehicle("mtb"),
-                new Profile("bike").setVehicle("bike").setWeighting("fastest"));
+                new CustomProfile("bike").setVehicle("bike"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
 
@@ -500,7 +498,7 @@ public class RoutingAlgorithmWithOSMTest {
 
     @Test
     public void testAndorra() {
-        Profile profile = new Profile("car").setVehicle("car").setWeighting("shortest");
+        Profile profile = new CustomProfile("car").setVehicle("car");
         GraphHopper hopper = createHopper(ANDORRA, profile);
         hopper.importOrLoad();
         checkQueries(hopper, createAndorraQueries());
@@ -508,7 +506,7 @@ public class RoutingAlgorithmWithOSMTest {
 
     @Test
     public void testAndorraPbf() {
-        Profile profile = new Profile("car").setVehicle("car").setWeighting("shortest");
+        Profile profile = new CustomProfile("car").setVehicle("car");
         GraphHopper hopper = createHopper(ANDORRA_PBF, profile);
         hopper.importOrLoad();
         checkQueries(hopper, createAndorraQueries());
@@ -524,7 +522,7 @@ public class RoutingAlgorithmWithOSMTest {
 
         queries.add(new Query(42.521269, 1.52298, 42.50418, 1.520662, 3223, 107));
 
-        GraphHopper hopper = createHopper(ANDORRA, new Profile("foot").setVehicle("foot").setWeighting("fastest"));
+        GraphHopper hopper = createHopper(ANDORRA, new CustomProfile("foot").setVehicle("foot"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -538,9 +536,9 @@ public class RoutingAlgorithmWithOSMTest {
         //   | bzip2 > campo-grande.extracted.osm.bz2
         List<Query> queries = new ArrayList<>();
         queries.add(new Query(-20.4001, -54.5999, -20.598, -54.54, 25323, 271));
-        queries.add(new Query(-20.43, -54.54, -20.537, -54.5999, 16231, 223));
+        queries.add(new Query(-20.43, -54.54, -20.537, -54.5999, 16233, 226));
         GraphHopper hopper = createHopper(DIR + "/campo-grande.osm.gz",
-                new Profile("car").setVehicle("car").setWeighting("shortest"));
+                new CustomProfile("car").setCustomModel(new CustomModel().setDistanceInfluence(1_000d)).setVehicle("car"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -555,7 +553,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> queries = new ArrayList<>();
         queries.add(query);
 
-        GraphHopper hopper = createHopper(MONACO, new Profile("car").setVehicle("car").setWeighting("shortest"));
+        GraphHopper hopper = createHopper(MONACO, new CustomProfile("car").setCustomModel(new CustomModel().setDistanceInfluence(10_000d)).setVehicle("car"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -568,7 +566,7 @@ public class RoutingAlgorithmWithOSMTest {
 
         // choose Unterloher Weg and the following residential + cycleway
         // list.add(new OneRun(50.004333, 11.600254, 50.044449, 11.543434, 6931, 184));
-        GraphHopper hopper = createHopper(BAYREUTH, new Profile("bike").setVehicle("bike").setWeighting("fastest"));
+        GraphHopper hopper = createHopper(BAYREUTH, new CustomProfile("bike").setVehicle("bike"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
     }
@@ -579,7 +577,7 @@ public class RoutingAlgorithmWithOSMTest {
         // choose cycleway (Dreschenauer Straße)
         list.add(new Query(49.987132, 11.510496, 50.018839, 11.505024, 3985, 106));
 
-        GraphHopper hopper = createHopper(BAYREUTH, new Profile("bike").setVehicle("bike").setWeighting("fastest"));
+        GraphHopper hopper = createHopper(BAYREUTH, new CustomProfile("bike").setVehicle("bike"));
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, list);
@@ -613,7 +611,7 @@ public class RoutingAlgorithmWithOSMTest {
         query.add(53.751299, 9.3869, 10, 10);
 
         GraphHopper hopper = createHopper(DIR + "/krautsand.osm.gz",
-                new Profile("car").setVehicle("car").setWeighting("fastest"));
+                new CustomProfile("car").setVehicle("car"));
         hopper.importOrLoad();
 
         for (Function<Query, GHRequest> requestFactory : createRequestFactories()) {
@@ -627,7 +625,7 @@ public class RoutingAlgorithmWithOSMTest {
 
     @Test
     public void testMonacoParallel() throws InterruptedException {
-        GraphHopper hopper = createHopper(MONACO, new Profile("car").setVehicle("car").setWeighting("shortest"));
+        GraphHopper hopper = createHopper(MONACO, new CustomProfile("car").setCustomModel(new CustomModel().setDistanceInfluence(10_000d)).setVehicle("car"));
         hopper.getReaderConfig().setMaxWayPointDistance(0);
         hopper.getRouterConfig().setSimplifyResponse(false);
         hopper.importOrLoad();

@@ -63,7 +63,7 @@ public class RouteResourceProfileSelectionTest {
                 .setProfiles(Arrays.asList(
                         new Profile("my_car").setVehicle("car").setWeighting("fastest"),
                         new CustomProfile("my_bike").setCustomModel(new CustomModel().setDistanceInfluence(200d)).setVehicle("bike"),
-                        new Profile("my_feet").setVehicle("foot").setWeighting("shortest")
+                        new CustomProfile("my_feet").setVehicle("foot")
                 ))
                 .setCHProfiles(Arrays.asList(
                         new CHProfile("my_car"),
@@ -89,7 +89,7 @@ public class RouteResourceProfileSelectionTest {
     public void selectUsingProfile(String mode) {
         assertDistance("my_car", mode, 3563);
         assertDistance("my_bike", mode, 3296);
-        assertDistance("my_feet", mode, 2935);
+        assertDistance("my_feet", mode, 3158);
         assertError("my_pink_car", mode, "The requested profile 'my_pink_car' does not exist");
     }
 

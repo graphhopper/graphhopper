@@ -30,12 +30,12 @@ import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PR
  *
  * @author Peter Karich
  */
-public class ShortestWeighting extends AbstractWeighting {
-    public ShortestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+class ShortestWeighting extends AbstractWeighting {
+    private ShortestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         this(accessEnc, speedEnc, NO_TURN_COST_PROVIDER);
     }
 
-    public ShortestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, TurnCostProvider turnCostProvider) {
+    private ShortestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, TurnCostProvider turnCostProvider) {
         super(accessEnc, speedEnc, turnCostProvider);
     }
 

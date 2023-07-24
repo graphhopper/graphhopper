@@ -22,7 +22,7 @@ import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
@@ -48,7 +48,8 @@ public class AccessFilterTest {
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 0).setDistance(3));
         graph.freeze();
         // add loop shortcut in 'fwd' direction
-        CHConfig chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage())));
+        CHConfig chConfig = CHConfig.edgeBased("profile", CustomModelParser.createShortestWeighting(accessEnc, speedEnc, encodingManager,
+                new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage())));
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();

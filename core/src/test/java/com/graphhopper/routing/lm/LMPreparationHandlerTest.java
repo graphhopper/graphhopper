@@ -9,7 +9,7 @@ import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import org.junit.jupiter.api.Test;
 
@@ -42,7 +42,7 @@ public class LMPreparationHandlerTest {
         EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         List<LMConfig> lmConfigs = Arrays.asList(
                 new LMConfig("conf1", new FastestWeighting(accessEnc, speedEnc)),
-                new LMConfig("conf2", new ShortestWeighting(accessEnc, speedEnc))
+                new LMConfig("conf2", CustomModelParser.createShortestWeighting(accessEnc, speedEnc, em))
         );
         List<PrepareLandmarks> preparations = handler.createPreparations(lmConfigs, new BaseGraph.Builder(em).build(), em, null);
         assertEquals(1, preparations.get(0).getLandmarkStorage().getFactor(), .1);
