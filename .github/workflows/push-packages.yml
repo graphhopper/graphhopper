@@ -1,5 +1,10 @@
 name: Publish to GitHub Packages
-on: push
+on:
+  push:
+    branches:
+      - 'ors_4.0'
+  release:
+    types: [ published ]
 jobs:
   publish:
     runs-on: ubuntu-22.04
@@ -31,9 +36,23 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/pom.xml', '**/package.json') }}
           restore-keys: |
             ${{ runner.os}}-node_modules-
-      - name: Build and publish package
+      - name: Build and publish package on snapshot
+        if: github.event_name == 'push' && github.event_name != 'release'
         run: |
           mvn -B -DskipTests -Pskip-shaded-web-jar -Pskip-tools-jar source:jar deploy
         env:
           RT_USERNAME: ${{ secrets.RT_USERNAME }}
           RT_PASSWORD: ${{ secrets.RT_PASSWORD }}
+      # Write a task to publish the package to GitHub Packages when a release is published
+      - name: Build and publish package on release
+        if: github.event_name == 'release'
+        run: |
+          mvn versions:set -DnewVersion=${{ github.event.release.tag_name }} -DgenerateBackupPoms=false
+          mvn -B -DskipTests -Pskip-shaded-web-jar -Pskip-tools-jar source:jar deploy
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
+          MAVEN_REPOSITORY_URL: ${{ secrets.MAVEN_REPOSITORY_URL }}
+          MAVEN_REPOSITORY_ID: ${{ secrets.MAVEN_REPOSITORY_ID }}
+          MAVEN_REPOSITORY_NAME: ${{ secrets.MAVEN_REPOSITORY_N
