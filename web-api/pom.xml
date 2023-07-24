@@ -10,7 +10,7 @@
     <description>JSON Representation of the API classes</description>
 
     <parent>
-        <groupId>org.github.GIScience.graphhopper</groupId>
+        <groupId>com.github.GIScience.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
         <version>4.0-SNAPSHOT</version>
     </parent>
