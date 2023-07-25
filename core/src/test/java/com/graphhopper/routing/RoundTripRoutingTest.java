@@ -27,8 +27,8 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
@@ -56,7 +56,7 @@ public class RoundTripRoutingTest {
     private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
     private final EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-    private final Weighting fastestWeighting = new FastestWeighting(accessEnc, speedEnc);
+    private final Weighting fastestWeighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, em);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private final GHPoint ghPoint1 = new GHPoint(0, 0);

@@ -300,15 +300,12 @@ public class Measurement {
         vehicle = args.getString("measurement.vehicle", "car");
         boolean turnCosts = args.getBool("measurement.turn_costs", false);
         int uTurnCosts = args.getInt("measurement.u_turn_costs", 40);
-        String weighting = args.getString("measurement.weighting", "fastest");
         boolean useCHEdge = args.getBool("measurement.ch.edge", true);
         boolean useCHNode = args.getBool("measurement.ch.node", true);
         boolean useLM = args.getBool("measurement.lm", true);
         String customModelFile = args.getString("measurement.custom_model_file", "");
         List<Profile> profiles = new ArrayList<>();
         if (!customModelFile.isEmpty()) {
-            if (!weighting.equals(CustomWeighting.NAME))
-                throw new IllegalArgumentException("To make use of a custom model you need to set measurement.weighting to 'custom'");
             // use custom profile(s) as specified in the given custom model file
             CustomModel customModel = loadCustomModel(customModelFile);
             profiles.add(new CustomProfile("profile_no_tc").setCustomModel(customModel).setVehicle(vehicle).setTurnCosts(false));
@@ -316,9 +313,10 @@ public class Measurement {
                 profiles.add(new CustomProfile("profile_tc").setCustomModel(customModel).setVehicle(vehicle).setTurnCosts(true).putHint(U_TURN_COSTS, uTurnCosts));
         } else {
             // use standard profiles
-            profiles.add(new Profile("profile_no_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(false));
+            // TODO NOW
+            profiles.add(new CustomProfile("profile_no_tc").setVehicle(vehicle).setTurnCosts(false));
             if (turnCosts)
-                profiles.add(new Profile("profile_tc").setVehicle(vehicle).setWeighting(weighting).setTurnCosts(true).putHint(U_TURN_COSTS, uTurnCosts));
+                profiles.add(new CustomProfile("profile_tc").setVehicle(vehicle).setTurnCosts(true).putHint(U_TURN_COSTS, uTurnCosts));
         }
         ghConfig.setProfiles(profiles);
 

@@ -8,7 +8,9 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.index.Snap;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,7 +25,7 @@ public class IsochroneExample {
         DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(VehicleSpeed.key("car"));
 
         // snap some GPS coordinates to the routing graph and build a query graph
-        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
         Snap snap = hopper.getLocationIndex().findClosest(42.508679, 1.532078, new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("car"))));
         QueryGraph queryGraph = QueryGraph.create(hopper.getBaseGraph(), snap);
 
@@ -49,7 +51,7 @@ public class IsochroneExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/isochrone-graph-cache");
-        hopper.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(false));
+        hopper.setProfiles(new CustomProfile("car").setVehicle("car").setTurnCosts(false));
         hopper.importOrLoad();
         return hopper;
     }

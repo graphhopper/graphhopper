@@ -61,7 +61,7 @@ public class RouteResourceProfileSelectionTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        new Profile("my_car").setVehicle("car").setWeighting("fastest"),
+                        new CustomProfile("my_car").setVehicle("car"),
                         new CustomProfile("my_bike").setCustomModel(new CustomModel().setDistanceInfluence(200d)).setVehicle("bike"),
                         new CustomProfile("my_feet").setVehicle("foot")
                 ))

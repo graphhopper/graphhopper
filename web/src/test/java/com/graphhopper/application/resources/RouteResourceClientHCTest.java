@@ -71,7 +71,7 @@ public class RouteResourceClientHCTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        new Profile("car").setVehicle("car").setWeighting("fastest"),
+                        new CustomProfile("car").setVehicle("car"),
                         new CustomProfile("bike").setVehicle("bike"),
                         new CustomProfile("my_custom_car").setVehicle("car")
                 ))

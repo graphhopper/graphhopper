@@ -38,7 +38,7 @@ public class RoutingExample {
         hopper.setGraphHopperLocation("target/routing-graph-cache");
 
         // see docs/core/profiles.md to learn more about profiles
-        hopper.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(false));
+        hopper.setProfiles(new CustomProfile("car").setVehicle("car").setTurnCosts(false));
 
         // this enables speed mode for the profile we called car
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));

@@ -24,9 +24,11 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -44,7 +46,7 @@ class QueryRoutingCHGraphTest {
     private DecimalEncodedValue speedEnc;
     private DecimalEncodedValue turnCostEnc;
     private EncodingManager encodingManager;
-    private FastestWeighting weighting;
+    private Weighting weighting;
     private BaseGraph graph;
     private NodeAccess na;
 
@@ -55,7 +57,8 @@ class QueryRoutingCHGraphTest {
         turnCostEnc = TurnCost.create("car", 5);
         encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
         graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-        weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()));
+        weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager,
+                new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()), new CustomModel());
         na = graph.getNodeAccess();
     }
 

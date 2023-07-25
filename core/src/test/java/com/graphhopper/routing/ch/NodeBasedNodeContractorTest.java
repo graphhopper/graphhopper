@@ -28,7 +28,6 @@ import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
@@ -287,7 +286,7 @@ public class NodeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(distances[3]));
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(distances[4]));
         graph.freeze();
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         setMaxLevelOnAllNodes(chStore);
@@ -325,7 +324,7 @@ public class NodeBasedNodeContractorTest {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 3).setDistance(1));
 
         graph.freeze();
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
         CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         setMaxLevelOnAllNodes(chStore);

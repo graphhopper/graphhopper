@@ -23,6 +23,7 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
 import com.graphhopper.resources.PtIsochroneResource;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -60,7 +61,7 @@ public class PtIsochroneTest {
                 .putObject("graph.location", GRAPH_LOC)
                 .putObject("gtfs.file", "../reader-gtfs/files/sample-feed")
                 .putObject("import.osm.ignored_highways", "").
-                setProfiles(Collections.singletonList(new Profile("foot").setVehicle("foot").setWeighting("fastest")));
+                setProfiles(Collections.singletonList(new CustomProfile("foot").setVehicle("foot")));
         Helper.removeDir(new File(GRAPH_LOC));
         return config;
     }

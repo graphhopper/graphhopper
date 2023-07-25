@@ -28,12 +28,14 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -152,8 +154,9 @@ public class RandomizedRoutingTest {
         private void preProcessGraph() {
             graph.freeze();
             weighting = traversalMode.isEdgeBased()
-                    ? new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()))
-                    : new FastestWeighting(accessEnc, speedEnc);
+                    ? CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager,
+                    new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()), new CustomModel())
+                    : CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
             if (prepareCH) {
                 CHConfig chConfig = traversalMode.isEdgeBased() ? CHConfig.edgeBased("p", weighting) : CHConfig.nodeBased("p", weighting);
                 PrepareContractionHierarchies pch = PrepareContractionHierarchies.fromGraph(graph, chConfig);
@@ -162,7 +165,7 @@ public class RandomizedRoutingTest {
             }
             if (prepareLM) {
                 // important: for LM preparation we need to use a weighting without turn costs #1960
-                LMConfig lmConfig = new LMConfig("car", new FastestWeighting(accessEnc, speedEnc));
+                LMConfig lmConfig = new LMConfig("car", CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager));
                 PrepareLandmarks prepare = new PrepareLandmarks(graph.getDirectory(), graph, encodingManager, lmConfig, 16);
                 prepare.setMaximumWeight(10000);
                 prepare.doWork();

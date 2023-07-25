@@ -21,10 +21,11 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
@@ -50,7 +51,7 @@ public class DefaultBidirPathExtractorTest {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(10));
         SPTEntry fwdEntry = new SPTEntry(0, 2, 0, new SPTEntry(1, 10));
         SPTEntry bwdEntry = new SPTEntry(2, 0);
-        Path p = DefaultBidirPathExtractor.extractPath(graph, new FastestWeighting(accessEnc, speedEnc), fwdEntry, bwdEntry, 0);
+        Path p = DefaultBidirPathExtractor.extractPath(graph, CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager), fwdEntry, bwdEntry, 0);
         assertEquals(IntArrayList.from(1, 2), p.calcNodes());
         assertEquals(10, p.getDistance(), 1e-4);
     }
@@ -69,7 +70,8 @@ public class DefaultBidirPathExtractorTest {
         SPTEntry fwdEntry = new SPTEntry(0, 2, 0.6, new SPTEntry(1, 0));
         SPTEntry bwdEntry = new SPTEntry(1, 2, 1.2, new SPTEntry(3, 0));
 
-        Path p = DefaultBidirPathExtractor.extractPath(graph, new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage)), fwdEntry, bwdEntry, 0);
+        Path p = DefaultBidirPathExtractor.extractPath(graph, CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager,
+                new DefaultTurnCostProvider(turnCostEnc, turnCostStorage), new CustomModel()), fwdEntry, bwdEntry, 0);
         p.setWeight(5 + 1.8);
 
         assertEquals(IntArrayList.from(1, 2, 3), p.calcNodes());

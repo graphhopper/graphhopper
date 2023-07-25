@@ -22,11 +22,12 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -62,7 +63,7 @@ public class AlternativeRouteTest {
             TurnCostProvider turnCostProvider = tMode.isEdgeBased()
                     ? new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage())
                     : TurnCostProvider.NO_TURN_COST_PROVIDER;
-            weighting = new FastestWeighting(accessEnc, speedEnc, turnCostProvider);
+            weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, em, turnCostProvider, new CustomModel());
         }
 
         @Override

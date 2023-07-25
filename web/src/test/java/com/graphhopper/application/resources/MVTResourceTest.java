@@ -21,6 +21,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -59,7 +60,7 @@ public class MVTResourceTest {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setWeighting("fastest")));
+                setProfiles(Collections.singletonList(new CustomProfile("car").setVehicle("car")));
         return config;
     }
 

@@ -30,7 +30,6 @@ import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
@@ -288,7 +287,7 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcFastestPath(Fixture f) {
-        FastestWeighting fastestWeighting = new FastestWeighting(f.carAccessEnc, f.carSpeedEnc);
+        Weighting fastestWeighting = CustomModelParser.createFastestWeighting(f.carAccessEnc, f.carSpeedEnc, f.encodingManager);
         BaseGraph graph = f.createGHStorage(false);
         initDirectedAndDiffSpeed(graph, f.carAccessEnc, f.carSpeedEnc);
 
@@ -874,7 +873,7 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testQueryGraphAndFastest(Fixture f) {
-        Weighting weighting = new FastestWeighting(f.carAccessEnc, f.carSpeedEnc);
+        Weighting weighting = CustomModelParser.createFastestWeighting(f.carAccessEnc, f.carSpeedEnc, f.encodingManager);
         BaseGraph graph = f.createGHStorage(false);
         initDirectedAndDiffSpeed(graph, f.carAccessEnc, f.carSpeedEnc);
         Path p = f.calcPath(graph, weighting, new GHPoint(0.002, 0.0005), new GHPoint(0.0017, 0.0031));
@@ -885,7 +884,7 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testTwoWeightsPerEdge(Fixture f) {
-        FastestWeighting fastestWeighting = new FastestWeighting(f.bike2AccessEnc, f.bike2SpeedEnc);
+        Weighting fastestWeighting = CustomModelParser.createFastestWeighting(f.bike2AccessEnc, f.bike2SpeedEnc, f.encodingManager);
         BaseGraph graph = f.createGHStorage(true);
         initEleGraph(graph, 18, f.bike2AccessEnc, f.bike2SpeedEnc);
         // force the other path
@@ -904,7 +903,7 @@ public class RoutingAlgorithmTest {
     public void testTwoWeightsPerEdge2(Fixture f) {
         // other direction should be different!
         Weighting fakeWeighting = new Weighting() {
-            private final Weighting tmpW = new FastestWeighting(f.carAccessEnc, f.carSpeedEnc);
+            private final Weighting tmpW = CustomModelParser.createFastestWeighting(f.carAccessEnc, f.carSpeedEnc, f.encodingManager);
 
             @Override
             public double getMinWeight(double distance) {
@@ -985,7 +984,7 @@ public class RoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testRandomGraph(Fixture f) {
         // todo: use speed both directions
-        FastestWeighting fastestWeighting = new FastestWeighting(f.carAccessEnc, f.carSpeedEnc);
+        Weighting fastestWeighting = CustomModelParser.createFastestWeighting(f.carAccessEnc, f.carSpeedEnc, f.encodingManager);
         BaseGraph graph = f.createGHStorage(false);
         final long seed = System.nanoTime();
         LOGGER.info("testRandomGraph - using seed: " + seed);
@@ -1008,8 +1007,8 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testMultipleVehicles_issue548(Fixture f) {
-        FastestWeighting footWeighting = new FastestWeighting(f.footAccessEnc, f.footSpeedEnc);
-        FastestWeighting carWeighting = new FastestWeighting(f.carAccessEnc, f.carSpeedEnc);
+        Weighting footWeighting = CustomModelParser.createFastestWeighting(f.footAccessEnc, f.footSpeedEnc, f.encodingManager);
+        Weighting carWeighting = CustomModelParser.createFastestWeighting(f.carAccessEnc, f.carSpeedEnc, f.encodingManager);
 
         BaseGraph graph = f.createGHStorage(false);
         initFootVsCar(f.carAccessEnc, f.carSpeedEnc, f.footAccessEnc, f.footSpeedEnc, graph);

@@ -31,6 +31,7 @@ import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.RoadClassLink;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.ev.Surface;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.Parameters;
@@ -91,7 +92,7 @@ public class RouteResourceTest {
                 putObject("graph.location", DIR)
                 // adding this so the corresponding check is not just skipped...
                 .putObject(MAX_NON_CH_POINT_DISTANCE, 10e6)
-                .setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car").setWeighting("fastest")))
+                .setProfiles(Collections.singletonList(new CustomProfile("my_car").setVehicle("car")))
                 .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }

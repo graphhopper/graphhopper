@@ -22,9 +22,10 @@ import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
@@ -87,7 +88,7 @@ public class AlternativeRouteEdgeCHTest {
 
     private RoutingCHGraph prepareCH(BaseGraph graph) {
         TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage());
-        CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(accessEnc, speedEnc, turnCostProvider));
+        CHConfig chConfig = CHConfig.edgeBased("profile", CustomModelParser.createWeighting(accessEnc, speedEnc, null, em, turnCostProvider, new CustomModel()));
         PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraph(graph, chConfig);
         PrepareContractionHierarchies.Result res = contractionHierarchies.doWork();
         return RoutingCHGraphImpl.fromGraph(graph, res.getCHStorage(), res.getCHConfig());
@@ -97,7 +98,7 @@ public class AlternativeRouteEdgeCHTest {
     public void testAssumptions() {
         BaseGraph g = createTestGraph(em);
         TurnCostProvider turnCostProvider = new DefaultTurnCostProvider(turnCostEnc, g.getTurnCostStorage());
-        CHConfig chConfig = CHConfig.edgeBased("profile", new FastestWeighting(accessEnc, speedEnc, turnCostProvider));
+        CHConfig chConfig = CHConfig.edgeBased("profile", CustomModelParser.createWeighting(accessEnc, speedEnc, null, em, turnCostProvider, new CustomModel()));
         CHStorage chStorage = CHStorage.fromGraph(g, chConfig);
         RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(g, chStorage, chConfig);
         DijkstraBidirectionEdgeCHNoSOD router = new DijkstraBidirectionEdgeCHNoSOD(chGraph);

@@ -30,14 +30,14 @@ import com.graphhopper.util.PMap;
  *
  * @author Peter Karich
  */
-public class ShortFastestWeighting extends FastestWeighting {
+class ShortFastestWeighting extends FastestWeighting {
     private static final String NAME = "short_fastest";
     private static final String TIME_FACTOR = "short_fastest.time_factor";
     private static final String DISTANCE_FACTOR = "short_fastest.distance_factor";
     private final double distanceFactor;
     private final double timeFactor;
 
-    public ShortFastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EnumEncodedValue<RoadAccess> roadAccessEnc, PMap map, TurnCostProvider turnCostProvider) {
+    ShortFastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EnumEncodedValue<RoadAccess> roadAccessEnc, PMap map, TurnCostProvider turnCostProvider) {
         super(accessEnc, speedEnc, roadAccessEnc, map, turnCostProvider);
         timeFactor = checkBounds(TIME_FACTOR, map.getDouble(TIME_FACTOR, 1), 0, 10);
 

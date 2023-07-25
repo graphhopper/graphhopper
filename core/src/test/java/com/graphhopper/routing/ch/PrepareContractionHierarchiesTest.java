@@ -25,7 +25,6 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
@@ -320,7 +319,7 @@ public class PrepareContractionHierarchiesTest {
 
         g = createGraph();
         // use fastest weighting in this test to be able to fine-tune some weights via the speed (see below)
-        Weighting fastestWeighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting fastestWeighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
         CHConfig chConfig = CHConfig.nodeBased("c", fastestWeighting);
         // the following graph reproduces the issue. note that we will use the node ids as ch levels, so there will
         // be a shortcut 3->2 visible at node 2 and another one 3->4 visible at node 3.
@@ -501,8 +500,8 @@ public class PrepareContractionHierarchiesTest {
                 .add(bikeAccessEnc).add(bikeSpeedEnc)
                 .build();
 
-        CHConfig carConfig = CHConfig.nodeBased("c1", new FastestWeighting(carAccessEnc, carSpeedEnc));
-        CHConfig bikeConfig = CHConfig.nodeBased("c2", new FastestWeighting(bikeAccessEnc, bikeSpeedEnc));
+        CHConfig carConfig = CHConfig.nodeBased("c1", CustomModelParser.createFastestWeighting(carAccessEnc, carSpeedEnc, tmpEncodingManager));
+        CHConfig bikeConfig = CHConfig.nodeBased("c2", CustomModelParser.createFastestWeighting(bikeAccessEnc, bikeSpeedEnc, tmpEncodingManager));
 
         BaseGraph graph = new BaseGraph.Builder(tmpEncodingManager).create();
         initShortcutsGraph(graph, carAccessEnc, carSpeedEnc);
@@ -533,8 +532,8 @@ public class PrepareContractionHierarchiesTest {
                 .add(car1AccessEnc).add(car1SpeedEnc).addTurnCostEncodedValue(car1TurnCostEnc)
                 .add(car2AccessEnc).add(car2SpeedEnc).addTurnCostEncodedValue(car2TurnCostEnc)
                 .build();
-        CHConfig car1Config = CHConfig.nodeBased("c1", new FastestWeighting(car1AccessEnc, car1SpeedEnc));
-        CHConfig car2Config = CHConfig.nodeBased("c2", new FastestWeighting(car2AccessEnc, car2SpeedEnc));
+        CHConfig car1Config = CHConfig.nodeBased("c1", CustomModelParser.createFastestWeighting(car1AccessEnc, car1SpeedEnc, em));
+        CHConfig car2Config = CHConfig.nodeBased("c2", CustomModelParser.createFastestWeighting(car2AccessEnc, car2SpeedEnc, em));
         BaseGraph graph = new BaseGraph.Builder(em).create();
 
         int numNodes = 5_000;

@@ -66,18 +66,18 @@ public class RouteResourceCustomModelTest {
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Arrays.asList(
-                        new Profile("wheelchair"),
+                        new CustomProfile("wheelchair")/* TODO NOW bug? .setVehicle("wheelchair")*/,
                         new CustomProfile("roads").setCustomModel(new CustomModel()).setVehicle("roads"),
                         new CustomProfile("car").setCustomModel(new CustomModel().setDistanceInfluence(70d)).setVehicle("car"),
                         new CustomProfile("car_with_area").setCustomModel(new CustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
                         new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0d)).setVehicle("bike"),
-                        new Profile("bike_fastest").setWeighting("fastest").setVehicle("bike"),
+                        new CustomProfile("bike_fastest").setVehicle("bike"),
                         new CustomProfile("bus").setCustomModel(null).setVehicle("roads").putHint("custom_model_files", Arrays.asList("bus.json")),
                         new CustomProfile("cargo_bike").setCustomModel(null).setVehicle("bike").
                                 putHint("custom_model_files", Arrays.asList("cargo_bike.json")),
                         new CustomProfile("json_bike").setCustomModel(null).setVehicle("roads").
                                 putHint("custom_model_files", Arrays.asList("bike.json", "bike_elevation.json")),
-                        new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
+                        new CustomProfile("foot_profile").setVehicle("foot"),
                         new CustomProfile("car_no_unclassified").setCustomModel(
                                         new CustomModel(new CustomModel().
                                                 addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0")))).
@@ -147,13 +147,6 @@ public class RouteResourceCustomModelTest {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"unknown\", \"custom_model\": {}, \"ch.disable\": true}";
         JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
         assertMessageStartsWith(jsonNode, "The requested profile 'unknown' does not exist.\nAvailable profiles: ");
-    }
-
-    @Test
-    public void testCustomWeightingRequired() {
-        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"foot_profile\", \"custom_model\": {}, \"ch.disable\": true}";
-        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertEquals("The requested profile 'foot_profile' cannot be used with `custom_model`, because it has weighting=fastest", jsonNode.get("message").asText());
     }
 
     @Test

@@ -32,15 +32,12 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.*;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -121,7 +118,8 @@ public class DirectedRoutingTest {
 
         private void preProcessGraph() {
             graph.freeze();
-            weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts));
+            weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager,
+                    new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts), new CustomModel());
             if (!prepareCH && !prepareLM) {
                 return;
             }
@@ -133,7 +131,7 @@ public class DirectedRoutingTest {
             }
             if (prepareLM) {
                 // important: for LM preparation we need to use a weighting without turn costs #1960
-                LMConfig lmConfig = new LMConfig("c2", new FastestWeighting(accessEnc, speedEnc));
+                LMConfig lmConfig = new LMConfig("c2", CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager));
                 // we need the subnetwork EV for LM
                 PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graph,
                         Arrays.asList(new PrepareRoutingSubnetworks.PrepareJob(encodingManager.getBooleanEncodedValue(Subnetwork.key("c2")), lmConfig.getWeighting())));

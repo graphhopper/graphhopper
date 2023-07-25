@@ -24,6 +24,7 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -305,7 +306,7 @@ class HeadingRoutingTest {
         LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
         locationIndex.prepareIndex();
         Map<String, Profile> profilesByName = new HashMap<>();
-        profilesByName.put("profile", new Profile("profile").setVehicle("car").setWeighting("fastest"));
+        profilesByName.put("profile", new CustomProfile("profile").setVehicle("car"));
         return new Router(graph.getBaseGraph(), encodingManager, locationIndex, profilesByName, new PathDetailsBuilderFactory(), new TranslationMap().doImport(), new RouterConfig(),
                 new DefaultWeightingFactory(graph.getBaseGraph(), encodingManager), Collections.emptyMap(), Collections.emptyMap());
     }

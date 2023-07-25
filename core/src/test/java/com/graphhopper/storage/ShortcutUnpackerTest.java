@@ -7,8 +7,9 @@ import com.graphhopper.routing.ch.ShortcutUnpacker;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -54,7 +55,7 @@ public class ShortcutUnpackerTest {
         private void freeze() {
             graph.freeze();
             TurnCostProvider turnCostProvider = edgeBased ? new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()) : NO_TURN_COST_PROVIDER;
-            CHConfig chConfig = new CHConfig("profile", new FastestWeighting(accessEnc, speedEnc, turnCostProvider), edgeBased);
+            CHConfig chConfig = new CHConfig("profile", CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager, turnCostProvider, new CustomModel()), edgeBased);
             CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
             chBuilder = new CHStorageBuilder(chStore);
             routingCHGraph = RoutingCHGraphImpl.fromGraph(graph, chStore, chConfig);

@@ -23,6 +23,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.gtfs.GtfsStorage;
 import com.graphhopper.gtfs.PtGraph;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -47,8 +48,8 @@ public class AnalysisTest {
         ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                new Profile("car").setVehicle("car").setWeighting("fastest")));
+                new CustomProfile("foot").setVehicle("foot"),
+                new CustomProfile("car").setVehicle("car")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

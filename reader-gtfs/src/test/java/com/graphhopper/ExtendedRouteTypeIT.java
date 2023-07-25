@@ -23,6 +23,7 @@ import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.gtfs.PtRouter;
 import com.graphhopper.gtfs.PtRouterImpl;
 import com.graphhopper.gtfs.Request;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;
@@ -52,8 +53,8 @@ public class ExtendedRouteTypeIT {
         ghConfig.putObject("gtfs.file", "files/another-sample-feed-extended-route-type.zip");
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                new Profile("car").setVehicle("car").setWeighting("fastest")));
+                new CustomProfile("foot").setVehicle("foot"),
+                new CustomProfile("car").setVehicle("car")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

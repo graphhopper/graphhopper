@@ -9,14 +9,15 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,6 +46,7 @@ public class DirectedBidirectionalDijkstraTest {
     private DecimalEncodedValue speedEnc;
     private Weighting weighting;
     private DecimalEncodedValue turnCostEnc;
+    private EncodingManager encodingManager;
 
     @BeforeEach
     public void setup() {
@@ -52,14 +54,14 @@ public class DirectedBidirectionalDijkstraTest {
         accessEnc = new SimpleBooleanEncodedValue("access", true);
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
         turnCostEnc = TurnCost.create("car", maxTurnCosts);
-        EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+        encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
         graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         turnCostStorage = graph.getTurnCostStorage();
-        weighting = createWeighting(Weighting.INFINITE_U_TURN_COSTS);
+        weighting = createWeighting(encodingManager, Weighting.INFINITE_U_TURN_COSTS);
     }
 
-    private Weighting createWeighting(int uTurnCosts) {
-        return new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts));
+    private Weighting createWeighting(EncodingManager em, int uTurnCosts) {
+        return CustomModelParser.createWeighting(accessEnc, speedEnc, null, em, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts), new CustomModel());
     }
 
     @Test
@@ -306,9 +308,9 @@ public class DirectedBidirectionalDijkstraTest {
         assertNotFound(calcPath(1, 2, 0, 2));
 
         // if we allow u-turns it is of course different again
-        assertPath(calcPath(1, 2, 1, 2, createWeighting(100)), 118, 300, 118000, nodes(1, 2, 3, 2));
-        assertPath(calcPath(1, 2, 0, 1, createWeighting(100)), 118, 300, 118000, nodes(1, 0, 1, 2));
-        assertPath(calcPath(1, 2, 0, 2, createWeighting(100)), 230, 500, 230000, nodes(1, 0, 1, 2, 3, 2));
+        assertPath(calcPath(1, 2, 1, 2, createWeighting(encodingManager, 100)), 118, 300, 118000, nodes(1, 2, 3, 2));
+        assertPath(calcPath(1, 2, 0, 1, createWeighting(encodingManager, 100)), 118, 300, 118000, nodes(1, 0, 1, 2));
+        assertPath(calcPath(1, 2, 0, 2, createWeighting(encodingManager, 100)), 230, 500, 230000, nodes(1, 0, 1, 2, 3, 2));
     }
 
     @Test
@@ -363,13 +365,13 @@ public class DirectedBidirectionalDijkstraTest {
 
         assertPath(calcPath(0, 6, right0, left6), 64.2, 1070, 64200, nodes(0, 1, 2, 3, 4, 5, 2, 1, 6));
         // if the u-turn cost is finite it depends on its value if we rather do the p-turn or do an immediate u-turn at node 2
-        assertPath(calcPath(0, 6, right0, left6, createWeighting(65)), 64.2, 1070, 64200, nodes(0, 1, 2, 3, 4, 5, 2, 1, 6));
-        assertPath(calcPath(0, 6, right0, left6, createWeighting(40)), 42.4, 40, 42400, nodes(0, 1, 2, 1, 6));
+        assertPath(calcPath(0, 6, right0, left6, createWeighting(encodingManager, 65)), 64.2, 1070, 64200, nodes(0, 1, 2, 3, 4, 5, 2, 1, 6));
+        assertPath(calcPath(0, 6, right0, left6, createWeighting(encodingManager, 40)), 42.4, 40, 42400, nodes(0, 1, 2, 1, 6));
 
         assertPath(calcPath(0, 6, left0, right6), 2.4, 40, 2400, nodes(0, 7, 8, 9, 6));
         assertPath(calcPath(0, 6, left0, left6), 66.6, 1110, 66600, nodes(0, 7, 8, 9, 6, 1, 2, 3, 4, 5, 2, 1, 6));
         // if the u-turn cost is finite we do a u-turn at node 1 (not at node 7 at the beginning!)
-        assertPath(calcPath(0, 6, left0, left6, createWeighting(40)), 43.6, 60, 43600, nodes(0, 7, 8, 9, 6, 1, 6));
+        assertPath(calcPath(0, 6, left0, left6, createWeighting(encodingManager, 40)), 43.6, 60, 43600, nodes(0, 7, 8, 9, 6, 1, 6));
     }
 
     @RepeatedTest(10)
@@ -379,7 +381,7 @@ public class DirectedBidirectionalDijkstraTest {
 
     @RepeatedTest(10)
     public void compare_standard_dijkstra_finite_uturn_costs() {
-        compare_with_dijkstra(createWeighting(40));
+        compare_with_dijkstra(createWeighting(encodingManager, 40));
     }
 
     private void compare_with_dijkstra(Weighting w) {

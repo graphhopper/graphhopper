@@ -85,6 +85,12 @@ public class CustomModelParser {
         return createWeighting(accessEnc, speedEnc, null, lookup, turnCostProvider, cm);
     }
 
+    public static CustomWeighting createFastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EncodingManager lookup) {
+        CustomModel cm = new CustomModel();
+
+        return createWeighting(accessEnc, speedEnc, null, lookup, TurnCostProvider.NO_TURN_COST_PROVIDER, cm);
+    }
+
     public static CustomWeighting createShortestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EncodingManager lookup) {
         return createShortestWeighting(accessEnc, speedEnc, lookup, TurnCostProvider.NO_TURN_COST_PROVIDER);
     }

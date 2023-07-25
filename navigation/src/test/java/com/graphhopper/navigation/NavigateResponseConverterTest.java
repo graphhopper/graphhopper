@@ -6,6 +6,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TranslationMap;
@@ -41,7 +42,7 @@ public class NavigateResponseConverterTest {
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFolder).
-                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting("fastest").setTurnCosts(false)).
+                setProfiles(new CustomProfile(profile).setVehicle(vehicle).setTurnCosts(false)).
                 importOrLoad();
     }
 

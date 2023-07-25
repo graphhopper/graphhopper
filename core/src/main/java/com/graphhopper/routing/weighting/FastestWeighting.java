@@ -21,6 +21,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Routing;
@@ -34,7 +35,7 @@ import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PR
  *
  * @author Peter Karich
  */
-public class FastestWeighting extends AbstractWeighting {
+class FastestWeighting extends AbstractWeighting {
     public static String DESTINATION_FACTOR = "road_access_destination_factor";
     public static String PRIVATE_FACTOR = "road_access_private_factor";
     /**
@@ -49,11 +50,11 @@ public class FastestWeighting extends AbstractWeighting {
     // this factor puts a penalty on roads with a "destination"-only or private access, see #733 and #1936
     private final double destinationPenalty, privatePenalty;
 
-    public FastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+    FastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         this(accessEnc, speedEnc, NO_TURN_COST_PROVIDER);
     }
 
-    public FastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, TurnCostProvider turnCostProvider) {
+    FastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, TurnCostProvider turnCostProvider) {
         this(accessEnc, speedEnc, null, new PMap(0), turnCostProvider);
     }
 

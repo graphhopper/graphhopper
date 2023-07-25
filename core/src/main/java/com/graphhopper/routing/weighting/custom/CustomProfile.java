@@ -22,6 +22,7 @@ import com.graphhopper.util.CustomModel;
 
 import java.util.Collections;
 
+// TODO NOW merge into Profile
 public class CustomProfile extends Profile {
 
     public CustomProfile(Profile profile) {

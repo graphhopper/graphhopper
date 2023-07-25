@@ -64,10 +64,9 @@ public class GraphHopperMultimodalIT {
         ghConfig.putObject("graph.location", GRAPH_LOC);
         CustomProfile carLocal = new CustomProfile("car_custom");
         carLocal.setVehicle("car");
-        carLocal.setWeighting("custom");
         ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                new Profile("car_default").setVehicle("car").setWeighting("fastest"),
+                new CustomProfile("foot").setVehicle("foot"),
+                new CustomProfile("car_default").setVehicle("car"),
                 carLocal));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);

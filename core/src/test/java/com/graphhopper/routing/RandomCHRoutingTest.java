@@ -9,15 +9,13 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.*;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -51,6 +49,7 @@ public class RandomCHRoutingTest {
         private Weighting weighting;
         private final BaseGraph graph;
         private CHConfig chConfig;
+        private final EncodingManager encodingManager;
 
         Fixture(TraversalMode traversalMode, int uTurnCosts) {
             this.traversalMode = traversalMode;
@@ -59,15 +58,17 @@ public class RandomCHRoutingTest {
             accessEnc = new SimpleBooleanEncodedValue("access", true);
             speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
             turnCostEnc = TurnCost.create("car", maxTurnCosts);
-            EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+            encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
             graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         }
 
         void freeze() {
             graph.freeze();
             chConfig = traversalMode.isEdgeBased()
-                    ? CHConfig.edgeBased("p", new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), uTurnCosts)))
-                    : CHConfig.nodeBased("p", new FastestWeighting(accessEnc, speedEnc));
+                    ? CHConfig.edgeBased("p", CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager,
+                    new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), uTurnCosts), new CustomModel()))
+                    : CHConfig.nodeBased("p", CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager,
+                    TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel()));
             weighting = chConfig.getWeighting();
         }
 

@@ -23,11 +23,13 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -98,8 +100,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         return EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
     }
 
-    public Path calcPath(Graph g, int from, int to, String algoStr) {
-        return createAlgo(g, createWeighting(), algoStr, EDGE_BASED).calcPath(from, to);
+    public Path calcPath(Graph g, EncodingManager em, int from, int to, String algoStr) {
+        return createAlgo(g, createWeighting(em), algoStr, EDGE_BASED).calcPath(from, to);
     }
 
     public RoutingAlgorithm createAlgo(Graph g, Weighting weighting, String algoStr, TraversalMode traversalMode) {
@@ -140,12 +142,13 @@ public class EdgeBasedRoutingAlgorithmTest {
         setTurnRestriction(g, 3, 6, 3);
     }
 
-    private Weighting createWeighting() {
-        return createWeighting(Weighting.INFINITE_U_TURN_COSTS);
+    private Weighting createWeighting(EncodingManager em) {
+        return createWeighting(em, Weighting.INFINITE_U_TURN_COSTS);
     }
 
-    private Weighting createWeighting(int uTurnCosts) {
-        return new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, tcs, uTurnCosts));
+    private Weighting createWeighting(EncodingManager em, int uTurnCosts) {
+        return CustomModelParser.createWeighting(accessEnc, speedEnc, null, em,
+                new DefaultTurnCostProvider(turnCostEnc, tcs, uTurnCosts), new CustomModel());
     }
 
     @ParameterizedTest
@@ -166,7 +169,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         for (int i = 0; i < numQueries; i++) {
             int from = rnd.nextInt(g.getNodes());
             int to = rnd.nextInt(g.getNodes());
-            Weighting w = createWeighting();
+            Weighting w = createWeighting(em);
             RoutingAlgorithm refAlgo = new Dijkstra(g, w, EDGE_BASED);
             Path refPath = refAlgo.calcPath(from, to);
             double refWeight = refPath.getWeight();
@@ -175,7 +178,7 @@ public class EdgeBasedRoutingAlgorithmTest {
                 continue;
             }
 
-            Path path = calcPath(g, from, to, algoStr);
+            Path path = calcPath(g, em, from, to, algoStr);
             if (!path.isFound()) {
                 fail("path not found for " + from + "->" + to + ", expected weight: " + refWeight);
             }
@@ -205,24 +208,26 @@ public class EdgeBasedRoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testBasicTurnRestriction(String algoStr) {
-        BaseGraph g = createStorage(createEncodingManager(true));
+        EncodingManager em = createEncodingManager(true);
+        BaseGraph g = createStorage(em);
         initGraph(g);
         initTurnRestrictions(g);
-        Path p = calcPath(g, 5, 1, algoStr);
+        Path p = calcPath(g, em, 5, 1, algoStr);
         assertEquals(IntArrayList.from(5, 2, 3, 4, 7, 6, 3, 1), p.calcNodes());
 
         // test 7-6-5 and reverse
-        p = calcPath(g, 5, 7, algoStr);
+        p = calcPath(g, em, 5, 7, algoStr);
         assertEquals(IntArrayList.from(5, 6, 7), p.calcNodes());
 
-        p = calcPath(g, 7, 5, algoStr);
+        p = calcPath(g, em, 7, 5, algoStr);
         assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
     }
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testLoop_issue1592(String algoStr) {
-        BaseGraph graph = createStorage(createEncodingManager(true));
+        EncodingManager em = createEncodingManager(true);
+        BaseGraph graph = createStorage(em);
         // 0-6
         //  \ \
         //   4-3
@@ -236,7 +241,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 1).setDistance(10));
         setTurnRestriction(graph, 0, 4, 3);
 
-        Path p = calcPath(graph, 0, 3, algoStr);
+        Path p = calcPath(graph, em, 0, 3, algoStr);
         assertEquals(14, p.getDistance(), 1.e-3);
         assertEquals(IntArrayList.from(0, 4, 1, 1, 4, 3), p.calcNodes());
     }
@@ -245,7 +250,8 @@ public class EdgeBasedRoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testTurnCosts_timeCalculation(String algoStr) {
         // 0 - 1 - 2 - 3 - 4
-        BaseGraph graph = createStorage(createEncodingManager(false));
+        EncodingManager em = createEncodingManager(false);
+        BaseGraph graph = createStorage(em);
         final int distance = 100;
         final int turnCosts = 2;
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(distance));
@@ -256,7 +262,7 @@ public class EdgeBasedRoutingAlgorithmTest {
 
         {
             // simple case where turn cost is encountered during forward search
-            Path p14 = calcPath(graph, 1, 4, algoStr);
+            Path p14 = calcPath(graph, em, 1, 4, algoStr);
             assertDistTimeWeight(p14, 3, distance, 6, turnCosts);
             assertEquals(20, p14.getWeight(), 1.e-6);
             assertEquals(20000, p14.getTime());
@@ -265,7 +271,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         {
             // this test is more involved for bidir algos: the turn costs have to be taken into account also at the
             // node where fwd and bwd searches meet
-            Path p04 = calcPath(graph, 0, 4, algoStr);
+            Path p04 = calcPath(graph, em, 0, 4, algoStr);
             assertDistTimeWeight(p04, 4, distance, 6, turnCosts);
             assertEquals(26, p04.getWeight(), 1.e-6);
             assertEquals(26000, p04.getTime());
@@ -294,14 +300,15 @@ public class EdgeBasedRoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testBlockANode(String algoStr) {
-        BaseGraph g = createStorage(createEncodingManager(true));
+        EncodingManager em = createEncodingManager(true);
+        BaseGraph g = createStorage(em);
         initGraph(g);
         blockNode3(g);
         for (int i = 0; i <= 7; i++) {
             if (i == 3) continue;
             for (int j = 0; j <= 7; j++) {
                 if (j == 3) continue;
-                Path p = calcPath(g, i, j, algoStr);
+                Path p = calcPath(g, em, i, j, algoStr);
                 assertTrue(p.isFound()); // We can go from everywhere to everywhere else without using node 3
                 for (IntCursor node : p.calcNodes()) {
                     assertNotEquals(3, node.value, p.calcNodes().toString());
@@ -313,7 +320,8 @@ public class EdgeBasedRoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testUTurns(String algoStr) {
-        BaseGraph g = createStorage(createEncodingManager(true));
+        EncodingManager em = createEncodingManager(true);
+        BaseGraph g = createStorage(em);
         initGraph(g);
 
         // force u-turn at node 3 by using finite u-turn costs
@@ -323,7 +331,7 @@ public class EdgeBasedRoutingAlgorithmTest {
 
         setTurnRestriction(g, 7, 6, 5);
         setTurnRestriction(g, 4, 3, 6);
-        Path p = createAlgo(g, createWeighting(50), algoStr, EDGE_BASED).calcPath(7, 5);
+        Path p = createAlgo(g, createWeighting(em, 50), algoStr, EDGE_BASED).calcPath(7, 5);
 
         assertEquals(2 + 2 * 0.1, p.getDistance(), 1.e-6);
         assertEquals(2.2 * 0.06 + 50, p.getWeight(), 1.e-6);
@@ -331,14 +339,14 @@ public class EdgeBasedRoutingAlgorithmTest {
         assertEquals(IntArrayList.from(7, 6, 3, 6, 5), p.calcNodes());
 
         // with default infinite u-turn costs we need to take an expensive detour
-        p = calcPath(g, 7, 5, algoStr);
+        p = calcPath(g, em, 7, 5, algoStr);
         assertEquals(1.1 + 864 + 0.5, p.getDistance(), 1.e-6);
         assertEquals(865.6 * 0.06, p.getWeight(), 1.e-6);
         assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
 
         // no more u-turn 6-3-6 -> now we have to take the expensive roads even with finite u-turn costs
         setTurnRestriction(g, 6, 3, 6);
-        p = createAlgo(g, createWeighting(100), algoStr, EDGE_BASED).calcPath(7, 5);
+        p = createAlgo(g, createWeighting(em, 100), algoStr, EDGE_BASED).calcPath(7, 5);
 
         assertEquals(1.1 + 864 + 0.5, p.getDistance(), 1.e-6);
         assertEquals(865.6 * 0.06, p.getWeight(), 1.e-6);
@@ -351,7 +359,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         //           3
         //           |
         // 0 -> 1 -> 2 -> 4 -> 5
-        BaseGraph g = createStorage(createEncodingManager(false));
+        EncodingManager em = createEncodingManager(false);
+        BaseGraph g = createStorage(em);
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(0, 1).setDistance(10));
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(1, 2).setDistance(10));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(10));
@@ -363,14 +372,14 @@ public class EdgeBasedRoutingAlgorithmTest {
 
         // with default/infinite u-turn costs there is no shortest path
         {
-            Path path = calcPath(g, 0, 5, algoStr);
+            Path path = calcPath(g, em, 0, 5, algoStr);
             assertFalse(path.isFound());
         }
 
         // with finite u-turn costs it is possible, the u-turn costs should be included
         // here we make sure the default u-turn time is also included at the meeting node for bidir algos
         {
-            Path path = createAlgo(g, createWeighting(67), algoStr, EDGE_BASED).calcPath(0, 5);
+            Path path = createAlgo(g, createWeighting(em, 67), algoStr, EDGE_BASED).calcPath(0, 5);
             assertEquals(60, path.getDistance(), 1.e-6);
             assertEquals(60 * 0.06 + 67, path.getWeight(), 1.e-6);
             assertEquals((36 + 670) * 100, path.getTime(), 1.e-6);
@@ -380,9 +389,10 @@ public class EdgeBasedRoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testBasicTurnCosts(String algoStr) {
-        BaseGraph g = createStorage(createEncodingManager(false));
+        EncodingManager em = createEncodingManager(false);
+        BaseGraph g = createStorage(em);
         initGraph(g);
-        Path p = calcPath(g, 5, 1, algoStr);
+        Path p = calcPath(g, em, 5, 1, algoStr);
 
         // no restriction and costs
         assertEquals(IntArrayList.from(5, 2, 3, 1), p.calcNodes());
@@ -391,7 +401,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         getEdge(g, 5, 6).setDistance(2);
         setTurnCost(g, 2, 5, 2, 3);
 
-        p = calcPath(g, 5, 1, algoStr);
+        p = calcPath(g, em, 5, 1, algoStr);
         assertEquals(IntArrayList.from(5, 6, 3, 1), p.calcNodes());
     }
 
@@ -406,7 +416,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         setTurnCost(g, 2, 5, 6, 3);
         setTurnCost(g, 1, 6, 7, 4);
 
-        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, tcs) {
+        Weighting weighting = new InternalShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, tcs) {
             @Override
             public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
                 if (edgeFrom >= 0)
@@ -415,7 +425,13 @@ public class EdgeBasedRoutingAlgorithmTest {
                     assertNotNull(g.getEdgeIteratorState(edgeTo, nodeVia), "edge " + edgeTo + " to " + nodeVia + " does not exist");
                 return super.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
             }
-        });
+        }) {
+            @Override
+            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+                double speed = reverse ? edgeState.getReverse(speedEnc) : edgeState.get(speedEnc);
+                return edgeState.getDistance() / speed * 3.6;
+            }
+        };
         Path p = createAlgo(g, weighting, algoStr, EDGE_BASED).calcPath(5, 1);
         assertEquals(IntArrayList.from(5, 6, 7, 4, 3, 1), p.calcNodes());
         assertEquals(5 * 0.06 + 1, p.getWeight(), 1.e-6);
@@ -429,7 +445,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         // 3-2-4
         //  \|
         //   0
-        final BaseGraph graph = createStorage(createEncodingManager(false));
+        EncodingManager em = createEncodingManager(false);
+        final BaseGraph graph = createStorage(em);
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 2).setDistance(188));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 0).setDistance(182));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 2).setDistance(690));
@@ -438,7 +455,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         setTurnRestriction(graph, 2, 2, 0);
         setTurnRestriction(graph, 3, 2, 4);
 
-        Path p = calcPath(graph, 3, 4, algoStr);
+        Path p = calcPath(graph, em, 3, 4, algoStr);
         assertEquals(IntArrayList.from(3, 2, 2, 4), p.calcNodes());
         assertEquals(999, p.getDistance(), 1.e-3);
     }
@@ -452,7 +469,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         // o3-4o
         //    |
         //    5
-        final BaseGraph graph = createStorage(createEncodingManager(false));
+        EncodingManager em = createEncodingManager(false);
+        final BaseGraph graph = createStorage(em);
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(2));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 4).setDistance(4));
@@ -461,7 +479,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 4).setDistance(1));
         setTurnRestriction(graph, 1, 4, 5);
 
-        Path p = calcPath(graph, 0, 5, algoStr);
+        Path p = calcPath(graph, em, 0, 5, algoStr);
         assertEquals(IntArrayList.from(0, 1, 4, 4, 5), p.calcNodes());
         assertEquals(11, p.getDistance(), 1.e-3);
         assertEquals(11 * 0.06, p.getWeight(), 1.e-3);

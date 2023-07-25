@@ -34,7 +34,7 @@ import com.graphhopper.util.PMap;
 public class Profile {
     private String name = "car";
     private String vehicle = "car";
-    private String weighting = "fastest";
+    private String weighting = "custom";
     private boolean turnCosts = false;
     private PMap hints = new PMap();
 

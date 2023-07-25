@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
@@ -51,7 +50,8 @@ public class PathTest {
     private final DecimalEncodedValue mixedCarSpeedEnc = new DecimalEncodedValueImpl("mixed_car_speed", 5, 5, false);
     private final BooleanEncodedValue mixedFootAccessEnc = new SimpleBooleanEncodedValue("mixed_foot_access", true);
     private final DecimalEncodedValue mixedFootSpeedEnc = new DecimalEncodedValueImpl("mixed_foot_speed", 4, 1, false);
-    private final EncodingManager mixedEncodingManager = EncodingManager.start().add(mixedCarAccessEnc).add(mixedCarSpeedEnc).add(mixedFootAccessEnc).add(mixedFootSpeedEnc).build();
+    private final EncodingManager mixedEncodingManager = EncodingManager.start().add(mixedCarAccessEnc).
+            add(mixedCarSpeedEnc).add(mixedFootAccessEnc).add(mixedFootSpeedEnc).build();
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
     private final RoundaboutGraph roundaboutGraph = new RoundaboutGraph();
@@ -81,7 +81,7 @@ public class PathTest {
         edge2.setWayGeometry(Helper.createPointList(11, 1, 10, 1));
 
         SPTEntry e1 = new SPTEntry(edge2.getEdge(), 2, 1, new SPTEntry(edge1.getEdge(), 1, 1, new SPTEntry(0, 1)));
-        FastestWeighting weighting = new FastestWeighting(carAccessEnc, carAvSpeedEnc);
+        Weighting weighting = CustomModelParser.createFastestWeighting(carAccessEnc, carAvSpeedEnc, carManager);
         Path path = extractPath(g, weighting, e1);
         // 0-1-2
         assertPList(Helper.createPointList(0, 0.1, 8, 1, 9, 1, 1, 0.1, 10, 1, 11, 1, 2, 0.1), path.calcPoints());
@@ -194,7 +194,7 @@ public class PathTest {
                                         new SPTEntry(edge1.getEdge(), 1, 1,
                                                 new SPTEntry(0, 1)
                                         ))));
-        FastestWeighting weighting = new FastestWeighting(carAccessEnc, carAvSpeedEnc);
+        Weighting weighting = CustomModelParser.createFastestWeighting(carAccessEnc, carAvSpeedEnc, carManager);
         Path path = extractPath(g, weighting, e1);
 
         InstructionList il = InstructionsFromEdges.calcInstructions(path, path.graph, weighting, carManager, tr);

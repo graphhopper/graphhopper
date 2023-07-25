@@ -25,8 +25,8 @@ import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
@@ -532,7 +532,7 @@ public class QueryGraphTest {
         EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graphWithTurnCosts.edge(0, 1).setDistance(10));
         EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graphWithTurnCosts.edge(2, 1).setDistance(10));
 
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graphWithTurnCosts.getTurnCostStorage()));
+        Weighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, em, new DefaultTurnCostProvider(turnCostEnc, graphWithTurnCosts.getTurnCostStorage()), new CustomModel());
 
         // no turn costs initially
         assertEquals(0, weighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);

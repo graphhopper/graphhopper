@@ -20,6 +20,7 @@ package com.graphhopper;
 
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
+import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import org.junit.jupiter.api.AfterAll;
@@ -61,8 +62,8 @@ public class FreeWalkIT {
         // TODO: to the street router.
         ghConfig.putObject("gtfs.free_walk", true);
         ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                new Profile("car").setVehicle("car").setWeighting("fastest")));
+                new CustomProfile("foot").setVehicle("foot"),
+                new CustomProfile("car").setVehicle("car")));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

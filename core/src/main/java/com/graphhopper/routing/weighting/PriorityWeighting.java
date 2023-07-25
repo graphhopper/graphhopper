@@ -32,13 +32,13 @@ import static com.graphhopper.routing.util.PriorityCode.BEST;
  *
  * @author Peter Karich
  */
-public class PriorityWeighting extends FastestWeighting {
+class PriorityWeighting extends FastestWeighting {
 
     private final double minFactor;
     private final double maxPrio;
     protected final DecimalEncodedValue priorityEnc;
 
-    public PriorityWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+    PriorityWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
                              EnumEncodedValue<RoadAccess> roadAccessEnc, PMap pMap, TurnCostProvider turnCostProvider) {
         super(accessEnc, speedEnc, roadAccessEnc, pMap, turnCostProvider);
         this.priorityEnc = priorityEnc;
