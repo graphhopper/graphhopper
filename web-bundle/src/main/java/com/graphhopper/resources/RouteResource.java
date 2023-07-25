@@ -171,6 +171,9 @@ public class RouteResource {
             // throw a dedicated exception here, otherwise a missing profile is still caught in Router
             throw new IllegalArgumentException("The 'profile' parameter is required when you use the `custom_model` parameter");
 
+        // TODO NOW should we move this legacy stuff into DefaultWeightingFactory to make this available for the low level API too?
+        if (request.getCustomModel() != null && request.getHints().has(HEADING_PENALTY))
+            request.getCustomModel().setHeadingPenalty(request.getHints().getDouble(HEADING_PENALTY, DEFAULT_HEADING_PENALTY));
         PMap profileResolverHints = new PMap(request.getHints());
         profileResolverHints.putObject("profile", request.getProfile());
         profileResolverHints.putObject("has_curbsides", !request.getCurbsides().isEmpty());
@@ -213,6 +216,7 @@ public class RouteResource {
         hints.remove("vehicle");
         hints.remove("edge_based");
         hints.remove("turn_costs");
+        hints.remove("heading_penalty");
     }
 
     private static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String
