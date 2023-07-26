@@ -11,8 +11,8 @@ import com.graphhopper.storage.IntsRef;
 import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
+import static com.graphhopper.routing.util.FerrySpeedCalculator.FERRIES;
 import static com.graphhopper.routing.util.PriorityCode.*;
-import static com.graphhopper.routing.util.parsers.AbstractAccessParser.FERRIES;
 import static com.graphhopper.routing.util.parsers.AbstractAccessParser.INTENDED;
 import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.getMaxSpeed;
 import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.isValidSpeed;
@@ -180,7 +180,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             weightToPrioMap.put(50d, priorityCode == null ? AVOID : priorityCode);
             if (way.hasTag("tunnel", intendedValues)) {
                 PriorityCode worse = priorityCode == null ? BAD : priorityCode.worse().worse();
-                weightToPrioMap.put(50d,  worse == EXCLUDE ? REACH_DESTINATION : worse);
+                weightToPrioMap.put(50d, worse == EXCLUDE ? REACH_DESTINATION : worse);
             }
         }
 
@@ -199,14 +199,14 @@ public abstract class BikeCommonPriorityParser implements TagParser {
             PriorityCode pushingSectionPrio = SLIGHT_AVOID;
             if (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
                 pushingSectionPrio = PREFER;
-            if (isDesignated(way) && (!way.hasTag("highway","steps")))
+            if (isDesignated(way) && (!way.hasTag("highway", "steps")))
                 pushingSectionPrio = VERY_NICE;
             if (way.hasTag("foot", "yes")) {
                 pushingSectionPrio = pushingSectionPrio.worse();
                 if (way.hasTag("segregated", "yes"))
                     pushingSectionPrio = pushingSectionPrio.better();
             }
-            if (way.hasTag("highway","steps")) {
+            if (way.hasTag("highway", "steps")) {
                 pushingSectionPrio = BAD;
             }
             weightToPrioMap.put(100d, pushingSectionPrio);
@@ -231,7 +231,8 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         // Increase the priority for scenic routes or in case that maxspeed limits our average speed as compensation. See #630
         if (way.hasTag("scenic", "yes") || maxSpeed > 0 && maxSpeed <= wayTypeSpeed) {
             PriorityCode lastEntryValue = weightToPrioMap.lastEntry().getValue();
-            if (lastEntryValue.getValue() < BEST.getValue()) weightToPrioMap.put(110d, lastEntryValue.better());
+            if (lastEntryValue.getValue() < BEST.getValue())
+                weightToPrioMap.put(110d, lastEntryValue.better());
         }
     }
 

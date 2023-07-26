@@ -5,6 +5,7 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Smoothness;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.Helper;
 
 import java.util.HashMap;
@@ -25,8 +26,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     private final EnumEncodedValue<Smoothness> smoothnessEnc;
     protected final Set<String> intendedValues = new HashSet<>(5);
 
-    protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc) {
-        super(speedEnc);
+    protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue ferrySpeedEnc) {
+        super(speedEnc, ferrySpeedEnc);
         this.smoothnessEnc = smoothnessEnc;
 
         // duplicate code as also in BikeCommonPriorityParser
@@ -133,7 +134,7 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
-                double ferrySpeed = ferrySpeedCalc.getSpeed(way);
+                double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
                 setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
                 if (avgSpeedEnc.isStoreTwoDirections())
                     setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);

@@ -1,29 +1,34 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.util.parsers.TagParser;
+import com.graphhopper.storage.IntsRef;
 
-public class FerrySpeedCalculator {
-    private final double unknownSpeed, minSpeed, maxSpeed;
+import java.util.Arrays;
+import java.util.Collection;
 
-    public FerrySpeedCalculator(double minSpeed, double maxSpeed, double unknownSpeed) {
-        this.minSpeed = minSpeed;
-        this.maxSpeed = maxSpeed;
-        this.unknownSpeed = unknownSpeed;
+public class FerrySpeedCalculator implements TagParser {
+    public static final Collection<String> FERRIES = Arrays.asList("shuttle_train", "ferry");
+    private DecimalEncodedValue ferrySpeedEnc;
+
+    public FerrySpeedCalculator(DecimalEncodedValue ferrySpeedEnc) {
+        this.ferrySpeedEnc = ferrySpeedEnc;
     }
 
-    public double getSpeed(ReaderWay way) {
+    static double getSpeed(ReaderWay way) {
         // todo: We currently face two problems related to ferry speeds:
         //       1) We cannot account for waiting times for short ferries (when we do the ferry speed is slower than the slowest we can store)
         //       2) When the ferry speed is larger than the maximum speed of the encoder (like 15km/h for foot) the
         //          ferry speed will be faster than what we can store.
 
-        // OSMReader adds the artificial 'speed_from_duration', 'duration:seconds' and 'way_distance' tags that we can
+        // OSMReader adds the artificial 'speed_from_duration' and 'way_distance' tags that we can
         // use to set the ferry speed. Otherwise we need to use fallback values.
         double speedInKmPerHour = way.getTag("speed_from_duration", Double.NaN);
         if (!Double.isNaN(speedInKmPerHour)) {
             // we reduce the speed to account for waiting time (we increase the duration by 40%)
-            double speedWithWaitingTime = speedInKmPerHour / 1.4;
-            return Math.round(Math.max(minSpeed, Math.min(speedWithWaitingTime, maxSpeed)));
+            return Math.round(speedInKmPerHour / 1.4);
         } else {
             // we have no speed value to work with because there was no valid duration tag.
             // we have to take a guess based on the distance.
@@ -35,11 +40,23 @@ public class FerrySpeedCalculator {
                 // that take you from one harbour to another, but rather ways that only represent the beginning of a
                 // longer ferry connection and that are used by multiple different connections, like here: https://www.openstreetmap.org/way/107913687
                 // It should not matter much which speed we use in this case, so we have no special handling for these.
-                return minSpeed;
+                return 1;
             else {
                 // todo: distinguish speed based on the distance of the ferry, see #2532
-                return unknownSpeed;
+                return 6;
             }
+        }
+    }
+
+    public static double minmax(double speed, DecimalEncodedValue avgSpeedEnc) {
+        return Math.max(avgSpeedEnc.getSmallestNonZeroValue(), Math.min(speed, avgSpeedEnc.getMaxStorableDecimal()));
+    }
+
+    @Override
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+        if (!way.hasTag("highway") && way.hasTag("route", FERRIES)) {
+            double ferrySpeed = minmax(getSpeed(way), ferrySpeedEnc);
+            ferrySpeedEnc.setDecimal(false, edgeId, edgeIntAccess, ferrySpeed);
         }
     }
 }
