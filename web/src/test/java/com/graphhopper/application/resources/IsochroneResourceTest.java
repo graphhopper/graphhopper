@@ -29,6 +29,7 @@ import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.locationtech.jts.geom.Coordinate;
@@ -42,7 +43,6 @@ import java.io.File;
 import java.util.Arrays;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
-import static com.graphhopper.util.Parameters.Routing.BLOCK_AREA;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -55,6 +55,7 @@ public class IsochroneResourceTest {
         config.getGraphHopperConfiguration().
                 putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
                         new Profile("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
@@ -264,13 +265,14 @@ public class IsochroneResourceTest {
         Response response = clientTarget(app, "/isochrone?profile=fast_car&point=42.531073,1.573792&time_limit=wurst")
                 .request().buildGet().invoke();
 
-        assertEquals(400, response.getStatus());
+        assertEquals(404, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         String message = json.path("message").asText();
 
-        assertEquals("query param time_limit is not a number.", message);
+        assertEquals("HTTP 404 Not Found", message);
     }
 
+    @Disabled("block_area is no longer supported and to use custom models we'd need a POST endpoint for isochrones")
     @Test
     public void requestWithBlockArea() {
         Response rsp = clientTarget(app, "/isochrone")
@@ -279,7 +281,7 @@ public class IsochroneResourceTest {
                 .queryParam("time_limit", 5 * 60)
                 .queryParam("buckets", 2)
                 .queryParam("type", "geojson")
-                .queryParam(BLOCK_AREA, "42.558067,1.589429,100")
+                .queryParam("block_area", "42.558067,1.589429,100")
                 .request().buildGet().invoke();
         JsonFeatureCollection featureCollection = rsp.readEntity(JsonFeatureCollection.class);
 

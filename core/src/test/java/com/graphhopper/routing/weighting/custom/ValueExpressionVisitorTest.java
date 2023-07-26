@@ -35,24 +35,27 @@ class ValueExpressionVisitorTest {
 
     @Test
     public void isValidAndSimpleCondition() {
-        NameValidator validVariable = s -> s.equals("edge") || s.equals("Math") || s.equals("priority");
-        ParseResult result = parse("edge == edge", validVariable);
+        ParseResult result = parse("edge == edge", (arg) -> false);
         assertFalse(result.ok);
 
-        result = parse("Math.sqrt(2)", validVariable);
+        result = parse("Math.sqrt(2)", (arg) -> false);
         assertTrue(result.ok, result.invalidMessage);
         assertTrue(result.guessedVariables.isEmpty());
 
-        result = parse("edge.getDistance()", validVariable);
+        result = parse("Math.sqrt(my_speed)", (arg) -> arg.equals("my_speed"));
+        assertTrue(result.ok, result.invalidMessage);
+        assertEquals("[my_speed]", result.guessedVariables.toString());
+
+        result = parse("edge.getDistance()", (arg) -> false);
         assertFalse(result.ok);
 
-        result = parse("road_class == PRIMARY", validVariable);
+        result = parse("road_class == PRIMARY", (arg) -> false);
         assertFalse(result.ok);
 
-        result = parse("toll == Toll.NO", validVariable);
+        result = parse("toll == Toll.NO", (arg) -> false);
         assertFalse(result.ok);
 
-        result = parse("priority * 2", validVariable);
+        result = parse("priority * 2", (s) -> s.equals("priority"));
         assertTrue(result.ok, result.invalidMessage);
         assertEquals("[priority]", result.guessedVariables.toString());
 
@@ -88,9 +91,6 @@ class ValueExpressionVisitorTest {
 
     @Test
     public void runMaxMin() {
-        long x = 6_000_000_000L;
-        System.out.println((int)x);
-
         DecimalEncodedValue prio1 = new DecimalEncodedValueImpl("my_priority", 5, 1, false);
         IntEncodedValueImpl prio2 = new IntEncodedValueImpl("my_priority2", 5, -5, false, false);
         EncodedValueLookup lookup = new EncodingManager.Builder().add(prio1).add(prio2).build();

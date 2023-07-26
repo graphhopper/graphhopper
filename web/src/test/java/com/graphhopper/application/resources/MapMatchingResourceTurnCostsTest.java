@@ -20,7 +20,6 @@ package com.graphhopper.application.resources;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
-import com.graphhopper.application.util.TestUtils;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
@@ -60,6 +59,7 @@ public class MapMatchingResourceTurnCostsTest {
         config.getGraphHopperConfiguration().
                 putObject("graph.vehicles", "car|turn_costs=true,bike").
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
                         new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
@@ -123,10 +123,10 @@ public class MapMatchingResourceTurnCostsTest {
         LineString expectedGeometry = readWktLineString("LINESTRING (12.3607 51.34365, 12.36418 51.34443, 12.36379 51.34538, 12.36082 51.34471, 12.36188 51.34278)");
         LineString actualGeometry = ResponsePathDeserializer.decodePolyline(path.get("points").asText(), 10, false).toLineString(false);
         assertEquals(DiscreteHausdorffDistance.distance(expectedGeometry, actualGeometry), 0.0, 1E-4);
-        assertEquals(106.15, path.get("time").asLong() / 1000f, 0.1);
-        assertEquals(106.15, json.get("map_matching").get("time").asLong() / 1000f, 0.1);
-        assertEquals(811.56, path.get("distance").asDouble(), 1);
-        assertEquals(811.56, json.get("map_matching").get("distance").asDouble(), 1);
+        assertEquals(101, path.get("time").asLong() / 1000f, 1);
+        assertEquals(101, json.get("map_matching").get("time").asLong() / 1000f, 1);
+        assertEquals(812, path.get("distance").asDouble(), 1);
+        assertEquals(812, json.get("map_matching").get("distance").asDouble(), 1);
     }
 
     private void runBike(String urlParams) {

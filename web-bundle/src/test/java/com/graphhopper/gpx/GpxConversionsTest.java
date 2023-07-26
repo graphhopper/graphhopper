@@ -46,8 +46,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
+import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
+import static com.graphhopper.search.KVStorage.KeyValue.createKV;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GpxConversionsTest {

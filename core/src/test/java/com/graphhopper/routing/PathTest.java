@@ -23,7 +23,6 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -35,8 +34,8 @@ import org.junit.jupiter.api.Test;
 
 import java.util.*;
 
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.STREET_NAME;
-import static com.graphhopper.search.EdgeKVStorage.KeyValue.createKV;
+import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
+import static com.graphhopper.search.KVStorage.KeyValue.createKV;
 import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
 import static com.graphhopper.util.Parameters.Details.*;
 import static org.junit.jupiter.api.Assertions.*;

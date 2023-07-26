@@ -24,6 +24,7 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.OSMReader;
+import com.graphhopper.reader.osm.RestrictionTagParser;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHPreparationHandler;
@@ -75,6 +76,7 @@ import static com.graphhopper.util.Parameters.Algorithms.RoundTrip;
  */
 public class GraphHopper {
     private static final Logger logger = LoggerFactory.getLogger(GraphHopper.class);
+    private MaxSpeedCalculator maxSpeedCalculator;
     private final Map<String, Profile> profilesByName = new LinkedHashMap<>();
     private final String fileLockName = "gh.lock";
     // utils
@@ -107,11 +109,12 @@ public class GraphHopper {
     private int maxRegionSearch = 4;
     // subnetworks
     private int minNetworkSize = 200;
+    private int subnetworksThreads = 1;
     // residential areas
-    private double residentialAreaRadius = 300;
-    private double residentialAreaSensitivity = 60;
-    private double cityAreaRadius = 2000;
-    private double cityAreaSensitivity = 30;
+    private double residentialAreaRadius = 400;
+    private double residentialAreaSensitivity = 6000;
+    private double cityAreaRadius = 1500;
+    private double cityAreaSensitivity = 1000;
     private int urbanDensityCalculationThreads = 0;
 
     // preparation handlers
@@ -519,6 +522,9 @@ public class GraphHopper {
                 dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.mmap.".length()), entry.getValue().toString());
         }
 
+        if (ghConfig.getBool("max_speed_calculator.enabled", false))
+            maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds());
+
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
 
@@ -550,6 +556,7 @@ public class GraphHopper {
         if (ghConfig.has("graph.elevation.smoothing"))
             throw new IllegalArgumentException("Use 'graph.elevation.edge_smoothing: moving_average' or the new 'graph.elevation.edge_smoothing: ramer'. See #2634.");
         osmReaderConfig.setElevationSmoothing(ghConfig.getString("graph.elevation.edge_smoothing", osmReaderConfig.getElevationSmoothing()));
+        osmReaderConfig.setSmoothElevationAverageWindowSize(ghConfig.getDouble("graph.elevation.edge_smoothing.moving_average.window_size", osmReaderConfig.getSmoothElevationAverageWindowSize()));
         osmReaderConfig.setElevationSmoothingRamerMax(ghConfig.getInt("graph.elevation.edge_smoothing.ramer.max_elevation", osmReaderConfig.getElevationSmoothingRamerMax()));
         osmReaderConfig.setLongEdgeSamplingDistance(ghConfig.getDouble("graph.elevation.long_edge_sampling_distance", osmReaderConfig.getLongEdgeSamplingDistance()));
         osmReaderConfig.setElevationMaxWayPointDistance(ghConfig.getDouble("graph.elevation.way_point_max_distance", osmReaderConfig.getElevationMaxWayPointDistance()));
@@ -562,12 +569,25 @@ public class GraphHopper {
 
         // optimizable prepare
         minNetworkSize = ghConfig.getInt("prepare.min_network_size", minNetworkSize);
+        subnetworksThreads = ghConfig.getInt("prepare.subnetworks.threads", subnetworksThreads);
 
         // prepare CH&LM
         chPreparationHandler.init(ghConfig);
         lmPreparationHandler.init(ghConfig);
 
         // osm import
+        // We do a few checks for import.osm.ignored_highways to prevent configuration errors when migrating from an older
+        // GH version.
+        if (!ghConfig.has("import.osm.ignored_highways"))
+            throw new IllegalArgumentException("Missing 'import.osm.ignored_highways'. Not using this parameter can decrease performance, see config-example.yml for more details");
+        String ignoredHighwaysString = ghConfig.getString("import.osm.ignored_highways", "");
+        if ((ignoredHighwaysString.contains("footway") || ignoredHighwaysString.contains("path")) && ghConfig.getProfiles().stream().map(Profile::getName).anyMatch(p -> p.contains("foot") || p.contains("hike") || p.contains("wheelchair")))
+            throw new IllegalArgumentException("You should not use import.osm.ignored_highways=footway or =path in conjunction with pedestrian profiles. This is probably an error in your configuration.");
+        if ((ignoredHighwaysString.contains("cycleway") || ignoredHighwaysString.contains("path")) && ghConfig.getProfiles().stream().map(Profile::getName).anyMatch(p -> p.contains("mtb") || p.contains("bike")))
+            throw new IllegalArgumentException("You should not use import.osm.ignored_highways=cycleway or =path in conjunction with bicycle profiles. This is probably an error in your configuration");
+
+        osmReaderConfig.setIgnoredHighways(Arrays.stream(ghConfig.getString("import.osm.ignored_highways", String.join(",", osmReaderConfig.getIgnoredHighways()))
+                .split(",")).map(String::trim).collect(Collectors.toList()));
         osmReaderConfig.setParseWayNames(ghConfig.getBool("datareader.instructions", osmReaderConfig.isParseWayNames()));
         osmReaderConfig.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", osmReaderConfig.getPreferredLanguage()));
         osmReaderConfig.setMaxWayPointDistance(ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, osmReaderConfig.getMaxWayPointDistance()));
@@ -586,6 +606,7 @@ public class GraphHopper {
 
         // routing
         routerConfig.setMaxVisitedNodes(ghConfig.getInt(Routing.INIT_MAX_VISITED_NODES, routerConfig.getMaxVisitedNodes()));
+        routerConfig.setTimeoutMillis(ghConfig.getLong(Routing.INIT_TIMEOUT_MS, routerConfig.getTimeoutMillis()));
         routerConfig.setMaxRoundTripRetries(ghConfig.getInt(RoundTrip.INIT_MAX_RETRIES, routerConfig.getMaxRoundTripRetries()));
         routerConfig.setNonChMaxWaypointDistance(ghConfig.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, routerConfig.getNonChMaxWaypointDistance()));
         routerConfig.setInstructionsEnabled(ghConfig.getBool(Routing.INIT_INSTRUCTIONS, routerConfig.isInstructionsEnabled()));
@@ -598,42 +619,25 @@ public class GraphHopper {
         return this;
     }
 
-    private void buildEncodingManagerAndOSMParsers(String flagEncodersStr, String encodedValuesStr, String dateRangeParserString, boolean withUrbanDensity, Collection<Profile> profiles) {
-        Map<String, String> flagEncodersMap = new LinkedHashMap<>();
-        for (String encoderStr : flagEncodersStr.split(",")) {
-            String name = encoderStr.split("\\|")[0].trim();
-            if (name.isEmpty())
-                continue;
-            if (flagEncodersMap.containsKey(name))
-                throw new IllegalArgumentException("Duplicate flag encoder: " + name + " in: " + encoderStr);
-            flagEncodersMap.put(name, encoderStr);
-        }
-        Map<String, String> flagEncodersFromProfilesMap = new LinkedHashMap<>();
-        for (Profile profile : profiles) {
-            // if a profile uses a flag encoder with turn costs make sure we add that flag encoder with turn costs
-            String vehicle = profile.getVehicle().trim();
-            if (!flagEncodersFromProfilesMap.containsKey(vehicle) || profile.isTurnCosts())
-                flagEncodersFromProfilesMap.put(vehicle, vehicle + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
-        }
-        // flag encoders from profiles are only taken into account when they were not given explicitly
-        flagEncodersFromProfilesMap.forEach(flagEncodersMap::putIfAbsent);
-
-        List<String> encodedValueStrings = Arrays.stream(encodedValuesStr.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toList());
-
+    protected EncodingManager buildEncodingManager(Map<String, String> vehiclesByName, List<String> encodedValueStrings,
+                                                   boolean withUrbanDensity, boolean withMaxSpeedEst, Collection<Profile> profiles) {
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
-        flagEncodersMap.forEach((name, encoderStr) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, new PMap(encoderStr))));
+        vehiclesByName.forEach((name, vehicleStr) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, new PMap(vehicleStr))));
         profiles.forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
+        if (withMaxSpeedEst)
+            emBuilder.add(MaxSpeedEstimated.create());
         if (withUrbanDensity)
             emBuilder.add(UrbanDensity.create());
-        encodedValueStrings.forEach(s -> emBuilder.add(encodedValueFactory.create(s)));
-        encodingManager = emBuilder.build();
+        encodedValueStrings.forEach(s -> emBuilder.add(encodedValueFactory.create(s, new PMap())));
+        return emBuilder.build();
+    }
 
-        osmParsers = new OSMParsers();
+    protected OSMParsers buildOSMParsers(Map<String, String> vehiclesByName, List<String> encodedValueStrings,
+                                         List<String> ignoredHighways, String dateRangeParserString) {
+        OSMParsers osmParsers = new OSMParsers();
+        ignoredHighways.forEach(osmParsers::addIgnoredHighway);
         for (String s : encodedValueStrings) {
-            TagParser tagParser = tagParserFactory.create(encodingManager, s);
+            TagParser tagParser = tagParserFactory.create(encodingManager, s, new PMap());
             if (tagParser != null)
                 osmParsers.addWayTagParser(tagParser);
         }
@@ -658,26 +662,84 @@ public class GraphHopper {
             osmParsers.addWayTagParser(new SlopeCalculator(encodingManager.getDecimalEncodedValue(MaxSlope.KEY),
                     encodingManager.getDecimalEncodedValue(AverageSlope.KEY)));
         }
+
+        if (maxSpeedCalculator != null) {
+            if (!encodingManager.hasEncodedValue(Country.KEY))
+                throw new IllegalArgumentException("max_speed_calculator needs country");
+            if (!encodingManager.hasEncodedValue(UrbanDensity.KEY))
+                throw new IllegalArgumentException("max_speed_calculator needs urban_density");
+            osmParsers.addWayTagParser(maxSpeedCalculator.getParser());
+        }
+
         if (encodingManager.hasEncodedValue(Curvature.KEY))
             osmParsers.addWayTagParser(new CurvatureCalculator(encodingManager.getDecimalEncodedValue(Curvature.KEY)));
 
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
-        flagEncodersMap.forEach((name, encoderStr) -> {
-            VehicleTagParser vehicleTagParser = vehicleTagParserFactory.createParser(encodingManager, name, new PMap(encoderStr));
-            vehicleTagParser.init(dateRangeParser);
-            if (vehicleTagParser instanceof BikeCommonTagParser) {
-                if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
-                    osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
-                if (encodingManager.hasEncodedValue(GetOffBike.KEY))
-                    osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY)));
-                if (encodingManager.hasEncodedValue(Smoothness.KEY))
-                    osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
-            } else if (vehicleTagParser instanceof FootTagParser) {
-                if (encodingManager.hasEncodedValue(FootNetwork.KEY))
-                    osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
-            }
-            osmParsers.addVehicleTagParser(vehicleTagParser);
+        Set<String> added = new HashSet<>();
+        vehiclesByName.forEach((name, vehicleStr) -> {
+            VehicleTagParsers vehicleTagParsers = vehicleTagParserFactory.createParsers(encodingManager, name,
+                    new PMap(vehicleStr).putObject("date_range_parser", dateRangeParser));
+            if (vehicleTagParsers == null)
+                return;
+            vehicleTagParsers.getTagParsers().forEach(tagParser -> {
+                if (tagParser == null) return;
+                if (tagParser instanceof BikeCommonAccessParser) {
+                    if (encodingManager.hasEncodedValue(BikeNetwork.KEY) && added.add(BikeNetwork.KEY))
+                        osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
+                    if (encodingManager.hasEncodedValue(Smoothness.KEY) && added.add(Smoothness.KEY))
+                        osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
+                } else if (tagParser instanceof FootAccessParser) {
+                    if (encodingManager.hasEncodedValue(FootNetwork.KEY) && added.add(FootNetwork.KEY))
+                        osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
+                }
+                String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
+                if (encodingManager.hasEncodedValue(turnCostKey)
+                        // need to make sure we do not add the same restriction parsers multiple times
+                        && osmParsers.getRestrictionTagParsers().stream().noneMatch(r -> r.getTurnCostEnc().getName().equals(turnCostKey))) {
+                    List<String> restrictions = tagParser instanceof AbstractAccessParser
+                            ? ((AbstractAccessParser) tagParser).getRestrictions()
+                            : OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(new PMap(vehicleStr).getString("transportation_mode", "VEHICLE")));
+                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(restrictions, encodingManager.getDecimalEncodedValue(turnCostKey)));
+                }
+            });
+            vehicleTagParsers.getTagParsers().forEach(tagParser -> {
+                if (tagParser == null) return;
+                osmParsers.addWayTagParser(tagParser);
+
+                if (tagParser instanceof BikeCommonAccessParser && encodingManager.hasEncodedValue(GetOffBike.KEY) && added.add(GetOffBike.KEY))
+                    osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY), ((BikeCommonAccessParser) tagParser).getAccessEnc()));
+            });
         });
+        return osmParsers;
+    }
+
+    public static List<String> getEncodedValueStrings(String encodedValuesStr) {
+        return Arrays.stream(encodedValuesStr.split(","))
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toList());
+    }
+
+    public static Map<String, String> getVehiclesByName(String vehiclesStr, Collection<Profile> profiles) {
+        Map<String, String> vehiclesMap = new LinkedHashMap<>();
+        for (String encoderStr : vehiclesStr.split(",")) {
+            String name = encoderStr.split("\\|")[0].trim();
+            if (name.isEmpty())
+                continue;
+            if (vehiclesMap.containsKey(name))
+                throw new IllegalArgumentException("Duplicate vehicle: " + name + " in: " + encoderStr);
+            vehiclesMap.put(name, encoderStr);
+        }
+        Map<String, String> vehiclesFromProfiles = new LinkedHashMap<>();
+        for (Profile profile : profiles) {
+            // if a profile uses a vehicle with turn costs make sure we add that vehicle with turn costs
+            String vehicle = profile.getVehicle().trim();
+            if (!vehiclesFromProfiles.containsKey(vehicle) || profile.isTurnCosts())
+                vehiclesFromProfiles.put(vehicle, vehicle + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
+        }
+        // vehicles from profiles are only taken into account when they were not given explicitly
+        vehiclesFromProfiles.forEach(vehiclesMap::putIfAbsent);
+        return vehiclesMap;
     }
 
     private static ElevationProvider createElevationProvider(GraphHopperConfig ghConfig) {
@@ -752,7 +814,7 @@ public class GraphHopper {
                 ",edges:" + Constants.VERSION_EDGE +
                 ",geometry:" + Constants.VERSION_GEOMETRY +
                 ",location_index:" + Constants.VERSION_LOCATION_IDX +
-                ",string_index:" + Constants.VERSION_EDGEKV_STORAGE +
+                ",string_index:" + Constants.VERSION_KV_STORAGE +
                 ",nodesCH:" + Constants.VERSION_NODE_CH +
                 ",shortcuts:" + Constants.VERSION_SHORTCUT;
     }
@@ -789,11 +851,16 @@ public class GraphHopper {
     /**
      * Creates the graph from OSM data.
      */
-    private void process(boolean closeEarly) {
+    protected void process(boolean closeEarly) {
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
         boolean withUrbanDensity = urbanDensityCalculationThreads > 0;
-        buildEncodingManagerAndOSMParsers(vehiclesString, encodedValuesString, dateRangeParserString, withUrbanDensity, profilesByName.values());
+        boolean withMaxSpeedEstimation = maxSpeedCalculator != null;
+        Map<String, String> vehiclesByName = getVehiclesByName(vehiclesString, profilesByName.values());
+        List<String> encodedValueStrings = getEncodedValueStrings(encodedValuesString);
+        encodingManager = buildEncodingManager(vehiclesByName, encodedValueStrings, withUrbanDensity,
+                withMaxSpeedEstimation, profilesByName.values());
+        osmParsers = buildOSMParsers(vehiclesByName, encodedValueStrings, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())
@@ -838,15 +905,9 @@ public class GraphHopper {
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
 
-        if (encodingManager.hasEncodedValue(UrbanDensity.KEY)) {
-            EnumEncodedValue<UrbanDensity> urbanDensityEnc = encodingManager.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
-            if (!encodingManager.hasEncodedValue(RoadClass.KEY))
-                throw new IllegalArgumentException("Urban density calculation requires " + RoadClass.KEY);
-            if (!encodingManager.hasEncodedValue(RoadClassLink.KEY))
-                throw new IllegalArgumentException("Urban density calculation requires " + RoadClassLink.KEY);
-            EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
-            BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
-            UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, roadClassEnc, roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
+        if (maxSpeedCalculator != null) {
+            maxSpeedCalculator.fillMaxSpeed(getBaseGraph(), encodingManager);
+            maxSpeedCalculator.close();
         }
     }
 
@@ -862,9 +923,7 @@ public class GraphHopper {
             logger.info("Creating custom area index, reading custom areas from: '" + customAreasDirectory + "'");
             customAreas.addAll(readCustomAreas());
         }
-        CustomArea area = GHUtility.getFirstDuplicateArea(customAreas, Country.ISO_ALPHA3);
-        if (area != null)
-            throw new IllegalArgumentException("area used duplicate '" + Country.ISO_ALPHA3 + "' see properties: " + area.getProperties());
+
         AreaIndex<CustomArea> areaIndex = new AreaIndex<>(customAreas);
         if (countryRuleFactory == null || countryRuleFactory.getCountryToRuleMap().isEmpty()) {
             logger.info("No country rules available");
@@ -873,7 +932,7 @@ public class GraphHopper {
         }
 
         logger.info("start creating graph from " + osmFile);
-        OSMReader reader = new OSMReader(baseGraph.getBaseGraph(), encodingManager, osmParsers, osmReaderConfig).setFile(_getOSMFile()).
+        OSMReader reader = new OSMReader(baseGraph.getBaseGraph(), osmParsers, osmReaderConfig).setFile(_getOSMFile()).
                 setAreaIndex(areaIndex).
                 setElevationProvider(eleProvider).
                 setCountryRuleFactory(countryRuleFactory);
@@ -891,6 +950,7 @@ public class GraphHopper {
         if (reader.getDataDate() != null)
             properties.put("datareader.data.date", f.format(reader.getDataDate()));
 
+        calculateUrbanDensity();
         writeEncodingManagerToProperties();
     }
 
@@ -898,6 +958,22 @@ public class GraphHopper {
         baseGraph.getDirectory().create();
         baseGraph.create(100);
         properties.create(100);
+        if (maxSpeedCalculator != null)
+            maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
+    }
+
+    protected void calculateUrbanDensity() {
+        if (encodingManager.hasEncodedValue(UrbanDensity.KEY)) {
+            EnumEncodedValue<UrbanDensity> urbanDensityEnc = encodingManager.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
+            if (!encodingManager.hasEncodedValue(RoadClass.KEY))
+                throw new IllegalArgumentException("Urban density calculation requires " + RoadClass.KEY);
+            if (!encodingManager.hasEncodedValue(RoadClassLink.KEY))
+                throw new IllegalArgumentException("Urban density calculation requires " + RoadClassLink.KEY);
+            EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+            BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
+            UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, roadClassEnc,
+                    roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
+        }
     }
 
     protected void writeEncodingManagerToProperties() {
@@ -989,7 +1065,6 @@ public class GraphHopper {
                     .setSegmentSize(defaultSegmentSize)
                     .build();
             baseGraph.loadExisting();
-            checkProfilesConsistency();
             String storedProfiles = properties.get("profiles");
             String configuredProfiles = getProfilesString();
             if (!storedProfiles.equals(configuredProfiles))
@@ -997,6 +1072,7 @@ public class GraphHopper {
                         + "\nGraphhopper config: " + configuredProfiles
                         + "\nGraph: " + storedProfiles
                         + "\nChange configuration to match the graph or delete " + baseGraph.getDirectory().getLocation());
+            checkProfilesConsistency();
 
             postProcessing(false);
             directory.loadMMap();
@@ -1129,7 +1205,7 @@ public class GraphHopper {
         if (closeEarly) {
             boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> p instanceof CustomProfile);
             if (!includesCustomProfiles)
-                // when there are custom profiles we must not close way geometry or EdgeKVStorage, because
+                // when there are custom profiles we must not close way geometry or KVStorage, because
                 // they might be needed to evaluate the custom weightings for the following preparations
                 baseGraph.flushAndCloseGeometryAndNameStorage();
         }
@@ -1322,6 +1398,7 @@ public class GraphHopper {
     protected void cleanUp() {
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(baseGraph.getBaseGraph(), buildSubnetworkRemovalJobs());
         preparation.setMinNetworkSize(minNetworkSize);
+        preparation.setThreads(subnetworksThreads);
         preparation.doWork();
         properties.put("profiles", getProfilesString());
         logger.info("nodes: " + Helper.nf(baseGraph.getNodes()) + ", edges: " + Helper.nf(baseGraph.getEdges()));

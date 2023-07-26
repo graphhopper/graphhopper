@@ -1,6 +1,6 @@
 package com.graphhopper.example;
 
-import com.graphhopper.routing.BidirRoutingAlgorithm;
+import com.graphhopper.routing.EdgeToEdgeRoutingAlgorithm;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
@@ -119,7 +119,7 @@ public class LowLevelAPIExample {
         Snap fromSnap = index.findClosest(15.15, 20.20, EdgeFilter.ALL_EDGES);
         Snap toSnap = index.findClosest(15.25, 20.21, EdgeFilter.ALL_EDGES);
         QueryGraph queryGraph = QueryGraph.create(graph, fromSnap, toSnap);
-        BidirRoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph, queryGraph).createAlgo(new PMap());
+        EdgeToEdgeRoutingAlgorithm algo = new CHRoutingAlgorithmFactory(chGraph, queryGraph).createAlgo(new PMap());
         Path path = algo.calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
         assert Helper.round(path.getDistance(), -2) == 1000;
     }

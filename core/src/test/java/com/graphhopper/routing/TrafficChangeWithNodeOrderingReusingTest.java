@@ -1,17 +1,16 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.reader.osm.OSMReader;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.ev.VehicleSpeed;
-import com.graphhopper.routing.util.CarTagParser;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.parsers.CarAverageSpeedParser;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -61,10 +60,9 @@ public class TrafficChangeWithNodeOrderingReusingTest {
             BooleanEncodedValue accessEnc = VehicleAccess.create("car");
             DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
             em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-            CarTagParser carParser = new CarTagParser(em, new PMap());
-            carParser.init(new DateRangeParser());
+            CarAverageSpeedParser carParser = new CarAverageSpeedParser(em, new PMap());
             osmParsers = new OSMParsers()
-                    .addVehicleTagParser(carParser);
+                    .addWayTagParser(carParser);
             baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(accessEnc, speedEnc));
             trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), accessEnc, speedEnc, maxDeviationPercentage));
             graph = new BaseGraph.Builder(em).create();
@@ -97,7 +95,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
         LOGGER.info("Running performance test, max deviation percentage: " + f.maxDeviationPercentage);
         // read osm
-        OSMReader reader = new OSMReader(f.graph, f.em, f.osmParsers, new OSMReaderConfig());
+        OSMReader reader = new OSMReader(f.graph, f.osmParsers, new OSMReaderConfig());
         reader.setFile(new File(OSM_FILE));
         reader.readGraph();
         f.graph.freeze();

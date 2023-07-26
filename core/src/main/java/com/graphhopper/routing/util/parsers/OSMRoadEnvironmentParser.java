@@ -19,8 +19,13 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.storage.IntsRef;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.routing.ev.RoadEnvironment.*;
 
@@ -33,7 +38,7 @@ public class OSMRoadEnvironmentParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         RoadEnvironment roadEnvironment = OTHER;
         if ((readerWay.hasTag("route", "ferry") && !readerWay.hasTag("ferry", "no")) ||
                 // TODO shuttle_train is sometimes also used in relations, e.g. https://www.openstreetmap.org/relation/1932780
@@ -45,11 +50,16 @@ public class OSMRoadEnvironmentParser implements TagParser {
             roadEnvironment = TUNNEL;
         else if (readerWay.hasTag("ford") || readerWay.hasTag("highway", "ford"))
             roadEnvironment = FORD;
-        else if (readerWay.hasTag("highway"))
-            roadEnvironment = ROAD;
+        else {
+            List<Map<String, Object>> nodeTags = readerWay.getTag("node_tags", Collections.emptyList());
+            // a barrier edge has the restriction in both nodes and the tags are the same
+            if (readerWay.hasTag("gh:barrier_edge") && nodeTags.get(0).containsKey("ford"))
+                roadEnvironment = FORD;
+            else if (readerWay.hasTag("highway"))
+                roadEnvironment = ROAD;
+        }
 
         if (roadEnvironment != OTHER)
-            roadEnvEnc.setEnum(false, edgeFlags, roadEnvironment);
-        return edgeFlags;
+            roadEnvEnc.setEnum(false, edgeId, edgeIntAccess, roadEnvironment);
     }
 }

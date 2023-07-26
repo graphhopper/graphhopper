@@ -21,7 +21,10 @@ package com.graphhopper.gtfs;
 import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.Profile;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.InMemConstructionIndex;
 import com.graphhopper.storage.index.IndexStructureInfo;
@@ -86,8 +89,17 @@ public class GraphHopperGtfs extends GraphHopper {
                 getGtfsStorage().getGtfsFeeds().forEach((id, gtfsFeed) -> {
                     Transfers transfers = new Transfers(gtfsFeed);
                     allTransfers.put(id, transfers);
-                    GtfsReader gtfsReader = new GtfsReader(id, getBaseGraph(), getEncodingManager(), ptGraph, ptGraph, getGtfsStorage(), getLocationIndex(), transfers, indexBuilder);
-                    gtfsReader.connectStopsToStreetNetwork();
+                    GtfsReader gtfsReader = new GtfsReader(id, ptGraph, ptGraph, getGtfsStorage(), getLocationIndex(), transfers, indexBuilder);
+                    // Stops must be connected to the networks of all the modes
+                    List<DefaultSnapFilter> snapFilters = getProfiles().stream().map(p ->
+                            new DefaultSnapFilter(createWeighting(p, new PMap()), getEncodingManager().getBooleanEncodedValue(Subnetwork.key(p.getName())))).collect(Collectors.toList());
+                    gtfsReader.connectStopsToStreetNetwork(e -> {
+                        for (DefaultSnapFilter snapFilter : snapFilters) {
+                            if (!snapFilter.accept(e))
+                                return false;
+                        }
+                        return true;
+                    });
                     LOGGER.info("Building transit graph for feed {}", gtfsFeed.feedId);
                     gtfsReader.buildPtNetwork();
                     allReaders.put(id, gtfsReader);
@@ -97,6 +109,7 @@ public class GraphHopperGtfs extends GraphHopper {
                 throw new RuntimeException("Error while constructing transit network. Is your GTFS file valid? Please check log for possible causes.", e);
             }
             ptGraph.flush();
+            getGtfsStorage().flush();
             stopIndex.store(indexBuilder);
             stopIndex.flush();
         }
@@ -110,10 +123,7 @@ public class GraphHopperGtfs extends GraphHopper {
         QueryGraph queryGraph = QueryGraph.create(getBaseGraph(), Collections.emptyList());
         Weighting transferWeighting = createWeighting(getProfile("foot"), new PMap());
         final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, ptGraph, transferWeighting, getGtfsStorage(), RealtimeFeed.empty(), true, true, false, 5.0, false, 0);
-        getGtfsStorage().getStationNodes().values().stream().distinct().map(n -> {
-            int streetNode = Optional.ofNullable(gtfsStorage.getPtToStreet().get(n)).orElse(-1);
-            return new Label.NodeId(streetNode, n);
-        }).forEach(stationNode -> {
+        getGtfsStorage().getStationNodes().values().stream().distinct().map(n -> new Label.NodeId(gtfsStorage.getPtToStreet().getOrDefault(n, -1), n)).forEach(stationNode -> {
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, true, false, false, 0, new ArrayList<>());
             router.setLimitStreetTime(Duration.ofSeconds(maxTransferWalkTimeSeconds).toMillis());
             for (Label label : router.calcLabels(stationNode, Instant.ofEpochMilli(0))) {
@@ -166,6 +176,8 @@ public class GraphHopperGtfs extends GraphHopper {
             if (edges.get(i).getBaseNode() != edges.get(i-1).getAdjNode())
                 return false;
         }
+        TripFromLabel tripFromLabel = new TripFromLabel(getBaseGraph(), getEncodingManager(), gtfsStorage, RealtimeFeed.empty(), getPathDetailsBuilderFactory(), 6.0);
+        tripFromLabel.transferPath(edgeKeys, createWeighting(getProfile("foot"), new PMap()), 0L);
         return true;
     }
 

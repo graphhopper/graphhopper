@@ -20,6 +20,8 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.config.Profile;
 import com.graphhopper.util.CustomModel;
 
+import java.util.Collections;
+
 public class CustomProfile extends Profile {
 
     public CustomProfile(Profile profile) {
@@ -32,12 +34,13 @@ public class CustomProfile extends Profile {
     public CustomProfile(String name) {
         super(name);
         setWeighting(CustomWeighting.NAME);
+        setCustomModel(new CustomModel());
     }
 
     public CustomProfile setCustomModel(CustomModel customModel) {
-        customModel.internal();
+        if (customModel != null)
+            customModel.internal();
         getHints().putObject(CustomModel.KEY, customModel);
-        getHints().putObject("custom_model_file", "empty");
         return this;
     }
 

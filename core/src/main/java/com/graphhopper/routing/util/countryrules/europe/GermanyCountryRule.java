@@ -31,36 +31,6 @@ import com.graphhopper.routing.util.countryrules.CountryRule;
  */
 public class GermanyCountryRule implements CountryRule {
 
-    /**
-     * In Germany there are roads without a speed limit. For these roads, this method
-     * will return {@link MaxSpeed#UNLIMITED_SIGN_SPEED}.
-     * <p>
-     * Your implementation should be able to handle these cases.
-     */
-    @Override
-    public double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
-        if (!Double.isNaN(currentMaxSpeed) || !transportationMode.isMotorVehicle())
-            return currentMaxSpeed;
-
-        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
-        // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
-        switch (roadClass) {
-            case MOTORWAY:
-            case TRUNK:
-                return MaxSpeed.UNLIMITED_SIGN_SPEED;
-            case PRIMARY:
-            case SECONDARY:
-            case TERTIARY:
-            case UNCLASSIFIED:
-            case RESIDENTIAL:
-                return 100;
-            case LIVING_STREET:
-                return 4;
-            default:
-                return Double.NaN;
-        }
-    }
-
     @Override
     public RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
         if (currentRoadAccess != RoadAccess.YES)
@@ -81,18 +51,18 @@ public class GermanyCountryRule implements CountryRule {
                 return RoadAccess.YES;
         }
     }
-    
+
     @Override
     public Toll getToll(ReaderWay readerWay, Toll currentToll) {
         if (currentToll != Toll.MISSING) {
             return currentToll;
         }
-        
+
         RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
         if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK || roadClass == RoadClass.PRIMARY) {
             return Toll.HGV;
         }
-        
+
         return currentToll;
     }
 }

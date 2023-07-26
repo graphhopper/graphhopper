@@ -24,7 +24,7 @@ public class RoutingExample {
         GraphHopper hopper = createGraphHopperInstance(relDir + "core/files/andorra.osm.pbf");
         routing(hopper);
         speedModeVersusFlexibleMode(hopper);
-        headingAndAlternativeRoute(hopper);
+        alternativeRoute(hopper);
         customizableRouting(relDir + "core/files/andorra.osm.pbf");
 
         // release resources to properly shutdown or start a new instance
@@ -88,31 +88,17 @@ public class RoutingExample {
         assert Helper.round(res.getBest().getDistance(), -2) == 900;
     }
 
-    public static void headingAndAlternativeRoute(GraphHopper hopper) {
-        // define a heading (direction) at start and destination
+    public static void alternativeRoute(GraphHopper hopper) {
+        // calculate alternative routes between two points (supported with and without CH)
         GHRequest req = new GHRequest().setProfile("car").
-                addPoint(new GHPoint(42.508774, 1.535414)).addPoint(new GHPoint(42.506595, 1.528795)).
-                setHeadings(Arrays.asList(180d, 90d)).
-                // use flexible mode (i.e. disable contraction hierarchies) to make heading and pass_through working
-                        putHint(Parameters.CH.DISABLE, true);
-        // if you have via points you can avoid U-turns there with
-        // req.getHints().putObject(Parameters.Routing.PASS_THROUGH, true);
+                addPoint(new GHPoint(42.502904, 1.514714)).addPoint(new GHPoint(42.508774, 1.537094)).
+                setAlgorithm(Parameters.Algorithms.ALT_ROUTE);
+        req.getHints().putObject(Parameters.Algorithms.AltRoute.MAX_PATHS, 3);
         GHResponse res = hopper.route(req);
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
-        assert res.getAll().size() == 1;
-        assert Helper.round(res.getBest().getDistance(), -2) == 800;
-
-        // calculate alternative routes between two points (supported with and without CH)
-        req = new GHRequest().setProfile("car").
-                addPoint(new GHPoint(42.502904, 1.514714)).addPoint(new GHPoint(42.511953, 1.535914)).
-                setAlgorithm(Parameters.Algorithms.ALT_ROUTE);
-        req.getHints().putObject(Parameters.Algorithms.AltRoute.MAX_PATHS, 3);
-        res = hopper.route(req);
-        if (res.hasErrors())
-            throw new RuntimeException(res.getErrors().toString());
         assert res.getAll().size() == 2;
-        assert Helper.round(res.getBest().getDistance(), -2) == 2300;
+        assert Helper.round(res.getBest().getDistance(), -2) == 2200;
     }
 
     /**
@@ -123,7 +109,8 @@ public class RoutingExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-custom-graph-cache");
-        hopper.setProfiles(new CustomProfile("car_custom").setCustomModel(new CustomModel()).setVehicle("car"));
+        CustomModel serverSideCustomModel = new CustomModel();
+        hopper.setProfiles(new CustomProfile("car_custom").setCustomModel(serverSideCustomModel).setVehicle("car"));
 
         // The hybrid mode uses the "landmark algorithm" and is up to 15x faster than the flexible mode (Dijkstra).
         // Still it is slower than the speed mode ("contraction hierarchies algorithm") ...
@@ -139,7 +126,7 @@ public class RoutingExample {
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
 
-        assert Math.round(res.getBest().getTime() / 1000d) == 96;
+        assert Math.round(res.getBest().getTime() / 1000d) == 94;
 
         // 2. now avoid primary roads and reduce maximum speed, see docs/core/custom-models.md for an in-depth explanation
         // and also the blog posts https://www.graphhopper.com/?s=customizable+routing
@@ -154,6 +141,6 @@ public class RoutingExample {
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
 
-        assert Math.round(res.getBest().getTime() / 1000d) == 165;
+        assert Math.round(res.getBest().getTime() / 1000d) == 164;
     }
 }

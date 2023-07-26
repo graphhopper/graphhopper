@@ -50,6 +50,7 @@ public class SPTResourceTest {
                 putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("graph.encoded_values", "max_speed,road_class").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
+                putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
                         new Profile("car_without_turncosts").setVehicle("car").setWeighting("fastest"),
@@ -72,10 +73,10 @@ public class SPTResourceTest {
         List<String> headers = Arrays.asList(lines[0].split(","));
         assertEquals("[longitude, latitude, time, distance]", headers.toString());
         String[] row = lines[166].split(",");
-        assertEquals(1.5552, Double.parseDouble(row[0]), 0.0001);
-        assertEquals(42.5179, Double.parseDouble(row[1]), 0.0001);
-        assertEquals(118, Integer.parseInt(row[2]) / 1000, 1);
-        assertEquals(2263, Integer.parseInt(row[3]), 1);
+        assertEquals(1.5740, Double.parseDouble(row[0]), 0.0001);
+        assertEquals(42.5362, Double.parseDouble(row[1]), 0.0001);
+        assertEquals(111, Integer.parseInt(row[2]) / 1000, 1);
+        assertEquals(1505, Integer.parseInt(row[3]), 1);
 
         rsp = clientTarget(app, "/spt?profile=car_without_turncosts&point=42.531073,1.573792&columns=prev_time").request().buildGet().invoke();
         rspCsvString = rsp.readEntity(String.class);
@@ -86,7 +87,7 @@ public class SPTResourceTest {
         assertNotEquals(-1, prevTimeIndex);
 
         row = lines[20].split(",");
-        assertEquals(41, Integer.parseInt(row[prevTimeIndex]) / 1000);
+        assertEquals(48, Integer.parseInt(row[prevTimeIndex]) / 1000);
     }
 
     @Test
@@ -96,9 +97,9 @@ public class SPTResourceTest {
         String[] lines = rspCsvString.split("\n");
         assertTrue(lines.length > 500);
         assertEquals("prev_node_id,edge_id,node_id,time,distance", lines[0]);
-        assertEquals("-1,-1,1948,0,0", lines[1]);
-        assertEquals("1948,2277,1324,3817,74", lines[2]);
-        assertEquals("1948,2276,263,13496,262", lines[3]);
+        assertEquals("-1,-1,2385,0,0", lines[1]);
+        assertEquals("2385,2821,1571,3711,74", lines[2]);
+        assertEquals("2385,2820,274,13121,262", lines[3]);
     }
 
     @Test
@@ -107,15 +108,15 @@ public class SPTResourceTest {
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
 
-        String[] row = lines[368].split(",");
-        assertEquals("", row[0]);
-        assertEquals("service", row[1]);
-        assertEquals(20, Double.parseDouble(row[2]), .1);
+        String[] row = lines[362].split(",");
+        assertEquals("Placeta Na Maria Pla", row[0]);
+        assertEquals("residential", row[1]);
+        assertEquals(50, Double.parseDouble(row[2]), .1);
 
         row = lines[249].split(",");
-        assertEquals("Carretera d'Engolasters", row[0]);
-        assertEquals("secondary", row[1]);
-        assertTrue(Double.isInfinite(Double.parseDouble(row[2])));
+        assertEquals("Carrer de la Plana", row[0]);
+        assertEquals("unclassified", row[1]);
+        assertEquals(Double.POSITIVE_INFINITY, Double.parseDouble(row[2]), .1);
     }
 
     @Test

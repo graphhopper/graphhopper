@@ -2,14 +2,8 @@
 // standard car profile
 {
   "priority": [
-    {
-      "if": "road_access == PRIVATE",
-      "multiply_by": "0.1"
-    },
-    {
-      "else_if": "road_access == DESTINATION",
-      "multiply_by": "0.1"
-    }
+    { "if": "road_access == PRIVATE", "multiply_by": "0" },
+    { "else_if": "road_access == DESTINATION", "multiply_by": "0.1" }
   ],
   "distance_influence": 0
 }

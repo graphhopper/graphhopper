@@ -18,10 +18,7 @@
 
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.RoadClass;
-import com.graphhopper.routing.ev.UrbanDensity;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.StopWatch;
@@ -66,39 +63,21 @@ public class UrbanDensityCalculator {
                                         EnumEncodedValue<RoadClass> roadClassEnc, BooleanEncodedValue roadClassLinkEnc,
                                         double radius, double sensitivity, int threads) {
         final ToDoubleFunction<EdgeIteratorState> calcRoadFactor = edge -> {
-            if (edge.get(roadClassLinkEnc))
-                // highway exits sometimes have a 'high' density. By excluding them here we try to prevent them from
-                // being classified as residential areas when they are in the countryside.
-                return 0;
             RoadClass roadClass = edge.get(roadClassEnc);
-            switch (roadClass) {
-                // we're interested in the road density of urban roads, so residential areas are particularly interesting
-                case RESIDENTIAL:
-                case LIVING_STREET:
-                case FOOTWAY:
-                case CYCLEWAY:
-                case STEPS:
-                    return 2;
-                case MOTORWAY:
-                case TRUNK:
-                case PRIMARY:
-                case SECONDARY:
-                case TERTIARY:
-                case SERVICE:
-                case OTHER:
-                    return 1;
-                default:
-                    return 0;
-            }
+            // we're interested in the road density of 'urban' roads, so dense road clusters of outdoor
+            // roads like tracks or paths and road class links should not contribute to the residential density
+            if (edge.get(roadClassLinkEnc) ||
+                    roadClass == RoadClass.TRACK ||
+                    roadClass == RoadClass.SERVICE ||
+                    roadClass == RoadClass.PATH ||
+                    roadClass == RoadClass.BRIDLEWAY)
+                return 0;
+            else
+                return 1;
         };
         // temporarily write results to an external array for thread-safety
         boolean[] isResidential = new boolean[graph.getEdges()];
         RoadDensityCalculator.calcRoadDensities(graph, (calculator, edge) -> {
-            RoadClass roadClass = edge.get(roadClassEnc);
-            if (roadClass == RoadClass.RESIDENTIAL || roadClass == RoadClass.LIVING_STREET) {
-                isResidential[edge.getEdge()] = true;
-                return;
-            }
             double roadDensity = calculator.calcRoadDensity(edge, radius, calcRoadFactor);
             isResidential[edge.getEdge()] = roadDensity * sensitivity >= 1.0;
         }, threads);

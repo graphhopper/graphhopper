@@ -44,18 +44,18 @@ public class CHPathCalculator implements PathCalculator {
     public List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions) {
         if (!edgeRestrictions.getUnfavoredEdges().isEmpty())
             throw new IllegalArgumentException("Using unfavored edges is currently not supported for CH");
-        BidirRoutingAlgorithm algo = createAlgo();
+        EdgeToEdgeRoutingAlgorithm algo = createAlgo();
         return calcPaths(from, to, edgeRestrictions, algo);
     }
 
-    private BidirRoutingAlgorithm createAlgo() {
+    private EdgeToEdgeRoutingAlgorithm createAlgo() {
         StopWatch sw = new StopWatch().start();
-        BidirRoutingAlgorithm algo = algoFactory.createAlgo(algoOpts);
+        EdgeToEdgeRoutingAlgorithm algo = algoFactory.createAlgo(algoOpts);
         debug = ", algoInit:" + (sw.stop().getNanos() / 1000) + " μs";
         return algo;
     }
 
-    private List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions, BidirRoutingAlgorithm algo) {
+    private List<Path> calcPaths(int from, int to, EdgeRestrictions edgeRestrictions, EdgeToEdgeRoutingAlgorithm algo) {
         StopWatch sw = new StopWatch().start();
         List<Path> paths;
         if (edgeRestrictions.getSourceOutEdge() != ANY_EDGE || edgeRestrictions.getTargetInEdge() != ANY_EDGE) {

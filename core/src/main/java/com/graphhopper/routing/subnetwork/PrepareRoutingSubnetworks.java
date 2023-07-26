@@ -22,9 +22,9 @@ import com.carrotsearch.hppc.BitSetIterator;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
@@ -32,6 +32,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 
@@ -63,6 +68,7 @@ public class PrepareRoutingSubnetworks {
     private final BaseGraph graph;
     private final List<PrepareJob> prepareJobs;
     private int minNetworkSize = 200;
+    private int threads = 1;
 
     public PrepareRoutingSubnetworks(BaseGraph graph, List<PrepareJob> prepareJobs) {
         this.graph = graph;
@@ -78,6 +84,11 @@ public class PrepareRoutingSubnetworks {
         return this;
     }
 
+    public PrepareRoutingSubnetworks setThreads(int threads) {
+        this.threads = threads;
+        return this;
+    }
+
     /**
      * Finds and marks all subnetworks according to {@link #setMinNetworkSize(int)}
      *
@@ -89,16 +100,27 @@ public class PrepareRoutingSubnetworks {
             return 0;
         }
         StopWatch sw = new StopWatch().start();
-        logger.info("Start marking subnetworks, prepare.min_network_size: " + minNetworkSize + ", nodes: " +
+        logger.info("Start marking subnetworks, prepare.min_network_size: " + minNetworkSize + ", threads: " + threads + ", nodes: " +
                 Helper.nf(graph.getNodes()) + ", edges: " + Helper.nf(graph.getEdges()) + ", jobs: " + prepareJobs + ", " + Helper.getMemInfo());
-        int total = 0;
-        for (PrepareJob job : prepareJobs)
-            total += setSubnetworks(job.weighting, job.subnetworkEnc);
+        AtomicInteger total = new AtomicInteger(0);
+        List<BitSet> flags = Stream.generate(() -> new BitSet(graph.getEdges())).limit(prepareJobs.size()).collect(Collectors.toList());
+        Stream<Runnable> runnables = IntStream.range(0, prepareJobs.size()).mapToObj(i -> () -> {
+            PrepareJob job = prepareJobs.get(i);
+            total.addAndGet(setSubnetworks(job.weighting, job.subnetworkEnc.getName().replaceAll("_subnetwork", ""), flags.get(i)));
+        });
+        GHUtility.runConcurrently(runnables, threads);
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            for (int i = 0; i < prepareJobs.size(); i++) {
+                PrepareJob prepareJob = prepareJobs.get(i);
+                iter.set(prepareJob.subnetworkEnc, flags.get(i).get(iter.getEdge()));
+            }
+        }
         logger.info("Finished finding and marking subnetworks for " + prepareJobs.size() + " jobs, took: " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
-        return total;
+        return total.get();
     }
 
-    private int setSubnetworks(Weighting weighting, BooleanEncodedValue subnetworkEnc) {
+    private int setSubnetworks(Weighting weighting, String jobName, BitSet subnetworkFlags) {
         // partition graph into strongly connected components using Tarjan's algorithm
         StopWatch sw = new StopWatch().start();
         EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(graph,
@@ -107,7 +129,7 @@ public class PrepareRoutingSubnetworks {
         List<IntArrayList> components = ccs.getComponents();
         BitSet singleEdgeComponents = ccs.getSingleEdgeComponents();
         long numSingleEdgeComponents = singleEdgeComponents.cardinality();
-        logger.info(subnetworkEnc.getName().replaceAll("_subnetwork", "") + " - Found " + ccs.getTotalComponents() + " subnetworks (" + numSingleEdgeComponents + " single edges and "
+        logger.info(jobName + " - Found " + ccs.getTotalComponents() + " subnetworks (" + numSingleEdgeComponents + " single edges and "
                 + components.size() + " components with more than one edge, total nodes: " + ccs.getEdgeKeys() + "), took: " + sw.stop().getSeconds() + "s");
 
         final int minNetworkSizeEdgeKeys = 2 * minNetworkSize;
@@ -125,7 +147,7 @@ public class PrepareRoutingSubnetworks {
 
             if (component.size() < minNetworkSizeEdgeKeys) {
                 for (IntCursor cursor : component)
-                    markedEdges += setSubnetworkEdge(cursor.value, weighting, subnetworkEnc);
+                    markedEdges += setSubnetworkEdge(cursor.value, weighting, subnetworkFlags);
                 subnetworks++;
                 biggestSubnetwork = Math.max(biggestSubnetwork, component.size());
             } else {
@@ -136,7 +158,7 @@ public class PrepareRoutingSubnetworks {
         if (minNetworkSizeEdgeKeys > 0) {
             BitSetIterator iter = singleEdgeComponents.iterator();
             for (int edgeKey = iter.nextSetBit(); edgeKey >= 0; edgeKey = iter.nextSetBit()) {
-                markedEdges += setSubnetworkEdge(edgeKey, weighting, subnetworkEnc);
+                markedEdges += setSubnetworkEdge(edgeKey, weighting, subnetworkFlags);
                 subnetworks++;
                 biggestSubnetwork = Math.max(biggestSubnetwork, 1);
             }
@@ -149,21 +171,21 @@ public class PrepareRoutingSubnetworks {
             throw new IllegalStateException("Too many total (directed) edges were marked as subnetwork edges: " + markedEdges + " out of " + (2 * graph.getEdges()) + "\n" +
                     "The maximum number of subnetwork edges is: " + (2 * allowedMarked));
 
-        logger.info(subnetworkEnc.getName().replaceAll("_subnetwork", "") + " - Marked " + subnetworks + " subnetworks (biggest: " + biggestSubnetwork + " edges) -> " +
+        logger.info(jobName + " - Marked " + subnetworks + " subnetworks (biggest: " + biggestSubnetwork + " edges) -> " +
                 (ccs.getTotalComponents() - subnetworks) + " components(s) remain (smallest: " + smallestNonSubnetwork + ", biggest: " + ccs.getBiggestComponent().size() + " edges)"
                 + ", total marked edges: " + markedEdges + ", took: " + sw.stop().getSeconds() + "s");
         return markedEdges;
     }
 
-    private int setSubnetworkEdge(int edgeKey, Weighting weighting, BooleanEncodedValue subnetworkEnc) {
+    private int setSubnetworkEdge(int edgeKey, Weighting weighting, BitSet subnetworkFlags) {
         // edges that are not accessible anyway are not marked as subnetworks additionally
         if (!Double.isFinite(weighting.calcEdgeWeightWithAccess(graph.getEdgeIteratorStateForKey(edgeKey), false)))
             return 0;
 
         // now get edge again but in stored direction so that subnetwork EV is not overwritten (as it is unidirectional)
-        EdgeIteratorState edgeState = graph.getEdgeIteratorState(getEdgeFromEdgeKey(edgeKey), Integer.MIN_VALUE);
-        if (!edgeState.get(subnetworkEnc)) {
-            edgeState.set(subnetworkEnc, true);
+        int edge = getEdgeFromEdgeKey(edgeKey);
+        if (!subnetworkFlags.get(edge)) {
+            subnetworkFlags.set(edge);
             return 1;
         } else {
             return 0;

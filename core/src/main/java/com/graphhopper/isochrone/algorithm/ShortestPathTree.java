@@ -131,7 +131,7 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
         if (traversalMode == TraversalMode.NODE_BASED) {
             fromMap.put(from, currentLabel);
         }
-        while (!finished()) {
+        while (!queueByWeighting.isEmpty()) {
             currentLabel = queueByWeighting.poll();
             if (currentLabel.deleted)
                 continue;
@@ -189,16 +189,6 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
         if (exploreType == WEIGHT)
             return label.weight;
         return label.distance;
-    }
-
-    @Override
-    protected boolean finished() {
-        return queueByWeighting.isEmpty();
-    }
-
-    @Override
-    protected Path extractPath() {
-        throw new UnsupportedOperationException();
     }
 
     @Override

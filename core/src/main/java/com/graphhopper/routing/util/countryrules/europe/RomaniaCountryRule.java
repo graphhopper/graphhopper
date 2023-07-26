@@ -28,7 +28,7 @@ import com.graphhopper.routing.util.countryrules.CountryRule;
  * @author Thomas Butz
  */
 public class RomaniaCountryRule implements CountryRule {
-    
+
     @Override
     public Toll getToll(ReaderWay readerWay, Toll currentToll) {
         if (currentToll != Toll.MISSING) {
@@ -36,7 +36,7 @@ public class RomaniaCountryRule implements CountryRule {
         }
 
         RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
-        if (roadClass == RoadClass.MOTORWAY  || roadClass == RoadClass.TRUNK)
+        if (roadClass == RoadClass.MOTORWAY || roadClass == RoadClass.TRUNK)
             return Toll.ALL;
         return currentToll;
     }

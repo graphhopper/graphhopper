@@ -23,10 +23,12 @@ import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -73,7 +75,7 @@ public class ViaRouting {
                 snap = locationIndex.findClosest(point.lat, point.lon, new HeadingEdgeFilter(directedSnapFilter, headings.get(placeIndex), point));
             } else if (!pointHints.isEmpty()) {
                 snap = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(strictEdgeFilter,
-                        pointHints.get(placeIndex), point, 100));
+                        pointHints.get(placeIndex), point, 170));
             } else if (!snapPreventions.isEmpty()) {
                 snap = locationIndex.findClosest(point.lat, point.lon, strictEdgeFilter);
             }
@@ -182,7 +184,16 @@ public class ViaRouting {
 
         // curbsides
         if (!fromCurbside.equals(CURBSIDE_ANY) || !toCurbside.equals(CURBSIDE_ANY)) {
-            DirectionResolver directionResolver = new DirectionResolver(queryGraph, edgeFilter);
+            DirectedEdgeFilter directedEdgeFilter = (edge, reverse) -> {
+                // todo: maybe find a cleaner way to obtain the original edge given a VirtualEdgeIterator (not VirtualEdgeIteratorState)
+                if (queryGraph.isVirtualEdge(edge.getEdge())) {
+                    EdgeIteratorState virtualEdge = queryGraph.getEdgeIteratorStateForKey(edge.getEdgeKey());
+                    EdgeIteratorState origEdge = queryGraph.getEdgeIteratorStateForKey(((VirtualEdgeIteratorState) virtualEdge).getOriginalEdgeKey());
+                    return edgeFilter.accept(origEdge, reverse);
+                } else
+                    return edgeFilter.accept(edge, reverse);
+            };
+            DirectionResolver directionResolver = new DirectionResolver(queryGraph, directedEdgeFilter);
             DirectionResolverResult fromDirection = directionResolver.resolveDirections(fromSnap.getClosestNode(), fromSnap.getQueryPoint());
             DirectionResolverResult toDirection = directionResolver.resolveDirections(toSnap.getClosestNode(), toSnap.getQueryPoint());
             int sourceOutEdge = DirectionResolverResult.getOutEdge(fromDirection, fromCurbside);

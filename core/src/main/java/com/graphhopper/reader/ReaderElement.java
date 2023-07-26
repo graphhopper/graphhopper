@@ -17,7 +17,10 @@
  */
 package com.graphhopper.reader;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 /**
@@ -74,10 +77,10 @@ public abstract class ReaderElement {
         return properties;
     }
 
-    public void setTags(Map<String, String> newTags) {
+    public void setTags(Map<String, Object> newTags) {
         properties.clear();
         if (newTags != null)
-            for (Entry<String, String> e : newTags.entrySet()) {
+            for (Entry<String, Object> e : newTags.entrySet()) {
                 setTag(e.getKey(), e.getValue());
             }
     }
@@ -96,16 +99,6 @@ public abstract class ReaderElement {
         if (val == null)
             return defaultValue;
         return val;
-    }
-
-    public List<String> getKeysWithPrefix(String keyPrefix) {
-        List<String> keys = new ArrayList<>();
-        for (String key : properties.keySet()) {
-            if (key.startsWith(keyPrefix)) {
-                keys.add(key);
-            }
-        }
-        return keys;
     }
 
     public void setTag(String name, Object value) {
@@ -147,8 +140,7 @@ public abstract class ReaderElement {
     }
 
     /**
-     * Check a number of tags in the given order for the any of the given values. Used to parse
-     * hierarchical access restrictions
+     * Check a number of tags in the given order for any of the given values.
      */
     public boolean hasTag(List<String> keyList, Collection<String> values) {
         for (String key : keyList) {
@@ -158,22 +150,27 @@ public abstract class ReaderElement {
         return false;
     }
 
-    public boolean hasTagWithKeyPrefix(String keyPrefix) {
-        for (String key : properties.keySet()) {
-            if (key.startsWith(keyPrefix)) {
+    /**
+     * Check a number of tags in the given order if their value is equal to the specified value.
+     */
+    public boolean hasTag(List<String> keyList, Object value) {
+        for (String key : keyList) {
+            if (value.equals(getTag(key, null)))
                 return true;
-            }
         }
         return false;
     }
 
     /**
      * Returns the first existing tag of the specified list where the order is important.
+     *
+     * @return an empty string if nothing found
      */
     public String getFirstPriorityTag(List<String> restrictions) {
         for (String str : restrictions) {
-            if (hasTag(str))
-                return getTag(str);
+            Object value = properties.get(str);
+            if (value != null)
+                return (String) value;
         }
         return "";
     }
@@ -188,10 +185,6 @@ public abstract class ReaderElement {
 
     public Type getType() {
         return type;
-    }
-
-    public boolean isType(Type type) {
-        return this.type == type;
     }
 
     @Override

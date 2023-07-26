@@ -28,22 +28,22 @@ import com.graphhopper.routing.util.countryrules.CountryRule;
  * @author Thomas Butz
  */
 public class HungaryCountryRule implements CountryRule {
-    
+
     @Override
     public Toll getToll(ReaderWay readerWay, Toll currentToll) {
         if (currentToll != Toll.MISSING) {
             return currentToll;
         }
 
-        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));        
+        RoadClass roadClass = RoadClass.find(readerWay.getTag("highway", ""));
         switch (roadClass) {
-        case MOTORWAY:
-            return Toll.ALL;
-        case TRUNK:
-        case PRIMARY:
-            return Toll.HGV;
-        default:
-            return currentToll;
+            case MOTORWAY:
+                return Toll.ALL;
+            case TRUNK:
+            case PRIMARY:
+                return Toll.HGV;
+            default:
+                return currentToll;
         }
     }
 }

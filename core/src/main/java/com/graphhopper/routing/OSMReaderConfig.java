@@ -18,15 +18,39 @@
 
 package com.graphhopper.routing;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class OSMReaderConfig {
+    private List<String> ignoredHighways = new ArrayList<>();
     private boolean parseWayNames = true;
     private String preferredLanguage = "";
     private double maxWayPointDistance = 1;
     private double elevationMaxWayPointDistance = Double.MAX_VALUE;
     private String smoothElevation = "";
+
+    private double smoothElevationAverageWindowSize = 150.0;
     private int ramerElevationSmoothingMax = 5;
     private double longEdgeSamplingDistance = Double.MAX_VALUE;
     private int workerThreads = 2;
+
+    public List<String> getIgnoredHighways() {
+        return ignoredHighways;
+    }
+
+    /**
+     * Sets the values of the highway tag that shall be ignored when we read the OSM file. This can be used to speed up
+     * the import and reduce the size of the resulting routing graph. For example if one is only interested in routing
+     * for motorized vehicles the routing graph size can be reduced by excluding footways, cycleways, paths and/or
+     * tracks. This can be quite significant depending on your area. Not only are there fewer ways to be processed, but
+     * there are also fewer junctions, which means fewer nodes and edges. Another reason to exclude footways etc. for
+     * motorized vehicle routing could be preventing undesired u-turns (#1858). Similarly, one could exclude motorway,
+     * trunk or even primary highways for bicycle or pedestrian routing.
+     */
+    public OSMReaderConfig setIgnoredHighways(List<String> ignoredHighways) {
+        this.ignoredHighways = ignoredHighways;
+        return this;
+    }
 
     public String getPreferredLanguage() {
         return preferredLanguage;
@@ -98,6 +122,14 @@ public class OSMReaderConfig {
     public OSMReaderConfig setElevationSmoothingRamerMax(int max) {
         this.ramerElevationSmoothingMax = max;
         return this;
+    }
+
+    public double getSmoothElevationAverageWindowSize() {
+        return smoothElevationAverageWindowSize;
+    }
+
+    public void setSmoothElevationAverageWindowSize(double smoothElevationAverageWindowSize) {
+        this.smoothElevationAverageWindowSize = smoothElevationAverageWindowSize;
     }
 
     public double getLongEdgeSamplingDistance() {

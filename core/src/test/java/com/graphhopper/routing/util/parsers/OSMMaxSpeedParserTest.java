@@ -18,11 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.MaxSpeed;
-import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.routing.util.countryrules.CountryRule;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.Test;
 
@@ -37,22 +33,22 @@ class OSMMaxSpeedParserTest {
         OSMMaxSpeedParser parser = new OSMMaxSpeedParser(maxSpeedEnc);
         IntsRef relFlags = new IntsRef(2);
         ReaderWay way = new ReaderWay(29L);
-        way.setTag("highway", "living_street");
-        way.setTag("country_rule", new CountryRule() {
-            @Override
-            public double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
-                return 5;
-            }
-        });
-        IntsRef edgeFlags = new IntsRef(1);
-        parser.handleWayTags(edgeFlags, way, relFlags);
-        assertEquals(5, maxSpeedEnc.getDecimal(false, edgeFlags), .1);
+        way.setTag("highway", "primary");
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        way.setTag("maxspeed", "30");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(30, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
 
-        // without a country_rule we get the default value
-        edgeFlags = new IntsRef(1);
-        way.removeTag("country_rule");
-        parser.handleWayTags(edgeFlags, way, relFlags);
-        assertEquals(MaxSpeed.UNSET_SPEED, maxSpeedEnc.getDecimal(false, edgeFlags), .1);
+        // different direction
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
+        way = new ReaderWay(29L);
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed:forward", "30");
+        way.setTag("maxspeed:backward", "40");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, relFlags);
+        assertEquals(30, maxSpeedEnc.getDecimal(false, edgeId, edgeIntAccess), .1);
+        assertEquals(40, maxSpeedEnc.getDecimal(true, edgeId, edgeIntAccess), .1);
     }
 
 }

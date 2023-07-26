@@ -17,7 +17,13 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.RoadAccess;
+import com.graphhopper.routing.ev.VehicleAccess;
+import com.graphhopper.routing.ev.VehicleSpeed;
+import com.graphhopper.routing.util.parsers.BikeAccessParser;
+import com.graphhopper.routing.util.parsers.CarAccessParser;
+import com.graphhopper.routing.util.parsers.FootAccessParser;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -31,46 +37,27 @@ import static org.junit.jupiter.api.Assertions.*;
 public class EncodingManagerTest {
 
     @Test
-    public void duplicateNamesNotAllowed() {
-        assertThrows(IllegalArgumentException.class, () -> EncodingManager.create("car,car"));
-    }
-
-    @Test
     public void testSupportFords() {
-        String flagEncoderStrings = "car,bike,foot";
-        EncodingManager manager = EncodingManager.create(flagEncoderStrings);
+        EncodingManager manager = new EncodingManager.Builder()
+                .add(VehicleEncodedValues.car(new PMap()))
+                .add(VehicleEncodedValues.bike(new PMap()))
+                .add(VehicleEncodedValues.foot(new PMap())).
+                build();
 
         // 1) default -> no block fords
-        assertFalse(new CarTagParser(manager, new PMap()).isBlockFords());
-        assertFalse(new BikeTagParser(manager, new PMap()).isBlockFords());
-        assertFalse(new FootTagParser(manager, new PMap()).isBlockFords());
+        assertFalse(new CarAccessParser(manager, new PMap()).isBlockFords());
+        assertFalse(new BikeAccessParser(manager, new PMap()).isBlockFords());
+        assertFalse(new FootAccessParser(manager, new PMap()).isBlockFords());
 
         // 2) true
-        assertTrue(new CarTagParser(manager, new PMap("block_fords=true")).isBlockFords());
-        assertTrue(new BikeTagParser(manager, new PMap("block_fords=true")).isBlockFords());
-        assertTrue(new FootTagParser(manager, new PMap("block_fords=true")).isBlockFords());
+        assertTrue(new CarAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
+        assertTrue(new BikeAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
+        assertTrue(new FootAccessParser(manager, new PMap("block_fords=true")).isBlockFords());
 
         // 3) false
-        assertFalse(new CarTagParser(manager, new PMap("block_fords=false")).isBlockFords());
-        assertFalse(new BikeTagParser(manager, new PMap("block_fords=false")).isBlockFords());
-        assertFalse(new FootTagParser(manager, new PMap("block_fords=false")).isBlockFords());
-    }
-
-    @Test
-    public void validEV() {
-        for (String str : Arrays.asList("blup_test", "test", "test12", "car_test_test")) {
-            assertTrue(EncodingManager.isValidEncodedValue(str), str);
-        }
-
-        for (String str : Arrays.asList("Test", "12test", "test|3", "car__test", "small_car$average_speed", "tes$0",
-                "blup_te.st_", "car___test", "car$$access", "test{34", "truck__average_speed", "blup.test", "test,21",
-                "täst", "blup.two.three", "blup..test")) {
-            assertFalse(EncodingManager.isValidEncodedValue(str), str);
-        }
-
-        for (String str : Arrays.asList("break", "switch")) {
-            assertFalse(EncodingManager.isValidEncodedValue(str), str);
-        }
+        assertFalse(new CarAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
+        assertFalse(new BikeAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
+        assertFalse(new FootAccessParser(manager, new PMap("block_fords=false")).isBlockFords());
     }
 
     @Test
@@ -87,7 +74,7 @@ public class EncodingManagerTest {
                 .add(VehicleAccess.create("bike")).add(VehicleSpeed.create("bike", 4, 2, true))
                 .add(VehicleSpeed.create("roads", 5, 5, false))
                 .add(VehicleAccess.create("hike")).add(new DecimalEncodedValueImpl("whatever_hike_average_speed_2022", 5, 5, true))
-                .add(new EnumEncodedValue<>(RoadAccess.KEY, RoadAccess.class))
+                .add(RoadAccess.create())
                 .build();
         // only for bike+hike there is access+'speed'
         assertEquals(Arrays.asList("bike", "hike"), em.getVehicles());
