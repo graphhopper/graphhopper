@@ -21,7 +21,7 @@ public class WheelchairAverageSpeedParser extends FootAverageSpeedParser {
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
+            if (FerrySpeedCalculator.isFerry(way)) {
                 double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
                 setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
                 setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);

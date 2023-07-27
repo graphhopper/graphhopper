@@ -5,13 +5,13 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RouteNetwork;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.util.FerrySpeedCalculator.FERRIES;
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static com.graphhopper.routing.util.parsers.AbstractAccessParser.INTENDED;
 import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.getMaxSpeed;
@@ -27,7 +27,6 @@ public abstract class BikeCommonPriorityParser implements TagParser {
     protected final Set<String> preferHighwayTags = new HashSet<>();
     protected final Map<String, PriorityCode> avoidHighwayTags = new HashMap<>();
     protected final Set<String> unpavedSurfaceTags = new HashSet<>();
-    protected final Set<String> ferries = new HashSet<>(FERRIES);
     protected final Set<String> intendedValues = new HashSet<>(INTENDED);
 
     protected final DecimalEncodedValue avgSpeedEnc;
@@ -90,7 +89,7 @@ public abstract class BikeCommonPriorityParser implements TagParser {
         String highwayValue = way.getTag("highway");
         Integer priorityFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeId, edgeIntAccess));
         if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
+            if (FerrySpeedCalculator.isFerry(way)) {
                 priorityFromRelation = SLIGHT_AVOID.getValue();
             } else {
                 return;
