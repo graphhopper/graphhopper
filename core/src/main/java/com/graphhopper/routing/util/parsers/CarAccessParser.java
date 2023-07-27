@@ -19,13 +19,12 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
-
-import static com.graphhopper.routing.util.FerrySpeedCalculator.FERRIES;
 
 public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
@@ -82,7 +81,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         String highwayValue = way.getTag("highway");
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (highwayValue == null) {
-            if (way.hasTag("route", FERRIES)) {
+            if (FerrySpeedCalculator.isFerry(way)) {
                 if (restrictedValues.contains(firstValue))
                     return WayAccess.CAN_SKIP;
                 if (intendedValues.contains(firstValue) ||

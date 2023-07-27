@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.util.PMap;
@@ -26,7 +27,6 @@ import com.graphhopper.util.PMap;
 import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.util.FerrySpeedCalculator.FERRIES;
 import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
 
 public class FootAccessParser extends AbstractAccessParser implements TagParser {
@@ -98,7 +98,7 @@ public class FootAccessParser extends AbstractAccessParser implements TagParser 
         if (highwayValue == null) {
             WayAccess acceptPotentially = WayAccess.CAN_SKIP;
 
-            if (way.hasTag("route", FERRIES)) {
+            if (FerrySpeedCalculator.isFerry(way)) {
                 String footTag = way.getTag("foot");
                 if (footTag == null || intendedValues.contains(footTag))
                     acceptPotentially = WayAccess.FERRY;

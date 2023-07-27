@@ -122,7 +122,7 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
-        if (way.hasTag("route", ferries)) {
+        if (FerrySpeedCalculator.isFerry(way)) {
             double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
             setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
             if (avgSpeedEnc.isStoreTwoDirections())

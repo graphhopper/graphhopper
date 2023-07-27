@@ -6,15 +6,17 @@ import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Arrays;
-import java.util.Collection;
-
 public class FerrySpeedCalculator implements TagParser {
-    public static final Collection<String> FERRIES = Arrays.asList("shuttle_train", "ferry");
-    private DecimalEncodedValue ferrySpeedEnc;
+    private final DecimalEncodedValue ferrySpeedEnc;
 
     public FerrySpeedCalculator(DecimalEncodedValue ferrySpeedEnc) {
         this.ferrySpeedEnc = ferrySpeedEnc;
+    }
+
+    public static boolean isFerry(ReaderWay way) {
+        return way.hasTag("route", "ferry") && !way.hasTag("ferry", "no") ||
+                // TODO shuttle_train is sometimes also used in relations, e.g. https://www.openstreetmap.org/relation/1932780
+                way.hasTag("route", "shuttle_train") && !way.hasTag("shuttle_train", "no");
     }
 
     static double getSpeed(ReaderWay way) {
@@ -54,7 +56,7 @@ public class FerrySpeedCalculator implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
-        if (!way.hasTag("highway") && way.hasTag("route", FERRIES)) {
+        if (isFerry(way)) {
             double ferrySpeed = minmax(getSpeed(way), ferrySpeedEnc);
             ferrySpeedEnc.setDecimal(false, edgeId, edgeIntAccess, ferrySpeed);
         }
