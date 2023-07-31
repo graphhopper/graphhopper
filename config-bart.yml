@@ -29,19 +29,6 @@ graphhopper:
       weighting: fastest
 
   import.osm.ignored_highways: ''
-
-  matrix.default_customer_priority: 0
-
-  # Specifies how many sources are used for each batch during matrix calculation when the RPHAST algorithm is used
-  # (this is the default algorithm for most non-flexible settings). The value of this parameter can be anything
-  # starting from one and correlates directly with the memory usage during the matrix calculation. The lower the value
-  # the less memory will be needed. However, this parameter also affects matrix calculation time (for very low values
-  # below ten the matrix calculation takes much longer, but too large values can also increase the calculation time).
-  # Choose 250 unless you know better or a smaller value if you really want to reduce memory usage. Also see the
-  # discussion in PR #288.
-  matrix.rphast.sources_per_run: 250
-
-  routing.round_trip.max_retries: 2
   routing.max_visited_nodes: 15000000
 
 server:
