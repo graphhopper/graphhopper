@@ -23,7 +23,7 @@ public class TripBasedRouter {
 
     private final Trips tripTransfers;
     private GtfsStorage gtfsStorage;
-    Instant earliestArrivalTime = Instant.MAX;
+    LocalDateTime earliestArrivalTime = LocalDateTime.MAX;
     private ObjectIntHashMap<Trips.TripKey> tripDoneFromIndex = new ObjectIntHashMap();
     private List<ResultLabel> result = new ArrayList<>();
     private Parameters parameters;
@@ -142,7 +142,7 @@ public class TripBasedRouter {
                 StopTime stopTime = stopTimes.get(i);
                 if (stopTime == null) continue;
                 for (StopWithTimeDelta destination : parameters.getEgressStations()) {
-                    Instant newArrivalTime = getArrivalTime(enqueuedTripSegment, stopTime).toInstant().plusMillis(destination.timeDelta);
+                    LocalDateTime newArrivalTime = getArrivalTime(enqueuedTripSegment, stopTime).plus(destination.timeDelta, ChronoUnit.MILLIS);
                     if (destination.stopId.stopId.equals(stopTime.stop_id) && destination.stopId.feedId.equals(feedId) && newArrivalTime.isBefore(earliestArrivalTime)) {
                         earliestArrivalTime = newArrivalTime;
                         ResultLabel newResult = new ResultLabel(round, destination, new Trips.TripAtStopTime(feedId, tripAtStopTime.tripDescriptor, stopTime.stop_sequence), enqueuedTripSegment);
@@ -171,7 +171,7 @@ public class TripBasedRouter {
             for (int i = tripAtStopTime.stop_sequence + 1; i < toStopSequence; i++) {
                 StopTime stopTime = stopTimes.get(i);
                 if (stopTime == null) continue;
-                if (!getArrivalTime(enqueuedTripSegment, stopTime).toInstant().isBefore(earliestArrivalTime))
+                if (!getArrivalTime(enqueuedTripSegment, stopTime).isBefore(earliestArrivalTime))
                     break;
                 Trips.TripAtStopTime transferOrigin = new Trips.TripAtStopTime(feedId, tripAtStopTime.tripDescriptor, stopTime.stop_sequence);
                 logger.trace("  {}", stopTime);
@@ -196,9 +196,9 @@ public class TripBasedRouter {
         return queue1;
     }
 
-    private ZonedDateTime getArrivalTime(EnqueuedTripSegment enqueuedTripSegment, StopTime stopTime) {
+    private LocalDateTime getArrivalTime(EnqueuedTripSegment enqueuedTripSegment, StopTime stopTime) {
         long extraDisutilityOfAccessSeconds = ((long) (enqueuedTripSegment.accessStation.timeDelta * (parameters.getBetaAccessTime() - 1.0))) / 1000L;
-        return enqueuedTripSegment.serviceDay.atStartOfDay(enqueuedTripSegment.accessStation.zoneId).plusSeconds(stopTime.arrival_time).plusSeconds(extraDisutilityOfAccessSeconds);
+        return enqueuedTripSegment.serviceDay.atTime(LocalTime.ofSecondOfDay(stopTime.arrival_time + extraDisutilityOfAccessSeconds));
     }
 
     private void enqueue(List<EnqueuedTripSegment> queue1, Trips.TripAtStopTime transferDestination, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, String gtfsFeed, LocalDate serviceDay, StopWithTimeDelta accessStation) {
@@ -220,7 +220,9 @@ public class TripBasedRouter {
                 seenMyself = true;
             if (seenMyself) {
                 Trips.TripKey otherTripKey = new Trips.TripKey(transferDestination.feedId, otherTrip.getTripId(), otherTrip.getStartTime().isEmpty() ? 0 : LocalTime.parse(otherTrip.getStartTime()).toSecondOfDay(), serviceDay);
-                tripDoneFromIndex.put(otherTripKey, transferDestination.stop_sequence);
+                int previousDoneFromIndex = tripDoneFromIndex.getOrDefault(otherTripKey, Integer.MAX_VALUE);
+                if (transferDestination.stop_sequence < previousDoneFromIndex)
+                    tripDoneFromIndex.put(otherTripKey, transferDestination.stop_sequence);
                 // TODO: and on later service days, in principle, otherwise we may do much too much work.
                 // alternative: keep labels only for today, and just don't check it off for trips that are not today?
             }
@@ -265,8 +267,8 @@ public class TripBasedRouter {
             return i.accessStation;
         }
 
-        Instant getArrivalTime() {
-            return TripBasedRouter.this.getArrivalTime(enqueuedTripSegment, getStopTime()).plusSeconds((long) ((destination.timeDelta / 1000L) * parameters.getBetaEgressTime())).toInstant();
+        LocalDateTime getArrivalTime() {
+            return TripBasedRouter.this.getArrivalTime(enqueuedTripSegment, getStopTime()).plusSeconds((long) ((destination.timeDelta / 1000L) * parameters.getBetaEgressTime()));
         }
 
         public int getRound() {
