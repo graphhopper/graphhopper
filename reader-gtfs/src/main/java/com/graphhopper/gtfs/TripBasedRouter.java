@@ -70,7 +70,7 @@ public class TripBasedRouter {
             Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey> tripsForThisFeed = tripTransfers.trips.get(accessStation.stopId.feedId);
             ZonedDateTime earliestDepartureTime = initialTime.atZone(accessStation.zoneId).plus(accessStation.timeDelta, ChronoUnit.MILLIS);
             LocalDate serviceDay = earliestDepartureTime.toLocalDate(); // FIXME service day across timezones FIXME service day wraparound
-            Map<String, List<Trips.TripAtStopTime>> boardingsByPattern = tripTransfers.boardingsForStopByPattern.getUnchecked(accessStation.stopId);
+            Map<String, List<Trips.TripAtStopTime>> boardingsByPattern = tripTransfers.getPatternBoardings(accessStation.stopId);
             int targetSecondOfDay = earliestDepartureTime.toLocalTime().toSecondOfDay();
             for (List<Trips.TripAtStopTime> boardings : boardingsByPattern.values()) {
                 int index = binarySearch(targetSecondOfDay, boardings, boarding -> tripsForThisFeed.get(boarding.tripDescriptor).stopTimes.get(boarding.stop_sequence).departure_time);

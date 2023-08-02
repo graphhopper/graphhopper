@@ -18,6 +18,8 @@
 
 package com.graphhopper.gtfs;
 
+import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
@@ -80,6 +82,11 @@ public class GraphHopperGtfs extends GraphHopper {
                     LocalDate trafficDay = LocalDate.parse(trafficDayString);
                     LOGGER.info("Caching trip-based transfers for pt router. Schedule day: {}", trafficDay);
                     gtfsStorage.tripTransfers.getTripTransfers(trafficDay);
+                }
+                for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
+                    for (Stop stop : entry.getValue().stops.values()) {
+                        gtfsStorage.tripTransfers.getPatternBoardings(new GtfsStorage.FeedIdWithStopId(entry.getKey(), stop.stop_id));
+                    }
                 }
             }
         } else {

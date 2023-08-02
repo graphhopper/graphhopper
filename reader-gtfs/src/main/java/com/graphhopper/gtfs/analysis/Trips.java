@@ -2,13 +2,7 @@ package com.graphhopper.gtfs.analysis;
 
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.model.Frequency;
-import com.conveyal.gtfs.model.StopTime;
-import com.conveyal.gtfs.model.Transfer;
-import com.conveyal.gtfs.model.Trip;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
+import com.conveyal.gtfs.model.*;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
@@ -35,6 +29,7 @@ public class Trips {
     private static final int MAXIMUM_TRANSFER_DURATION = 24 * 60 * 60;
     private final Map<String, Transfers> transfers;
     public final Map<String, Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey>> trips;
+    private Map<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>> boardingsForStopByPattern = new ConcurrentHashMap<>();
     private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfersPerDay = new ConcurrentHashMap<>();
     private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfersPerDayCache = new ConcurrentHashMap<>();
 
@@ -52,6 +47,14 @@ public class Trips {
                     .flatMap(trip -> unfoldFrequencies(feed, trip))
                     .collect(Collectors.toMap(t -> t, feed::getStopTimesForTripWithTripPatternKey)));
         }
+    }
+
+    public Map<String, List<TripAtStopTime>> getPatternBoardings(GtfsStorage.FeedIdWithStopId k) {
+        return boardingsForStopByPattern.computeIfAbsent(k, key -> RealtimeFeed.findAllBoardings(gtfsStorage, key)
+                .map(PtGraph.PtEdge::getAttrs)
+                .map(boarding -> new TripAtStopTime(key.feedId, boarding.tripDescriptor, boarding.stop_sequence))
+                .sorted(Comparator.comparingInt(boarding -> trips.get(key.feedId).get(boarding.tripDescriptor).stopTimes.get(boarding.stop_sequence).departure_time))
+                .collect(Collectors.groupingBy(boarding -> trips.get(key.feedId).get(boarding.tripDescriptor).pattern.pattern_id)));
     }
 
     GtfsStorage gtfsStorage;
@@ -100,7 +103,7 @@ public class Trips {
 
     private void insertTripTransfers(LocalDate trafficDay, ObjectIntHashMap<GtfsStorage.FeedIdWithStopId> arrivalTimes, StopTime arrivalStopTime, List<TripAtStopTime> destinations, GtfsStorage.FeedIdWithStopId boardingStop, int streetTime, List<Transfer> transfers) {
         int earliestDepartureTime = arrivalStopTime.arrival_time + streetTime;
-        Collection<List<TripAtStopTime>> boardingsForPattern = boardingsForStopByPattern.getUnchecked(boardingStop).values();
+        Collection<List<TripAtStopTime>> boardingsForPattern = boardingsForStopByPattern.get(boardingStop).values();
         for (List<TripAtStopTime> boardings : boardingsForPattern) {
             for (TripAtStopTime candidate : boardings) {
                 GTFSFeed.StopTimesForTripWithTripPatternKey trip = trips.get(candidate.feedId).get(candidate.tripDescriptor);
@@ -146,17 +149,6 @@ public class Trips {
             }
         }
     }
-
-    public LoadingCache<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>> boardingsForStopByPattern = CacheBuilder.newBuilder().maximumSize(200000).build(new CacheLoader<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>>() {
-        @Override
-        public Map<String, List<TripAtStopTime>> load(GtfsStorage.FeedIdWithStopId key) {
-            return RealtimeFeed.findAllBoardings(gtfsStorage, key)
-                    .map(PtGraph.PtEdge::getAttrs)
-                    .map(boarding -> new TripAtStopTime(key.feedId, boarding.tripDescriptor, boarding.stop_sequence))
-                    .sorted(Comparator.comparingInt(boarding -> trips.get(key.feedId).get(boarding.tripDescriptor).stopTimes.get(boarding.stop_sequence).departure_time))
-                    .collect(Collectors.groupingBy(boarding -> trips.get(key.feedId).get(boarding.tripDescriptor).pattern.pattern_id));
-        }
-    });
 
     public static void findAllTripTransfersInto(Map<TripAtStopTime, Collection<TripAtStopTime>> result, GtfsStorage gtfsStorage, LocalDate trafficDay) {
         Trips tripTransfers = new Trips(gtfsStorage);
