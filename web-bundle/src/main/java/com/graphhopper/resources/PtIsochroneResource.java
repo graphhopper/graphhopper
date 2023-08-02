@@ -113,7 +113,7 @@ public class PtIsochroneResource {
         PtLocationSnapper.Result snapResult = new PtLocationSnapper(baseGraph, locationIndex, gtfsStorage).snapAll(Arrays.asList(location), Arrays.asList(accessSnapFilter, egressSnapFilter));
 
         // TODO: Should also incorporate egressWeighting in some way? Maybe?
-        GraphExplorer graphExplorer = new GraphExplorer(snapResult.queryGraph, gtfsStorage.getPtGraph(), accessWeighting, gtfsStorage, RealtimeFeed.empty(), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
+        GraphExplorer graphExplorer = new GraphExplorer(snapResult.queryGraph, gtfsStorage.getPtGraph(), reverseFlow ? egressWeighting : accessWeighting, gtfsStorage, RealtimeFeed.empty(), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
         MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, reverseFlow, false, false, 0, Collections.emptyList());
         router.setBetaStreetTime(reverseFlow ? betaEgressTime : betaAccessTime);
         router.setLimitStreetTime(limitStreetTimeParam.get().toMillis());
