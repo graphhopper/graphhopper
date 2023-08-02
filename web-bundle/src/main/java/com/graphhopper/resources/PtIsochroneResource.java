@@ -37,7 +37,6 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.JsonFeature;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
@@ -60,7 +59,6 @@ import java.util.*;
 public class PtIsochroneResource {
 
     private static final double JTS_TOLERANCE = 0.00001;
-    private static final Logger logger = LoggerFactory.getLogger(GraphHopper.class);  // TODO: Remove.
     private final GtfsStorage gtfsStorage;
     private final EncodingManager encodingManager;
     private final BaseGraph baseGraph;
@@ -91,26 +89,14 @@ public class PtIsochroneResource {
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("pt.earliest_departure_time") @NotNull OffsetDateTimeParam departureTimeParam,
             @QueryParam("pt.access_profile") @DefaultValue("foot") String accessProfile,
-//            @QueryParam("pt.beta_access_time") @DefaultValue("PT30M") Double betaAccessTime,
+            @QueryParam("pt.beta_access_time") @DefaultValue("1") Double betaAccessTime,
             @QueryParam("pt.egress_profile") @DefaultValue("foot") String egressProfile,
-//            @QueryParam("pt.beta_egress_time") @DefaultValue("false") Double betaEgressTime,
+            @QueryParam("pt.beta_egress_time") @DefaultValue("1") Double betaEgressTime,
             @QueryParam("pt.limit_street_time") @DefaultValue("PT30M") DurationParam limitStreetTimeParam,
             @QueryParam("pt.blocked_route_types") @DefaultValue("0") int blockedRouteTypes,
             @QueryParam("result") @DefaultValue("multipolygon") String format) {
         Instant initialTime = departureTimeParam.get().toInstant();
         GHLocation location = sourceParam.get();
-
-        // TODO: Remove
-        logger.warn(accessProfile);
-
-//        accessProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getAccessProfile())).findFirst().get();
-//        accessWeighting = weightingFactory.createWeighting(accessProfile, new PMap(), false);
-//        accessSnapFilter = new DefaultSnapFilter(accessWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(accessProfile.getName())));
-//        egressProfile = config.getProfiles().stream().filter(p -> p.getName().equals(request.getEgressProfile())).findFirst().get();
-//        egressWeighting = weightingFactory.createWeighting(egressProfile, new PMap(), false);
-//        egressSnapFilter = new DefaultSnapFilter(egressWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile.getName())));
-
-//        PtLocationSnapper.Result result = new PtLocationSnapper(baseGraph, locationIndex, gtfsStorage).snapAll(Arrays.asList(enter, exit), Arrays.asList(accessSnapFilter, egressSnapFilter));
 
         double targetZ = seconds * 1000;
 
@@ -124,12 +110,13 @@ public class PtIsochroneResource {
         DecimalEncodedValue egressSpeedEnc = encodingManager.getDecimalEncodedValue(VehicleSpeed.key(egressProfile));
         final Weighting egressWeighting = new FastestWeighting(egressProfileEnc, egressSpeedEnc);
         DefaultSnapFilter egressSnapFilter = new DefaultSnapFilter(egressWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile)));
-
         PtLocationSnapper.Result snapResult = new PtLocationSnapper(baseGraph, locationIndex, gtfsStorage).snapAll(Arrays.asList(location), Arrays.asList(accessSnapFilter, egressSnapFilter));
 
-        // TODO: Should also incorporate egressWeighting in some way.
+        // TODO: Should also incorporate egressWeighting in some way? Maybe?
         GraphExplorer graphExplorer = new GraphExplorer(snapResult.queryGraph, gtfsStorage.getPtGraph(), accessWeighting, gtfsStorage, RealtimeFeed.empty(), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
         MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, reverseFlow, false, false, 0, Collections.emptyList());
+        router.setBetaStreetTime(reverseFlow ? betaEgressTime : betaAccessTime);
+        router.setLimitStreetTime(limitStreetTimeParam.get().toMillis());
 
         Map<Coordinate, Double> z1 = new HashMap<>();
         NodeAccess nodeAccess = snapResult.queryGraph.getNodeAccess();
