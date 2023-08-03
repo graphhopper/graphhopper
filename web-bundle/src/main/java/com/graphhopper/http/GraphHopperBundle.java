@@ -296,6 +296,7 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                     } else {
                         bind(PtRouterImpl.class).to(PtRouter.class);
                     }
+                    bind(PtRouterImpl.class).to(PtRouter.class).named("classic");
                     bind(PtRouterFreeWalkImpl.class).to(PtRouter.class).named("free_walk");
                     bind(PtRouterTripBasedImpl.class).to(PtRouter.class).named("trip_based");
                 }
