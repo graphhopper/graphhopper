@@ -99,9 +99,13 @@ public class TripBasedRouter {
 
     private void iterate(List<EnqueuedTripSegment> queue) {
         int round = 0;
+        checkArrivals(queue, round);
         while (queue.size() != 0 && round < 3) {
-            queue = round(queue, round);
+            logger.trace("Round {}", round);
+            List<EnqueuedTripSegment> queue1 = enqueueTransfers(queue);
+            queue = queue1;
             round = round + 1;
+            checkArrivals(queue, round);
         }
     }
 
@@ -129,13 +133,6 @@ public class TripBasedRouter {
                     ", serviceDay=" + serviceDay +
                     '}';
         }
-    }
-
-    private List<EnqueuedTripSegment> round(List<EnqueuedTripSegment> queue0, int round) {
-        logger.trace("Round {}", round);
-        checkArrivals(queue0, round);
-        List<EnqueuedTripSegment> queue1 = enqueueTransfers(queue0);
-        return queue1;
     }
 
     private List<EnqueuedTripSegment> enqueueTransfers(List<EnqueuedTripSegment> queue0) {

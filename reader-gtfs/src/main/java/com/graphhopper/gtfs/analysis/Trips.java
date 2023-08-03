@@ -26,7 +26,7 @@ import static com.conveyal.gtfs.model.Entity.Writer.convertToGtfsTime;
 
 public class Trips {
 
-    private static final int MAXIMUM_TRANSFER_DURATION = 24 * 60 * 60;
+    private static final int MAXIMUM_TRANSFER_DURATION = 15 * 60;
     private final Map<String, Transfers> transfers;
     public final Map<String, Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey>> trips;
     private Map<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>> boardingsForStopByPattern = new ConcurrentHashMap<>();
@@ -103,7 +103,7 @@ public class Trips {
 
     private void insertTripTransfers(LocalDate trafficDay, ObjectIntHashMap<GtfsStorage.FeedIdWithStopId> arrivalTimes, StopTime arrivalStopTime, List<TripAtStopTime> destinations, GtfsStorage.FeedIdWithStopId boardingStop, int streetTime, List<Transfer> transfers) {
         int earliestDepartureTime = arrivalStopTime.arrival_time + streetTime;
-        Collection<List<TripAtStopTime>> boardingsForPattern = boardingsForStopByPattern.get(boardingStop).values();
+        Collection<List<TripAtStopTime>> boardingsForPattern = getPatternBoardings(boardingStop).values();
         for (List<TripAtStopTime> boardings : boardingsForPattern) {
             for (TripAtStopTime candidate : boardings) {
                 GTFSFeed.StopTimesForTripWithTripPatternKey trip = trips.get(candidate.feedId).get(candidate.tripDescriptor);
