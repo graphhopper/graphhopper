@@ -17,10 +17,11 @@ and documentation issues are tagged with
 3. Add at least one test for your change. Only refactoring and documentation changes
 require no new tests. Also make sure you submit a change specific to exactly one issue. If you have ideas for multiple 
 changes please create separate pull requests.
+4. Make sure to create a new branch whenever you are contributing to the isuues and make pull request 
 
-4. Make the test(s) pass.
+5. Make the test(s) pass.
 
-5. Push to your fork and [submit a pull request](https://help.github.com/articles/using-pull-requests). A button should
+6. Push to your fork and [submit a pull request](https://help.github.com/articles/using-pull-requests). A button should
 appear on your fork its github page afterwards.
 
 ## License Agreement
