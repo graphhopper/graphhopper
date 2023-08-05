@@ -41,6 +41,11 @@ public class ConditionalOSMTagInspector implements ConditionalTagInspector {
         this(Arrays.asList(new DateRangeParser(value)), tagsToCheck, restrictiveValues, permittedValues, false);
     }
 
+    public ConditionalOSMTagInspector(List<String> tagsToCheck,
+                                      Set<String> restrictiveValues, Set<String> permittedValues) {
+        this(null, tagsToCheck, restrictiveValues, permittedValues, false);
+    }
+
     public ConditionalOSMTagInspector(List<? extends ConditionalValueParser> valueParsers, List<String> tagsToCheck,
                                       Set<String> restrictiveValues, Set<String> permittedValues, boolean enabledLogs) {
         this.tagsToCheck = new ArrayList<>(tagsToCheck.size());
@@ -54,9 +59,11 @@ public class ConditionalOSMTagInspector implements ConditionalTagInspector {
         boolean logUnsupportedFeatures = false;
         this.permitParser = new ConditionalParser(permittedValues, logUnsupportedFeatures);
         this.restrictiveParser = new ConditionalParser(restrictiveValues, logUnsupportedFeatures);
-        for (ConditionalValueParser cvp : valueParsers) {
-            permitParser.addConditionalValueParser(cvp);
-            restrictiveParser.addConditionalValueParser(cvp);
+        if (valueParsers != null) {
+            for (ConditionalValueParser cvp : valueParsers) {
+                permitParser.addConditionalValueParser(cvp);
+                restrictiveParser.addConditionalValueParser(cvp);
+            }
         }
     }
 

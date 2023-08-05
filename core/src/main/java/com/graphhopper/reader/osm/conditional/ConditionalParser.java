@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Set;
 
@@ -107,6 +106,9 @@ public class ConditionalParser {
     public boolean checkCondition(String conditionalTag) throws ParseException {
         if (conditionalTag == null || conditionalTag.isEmpty() || !conditionalTag.contains("@"))
             return false;
+
+        if (valueParsers.size() == 0)
+            return true;
 
         if (conditionalTag.contains(";")) {
             if (enabledLogs)

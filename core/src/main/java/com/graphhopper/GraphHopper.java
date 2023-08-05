@@ -646,6 +646,8 @@ public class GraphHopper {
         // all these defaults and just use the config as the single source of truth
         if (!encodedValueStrings.contains(Roundabout.KEY))
             osmParsers.addWayTagParser(new OSMRoundaboutParser(encodingManager.getBooleanEncodedValue(Roundabout.KEY)));
+        if (!encodedValueStrings.contains(SeasonalRestricted.KEY))
+            osmParsers.addWayTagParser(new OSMSeasonalRestrictedParser(encodingManager.getBooleanEncodedValue(SeasonalRestricted.KEY)));
         if (!encodedValueStrings.contains(RoadClass.KEY))
             osmParsers.addWayTagParser(new OSMRoadClassParser(encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)));
         if (!encodedValueStrings.contains(RoadClassLink.KEY))

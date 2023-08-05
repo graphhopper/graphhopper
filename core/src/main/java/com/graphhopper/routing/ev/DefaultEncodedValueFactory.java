@@ -25,6 +25,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
     public EncodedValue create(String name, PMap properties) {
         if (Roundabout.KEY.equals(name)) {
             return Roundabout.create();
+        } else if (SeasonalRestricted.KEY.equals(name)) {
+            return SeasonalRestricted.create();
         } else if (GetOffBike.KEY.equals(name)) {
             return GetOffBike.create();
         } else if (RoadClass.KEY.equals(name)) {
