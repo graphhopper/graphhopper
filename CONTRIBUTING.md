@@ -18,9 +18,11 @@ and documentation issues are tagged with
 require no new tests. Also make sure you submit a change specific to exactly one issue. If you have ideas for multiple 
 changes please create separate pull requests.
 
-4. Make the test(s) pass.
+4. Make sure to create a seperate branch whenever you want to contribute and make pull request
 
-5. Push to your fork and [submit a pull request](https://help.github.com/articles/using-pull-requests). A button should
+5. Make the test(s) pass.
+
+6. Push to your fork and [submit a pull request](https://help.github.com/articles/using-pull-requests). A button should
 appear on your fork its github page afterwards.
 
 ## License Agreement
