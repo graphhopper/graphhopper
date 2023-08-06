@@ -446,6 +446,15 @@ public class OSMReader {
                 if (way.hasTag("destination:backward"))
                     list.add(new KVStorage.KeyValue(STREET_DESTINATION, fixWayName(way.getTag("destination:backward")), false, true));
             }
+
+            String condition = fixCondition(way.getTag("access:conditional"));
+            if (!condition.isEmpty())
+                list.add(new KVStorage.KeyValue(ACCESS_CONDITION, condition));
+            else {
+                condition = fixCondition(way.getTag("vehicle:conditional"));
+                if (!condition.isEmpty())
+                    list.add(new KVStorage.KeyValue(ACCESS_CONDITION, condition));
+           }
         }
         way.setTag("key_values", list);
 
@@ -499,6 +508,12 @@ public class OSMReader {
             return "";
         // the KVStorage does not accept too long strings -> Helper.cutStringForKV
         return KVStorage.cutString(WAY_NAME_PATTERN.matcher(str).replaceAll(", "));
+    }
+
+    static String fixCondition(String str) {
+        if (str == null)
+            return "";
+        return KVStorage.cutString(str);
     }
 
     /**

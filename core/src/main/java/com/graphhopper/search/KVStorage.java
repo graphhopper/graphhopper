@@ -478,6 +478,7 @@ public class KVStorage {
         public static final String STREET_REF = "street_ref";
         public static final String STREET_DESTINATION = "street_destination";
         public static final String STREET_DESTINATION_REF = "street_destination_ref";
+        public static final String ACCESS_CONDITION = "access_condition";
 
         public String key;
         public Object value;
