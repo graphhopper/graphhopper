@@ -145,7 +145,7 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      */
     protected double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
         double maxSpeed = getMaxSpeed(way, bwd);
-        return Math.min(140, isValidSpeed(maxSpeed) ? maxSpeed * 0.9 : speed);
+        return Math.min(140, isValidSpeed(maxSpeed) ? Math.max(1, maxSpeed * 0.9) : speed);
     }
 
     /**
