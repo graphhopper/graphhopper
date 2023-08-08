@@ -115,7 +115,7 @@ public class Visually_impairedPriorityParser implements TagParser {
         }
         else if(traffic_signals)
             weightToPrioMap.put(100d, AVOID.getValue());
-        else if (way.hasTag("footway",crossing)) {
+        else if (way.hasTag("footway",crossing))
             weightToPrioMap.put(100d, REACH_DESTINATION.getValue());
     
         collect(way, weightToPrioMap);
