@@ -581,7 +581,7 @@ public class GraphHopper {
         if (!ghConfig.has("import.osm.ignored_highways"))
             throw new IllegalArgumentException("Missing 'import.osm.ignored_highways'. Not using this parameter can decrease performance, see config-example.yml for more details");
         String ignoredHighwaysString = ghConfig.getString("import.osm.ignored_highways", "");
-        if ((ignoredHighwaysString.contains("footway") || ignoredHighwaysString.contains("path")) && ghConfig.getProfiles().stream().map(Profile::getName).anyMatch(p -> p.contains("foot") || p.contains("hike") || p.contains("wheelchair")))
+        if ((ignoredHighwaysString.contains("footway") || ignoredHighwaysString.contains("path")) && ghConfig.getProfiles().stream().map(Profile::getName).anyMatch(p -> p.contains("foot") || p.contains("hike") || p.contains("wheelchair") || p.contains("visually_impaired")))
             throw new IllegalArgumentException("You should not use import.osm.ignored_highways=footway or =path in conjunction with pedestrian profiles. This is probably an error in your configuration.");
         if ((ignoredHighwaysString.contains("cycleway") || ignoredHighwaysString.contains("path")) && ghConfig.getProfiles().stream().map(Profile::getName).anyMatch(p -> p.contains("mtb") || p.contains("bike")))
             throw new IllegalArgumentException("You should not use import.osm.ignored_highways=cycleway or =path in conjunction with bicycle profiles. This is probably an error in your configuration");

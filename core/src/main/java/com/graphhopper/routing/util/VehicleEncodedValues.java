@@ -27,7 +27,7 @@ import java.util.List;
 import static com.graphhopper.routing.util.VehicleEncodedValuesFactory.*;
 
 public class VehicleEncodedValues {
-    public static final List<String> OUTDOOR_VEHICLES = Arrays.asList(BIKE, RACINGBIKE, MOUNTAINBIKE, FOOT, WHEELCHAIR);
+    public static final List<String> OUTDOOR_VEHICLES = Arrays.asList(BIKE, RACINGBIKE, MOUNTAINBIKE, FOOT, WHEELCHAIR, VISUALLY_IMPAIRED);
 
     private final String name;
     private final BooleanEncodedValue accessEnc;
@@ -56,6 +56,20 @@ public class VehicleEncodedValues {
                 .putObject("speed_two_directions", true)
         );
     }
+
+    public static VehicleEncodedValues visually_impaired(PMap properties) {
+        String name = properties.getString("name", "visually_impaired");
+        int speedBits = properties.getInt("speed_bits", 4);
+        double speedFactor = properties.getDouble("speed_factor", 1);
+        boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
+        int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
+        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
+        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
+        DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
+        DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnCostEnc);
+    }
+
 
     public static VehicleEncodedValues bike(PMap properties) {
         String name = properties.getString("name", "bike");

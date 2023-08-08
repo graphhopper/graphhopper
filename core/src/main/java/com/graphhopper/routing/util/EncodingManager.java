@@ -176,7 +176,7 @@ public class EncodingManager implements EncodedValueLookup {
                 keys.add(GetOffBike.KEY);
                 keys.add(Smoothness.KEY);
             }
-            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("foot") || vehicle.contains("hike") || vehicle.contains("wheelchair")))
+            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("foot") || vehicle.contains("hike") || vehicle.contains("wheelchair") || vehicle.contains("visually_impaired")))
                 keys.add(FootNetwork.KEY);
 
             DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();

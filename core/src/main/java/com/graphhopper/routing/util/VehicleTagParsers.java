@@ -87,6 +87,14 @@ public class VehicleTagParsers {
         );
     }
 
+    public static VehicleTagParsers visually_impaired(EncodedValueLookup lookup, PMap properties) {
+        return new VehicleTagParsers(
+                new Visually_impairedAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
+                new Visually_impairedAverageSpeedParser(lookup, properties),
+                new Visually_impairedPriorityParser(lookup, properties)
+        );
+    }
+
     public VehicleTagParsers(TagParser accessParser, TagParser speedParser, TagParser priorityParser) {
         this.accessParser = accessParser;
         this.speedParser = speedParser;

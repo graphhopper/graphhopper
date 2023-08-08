@@ -97,6 +97,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return new EnumEncodedValue<>(Crossing.KEY, Crossing.class);
         } else if (FerrySpeed.KEY.equals(name)) {
             return FerrySpeed.create();
+        } else if (Tactile_paving.KEY.equals(name)){
+            return Tactile_paving.create();
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }

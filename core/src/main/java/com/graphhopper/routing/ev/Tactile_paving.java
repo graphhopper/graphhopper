@@ -15,22 +15,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package com.graphhopper.routing.ev;
 
 import com.graphhopper.util.Helper;
 
-/**
- * This enum defines the road class of an edge. It is heavily influenced from the highway tag in OSM that can be
- * primary, cycleway etc. All edges that do not fit get OTHER as value.
- */
-public enum RoadClass {
-    OTHER, MOTORWAY, TRUNK, PRIMARY, SECONDARY, TERTIARY, RESIDENTIAL, UNCLASSIFIED,
-    SERVICE, ROAD, TRACK, BRIDLEWAY, STEPS, CYCLEWAY, PATH, LIVING_STREET, FOOTWAY, PEDESTRIAN, PLATFORM, CORRIDOR, TACTILE_PAVING;
+public enum Tactile_paving {
+    MISSING, SIDEWALK, CROSSING, ACCESS_AISLE, LINK, TRAFFIC_ISLAND, ALLEY;
 
-    public static final String KEY = "road_class";
+    public static final String KEY = "tactile_paving";
 
-    public static EnumEncodedValue<RoadClass> create() {
-        return new EnumEncodedValue<>(RoadClass.KEY, RoadClass.class);
+    public static EnumEncodedValue<Tactile_paving> create() {
+        return new EnumEncodedValue<>(KEY, Tactile_paving.class);
     }
 
     @Override
@@ -38,13 +34,14 @@ public enum RoadClass {
         return Helper.toLowerCase(super.toString());
     }
 
-    public static RoadClass find(String name) {
+    public static Tactile_paving find(String name) {
         if (name == null || name.isEmpty())
-            return OTHER;
+            return MISSING;
+
         try {
-            return RoadClass.valueOf(Helper.toUpperCase(name));
+            return Tactile_paving.valueOf(Helper.toUpperCase(name));
         } catch (IllegalArgumentException ex) {
-            return OTHER;
+            return MISSING;
         }
     }
 }
