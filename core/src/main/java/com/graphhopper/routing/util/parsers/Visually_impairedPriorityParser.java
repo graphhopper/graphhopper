@@ -24,6 +24,7 @@ public class Visually_impairedPriorityParser implements TagParser {
     protected final DecimalEncodedValue priorityWayEncoder;
     protected EnumEncodedValue<RouteNetwork> visually_impairedRouteEnc;
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
+    private boolean traffic_signals = false;
 
     public Visually_impairedPriorityParser(EncodedValueLookup lookup, PMap properties) {
         this(lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "visually_impaired"))),
@@ -54,6 +55,7 @@ public class Visually_impairedPriorityParser implements TagParser {
         safeHighwayTags.add("residential");
         safeHighwayTags.add("service");
         safeHighwayTags.add("platform");
+        safeHighwayTags.add("steps");
 
         avoidHighwayTags.add("trunk");
         avoidHighwayTags.add("trunk_link");
@@ -89,6 +91,33 @@ public class Visually_impairedPriorityParser implements TagParser {
         else
             weightToPrioMap.put(110d, priorityFromRelation);
 
+        traffic_signals=false;
+        Arrays.asList(
+            "sound",
+            "vibration",
+            "arrow",
+            "minimap",
+            "floor_vibration",
+            "countdown",
+            "floor_light"
+        ).forEach(s -> {
+            if(way.hasTag("traffic_signals:"+s,"yes"))
+                traffic_signals=true;
+        });
+
+        Set<String> crossing = new HashSet<>();
+        crossing.add("crossing");
+        String tacttile_paving = way.getTag("tactile_paving","no");
+        if(!(traffic_signals || way.hasTag("footway",crossing) )){
+            if (Arrays.asList("no","incolect").contains(tacttile_paving)){
+                weightToPrioMap.put(100d, EXCLUDE.getValue());
+            }
+        }
+        else if(traffic_signals)
+            weightToPrioMap.put(100d, AVOID.getValue());
+        else if (way.hasTag("footway",crossing)) {
+            weightToPrioMap.put(100d, REACH_DESTINATION.getValue());
+    
         collect(way, weightToPrioMap);
 
         // pick priority with biggest order value
