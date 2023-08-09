@@ -108,7 +108,7 @@ public class Visually_impairedPriorityParser implements TagParser {
         Set<String> crossing = new HashSet<>();
         crossing.add("crossing");
         String tacttile_paving = way.getTag("tactile_paving","no");
-        if(!(traffic_signals || way.hasTag("footway",crossing) )){
+        if(!(traffic_signals || way.hasTag("footway",crossing) || way.hasTag("highway","steps") )){
             if (Arrays.asList("no","incolect").contains(tacttile_paving)){
                 weightToPrioMap.put(100d, EXCLUDE.getValue());
             }
@@ -116,6 +116,8 @@ public class Visually_impairedPriorityParser implements TagParser {
         else if(traffic_signals)
             weightToPrioMap.put(100d, AVOID.getValue());
         else if (way.hasTag("footway",crossing))
+            weightToPrioMap.put(100d, REACH_DESTINATION.getValue());
+        else if(way.hasTag("highway","steps"))
             weightToPrioMap.put(100d, REACH_DESTINATION.getValue());
     
         collect(way, weightToPrioMap);
