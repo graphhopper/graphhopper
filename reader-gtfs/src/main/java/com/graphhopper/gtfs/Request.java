@@ -28,7 +28,7 @@ import java.util.*;
 public class Request {
     private List<GHLocation> points;
     private Instant earliestDepartureTime;
-    private int maxVisitedNodes = 1_000_000;
+    private int maxVisitedNodes = 4_000_000;
     private boolean profileQuery;
     private Boolean ignoreTransfers;
     private double betaTransfers = 0.0;

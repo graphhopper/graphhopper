@@ -198,13 +198,15 @@ public class RealtimeFeed {
     }
 
     public static Stream<PtGraph.PtEdge> findAllBoardings(GtfsStorage staticGtfs, GtfsStorage.FeedIdWithStopId feedIdWithStopId) {
-        int station = staticGtfs.getStationNodes().get(feedIdWithStopId);
-        Stream<PtGraph.PtEdge> boardings = StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(station).spliterator(), false)
-                .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(e.getAdjNode()).spliterator(), false))
-                .filter(e -> e.getAttrs().feedIdWithTimezone.feedId.equals(feedIdWithStopId.feedId))
-                .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(e.getAdjNode()).spliterator(), false))
-                .filter(e -> e.getType() == GtfsStorage.EdgeType.BOARD);
-        return boardings;
+        Integer station = staticGtfs.getStationNodes().get(feedIdWithStopId);
+        if (station == null)
+            return Stream.empty();
+        else
+            return StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(station).spliterator(), false)
+                    .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(e.getAdjNode()).spliterator(), false))
+                    .filter(e -> e.getAttrs().feedIdWithTimezone.feedId.equals(feedIdWithStopId.feedId))
+                    .flatMap(e -> StreamSupport.stream(staticGtfs.getPtGraph().edgesAround(e.getAdjNode()).spliterator(), false))
+                    .filter(e -> e.getType() == GtfsStorage.EdgeType.BOARD);
     }
 
     private static int[] collectWithPadding(Stream<PtGraph.PtEdge> boardEdges) {
