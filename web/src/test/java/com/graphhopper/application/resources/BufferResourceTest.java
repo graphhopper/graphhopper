@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 
 import javax.ws.rs.core.Response;
 
@@ -35,18 +36,17 @@ public class BufferResourceTest {
 
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
-        config.getGraphHopperConfiguration().putObject("graph.flag_encoders", "car|turn_costs=true")
+        config.getGraphHopperConfiguration()
+                .putObject("graph.vehicles", "car|turn_costs=true")
                 .putObject("datareader.file", "../core/files/andorra.osm.pbf")
+                .putObject("import.osm.ignored_highways", "")
                 .putObject("graph.location", DIR)
-                .setProfiles(Arrays.asList(
-                        new Profile("fast_car").setVehicle("car")
-                                .setWeighting("fastest").setTurnCosts(true),
-                        new Profile("short_car").setVehicle("car")
-                                .setWeighting("shortest")
-                                .setTurnCosts(true),
-                        new Profile("fast_car_no_turn_restrictions")
-                                .setVehicle("car").setWeighting("fastest")
-                                .setTurnCosts(false)));
+                .setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car").setWeighting("fastest").setTurnCosts(true)
+                // .setProfiles(Arrays.asList(
+                //         new Profile("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
+                //         new Profile("short_car").setVehicle("car").setWeighting("shortest").setTurnCosts(true),
+                //         new Profile("fast_car_no_turn_restrictions").setVehicle("car").setWeighting("fastest").setTurnCosts(false)
+                ));
         return config;
     }
 
@@ -58,9 +58,7 @@ public class BufferResourceTest {
 
     @Test
     public void testBasicBidirectionalStartQuery() {
-        final Response response = clientTarget(app, "/buffer?profile=my_car&"
-                + "point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000").request()
-                .buildGet().invoke();
+        final Response response = clientTarget(app, "/buffer?profile=my_car&point=42.54287,1.471&roadName=CG-4&thresholdDistance=2000").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
 
         JsonFeatureCollection featureCollection = response.readEntity(JsonFeatureCollection.class);
