@@ -57,14 +57,14 @@ public class TripBasedRouter {
         this.parameters = parameters;
         while (!parameters.getProfileLength().isNegative()) {
             Instant initialTime = parameters.getProfileStartTime().plus(parameters.getProfileLength());
-            route(parameters.getAccessStations(), parameters.getEgressStations(), initialTime, parameters.getTripFilter());
+            route(parameters.getAccessStations(), initialTime, parameters.getTripFilter());
             parameters.setProfileLength(parameters.getProfileLength().minus(Duration.ofMinutes(1)));
         }
-        route(parameters.getAccessStations(), parameters.getEgressStations(), parameters.getProfileStartTime(), parameters.getTripFilter());
+        route(parameters.getAccessStations(), parameters.getProfileStartTime(), parameters.getTripFilter());
         return result;
     }
 
-    public List<ResultLabel> route(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant initialTime, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter) {
+    public List<ResultLabel> route(List<StopWithTimeDelta> accessStations, Instant initialTime, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter) {
         List<EnqueuedTripSegment> queue = new ArrayList<>();
         for (StopWithTimeDelta accessStation : accessStations) {
             Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey> tripsForThisFeed = tripTransfers.trips.get(accessStation.stopId.feedId);
@@ -99,12 +99,13 @@ public class TripBasedRouter {
 
     private void iterate(List<EnqueuedTripSegment> queue) {
         int round = 0;
+        logger.debug("Round {}: {}", round, queue.size());
         checkArrivals(queue, round);
         while (queue.size() != 0 && round < 3) {
-            logger.trace("Round {}", round);
             List<EnqueuedTripSegment> queue1 = enqueueTransfers(queue);
             queue = queue1;
             round = round + 1;
+            logger.debug("Round {}: {}", round, queue.size());
             checkArrivals(queue, round);
         }
     }
@@ -229,6 +230,8 @@ public class TripBasedRouter {
                 int previousDoneFromIndex = tripDoneFromIndex.getOrDefault(otherTripKey, Integer.MAX_VALUE);
                 if (transferDestination.stop_sequence < previousDoneFromIndex)
                     tripDoneFromIndex.put(otherTripKey, transferDestination.stop_sequence);
+                else
+                    break;
                 // TODO: and on later service days, in principle, otherwise we may do much too much work.
                 // alternative: keep labels only for today, and just don't check it off for trips that are not today?
             }
