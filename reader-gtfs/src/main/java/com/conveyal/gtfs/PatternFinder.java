@@ -78,19 +78,13 @@ public class PatternFinder {
 
 
             Pattern pattern = new Pattern(key.stops, trips);
-            // Overwrite long UUID with sequential integer pattern ID
-            pattern.pattern_id = Integer.toString(nextPatternId++);
+            pattern.pattern_id = gtfsFeed.feedId + " " + nextPatternId++;
             patterns.put(key, pattern);
         }
         LOG.info("Total patterns: {}", tripsForPattern.keySet().size());
         return patterns;
     }
 
-    /**
-     * Used as a map key when grouping trips by stop pattern. Note that this includes the routeId, so the same sequence of
-     * stops on two different routes makes two different patterns.
-     * These objects are not intended for use outside the grouping process.
-     */
     public static class TripPatternKey {
 
         public List<String> stops = new ArrayList<>();
