@@ -235,8 +235,8 @@ public class RandomizedRoutingTest {
         final long seed = System.nanoTime();
         final int numQueries = 50;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(f.graph, rnd, 100, 2.2, true, true,
-                f.accessEnc, f.speedEnc, null, 0.7, 0.8, 0.8);
+        GHUtility.buildRandomGraph(f.graph, rnd, 100, 2.2, true,
+                f.accessEnc, f.speedEnc, null, 0.8, 0.8);
         GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
 //        GHUtility.printGraphForUnitTest(f.graph, f.accessEnc, f.speedEnc);
         f.preProcessGraph();
@@ -273,8 +273,8 @@ public class RandomizedRoutingTest {
         // the same as taking the direct edge!
         double pOffset = 0;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.2, true, true,
-                f.accessEnc, f.speedEnc, null, 0.7, 0.8, pOffset);
+        GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.2, true,
+                f.accessEnc, f.speedEnc, null, 0.8, pOffset);
         GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
 //        GHUtility.printGraphForUnitTest(f.graph, f.accessEnc, f.speedEnc);
         f.preProcessGraph();

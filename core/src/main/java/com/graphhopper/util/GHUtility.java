@@ -206,9 +206,9 @@ public class GHUtility {
     /**
      * @param speed if null a random speed will be assigned to every edge
      */
-    public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree, boolean allowLoops,
+    public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree,
                                         boolean allowZeroDistance, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, Double speed,
-                                        double pNonZeroLoop, double pBothDir, double pRandomDistanceOffset) {
+                                        double pBothDir, double pRandomDistanceOffset) {
         if (numNodes < 2 || meanDegree < 1) {
             throw new IllegalArgumentException("numNodes must be >= 2, meanDegree >= 1");
         }
@@ -224,14 +224,9 @@ public class GHUtility {
         while (numEdges < totalNumEdges) {
             int from = random.nextInt(numNodes);
             int to = random.nextInt(numNodes);
-            if (!allowLoops && from == to) {
+            if (from == to)
                 continue;
-            }
             double distance = GHUtility.getDistance(from, to, graph.getNodeAccess());
-            // allow loops with non-zero distance
-            if (from == to && random.nextDouble() < pNonZeroLoop) {
-                distance = random.nextDouble() * 1000;
-            }
             if (!allowZeroDistance) {
                 distance = Math.max(0.001, distance);
             }

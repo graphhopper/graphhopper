@@ -105,8 +105,8 @@ public class RandomCHRoutingTest {
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
         double pOffset = 0;
-        GHUtility.buildRandomGraph(f.graph, rnd, numNodes, 2.5, true, true,
-                f.accessEnc, f.speedEnc, null, 0.7, 0.9, pOffset);
+        GHUtility.buildRandomGraph(f.graph, rnd, numNodes, 2.5, true,
+                f.accessEnc, f.speedEnc, null, 0.9, pOffset);
         if (f.traversalMode.isEdgeBased()) {
             GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.graph.getTurnCostStorage());
         }
@@ -155,8 +155,8 @@ public class RandomCHRoutingTest {
         assumeTrue(f.traversalMode.isEdgeBased());
         long seed = 60643479675316L;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.5, true, true,
-                f.accessEnc, f.speedEnc, null, 0.7, 0.9, 0.0);
+        GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.5, true,
+                f.accessEnc, f.speedEnc, null, 0.9, 0.0);
         GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.graph.getTurnCostStorage());
         runRandomTest(f, rnd, 20);
     }
