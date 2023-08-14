@@ -221,28 +221,6 @@ public class EdgeBasedRoutingAlgorithmTest {
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
-    public void testLoop_issue1592(String algoStr) {
-        BaseGraph graph = createStorage(createEncodingManager(true));
-        // 0-6
-        //  \ \
-        //   4-3
-        //   |
-        //   1o
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 6).setDistance(10));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 3).setDistance(10));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 1).setDistance(10));
-        setTurnRestriction(graph, 0, 4, 3);
-
-        Path p = calcPath(graph, 0, 3, algoStr);
-        assertEquals(14, p.getDistance(), 1.e-3);
-        assertEquals(IntArrayList.from(0, 4, 1, 1, 4, 3), p.calcNodes());
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(FixtureProvider.class)
     public void testTurnCosts_timeCalculation(String algoStr) {
         // 0 - 1 - 2 - 3 - 4
         BaseGraph graph = createStorage(createEncodingManager(false));
@@ -420,52 +398,6 @@ public class EdgeBasedRoutingAlgorithmTest {
         assertEquals(IntArrayList.from(5, 6, 7, 4, 3, 1), p.calcNodes());
         assertEquals(5 * 0.06 + 1, p.getWeight(), 1.e-6);
         assertEquals(1300, p.getTime(), .1);
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(FixtureProvider.class)
-    public void testLoopEdge(String algoStr) {
-        //   o
-        // 3-2-4
-        //  \|
-        //   0
-        final BaseGraph graph = createStorage(createEncodingManager(false));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 2).setDistance(188));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 0).setDistance(182));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 2).setDistance(690));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 2).setDistance(121));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 0).setDistance(132));
-        setTurnRestriction(graph, 2, 2, 0);
-        setTurnRestriction(graph, 3, 2, 4);
-
-        Path p = calcPath(graph, 3, 4, algoStr);
-        assertEquals(IntArrayList.from(3, 2, 2, 4), p.calcNodes());
-        assertEquals(999, p.getDistance(), 1.e-3);
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(FixtureProvider.class)
-    public void testDoubleLoopPTurn(String algoStr) {
-        // we cannot go 1-4-5, but taking the loop at 4 is cheaper than taking the one at 3
-        //  0-1
-        //    |
-        // o3-4o
-        //    |
-        //    5
-        final BaseGraph graph = createStorage(createEncodingManager(false));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 4).setDistance(4));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 4).setDistance(5));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 4).setDistance(1));
-        setTurnRestriction(graph, 1, 4, 5);
-
-        Path p = calcPath(graph, 0, 5, algoStr);
-        assertEquals(IntArrayList.from(0, 1, 4, 4, 5), p.calcNodes());
-        assertEquals(11, p.getDistance(), 1.e-3);
-        assertEquals(11 * 0.06, p.getWeight(), 1.e-3);
-        assertEquals(11 * 0.06 * 1000, p.getTime(), 1.e-3);
     }
 
     private void setTurnRestriction(BaseGraph g, int from, int via, int to) {

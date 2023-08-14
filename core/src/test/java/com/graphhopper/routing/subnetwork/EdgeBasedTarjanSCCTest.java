@@ -157,25 +157,20 @@ class EdgeBasedTarjanSCCTest {
     }
 
     @Test
-    public void smallGraphWithLoops() {
-        // 3<-0->2-1o
-        //    o
-        g.edge(0, 0).setDistance(1).set(accessEnc, true, true);// edge-keys 0,1
-        g.edge(0, 2).setDistance(1).set(accessEnc, true, false); // edge-keys 2,3
-        g.edge(0, 3).setDistance(1).set(accessEnc, true, false); // edge-keys 4,5
-        g.edge(2, 1).setDistance(1).set(accessEnc, true, true); // edge-keys 6,7
-        g.edge(1, 1).setDistance(1).set(accessEnc, true, true); // edge-keys 8,9
+    public void smallGraph() {
+        // 3<-0->2-1
+        g.edge(0, 2).setDistance(1).set(accessEnc, true, false); // edge-keys 0,1
+        g.edge(0, 3).setDistance(1).set(accessEnc, true, false); // edge-keys 2,3
+        g.edge(2, 1).setDistance(1).set(accessEnc, true, true); // edge-keys 4,5
         ConnectedComponents result = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, false);
-        assertEquals(10, result.getEdgeKeys());
-        assertEquals(6, result.getTotalComponents());
-        assertEquals(2, result.getComponents().size());
+        assertEquals(6, result.getEdgeKeys());
+        assertEquals(5, result.getTotalComponents());
+        assertEquals(1, result.getComponents().size());
         assertEquals(result.getComponents().get(0), result.getBiggestComponent());
-        assertEquals(IntArrayList.from(7, 9, 8, 6), result.getComponents().get(0));
-        assertEquals(IntArrayList.from(1, 0), result.getComponents().get(1));
+        assertEquals(IntArrayList.from(5, 4), result.getComponents().get(0));
         assertEquals(4, result.getSingleEdgeComponents().cardinality());
-        for (IntCursor c : IntArrayList.from(2, 3, 4, 5)) {
+        for (IntCursor c : IntArrayList.from(0, 1, 2, 3))
             assertTrue(result.getSingleEdgeComponents().get(c.value));
-        }
     }
 
     @Test

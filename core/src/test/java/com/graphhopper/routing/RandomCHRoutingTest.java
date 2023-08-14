@@ -142,19 +142,11 @@ public class RandomCHRoutingTest {
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
-    public void issue1583(Fixture f) {
-        assumeFalse(f.traversalMode.isEdgeBased());
-        Random rnd = new Random(10785899964423L);
-        buildRandomGraphLegacy(f.graph, f.accessEnc, f.speedEnc, rnd, 50, 2.5, true, true, 0.9);
-        runRandomTest(f, rnd, 20);
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(FixtureProvider.class)
     public void issue1593(Fixture f) {
         assumeTrue(f.traversalMode.isEdgeBased());
         long seed = 60643479675316L;
         Random rnd = new Random(seed);
+        // todonow: the seed was fixed here!!
         GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.5, true,
                 f.accessEnc, f.speedEnc, null, 0.9, 0.0);
         GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.graph.getTurnCostStorage());

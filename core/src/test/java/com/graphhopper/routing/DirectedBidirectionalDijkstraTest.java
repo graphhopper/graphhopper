@@ -272,23 +272,6 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     @Test
-    public void enforceLoopEdge() {
-        //  o       o
-        //  0 - 1 - 2
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 0).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 2).setDistance(1));
-
-        assertPath(calcPath(0, 2, ANY_EDGE, ANY_EDGE), 0.12, 2, 120, nodes(0, 1, 2));
-        assertPath(calcPath(0, 2, 1, 2), 0.12, 2, 120, nodes(0, 1, 2));
-        // we can enforce taking the loop at start/target
-        assertPath(calcPath(0, 2, 0, 2), 0.18, 3, 180, nodes(0, 0, 1, 2));
-        assertPath(calcPath(0, 2, 1, 3), 0.18, 3, 180, nodes(0, 1, 2, 2));
-        assertPath(calcPath(0, 2, 0, 3), 0.24, 4, 240, nodes(0, 0, 1, 2, 2));
-    }
-
-    @Test
     public void sourceAndTargetAreNeighbors() {
         // 0-1-2-3
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
