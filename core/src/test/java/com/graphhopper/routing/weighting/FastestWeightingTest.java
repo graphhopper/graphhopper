@@ -31,6 +31,7 @@ import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FAC
 import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -47,32 +48,36 @@ public class FastestWeightingTest {
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(10);
         GHUtility.setSpeed(140, 0, accessEnc, speedEnc, edge);
         Weighting instance = new FastestWeighting(accessEnc, speedEnc);
-        assertEquals(instance.getMinWeight(10), instance.calcEdgeWeight(edge, false), 1e-8);
+        assertEquals(instance.getMinWeight(10), instance.calcEdgeWeightWithAccess(edge, false), 1e-8);
     }
 
     @Test
     public void testWeightWrongHeading() {
-        Weighting instance = new FastestWeighting(accessEnc, speedEnc, null, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, 100), TurnCostProvider.NO_TURN_COST_PROVIDER);
+        final double penalty = 100;
+        Weighting instance = new FastestWeighting(accessEnc, speedEnc, null, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, penalty), TurnCostProvider.NO_TURN_COST_PROVIDER);
         EdgeIteratorState edge = graph.edge(1, 2).setDistance(10).setWayGeometry(Helper.createPointList(51, 0, 51, 1));
-        GHUtility.setSpeed(10, 0, accessEnc, speedEnc, edge);
+        GHUtility.setSpeed(10, 10, accessEnc, speedEnc, edge);
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(edge.getEdgeKey(), 99, 5, 6, edge.getDistance(), edge.getFlags(),
                 edge.getKeyValues(), edge.fetchWayGeometry(FetchMode.PILLAR_ONLY), false);
-        double time = instance.calcEdgeWeight(virtEdge, false);
+        double time = instance.calcEdgeWeightWithAccess(virtEdge, false);
 
+        // no penalty on edge
+        assertEquals(time, instance.calcEdgeWeightWithAccess(virtEdge, false), 1e-8);
+        assertEquals(time, instance.calcEdgeWeightWithAccess(virtEdge, true), 1e-8);
+        // ... unless setting it to unfavored (in both directions)
         virtEdge.setUnfavored(true);
-        // heading penalty on edge
-        assertEquals(time + 100, instance.calcEdgeWeight(virtEdge, false), 1e-8);
-        // only after setting it
-        virtEdge.setUnfavored(true);
-        assertEquals(time + 100, instance.calcEdgeWeight(virtEdge, true), 1e-8);
+        assertEquals(time + penalty, instance.calcEdgeWeightWithAccess(virtEdge, false), 1e-8);
+        assertEquals(time + penalty, instance.calcEdgeWeightWithAccess(virtEdge, true), 1e-8);
         // but not after releasing it
         virtEdge.setUnfavored(false);
-        assertEquals(time, instance.calcEdgeWeight(virtEdge, true), 1e-8);
+        assertEquals(time, instance.calcEdgeWeightWithAccess(virtEdge, false), 1e-8);
+        assertEquals(time, instance.calcEdgeWeightWithAccess(virtEdge, true), 1e-8);
 
         // test default penalty
         virtEdge.setUnfavored(true);
         instance = new FastestWeighting(accessEnc, speedEnc);
-        assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcEdgeWeight(virtEdge, false), 1e-8);
+        assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcEdgeWeightWithAccess(virtEdge, false), 1e-8);
+        assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcEdgeWeightWithAccess(virtEdge, true), 1e-8);
     }
 
     @Test
@@ -80,11 +85,11 @@ public class FastestWeightingTest {
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(10);
         Weighting instance = new FastestWeighting(accessEnc, speedEnc);
         edge.set(speedEnc, 0);
-        assertEquals(1.0 / 0, instance.calcEdgeWeight(edge, false), 1e-8);
+        assertTrue(Double.isInfinite(instance.calcEdgeWeightWithAccess(edge, false)));
 
         // 0 / 0 returns NaN but calcWeight should not return NaN!
         edge.setDistance(0);
-        assertEquals(1.0 / 0, instance.calcEdgeWeight(edge, false), 1e-8);
+        assertTrue(Double.isInfinite(instance.calcEdgeWeightWithAccess(edge, false)));
     }
 
     @Test
@@ -108,7 +113,7 @@ public class FastestWeightingTest {
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100));
         // turn costs are given in seconds
         setTurnCost(graph, 0, 1, 2, 5);
-        assertEquals(6 + 5, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
+        assertEquals(6 + 5, GHUtility.calcWeightWithTurnWeightWithAccess(weighting, edge, false, 0), 1.e-6);
         assertEquals(6000 + 5000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
     }
 
@@ -117,7 +122,7 @@ public class FastestWeightingTest {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 40));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
-        assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
+        assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeightWithAccess(weighting, edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
     }
 
@@ -156,13 +161,13 @@ public class FastestWeightingTest {
                 new PMap().putObject(DESTINATION_FACTOR, 1), TurnCostProvider.NO_TURN_COST_PROVIDER);
 
         edge.set(roadAccessEnc, RoadAccess.YES);
-        assertEquals(60, weighting.calcEdgeWeight(edge, false), 1.e-6);
-        assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 1.e-6);
+        assertEquals(60, weighting.calcEdgeWeightWithAccess(edge, false), 1.e-6);
+        assertEquals(200, bikeWeighting.calcEdgeWeightWithAccess(edge, false), 1.e-6);
 
         // the destination tag does not change the weight for the bike weighting
         edge.set(roadAccessEnc, RoadAccess.DESTINATION);
-        assertEquals(600, weighting.calcEdgeWeight(edge, false), 0.1);
-        assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 0.1);
+        assertEquals(600, weighting.calcEdgeWeightWithAccess(edge, false), 0.1);
+        assertEquals(200, bikeWeighting.calcEdgeWeightWithAccess(edge, false), 0.1);
     }
 
     @Test
@@ -189,13 +194,13 @@ public class FastestWeightingTest {
         way.setTag("highway", "secondary");
 
         edge.set(roadAccessEnc, RoadAccess.YES);
-        assertEquals(60, weighting.calcEdgeWeight(edge, false), 1.e-6);
-        assertEquals(200, bikeWeighting.calcEdgeWeight(edge, false), 1.e-6);
+        assertEquals(60, weighting.calcEdgeWeightWithAccess(edge, false), 1.e-6);
+        assertEquals(200, bikeWeighting.calcEdgeWeightWithAccess(edge, false), 1.e-6);
 
         edge.set(roadAccessEnc, RoadAccess.PRIVATE);
-        assertEquals(600, weighting.calcEdgeWeight(edge, false), 1.e-6);
+        assertEquals(600, weighting.calcEdgeWeightWithAccess(edge, false), 1.e-6);
         // private should influence bike only slightly
-        assertEquals(240, bikeWeighting.calcEdgeWeight(edge, false), 1.e-6);
+        assertEquals(240, bikeWeighting.calcEdgeWeightWithAccess(edge, false), 1.e-6);
     }
 
     private void setTurnCost(Graph graph, int from, int via, int to, double turnCost) {

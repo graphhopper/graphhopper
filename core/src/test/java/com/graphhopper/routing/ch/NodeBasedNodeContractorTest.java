@@ -369,7 +369,7 @@ public class NodeBasedNodeContractorTest {
     }
 
     private double getWeight(EdgeIteratorState edge) {
-        return weighting.calcEdgeWeight(edge, false);
+        return weighting.calcEdgeWeightWithAccess(edge, false);
     }
 
     private Set<Shortcut> setOf(Shortcut... shortcuts) {

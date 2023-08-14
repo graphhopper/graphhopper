@@ -569,8 +569,9 @@ public class LandmarkStorage {
         return ((int) landmarkWeightDA.getShort(pointer) & 0x0000FFFF) == SHORT_INFINITY;
     }
 
+    // todonow: apparently this method is only used in one test. can we remove it?
     int calcWeight(EdgeIteratorState edge, boolean reverse) {
-        return (int) (weighting.calcEdgeWeight(edge, reverse) / factor);
+        return (int) (weighting.calcEdgeWeightWithAccess(edge, reverse) / factor);
     }
 
     // From all available landmarks pick just a few active ones
