@@ -131,6 +131,7 @@ public class RandomizedRoutingTest {
             this.prepareLM = prepareLM;
             this.traversalMode = traversalMode;
             maxTurnCosts = 10;
+            // todonow
             // todo: this test only works with speedTwoDirections=false (as long as loops are enabled), otherwise it will
             // fail sometimes for edge-based algorithms, #1631, but maybe we can should disable different fwd/bwd speeds
             // only for loops instead?

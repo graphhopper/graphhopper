@@ -180,6 +180,8 @@ public class CHPreparationGraph {
 
     public void addEdge(int from, int to, int edge, double weightFwd, double weightBwd) {
         checkNotReady();
+        if (from == to)
+            throw new IllegalArgumentException("Loop edges are no longer supported since todonow");
         boolean fwd = Double.isFinite(weightFwd);
         boolean bwd = Double.isFinite(weightBwd);
         if (!fwd && !bwd)
@@ -578,12 +580,12 @@ public class CHPreparationGraph {
 
         @Override
         public int getOrigEdgeKeyFirstAB() {
-            return GHUtility.createEdgeKey(prepareEdge, nodeA == nodeB, false);
+            return GHUtility.createEdgeKey(prepareEdge, false);
         }
 
         @Override
         public int getOrigEdgeKeyFirstBA() {
-            return GHUtility.createEdgeKey(prepareEdge, nodeA == nodeB, true);
+            return GHUtility.createEdgeKey(prepareEdge, true);
         }
 
         @Override
@@ -884,13 +886,13 @@ public class CHPreparationGraph {
             void addEdge(int from, int to, int edge, boolean fwd, boolean bwd) {
                 fromNodes.add(from);
                 toNodes.add(to);
-                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, from == to, false), fwd, bwd));
+                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, false), fwd, bwd));
                 maxFrom = Math.max(maxFrom, from);
                 maxTo = Math.max(maxTo, to);
 
                 fromNodes.add(to);
                 toNodes.add(from);
-                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, from == to, true), bwd, fwd));
+                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, true), bwd, fwd));
                 maxFrom = Math.max(maxFrom, to);
                 maxTo = Math.max(maxTo, from);
             }

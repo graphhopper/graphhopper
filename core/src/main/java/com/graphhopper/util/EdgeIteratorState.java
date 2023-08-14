@@ -82,13 +82,12 @@ public interface EdgeIteratorState {
      * {@link GHUtility#getEdgeFromEdgeKey(int)}, but the edge key also contains information about the
      * direction of the edge. The edge key is even when the edge is oriented in storage direction and odd
      * otherwise. You can use the edge key to retrieve an edge state in the associated direction using
-     * {@link Graph#getEdgeIteratorStateForKey(int)}. Loop edges are always returned in 'forward' direction even when
-     * you use an odd edge key.
+     * {@link Graph#getEdgeIteratorStateForKey(int)}.
      */
     int getEdgeKey();
 
     /**
-     * Like #getEdgeKey, but returns the reverse key. For loops the reverse key is the same as the key.
+     * Like #getEdgeKey, but returns the reverse key.
      */
     int getReverseEdgeKey();
 

@@ -84,7 +84,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState {
 
     @Override
     public int getReverseEdgeKey() {
-        return baseNode == adjNode ? edgeKey : GHUtility.reverseEdgeKey(edgeKey);
+        return GHUtility.reverseEdgeKey(edgeKey);
     }
 
     @Override
