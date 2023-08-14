@@ -181,7 +181,7 @@ public class CHPreparationGraph {
     public void addEdge(int from, int to, int edge, double weightFwd, double weightBwd) {
         checkNotReady();
         if (from == to)
-            throw new IllegalArgumentException("Loop edges are no longer supported since todonow");
+            throw new IllegalArgumentException("Loop edges are no longer supported since #2862");
         boolean fwd = Double.isFinite(weightFwd);
         boolean bwd = Double.isFinite(weightBwd);
         if (!fwd && !bwd)
