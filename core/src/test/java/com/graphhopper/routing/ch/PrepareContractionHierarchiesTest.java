@@ -541,7 +541,7 @@ public class PrepareContractionHierarchiesTest {
         int numQueries = 100;
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, numNodes, 1.3, true, true, car1AccessEnc, null, null, 0.7, 0.9, 0.8);
+        GHUtility.buildRandomGraph(graph, rnd, numNodes, 1.3, true, car1AccessEnc, null, null, 0.9, 0.8);
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
             iter.set(car1AccessEnc, rnd.nextDouble() > 0.05, rnd.nextDouble() > 0.05);

@@ -14,6 +14,7 @@
 - urban density is now based on road junctions, so the according parameters need adjustment in case
   the config file does not use the defaults, see #2842
 - removed heading penalty *time*, see #2563
+- base graph no longer allows loop edges, see #2862
 
 ### 7.0 [14 Mar 2023]
 

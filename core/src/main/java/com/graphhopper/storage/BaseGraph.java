@@ -278,6 +278,14 @@ public class BaseGraph implements Graph, Closeable {
     public EdgeIteratorState edge(int nodeA, int nodeB) {
         if (isFrozen())
             throw new IllegalStateException("Cannot create edge if graph is already frozen");
+        if (nodeA == nodeB)
+            // Loop edges would only make sense if their attributes were the same for both 'directions',
+            // because for routing algorithms (which ignore the way geometry) loop edges do not even
+            // have a well-defined 'direction'. So we either need to make sure the attributes
+            // are the same for both directions, or reject loop edges altogether. Since we currently
+            // don't know any use-case for loop edges in road networks (there is one for PT),
+            // we reject them here.
+            throw new IllegalArgumentException("Loop edges are not supported, got: " + nodeA + " - " + nodeB);
         int edgeId = store.edge(nodeA, nodeB);
         EdgeIteratorStateImpl edge = new EdgeIteratorStateImpl(this);
         boolean valid = edge.init(edgeId, nodeB);
@@ -713,7 +721,7 @@ public class BaseGraph implements Graph, Closeable {
             baseNode = store.getNodeA(edgePointer);
             adjNode = store.getNodeB(edgePointer);
 
-            if (edgeKey % 2 == 0 || baseNode == adjNode) {
+            if (edgeKey % 2 == 0) {
                 reverse = false;
             } else {
                 reverse = true;
@@ -936,12 +944,12 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public int getEdgeKey() {
-            return GHUtility.createEdgeKey(edgeId, baseNode == adjNode, reverse);
+            return GHUtility.createEdgeKey(edgeId, reverse);
         }
 
         @Override
         public int getReverseEdgeKey() {
-            return baseNode == adjNode ? getEdgeKey() : GHUtility.reverseEdgeKey(getEdgeKey());
+            return GHUtility.reverseEdgeKey(getEdgeKey());
         }
 
         @Override

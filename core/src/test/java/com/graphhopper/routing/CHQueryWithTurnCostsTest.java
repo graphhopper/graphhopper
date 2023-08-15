@@ -562,29 +562,6 @@ public class CHQueryWithTurnCostsTest {
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
-    public void testFindPath_loopIsRecognizedAsIncomingEdge(Fixture f) {
-        //     ---
-        //     \ /
-        // 0 -- 3 -- 2 -- 1
-        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(0, 3).setDistance(1));
-        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(3, 3).setDistance(1));
-        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, f.accessEnc, f.speedEnc, f.graph.edge(3, 2).setDistance(1));
-        EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, f.accessEnc, f.speedEnc, f.graph.edge(2, 1).setDistance(1));
-        f.setRestriction(edge0, edge2, 3);
-        f.freeze();
-
-        // contraction yields no shortcuts
-        f.setIdentityLevels();
-
-        // node 3 is the bridge node where both forward and backward searches meet. since there is a turn restriction
-        // at node 3 we cannot go from 0 to 2 directly, but we need to take the loop at 3 first. when the backward 
-        // search arrives at 3 it checks if 3 could be reached by the forward search and therefore its crucial that
-        // the ('forward') loop at 3 is recognized as an incoming edge at node 3
-        f.testPathCalculation(0, 1, 4, IntArrayList.from(0, 3, 3, 2, 1));
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(FixtureProvider.class)
     public void testFindPath_shortcutLoopIsRecognizedAsIncomingEdge(Fixture f) {
         //          -0-
         //          \ /

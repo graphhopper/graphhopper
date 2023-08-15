@@ -754,132 +754,6 @@ public class CHTurnCostTest {
         checkPath(IntArrayList.from(2, 1, 0, 4), 3, 8, 2, 4, new int[]{2, 0, 1, 3, 4});
     }
 
-    @Test
-    public void testFindPath_loopsMustAlwaysBeAccepted() {
-        //     ---
-        //     \ /
-        // 0 -- 1 -- 2 -- 3
-        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 1).setDistance(1));
-        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        setTurnCost(edge0, edge1, 1, 1);
-        setRestriction(edge0, edge2, 1);
-        graph.freeze();
-        final IntArrayList expectedPath = IntArrayList.from(0, 1, 1, 2, 3);
-        checkPath(expectedPath, 4, 1, 0, 3, new int[]{0, 2, 1, 3});
-    }
-
-    @Test
-    public void testFindPath_compareWithDijkstra_zeroWeightLoops_random() {
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 3).setDistance(21.329000));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 5).setDistance(29.126000));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 0).setDistance(38.865000));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 4).setDistance(80.005000));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 1).setDistance(91.023000));
-        // add loops with zero weight ...
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 1).setDistance(0.000000));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 1).setDistance(0.000000));
-        graph.freeze();
-        automaticCompareCHWithDijkstra(100);
-    }
-
-    @Test
-    public void testFindPath_compareWithDijkstra_zeroWeightLoops() {
-        //                  /|
-        // 0 -> 1 -> 2 -> 3 --
-        //                | \|
-        //                4
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        graph.freeze();
-        IntArrayList expectedPath = IntArrayList.from(0, 1, 2, 3, 4);
-        checkPath(expectedPath, 4, 0, 0, 4, new int[]{2, 0, 4, 1, 3});
-    }
-
-    @Test
-    void anotherDoubleZeroWeightLoop() {
-        // taken from a random graph test. this one failed in a feature branch when the others did not.
-        //         1 - 4 - 6 - 7
-        //       /
-        // 0 - 5 - 2
-        //    oo
-        // note there are two (directed) zero weight loops at node 5!
-        GHUtility.setSpeed(60.000000, 60.000000, accessEnc, speedEnc, graph.edge(5, 1).setDistance(263.944000)); // edgeId=0
-        GHUtility.setSpeed(120.000000, 120.000000, accessEnc, speedEnc, graph.edge(5, 2).setDistance(315.026000)); // edgeId=1
-        GHUtility.setSpeed(40.000000, 40.000000, accessEnc, speedEnc, graph.edge(1, 4).setDistance(157.012000)); // edgeId=2
-        GHUtility.setSpeed(45.000000, 45.000000, accessEnc, speedEnc, graph.edge(5, 0).setDistance(513.913000)); // edgeId=3
-        GHUtility.setSpeed(15.000000, 15.000000, accessEnc, speedEnc, graph.edge(6, 4).setDistance(678.992000)); // edgeId=4
-        GHUtility.setSpeed(60.000000, 0.000000, accessEnc, speedEnc, graph.edge(5, 5).setDistance(0.000000)); // edgeId=5
-        GHUtility.setSpeed(40.000000, 40.000000, accessEnc, speedEnc, graph.edge(6, 7).setDistance(890.261000)); // edgeId=6
-        GHUtility.setSpeed(90.000000, 0.000000, accessEnc, speedEnc, graph.edge(5, 5).setDistance(0.000000)); // edgeId=7
-        graph.freeze();
-        automaticCompareCHWithDijkstra(100);
-    }
-
-    @Test
-    public void testFindPath_compareWithDijkstra_zeroWeightLoops_withTurnRestriction() {
-        //                  /|
-        // 0 -> 1 -> 2 -> 3 --
-        //                | \|
-        //                4
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        EdgeIteratorState edge5 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        setTurnCost(edge2, edge3, 3, 5);
-        setTurnCost(edge2, edge4, 3, 4);
-        setTurnCost(edge3, edge4, 3, 2);
-        setRestriction(edge2, edge5, 3);
-        graph.freeze();
-        IntArrayList expectedPath = IntArrayList.from(0, 1, 2, 3, 3, 4);
-        checkPath(expectedPath, 4, 4, 0, 4, new int[]{2, 0, 4, 1, 3});
-    }
-
-    @Test
-    public void testFindPath_oneWayLoop() {
-        //     o
-        // 0-1-2-3-4
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        setRestriction(1, 2, 3);
-        graph.freeze();
-        automaticPrepareCH();
-        compareCHQueryWithDijkstra(0, 3);
-        compareCHQueryWithDijkstra(1, 4);
-        final Random rnd = new Random(System.nanoTime());
-        for (int i = 0; i < 100; ++i) {
-            compareCHQueryWithDijkstra(rnd.nextInt(graph.getNodes()), rnd.nextInt(graph.getNodes()));
-        }
-    }
-
-    @Test
-    public void testFindPath_loopEdge() {
-        // 1-0
-        // | |
-        // 4-2o
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 0).setDistance(802.964000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 4).setDistance(615.195000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 2).setDistance(181.788000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2).setDistance(191.996000));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 4).setDistance(527.821000));
-        setRestriction(0, 2, 4);
-        setTurnCost(0, 2, 2, 3);
-        setTurnCost(2, 2, 4, 4);
-        graph.freeze();
-        automaticPrepareCH();
-        compareCHQueryWithDijkstra(0, 4);
-    }
-
     @ParameterizedTest
     @ValueSource(strings = {DIJKSTRA_BI, ASTAR_BI})
     public void test_issue1593_full(String algo) {
@@ -1205,8 +1079,8 @@ public class CHTurnCostTest {
     private void compareWithDijkstraOnRandomGraph(long seed) {
         final Random rnd = new Random(seed);
         // for larger graphs preparation takes much longer the higher the degree is!
-        GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, true,
-                accessEnc, speedEnc, null, 0.7, 0.9, 0.8);
+        GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true,
+                accessEnc, speedEnc, null, 0.9, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
@@ -1233,8 +1107,8 @@ public class CHTurnCostTest {
     }
 
     private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
-        GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, true,
-                accessEnc, speedEnc, null, 0.7, 0.9, 0.8);
+        GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true,
+                accessEnc, speedEnc, null, 0.9, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;

@@ -195,8 +195,8 @@ class TarjanSCCTest {
     private void doImplicitVsExplicit(boolean excludeSingle) {
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 1_000, 2, true, true,
-                accessEnc, null, 60d, 0.8, 0.7, 0);
+        GHUtility.buildRandomGraph(graph, rnd, 1_000, 2, true,
+                accessEnc, null, 60d, 0.7, 0);
         TarjanSCC.ConnectedComponents implicit = TarjanSCC.findComponentsRecursive(graph, edgeFilter, excludeSingle);
         TarjanSCC.ConnectedComponents explicit = TarjanSCC.findComponents(graph, edgeFilter, excludeSingle);
 

@@ -76,9 +76,6 @@ public class DirectionResolver {
         if (adjacentEdges.nextPoints.isEmpty()) {
             return DirectionResolverResult.impossible();
         }
-        if (adjacentEdges.numLoops > 0) {
-            return DirectionResolverResult.unrestricted();
-        }
         if (adjacentEdges.numZeroDistanceEdges > 0) {
             // if we snap to a tower node that is adjacent to a barrier edge we apply no restrictions. this is the
             // easiest thing to do, but maybe we need a more sophisticated handling of this case in the future.
@@ -209,9 +206,7 @@ public class DirectionResolver {
             Edge edge = new Edge(iter.getEdge(), iter.getAdjNode(), nextPoint);
             adjacentEdges.addEdge(edge, isIn, isOut);
 
-            if (iter.getBaseNode() == iter.getAdjNode())
-                adjacentEdges.numLoops++;
-            else if (isZeroDistanceEdge)
+            if (isZeroDistanceEdge)
                 adjacentEdges.numZeroDistanceEdges++;
             else
                 adjacentEdges.numStandardEdges++;
@@ -224,7 +219,6 @@ public class DirectionResolver {
         private final Map<Point, List<Edge>> inEdgesByNextPoint = new HashMap<>(2);
         private final Map<Point, List<Edge>> outEdgesByNextPoint = new HashMap<>(2);
         final Set<Point> nextPoints = new HashSet<>(2);
-        int numLoops;
         int numStandardEdges;
         int numZeroDistanceEdges;
 
