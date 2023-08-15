@@ -212,8 +212,8 @@ class NodeBasedNodeContractor implements NodeContractor {
         // collect outgoing nodes (goal-nodes) only once
         while (incomingEdges.next()) {
             int fromNode = incomingEdges.getAdjNode();
-            // there should be no loops
-            if (fromNode == node) throw new AssertionError();
+            if (fromNode == node)
+                throw new IllegalStateException("Unexpected loop edge at node: " + node);
 
             final double incomingEdgeWeight = incomingEdges.getWeight();
             // this check is important to prevent calling calcMillis on inaccessible edges and also allows early exit
