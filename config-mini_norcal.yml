@@ -1,15 +1,15 @@
 # for the usage see the Readme.md
 graphhopper:
-  datareader.file: /Users/michaelzilske/Downloads/norcal-latest.osm.pbf
-  gtfs.file: /Users/michaelzilske/GTFSTransitData_RG
+  datareader.file: /Users/michaelzilske/mini_nor_cal/mini_nor_cal-regional_transportation_network-osm_cutout-b6b883700478cea5de1bb2e895aec2c4cd97ef4f.osm.pbf
+  gtfs.file: /Users/michaelzilske/mini_nor_cal/f-9qc-eldoradotransit~ca~us.zip,/Users/michaelzilske/mini_nor_cal/f-9qc7-unitransdavis.zip,/Users/michaelzilske/mini_nor_cal/f-9qcs-rosevilletransit.zip,/Users/michaelzilske/mini_nor_cal/f-9qc-placercountytransit.zip,/Users/michaelzilske/mini_nor_cal/f-9qc7-yolobusyolocounty.zip,/Users/michaelzilske/mini_nor_cal/f-amtrak~capitol~corridor.zip,/Users/michaelzilske/mini_nor_cal/f-9qc-yubasutter~ca~us.zip,/Users/michaelzilske/mini_nor_cal/f-9qce-sacramentoregionaltransit.zip
 
 
-  graph.location: graph-cache
+  graph.location: graph-mini_norcal
   graph.dataaccess.default_type: RAM_STORE
 
   gtfs.trip_based: true
   #gtfs.schedule_day: 2023-04-05,2023-05-10
-  gtfs.schedule_day: 2023-07-04
+  gtfs.schedule_day: 2022-09-22
 
   gtfs.max_transfer_interpolation_walk_time_seconds: 300
 
@@ -29,7 +29,7 @@ graphhopper:
       weighting: fastest
 
   import.osm.ignored_highways: ''
-  routing.max_visited_nodes: 15000000
+  routing.max_visited_nodes: 4000000
 
 server:
   # for some reason dropwizard expects this to be camel-cased...
@@ -51,13 +51,12 @@ logging:
   level: INFO
 
   loggers:
-    "com.graphhopper":
-      level: DEBUG
+    "com.graphhopper": INFO
 
   appenders:
     - type: console
       time_zone: UTC
-      log_format: "%msg%n"
+      log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
     - type: file
       time_zone: UTC
       log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
