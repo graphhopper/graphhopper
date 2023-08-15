@@ -1,6 +1,5 @@
 package com.graphhopper.gtfs;
 
-import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
@@ -26,13 +25,15 @@ public class TripBasedRouter {
     private final Trips tripTransfers;
     private GtfsStorage gtfsStorage;
     int earliestArrivalTime = Integer.MAX_VALUE;
-    private ObjectIntHashMap<Trips.TripKey> tripDoneFromIndex = new ObjectIntHashMap();
+    private int[] tripDoneFromIndex;
     private List<ResultLabel> result = new ArrayList<>();
     private Parameters parameters;
 
     public TripBasedRouter(GtfsStorage gtfsStorage, Trips tripTransfers) {
         this.gtfsStorage = gtfsStorage;
         this.tripTransfers = tripTransfers;
+        this.tripDoneFromIndex = new int[tripTransfers.idx];
+        Arrays.fill(this.tripDoneFromIndex, Integer.MAX_VALUE);
     }
 
     public static class StopWithTimeDelta {
@@ -229,8 +230,7 @@ public class TripBasedRouter {
 
     private void enqueue(List<EnqueuedTripSegment> queue1, GTFSFeed.StopTimesForTripWithTripPatternKey destinationTripPointer, Trips.TripAtStopTime transferDestination, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, LocalDate serviceDay, StopWithTimeDelta accessStation) {
         GtfsRealtime.TripDescriptor tripId = transferDestination.tripDescriptor;
-        Trips.TripKey tripKey = new Trips.TripKey(transferDestination.feedId, tripId.getTripId(), tripId.getStartTime().isEmpty() ? 0 : LocalTime.parse(tripId.getStartTime()).toSecondOfDay(), serviceDay);
-        int thisTripDoneFromIndex = tripDoneFromIndex.getOrDefault(tripKey, Integer.MAX_VALUE);
+        int thisTripDoneFromIndex = tripDoneFromIndex[destinationTripPointer.idx];
         if (transferDestination.stop_sequence < thisTripDoneFromIndex) {
             if (transferDestination.stop_sequence + 1 < thisTripDoneFromIndex) {
                 queue1.add(new EnqueuedTripSegment(destinationTripPointer, transferDestination, thisTripDoneFromIndex, serviceDay, transferOrigin, parent, accessStation));
@@ -247,10 +247,9 @@ public class TripBasedRouter {
             if (tripId.equals(otherTrip))
                 seenMyself = true;
             if (seenMyself) {
-                Trips.TripKey otherTripKey = new Trips.TripKey(transferDestination.feedId, otherTrip.getTripId(), otherTrip.getStartTime().isEmpty() ? 0 : LocalTime.parse(otherTrip.getStartTime()).toSecondOfDay(), serviceDay);
-                int previousDoneFromIndex = tripDoneFromIndex.getOrDefault(otherTripKey, Integer.MAX_VALUE);
+                int previousDoneFromIndex = tripDoneFromIndex[stopTimes.idx];
                 if (transferDestination.stop_sequence < previousDoneFromIndex)
-                    tripDoneFromIndex.put(otherTripKey, transferDestination.stop_sequence);
+                    tripDoneFromIndex[stopTimes.idx] = transferDestination.stop_sequence;
                 else
                     break;
                 // TODO: and on later service days, in principle, otherwise we may do much too much work.

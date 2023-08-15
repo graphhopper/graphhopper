@@ -2,7 +2,11 @@ package com.graphhopper.gtfs.analysis;
 
 import com.carrotsearch.hppc.ObjectIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.model.*;
+import com.conveyal.gtfs.PatternFinder;
+import com.conveyal.gtfs.model.Frequency;
+import com.conveyal.gtfs.model.StopTime;
+import com.conveyal.gtfs.model.Transfer;
+import com.conveyal.gtfs.model.Trip;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.ListMultimap;
 import com.google.common.collect.Lists;
@@ -32,6 +36,7 @@ public class Trips {
     private Map<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>> boardingsForStopByPattern = new ConcurrentHashMap<>();
     private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfersPerDay = new ConcurrentHashMap<>();
     private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfersPerDayCache = new ConcurrentHashMap<>();
+    public int idx;
 
     public Trips(GtfsStorage gtfsStorage) {
         this.gtfsStorage = gtfsStorage;
@@ -41,11 +46,20 @@ public class Trips {
             transfers.put(entry.getKey(), new Transfers(entry.getValue()));
         }
         trips = new HashMap<>();
+        idx = 0;
         for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
             GTFSFeed feed = entry.getValue();
-            trips.put(entry.getKey(), feed.trips.values().stream()
-                    .flatMap(trip -> unfoldFrequencies(feed, trip))
-                    .collect(Collectors.toMap(t -> t, feed::getStopTimesForTripWithTripPatternKey)));
+            Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey> tripsForFeed = new HashMap<>();
+            for (PatternFinder.Pattern pattern : feed.patterns.values()) {
+                for (GtfsRealtime.TripDescriptor tripDescriptor : pattern.trips) {
+                    GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer = feed.getStopTimesForTripWithTripPatternKey(tripDescriptor);
+                    tripPointer.idx = idx++;
+                    if (tripPointer.idx == Integer.MAX_VALUE)
+                        throw new RuntimeException();
+                    tripsForFeed.put(tripDescriptor, tripPointer);
+                }
+            }
+            trips.put(entry.getKey(), tripsForFeed);
         }
     }
 
@@ -258,31 +272,4 @@ public class Trips {
         }
     }
 
-    public static class TripKey {
-
-        public final String feedId;
-        public final String tripId;
-        public final int startTime;
-        public final LocalDate serviceDate;
-
-        public TripKey(String feedId, String tripId, int startTime, LocalDate serviceDate) {
-            this.feedId = feedId;
-            this.tripId = tripId;
-            this.startTime = startTime;
-            this.serviceDate = serviceDate;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            TripKey tripKey = (TripKey) o;
-            return startTime == tripKey.startTime && Objects.equals(feedId, tripKey.feedId) && Objects.equals(tripId, tripKey.tripId) && Objects.equals(serviceDate, tripKey.serviceDate);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(feedId, tripId, startTime, serviceDate);
-        }
-    }
 }

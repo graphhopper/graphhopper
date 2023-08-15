@@ -101,7 +101,7 @@ public class GTFSFeed implements Cloneable, Closeable {
     private GeometryFactory gf = new GeometryFactory();
 
     private boolean loaded = false;
-    private Map<PatternFinder.TripPatternKey, PatternFinder.Pattern> patterns;
+    public Map<PatternFinder.TripPatternKey, PatternFinder.Pattern> patterns;
 
     /**
      * The order in which we load the tables is important for two reasons.
@@ -194,6 +194,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         public final int routeType;
         public final List<StopTime> stopTimes;
         public final PatternFinder.Pattern pattern;
+        public int idx;
     }
 
     public StopTimesForTripWithTripPatternKey getStopTimesForTripWithTripPatternKey(GtfsRealtime.TripDescriptor key) {
