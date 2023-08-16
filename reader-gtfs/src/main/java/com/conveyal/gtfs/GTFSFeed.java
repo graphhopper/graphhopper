@@ -195,6 +195,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         public final List<StopTime> stopTimes;
         public final PatternFinder.Pattern pattern;
         public int idx;
+        public int endIdxOfPattern; // exclusive
     }
 
     public StopTimesForTripWithTripPatternKey getStopTimesForTripWithTripPatternKey(GtfsRealtime.TripDescriptor key) {

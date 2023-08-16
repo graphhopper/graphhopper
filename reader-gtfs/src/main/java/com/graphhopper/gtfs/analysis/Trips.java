@@ -51,9 +51,11 @@ public class Trips {
             GTFSFeed feed = entry.getValue();
             Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey> tripsForFeed = new HashMap<>();
             for (PatternFinder.Pattern pattern : feed.patterns.values()) {
+                int endIdxOfPattern = idx + pattern.trips.size();
                 for (GtfsRealtime.TripDescriptor tripDescriptor : pattern.trips) {
                     GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer = feed.getStopTimesForTripWithTripPatternKey(tripDescriptor);
                     tripPointer.idx = idx++;
+                    tripPointer.endIdxOfPattern = endIdxOfPattern;
                     if (tripPointer.idx == Integer.MAX_VALUE)
                         throw new RuntimeException();
                     tripsForFeed.put(tripDescriptor, tripPointer);

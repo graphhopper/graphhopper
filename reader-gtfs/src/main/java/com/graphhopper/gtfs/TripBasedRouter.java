@@ -234,27 +234,19 @@ public class TripBasedRouter {
             if (transferDestination.stop_sequence + 1 < thisTripDoneFromIndex) {
                 queue1.add(new EnqueuedTripSegment(destinationTripPointer, transferDestination, thisTripDoneFromIndex, serviceDay, transferOrigin, parent, accessStation));
             }
-            markAsDone(transferDestination, destinationTripPointer);
+            markAsDone(destinationTripPointer, transferDestination.stop_sequence);
         }
     }
 
-    private void markAsDone(Trips.TripAtStopTime transferDestination, GTFSFeed.StopTimesForTripWithTripPatternKey destinationTripPointer) {
-        int seenMyselfAt = -1;
-        for (int i = 0; i < destinationTripPointer.pattern.trips.size(); i++) {
-            GtfsRealtime.TripDescriptor otherTrip = destinationTripPointer.pattern.trips.get(i);
+    private void markAsDone(GTFSFeed.StopTimesForTripWithTripPatternKey destinationTripPointer, int doneFromIndex) {
+        for (int i = destinationTripPointer.idx; i < destinationTripPointer.endIdxOfPattern; i++) {
             // Trips within a pattern are sorted by start time. All that come after me can be marked as done.
-            if (seenMyselfAt == -1 && transferDestination.tripDescriptor.equals(otherTrip)) {
-                seenMyselfAt = i;
-            }
-            if (seenMyselfAt != -1) {
-                int previousDoneFromIndex = tripDoneFromIndex[destinationTripPointer.idx + i - seenMyselfAt];
-                if (transferDestination.stop_sequence < previousDoneFromIndex)
-                    tripDoneFromIndex[destinationTripPointer.idx + i - seenMyselfAt] = transferDestination.stop_sequence;
-                else
-                    break;
-            }
+            int previousDoneFromIndex = tripDoneFromIndex[i];
+            if (doneFromIndex < previousDoneFromIndex)
+                tripDoneFromIndex[i] = doneFromIndex;
+            else
+                break;
         }
-        assert (seenMyselfAt != -1);
     }
 
     public class ResultLabel {
