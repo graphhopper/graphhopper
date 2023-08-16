@@ -52,7 +52,7 @@ logging:
 
   loggers:
     "com.graphhopper":
-      level: DEBUG
+      level: INFO
 
   appenders:
     - type: console

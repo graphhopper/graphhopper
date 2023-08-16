@@ -211,7 +211,7 @@ public class TripBasedRouter {
                         Iterator<ResultLabel> it = result.iterator();
                         while (it.hasNext()) {
                             ResultLabel oldResult = it.next();
-                            if (oldResult.getArrivalTime().toLocalTime().toSecondOfDay() < newArrivalTime) continue;
+                            if (oldResult.getArrivalTime() < newArrivalTime) continue;
                             if (oldResult.getRealTransfers() < newRealTransfers) continue;
                             if (oldResult.getDepartureTime() > newDepartureTime) continue;
                             it.remove();
@@ -284,8 +284,8 @@ public class TripBasedRouter {
             return i.accessStation;
         }
 
-        LocalDateTime getArrivalTime() {
-            return LocalDateTime.of(enqueuedTripSegment.serviceDay, LocalTime.ofSecondOfDay(TripBasedRouter.this.getArrivalTime(enqueuedTripSegment, getStopTime(), (int) ((destination.timeDelta / 1000L) * parameters.getBetaEgressTime()))));
+        int getArrivalTime() {
+            return TripBasedRouter.this.getArrivalTime(enqueuedTripSegment, getStopTime(), (int) ((destination.timeDelta / 1000L) * parameters.getBetaEgressTime()));
         }
 
         public int getRound() {
