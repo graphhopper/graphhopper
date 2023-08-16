@@ -242,14 +242,18 @@ public class TripBasedRouter {
     private void markAsDone(Trips.TripAtStopTime transferDestination, GtfsRealtime.TripDescriptor tripId, LocalDate serviceDay) {
         GTFSFeed.StopTimesForTripWithTripPatternKey stopTimes = tripTransfers.trips.get(transferDestination.feedId).get(tripId);
         boolean seenMyself = false;
-        for (GtfsRealtime.TripDescriptor otherTrip : stopTimes.pattern.trips) {
+        int j = -1;
+        for (int i = 0; i < stopTimes.pattern.trips.size(); i++) {
+            GtfsRealtime.TripDescriptor otherTrip = stopTimes.pattern.trips.get(i);
             // Trips within a pattern are sorted by start time. All that come after me can be marked as done.
-            if (tripId.equals(otherTrip))
+            if (tripId.equals(otherTrip)) {
                 seenMyself = true;
+                j = i;
+            }
             if (seenMyself) {
-                int previousDoneFromIndex = tripDoneFromIndex[stopTimes.idx];
+                int previousDoneFromIndex = tripDoneFromIndex[stopTimes.idx + i - j];
                 if (transferDestination.stop_sequence < previousDoneFromIndex)
-                    tripDoneFromIndex[stopTimes.idx] = transferDestination.stop_sequence;
+                    tripDoneFromIndex[stopTimes.idx + i - j] = transferDestination.stop_sequence;
                 else
                     break;
                 // TODO: and on later service days, in principle, otherwise we may do much too much work.
