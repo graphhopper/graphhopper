@@ -229,40 +229,32 @@ public class TripBasedRouter {
     }
 
     private void enqueue(List<EnqueuedTripSegment> queue1, GTFSFeed.StopTimesForTripWithTripPatternKey destinationTripPointer, Trips.TripAtStopTime transferDestination, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, LocalDate serviceDay, StopWithTimeDelta accessStation) {
-        GtfsRealtime.TripDescriptor tripId = transferDestination.tripDescriptor;
         int thisTripDoneFromIndex = tripDoneFromIndex[destinationTripPointer.idx];
         if (transferDestination.stop_sequence < thisTripDoneFromIndex) {
             if (transferDestination.stop_sequence + 1 < thisTripDoneFromIndex) {
                 queue1.add(new EnqueuedTripSegment(destinationTripPointer, transferDestination, thisTripDoneFromIndex, serviceDay, transferOrigin, parent, accessStation));
             }
-            markAsDone(transferDestination, tripId, serviceDay);
+            markAsDone(transferDestination, destinationTripPointer);
         }
     }
 
-    private void markAsDone(Trips.TripAtStopTime transferDestination, GtfsRealtime.TripDescriptor tripId, LocalDate serviceDay) {
-        GTFSFeed.StopTimesForTripWithTripPatternKey stopTimes = tripTransfers.trips.get(transferDestination.feedId).get(tripId);
-        boolean seenMyself = false;
-        int j = -1;
-        for (int i = 0; i < stopTimes.pattern.trips.size(); i++) {
-            GtfsRealtime.TripDescriptor otherTrip = stopTimes.pattern.trips.get(i);
+    private void markAsDone(Trips.TripAtStopTime transferDestination, GTFSFeed.StopTimesForTripWithTripPatternKey destinationTripPointer) {
+        int seenMyselfAt = -1;
+        for (int i = 0; i < destinationTripPointer.pattern.trips.size(); i++) {
+            GtfsRealtime.TripDescriptor otherTrip = destinationTripPointer.pattern.trips.get(i);
             // Trips within a pattern are sorted by start time. All that come after me can be marked as done.
-            if (tripId.equals(otherTrip)) {
-                seenMyself = true;
-                j = i;
+            if (seenMyselfAt == -1 && transferDestination.tripDescriptor.equals(otherTrip)) {
+                seenMyselfAt = i;
             }
-            if (seenMyself) {
-                int previousDoneFromIndex = tripDoneFromIndex[stopTimes.idx + i - j];
+            if (seenMyselfAt != -1) {
+                int previousDoneFromIndex = tripDoneFromIndex[destinationTripPointer.idx + i - seenMyselfAt];
                 if (transferDestination.stop_sequence < previousDoneFromIndex)
-                    tripDoneFromIndex[stopTimes.idx + i - j] = transferDestination.stop_sequence;
+                    tripDoneFromIndex[destinationTripPointer.idx + i - seenMyselfAt] = transferDestination.stop_sequence;
                 else
                     break;
-                // TODO: and on later service days, in principle, otherwise we may do much too much work.
-                // alternative: keep labels only for today, and just don't check it off for trips that are not today?
             }
         }
-        if (!seenMyself) {
-            throw new RuntimeException();
-        }
+        assert (seenMyselfAt != -1);
     }
 
     public class ResultLabel {
