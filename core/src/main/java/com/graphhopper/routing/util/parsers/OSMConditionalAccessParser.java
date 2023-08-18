@@ -16,6 +16,10 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.Map;
 
+/**
+ * This parser fills CarConditionalAccess from the conditional access restriction.
+ * Currently node tags will be ignored.
+ */
 public class OSMConditionalAccessParser implements TagParser {
 
     private static final Logger logger = LoggerFactory.getLogger(OSMConditionalAccessParser.class);
