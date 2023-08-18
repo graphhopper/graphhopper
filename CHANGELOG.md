@@ -1,7 +1,7 @@
 
 ### 8.0 [not yet released]
 
-- conditional access tags are no longer considered from vehicle tag parsers and instead a new car_conditional_restriction encoded value can be used in a custom model. Seasonal restrictions will be ignored to handle problems described in #2477 but could be shown with path details "access_conditional". See #1234
+- conditional access restriction tags are no longer considered from vehicle tag parsers and instead a new car_conditional_access encoded value can be used in a custom model. Seasonal restrictions will be ignored to handle problems described in #2477 but could be shown with path details "access_conditional". See #1234
 - /info endpoint does no longer return the vehicle used per profile and won't return encoded value of vehicles like car_average_speed
 - Country rules no longer contain maxspeed handling, enable a much better alternative via `max_speed_calculator.enabled: true`. On the client side use `max_speed_estimated` to determine if max_speed is from OSM or an estimation. See #2810
 - bike routing better avoids dangerous roads, see #2796 and #2802
