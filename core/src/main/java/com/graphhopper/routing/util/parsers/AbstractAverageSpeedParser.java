@@ -3,24 +3,18 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.HashSet;
-import java.util.Set;
-
-import static com.graphhopper.routing.util.parsers.AbstractAccessParser.FERRIES;
 
 public abstract class AbstractAverageSpeedParser implements TagParser {
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final DecimalEncodedValue avgSpeedEnc;
-    protected final Set<String> ferries = new HashSet<>(FERRIES);
-    protected final FerrySpeedCalculator ferrySpeedCalc;
+    protected final DecimalEncodedValue ferrySpeedEnc;
 
-    protected AbstractAverageSpeedParser(DecimalEncodedValue speedEnc) {
+    protected AbstractAverageSpeedParser(DecimalEncodedValue speedEnc, DecimalEncodedValue ferrySpeedEnc) {
         this.avgSpeedEnc = speedEnc;
-        this.ferrySpeedCalc = new FerrySpeedCalculator(speedEnc.getSmallestNonZeroValue(), speedEnc.getMaxStorableDecimal(), 6);
+        this.ferrySpeedEnc = ferrySpeedEnc;
     }
 
     /**

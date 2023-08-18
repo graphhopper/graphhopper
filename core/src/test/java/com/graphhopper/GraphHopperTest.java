@@ -926,6 +926,37 @@ public class GraphHopperTest {
     }
 
     @Test
+    public void testHeading() {
+        final String profile = "profile";
+        final String vehicle = "car";
+        final String weighting = "fastest";
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(BAYREUTH).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setStoreOnFlush(true).
+                importOrLoad();
+
+        // the heading affects the weight, but not the time
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(49.985917, 11.510603)).
+                addPoint(new GHPoint(49.98669, 11.509482)).
+                setProfile(profile);
+        GHResponse rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors());
+        assertEquals(138, rsp.getBest().getDistance(), 1);
+        assertEquals(17, rsp.getBest().getRouteWeight(), 1);
+        assertEquals(17000, rsp.getBest().getTime(), 1000);
+        // with heading
+        req.setHeadings(Arrays.asList(100., 0.));
+        rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors());
+        assertEquals(138, rsp.getBest().getDistance(), 1);
+        assertEquals(317, rsp.getBest().getRouteWeight(), 1);
+        assertEquals(17000, rsp.getBest().getTime(), 1000);
+    }
+
+    @Test
     public void testMonacoMaxVisitedNodes() {
         final String profile = "profile";
         final String vehicle = "foot";

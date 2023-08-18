@@ -10,7 +10,6 @@ import com.graphhopper.storage.IntsRef;
 import java.util.*;
 
 public abstract class AbstractAccessParser implements TagParser {
-    static final Collection<String> FERRIES = Arrays.asList("shuttle_train", "ferry");
     static final Collection<String> ONEWAYS = Arrays.asList("yes", "true", "1", "-1");
     static final Collection<String> INTENDED = Arrays.asList("yes", "designated", "official", "permissive");
 
@@ -19,7 +18,6 @@ public abstract class AbstractAccessParser implements TagParser {
     protected final Set<String> restrictedValues = new HashSet<>(5);
 
     protected final Set<String> intendedValues = new HashSet<>(INTENDED);
-    protected final Set<String> ferries = new HashSet<>(FERRIES);
     protected final Set<String> oneways = new HashSet<>(ONEWAYS);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> barriers = new HashSet<>(5);

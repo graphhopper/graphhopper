@@ -2,6 +2,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.PMap;
 
 import java.util.HashMap;
@@ -16,11 +17,12 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
     public FootAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "foot"))));
+        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "foot"))),
+                lookup.getDecimalEncodedValue(FerrySpeed.KEY));
     }
 
-    protected FootAverageSpeedParser(DecimalEncodedValue speedEnc) {
-        super(speedEnc);
+    protected FootAverageSpeedParser(DecimalEncodedValue speedEnc, DecimalEncodedValue ferrySpeedEnc) {
+        super(speedEnc, ferrySpeedEnc);
 
         routeMap.put(INTERNATIONAL, UNCHANGED.getValue());
         routeMap.put(NATIONAL, UNCHANGED.getValue());
@@ -32,8 +34,8 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
-                double ferrySpeed = ferrySpeedCalc.getSpeed(way);
+            if (FerrySpeedCalculator.isFerry(way)) {
+                double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
                 setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
                 if (avgSpeedEnc.isStoreTwoDirections())
                     setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);

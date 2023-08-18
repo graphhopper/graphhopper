@@ -2,6 +2,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
@@ -10,13 +11,11 @@ import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
-import static com.graphhopper.routing.util.parsers.AbstractAccessParser.FERRIES;
 import static com.graphhopper.routing.util.parsers.AbstractAccessParser.INTENDED;
 import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.getMaxSpeed;
 import static com.graphhopper.routing.util.parsers.AbstractAverageSpeedParser.isValidSpeed;
 
 public class FootPriorityParser implements TagParser {
-    final Set<String> ferries = new HashSet<>(FERRIES);
     final Set<String> intendedValues = new HashSet<>(INTENDED);
     final Set<String> safeHighwayTags = new HashSet<>();
     final Set<String> avoidHighwayTags = new HashSet<>();
@@ -76,7 +75,7 @@ public class FootPriorityParser implements TagParser {
         String highwayValue = way.getTag("highway");
         Integer priorityFromRelation = routeMap.get(footRouteEnc.getEnum(false, edgeId, edgeIntAccess));
         if (highwayValue == null) {
-            if (way.hasTag("route", ferries))
+            if (FerrySpeedCalculator.isFerry(way))
                 priorityWayEncoder.setDecimal(false, edgeId, edgeIntAccess, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));
         } else {
             priorityWayEncoder.setDecimal(false, edgeId, edgeIntAccess, PriorityCode.getValue(handlePriority(way, priorityFromRelation)));

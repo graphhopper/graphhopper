@@ -43,7 +43,6 @@ public class FastestWeighting extends AbstractWeighting {
      */
     protected final static double SPEED_CONV = 3.6;
     private final double headingPenalty;
-    private final long headingPenaltyMillis;
     private final double maxSpeed;
     private final EnumEncodedValue<RoadAccess> roadAccessEnc;
     // this factor puts a penalty on roads with a "destination"-only or private access, see #733 and #1936
@@ -60,7 +59,6 @@ public class FastestWeighting extends AbstractWeighting {
     public FastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EnumEncodedValue<RoadAccess> roadAccessEnc, PMap map, TurnCostProvider turnCostProvider) {
         super(accessEnc, speedEnc, turnCostProvider);
         headingPenalty = map.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
-        headingPenaltyMillis = Math.round(headingPenalty * 1000);
         maxSpeed = speedEnc.getMaxOrMaxStorableDecimal() / SPEED_CONV;
 
         destinationPenalty = map.getDouble(DESTINATION_FACTOR, 1);
@@ -101,17 +99,6 @@ public class FastestWeighting extends AbstractWeighting {
             time += headingPenalty;
 
         return time;
-    }
-
-    @Override
-    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        // TODO move this to AbstractWeighting? see #485
-        long time = 0;
-        boolean unfavoredEdge = edgeState.get(EdgeIteratorState.UNFAVORED_EDGE);
-        if (unfavoredEdge)
-            time += headingPenaltyMillis;
-
-        return time + super.calcEdgeMillis(edgeState, reverse);
     }
 
     static double checkBounds(String key, double val, double from, double to) {

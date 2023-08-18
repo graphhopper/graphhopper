@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.util.PMap;
 
@@ -87,6 +88,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMConditionalAccessParser(CarConditionalAccess.CONDITIONALS,
                     lookup.getEnumEncodedValue(CarConditionalAccess.KEY, CarConditionalAccess.class),
                     properties.getString("date_range_parser_day", ""));
+        else if (name.equals(FerrySpeed.KEY))
+            return new FerrySpeedCalculator(lookup.getDecimalEncodedValue(FerrySpeed.KEY));
         return null;
     }
 }
