@@ -6,10 +6,7 @@ import com.graphhopper.routing.ev.CarConditionalAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.Test;
-
-import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -17,11 +14,12 @@ class OSMConditionalAccessParserTest {
 
     private final EnumEncodedValue<CarConditionalAccess> restricted = CarConditionalAccess.create();
     private final EncodingManager em = new EncodingManager.Builder().add(restricted).build();
-    private final String today = "2023 May 17";
-    private final OSMConditionalAccessParser parser = new OSMConditionalAccessParser(CarConditionalAccess.CONDITIONALS, restricted, "2023-05-17");
+    private final OSMConditionalAccessParser parser = new OSMConditionalAccessParser(CarConditionalAccess.CONDITIONALS,
+            (edgeId, access, b) -> restricted.setEnum(false, edgeId, access, b ? CarConditionalAccess.YES : CarConditionalAccess.NO), "2023-05-17");
 
     @Test
     public void testBasics() {
+        String today = "2023 May 17";
         ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edgeId = 0;
         assertEquals(CarConditionalAccess.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));

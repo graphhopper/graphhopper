@@ -3,9 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.ConditionalValueParser;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.ev.CarConditionalAccess;
 import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
@@ -17,20 +15,25 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * This parser fills CarConditionalAccess from the conditional access restriction.
- * Currently node tags will be ignored.
+ * This parser fills the different ConditionalAccess enums from the conditional access restriction.
+ * Node tags will be ignored.
  */
 public class OSMConditionalAccessParser implements TagParser {
 
     private static final Logger logger = LoggerFactory.getLogger(OSMConditionalAccessParser.class);
     private final Collection<String> conditionals;
-    private final EnumEncodedValue<CarConditionalAccess> conditionalAccessEnc;
+    private final Setter restrictionSetter;
     private final DateRangeParser parser;
     private final boolean enabledLogs = false;
 
-    public OSMConditionalAccessParser(Collection<String> conditionals, EnumEncodedValue<CarConditionalAccess> condRestriction, String dateRangeParserDate) {
+    @FunctionalInterface
+    public interface Setter {
+        void setter(int edgeId, EdgeIntAccess edgeIntAccess, boolean b);
+    }
+
+    public OSMConditionalAccessParser(Collection<String> conditionals, Setter restrictionSetter, String dateRangeParserDate) {
         this.conditionals = conditionals;
-        this.conditionalAccessEnc = condRestriction;
+        this.restrictionSetter = restrictionSetter;
         if (dateRangeParserDate.isEmpty())
             dateRangeParserDate = Helper.createFormatter("yyyy-MM-dd").format(new Date().getTime());
 
@@ -42,23 +45,23 @@ public class OSMConditionalAccessParser implements TagParser {
         // TODO for now the node tag overhead is not worth the effort due to very few data points
         // List<Map<String, Object>> nodeTags = way.getTag("node_tags", null);
 
-        CarConditionalAccess cond = getConditional(way.getTags());
-        conditionalAccessEnc.setEnum(false, edgeId, edgeIntAccess, cond);
+        Boolean b = getConditional(way.getTags());
+        if (b != null)
+            restrictionSetter.setter(edgeId, edgeIntAccess, b);
     }
 
-    CarConditionalAccess getConditional(Map<String, Object> tags) {
+    Boolean getConditional(Map<String, Object> tags) {
         for (Map.Entry<String, Object> entry : tags.entrySet()) {
             if (!conditionals.contains(entry.getKey())) continue;
 
             String value = (String) entry.getValue();
             String[] strs = value.split("@");
             if (strs.length == 2 && isInRange(strs[1].trim())) {
-                if (strs[0].trim().equals("no")) return CarConditionalAccess.NO;
-                if (strs[0].trim().equals("yes")) return CarConditionalAccess.YES;
+                if (strs[0].trim().equals("no")) return false;
+                if (strs[0].trim().equals("yes")) return true;
             }
-
         }
-        return CarConditionalAccess.MISSING;
+        return null;
     }
 
     private boolean isInRange(final String value) {

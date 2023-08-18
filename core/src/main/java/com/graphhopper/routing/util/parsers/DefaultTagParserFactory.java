@@ -84,11 +84,19 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new StateParser(lookup.getEnumEncodedValue(State.KEY, State.class));
         else if (name.equals(Crossing.KEY))
             return new OSMCrossingParser(lookup.getEnumEncodedValue(Crossing.KEY, Crossing.class));
-        else if (name.equals(CarConditionalAccess.KEY))
-            return new OSMConditionalAccessParser(CarConditionalAccess.CONDITIONALS,
-                    lookup.getEnumEncodedValue(CarConditionalAccess.KEY, CarConditionalAccess.class),
-                    properties.getString("date_range_parser_day", ""));
-        else if (name.equals(FerrySpeed.KEY))
+        else if (name.equals(CarConditionalAccess.KEY)) {
+            EnumEncodedValue<CarConditionalAccess> enc = lookup.getEnumEncodedValue(CarConditionalAccess.KEY, CarConditionalAccess.class);
+            OSMConditionalAccessParser.Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? CarConditionalAccess.YES : CarConditionalAccess.NO);
+            return new OSMConditionalAccessParser(CarConditionalAccess.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
+        } else if (name.equals(BikeConditionalAccess.KEY)) {
+            EnumEncodedValue<BikeConditionalAccess> enc = lookup.getEnumEncodedValue(BikeConditionalAccess.KEY, BikeConditionalAccess.class);
+            OSMConditionalAccessParser.Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? BikeConditionalAccess.YES : BikeConditionalAccess.NO);
+            return new OSMConditionalAccessParser(BikeConditionalAccess.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
+        } else if (name.equals(FootConditionalAccess.KEY)) {
+            EnumEncodedValue<FootConditionalAccess> enc = lookup.getEnumEncodedValue(FootConditionalAccess.KEY, FootConditionalAccess.class);
+            OSMConditionalAccessParser.Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? FootConditionalAccess.YES : FootConditionalAccess.NO);
+            return new OSMConditionalAccessParser(FootConditionalAccess.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
+        } else if (name.equals(FerrySpeed.KEY))
             return new FerrySpeedCalculator(lookup.getDecimalEncodedValue(FerrySpeed.KEY));
         return null;
     }

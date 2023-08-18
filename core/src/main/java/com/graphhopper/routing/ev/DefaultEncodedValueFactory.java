@@ -97,6 +97,10 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return new EnumEncodedValue<>(Crossing.KEY, Crossing.class);
         } else if (CarConditionalAccess.KEY.equals(name)) {
             return CarConditionalAccess.create();
+        } else if (BikeConditionalAccess.KEY.equals(name)) {
+            return BikeConditionalAccess.create();
+        } else if (FootConditionalAccess.KEY.equals(name)) {
+            return FootConditionalAccess.create();
         } else if (FerrySpeed.KEY.equals(name)) {
             return FerrySpeed.create();
         } else {
