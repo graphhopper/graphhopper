@@ -18,7 +18,10 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.Dijkstra;
+import com.graphhopper.routing.DijkstraBidirectionEdgeCHNoSOD;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
@@ -27,6 +30,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
@@ -99,17 +103,17 @@ public class CHTurnCostTest {
     private List<CHConfig> createCHConfigs() {
         Set<CHConfig> configs = new LinkedHashSet<>(5);
         // the first one is always the one with infinite u-turn costs
-        configs.add(CHConfig.edgeBased("p0", new InternalShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, INFINITE_U_TURN_COSTS))));
+        configs.add(CHConfig.edgeBased("p0", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, INFINITE_U_TURN_COSTS))));
         // this one we also always add
-        configs.add(CHConfig.edgeBased("p1", new InternalShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, 0))));
+        configs.add(CHConfig.edgeBased("p1", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, 0))));
         // ... and this one
-        configs.add(CHConfig.edgeBased("p2", new InternalShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, 50))));
+        configs.add(CHConfig.edgeBased("p2", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, 50))));
         // add more (distinct) profiles
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         while (configs.size() < 6) {
             int uTurnCosts = 10 + rnd.nextInt(90);
-            configs.add(CHConfig.edgeBased("p" + configs.size(), CustomModelParser.createShortestWeighting(accessEnc, speedEnc, encodingManager, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts))));
+            configs.add(CHConfig.edgeBased("p" + configs.size(), new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts))));
         }
         return new ArrayList<>(configs);
     }

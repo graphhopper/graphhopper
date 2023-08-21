@@ -23,6 +23,7 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -62,7 +63,7 @@ public class CHQueryWithTurnCostsTest {
             this.algoString = algoString;
             EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
             graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-            chConfig = CHConfig.edgeBased("profile", new InternalShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage())));
+            chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage())));
         }
 
         @Override

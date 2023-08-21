@@ -76,19 +76,6 @@ public class CustomModelParser {
         return new CustomWeighting(accessEnc, speedEnc, turnCostProvider, parameters);
     }
 
-    public static CustomWeighting createShortestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EncodingManager lookup, TurnCostProvider turnCostProvider) {
-        CustomModel cm = new CustomModel().
-                setDistanceInfluence(10_000d);
-        // TODO once access and speed are handled inside the Weighting, do:
-//                addToPriority(Statement.If(accessEnc.getName(), MULTIPLY, "0")).
-//                addToSpeed(Statement.If("true", LIMIT, speedEnc.getName()));
-        return createWeighting(accessEnc, speedEnc, null, lookup, turnCostProvider, cm);
-    }
-
-    public static CustomWeighting createShortestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EncodingManager lookup) {
-        return createShortestWeighting(accessEnc, speedEnc, lookup, TurnCostProvider.NO_TURN_COST_PROVIDER);
-    }
-
     /**
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
