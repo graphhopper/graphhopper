@@ -54,7 +54,7 @@ public class DijkstraOneToManyTest {
         accessEnc = new SimpleBooleanEncodedValue("access", true);
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
         encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-        defaultWeighting = new ShortestWeighting(accessEnc, speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
+        defaultWeighting = new ShortestWeighting(accessEnc, speedEnc);
     }
 
     private static void initGraphWeightLimit(Graph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {

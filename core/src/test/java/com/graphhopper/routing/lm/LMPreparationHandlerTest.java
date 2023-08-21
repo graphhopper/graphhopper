@@ -44,7 +44,7 @@ public class LMPreparationHandlerTest {
         EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         List<LMConfig> lmConfigs = Arrays.asList(
                 new LMConfig("conf1", new FastestWeighting(accessEnc, speedEnc)),
-                new LMConfig("conf2", new ShortestWeighting(accessEnc, speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER))
+                new LMConfig("conf2", new ShortestWeighting(accessEnc, speedEnc))
         );
         List<PrepareLandmarks> preparations = handler.createPreparations(lmConfigs, new BaseGraph.Builder(em).build(), em, null);
         assertEquals(1, preparations.get(0).getLandmarkStorage().getFactor(), .1);

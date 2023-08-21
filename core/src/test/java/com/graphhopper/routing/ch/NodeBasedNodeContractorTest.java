@@ -50,7 +50,7 @@ public class NodeBasedNodeContractorTest {
     private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
     private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-    private final Weighting weighting = new ShortestWeighting(accessEnc, speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
+    private final Weighting weighting = new ShortestWeighting(accessEnc, speedEnc);
     private final BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
     private final CHConfig chConfig = CHConfig.nodeBased("profile", weighting);
     private CHStorage store;

@@ -70,7 +70,7 @@ class AStarBidirectionTest {
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 10).setDistance(100));
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(10, 2).setDistance(100));
 
-        Weighting weighting = new ShortestWeighting(accessEnc, speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
+        Weighting weighting = new ShortestWeighting(accessEnc, speedEnc);
         AStarBidirection algo = new AStarBidirection(graph, weighting, TraversalMode.NODE_BASED);
         algo.setApproximation(new InfeasibleApproximator());
         Path path = algo.calcPath(0, 9);

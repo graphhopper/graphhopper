@@ -114,7 +114,7 @@ public class RoutingAlgorithmTest {
                     .add(footAccessEnc).add(footSpeedEnc)
                     .add(bike2AccessEnc).add(bike2SpeedEnc).build();
             // most tests use the default weighting, but this can be chosen for each test separately
-            defaultWeighting = new ShortestWeighting(carAccessEnc, carSpeedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
+            defaultWeighting = new ShortestWeighting(carAccessEnc, carSpeedEnc);
             // most tests do not limit the number of visited nodes, but this can be chosen for each test separately
             defaultMaxVisitedNodes = Integer.MAX_VALUE;
         }
@@ -347,7 +347,7 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcFootPath(Fixture f) {
-        Weighting weighting = new ShortestWeighting(f.footAccessEnc, f.footSpeedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
+        Weighting weighting = new ShortestWeighting(f.footAccessEnc, f.footSpeedEnc);
         BaseGraph graph = f.createGHStorage(false);
         initFootVsCar(f.carAccessEnc, f.carSpeedEnc, f.footAccessEnc, f.footSpeedEnc, graph);
         Path p1 = f.calcPath(graph, weighting, 0, 7);
@@ -747,7 +747,7 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testWithCoordinates(Fixture f) {
-        Weighting weighting = new ShortestWeighting(f.carAccessEnc, f.carSpeedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
+        Weighting weighting = new ShortestWeighting(f.carAccessEnc, f.carSpeedEnc);
         BaseGraph graph = f.createGHStorage(false);
         GHUtility.setSpeed(60, true, true, f.carAccessEnc, f.carSpeedEnc, graph.edge(0, 1).setDistance(2)).
                 setWayGeometry(Helper.createPointList(1.5, 1));

@@ -48,7 +48,7 @@ public class PrepareContractionHierarchiesTest {
     private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
     private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-    private final Weighting weighting = new ShortestWeighting(accessEnc, speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
+    private final Weighting weighting = new ShortestWeighting(accessEnc, speedEnc);
     private final CHConfig chConfig = CHConfig.nodeBased("c", weighting);
     private BaseGraph g;
 
@@ -477,8 +477,8 @@ public class PrepareContractionHierarchiesTest {
                 .build();
 
         // FastestWeighting would lead to different shortcuts due to different default speeds for bike and car
-        CHConfig carProfile = CHConfig.nodeBased("c1", new ShortestWeighting(carAccessEnc, carSpeedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER));
-        CHConfig bikeProfile = CHConfig.nodeBased("c2", new ShortestWeighting(bikeAccessEnc, bikeSpeedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER));
+        CHConfig carProfile = CHConfig.nodeBased("c1", new ShortestWeighting(carAccessEnc, carSpeedEnc));
+        CHConfig bikeProfile = CHConfig.nodeBased("c2", new ShortestWeighting(bikeAccessEnc, bikeSpeedEnc));
 
         BaseGraph graph = new BaseGraph.Builder(tmpEncodingManager).create();
         initShortcutsGraph(graph, carAccessEnc, carSpeedEnc);

@@ -77,7 +77,7 @@ public class DijkstraBidirectionCHTest {
         RoutingAlgorithmTest.initDirectedAndDiffSpeed(graph, carAccessEnc, carSpeedEnc);
 
         // do CH preparation for car
-        Weighting weighting = new ShortestWeighting(carAccessEnc, carSpeedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
+        Weighting weighting = new ShortestWeighting(carAccessEnc, carSpeedEnc);
         prepareCH(graph, CHConfig.nodeBased(weighting.getName(), weighting));
 
         // use base graph for solving normal Dijkstra
@@ -149,7 +149,7 @@ public class DijkstraBidirectionCHTest {
         GHUtility.setSpeed(60, true, false, carAccessEnc, carSpeedEnc, graph.edge(3, 9).setDistance(200));
         graph.freeze();
 
-        Weighting weighting = new ShortestWeighting(carAccessEnc, carSpeedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
+        Weighting weighting = new ShortestWeighting(carAccessEnc, carSpeedEnc);
         CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
 

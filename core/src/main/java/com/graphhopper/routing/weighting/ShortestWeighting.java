@@ -33,6 +33,10 @@ public class ShortestWeighting implements Weighting {
     final DecimalEncodedValue speedEnc;
     final TurnCostProvider tcProvider;
 
+    public ShortestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+        this(accessEnc, speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
+    }
+
     public ShortestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, TurnCostProvider tcProvider) {
         this.accessEnc = accessEnc;
         this.speedEnc = speedEnc;
