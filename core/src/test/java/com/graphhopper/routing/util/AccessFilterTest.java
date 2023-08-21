@@ -23,7 +23,6 @@ import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;

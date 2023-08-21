@@ -25,9 +25,7 @@ import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.GHUtility;
@@ -152,12 +150,12 @@ public class DijkstraOneToManyTest {
         algo.setWeightLimit(3);
         Path p = algo.calcPath(0, 4);
         assertTrue(p.isFound());
-        assertEquals(3.0, p.getWeight(), .1);
+        assertEquals(3.0, p.getWeight(), 1e-6);
 
         algo = createAlgo(graph);
         p = algo.calcPath(0, 3);
         assertTrue(p.isFound());
-        assertEquals(3.0, p.getWeight(), .1);
+        assertEquals(3.0, p.getWeight(), 1e-6);
     }
 
     @Test
