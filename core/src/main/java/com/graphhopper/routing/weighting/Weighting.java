@@ -56,7 +56,7 @@ public interface Weighting {
     double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
 
     /**
-     * This method calculates the time taken (in milli seconds) to travel along the specified edgeState.
+     * This method calculates the time taken (in milliseconds) to travel along the specified edgeState.
      * It is typically used for post-processing and on only a few thousand edges.
      */
     long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse);
@@ -73,11 +73,5 @@ public interface Weighting {
     boolean hasTurnCosts();
 
     String getName();
-
-    default double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse) {
-        if (edgeHasNoAccess(edgeState, reverse))
-            return Double.POSITIVE_INFINITY;
-        return calcEdgeWeight(edgeState, reverse);
-    }
 
 }
