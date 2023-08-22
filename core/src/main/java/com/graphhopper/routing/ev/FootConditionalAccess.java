@@ -8,7 +8,7 @@ import java.util.HashSet;
 
 /**
  * Stores temporary so-called conditional restrictions from access:conditional and other conditional
- * tags affecting cars and motor vehicles.
+ * tags affecting foot.
  */
 public enum FootConditionalAccess {
 

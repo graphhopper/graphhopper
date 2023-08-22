@@ -447,8 +447,19 @@ public class OSMReader {
             }
             if (way.getTags().size() > 1) // at least highway tag
                 for (Map.Entry<String, Object> entry : way.getTags().entrySet()) {
-                    if (entry.getKey().endsWith(":conditional"))
-                        list.add(new KVStorage.KeyValue(entry.getKey().replace(':', '_'), entry.getValue()));
+                    if (entry.getKey().endsWith(":conditional") && entry.getValue() instanceof String &&
+                            // for now reduce index size a bit and focus on access tags
+                            !entry.getKey().startsWith("maxspeed")) {
+                        // remove spaces as they unnecessarily increase the unique number of values:
+                        String value = KVStorage.cutString(((String) entry.getValue()).replace(" ", ""));
+                        boolean fwd = entry.getKey().contains("forward");
+                        boolean bwd = entry.getKey().contains("backward");
+                        if (!fwd && !bwd)
+                            list.add(new KVStorage.KeyValue("street_" + entry.getKey().replace(':', '_'), value, true, true));
+                        else
+                            list.add(new KVStorage.KeyValue("street_" + entry.getKey().replace(':', '_'), value, fwd, bwd));
+                    }
+
                 }
 
             way.setTag("key_values", list);

@@ -15,7 +15,7 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * This parser fills the different ConditionalAccess enums from the conditional access restriction.
+ * This parser fills the different XYConditionalAccess enums from the conditional access restriction.
  * Node tags will be ignored.
  */
 public class OSMConditionalAccessParser implements TagParser {
@@ -28,7 +28,7 @@ public class OSMConditionalAccessParser implements TagParser {
 
     @FunctionalInterface
     public interface Setter {
-        void setter(int edgeId, EdgeIntAccess edgeIntAccess, boolean b);
+        void setBoolean(int edgeId, EdgeIntAccess edgeIntAccess, boolean b);
     }
 
     public OSMConditionalAccessParser(Collection<String> conditionals, Setter restrictionSetter, String dateRangeParserDate) {
@@ -47,7 +47,7 @@ public class OSMConditionalAccessParser implements TagParser {
 
         Boolean b = getConditional(way.getTags());
         if (b != null)
-            restrictionSetter.setter(edgeId, edgeIntAccess, b);
+            restrictionSetter.setBoolean(edgeId, edgeIntAccess, b);
     }
 
     Boolean getConditional(Map<String, Object> tags) {
