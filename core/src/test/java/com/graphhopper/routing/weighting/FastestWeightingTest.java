@@ -31,6 +31,7 @@ import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FAC
 import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -52,27 +53,31 @@ public class FastestWeightingTest {
 
     @Test
     public void testWeightWrongHeading() {
-        Weighting instance = new FastestWeighting(accessEnc, speedEnc, null, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, 100), TurnCostProvider.NO_TURN_COST_PROVIDER);
+        final double penalty = 100;
+        Weighting instance = new FastestWeighting(accessEnc, speedEnc, null, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, penalty), TurnCostProvider.NO_TURN_COST_PROVIDER);
         EdgeIteratorState edge = graph.edge(1, 2).setDistance(10).setWayGeometry(Helper.createPointList(51, 0, 51, 1));
-        GHUtility.setSpeed(10, 0, accessEnc, speedEnc, edge);
+        GHUtility.setSpeed(10, 10, accessEnc, speedEnc, edge);
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(edge.getEdgeKey(), 99, 5, 6, edge.getDistance(), edge.getFlags(),
                 edge.getKeyValues(), edge.fetchWayGeometry(FetchMode.PILLAR_ONLY), false);
         double time = instance.calcEdgeWeight(virtEdge, false);
 
+        // no penalty on edge
+        assertEquals(time, instance.calcEdgeWeight(virtEdge, false), 1e-8);
+        assertEquals(time, instance.calcEdgeWeight(virtEdge, true), 1e-8);
+        // ... unless setting it to unfavored (in both directions)
         virtEdge.setUnfavored(true);
-        // heading penalty on edge
-        assertEquals(time + 100, instance.calcEdgeWeight(virtEdge, false), 1e-8);
-        // only after setting it
-        virtEdge.setUnfavored(true);
-        assertEquals(time + 100, instance.calcEdgeWeight(virtEdge, true), 1e-8);
+        assertEquals(time + penalty, instance.calcEdgeWeight(virtEdge, false), 1e-8);
+        assertEquals(time + penalty, instance.calcEdgeWeight(virtEdge, true), 1e-8);
         // but not after releasing it
         virtEdge.setUnfavored(false);
+        assertEquals(time, instance.calcEdgeWeight(virtEdge, false), 1e-8);
         assertEquals(time, instance.calcEdgeWeight(virtEdge, true), 1e-8);
 
         // test default penalty
         virtEdge.setUnfavored(true);
         instance = new FastestWeighting(accessEnc, speedEnc);
         assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcEdgeWeight(virtEdge, false), 1e-8);
+        assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcEdgeWeight(virtEdge, true), 1e-8);
     }
 
     @Test
@@ -80,11 +85,11 @@ public class FastestWeightingTest {
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(10);
         Weighting instance = new FastestWeighting(accessEnc, speedEnc);
         edge.set(speedEnc, 0);
-        assertEquals(1.0 / 0, instance.calcEdgeWeight(edge, false), 1e-8);
+        assertTrue(Double.isInfinite(instance.calcEdgeWeight(edge, false)));
 
         // 0 / 0 returns NaN but calcWeight should not return NaN!
         edge.setDistance(0);
-        assertEquals(1.0 / 0, instance.calcEdgeWeight(edge, false), 1e-8);
+        assertTrue(Double.isInfinite(instance.calcEdgeWeight(edge, false)));
     }
 
     @Test

@@ -35,6 +35,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -205,7 +206,7 @@ public class RoutingAlgorithmWithOSMTest {
 
     static CustomModel getCustomModel(String file) {
         try {
-            String string = Helper.readJSONFileWithoutComments(new File("../custom_models/", file).getAbsolutePath());
+            String string = Helper.readJSONFileWithoutComments(new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/custom_models/" + file)));
             return Jackson.newObjectMapper().readValue(string, CustomModel.class);
         } catch (Exception ex) {
             throw new RuntimeException(ex);
@@ -593,17 +594,17 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testBikeBayreuth_UseBikeNetwork() {
         List<Query> list = new ArrayList<>();
-        list.add(new Query(49.979667,11.521019, 49.987415,11.510577, 1288, 45));
+        list.add(new Query(49.979667, 11.521019, 49.987415, 11.510577, 1288, 45));
 
         GraphHopper hopper = createHopper(BAYREUTH, new CustomProfile("bike").setCustomModel(
-                        CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_elevation.json"))).setVehicle("roads"));
+                CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_elevation.json"))).setVehicle("roads"));
         hopper.setVehiclesString("bike,roads");
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, list);
     }
 
-        @Test
+    @Test
     public void testDisconnectedAreaAndMultiplePoints() {
         Query query = new Query();
         query.add(53.753177, 9.435968, 10, 10);

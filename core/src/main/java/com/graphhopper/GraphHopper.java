@@ -656,6 +656,8 @@ public class GraphHopper {
             osmParsers.addWayTagParser(new OSMMaxSpeedParser(encodingManager.getDecimalEncodedValue(MaxSpeed.KEY)));
         if (!encodedValueStrings.contains(RoadAccess.KEY))
             osmParsers.addWayTagParser(new OSMRoadAccessParser(encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
+        if (!encodedValueStrings.contains(FerrySpeed.KEY))
+            osmParsers.addWayTagParser(new FerrySpeedCalculator(encodingManager.getDecimalEncodedValue(FerrySpeed.KEY)));
         if (encodingManager.hasEncodedValue(AverageSlope.KEY) || encodingManager.hasEncodedValue(MaxSlope.KEY)) {
             if (!encodingManager.hasEncodedValue(AverageSlope.KEY) || !encodingManager.hasEncodedValue(MaxSlope.KEY))
                 throw new IllegalArgumentException("Enable both, average_slope and max_slope");

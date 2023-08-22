@@ -109,6 +109,8 @@ public final class CustomWeighting extends AbstractWeighting {
         final double distance = edgeState.getDistance();
         double seconds = calcSeconds(distance, edgeState, reverse);
         if (Double.isInfinite(seconds)) return Double.POSITIVE_INFINITY;
+        // add penalty at start/stop/via points
+        if (edgeState.get(EdgeIteratorState.UNFAVORED_EDGE)) seconds += headingPenaltySeconds;
         double distanceCosts = distance * distanceInfluence;
         if (Double.isInfinite(distanceCosts)) return Double.POSITIVE_INFINITY;
         double priority = edgeToPriorityMapping.get(edgeState, reverse);
@@ -118,12 +120,7 @@ public final class CustomWeighting extends AbstractWeighting {
     }
 
     double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
-        // special case for loop edges: since they do not have a meaningful direction we always need to read them in forward direction
-        if (edgeState.getBaseNode() == edgeState.getAdjNode())
-            reverse = false;
-
-        // TODO see #1835
-        if (reverse ? !edgeState.getReverse(accessEnc) : !edgeState.get(accessEnc))
+        if (edgeHasNoAccess(edgeState, reverse))
             return Double.POSITIVE_INFINITY;
 
         double speed = edgeToSpeedMapping.get(edgeState, reverse);
@@ -134,9 +131,7 @@ public final class CustomWeighting extends AbstractWeighting {
         if (speed < 0)
             throw new IllegalArgumentException("Speed cannot be negative");
 
-        double seconds = distance / speed * SPEED_CONV;
-        // add penalty at start/stop/via points
-        return edgeState.get(EdgeIteratorState.UNFAVORED_EDGE) ? seconds + headingPenaltySeconds : seconds;
+        return distance / speed * SPEED_CONV;
     }
 
     @Override
@@ -164,7 +159,7 @@ public final class CustomWeighting extends AbstractWeighting {
         private final double headingPenaltySeconds;
 
         public Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
-                   double maxSpeed, double maxPriority, double distanceInfluence, double headingPenaltySeconds) {
+                          double maxSpeed, double maxPriority, double distanceInfluence, double headingPenaltySeconds) {
             this.edgeToSpeedMapping = edgeToSpeedMapping;
             this.edgeToPriorityMapping = edgeToPriorityMapping;
             this.maxSpeed = maxSpeed;

@@ -126,10 +126,8 @@ public class GHUtilityTest {
 
     @Test
     public void testEdgeStuff() {
-        assertEquals(2, GHUtility.createEdgeKey(1, false, false));
-        assertEquals(2, GHUtility.createEdgeKey(1, true, false));
-        assertEquals(2, GHUtility.createEdgeKey(1, true, true));
-        assertEquals(3, GHUtility.createEdgeKey(1, false, true));
+        assertEquals(2, GHUtility.createEdgeKey(1, false));
+        assertEquals(3, GHUtility.createEdgeKey(1, true));
     }
 
     @Test

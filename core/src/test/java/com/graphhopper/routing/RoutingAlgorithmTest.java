@@ -917,7 +917,9 @@ public class RoutingAlgorithmTest {
             }
 
             @Override
-            public final double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+                if (edgeHasNoAccess(edgeState, reverse))
+                    return Double.POSITIVE_INFINITY;
                 int adj = edgeState.getAdjNode();
                 int base = edgeState.getBaseNode();
                 if (reverse) {
@@ -991,9 +993,8 @@ public class RoutingAlgorithmTest {
         final long seed = System.nanoTime();
         LOGGER.info("testRandomGraph - using seed: " + seed);
         Random rnd = new Random(seed);
-        // we're not including loops otherwise duplicate nodes in path might fail the test
-        GHUtility.buildRandomGraph(graph, rnd, 10, 2.0, false, true,
-                f.carAccessEnc, f.carSpeedEnc, null, 0.7, 0.7, 0.7);
+        GHUtility.buildRandomGraph(graph, rnd, 10, 2.0, true,
+                f.carAccessEnc, f.carSpeedEnc, null, 0.7, 0.7);
         final PathCalculator refCalculator = new DijkstraCalculator();
         int numRuns = 100;
         for (int i = 0; i < numRuns; i++) {

@@ -10,14 +10,12 @@ import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.io.InputStreamReader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -55,7 +53,7 @@ public class HikeCustomModelTest {
 
     static CustomModel getCustomModel(String file) {
         try {
-            String string = Helper.readJSONFileWithoutComments(new File("../custom_models/", file).getAbsolutePath());
+            String string = Helper.readJSONFileWithoutComments(new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/custom_models/" + file)));
             return Jackson.newObjectMapper().readValue(string, CustomModel.class);
         } catch (Exception ex) {
             throw new RuntimeException(ex);

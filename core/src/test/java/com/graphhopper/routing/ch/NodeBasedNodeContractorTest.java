@@ -306,33 +306,6 @@ public class NodeBasedNodeContractorTest {
         assertEquals(dijkstraPath.getWeight(), chPath.getWeight(), 1.e-6);
     }
 
-    @Test
-    public void testNodeContraction_preventUnnecessaryShortcutWithLoop() {
-        // there should not be shortcuts where one of the skipped edges is a loop at the node to be contracted,
-        // see also #1583
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
-        // 0 - 1 - 2 - 3
-        // o           o
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 0).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 3).setDistance(1));
-
-        graph.freeze();
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
-        CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
-        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
-        setMaxLevelOnAllNodes(chStore);
-        NodeContractor nodeContractor = createNodeContractor(graph, chStore, chConfig);
-        nodeContractor.contractNode(0);
-        nodeContractor.contractNode(3);
-        checkNoShortcuts(chStore);
-    }
-
     private void contractInOrder(int... nodeIds) {
         contractInOrder(graph, store, chConfig, nodeIds);
     }

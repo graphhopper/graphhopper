@@ -55,6 +55,8 @@ public class ShortestWeighting implements Weighting {
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        if (edgeHasNoAccess(edgeState, reverse))
+            return Double.POSITIVE_INFINITY;
         return edgeState.getDistance();
     }
 
