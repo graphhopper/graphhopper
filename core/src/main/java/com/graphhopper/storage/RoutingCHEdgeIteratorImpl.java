@@ -99,7 +99,7 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
     }
 
     private boolean finiteWeight(boolean reverse) {
-        return !Double.isInfinite(getOrigEdgeWeight(reverse, false));
+        return !Double.isInfinite(getOrigEdgeWeight(reverse));
     }
 
 }
