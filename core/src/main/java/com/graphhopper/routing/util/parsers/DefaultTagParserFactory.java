@@ -20,6 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.routing.util.parsers.OSMConditionalRestrictionsParser.Setter;
 import com.graphhopper.util.PMap;
 
 public class DefaultTagParserFactory implements TagParserFactory {
@@ -86,16 +87,16 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMCrossingParser(lookup.getEnumEncodedValue(Crossing.KEY, Crossing.class));
         else if (name.equals(CarAccessConditional.KEY)) {
             EnumEncodedValue<CarAccessConditional> enc = lookup.getEnumEncodedValue(CarAccessConditional.KEY, CarAccessConditional.class);
-            OSMAccessConditionalParser.Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? CarAccessConditional.YES : CarAccessConditional.NO);
-            return new OSMAccessConditionalParser(CarAccessConditional.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
+            Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? CarAccessConditional.YES : CarAccessConditional.NO);
+            return new OSMConditionalRestrictionsParser(CarAccessConditional.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
         } else if (name.equals(BikeAccessConditional.KEY)) {
             EnumEncodedValue<BikeAccessConditional> enc = lookup.getEnumEncodedValue(BikeAccessConditional.KEY, BikeAccessConditional.class);
-            OSMAccessConditionalParser.Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? BikeAccessConditional.YES : BikeAccessConditional.NO);
-            return new OSMAccessConditionalParser(BikeAccessConditional.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
+            Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? BikeAccessConditional.YES : BikeAccessConditional.NO);
+            return new OSMConditionalRestrictionsParser(BikeAccessConditional.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
         } else if (name.equals(FootAccessConditional.KEY)) {
             EnumEncodedValue<FootAccessConditional> enc = lookup.getEnumEncodedValue(FootAccessConditional.KEY, FootAccessConditional.class);
-            OSMAccessConditionalParser.Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? FootAccessConditional.YES : FootAccessConditional.NO);
-            return new OSMAccessConditionalParser(FootAccessConditional.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
+            Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? FootAccessConditional.YES : FootAccessConditional.NO);
+            return new OSMConditionalRestrictionsParser(FootAccessConditional.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
         } else if (name.equals(FerrySpeed.KEY))
             return new FerrySpeedCalculator(lookup.getDecimalEncodedValue(FerrySpeed.KEY));
         return null;

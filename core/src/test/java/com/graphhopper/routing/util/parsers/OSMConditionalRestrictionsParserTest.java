@@ -10,11 +10,11 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-class OSMAccessConditionalParserTest {
+class OSMConditionalRestrictionsParserTest {
 
     private final EnumEncodedValue<CarAccessConditional> restricted = CarAccessConditional.create();
     private final EncodingManager em = new EncodingManager.Builder().add(restricted).build();
-    private final OSMAccessConditionalParser parser = new OSMAccessConditionalParser(CarAccessConditional.CONDITIONALS,
+    private final OSMConditionalRestrictionsParser parser = new OSMConditionalRestrictionsParser(CarAccessConditional.CONDITIONALS,
             (edgeId, access, b) -> restricted.setEnum(false, edgeId, access, b ? CarAccessConditional.YES : CarAccessConditional.NO), "2023-05-17");
 
     @Test
