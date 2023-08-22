@@ -95,12 +95,12 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return Curvature.create();
         } else if (Crossing.KEY.equals(name)) {
             return new EnumEncodedValue<>(Crossing.KEY, Crossing.class);
-        } else if (CarConditionalAccess.KEY.equals(name)) {
-            return CarConditionalAccess.create();
-        } else if (BikeConditionalAccess.KEY.equals(name)) {
-            return BikeConditionalAccess.create();
-        } else if (FootConditionalAccess.KEY.equals(name)) {
-            return FootConditionalAccess.create();
+        } else if (CarAccessConditional.KEY.equals(name)) {
+            return CarAccessConditional.create();
+        } else if (BikeAccessConditional.KEY.equals(name)) {
+            return BikeAccessConditional.create();
+        } else if (FootAccessConditional.KEY.equals(name)) {
+            return FootAccessConditional.create();
         } else if (FerrySpeed.KEY.equals(name)) {
             return FerrySpeed.create();
         } else {

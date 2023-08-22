@@ -4,7 +4,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.json.Statement;
-import com.graphhopper.routing.ev.FootConditionalAccess;
+import com.graphhopper.routing.ev.FootAccessConditional;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
@@ -20,7 +20,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
-public class CustomizableConditionalAccessTest {
+public class CustomizableConditionalRestrictionsTest {
 
     private static final String GH_LOCATION = "target/routing-conditional-access-gh";
 
@@ -34,11 +34,10 @@ public class CustomizableConditionalAccessTest {
     public void testConditionalAccess() {
         GraphHopper hopper = new GraphHopper().
                 setStoreOnFlush(false).
-                setOSMFile("../core/files/conditional-access.osm.xml").
+                setOSMFile("../core/files/conditional-restrictions.osm.xml").
                 setProfiles(new CustomProfile("foot").setVehicle("foot")).
                 setMinNetworkSize(0).
-                // TODO NOW use foot_access_conditional to make it more similar to the path detail (and OSM)
-                        setEncodedValuesString(FootConditionalAccess.KEY).
+                setEncodedValuesString(FootAccessConditional.KEY).
                 setGraphHopperLocation(GH_LOCATION);
 
         hopper.getRouterConfig().setSimplifyResponse(false);
@@ -56,7 +55,7 @@ public class CustomizableConditionalAccessTest {
 
         rsp = hopper.route(new GHRequest(50.909136, 14.213924, 50.90918, 14.213549).
                 setProfile("foot").
-                setCustomModel(new CustomModel().addToPriority(Statement.If("foot_conditional_access == NO", Statement.Op.MULTIPLY, "0"))).
+                setCustomModel(new CustomModel().addToPriority(Statement.If("foot_access_conditional == NO", Statement.Op.MULTIPLY, "0"))).
                 setPathDetails(Arrays.asList(PD_KEY)));
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(16, rsp.getBest().getDistance(), 1);

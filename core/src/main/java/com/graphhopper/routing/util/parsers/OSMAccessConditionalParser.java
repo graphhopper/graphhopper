@@ -15,12 +15,12 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * This parser fills the different XYConditionalAccess enums from the conditional access restriction.
+ * This parser fills the different XYAccessConditional enums from the conditional restrictions.
  * Node tags will be ignored.
  */
-public class OSMConditionalAccessParser implements TagParser {
+public class OSMAccessConditionalParser implements TagParser {
 
-    private static final Logger logger = LoggerFactory.getLogger(OSMConditionalAccessParser.class);
+    private static final Logger logger = LoggerFactory.getLogger(OSMAccessConditionalParser.class);
     private final Collection<String> conditionals;
     private final Setter restrictionSetter;
     private final DateRangeParser parser;
@@ -31,7 +31,7 @@ public class OSMConditionalAccessParser implements TagParser {
         void setBoolean(int edgeId, EdgeIntAccess edgeIntAccess, boolean b);
     }
 
-    public OSMConditionalAccessParser(Collection<String> conditionals, Setter restrictionSetter, String dateRangeParserDate) {
+    public OSMAccessConditionalParser(Collection<String> conditionals, Setter restrictionSetter, String dateRangeParserDate) {
         this.conditionals = conditionals;
         this.restrictionSetter = restrictionSetter;
         if (dateRangeParserDate.isEmpty())
