@@ -100,8 +100,8 @@ public class CHPreparationGraph {
                     graph.getEdges() + " vs. " + prepareGraph.getOriginalEdges());
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            double weightFwd = weighting.calcEdgeWeightWithAccess(iter, false);
-            double weightBwd = weighting.calcEdgeWeightWithAccess(iter, true);
+            double weightFwd = weighting.calcEdgeWeight(iter, false);
+            double weightBwd = weighting.calcEdgeWeight(iter, true);
             prepareGraph.addEdge(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(), weightFwd, weightBwd);
         }
         prepareGraph.prepareForContraction();

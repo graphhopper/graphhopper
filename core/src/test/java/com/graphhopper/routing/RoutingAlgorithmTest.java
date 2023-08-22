@@ -936,7 +936,9 @@ public class RoutingAlgorithmTest {
             }
 
             @Override
-            public final double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+                if (edgeHasNoAccess(edgeState, reverse))
+                    return Double.POSITIVE_INFINITY;
                 int adj = edgeState.getAdjNode();
                 int base = edgeState.getBaseNode();
                 if (reverse) {
