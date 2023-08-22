@@ -17,19 +17,17 @@
  */
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.routing.InternalShortestWeighting;
 import com.graphhopper.routing.RoutingAlgorithmTest;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -70,25 +68,27 @@ public class LandmarkStorageTest {
     @Test
     public void testInfiniteWeight() {
         Directory dir = new RAMDirectory();
-        EdgeIteratorState edge = graph.edge(0, 1);
-        int res = new LandmarkStorage(graph, encodingManager, dir,
-                new LMConfig("c1", new InternalShortestWeighting(accessEnc, speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER) {
-                    @Override
-                    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-                        return Integer.MAX_VALUE * 2L;
-                    }
-                }), 8).setMaximumWeight(LandmarkStorage.PRECISION).calcWeight(edge, false);
-        assertEquals(Integer.MAX_VALUE, res);
+        graph.edge(0, 1);
+        LandmarkStorage lms = new LandmarkStorage(graph, encodingManager, dir, new LMConfig("car", new FastestWeighting(accessEnc, speedEnc)), 8).
+                setMaximumWeight(LandmarkStorage.PRECISION);
+        lms.createLandmarks();
 
-        dir = new RAMDirectory();
-        res = new LandmarkStorage(graph, encodingManager, dir,
-                new LMConfig("c2", new InternalShortestWeighting(accessEnc, speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER) {
-                    @Override
-                    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-                        return Double.POSITIVE_INFINITY;
-                    }
-                }), 8).setMaximumWeight(LandmarkStorage.PRECISION).calcWeight(edge, false);
-        assertEquals(Integer.MAX_VALUE, res);
+        // default is infinity but return short max
+        assertTrue(lms.isInfinity(0));
+        assertEquals(LandmarkStorage.SHORT_MAX, lms.getFromWeight(0, 0));
+
+        // store max directly
+        lms.setWeight(0, LandmarkStorage.SHORT_MAX);
+        assertFalse(lms.isInfinity(0));
+        assertEquals(LandmarkStorage.SHORT_MAX, lms.getFromWeight(0, 0));
+
+        // store only max even if weight is larger
+        lms.setWeight(0, Integer.MAX_VALUE);
+        assertFalse(lms.isInfinity(0));
+        assertEquals(LandmarkStorage.SHORT_MAX, lms.getFromWeight(0, 0));
+
+        // If bigger than integer max throw exception. Could this happen if weights add up too much?
+        assertThrows(UnsupportedOperationException.class, () -> lms.setWeight(0, (double) Integer.MAX_VALUE + 1));
     }
 
     @Test
@@ -107,14 +107,6 @@ public class LandmarkStorageTest {
         assertEquals(65534, lms.getFromWeight(0, 0));
         lms.setWeight(0, 79999);
         assertEquals(65534, lms.getFromWeight(0, 0));
-
-        lms._getInternalDA().setInt(0, Integer.MAX_VALUE);
-        assertTrue(lms.isInfinity(0));
-        // for infinity return much bigger value
-        // assertEquals(Integer.MAX_VALUE, lms.getFromWeight(0, 0));
-
-        lms.setWeight(0, 79999);
-        assertFalse(lms.isInfinity(0));
     }
 
     @Test

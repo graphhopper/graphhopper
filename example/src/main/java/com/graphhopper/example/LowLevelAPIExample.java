@@ -40,7 +40,7 @@ public class LowLevelAPIExample {
     public static void createAndSaveGraph() {
         {
             BooleanEncodedValue accessEnc = VehicleAccess.create("car");
-            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
             EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
             BaseGraph graph = new BaseGraph.Builder(em).setDir(new RAMDirectory(graphLocation, true)).create();
             // Make a weighted edge between two nodes and set average speed to 50km/h
@@ -65,7 +65,7 @@ public class LowLevelAPIExample {
             // Load the graph ... can be also in a different code location
             // note that the EncodingManager must be the same
             BooleanEncodedValue accessEnc = VehicleAccess.create("car");
-            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
             EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
             BaseGraph graph = new BaseGraph.Builder(em).setDir(new RAMDirectory(graphLocation, true)).build();
             graph.loadExisting();
@@ -92,7 +92,7 @@ public class LowLevelAPIExample {
     public static void useContractionHierarchiesToMakeQueriesFaster() {
         // Creating and saving the graph
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
-        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
         EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         Weighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, em, TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel());
         CHConfig chConfig = CHConfig.nodeBased("my_profile", weighting);

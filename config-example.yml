@@ -43,8 +43,9 @@ graphhopper:
 #      weighting: custom
 #      custom_model_files: [bike.json, bike_elevation.json]
 
-  # specify the folder where to find the custom model files - see this folder for more possibilities
-  custom_models.directory: custom_models
+  # instead of the inbuilt custom models (see ./core/src/main/resources/com/graphhopper/custom_models)
+  # you can specify a folder where to find your own custom model files
+  # custom_models.directory: custom_models
 
   # Speed mode:
   # Its possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires

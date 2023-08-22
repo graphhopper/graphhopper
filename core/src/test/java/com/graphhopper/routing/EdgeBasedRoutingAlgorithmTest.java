@@ -23,6 +23,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
@@ -159,8 +160,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         Random rnd = new Random(seed);
         EncodingManager em = createEncodingManager(false);
         BaseGraph g = createStorage(em);
-        GHUtility.buildRandomGraph(g, rnd, 50, 2.2, true, true,
-                accessEnc, speedEnc, null, 0.8, 0.8, 0.8);
+        GHUtility.buildRandomGraph(g, rnd, 50, 2.2, true,
+                accessEnc, speedEnc, null, 0.8, 0.8);
         GHUtility.addRandomTurnCosts(g, seed, accessEnc, turnCostEnc, 3, tcs);
         g.freeze();
         int numPathsNotFound = 0;
@@ -221,29 +222,6 @@ public class EdgeBasedRoutingAlgorithmTest {
 
         p = calcPath(g, em, 7, 5, algoStr);
         assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(FixtureProvider.class)
-    public void testLoop_issue1592(String algoStr) {
-        EncodingManager em = createEncodingManager(true);
-        BaseGraph graph = createStorage(em);
-        // 0-6
-        //  \ \
-        //   4-3
-        //   |
-        //   1o
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 6).setDistance(10));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 3).setDistance(10));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 1).setDistance(10));
-        setTurnRestriction(graph, 0, 4, 3);
-
-        Path p = calcPath(graph, em, 0, 3, algoStr);
-        assertEquals(14, p.getDistance(), 1.e-3);
-        assertEquals(IntArrayList.from(0, 4, 1, 1, 4, 3), p.calcNodes());
     }
 
     @ParameterizedTest
@@ -416,7 +394,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         setTurnCost(g, 2, 5, 6, 3);
         setTurnCost(g, 1, 6, 7, 4);
 
-        Weighting weighting = new InternalShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, tcs) {
+        Weighting weighting = new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, tcs) {
             @Override
             public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
                 if (edgeFrom >= 0)
@@ -436,54 +414,6 @@ public class EdgeBasedRoutingAlgorithmTest {
         assertEquals(IntArrayList.from(5, 6, 7, 4, 3, 1), p.calcNodes());
         assertEquals(5 * 0.06 + 1, p.getWeight(), 1.e-6);
         assertEquals(1300, p.getTime(), .1);
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(FixtureProvider.class)
-    public void testLoopEdge(String algoStr) {
-        //   o
-        // 3-2-4
-        //  \|
-        //   0
-        EncodingManager em = createEncodingManager(false);
-        final BaseGraph graph = createStorage(em);
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 2).setDistance(188));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 0).setDistance(182));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 2).setDistance(690));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 2).setDistance(121));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 0).setDistance(132));
-        setTurnRestriction(graph, 2, 2, 0);
-        setTurnRestriction(graph, 3, 2, 4);
-
-        Path p = calcPath(graph, em, 3, 4, algoStr);
-        assertEquals(IntArrayList.from(3, 2, 2, 4), p.calcNodes());
-        assertEquals(999, p.getDistance(), 1.e-3);
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(FixtureProvider.class)
-    public void testDoubleLoopPTurn(String algoStr) {
-        // we cannot go 1-4-5, but taking the loop at 4 is cheaper than taking the one at 3
-        //  0-1
-        //    |
-        // o3-4o
-        //    |
-        //    5
-        EncodingManager em = createEncodingManager(false);
-        final BaseGraph graph = createStorage(em);
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 4).setDistance(4));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 4).setDistance(5));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 4).setDistance(1));
-        setTurnRestriction(graph, 1, 4, 5);
-
-        Path p = calcPath(graph, em, 0, 5, algoStr);
-        assertEquals(IntArrayList.from(0, 1, 4, 4, 5), p.calcNodes());
-        assertEquals(11, p.getDistance(), 1.e-3);
-        assertEquals(11 * 0.06, p.getWeight(), 1.e-3);
-        assertEquals(11 * 0.06 * 1000, p.getTime(), 1.e-3);
     }
 
     private void setTurnRestriction(BaseGraph g, int from, int via, int to) {

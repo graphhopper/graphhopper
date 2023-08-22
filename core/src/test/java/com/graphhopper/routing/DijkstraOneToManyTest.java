@@ -24,8 +24,8 @@ import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.GHUtility;
@@ -52,7 +52,7 @@ public class DijkstraOneToManyTest {
         accessEnc = new SimpleBooleanEncodedValue("access", true);
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
         encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-        defaultWeighting = CustomModelParser.createShortestWeighting(accessEnc, speedEnc, encodingManager);
+        defaultWeighting = new ShortestWeighting(accessEnc, speedEnc);
     }
 
     private static void initGraphWeightLimit(Graph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
@@ -147,15 +147,15 @@ public class DijkstraOneToManyTest {
         initGraphWeightLimit(graph, accessEnc, speedEnc);
 
         DijkstraOneToMany algo = createAlgo(graph);
-        algo.setWeightLimit(30.18);
+        algo.setWeightLimit(3);
         Path p = algo.calcPath(0, 4);
         assertTrue(p.isFound());
-        assertEquals(30.2, p.getWeight(), .1);
+        assertEquals(3.0, p.getWeight(), 1e-6);
 
         algo = createAlgo(graph);
         p = algo.calcPath(0, 3);
         assertTrue(p.isFound());
-        assertEquals(30.2, p.getWeight(), .1);
+        assertEquals(3.0, p.getWeight(), 1e-6);
     }
 
     @Test

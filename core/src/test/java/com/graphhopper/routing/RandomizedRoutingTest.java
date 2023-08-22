@@ -133,11 +133,8 @@ public class RandomizedRoutingTest {
             this.prepareLM = prepareLM;
             this.traversalMode = traversalMode;
             maxTurnCosts = 10;
-            // todo: this test only works with speedTwoDirections=false (as long as loops are enabled), otherwise it will
-            // fail sometimes for edge-based algorithms, #1631, but maybe we can should disable different fwd/bwd speeds
-            // only for loops instead?
             accessEnc = new SimpleBooleanEncodedValue("access", true);
-            speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+            speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
             turnCostEnc = TurnCost.create("car", maxTurnCosts);
             encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("car")).build();
             graph = new BaseGraph.Builder(encodingManager)
@@ -238,8 +235,8 @@ public class RandomizedRoutingTest {
         final long seed = System.nanoTime();
         final int numQueries = 50;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(f.graph, rnd, 100, 2.2, true, true,
-                f.accessEnc, f.speedEnc, null, 0.7, 0.8, 0.8);
+        GHUtility.buildRandomGraph(f.graph, rnd, 100, 2.2, true,
+                f.accessEnc, f.speedEnc, null, 0.8, 0.8);
         GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
 //        GHUtility.printGraphForUnitTest(f.graph, f.accessEnc, f.speedEnc);
         f.preProcessGraph();
@@ -276,8 +273,8 @@ public class RandomizedRoutingTest {
         // the same as taking the direct edge!
         double pOffset = 0;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.2, true, true,
-                f.accessEnc, f.speedEnc, null, 0.7, 0.8, pOffset);
+        GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.2, true,
+                f.accessEnc, f.speedEnc, null, 0.8, pOffset);
         GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
 //        GHUtility.printGraphForUnitTest(f.graph, f.accessEnc, f.speedEnc);
         f.preProcessGraph();

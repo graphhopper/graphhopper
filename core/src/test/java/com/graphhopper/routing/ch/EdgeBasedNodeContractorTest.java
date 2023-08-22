@@ -18,10 +18,10 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.InternalShortestWeighting;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
@@ -67,9 +67,9 @@ public class EdgeBasedNodeContractorTest {
         EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
         graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         chConfigs = Arrays.asList(
-                CHConfig.edgeBased("p1", new InternalShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()))),
-                CHConfig.edgeBased("p2", new InternalShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 60))),
-                CHConfig.edgeBased("p3", new InternalShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 0)))
+                CHConfig.edgeBased("p1", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()))),
+                CHConfig.edgeBased("p2", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 60))),
+                CHConfig.edgeBased("p3", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 0)))
         );
     }
 
@@ -457,46 +457,6 @@ public class EdgeBasedNodeContractorTest {
         contractNodes(1, 2, 3, 4);
         // no shortcuts needed
         checkShortcuts();
-    }
-
-    @Test
-    public void testContractNode_twoNormalEdges_withTurnCost_andLoop() {
-        runTestWithTurnCostAndLoop(false);
-    }
-
-    @Test
-    public void testContractNode_twoNormalEdges_withTurnCost_andLoop_loopHelps() {
-        runTestWithTurnCostAndLoop(true);
-    }
-
-    private void runTestWithTurnCostAndLoop(boolean loopHelps) {
-        //            />\
-        //            \ /
-        // 0 --> 3 --> 2 --> 4 --> 1
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 3).setDistance(1));
-        final EdgeIteratorState e3to2 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 2).setDistance(3));
-        final EdgeIteratorState e2to2 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 2).setDistance(2));
-        final EdgeIteratorState e2to4 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 4).setDistance(5));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 1).setDistance(1));
-
-        setTurnCost(e3to2, e2to2, 2, 2);
-        setTurnCost(e2to2, e2to4, 2, 1);
-        setTurnCost(e3to2, e2to4, 2, loopHelps ? 6 : 3);
-        freeze();
-        setMaxLevelOnAllNodes();
-
-        contractNodes(2, 0, 1, 3, 4);
-        if (loopHelps) {
-            // it is better to take the loop at node 2, so we need to introduce two shortcuts where the second contains
-            // the first (this is important for path unpacking)
-            checkShortcuts(
-                    createShortcut(2, 3, e3to2, e2to2, 7, false, true),
-                    createShortcut(3, 4, e3to2.getEdgeKey(), e2to4.getEdgeKey(), 5, e2to4.getEdge(), 13, true, false));
-        } else {
-            // taking the loop would be worse, so the path is just 3-2-4 and we only need a single shortcut
-            checkShortcuts(
-                    createShortcut(3, 4, e3to2, e2to4, 11));
-        }
     }
 
     @Test
@@ -1172,28 +1132,6 @@ public class EdgeBasedNodeContractorTest {
     }
 
     @Test
-    public void testNodeContraction_forwardLoopNeedsToBeRecognizedAsIncoming() {
-        //     ---
-        //     \ /
-        // 0 -- 1 -- 2 -- 3 -- 4
-        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 1).setDistance(1));
-        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        setRestriction(edge0, edge2, 1);
-        freeze();
-        setMaxLevelOnAllNodes();
-        contractNodes(2, 0, 4, 1, 3);
-        checkShortcuts(
-                // we need a shortcut going from 1 to 3, but this is not entirely trivial, because it is crucial that
-                // the loop at node 1 is recognized as an incoming edge at node 1 although it is only 'unidirectional',
-                // i.e. it has only a fwd flag
-                createShortcut(1, 3, edge2, edge3, 2)
-        );
-    }
-
-    @Test
     public void testNodeContraction_minorWeightDeviation() {
         // 0 -> 1 -> 2 -> 3 -> 4
         GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(51.401));
@@ -1206,183 +1144,6 @@ public class EdgeBasedNodeContractorTest {
         checkShortcuts(
                 createShortcut(1, 3, 2, 4, 1, 2, 145.847)
         );
-    }
-
-    @Test
-    public void testNodeContraction_zeroWeightLoop_loopOnly() {
-        // zero weight loops are quite a headache..., also see #1355
-        //                  /|
-        // 0 -> 1 -> 2 -> 3 --
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        freeze();
-        setMaxLevelOnAllNodes();
-        contractNodes(2, 0, 1, 3);
-        checkShortcuts(
-                createShortcut(1, 3, 2, 4, 1, 2, 2)
-        );
-    }
-
-    @Test
-    public void testNodeContraction_zeroWeightLoop_loopAndEdge() {
-        //                  /|
-        // 0 -> 1 -> 2 -> 3 --
-        //                |
-        //                4
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        freeze();
-        setMaxLevelOnAllNodes();
-        contractNodes(2, 0, 1, 4, 3);
-        checkShortcuts(
-                createShortcut(1, 3, 2, 4, 1, 2, 2)
-        );
-    }
-
-    @Test
-    public void testNodeContraction_zeroWeightLoop_twoLoops() {
-        //                  /|
-        // 0 -> 1 -> 2 -> 3 --
-        //                  \|
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        freeze();
-        setMaxLevelOnAllNodes();
-        contractNodes(2, 0, 1, 3);
-        checkShortcuts(
-                createShortcut(1, 3, 2, 4, 1, 2, 2)
-        );
-    }
-
-    @Test
-    public void testNodeContraction_zeroWeightLoop_twoLoopsAndEdge_edgeFirst() {
-        //                  /|
-        // 0 -> 1 -> 2 -> 3 --
-        //                | \|
-        //                4
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        freeze();
-        setMaxLevelOnAllNodes();
-        contractNodes(2, 0, 1, 4, 3);
-        checkShortcuts(
-                createShortcut(1, 3, 2, 4, 1, 2, 2)
-        );
-    }
-
-    @Test
-    public void testNodeContraction_zeroWeightLoop_twoLoopsAndEdge_loopsFirst() {
-        //                  /|
-        // 0 -> 1 -> 2 -> 3 --
-        //                | \|
-        //                4
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        freeze();
-        setMaxLevelOnAllNodes();
-        contractNodes(2, 0, 1, 4, 3);
-        checkShortcuts(
-                createShortcut(1, 3, 2, 8, 1, 4, 2)
-        );
-    }
-
-    @Test
-    public void testNodeContraction_zeroWeightLoop_manyLoops() {
-        //                  /| many
-        // 0 -> 1 -> 2 -> 3 --
-        //                | 
-        //                4
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        freeze();
-        setMaxLevelOnAllNodes();
-        contractNodes(2, 0, 1, 4, 3);
-        checkShortcuts(
-                createShortcut(1, 3, 6, 10, 3, 5, 2)
-        );
-    }
-
-    @Test
-    public void testNodeContraction_zeroWeightLoop_another() {
-        //         1 - 4 - 6 - 7
-        //       /
-        // 0 - 5 - 2
-        //    oo
-        // note there are two (directed) zero weight loops at node 5!
-        // edgeId=0
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 1).setDistance(100));
-        // edgeId=1
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 2).setDistance(100));
-        // edgeId=2
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 4).setDistance(100));
-        // edgeId=3
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 0).setDistance(100));
-        // edgeId=4
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 4).setDistance(100));
-        // edgeId=5
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 5).setDistance(0));
-        // edgeId=6
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 7).setDistance(100));
-        // edgeId=7
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 5).setDistance(0));
-        freeze();
-        setMaxLevelOnAllNodes();
-        contractNodes(1, 3, 0, 2, 7, 6, 4);
-        // contracting node 1 leads to two shortcuts. it is important that we do not consider the path 5-5-1-4 a
-        // witness for the bridge path 5-1-4. it has the same weight and 'looks' like a witness path, because it
-        // connects the same nodes and is not a bridge path. this needs special handling in our edge-based witness path
-        // searcher.
-        checkShortcuts(
-                createShortcut(4, 5, 0, 4, 0, 2, 200, false, true),
-                createShortcut(4, 5, 5, 1, 2, 0, 200, true, false)
-        );
-    }
-
-    @Test
-    public void testNodeContraction_zeroWeightLoop_twoLoopsAndEdge_withTurnRestriction() {
-        //                  /|
-        // 0 -> 1 -> 2 -> 3 --
-        //                | 
-        //                4
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        // add a few more loops to make this test more difficult to pass
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 3).setDistance(0));
-        // we have to use the zero weight loop so it may not be excluded
-        setTurnCost(edge2, edge3, 3, 5);
-        setRestriction(edge2, edge4, 3);
-        freeze();
-        setMaxLevelOnAllNodes();
-        contractNodes(2, 0, 4, 1, 3);
-        checkNumShortcuts(1);
     }
 
     @Test

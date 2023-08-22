@@ -19,7 +19,6 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraBidirectionCH;
-import com.graphhopper.routing.InternalShortestWeighting;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -28,7 +27,7 @@ import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
@@ -50,7 +49,7 @@ public class NodeBasedNodeContractorTest {
     private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
     private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-    private final Weighting weighting = new InternalShortestWeighting(accessEnc, speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
+    private final Weighting weighting = new ShortestWeighting(accessEnc, speedEnc);
     private final BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
     private final CHConfig chConfig = CHConfig.nodeBased("profile", weighting);
     private CHStorage store;
@@ -305,33 +304,6 @@ public class NodeBasedNodeContractorTest {
         assertEquals(dijkstraPath.calcNodes(), chPath.calcNodes());
         assertEquals(dijkstraPath.getDistance(), chPath.getDistance(), 1.e-6);
         assertEquals(dijkstraPath.getWeight(), chPath.getWeight(), 1.e-6);
-    }
-
-    @Test
-    public void testNodeContraction_preventUnnecessaryShortcutWithLoop() {
-        // there should not be shortcuts where one of the skipped edges is a loop at the node to be contracted,
-        // see also #1583
-        BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
-        DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-        BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
-        // 0 - 1 - 2 - 3
-        // o           o
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 0).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 3).setDistance(1));
-
-        graph.freeze();
-        Weighting weighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
-        CHConfig chConfig = CHConfig.nodeBased("p1", weighting);
-        CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
-        setMaxLevelOnAllNodes(chStore);
-        NodeContractor nodeContractor = createNodeContractor(graph, chStore, chConfig);
-        nodeContractor.contractNode(0);
-        nodeContractor.contractNode(3);
-        checkNoShortcuts(chStore);
     }
 
     private void contractInOrder(int... nodeIds) {

@@ -8,6 +8,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
@@ -329,7 +330,6 @@ class CustomWeightingTest {
         return CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
     }
 
-
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(10);
@@ -415,7 +415,7 @@ class CustomWeightingTest {
     @Test
     public void calcWeightAndTime_withTurnCosts_shortest() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-        Weighting weighting = CustomModelParser.createShortestWeighting(accessEnc, avSpeedEnc, encodingManager,
+        Weighting weighting = new ShortestWeighting(accessEnc, avSpeedEnc,
                 new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()));
         GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(1, 2).setDistance(100));

@@ -326,46 +326,6 @@ public class QueryGraphTest {
     }
 
     @Test
-    public void testOneWayLoop_Issue162() {
-        // do query at x, where edge is oneway
-        //
-        // |\
-        // | x
-        // 0<-\
-        // |
-        // 1        
-        NodeAccess na = g.getNodeAccess();
-        na.setNode(0, 0, 0);
-        na.setNode(1, 0, -0.001);
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(0, 1).setDistance(10));
-        BooleanEncodedValue accessEnc = this.accessEnc;
-        DecimalEncodedValue avSpeedEnc = speedEnc;
-        // in the case of identical nodes the wayGeometry defines the direction!
-        EdgeIteratorState edge = g.edge(0, 0).
-                setDistance(100).
-                set(accessEnc, true, false).set(avSpeedEnc, 20.0).
-                setWayGeometry(Helper.createPointList(0.001, 0, 0, 0.001));
-
-        Snap snap = new Snap(0.0011, 0.0009);
-        snap.setClosestEdge(edge);
-        snap.setWayIndex(1);
-        snap.calcSnappedPoint(new DistanceCalcEuclidean());
-
-        QueryGraph qg = lookup(snap);
-        EdgeExplorer ee = qg.createEdgeExplorer();
-        assertTrue(snap.getClosestNode() > 1);
-        assertEquals(2, GHUtility.count(ee.setBaseNode(snap.getClosestNode())));
-        EdgeIterator iter = ee.setBaseNode(snap.getClosestNode());
-        iter.next();
-        assertTrue(iter.get(accessEnc), iter.toString());
-        assertFalse(iter.getReverse(accessEnc), iter.toString());
-
-        iter.next();
-        assertFalse(iter.get(accessEnc), iter.toString());
-        assertTrue(iter.getReverse(accessEnc), iter.toString());
-    }
-
-    @Test
     public void testEdgesShareOneNode() {
         initGraph(g);
 

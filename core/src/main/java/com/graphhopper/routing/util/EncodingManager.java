@@ -168,7 +168,8 @@ public class EncodingManager implements EncodedValueLookup {
                     RoadClassLink.KEY,
                     RoadEnvironment.KEY,
                     MaxSpeed.KEY,
-                    RoadAccess.KEY
+                    RoadAccess.KEY,
+                    FerrySpeed.KEY
             ));
             if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("bike") || vehicle.contains("mtb") || vehicle.contains("racingbike"))) {
                 keys.add(BikeNetwork.KEY);

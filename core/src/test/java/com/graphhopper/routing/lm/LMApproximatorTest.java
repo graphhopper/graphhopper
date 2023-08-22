@@ -54,7 +54,7 @@ public class LMApproximatorTest {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
 
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, true, accessEnc, speedEnc, null, 0.7, 0.8, 0.8);
+        GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, accessEnc, speedEnc, null, 0.8, 0.8);
 
         Weighting weighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
 

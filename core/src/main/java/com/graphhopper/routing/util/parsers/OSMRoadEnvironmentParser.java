@@ -21,6 +21,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Collections;
@@ -40,9 +41,7 @@ public class OSMRoadEnvironmentParser implements TagParser {
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         RoadEnvironment roadEnvironment = OTHER;
-        if ((readerWay.hasTag("route", "ferry") && !readerWay.hasTag("ferry", "no")) ||
-                // TODO shuttle_train is sometimes also used in relations, e.g. https://www.openstreetmap.org/relation/1932780
-                readerWay.hasTag("route", "shuttle_train") && !readerWay.hasTag("shuttle_train", "no"))
+        if (FerrySpeedCalculator.isFerry(readerWay))
             roadEnvironment = FERRY;
         else if (readerWay.hasTag("bridge") && !readerWay.hasTag("bridge", "no"))
             roadEnvironment = BRIDGE;

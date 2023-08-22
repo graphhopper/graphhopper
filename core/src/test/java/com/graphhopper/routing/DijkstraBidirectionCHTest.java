@@ -25,9 +25,9 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
-import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
@@ -74,7 +74,7 @@ public class DijkstraBidirectionCHTest {
         RoutingAlgorithmTest.initDirectedAndDiffSpeed(graph, carAccessEnc, carSpeedEnc);
 
         // do CH preparation for car
-        CustomWeighting weighting = CustomModelParser.createShortestWeighting(carAccessEnc, carSpeedEnc, encodingManager);
+        Weighting weighting = new ShortestWeighting(carAccessEnc, carSpeedEnc);
         prepareCH(graph, CHConfig.nodeBased(weighting.getName(), weighting));
 
         // use base graph for solving normal Dijkstra
@@ -146,7 +146,7 @@ public class DijkstraBidirectionCHTest {
         GHUtility.setSpeed(60, true, false, carAccessEnc, carSpeedEnc, graph.edge(3, 9).setDistance(200));
         graph.freeze();
 
-        Weighting weighting = CustomModelParser.createShortestWeighting(carAccessEnc, carSpeedEnc, encodingManager);
+        Weighting weighting = new ShortestWeighting(carAccessEnc, carSpeedEnc);
         CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);
         CHStorage store = CHStorage.fromGraph(graph, chConfig);
 
