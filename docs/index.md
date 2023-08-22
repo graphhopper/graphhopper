@@ -67,6 +67,7 @@ Various topics are explained in more detail separately:
 
  * [Add GraphHopper Maps to your Browser](./web/open-search.md): Instructions how to setup GraphHopper as the standard search engine in your browser.
  * [Embed GraphHopper on your website](https://github.com/karussell/graphhopper-embed-form): A small code snippet on how to integrate GraphHopper Maps in your web site like a contact form
+ * [GraphHopper Repository Map](https://sourcespy.com/github/graphhoppergraphhopper/): A collection of diagrams covering implementation details such as modules, dependencies, class hierarchies and others. 
 
 #### Android & iOS
 
