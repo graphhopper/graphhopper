@@ -112,9 +112,9 @@ public class LandmarkStorage {
         // allowing arbitrary weighting is too dangerous
         this.lmSelectionWeighting = new AbstractAdjustedWeighting(weighting) {
             @Override
-            public double calcEdgeWeight(EdgeIteratorState edge, boolean reverse) {
+            public double calcEdgeWeightWithAccess(EdgeIteratorState edge, boolean reverse) {
                 // make accessibility of shortest identical to the provided weighting to avoid problems like shown in testWeightingConsistence
-                double res = weighting.calcEdgeWeight(edge, reverse);
+                double res = weighting.calcEdgeWeightWithAccess(edge, reverse);
                 if (res >= Double.MAX_VALUE)
                     return Double.POSITIVE_INFINITY;
 

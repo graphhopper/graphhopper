@@ -44,8 +44,8 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
     }
 
     @Override
-    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        return superWeighting.calcEdgeWeight(edgeState, reverse);
+    public double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse) {
+        return superWeighting.calcEdgeWeightWithAccess(edgeState, reverse);
     }
 
     @Override

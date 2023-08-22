@@ -52,8 +52,8 @@ public class QueryGraphWeighting implements Weighting {
     }
 
     @Override
-    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        return weighting.calcEdgeWeight(edgeState, reverse);
+    public double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse) {
+        return weighting.calcEdgeWeightWithAccess(edgeState, reverse);
     }
 
     @Override

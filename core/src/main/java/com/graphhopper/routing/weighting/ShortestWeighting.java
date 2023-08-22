@@ -45,7 +45,9 @@ public class ShortestWeighting extends AbstractWeighting {
     }
 
     @Override
-    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+    public double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse) {
+        if (edgeHasNoAccess(edgeState, reverse))
+            return Double.POSITIVE_INFINITY;
         return edgeState.getDistance();
     }
 
