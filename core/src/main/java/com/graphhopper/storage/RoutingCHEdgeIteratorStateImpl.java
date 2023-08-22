@@ -119,24 +119,12 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
         if (isShortcut()) {
             return store.getWeight(shortcutPointer);
         } else {
-            return getOrigEdgeWeight(reverse, true);
+            return getOrigEdgeWeight(reverse);
         }
     }
 
-    /**
-     * @param needWeight if false this method will return as soon as its clear that the weight is finite (no need to
-     *                   do the full computation)
-     */
-    double getOrigEdgeWeight(boolean reverse, boolean needWeight) {
-        // todo: for #1835 move the access check into the weighting
-        final EdgeIteratorState baseEdge = getBaseGraphEdgeState();
-        if (baseEdge.getBaseNode() == baseEdge.getAdjNode())
-            throw new IllegalStateException("Unexpected loop-edge at node: " + baseEdge.getBaseNode());
-        if (weighting.edgeHasNoAccess(baseEdge, reverse))
-            return Double.POSITIVE_INFINITY;
-        if (!needWeight)
-            return 0;
-        return weighting.calcEdgeWeight(baseEdge, reverse);
+    double getOrigEdgeWeight(boolean reverse) {
+        return weighting.calcEdgeWeight(getBaseGraphEdgeState(), reverse);
     }
 
     private EdgeIteratorState getBaseGraphEdgeState() {
