@@ -90,7 +90,7 @@ public class HeadingExample {
     static void with_heading_start_stop_lower_penalty(GraphHopper hopper) {
         GHRequest request = new GHRequest(new GHPoint(42.566757, 1.597751), new GHPoint(42.567396, 1.597807)).
                 setHeadings(Arrays.asList(270d, 180d)).
-                setCustomModel(new CustomModel().setHeadingPenalty(10)).
+                putHint(Parameters.Routing.HEADING_PENALTY, 0).
                 putHint(Parameters.CH.DISABLE, true).
                 setProfile("car");
         GHResponse response = hopper.route(request);
