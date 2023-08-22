@@ -269,7 +269,7 @@ public class LandmarkStorage {
         }
 
         EdgeFilter accessFilter = edge -> !edge.get(edgeInSubnetworkEnc) && !blockedEdges.contains(edge.getEdge());
-        EdgeFilter tarjanFilter = edge -> accessFilter.accept(edge) && Double.isFinite(weighting.calcEdgeWeightWithAccess(edge, false));
+        EdgeFilter tarjanFilter = edge -> accessFilter.accept(edge) && Double.isFinite(weighting.calcEdgeWeight(edge, false));
 
         StopWatch sw = new StopWatch().start();
         ConnectedComponents graphComponents = TarjanSCC.findComponents(graph, tarjanFilter, true);
@@ -802,7 +802,7 @@ public class LandmarkStorage {
         protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
             if (!accessFilter.accept(iter))
                 return Double.POSITIVE_INFINITY;
-            return GHUtility.calcWeightWithTurnWeightWithAccess(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
+            return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
         }
 
         int getFromCount() {

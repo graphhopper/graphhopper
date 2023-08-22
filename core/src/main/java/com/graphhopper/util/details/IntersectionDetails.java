@@ -22,7 +22,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
 
@@ -85,7 +84,7 @@ public class IntersectionDetails extends AbstractPathDetailsBuilder {
                 intersectionValues.in = edgeId(tmpEdge) == fromEdge;
                 intersectionValues.out = edgeId(tmpEdge) == edgeId(edge);
                 // The in edge is always false, this means that u-turns are not considered as possible turning option
-                intersectionValues.entry = !intersectionValues.in && Double.isFinite(weighting.calcEdgeWeightWithAccess(tmpEdge, false));
+                intersectionValues.entry = !intersectionValues.in && Double.isFinite(weighting.calcEdgeWeight(tmpEdge, false));
 
                 intersectingEdges.add(intersectionValues);
             }
