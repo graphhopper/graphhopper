@@ -112,9 +112,9 @@ public class LandmarkStorage {
         // allowing arbitrary weighting is too dangerous
         this.lmSelectionWeighting = new AbstractAdjustedWeighting(weighting) {
             @Override
-            public double calcEdgeWeightWithAccess(EdgeIteratorState edge, boolean reverse) {
+            public double calcEdgeWeight(EdgeIteratorState edge, boolean reverse) {
                 // make accessibility of shortest identical to the provided weighting to avoid problems like shown in testWeightingConsistence
-                double res = weighting.calcEdgeWeightWithAccess(edge, reverse);
+                double res = weighting.calcEdgeWeight(edge, reverse);
                 if (res >= Double.MAX_VALUE)
                     return Double.POSITIVE_INFINITY;
 
@@ -269,7 +269,7 @@ public class LandmarkStorage {
         }
 
         EdgeFilter accessFilter = edge -> !edge.get(edgeInSubnetworkEnc) && !blockedEdges.contains(edge.getEdge());
-        EdgeFilter tarjanFilter = edge -> accessFilter.accept(edge) && Double.isFinite(weighting.calcEdgeWeightWithAccess(edge, false));
+        EdgeFilter tarjanFilter = edge -> accessFilter.accept(edge) && Double.isFinite(weighting.calcEdgeWeight(edge, false));
 
         StopWatch sw = new StopWatch().start();
         ConnectedComponents graphComponents = TarjanSCC.findComponents(graph, tarjanFilter, true);
@@ -802,7 +802,7 @@ public class LandmarkStorage {
         protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
             if (!accessFilter.accept(iter))
                 return Double.POSITIVE_INFINITY;
-            return GHUtility.calcWeightWithTurnWeightWithAccess(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
+            return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
         }
 
         int getFromCount() {

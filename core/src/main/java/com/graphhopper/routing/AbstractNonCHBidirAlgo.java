@@ -183,7 +183,7 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
 
             if (updateBestPath) {
                 // only needed for edge-based -> skip the calculation and use dummy value otherwise
-                double edgeWeight = traversalMode.isEdgeBased() ? weighting.calcEdgeWeightWithAccess(iter, reverse) : Double.POSITIVE_INFINITY;
+                double edgeWeight = traversalMode.isEdgeBased() ? weighting.calcEdgeWeight(iter, reverse) : Double.POSITIVE_INFINITY;
                 // todo: performance - if bestWeightMapOther.get(traversalId) == null, updateBestPath will exit early and we might
                 // have calculated the edgeWeight unnecessarily
                 updateBestPath(edgeWeight, entry, EdgeIterator.NO_EDGE, traversalId, reverse);
@@ -194,12 +194,12 @@ public abstract class AbstractNonCHBidirAlgo extends AbstractBidirAlgo implement
     protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
         // note that for node-based routing the weights will be wrong in case the weighting is returning non-zero
         // turn weights, see discussion in #1960
-        return GHUtility.calcWeightWithTurnWeightWithAccess(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
+        return GHUtility.calcWeightWithTurnWeight(weighting, iter, reverse, currEdge.edge) + currEdge.getWeightOfVisitedPath();
     }
 
     @Override
     protected double getInEdgeWeight(SPTEntry entry) {
-        return weighting.calcEdgeWeightWithAccess(graph.getEdgeIteratorState(entry.edge, entry.adjNode), false);
+        return weighting.calcEdgeWeight(graph.getEdgeIteratorState(entry.edge, entry.adjNode), false);
     }
 
     @Override

@@ -212,8 +212,8 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         }
 
         @Override
-        public double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse) {
-            double baseWeight = baseWeighting.calcEdgeWeightWithAccess(edgeState, reverse);
+        public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+            double baseWeight = baseWeighting.calcEdgeWeight(edgeState, reverse);
             if (Double.isInfinite(baseWeight)) {
                 // we are not touching this, might happen when speed is 0 ?
                 return baseWeight;

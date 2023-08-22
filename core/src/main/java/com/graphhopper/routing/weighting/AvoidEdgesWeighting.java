@@ -47,8 +47,8 @@ public class AvoidEdgesWeighting extends AbstractAdjustedWeighting {
     }
 
     @Override
-    public double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse) {
-        double weight = superWeighting.calcEdgeWeightWithAccess(edgeState, reverse);
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        double weight = superWeighting.calcEdgeWeight(edgeState, reverse);
         if (avoidedEdges.contains(edgeState.getEdge()))
             return weight * edgePenaltyFactor;
 

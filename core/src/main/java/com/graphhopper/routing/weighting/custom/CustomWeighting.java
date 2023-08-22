@@ -104,7 +104,7 @@ public final class CustomWeighting extends AbstractWeighting {
     }
 
     @Override
-    public double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse) {
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         final double distance = edgeState.getDistance();
         double seconds = calcSeconds(distance, edgeState, reverse);
         if (Double.isInfinite(seconds)) return Double.POSITIVE_INFINITY;

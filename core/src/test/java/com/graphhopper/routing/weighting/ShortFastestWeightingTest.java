@@ -45,11 +45,11 @@ public class ShortFastestWeightingTest {
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(10);
         GHUtility.setSpeed(50, 0, accessEnc, speedEnc, edge);
         Weighting instance = new ShortFastestWeighting(accessEnc, speedEnc, null, new PMap("short_fastest.distance_factor=0.03"), TurnCostProvider.NO_TURN_COST_PROVIDER);
-        assertEquals(1.02, instance.calcEdgeWeightWithAccess(edge, false), 1e-6);
+        assertEquals(1.02, instance.calcEdgeWeight(edge, false), 1e-6);
 
         // more influence from distance
         instance = new ShortFastestWeighting(accessEnc, speedEnc, null, new PMap("short_fastest.distance_factor=0.1"), TurnCostProvider.NO_TURN_COST_PROVIDER);
-        assertEquals(1.72, instance.calcEdgeWeightWithAccess(edge, false), 1e-6);
+        assertEquals(1.72, instance.calcEdgeWeight(edge, false), 1e-6);
     }
 
     @Test

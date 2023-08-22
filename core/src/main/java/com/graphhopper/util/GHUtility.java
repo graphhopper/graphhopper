@@ -557,14 +557,14 @@ public class GHUtility {
     }
 
     /**
-     * Calculates the weight of a given edge like {@link Weighting#calcEdgeWeightWithAccess} and adds the transition
+     * Calculates the weight of a given edge like {@link Weighting#calcEdgeWeight} and adds the transition
      * cost (the turn weight, {@link Weighting#calcTurnWeight}) associated with transitioning from/to the edge with ID prevOrNextEdgeId.
      *
      * @param prevOrNextEdgeId if reverse is false this has to be the previous edgeId, if true it
      *                         has to be the next edgeId in the direction from start to end.
      */
-    public static double calcWeightWithTurnWeightWithAccess(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        final double edgeWeight = weighting.calcEdgeWeightWithAccess(edgeState, reverse);
+    public static double calcWeightWithTurnWeight(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        final double edgeWeight = weighting.calcEdgeWeight(edgeState, reverse);
         if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
             return edgeWeight;
         }
@@ -575,7 +575,7 @@ public class GHUtility {
     }
 
     /**
-     * @see #calcWeightWithTurnWeightWithAccess(Weighting, EdgeIteratorState, boolean, int)
+     * @see #calcWeightWithTurnWeight(Weighting, EdgeIteratorState, boolean, int)
      */
     public static long calcMillisWithTurnMillis(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         long edgeMillis = weighting.calcEdgeMillis(edgeState, reverse);

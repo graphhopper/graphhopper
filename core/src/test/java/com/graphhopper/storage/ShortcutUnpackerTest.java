@@ -359,7 +359,7 @@ public class ShortcutUnpackerTest {
             edgeIds.add(edge.getEdge());
             baseNodes.add(edge.getBaseNode());
             adjNodes.add(edge.getAdjNode());
-            weights.add(GHUtility.calcWeightWithTurnWeightWithAccess(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId));
+            weights.add(GHUtility.calcWeightWithTurnWeight(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId));
             distances.add(edge.getDistance());
             times.add(GHUtility.calcMillisWithTurnMillis(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId));
             prevOrNextEdgeIds.add(prevOrNextEdgeId);
@@ -378,7 +378,7 @@ public class ShortcutUnpackerTest {
         @Override
         public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
             time += GHUtility.calcMillisWithTurnMillis(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId);
-            weight += GHUtility.calcWeightWithTurnWeightWithAccess(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId);
+            weight += GHUtility.calcWeightWithTurnWeight(routingCHGraph.getWeighting(), edge, reverse, prevOrNextEdgeId);
         }
     }
 }

@@ -111,7 +111,7 @@ public class LMApproximatorTest {
                     EdgeIterator neighbors = graph.createEdgeExplorer(AccessFilter.outEdges(accessEnc)).setBaseNode(v);
                     while (neighbors.next()) {
                         int w = neighbors.getAdjNode();
-                        double vw = weighting.calcEdgeWeightWithAccess(neighbors, false);
+                        double vw = weighting.calcEdgeWeight(neighbors, false);
                         double vwApprox = lmApproximator.approximate(v) - lmApproximator.approximate(w);
                         if (vwApprox - lm.getLandmarkStorage().getFactor() > vw) {
                             System.out.printf("%f\t%f\n", vwApprox - lm.getLandmarkStorage().getFactor(), vw);
@@ -122,7 +122,7 @@ public class LMApproximatorTest {
                     neighbors = graph.createEdgeExplorer(AccessFilter.outEdges(accessEnc)).setBaseNode(v);
                     while (neighbors.next()) {
                         int w = neighbors.getAdjNode();
-                        double vw = weighting.calcEdgeWeightWithAccess(neighbors, false);
+                        double vw = weighting.calcEdgeWeight(neighbors, false);
                         double vwApprox = balancedWeightApproximator.approximate(v, false) - balancedWeightApproximator.approximate(w, false);
                         if (vwApprox - lm.getLandmarkStorage().getFactor() > vw) {
                             System.out.printf("%f\t%f\n", vwApprox - lm.getLandmarkStorage().getFactor(), vw);

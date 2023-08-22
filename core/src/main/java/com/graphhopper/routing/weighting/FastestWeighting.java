@@ -80,7 +80,7 @@ public class FastestWeighting extends AbstractWeighting {
     }
 
     @Override
-    public double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse) {
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         if (edgeHasNoAccess(edgeState, reverse))
             return Double.POSITIVE_INFINITY;
         double speed = reverse ? edgeState.getReverse(speedEnc) : edgeState.get(speedEnc);

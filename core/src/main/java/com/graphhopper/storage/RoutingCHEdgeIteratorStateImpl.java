@@ -136,7 +136,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
             return Double.POSITIVE_INFINITY;
         if (!needWeight)
             return 0;
-        return weighting.calcEdgeWeightWithAccess(baseEdge, reverse);
+        return weighting.calcEdgeWeight(baseEdge, reverse);
     }
 
     private EdgeIteratorState getBaseGraphEdgeState() {

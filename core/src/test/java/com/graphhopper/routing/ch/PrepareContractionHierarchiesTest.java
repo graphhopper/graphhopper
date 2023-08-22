@@ -392,7 +392,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     private double getWeight(Graph graph, Weighting w, int from, int to, boolean incoming) {
-        return w.calcEdgeWeightWithAccess(getEdge(graph, from, to, false), incoming);
+        return w.calcEdgeWeight(getEdge(graph, from, to, false), incoming);
     }
 
     private EdgeIteratorState getEdge(Graph graph, int from, int to, boolean incoming) {

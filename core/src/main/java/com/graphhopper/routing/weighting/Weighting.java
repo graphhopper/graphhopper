@@ -53,7 +53,7 @@ public interface Weighting {
      * @return the calculated weight with the specified velocity has to be in the range of 0 and
      * +Infinity. Make sure your method does not return NaN which can e.g. occur for 0/0.
      */
-    double calcEdgeWeightWithAccess(EdgeIteratorState edgeState, boolean reverse);
+    double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
 
     /**
      * This method calculates the time taken (in milliseconds) to travel along the specified edgeState.
