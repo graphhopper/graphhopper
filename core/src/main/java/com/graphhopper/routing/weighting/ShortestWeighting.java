@@ -62,7 +62,6 @@ public class ShortestWeighting implements Weighting {
 
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        if (edgeState.getBaseNode() == edgeState.getAdjNode()) reverse = false;
         double speed = reverse ? edgeState.getReverse(speedEnc) : edgeState.get(speedEnc);
         return Math.round(edgeState.getDistance() / speed * 3.6 * 1000);
     }
