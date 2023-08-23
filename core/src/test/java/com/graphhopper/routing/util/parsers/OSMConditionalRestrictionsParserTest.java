@@ -25,7 +25,6 @@ class OSMConditionalRestrictionsParserTest {
         assertEquals(CarAccessConditional.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
 
         ReaderWay way = new ReaderWay(0L);
-        way.clearTags();
         way.setTag("highway", "road");
         way.setTag("access:conditional", "no @ (" + today + ")");
         parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
@@ -60,5 +59,22 @@ class OSMConditionalRestrictionsParserTest {
         way.setTag("access:conditional", "yes @ Apr-Nov");
         parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
         assertEquals(CarAccessConditional.YES, restricted.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    public void testTaggingMistake() {
+        ArrayEdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("highway", "road");
+        // ignore incomplete values
+        way.setTag("access:conditional", "no @ 2023 Mar-Oct");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
+        assertEquals(CarAccessConditional.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
+
+        // here the "1" will be interpreted as year -> incorrect range
+        way.setTag("access:conditional", "no @ 1 Nov - 1 Mar");
+        parser.handleWayTags(edgeId, edgeIntAccess, way, IntsRef.EMPTY);
+        assertEquals(CarAccessConditional.MISSING, restricted.getEnum(false, edgeId, edgeIntAccess));
     }
 }

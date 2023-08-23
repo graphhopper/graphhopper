@@ -122,7 +122,11 @@ public class DateRangeParser implements ConditionalValueParser {
             // to = new ParsedCalendar(from.parseType, (Calendar) from.parsedCalendar.clone());
             to = parseDateString(dateArr[0]);
 
-        return new DateRange(from, to);
+        try {
+            return new DateRange(from, to);
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     @Override
