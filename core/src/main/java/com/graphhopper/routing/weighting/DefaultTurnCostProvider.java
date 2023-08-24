@@ -61,15 +61,17 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         if (!EdgeIterator.Edge.isValid(edgeFrom) || !EdgeIterator.Edge.isValid(edgeTo)) {
             return 0;
         }
-        double tCost = 0;
+        double turnCost = turnCostStorage.get(turnCostEnc, edgeFrom, nodeVia, edgeTo);
         if (edgeFrom == edgeTo) {
-            // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
-            tCost = uTurnCosts;
-        } else {
-            if (turnCostEnc != null)
-                tCost = turnCostStorage.get(turnCostEnc, edgeFrom, nodeVia, edgeTo);
-        }
-        return tCost;
+            // another hack needed for prepare subnetworks
+            if (uTurnCosts == 0)
+                return 0;
+            // Only u-turns for which we set a cost explicitly are allowed.
+            // Note that we ignore the set cost and only abuse it to mark allowed u-turns
+            // ... which is a total hack and means we cannot explicitly deny a u-turn...
+            return turnCost > 0 ? uTurnCosts : Double.POSITIVE_INFINITY;
+        } else
+            return turnCost;
     }
 
     @Override

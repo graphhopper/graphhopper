@@ -1398,12 +1398,47 @@ public class GraphHopper {
      * Internal method to clean up the graph.
      */
     protected void cleanUp() {
+        // find dead-ends and make sure u-turns are allowed there
+        for (Profile profile : profilesByName.values()) {
+            if (profile.isTurnCosts()) {
+                DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(profile.getVehicle()));
+                Weighting weighting = createWeighting(profile, new PMap().putObject(Parameters.Routing.U_TURN_COSTS, 0));
+                allowUTurnsAtDeadEnds(weighting, turnCostEnc);
+            }
+        }
+
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(baseGraph.getBaseGraph(), buildSubnetworkRemovalJobs());
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.setThreads(subnetworksThreads);
         preparation.doWork();
         properties.put("profiles", getProfilesString());
         logger.info("nodes: " + Helper.nf(baseGraph.getNodes()) + ", edges: " + Helper.nf(baseGraph.getEdges()));
+    }
+
+    private void allowUTurnsAtDeadEnds(Weighting weighting, DecimalEncodedValue turnCostEnc) {
+        EdgeExplorer inExplorer = baseGraph.createEdgeExplorer();
+        EdgeExplorer outExplorer = baseGraph.createEdgeExplorer();
+        for (int node = 0; node < baseGraph.getNodes(); node++) {
+            EdgeIterator fromEdge = inExplorer.setBaseNode(node);
+            OUTER:
+            while (fromEdge.next()) {
+                if (Double.isFinite(weighting.calcEdgeWeight(fromEdge, true))) {
+                    EdgeIterator toEdge = outExplorer.setBaseNode(node);
+                    while (toEdge.next()) {
+                        if (toEdge.getEdge() != fromEdge.getEdge() && Double.isFinite(GHUtility.calcWeightWithTurnWeight(weighting, toEdge, false, fromEdge.getEdge())))
+                            continue OUTER;
+                    }
+                    // the only way to continue from fromEdge is a u-turn. this is a dead-end and we
+                    // must allow the u-turn
+                    setUTurnAllowed(baseGraph, turnCostEnc, fromEdge.getEdge(), node);
+                }
+            }
+        }
+    }
+
+    private void setUTurnAllowed(BaseGraph baseGraph, DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode) {
+        // total hack: We use cost='infinity' to mark the u-turns that are **allowed**, see DefaultTurnCostProvider
+        baseGraph.getTurnCostStorage().set(turnCostEnc, fromEdge, viaNode, fromEdge, Double.POSITIVE_INFINITY);
     }
 
     private List<PrepareJob> buildSubnetworkRemovalJobs() {
