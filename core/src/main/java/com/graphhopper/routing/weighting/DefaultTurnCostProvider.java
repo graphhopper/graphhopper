@@ -63,7 +63,8 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         }
         double turnCost = turnCostStorage.get(turnCostEnc, edgeFrom, nodeVia, edgeTo);
         if (edgeFrom == edgeTo) {
-            // another hack needed for prepare subnetworks
+            // another hack needed because we are using the turn cost provider already before we set
+            // the allowed-u-turn flags
             if (uTurnCosts == 0)
                 return 0;
             // Only u-turns for which we set a cost explicitly are allowed.
