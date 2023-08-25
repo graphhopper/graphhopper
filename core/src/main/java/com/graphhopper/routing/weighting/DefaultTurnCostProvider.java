@@ -29,16 +29,21 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
     private final TurnCostStorage turnCostStorage;
     private final int uTurnCostsInt;
     private final double uTurnCosts;
+    private final boolean storedUTurnCostsAreDeadEndFlags;
 
     public DefaultTurnCostProvider(DecimalEncodedValue turnCostEnc, TurnCostStorage turnCostStorage) {
         this(turnCostEnc, turnCostStorage, Weighting.INFINITE_U_TURN_COSTS);
+    }
+
+    public DefaultTurnCostProvider(DecimalEncodedValue turnCostEnc, TurnCostStorage turnCostStorage, int uTurnCosts) {
+        this(turnCostEnc, turnCostStorage, uTurnCosts, false);
     }
 
     /**
      * @param uTurnCosts the costs of a u-turn in seconds, for {@link Weighting#INFINITE_U_TURN_COSTS} the u-turn costs
      *                   will be infinite
      */
-    public DefaultTurnCostProvider(DecimalEncodedValue turnCostEnc, TurnCostStorage turnCostStorage, int uTurnCosts) {
+    public DefaultTurnCostProvider(DecimalEncodedValue turnCostEnc, TurnCostStorage turnCostStorage, int uTurnCosts, boolean storedUTurnCostsAreDeadEndFlags) {
         if (uTurnCosts < 0 && uTurnCosts != INFINITE_U_TURN_COSTS) {
             throw new IllegalArgumentException("u-turn costs must be positive, or equal to " + INFINITE_U_TURN_COSTS + " (=infinite costs)");
         }
@@ -50,6 +55,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         // if null the TurnCostProvider can be still useful for edge-based routing
         this.turnCostEnc = turnCostEnc;
         this.turnCostStorage = turnCostStorage;
+        this.storedUTurnCostsAreDeadEndFlags = storedUTurnCostsAreDeadEndFlags;
     }
 
     public DecimalEncodedValue getTurnCostEnc() {
@@ -63,14 +69,14 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         }
         double turnCost = turnCostStorage.get(turnCostEnc, edgeFrom, nodeVia, edgeTo);
         if (edgeFrom == edgeTo) {
-            // another hack needed because we are using the turn cost provider already before we set
-            // the allowed-u-turn flags
-            if (uTurnCosts == 0)
-                return 0;
-            // Only u-turns for which we set a cost explicitly are allowed.
-            // Note that we ignore the set cost and only abuse it to mark allowed u-turns
-            // ... which is a total hack and means we cannot explicitly deny a u-turn...
-            return turnCost > 0 ? uTurnCosts : Double.POSITIVE_INFINITY;
+            if (storedUTurnCostsAreDeadEndFlags)
+                // If edgeFrom==edgeTo we use the 'turn costs' to mark dead-end roads as the only
+                // places where u-turns are allowed.
+                return turnCost > 0 ? uTurnCosts : Double.POSITIVE_INFINITY;
+            else
+                // Note that the u-turn costs overwrite any turn costs set in TurnCostStorage which
+                // means we cannot explicitly deny a single u-turn.
+                return uTurnCosts;
         } else
             return turnCost;
     }
