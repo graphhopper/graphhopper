@@ -25,14 +25,8 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
 /**
- * A key/value store, where the unique keys are turn cost relations, and the values are IntRefs.
- * A turn cost relation is a triple (fromEdge, viaNode, toEdge),
- * and refers to one of the possible ways of crossing an intersection.
- * <p>
- * Like IntRefs on edges, this can in principle be used to store values of any kind.
- * <p>
- * In practice, the IntRefs are used to store generalized travel costs per turn cost relation per vehicle type.
- * In practice, we only store 0 or infinity. (Can turn, or cannot turn.)
+ * A key/value store, where the unique keys are triples (fromEdge, viaNode, toEdge) and the values
+ * are integers that can be used to store encoded values.
  *
  * @author Karl Hübner
  * @author Peter Karich
@@ -90,15 +84,15 @@ public class TurnCostStorage {
 
     /**
      * Sets the turn cost at the viaNode when going from "fromEdge" to "toEdge"
-     * WARNING: It is tacitly assumed that for every encoder, this method is only called once per turn cost relation.
-     * Subsequent calls for the same encoder and the same turn cost relation will have undefined results.
-     * (The implementation below ORs the new bits into the existing bits.)
      */
     public void set(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge, double cost) {
-        EdgeIntAccessImpl intAccess = new EdgeIntAccessImpl();
-        turnCostEnc.setDecimal(false, -1, intAccess, cost);
-        int newFlags = intAccess.getVal();
+        long pointer = findOrCreateTurnCostEntry(fromEdge, viaNode, toEdge);
+        if (pointer < 0)
+            throw new IllegalStateException("Invalid pointer: " + pointer + " at (" + fromEdge + ", " + viaNode + ", " + toEdge + ")");
+        turnCostEnc.setDecimal(false, -1, createIntAccess(pointer), cost);
+    }
 
+    private long findOrCreateTurnCostEntry(int fromEdge, int viaNode, int toEdge) {
         long pointer = findPointer(fromEdge, viaNode, toEdge);
         if (pointer < 0) {
             // create a new entry
@@ -110,54 +104,31 @@ public class TurnCostStorage {
             turnCosts.setInt(pointer + TC_TO, toEdge);
             turnCosts.setInt(pointer + TC_NEXT, prevIndex);
             turnCostsCount++;
-        } else {
-            newFlags = turnCosts.getInt(pointer + TC_FLAGS) | newFlags;
         }
-        turnCosts.setInt(pointer + TC_FLAGS, newFlags);
+        return pointer;
     }
 
     /**
      * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
      */
     public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
-        int val = readFlagsInt(fromEdge, viaNode, toEdge);
-        return turnCostEnc.getDecimal(false, -1, new EdgeIntAccessImpl(val));
+        return turnCostEnc.getDecimal(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
     }
 
-    private static class EdgeIntAccessImpl implements EdgeIntAccess {
+    private EdgeIntAccess createIntAccess(long pointer) {
+        return new EdgeIntAccess() {
+            @Override
+            public int getInt(int edgeId, int index) {
+                return pointer < 0 ? 0 : turnCosts.getInt(pointer + TC_FLAGS);
+            }
 
-        private int val;
-
-        EdgeIntAccessImpl() {
-        }
-
-        EdgeIntAccessImpl(int val) {
-            this.val = val;
-        }
-
-        @Override
-        public int getInt(int edgeId, int index) {
-            return val;
-        }
-
-        @Override
-        public void setInt(int edgeId, int index, int value) {
-            if (index > 0)
-                throw new IllegalArgumentException("TurnCostStorage: more than 1 int not supported");
-            this.val = value;
-        }
-
-        public int getVal() {
-            return val;
-        }
-    }
-
-    /**
-     * @return turn cost flags of the specified triple "from edge", "via node" and "to edge"
-     */
-    private int readFlagsInt(int fromEdge, int viaNode, int toEdge) {
-        long pointer = findPointer(fromEdge, viaNode, toEdge);
-        return pointer < 0 ? 0 : turnCosts.getInt(pointer + TC_FLAGS);
+            @Override
+            public void setInt(int edgeId, int index, int value) {
+                if (pointer < 0)
+                    throw new IllegalStateException("pointer must not be negative: " + pointer);
+                turnCosts.setInt(pointer + TC_FLAGS, value);
+            }
+        };
     }
 
     private void ensureTurnCostIndex(int nodeIndex) {

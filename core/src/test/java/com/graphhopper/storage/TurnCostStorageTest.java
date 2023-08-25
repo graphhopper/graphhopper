@@ -169,8 +169,7 @@ public class TurnCostStorageTest {
         turnCostStorage.set(carEnc, edge32, 2, edge20, 0);
         turnCostStorage.set(carEnc, edge32, 2, edge20, Double.POSITIVE_INFINITY);
         turnCostStorage.set(carEnc, edge32, 2, edge20, 0);
-        // yes, it should be 0, not infinity, but this is a current limitation (we or together the flags)
-        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge32, 2, edge20));
+        assertEquals(0, turnCostStorage.get(carEnc, edge32, 2, edge20));
     }
 
     @Test
