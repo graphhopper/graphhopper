@@ -8,7 +8,6 @@ import java.io.File;
 
 public class RoutingExampleTest {
 
-    @Disabled("todonow")
     @Test
     public void main() {
         Helper.removeDir(new File("target/routing-graph-cache"));
