@@ -121,17 +121,22 @@ public class GraphHopperManaged implements Managed {
                             throw new IllegalArgumentException("Use custom_models.directory for the custom_model_files parent");
                         if (!file.endsWith(".json"))
                             throw new IllegalArgumentException("Yaml is no longer supported, see #2672. Use JSON with optional comments //");
+
                         try {
-                            // dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
                             String string;
-                            if (customModelFolder.isEmpty())
-                                string = Helper.readJSONFileWithoutComments(new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/custom_models/" + file)));
-                            else
+                            // 1. try to load custom model from jar
+                            InputStream is = GHUtility.class.getResourceAsStream("/com/graphhopper/custom_models/" + file);
+                            if (is != null) {
+                                string = Helper.readJSONFileWithoutComments(new InputStreamReader(is));
+                            } else {
+                                // 2. try to load custom model file from external location
+                                // dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
                                 string = Helper.readJSONFileWithoutComments(Paths.get(customModelFolder).
                                         resolve(file).toFile().getAbsolutePath());
+                            }
                             customModel = CustomModel.merge(customModel, jsonOM.readValue(string, CustomModel.class));
-                        } catch (Exception ex) {
-                            throw new RuntimeException("Cannot load custom_model from location " + file + " for profile " + profile.getName(), ex);
+                        } catch (IOException ex) {
+                            throw new RuntimeException("Cannot load custom_model from location " + file + ", profile:" + profile.getName(), ex);
                         }
                     }
 
