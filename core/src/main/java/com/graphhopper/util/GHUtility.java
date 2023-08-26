@@ -161,8 +161,9 @@ public class GHUtility {
     }
 
     public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
-        printGraphForUnitTest(g, accessEnc, speedEnc, new BBox(
-                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
+        // todonow
+//        printGraphForUnitTest(g, accessEnc, speedEnc, new BBox(
+//                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
     }
 
     public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, BBox bBox) {
@@ -190,11 +191,17 @@ public class GHUtility {
         }
         int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
         int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
-        if (speedEnc != null) {
+        if (speedEnc != null && accessEnc != null) {
             System.out.printf(Locale.ROOT,
                     "GHUtility.setSpeed(%f, %f, encoder, graph.edge(%d, %d).setDistance(%f)); // edgeId=%s\n",
                     fwd ? edge.get(speedEnc) : 0, bwd ? edge.getReverse(speedEnc) : 0,
                     from, to, edge.getDistance(), edge.getEdge());
+        } else if (speedEnc != null) {
+            System.out.printf(Locale.ROOT,
+                    "graph.edge(%d, %d).setDistance(%f).set(speedEnc, %b, %b); // edgeId=%s\n",
+                    from, to, edge.getDistance(),
+                    fwd ? edge.get(speedEnc) : 0, bwd ? edge.getReverse(speedEnc) : 0,
+                    edge.getEdge());
         } else {
             System.out.printf(Locale.ROOT,
                     "graph.edge(%d, %d).setDistance(%f).set(accessEnc, %b, %b); // edgeId=%s\n",
@@ -237,8 +244,11 @@ public class GHUtility {
             maxDist = Math.max(maxDist, distance);
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
-            EdgeIteratorState edge = graph.edge(from, to).setDistance(distance).set(accessEnc, true);
-            if (bothDirections) edge.setReverse(accessEnc, true);
+            EdgeIteratorState edge = graph.edge(from, to).setDistance(distance);
+            if (accessEnc != null) {
+                edge.set(accessEnc, true);
+                if (bothDirections) edge.setReverse(accessEnc, true);
+            }
             double fwdSpeed = 10 + random.nextDouble() * 110;
             double bwdSpeed = 10 + random.nextDouble() * 110;
             // if an explicit speed is given we discard the random speeds and use the given one instead
@@ -249,6 +259,10 @@ public class GHUtility {
                 edge.set(speedEnc, fwdSpeed);
                 if (speedEnc.isStoreTwoDirections())
                     edge.setReverse(speedEnc, bwdSpeed);
+            }
+            if (accessEnc == null && speedEnc != null) {
+                if (!bothDirections)
+                    edge.setReverse(speedEnc, 0);
             }
             numEdges++;
         }
@@ -271,8 +285,8 @@ public class GHUtility {
         double pEdgePairHasTurnCosts = 0.6;
         double pCostIsRestriction = 0.1;
 
-        EdgeExplorer inExplorer = graph.createEdgeExplorer(AccessFilter.inEdges(accessEnc));
-        EdgeExplorer outExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(accessEnc));
+        EdgeExplorer inExplorer = graph.createEdgeExplorer(accessEnc == null ? edge -> true : AccessFilter.inEdges(accessEnc));
+        EdgeExplorer outExplorer = graph.createEdgeExplorer(accessEnc == null ? edge -> true : AccessFilter.outEdges(accessEnc));
         for (int node = 0; node < graph.getNodes(); ++node) {
             if (random.nextDouble() < pNodeHasTurnCosts) {
                 EdgeIterator inIter = inExplorer.setBaseNode(node);

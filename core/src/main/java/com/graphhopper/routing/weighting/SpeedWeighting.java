@@ -29,6 +29,10 @@ public class SpeedWeighting implements Weighting {
     private final TurnCostStorage turnCostStorage;
     private final double uTurnCosts;
 
+    public SpeedWeighting(DecimalEncodedValue speedEnc) {
+        this(speedEnc, null, null, 0);
+    }
+
     public SpeedWeighting(DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc, TurnCostStorage turnCostStorage, double uTurnCosts) {
         if (uTurnCosts < 0) throw new IllegalArgumentException("u-turn costs must be positive");
         this.speedEnc = speedEnc;
@@ -61,6 +65,7 @@ public class SpeedWeighting implements Weighting {
 
     @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+        if (turnCostEnc == null) return 0;
         if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge))
             return 0;
         if (inEdge == outEdge) return uTurnCosts;
@@ -74,7 +79,7 @@ public class SpeedWeighting implements Weighting {
 
     @Override
     public boolean hasTurnCosts() {
-        return true;
+        return turnCostEnc != null;
     }
 
     @Override

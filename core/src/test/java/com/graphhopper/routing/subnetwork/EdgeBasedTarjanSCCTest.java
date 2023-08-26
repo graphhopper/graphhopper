@@ -248,8 +248,7 @@ class EdgeBasedTarjanSCCTest {
     private void doImplicitVsExplicit(boolean excludeSingle) {
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(g, rnd, 500, 2, true,
-                accessEnc, null, 60d, 0.7, 0);
+        GHUtility.buildRandomGraph(g, rnd, 500, 2, true, accessEnc, null, 60d, 0.7, 0);
         ConnectedComponents implicit = EdgeBasedTarjanSCC.findComponentsRecursive(g, fwdAccessFilter, excludeSingle);
         ConnectedComponents explicit = EdgeBasedTarjanSCC.findComponents(g, fwdAccessFilter, excludeSingle);
         assertEquals(2 * g.getEdges(), implicit.getEdgeKeys(), "total number of edge keys in connected components should equal twice the number of edges in graph");

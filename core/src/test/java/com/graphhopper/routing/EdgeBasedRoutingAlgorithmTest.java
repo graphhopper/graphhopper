@@ -19,11 +19,12 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
@@ -53,7 +54,6 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class EdgeBasedRoutingAlgorithmTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedRoutingAlgorithmTest.class);
-    private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue speedEnc;
     private DecimalEncodedValue turnCostEnc;
     private TurnCostStorage tcs;
@@ -79,23 +79,22 @@ public class EdgeBasedRoutingAlgorithmTest {
     // |  |  |
     // 5--6--7
     private void initGraph(Graph graph) {
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(3));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 5).setDistance(0.5));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 7).setDistance(1));
+        graph.edge(0, 1).setDistance(3).set(speedEnc, 60, 60);
+        graph.edge(0, 2).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(1, 3).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(2, 5).setDistance(0.5).set(speedEnc, 60, 60);
+        graph.edge(3, 6).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(4, 7).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(6, 7).setDistance(1).set(speedEnc, 60, 60);
     }
 
     private EncodingManager createEncodingManager(boolean restrictedOnly) {
-        accessEnc = new SimpleBooleanEncodedValue("access", true);
-        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         turnCostEnc = TurnCost.create("car", restrictedOnly ? 1 : 3);
-        return EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+        return EncodingManager.start().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
     }
 
     public Path calcPath(Graph g, int from, int to, String algoStr) {
@@ -141,11 +140,11 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     private Weighting createWeighting() {
-        return createWeighting(Weighting.INFINITE_U_TURN_COSTS);
+        return createWeighting(Double.POSITIVE_INFINITY);
     }
 
-    private Weighting createWeighting(int uTurnCosts) {
-        return new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, tcs, uTurnCosts));
+    private Weighting createWeighting(double uTurnCosts) {
+        return new SpeedWeighting(speedEnc, turnCostEnc, tcs, uTurnCosts);
     }
 
     @ParameterizedTest
@@ -156,9 +155,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         Random rnd = new Random(seed);
         EncodingManager em = createEncodingManager(false);
         BaseGraph g = createStorage(em);
-        GHUtility.buildRandomGraph(g, rnd, 50, 2.2, true,
-                accessEnc, speedEnc, null, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(g, seed, accessEnc, turnCostEnc, 3, tcs);
+        GHUtility.buildRandomGraph(g, rnd, 50, 2.2, true, null, speedEnc, null, 0.8, 0.8);
+        GHUtility.addRandomTurnCosts(g, seed, null, turnCostEnc, 3, tcs);
         g.freeze();
         int numPathsNotFound = 0;
         // todo: reduce redundancy with RandomCHRoutingTest
@@ -226,10 +224,10 @@ public class EdgeBasedRoutingAlgorithmTest {
         BaseGraph graph = createStorage(createEncodingManager(false));
         final int distance = 100;
         final int turnCosts = 2;
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(distance));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(distance));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(distance));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(distance));
+        graph.edge(0, 1).setDistance(distance).set(speedEnc, 60, 60);
+        graph.edge(1, 2).setDistance(distance).set(speedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(distance).set(speedEnc, 60, 60);
+        graph.edge(3, 4).setDistance(distance).set(speedEnc, 60, 60);
         setTurnCost(graph, turnCosts, 1, 2, 3);
 
         {
@@ -330,11 +328,11 @@ public class EdgeBasedRoutingAlgorithmTest {
         //           |
         // 0 -> 1 -> 2 -> 4 -> 5
         BaseGraph g = createStorage(createEncodingManager(false));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(0, 1).setDistance(10));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(1, 2).setDistance(10));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(2, 3).setDistance(10));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(2, 4).setDistance(10));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, g.edge(4, 5).setDistance(10));
+        g.edge(0, 1).setDistance(10).set(speedEnc, 60, 0);
+        g.edge(1, 2).setDistance(10).set(speedEnc, 60, 0);
+        g.edge(2, 3).setDistance(10).set(speedEnc, 60, 60);
+        g.edge(2, 4).setDistance(10).set(speedEnc, 60, 0);
+        g.edge(4, 5).setDistance(10).set(speedEnc, 60, 0);
 
         // cannot go straight at node 2
         setTurnRestriction(g, 1, 2, 4);
@@ -384,7 +382,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         setTurnCost(g, 2, 5, 6, 3);
         setTurnCost(g, 1, 6, 7, 4);
 
-        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, tcs) {
+        SpeedWeighting weighting = new SpeedWeighting(speedEnc, turnCostEnc, tcs, Double.POSITIVE_INFINITY) {
             @Override
             public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
                 if (edgeFrom >= 0)
@@ -393,7 +391,7 @@ public class EdgeBasedRoutingAlgorithmTest {
                     assertNotNull(g.getEdgeIteratorState(edgeTo, nodeVia), "edge " + edgeTo + " to " + nodeVia + " does not exist");
                 return super.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
             }
-        });
+        };
         Path p = createAlgo(g, weighting, algoStr, EDGE_BASED).calcPath(5, 1);
         assertEquals(IntArrayList.from(5, 6, 7, 4, 3, 1), p.calcNodes());
         assertEquals(5 * 0.06 + 1, p.getWeight(), 1.e-6);

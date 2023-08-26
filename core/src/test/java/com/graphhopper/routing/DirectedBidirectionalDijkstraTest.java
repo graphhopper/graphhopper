@@ -374,8 +374,7 @@ public class DirectedBidirectionalDijkstraTest {
 
         Random rnd = new Random(seed);
         int numNodes = 100;
-        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.2, true,
-                accessEnc, speedEnc, null, 0.8, 0.8);
+        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.2, true, accessEnc, speedEnc, null, 0.8, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxTurnCosts, turnCostStorage);
 
         long numStrictViolations = 0;

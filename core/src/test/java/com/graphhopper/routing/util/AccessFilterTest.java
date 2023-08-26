@@ -20,20 +20,19 @@ package com.graphhopper.routing.util;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.routing.ch.PrepareEncoder;
-import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AccessFilterTest {
-    private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
     private final DecimalEncodedValue turnCostEnc = TurnCost.create("car", 1);
-    private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+    private final EncodingManager encodingManager = EncodingManager.start().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
     private final BaseGraph graph = new BaseGraph.Builder(encodingManager)
             .withTurnCosts(true)
             .create();
@@ -43,12 +42,12 @@ public class AccessFilterTest {
         // 0-1
         //  \|
         //   2
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(2));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 0).setDistance(3));
+        graph.edge(0, 1).setDistance(100).set(speedEnc, 60, 0);
+        graph.edge(1, 2).setDistance(200).set(speedEnc, 60, 0);
+        graph.edge(2, 0).setDistance(300).set(speedEnc, 60, 0);
         graph.freeze();
         // add loop shortcut in 'fwd' direction
-        CHConfig chConfig = CHConfig.edgeBased("profile", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage())));
+        CHConfig chConfig = CHConfig.edgeBased("profile", new SpeedWeighting(speedEnc, turnCostEnc, graph.getTurnCostStorage(), 50));
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();

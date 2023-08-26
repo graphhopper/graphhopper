@@ -28,6 +28,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FiniteWeightFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.RAMDirectory;
@@ -53,10 +54,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * @author Peter Karich
  */
 public class RoundTripRoutingTest {
-    private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-    private final EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-    private final Weighting fastestWeighting = new FastestWeighting(accessEnc, speedEnc);
+    private final EncodingManager em = EncodingManager.start().add(speedEnc).build();
+    private final Weighting fastestWeighting = new SpeedWeighting(speedEnc, null, null, 0);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private final GHPoint ghPoint1 = new GHPoint(0, 0);
@@ -130,7 +130,7 @@ public class RoundTripRoutingTest {
 
     private BaseGraph createTestGraph() {
         BaseGraph graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
-        AlternativeRouteTest.initTestGraph(graph, accessEnc, speedEnc);
+        AlternativeRouteTest.initTestGraph(graph, speedEnc);
         return graph;
     }
 
@@ -142,9 +142,8 @@ public class RoundTripRoutingTest {
         // ---|------
         //    |-1 0 1
         BaseGraph graph = new BaseGraph.Builder(em).create();
-        for (int i = 0; i < 8; ++i) {
-            GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(i, (i + 1) % 8).setDistance(1));
-        }
+        for (int i = 0; i < 8; ++i)
+            graph.edge(i, (i + 1) % 8).setDistance(1).set(speedEnc, 60, 60);
         updateDistancesFor(graph, 0, 1, -1);
         updateDistancesFor(graph, 1, 1, 0);
         updateDistancesFor(graph, 2, 1, 1);

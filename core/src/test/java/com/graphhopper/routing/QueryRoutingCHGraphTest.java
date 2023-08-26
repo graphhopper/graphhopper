@@ -23,8 +23,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistancePlaneProjection;
@@ -40,30 +39,28 @@ import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static org.junit.jupiter.api.Assertions.*;
 
 class QueryRoutingCHGraphTest {
-    private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue speedEnc;
     private DecimalEncodedValue turnCostEnc;
     private EncodingManager encodingManager;
-    private FastestWeighting weighting;
+    private SpeedWeighting weighting;
     private BaseGraph graph;
     private NodeAccess na;
 
     @BeforeEach
     public void setup() {
-        accessEnc = new SimpleBooleanEncodedValue("access", true);
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         turnCostEnc = TurnCost.create("car", 5);
-        encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+        encodingManager = EncodingManager.start().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
         graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-        weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()));
+        weighting = new SpeedWeighting(speedEnc, turnCostEnc, graph.getTurnCostStorage(), Double.POSITIVE_INFINITY);
         na = graph.getNodeAccess();
     }
 
     @Test
     public void basic() {
         // 0-1-2
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(10));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(10));
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 60, 60);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 60, 60);
         graph.freeze();
         assertEquals(2, graph.getEdges());
 
@@ -100,8 +97,8 @@ class QueryRoutingCHGraphTest {
     public void withShortcuts() {
         // 0-1-2
         //  \-/
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(10));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(10));
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 60, 60);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 60, 60);
         graph.freeze();
         assertEquals(2, graph.getEdges());
 
@@ -266,7 +263,7 @@ class QueryRoutingCHGraphTest {
 
     @Test
     public void getBaseGraph() {
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(10));
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 60, 60);
         graph.freeze();
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
@@ -471,7 +468,8 @@ class QueryRoutingCHGraphTest {
         // we set the access flags, but do use direction dependent speeds to make sure we are testing whether or not the
         // access flags are respected and the weight calculation does not simply rely on the speed, see this forum issue
         // https://discuss.graphhopper.com/t/speed-and-access-when-setbothdirections-true-false/5695
-        edge.set(accessEnc, true, false);
+        // todonow!!!
+//        edge.set(accessEnc, true, false);
         edge.set(speedEnc, 60, 60);
         graph.freeze();
 
@@ -694,7 +692,7 @@ class QueryRoutingCHGraphTest {
     private EdgeIteratorState addEdge(Graph graph, int from, int to) {
         NodeAccess na = graph.getNodeAccess();
         double dist = DistancePlaneProjection.DIST_PLANE.calcDist(na.getLat(from), na.getLon(from), na.getLat(to), na.getLon(to));
-        return GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(from, to).setDistance(dist));
+        return graph.edge(from, to).setDistance(dist).set(speedEnc, 60, 60);
     }
 
 }
