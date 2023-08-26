@@ -22,15 +22,16 @@ import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraBidirectionEdgeCHNoSOD;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -48,7 +49,6 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.GHUtility.updateDistancesFor;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
@@ -68,7 +68,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class CHTurnCostTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(CHTurnCostTest.class);
     private int maxCost;
-    private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue speedEnc;
     private DecimalEncodedValue turnCostEnc;
     private EncodingManager encodingManager;
@@ -82,10 +81,9 @@ public class CHTurnCostTest {
     @BeforeEach
     public void init() {
         maxCost = 10;
-        accessEnc = new SimpleBooleanEncodedValue("access", true);
-        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         turnCostEnc = TurnCost.create("car", maxCost);
-        encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+        encodingManager = EncodingManager.start().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
         graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).build();
         turnCostStorage = graph.getTurnCostStorage();
         chConfigs = createCHConfigs();
@@ -102,32 +100,35 @@ public class CHTurnCostTest {
     private List<CHConfig> createCHConfigs() {
         Set<CHConfig> configs = new LinkedHashSet<>(5);
         // the first one is always the one with infinite u-turn costs
-        configs.add(CHConfig.edgeBased("p0", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, INFINITE_U_TURN_COSTS))));
+        configs.add(CHConfig.edgeBased("p0", new SpeedWeighting(speedEnc, turnCostEnc, turnCostStorage, Double.POSITIVE_INFINITY)));
         // this one we also always add
-        configs.add(CHConfig.edgeBased("p1", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, 0))));
+        configs.add(CHConfig.edgeBased("p1", new SpeedWeighting(speedEnc, turnCostEnc, turnCostStorage, 0)));
         // ... and this one
-        configs.add(CHConfig.edgeBased("p2", new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, 50))));
+        configs.add(CHConfig.edgeBased("p2", new SpeedWeighting(speedEnc, turnCostEnc, turnCostStorage, 50)));
         // add more (distinct) profiles
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
         while (configs.size() < 6) {
             int uTurnCosts = 10 + rnd.nextInt(90);
-            configs.add(CHConfig.edgeBased("p" + configs.size(), new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts))));
+            configs.add(CHConfig.edgeBased("p" + configs.size(), new SpeedWeighting(speedEnc, turnCostEnc, turnCostStorage, uTurnCosts)));
         }
         return new ArrayList<>(configs);
     }
 
     private EdgeIteratorState setEdge(BaseGraph graph, double speed, boolean fwd, boolean bwd, int from, int to, double distance) {
-        return GHUtility.setSpeed(speed, fwd, bwd, accessEnc, speedEnc, graph.edge(from, to).setDistance(distance));
+        EdgeIteratorState edge = graph.edge(from, to).setDistance(distance);
+        edge.set(speedEnc, fwd ? speed : 0);
+        edge.setReverse(speedEnc, bwd ? speed : 0);
+        return edge;
     }
 
     @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_linear() {
         // 2-1-0-3-4
-        setEdge(graph, 60, true, true, 2, 1, 2);
-        setEdge(graph, 60, true, true, 1, 0, 3);
-        setEdge(graph, 60, true, true, 0, 3, 1);
-        setEdge(graph, 60, true, true, 3, 4, 3);
+        setEdge(graph, 10, true, true, 2, 1, 20);
+        setEdge(graph, 10, true, true, 1, 0, 30);
+        setEdge(graph, 10, true, true, 0, 3, 10);
+        setEdge(graph, 10, true, true, 3, 4, 30);
         graph.freeze();
         setTurnCost(2, 1, 0, 2);
         setTurnCost(0, 3, 4, 4);
@@ -139,11 +140,11 @@ public class CHTurnCostTest {
         //  /\    /<-3
         // 0  1--2
         //  \/    \->4
-        setEdge(graph, 60, true, true, 0, 1, 5);
-        setEdge(graph, 60, true, true, 0, 1, 6);
-        setEdge(graph, 60, true, true, 1, 2, 2);
-        setEdge(graph, 60, true, false, 3, 2, 3);
-        setEdge(graph, 60, true, false, 2, 4, 3);
+        setEdge(graph, 10, true, true, 0, 1, 50);
+        setEdge(graph, 10, true, true, 0, 1, 60);
+        setEdge(graph, 10, true, true, 1, 2, 20);
+        setEdge(graph, 10, true, false, 3, 2, 30);
+        setEdge(graph, 10, true, false, 2, 4, 30);
         setRestriction(3, 2, 4);
         graph.freeze();
         compareCHWithDijkstra(10, new int[]{0, 1, 2, 3, 4});
@@ -154,11 +155,11 @@ public class CHTurnCostTest {
         //  /\ /\   
         // 0  1  2--3
         //  \/ \/
-        setEdge(graph, 60, true, true, 0, 1, 25.789000);
-        setEdge(graph, 60, true, true, 0, 1, 26.016000);
-        setEdge(graph, 60, true, true, 1, 2, 21.902000);
-        setEdge(graph, 60, true, true, 1, 2, 21.862000);
-        setEdge(graph, 60, true, true, 2, 3, 52.987000);
+        setEdge(graph, 10, true, true, 0, 1, 250.789000);
+        setEdge(graph, 10, true, true, 0, 1, 260.016000);
+        setEdge(graph, 10, true, true, 1, 2, 210.902000);
+        setEdge(graph, 10, true, true, 1, 2, 210.862000);
+        setEdge(graph, 10, true, true, 2, 3, 520.987000);
         graph.freeze();
         compareCHWithDijkstra(1000, new int[]{0, 1, 2, 3});
     }
@@ -176,17 +177,17 @@ public class CHTurnCostTest {
         // To cover all or at least as many as possible different cases we randomly apply some restrictions and compare
         // the resulting query with a standard Dijkstra search.
         // If this test fails use the logger output to generate code for further debugging.
-        setEdge(graph, 60, true, false, 0, 5, 1);
-        setEdge(graph, 60, true, false, 1, 5, 1);
-        setEdge(graph, 60, true, false, 2, 5, 1);
-        setEdge(graph, 60, true, false, 5, 3, 1);
-        setEdge(graph, 60, true, false, 3, 4, 1);
-        setEdge(graph, 60, true, false, 4, 7, 1);
-        setEdge(graph, 60, true, false, 5, 6, 3);
-        setEdge(graph, 60, true, false, 6, 7, 3);
-        setEdge(graph, 60, true, false, 7, 8, 1);
-        setEdge(graph, 60, true, false, 7, 9, 1);
-        setEdge(graph, 60, true, false, 7, 10, 1);
+        setEdge(graph, 10, true, false, 0, 5, 10);
+        setEdge(graph, 10, true, false, 1, 5, 10);
+        setEdge(graph, 10, true, false, 2, 5, 10);
+        setEdge(graph, 10, true, false, 5, 3, 10);
+        setEdge(graph, 10, true, false, 3, 4, 10);
+        setEdge(graph, 10, true, false, 4, 7, 10);
+        setEdge(graph, 10, true, false, 5, 6, 30);
+        setEdge(graph, 10, true, false, 6, 7, 30);
+        setEdge(graph, 10, true, false, 7, 8, 10);
+        setEdge(graph, 10, true, false, 7, 9, 10);
+        setEdge(graph, 10, true, false, 7, 10, 10);
 
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
@@ -220,15 +221,15 @@ public class CHTurnCostTest {
         // 1 - 5 - 6 - 7 - 9
         //    /         \
         //   2           10
-        setEdge(graph, 60, true, false, 1, 5, 1);
-        setEdge(graph, 60, true, false, 2, 5, 1);
-        setEdge(graph, 60, true, false, 5, 3, 1);
-        setEdge(graph, 60, true, false, 3, 4, 1);
-        setEdge(graph, 60, true, false, 4, 7, 1);
-        setEdge(graph, 60, true, false, 5, 6, 3);
-        setEdge(graph, 60, true, false, 6, 7, 3);
-        setEdge(graph, 60, true, false, 7, 9, 1);
-        setEdge(graph, 60, true, false, 7, 10, 1);
+        setEdge(graph, 10, true, false, 1, 5, 10);
+        setEdge(graph, 10, true, false, 2, 5, 10);
+        setEdge(graph, 10, true, false, 5, 3, 10);
+        setEdge(graph, 10, true, false, 3, 4, 10);
+        setEdge(graph, 10, true, false, 4, 7, 10);
+        setEdge(graph, 10, true, false, 5, 6, 30);
+        setEdge(graph, 10, true, false, 6, 7, 30);
+        setEdge(graph, 10, true, false, 7, 9, 10);
+        setEdge(graph, 10, true, false, 7, 10, 10);
 
         setTurnCost(2, 5, 6, 4);
         setRestriction(1, 5, 6);
@@ -242,11 +243,11 @@ public class CHTurnCostTest {
     public void testFindPath_duplicateEdge() {
         // 0 -> 1 -> 2 -> 3 -> 4
         //            \->/
-        setEdge(graph, 60, true, false, 0, 1, 1);
-        setEdge(graph, 60, true, false, 1, 2, 1);
-        setEdge(graph, 60, true, false, 2, 3, 1);
-        setEdge(graph, 60, true, false, 2, 3, 1);
-        setEdge(graph, 60, true, false, 3, 4, 1);
+        setEdge(graph, 10, true, false, 0, 1, 10);
+        setEdge(graph, 10, true, false, 1, 2, 10);
+        setEdge(graph, 10, true, false, 2, 3, 10);
+        setEdge(graph, 10, true, false, 2, 3, 10);
+        setEdge(graph, 10, true, false, 3, 4, 10);
         compareCHWithDijkstra(100, new int[]{2, 3, 0, 4, 1});
     }
 
@@ -255,14 +256,14 @@ public class CHTurnCostTest {
         // 0   2   4   6   8
         //  \ / \ / \ / \ /
         //   1   3   5   7
-        setEdge(graph, 60, true, false, 0, 1, 1);
-        setEdge(graph, 60, true, false, 1, 2, 1);
-        setEdge(graph, 60, true, false, 2, 3, 1);
-        setEdge(graph, 60, true, false, 3, 4, 1);
-        setEdge(graph, 60, true, false, 4, 5, 1);
-        setEdge(graph, 60, true, false, 5, 6, 1);
-        setEdge(graph, 60, true, false, 6, 7, 1);
-        setEdge(graph, 60, true, false, 7, 8, 1);
+        setEdge(graph, 10, true, false, 0, 1, 10);
+        setEdge(graph, 10, true, false, 1, 2, 10);
+        setEdge(graph, 10, true, false, 2, 3, 10);
+        setEdge(graph, 10, true, false, 3, 4, 10);
+        setEdge(graph, 10, true, false, 4, 5, 10);
+        setEdge(graph, 10, true, false, 5, 6, 10);
+        setEdge(graph, 10, true, false, 6, 7, 10);
+        setEdge(graph, 10, true, false, 7, 8, 10);
         graph.freeze();
         setTurnCost(1, 2, 3, 4);
         setTurnCost(3, 4, 5, 2);
@@ -279,12 +280,12 @@ public class CHTurnCostTest {
         //   5 3 2 1 4    turn costs ->
         // 0-1-2-3-4-5-6
         //   0 1 4 2 3    turn costs <-
-        EdgeIteratorState edge0 = setEdge(graph, 60, true, true, 0, 1, 1);
-        EdgeIteratorState edge1 = setEdge(graph, 60, true, true, 1, 2, 1);
-        EdgeIteratorState edge2 = setEdge(graph, 60, true, true, 2, 3, 1);
-        EdgeIteratorState edge3 = setEdge(graph, 60, true, true, 3, 4, 1);
-        EdgeIteratorState edge4 = setEdge(graph, 60, true, true, 4, 5, 1);
-        EdgeIteratorState edge5 = setEdge(graph, 60, true, true, 5, 6, 1);
+        EdgeIteratorState edge0 = setEdge(graph, 10, true, true, 0, 1, 10);
+        EdgeIteratorState edge1 = setEdge(graph, 10, true, true, 1, 2, 10);
+        EdgeIteratorState edge2 = setEdge(graph, 10, true, true, 2, 3, 10);
+        EdgeIteratorState edge3 = setEdge(graph, 10, true, true, 3, 4, 10);
+        EdgeIteratorState edge4 = setEdge(graph, 10, true, true, 4, 5, 10);
+        EdgeIteratorState edge5 = setEdge(graph, 10, true, true, 5, 6, 10);
         graph.freeze();
 
         // turn costs ->
@@ -319,11 +320,11 @@ public class CHTurnCostTest {
         //  0-4-3
         //    |
         //    1
-        setEdge(graph, 60, true, false, 0, 4, 2);
-        setEdge(graph, 60, true, true, 4, 3, 2);
-        setEdge(graph, 60, true, true, 3, 2, 1);
-        setEdge(graph, 60, true, true, 2, 4, 1);
-        setEdge(graph, 60, true, false, 4, 1, 1);
+        setEdge(graph, 10, true, false, 0, 4, 20);
+        setEdge(graph, 10, true, true, 4, 3, 20);
+        setEdge(graph, 10, true, true, 3, 2, 10);
+        setEdge(graph, 10, true, true, 2, 4, 10);
+        setEdge(graph, 10, true, false, 4, 1, 10);
         graph.freeze();
 
         // enforce loop (going counter-clockwise)
@@ -341,14 +342,14 @@ public class CHTurnCostTest {
         //  7-5-0
         //    |
         //    6-4
-        setEdge(graph, 60, true, false, 3, 7, 1);
-        setEdge(graph, 60, true, false, 7, 5, 2);
-        setEdge(graph, 60, true, false, 5, 0, 2);
-        setEdge(graph, 60, true, false, 0, 2, 1);
-        setEdge(graph, 60, true, false, 2, 1, 2);
-        setEdge(graph, 60, true, false, 1, 5, 1);
-        setEdge(graph, 60, true, false, 5, 6, 1);
-        setEdge(graph, 60, true, false, 6, 4, 2);
+        setEdge(graph, 10, true, false, 3, 7, 10);
+        setEdge(graph, 10, true, false, 7, 5, 20);
+        setEdge(graph, 10, true, false, 5, 0, 20);
+        setEdge(graph, 10, true, false, 0, 2, 10);
+        setEdge(graph, 10, true, false, 2, 1, 20);
+        setEdge(graph, 10, true, false, 1, 5, 10);
+        setEdge(graph, 10, true, false, 5, 6, 10);
+        setEdge(graph, 10, true, false, 6, 4, 20);
         graph.freeze();
 
         setRestriction(7, 5, 6);
@@ -368,13 +369,13 @@ public class CHTurnCostTest {
         //  1-2-3
         //    |
         //    5-6
-        setEdge(graph, 60, true, false, 0, 1, 1);
-        setEdge(graph, 60, true, false, 1, 2, 2);
-        setEdge(graph, 60, true, true, 2, 3, 2);
-        setEdge(graph, 60, true, true, 3, 4, 1);
-        setEdge(graph, 60, true, true, 4, 2, 1);
-        setEdge(graph, 60, true, false, 2, 5, 1);
-        setEdge(graph, 60, true, false, 5, 6, 2);
+        setEdge(graph, 10, true, false, 0, 1, 10);
+        setEdge(graph, 10, true, false, 1, 2, 20);
+        setEdge(graph, 10, true, true, 2, 3, 20);
+        setEdge(graph, 10, true, true, 3, 4, 10);
+        setEdge(graph, 10, true, true, 4, 2, 10);
+        setEdge(graph, 10, true, false, 2, 5, 10);
+        setEdge(graph, 10, true, false, 5, 6, 20);
         graph.freeze();
 
         // enforce loop (going counter-clockwise)
@@ -399,29 +400,29 @@ public class CHTurnCostTest {
         //  }  |  }  }
         // 11~12-13-14
 
-        setEdge(graph, 60, true, true, 0, 1, 1);
-        setEdge(graph, 60, true, true, 1, 6, 1);
-        setEdge(graph, 60, true, true, 6, 7, 2);
-        setEdge(graph, 60, true, true, 7, 8, 2);
-        setEdge(graph, 60, true, true, 8, 3, 1);
-        setEdge(graph, 60, true, true, 3, 2, 2);
-        setEdge(graph, 60, true, true, 2, 7, 1);
-        setEdge(graph, 60, true, true, 7, 12, 1);
-        setEdge(graph, 60, true, true, 12, 13, 2);
-        setEdge(graph, 60, true, true, 13, 14, 2);
+        setEdge(graph, 10, true, true, 0, 1, 10);
+        setEdge(graph, 10, true, true, 1, 6, 10);
+        setEdge(graph, 10, true, true, 6, 7, 20);
+        setEdge(graph, 10, true, true, 7, 8, 20);
+        setEdge(graph, 10, true, true, 8, 3, 10);
+        setEdge(graph, 10, true, true, 3, 2, 20);
+        setEdge(graph, 10, true, true, 2, 7, 10);
+        setEdge(graph, 10, true, true, 7, 12, 10);
+        setEdge(graph, 10, true, true, 12, 13, 20);
+        setEdge(graph, 10, true, true, 13, 14, 20);
 
         // some more edges to make it more complicated -> potentially find more bugs
-        setEdge(graph, 60, true, true, 1, 2, 8);
-        setEdge(graph, 60, true, true, 6, 11, 3);
-        setEdge(graph, 60, true, true, 11, 12, 50);
-        setEdge(graph, 60, true, true, 8, 13, 1);
-        setEdge(graph, 60, true, true, 0, 15, 1);
-        setEdge(graph, 60, true, true, 15, 16, 2);
-        setEdge(graph, 60, true, true, 16, 17, 3);
-        setEdge(graph, 60, true, true, 17, 4, 2);
-        setEdge(graph, 60, true, true, 3, 4, 2);
-        setEdge(graph, 60, true, true, 4, 9, 1);
-        setEdge(graph, 60, true, true, 9, 14, 2);
+        setEdge(graph, 10, true, true, 1, 2, 80);
+        setEdge(graph, 10, true, true, 6, 11, 30);
+        setEdge(graph, 10, true, true, 11, 12, 500);
+        setEdge(graph, 10, true, true, 8, 13, 10);
+        setEdge(graph, 10, true, true, 0, 15, 10);
+        setEdge(graph, 10, true, true, 15, 16, 20);
+        setEdge(graph, 10, true, true, 16, 17, 30);
+        setEdge(graph, 10, true, true, 17, 4, 20);
+        setEdge(graph, 10, true, true, 3, 4, 20);
+        setEdge(graph, 10, true, true, 4, 9, 10);
+        setEdge(graph, 10, true, true, 9, 14, 20);
         graph.freeze();
 
         // enforce loop (going counter-clockwise)
@@ -462,49 +463,49 @@ public class CHTurnCostTest {
         // 21-22-23-24 25-26
 
         // first we add all edges that contribute to the shortest path, verticals: cost=1, horizontals: cost=2
-        setEdge(graph, 60, true, true, 0, 1, 1);
-        setEdge(graph, 60, true, true, 1, 7, 3);
-        setEdge(graph, 60, true, false, 7, 8, 2);
-        setEdge(graph, 60, true, true, 8, 3, 1);
-        setEdge(graph, 60, true, true, 3, 2, 2);
-        setEdge(graph, 60, true, true, 2, 7, 1);
-        setEdge(graph, 60, true, true, 7, 12, 1);
-        setEdge(graph, 60, true, true, 12, 11, 2);
-        setEdge(graph, 60, true, true, 11, 6, 1);
-        setEdge(graph, 60, true, false, 6, 7, 2);
-        setEdge(graph, 60, true, true, 7, 13, 3);
-        setEdge(graph, 60, true, true, 13, 14, 2);
-        setEdge(graph, 60, true, true, 14, 9, 1);
-        setEdge(graph, 60, true, true, 9, 4, 1);
-        setEdge(graph, 60, true, true, 4, 5, 2);
-        setEdge(graph, 60, true, true, 5, 10, 1);
-        setEdge(graph, 60, true, true, 10, 9, 2);
-        setEdge(graph, 60, true, true, 14, 19, 1);
-        setEdge(graph, 60, true, true, 19, 18, 2);
-        setEdge(graph, 60, true, true, 18, 17, 2);
-        setEdge(graph, 60, true, true, 17, 16, 2);
-        setEdge(graph, 60, true, true, 16, 21, 1);
-        setEdge(graph, 60, true, true, 21, 22, 2);
-        setEdge(graph, 60, true, true, 22, 23, 2);
-        setEdge(graph, 60, true, true, 23, 24, 2);
-        setEdge(graph, 60, true, true, 24, 19, 1);
-        setEdge(graph, 60, true, true, 19, 20, 2);
-        setEdge(graph, 60, true, true, 20, 25, 1);
-        setEdge(graph, 60, true, true, 25, 26, 2);
+        setEdge(graph, 10, true, true, 0, 1, 10);
+        setEdge(graph, 10, true, true, 1, 7, 30);
+        setEdge(graph, 10, true, false, 7, 8, 20);
+        setEdge(graph, 10, true, true, 8, 3, 10);
+        setEdge(graph, 10, true, true, 3, 2, 20);
+        setEdge(graph, 10, true, true, 2, 7, 10);
+        setEdge(graph, 10, true, true, 7, 12, 10);
+        setEdge(graph, 10, true, true, 12, 11, 20);
+        setEdge(graph, 10, true, true, 11, 6, 10);
+        setEdge(graph, 10, true, false, 6, 7, 20);
+        setEdge(graph, 10, true, true, 7, 13, 30);
+        setEdge(graph, 10, true, true, 13, 14, 20);
+        setEdge(graph, 10, true, true, 14, 9, 10);
+        setEdge(graph, 10, true, true, 9, 4, 10);
+        setEdge(graph, 10, true, true, 4, 5, 20);
+        setEdge(graph, 10, true, true, 5, 10, 10);
+        setEdge(graph, 10, true, true, 10, 9, 20);
+        setEdge(graph, 10, true, true, 14, 19, 10);
+        setEdge(graph, 10, true, true, 19, 18, 20);
+        setEdge(graph, 10, true, true, 18, 17, 20);
+        setEdge(graph, 10, true, true, 17, 16, 20);
+        setEdge(graph, 10, true, true, 16, 21, 10);
+        setEdge(graph, 10, true, true, 21, 22, 20);
+        setEdge(graph, 10, true, true, 22, 23, 20);
+        setEdge(graph, 10, true, true, 23, 24, 20);
+        setEdge(graph, 10, true, true, 24, 19, 10);
+        setEdge(graph, 10, true, true, 19, 20, 20);
+        setEdge(graph, 10, true, true, 20, 25, 10);
+        setEdge(graph, 10, true, true, 25, 26, 20);
 
         //some more edges to make it more complicated -> potentially find more bugs
-        setEdge(graph, 60, true, true, 1, 2, 1);
-        setEdge(graph, 60, true, false, 4, 3, 1);
-        setEdge(graph, 60, true, true, 8, 9, 75);
-        setEdge(graph, 60, true, true, 17, 22, 9);
-        setEdge(graph, 60, true, true, 18, 23, 15);
-        setEdge(graph, 60, true, true, 12, 17, 50);
-        setEdge(graph, 60, true, true, 13, 18, 80);
-        setEdge(graph, 60, true, true, 14, 15, 3);
-        setEdge(graph, 60, true, true, 15, 27, 2);
-        setEdge(graph, 60, true, true, 27, 28, 100);
-        setEdge(graph, 60, true, true, 28, 26, 1);
-        setEdge(graph, 60, true, true, 20, 28, 1);
+        setEdge(graph, 10, true, true, 1, 2, 10);
+        setEdge(graph, 10, true, false, 4, 3, 10);
+        setEdge(graph, 10, true, true, 8, 9, 750);
+        setEdge(graph, 10, true, true, 17, 22, 90);
+        setEdge(graph, 10, true, true, 18, 23, 150);
+        setEdge(graph, 10, true, true, 12, 17, 500);
+        setEdge(graph, 10, true, true, 13, 18, 800);
+        setEdge(graph, 10, true, true, 14, 15, 30);
+        setEdge(graph, 10, true, true, 15, 27, 20);
+        setEdge(graph, 10, true, true, 27, 28, 1000);
+        setEdge(graph, 10, true, true, 28, 26, 10);
+        setEdge(graph, 10, true, true, 20, 28, 10);
         graph.freeze();
 
         // enforce figure of eight curve at node 7
@@ -545,13 +546,13 @@ public class CHTurnCostTest {
         //           4- 0
         //           |
         //     5 ->  6 -> 1
-        setEdge(graph, 60, true, false, 5, 6, 1);
-        setEdge(graph, 60, true, false, 6, 1, 1);
-        setEdge(graph, 60, true, true, 6, 4, 1);
-        setEdge(graph, 60, true, false, 4, 0, 1);
-        setEdge(graph, 60, true, false, 0, 3, 1);
-        setEdge(graph, 60, true, false, 3, 2, 1);
-        setEdge(graph, 60, true, false, 2, 4, 1);
+        setEdge(graph, 10, true, false, 5, 6, 10);
+        setEdge(graph, 10, true, false, 6, 1, 10);
+        setEdge(graph, 10, true, true, 6, 4, 10);
+        setEdge(graph, 10, true, false, 4, 0, 10);
+        setEdge(graph, 10, true, false, 0, 3, 10);
+        setEdge(graph, 10, true, false, 3, 2, 10);
+        setEdge(graph, 10, true, false, 2, 4, 10);
         graph.freeze();
         setRestriction(5, 6, 1);
 
@@ -569,14 +570,14 @@ public class CHTurnCostTest {
         //           1
         //           |
         //     5 ->  6 -> 7
-        setEdge(graph, 60, true, false, 5, 6, 1);
-        setEdge(graph, 60, true, false, 6, 7, 1);
-        setEdge(graph, 60, true, true, 6, 1, 1);
-        setEdge(graph, 60, true, true, 1, 4, 1);
-        setEdge(graph, 60, true, false, 4, 0, 1);
-        setEdge(graph, 60, true, false, 0, 3, 1);
-        setEdge(graph, 60, true, false, 3, 2, 1);
-        setEdge(graph, 60, true, false, 2, 4, 1);
+        setEdge(graph, 10, true, false, 5, 6, 10);
+        setEdge(graph, 10, true, false, 6, 7, 10);
+        setEdge(graph, 10, true, true, 6, 1, 10);
+        setEdge(graph, 10, true, true, 1, 4, 10);
+        setEdge(graph, 10, true, false, 4, 0, 10);
+        setEdge(graph, 10, true, false, 0, 3, 10);
+        setEdge(graph, 10, true, false, 3, 2, 10);
+        setEdge(graph, 10, true, false, 2, 4, 10);
         graph.freeze();
         setRestriction(5, 6, 7);
 
@@ -597,7 +598,7 @@ public class CHTurnCostTest {
         // 6 - 7 - 8
         // for large sizes contraction takes very long because there are so many edges
         final int size = 4;
-        final int maxDist = 4;
+        final int maxDist = 40;
         final int numQueries = 1000;
         long seed = System.nanoTime();
         LOGGER.info("Seed used to generate graph: {}", seed);
@@ -610,7 +611,7 @@ public class CHTurnCostTest {
                 final int from = i * size + j;
                 final int to = from + 1;
                 final double dist = nextDist(maxDist, rnd);
-                setEdge(graph, 60, true, true, from, to, dist);
+                setEdge(graph, 10, true, true, from, to, dist);
                 LOGGER.trace("final EdgeIteratorState edge{} = graph.edge({},{},{},true);", edgeCounter++, from, to, dist);
             }
         }
@@ -620,7 +621,7 @@ public class CHTurnCostTest {
                 final int from = i * size + j;
                 final int to = from + size;
                 double dist = nextDist(maxDist, rnd);
-                setEdge(graph, 60, true, true, from, to, dist);
+                setEdge(graph, 10, true, true, from, to, dist);
                 LOGGER.trace("final EdgeIteratorState edge{} = graph.edge({},{},{},true);", edgeCounter++, from, to, dist);
             }
         }
@@ -631,20 +632,20 @@ public class CHTurnCostTest {
                 if (j < size - 1) {
                     final double dist = nextDist(maxDist, rnd);
                     final int to = from + size + 1;
-                    setEdge(graph, 60, true, true, from, to, dist);
+                    setEdge(graph, 10, true, true, from, to, dist);
                     LOGGER.trace("final EdgeIteratorState edge{} = graph.edge({},{},{},true);", edgeCounter++, from, to, dist);
                 }
                 if (j > 0) {
                     final double dist = nextDist(maxDist, rnd);
                     final int to = from + size - 1;
-                    setEdge(graph, 60, true, true, from, to, dist);
+                    setEdge(graph, 10, true, true, from, to, dist);
                     LOGGER.trace("final EdgeIteratorState edge{} = graph.edge({},{},{},true);", edgeCounter++, from, to, dist);
                 }
             }
         }
         graph.freeze();
-        EdgeExplorer inExplorer = graph.createEdgeExplorer(AccessFilter.inEdges(accessEnc));
-        EdgeExplorer outExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(accessEnc));
+        EdgeExplorer inExplorer = graph.createEdgeExplorer();
+        EdgeExplorer outExplorer = graph.createEdgeExplorer();
 
         // add turn costs or restrictions
         for (int node = 0; node < size * size; ++node) {
@@ -669,11 +670,11 @@ public class CHTurnCostTest {
 
     @Test
     public void testFindPath_bug() {
-        setEdge(graph, 60, true, false, 1, 2, 18.364000);
-        setEdge(graph, 60, true, true, 1, 4, 29.814000);
-        setEdge(graph, 60, true, true, 0, 2, 14.554000);
-        setEdge(graph, 60, true, true, 1, 4, 29.819000);
-        setEdge(graph, 60, true, true, 1, 3, 29.271000);
+        setEdge(graph, 10, true, false, 1, 2, 180.364000);
+        setEdge(graph, 10, true, true, 1, 4, 290.814000);
+        setEdge(graph, 10, true, true, 0, 2, 140.554000);
+        setEdge(graph, 10, true, true, 1, 4, 290.819000);
+        setEdge(graph, 10, true, true, 1, 3, 290.271000);
         setRestriction(3, 1, 2);
         graph.freeze();
 
@@ -683,11 +684,11 @@ public class CHTurnCostTest {
     @Test
     public void testFindPath_bug2() {
         // 1 = 0 - 3 - 2 - 4
-        setEdge(graph, 60, true, true, 0, 3, 24.001000);
-        setEdge(graph, 60, true, true, 0, 1, 6.087000);
-        setEdge(graph, 60, true, true, 0, 1, 6.067000);
-        setEdge(graph, 60, true, true, 2, 3, 46.631000);
-        setEdge(graph, 60, true, true, 2, 4, 46.184000);
+        setEdge(graph, 10, true, true, 0, 3, 240.001000);
+        setEdge(graph, 10, true, true, 0, 1, 60.087000);
+        setEdge(graph, 10, true, true, 0, 1, 60.067000);
+        setEdge(graph, 10, true, true, 2, 3, 460.631000);
+        setEdge(graph, 10, true, true, 2, 4, 460.184000);
         graph.freeze();
 
         compareCHWithDijkstra(1000, new int[]{1, 0, 3, 2, 4});
@@ -700,15 +701,15 @@ public class CHTurnCostTest {
         //           1   2
         //            \ /
         // 0 - 7 - 8 - 4 - 6 - 5
-        setEdge(graph, 60, true, false, 0, 7, 1);
-        setEdge(graph, 60, true, false, 7, 8, 1);
-        setEdge(graph, 60, true, false, 8, 4, 1);
-        setEdge(graph, 60, true, false, 4, 1, 1);
-        setEdge(graph, 60, true, false, 1, 3, 1);
-        setEdge(graph, 60, true, false, 3, 2, 1);
-        setEdge(graph, 60, true, false, 2, 4, 1);
-        setEdge(graph, 60, true, false, 4, 6, 1);
-        setEdge(graph, 60, true, false, 6, 5, 1);
+        setEdge(graph, 10, true, false, 0, 7, 10);
+        setEdge(graph, 10, true, false, 7, 8, 10);
+        setEdge(graph, 10, true, false, 8, 4, 10);
+        setEdge(graph, 10, true, false, 4, 1, 10);
+        setEdge(graph, 10, true, false, 1, 3, 10);
+        setEdge(graph, 10, true, false, 3, 2, 10);
+        setEdge(graph, 10, true, false, 2, 4, 10);
+        setEdge(graph, 10, true, false, 4, 6, 10);
+        setEdge(graph, 10, true, false, 6, 5, 10);
         setRestriction(8, 4, 6);
         graph.freeze();
 
@@ -725,11 +726,11 @@ public class CHTurnCostTest {
         // 0-3-4
         //   |/
         //   2
-        setEdge(graph, 60, true, false, 0, 3, 100);
-        setEdge(graph, 60, true, true, 3, 4, 100);
-        setEdge(graph, 60, true, false, 4, 2, 500);
-        setEdge(graph, 60, true, false, 2, 3, 200);
-        setEdge(graph, 60, true, false, 3, 1, 100);
+        setEdge(graph, 10, true, false, 0, 3, 1000);
+        setEdge(graph, 10, true, true, 3, 4, 1000);
+        setEdge(graph, 10, true, false, 4, 2, 5000);
+        setEdge(graph, 10, true, false, 2, 3, 2000);
+        setEdge(graph, 10, true, false, 3, 1, 1000);
         setRestriction(0, 3, 1);
         graph.freeze();
         chConfig = chConfigs.get(2);
@@ -747,11 +748,11 @@ public class CHTurnCostTest {
         // 2-1--3
         //   |  |
         //   0->4
-        EdgeIteratorState edge0 = setEdge(graph, 60, true, true, 1, 2, 1);
-        EdgeIteratorState edge1 = setEdge(graph, 60, true, false, 0, 4, 1);
-        EdgeIteratorState edge2 = setEdge(graph, 60, true, true, 4, 3, 1);
-        EdgeIteratorState edge3 = setEdge(graph, 60, true, true, 1, 3, 1);
-        EdgeIteratorState edge4 = setEdge(graph, 60, true, true, 1, 0, 1);
+        EdgeIteratorState edge0 = setEdge(graph, 10, true, true, 1, 2, 10);
+        EdgeIteratorState edge1 = setEdge(graph, 10, true, false, 0, 4, 10);
+        EdgeIteratorState edge2 = setEdge(graph, 10, true, true, 4, 3, 10);
+        EdgeIteratorState edge3 = setEdge(graph, 10, true, true, 1, 3, 10);
+        EdgeIteratorState edge4 = setEdge(graph, 10, true, true, 1, 0, 10);
         setTurnCost(edge0, edge4, 1, 8);
         setRestriction(edge0, edge3, 1);
         graph.freeze();
@@ -773,11 +774,11 @@ public class CHTurnCostTest {
         na.setNode(2, 49.404004, 9.709110);
         na.setNode(3, 49.400160, 9.708787);
         na.setNode(4, 49.400883, 9.706347);
-        EdgeIteratorState edge0 = setEdge(graph, 60, true, true, 4, 3, 194.063000);
-        EdgeIteratorState edge1 = setEdge(graph, 60, true, true, 1, 2, 525.106000);
-        EdgeIteratorState edge2 = setEdge(graph, 60, true, true, 1, 2, 525.106000);
-        EdgeIteratorState edge3 = setEdge(graph, 60, true, false, 4, 1, 703.778000);
-        EdgeIteratorState edge4 = setEdge(graph, 60, true, true, 2, 4, 400.509000);
+        EdgeIteratorState edge0 = setEdge(graph, 10, true, true, 4, 3, 1940.063000);
+        EdgeIteratorState edge1 = setEdge(graph, 10, true, true, 1, 2, 5250.106000);
+        EdgeIteratorState edge2 = setEdge(graph, 10, true, true, 1, 2, 5250.106000);
+        EdgeIteratorState edge3 = setEdge(graph, 10, true, false, 4, 1, 7030.778000);
+        EdgeIteratorState edge4 = setEdge(graph, 10, true, true, 2, 4, 4000.509000);
         // cannot go 4-2-1 and 1-2-4 (at least when using edge1, there is still edge2!)
         setRestriction(edge4, edge1, 2);
         setRestriction(edge1, edge4, 2);
@@ -829,11 +830,11 @@ public class CHTurnCostTest {
         na.setNode(0, 0.1, 0.1);
         na.setNode(5, 0.1, 0.2);
         na.setNode(4, 0.1, 0.3);
-        EdgeIteratorState edge0 = setEdge(graph, 60, true, true, 3, 1, 10);
-        EdgeIteratorState edge1 = setEdge(graph, 60, true, true, 2, 3, 10);
-        setEdge(graph, 60, true, true, 3, 0, 10);
-        setEdge(graph, 60, true, true, 0, 5, 10);
-        setEdge(graph, 60, true, true, 5, 4, 10);
+        EdgeIteratorState edge0 = setEdge(graph, 10, true, true, 3, 1, 100);
+        EdgeIteratorState edge1 = setEdge(graph, 10, true, true, 2, 3, 100);
+        setEdge(graph, 10, true, true, 3, 0, 100);
+        setEdge(graph, 10, true, true, 0, 5, 100);
+        setEdge(graph, 10, true, true, 5, 4, 100);
         // cannot go, 2-3-1
         setRestriction(edge1, edge0, 3);
         graph.freeze();
@@ -862,8 +863,8 @@ public class CHTurnCostTest {
     public void testRouteViaVirtualNode(String algo) {
         //   3
         // 0-x-1-2
-        setEdge(graph, 60, true, false, 0, 1, 0);
-        setEdge(graph, 60, true, false, 1, 2, 0);
+        setEdge(graph, 10, true, false, 0, 1, 0);
+        setEdge(graph, 10, true, false, 1, 2, 0);
         updateDistancesFor(graph, 0, 0.00, 0.00);
         updateDistancesFor(graph, 1, 0.02, 0.02);
         updateDistancesFor(graph, 2, 0.03, 0.03);
@@ -889,9 +890,9 @@ public class CHTurnCostTest {
         // 0-x-1
         //  \  |
         //   \-2
-        setEdge(graph, 60, true, true, 0, 1, 1);
-        setEdge(graph, 60, true, true, 1, 2, 1);
-        setEdge(graph, 60, true, true, 2, 0, 1);
+        setEdge(graph, 10, true, true, 0, 1, 10);
+        setEdge(graph, 10, true, true, 1, 2, 10);
+        setEdge(graph, 10, true, true, 2, 0, 10);
         updateDistancesFor(graph, 0, 0.01, 0.00);
         updateDistancesFor(graph, 1, 0.01, 0.02);
         updateDistancesFor(graph, 2, 0.00, 0.02);
@@ -917,12 +918,12 @@ public class CHTurnCostTest {
         // 4->3->2->1-x-0
         //          |
         //          5->6
-        setEdge(graph, 60, true, false, 4, 3, 0);
-        setEdge(graph, 60, true, false, 3, 2, 0);
-        setEdge(graph, 60, true, false, 2, 1, 0);
-        setEdge(graph, 60, true, true, 1, 0, 0);
-        setEdge(graph, 60, true, false, 1, 5, 0);
-        setEdge(graph, 60, true, false, 5, 6, 0);
+        setEdge(graph, 10, true, false, 4, 3, 00);
+        setEdge(graph, 10, true, false, 3, 2, 00);
+        setEdge(graph, 10, true, false, 2, 1, 00);
+        setEdge(graph, 10, true, true, 1, 0, 00);
+        setEdge(graph, 10, true, false, 1, 5, 00);
+        setEdge(graph, 10, true, false, 5, 6, 00);
         updateDistancesFor(graph, 4, 0.1, 0.0);
         updateDistancesFor(graph, 3, 0.1, 0.1);
         updateDistancesFor(graph, 2, 0.1, 0.2);
@@ -969,14 +970,14 @@ public class CHTurnCostTest {
         // cancelled the entire fwd search instead of simply stalling node 6.
         //       |-------1-|
         // 7-6---0---2-3-4-5
-        setEdge(graph, 60, true, false, 0, 1, 0);
-        setEdge(graph, 60, true, false, 1, 5, 0);
-        setEdge(graph, 60, true, false, 0, 2, 0);
-        setEdge(graph, 60, true, false, 2, 3, 0);
-        setEdge(graph, 60, true, false, 3, 4, 0);
-        setEdge(graph, 60, true, false, 4, 5, 0);
-        setEdge(graph, 60, true, false, 0, 6, 0);
-        setEdge(graph, 60, true, false, 6, 7, 0);
+        setEdge(graph, 10, true, false, 0, 1, 0);
+        setEdge(graph, 10, true, false, 1, 5, 0);
+        setEdge(graph, 10, true, false, 0, 2, 0);
+        setEdge(graph, 10, true, false, 2, 3, 0);
+        setEdge(graph, 10, true, false, 3, 4, 0);
+        setEdge(graph, 10, true, false, 4, 5, 0);
+        setEdge(graph, 10, true, false, 0, 6, 0);
+        setEdge(graph, 10, true, false, 6, 7, 0);
         updateDistancesFor(graph, 0, 46.5, 9.7);
         updateDistancesFor(graph, 1, 46.9, 9.8);
         updateDistancesFor(graph, 2, 46.7, 9.7);
@@ -996,13 +997,13 @@ public class CHTurnCostTest {
     void testZeroUTurnCosts_atBarrier_issue2564() {
         // lvl: 0 3 2 4 5 1
         //  nd: 0-1-2-3-4-5
-        setEdge(graph, 60, true, true, 0, 1, 100);
+        setEdge(graph, 10, true, true, 0, 1, 1000);
         // the original bug was sometimes hidden depending on the exact distance, so we use these odd numbers here
-        setEdge(graph, 60, true, true, 1, 2, 7.336);
-        setEdge(graph, 60, true, true, 2, 3, 10.161);
+        setEdge(graph, 10, true, true, 1, 2, 70.336);
+        setEdge(graph, 10, true, true, 2, 3, 100.161);
         // a zero distance edge (like a passable barrier)!
-        setEdge(graph, 60, true, true, 3, 4, 0);
-        setEdge(graph, 60, true, true, 4, 5, 100);
+        setEdge(graph, 10, true, true, 3, 4, 0);
+        setEdge(graph, 10, true, true, 4, 5, 1000);
         graph.freeze();
         // u-turn costs are zero!
         chConfig = chConfigs.get(1);
@@ -1017,11 +1018,11 @@ public class CHTurnCostTest {
         // 2-3
         // | |
         // 0-4-1
-        setEdge(graph, 60, true, true, 2, 0, 800.22);
-        setEdge(graph, 60, true, true, 3, 4, 478.84);
-        setEdge(graph, 60, true, true, 0, 4, 547.08);
-        setEdge(graph, 60, true, true, 4, 1, 288.95);
-        setEdge(graph, 60, true, true, 2, 3, 90);
+        setEdge(graph, 10, true, true, 2, 0, 8000.22);
+        setEdge(graph, 10, true, true, 3, 4, 4780.84);
+        setEdge(graph, 10, true, true, 0, 4, 5470.08);
+        setEdge(graph, 10, true, true, 4, 1, 2880.95);
+        setEdge(graph, 10, true, true, 2, 3, 900);
         graph.freeze();
         prepareCH(1, 3, 0, 2, 4);
         compareCHQueryWithDijkstra(1, 2);
@@ -1032,11 +1033,11 @@ public class CHTurnCostTest {
         // 1 - 2 - 0 - 4
         //          \ /
         //           3
-        setEdge(graph, 60, true, true, 0, 3, 100); // edgeId=0
-        setEdge(graph, 60, true, true, 4, 3, 100); // edgeId=1
-        setEdge(graph, 60, true, true, 0, 4, 100); // edgeId=2
-        setEdge(graph, 60, true, true, 1, 2, 100); // edgeId=3
-        setEdge(graph, 60, true, true, 0, 2, 100); // edgeId=4
+        setEdge(graph, 10, true, true, 0, 3, 1000); // edgeId=0
+        setEdge(graph, 10, true, true, 4, 3, 1000); // edgeId=1
+        setEdge(graph, 10, true, true, 0, 4, 1000); // edgeId=2
+        setEdge(graph, 10, true, true, 1, 2, 1000); // edgeId=3
+        setEdge(graph, 10, true, true, 0, 2, 1000); // edgeId=4
         graph.freeze();
         prepareCH(2, 0, 1, 3, 4);
         assertEquals(2, chGraph.getShortcuts());
@@ -1083,8 +1084,8 @@ public class CHTurnCostTest {
     private void compareWithDijkstraOnRandomGraph(long seed) {
         final Random rnd = new Random(seed);
         // for larger graphs preparation takes much longer the higher the degree is!
-        GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, accessEnc, speedEnc, null, 0.9, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxCost, turnCostStorage);
+        GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, null, speedEnc, null, 0.9, 0.8);
+        GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
         IntArrayList contractionOrder = getRandomIntegerSequence(graph.getNodes(), rnd);
@@ -1110,8 +1111,8 @@ public class CHTurnCostTest {
     }
 
     private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
-        GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, accessEnc, speedEnc, null, 0.9, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxCost, turnCostStorage);
+        GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, null, speedEnc, null, 0.9, 0.8);
+        GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
         automaticCompareCHWithDijkstra(100);
@@ -1139,8 +1140,8 @@ public class CHTurnCostTest {
     private void checkPathUsingDijkstra(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to) {
         Path dijkstraPath = findPathUsingDijkstra(from, to);
         int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
-        int expectedDistance = expectedEdgeWeight;
-        int expectedTime = expectedEdgeWeight * 60 + expectedTurnCosts * 1000;
+        int expectedDistance = expectedEdgeWeight * 10;
+        int expectedTime = (expectedEdgeWeight + expectedTurnCosts) * 1000;
         assertEquals(expectedPath, dijkstraPath.calcNodes(), "Normal Dijkstra did not find expected path.");
         assertEquals(expectedWeight, dijkstraPath.getWeight(), 1.e-6, "Normal Dijkstra did not calculate expected weight.");
         assertEquals(expectedDistance, dijkstraPath.getDistance(), 1.e-6, "Normal Dijkstra did not calculate expected distance.");
@@ -1150,8 +1151,8 @@ public class CHTurnCostTest {
     private void checkPathUsingCH(IntArrayList expectedPath, int expectedEdgeWeight, int expectedTurnCosts, int from, int to, int[] contractionOrder) {
         Path chPath = findPathUsingCH(from, to, contractionOrder);
         int expectedWeight = expectedEdgeWeight + expectedTurnCosts;
-        int expectedDistance = expectedEdgeWeight;
-        int expectedTime = expectedEdgeWeight * 60 + expectedTurnCosts * 1000;
+        int expectedDistance = expectedEdgeWeight * 10;
+        int expectedTime = (expectedEdgeWeight + expectedTurnCosts) * 1000;
         assertEquals(expectedPath, chPath.calcNodes(), "Contraction Hierarchies did not find expected path. contraction order=" + Arrays.toString(contractionOrder));
         assertEquals(expectedWeight, chPath.getWeight(), 1.e-6, "Contraction Hierarchies did not calculate expected weight.");
         assertEquals(expectedDistance, chPath.getDistance(), 1.e-6, "Contraction Hierarchies did not calculate expected distance.");
@@ -1225,7 +1226,7 @@ public class CHTurnCostTest {
         }
         if (algosDisagree) {
             System.out.println("Graph that produced error:");
-            GHUtility.printGraphForUnitTest(graph, accessEnc, speedEnc);
+            GHUtility.printGraphForUnitTest(graph, null, speedEnc);
             fail("Dijkstra and CH did not find equal shortest paths for route from " + from + " to " + to + "\n" +
                     " dijkstra: weight: " + dijkstraPath.getWeight() + ", distance: " + dijkstraPath.getDistance() +
                     ", time: " + dijkstraPath.getTime() + ", nodes: " + dijkstraPath.calcNodes() + "\n" +
