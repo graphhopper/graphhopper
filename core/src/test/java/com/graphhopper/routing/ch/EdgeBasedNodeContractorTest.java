@@ -86,12 +86,12 @@ public class EdgeBasedNodeContractorTest {
         //  6- 7-8
         //     |
         //     9
-        graph.edge(6, 7).setDistance(2).set(speedEnc, 60, 0);
-        final EdgeIteratorState edge7to8 = graph.edge(7, 8).setDistance(2).set(speedEnc, 60, 0);
-        final EdgeIteratorState edge8to3 = graph.edge(8, 3).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState edge3to2 = graph.edge(3, 2).setDistance(2).set(speedEnc, 60, 0);
-        final EdgeIteratorState edge2to7 = graph.edge(2, 7).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(7, 9).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(6, 7).setDistance(20).set(speedEnc, 10, 0);
+        final EdgeIteratorState edge7to8 = graph.edge(7, 8).setDistance(20).set(speedEnc, 10, 0);
+        final EdgeIteratorState edge8to3 = graph.edge(8, 3).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState edge3to2 = graph.edge(3, 2).setDistance(20).set(speedEnc, 10, 0);
+        final EdgeIteratorState edge2to7 = graph.edge(2, 7).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(7, 9).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
 
@@ -114,13 +114,13 @@ public class EdgeBasedNodeContractorTest {
         // 2 -> 6 -> 3 -> 5 -> 4
         //      |    ^
         //      -> 0-|
-        final EdgeIteratorState e6to0 = graph.edge(6, 0).setDistance(4).set(speedEnc, 60, 0);
-        final EdgeIteratorState e0to3 = graph.edge(0, 3).setDistance(5).set(speedEnc, 60, 0);
-        graph.edge(1, 6).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState e6to3 = graph.edge(6, 3).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState e3to5 = graph.edge(3, 5).setDistance(2).set(speedEnc, 60, 0);
-        graph.edge(2, 6).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(5, 4).setDistance(2).set(speedEnc, 60, 0);
+        final EdgeIteratorState e6to0 = graph.edge(6, 0).setDistance(40).set(speedEnc, 10, 0);
+        final EdgeIteratorState e0to3 = graph.edge(0, 3).setDistance(50).set(speedEnc, 10, 0);
+        graph.edge(1, 6).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState e6to3 = graph.edge(6, 3).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState e3to5 = graph.edge(3, 5).setDistance(20).set(speedEnc, 10, 0);
+        graph.edge(2, 6).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(5, 4).setDistance(20).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         setRestriction(1, 6, 3);
@@ -141,11 +141,11 @@ public class EdgeBasedNodeContractorTest {
         //    /->0-->
         //   v       \
         //  4 <-----> 2 -> 3 -> 1
-        EdgeIteratorState e0to4 = graph.edge(4, 0).setDistance(3).set(speedEnc, 60, 60);
-        EdgeIteratorState e0to2 = graph.edge(0, 2).setDistance(5).set(speedEnc, 60, 0);
-        EdgeIteratorState e2to3 = graph.edge(2, 3).setDistance(2).set(speedEnc, 60, 0);
-        EdgeIteratorState e1to3 = graph.edge(3, 1).setDistance(2).set(speedEnc, 60, 0);
-        EdgeIteratorState e2to4 = graph.edge(4, 2).setDistance(2).set(speedEnc, 60, 60);
+        EdgeIteratorState e0to4 = graph.edge(4, 0).setDistance(30).set(speedEnc, 10, 10);
+        EdgeIteratorState e0to2 = graph.edge(0, 2).setDistance(50).set(speedEnc, 10, 0);
+        EdgeIteratorState e2to3 = graph.edge(2, 3).setDistance(20).set(speedEnc, 10, 0);
+        EdgeIteratorState e1to3 = graph.edge(3, 1).setDistance(20).set(speedEnc, 10, 0);
+        EdgeIteratorState e2to4 = graph.edge(4, 2).setDistance(20).set(speedEnc, 10, 10);
         freeze();
 
         setMaxLevelOnAllNodes();
@@ -168,13 +168,13 @@ public class EdgeBasedNodeContractorTest {
         //  0-4-6
         //    |
         //    5-2
-        graph.edge(1, 0).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(0, 4).setDistance(2).set(speedEnc, 60, 0);
-        final EdgeIteratorState e4to6 = graph.edge(4, 6).setDistance(2).set(speedEnc, 60, 60);
-        final EdgeIteratorState e6to3 = graph.edge(6, 3).setDistance(1).set(speedEnc, 60, 60);
-        final EdgeIteratorState e3to4 = graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 60);
-        final EdgeIteratorState e4to5 = graph.edge(4, 5).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(5, 2).setDistance(2).set(speedEnc, 60, 0);
+        graph.edge(1, 0).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(0, 4).setDistance(20).set(speedEnc, 10, 0);
+        final EdgeIteratorState e4to6 = graph.edge(4, 6).setDistance(20).set(speedEnc, 10, 10);
+        final EdgeIteratorState e6to3 = graph.edge(6, 3).setDistance(10).set(speedEnc, 10, 10);
+        final EdgeIteratorState e3to4 = graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 10);
+        final EdgeIteratorState e4to5 = graph.edge(4, 5).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(5, 2).setDistance(20).set(speedEnc, 10, 0);
         freeze();
 
         // enforce loop (going counter-clockwise)
@@ -198,9 +198,9 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testContractNode_twoNormalEdges_noSourceEdgeToConnect() {
         // 1 --> 0 --> 2 --> 3
-        graph.edge(1, 0).setDistance(3).set(speedEnc, 60, 0);
-        graph.edge(0, 2).setDistance(5).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(1, 0).setDistance(30).set(speedEnc, 10, 0);
+        graph.edge(0, 2).setDistance(50).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(0, 3, 1, 2);
@@ -213,9 +213,9 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testContractNode_twoNormalEdges_noTargetEdgeToConnect() {
         // 3 --> 1 --> 0 --> 2
-        graph.edge(3, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 0).setDistance(3).set(speedEnc, 60, 0);
-        graph.edge(0, 2).setDistance(5).set(speedEnc, 60, 0);
+        graph.edge(3, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 0).setDistance(30).set(speedEnc, 10, 0);
+        graph.edge(0, 2).setDistance(50).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(0, 3, 1, 2);
@@ -228,10 +228,10 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testContractNode_twoNormalEdges_noEdgesToConnectBecauseOfTurnRestrictions() {
         // 0 --> 3 --> 2 --> 4 --> 1
-        graph.edge(0, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(3, 2).setDistance(3).set(speedEnc, 60, 0);
-        graph.edge(2, 4).setDistance(5).set(speedEnc, 60, 0);
-        graph.edge(4, 1).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(3, 2).setDistance(30).set(speedEnc, 10, 0);
+        graph.edge(2, 4).setDistance(50).set(speedEnc, 10, 0);
+        graph.edge(4, 1).setDistance(10).set(speedEnc, 10, 0);
         setRestriction(0, 3, 2);
         setRestriction(2, 4, 1);
         freeze();
@@ -244,10 +244,10 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testContractNode_twoNormalEdges_noTurncosts() {
         // 0 --> 3 --> 2 --> 4 --> 1
-        graph.edge(0, 3).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState e3to2 = graph.edge(3, 2).setDistance(3).set(speedEnc, 60, 0);
-        final EdgeIteratorState e2to4 = graph.edge(2, 4).setDistance(5).set(speedEnc, 60, 0);
-        graph.edge(4, 1).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 3).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState e3to2 = graph.edge(3, 2).setDistance(30).set(speedEnc, 10, 0);
+        final EdgeIteratorState e2to4 = graph.edge(2, 4).setDistance(50).set(speedEnc, 10, 0);
+        graph.edge(4, 1).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
@@ -267,10 +267,10 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testContractNode_twoNormalEdges_noShortcuts() {
         // 0 --> 1 --> 2 --> 3 --> 4
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(3).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(5).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(30).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(50).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractAllNodesInOrder();
@@ -281,10 +281,10 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testContractNode_twoNormalEdges_noOutgoingEdges() {
         // 0 --> 1 --> 2 <-- 3 <-- 4
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(3).set(speedEnc, 60, 0);
-        graph.edge(3, 2).setDistance(5).set(speedEnc, 60, 0);
-        graph.edge(4, 3).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(30).set(speedEnc, 10, 0);
+        graph.edge(3, 2).setDistance(50).set(speedEnc, 10, 0);
+        graph.edge(4, 3).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
@@ -294,10 +294,10 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testContractNode_twoNormalEdges_noIncomingEdges() {
         // 0 <-- 1 <-- 2 --> 3 --> 4
-        graph.edge(1, 0).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 1).setDistance(3).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(5).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(1, 0).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 1).setDistance(30).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(50).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
@@ -311,11 +311,11 @@ public class EdgeBasedNodeContractorTest {
 
         // 0 -> 1 -> 2 -> 3 -> 4
         //            \->/
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(2).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(20).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
@@ -329,11 +329,11 @@ public class EdgeBasedNodeContractorTest {
     public void testContractNode_duplicateIncomingEdges_differentWeight() {
         // 0 -> 1 -> 2 -> 3 -> 4
         //       \->/
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(2).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(20).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
@@ -351,11 +351,11 @@ public class EdgeBasedNodeContractorTest {
 
         // 0 -> 1 -> 2 -> 3 -> 4
         //            \->/
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
@@ -366,11 +366,11 @@ public class EdgeBasedNodeContractorTest {
     public void testContractNode_duplicateIncomingEdges_sameWeight() {
         // 0 -> 1 -> 2 -> 3 -> 4
         //       \->/
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 4, 1, 3);
@@ -380,10 +380,10 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testContractNode_twoNormalEdges_withTurnCost() {
         // 0 --> 3 --> 2 --> 4 --> 1
-        graph.edge(0, 3).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState e3to2 = graph.edge(3, 2).setDistance(3).set(speedEnc, 60, 0);
-        final EdgeIteratorState e2to4 = graph.edge(2, 4).setDistance(5).set(speedEnc, 60, 0);
-        graph.edge(4, 1).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 3).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState e3to2 = graph.edge(3, 2).setDistance(30).set(speedEnc, 10, 0);
+        final EdgeIteratorState e2to4 = graph.edge(2, 4).setDistance(50).set(speedEnc, 10, 0);
+        graph.edge(4, 1).setDistance(10).set(speedEnc, 10, 0);
         setTurnCost(3, 2, 4, 4);
         freeze();
         setMaxLevelOnAllNodes();
@@ -394,10 +394,10 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testContractNode_twoNormalEdges_withTurnRestriction() {
         // 0 --> 3 --> 2 --> 4 --> 1
-        graph.edge(0, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(3, 2).setDistance(3).set(speedEnc, 60, 0);
-        graph.edge(2, 4).setDistance(5).set(speedEnc, 60, 0);
-        graph.edge(4, 1).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(3, 2).setDistance(30).set(speedEnc, 10, 0);
+        graph.edge(2, 4).setDistance(50).set(speedEnc, 10, 0);
+        graph.edge(4, 1).setDistance(10).set(speedEnc, 10, 0);
         setRestriction(3, 2, 4);
         freeze();
         setMaxLevelOnAllNodes();
@@ -408,10 +408,10 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testContractNode_twoNormalEdges_bidirectional() {
         // 0 -- 3 -- 2 -- 4 -- 1
-        graph.edge(0, 3).setDistance(1).set(speedEnc, 60, 60);
-        final EdgeIteratorState e3to2 = graph.edge(3, 2).setDistance(3).set(speedEnc, 60, 60);
-        final EdgeIteratorState e2to4 = graph.edge(2, 4).setDistance(5).set(speedEnc, 60, 60);
-        graph.edge(4, 1).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(0, 3).setDistance(10).set(speedEnc, 10, 10);
+        final EdgeIteratorState e3to2 = graph.edge(3, 2).setDistance(30).set(speedEnc, 10, 10);
+        final EdgeIteratorState e2to4 = graph.edge(2, 4).setDistance(50).set(speedEnc, 10, 10);
+        graph.edge(4, 1).setDistance(10).set(speedEnc, 10, 10);
         setTurnCost(e3to2, e2to4, 2, 4);
         setTurnCost(e2to4, e3to2, 2, 4);
         freeze();
@@ -429,10 +429,10 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testContractNode_twoNormalEdges_bidirectional_differentCosts() {
         // 0 -- 3 -- 2 -- 4 -- 1
-        graph.edge(0, 3).setDistance(1).set(speedEnc, 60, 60);
-        final EdgeIteratorState e3to2 = graph.edge(3, 2).setDistance(3).set(speedEnc, 60, 60);
-        final EdgeIteratorState e2to4 = graph.edge(2, 4).setDistance(5).set(speedEnc, 60, 60);
-        graph.edge(4, 1).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(0, 3).setDistance(10).set(speedEnc, 10, 10);
+        final EdgeIteratorState e3to2 = graph.edge(3, 2).setDistance(30).set(speedEnc, 10, 10);
+        final EdgeIteratorState e2to4 = graph.edge(2, 4).setDistance(50).set(speedEnc, 10, 10);
+        graph.edge(4, 1).setDistance(10).set(speedEnc, 10, 10);
         setTurnCost(e3to2, e2to4, 2, 4);
         setTurnCost(e2to4, e3to2, 2, 7);
         freeze();
@@ -447,9 +447,9 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testContractNode_multiple_bidirectional_linear() {
         // 3 -- 2 -- 1 -- 4
-        graph.edge(3, 2).setDistance(2).set(speedEnc, 60, 60);
-        graph.edge(2, 1).setDistance(3).set(speedEnc, 60, 60);
-        graph.edge(1, 4).setDistance(6).set(speedEnc, 60, 60);
+        graph.edge(3, 2).setDistance(20).set(speedEnc, 10, 10);
+        graph.edge(2, 1).setDistance(30).set(speedEnc, 10, 10);
+        graph.edge(1, 4).setDistance(60).set(speedEnc, 10, 10);
         freeze();
         setMaxLevelOnAllNodes();
 
@@ -463,12 +463,12 @@ public class EdgeBasedNodeContractorTest {
         // 2 -> 7 -> 3 -> 5 -> 6
         //           |
         //     1 <-> 4
-        final EdgeIteratorState e7to3 = graph.edge(7, 3).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState e3to5 = graph.edge(3, 5).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState e3to4 = graph.edge(3, 4).setDistance(2).set(speedEnc, 60, 60);
-        graph.edge(2, 7).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(5, 6).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 4).setDistance(1).set(speedEnc, 60, 60);
+        final EdgeIteratorState e7to3 = graph.edge(7, 3).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState e3to5 = graph.edge(3, 5).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState e3to4 = graph.edge(3, 4).setDistance(20).set(speedEnc, 10, 10);
+        graph.edge(2, 7).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(5, 6).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 4).setDistance(10).set(speedEnc, 10, 10);
         freeze();
         setMaxLevelOnAllNodes();
         setRestriction(7, 3, 5);
@@ -538,19 +538,19 @@ public class EdgeBasedNodeContractorTest {
     // 9--7 5 8--10
     private class GraphWithTwoLoops {
         final int centerNode = 6;
-        final EdgeIteratorState e0to1 = graph.edge(0, 1).setDistance(3).set(speedEnc, 60, 0);
-        final EdgeIteratorState e1to6 = graph.edge(1, 6).setDistance(2).set(speedEnc, 60, 0);
-        final EdgeIteratorState e6to0 = graph.edge(6, 0).setDistance(4).set(speedEnc, 60, 0);
-        final EdgeIteratorState e2to3 = graph.edge(2, 3).setDistance(2).set(speedEnc, 60, 0);
-        final EdgeIteratorState e3to6 = graph.edge(3, 6).setDistance(7).set(speedEnc, 60, 0);
-        final EdgeIteratorState e6to2 = graph.edge(6, 2).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState e7to6 = graph.edge(7, 6).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState e6to8 = graph.edge(6, 8).setDistance(6).set(speedEnc, 60, 0);
-        final EdgeIteratorState e9to7 = graph.edge(9, 7).setDistance(2).set(speedEnc, 60, 0);
-        final EdgeIteratorState e8to10 = graph.edge(8, 10).setDistance(3).set(speedEnc, 60, 0);
+        final EdgeIteratorState e0to1 = graph.edge(0, 1).setDistance(30).set(speedEnc, 10, 0);
+        final EdgeIteratorState e1to6 = graph.edge(1, 6).setDistance(20).set(speedEnc, 10, 0);
+        final EdgeIteratorState e6to0 = graph.edge(6, 0).setDistance(40).set(speedEnc, 10, 0);
+        final EdgeIteratorState e2to3 = graph.edge(2, 3).setDistance(20).set(speedEnc, 10, 0);
+        final EdgeIteratorState e3to6 = graph.edge(3, 6).setDistance(70).set(speedEnc, 10, 0);
+        final EdgeIteratorState e6to2 = graph.edge(6, 2).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState e7to6 = graph.edge(7, 6).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState e6to8 = graph.edge(6, 8).setDistance(60).set(speedEnc, 10, 0);
+        final EdgeIteratorState e9to7 = graph.edge(9, 7).setDistance(20).set(speedEnc, 10, 0);
+        final EdgeIteratorState e8to10 = graph.edge(8, 10).setDistance(30).set(speedEnc, 10, 0);
         // these two edges help to avoid loop avoidance for the left and right loops
-        final EdgeIteratorState e4to6 = graph.edge(4, 6).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState e5to6 = graph.edge(5, 6).setDistance(1).set(speedEnc, 60, 0);
+        final EdgeIteratorState e4to6 = graph.edge(4, 6).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState e5to6 = graph.edge(5, 6).setDistance(10).set(speedEnc, 10, 0);
         final int numEdges = 12;
 
         GraphWithTwoLoops(int turnCost70, int turnCost72, int turnCost12, int turnCost18, int turnCost38, int turnCost78) {
@@ -610,11 +610,11 @@ public class EdgeBasedNodeContractorTest {
     //     / \
     // 4--1---2--3
     private class GraphWithDetour {
-        private final EdgeIteratorState e4to1 = graph.edge(4, 1).setDistance(2).set(speedEnc, 60, 0);
-        private final EdgeIteratorState e1to0 = graph.edge(1, 0).setDistance(4).set(speedEnc, 60, 0);
-        private final EdgeIteratorState e1to2 = graph.edge(1, 2).setDistance(3).set(speedEnc, 60, 0);
-        private final EdgeIteratorState e0to2 = graph.edge(0, 2).setDistance(3).set(speedEnc, 60, 0);
-        private final EdgeIteratorState e2to3 = graph.edge(2, 3).setDistance(2).set(speedEnc, 60, 0);
+        private final EdgeIteratorState e4to1 = graph.edge(4, 1).setDistance(20).set(speedEnc, 10, 0);
+        private final EdgeIteratorState e1to0 = graph.edge(1, 0).setDistance(40).set(speedEnc, 10, 0);
+        private final EdgeIteratorState e1to2 = graph.edge(1, 2).setDistance(30).set(speedEnc, 10, 0);
+        private final EdgeIteratorState e0to2 = graph.edge(0, 2).setDistance(30).set(speedEnc, 10, 0);
+        private final EdgeIteratorState e2to3 = graph.edge(2, 3).setDistance(20).set(speedEnc, 10, 0);
 
         GraphWithDetour(int turnCost42, int turnCost13, int turnCost40, int turnCost03) {
             setTurnCost(e4to1, e1to2, 1, turnCost42);
@@ -652,14 +652,14 @@ public class EdgeBasedNodeContractorTest {
     //  \ / \ /
     // 2-1-0-4-6
     private class GraphWithDetourMultipleInOutEdges {
-        final EdgeIteratorState e5to1 = graph.edge(5, 1).setDistance(3).set(speedEnc, 60, 0);
-        final EdgeIteratorState e2to1 = graph.edge(2, 1).setDistance(2).set(speedEnc, 60, 0);
-        final EdgeIteratorState e1to3 = graph.edge(1, 3).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState e3to4 = graph.edge(3, 4).setDistance(2).set(speedEnc, 60, 0);
-        final EdgeIteratorState e1to0 = graph.edge(1, 0).setDistance(5).set(speedEnc, 60, 0);
-        final EdgeIteratorState e0to4 = graph.edge(0, 4).setDistance(2).set(speedEnc, 60, 0);
-        final EdgeIteratorState e4to6 = graph.edge(4, 6).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState e4to7 = graph.edge(4, 7).setDistance(3).set(speedEnc, 60, 0);
+        final EdgeIteratorState e5to1 = graph.edge(5, 1).setDistance(30).set(speedEnc, 10, 0);
+        final EdgeIteratorState e2to1 = graph.edge(2, 1).setDistance(20).set(speedEnc, 10, 0);
+        final EdgeIteratorState e1to3 = graph.edge(1, 3).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState e3to4 = graph.edge(3, 4).setDistance(20).set(speedEnc, 10, 0);
+        final EdgeIteratorState e1to0 = graph.edge(1, 0).setDistance(50).set(speedEnc, 10, 0);
+        final EdgeIteratorState e0to4 = graph.edge(0, 4).setDistance(20).set(speedEnc, 10, 0);
+        final EdgeIteratorState e4to6 = graph.edge(4, 6).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState e4to7 = graph.edge(4, 7).setDistance(30).set(speedEnc, 10, 0);
 
         GraphWithDetourMultipleInOutEdges(int turnCost20, int turnCost50, int turnCost23, int turnCost53, int turnCost36) {
             setTurnCost(e1to3, e3to4, 3, 2);
@@ -701,12 +701,12 @@ public class EdgeBasedNodeContractorTest {
     //     |
     //     5
     private class GraphWithLoop {
-        final EdgeIteratorState e0to1 = graph.edge(0, 1).setDistance(2).set(speedEnc, 60, 0);
-        final EdgeIteratorState e1to2 = graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState e2to0 = graph.edge(2, 0).setDistance(1).set(speedEnc, 60, 0);
-        final EdgeIteratorState e3to2 = graph.edge(3, 2).setDistance(3).set(speedEnc, 60, 0);
-        final EdgeIteratorState e2to4 = graph.edge(2, 4).setDistance(5).set(speedEnc, 60, 0);
-        final EdgeIteratorState e5to2 = graph.edge(5, 2).setDistance(2).set(speedEnc, 60, 0);
+        final EdgeIteratorState e0to1 = graph.edge(0, 1).setDistance(20).set(speedEnc, 10, 0);
+        final EdgeIteratorState e1to2 = graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState e2to0 = graph.edge(2, 0).setDistance(10).set(speedEnc, 10, 0);
+        final EdgeIteratorState e3to2 = graph.edge(3, 2).setDistance(30).set(speedEnc, 10, 0);
+        final EdgeIteratorState e2to4 = graph.edge(2, 4).setDistance(50).set(speedEnc, 10, 0);
+        final EdgeIteratorState e5to2 = graph.edge(5, 2).setDistance(20).set(speedEnc, 10, 0);
 
         GraphWithLoop(int turnCost34) {
             setTurnCost(e3to2, e2to4, 2, turnCost34);
@@ -722,16 +722,16 @@ public class EdgeBasedNodeContractorTest {
         // 0 - 1   3 - 4   |
         //     |   |      /     
         //     5 - 9 ---- 
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(5).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 5).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(5, 9).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(9, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 7).setDistance(6).set(speedEnc, 60, 0);
-        graph.edge(9, 7).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(7, 10).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(50).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 5).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(5, 9).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(9, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 7).setDistance(60).set(speedEnc, 10, 0);
+        graph.edge(9, 7).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(7, 10).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 10, 4, 1, 5, 7, 9, 3);
@@ -745,13 +745,13 @@ public class EdgeBasedNodeContractorTest {
         // 0 -> 1 -> 5 <_
         //      v    v   \
         //      2 -> 3 -> 4
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 5).setDistance(1).set(speedEnc, 60, 0);
-        EdgeIteratorState e2to3 = graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 0);
-        EdgeIteratorState e3to4 = graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(4, 5).setDistance(1).set(speedEnc, 60, 0);
-        EdgeIteratorState e5to3 = graph.edge(5, 3).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 5).setDistance(10).set(speedEnc, 10, 0);
+        EdgeIteratorState e2to3 = graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 0);
+        EdgeIteratorState e3to4 = graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(4, 5).setDistance(10).set(speedEnc, 10, 0);
+        EdgeIteratorState e5to3 = graph.edge(5, 3).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(3, 2, 0, 1, 5, 4);
@@ -773,16 +773,16 @@ public class EdgeBasedNodeContractorTest {
         // 0 --> 1 ---> 3 ---> 5 --> 6 
         //        \           /
         //         \--> 4 ---/   
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 4).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 4).setDistance(10).set(speedEnc, 10, 0);
         // bidirectional
-        graph.edge(2, 5).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(3, 5).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(2, 5).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(3, 5).setDistance(10).set(speedEnc, 10, 0);
         // bidirectional
-        graph.edge(4, 5).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(5, 6).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(4, 5).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(5, 6).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(3, 0, 6, 1, 2, 5, 4);
@@ -806,16 +806,16 @@ public class EdgeBasedNodeContractorTest {
         // 0 --> 1 ---> 3 ---> 5 --> 6 
         //        \           /
         //         \--- 4 ->-/   
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
         // bidirectional
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(1, 3).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(1, 3).setDistance(10).set(speedEnc, 10, 0);
         // bidirectional
-        graph.edge(1, 4).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(2, 5).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(3, 5).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(4, 5).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(5, 6).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(1, 4).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(2, 5).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(3, 5).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(4, 5).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(5, 6).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(3, 0, 6, 1, 2, 5, 4);
@@ -836,12 +836,12 @@ public class EdgeBasedNodeContractorTest {
         // 0 -> 1 <-> 5
         //      v     v
         //      2 --> 3 -> 4
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, edge1to2bidirectional ? 60 : 0);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 5).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(5, 3).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, edge1to2bidirectional ? 10 : 0);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 5).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(5, 3).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 5, 4, 3);
@@ -855,12 +855,12 @@ public class EdgeBasedNodeContractorTest {
         // 0 -> 1 <-> 5
         //      v     v
         //      2 --> 3 -> 4
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 5).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(5, 3).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 5).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(5, 3).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(5, 0, 4, 1, 2, 3);
@@ -873,18 +873,18 @@ public class EdgeBasedNodeContractorTest {
         // 0 -> 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
         //     /      \                 /      \
         //10 ->        ------> 9 ------>        -> 11
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(4, 5).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(5, 6).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(6, 7).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(7, 8).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 9).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(9, 6).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(10, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(7, 11).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(4, 5).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(5, 6).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(6, 7).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(7, 8).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 9).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(9, 6).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(10, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(7, 11).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 6, 3, 5, 4, 0, 8, 10, 11, 1, 7, 9);
@@ -906,12 +906,12 @@ public class EdgeBasedNodeContractorTest {
         // 0 -> 1 -> 2 -> 3 -> 4
         //       \       /         
         //        -- 5 ->   
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 5).setDistance(3).set(speedEnc, 60, 0);
-        graph.edge(5, 3).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 5).setDistance(30).set(speedEnc, 10, 0);
+        graph.edge(5, 3).setDistance(10).set(speedEnc, 10, 0);
         setTurnCost(2, 3, 4, 5);
         setTurnCost(5, 3, 4, 2);
         freeze();
@@ -930,12 +930,12 @@ public class EdgeBasedNodeContractorTest {
         // 0 -> 1 -> 2 -> 3 -> 4 -> 5
         //       \        |
         //        ------->|
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 3).setDistance(4).set(speedEnc, 60, 0);
-        graph.edge(4, 5).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 3).setDistance(40).set(speedEnc, 10, 0);
+        graph.edge(4, 5).setDistance(10).set(speedEnc, 10, 0);
 
         freeze();
         setMaxLevelOnAllNodes();
@@ -954,12 +954,12 @@ public class EdgeBasedNodeContractorTest {
         // 0 -> 1 -> 2 -> 3 -> 4 -> 5
         //           |        / 
         //           ------->
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(4, 5).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 4).setDistance(4).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(4, 5).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 4).setDistance(40).set(speedEnc, 10, 0);
 
         freeze();
         setMaxLevelOnAllNodes();
@@ -973,9 +973,9 @@ public class EdgeBasedNodeContractorTest {
     public void testNodeContraction_parallelEdges_onlyOneLoopShortcutNeeded() {
         //  /--\
         // 0 -- 1 -- 2
-        EdgeIteratorState edge0 = graph.edge(0, 1).setDistance(2).set(speedEnc, 60, 60);
-        EdgeIteratorState edge1 = graph.edge(1, 0).setDistance(4).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(5).set(speedEnc, 60, 60);
+        EdgeIteratorState edge0 = graph.edge(0, 1).setDistance(20).set(speedEnc, 10, 10);
+        EdgeIteratorState edge1 = graph.edge(1, 0).setDistance(40).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(50).set(speedEnc, 10, 10);
         setTurnCost(edge0, edge1, 0, 1);
         setTurnCost(edge1, edge0, 0, 2);
         freeze();
@@ -993,12 +993,12 @@ public class EdgeBasedNodeContractorTest {
         // |\   |
         // | \  /        
         // -- 2 
-        graph.edge(1, 3).setDistance(47).set(speedEnc, 60, 60);
-        graph.edge(2, 4).setDistance(19).set(speedEnc, 60, 60);
-        EdgeIteratorState e2 = graph.edge(2, 5).setDistance(38).set(speedEnc, 60, 60);
-        EdgeIteratorState e3 = graph.edge(2, 5).setDistance(57).set(speedEnc, 60, 60); // note there is a duplicate edge here (with different weight)
-        graph.edge(3, 4).setDistance(10).set(speedEnc, 60, 60);
-        EdgeIteratorState e5 = graph.edge(4, 5).setDistance(56).set(speedEnc, 60, 60);
+        graph.edge(1, 3).setDistance(470).set(speedEnc, 10, 10);
+        graph.edge(2, 4).setDistance(190).set(speedEnc, 10, 10);
+        EdgeIteratorState e2 = graph.edge(2, 5).setDistance(380).set(speedEnc, 10, 10);
+        EdgeIteratorState e3 = graph.edge(2, 5).setDistance(570).set(speedEnc, 10, 10); // note there is a duplicate edge here (with different weight)
+        graph.edge(3, 4).setDistance(100).set(speedEnc, 10, 10);
+        EdgeIteratorState e5 = graph.edge(4, 5).setDistance(560).set(speedEnc, 10, 10);
 
         setTurnCost(e3, e2, 5, 4);
         setTurnCost(e2, e3, 5, 5);
@@ -1030,9 +1030,9 @@ public class EdgeBasedNodeContractorTest {
 
     @Test
     public void testNodeContraction_tripleConnection() {
-        graph.edge(0, 1).setDistance(1.0).set(speedEnc, 60, 60);
-        graph.edge(0, 1).setDistance(2.0).set(speedEnc, 60, 60);
-        graph.edge(0, 1).setDistance(3.5).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(10.0).set(speedEnc, 10, 10);
+        graph.edge(0, 1).setDistance(20.0).set(speedEnc, 10, 10);
+        graph.edge(0, 1).setDistance(35.0).set(speedEnc, 10, 10);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(1, 0);
@@ -1050,10 +1050,10 @@ public class EdgeBasedNodeContractorTest {
         //    v   ^
         //     \ /
         //      2
-        graph.edge(0, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(2, 1).setDistance(1).set(speedEnc, 60, 0);
-        graph.edge(1, 3).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 1).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(1, 3).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3);
@@ -1067,11 +1067,11 @@ public class EdgeBasedNodeContractorTest {
         //  0-4-3
         //    |
         //    1
-        graph.edge(0, 4).setDistance(2).set(speedEnc, 60, 0);
-        graph.edge(4, 3).setDistance(2).set(speedEnc, 60, 60);
-        graph.edge(3, 2).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(2, 4).setDistance(1).set(speedEnc, 60, 60);
-        graph.edge(4, 1).setDistance(1).set(speedEnc, 60, 0);
+        graph.edge(0, 4).setDistance(20).set(speedEnc, 10, 0);
+        graph.edge(4, 3).setDistance(20).set(speedEnc, 10, 10);
+        graph.edge(3, 2).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(2, 4).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(4, 1).setDistance(10).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
 
@@ -1095,11 +1095,11 @@ public class EdgeBasedNodeContractorTest {
         // 0-3-4
         //   |/
         //   2
-        graph.edge(0, 3).setDistance(100).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(100).set(speedEnc, 60, 60);
-        graph.edge(4, 2).setDistance(500).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(200).set(speedEnc, 60, 0);
-        graph.edge(3, 1).setDistance(100).set(speedEnc, 60, 0);
+        graph.edge(0, 3).setDistance(1000).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(1000).set(speedEnc, 10, 10);
+        graph.edge(4, 2).setDistance(5000).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(2000).set(speedEnc, 10, 0);
+        graph.edge(3, 1).setDistance(1000).set(speedEnc, 10, 0);
         freeze();
         chStore = CHStorage.fromGraph(graph, chConfigs.get(1));
         chBuilder = new CHStorageBuilder(chStore);
@@ -1118,11 +1118,11 @@ public class EdgeBasedNodeContractorTest {
         //  /\    /<-3
         // 0  1--2
         //  \/    \->4
-        graph.edge(0, 1).setDistance(5).set(speedEnc, 60, 60);
-        graph.edge(0, 1).setDistance(6).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(2).set(speedEnc, 60, 60);
-        graph.edge(3, 2).setDistance(3).set(speedEnc, 60, 0);
-        graph.edge(2, 4).setDistance(3).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(50).set(speedEnc, 10, 10);
+        graph.edge(0, 1).setDistance(60).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(20).set(speedEnc, 10, 10);
+        graph.edge(3, 2).setDistance(30).set(speedEnc, 10, 0);
+        graph.edge(2, 4).setDistance(30).set(speedEnc, 10, 0);
         setRestriction(3, 2, 4);
         freeze();
         setMaxLevelOnAllNodes();
@@ -1133,10 +1133,10 @@ public class EdgeBasedNodeContractorTest {
     @Test
     public void testNodeContraction_minorWeightDeviation() {
         // 0 -> 1 -> 2 -> 3 -> 4
-        graph.edge(0, 1).setDistance(51.401).set(speedEnc, 60, 0);
-        graph.edge(1, 2).setDistance(70.041).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(75.806).set(speedEnc, 60, 0);
-        graph.edge(3, 4).setDistance(05.003).set(speedEnc, 60, 0);
+        graph.edge(0, 1).setDistance(514.01).set(speedEnc, 10, 0);
+        graph.edge(1, 2).setDistance(700.41).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(758.06).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(050.03).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         contractNodes(2, 0, 1, 3, 4);
@@ -1151,14 +1151,14 @@ public class EdgeBasedNodeContractorTest {
         //           |
         // 0 -> 3 -> 2 <-> 4 -> 5
         //  \---<----|
-        graph.edge(3, 2).setDistance(71.203000).set(speedEnc, 60, 0);
-        graph.edge(0, 3).setDistance(79.003000).set(speedEnc, 60, 0);
-        graph.edge(2, 0).setDistance(21.328000).set(speedEnc, 60, 0);
-        graph.edge(2, 4).setDistance(16.499000).set(speedEnc, 60, 0);
-        graph.edge(4, 2).setDistance(16.487000).set(speedEnc, 60, 0);
-        graph.edge(6, 1).setDistance(55.603000).set(speedEnc, 60, 0);
-        graph.edge(2, 1).setDistance(33.453000).set(speedEnc, 60, 0);
-        graph.edge(4, 5).setDistance(29.665000).set(speedEnc, 60, 0);
+        graph.edge(3, 2).setDistance(710.203000).set(speedEnc, 10, 0);
+        graph.edge(0, 3).setDistance(790.003000).set(speedEnc, 10, 0);
+        graph.edge(2, 0).setDistance(210.328000).set(speedEnc, 10, 0);
+        graph.edge(2, 4).setDistance(160.499000).set(speedEnc, 10, 0);
+        graph.edge(4, 2).setDistance(160.487000).set(speedEnc, 10, 0);
+        graph.edge(6, 1).setDistance(550.603000).set(speedEnc, 10, 0);
+        graph.edge(2, 1).setDistance(330.453000).set(speedEnc, 10, 0);
+        graph.edge(4, 5).setDistance(290.665000).set(speedEnc, 10, 0);
         freeze();
         setMaxLevelOnAllNodes();
         EdgeBasedNodeContractor nodeContractor = createNodeContractor();
@@ -1170,11 +1170,11 @@ public class EdgeBasedNodeContractorTest {
     @Test
     void issue_2564() {
         // 0-1-2-3-4-5
-        graph.edge(0, 1).setDistance(100).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(7.336).set(speedEnc, 60, 60);
-        graph.edge(2, 3).setDistance(10.161).set(speedEnc, 60, 60);
-        graph.edge(3, 4).setDistance(0).set(speedEnc, 60, 60);
-        graph.edge(4, 5).setDistance(100).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(1000).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(73.36).set(speedEnc, 10, 10);
+        graph.edge(2, 3).setDistance(101.61).set(speedEnc, 10, 10);
+        graph.edge(3, 4).setDistance(0).set(speedEnc, 10, 10);
+        graph.edge(4, 5).setDistance(1000).set(speedEnc, 10, 10);
         freeze();
         chStore = CHStorage.fromGraph(graph, chConfigs.get(2));
         chBuilder = new CHStorageBuilder(chStore);
