@@ -117,13 +117,17 @@ public class CHTurnCostTest {
         return new ArrayList<>(configs);
     }
 
+    private EdgeIteratorState setEdge(BaseGraph graph, double speed, boolean fwd, boolean bwd, int from, int to, double distance) {
+        return GHUtility.setSpeed(speed, fwd, bwd, accessEnc, speedEnc, graph.edge(from, to).setDistance(distance));
+    }
+
     @RepeatedTest(10)
     public void testFindPath_randomContractionOrder_linear() {
         // 2-1-0-3-4
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 1).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 0).setDistance(3));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(3));
+        setEdge(graph, 60, true, true, 2, 1, 2);
+        setEdge(graph, 60, true, true, 1, 0, 3);
+        setEdge(graph, 60, true, true, 0, 3, 1);
+        setEdge(graph, 60, true, true, 3, 4, 3);
         graph.freeze();
         setTurnCost(2, 1, 0, 2);
         setTurnCost(0, 3, 4, 4);
@@ -135,11 +139,11 @@ public class CHTurnCostTest {
         //  /\    /<-3
         // 0  1--2
         //  \/    \->4
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(5));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(6));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(2));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 2).setDistance(3));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 4).setDistance(3));
+        setEdge(graph, 60, true, true, 0, 1, 5);
+        setEdge(graph, 60, true, true, 0, 1, 6);
+        setEdge(graph, 60, true, true, 1, 2, 2);
+        setEdge(graph, 60, true, false, 3, 2, 3);
+        setEdge(graph, 60, true, false, 2, 4, 3);
         setRestriction(3, 2, 4);
         graph.freeze();
         compareCHWithDijkstra(10, new int[]{0, 1, 2, 3, 4});
@@ -150,11 +154,11 @@ public class CHTurnCostTest {
         //  /\ /\   
         // 0  1  2--3
         //  \/ \/
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(25.789000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(26.016000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(21.902000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(21.862000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(52.987000));
+        setEdge(graph, 60, true, true, 0, 1, 25.789000);
+        setEdge(graph, 60, true, true, 0, 1, 26.016000);
+        setEdge(graph, 60, true, true, 1, 2, 21.902000);
+        setEdge(graph, 60, true, true, 1, 2, 21.862000);
+        setEdge(graph, 60, true, true, 2, 3, 52.987000);
         graph.freeze();
         compareCHWithDijkstra(1000, new int[]{0, 1, 2, 3});
     }
@@ -172,17 +176,17 @@ public class CHTurnCostTest {
         // To cover all or at least as many as possible different cases we randomly apply some restrictions and compare
         // the resulting query with a standard Dijkstra search.
         // If this test fails use the logger output to generate code for further debugging.
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 6).setDistance(3));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(6, 7).setDistance(3));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(7, 8).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(7, 9).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(7, 10).setDistance(1));
+        setEdge(graph, 60, true, false, 0, 5, 1);
+        setEdge(graph, 60, true, false, 1, 5, 1);
+        setEdge(graph, 60, true, false, 2, 5, 1);
+        setEdge(graph, 60, true, false, 5, 3, 1);
+        setEdge(graph, 60, true, false, 3, 4, 1);
+        setEdge(graph, 60, true, false, 4, 7, 1);
+        setEdge(graph, 60, true, false, 5, 6, 3);
+        setEdge(graph, 60, true, false, 6, 7, 3);
+        setEdge(graph, 60, true, false, 7, 8, 1);
+        setEdge(graph, 60, true, false, 7, 9, 1);
+        setEdge(graph, 60, true, false, 7, 10, 1);
 
         long seed = System.nanoTime();
         Random rnd = new Random(seed);
@@ -216,15 +220,15 @@ public class CHTurnCostTest {
         // 1 - 5 - 6 - 7 - 9
         //    /         \
         //   2           10
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 6).setDistance(3));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(6, 7).setDistance(3));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(7, 9).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(7, 10).setDistance(1));
+        setEdge(graph, 60, true, false, 1, 5, 1);
+        setEdge(graph, 60, true, false, 2, 5, 1);
+        setEdge(graph, 60, true, false, 5, 3, 1);
+        setEdge(graph, 60, true, false, 3, 4, 1);
+        setEdge(graph, 60, true, false, 4, 7, 1);
+        setEdge(graph, 60, true, false, 5, 6, 3);
+        setEdge(graph, 60, true, false, 6, 7, 3);
+        setEdge(graph, 60, true, false, 7, 9, 1);
+        setEdge(graph, 60, true, false, 7, 10, 1);
 
         setTurnCost(2, 5, 6, 4);
         setRestriction(1, 5, 6);
@@ -238,11 +242,11 @@ public class CHTurnCostTest {
     public void testFindPath_duplicateEdge() {
         // 0 -> 1 -> 2 -> 3 -> 4
         //            \->/
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
+        setEdge(graph, 60, true, false, 0, 1, 1);
+        setEdge(graph, 60, true, false, 1, 2, 1);
+        setEdge(graph, 60, true, false, 2, 3, 1);
+        setEdge(graph, 60, true, false, 2, 3, 1);
+        setEdge(graph, 60, true, false, 3, 4, 1);
         compareCHWithDijkstra(100, new int[]{2, 3, 0, 4, 1});
     }
 
@@ -251,14 +255,14 @@ public class CHTurnCostTest {
         // 0   2   4   6   8
         //  \ / \ / \ / \ /
         //   1   3   5   7
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(6, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(7, 8).setDistance(1));
+        setEdge(graph, 60, true, false, 0, 1, 1);
+        setEdge(graph, 60, true, false, 1, 2, 1);
+        setEdge(graph, 60, true, false, 2, 3, 1);
+        setEdge(graph, 60, true, false, 3, 4, 1);
+        setEdge(graph, 60, true, false, 4, 5, 1);
+        setEdge(graph, 60, true, false, 5, 6, 1);
+        setEdge(graph, 60, true, false, 6, 7, 1);
+        setEdge(graph, 60, true, false, 7, 8, 1);
         graph.freeze();
         setTurnCost(1, 2, 3, 4);
         setTurnCost(3, 4, 5, 2);
@@ -275,12 +279,12 @@ public class CHTurnCostTest {
         //   5 3 2 1 4    turn costs ->
         // 0-1-2-3-4-5-6
         //   0 1 4 2 3    turn costs <-
-        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(1));
-        EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 5).setDistance(1));
-        EdgeIteratorState edge5 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 6).setDistance(1));
+        EdgeIteratorState edge0 = setEdge(graph, 60, true, true, 0, 1, 1);
+        EdgeIteratorState edge1 = setEdge(graph, 60, true, true, 1, 2, 1);
+        EdgeIteratorState edge2 = setEdge(graph, 60, true, true, 2, 3, 1);
+        EdgeIteratorState edge3 = setEdge(graph, 60, true, true, 3, 4, 1);
+        EdgeIteratorState edge4 = setEdge(graph, 60, true, true, 4, 5, 1);
+        EdgeIteratorState edge5 = setEdge(graph, 60, true, true, 5, 6, 1);
         graph.freeze();
 
         // turn costs ->
@@ -315,11 +319,11 @@ public class CHTurnCostTest {
         //  0-4-3
         //    |
         //    1
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 4).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 3).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 1).setDistance(1));
+        setEdge(graph, 60, true, false, 0, 4, 2);
+        setEdge(graph, 60, true, true, 4, 3, 2);
+        setEdge(graph, 60, true, true, 3, 2, 1);
+        setEdge(graph, 60, true, true, 2, 4, 1);
+        setEdge(graph, 60, true, false, 4, 1, 1);
         graph.freeze();
 
         // enforce loop (going counter-clockwise)
@@ -337,14 +341,14 @@ public class CHTurnCostTest {
         //  7-5-0
         //    |
         //    6-4
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(7, 5).setDistance(2));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 0).setDistance(2));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 1).setDistance(2));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(6, 4).setDistance(2));
+        setEdge(graph, 60, true, false, 3, 7, 1);
+        setEdge(graph, 60, true, false, 7, 5, 2);
+        setEdge(graph, 60, true, false, 5, 0, 2);
+        setEdge(graph, 60, true, false, 0, 2, 1);
+        setEdge(graph, 60, true, false, 2, 1, 2);
+        setEdge(graph, 60, true, false, 1, 5, 1);
+        setEdge(graph, 60, true, false, 5, 6, 1);
+        setEdge(graph, 60, true, false, 6, 4, 2);
         graph.freeze();
 
         setRestriction(7, 5, 6);
@@ -364,13 +368,13 @@ public class CHTurnCostTest {
         //  1-2-3
         //    |
         //    5-6
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 5).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 6).setDistance(2));
+        setEdge(graph, 60, true, false, 0, 1, 1);
+        setEdge(graph, 60, true, false, 1, 2, 2);
+        setEdge(graph, 60, true, true, 2, 3, 2);
+        setEdge(graph, 60, true, true, 3, 4, 1);
+        setEdge(graph, 60, true, true, 4, 2, 1);
+        setEdge(graph, 60, true, false, 2, 5, 1);
+        setEdge(graph, 60, true, false, 5, 6, 2);
         graph.freeze();
 
         // enforce loop (going counter-clockwise)
@@ -395,29 +399,29 @@ public class CHTurnCostTest {
         //  }  |  }  }
         // 11~12-13-14
 
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 7).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(7, 8).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(8, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 2).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(7, 12).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(12, 13).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(13, 14).setDistance(2));
+        setEdge(graph, 60, true, true, 0, 1, 1);
+        setEdge(graph, 60, true, true, 1, 6, 1);
+        setEdge(graph, 60, true, true, 6, 7, 2);
+        setEdge(graph, 60, true, true, 7, 8, 2);
+        setEdge(graph, 60, true, true, 8, 3, 1);
+        setEdge(graph, 60, true, true, 3, 2, 2);
+        setEdge(graph, 60, true, true, 2, 7, 1);
+        setEdge(graph, 60, true, true, 7, 12, 1);
+        setEdge(graph, 60, true, true, 12, 13, 2);
+        setEdge(graph, 60, true, true, 13, 14, 2);
 
         // some more edges to make it more complicated -> potentially find more bugs
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(8));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 11).setDistance(3));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(11, 12).setDistance(50));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(8, 13).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 15).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(15, 16).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(16, 17).setDistance(3));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(17, 4).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 9).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(9, 14).setDistance(2));
+        setEdge(graph, 60, true, true, 1, 2, 8);
+        setEdge(graph, 60, true, true, 6, 11, 3);
+        setEdge(graph, 60, true, true, 11, 12, 50);
+        setEdge(graph, 60, true, true, 8, 13, 1);
+        setEdge(graph, 60, true, true, 0, 15, 1);
+        setEdge(graph, 60, true, true, 15, 16, 2);
+        setEdge(graph, 60, true, true, 16, 17, 3);
+        setEdge(graph, 60, true, true, 17, 4, 2);
+        setEdge(graph, 60, true, true, 3, 4, 2);
+        setEdge(graph, 60, true, true, 4, 9, 1);
+        setEdge(graph, 60, true, true, 9, 14, 2);
         graph.freeze();
 
         // enforce loop (going counter-clockwise)
@@ -458,49 +462,49 @@ public class CHTurnCostTest {
         // 21-22-23-24 25-26
 
         // first we add all edges that contribute to the shortest path, verticals: cost=1, horizontals: cost=2
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 7).setDistance(3));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(7, 8).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(8, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 2).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(7, 12).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(12, 11).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(11, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(6, 7).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(7, 13).setDistance(3));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(13, 14).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(14, 9).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(9, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 5).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 10).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(10, 9).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(14, 19).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(19, 18).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(18, 17).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(17, 16).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(16, 21).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(21, 22).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(22, 23).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(23, 24).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(24, 19).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(19, 20).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(20, 25).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(25, 26).setDistance(2));
+        setEdge(graph, 60, true, true, 0, 1, 1);
+        setEdge(graph, 60, true, true, 1, 7, 3);
+        setEdge(graph, 60, true, false, 7, 8, 2);
+        setEdge(graph, 60, true, true, 8, 3, 1);
+        setEdge(graph, 60, true, true, 3, 2, 2);
+        setEdge(graph, 60, true, true, 2, 7, 1);
+        setEdge(graph, 60, true, true, 7, 12, 1);
+        setEdge(graph, 60, true, true, 12, 11, 2);
+        setEdge(graph, 60, true, true, 11, 6, 1);
+        setEdge(graph, 60, true, false, 6, 7, 2);
+        setEdge(graph, 60, true, true, 7, 13, 3);
+        setEdge(graph, 60, true, true, 13, 14, 2);
+        setEdge(graph, 60, true, true, 14, 9, 1);
+        setEdge(graph, 60, true, true, 9, 4, 1);
+        setEdge(graph, 60, true, true, 4, 5, 2);
+        setEdge(graph, 60, true, true, 5, 10, 1);
+        setEdge(graph, 60, true, true, 10, 9, 2);
+        setEdge(graph, 60, true, true, 14, 19, 1);
+        setEdge(graph, 60, true, true, 19, 18, 2);
+        setEdge(graph, 60, true, true, 18, 17, 2);
+        setEdge(graph, 60, true, true, 17, 16, 2);
+        setEdge(graph, 60, true, true, 16, 21, 1);
+        setEdge(graph, 60, true, true, 21, 22, 2);
+        setEdge(graph, 60, true, true, 22, 23, 2);
+        setEdge(graph, 60, true, true, 23, 24, 2);
+        setEdge(graph, 60, true, true, 24, 19, 1);
+        setEdge(graph, 60, true, true, 19, 20, 2);
+        setEdge(graph, 60, true, true, 20, 25, 1);
+        setEdge(graph, 60, true, true, 25, 26, 2);
 
         //some more edges to make it more complicated -> potentially find more bugs
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(8, 9).setDistance(75));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(17, 22).setDistance(9));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(18, 23).setDistance(15));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(12, 17).setDistance(50));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(13, 18).setDistance(80));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(14, 15).setDistance(3));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(15, 27).setDistance(2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(27, 28).setDistance(100));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(28, 26).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(20, 28).setDistance(1));
+        setEdge(graph, 60, true, true, 1, 2, 1);
+        setEdge(graph, 60, true, false, 4, 3, 1);
+        setEdge(graph, 60, true, true, 8, 9, 75);
+        setEdge(graph, 60, true, true, 17, 22, 9);
+        setEdge(graph, 60, true, true, 18, 23, 15);
+        setEdge(graph, 60, true, true, 12, 17, 50);
+        setEdge(graph, 60, true, true, 13, 18, 80);
+        setEdge(graph, 60, true, true, 14, 15, 3);
+        setEdge(graph, 60, true, true, 15, 27, 2);
+        setEdge(graph, 60, true, true, 27, 28, 100);
+        setEdge(graph, 60, true, true, 28, 26, 1);
+        setEdge(graph, 60, true, true, 20, 28, 1);
         graph.freeze();
 
         // enforce figure of eight curve at node 7
@@ -541,13 +545,13 @@ public class CHTurnCostTest {
         //           4- 0
         //           |
         //     5 ->  6 -> 1
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(6, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 0).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 4).setDistance(1));
+        setEdge(graph, 60, true, false, 5, 6, 1);
+        setEdge(graph, 60, true, false, 6, 1, 1);
+        setEdge(graph, 60, true, true, 6, 4, 1);
+        setEdge(graph, 60, true, false, 4, 0, 1);
+        setEdge(graph, 60, true, false, 0, 3, 1);
+        setEdge(graph, 60, true, false, 3, 2, 1);
+        setEdge(graph, 60, true, false, 2, 4, 1);
         graph.freeze();
         setRestriction(5, 6, 1);
 
@@ -565,14 +569,14 @@ public class CHTurnCostTest {
         //           1
         //           |
         //     5 ->  6 -> 7
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(6, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(6, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 0).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 4).setDistance(1));
+        setEdge(graph, 60, true, false, 5, 6, 1);
+        setEdge(graph, 60, true, false, 6, 7, 1);
+        setEdge(graph, 60, true, true, 6, 1, 1);
+        setEdge(graph, 60, true, true, 1, 4, 1);
+        setEdge(graph, 60, true, false, 4, 0, 1);
+        setEdge(graph, 60, true, false, 0, 3, 1);
+        setEdge(graph, 60, true, false, 3, 2, 1);
+        setEdge(graph, 60, true, false, 2, 4, 1);
         graph.freeze();
         setRestriction(5, 6, 7);
 
@@ -606,7 +610,7 @@ public class CHTurnCostTest {
                 final int from = i * size + j;
                 final int to = from + 1;
                 final double dist = nextDist(maxDist, rnd);
-                GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(from, to).setDistance(dist));
+                setEdge(graph, 60, true, true, from, to, dist);
                 LOGGER.trace("final EdgeIteratorState edge{} = graph.edge({},{},{},true);", edgeCounter++, from, to, dist);
             }
         }
@@ -616,7 +620,7 @@ public class CHTurnCostTest {
                 final int from = i * size + j;
                 final int to = from + size;
                 double dist = nextDist(maxDist, rnd);
-                GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(from, to).setDistance(dist));
+                setEdge(graph, 60, true, true, from, to, dist);
                 LOGGER.trace("final EdgeIteratorState edge{} = graph.edge({},{},{},true);", edgeCounter++, from, to, dist);
             }
         }
@@ -627,13 +631,13 @@ public class CHTurnCostTest {
                 if (j < size - 1) {
                     final double dist = nextDist(maxDist, rnd);
                     final int to = from + size + 1;
-                    GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(from, to).setDistance(dist));
+                    setEdge(graph, 60, true, true, from, to, dist);
                     LOGGER.trace("final EdgeIteratorState edge{} = graph.edge({},{},{},true);", edgeCounter++, from, to, dist);
                 }
                 if (j > 0) {
                     final double dist = nextDist(maxDist, rnd);
                     final int to = from + size - 1;
-                    GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(from, to).setDistance(dist));
+                    setEdge(graph, 60, true, true, from, to, dist);
                     LOGGER.trace("final EdgeIteratorState edge{} = graph.edge({},{},{},true);", edgeCounter++, from, to, dist);
                 }
             }
@@ -665,11 +669,11 @@ public class CHTurnCostTest {
 
     @Test
     public void testFindPath_bug() {
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(18.364000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 4).setDistance(29.814000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2).setDistance(14.554000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 4).setDistance(29.819000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3).setDistance(29.271000));
+        setEdge(graph, 60, true, false, 1, 2, 18.364000);
+        setEdge(graph, 60, true, true, 1, 4, 29.814000);
+        setEdge(graph, 60, true, true, 0, 2, 14.554000);
+        setEdge(graph, 60, true, true, 1, 4, 29.819000);
+        setEdge(graph, 60, true, true, 1, 3, 29.271000);
         setRestriction(3, 1, 2);
         graph.freeze();
 
@@ -679,11 +683,11 @@ public class CHTurnCostTest {
     @Test
     public void testFindPath_bug2() {
         // 1 = 0 - 3 - 2 - 4
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 3).setDistance(24.001000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(6.087000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(6.067000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(46.631000));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 4).setDistance(46.184000));
+        setEdge(graph, 60, true, true, 0, 3, 24.001000);
+        setEdge(graph, 60, true, true, 0, 1, 6.087000);
+        setEdge(graph, 60, true, true, 0, 1, 6.067000);
+        setEdge(graph, 60, true, true, 2, 3, 46.631000);
+        setEdge(graph, 60, true, true, 2, 4, 46.184000);
         graph.freeze();
 
         compareCHWithDijkstra(1000, new int[]{1, 0, 3, 2, 4});
@@ -696,15 +700,15 @@ public class CHTurnCostTest {
         //           1   2
         //            \ /
         // 0 - 7 - 8 - 4 - 6 - 5
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 7).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(7, 8).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(8, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 3).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 4).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 6).setDistance(1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(6, 5).setDistance(1));
+        setEdge(graph, 60, true, false, 0, 7, 1);
+        setEdge(graph, 60, true, false, 7, 8, 1);
+        setEdge(graph, 60, true, false, 8, 4, 1);
+        setEdge(graph, 60, true, false, 4, 1, 1);
+        setEdge(graph, 60, true, false, 1, 3, 1);
+        setEdge(graph, 60, true, false, 3, 2, 1);
+        setEdge(graph, 60, true, false, 2, 4, 1);
+        setEdge(graph, 60, true, false, 4, 6, 1);
+        setEdge(graph, 60, true, false, 6, 5, 1);
         setRestriction(8, 4, 6);
         graph.freeze();
 
@@ -721,11 +725,11 @@ public class CHTurnCostTest {
         // 0-3-4
         //   |/
         //   2
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 3).setDistance(100));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(100));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 2).setDistance(500));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(200));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 1).setDistance(100));
+        setEdge(graph, 60, true, false, 0, 3, 100);
+        setEdge(graph, 60, true, true, 3, 4, 100);
+        setEdge(graph, 60, true, false, 4, 2, 500);
+        setEdge(graph, 60, true, false, 2, 3, 200);
+        setEdge(graph, 60, true, false, 3, 1, 100);
         setRestriction(0, 3, 1);
         graph.freeze();
         chConfig = chConfigs.get(2);
@@ -743,11 +747,11 @@ public class CHTurnCostTest {
         // 2-1--3
         //   |  |
         //   0->4
-        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 4).setDistance(1));
-        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 3).setDistance(1));
-        EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3).setDistance(1));
-        EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 0).setDistance(1));
+        EdgeIteratorState edge0 = setEdge(graph, 60, true, true, 1, 2, 1);
+        EdgeIteratorState edge1 = setEdge(graph, 60, true, false, 0, 4, 1);
+        EdgeIteratorState edge2 = setEdge(graph, 60, true, true, 4, 3, 1);
+        EdgeIteratorState edge3 = setEdge(graph, 60, true, true, 1, 3, 1);
+        EdgeIteratorState edge4 = setEdge(graph, 60, true, true, 1, 0, 1);
         setTurnCost(edge0, edge4, 1, 8);
         setRestriction(edge0, edge3, 1);
         graph.freeze();
@@ -769,11 +773,11 @@ public class CHTurnCostTest {
         na.setNode(2, 49.404004, 9.709110);
         na.setNode(3, 49.400160, 9.708787);
         na.setNode(4, 49.400883, 9.706347);
-        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 3).setDistance(194.063000));
-        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(525.106000));
-        EdgeIteratorState edge2 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(525.106000));
-        EdgeIteratorState edge3 = GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 1).setDistance(703.778000));
-        EdgeIteratorState edge4 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 4).setDistance(400.509000));
+        EdgeIteratorState edge0 = setEdge(graph, 60, true, true, 4, 3, 194.063000);
+        EdgeIteratorState edge1 = setEdge(graph, 60, true, true, 1, 2, 525.106000);
+        EdgeIteratorState edge2 = setEdge(graph, 60, true, true, 1, 2, 525.106000);
+        EdgeIteratorState edge3 = setEdge(graph, 60, true, false, 4, 1, 703.778000);
+        EdgeIteratorState edge4 = setEdge(graph, 60, true, true, 2, 4, 400.509000);
         // cannot go 4-2-1 and 1-2-4 (at least when using edge1, there is still edge2!)
         setRestriction(edge4, edge1, 2);
         setRestriction(edge1, edge4, 2);
@@ -825,11 +829,11 @@ public class CHTurnCostTest {
         na.setNode(0, 0.1, 0.1);
         na.setNode(5, 0.1, 0.2);
         na.setNode(4, 0.1, 0.3);
-        EdgeIteratorState edge0 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 1).setDistance(10));
-        EdgeIteratorState edge1 = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(10));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 0).setDistance(10));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 5).setDistance(10));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 4).setDistance(10));
+        EdgeIteratorState edge0 = setEdge(graph, 60, true, true, 3, 1, 10);
+        EdgeIteratorState edge1 = setEdge(graph, 60, true, true, 2, 3, 10);
+        setEdge(graph, 60, true, true, 3, 0, 10);
+        setEdge(graph, 60, true, true, 0, 5, 10);
+        setEdge(graph, 60, true, true, 5, 4, 10);
         // cannot go, 2-3-1
         setRestriction(edge1, edge0, 3);
         graph.freeze();
@@ -858,8 +862,8 @@ public class CHTurnCostTest {
     public void testRouteViaVirtualNode(String algo) {
         //   3
         // 0-x-1-2
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(0, 1).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(0));
+        setEdge(graph, 60, true, false, 0, 1, 0);
+        setEdge(graph, 60, true, false, 1, 2, 0);
         updateDistancesFor(graph, 0, 0.00, 0.00);
         updateDistancesFor(graph, 1, 0.02, 0.02);
         updateDistancesFor(graph, 2, 0.03, 0.03);
@@ -885,9 +889,9 @@ public class CHTurnCostTest {
         // 0-x-1
         //  \  |
         //   \-2
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 0).setDistance(1));
+        setEdge(graph, 60, true, true, 0, 1, 1);
+        setEdge(graph, 60, true, true, 1, 2, 1);
+        setEdge(graph, 60, true, true, 2, 0, 1);
         updateDistancesFor(graph, 0, 0.01, 0.00);
         updateDistancesFor(graph, 1, 0.01, 0.02);
         updateDistancesFor(graph, 2, 0.00, 0.02);
@@ -913,12 +917,12 @@ public class CHTurnCostTest {
         // 4->3->2->1-x-0
         //          |
         //          5->6
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(4, 3).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 2).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 1).setDistance(0));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 0).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 5).setDistance(0));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 6).setDistance(0));
+        setEdge(graph, 60, true, false, 4, 3, 0);
+        setEdge(graph, 60, true, false, 3, 2, 0);
+        setEdge(graph, 60, true, false, 2, 1, 0);
+        setEdge(graph, 60, true, true, 1, 0, 0);
+        setEdge(graph, 60, true, false, 1, 5, 0);
+        setEdge(graph, 60, true, false, 5, 6, 0);
         updateDistancesFor(graph, 4, 0.1, 0.0);
         updateDistancesFor(graph, 3, 0.1, 0.1);
         updateDistancesFor(graph, 2, 0.1, 0.2);
@@ -965,14 +969,14 @@ public class CHTurnCostTest {
         // cancelled the entire fwd search instead of simply stalling node 6.
         //       |-------1-|
         // 7-6---0---2-3-4-5
-        graph.edge(0, 1).set(accessEnc, true).set(speedEnc, 60);
-        graph.edge(1, 5).set(accessEnc, true).set(speedEnc, 60);
-        graph.edge(0, 2).set(accessEnc, true).set(speedEnc, 60);
-        graph.edge(2, 3).set(accessEnc, true).set(speedEnc, 60);
-        graph.edge(3, 4).set(accessEnc, true).set(speedEnc, 60);
-        graph.edge(4, 5).set(accessEnc, true).set(speedEnc, 60);
-        graph.edge(0, 6).set(accessEnc, true).set(speedEnc, 60);
-        graph.edge(6, 7).set(accessEnc, true).set(speedEnc, 60);
+        setEdge(graph, 60, true, false, 0, 1, 0);
+        setEdge(graph, 60, true, false, 1, 5, 0);
+        setEdge(graph, 60, true, false, 0, 2, 0);
+        setEdge(graph, 60, true, false, 2, 3, 0);
+        setEdge(graph, 60, true, false, 3, 4, 0);
+        setEdge(graph, 60, true, false, 4, 5, 0);
+        setEdge(graph, 60, true, false, 0, 6, 0);
+        setEdge(graph, 60, true, false, 6, 7, 0);
         updateDistancesFor(graph, 0, 46.5, 9.7);
         updateDistancesFor(graph, 1, 46.9, 9.8);
         updateDistancesFor(graph, 2, 46.7, 9.7);
@@ -992,13 +996,13 @@ public class CHTurnCostTest {
     void testZeroUTurnCosts_atBarrier_issue2564() {
         // lvl: 0 3 2 4 5 1
         //  nd: 0-1-2-3-4-5
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
+        setEdge(graph, 60, true, true, 0, 1, 100);
         // the original bug was sometimes hidden depending on the exact distance, so we use these odd numbers here
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(1, 2).setDistance(7.336));
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(2, 3).setDistance(10.161));
+        setEdge(graph, 60, true, true, 1, 2, 7.336);
+        setEdge(graph, 60, true, true, 2, 3, 10.161);
         // a zero distance edge (like a passable barrier)!
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(3, 4).setDistance(0));
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(4, 5).setDistance(100));
+        setEdge(graph, 60, true, true, 3, 4, 0);
+        setEdge(graph, 60, true, true, 4, 5, 100);
         graph.freeze();
         // u-turn costs are zero!
         chConfig = chConfigs.get(1);
@@ -1013,11 +1017,11 @@ public class CHTurnCostTest {
         // 2-3
         // | |
         // 0-4-1
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(2, 0).setDistance(800.22));
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(3, 4).setDistance(478.84));
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(0, 4).setDistance(547.08));
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(4, 1).setDistance(288.95));
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(2, 3).setDistance(90));
+        setEdge(graph, 60, true, true, 2, 0, 800.22);
+        setEdge(graph, 60, true, true, 3, 4, 478.84);
+        setEdge(graph, 60, true, true, 0, 4, 547.08);
+        setEdge(graph, 60, true, true, 4, 1, 288.95);
+        setEdge(graph, 60, true, true, 2, 3, 90);
         graph.freeze();
         prepareCH(1, 3, 0, 2, 4);
         compareCHQueryWithDijkstra(1, 2);
@@ -1028,11 +1032,11 @@ public class CHTurnCostTest {
         // 1 - 2 - 0 - 4
         //          \ /
         //           3
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(0, 3).setDistance(100)); // edgeId=0
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(4, 3).setDistance(100)); // edgeId=1
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(0, 4).setDistance(100)); // edgeId=2
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100)); // edgeId=3
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, graph.edge(0, 2).setDistance(100)); // edgeId=4
+        setEdge(graph, 60, true, true, 0, 3, 100); // edgeId=0
+        setEdge(graph, 60, true, true, 4, 3, 100); // edgeId=1
+        setEdge(graph, 60, true, true, 0, 4, 100); // edgeId=2
+        setEdge(graph, 60, true, true, 1, 2, 100); // edgeId=3
+        setEdge(graph, 60, true, true, 0, 2, 100); // edgeId=4
         graph.freeze();
         prepareCH(2, 0, 1, 3, 4);
         assertEquals(2, chGraph.getShortcuts());
@@ -1079,8 +1083,7 @@ public class CHTurnCostTest {
     private void compareWithDijkstraOnRandomGraph(long seed) {
         final Random rnd = new Random(seed);
         // for larger graphs preparation takes much longer the higher the degree is!
-        GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true,
-                accessEnc, speedEnc, null, 0.9, 0.8);
+        GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, accessEnc, speedEnc, null, 0.9, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
@@ -1107,8 +1110,7 @@ public class CHTurnCostTest {
     }
 
     private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
-        GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true,
-                accessEnc, speedEnc, null, 0.9, 0.8);
+        GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, accessEnc, speedEnc, null, 0.9, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, accessEnc, turnCostEnc, maxCost, turnCostStorage);
         graph.freeze();
         checkStrict = false;
