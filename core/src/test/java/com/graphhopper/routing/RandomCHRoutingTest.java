@@ -45,14 +45,14 @@ public class RandomCHRoutingTest {
     private static final class Fixture {
         private final TraversalMode traversalMode;
         private final int maxTurnCosts;
-        private final int uTurnCosts;
+        private final double uTurnCosts;
         private final DecimalEncodedValue speedEnc;
         private final DecimalEncodedValue turnCostEnc;
         private Weighting weighting;
         private final BaseGraph graph;
         private CHConfig chConfig;
 
-        Fixture(TraversalMode traversalMode, int uTurnCosts) {
+        Fixture(TraversalMode traversalMode, double uTurnCosts) {
             this.traversalMode = traversalMode;
             this.maxTurnCosts = 10;
             this.uTurnCosts = uTurnCosts;
@@ -80,9 +80,9 @@ public class RandomCHRoutingTest {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
             return Stream.of(
-                            new Fixture(TraversalMode.NODE_BASED, INFINITE_U_TURN_COSTS),
+                            new Fixture(TraversalMode.NODE_BASED, Double.POSITIVE_INFINITY),
                             new Fixture(TraversalMode.EDGE_BASED, 40),
-                            new Fixture(TraversalMode.EDGE_BASED, INFINITE_U_TURN_COSTS)
+                            new Fixture(TraversalMode.EDGE_BASED, Double.POSITIVE_INFINITY)
                     )
                     .map(Arguments::of);
         }

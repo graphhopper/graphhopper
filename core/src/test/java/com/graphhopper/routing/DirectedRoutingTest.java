@@ -79,7 +79,7 @@ public class DirectedRoutingTest {
 
     private static class Fixture {
         private final Algo algo;
-        private final int uTurnCosts;
+        private final double uTurnCosts;
         private final boolean prepareCH;
         private final boolean prepareLM;
         private final Directory dir;
@@ -93,7 +93,7 @@ public class DirectedRoutingTest {
         private RoutingCHGraph routingCHGraph;
         private LandmarkStorage lm;
 
-        public Fixture(Algo algo, int uTurnCosts, boolean prepareCH, boolean prepareLM) {
+        public Fixture(Algo algo, double uTurnCosts, boolean prepareCH, boolean prepareLM) {
             this.algo = algo;
             this.uTurnCosts = uTurnCosts;
             this.prepareCH = prepareCH;
@@ -179,13 +179,13 @@ public class DirectedRoutingTest {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
             return Stream.of(
-                    new Fixture(Algo.ASTAR_UNI_BEELINE, INFINITE_U_TURN_COSTS, false, false),
-                    new Fixture(Algo.ASTAR_BI_BEELINE, INFINITE_U_TURN_COSTS, false, false),
-                    new Fixture(Algo.CH_ASTAR, INFINITE_U_TURN_COSTS, true, false),
-                    new Fixture(Algo.CH_DIJKSTRA, INFINITE_U_TURN_COSTS, true, false),
+                    new Fixture(Algo.ASTAR_UNI_BEELINE, Double.POSITIVE_INFINITY, false, false),
+                    new Fixture(Algo.ASTAR_BI_BEELINE, Double.POSITIVE_INFINITY, false, false),
+                    new Fixture(Algo.CH_ASTAR, Double.POSITIVE_INFINITY, true, false),
+                    new Fixture(Algo.CH_DIJKSTRA, Double.POSITIVE_INFINITY, true, false),
                     // todo: LM+directed still fails sometimes, #1971,
                     // todonow: comment out again
-                    new Fixture(Algo.LM, INFINITE_U_TURN_COSTS, false, true),
+                    new Fixture(Algo.LM, Double.POSITIVE_INFINITY, false, true),
                     new Fixture(Algo.ASTAR_UNI_BEELINE, 40, false, false),
                     new Fixture(Algo.ASTAR_BI_BEELINE, 40, false, false),
                     new Fixture(Algo.CH_ASTAR, 40, true, false),
