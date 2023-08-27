@@ -58,8 +58,8 @@ public class DefaultBidirPathExtractorTest {
     public void testExtract2() {
         // 1->2->3
         Graph graph = createGraph();
-        graph.edge(1, 2).setDistance(10).set(speedEnc, 60, 0);
-        graph.edge(2, 3).setDistance(20).set(speedEnc, 60, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(20).set(speedEnc, 10, 0);
         // add some turn costs at node 2 where fwd&bwd searches meet. these costs have to be included in the
         // weight and the time of the path
         TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
@@ -69,11 +69,11 @@ public class DefaultBidirPathExtractorTest {
         SPTEntry bwdEntry = new SPTEntry(1, 2, 1.2, new SPTEntry(3, 0));
 
         Path p = DefaultBidirPathExtractor.extractPath(graph, new SpeedWeighting(speedEnc, turnCostEnc, turnCostStorage, Double.POSITIVE_INFINITY), fwdEntry, bwdEntry, 0);
-        p.setWeight(5 + 1.8);
+        p.setWeight(5 + 3);
 
         assertEquals(IntArrayList.from(1, 2, 3), p.calcNodes());
         assertEquals(30, p.getDistance(), 1e-4);
-        assertEquals(5 + 1.8, p.getWeight(), 1e-4);
-        assertEquals(5000 + 1800, p.getTime(), 1.e-6);
+        assertEquals(8, p.getWeight(), 1e-4);
+        assertEquals(8000, p.getTime(), 1.e-6);
     }
 }

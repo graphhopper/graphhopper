@@ -68,7 +68,8 @@ public class SpeedWeighting implements Weighting {
         if (turnCostEnc == null) return 0;
         if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge))
             return 0;
-        if (inEdge == outEdge) return uTurnCosts;
+        if (inEdge == outEdge)
+            return Math.max(turnCostStorage.get(turnCostEnc, inEdge, viaNode, outEdge), uTurnCosts);
         else return turnCostStorage.get(turnCostEnc, inEdge, viaNode, outEdge);
     }
 

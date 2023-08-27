@@ -415,9 +415,8 @@ public class QueryGraphTest {
 
     @Test
     public void testIteration_Issue163() {
-        // todonow
-        EdgeFilter outEdgeFilter = EdgeFilter.ALL_EDGES;
-        EdgeFilter inEdgeFilter = EdgeFilter.ALL_EDGES;
+        EdgeFilter inEdgeFilter = edge -> edge.getReverse(speedEnc) > 0;
+        EdgeFilter outEdgeFilter = edge -> edge.get(speedEnc) > 0;
         EdgeExplorer inExplorer = g.createEdgeExplorer(inEdgeFilter);
         EdgeExplorer outExplorer = g.createEdgeExplorer(outEdgeFilter);
 

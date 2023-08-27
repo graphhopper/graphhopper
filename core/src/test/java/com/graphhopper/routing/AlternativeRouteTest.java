@@ -51,7 +51,7 @@ public class AlternativeRouteTest {
 
         public Fixture(TraversalMode tMode) {
             this.traversalMode = tMode;
-            speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+            speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
             turnCostEnc = TurnCost.create("car", 1);
 
             EncodingManager em = EncodingManager.start().add(speedEnc).add(turnCostEnc).build();
@@ -83,17 +83,17 @@ public class AlternativeRouteTest {
          5--6-7---8
         
          */
-        graph.edge(1, 9).setDistance(1).set(speedEnc, 60);
-        graph.edge(9, 2).setDistance(1).set(speedEnc, 60);
-        graph.edge(2, 3).setDistance(1).set(speedEnc, 60);
-        graph.edge(3, 4).setDistance(1).set(speedEnc, 60);
-        graph.edge(4, 10).setDistance(1).set(speedEnc, 60);
-        graph.edge(5, 6).setDistance(1).set(speedEnc, 60);
-        graph.edge(6, 7).setDistance(1).set(speedEnc, 60);
-        graph.edge(7, 8).setDistance(1).set(speedEnc, 60);
-        graph.edge(1, 5).setDistance(2).set(speedEnc, 60);
-        graph.edge(6, 3).setDistance(1).set(speedEnc, 60);
-        graph.edge(4, 8).setDistance(1).set(speedEnc, 60);
+        graph.edge(1, 9).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(9, 2).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(4, 10).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(6, 7).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(7, 8).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(1, 5).setDistance(2).set(speedEnc, 60, 60);
+        graph.edge(6, 3).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(4, 8).setDistance(1).set(speedEnc, 60, 60);
 
         updateDistancesFor(graph, 5, 0.00, 0.05);
         updateDistancesFor(graph, 6, 0.00, 0.10);
@@ -136,7 +136,7 @@ public class AlternativeRouteTest {
         // so which alternative is better? longer plateau.weight with bigger path.weight or smaller path.weight with smaller plateau.weight
         // assertEquals(IntArrayList.from(5, 1, 9, 2, 3, 4), secondAlt.calcNodes());
         assertEquals(IntArrayList.from(5, 6, 7, 8, 4), secondAlt.calcNodes());
-        assertEquals(1667.9, secondAlt.getWeight(), .1);
+        assertEquals(463.3, secondAlt.getWeight(), .1);
     }
 
     @ParameterizedTest
@@ -157,7 +157,7 @@ public class AlternativeRouteTest {
         assertEquals(IntArrayList.from(5, 6, 3, 4), pathInfos.get(0).getPath().calcNodes());
         assertEquals(IntArrayList.from(5, 6, 7, 8, 4), pathInfos.get(1).getPath().calcNodes());
         assertEquals(IntArrayList.from(5, 1, 9, 2, 3, 4), pathInfos.get(2).getPath().calcNodes());
-        assertEquals(2416.0, pathInfos.get(2).getPath().getWeight(), .1);
+        assertEquals(671.1, pathInfos.get(2).getPath().getWeight(), .1);
     }
 
     private void checkAlternatives(List<AlternativeRoute.AlternativeInfo> alternativeInfos) {

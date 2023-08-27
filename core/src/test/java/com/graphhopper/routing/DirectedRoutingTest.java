@@ -20,7 +20,10 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.LMRoutingAlgorithmFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
@@ -31,8 +34,7 @@ import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -41,8 +43,6 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
-import org.junit.jupiter.api.Disabled;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -64,7 +64,6 @@ import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -85,7 +84,6 @@ public class DirectedRoutingTest {
         private final boolean prepareLM;
         private final Directory dir;
         private final BaseGraph graph;
-        private final BooleanEncodedValue accessEnc;
         private final DecimalEncodedValue speedEnc;
         private final DecimalEncodedValue turnCostEnc;
         private final TurnCostStorage turnCostStorage;
@@ -103,10 +101,9 @@ public class DirectedRoutingTest {
 
             dir = new RAMDirectory();
             maxTurnCosts = 10;
-            accessEnc = new SimpleBooleanEncodedValue("access", true);
             speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
             turnCostEnc = TurnCost.create("car", maxTurnCosts);
-            encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("c2")).build();
+            encodingManager = EncodingManager.start().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).add(Subnetwork.create("c2")).build();
             graph = new BaseGraph.Builder(encodingManager).setDir(dir).withTurnCosts(true).create();
             turnCostStorage = graph.getTurnCostStorage();
         }
@@ -118,7 +115,7 @@ public class DirectedRoutingTest {
 
         private void preProcessGraph() {
             graph.freeze();
-            weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, turnCostStorage, uTurnCosts));
+            weighting = new SpeedWeighting(speedEnc, turnCostEnc, turnCostStorage, uTurnCosts);
             if (!prepareCH && !prepareLM) {
                 return;
             }
@@ -130,7 +127,7 @@ public class DirectedRoutingTest {
             }
             if (prepareLM) {
                 // important: for LM preparation we need to use a weighting without turn costs #1960
-                LMConfig lmConfig = new LMConfig("c2", new FastestWeighting(accessEnc, speedEnc));
+                LMConfig lmConfig = new LMConfig("c2", new SpeedWeighting(speedEnc));
                 // we need the subnetwork EV for LM
                 PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(graph,
                         Arrays.asList(new PrepareRoutingSubnetworks.PrepareJob(encodingManager.getBooleanEncodedValue(Subnetwork.key("c2")), lmConfig.getWeighting())));
@@ -187,13 +184,15 @@ public class DirectedRoutingTest {
                     new Fixture(Algo.CH_ASTAR, INFINITE_U_TURN_COSTS, true, false),
                     new Fixture(Algo.CH_DIJKSTRA, INFINITE_U_TURN_COSTS, true, false),
                     // todo: LM+directed still fails sometimes, #1971,
-//                  new Fixture(Algo.LM, INFINITE_U_TURN_COSTS, false, true),
+                    // todonow: comment out again
+                    new Fixture(Algo.LM, INFINITE_U_TURN_COSTS, false, true),
                     new Fixture(Algo.ASTAR_UNI_BEELINE, 40, false, false),
                     new Fixture(Algo.ASTAR_BI_BEELINE, 40, false, false),
                     new Fixture(Algo.CH_ASTAR, 40, true, false),
-                    new Fixture(Algo.CH_DIJKSTRA, 40, true, false)
+                    new Fixture(Algo.CH_DIJKSTRA, 40, true, false),
                     // todo: LM+directed still fails sometimes, #1971,
-//                  new Fixture(Algo.LM, 40, false, true),
+                    // todonow: comment out again
+                    new Fixture(Algo.LM, 40, false, true)
             ).map(Arguments::of);
         }
     }
@@ -219,8 +218,8 @@ public class DirectedRoutingTest {
         final long seed = System.nanoTime();
         final int numQueries = 50;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(f.graph, rnd, 100, 2.2, true, f.accessEnc, f.speedEnc, null, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
+        GHUtility.buildRandomGraph(f.graph, rnd, 100, 2.2, true, null, f.speedEnc, null, 0.8, 0.8);
+        GHUtility.addRandomTurnCosts(f.graph, seed, null, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
 //        GHUtility.printGraphForUnitTest(f.graph, f.encoder);
         f.preProcessGraph();
         List<String> strictViolations = new ArrayList<>();
@@ -260,8 +259,8 @@ public class DirectedRoutingTest {
         // the same as taking the direct edge!
         double pOffset = 0;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.2, true, f.accessEnc, f.speedEnc, null, 0.8, pOffset);
-        GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
+        GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.2, true, null, f.speedEnc, null, 0.8, pOffset);
+        GHUtility.addRandomTurnCosts(f.graph, seed, null, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
         // GHUtility.printGraphForUnitTest(graph, encoder);
         f.preProcessGraph();
         LocationIndexTree index = new LocationIndexTree(f.graph, f.dir);
@@ -295,51 +294,7 @@ public class DirectedRoutingTest {
         }
     }
 
-    @Disabled("todo: fix this, #1971")
-    @Test
-    public void issue_2581() {
-        Fixture f = new Fixture(Algo.LM, 40, false, true);
-        // this test failed with 'forward and backward entries must have same adjacent nodes' before #2581 was fixed.
-        // but it still fails with a wrong shortest path weight, probably because of #1971.
-        NodeAccess na = f.graph.getNodeAccess();
-        na.setNode(0, 49.406624, 9.703301);
-        na.setNode(1, 49.404040, 9.704504);
-        na.setNode(2, 49.407601, 9.700407);
-        na.setNode(3, 49.406038, 9.700309);
-        na.setNode(4, 49.400086, 9.705911);
-        na.setNode(5, 49.405893, 9.704811);
-        na.setNode(6, 49.409435, 9.701510);
-        na.setNode(7, 49.407531, 9.701966);
-        // 3-0=1-2=7-5
-        //   |
-        //   4
-        BooleanEncodedValue accessEnc = f.accessEnc;
-        DecimalEncodedValue speedEnc = f.speedEnc;
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(0, 1).setDistance(300.186000)); // edgeId=0
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(0, 4).setDistance(751.113000)); // edgeId=1
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(7, 2).setDistance(113.102000)); // edgeId=2
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(3, 0).setDistance(226.030000)); // edgeId=3
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(1, 2).setDistance(494.601000)); // edgeId=4
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(7, 2).setDistance(113.102000)); // edgeId=5
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(5, 7).setDistance(274.848000)); // edgeId=6
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc, f.graph.edge(0, 1).setDistance(300.186000)); // edgeId=7
-        f.preProcessGraph();
-        LocationIndexTree index = new LocationIndexTree(f.graph, f.dir);
-        index.prepareIndex();
-        Snap snap1 = index.findClosest(49.40513869516064, 9.703482698430037, EdgeFilter.ALL_EDGES);
-        Snap snap2 = index.findClosest(49.40650971100665, 9.704468799032508, EdgeFilter.ALL_EDGES);
-        List<Snap> snaps = Arrays.asList(snap1, snap2);
-        QueryGraph queryGraph = QueryGraph.create(f.graph, snaps);
-        int source = snaps.get(0).getClosestNode();
-        int target = snaps.get(1).getClosestNode();
-        int sourceOutEdge = 8;
-        int targetInEdge = 11;
-        Path refPath = new DijkstraBidirectionRef(queryGraph, ((Graph) queryGraph).wrapWeighting(f.weighting), TraversalMode.EDGE_BASED)
-                .calcPath(source, target, sourceOutEdge, targetInEdge);
-        Path path = f.createAlgo(queryGraph)
-                .calcPath(source, target, sourceOutEdge, targetInEdge);
-        assertTrue(comparePaths(refPath, path, source, target, false, -1).isEmpty());
-    }
+    // todonow: create a new test for 2581/1971
 
     private List<String> comparePaths(Path refPath, Path path, int source, int target, boolean checkNodes, long seed) {
         List<String> strictViolations = new ArrayList<>();

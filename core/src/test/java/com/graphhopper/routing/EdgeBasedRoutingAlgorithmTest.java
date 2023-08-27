@@ -222,7 +222,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     public void testTurnCosts_timeCalculation(String algoStr) {
         // 0 - 1 - 2 - 3 - 4
         BaseGraph graph = createStorage(createEncodingManager(false));
-        final int distance = 10000;
+        final int distance = 60;
         final int turnCosts = 2;
         graph.edge(0, 1).setDistance(distance).set(speedEnc, 10, 10);
         graph.edge(1, 2).setDistance(distance).set(speedEnc, 10, 10);
@@ -301,24 +301,24 @@ public class EdgeBasedRoutingAlgorithmTest {
         setTurnRestriction(g, 4, 3, 6);
         Path p = createAlgo(g, createWeighting(50), algoStr, EDGE_BASED).calcPath(7, 5);
 
-        assertEquals(2 + 2 * 0.1, p.getDistance(), 1.e-6);
-        assertEquals(2.2 * 0.06 + 50, p.getWeight(), 1.e-6);
-        assertEquals((2.2 * 0.06 + 50) * 1000, p.getTime(), 1.e-6);
         assertEquals(IntArrayList.from(7, 6, 3, 6, 5), p.calcNodes());
+        assertEquals(20 + 2, p.getDistance(), 1.e-6);
+        assertEquals(2.2 + 50, p.getWeight(), 1.e-6);
+        assertEquals((2.2 + 50) * 1000, p.getTime(), 1.e-6);
 
         // with default infinite u-turn costs we need to take an expensive detour
         p = calcPath(g, 7, 5, algoStr);
-        assertEquals(1.1 + 864 + 0.5, p.getDistance(), 1.e-6);
-        assertEquals(865.6 * 0.06, p.getWeight(), 1.e-6);
         assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
+        assertEquals(10 + 1 + 8640 + 5, p.getDistance(), 1.e-6);
+        assertEquals(865.6, p.getWeight(), 1.e-6);
 
         // no more u-turn 6-3-6 -> now we have to take the expensive roads even with finite u-turn costs
         setTurnRestriction(g, 6, 3, 6);
-        p = createAlgo(g, createWeighting(100), algoStr, EDGE_BASED).calcPath(7, 5);
+        p = createAlgo(g, createWeighting(1000), algoStr, EDGE_BASED).calcPath(7, 5);
 
-        assertEquals(1.1 + 864 + 0.5, p.getDistance(), 1.e-6);
-        assertEquals(865.6 * 0.06, p.getWeight(), 1.e-6);
         assertEquals(IntArrayList.from(7, 6, 3, 2, 5), p.calcNodes());
+        assertEquals(10 + 1 + 8640 + 5, p.getDistance(), 1.e-6);
+        assertEquals(865.6, p.getWeight(), 1.e-6);
     }
 
     @ParameterizedTest
@@ -348,8 +348,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         {
             Path path = createAlgo(g, createWeighting(67), algoStr, EDGE_BASED).calcPath(0, 5);
             assertEquals(600, path.getDistance(), 1.e-6);
-            assertEquals(60 * 0.06 + 67, path.getWeight(), 1.e-6);
-            assertEquals((36 + 670) * 100, path.getTime(), 1.e-6);
+            assertEquals(60 + 67, path.getWeight(), 1.e-6);
+            assertEquals((60 + 67) * 1000, path.getTime(), 1.e-6);
         }
     }
 
@@ -375,7 +375,21 @@ public class EdgeBasedRoutingAlgorithmTest {
     @ArgumentsSource(FixtureProvider.class)
     public void testTurnCostsBug_991(String algoStr) {
         final BaseGraph g = createStorage(createEncodingManager(false));
-        initGraph(g);
+        // 0--1
+        // |  |
+        // 2--3--4
+        // |  |  |
+        // 5--6--7
+        g.edge(0, 1).setDistance(3).set(speedEnc, 10, 10);
+        g.edge(0, 2).setDistance(1).set(speedEnc, 10, 10);
+        g.edge(1, 3).setDistance(1).set(speedEnc, 10, 10);
+        g.edge(2, 3).setDistance(1).set(speedEnc, 10, 10);
+        g.edge(3, 4).setDistance(1).set(speedEnc, 10, 10);
+        g.edge(2, 5).setDistance(0.5).set(speedEnc, 10, 10);
+        g.edge(3, 6).setDistance(1).set(speedEnc, 10, 10);
+        g.edge(4, 7).setDistance(1).set(speedEnc, 10, 10);
+        g.edge(5, 6).setDistance(1).set(speedEnc, 10, 10);
+        g.edge(6, 7).setDistance(1).set(speedEnc, 10, 10);
 
         setTurnCost(g, 2, 5, 2, 3);
         setTurnCost(g, 2, 2, 0, 1);
@@ -394,8 +408,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         };
         Path p = createAlgo(g, weighting, algoStr, EDGE_BASED).calcPath(5, 1);
         assertEquals(IntArrayList.from(5, 6, 7, 4, 3, 1), p.calcNodes());
-        assertEquals(5 * 0.06 + 1, p.getWeight(), 1.e-6);
-        assertEquals(1300, p.getTime(), .1);
+        assertEquals(5 * 0.1 + 1, p.getWeight(), 1.e-6);
+        assertEquals(1500, p.getTime(), .1);
     }
 
     private void setTurnRestriction(BaseGraph g, int from, int via, int to) {
