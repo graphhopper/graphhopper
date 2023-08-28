@@ -192,6 +192,12 @@ public class GHUtility {
                 edge.getEdge());
     }
 
+    public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree,
+                                        boolean allowZeroDistance, DecimalEncodedValue speedEnc, Double speed,
+                                        double pBothDir, double pRandomDistanceOffset) {
+        buildRandomGraph(graph, random, numNodes, meanDegree, allowZeroDistance, null, speedEnc, speed, pBothDir, pRandomDistanceOffset);
+    }
+
     /**
      * @param speed if null a random speed will be assigned to every edge
      */

@@ -217,7 +217,7 @@ public class DirectedRoutingTest {
         final long seed = System.nanoTime();
         final int numQueries = 50;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(f.graph, rnd, 100, 2.2, true, null, f.speedEnc, null, 0.8, 0.8);
+        GHUtility.buildRandomGraph(f.graph, rnd, 100, 2.2, true, f.speedEnc, null, 0.8, 0.8);
         GHUtility.addRandomTurnCosts(f.graph, seed, null, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
 //        GHUtility.printGraphForUnitTest(f.graph, f.encoder);
         f.preProcessGraph();
@@ -258,7 +258,7 @@ public class DirectedRoutingTest {
         // the same as taking the direct edge!
         double pOffset = 0;
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.2, true, null, f.speedEnc, null, 0.8, pOffset);
+        GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.2, true, f.speedEnc, null, 0.8, pOffset);
         GHUtility.addRandomTurnCosts(f.graph, seed, null, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
 //        GHUtility.printGraphForUnitTest(f.graph, f.speedEnc);
         f.preProcessGraph();
@@ -331,13 +331,11 @@ public class DirectedRoutingTest {
         int target = snaps.get(1).getClosestNode();
         int sourceOutEdge = 9;
         int targetInEdge = 12;
-        int chSourceOutEdge = 9;
-        int chTargetInEdge = 12;
 
         Path refPath = new DijkstraBidirectionRef(queryGraph, ((Graph) queryGraph).wrapWeighting(f.weighting), TraversalMode.EDGE_BASED)
                 .calcPath(source, target, sourceOutEdge, targetInEdge);
         Path path = f.createAlgo(queryGraph)
-                .calcPath(source, target, chSourceOutEdge, chTargetInEdge);
+                .calcPath(source, target, sourceOutEdge, targetInEdge);
         assertTrue(comparePaths(refPath, path, source, target, false, -1).isEmpty());
     }
 
