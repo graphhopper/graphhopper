@@ -49,7 +49,8 @@ import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -160,14 +161,12 @@ public class GHUtility {
         return list;
     }
 
-    public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
-        // todonow
-//        printGraphForUnitTest(g, accessEnc, speedEnc, new BBox(
-//                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
+    public static void printGraphForUnitTest(Graph g, DecimalEncodedValue speedEnc) {
+        printGraphForUnitTest(g, speedEnc, new BBox(
+                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
     }
 
-    public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, BBox bBox) {
-        System.out.println("WARNING: printGraphForUnitTest does not pay attention to custom edge speeds at the moment");
+    public static void printGraphForUnitTest(Graph g, DecimalEncodedValue speedEnc, BBox bBox) {
         NodeAccess na = g.getNodeAccess();
         for (int node = 0; node < g.getNodes(); ++node) {
             if (bBox.contains(na.getLat(node), na.getLon(node))) {
@@ -178,36 +177,19 @@ public class GHUtility {
         while (iter.next()) {
             if (bBox.contains(na.getLat(iter.getBaseNode()), na.getLon(iter.getBaseNode())) &&
                     bBox.contains(na.getLat(iter.getAdjNode()), na.getLon(iter.getAdjNode()))) {
-                printUnitTestEdge(accessEnc, speedEnc, iter);
+                printUnitTestEdge(speedEnc, iter);
             }
         }
     }
 
-    private static void printUnitTestEdge(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EdgeIteratorState edge) {
-        boolean fwd = edge.get(accessEnc);
-        boolean bwd = edge.getReverse(accessEnc);
-        if (!fwd && !bwd) {
-            return;
-        }
+    private static void printUnitTestEdge(DecimalEncodedValue speedEnc, EdgeIteratorState edge) {
+        boolean fwd = edge.get(speedEnc) > 0;
         int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
         int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
-        if (speedEnc != null && accessEnc != null) {
-            System.out.printf(Locale.ROOT,
-                    "GHUtility.setSpeed(%f, %f, encoder, graph.edge(%d, %d).setDistance(%f)); // edgeId=%s\n",
-                    fwd ? edge.get(speedEnc) : 0, bwd ? edge.getReverse(speedEnc) : 0,
-                    from, to, edge.getDistance(), edge.getEdge());
-        } else if (speedEnc != null) {
-            System.out.printf(Locale.ROOT,
-                    "graph.edge(%d, %d).setDistance(%f).set(speedEnc, %b, %b); // edgeId=%s\n",
-                    from, to, edge.getDistance(),
-                    fwd ? edge.get(speedEnc) : 0, bwd ? edge.getReverse(speedEnc) : 0,
-                    edge.getEdge());
-        } else {
-            System.out.printf(Locale.ROOT,
-                    "graph.edge(%d, %d).setDistance(%f).set(accessEnc, %b, %b); // edgeId=%s\n",
-                    from, to, edge.getDistance(),
-                    edge.get(accessEnc), edge.getReverse(accessEnc), edge.getEdge());
-        }
+        System.out.printf(Locale.ROOT,
+                "graph.edge(%d, %d).setDistance(%f).set(speedEnc, %f, %f); // edgeId=%s\n",
+                from, to, edge.getDistance(), edge.get(speedEnc), edge.getReverse(speedEnc),
+                edge.getEdge());
     }
 
     /**

@@ -1224,7 +1224,7 @@ public class CHTurnCostTest {
         }
         if (algosDisagree) {
             System.out.println("Graph that produced error:");
-            GHUtility.printGraphForUnitTest(graph, null, speedEnc);
+            GHUtility.printGraphForUnitTest(graph, speedEnc);
             fail("Dijkstra and CH did not find equal shortest paths for route from " + from + " to " + to + "\n" +
                     " dijkstra: weight: " + dijkstraPath.getWeight() + ", distance: " + dijkstraPath.getDistance() +
                     ", time: " + dijkstraPath.getTime() + ", nodes: " + dijkstraPath.calcNodes() + "\n" +

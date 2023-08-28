@@ -43,6 +43,7 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -63,6 +64,7 @@ import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static com.graphhopper.util.Parameters.Routing.ALGORITHM;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -183,15 +185,13 @@ public class DirectedRoutingTest {
                     new Fixture(Algo.CH_ASTAR, Double.POSITIVE_INFINITY, true, false),
                     new Fixture(Algo.CH_DIJKSTRA, Double.POSITIVE_INFINITY, true, false),
                     // todo: LM+directed still fails sometimes, #1971,
-                    // todonow: comment out again
-                    new Fixture(Algo.LM, Double.POSITIVE_INFINITY, false, true),
+//                    new Fixture(Algo.LM, Double.POSITIVE_INFINITY, false, true),
                     new Fixture(Algo.ASTAR_UNI_BEELINE, 40, false, false),
                     new Fixture(Algo.ASTAR_BI_BEELINE, 40, false, false),
                     new Fixture(Algo.CH_ASTAR, 40, true, false),
-                    new Fixture(Algo.CH_DIJKSTRA, 40, true, false),
+                    new Fixture(Algo.CH_DIJKSTRA, 40, true, false)
                     // todo: LM+directed still fails sometimes, #1971,
-                    // todonow: comment out again
-                    new Fixture(Algo.LM, 40, false, true)
+//                    new Fixture(Algo.LM, 40, false, true)
             ).map(Arguments::of);
         }
     }
@@ -260,7 +260,7 @@ public class DirectedRoutingTest {
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(f.graph, rnd, 50, 2.2, true, null, f.speedEnc, null, 0.8, pOffset);
         GHUtility.addRandomTurnCosts(f.graph, seed, null, f.turnCostEnc, f.maxTurnCosts, f.turnCostStorage);
-        // GHUtility.printGraphForUnitTest(graph, encoder);
+//        GHUtility.printGraphForUnitTest(f.graph, f.speedEnc);
         f.preProcessGraph();
         LocationIndexTree index = new LocationIndexTree(f.graph, f.dir);
         index.prepareIndex();
@@ -293,7 +293,53 @@ public class DirectedRoutingTest {
         }
     }
 
-    // todonow: create a new test for 2581/1971
+    @Disabled("fix this #1971")
+    @ParameterizedTest
+    @ArgumentsSource(RepeatedFixtureProvider.class)
+    public void issue1971(Fixture f) {
+        NodeAccess na = f.graph.getNodeAccess();
+        na.setNode(0, 49.408463, 9.700777);
+        na.setNode(1, 49.404298, 9.701958);
+        na.setNode(2, 49.402072, 9.701939);
+        na.setNode(3, 49.401666, 9.701269);
+        na.setNode(4, 49.408590, 9.705463);
+        na.setNode(5, 49.406499, 9.700350);
+        na.setNode(6, 49.407540, 9.703129);
+        na.setNode(7, 49.403293, 9.704648);
+        na.setNode(8, 49.404845, 9.704984);
+        na.setNode(9, 49.409987, 9.704574);
+        f.graph.edge(4, 8).setDistance(417.830000).set(f.speedEnc, 65.000000, 0.000000); // edgeId=0
+        f.graph.edge(0, 1).setDistance(470.936000).set(f.speedEnc, 30.000000, 75.000000); // edgeId=1
+        f.graph.edge(3, 5).setDistance(541.431000).set(f.speedEnc, 60.000000, 0.000000); // edgeId=2
+        f.graph.edge(3, 5).setDistance(541.431000).set(f.speedEnc, 105.000000, 95.000000); // edgeId=3
+        f.graph.edge(4, 2).setDistance(768.268000).set(f.speedEnc, 30.000000, 100.000000); // edgeId=4
+        f.graph.edge(7, 3).setDistance(304.057000).set(f.speedEnc, 10.000000, 0.000000); // edgeId=5
+        f.graph.edge(3, 4).setDistance(827.520000).set(f.speedEnc, 100.000000, 90.000000); // edgeId=6
+        f.graph.edge(6, 9).setDistance(291.534000).set(f.speedEnc, 35.000000, 65.000000); // edgeId=7
+        f.graph.edge(2, 7).setDistance(238.355000).set(f.speedEnc, 65.000000, 20.000000); // edgeId=8
+        f.graph.edge(0, 2).setDistance(715.518000).set(f.speedEnc, 15.000000, 0.000000); // edgeId=9
+        f.graph.edge(4, 5).setDistance(436.976000).set(f.speedEnc, 80.000000, 20.000000); // edgeId=10
+        f.preProcessGraph();
+        LocationIndexTree index = new LocationIndexTree(f.graph, f.dir);
+        index.prepareIndex();
+        List<Snap> snaps = Arrays.asList(
+                index.findClosest(49.409452, 9.700482, EdgeFilter.ALL_EDGES),
+                index.findClosest(49.406555, 9.704395, EdgeFilter.ALL_EDGES)
+        );
+        QueryGraph queryGraph = QueryGraph.create(f.graph, snaps);
+        int source = snaps.get(0).getClosestNode();
+        int target = snaps.get(1).getClosestNode();
+        int sourceOutEdge = 9;
+        int targetInEdge = 12;
+        int chSourceOutEdge = 9;
+        int chTargetInEdge = 12;
+
+        Path refPath = new DijkstraBidirectionRef(queryGraph, ((Graph) queryGraph).wrapWeighting(f.weighting), TraversalMode.EDGE_BASED)
+                .calcPath(source, target, sourceOutEdge, targetInEdge);
+        Path path = f.createAlgo(queryGraph)
+                .calcPath(source, target, chSourceOutEdge, chTargetInEdge);
+        assertTrue(comparePaths(refPath, path, source, target, false, -1).isEmpty());
+    }
 
     private List<String> comparePaths(Path refPath, Path path, int source, int target, boolean checkNodes, long seed) {
         List<String> strictViolations = new ArrayList<>();
