@@ -139,7 +139,7 @@ public class RoundTripRoutingTest {
         //    |-1 0 1
         BaseGraph graph = new BaseGraph.Builder(em).create();
         for (int i = 0; i < 8; ++i)
-            graph.edge(i, (i + 1) % 8).setDistance(10).set(speedEnc, 60, 60);
+            graph.edge(i, (i + 1) % 8).setDistance(10).set(speedEnc, 10, 10);
         updateDistancesFor(graph, 0, 1, -1);
         updateDistancesFor(graph, 1, 1, 0);
         updateDistancesFor(graph, 2, 1, 1);

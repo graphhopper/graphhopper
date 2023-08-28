@@ -57,7 +57,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.GHUtility.createRandomSnaps;

@@ -41,7 +41,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class QueryRoutingCHGraphTest {
     private DecimalEncodedValue speedEnc;
     private DecimalEncodedValue turnCostEnc;
-    private EncodingManager encodingManager;
     private SpeedWeighting weighting;
     private BaseGraph graph;
     private NodeAccess na;
@@ -50,7 +49,7 @@ class QueryRoutingCHGraphTest {
     public void setup() {
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
         turnCostEnc = TurnCost.create("car", 5);
-        encodingManager = EncodingManager.start().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+        EncodingManager encodingManager = EncodingManager.start().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
         graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         weighting = new SpeedWeighting(speedEnc, turnCostEnc, graph.getTurnCostStorage(), Double.POSITIVE_INFINITY);
         na = graph.getNodeAccess();
@@ -59,8 +58,8 @@ class QueryRoutingCHGraphTest {
     @Test
     public void basic() {
         // 0-1-2
-        graph.edge(0, 1).setDistance(10).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(10).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 10);
         graph.freeze();
         assertEquals(2, graph.getEdges());
 
@@ -97,8 +96,8 @@ class QueryRoutingCHGraphTest {
     public void withShortcuts() {
         // 0-1-2
         //  \-/
-        graph.edge(0, 1).setDistance(10).set(speedEnc, 60, 60);
-        graph.edge(1, 2).setDistance(10).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 10);
         graph.freeze();
         assertEquals(2, graph.getEdges());
 
@@ -263,7 +262,7 @@ class QueryRoutingCHGraphTest {
 
     @Test
     public void getBaseGraph() {
-        graph.edge(0, 1).setDistance(10).set(speedEnc, 60, 60);
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 10);
         graph.freeze();
 
         CHConfig chConfig = CHConfig.edgeBased("x", weighting);
@@ -367,7 +366,7 @@ class QueryRoutingCHGraphTest {
         na.setNode(2, 50.00, 10.20);
         EdgeIteratorState edge = addEdge(graph, 0, 1)
                 // use different speeds for the two directions
-                .set(speedEnc, 90, 30);
+                .set(speedEnc, 30, 10);
         addEdge(graph, 1, 2);
         graph.freeze();
 
@@ -385,18 +384,18 @@ class QueryRoutingCHGraphTest {
         assertEquals(20, iter.getWeight(false), 1.e-6);
         assertEquals(20, iter.getWeight(true), 1.e-6);
         assertNextEdge(iter, 0, 1, 0);
-        assertEquals(79.416355, iter.getWeight(false), 1.e-6);
-        assertEquals(238.249066, iter.getWeight(true), 1.e-6);
+        assertEquals(238.249066, iter.getWeight(false), 1.e-6);
+        assertEquals(714.7472, iter.getWeight(true), 1.e-6);
         assertEnd(iter);
 
-        // for incoming edges its the same
+        // for incoming edges it's the same
         iter = routingCHGraph.createInEdgeExplorer().setBaseNode(0);
         assertNextShortcut(iter, 0, 2, 0, 1);
         assertEquals(20, iter.getWeight(false), 1.e-6);
         assertEquals(20, iter.getWeight(true), 1.e-6);
         assertNextEdge(iter, 0, 1, 0);
-        assertEquals(79.416355, iter.getWeight(false), 1.e-6);
-        assertEquals(238.249066, iter.getWeight(true), 1.e-6);
+        assertEquals(238.249066, iter.getWeight(false), 1.e-6);
+        assertEquals(714.7472, iter.getWeight(true), 1.e-6);
         assertEnd(iter);
 
         // now including virtual edges
@@ -412,8 +411,8 @@ class QueryRoutingCHGraphTest {
         iter = queryCHGraph.createOutEdgeExplorer().setBaseNode(0);
         assertNextEdge(iter, 0, 3, 2);
         // should be about half the weight as for the original edge as the query point is in the middle of the edge
-        assertEquals(39.708178, iter.getWeight(false), 1.e-4);
-        assertEquals(119.12453, iter.getWeight(true), 1.e-4);
+        assertEquals(119.12453, iter.getWeight(false), 1.e-4);
+        assertEquals(357.373605, iter.getWeight(true), 1.e-4);
         assertNextShortcut(iter, 0, 2, 0, 1);
         assertEquals(20, iter.getWeight(false), 1.e-6);
         assertEquals(20, iter.getWeight(true), 1.e-6);
@@ -421,8 +420,8 @@ class QueryRoutingCHGraphTest {
 
         iter = queryCHGraph.createInEdgeExplorer().setBaseNode(0);
         assertNextEdge(iter, 0, 3, 2);
-        assertEquals(39.708178, iter.getWeight(false), 1.e-4);
-        assertEquals(119.12453, iter.getWeight(true), 1.e-4);
+        assertEquals(119.12453, iter.getWeight(false), 1.e-4);
+        assertEquals(357.373605, iter.getWeight(true), 1.e-4);
         assertNextShortcut(iter, 0, 2, 0, 1);
         assertEquals(20, iter.getWeight(false), 1.e-6);
         assertEquals(20, iter.getWeight(true), 1.e-6);
@@ -431,32 +430,32 @@ class QueryRoutingCHGraphTest {
         // at the virtual node
         iter = queryCHGraph.createOutEdgeExplorer().setBaseNode(3);
         assertNextEdge(iter, 3, 0, 2);
-        assertEquals(119.12453, iter.getWeight(false), 1.e-4);
-        assertEquals(39.708178, iter.getWeight(true), 1.e-4);
-        assertNextEdge(iter, 3, 1, 3);
-        assertEquals(39.708178, iter.getWeight(false), 1.e-4);
+        assertEquals(357.373605, iter.getWeight(false), 1.e-4);
         assertEquals(119.12453, iter.getWeight(true), 1.e-4);
+        assertNextEdge(iter, 3, 1, 3);
+        assertEquals(119.12453, iter.getWeight(false), 1.e-4);
+        assertEquals(357.373605, iter.getWeight(true), 1.e-4);
         assertEnd(iter);
 
         iter = queryCHGraph.createInEdgeExplorer().setBaseNode(3);
         assertNextEdge(iter, 3, 0, 2);
-        assertEquals(119.12453, iter.getWeight(false), 1.e-4);
-        assertEquals(39.708178, iter.getWeight(true), 1.e-4);
-        assertNextEdge(iter, 3, 1, 3);
-        assertEquals(39.708178, iter.getWeight(false), 1.e-4);
+        assertEquals(357.373605, iter.getWeight(false), 1.e-4);
         assertEquals(119.12453, iter.getWeight(true), 1.e-4);
+        assertNextEdge(iter, 3, 1, 3);
+        assertEquals(119.12453, iter.getWeight(false), 1.e-4);
+        assertEquals(357.373605, iter.getWeight(true), 1.e-4);
         assertEnd(iter);
 
         // getting a single edge
         RoutingCHEdgeIteratorState edgeState = queryCHGraph.getEdgeIteratorState(3, 3);
         assertEdgeState(edgeState, 0, 3, 2);
-        assertEquals(39.708178, edgeState.getWeight(false), 1.e-4);
-        assertEquals(119.12453, edgeState.getWeight(true), 1.e-4);
+        assertEquals(119.12453, edgeState.getWeight(false), 1.e-4);
+        assertEquals(357.373605, edgeState.getWeight(true), 1.e-4);
 
         edgeState = queryCHGraph.getEdgeIteratorState(3, 0);
         assertEdgeState(edgeState, 3, 0, 2);
-        assertEquals(119.12453, edgeState.getWeight(false), 1.e-4);
-        assertEquals(39.708178, edgeState.getWeight(true), 1.e-4);
+        assertEquals(357.373605, edgeState.getWeight(false), 1.e-4);
+        assertEquals(119.12453, edgeState.getWeight(true), 1.e-4);
     }
 
     @Test
@@ -613,7 +612,7 @@ class QueryRoutingCHGraphTest {
     private EdgeIteratorState addEdge(Graph graph, int from, int to) {
         NodeAccess na = graph.getNodeAccess();
         double dist = DistancePlaneProjection.DIST_PLANE.calcDist(na.getLat(from), na.getLon(from), na.getLat(to), na.getLon(to));
-        return graph.edge(from, to).setDistance(dist).set(speedEnc, 60, 60);
+        return graph.edge(from, to).setDistance(dist).set(speedEnc, 10, 10);
     }
 
 }
