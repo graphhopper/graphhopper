@@ -12,8 +12,53 @@ jobs:
 
     steps:
     - name: Remove old artifacts
-      uses: c-hive/gha-remove-artifacts@v1
+      uses: c-hive/gha-remove-artifacts@v1.3.0
       with:
         age: '11 months'
         skip-tags: true
         skip-recent: 10
+
+  remove-old-artifacts-2:
+    if: github.repository_owner == 'graphhopper'
+    name: Remove old artifacts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10 # stop the task if it takes longer
+
+    steps:
+    - name: Remove old artifacts 2.1
+      uses: actions/delete-package-versions@v4.1.1
+      with:
+        package-name: matrix
+        package-type: maven
+        min-versions-to-keep: 30
+
+    - name: Remove old artifacts 2.2
+      uses: actions/delete-package-versions@v4.1.1
+      with:
+        package-name: com.graphhopper.graphhopper-matrix
+        package-type: maven
+        min-versions-to-keep: 30
+
+    - name: Remove old artifacts 2.3
+      uses: actions/delete-package-versions@v4.1.1
+      with:
+        package-name: graphhopper-matrix
+        package-type: maven
+        min-versions-to-keep: 30
+
+  remove-old-artifacts-3:
+    if: github.repository_owner == 'graphhopper'
+    name: Remove old artifacts 3
+    runs-on: ubuntu-latest
+    timeout-minutes: 10 # stop the task if it takes longer
+
+    steps:
+    - name: Remove old artifacts 2.1
+      uses: actions/delete-package-versions@v4.1.1
+      with:
+        names: |
+          matrix
+          com.graphhopper.graphhopper-matrix
+          graphhopper-matrix
+        type: maven
+        keep: 30
