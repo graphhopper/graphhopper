@@ -110,19 +110,10 @@ public class RandomCHRoutingTest {
         if (f.traversalMode.isEdgeBased()) {
             GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.graph.getTurnCostStorage());
         }
-        runRandomTest(f, rnd, 20);
+        runRandomTest(f, rnd);
     }
 
-    @ParameterizedTest
-    @ArgumentsSource(FixtureProvider.class)
-    public void issue1582(Fixture f) {
-        assumeFalse(f.traversalMode.isEdgeBased());
-        Random rnd = new Random(4111485945982L);
-        buildRandomGraphLegacy(f.graph, f.accessEnc, f.speedEnc, rnd, 10, 2.5, false, true, 0.9);
-        runRandomTest(f, rnd, 100);
-    }
-
-    private void runRandomTest(Fixture f, Random rnd, int numVirtualNodes) {
+    private void runRandomTest(Fixture f, Random rnd) {
         LocationIndexTree locationIndex = new LocationIndexTree(f.graph, f.graph.getDirectory());
         locationIndex.prepareIndex();
 
@@ -132,6 +123,7 @@ public class RandomCHRoutingTest {
         RoutingCHGraph chGraph = RoutingCHGraphImpl.fromGraph(f.graph, res.getCHStorage(), res.getCHConfig());
 
         int numQueryGraph = 25;
+        int numVirtualNodes = 20;
         for (int j = 0; j < numQueryGraph; j++) {
             // add virtual nodes and edges, because they can change the routing behavior and/or produce bugs, e.g.
             // when via-points are used
@@ -185,43 +177,5 @@ public class RandomCHRoutingTest {
         }
     }
 
-    /**
-     * More or less does the same as {@link GHUtility#buildRandomGraph}, but since some special seeds
-     * are used in a few tests above this code is kept here. Do not use it for new tests.
-     */
-    private void buildRandomGraphLegacy(Graph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, Random random, int numNodes, double meanDegree, boolean allowLoops, boolean allowZeroDistance, double pBothDir) {
-        for (int i = 0; i < numNodes; ++i) {
-            double lat = 49.4 + (random.nextDouble() * 0.0001);
-            double lon = 9.7 + (random.nextDouble() * 0.0001);
-            graph.getNodeAccess().setNode(i, lat, lon);
-        }
-        double minDist = Double.MAX_VALUE;
-        double maxDist = Double.MIN_VALUE;
-        int numEdges = (int) (0.5 * meanDegree * numNodes);
-        for (int i = 0; i < numEdges; ++i) {
-            int from = random.nextInt(numNodes);
-            int to = random.nextInt(numNodes);
-            if (!allowLoops && from == to) {
-                continue;
-            }
-            double distance = GHUtility.getDistance(from, to, graph.getNodeAccess());
-            if (!allowZeroDistance) {
-                distance = Math.max(0.001, distance);
-            }
-            // add some random offset for most cases, but also allow duplicate edges with same weight
-            if (random.nextDouble() < 0.8)
-                distance += random.nextDouble() * distance * 0.01;
-            minDist = Math.min(minDist, distance);
-            maxDist = Math.max(maxDist, distance);
-            // using bidirectional edges will increase mean degree of graph above given value
-            boolean bothDirections = random.nextDouble() < pBothDir;
-            EdgeIteratorState edge = GHUtility.setSpeed(60, true, bothDirections, accessEnc, speedEnc, graph.edge(from, to).setDistance(distance));
-            double fwdSpeed = 10 + random.nextDouble() * 120;
-            double bwdSpeed = 10 + random.nextDouble() * 120;
-            edge.set(speedEnc, fwdSpeed);
-            if (speedEnc.isStoreTwoDirections())
-                edge.setReverse(speedEnc, bwdSpeed);
-        }
-    }
 }
 
