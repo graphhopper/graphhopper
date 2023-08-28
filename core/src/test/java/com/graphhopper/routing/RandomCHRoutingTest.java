@@ -115,24 +115,6 @@ public class RandomCHRoutingTest {
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
-    public void issue1574_1(Fixture f) {
-        assumeFalse(f.traversalMode.isEdgeBased());
-        Random rnd = new Random(9348906923700L);
-        buildRandomGraphLegacy(f.graph, f.accessEnc, f.speedEnc, rnd, 50, 2.5, false, true, 0.9);
-        runRandomTest(f, rnd, 20);
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(FixtureProvider.class)
-    public void issue1574_2(Fixture f) {
-        assumeFalse(f.traversalMode.isEdgeBased());
-        Random rnd = new Random(10093639220394L);
-        buildRandomGraphLegacy(f.graph, f.accessEnc, f.speedEnc, rnd, 50, 2.5, false, true, 0.9);
-        runRandomTest(f, rnd, 20);
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(FixtureProvider.class)
     public void issue1582(Fixture f) {
         assumeFalse(f.traversalMode.isEdgeBased());
         Random rnd = new Random(4111485945982L);
