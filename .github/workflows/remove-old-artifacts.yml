@@ -16,7 +16,7 @@ jobs:
       with:
         age: '11 months'
         skip-tags: true
-        skip-recent: 10
+        skip-recent: 300
 
   remove-old-artifacts-2:
     if: github.repository_owner == 'graphhopper'
@@ -30,21 +30,21 @@ jobs:
       with:
         package-name: matrix
         package-type: maven
-        min-versions-to-keep: 30
+        min-versions-to-keep: 300
 
     - name: Remove old artifacts 2.2
       uses: actions/delete-package-versions@v4.1.1
       with:
         package-name: com.graphhopper.graphhopper-matrix
         package-type: maven
-        min-versions-to-keep: 30
+        min-versions-to-keep: 300
 
     - name: Remove old artifacts 2.3
       uses: actions/delete-package-versions@v4.1.1
       with:
         package-name: graphhopper-matrix
         package-type: maven
-        min-versions-to-keep: 30
+        min-versions-to-keep: 300
 
   remove-old-artifacts-3:
     if: github.repository_owner == 'graphhopper'
@@ -61,4 +61,4 @@ jobs:
           com.graphhopper.graphhopper-matrix
           graphhopper-matrix
         type: maven
-        keep: 30
+        keep: 300
