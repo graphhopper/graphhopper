@@ -160,7 +160,7 @@ public final class GraphExplorer {
             @Override
             public boolean tryAdvance(Consumer<? super MultiModalEdge> action) {
                 while (e.next()) {
-                    if (!accessEgressWeighting.edgeHasNoAccess(e, reverse)) {
+                    if (Double.isFinite(accessEgressWeighting.calcEdgeWeight(e, reverse))) {
                         action.accept(new MultiModalEdge(e.getEdge(), e.getBaseNode(), e.getAdjNode(), (long) (accessEgressWeighting.calcEdgeMillis(e.detach(false), reverse) * (5.0 / walkSpeedKmH)), e.getDistance()));
                         return true;
                     }
