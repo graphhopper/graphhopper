@@ -1008,8 +1008,7 @@ public class RoutingAlgorithmTest {
         final long seed = System.nanoTime();
         LOGGER.info("testRandomGraph - using seed: " + seed);
         Random rnd = new Random(seed);
-        GHUtility.buildRandomGraph(graph, rnd, 10, 2.0, true,
-                f.carAccessEnc, f.carSpeedEnc, null, 0.7, 0.7);
+        GHUtility.buildRandomGraph(graph, rnd, 10, 2.0, true, f.carAccessEnc, f.carSpeedEnc, null, 0.7, 0.7);
         final PathCalculator refCalculator = new DijkstraCalculator();
         int numRuns = 100;
         for (int i = 0; i < numRuns; i++) {
