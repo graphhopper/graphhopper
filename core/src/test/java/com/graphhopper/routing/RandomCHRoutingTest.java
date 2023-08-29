@@ -11,10 +11,12 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.CHConfig;
+import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -35,8 +37,6 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
-import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class RandomCHRoutingTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(RandomCHRoutingTest.class);
@@ -105,8 +105,7 @@ public class RandomCHRoutingTest {
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
         double pOffset = 0;
-        GHUtility.buildRandomGraph(f.graph, rnd, numNodes, 2.5, true,
-                f.accessEnc, f.speedEnc, null, 0.9, pOffset);
+        GHUtility.buildRandomGraph(f.graph, rnd, numNodes, 2.5, true, f.accessEnc, f.speedEnc, null, 0.9, pOffset);
         if (f.traversalMode.isEdgeBased()) {
             GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.graph.getTurnCostStorage());
         }
