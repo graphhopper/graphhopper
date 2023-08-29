@@ -156,6 +156,23 @@ public class TurnCostStorageTest {
     }
 
     @Test
+    public void setMultipleTimes() {
+        BaseGraph g = new BaseGraph.Builder(manager).withTurnCosts(true).create();
+        initGraph(g, accessEnc, speedEnc);
+        TurnCostStorage turnCostStorage = g.getTurnCostStorage();
+        DecimalEncodedValue carEnc = carTurnCostEnc;
+        int edge32 = getEdge(g, 3, 2).getEdge();
+        int edge20 = getEdge(g, 2, 0).getEdge();
+        assertEquals(0, turnCostStorage.get(carEnc, edge32, 2, edge20));
+        turnCostStorage.set(carEnc, edge32, 2, edge20, Double.POSITIVE_INFINITY);
+        assertEquals(Double.POSITIVE_INFINITY, turnCostStorage.get(carEnc, edge32, 2, edge20));
+        turnCostStorage.set(carEnc, edge32, 2, edge20, 0);
+        turnCostStorage.set(carEnc, edge32, 2, edge20, Double.POSITIVE_INFINITY);
+        turnCostStorage.set(carEnc, edge32, 2, edge20, 0);
+        assertEquals(0, turnCostStorage.get(carEnc, edge32, 2, edge20));
+    }
+
+    @Test
     public void testIterateEmptyStore() {
         BaseGraph g = new BaseGraph.Builder(manager).withTurnCosts(true).create();
         initGraph(g, accessEnc, speedEnc);
