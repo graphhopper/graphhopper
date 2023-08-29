@@ -257,11 +257,6 @@ public class RestrictionSetterTest {
         }
 
         @Override
-        public boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse) {
-            return false;
-        }
-
-        @Override
         public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
             return edgeState.getDistance();
         }
