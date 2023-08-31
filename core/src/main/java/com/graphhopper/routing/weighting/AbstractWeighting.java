@@ -40,12 +40,6 @@ public abstract class AbstractWeighting implements Weighting {
         this.turnCostProvider = turnCostProvider;
     }
 
-    protected boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse) {
-        if (edgeState.getBaseNode() == edgeState.getAdjNode())
-            throw new IllegalStateException("Unexpected loop-edge at node: " + edgeState.getBaseNode());
-        return reverse ? !edgeState.getReverse(accessEnc) : !edgeState.get(accessEnc);
-    }
-
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
         if (reverse && !edgeState.getReverse(accessEnc) || !reverse && !edgeState.get(accessEnc))

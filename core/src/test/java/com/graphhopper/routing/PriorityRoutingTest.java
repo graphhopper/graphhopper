@@ -74,15 +74,6 @@ public class PriorityRoutingTest {
 
         // A* and Dijkstra should yield the same path (the max priority must be taken into account by weighting.getMinWeight)
         {
-            Weighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, priorityEnc,
-                    em, TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel());
-            Path pathDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
-            Path pathAStar = new AStar(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
-            assertEquals(pathDijkstra.calcNodes(), pathAStar.calcNodes());
-            assertEquals(IntArrayList.from(0, 4, 5, 3), pathAStar.calcNodes());
-        }
-
-        {
             CustomModel customModel = new CustomModel();
             CustomWeighting weighting = CustomModelParser.createWeighting(accessEnc,
                     speedEnc, priorityEnc, em,

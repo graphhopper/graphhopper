@@ -45,7 +45,6 @@ public class DirectedBidirectionalDijkstraTest {
     private DecimalEncodedValue speedEnc;
     private Weighting weighting;
     private DecimalEncodedValue turnCostEnc;
-    private EncodingManager encodingManager;
 
     @BeforeEach
     public void setup() {
