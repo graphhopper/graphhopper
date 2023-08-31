@@ -1113,14 +1113,12 @@ public class GraphHopper {
                         "Error: " + e.getMessage());
             }
 
-            if (profile instanceof Profile) {
-                CustomModel customModel = ((Profile) profile).getCustomModel();
-                if (customModel == null)
-                    throw new IllegalArgumentException("custom model for profile '" + profile.getName() + "' was empty");
-                if (!CustomWeighting.NAME.equals(profile.getWeighting()))
-                    throw new IllegalArgumentException("profile '" + profile.getName() + "' has a custom model but " +
-                            "weighting=" + profile.getWeighting() + " was defined");
-            }
+            CustomModel customModel = profile.getCustomModel();
+            if (customModel == null)
+                throw new IllegalArgumentException("custom model for profile '" + profile.getName() + "' was empty");
+            if (!CustomWeighting.NAME.equals(profile.getWeighting()))
+                throw new IllegalArgumentException("profile '" + profile.getName() + "' has a custom model but " +
+                        "weighting=" + profile.getWeighting() + " was defined");
         }
 
         Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfiles().size());
@@ -1202,14 +1200,6 @@ public class GraphHopper {
     protected void postProcessing(boolean closeEarly) {
         initLocationIndex();
         importPublicTransit();
-
-        if (closeEarly) {
-            boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> p instanceof Profile);
-            if (!includesCustomProfiles)
-                // when there are custom profiles we must not close way geometry or KVStorage, because
-                // they might be needed to evaluate the custom weightings for the following preparations
-                baseGraph.flushAndCloseGeometryAndNameStorage();
-        }
 
         if (lmPreparationHandler.isEnabled())
             loadOrPrepareLM(closeEarly);

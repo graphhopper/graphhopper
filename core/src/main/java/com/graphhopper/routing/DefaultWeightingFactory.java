@@ -78,11 +78,8 @@ public class DefaultWeightingFactory implements WeightingFactory {
                 ? encodingManager.getDecimalEncodedValue(VehiclePriority.key(vehicle))
                 : null;
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
-            if (!(profile instanceof Profile))
-                throw new IllegalArgumentException("custom weighting requires a CustomProfile but was profile=" + profile.getName());
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
-            Profile customProfile = (Profile) profile;
-            final CustomModel mergedCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
+            final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
             weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
