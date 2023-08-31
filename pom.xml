@@ -6,7 +6,7 @@
     <groupId>com.github.GIScience.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>4.0-SNAPSHOT</version>
+    <version>4.9-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>https://www.graphhopper.com</url>
     <inceptionYear>2012</inceptionYear>
@@ -81,7 +81,7 @@
         <module>core</module>
         <module>reader-gtfs</module>
         <!-- ORS-GH MOD<module>tools</module> -->
-        <!-- ORS-GH MOD<module>hmm-lib</module> -->
+        <module>hmm-lib</module>
         <module>map-matching</module>
         <!-- ORS-GH MOD<module>web-bundle</module> -->
         <module>web-api</module>
@@ -97,7 +97,7 @@
             <dependency>
                 <groupId>io.dropwizard</groupId>
                 <artifactId>dropwizard-dependencies</artifactId>
-                <version>4.0.1</version>
+                <version>2.0.21</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -114,7 +114,7 @@
             <dependency>
                 <groupId>org.locationtech.jts</groupId>
                 <artifactId>jts-core</artifactId>
-                <version>1.19.0</version>
+                <version>1.15.1</version>
             </dependency>
             <dependency>
                 <groupId>com.wdtinc</groupId>

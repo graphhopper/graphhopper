@@ -19,7 +19,7 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>hmm-lib-external</artifactId>
     <!-- SNAPSHOT is necessary otherwise it says: Deployment failed: repository element was not specified in the POM inside distributionManagement element-->
-    <version>4.0</version>
+    <version>4.9-SNAPSHOT</version>
     <packaging>jar</packaging>
   
     <name>hmm-lib</name>
@@ -27,9 +27,9 @@
     <url>https://github.com/bmwcarit/hmm-lib</url>
 
     <parent>
-        <groupId>com.graphhopper</groupId>
+        <groupId>com.github.GIScience.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>4.0</version>
+        <version>4.9-SNAPSHOT</version>
     </parent>
 
     <developers>

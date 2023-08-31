@@ -9,23 +9,23 @@
     <parent>
         <groupId>com.github.GIScience.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>4.0-SNAPSHOT</version>
+        <version>4.9-SNAPSHOT</version>
     </parent>
     
     <dependencies>
         <dependency>
             <groupId>com.github.GIScience.graphhopper</groupId>
             <artifactId>graphhopper-core</artifactId>
-            <version>4.0-SNAPSHOT</version>
+            <version>4.9-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.graphhopper</groupId>
+            <groupId>com.github.GIScience.graphhopper</groupId>
             <artifactId>hmm-lib-external</artifactId>
-            <version>4.0</version>
+            <version>4.9-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
