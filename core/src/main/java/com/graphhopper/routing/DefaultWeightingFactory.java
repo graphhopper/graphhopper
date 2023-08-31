@@ -26,7 +26,6 @@ import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
@@ -36,8 +35,6 @@ import com.graphhopper.util.Parameters;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.toLowerCase;
-import static com.graphhopper.util.Parameters.Routing.DEFAULT_HEADING_PENALTY;
-import static com.graphhopper.util.Parameters.Routing.HEADING_PENALTY;
 
 public class DefaultWeightingFactory implements WeightingFactory {
 
@@ -81,10 +78,10 @@ public class DefaultWeightingFactory implements WeightingFactory {
                 ? encodingManager.getDecimalEncodedValue(VehiclePriority.key(vehicle))
                 : null;
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
-            if (!(profile instanceof CustomProfile))
+            if (!(profile instanceof Profile))
                 throw new IllegalArgumentException("custom weighting requires a CustomProfile but was profile=" + profile.getName());
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
-            CustomProfile customProfile = (CustomProfile) profile;
+            Profile customProfile = (Profile) profile;
             final CustomModel mergedCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));

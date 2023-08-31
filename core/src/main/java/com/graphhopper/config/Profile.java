@@ -20,6 +20,7 @@ package com.graphhopper.config;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
@@ -50,6 +51,7 @@ public class Profile {
 
     public Profile(String name) {
         setName(name);
+        setCustomModel(new CustomModel());
     }
 
     public String getName() {
@@ -78,6 +80,17 @@ public class Profile {
     public Profile setWeighting(String weighting) {
         this.weighting = weighting;
         return this;
+    }
+
+    public Profile setCustomModel(CustomModel customModel) {
+        if (customModel != null)
+            customModel.internal();
+        getHints().putObject(CustomModel.KEY, customModel);
+        return this;
+    }
+
+    public CustomModel getCustomModel() {
+        return getHints().getObject(CustomModel.KEY, null);
     }
 
     public boolean isTurnCosts() {

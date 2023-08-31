@@ -27,7 +27,6 @@ import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.MapMatching;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.matching.State;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -60,7 +59,7 @@ public class MapMatching2Test {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
-        hopper.setProfiles(new CustomProfile("my_profile").setVehicle("car"));
+        hopper.setProfiles(new Profile("my_profile").setVehicle("car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
 
@@ -85,7 +84,7 @@ public class MapMatching2Test {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/issue-70.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
-        hopper.setProfiles(new CustomProfile("my_profile").setVehicle("car"));
+        hopper.setProfiles(new Profile("my_profile").setVehicle("car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
 
@@ -105,7 +104,7 @@ public class MapMatching2Test {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
-        hopper.setProfiles(new CustomProfile("my_profile").setVehicle("car"));
+        hopper.setProfiles(new Profile("my_profile").setVehicle("car"));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
 

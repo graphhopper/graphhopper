@@ -1,10 +1,8 @@
 package com.graphhopper.storage;
 
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.Helper;
-
-import static com.graphhopper.config.Profile.validateProfileName;
 
 /**
  * Container to hold properties used for CH preparation Specifies all properties of a CH routing profile.
@@ -28,7 +26,7 @@ public class CHConfig {
     }
 
     public CHConfig(String chGraphName, Weighting weighting, boolean edgeBased) {
-        validateProfileName(chGraphName);
+        Profile.validateProfileName(chGraphName);
         this.chGraphName = chGraphName;
         this.weighting = weighting;
         this.edgeBased = edgeBased;

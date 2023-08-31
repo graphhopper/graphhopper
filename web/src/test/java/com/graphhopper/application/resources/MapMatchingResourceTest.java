@@ -22,7 +22,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.ResponsePathDeserializer;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
+
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -60,8 +60,8 @@ public class MapMatchingResourceTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new CustomProfile("fast_car").setVehicle("car"),
-                        new CustomProfile("fast_bike").setVehicle("bike")));
+                        new Profile("fast_car").setVehicle("car"),
+                        new Profile("fast_bike").setVehicle("bike")));
         return config;
     }
 

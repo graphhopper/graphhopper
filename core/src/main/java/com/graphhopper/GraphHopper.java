@@ -40,7 +40,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -1114,8 +1113,8 @@ public class GraphHopper {
                         "Error: " + e.getMessage());
             }
 
-            if (profile instanceof CustomProfile) {
-                CustomModel customModel = ((CustomProfile) profile).getCustomModel();
+            if (profile instanceof Profile) {
+                CustomModel customModel = ((Profile) profile).getCustomModel();
                 if (customModel == null)
                     throw new IllegalArgumentException("custom model for profile '" + profile.getName() + "' was empty");
                 if (!CustomWeighting.NAME.equals(profile.getWeighting()))
@@ -1205,7 +1204,7 @@ public class GraphHopper {
         importPublicTransit();
 
         if (closeEarly) {
-            boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> p instanceof CustomProfile);
+            boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> p instanceof Profile);
             if (!includesCustomProfiles)
                 // when there are custom profiles we must not close way geometry or KVStorage, because
                 // they might be needed to evaluate the custom weightings for the following preparations

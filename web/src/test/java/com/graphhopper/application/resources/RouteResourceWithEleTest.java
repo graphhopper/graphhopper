@@ -22,7 +22,6 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -57,7 +56,7 @@ public class RouteResourceWithEleTest {
                 putObject("graph.location", dir).
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Collections.singletonList(
-                        new CustomProfile("profile").setVehicle("car")
+                        new Profile("profile").setVehicle("car")
                 ));
         return config;
     }

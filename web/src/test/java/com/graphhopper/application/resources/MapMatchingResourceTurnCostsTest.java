@@ -24,7 +24,6 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.ResponsePathDeserializer;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -63,9 +62,9 @@ public class MapMatchingResourceTurnCostsTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new CustomProfile("car").setVehicle("car").setTurnCosts(true),
-                        new CustomProfile("car_no_tc").setVehicle("car"),
-                        new CustomProfile("bike").setVehicle("bike"))
+                        new Profile("car").setVehicle("car").setTurnCosts(true),
+                        new Profile("car_no_tc").setVehicle("car"),
+                        new Profile("bike").setVehicle("bike"))
                 ).
                 setLMProfiles(Arrays.asList(
                         new LMProfile("car"),

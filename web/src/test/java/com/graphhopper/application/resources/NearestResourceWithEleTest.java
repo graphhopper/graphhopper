@@ -23,7 +23,6 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -56,7 +55,7 @@ public class NearestResourceWithEleTest {
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", dir).
-                setProfiles(Collections.singletonList(new CustomProfile("car").setVehicle("car")));
+                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car")));
         return config;
     }
 

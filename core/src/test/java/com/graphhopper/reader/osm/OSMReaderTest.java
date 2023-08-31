@@ -33,7 +33,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.*;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -391,9 +390,7 @@ public class OSMReaderTest {
         hopper.setVehiclesString("car|block_fords=true");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
-                setProfiles(
-                        new CustomProfile("car").setVehicle("car")
-                ).
+                setProfiles(new Profile("car").setVehicle("car")).
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getBaseGraph();
@@ -708,9 +705,9 @@ public class OSMReaderTest {
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
-                        new CustomProfile("bike").setVehicle("bike").setTurnCosts(true),
-                        new CustomProfile("car").setVehicle("car").setTurnCosts(true),
-                        new CustomProfile("truck").setVehicle("truck").setTurnCosts(true)
+                        new Profile("bike").setVehicle("bike").setTurnCosts(true),
+                        new Profile("car").setVehicle("car").setTurnCosts(true),
+                        new Profile("truck").setVehicle("truck").setTurnCosts(true)
                 ).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
@@ -907,7 +904,7 @@ public class OSMReaderTest {
                 return new File(getClass().getResource(file2).getFile());
             }
         }.setOSMFile("dummy").
-                setProfiles(new CustomProfile("profile").setVehicle("car")).
+                setProfiles(new Profile("profile").setVehicle("car")).
                 setMinNetworkSize(0).
                 setGraphHopperLocation(dir).
                 importOrLoad();
@@ -999,10 +996,10 @@ public class OSMReaderTest {
             setGraphHopperLocation(dir);
             if (turnCosts) setVehiclesString("roads|turn_costs=true|transportation_mode=HGV");
             setProfiles(
-                    new CustomProfile("foot").setVehicle("foot"),
-                    new CustomProfile("car").setVehicle("car").setTurnCosts(turnCosts),
-                    new CustomProfile("bike").setVehicle("bike").setTurnCosts(turnCosts),
-                    new CustomProfile("roads").setVehicle("roads").setTurnCosts(turnCosts)
+                    new Profile("foot").setVehicle("foot"),
+                    new Profile("car").setVehicle("car").setTurnCosts(turnCosts),
+                    new Profile("bike").setVehicle("bike").setTurnCosts(turnCosts),
+                    new Profile("roads").setVehicle("roads").setTurnCosts(turnCosts)
             );
             getReaderConfig().setPreferredLanguage(prefLang);
         }

@@ -25,7 +25,6 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.GHUtility;
@@ -100,7 +99,7 @@ public class GraphHopperManaged implements Managed {
                 try {
                     // custom_model can be an object tree (read from config) or an object (e.g. from tests)
                     customModel = jsonOM.readValue(jsonOM.writeValueAsBytes(cm), CustomModel.class);
-                    newProfiles.add(new CustomProfile(profile).setCustomModel(customModel));
+                    newProfiles.add(profile.setCustomModel(customModel));
                 } catch (Exception ex) {
                     throw new RuntimeException("Cannot load custom_model from " + cm + " for profile " + profile.getName()
                             + ". If you are trying to load from a file, use 'custom_model_files' instead.", ex);
@@ -113,7 +112,7 @@ public class GraphHopperManaged implements Managed {
                     throw new IllegalArgumentException("Missing 'custom_model' or 'custom_model_files' field in profile '"
                             + profile.getName() + "'. To use default specify custom_model_files: []");
                 if (customModelFileNames.isEmpty()) {
-                    newProfiles.add(new CustomProfile(profile).setCustomModel(customModel = new CustomModel()));
+                    newProfiles.add(profile.setCustomModel(customModel = new CustomModel()));
                 } else {
                     customModel = new CustomModel();
                     for (String file : customModelFileNames) {
@@ -140,7 +139,7 @@ public class GraphHopperManaged implements Managed {
                         }
                     }
 
-                    newProfiles.add(new CustomProfile(profile).setCustomModel(customModel));
+                    newProfiles.add(profile.setCustomModel(customModel));
                 }
             }
 

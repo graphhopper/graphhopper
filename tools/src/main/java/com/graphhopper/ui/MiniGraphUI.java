@@ -38,7 +38,6 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RoutingCHGraph;
@@ -101,7 +100,7 @@ public class MiniGraphUI {
         args.putObject("graph.location", args.getString("graph.location", "tools/target/mini-graph-ui-gh"));
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         ghConfig.setProfiles(Arrays.asList(
-                new CustomProfile("profile")
+                new Profile("profile")
                         .setVehicle("car")
                         .setTurnCosts(true)
         )).putObject("import.osm.ignored_highways", "");
