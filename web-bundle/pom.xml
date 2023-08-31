@@ -5,36 +5,36 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>graphhopper-web-bundle</artifactId>
     <packaging>jar</packaging>
-    <version>4.0</version>
+    <version>4.9-SNAPSHOT</version>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
     <parent>
-        <groupId>com.graphhopper</groupId>
+        <groupId>com.github.GIScience.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>4.0</version>
+        <version>4.9-SNAPSHOT</version>
     </parent>
 
     <dependencies>
         <dependency>
-            <groupId>com.graphhopper</groupId>
+            <groupId>com.github.GIScience.graphhopper</groupId>
             <artifactId>graphhopper-web-api</artifactId>
-            <version>${project.parent.version}</version>
+            <version>4.9-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.graphhopper</groupId>
+            <groupId>com.github.GIScience.graphhopper</groupId>
             <artifactId>graphhopper-core</artifactId>
-            <version>${project.parent.version}</version>
+            <version>4.9-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.graphhopper</groupId>
+            <groupId>com.github.GIScience.graphhopper</groupId>
             <artifactId>graphhopper-reader-gtfs</artifactId>
-            <version>${project.parent.version}</version>
+            <version>4.9-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.graphhopper</groupId>
+            <groupId>com.github.GIScience.graphhopper</groupId>
             <artifactId>graphhopper-map-matching</artifactId>
-            <version>${project.parent.version}</version>
+            <version>4.9-SNAPSHOT</version>
         </dependency>
 
         <!-- required for JDK9 -->
@@ -116,9 +116,9 @@
 
         <!-- for integration tests of service -->
         <dependency>
-            <groupId>com.graphhopper</groupId>
+            <groupId>com.github.GIScience.graphhopper</groupId>
             <artifactId>directions-api-client-hc</artifactId>
-            <version>${project.parent.version}</version>
+            <version>4.9-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

@@ -7,9 +7,11 @@ on:
   push:
     branches:
       - 'ors_4.0'
+      - 'releases/v4.*'
   pull_request:
     branches:
       - 'ors_4.0'
+      - 'releases/v4.*'
 
 jobs:
   run_tests:

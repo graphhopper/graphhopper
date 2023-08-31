@@ -5,14 +5,14 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>graphhopper-web</artifactId>
     <packaging>jar</packaging>
-    <version>4.0</version>
+    <version>4.9-SNAPSHOT</version>
     <name>GraphHopper Web</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
     <parent>
-        <groupId>com.graphhopper</groupId>
+        <groupId>com.github.GIScience.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>4.0</version>
+        <version>4.9-SNAPSHOT</version>
     </parent>
     <properties>
         <shade-phase>package</shade-phase>
@@ -28,14 +28,14 @@
             <artifactId>dropwizard-assets</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.graphhopper</groupId>
+            <groupId>com.github.GIScience.graphhopper</groupId>
             <artifactId>graphhopper-web-bundle</artifactId>
-            <version>${project.parent.version}</version>
+            <version>4.9-SNAPSHOT</version>
         </dependency>
         <dependency>
-            <groupId>com.graphhopper</groupId>
+            <groupId>com.github.GIScience.graphhopper</groupId>
             <artifactId>graphhopper-nav</artifactId>
-            <version>${project.parent.version}</version>
+            <version>4.9-SNAPSHOT</version>
         </dependency>
 
         <dependency>
@@ -64,9 +64,9 @@
 
         <!-- for integration tests of service -->
         <dependency>
-            <groupId>com.graphhopper</groupId>
+            <groupId>com.github.GIScience.graphhopper</groupId>
             <artifactId>directions-api-client-hc</artifactId>
-            <version>${project.parent.version}</version>
+            <version>4.9-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
 
