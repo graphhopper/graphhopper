@@ -91,7 +91,7 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public String toString() {
-        return getName() + "|" + speedEnc.getName().split("$")[0];
+        return getName() + "|" + speedEnc.getName();
     }
 
 }

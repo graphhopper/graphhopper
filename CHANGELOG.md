@@ -1,5 +1,6 @@
 ### 8.0 [not yet released]
 
+- remove shortest weighting for public usage, use a high distance_influence instead, see #2865
 - removed duration:seconds as intermediate tag
 - /info endpoint does no longer return the vehicle used per profile and won't return encoded value of vehicles like car_average_speed
 - Country rules no longer contain maxspeed handling, enable a much better alternative via `max_speed_calculator.enabled: true`. On the client side use `max_speed_estimated` to determine if max_speed is from OSM or an estimation. See #2810

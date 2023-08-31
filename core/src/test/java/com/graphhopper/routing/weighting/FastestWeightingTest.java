@@ -129,7 +129,8 @@ public class FastestWeightingTest {
     @Test
     public void calcWeightAndTime_withTurnCosts_shortest() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-        Weighting weighting = new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()));
+        Weighting weighting = new ShortestWeighting(accessEnc, speedEnc,
+                new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100));
         // turn costs are given in seconds

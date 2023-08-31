@@ -20,8 +20,7 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Specifies how the best route is calculated. E.g. the fastest or shortest route.
- * <p>
+ * Specifies how the best route is calculated.
  *
  * @author Peter Karich
  */
