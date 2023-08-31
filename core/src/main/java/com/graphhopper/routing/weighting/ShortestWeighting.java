@@ -49,20 +49,14 @@ public class ShortestWeighting implements Weighting {
     }
 
     @Override
-    public boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse) {
-        return reverse ? !edgeState.getReverse(accessEnc) : !edgeState.get(accessEnc);
-    }
-
-    @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-        if (edgeHasNoAccess(edgeState, reverse))
+        if (reverse ? !edgeState.getReverse(accessEnc) : !edgeState.get(accessEnc))
             return Double.POSITIVE_INFINITY;
         return edgeState.getDistance();
     }
 
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        if (edgeState.getBaseNode() == edgeState.getAdjNode()) reverse = false;
         double speed = reverse ? edgeState.getReverse(speedEnc) : edgeState.get(speedEnc);
         return Math.round(edgeState.getDistance() / speed * 3.6 * 1000);
     }

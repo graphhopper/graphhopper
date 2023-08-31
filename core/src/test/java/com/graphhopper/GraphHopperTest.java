@@ -467,7 +467,6 @@ public class GraphHopperTest {
         final String profile = "profile";
         final String vehicle = "bike";
 
-
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
@@ -493,7 +492,6 @@ public class GraphHopperTest {
     public void testAlternativeRoutesCar() {
         final String profile = "profile";
         final String vehicle = "car";
-
 
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
@@ -588,7 +586,8 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
                 setProfiles(new CustomProfile(profile).
-                        setCustomModel(new CustomModel().addToPriority(If("road_access == DESTINATION", MULTIPLY, ".1"))).setVehicle(vehicle));
+                        setCustomModel(new CustomModel().addToPriority(If("road_access == DESTINATION", MULTIPLY, ".1"))).
+                        setVehicle(vehicle));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
@@ -959,7 +958,7 @@ public class GraphHopperTest {
     public void testMonacoMaxVisitedNodes() {
         final String profile = "profile";
         final String vehicle = "foot";
-
+        
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
