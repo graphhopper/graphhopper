@@ -20,6 +20,7 @@ package com.graphhopper;
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.CHProfile;
+import com.graphhopper.config.CustomResolver;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.reader.dem.*;
@@ -536,7 +537,11 @@ public class GraphHopper {
         if (!ghConfig.getString("spatial_rules.max_bbox", "").isEmpty())
             throw new IllegalArgumentException("spatial_rules.max_bbox has been deprecated. There is no replacement, all custom areas will be considered.");
 
-        setProfiles(ghConfig.getProfiles());
+        String customAreasDirectory = ghConfig.getString("custom_areas.directory", "");
+        JsonFeatureCollection globalAreas = CustomResolver.resolveCustomAreas(customAreasDirectory);
+        String customModelFolder = ghConfig.getString("custom_models.directory", ghConfig.getString("custom_model_folder", ""));
+        List<Profile> newProfiles = CustomResolver.resolveCustomModelFiles(customModelFolder, ghConfig.getProfiles(), globalAreas);
+        setProfiles(newProfiles);
 
         if (ghConfig.has("graph.vehicles") && ghConfig.has("graph.flag_encoders"))
             throw new IllegalArgumentException("Remove graph.flag_encoders as it cannot be used in parallel with graph.vehicles");
