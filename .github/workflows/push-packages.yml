@@ -37,13 +37,24 @@ jobs:
           key: ${{ runner.os }}-node-${{ hashFiles('**/pom.xml', '**/package.json') }}
           restore-keys: |
             ${{ runner.os}}-node_modules-
+      - uses: s4u/maven-settings-action@v2.8.0
+        with:
+          servers: |
+            [{
+                "id": "heigit-nexus-snapshots",
+                "username": "${{ secrets.NEXUS_USERNAME }}",
+                "password": "${{ secrets.NEXUS_PASSWORD }}"
+            }, {
+                "id": "heigit-nexus-releases",
+                "username": "${{ secrets.NEXUS_USERNAME }}",
+                "password": "${{ secrets.NEXUS_PASSWORD }}"
+            }]
       - name: Build and publish package on snapshot
         if: github.event_name == 'push' && github.event_name != 'release'
         run: |
           mvn -B -DskipTests -Pskip-shaded-web-jar -Pskip-tools-jar source:jar deploy
         env:
-          RT_USERNAME: ${{ secrets.RT_USERNAME }}
-          RT_PASSWORD: ${{ secrets.RT_PASSWORD }}
+          NEXUS_BASE_URL: ${{ vars.NEXUS_BASE_URL }}
       # Write a task to publish the package to GitHub Packages when a release is published
       - name: Build and publish package on release
         if: github.event_name == 'release'
@@ -51,5 +62,4 @@ jobs:
           mvn versions:set -DnewVersion=${{ github.event.release.tag_name }} -DgenerateBackupPoms=false
           mvn -B -DskipTests -Pskip-shaded-web-jar -Pskip-tools-jar source:jar deploy
         env:
-          RT_USERNAME: ${{ secrets.RT_USERNAME }}
-          RT_PASSWORD: ${{ secrets.RT_PASSWORD }}
+          NEXUS_BASE_URL: ${{ vars.NEXUS_BASE_URL }}

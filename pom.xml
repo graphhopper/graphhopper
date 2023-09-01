@@ -302,52 +302,19 @@
                     </excludes>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.jfrog.buildinfo</groupId>
-                <artifactId>artifactory-maven-plugin</artifactId>
-                <version>3.6.1</version>
-                <executions>
-                    <execution>
-                        <id>build-info</id>
-                        <goals>
-                            <goal>publish</goal>
-                        </goals>
-                        <configuration>
-                            <artifactory>
-                                <includeEnvVars>true</includeEnvVars>
-                                <envVarsExcludePatterns>*password*,*secret*,*key*,*token*,*passphrase*</envVarsExcludePatterns>
-                                <timeoutSec>60</timeoutSec>
-                            </artifactory>
-                            <publisher>
-                                <contextUrl>https://repo.heigit.org/artifactory</contextUrl>
-                                <username>${env.RT_USERNAME}</username>
-                                <password>${env.RT_PASSWORD}</password>
-                                <excludePatterns>*-tests.jar</excludePatterns>
-                                <repoKey>libs-release-local</repoKey>
-                                <snapshotRepoKey>libs-snapshot-local</snapshotRepoKey>
-                            </publisher>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
         </plugins>
     </build>
 
     <distributionManagement>
-        <downloadUrl>https://repo.heigit.org/artifactory/</downloadUrl>
         <repository>
-            <id>releases</id>
-            <name>HeiGIT repository</name>
-            <uniqueVersion>false</uniqueVersion>
-            <url>https://repo.heigit.org/artifactory/libs-release-local</url>
-            <layout>default</layout>
+            <id>heigit-nexus-releases</id>
+            <name>HeiGIT Releases</name>
+            <url>${env.NEXUS_BASE_URL}/repository/maven-releases/</url>
         </repository>
         <snapshotRepository>
-            <id>snapshots</id>
-            <name>HeiGIT repository (snapshots)</name>
-            <uniqueVersion>true</uniqueVersion>
-            <url>https://repo.heigit.org/artifactory/libs-snapshot-local</url>
-            <layout>default</layout>
+            <id>heigit-nexus-snapshots</id>
+            <name>HeiGIT Snapshots</name>
+            <url>${env.NEXUS_BASE_URL}/repository/maven-snapshots/</url>
         </snapshotRepository>
     </distributionManagement>
 
