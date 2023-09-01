@@ -1,15 +1,14 @@
-FROM maven:3.6.3-jdk-8 as build
+FROM maven:3.9.4-amazoncorretto-20 as build
 
-RUN apt-get install -y wget
+RUN yum install -y wget git
 WORKDIR /graphhopper
 COPY . .
 RUN mvn clean install -DskipTests
 
-FROM openjdk:11.0-jre
+FROM amazoncorretto:20-al2-jdk
 
-RUN apt-get update \
-  && apt-get install -y awscli pigz \
-  && mkdir -p /data
+RUN yum install -y awscli pigz && \
+    mkdir -p /data
 
 WORKDIR /graphhopper
 COPY --from=build /graphhopper/web/target/graphhopper*.jar ./
