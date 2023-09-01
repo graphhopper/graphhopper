@@ -1,13 +1,13 @@
 FROM maven:3.9.4-amazoncorretto-20 as build
 
-RUN yum install -y wget git
+RUN yum install -y wget git tar
 WORKDIR /graphhopper
 COPY . .
 RUN mvn clean install -DskipTests
 
 FROM amazoncorretto:20-al2-jdk
 
-RUN yum install -y awscli pigz && \
+RUN yum install -y awscli pigz tar && \
     mkdir -p /data
 
 WORKDIR /graphhopper
