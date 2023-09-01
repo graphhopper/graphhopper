@@ -1,13 +1,15 @@
-FROM maven:3.9.4-amazoncorretto-20 as build
+FROM maven:3.9.4-eclipse-temurin-17-focal as build
 
-RUN yum install -y wget git tar
+RUN apt-get update && \
+    apt-get install -y wget git tar
 WORKDIR /graphhopper
 COPY . .
 RUN mvn clean install -DskipTests
 
-FROM amazoncorretto:20-al2-jdk
+FROM eclipse-temurin:17-jre-jammy
 
-RUN yum install -y awscli pigz tar && \
+RUN apt-get update && \
+    apt-get install -y awscli pigz tar && \
     mkdir -p /data
 
 WORKDIR /graphhopper
