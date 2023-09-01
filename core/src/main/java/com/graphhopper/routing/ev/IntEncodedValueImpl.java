@@ -233,7 +233,8 @@ public class IntEncodedValueImpl implements IntEncodedValue {
     }
 
     static boolean isValidEncodedValue(String name) {
-        if (name.length() < 2 || name.startsWith("in_") || !isLowerLetter(name.charAt(0)) || SourceVersion.isKeyword(name))
+        if (name.length() < 2 || name.startsWith("in_") || name.startsWith("backward_")
+                || !isLowerLetter(name.charAt(0)) || SourceVersion.isKeyword(name))
             return false;
 
         int underscoreCount = 0;

@@ -3,6 +3,8 @@ package com.graphhopper.config;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
@@ -22,6 +24,7 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.JsonFeatureCollection;
 
@@ -83,13 +86,22 @@ public class CustomResolver {
                             throw new IllegalArgumentException("Use custom_models.directory for the custom_model_files parent");
                         if (!file.endsWith(".json"))
                             throw new IllegalArgumentException("Yaml is no longer supported, see #2672. Use JSON with optional comments //");
+
                         try {
-                            // Somehow dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
-                            String string = Helper.readJSONFileWithoutComments(Paths.get(customModelFolder).
-                                    resolve(file).toFile().getAbsolutePath());
+                            String string;
+                            // 1. try to load custom model from jar
+                            InputStream is = GHUtility.class.getResourceAsStream("/com/graphhopper/custom_models/" + file);
+                            if (is != null) {
+                                string = Helper.readJSONFileWithoutComments(new InputStreamReader(is));
+                            } else {
+                                // 2. try to load custom model file from external location
+                                // dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
+                                string = Helper.readJSONFileWithoutComments(Paths.get(customModelFolder).
+                                        resolve(file).toFile().getAbsolutePath());
+                            }
                             customModel = CustomModel.merge(customModel, jsonOM.readValue(string, CustomModel.class));
-                        } catch (Exception ex) {
-                            throw new RuntimeException("Cannot load custom_model from location " + file + " for profile " + profile.getName(), ex);
+                        } catch (IOException ex) {
+                            throw new RuntimeException("Cannot load custom_model from location " + file + ", profile:" + profile.getName(), ex);
                         }
                     }
 
@@ -101,6 +113,6 @@ public class CustomResolver {
             // statements (see CustomModelParser)
             customModel.addAreas(globalAreas);
         }
-        return newProfiles;
+        return newProfiles;    
     }
 }

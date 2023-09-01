@@ -54,8 +54,8 @@ public enum TraversalMode {
     public final int createTraversalId(RoutingCHEdgeIteratorState chEdgeState, boolean reverse) {
         if (edgeBased) {
             int key = reverse ? chEdgeState.getOrigEdgeKeyFirst() : chEdgeState.getOrigEdgeKeyLast();
-            // For reverse traversal we need to revert the edge key, but not for loops and not for shortcuts.
-            // Why not for shortcuts? Because of our definition of the first/last edge keys: they do not depend on the
+            // For reverse traversal we need to revert the edge key, but not for shortcuts.
+            // Why? Because of our definition of the first/last edge keys: they do not depend on the
             // 'state' of the edge state, but are defined in terms of the direction of the (always directed) shortcut.
             if (reverse && !chEdgeState.isShortcut() && chEdgeState.getBaseNode() != chEdgeState.getAdjNode())
                 key = GHUtility.reverseEdgeKey(key);

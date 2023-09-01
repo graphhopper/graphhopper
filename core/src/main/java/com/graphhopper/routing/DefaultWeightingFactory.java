@@ -87,14 +87,15 @@ public class DefaultWeightingFactory implements WeightingFactory {
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
             if (!(profile instanceof CustomProfile))
                 throw new IllegalArgumentException("custom weighting requires a CustomProfile but was profile=" + profile.getName());
-            CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
+            final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             CustomProfile customProfile = (CustomProfile) profile;
-
-            queryCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
+            final CustomModel mergedCustomModel = CustomModel.merge(customProfile.getCustomModel(), queryCustomModel);
+            if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
+                mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
             weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
-                    priorityEnc, encodingManager, turnCostProvider, queryCustomModel);
+                    priorityEnc, encodingManager, turnCostProvider, mergedCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
-            weighting = new ShortestWeighting(accessEnc, speedEnc, turnCostProvider);
+            throw new IllegalArgumentException("Instead of weighting=shortest use weighting=custom with a high distance_influence");
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {
             if (!encodingManager.hasEncodedValue(RoadAccess.KEY))
                 throw new IllegalArgumentException("The fastest weighting requires road_access");

@@ -6,14 +6,13 @@ import com.graphhopper.reader.osm.Pair;
 import com.graphhopper.reader.osm.RestrictionType;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,12 +23,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class RestrictionSetterTest {
     private static final IntArrayList NO_PATH = IntArrayList.from();
+    private DecimalEncodedValue speedEnc;
     private BaseGraph graph;
     private RestrictionSetter r;
 
     @BeforeEach
     void setup() {
-        graph = new BaseGraph.Builder(1).withTurnCosts(true).create();
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+        EncodingManager encodingManager = EncodingManager.start().add(speedEnc).build();
+        graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         r = new RestrictionSetter(graph);
     }
 
@@ -229,7 +231,7 @@ public class RestrictionSetterTest {
     }
 
     private IntArrayList calcPath(int from, int to, DecimalEncodedValue turnCostEnc) {
-        return new IntArrayList(new Dijkstra(graph, new MyWeighting(graph, turnCostEnc), TraversalMode.EDGE_BASED).calcPath(from, to).calcNodes());
+        return new IntArrayList(new Dijkstra(graph, new SpeedWeighting(speedEnc, turnCostEnc, graph.getTurnCostStorage(), Double.POSITIVE_INFINITY), TraversalMode.EDGE_BASED).calcPath(from, to).calcNodes());
     }
 
     private IntArrayList nodes(int... nodes) {
@@ -241,54 +243,7 @@ public class RestrictionSetterTest {
     }
 
     private int edge(int from, int to) {
-        return graph.edge(from, to).setDistance(10).getEdge();
+        return graph.edge(from, to).setDistance(100).set(speedEnc, 10, 10).getEdge();
     }
 
-    private static class MyWeighting implements Weighting {
-        private final TurnCostProvider turnCostProvider;
-
-        public MyWeighting(BaseGraph graph, DecimalEncodedValue turnCostEnc) {
-            turnCostProvider = new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage());
-        }
-
-        @Override
-        public double getMinWeight(double distance) {
-            return 0;
-        }
-
-        @Override
-        public boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse) {
-            return false;
-        }
-
-        @Override
-        public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-            return edgeState.getDistance();
-        }
-
-        @Override
-        public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-            return 0;
-        }
-
-        @Override
-        public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-            return turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
-        }
-
-        @Override
-        public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-            return 0;
-        }
-
-        @Override
-        public boolean hasTurnCosts() {
-            return true;
-        }
-
-        @Override
-        public String getName() {
-            return "test";
-        }
-    }
 }

@@ -34,6 +34,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -346,10 +347,10 @@ public class RoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcFootPath(Fixture f) {
-        ShortestWeighting shortestWeighting = new ShortestWeighting(f.footAccessEnc, f.footSpeedEnc);
+        Weighting weighting = new ShortestWeighting(f.footAccessEnc, f.footSpeedEnc);
         BaseGraph graph = f.createGHStorage(false);
         initFootVsCar(f.carAccessEnc, f.carSpeedEnc, f.footAccessEnc, f.footSpeedEnc, graph);
-        Path p1 = f.calcPath(graph, shortestWeighting, 0, 7);
+        Path p1 = f.calcPath(graph, weighting, 0, 7);
         assertEquals(17000, p1.getDistance(), 1e-6, p1.toString());
         assertEquals(12240 * 1000, p1.getTime(), p1.toString());
         assertEquals(nodes(0, 4, 5, 7), p1.calcNodes());
@@ -901,26 +902,6 @@ public class RoutingAlgorithmTest {
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
-    public void test0SpeedButUnblocked_Issue242(Fixture f) {
-        BaseGraph graph = f.createGHStorage();
-        EdgeIteratorState edge01 = graph.edge(0, 1).setDistance(10);
-        EdgeIteratorState edge12 = graph.edge(1, 2).setDistance(10);
-        edge01.set(f.carSpeedEnc, 0.0).set(f.carAccessEnc, true, true);
-        edge01.setFlags(edge01.getFlags());
-
-        edge12.set(f.carSpeedEnc, 0.0).set(f.carAccessEnc, true, true);
-        edge12.setFlags(edge12.getFlags());
-
-        try {
-            f.calcPath(graph, 0, 2);
-            fail("there should have been an exception");
-        } catch (Exception ex) {
-            assertTrue(ex.getMessage().startsWith("Speed cannot be 0"), ex.getMessage());
-        }
-    }
-
-    @ParameterizedTest
-    @ArgumentsSource(FixtureProvider.class)
     public void testTwoWeightsPerEdge2(Fixture f) {
         // other direction should be different!
         Weighting fakeWeighting = new Weighting() {
@@ -931,12 +912,10 @@ public class RoutingAlgorithmTest {
                 return 0.8 * distance;
             }
 
-            public boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse) {
-                return tmpW.edgeHasNoAccess(edgeState, reverse);
-            }
-
             @Override
-            public final double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+            public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+                if (Double.isInfinite(tmpW.calcEdgeWeight(edgeState, reverse)))
+                    return Double.POSITIVE_INFINITY;
                 int adj = edgeState.getAdjNode();
                 int base = edgeState.getBaseNode();
                 if (reverse) {
@@ -1010,9 +989,7 @@ public class RoutingAlgorithmTest {
         final long seed = System.nanoTime();
         LOGGER.info("testRandomGraph - using seed: " + seed);
         Random rnd = new Random(seed);
-        // we're not including loops otherwise duplicate nodes in path might fail the test
-        GHUtility.buildRandomGraph(graph, rnd, 10, 2.0, false, true,
-                f.carAccessEnc, f.carSpeedEnc, null, 0.7, 0.7, 0.7);
+        GHUtility.buildRandomGraph(graph, rnd, 10, 2.0, true, f.carAccessEnc, f.carSpeedEnc, null, 0.7, 0.7);
         final PathCalculator refCalculator = new DijkstraCalculator();
         int numRuns = 100;
         for (int i = 0; i < numRuns; i++) {

@@ -49,7 +49,8 @@ import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -160,13 +161,12 @@ public class GHUtility {
         return list;
     }
 
-    public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
-        printGraphForUnitTest(g, accessEnc, speedEnc, new BBox(
+    public static void printGraphForUnitTest(Graph g, DecimalEncodedValue speedEnc) {
+        printGraphForUnitTest(g, speedEnc, new BBox(
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
     }
 
-    public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, BBox bBox) {
-        System.out.println("WARNING: printGraphForUnitTest does not pay attention to custom edge speeds at the moment");
+    public static void printGraphForUnitTest(Graph g, DecimalEncodedValue speedEnc, BBox bBox) {
         NodeAccess na = g.getNodeAccess();
         for (int node = 0; node < g.getNodes(); ++node) {
             if (bBox.contains(na.getLat(node), na.getLon(node))) {
@@ -177,38 +177,33 @@ public class GHUtility {
         while (iter.next()) {
             if (bBox.contains(na.getLat(iter.getBaseNode()), na.getLon(iter.getBaseNode())) &&
                     bBox.contains(na.getLat(iter.getAdjNode()), na.getLon(iter.getAdjNode()))) {
-                printUnitTestEdge(accessEnc, speedEnc, iter);
+                printUnitTestEdge(speedEnc, iter);
             }
         }
     }
 
-    private static void printUnitTestEdge(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EdgeIteratorState edge) {
-        boolean fwd = edge.get(accessEnc);
-        boolean bwd = edge.getReverse(accessEnc);
-        if (!fwd && !bwd) {
-            return;
-        }
+    private static void printUnitTestEdge(DecimalEncodedValue speedEnc, EdgeIteratorState edge) {
+        boolean fwd = edge.get(speedEnc) > 0;
         int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
         int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
-        if (speedEnc != null) {
-            System.out.printf(Locale.ROOT,
-                    "GHUtility.setSpeed(%f, %f, encoder, graph.edge(%d, %d).setDistance(%f)); // edgeId=%s\n",
-                    fwd ? edge.get(speedEnc) : 0, bwd ? edge.getReverse(speedEnc) : 0,
-                    from, to, edge.getDistance(), edge.getEdge());
-        } else {
-            System.out.printf(Locale.ROOT,
-                    "graph.edge(%d, %d).setDistance(%f).set(accessEnc, %b, %b); // edgeId=%s\n",
-                    from, to, edge.getDistance(),
-                    edge.get(accessEnc), edge.getReverse(accessEnc), edge.getEdge());
-        }
+        System.out.printf(Locale.ROOT,
+                "graph.edge(%d, %d).setDistance(%f).set(speedEnc, %f, %f); // edgeId=%s\n",
+                from, to, edge.getDistance(), edge.get(speedEnc), edge.getReverse(speedEnc),
+                edge.getEdge());
+    }
+
+    public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree,
+                                        boolean allowZeroDistance, DecimalEncodedValue speedEnc, Double speed,
+                                        double pBothDir, double pRandomDistanceOffset) {
+        buildRandomGraph(graph, random, numNodes, meanDegree, allowZeroDistance, null, speedEnc, speed, pBothDir, pRandomDistanceOffset);
     }
 
     /**
      * @param speed if null a random speed will be assigned to every edge
      */
-    public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree, boolean allowLoops,
+    public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree,
                                         boolean allowZeroDistance, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, Double speed,
-                                        double pNonZeroLoop, double pBothDir, double pRandomDistanceOffset) {
+                                        double pBothDir, double pRandomDistanceOffset) {
         if (numNodes < 2 || meanDegree < 1) {
             throw new IllegalArgumentException("numNodes must be >= 2, meanDegree >= 1");
         }
@@ -224,14 +219,9 @@ public class GHUtility {
         while (numEdges < totalNumEdges) {
             int from = random.nextInt(numNodes);
             int to = random.nextInt(numNodes);
-            if (!allowLoops && from == to) {
+            if (from == to)
                 continue;
-            }
             double distance = GHUtility.getDistance(from, to, graph.getNodeAccess());
-            // allow loops with non-zero distance
-            if (from == to && random.nextDouble() < pNonZeroLoop) {
-                distance = random.nextDouble() * 1000;
-            }
             if (!allowZeroDistance) {
                 distance = Math.max(0.001, distance);
             }
@@ -242,8 +232,11 @@ public class GHUtility {
             maxDist = Math.max(maxDist, distance);
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
-            EdgeIteratorState edge = graph.edge(from, to).setDistance(distance).set(accessEnc, true);
-            if (bothDirections) edge.setReverse(accessEnc, true);
+            EdgeIteratorState edge = graph.edge(from, to).setDistance(distance);
+            if (accessEnc != null) {
+                edge.set(accessEnc, true);
+                if (bothDirections) edge.setReverse(accessEnc, true);
+            }
             double fwdSpeed = 10 + random.nextDouble() * 110;
             double bwdSpeed = 10 + random.nextDouble() * 110;
             // if an explicit speed is given we discard the random speeds and use the given one instead
@@ -254,6 +247,10 @@ public class GHUtility {
                 edge.set(speedEnc, fwdSpeed);
                 if (speedEnc.isStoreTwoDirections())
                     edge.setReverse(speedEnc, bwdSpeed);
+            }
+            if (accessEnc == null && speedEnc != null) {
+                if (!bothDirections)
+                    edge.setReverse(speedEnc, 0);
             }
             numEdges++;
         }
@@ -276,8 +273,8 @@ public class GHUtility {
         double pEdgePairHasTurnCosts = 0.6;
         double pCostIsRestriction = 0.1;
 
-        EdgeExplorer inExplorer = graph.createEdgeExplorer(AccessFilter.inEdges(accessEnc));
-        EdgeExplorer outExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(accessEnc));
+        EdgeExplorer inExplorer = graph.createEdgeExplorer(accessEnc == null ? edge -> true : AccessFilter.inEdges(accessEnc));
+        EdgeExplorer outExplorer = graph.createEdgeExplorer(accessEnc == null ? edge -> true : AccessFilter.outEdges(accessEnc));
         for (int node = 0; node < graph.getNodes(); ++node) {
             if (random.nextDouble() < pNodeHasTurnCosts) {
                 EdgeIterator inIter = inExplorer.setBaseNode(node);
@@ -497,14 +494,14 @@ public class GHUtility {
     /**
      * Creates an edge key, i.e. an integer number that encodes an edge ID and the direction of an edge
      */
-    public static int createEdgeKey(int edgeId, boolean isLoop, boolean reverse) {
+    public static int createEdgeKey(int edgeId, boolean reverse) {
         // edge state in storage direction -> edge key is even
         // edge state against storage direction -> edge key is odd
-        return (edgeId << 1) + ((reverse && !isLoop) ? 1 : 0);
+        return (edgeId << 1) + (reverse ? 1 : 0);
     }
 
     /**
-     * Returns the edgeKey of the opposite direction, be careful not to use this for loops!
+     * Returns the edgeKey of the opposite direction
      */
     public static int reverseEdgeKey(int edgeKey) {
         return edgeKey % 2 == 0 ? edgeKey + 1 : edgeKey - 1;
@@ -559,16 +556,6 @@ public class GHUtility {
             iter.setDistance(DIST_EARTH.calcDistance(iter.fetchWayGeometry(FetchMode.ALL)));
             // System.out.println(node + "->" + adj + ": " + iter.getDistance());
         }
-    }
-
-    public static double calcWeightWithTurnWeightWithAccess(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        if (edgeState.getBaseNode() == edgeState.getAdjNode()) {
-            if (weighting.edgeHasNoAccess(edgeState, false) && weighting.edgeHasNoAccess(edgeState, true))
-                return Double.POSITIVE_INFINITY;
-        } else if (weighting.edgeHasNoAccess(edgeState, reverse)) {
-            return Double.POSITIVE_INFINITY;
-        }
-        return calcWeightWithTurnWeight(weighting, edgeState, reverse, prevOrNextEdgeId);
     }
 
     /**
@@ -710,16 +697,11 @@ public class GHUtility {
         IntIndexedContainer refNodes = refPath.calcNodes();
         IntIndexedContainer pathNodes = path.calcNodes();
         if (!refNodes.equals(pathNodes)) {
-            // sometimes paths are only different because of a zero weight loop. we do not consider these as strict
-            // violations, see: #1864
-            boolean isStrictViolation = !ArrayUtil.withoutConsecutiveDuplicates(refNodes).equals(ArrayUtil.withoutConsecutiveDuplicates(pathNodes));
             // sometimes there are paths including an edge a-c that has the same distance as the two edges a-b-c. in this
             // case both options are valid best paths. we only check for this most simple and frequent case here...
             if (path.getGraph() != refPath.getGraph())
                 fail("path and refPath graphs are different");
-            if (pathsEqualExceptOneEdge(path.getGraph(), refNodes, pathNodes))
-                isStrictViolation = false;
-            if (isStrictViolation)
+            if (!pathsEqualExceptOneEdge(path.getGraph(), refNodes, pathNodes))
                 strictViolations.add("wrong nodes " + source + "->" + target + "\nexpected: " + refNodes + "\ngiven:    " + pathNodes);
         }
         return strictViolations;

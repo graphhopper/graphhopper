@@ -15,14 +15,12 @@ graphhopper:
   # In general a profile consists of the following
   # - name (required): a unique string identifier for the profile
   # - vehicle (required): refers to the `graph.vehicles` used for this profile
-  # - weighting (required): the weighting used for this profile like custom,fastest,shortest or short_fastest
+  # - weighting (required): the weighting used for this profile like custom
   # - turn_costs (true/false, default: false): whether or not turn restrictions should be applied for this profile.
   #
   # Depending on the above fields there are other properties that can be used, e.g.
   # - distance_factor: 0.1 (can be used to fine tune the time/distance trade-off of short_fastest weighting)
   # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
-  #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
-  #   in seconds, so for example it does not work with shortest weighting.
   # - custom_model_files: when you specified "weighting: custom" you need to set one or more json files which are searched in
   #   custom_models.directory or the working directory that defines the custom_model. If you want an empty model you can
   #   set "custom_model_files: []
@@ -46,8 +44,9 @@ graphhopper:
 #      weighting: custom
 #      custom_model_files: [bike.json, bike_elevation.json]
 
-  # specify the folder where to find the custom model files - see this folder for more possibilities
-  custom_models.directory: custom_models
+  # instead of the inbuilt custom models (see ./core/src/main/resources/com/graphhopper/custom_models)
+  # you can specify a folder where to find your own custom model files
+  # custom_models.directory: custom_models
 
   # Speed mode:
   # Its possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
