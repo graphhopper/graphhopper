@@ -12,7 +12,7 @@ Now create the jar from sources via:
 # now get the source code and create the jar in web/target
 git clone git://github.com/graphhopper/graphhopper.git
 cd graphhopper
-git checkout master # if you prefer a less moving branch you can use e.g. 4.x
+git checkout master # if you prefer a less moving branch you can use e.g. 7.x
 mvn clean install -DskipTests
 # start GraphHopper and before download the road data
 wget http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
@@ -87,7 +87,7 @@ as those versions are not in maven central:
 ### Web UI (JavaScript)
 
 The development of the GraphHopper Maps UI happens in a [different repository](https://github.com/graphhopper/graphhopper-maps).
-The mvn life-cycle will just download one of its releases.
+The mvn command will download one of its releases.
 
 ### Swing and Desktop Usage
 
