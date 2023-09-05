@@ -19,7 +19,9 @@
 package com.graphhopper.resources;
 
 import com.conveyal.gtfs.model.Stop;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.gtfs.*;
+import com.graphhopper.http.DurationParam;
 import com.graphhopper.http.GHLocationParam;
 import com.graphhopper.http.OffsetDateTimeParam;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
@@ -55,7 +57,6 @@ import java.util.*;
 public class PtIsochroneResource {
 
     private static final double JTS_TOLERANCE = 0.00001;
-
     private final GtfsStorage gtfsStorage;
     private final EncodingManager encodingManager;
     private final BaseGraph baseGraph;
@@ -85,6 +86,11 @@ public class PtIsochroneResource {
             @QueryParam("time_limit") @DefaultValue("600") long seconds,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
             @QueryParam("pt.earliest_departure_time") @NotNull OffsetDateTimeParam departureTimeParam,
+            @QueryParam("pt.access_profile") @DefaultValue("foot") String accessProfile,
+            @QueryParam("pt.beta_access_time") @DefaultValue("1") Double betaAccessTime,
+            @QueryParam("pt.egress_profile") @DefaultValue("foot") String egressProfile,
+            @QueryParam("pt.beta_egress_time") @DefaultValue("1") Double betaEgressTime,
+            @QueryParam("pt.limit_street_time") @DefaultValue("PT30M") DurationParam limitStreetTimeParam,
             @QueryParam("pt.blocked_route_types") @DefaultValue("0") int blockedRouteTypes,
             @QueryParam("result") @DefaultValue("multipolygon") String format) {
         Instant initialTime = departureTimeParam.get().toInstant();
@@ -93,14 +99,22 @@ public class PtIsochroneResource {
         double targetZ = seconds * 1000;
 
         GeometryFactory geometryFactory = new GeometryFactory();
-        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key("foot"));
-        DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(VehicleSpeed.key("foot"));
-        final Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
-        DefaultSnapFilter snapFilter = new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("foot")));
 
-        PtLocationSnapper.Result snapResult = new PtLocationSnapper(baseGraph, locationIndex, gtfsStorage).snapAll(Arrays.asList(location), Arrays.asList(snapFilter));
-        GraphExplorer graphExplorer = new GraphExplorer(snapResult.queryGraph, gtfsStorage.getPtGraph(), weighting, gtfsStorage, RealtimeFeed.empty(), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
+        BooleanEncodedValue accessProfileEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key(accessProfile));
+        DecimalEncodedValue accessSpeedEnc = encodingManager.getDecimalEncodedValue(VehicleSpeed.key(accessProfile));
+        final Weighting accessWeighting = new FastestWeighting(accessProfileEnc, accessSpeedEnc);
+        DefaultSnapFilter accessSnapFilter = new DefaultSnapFilter(accessWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(accessProfile)));
+        BooleanEncodedValue egressProfileEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key(egressProfile));
+        DecimalEncodedValue egressSpeedEnc = encodingManager.getDecimalEncodedValue(VehicleSpeed.key(egressProfile));
+        final Weighting egressWeighting = new FastestWeighting(egressProfileEnc, egressSpeedEnc);
+        DefaultSnapFilter egressSnapFilter = new DefaultSnapFilter(egressWeighting, encodingManager.getBooleanEncodedValue(Subnetwork.key(egressProfile)));
+        PtLocationSnapper.Result snapResult = new PtLocationSnapper(baseGraph, locationIndex, gtfsStorage).snapAll(Arrays.asList(location), Arrays.asList(accessSnapFilter, egressSnapFilter));
+
+        // TODO: Should also incorporate egressWeighting in some way? Maybe?
+        GraphExplorer graphExplorer = new GraphExplorer(snapResult.queryGraph, gtfsStorage.getPtGraph(), reverseFlow ? egressWeighting : accessWeighting, gtfsStorage, RealtimeFeed.empty(), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
         MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, reverseFlow, false, false, 0, Collections.emptyList());
+        router.setBetaStreetTime(reverseFlow ? betaEgressTime : betaAccessTime);
+        router.setLimitStreetTime(limitStreetTimeParam.get().toMillis());
 
         Map<Coordinate, Double> z1 = new HashMap<>();
         NodeAccess nodeAccess = snapResult.queryGraph.getNodeAccess();

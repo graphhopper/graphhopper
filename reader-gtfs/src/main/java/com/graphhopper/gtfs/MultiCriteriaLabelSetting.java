@@ -72,7 +72,7 @@ public class MultiCriteriaLabelSetting {
         this.betaTransfers = betaTransfers;
     }
 
-    void setBetaStreetTime(double betaWalkTime) {
+    public void setBetaStreetTime(double betaWalkTime) {
         this.betaStreetTime = betaWalkTime;
     }
 

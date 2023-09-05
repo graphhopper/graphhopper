@@ -83,17 +83,17 @@ alternative_route.max_share_factor  | 0.6   | If `algorithm=alternative_route` t
 
 Only applicable when profile `pt` is used.
 
-Parameter                  | Default    | Description
-:--------------------------|:-----------|:-----------
-point                      | -          | Specify multiple points for which the route should be calculated. The order is important. Specify at least two points.
-locale                     | en         | The locale of the resulting turn instructions. E.g. `pt_PT` for Portuguese or `de` for German.
-pt.earliest_departure_time | -          | Specify the earliest departure time of the itineraries. In ISO-8601 format `yyyy-MM-ddTHH:mm:ssZ` e.g. `2020-12-30T12:56:00Z`.
-pt.arrive_by               | false      | If true the `pt.earliest_departure_time` parameter is used to define the latest time of arrival of the itineraries.
-pt.profile                 | false      | If true you request a list of all itineraries where each one is the best way to get from A to B, for some departure time within a specified time window. This profile query is also called "range query". The time window is specified via `pt.profile_duration`. Limited to 50 by default, change this via `pt.limit_solutions`.
+Parameter                  | Default        | Description
+:--------------------------|:---------------|:-----------
+point                      | -              | Specify multiple points for which the route should be calculated. The order is important. Specify at least two points.
+locale                     | en             | The locale of the resulting turn instructions. E.g. `pt_PT` for Portuguese or `de` for German.
+pt.earliest_departure_time | -              | Specify the earliest departure time of the itineraries. In ISO-8601 format `yyyy-MM-ddTHH:mm:ssZ` e.g. `2020-12-30T12:56:00Z`.
+pt.arrive_by               | false          | If true the `pt.earliest_departure_time` parameter is used to define the latest time of arrival of the itineraries.
+pt.profile                 | false          | If true you request a list of all itineraries where each one is the best way to get from A to B, for some departure time within a specified time window. This profile query is also called "range query". The time window is specified via `pt.profile_duration`. Limited to 50 by default, change this via `pt.limit_solutions`.
 pt.profile_duration        | PT60M (1 hour) | The time window for a profile query and so only applicable if `pt.profile` is `true`. Duration string e.g. `PT200S`.
-pt.limit_street_time       | unlimited  | Maximum duration on street for access or egress of public transit i.e. time outside of public transit. Duration string e.g. `PT30M`.
-pt.ignore_transfers        | false      | Specifies if transfers as criterion should be ignored.
-pt.limit_solutions         | unlimited  | The number of maximum solutions that should be searched.
+pt.limit_street_time       | unlimited      | Maximum duration on street for access or egress of public transit i.e. time outside of public transit. Duration string e.g. `PT30M`.
+pt.ignore_transfers        | false          | Specifies if transfers as criterion should be ignored.
+pt.limit_solutions         | unlimited      | The number of maximum solutions that should be searched.
 
 ## Example JSON output
 
@@ -265,3 +265,5 @@ point                       |         | Specify the start coordinate (required).
 time_limit                  | 600     | Specify which time the vehicle should travel. In seconds. (optional, default to 600)
 distance_limit              | -1      | Specify which distance the vehicle should travel. In meter. (optional, default to -1)
 pt.earliest_departure_time  |         | Specify the earliest departure time of the trip. Only applicable and required when profile `pt` is used. See the public transit section above for more details and other parameters.
+pt.access_profile           | foot    | Specify the profile to be used as **access** mode, like `foot`, `bike`, or `car`. Only applicable when profile `pt` is used.
+pt.egress_profile           | foot    | Specify the profile to be used as **egress** mode, like `foot`, `bike`, or `car`. Only applicable when profile `pt` is used.
