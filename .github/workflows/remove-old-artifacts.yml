@@ -53,7 +53,7 @@ jobs:
     timeout-minutes: 10 # stop the task if it takes longer
 
     steps:
-    - name: Remove old artifacts 2.1
+    - name: Remove old artifacts 3.1
       uses: SmartsquareGmbH/delete-old-packages@v0.7.0
       with:
         names: |
