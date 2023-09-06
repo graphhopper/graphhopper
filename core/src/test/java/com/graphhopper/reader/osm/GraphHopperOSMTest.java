@@ -354,11 +354,10 @@ public class GraphHopperOSMTest {
     public void testPrepare() {
         final String profile = "profile";
         final String vehicle = "car";
-        final String weighting = "shortest";
 
         instance = new GraphHopper().
                 setStoreOnFlush(false).
-                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting(weighting)).
+                setProfiles(new CustomProfile(profile).setVehicle(vehicle)).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
@@ -794,8 +793,8 @@ public class GraphHopperOSMTest {
     public void testGetMultipleWeightingsForCH() {
         GraphHopper hopper = new GraphHopper().
                 setProfiles(
-                        new Profile("profile1").setVehicle("car").setWeighting("fastest"),
-                        new Profile("profile2").setVehicle("car").setWeighting("shortest")
+                        new CustomProfile("profile1").setVehicle("car"),
+                        new CustomProfile("profile2").setCustomModel(new CustomModel().setDistanceInfluence(1000d)).setVehicle("car")
                 ).
                 setStoreOnFlush(false).
                 setGraphHopperLocation(ghLoc).
@@ -861,7 +860,7 @@ public class GraphHopperOSMTest {
             // problem: we remove a profile, which would technically be possible, but does not save memory either. it
             //          could be useful to disable a profile, but currently we just force a new import.
             GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
-                    new Profile("car").setVehicle("car").setWeighting("shortest")
+                    new CustomProfile("car").setVehicle("car")
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
             assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());

@@ -104,7 +104,7 @@ public class IsochroneResource {
         ToDoubleFunction<ShortestPathTree.IsoLabel> fz;
         if (weightLimit.orElseThrow(() -> new IllegalArgumentException("query param weight_limit is not a number.")) > 0) {
             limit = weightLimit.getAsLong();
-            shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 2_000));
+            shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 200));
             fz = l -> l.weight;
         } else if (distanceLimitInMeter.orElseThrow(() -> new IllegalArgumentException("query param distance_limit is not a number.")) > 0) {
             limit = distanceLimitInMeter.getAsLong();

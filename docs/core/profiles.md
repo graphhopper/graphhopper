@@ -25,19 +25,17 @@ profiles:
     weighting: fastest
   - name: some_other_profile
     vehicle: bike
-    weighting: shortest
+    weighting: fastest
 ```
 
 The vehicle field must correspond to one of GraphHopper's built-in vehicle types:
 
 - foot
-- hike
 - wheelchair
 - bike
 - racingbike
 - mtb
 - car
-- motorcycle
 
 By choosing a vehicle GraphHopper determines the accessibility and a default travel speed for the different road types.
 
@@ -45,9 +43,7 @@ The weighting determines the 'cost function' for the route calculation and must 
 weightings:
 
 - fastest (minimum travel time)
-- shortest (minimum travel distance)
 - short_fastest (yields a compromise between short and fast routes)
-- curvature (prefers routes with lots of curves for enjoyable motorcycle rides)
 - custom (enables custom profiles, see the next section)
 
 Another important profile setting is `turn_costs: true/false`. Use this to enable turn restrictions for each profile. 
@@ -92,7 +88,7 @@ All details about the custom model specification are explained [here](./custom-m
 
 ### Setting up Encoded Values
 
-As explained [here](./custom-models.md), custom models make use of the encoded values, which are mostly derived from the
+As explained [here](./custom-models.md), custom models make use of the encoded values, which are often derived from the
 OSM way tags. All built-in encoded values are defined in
 [`DefaultEncodedValueFactory.java`](../../core/src/main/java/com/graphhopper/routing/ev/DefaultEncodedValueFactory.java)
 but only categories specified with `graph.encoded_values` field in the `config.yml` will be available in the graph
