@@ -22,7 +22,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
-
 import com.graphhopper.config.Profile;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;

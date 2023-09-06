@@ -32,6 +32,7 @@ import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.routing.weighting.custom.FindMinMax;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
@@ -389,6 +390,8 @@ public class Router {
             if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs" +
                         "\nThe following profiles do support turn costs: " + getTurnCostProfiles());
+            if (request.getCustomModel() != null && !CustomWeighting.NAME.equals(profile.getWeighting()))
+                throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' cannot be used with `custom_model`, because it has weighting=" + profile.getWeighting());
 
             final int uTurnCostsInt = request.getHints().getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
             if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !profile.isTurnCosts()) {

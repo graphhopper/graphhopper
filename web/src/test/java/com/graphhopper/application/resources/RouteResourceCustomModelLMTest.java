@@ -72,7 +72,7 @@ public class RouteResourceCustomModelLMTest {
     }
 
     @Test
-    public void testCustomProfile() {
+    public void testBasic() {
         String jsonQuery = "{" +
                 " \"points\": [[1.518946,42.531453],[1.54006,42.511178]]," +
                 " \"profile\": \"car_custom\"" +
@@ -87,7 +87,7 @@ public class RouteResourceCustomModelLMTest {
     }
 
     @Test
-    public void testCustomWeighting() {
+    public void testWithRules() {
         String body = "{\"points\": [[1.529106,42.506567], [1.54006,42.511178]]," +
                 " \"profile\": \"car_custom\", \"custom_model\":{" +
                 " \"priority\": [{\"if\": \"road_class != SECONDARY\", \"multiply_by\": 0.5}]}" +
@@ -112,7 +112,7 @@ public class RouteResourceCustomModelLMTest {
     }
 
     @Test
-    public void testCustomWeightingAvoidTunnels() {
+    public void testAvoidTunnels() {
         String body = "{\"points\": [[1.533365, 42.506211], [1.523924, 42.520605]]," +
                 "\"profile\": \"car_custom\"," +
                 "\"custom_model\": {" +
@@ -127,7 +127,7 @@ public class RouteResourceCustomModelLMTest {
     }
 
     @Test
-    public void testCustomWeightingSimplisticWheelchair() {
+    public void testSimplisticWheelchair() {
         String body = "{\"points\": [[1.540875,42.510672], [1.54212,42.511131]]," +
                 "\"profile\": \"foot_custom\"," +
                 "\"custom_model\": {" +

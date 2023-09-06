@@ -24,9 +24,6 @@ import com.graphhopper.json.Statement;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * This class is used in combination with CustomProfile.
- */
 public class CustomModel {
 
     public static final String KEY = "custom_model";

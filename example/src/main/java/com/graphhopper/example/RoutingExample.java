@@ -6,7 +6,6 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
-
 import com.graphhopper.config.Profile;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;

@@ -3,7 +3,6 @@ package com.graphhopper.example;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.EdgeFilter;
-
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.index.LocationIndex;

@@ -20,6 +20,8 @@ package com.graphhopper.config;
 
 import java.util.Objects;
 
+import static com.graphhopper.config.Profile.validateProfileName;
+
 /**
  * Corresponds to an entry in the `profiles_ch` section in config.yml and specifies a routing profile that shall be
  * prepared using Contraction Hierarchies (CH)
@@ -42,7 +44,7 @@ public class CHProfile {
     }
 
     void setProfile(String profile) {
-        Profile.validateProfileName(profile);
+        validateProfileName(profile);
         this.profile = profile;
     }
 

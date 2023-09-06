@@ -18,17 +18,18 @@
 
 package com.graphhopper.routing.lm;
 
-import com.graphhopper.config.Profile;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.Objects;
+
+import static com.graphhopper.config.Profile.validateProfileName;
 
 public class LMConfig {
     private final String profileName;
     private final Weighting weighting;
 
     public LMConfig(String profileName, Weighting weighting) {
-        Profile.validateProfileName(profileName);
+        validateProfileName(profileName);
         this.profileName = profileName;
         this.weighting = weighting;
     }

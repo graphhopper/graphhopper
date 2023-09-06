@@ -378,7 +378,7 @@ public class InstructionListTest {
     }
 
     @Test
-    public void testInstructionIfSlightTurnForCustomProfile() {
+    public void testInstructionIfSlightTurn() {
         BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 1, false);
         DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl("priority", 4, PriorityCode.getFactor(1), false);

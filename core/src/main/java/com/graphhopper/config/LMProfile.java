@@ -20,6 +20,8 @@ package com.graphhopper.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import static com.graphhopper.config.Profile.validateProfileName;
+
 /**
  * Corresponds to an entry in the `profiles_lm` section in config.yml and specifies a routing profile that shall be
  * prepared using Landmarks (LM)
@@ -44,7 +46,7 @@ public class LMProfile {
     }
 
     void setProfile(String profile) {
-        Profile.validateProfileName(profile);
+        validateProfileName(profile);
         this.profile = profile;
     }
 
@@ -57,7 +59,7 @@ public class LMProfile {
     }
 
     public LMProfile setPreparationProfile(String preparationProfile) {
-        Profile.validateProfileName(preparationProfile);
+        validateProfileName(preparationProfile);
         if (maximumLMWeight >= 0)
             throw new IllegalArgumentException("Using non-default maximum_lm_weight and preparation_profile at the same time is not allowed");
         this.preparationProfile = preparationProfile;

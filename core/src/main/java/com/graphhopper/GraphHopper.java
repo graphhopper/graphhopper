@@ -247,8 +247,8 @@ public class GraphHopper {
      * <pre>
      * {@code
      *   hopper.setProfiles(
-     *     new CustomProfile("my_car").setVehicle("car"),
-     *     new CustomProfile("your_bike").setVehicle("bike")
+     *     new Profile("my_car").setVehicle("car"),
+     *     new Profile("your_bike").setVehicle("bike")
      *   );
      *   hopper.getCHPreparationHandler().setCHProfiles(
      *     new CHProfile("my_car"),
@@ -1113,10 +1113,9 @@ public class GraphHopper {
                         "Error: " + e.getMessage());
             }
 
-            CustomModel customModel = profile.getCustomModel();
-            if (customModel == null)
+            if (CustomWeighting.NAME.equals(profile.getWeighting()) && profile.getCustomModel() == null)
                 throw new IllegalArgumentException("custom model for profile '" + profile.getName() + "' was empty");
-            if (!CustomWeighting.NAME.equals(profile.getWeighting()))
+            if (!CustomWeighting.NAME.equals(profile.getWeighting()) && profile.getCustomModel() != null)
                 throw new IllegalArgumentException("profile '" + profile.getName() + "' has a custom model but " +
                         "weighting=" + profile.getWeighting() + " was defined");
         }

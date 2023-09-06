@@ -291,7 +291,7 @@ public class GraphHopperTest {
         }
     }
 
-    private void testImportCloseAndLoad(boolean ch, boolean lm, boolean sort, boolean custom) {
+    private void testImportCloseAndLoad(boolean ch, boolean lm, boolean sort) {
         final String vehicle = "foot";
         final String profileName = "profile";
         GraphHopper hopper = new GraphHopper().
@@ -300,20 +300,17 @@ public class GraphHopperTest {
                 setStoreOnFlush(true).
                 setSortGraph(sort);
 
-        Profile profile = new Profile(profileName).setVehicle(vehicle);
-        if (custom) {
-            JsonFeature area51Feature = new JsonFeature();
-            area51Feature.setId("area51");
-            area51Feature.setGeometry(new GeometryFactory().createPolygon(new Coordinate[]{
-                    new Coordinate(7.4174, 43.7345),
-                    new Coordinate(7.4198, 43.7355),
-                    new Coordinate(7.4207, 43.7344),
-                    new Coordinate(7.4174, 43.7345)}));
-            CustomModel customModel = new CustomModel().setDistanceInfluence(0d);
-            customModel.getPriority().add(If("in_area51", MULTIPLY, "0.1"));
-            customModel.getAreas().getFeatures().add(area51Feature);
-            profile = new Profile(profileName).setCustomModel(customModel).setVehicle(vehicle);
-        }
+        JsonFeature area51Feature = new JsonFeature();
+        area51Feature.setId("area51");
+        area51Feature.setGeometry(new GeometryFactory().createPolygon(new Coordinate[]{
+                new Coordinate(7.4174, 43.7345),
+                new Coordinate(7.4198, 43.7355),
+                new Coordinate(7.4207, 43.7344),
+                new Coordinate(7.4174, 43.7345)}));
+        CustomModel customModel = new CustomModel().setDistanceInfluence(0d);
+        customModel.getPriority().add(If("in_area51", MULTIPLY, "0.1"));
+        customModel.getAreas().getFeatures().add(area51Feature);
+        Profile profile = new Profile(profileName).setCustomModel(customModel).setVehicle(vehicle);
         hopper.setProfiles(profile);
 
         if (ch) {
@@ -394,38 +391,27 @@ public class GraphHopperTest {
 
     @Test
     public void testImportThenLoadCH() {
-        testImportCloseAndLoad(true, false, false, false);
+        testImportCloseAndLoad(true, false, false);
     }
 
     @Test
     public void testImportThenLoadLM() {
-        testImportCloseAndLoad(false, true, false, false);
-    }
-
-    @Test
-    public void testImportThenLoadLMWithCustom() {
-        testImportCloseAndLoad(false, true, false, true);
+        testImportCloseAndLoad(false, true, false);
     }
 
     @Test
     public void testImportThenLoadCHLM() {
-        testImportCloseAndLoad(true, true, false, false);
+        testImportCloseAndLoad(true, true, false);
     }
 
     @Test
     public void testImportThenLoadCHLMAndSort() {
-        testImportCloseAndLoad(true, true, true, false);
+        testImportCloseAndLoad(true, true, true);
     }
 
     @Test
     public void testImportThenLoadFlexible() {
-        testImportCloseAndLoad(false, false, false, false);
-    }
-
-    @Test
-    public void testImportWithCHANDCustomProfile() {
-        // we cannot unload geometry as it might be required in CustomWeighting when using in_area_xy in condition
-        testImportCloseAndLoad(true, false, false, true);
+        testImportCloseAndLoad(false, false, false);
     }
 
     @Test
@@ -1691,7 +1677,7 @@ public class GraphHopperTest {
     }
 
     @Test
-    public void testLMConstraintsForCustomProfiles() {
+    public void testLMConstraints() {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).

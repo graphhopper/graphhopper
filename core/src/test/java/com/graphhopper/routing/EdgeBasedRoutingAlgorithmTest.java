@@ -24,16 +24,11 @@ import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -208,8 +203,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testBasicTurnRestriction(String algoStr) {
-        EncodingManager em = createEncodingManager(true);
-        BaseGraph g = createStorage(em);
+        BaseGraph g = createStorage(createEncodingManager(true));
         initGraph(g);
         initTurnRestrictions(g);
         Path p = calcPath(g, 5, 1, algoStr);
@@ -276,8 +270,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testBlockANode(String algoStr) {
-        EncodingManager em = createEncodingManager(true);
-        BaseGraph g = createStorage(em);
+        BaseGraph g = createStorage(createEncodingManager(true));
         initGraph(g);
         blockNode3(g);
         for (int i = 0; i <= 7; i++) {
@@ -296,8 +289,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testUTurns(String algoStr) {
-        EncodingManager em = createEncodingManager(true);
-        BaseGraph g = createStorage(em);
+        BaseGraph g = createStorage(createEncodingManager(true));
         initGraph(g);
 
         // force u-turn at node 3 by using finite u-turn costs
@@ -335,7 +327,6 @@ public class EdgeBasedRoutingAlgorithmTest {
         //           3
         //           |
         // 0 -> 1 -> 2 -> 4 -> 5
-
         BaseGraph g = createStorage(createEncodingManager(false));
         g.edge(0, 1).setDistance(100).set(speedEnc, 10, 0);
         g.edge(1, 2).setDistance(100).set(speedEnc, 10, 0);
@@ -365,8 +356,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testBasicTurnCosts(String algoStr) {
-        EncodingManager em = createEncodingManager(false);
-        BaseGraph g = createStorage(em);
+        BaseGraph g = createStorage(createEncodingManager(false));
         initGraph(g);
         Path p = calcPath(g, 5, 1, algoStr);
 
