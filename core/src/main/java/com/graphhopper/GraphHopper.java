@@ -1200,6 +1200,14 @@ public class GraphHopper {
         initLocationIndex();
         importPublicTransit();
 
+        if (closeEarly) {
+            boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> CustomWeighting.NAME.equals(p.getWeighting()));
+            if (!includesCustomProfiles)
+                // when there are custom profiles we must not close way geometry or KVStorage, because
+                // they might be needed to evaluate the custom weightings for the following preparations
+                baseGraph.flushAndCloseGeometryAndNameStorage();
+        }
+
         if (lmPreparationHandler.isEnabled())
             loadOrPrepareLM(closeEarly);
 
