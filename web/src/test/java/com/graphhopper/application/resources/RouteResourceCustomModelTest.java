@@ -66,7 +66,7 @@ public class RouteResourceCustomModelTest {
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Arrays.asList(
-                        new Profile("wheelchair")/* TODO NOW bug? .setVehicle("wheelchair")*/,
+                        new Profile("wheelchair")/* TODO .setVehicle("wheelchair") */,
                         new Profile("roads").setCustomModel(new CustomModel()).setVehicle("roads"),
                         new Profile("car").setCustomModel(new CustomModel().setDistanceInfluence(70d)).setVehicle("car"),
                         new Profile("car_with_area").setCustomModel(new CustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
