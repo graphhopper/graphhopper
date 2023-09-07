@@ -21,8 +21,8 @@ package com.graphhopper.routing.lm;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.NodeAccess;
@@ -66,7 +66,7 @@ public class LMIssueTest {
                 .withTurnCosts(true)
                 .setDir(dir)
                 .create();
-        weighting = new FastestWeighting(accessEnc, speedEnc);
+        weighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
     }
 
     private void preProcessGraph() {

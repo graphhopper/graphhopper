@@ -19,7 +19,6 @@ graphhopper:
   # - turn_costs (true/false, default: false): whether or not turn restrictions should be applied for this profile.
   #
   # Depending on the above fields there are other properties that can be used, e.g.
-  # - distance_factor: 0.1 (can be used to fine tune the time/distance trade-off of short_fastest weighting)
   # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
   # - custom_model_files: when you specified "weighting: custom" you need to set one or more json files which are searched in
   #   custom_models.directory or the working directory that defines the custom_model. If you want an empty model you can
@@ -32,7 +31,6 @@ graphhopper:
   profiles:
     - name: car
       vehicle: car
-      weighting: custom
       custom_model:
         distance_influence: 70
 #      turn_costs: true
@@ -41,7 +39,6 @@ graphhopper:
 #    - name: bike
 #      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
 #      vehicle: bike
-#      weighting: custom
 #      custom_model_files: [bike.json, bike_elevation.json]
 
   # instead of the inbuilt custom models (see ./core/src/main/resources/com/graphhopper/custom_models)

@@ -23,7 +23,6 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.JsonFeatureCollection;
@@ -60,9 +59,9 @@ public class IsochroneResourceTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new CustomProfile("fast_car").setVehicle("car").setTurnCosts(true),
-                        new CustomProfile("short_car").setCustomModel(new CustomModel().setDistanceInfluence(1_000d)).setVehicle("car").setTurnCosts(true),
-                        new CustomProfile("fast_car_no_turn_restrictions").setVehicle("car").setTurnCosts(false)
+                        new Profile("fast_car").setVehicle("car").setTurnCosts(true),
+                        new Profile("short_car").setCustomModel(new CustomModel().setDistanceInfluence(1_000d)).setVehicle("car").setTurnCosts(true),
+                        new Profile("fast_car_no_turn_restrictions").setVehicle("car").setTurnCosts(false)
                 ));
         return config;
     }

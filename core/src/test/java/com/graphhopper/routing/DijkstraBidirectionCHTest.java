@@ -25,9 +25,9 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
@@ -91,8 +91,8 @@ public class DijkstraBidirectionCHTest {
         SimpleBooleanEncodedValue carAccessEnc = new SimpleBooleanEncodedValue("car_access", true);
         DecimalEncodedValueImpl carSpeedEnc = new DecimalEncodedValueImpl("car_speed", 5, 5, false);
         EncodingManager em = EncodingManager.start().add(footAccessEnc).add(footSpeedEnc).add(carAccessEnc).add(carSpeedEnc).build();
-        FastestWeighting footWeighting = new FastestWeighting(footAccessEnc, footSpeedEnc);
-        FastestWeighting carWeighting = new FastestWeighting(carAccessEnc, carSpeedEnc);
+        Weighting footWeighting = CustomModelParser.createFastestWeighting(footAccessEnc, footSpeedEnc, em);
+        Weighting carWeighting = CustomModelParser.createFastestWeighting(carAccessEnc, carSpeedEnc, em);
 
         CHConfig carConfig = CHConfig.nodeBased("p_car", carWeighting);
         BaseGraph g = new BaseGraph.Builder(em).create();
@@ -190,12 +190,13 @@ public class DijkstraBidirectionCHTest {
         runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, IntArrayList.from(2, 1, 0), bike2AccessEnc, bike2SpeedEnc);
     }
 
-    private void runTestWithDirectionDependentEdgeSpeed(double speed, double revSpeed, int from, int to, IntArrayList expectedPath, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+    private void runTestWithDirectionDependentEdgeSpeed(double speed, double revSpeed, int from, int to,
+                                                        IntArrayList expectedPath, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
         BaseGraph graph = createGHStorage();
         GHUtility.setSpeed(speed, revSpeed, accessEnc, speedEnc, graph.edge(0, 1).setDistance(2));
         GHUtility.setSpeed(20, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(1));
         graph.freeze();
-        FastestWeighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
         CHConfig chConfig = CHConfig.nodeBased(weighting.getName(), weighting);
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         new CHStorageBuilder(chStore).setIdentityLevels();

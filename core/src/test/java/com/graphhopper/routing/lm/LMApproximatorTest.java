@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
@@ -55,7 +56,7 @@ public class LMApproximatorTest {
         Random rnd = new Random(seed);
         GHUtility.buildRandomGraph(graph, rnd, 100, 2.2, true, accessEnc, speedEnc, null, 0.8, 0.8);
 
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
 
         PrepareLandmarks lm = new PrepareLandmarks(dir, graph, encodingManager, new LMConfig("car", weighting), 16);
         lm.setMaximumWeight(10000);

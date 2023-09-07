@@ -40,7 +40,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -248,8 +247,8 @@ public class GraphHopper {
      * <pre>
      * {@code
      *   hopper.setProfiles(
-     *     new CustomProfile("my_car").setVehicle("car"),
-     *     new CustomProfile("your_bike").setVehicle("bike")
+     *     new Profile("my_car").setVehicle("car"),
+     *     new Profile("your_bike").setVehicle("bike")
      *   );
      *   hopper.getCHPreparationHandler().setCHProfiles(
      *     new CHProfile("my_car"),
@@ -1114,14 +1113,11 @@ public class GraphHopper {
                         "Error: " + e.getMessage());
             }
 
-            if (profile instanceof CustomProfile) {
-                CustomModel customModel = ((CustomProfile) profile).getCustomModel();
-                if (customModel == null)
-                    throw new IllegalArgumentException("custom model for profile '" + profile.getName() + "' was empty");
-                if (!CustomWeighting.NAME.equals(profile.getWeighting()))
-                    throw new IllegalArgumentException("profile '" + profile.getName() + "' has a custom model but " +
-                            "weighting=" + profile.getWeighting() + " was defined");
-            }
+            if (CustomWeighting.NAME.equals(profile.getWeighting()) && profile.getCustomModel() == null)
+                throw new IllegalArgumentException("custom model for profile '" + profile.getName() + "' was empty");
+            if (!CustomWeighting.NAME.equals(profile.getWeighting()) && profile.getCustomModel() != null)
+                throw new IllegalArgumentException("profile '" + profile.getName() + "' has a custom model but " +
+                        "weighting=" + profile.getWeighting() + " was defined");
         }
 
         Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfiles().size());
@@ -1205,7 +1201,7 @@ public class GraphHopper {
         importPublicTransit();
 
         if (closeEarly) {
-            boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> p instanceof CustomProfile);
+            boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> CustomWeighting.NAME.equals(p.getWeighting()));
             if (!includesCustomProfiles)
                 // when there are custom profiles we must not close way geometry or KVStorage, because
                 // they might be needed to evaluate the custom weightings for the following preparations

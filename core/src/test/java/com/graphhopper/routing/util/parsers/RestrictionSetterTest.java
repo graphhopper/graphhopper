@@ -238,12 +238,7 @@ public class RestrictionSetterTest {
         return IntArrayList.from(nodes);
     }
 
-    private IntArrayList edges(int... edges) {
-        return IntArrayList.from(edges);
-    }
-
     private int edge(int from, int to) {
         return graph.edge(from, to).setDistance(100).set(speedEnc, 10, 10).getEdge();
     }
-
 }

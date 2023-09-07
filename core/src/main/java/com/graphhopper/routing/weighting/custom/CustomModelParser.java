@@ -20,6 +20,7 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -73,6 +74,12 @@ public class CustomModelParser {
         double maxSpeed = speedEnc.getMaxOrMaxStorableDecimal();
         CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, speedEnc, maxSpeed, priorityEnc);
         return new CustomWeighting(accessEnc, speedEnc, turnCostProvider, parameters);
+    }
+
+    public static CustomWeighting createFastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EncodingManager lookup) {
+        CustomModel cm = new CustomModel();
+
+        return createWeighting(accessEnc, speedEnc, null, lookup, TurnCostProvider.NO_TURN_COST_PROVIDER, cm);
     }
 
     /**

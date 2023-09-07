@@ -487,7 +487,6 @@ public class QueryGraphTest {
 
         EdgeIteratorState edge0 = graphWithTurnCosts.edge(0, 1).setDistance(10).set(speedEnc, 60, 60);
         EdgeIteratorState edge1 = graphWithTurnCosts.edge(2, 1).setDistance(10).set(speedEnc, 60, 60);
-
         Weighting weighting = new SpeedWeighting(speedEnc, turnCostEnc, graphWithTurnCosts.getTurnCostStorage(), Double.POSITIVE_INFINITY);
 
         // no turn costs initially

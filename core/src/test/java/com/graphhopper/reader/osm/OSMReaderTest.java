@@ -390,9 +390,7 @@ public class OSMReaderTest {
         hopper.setVehiclesString("car|block_fords=true");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
-                setProfiles(
-                        new Profile("car").setVehicle("car").setWeighting("fastest")
-                ).
+                setProfiles(new Profile("car").setVehicle("car")).
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getBaseGraph();
@@ -707,9 +705,9 @@ public class OSMReaderTest {
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
-                        new Profile("bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(true),
-                        new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
-                        new Profile("truck").setVehicle("truck").setWeighting("fastest").setTurnCosts(true)
+                        new Profile("bike").setVehicle("bike").setTurnCosts(true),
+                        new Profile("car").setVehicle("car").setTurnCosts(true),
+                        new Profile("truck").setVehicle("truck").setTurnCosts(true)
                 ).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
@@ -906,7 +904,7 @@ public class OSMReaderTest {
                 return new File(getClass().getResource(file2).getFile());
             }
         }.setOSMFile("dummy").
-                setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest")).
+                setProfiles(new Profile("profile").setVehicle("car")).
                 setMinNetworkSize(0).
                 setGraphHopperLocation(dir).
                 importOrLoad();
@@ -998,10 +996,10 @@ public class OSMReaderTest {
             setGraphHopperLocation(dir);
             if (turnCosts) setVehiclesString("roads|turn_costs=true|transportation_mode=HGV");
             setProfiles(
-                    new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                    new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(turnCosts),
-                    new Profile("bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(turnCosts),
-                    new Profile("roads").setVehicle("roads").setWeighting("fastest").setTurnCosts(turnCosts)
+                    new Profile("foot").setVehicle("foot"),
+                    new Profile("car").setVehicle("car").setTurnCosts(turnCosts),
+                    new Profile("bike").setVehicle("bike").setTurnCosts(turnCosts),
+                    new Profile("roads").setVehicle("roads").setTurnCosts(turnCosts)
             );
             getReaderConfig().setPreferredLanguage(prefLang);
         }
