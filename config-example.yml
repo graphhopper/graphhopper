@@ -31,7 +31,6 @@ graphhopper:
   profiles:
     - name: car
       vehicle: car
-      weighting: custom
       custom_model:
         distance_influence: 70
 #      turn_costs: true
@@ -40,7 +39,6 @@ graphhopper:
 #    - name: bike
 #      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
 #      vehicle: bike
-#      weighting: custom
 #      custom_model_files: [bike.json, bike_elevation.json]
 
   # instead of the inbuilt custom models (see ./core/src/main/resources/com/graphhopper/custom_models)
