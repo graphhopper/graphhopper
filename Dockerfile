@@ -21,9 +21,7 @@ COPY ./bay-area/* ./bay-area/
 COPY ./build-graph-cache.sh .
 COPY ./graphhopper.sh .
 
-RUN chmod +x ./build-graph-cache.sh \
-    chmod +x ./graphhopper.sh \
-    chmod +x *.jar
+RUN chmod +x /graphhopper/build-graph-cache.sh /graphhopper/graphhopper.sh /graphhopper/*.jar
 
 VOLUME [ "/data" ]
 
