@@ -48,6 +48,14 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
 
+      - name: Cache local Maven repository
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2/repository
+          key: ${{matrix.platform}}-${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{matrix.platform}}-${{ runner.os }}-maven-
+
       - name: Build and push Docker image
         id: build
         uses: docker/build-push-action@v4
