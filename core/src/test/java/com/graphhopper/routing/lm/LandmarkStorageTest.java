@@ -18,17 +18,18 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.RoutingAlgorithmTest;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,15 +48,13 @@ public class LandmarkStorageTest {
     private BaseGraph graph;
     private BooleanEncodedValue subnetworkEnc;
     private EncodingManager encodingManager;
-    private BooleanEncodedValue accessEnc;
     private DecimalEncodedValue speedEnc;
 
     @BeforeEach
     public void setUp() {
         subnetworkEnc = Subnetwork.create("car");
-        accessEnc = new SimpleBooleanEncodedValue("access", true);
-        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-        encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(subnetworkEnc).build();
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+        encodingManager = new EncodingManager.Builder().add(speedEnc).add(subnetworkEnc).build();
         graph = new BaseGraph.Builder(encodingManager).create();
     }
 
@@ -69,7 +68,7 @@ public class LandmarkStorageTest {
     public void testInfiniteWeight() {
         Directory dir = new RAMDirectory();
         graph.edge(0, 1);
-        LandmarkStorage lms = new LandmarkStorage(graph, encodingManager, dir, new LMConfig("car", new FastestWeighting(accessEnc, speedEnc)), 8).
+        LandmarkStorage lms = new LandmarkStorage(graph, encodingManager, dir, new LMConfig("car", new SpeedWeighting(speedEnc)), 8).
                 setMaximumWeight(LandmarkStorage.PRECISION);
         lms.createLandmarks();
 
@@ -93,10 +92,10 @@ public class LandmarkStorageTest {
 
     @Test
     public void testSetGetWeight() {
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(40.1));
+        graph.edge(0, 1).set(speedEnc, 60, 60).setDistance(40.1);
         Directory dir = new RAMDirectory();
         LandmarkStorage lms = new LandmarkStorage(graph, encodingManager, dir,
-                new LMConfig("c1", CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager)), 4).
+                new LMConfig("c1", new SpeedWeighting(speedEnc)), 4).
                 setMaximumWeight(LandmarkStorage.PRECISION);
         lms._getInternalDA().create(2000);
         // 2^16=65536, use -1 for infinity and -2 for maximum
@@ -112,14 +111,14 @@ public class LandmarkStorageTest {
     @Test
     public void testWithSubnetworks() {
         // 0-1-2..4-5->6
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(10.1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(10.2));
+        graph.edge(0, 1).setDistance(10.1).set(speedEnc, 60, 60);
+        graph.edge(1, 2).setDistance(10.2).set(speedEnc, 60, 60);
 
-        graph.edge(2, 4).set(accessEnc, false, false);
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 5).setDistance(10.5));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 6).setDistance(10.6));
+        graph.edge(2, 4).set(speedEnc, 0, 0);
+        graph.edge(4, 5).setDistance(10.5).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(10.6).set(speedEnc, 60, 0);
 
-        Weighting weighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
+        Weighting weighting = new SpeedWeighting(speedEnc);
         // 1 means => 2 allowed edge keys => excludes the node 6
         subnetworkRemoval(weighting, 1);
 
@@ -135,13 +134,13 @@ public class LandmarkStorageTest {
     @Test
     public void testWithStronglyConnectedComponent() {
         // 0 - 1 - 2 = 3 - 4
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(10.1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(10.2));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(10.3));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(3, 2).setDistance(10.2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4).setDistance(10.4));
+        graph.edge(0, 1).setDistance(10.1).set(speedEnc, 60, 60);
+        graph.edge(1, 2).setDistance(10.2).set(speedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(10.3).set(speedEnc, 60, 0);
+        graph.edge(3, 2).setDistance(10.2).set(speedEnc, 60, 0);
+        graph.edge(3, 4).setDistance(10.4).set(speedEnc, 60, 60);
 
-        Weighting weighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
+        Weighting weighting = new SpeedWeighting(speedEnc);
 
         // 3 nodes => 6 allowed edge keys but still do not exclude 3 & 4 as strongly connected and not a too small subnetwork!
         subnetworkRemoval(weighting, 4);
@@ -165,14 +164,14 @@ public class LandmarkStorageTest {
     public void testWithOnewaySubnetworks() {
         // 0 -- 1 -> 2 -> 3
         // 4 -- 5 ->/
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(10.1));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(1, 2).setDistance(10.2));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(2, 3).setDistance(10.3));
+        graph.edge(0, 1).setDistance(10.1).set(speedEnc, 60, 60);
+        graph.edge(1, 2).setDistance(10.2).set(speedEnc, 60, 0);
+        graph.edge(2, 3).setDistance(10.3).set(speedEnc, 60, 0);
 
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(4, 5).setDistance(10.5));
-        GHUtility.setSpeed(60, true, false, accessEnc, speedEnc, graph.edge(5, 2).setDistance(10.2));
+        graph.edge(4, 5).setDistance(10.5).set(speedEnc, 60, 60);
+        graph.edge(5, 2).setDistance(10.2).set(speedEnc, 60, 0);
 
-        Weighting weighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
+        Weighting weighting = new SpeedWeighting(speedEnc);
         // 1 allowed node => 2 allowed edge keys (exclude 2 and 3 because they are separate too small oneway subnetworks)
         subnetworkRemoval(weighting, 1);
 
@@ -188,12 +187,13 @@ public class LandmarkStorageTest {
     @Test
     public void testWeightingConsistence1() {
         // create an indifferent problem: shortest weighting can pass the speed==0 edge but fastest cannot (?)
-        graph.edge(0, 1).setDistance(10.1).set(accessEnc, true, true);
-        GHUtility.setSpeed(30, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(10));
-        graph.edge(2, 3).setDistance(10.1).set(accessEnc, true, true);
+        // 0--1-2--3
+        graph.edge(0, 1).setDistance(10.1).set(speedEnc, 0, 0);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 30, 30);
+        graph.edge(2, 3).setDistance(10.1).set(speedEnc, 0, 0);
 
         LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(),
-                new LMConfig("car", CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager)), 2);
+                new LMConfig("car", new SpeedWeighting(speedEnc)), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
 
@@ -203,12 +203,12 @@ public class LandmarkStorageTest {
 
     @Test
     public void testWeightingConsistence2() {
-        GHUtility.setSpeed(30, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(10));
-        graph.edge(2, 3).setDistance(10.1).set(accessEnc, true, true);
-        GHUtility.setSpeed(30, true, true, accessEnc, speedEnc, graph.edge(2, 3).setDistance(10));
+        graph.edge(0, 1).setDistance(10).set(speedEnc, 30, 30);
+        graph.edge(2, 3).setDistance(10.1).set(speedEnc, 0, 0);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 30, 30);
 
         LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(),
-                new LMConfig("car", CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager)), 2);
+                new LMConfig("car", new SpeedWeighting(speedEnc)), 2);
         storage.setMinimumNodes(2);
         storage.createLandmarks();
 
@@ -219,10 +219,10 @@ public class LandmarkStorageTest {
 
     @Test
     public void testWithBorderBlocking() {
-        RoutingAlgorithmTest.initBiGraph(graph, accessEnc, speedEnc);
+        RoutingAlgorithmTest.initBiGraph(graph, speedEnc);
 
         LandmarkStorage storage = new LandmarkStorage(graph, encodingManager, new RAMDirectory(),
-                new LMConfig("car", CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager)), 2);
+                new LMConfig("car", new SpeedWeighting(speedEnc)), 2);
         final SplitArea right = new SplitArea(emptyList());
         final SplitArea left = new SplitArea(emptyList());
         final AreaIndex<SplitArea> areaIndex = new AreaIndex<SplitArea>(emptyList()) {

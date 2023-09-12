@@ -2,23 +2,22 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.RoutingCHGraphImpl;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -35,7 +34,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.stream.Stream;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.GHUtility.createRandomSnaps;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -46,33 +44,28 @@ public class RandomCHRoutingTest {
     private static final class Fixture {
         private final TraversalMode traversalMode;
         private final int maxTurnCosts;
-        private final int uTurnCosts;
-        private final BooleanEncodedValue accessEnc;
+        private final double uTurnCosts;
         private final DecimalEncodedValue speedEnc;
         private final DecimalEncodedValue turnCostEnc;
         private Weighting weighting;
         private final BaseGraph graph;
         private CHConfig chConfig;
-        private final EncodingManager encodingManager;
 
-        Fixture(TraversalMode traversalMode, int uTurnCosts) {
+        Fixture(TraversalMode traversalMode, double uTurnCosts) {
             this.traversalMode = traversalMode;
             this.maxTurnCosts = 10;
             this.uTurnCosts = uTurnCosts;
-            accessEnc = new SimpleBooleanEncodedValue("access", true);
-            speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+            speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
             turnCostEnc = TurnCost.create("car", maxTurnCosts);
-            encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+            EncodingManager encodingManager = EncodingManager.start().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
             graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         }
 
         void freeze() {
             graph.freeze();
             chConfig = traversalMode.isEdgeBased()
-                    ? CHConfig.edgeBased("p", CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager,
-                    new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), uTurnCosts), new CustomModel()))
-                    : CHConfig.nodeBased("p", CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager,
-                    TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel()));
+                    ? CHConfig.edgeBased("p", new SpeedWeighting(speedEnc, turnCostEnc, graph.getTurnCostStorage(), uTurnCosts))
+                    : CHConfig.nodeBased("p", new SpeedWeighting(speedEnc));
             weighting = chConfig.getWeighting();
         }
 
@@ -86,9 +79,9 @@ public class RandomCHRoutingTest {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
             return Stream.of(
-                            new Fixture(TraversalMode.NODE_BASED, INFINITE_U_TURN_COSTS),
+                            new Fixture(TraversalMode.NODE_BASED, Double.POSITIVE_INFINITY),
                             new Fixture(TraversalMode.EDGE_BASED, 40),
-                            new Fixture(TraversalMode.EDGE_BASED, INFINITE_U_TURN_COSTS)
+                            new Fixture(TraversalMode.EDGE_BASED, Double.POSITIVE_INFINITY)
                     )
                     .map(Arguments::of);
         }
@@ -110,9 +103,9 @@ public class RandomCHRoutingTest {
         // we may not use an offset when query graph is involved, otherwise traveling via virtual edges will not be
         // the same as taking the direct edge!
         double pOffset = 0;
-        GHUtility.buildRandomGraph(f.graph, rnd, numNodes, 2.5, true, f.accessEnc, f.speedEnc, null, 0.9, pOffset);
+        GHUtility.buildRandomGraph(f.graph, rnd, numNodes, 2.5, true, f.speedEnc, null, 0.9, pOffset);
         if (f.traversalMode.isEdgeBased()) {
-            GHUtility.addRandomTurnCosts(f.graph, seed, f.accessEnc, f.turnCostEnc, f.maxTurnCosts, f.graph.getTurnCostStorage());
+            GHUtility.addRandomTurnCosts(f.graph, seed, null, f.turnCostEnc, f.maxTurnCosts, f.graph.getTurnCostStorage());
         }
         runRandomTest(f, rnd);
     }
