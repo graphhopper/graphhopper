@@ -1,6 +1,5 @@
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.BitUtil;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
