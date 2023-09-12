@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.IntsRefEdgeIntAccess;
@@ -82,6 +83,13 @@ public class TurnCostStorage {
         return true;
     }
 
+    public void set(BooleanEncodedValue bev, int fromEdge, int viaNode, int toEdge, boolean value) {
+        long pointer = findOrCreateTurnCostEntry(fromEdge, viaNode, toEdge);
+        if (pointer < 0)
+            throw new IllegalStateException("Invalid pointer: " + pointer + " at (" + fromEdge + ", " + viaNode + ", " + toEdge + ")");
+        bev.setBool(false, -1, createIntAccess(pointer), value);
+    }
+
     /**
      * Sets the turn cost at the viaNode when going from "fromEdge" to "toEdge"
      */
@@ -113,6 +121,10 @@ public class TurnCostStorage {
      */
     public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
         return turnCostEnc.getDecimal(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
+    }
+
+    public boolean get(BooleanEncodedValue bev, int fromEdge, int viaNode, int toEdge) {
+        return bev.getBool(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
     }
 
     private EdgeIntAccess createIntAccess(long pointer) {

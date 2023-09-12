@@ -607,7 +607,7 @@ public class OSMReader {
                     r.second = null;
                 }
             }
-            restrictionSetter.setRestrictions(restrictionsWithType, restrictionTagParser.getTurnCostEnc());
+            restrictionSetter.setRestrictions(restrictionsWithType, restrictionTagParser.getTurnRestrictionEnc());
         }
     }
 
