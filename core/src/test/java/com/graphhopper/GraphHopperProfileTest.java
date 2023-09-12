@@ -37,11 +37,11 @@ public class GraphHopperProfileTest {
     @Test
     public void deserialize() throws IOException {
         ObjectMapper objectMapper = Jackson.newObjectMapper();
-        String json = "{\"name\":\"my_car\",\"vehicle\":\"car\",\"weighting\":\"fastest\",\"turn_costs\":true,\"foo\":\"bar\",\"baz\":\"buzz\"}";
+        String json = "{\"name\":\"my_car\",\"vehicle\":\"car\",\"weighting\":\"custom\",\"turn_costs\":true,\"foo\":\"bar\",\"baz\":\"buzz\"}";
         Profile profile = objectMapper.readValue(json, Profile.class);
         assertEquals("my_car", profile.getName());
         assertEquals("car", profile.getVehicle());
-        assertEquals("fastest", profile.getWeighting());
+        assertEquals("custom", profile.getWeighting());
         assertTrue(profile.isTurnCosts());
         assertEquals(2, profile.getHints().toMap().size());
         assertEquals("bar", profile.getHints().getString("foo", ""));
@@ -52,9 +52,9 @@ public class GraphHopperProfileTest {
     public void duplicateProfileName_error() {
         final GraphHopper hopper = createHopper();
         assertIllegalArgument(() -> hopper.setProfiles(
-                new Profile("my_profile").setVehicle("car").setWeighting("fastest"),
-                new Profile("your_profile").setVehicle("car").setWeighting("short_fastest"),
-                new Profile("my_profile").setVehicle("car").setWeighting("shortest")
+                new Profile("my_profile").setVehicle("car"),
+                new Profile("your_profile").setVehicle("car"),
+                new Profile("my_profile").setVehicle("car")
         ), "Profile names must be unique. Duplicate name: 'my_profile'");
     }
 

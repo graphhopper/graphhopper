@@ -20,7 +20,9 @@ package com.graphhopper.routing.subnetwork;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.subnetwork.EdgeBasedTarjanSCC.ConnectedComponents;
 import com.graphhopper.routing.subnetwork.TarjanSCCTest.IntWithArray;
 import com.graphhopper.routing.util.AllEdgesIterator;

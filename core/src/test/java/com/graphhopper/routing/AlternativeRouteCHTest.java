@@ -24,7 +24,7 @@ import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.CHConfig;
 import com.graphhopper.storage.RoutingCHGraph;
@@ -84,7 +84,7 @@ public class AlternativeRouteCHTest {
         // meet on all four possible paths from 5 to 10
         // 5 ---> 11 will be reachable via shortcuts, as 11 is on shortest path 5 --> 12
         final int[] nodeOrdering = new int[]{0, 10, 12, 4, 3, 2, 5, 1, 6, 7, 8, 9, 11};
-        CHConfig chConfig = CHConfig.nodeBased("p", new FastestWeighting(accessEnc, speedEnc));
+        CHConfig chConfig = CHConfig.nodeBased("p", CustomModelParser.createFastestWeighting(accessEnc, speedEnc, em));
         PrepareContractionHierarchies contractionHierarchies = PrepareContractionHierarchies.fromGraph(graph, chConfig);
         contractionHierarchies.useFixedNodeOrdering(NodeOrderingProvider.fromArray(nodeOrdering));
         PrepareContractionHierarchies.Result res = contractionHierarchies.doWork();

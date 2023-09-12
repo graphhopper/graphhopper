@@ -7,7 +7,7 @@ graphhopper:
   profiles:
     - name: foot
       vehicle: foot
-      weighting: fastest
+      weighting: custom
 
 server:
   application_connectors:

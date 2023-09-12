@@ -41,7 +41,7 @@ public class NavigateResponseConverterTest {
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFolder).
-                setProfiles(new Profile(profile).setVehicle(vehicle).setWeighting("fastest").setTurnCosts(false)).
+                setProfiles(new Profile(profile).setVehicle(vehicle).setTurnCosts(false)).
                 importOrLoad();
     }
 

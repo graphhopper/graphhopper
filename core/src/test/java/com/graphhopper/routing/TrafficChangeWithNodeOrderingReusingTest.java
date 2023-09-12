@@ -12,9 +12,9 @@ import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.parsers.CarAverageSpeedParser;
 import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.MiniPerfTest;
@@ -63,7 +63,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
             CarAverageSpeedParser carParser = new CarAverageSpeedParser(em, new PMap());
             osmParsers = new OSMParsers()
                     .addWayTagParser(carParser);
-            baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(accessEnc, speedEnc));
+            baseCHConfig = CHConfig.nodeBased("base", CustomModelParser.createFastestWeighting(accessEnc, speedEnc, em));
             trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), accessEnc, speedEnc, maxDeviationPercentage));
             graph = new BaseGraph.Builder(em).create();
         }
