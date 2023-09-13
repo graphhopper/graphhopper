@@ -56,7 +56,9 @@ public class AlternativeRouteTest {
 
             EncodingManager em = EncodingManager.start().add(speedEnc).add(turnCostEnc).build();
             graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
-            weighting = new SpeedWeighting(speedEnc, tMode.isEdgeBased() ? turnCostEnc : null, graph.getTurnCostStorage(), Double.POSITIVE_INFINITY);
+            weighting = tMode.isEdgeBased()
+                    ? new SpeedWeighting(speedEnc, turnCostEnc, graph.getTurnCostStorage(), Double.POSITIVE_INFINITY)
+                    : new SpeedWeighting(speedEnc);
         }
 
         @Override

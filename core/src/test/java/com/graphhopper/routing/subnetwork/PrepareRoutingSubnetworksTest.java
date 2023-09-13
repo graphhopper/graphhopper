@@ -249,7 +249,7 @@ public class PrepareRoutingSubnetworksTest {
     }
 
     private static PrepareRoutingSubnetworks.PrepareJob createJob(BooleanEncodedValue subnetworkEnc, DecimalEncodedValue speedEnc) {
-        return createJob(subnetworkEnc, speedEnc, null, null, 0);
+        return new PrepareRoutingSubnetworks.PrepareJob(subnetworkEnc, new SpeedWeighting(speedEnc));
     }
 
     private static PrepareRoutingSubnetworks.PrepareJob createJob(BooleanEncodedValue subnetworkEnc, DecimalEncodedValue speedEnc,
