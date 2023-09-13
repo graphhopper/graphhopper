@@ -49,7 +49,7 @@ public class SpeedWeighting implements Weighting {
 
             @Override
             public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-                throw new UnsupportedOperationException();
+                return (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
             }
         };
     }
@@ -83,7 +83,7 @@ public class SpeedWeighting implements Weighting {
 
     @Override
     public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-        return (long) (1000 * calcTurnWeight(inEdge, viaNode, outEdge));
+        return turnCostProvider.calcTurnMillis(inEdge, viaNode, outEdge);
     }
 
     @Override
