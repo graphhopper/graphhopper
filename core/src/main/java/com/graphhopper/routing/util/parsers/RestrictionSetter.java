@@ -18,13 +18,15 @@
 
 package com.graphhopper.routing.util.parsers;
 
-import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.IntHashSet;
+import com.carrotsearch.hppc.IntIntHashMap;
+import com.carrotsearch.hppc.IntIntMap;
+import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.reader.osm.GraphRestriction;
 import com.graphhopper.reader.osm.Pair;
 import com.graphhopper.reader.osm.RestrictionType;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;

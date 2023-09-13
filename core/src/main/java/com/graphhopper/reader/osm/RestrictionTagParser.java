@@ -19,7 +19,6 @@
 package com.graphhopper.reader.osm;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 
 import java.util.*;
 import java.util.stream.Collectors;

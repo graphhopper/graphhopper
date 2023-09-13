@@ -43,12 +43,13 @@ public class SpeedWeighting implements Weighting {
                     return 0;
                 if (inEdge == outEdge)
                     return Math.max(turnCostStorage.get(turnCostEnc, inEdge, viaNode, outEdge), uTurnCosts);
-                else return turnCostStorage.get(turnCostEnc, inEdge, viaNode, outEdge);
+                else
+                    return turnCostStorage.get(turnCostEnc, inEdge, viaNode, outEdge);
             }
 
             @Override
             public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-                return 0;
+                throw new UnsupportedOperationException();
             }
         };
     }
