@@ -17,7 +17,7 @@ env:
 
 jobs:
   build-and-push-image:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.platform == 'linux/arm64' && 'arm64' || 'ubuntu-latest' }}
     strategy:
       matrix:
         platform: ['linux/amd64', 'linux/arm64']
