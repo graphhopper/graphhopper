@@ -25,20 +25,37 @@ import com.graphhopper.util.EdgeIteratorState;
 
 public class SpeedWeighting implements Weighting {
     private final DecimalEncodedValue speedEnc;
-    private final DecimalEncodedValue turnCostEnc;
-    private final TurnCostStorage turnCostStorage;
-    private final double uTurnCosts;
+    private final TurnCostProvider turnCostProvider;
 
     public SpeedWeighting(DecimalEncodedValue speedEnc) {
-        this(speedEnc, null, null, 0);
+        this(speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
     }
 
     public SpeedWeighting(DecimalEncodedValue speedEnc, DecimalEncodedValue turnCostEnc, TurnCostStorage turnCostStorage, double uTurnCosts) {
+        if (turnCostStorage == null || turnCostEnc == null)
+            throw new IllegalArgumentException("This SpeedWeighting constructor expects turnCostEnc and turnCostStorage to be != null");
         if (uTurnCosts < 0) throw new IllegalArgumentException("u-turn costs must be positive");
         this.speedEnc = speedEnc;
-        this.turnCostEnc = turnCostEnc;
-        this.turnCostStorage = turnCostStorage;
-        this.uTurnCosts = uTurnCosts;
+        this.turnCostProvider = new TurnCostProvider() {
+            @Override
+            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge))
+                    return 0;
+                if (inEdge == outEdge)
+                    return Math.max(turnCostStorage.get(turnCostEnc, inEdge, viaNode, outEdge), uTurnCosts);
+                else return turnCostStorage.get(turnCostEnc, inEdge, viaNode, outEdge);
+            }
+
+            @Override
+            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+                return 0;
+            }
+        };
+    }
+
+    public SpeedWeighting(DecimalEncodedValue speedEnc, TurnCostProvider turnCostProvider) {
+        this.speedEnc = speedEnc;
+        this.turnCostProvider = turnCostProvider;
     }
 
     @Override
@@ -60,12 +77,7 @@ public class SpeedWeighting implements Weighting {
 
     @Override
     public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-        if (turnCostEnc == null) return 0;
-        if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge))
-            return 0;
-        if (inEdge == outEdge)
-            return Math.max(turnCostStorage.get(turnCostEnc, inEdge, viaNode, outEdge), uTurnCosts);
-        else return turnCostStorage.get(turnCostEnc, inEdge, viaNode, outEdge);
+        return turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
     }
 
     @Override
@@ -75,7 +87,7 @@ public class SpeedWeighting implements Weighting {
 
     @Override
     public boolean hasTurnCosts() {
-        return turnCostEnc != null;
+        return turnCostProvider != TurnCostProvider.NO_TURN_COST_PROVIDER;
     }
 
     @Override

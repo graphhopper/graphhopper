@@ -116,11 +116,8 @@ public class TurnCostStorage {
         return pointer;
     }
 
-    /**
-     * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
-     */
-    public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
-        return turnCostEnc.getDecimal(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
+    public double get(DecimalEncodedValue dev, int fromEdge, int viaNode, int toEdge) {
+        return dev.getDecimal(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
     }
 
     public boolean get(BooleanEncodedValue bev, int fromEdge, int viaNode, int toEdge) {
@@ -193,6 +190,8 @@ public class TurnCostStorage {
 
         int getToEdge();
 
+        boolean get(BooleanEncodedValue booleanEncodedValue);
+
         double getCost(DecimalEncodedValue encodedValue);
 
         boolean next();
@@ -221,6 +220,12 @@ public class TurnCostStorage {
         @Override
         public int getToEdge() {
             return turnCosts.getInt(turnCostPtr() + TC_TO);
+        }
+
+        @Override
+        public boolean get(BooleanEncodedValue booleanEncodedValue) {
+            intsRef.ints[0] = turnCosts.getInt(turnCostPtr() + TC_FLAGS);
+            return booleanEncodedValue.getBool(false, -1, edgeIntAccess);
         }
 
         @Override

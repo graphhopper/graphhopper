@@ -1098,10 +1098,10 @@ public class GraphHopper {
             if (!encodingManager.getVehicles().contains(profile.getVehicle()))
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". " +
                         "Available vehicles: " + String.join(",", encodingManager.getVehicles()));
-            DecimalEncodedValue turnCostEnc = encodingManager.hasEncodedValue(TurnCost.key(profile.getVehicle()))
-                    ? encodingManager.getDecimalEncodedValue(TurnCost.key(profile.getVehicle()))
+            BooleanEncodedValue turnRestrictionEnc = encodingManager.hasEncodedValue(TurnRestriction.key(profile.getVehicle()))
+                    ? encodingManager.getBooleanEncodedValue(TurnRestriction.key(profile.getVehicle()))
                     : null;
-            if (profile.isTurnCosts() && turnCostEnc == null) {
+            if (profile.isTurnCosts() && turnRestrictionEnc == null) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +
                         "'turn_costs=true', but the corresponding vehicle '" + profile.getVehicle() + "' does not support turn costs." +
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.vehicles`");

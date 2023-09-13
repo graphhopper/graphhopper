@@ -9,6 +9,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.SpeedWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.BaseGraph;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -228,7 +229,18 @@ public class RestrictionSetterTest {
     }
 
     private IntArrayList calcPath(int from, int to, BooleanEncodedValue turnRestrictionEnc) {
-        return new IntArrayList(new Dijkstra(graph, new SpeedWeighting(speedEnc, turnRestrictionEnc, graph.getTurnCostStorage(), Double.POSITIVE_INFINITY), TraversalMode.EDGE_BASED).calcPath(from, to).calcNodes());
+        return new IntArrayList(new Dijkstra(graph, new SpeedWeighting(speedEnc, new TurnCostProvider() {
+            @Override
+            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                if (inEdge == outEdge) return Double.POSITIVE_INFINITY;
+                return graph.getTurnCostStorage().get(turnRestrictionEnc, inEdge, viaNode, outEdge) ? Double.POSITIVE_INFINITY : 0;
+            }
+
+            @Override
+            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+                return Double.isInfinite(calcTurnWeight(inEdge, viaNode, outEdge)) ? Long.MAX_VALUE : 0L;
+            }
+        }), TraversalMode.EDGE_BASED).calcPath(from, to).calcNodes());
     }
 
     private IntArrayList nodes(int... nodes) {
