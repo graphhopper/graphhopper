@@ -26,19 +26,20 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 
 public class DefaultTurnCostProvider implements TurnCostProvider {
     private final BooleanEncodedValue turnRestrictionEnc;
+    private final BooleanEncodedValue deadEndEnc;
     private final TurnCostStorage turnCostStorage;
     private final int uTurnCostsInt;
     private final double uTurnCosts;
 
-    public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, TurnCostStorage turnCostStorage) {
-        this(turnRestrictionEnc, turnCostStorage, Weighting.INFINITE_U_TURN_COSTS);
+    public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, BooleanEncodedValue deadEndEnc, TurnCostStorage turnCostStorage) {
+        this(turnRestrictionEnc, deadEndEnc, turnCostStorage, Weighting.INFINITE_U_TURN_COSTS);
     }
 
     /**
      * @param uTurnCosts the costs of a u-turn in seconds, for {@link Weighting#INFINITE_U_TURN_COSTS} the u-turn costs
-     *                   will be infinite
+     *                   will be infinite. u-turns are only allowed at dead ends.
      */
-    public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, TurnCostStorage turnCostStorage, int uTurnCosts) {
+    public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, BooleanEncodedValue deadEndEnc, TurnCostStorage turnCostStorage, int uTurnCosts) {
         if (uTurnCosts < 0 && uTurnCosts != INFINITE_U_TURN_COSTS) {
             throw new IllegalArgumentException("u-turn costs must be positive, or equal to " + INFINITE_U_TURN_COSTS + " (=infinite costs)");
         }
@@ -49,6 +50,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         }
         // if null the TurnCostProvider can be still useful for edge-based routing
         this.turnRestrictionEnc = turnRestrictionEnc;
+        this.deadEndEnc = deadEndEnc;
         this.turnCostStorage = turnCostStorage;
     }
 
@@ -56,20 +58,20 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         return turnRestrictionEnc;
     }
 
+    public BooleanEncodedValue getDeadEndEnc() {
+        return deadEndEnc;
+    }
+
     @Override
     public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
-        if (!EdgeIterator.Edge.isValid(edgeFrom) || !EdgeIterator.Edge.isValid(edgeTo)) {
+        if (!EdgeIterator.Edge.isValid(edgeFrom) || !EdgeIterator.Edge.isValid(edgeTo))
             return 0;
-        }
-        double tCost = 0;
-        if (edgeFrom == edgeTo) {
-            // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
-            tCost = uTurnCosts;
-        } else {
-            if (turnRestrictionEnc != null)
-                tCost = turnCostStorage.get(turnRestrictionEnc, edgeFrom, nodeVia, edgeTo) ? Double.POSITIVE_INFINITY : 0;
-        }
-        return tCost;
+        if (turnCostStorage.get(turnRestrictionEnc, edgeFrom, nodeVia, edgeTo))
+            return Double.POSITIVE_INFINITY;
+        else if (edgeFrom == edgeTo)
+            return turnCostStorage.get(deadEndEnc, edgeFrom, nodeVia, edgeTo) ? uTurnCosts : Double.POSITIVE_INFINITY;
+        else
+            return 0;
     }
 
     @Override

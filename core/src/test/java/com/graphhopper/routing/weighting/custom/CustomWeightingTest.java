@@ -32,6 +32,7 @@ class CustomWeightingTest {
     EnumEncodedValue<RoadClass> roadClassEnc;
     EncodingManager encodingManager;
     BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create("car");
+    BooleanEncodedValue deadEndEnc = DeadEnd.create("car");
 
     @BeforeEach
     public void setup() {
@@ -42,6 +43,7 @@ class CustomWeightingTest {
                 .add(Hazmat.create())
                 .add(RouteNetwork.create(BikeNetwork.KEY))
                 .addTurnCostEncodedValue(turnRestrictionEnc)
+                .addTurnCostEncodedValue(deadEndEnc)
                 .build();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
@@ -409,7 +411,7 @@ class CustomWeightingTest {
     public void calcWeightAndTime_withTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         Weighting weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager,
-                new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage()), new CustomModel());
+                new DefaultTurnCostProvider(turnRestrictionEnc, deadEndEnc, graph.getTurnCostStorage()), new CustomModel());
         GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(1, 2).setDistance(100));
         setTurnRestriction(graph, 0, 1, 2);
@@ -421,7 +423,7 @@ class CustomWeightingTest {
     public void calcWeightAndTime_uTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         Weighting weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null,
-                encodingManager, new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), 40), new CustomModel());
+                encodingManager, new DefaultTurnCostProvider(turnRestrictionEnc, deadEndEnc, graph.getTurnCostStorage(), 40), new CustomModel());
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(0, 1).setDistance(100));
         assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
@@ -431,7 +433,7 @@ class CustomWeightingTest {
     public void calcWeightAndTime_withTurnCosts_shortest() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         Weighting weighting = new ShortestWeighting(accessEnc, avSpeedEnc,
-                new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage()));
+                new DefaultTurnCostProvider(turnRestrictionEnc, deadEndEnc, graph.getTurnCostStorage()));
         GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(1, 2).setDistance(100));
         setTurnRestriction(graph, 0, 1, 2);
