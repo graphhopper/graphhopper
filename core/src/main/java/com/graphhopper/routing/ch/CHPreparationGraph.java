@@ -123,6 +123,9 @@ public class CHPreparationGraph {
             while (inIter.next()) {
                 EdgeIterator outIter = outExplorer.setBaseNode(node);
                 while (outIter.next()) {
+                    // we handle u-turns separately to reduce the number of stored turn costs
+                    if (inIter.getEdge() == outIter.getEdge())
+                        continue;
                     double turnWeight = weighting.calcTurnWeight(inIter.getEdge(), node, outIter.getEdge());
                     if (turnWeight > 0) {
                         long edgePair = BitUtil.LITTLE.toLong(inIter.getEdge(), outIter.getEdge());
@@ -138,6 +141,8 @@ public class CHPreparationGraph {
         return (inEdge, viaNode, outEdge) -> {
             if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge))
                 return 0;
+            if (inEdge == outEdge)
+                return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
             // traverse all turn cost entries we have for this viaNode and return the turn costs if we find a match
             for (int i = turnCostNodes[viaNode]; i < turnCostNodes[viaNode + 1]; i++) {
                 long l = turnCostEdgePairs.get(i);
