@@ -66,7 +66,7 @@ public class BaseGraph implements Graph, Closeable {
         this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
-        turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", segmentSize)) : null;
+        turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", segmentSize), dir.create("turn_costs_frozen", segmentSize)) : null;
     }
 
     private int getOtherNode(int nodeThis, long edgePointer) {
