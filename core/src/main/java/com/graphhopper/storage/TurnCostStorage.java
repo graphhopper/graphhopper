@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.IntsRefEdgeIntAccess;
@@ -45,6 +46,8 @@ public class TurnCostStorage {
     private final DataAccess turnCosts;
     private int turnCostsCount;
 
+    private boolean frozen;
+
     public TurnCostStorage(BaseGraph baseGraph, DataAccess turnCosts) {
         this.baseGraph = baseGraph;
         this.turnCosts = turnCosts;
@@ -59,6 +62,7 @@ public class TurnCostStorage {
         turnCosts.setHeader(0, Constants.VERSION_TURN_COSTS);
         turnCosts.setHeader(4, BYTES_PER_ENTRY);
         turnCosts.setHeader(2 * 4, turnCostsCount);
+        turnCosts.setHeader(3 * 4, frozen ? 1 : 0);
         turnCosts.flush();
     }
 
@@ -79,7 +83,48 @@ public class TurnCostStorage {
             throw new IllegalStateException("Number of bytes per turn cost entry does not match the current configuration: " + turnCosts.getHeader(0) + " vs. " + BYTES_PER_ENTRY);
         }
         turnCostsCount = turnCosts.getHeader(8);
+        frozen = turnCosts.getHeader(12) == 1;
         return true;
+    }
+
+    public void freeze() {
+        sortTurnCosts();
+        this.frozen = true;
+    }
+
+    public boolean getFrozen() {
+        return frozen;
+    }
+
+    public void sortTurnCosts() {
+        IntArrayList turnCostIndices = new IntArrayList();
+        for (int node = 0; node < baseGraph.getNodes(); node++)
+            turnCostIndices.add(baseGraph.getNodeAccess().getTurnCostIndex(node));
+
+        IntArrayList froms = new IntArrayList();
+        IntArrayList tos = new IntArrayList();
+        IntArrayList flags = new IntArrayList();
+        IntArrayList nexts = new IntArrayList();
+        for (int i = 0; i < turnCostsCount; i++) {
+            froms.add(turnCosts.getInt((long) i * BYTES_PER_ENTRY + TC_FROM));
+            tos.add(turnCosts.getInt((long) i * BYTES_PER_ENTRY + TC_TO));
+            flags.add(turnCosts.getInt((long) i * BYTES_PER_ENTRY + TC_FLAGS));
+            nexts.add(turnCosts.getInt((long) i * BYTES_PER_ENTRY + TC_NEXT));
+        }
+
+        int count = 0;
+        for (int node = 0; node < baseGraph.getNodes(); node++) {
+            int index = turnCostIndices.get(node);
+            baseGraph.getNodeAccess().setTurnCostIndex(node, index == NO_TURN_ENTRY ? NO_TURN_ENTRY : count);
+            while (index != NO_TURN_ENTRY) {
+                turnCosts.setInt((long) count * BYTES_PER_ENTRY + TC_FROM, froms.get(index));
+                turnCosts.setInt((long) count * BYTES_PER_ENTRY + TC_TO, tos.get(index));
+                turnCosts.setInt((long) count * BYTES_PER_ENTRY + TC_FLAGS, flags.get(index));
+                index = nexts.get(index);
+                turnCosts.setInt((long) count * BYTES_PER_ENTRY + TC_NEXT, index == NO_TURN_ENTRY ? NO_TURN_ENTRY : count + 1);
+                count++;
+            }
+        }
     }
 
     /**
@@ -90,6 +135,10 @@ public class TurnCostStorage {
         if (pointer < 0)
             throw new IllegalStateException("Invalid pointer: " + pointer + " at (" + fromEdge + ", " + viaNode + ", " + toEdge + ")");
         turnCostEnc.setDecimal(false, -1, createIntAccess(pointer), cost);
+    }
+
+    private void checkFrozen() {
+        if (!frozen) throw new IllegalStateException("Turn cost storage is not frozen yet");
     }
 
     private long findOrCreateTurnCostEntry(int fromEdge, int viaNode, int toEdge) {
@@ -112,6 +161,7 @@ public class TurnCostStorage {
      * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
      */
     public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
+        checkFrozen();
         return turnCostEnc.getDecimal(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
     }
 

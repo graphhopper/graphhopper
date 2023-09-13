@@ -150,9 +150,13 @@ public class BaseGraph implements Graph, Closeable {
         if (isFrozen())
             throw new IllegalStateException("base graph already frozen");
         store.setFrozen(true);
+        if (turnCostStorage != null)
+            turnCostStorage.freeze();
     }
 
     public synchronized boolean isFrozen() {
+        if (turnCostStorage != null && store.getFrozen() != turnCostStorage.getFrozen())
+            throw new IllegalStateException("store and turn cost storage should either be both frozen or both not frozen");
         return store.getFrozen();
     }
 

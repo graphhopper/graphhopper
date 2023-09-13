@@ -109,48 +109,7 @@ public class CHPreparationGraph {
      * that storing all turn costs in separate arrays upfront speeds up edge-based CH preparation by about 25%. See #2084
      */
     public static TurnCostFunction buildTurnCostFunctionFromTurnCostStorage(Graph graph, Weighting weighting) {
-        // we maintain a list of inEdge/outEdge/turn-cost triples (we use two arrays for this) that is sorted by nodes
-        LongArrayList turnCostEdgePairs = new LongArrayList();
-        DoubleArrayList turnWeights = new DoubleArrayList();
-        // for each node we store the index of the first turn cost entry/triple in the list
-        final int[] turnCostNodes = new int[graph.getNodes() + 1];
-
-        EdgeExplorer inExplorer = graph.createEdgeExplorer();
-        EdgeExplorer outExplorer = graph.createEdgeExplorer();
-        for (int node = 0; node < graph.getNodes(); node++) {
-            turnCostNodes[node] = turnCostEdgePairs.size();
-            EdgeIterator inIter = inExplorer.setBaseNode(node);
-            while (inIter.next()) {
-                EdgeIterator outIter = outExplorer.setBaseNode(node);
-                while (outIter.next()) {
-                    // we handle u-turns separately to reduce the number of stored turn costs
-                    if (inIter.getEdge() == outIter.getEdge())
-                        continue;
-                    double turnWeight = weighting.calcTurnWeight(inIter.getEdge(), node, outIter.getEdge());
-                    if (turnWeight > 0) {
-                        long edgePair = BitUtil.LITTLE.toLong(inIter.getEdge(), outIter.getEdge());
-                        turnCostEdgePairs.add(edgePair);
-                        turnWeights.add(turnWeight);
-                    }
-                }
-            }
-        }
-        turnCostNodes[turnCostNodes.length - 1] = turnCostEdgePairs.size();
-        // todonow: if this is really faster than simply returning weighting::calcTurnWeight why don't we
-        //          just re-sort the turn cost storage when we freeze the base graph?
-        return (inEdge, viaNode, outEdge) -> {
-            if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge))
-                return 0;
-            if (inEdge == outEdge)
-                return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
-            // traverse all turn cost entries we have for this viaNode and return the turn costs if we find a match
-            for (int i = turnCostNodes[viaNode]; i < turnCostNodes[viaNode + 1]; i++) {
-                long l = turnCostEdgePairs.get(i);
-                if (inEdge == BitUtil.LITTLE.getIntLow(l) && outEdge == BitUtil.LITTLE.getIntHigh(l))
-                    return turnWeights.get(i);
-            }
-            return 0;
-        };
+        return weighting::calcTurnWeight;
     }
 
     public int getNodes() {
