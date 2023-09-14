@@ -130,9 +130,9 @@ public class TurnCostStorage {
             int index = baseGraph.getNodeAccess().getTurnCostIndex(node);
             baseGraph.getNodeAccess().setTurnCostIndex(node, count);
             while (index != NO_TURN_ENTRY) {
-                turnCosts.setInt(12L * count, froms.get(index));
-                turnCosts.setInt(12L * count + 4, tos.get(index));
-                turnCosts.setInt(12L * count + 8, flags.get(index));
+                turnCosts.setInt((long) BYTES_PER_ENTRY * count, froms.get(index));
+                turnCosts.setInt((long) BYTES_PER_ENTRY * count + 4L, tos.get(index));
+                turnCosts.setInt((long) BYTES_PER_ENTRY * count + 8L, flags.get(index));
                 index = nexts.get(index);
                 count++;
             }
@@ -177,8 +177,8 @@ public class TurnCostStorage {
             int start = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
             int end = viaNode == baseGraph.getNodes() - 1 ? turnCostsCount : baseGraph.getNodeAccess().getTurnCostIndex(viaNode + 1);
             for (int i = start; i < end; i++) {
-                if (turnCosts.getInt(12L * i) == fromEdge && turnCosts.getInt(12L * i + 4L) == toEdge) {
-                    flagContainer[0] = turnCosts.getInt(12L * i + 8L);
+                if (turnCosts.getInt((long) BYTES_PER_ENTRY * i) == fromEdge && turnCosts.getInt((long) BYTES_PER_ENTRY * i + 4L) == toEdge) {
+                    flagContainer[0] = turnCosts.getInt((long) BYTES_PER_ENTRY * i + 8L);
                     return turnCostEnc.getDecimal(false, -1, readIntAccess);
                 }
             }
