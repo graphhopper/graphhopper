@@ -110,14 +110,14 @@ public class TurnCostStorage {
     }
 
     public void sortTurnCosts() {
-        IntArrayList turnCostIndices = new IntArrayList();
+        IntArrayList turnCostIndices = new IntArrayList(baseGraph.getNodes());
         for (int node = 0; node < baseGraph.getNodes(); node++)
             turnCostIndices.add(baseGraph.getNodeAccess().getTurnCostIndex(node));
 
-        IntArrayList froms = new IntArrayList();
-        IntArrayList tos = new IntArrayList();
-        IntArrayList flags = new IntArrayList();
-        IntArrayList nexts = new IntArrayList();
+        IntArrayList froms = new IntArrayList(turnCostsCount);
+        IntArrayList tos = new IntArrayList(turnCostsCount);
+        IntArrayList flags = new IntArrayList(turnCostsCount);
+        IntArrayList nexts = new IntArrayList(turnCostsCount);
         for (int i = 0; i < turnCostsCount; i++) {
             froms.add(turnCosts.getInt((long) i * BYTES_PER_ENTRY + TC_FROM));
             tos.add(turnCosts.getInt((long) i * BYTES_PER_ENTRY + TC_TO));
