@@ -66,7 +66,7 @@ public class BaseGraph implements Graph, Closeable {
         this.store = new BaseGraphNodesAndEdges(dir, intsForFlags, withElevation, withTurnCosts, segmentSize);
         this.nodeAccess = new GHNodeAccess(store);
         this.segmentSize = segmentSize;
-        turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", segmentSize)) : null;
+        turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
     }
 
     private int getOtherNode(int nodeThis, long edgePointer) {
@@ -150,9 +150,13 @@ public class BaseGraph implements Graph, Closeable {
         if (isFrozen())
             throw new IllegalStateException("base graph already frozen");
         store.setFrozen(true);
+        if (turnCostStorage != null)
+            turnCostStorage.freeze();
     }
 
     public synchronized boolean isFrozen() {
+        if (turnCostStorage != null && store.getFrozen() != turnCostStorage.getFrozen())
+            throw new IllegalStateException("store and turn cost storage should either be both frozen or both not frozen");
         return store.getFrozen();
     }
 
