@@ -122,7 +122,7 @@ public class CHTurnCostTest {
         graph.edge(1, 0).setDistance(30).set(speedEnc, 10, 10);
         graph.edge(0, 3).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(3, 4).setDistance(30).set(speedEnc, 10, 10);
-        graph.freeze();
+        // graph.freeze();
         setTurnCost(2, 1, 0, 2);
         setTurnCost(0, 3, 4, 4);
         checkPathUsingRandomContractionOrder(IntArrayList.from(2, 1, 0, 3, 4), 9, 6, 2, 4);
@@ -139,7 +139,7 @@ public class CHTurnCostTest {
         graph.edge(3, 2).setDistance(30).set(speedEnc, 10, 0);
         graph.edge(2, 4).setDistance(30).set(speedEnc, 10, 0);
         setRestriction(3, 2, 4);
-        graph.freeze();
+        // graph.freeze();
         compareCHWithDijkstra(10, new int[]{0, 1, 2, 3, 4});
     }
 
@@ -153,7 +153,7 @@ public class CHTurnCostTest {
         graph.edge(1, 2).setDistance(210.902000).set(speedEnc, 10, 10);
         graph.edge(1, 2).setDistance(210.862000).set(speedEnc, 10, 10);
         graph.edge(2, 3).setDistance(520.987000).set(speedEnc, 10, 10);
-        graph.freeze();
+        // graph.freeze();
         compareCHWithDijkstra(1000, new int[]{0, 1, 2, 3});
     }
 
@@ -257,7 +257,7 @@ public class CHTurnCostTest {
         graph.edge(5, 6).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(6, 7).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(7, 8).setDistance(10).set(speedEnc, 10, 0);
-        graph.freeze();
+        // graph.freeze();
         setTurnCost(1, 2, 3, 4);
         setTurnCost(3, 4, 5, 2);
         setTurnCost(5, 6, 7, 3);
@@ -279,7 +279,7 @@ public class CHTurnCostTest {
         EdgeIteratorState edge3 = graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 10);
         EdgeIteratorState edge4 = graph.edge(4, 5).setDistance(10).set(speedEnc, 10, 10);
         EdgeIteratorState edge5 = graph.edge(5, 6).setDistance(10).set(speedEnc, 10, 10);
-        graph.freeze();
+        // graph.freeze();
 
         // turn costs ->
         setTurnCost(edge0, edge1, 1, 5);
@@ -318,7 +318,7 @@ public class CHTurnCostTest {
         graph.edge(3, 2).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(2, 4).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(4, 1).setDistance(10).set(speedEnc, 10, 0);
-        graph.freeze();
+        // graph.freeze();
 
         // enforce loop (going counter-clockwise)
         setRestriction(0, 4, 1);
@@ -343,7 +343,7 @@ public class CHTurnCostTest {
         graph.edge(1, 5).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(5, 6).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(6, 4).setDistance(20).set(speedEnc, 10, 0);
-        graph.freeze();
+        // graph.freeze();
 
         setRestriction(7, 5, 6);
         setTurnCost(0, 2, 1, 2);
@@ -369,7 +369,7 @@ public class CHTurnCostTest {
         graph.edge(4, 2).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(2, 5).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(5, 6).setDistance(20).set(speedEnc, 10, 0);
-        graph.freeze();
+        // graph.freeze();
 
         // enforce loop (going counter-clockwise)
         setRestriction(1, 2, 5);
@@ -416,7 +416,7 @@ public class CHTurnCostTest {
         graph.edge(3, 4).setDistance(20).set(speedEnc, 10, 10);
         graph.edge(4, 9).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(9, 14).setDistance(20).set(speedEnc, 10, 10);
-        graph.freeze();
+        // graph.freeze();
 
         // enforce loop (going counter-clockwise)
         setRestriction(6, 7, 12);
@@ -499,7 +499,7 @@ public class CHTurnCostTest {
         graph.edge(27, 28).setDistance(1000).set(speedEnc, 10, 10);
         graph.edge(28, 26).setDistance(10).set(speedEnc, 10, 10);
         graph.edge(20, 28).setDistance(10).set(speedEnc, 10, 10);
-        graph.freeze();
+        // graph.freeze();
 
         // enforce figure of eight curve at node 7
         setRestriction(1, 7, 13);
@@ -546,7 +546,7 @@ public class CHTurnCostTest {
         graph.edge(0, 3).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(3, 2).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(2, 4).setDistance(10).set(speedEnc, 10, 0);
-        graph.freeze();
+        // graph.freeze();
         setRestriction(5, 6, 1);
 
         final IntArrayList expectedPath = IntArrayList.from(5, 6, 4, 0, 3, 2, 4, 6, 1);
@@ -571,7 +571,7 @@ public class CHTurnCostTest {
         graph.edge(0, 3).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(3, 2).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(2, 4).setDistance(10).set(speedEnc, 10, 0);
-        graph.freeze();
+        // graph.freeze();
         setRestriction(5, 6, 7);
 
         final IntArrayList expectedPath = IntArrayList.from(5, 6, 1, 4, 0, 3, 2, 4, 1, 6, 7);
@@ -636,7 +636,7 @@ public class CHTurnCostTest {
                 }
             }
         }
-        graph.freeze();
+        // graph.freeze();
         EdgeExplorer inExplorer = graph.createEdgeExplorer();
         EdgeExplorer outExplorer = graph.createEdgeExplorer();
 
@@ -669,7 +669,7 @@ public class CHTurnCostTest {
         graph.edge(1, 4).setDistance(290.819000).set(speedEnc, 10, 10);
         graph.edge(1, 3).setDistance(290.271000).set(speedEnc, 10, 10);
         setRestriction(3, 1, 2);
-        graph.freeze();
+        // graph.freeze();
 
         compareCHWithDijkstra(100, new int[]{1, 0, 3, 2, 4});
     }
@@ -682,7 +682,7 @@ public class CHTurnCostTest {
         graph.edge(0, 1).setDistance(60.067000).set(speedEnc, 10, 10);
         graph.edge(2, 3).setDistance(460.631000).set(speedEnc, 10, 10);
         graph.edge(2, 4).setDistance(460.184000).set(speedEnc, 10, 10);
-        graph.freeze();
+        // graph.freeze();
 
         compareCHWithDijkstra(1000, new int[]{1, 0, 3, 2, 4});
     }
@@ -704,7 +704,7 @@ public class CHTurnCostTest {
         graph.edge(4, 6).setDistance(10).set(speedEnc, 10, 0);
         graph.edge(6, 5).setDistance(10).set(speedEnc, 10, 0);
         setRestriction(8, 4, 6);
-        graph.freeze();
+        // graph.freeze();
 
         prepareCH(0, 1, 2, 3, 4, 5, 6, 7, 8);
         compareCHQueryWithDijkstra(0, 5);
@@ -725,7 +725,7 @@ public class CHTurnCostTest {
         graph.edge(2, 3).setDistance(2000).set(speedEnc, 10, 0);
         graph.edge(3, 1).setDistance(1000).set(speedEnc, 10, 0);
         setRestriction(0, 3, 1);
-        graph.freeze();
+        // graph.freeze();
         chConfig = chConfigs.get(2);
         prepareCH(4, 0, 2, 3, 1);
         Path path = createAlgo().calcPath(0, 1);
@@ -748,7 +748,7 @@ public class CHTurnCostTest {
         EdgeIteratorState edge4 = graph.edge(1, 0).setDistance(10).set(speedEnc, 10, 10);
         setTurnCost(edge0, edge4, 1, 8);
         setRestriction(edge0, edge3, 1);
-        graph.freeze();
+        // graph.freeze();
         checkPath(IntArrayList.from(2, 1, 0, 4), 3, 8, 2, 4, new int[]{2, 0, 1, 3, 4});
     }
 
@@ -777,7 +777,7 @@ public class CHTurnCostTest {
         setRestriction(edge1, edge4, 2);
         // cannot go 3-4-1
         setRestriction(edge0, edge3, 4);
-        graph.freeze();
+        // graph.freeze();
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
         List<GHPoint> points = Arrays.asList(
@@ -830,7 +830,7 @@ public class CHTurnCostTest {
         graph.edge(5, 4).setDistance(100).set(speedEnc, 10, 10);
         // cannot go, 2-3-1
         setRestriction(edge1, edge0, 3);
-        graph.freeze();
+        // graph.freeze();
         prepareCH(0, 1, 2, 3, 4, 5);
         assertEquals(5, chGraph.getBaseGraph().getEdges());
         assertEquals(7, chGraph.getEdges(), "expected two shortcuts: 3->5 and 5->3");
@@ -861,7 +861,7 @@ public class CHTurnCostTest {
         updateDistancesFor(graph, 0, 0.00, 0.00);
         updateDistancesFor(graph, 1, 0.02, 0.02);
         updateDistancesFor(graph, 2, 0.03, 0.03);
-        graph.freeze();
+        // graph.freeze();
         automaticPrepareCH();
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
@@ -889,7 +889,7 @@ public class CHTurnCostTest {
         updateDistancesFor(graph, 0, 0.01, 0.00);
         updateDistancesFor(graph, 1, 0.01, 0.02);
         updateDistancesFor(graph, 2, 0.00, 0.02);
-        graph.freeze();
+        // graph.freeze();
         automaticPrepareCH();
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
         index.prepareIndex();
@@ -926,7 +926,7 @@ public class CHTurnCostTest {
         updateDistancesFor(graph, 6, 0.0, 0.4);
         // not allowed to turn right at node 1 -> we have to take a u-turn at node 0 (or at the virtual node...)
         setRestriction(2, 1, 5);
-        graph.freeze();
+        // graph.freeze();
         chConfig = chConfigs.get(2);
         prepareCH(0, 1, 2, 3, 4, 5, 6);
         LocationIndexTree index = new LocationIndexTree(graph, new RAMDirectory());
@@ -979,7 +979,7 @@ public class CHTurnCostTest {
         updateDistancesFor(graph, 5, 47.0, 9.7);
         updateDistancesFor(graph, 6, 46.3, 9.7);
         updateDistancesFor(graph, 7, 46.2, 9.7);
-        graph.freeze();
+        // graph.freeze();
         automaticPrepareCH();
         RoutingAlgorithm chAlgo = new CHRoutingAlgorithmFactory(chGraph).createAlgo(new PMap().putObject(ALGORITHM, algo));
         Path path = chAlgo.calcPath(0, 5);
@@ -997,7 +997,7 @@ public class CHTurnCostTest {
         // a zero distance edge (like a passable barrier)!
         graph.edge(3, 4).setDistance(0).set(speedEnc, 10, 10);
         graph.edge(4, 5).setDistance(1000).set(speedEnc, 10, 10);
-        graph.freeze();
+        // graph.freeze();
         // u-turn costs are zero!
         chConfig = chConfigs.get(1);
         // contracting node 2 is supposed to create the 1-3 shortcut for both directions, but before fixing #2564
@@ -1016,7 +1016,7 @@ public class CHTurnCostTest {
         graph.edge(0, 4).setDistance(5470.08).set(speedEnc, 10, 10);
         graph.edge(4, 1).setDistance(2880.95).set(speedEnc, 10, 10);
         graph.edge(2, 3).setDistance(900).set(speedEnc, 10, 10);
-        graph.freeze();
+        // graph.freeze();
         prepareCH(1, 3, 0, 2, 4);
         compareCHQueryWithDijkstra(1, 2);
     }
@@ -1036,7 +1036,7 @@ public class CHTurnCostTest {
         graph.edge(1, 2).setDistance(1000).set(speedEnc, 10, 10);
         // edgeId=4
         graph.edge(0, 2).setDistance(1000).set(speedEnc, 10, 10);
-        graph.freeze();
+        // graph.freeze();
         prepareCH(2, 0, 1, 3, 4);
         assertEquals(2, chGraph.getShortcuts());
         RoutingCHEdgeIteratorState chEdge = chGraph.getEdgeIteratorState(6, 4);
@@ -1084,7 +1084,7 @@ public class CHTurnCostTest {
         // for larger graphs preparation takes much longer the higher the degree is!
         GHUtility.buildRandomGraph(graph, rnd, 20, 3.0, true, speedEnc, null, 0.9, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, maxCost, turnCostStorage);
-        graph.freeze();
+        // graph.freeze();
         checkStrict = false;
         IntArrayList contractionOrder = getRandomIntegerSequence(graph.getNodes(), rnd);
         compareCHWithDijkstra(100, contractionOrder.toArray());
@@ -1111,7 +1111,7 @@ public class CHTurnCostTest {
     private void compareWithDijkstraOnRandomGraph_heuristic(long seed) {
         GHUtility.buildRandomGraph(graph, new Random(seed), 20, 3.0, true, speedEnc, null, 0.9, 0.8);
         GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, maxCost, turnCostStorage);
-        graph.freeze();
+        // graph.freeze();
         checkStrict = false;
         automaticCompareCHWithDijkstra(100);
     }
@@ -1181,6 +1181,8 @@ public class CHTurnCostTest {
     }
 
     private void automaticPrepareCH() {
+        if (!graph.isFrozen())
+            graph.freeze();
         PMap pMap = new PMap();
         pMap.putObject(PERIODIC_UPDATES, 20);
         pMap.putObject(LAST_LAZY_NODES_UPDATES, 100);
