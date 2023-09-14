@@ -53,6 +53,20 @@ public class TurnCostStorage {
     private IntArrayList frz_tos;
     private IntArrayList frz_flags;
 
+    private int[] flagsContainer = new int[1];
+
+    private EdgeIntAccess edgeIntAccess = new EdgeIntAccess() {
+        @Override
+        public int getInt(int edgeId, int index) {
+            return flagsContainer[0];
+        }
+
+        @Override
+        public void setInt(int edgeId, int index, int value) {
+            throw new UnsupportedOperationException();
+        }
+    };
+
     public TurnCostStorage(BaseGraph baseGraph, DataAccess turnCosts) {
         this.baseGraph = baseGraph;
         this.turnCosts = turnCosts;
@@ -160,18 +174,8 @@ public class TurnCostStorage {
             int end = frz_tcIndices.get(viaNode + 1);
             for (int i = start; i < end; i++) {
                 if (frz_froms.get(i) == fromEdge && frz_tos.get(i) == toEdge) {
-                    int flags = frz_flags.get(i);
-                    return turnCostEnc.getDecimal(false, -1, new EdgeIntAccess() {
-                        @Override
-                        public int getInt(int edgeId, int index) {
-                            return flags;
-                        }
-
-                        @Override
-                        public void setInt(int edgeId, int index, int value) {
-                            throw new UnsupportedOperationException();
-                        }
-                    });
+                    flagsContainer[0] = frz_flags.get(i);
+                    return turnCostEnc.getDecimal(false, -1, edgeIntAccess);
                 }
             }
             return 0;
