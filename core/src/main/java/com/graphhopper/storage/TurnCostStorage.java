@@ -129,7 +129,7 @@ public class TurnCostStorage {
             nexts.add(turnCosts.getInt((long) i * BYTES_PER_ENTRY + TC_NEXT));
         }
 
-        frz_tcIndices.ensureCapacity(4L * baseGraph.getNodes());
+        frz_tcIndices.ensureCapacity(4L * baseGraph.getNodes() + 1);
         int count = 0;
         for (int node = 0; node < baseGraph.getNodes(); node++) {
             int index = baseGraph.getNodeAccess().getTurnCostIndex(node);
@@ -142,6 +142,7 @@ public class TurnCostStorage {
                 count++;
             }
         }
+        frz_tcIndices.setInt(4L * baseGraph.getNodes(), count);
     }
 
     /**
@@ -180,7 +181,7 @@ public class TurnCostStorage {
     public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
         if (frozen) {
             int start = frz_tcIndices.getInt(4L * viaNode);
-            int end = viaNode == baseGraph.getNodes() - 1 ? turnCostsCount : frz_tcIndices.getInt(4L * (viaNode + 1));
+            int end = frz_tcIndices.getInt(4L * (viaNode + 1));
             for (int i = start; i < end; i++) {
                 if (turnCosts.getInt(12L * i) == fromEdge && turnCosts.getInt(12L * i + 4L) == toEdge) {
                     flagContainer[0] = turnCosts.getInt(12L * i + 8L);
