@@ -18,11 +18,9 @@
 package com.graphhopper.storage;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.IntsRefEdgeIntAccess;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
@@ -50,9 +48,7 @@ public class TurnCostStorage {
 
     private boolean frozen;
 
-    private int[] frz_tcIndices;
-    private LongArrayList frz_fromsTos;
-    private IntArrayList frz_flags;
+    private DataAccess frz_tcIndices;
 
     private int[] flagContainer = new int[1];
     private EdgeIntAccess readIntAccess = new EdgeIntAccess() {
@@ -70,6 +66,8 @@ public class TurnCostStorage {
     public TurnCostStorage(BaseGraph baseGraph, DataAccess turnCosts) {
         this.baseGraph = baseGraph;
         this.turnCosts = turnCosts;
+
+        frz_tcIndices = baseGraph.getDirectory().create("frz_idx", DAType.RAM_INT);
     }
 
     public TurnCostStorage create(long initBytes) {
@@ -116,25 +114,34 @@ public class TurnCostStorage {
     }
 
     public void sortTurnCosts() {
-        frz_tcIndices = new int[baseGraph.getNodes() + 1];
-        frz_fromsTos = new LongArrayList(turnCostsCount);
-        frz_flags = new IntArrayList(turnCostsCount);
+        IntArrayList turnCostIndices = new IntArrayList();
+        for (int node = 0; node < baseGraph.getNodes(); node++)
+            turnCostIndices.add(baseGraph.getNodeAccess().getTurnCostIndex(node));
+
+        IntArrayList froms = new IntArrayList();
+        IntArrayList tos = new IntArrayList();
+        IntArrayList flags = new IntArrayList();
+        IntArrayList nexts = new IntArrayList();
+        for (int i = 0; i < turnCostsCount; i++) {
+            froms.add(turnCosts.getInt((long) i * BYTES_PER_ENTRY + TC_FROM));
+            tos.add(turnCosts.getInt((long) i * BYTES_PER_ENTRY + TC_TO));
+            flags.add(turnCosts.getInt((long) i * BYTES_PER_ENTRY + TC_FLAGS));
+            nexts.add(turnCosts.getInt((long) i * BYTES_PER_ENTRY + TC_NEXT));
+        }
+
+        frz_tcIndices.ensureCapacity(4L * baseGraph.getNodes());
         int count = 0;
         for (int node = 0; node < baseGraph.getNodes(); node++) {
             int index = baseGraph.getNodeAccess().getTurnCostIndex(node);
-            frz_tcIndices[node] = count;
+            frz_tcIndices.setInt(4L * node, count);
             while (index != NO_TURN_ENTRY) {
-                long edgePair = BitUtil.LITTLE.toLong(
-                        turnCosts.getInt((long) index * BYTES_PER_ENTRY + TC_FROM),
-                        turnCosts.getInt((long) index * BYTES_PER_ENTRY + TC_TO)
-                );
-                frz_fromsTos.add(edgePair);
-                frz_flags.add(turnCosts.getInt((long) index * BYTES_PER_ENTRY + TC_FLAGS));
-                index = turnCosts.getInt((long) index * BYTES_PER_ENTRY + TC_NEXT);
+                turnCosts.setInt(12L * count, froms.get(index));
+                turnCosts.setInt(12L * count + 4, tos.get(index));
+                turnCosts.setInt(12L * count + 8, flags.get(index));
+                index = nexts.get(index);
                 count++;
             }
         }
-        frz_tcIndices[baseGraph.getNodes()] = count;
     }
 
     /**
@@ -172,12 +179,11 @@ public class TurnCostStorage {
      */
     public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
         if (frozen) {
-            int start = frz_tcIndices[viaNode];
-            int end = frz_tcIndices[viaNode + 1];
+            int start = frz_tcIndices.getInt(4L * viaNode);
+            int end = viaNode == baseGraph.getNodes() - 1 ? turnCostsCount : frz_tcIndices.getInt(4L * (viaNode + 1));
             for (int i = start; i < end; i++) {
-                long l = frz_fromsTos.get(i);
-                if (BitUtil.LITTLE.getIntLow(l) == fromEdge && BitUtil.LITTLE.getIntHigh(l) == toEdge) {
-                    flagContainer[0] = frz_flags.get(i);
+                if (turnCosts.getInt(12L * i) == fromEdge && turnCosts.getInt(12L * i + 4L) == toEdge) {
+                    flagContainer[0] = turnCosts.getInt(12L * i + 8L);
                     return turnCostEnc.getDecimal(false, -1, readIntAccess);
                 }
             }
