@@ -48,14 +48,19 @@ public class TurnCostStorage {
 
     private boolean frozen;
 
-    private IntArrayList frz_tcIndices;
-    private IntArrayList frz_froms;
-    private IntArrayList frz_tos;
-    private IntArrayList frz_flags;
+    private DataAccess frz_tcIndices;
+    private DataAccess frz_froms;
+    private DataAccess frz_tos;
+    private DataAccess frz_flags;
 
     public TurnCostStorage(BaseGraph baseGraph, DataAccess turnCosts) {
         this.baseGraph = baseGraph;
         this.turnCosts = turnCosts;
+
+        frz_tcIndices = baseGraph.getDirectory().create("frz_idx", DAType.RAM_INT);
+        frz_froms = baseGraph.getDirectory().create("frz_from", DAType.RAM_INT);
+        frz_tos = baseGraph.getDirectory().create("frz_to", DAType.RAM_INT);
+        frz_flags = baseGraph.getDirectory().create("frz_flag", DAType.RAM_INT);
     }
 
     public TurnCostStorage create(long initBytes) {
@@ -102,23 +107,23 @@ public class TurnCostStorage {
     }
 
     public void sortTurnCosts() {
-        frz_tcIndices = new IntArrayList(baseGraph.getNodes() + 1);
-        frz_froms = new IntArrayList(turnCostsCount);
-        frz_tos = new IntArrayList(turnCostsCount);
-        frz_flags = new IntArrayList(turnCostsCount);
+        frz_tcIndices.ensureCapacity(4L * baseGraph.getNodes() + 1);
+        frz_froms.ensureCapacity(4L * turnCostsCount);
+        frz_tos.ensureCapacity(4L * turnCostsCount);
+        frz_flags.ensureCapacity(4L * turnCostsCount);
         int count = 0;
         for (int node = 0; node < baseGraph.getNodes(); node++) {
             int index = baseGraph.getNodeAccess().getTurnCostIndex(node);
-            frz_tcIndices.add(count);
+            frz_tcIndices.setInt(4L * node, count);
             while (index != NO_TURN_ENTRY) {
-                frz_froms.add(turnCosts.getInt((long) index * BYTES_PER_ENTRY + TC_FROM));
-                frz_tos.add(turnCosts.getInt((long) index * BYTES_PER_ENTRY + TC_TO));
-                frz_flags.add(turnCosts.getInt((long) index * BYTES_PER_ENTRY + TC_FLAGS));
+                frz_froms.setInt(4L * count, turnCosts.getInt((long) index * BYTES_PER_ENTRY + TC_FROM));
+                frz_tos.setInt(4L * count, turnCosts.getInt((long) index * BYTES_PER_ENTRY + TC_TO));
+                frz_flags.setInt(4L * count, turnCosts.getInt((long) index * BYTES_PER_ENTRY + TC_FLAGS));
                 index = turnCosts.getInt((long) index * BYTES_PER_ENTRY + TC_NEXT);
                 count++;
             }
         }
-        frz_tcIndices.add(count);
+        frz_tcIndices.setInt(4L * baseGraph.getNodes(), count);
     }
 
     /**
@@ -156,10 +161,10 @@ public class TurnCostStorage {
      */
     public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
         if (frozen) {
-            int start = frz_tcIndices.get(viaNode);
-            int end = frz_tcIndices.get(viaNode + 1);
+            int start = frz_tcIndices.getInt(4L * viaNode);
+            int end = frz_tcIndices.getInt(4L * (viaNode + 1));
             for (int i = start; i < end; i++) {
-                if (frz_froms.get(i) == fromEdge && frz_tos.get(i) == toEdge)
+                if (frz_froms.getInt(4L * i) == fromEdge && frz_tos.getInt(4L * i) == toEdge)
                     return Double.POSITIVE_INFINITY;
             }
             return 0;
