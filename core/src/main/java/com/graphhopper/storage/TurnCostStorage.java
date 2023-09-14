@@ -48,8 +48,6 @@ public class TurnCostStorage {
 
     private boolean frozen;
 
-    private DataAccess frz_tcIndices;
-
     private int[] flagContainer = new int[1];
     private EdgeIntAccess readIntAccess = new EdgeIntAccess() {
         @Override
@@ -66,8 +64,6 @@ public class TurnCostStorage {
     public TurnCostStorage(BaseGraph baseGraph, DataAccess turnCosts) {
         this.baseGraph = baseGraph;
         this.turnCosts = turnCosts;
-
-        frz_tcIndices = baseGraph.getDirectory().create("frz_idx", DAType.RAM_INT);
     }
 
     public TurnCostStorage create(long initBytes) {
@@ -129,11 +125,10 @@ public class TurnCostStorage {
             nexts.add(turnCosts.getInt((long) i * BYTES_PER_ENTRY + TC_NEXT));
         }
 
-        frz_tcIndices.ensureCapacity(4L * baseGraph.getNodes() + 1);
         int count = 0;
         for (int node = 0; node < baseGraph.getNodes(); node++) {
             int index = baseGraph.getNodeAccess().getTurnCostIndex(node);
-            frz_tcIndices.setInt(4L * node, count);
+            baseGraph.getNodeAccess().setTurnCostIndex(node, count);
             while (index != NO_TURN_ENTRY) {
                 turnCosts.setInt(12L * count, froms.get(index));
                 turnCosts.setInt(12L * count + 4, tos.get(index));
@@ -142,7 +137,6 @@ public class TurnCostStorage {
                 count++;
             }
         }
-        frz_tcIndices.setInt(4L * baseGraph.getNodes(), count);
     }
 
     /**
@@ -180,8 +174,8 @@ public class TurnCostStorage {
      */
     public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
         if (frozen) {
-            int start = frz_tcIndices.getInt(4L * viaNode);
-            int end = frz_tcIndices.getInt(4L * (viaNode + 1));
+            int start = baseGraph.getNodeAccess().getTurnCostIndex(viaNode);
+            int end = viaNode == baseGraph.getNodes() - 1 ? turnCostsCount : baseGraph.getNodeAccess().getTurnCostIndex(viaNode + 1);
             for (int i = start; i < end; i++) {
                 if (turnCosts.getInt(12L * i) == fromEdge && turnCosts.getInt(12L * i + 4L) == toEdge) {
                     flagContainer[0] = turnCosts.getInt(12L * i + 8L);
