@@ -37,6 +37,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return RoadAccess.create();
         } else if (MaxSpeed.KEY.equals(name)) {
             return MaxSpeed.create();
+        } else if (MaxSpeedEstimated.KEY.equals(name)) {
+            return MaxSpeedEstimated.create();
         } else if (MaxWeight.KEY.equals(name)) {
             return MaxWeight.create();
         } else if (MaxWeightExcept.KEY.equals(name)) {
@@ -81,6 +83,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return HorseRating.create();
         } else if (Country.KEY.equals(name)) {
             return Country.create();
+        } else if (State.KEY.equals(name)) {
+            return State.create();
         } else if (name.endsWith(Subnetwork.key(""))) {
             return Subnetwork.create(name);
         } else if (MaxSlope.KEY.equals(name)) {
@@ -91,6 +95,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return Curvature.create();
         } else if (Crossing.KEY.equals(name)) {
             return new EnumEncodedValue<>(Crossing.KEY, Crossing.class);
+        } else if (FerrySpeed.KEY.equals(name)) {
+            return FerrySpeed.create();
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }

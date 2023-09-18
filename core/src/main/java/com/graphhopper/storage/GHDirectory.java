@@ -57,7 +57,7 @@ public class GHDirectory implements Directory {
      * the specified percentage (only applied for load, not for import).
      * As keys can be patterns the order is important and the LinkedHashMap is forced as type.
      */
-    public void configure(LinkedHashMap<String, String> config) {
+    public Directory configure(LinkedHashMap<String, String> config) {
         for (Map.Entry<String, String> kv : config.entrySet()) {
             String value = kv.getValue().trim();
             if (kv.getKey().startsWith("preload."))
@@ -72,6 +72,7 @@ public class GHDirectory implements Directory {
                 defaultTypes.put(pattern, DAType.fromString(value));
             }
         }
+        return this;
     }
 
     /**

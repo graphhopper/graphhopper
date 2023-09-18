@@ -116,7 +116,7 @@ public class AStar extends AbstractRoutingAlgorithm implements EdgeToEdgeRouting
                 if (!accept(iter, currEdge.edge) || (currEdge.edge == NO_EDGE && fromOutEdge != ANY_EDGE && iter.getEdge() != fromOutEdge))
                     continue;
 
-                double tmpWeight = GHUtility.calcWeightWithTurnWeightWithAccess(weighting, iter, false, currEdge.edge) + currEdge.weightOfVisitedPath;
+                double tmpWeight = GHUtility.calcWeightWithTurnWeight(weighting, iter, false, currEdge.edge) + currEdge.weightOfVisitedPath;
                 if (Double.isInfinite(tmpWeight)) {
                     continue;
                 }

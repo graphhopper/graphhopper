@@ -3,6 +3,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
 
@@ -41,7 +42,7 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
         if (highwayValue == null) {
             WayAccess access = WayAccess.CAN_SKIP;
 
-            if (way.hasTag("route", ferries)) {
+            if (FerrySpeedCalculator.isFerry(way)) {
                 // if bike is NOT explicitly tagged allow bike but only if foot is not specified either
                 String bikeTag = way.getTag("bicycle");
                 if (bikeTag == null && !way.hasTag("foot") || intendedValues.contains(bikeTag))

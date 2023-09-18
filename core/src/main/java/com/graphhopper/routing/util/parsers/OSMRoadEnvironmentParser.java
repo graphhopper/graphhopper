@@ -21,6 +21,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Collections;
@@ -39,17 +40,8 @@ public class OSMRoadEnvironmentParser implements TagParser {
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
-        List<Map<String, Object>> nodeTags = readerWay.getTag("node_tags", Collections.emptyList());
-        // a barrier edge has the restriction in both nodes and the tags are the same
-        if (readerWay.hasTag("gh:barrier_edge") && nodeTags.get(0).containsKey("ford")) {
-            roadEnvEnc.setEnum(false, edgeId, edgeIntAccess, FORD);
-            return;
-        }
-
         RoadEnvironment roadEnvironment = OTHER;
-        if ((readerWay.hasTag("route", "ferry") && !readerWay.hasTag("ferry", "no")) ||
-                // TODO shuttle_train is sometimes also used in relations, e.g. https://www.openstreetmap.org/relation/1932780
-                readerWay.hasTag("route", "shuttle_train") && !readerWay.hasTag("shuttle_train", "no"))
+        if (FerrySpeedCalculator.isFerry(readerWay))
             roadEnvironment = FERRY;
         else if (readerWay.hasTag("bridge") && !readerWay.hasTag("bridge", "no"))
             roadEnvironment = BRIDGE;
@@ -57,8 +49,14 @@ public class OSMRoadEnvironmentParser implements TagParser {
             roadEnvironment = TUNNEL;
         else if (readerWay.hasTag("ford") || readerWay.hasTag("highway", "ford"))
             roadEnvironment = FORD;
-        else if (readerWay.hasTag("highway"))
-            roadEnvironment = ROAD;
+        else {
+            List<Map<String, Object>> nodeTags = readerWay.getTag("node_tags", Collections.emptyList());
+            // a barrier edge has the restriction in both nodes and the tags are the same
+            if (readerWay.hasTag("gh:barrier_edge") && nodeTags.get(0).containsKey("ford"))
+                roadEnvironment = FORD;
+            else if (readerWay.hasTag("highway"))
+                roadEnvironment = ROAD;
+        }
 
         if (roadEnvironment != OTHER)
             roadEnvEnc.setEnum(false, edgeId, edgeIntAccess, roadEnvironment);

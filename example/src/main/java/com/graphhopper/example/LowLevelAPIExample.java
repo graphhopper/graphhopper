@@ -13,11 +13,13 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -38,7 +40,7 @@ public class LowLevelAPIExample {
     public static void createAndSaveGraph() {
         {
             BooleanEncodedValue accessEnc = VehicleAccess.create("car");
-            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
             EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
             BaseGraph graph = new BaseGraph.Builder(em).setDir(new RAMDirectory(graphLocation, true)).create();
             // Make a weighted edge between two nodes and set average speed to 50km/h
@@ -63,7 +65,7 @@ public class LowLevelAPIExample {
             // Load the graph ... can be also in a different code location
             // note that the EncodingManager must be the same
             BooleanEncodedValue accessEnc = VehicleAccess.create("car");
-            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+            DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
             EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
             BaseGraph graph = new BaseGraph.Builder(em).setDir(new RAMDirectory(graphLocation, true)).build();
             graph.loadExisting();
@@ -77,7 +79,7 @@ public class LowLevelAPIExample {
             Snap fromSnap = index.findClosest(15.15, 20.20, EdgeFilter.ALL_EDGES);
             Snap toSnap = index.findClosest(15.25, 20.21, EdgeFilter.ALL_EDGES);
             QueryGraph queryGraph = QueryGraph.create(graph, fromSnap, toSnap);
-            Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
+            Weighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, em, TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel());
             Path path = new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED).calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
             assert Helper.round(path.getDistance(), -2) == 1500;
 
@@ -90,9 +92,9 @@ public class LowLevelAPIExample {
     public static void useContractionHierarchiesToMakeQueriesFaster() {
         // Creating and saving the graph
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
-        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
+        DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
         EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc);
+        Weighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, em, TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel());
         CHConfig chConfig = CHConfig.nodeBased("my_profile", weighting);
         BaseGraph graph = new BaseGraph.Builder(em)
                 .setDir(new RAMDirectory(graphLocation, true))

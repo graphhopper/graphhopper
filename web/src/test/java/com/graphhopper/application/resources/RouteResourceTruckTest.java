@@ -5,7 +5,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.config.Profile;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -37,7 +37,8 @@ public class RouteResourceTruckTest {
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,hgv").
                 putObject("import.osm.ignored_highways", "").
                 putObject("custom_models.directory", "./src/test/resources/com/graphhopper/application/resources").
-                setProfiles(Arrays.asList(new CustomProfile("truck").setCustomModel(null).setVehicle("roads").putHint("custom_model_files", Arrays.asList("truck.json")))).
+                setProfiles(Arrays.asList(new Profile("truck").setCustomModel(null).
+                        setVehicle("roads").putHint("custom_model_files", Arrays.asList("test_truck.json")))).
                 setCHProfiles(Arrays.asList(new CHProfile("truck")));
         return config;
     }

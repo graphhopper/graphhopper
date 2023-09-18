@@ -55,7 +55,7 @@ public class PtRouteResourceTest {
                 putObject("gtfs.file", "../reader-gtfs/files/sample-feed").
                 putObject("graph.location", DIR).
                 putObject("import.osm.ignored_highways", "").
-                setProfiles(Collections.singletonList(new Profile("foot").setVehicle("foot").setWeighting("fastest")));
+                setProfiles(Collections.singletonList(new Profile("foot").setVehicle("foot")));
         return config;
     }
 
@@ -179,7 +179,6 @@ public class PtRouteResourceTest {
                 .request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         InfoResource.Info info = response.readEntity(InfoResource.Info.class);
-        assertTrue(info.supported_vehicles.contains("pt"));
         assertTrue(info.profiles.stream().anyMatch(p -> p.name.equals("pt")));
     }
 

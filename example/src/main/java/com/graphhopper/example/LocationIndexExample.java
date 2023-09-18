@@ -19,7 +19,7 @@ public class LocationIndexExample {
 
     public static void graphhopperLocationIndex(String relDir) {
         GraphHopper hopper = new GraphHopper();
-        hopper.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest"));
+        hopper.setProfiles(new Profile("car").setVehicle("car"));
         hopper.setOSMFile(relDir + "core/files/andorra.osm.pbf");
         hopper.setGraphHopperLocation("./target/locationindex-graph-cache");
         hopper.importOrLoad();

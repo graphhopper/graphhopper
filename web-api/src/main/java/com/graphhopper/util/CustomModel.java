@@ -24,16 +24,13 @@ import com.graphhopper.json.Statement;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * This class is used in combination with CustomProfile.
- */
 public class CustomModel {
 
     public static final String KEY = "custom_model";
 
     // 'Double' instead of 'double' is required to know if it was 0 or not specified in the request.
     private Double distanceInfluence;
-    private double headingPenalty = Parameters.Routing.DEFAULT_HEADING_PENALTY;
+    private Double headingPenalty;
     private boolean internal;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
@@ -150,7 +147,7 @@ public class CustomModel {
         return this;
     }
 
-    public double getHeadingPenalty() {
+    public Double getHeadingPenalty() {
         return headingPenalty;
     }
 
@@ -177,6 +174,8 @@ public class CustomModel {
 
         if (queryModel.getDistanceInfluence() != null)
             mergedCM.distanceInfluence = queryModel.distanceInfluence;
+        if (queryModel.getHeadingPenalty() != null)
+            mergedCM.headingPenalty = queryModel.headingPenalty;
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
         mergedCM.addAreas(queryModel.getAreas());

@@ -36,7 +36,7 @@ public class RoutingExampleTC {
         GHRequest req = new GHRequest(42.50822, 1.533966, 42.506899, 1.525372).
                 setCurbsides(Arrays.asList(CURBSIDE_ANY, CURBSIDE_RIGHT)).
                 setProfile("car");
-        route(hopper, req, 1729, 112_000);
+        route(hopper, req, 1729, 110_800);
     }
 
     public static void routeWithTurnCostsAndOtherUTurnCosts(GraphHopper hopper) {
@@ -46,8 +46,8 @@ public class RoutingExampleTC {
                 // will be ignored and those set for our profile will be used.
                 .putHint(Parameters.CH.DISABLE, true)
                 .setProfile("car");
-        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 10), 1370, 100_000);
-        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 15), 1370, 105_000);
+        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 10), 1370, 98_700);
+        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 15), 1370, 103_700);
     }
 
     private static void route(GraphHopper hopper, GHRequest req, int expectedDistance, int expectedTime) {
@@ -67,7 +67,7 @@ public class RoutingExampleTC {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-tc-graph-cache");
-        Profile profile = new Profile("car").setVehicle("car").setWeighting("fastest")
+        Profile profile = new Profile("car").setVehicle("car")
                 // enabling turn costs means OSM turn restriction constraints like 'no_left_turn' will be taken into account
                 .setTurnCosts(true)
                 // we can also set u_turn_costs (in seconds). by default no u-turns are allowed, but with this setting

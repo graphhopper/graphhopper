@@ -138,9 +138,11 @@ public class RouteResource {
         String logStr = (httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent")) + " " + points + ", took: " + String.format("%.1f", took) + "ms, algo: " + algoStr + ", profile: " + profileName;
 
         if (ghResponse.hasErrors()) {
-            MultiException ex = new MultiException(ghResponse.getErrors());
-            logger.info(logStr, ex);
-            throw ex;
+            logger.info(logStr + " " + ghResponse);
+            return Response.status(Response.Status.BAD_REQUEST).
+                    entity(new MultiException(ghResponse.getErrors())).
+                    type(writeGPX ? "application/gpx+xml" : MediaType.APPLICATION_JSON).
+                    build();
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
                     + ", distance0: " + ghResponse.getBest().getDistance()
@@ -190,9 +192,7 @@ public class RouteResource {
                 + ", custom_model: " + request.getCustomModel();
 
         if (ghResponse.hasErrors()) {
-            MultiException ex = new MultiException(ghResponse.getErrors());
-            logger.error(logStr, ex);
-            throw ex;
+            throw new MultiException(ghResponse.getErrors());
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
                     + ", distance0: " + ghResponse.getBest().getDistance()

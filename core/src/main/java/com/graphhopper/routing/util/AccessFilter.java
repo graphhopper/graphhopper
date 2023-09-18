@@ -43,7 +43,7 @@ public class AccessFilter implements EdgeFilter {
     }
 
     /**
-     * Accepts all edges that are either forward or backward for the given flag encoder.
+     * Accepts all edges that are either forward or backward according to the given accessEnc.
      * Edges where neither one of the flags is enabled will still not be accepted. If you need to retrieve all edges
      * regardless of their encoding use {@link EdgeFilter#ALL_EDGES} instead.
      */
@@ -57,13 +57,6 @@ public class AccessFilter implements EdgeFilter {
 
     @Override
     public final boolean accept(EdgeIteratorState iter) {
-        if (iter.getBaseNode() == iter.getAdjNode()) {
-            // this is needed for edge-based CH, see #1525
-            // background: we need to explicitly accept shortcut edges that are loops, because if we insert a loop
-            // shortcut with the fwd flag an AccessFilter with bwd=true and fwd=false does not find it, although
-            // it is also an 'incoming' edge.
-            return iter.get(accessEnc) || iter.getReverse(accessEnc);
-        }
         return fwd && iter.get(accessEnc) || bwd && iter.getReverse(accessEnc);
     }
 

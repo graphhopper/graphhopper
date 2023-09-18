@@ -100,8 +100,8 @@ public class CHPreparationGraph {
                     graph.getEdges() + " vs. " + prepareGraph.getOriginalEdges());
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            double weightFwd = weighting.calcEdgeWeightWithAccess(iter, false);
-            double weightBwd = weighting.calcEdgeWeightWithAccess(iter, true);
+            double weightFwd = weighting.calcEdgeWeight(iter, false);
+            double weightBwd = weighting.calcEdgeWeight(iter, true);
             prepareGraph.addEdge(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(), weightFwd, weightBwd);
         }
         prepareGraph.prepareForContraction();
@@ -131,7 +131,7 @@ public class CHPreparationGraph {
             int viaNode = tcIter.getViaNode();
             if (viaNode < lastNode)
                 throw new IllegalStateException();
-            long edgePair = BitUtil.LITTLE.combineIntsToLong(tcIter.getFromEdge(), tcIter.getToEdge());
+            long edgePair = BitUtil.LITTLE.toLong(tcIter.getFromEdge(), tcIter.getToEdge());
             // note that as long as we only use OSM turn restrictions all the turn costs are infinite anyway
             double turnCost = tcIter.getCost(turnCostEnc);
             int index = turnCostEdgePairs.size();
@@ -180,6 +180,8 @@ public class CHPreparationGraph {
 
     public void addEdge(int from, int to, int edge, double weightFwd, double weightBwd) {
         checkNotReady();
+        if (from == to)
+            throw new IllegalArgumentException("Loop edges are no longer supported since #2862");
         boolean fwd = Double.isFinite(weightFwd);
         boolean bwd = Double.isFinite(weightBwd);
         if (!fwd && !bwd)
@@ -578,12 +580,12 @@ public class CHPreparationGraph {
 
         @Override
         public int getOrigEdgeKeyFirstAB() {
-            return GHUtility.createEdgeKey(prepareEdge, nodeA == nodeB, false);
+            return GHUtility.createEdgeKey(prepareEdge, false);
         }
 
         @Override
         public int getOrigEdgeKeyFirstBA() {
-            return GHUtility.createEdgeKey(prepareEdge, nodeA == nodeB, true);
+            return GHUtility.createEdgeKey(prepareEdge, true);
         }
 
         @Override
@@ -884,13 +886,13 @@ public class CHPreparationGraph {
             void addEdge(int from, int to, int edge, boolean fwd, boolean bwd) {
                 fromNodes.add(from);
                 toNodes.add(to);
-                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, from == to, false), fwd, bwd));
+                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, false), fwd, bwd));
                 maxFrom = Math.max(maxFrom, from);
                 maxTo = Math.max(maxTo, to);
 
                 fromNodes.add(to);
                 toNodes.add(from);
-                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, from == to, true), bwd, fwd));
+                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, true), bwd, fwd));
                 maxFrom = Math.max(maxFrom, to);
                 maxTo = Math.max(maxTo, from);
             }

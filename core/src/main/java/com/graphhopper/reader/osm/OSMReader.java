@@ -27,14 +27,17 @@ import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.dem.EdgeElevationSmoothing;
+import com.graphhopper.reader.dem.EdgeElevationSmoothingMovingAverage;
+import com.graphhopper.reader.dem.EdgeElevationSmoothingRamer;
 import com.graphhopper.reader.dem.EdgeSampling;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.Country;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.State;
 import com.graphhopper.routing.util.AreaIndex;
 import com.graphhopper.routing.util.CustomArea;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
@@ -221,7 +224,7 @@ public class OSMReader {
     }
 
     private boolean isFerry(ReaderWay way) {
-        return way.hasTag("route", "ferry", "shuttle_train");
+        return FerrySpeedCalculator.isFerry(way);
     }
 
     /**
@@ -260,21 +263,35 @@ public class OSMReader {
 
         // special handling for countries: since they are built-in with GraphHopper they are always fed to the EncodingManager
         Country country = Country.MISSING;
-        CustomArea prevCustomArea = null;
+        State state = State.MISSING;
+        double countryArea = Double.POSITIVE_INFINITY;
         for (CustomArea customArea : customAreas) {
+            // ignore areas that aren't countries
             if (customArea.getProperties() == null) continue;
-            Object alpha3 = customArea.getProperties().get(Country.ISO_ALPHA3);
-            if (alpha3 == null)
+            String alpha2WithSubdivision = (String) customArea.getProperties().get(State.ISO_3166_2);
+            if (alpha2WithSubdivision == null)
                 continue;
 
-            // multiple countries are available -> pick the smaller one, see #2663
-            if (prevCustomArea != null && prevCustomArea.getArea() < customArea.getArea())
-                break;
+            // the country string must be either something like US-CA (including subdivision) or just DE
+            String[] strs = alpha2WithSubdivision.split("-");
+            if (strs.length == 0 || strs.length > 2)
+                throw new IllegalStateException("Invalid alpha2: " + alpha2WithSubdivision);
+            Country c = Country.find(strs[0]);
+            if (c == null)
+                throw new IllegalStateException("Unknown country: " + strs[0]);
 
-            prevCustomArea = customArea;
-            country = Country.valueOf((String) alpha3);
+            if (
+                // countries with subdivision overrule those without subdivision as well as bigger ones with subdivision
+                    strs.length == 2 && (state == State.MISSING || customArea.getArea() < countryArea)
+                            // countries without subdivision only overrule bigger ones without subdivision
+                            || strs.length == 1 && (state == State.MISSING && customArea.getArea() < countryArea)) {
+                country = c;
+                state = State.find(alpha2WithSubdivision);
+                countryArea = customArea.getArea();
+            }
         }
         way.setTag("country", country);
+        way.setTag("country_state", state);
 
         if (countryRuleFactory != null) {
             CountryRule countryRule = countryRuleFactory.getCountryRule(country);
@@ -316,9 +333,11 @@ public class OSMReader {
 
             // smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
             if (config.getElevationSmoothing().equals("ramer"))
-                EdgeElevationSmoothing.smoothRamer(pointList, config.getElevationSmoothingRamerMax());
+                EdgeElevationSmoothingRamer.smooth(pointList, config.getElevationSmoothingRamerMax());
             else if (config.getElevationSmoothing().equals("moving_average"))
-                EdgeElevationSmoothing.smoothMovingAverage(pointList);
+                EdgeElevationSmoothingMovingAverage.smooth(pointList, config.getSmoothElevationAverageWindowSize());
+            else if (!config.getElevationSmoothing().isEmpty())
+                throw new AssertionError("Unsupported elevation smoothing algorithm: '" + config.getElevationSmoothing() + "'");
         }
 
         if (config.getMaxWayPointDistance() > 0 && pointList.size() > 2)
@@ -469,11 +488,10 @@ public class OSMReader {
                     " minutes), distance=" + distance + " m");
             return;
         }
-        // These tags will be present if 1) isCalculateWayDistance was true for this way, 2) no OSM nodes were missing
+        // tag will be present if 1) isCalculateWayDistance was true for this way, 2) no OSM nodes were missing
         // such that the distance could actually be calculated, 3) there was a duration tag we could parse, and 4) the
         // derived speed was not unrealistically slow.
         way.setTag("speed_from_duration", speedInKmPerHour);
-        way.setTag("duration:seconds", durationInSeconds);
     }
 
     static String fixWayName(String str) {

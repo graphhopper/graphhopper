@@ -40,11 +40,11 @@ public class VehicleEncodedValues {
         int speedBits = properties.getInt("speed_bits", 4);
         double speedFactor = properties.getDouble("speed_factor", 1);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
-        int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
+        boolean turnCosts = properties.getBool("turn_costs", false);
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
-        DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
+        DecimalEncodedValue turnCostEnc = turnCosts ? TurnCost.create(name, 1) : null;
         return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnCostEnc);
     }
 
@@ -62,11 +62,11 @@ public class VehicleEncodedValues {
         int speedBits = properties.getInt("speed_bits", 4);
         double speedFactor = properties.getDouble("speed_factor", 2);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
-        int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
+        boolean turnCosts = properties.getBool("turn_costs", false);
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
-        DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
+        DecimalEncodedValue turnCostEnc = turnCosts ? TurnCost.create(name, 1) : null;
         return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnCostEnc);
     }
 
@@ -80,12 +80,12 @@ public class VehicleEncodedValues {
 
     public static VehicleEncodedValues car(PMap properties) {
         String name = properties.getString("name", "car");
-        int speedBits = properties.getInt("speed_bits", 5);
-        double speedFactor = properties.getDouble("speed_factor", 5);
-        int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
+        int speedBits = properties.getInt("speed_bits", 7);
+        double speedFactor = properties.getDouble("speed_factor", 2);
+        boolean turnCosts = properties.getBool("turn_costs", false);
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, true);
-        DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
+        DecimalEncodedValue turnCostEnc = turnCosts ? TurnCost.create(name, 1) : null;
         return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnCostEnc);
     }
 
@@ -94,10 +94,10 @@ public class VehicleEncodedValues {
         int speedBits = properties.getInt("speed_bits", 7);
         double speedFactor = properties.getDouble("speed_factor", 2);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", true);
-        int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
+        boolean turnCosts = properties.getBool("turn_costs", false);
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
-        DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
+        DecimalEncodedValue turnCostEnc = turnCosts ? TurnCost.create(name, 1) : null;
         return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnCostEnc);
     }
 

@@ -27,10 +27,6 @@ import com.graphhopper.routing.util.TransportationMode;
  * GraphHopper uses country rules to adjust the routing behavior based on the country an edge is located in
  */
 public interface CountryRule {
-    default double getMaxSpeed(ReaderWay readerWay, TransportationMode transportationMode, double currentMaxSpeed) {
-        return currentMaxSpeed;
-    }
-
     default RoadAccess getAccess(ReaderWay readerWay, TransportationMode transportationMode, RoadAccess currentRoadAccess) {
         return currentRoadAccess;
     }

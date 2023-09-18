@@ -131,7 +131,7 @@ public class MapMatching {
 
             @Override
             public List<Path> calcPaths(QueryGraph queryGraph, int fromNode, int fromOutEdge, int[] toNodes, int[] toInEdges, int observationIndex) {
-                assert(toNodes.length == toInEdges.length);
+                assert (toNodes.length == toInEdges.length);
                 List<Path> result = new ArrayList<>();
                 for (int i = 0; i < toNodes.length; i++) {
                     result.add(calcOnePath(queryGraph, fromNode, toNodes[i], fromOutEdge, toInEdges[i]));
@@ -437,10 +437,10 @@ public class MapMatching {
         if (qe == null) {
             throw new IllegalArgumentException("Sequence is broken for submitted track at initial time step.");
         }
-//        if (qe.timeStep != timeSteps.size() - 1) {
-//            throw new IllegalArgumentException("Sequence is broken for submitted track at time step "
-//                    + qe.timeStep + ". observation:" + qe.state.getEntry());
-//        }
+        if (qe.timeStep != timeSteps.size() - 1) {
+            throw new IllegalArgumentException("Sequence is broken for submitted track at time step "
+                    + qe.timeStep + ". observation:" + qe.state.getEntry());
+        }
         ArrayList<SequenceState<State, Observation, Path>> result = new ArrayList<>();
         while (qe != null) {
             final SequenceState<State, Observation, Path> ss = new SequenceState<>(qe.state, qe.state.getEntry(), qe.back == null ? null : roadPaths.get(new Transition<>(qe.back.state, qe.state)));

@@ -15,14 +15,11 @@ graphhopper:
   # In general a profile consists of the following
   # - name (required): a unique string identifier for the profile
   # - vehicle (required): refers to the `graph.vehicles` used for this profile
-  # - weighting (required): the weighting used for this profile like custom,fastest,shortest or short_fastest
+  # - weighting (required): the weighting used for this profile like custom
   # - turn_costs (true/false, default: false): whether or not turn restrictions should be applied for this profile.
   #
   # Depending on the above fields there are other properties that can be used, e.g.
-  # - distance_factor: 0.1 (can be used to fine tune the time/distance trade-off of short_fastest weighting)
   # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
-  #   Note that since the u-turn costs are given in seconds the weighting you use should also calculate the weight
-  #   in seconds, so for example it does not work with shortest weighting.
   # - custom_model_files: when you specified "weighting: custom" you need to set one or more json files which are searched in
   #   custom_models.directory or the working directory that defines the custom_model. If you want an empty model you can
   #   set "custom_model_files: []
@@ -34,7 +31,6 @@ graphhopper:
   profiles:
     - name: car
       vehicle: car
-      weighting: custom
       custom_model:
         distance_influence: 70
 #      turn_costs: true
@@ -43,11 +39,11 @@ graphhopper:
 #    - name: bike
 #      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
 #      vehicle: bike
-#      weighting: custom
 #      custom_model_files: [bike.json, bike_elevation.json]
 
-  # specify the folder where to find the custom model files - see this folder for more possibilities
-  custom_models.directory: custom_models
+  # instead of the inbuilt custom models (see ./core/src/main/resources/com/graphhopper/custom_models)
+  # you can specify a folder where to find your own custom model files
+  # custom_models.directory: custom_models
 
   # Speed mode:
   # Its possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
@@ -120,8 +116,11 @@ graphhopper:
   # graph.elevation.edge_smoothing: ramer
   # removes elevation fluctuations up to max_elevation (in meter) and replaces the elevation with a value based on the average slope
   # graph.elevation.edge_smoothing.ramer.max_elevation: 5
-  # A potentially bigger reduction of ascend/descend is possible, but maximum slope will often increase (do not use when average_slope and maximum_slope shall be used in a custom_model)
+  # Using an averaging approach for smoothing will reveal values not affected by outliers and realistic slopes and total altitude values (up and down)
   # graph.elevation.edge_smoothing: moving_average
+  # window size in meter along a way used for averaging a node's elevation
+  # graph.elevation.edge_smoothing.moving_average.window_size: 150
+
 
   # To increase elevation profile resolution, use the following two parameters to tune the extra resolution you need
   # against the additional storage space used for edge geometries. You should enable bilinear interpolation when using
@@ -133,37 +132,45 @@ graphhopper:
   # graph.elevation.way_point_max_distance: 10
 
 
-  #### Urban density (built-up areas) ####
+    #### Country-dependent defaults for max speeds ####
 
-  # This feature allows classifying roads into 'rural', 'residential' and 'city' areas (encoded value 'urban_density')
-  # Use 1 or more threads to enable the feature
-  # graph.urban_density.threads: 8
-  # Use higher/lower sensitivities if too little/many roads fall into the according categories.
-  # Using smaller radii will speed up the classification, but only change these values if you know what you are doing.
-  # If you do not need the (rather slow) city classification set city_radius to zero.
-  # graph.urban_density.residential_radius: 300
-  # graph.urban_density.residential_sensitivity: 60
-  # graph.urban_density.city_radius: 2000
-  # graph.urban_density.city_sensitivity: 30
+    # This features sets a maximum speed in 'max_speed' encoded value if no maxspeed tag was found. It is country-dependent
+    # and based on several rules. See https://github.com/westnordost/osm-legal-default-speeds
+    # To use it uncomment the following, then enable urban density below and add 'country' to graph.encoded_values
+    # max_speed_calculator.enabled: true
 
 
-  #### Subnetworks ####
+    #### Urban density (built-up areas) ####
 
-  # In many cases the road network consists of independent components without any routes going in between. In
-  # the most simple case you can imagine an island without a bridge or ferry connection. The following parameter
-  # allows setting a minimum size (number of edges) for such detached components. This can be used to reduce the number
-  # of cases where a connection between locations might not be found.
+    # This feature allows classifying roads into 'rural', 'residential' and 'city' areas (encoded value 'urban_density')
+    # Use 1 or more threads to enable the feature
+    # graph.urban_density.threads: 8
+    # Use higher/lower sensitivities if too little/many roads fall into the according categories.
+    # Using smaller radii will speed up the classification, but only change these values if you know what you are doing.
+    # If you do not need the (rather slow) city classification set city_radius to zero.
+    # graph.urban_density.residential_radius: 400
+    # graph.urban_density.residential_sensitivity: 6000
+    # graph.urban_density.city_radius: 1500
+    # graph.urban_density.city_sensitivity: 1000
+
+
+    #### Subnetworks ####
+
+    # In many cases the road network consists of independent components without any routes going in between. In
+    # the most simple case you can imagine an island without a bridge or ferry connection. The following parameter
+    # allows setting a minimum size (number of edges) for such detached components. This can be used to reduce the number
+    # of cases where a connection between locations might not be found.
   prepare.min_network_size: 200
   prepare.subnetworks.threads: 1
 
 
-  #### Routing ####
+    #### Routing ####
 
-  # You can define the maximum visited nodes when routing. This may result in not found connections if there is no
-  # connection between two points within the given visited nodes. The default is Integer.MAX_VALUE. Useful for flexibility mode
-  # routing.max_visited_nodes: 1000000
+    # You can define the maximum visited nodes when routing. This may result in not found connections if there is no
+    # connection between two points within the given visited nodes. The default is Integer.MAX_VALUE. Useful for flexibility mode
+    # routing.max_visited_nodes: 1000000
 
-  # The maximum time in milliseconds after which a routing request will be aborted. This has some routing algorithm
+    # The maximum time in milliseconds after which a routing request will be aborted. This has some routing algorithm
   # specific caveats, but generally it should allow the prevention of long-running requests. The default is Long.MAX_VALUE
   # routing.timeout_ms: 300000
 

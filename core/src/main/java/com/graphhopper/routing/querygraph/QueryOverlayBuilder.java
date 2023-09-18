@@ -234,9 +234,9 @@ class QueryOverlayBuilder {
         boolean reverse = closestEdge.get(EdgeIteratorState.REVERSE_STATE);
         // edges between base and snapped point
         List<KVStorage.KeyValue> keyValues = closestEdge.getKeyValues();
-        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origEdgeKey, GHUtility.createEdgeKey(virtEdgeId, prevNodeId == nodeId, false),
+        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origEdgeKey, GHUtility.createEdgeKey(virtEdgeId, false),
                 prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), keyValues, basePoints, reverse);
-        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevEdgeKey, GHUtility.createEdgeKey(virtEdgeId, prevNodeId == nodeId, true),
+        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevEdgeKey, GHUtility.createEdgeKey(virtEdgeId, true),
                 nodeId, prevNodeId, baseDistance, IntsRef.deepCopyOf(closestEdge.getFlags()), keyValues, baseReversePoints, !reverse);
 
         baseEdge.setReverseEdge(baseReverseEdge);

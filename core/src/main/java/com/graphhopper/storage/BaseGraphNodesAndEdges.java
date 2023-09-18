@@ -190,6 +190,8 @@ class BaseGraphNodesAndEdges {
     public int edge(int nodeA, int nodeB) {
         if (edgeCount == Integer.MAX_VALUE)
             throw new IllegalStateException("Maximum edge count exceeded: " + edgeCount);
+        if (nodeA == nodeB)
+            throw new IllegalArgumentException("Loop edges are not supported, got: " + nodeA + " - " + nodeB);
         ensureNodeCapacity(Math.max(nodeA, nodeB));
         final int edge = edgeCount;
         final long edgePointer = (long) edgeCount * edgeEntryBytes;

@@ -23,9 +23,7 @@ import com.graphhopper.gtfs.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.details.PathDetail;
@@ -62,12 +60,11 @@ public class GraphHopperMultimodalIT {
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("gtfs.file", "files/sample-feed");
         ghConfig.putObject("graph.location", GRAPH_LOC);
-        CustomProfile carLocal = new CustomProfile("car_custom");
+        Profile carLocal = new Profile("car_custom");
         carLocal.setVehicle("car");
-        carLocal.setWeighting("custom");
         ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                new Profile("car_default").setVehicle("car").setWeighting("fastest"),
+                new Profile("foot").setVehicle("foot"),
+                new Profile("car_default").setVehicle("car"),
                 carLocal));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
@@ -124,7 +121,7 @@ public class GraphHopperMultimodalIT {
         response = graphHopper.route(ghRequest);
         ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
         firstTransitSolution = response.getAll().stream().filter(p -> p.getLegs().size() > 1).findFirst().get();
-        assertThat(arrivalTime(walkSolution.getLegs().get(0))).isBefore(arrivalTime(firstTransitSolution.getLegs().get(firstTransitSolution.getLegs().size()-1)));
+        assertThat(arrivalTime(walkSolution.getLegs().get(0))).isBefore(arrivalTime(firstTransitSolution.getLegs().get(firstTransitSolution.getLegs().size() - 1)));
         assertThat(routeDuration(firstTransitSolution)).isLessThanOrEqualTo(routeDuration(walkSolution));
 
         assertThat(response.getHints().getInt("visited_nodes.sum", Integer.MAX_VALUE)).isLessThanOrEqualTo(271);
@@ -159,15 +156,15 @@ public class GraphHopperMultimodalIT {
         assertThat(distances.stream().mapToDouble(d -> (double) d.getValue()).sum())
                 .isEqualTo(EXPECTED_TOTAL_WALKING_DISTANCE); // Also total walking distance -- PathDetails only cover access/egress for now
         assertThat(distances.get(0).getFirst()).isEqualTo(0); // PathDetails start and end with PointList
-        assertThat(distances.get(distances.size()-1).getLast()).isEqualTo(10);
+        assertThat(distances.get(distances.size() - 1).getLast()).isEqualTo(10);
 
         List<PathDetail> accessDistances = ((Trip.WalkLeg) firstTransitSolution.getLegs().get(0)).details.get("distance");
         assertThat(accessDistances.get(0).getFirst()).isEqualTo(0);
-        assertThat(accessDistances.get(accessDistances.size()-1).getLast()).isEqualTo(2);
+        assertThat(accessDistances.get(accessDistances.size() - 1).getLast()).isEqualTo(2);
 
         List<PathDetail> egressDistances = ((Trip.WalkLeg) firstTransitSolution.getLegs().get(2)).details.get("distance");
         assertThat(egressDistances.get(0).getFirst()).isEqualTo(0);
-        assertThat(egressDistances.get(egressDistances.size()-1).getLast()).isEqualTo(5);
+        assertThat(egressDistances.get(egressDistances.size() - 1).getLast()).isEqualTo(5);
 
         ResponsePath walkSolution = response.getAll().stream().filter(p -> p.getLegs().size() == 1).findFirst().get();
         assertThat(walkSolution.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())

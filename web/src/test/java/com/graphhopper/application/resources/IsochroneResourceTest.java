@@ -23,6 +23,7 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.JsonFeatureCollection;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -58,9 +59,9 @@ public class IsochroneResourceTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("fast_car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
-                        new Profile("short_car").setVehicle("car").setWeighting("shortest").setTurnCosts(true),
-                        new Profile("fast_car_no_turn_restrictions").setVehicle("car").setWeighting("fastest").setTurnCosts(false)
+                        new Profile("fast_car").setVehicle("car").setTurnCosts(true),
+                        new Profile("short_car").setCustomModel(new CustomModel().setDistanceInfluence(1_000d)).setVehicle("car").setTurnCosts(true),
+                        new Profile("fast_car_no_turn_restrictions").setVehicle("car").setTurnCosts(false)
                 ));
         return config;
     }
@@ -142,14 +143,14 @@ public class IsochroneResourceTest {
     @Test
     public void requestByWeightLimit() {
         WebTarget commonTarget = clientTarget(app, "/isochrone")
-                .queryParam("profile", "short_car")
+                .queryParam("profile", "fast_car")
                 .queryParam("point", "42.531073,1.573792")
                 .queryParam("type", "geojson");
 
-        long limit = 3000;
+        long limit = 10 * 60;
 
         Response distanceLimitRsp = commonTarget
-                .queryParam("distance_limit", limit)
+                .queryParam("time_limit", limit)
                 .request().buildGet().invoke();
         JsonFeatureCollection distanceLimitFeatureCollection = distanceLimitRsp.readEntity(JsonFeatureCollection.class);
         Geometry distanceLimitPolygon = distanceLimitFeatureCollection.getFeatures().get(0).getGeometry();
