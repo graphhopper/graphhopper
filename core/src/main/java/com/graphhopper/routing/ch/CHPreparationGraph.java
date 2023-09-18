@@ -18,15 +18,19 @@
 
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntContainer;
-import com.carrotsearch.hppc.IntScatterSet;
-import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.sorting.IndirectComparator;
 import com.carrotsearch.hppc.sorting.IndirectSort;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.weighting.AbstractWeighting;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.ArrayUtil.zero;
@@ -103,13 +107,11 @@ public class CHPreparationGraph {
         prepareGraph.prepareForContraction();
     }
 
-    /**
-     * Builds a turn cost function for a given graph('s turn cost storage) and given uTurnCosts.
-     * The trivial implementation would be simply using {@link Weighting#calcTurnWeight}. However, it turned out
-     * that storing all turn costs in separate arrays upfront speeds up edge-based CH preparation by about 25%. See #2084
-     */
     public static TurnCostFunction buildTurnCostFunctionFromTurnCostStorage(Graph graph, Weighting weighting) {
-        // todonow: removed this optimization for now. it would be much better if we could do this internally in turn cost storage
+        // At some point we used an optimized version where we copied the turn costs to sorted arrays
+        // temporarily. This seemed to be around 25% faster according to measurements on the Bavaria
+        // map, but later this turned out to be no real improvement for large maps (planet, Europe, a
+        // and even Germany). See also #2084
         return weighting::calcTurnWeight;
     }
 

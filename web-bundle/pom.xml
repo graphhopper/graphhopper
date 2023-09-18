@@ -168,9 +168,9 @@
                         <id>create target directory</id>
                         <phase>initialize</phase>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <mkdir dir="${basedir}/target"/>
-                            </tasks>
+                            </target>
                         </configuration>
                         <goals>
                             <goal>run</goal>
@@ -180,7 +180,7 @@
                         <id>unzip maps bundle</id>
                         <phase>process-resources</phase>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <untar compression="gzip"
                                        src="${basedir}/target/graphhopper-graphhopper-maps-bundle-${graphhopper-maps.version}.tgz"
                                        dest="${basedir}/target/classes/com/graphhopper/maps">
@@ -190,7 +190,7 @@
                                     </patternset>
                                     <mapper type="regexp" from="package\/dist\/(.*)" to="\1"/>
                                 </untar>
-                            </tasks>
+                            </target>
                         </configuration>
                         <goals>
                             <goal>run</goal>
