@@ -10,9 +10,12 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
+import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,6 +25,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -64,7 +69,8 @@ public class ShortestPathTreeTest {
 
     private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-    private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+    private final BooleanEncodedValue ferryEnc = new SimpleBooleanEncodedValue("ferry", false);
+    private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).add(ferryEnc).build();
     private BaseGraph graph;
 
 
@@ -168,6 +174,33 @@ public class ShortestPathTreeTest {
                 () -> assertEquals(60300, result.get(8).time), () -> assertEquals(8, result.get(8).node)
         );
     }
+
+    @Test
+    public void testFerry() {
+        AllEdgesIterator allEdges = graph.getAllEdges();
+        while (allEdges.next()) {
+            allEdges.set(ferryEnc, false);
+        }
+        EdgeIteratorState edge = findEdge(6, 7);
+        edge.set(ferryEnc, true);
+
+        List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
+        CustomModel cm = new CustomModel();
+        cm.addToPriority(If("ferry", MULTIPLY, "0.005"));
+        CustomWeighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager, TurnCostProvider.NO_TURN_COST_PROVIDER, cm);
+        ShortestPathTree instance = new ShortestPathTree(graph, weighting, false, TraversalMode.NODE_BASED);
+        instance.setTimeLimit(30_000);
+        instance.search(0, result::add);
+        assertEquals(4, result.size());
+        assertAll(
+                () -> assertEquals(0, result.get(0).time), () -> assertEquals(0, result.get(0).node),
+                () -> assertEquals(9000, result.get(1).time), () -> assertEquals(4, result.get(1).node),
+                () -> assertEquals(18000, result.get(2).time), () -> assertEquals(6, result.get(2).node),
+                () -> assertEquals(25200, result.get(3).time), () -> assertEquals(1, result.get(3).node)
+        );
+        assertEquals(7, instance.getVisitedNodes(), "If this increases, make sure we are not traversing entire graph irl");
+    }
+
 
     @Test
     public void testEdgeBasedWithFreeUTurns() {
@@ -324,6 +357,16 @@ public class ShortestPathTreeTest {
                 () -> assertEquals(70.0, result.get(4).distance),
                 () -> assertEquals(70.0, result.get(5).distance)
         );
+    }
+
+    EdgeIteratorState findEdge(int a, int b) {
+        EdgeIterator edgeIterator = graph.createEdgeExplorer().setBaseNode(a);
+        while (edgeIterator.next()) {
+            if (edgeIterator.getAdjNode() == b) {
+                return edgeIterator;
+            }
+        }
+        throw new RuntimeException("nope");
     }
 
 }
