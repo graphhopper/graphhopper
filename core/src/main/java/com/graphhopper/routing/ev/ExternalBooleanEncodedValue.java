@@ -22,6 +22,9 @@ import com.carrotsearch.hppc.BitSet;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/**
+ * Works like a normal encoded value, but the underlying data is not stored within the graph
+ */
 public class ExternalBooleanEncodedValue implements BooleanEncodedValue {
     private final String name;
     private final boolean storeTwoDirections;
