@@ -24,23 +24,13 @@ import java.util.Objects;
 public class Observation {
     private GHPoint point;
     private double accumulatedLinearDistanceToPrevious;
-    private int index;
 
     public Observation(GHPoint p) {
-        this(p, -1);
-    }
-
-    public Observation(GHPoint p, int index) {
         this.point = p;
-        this.index = index;
     }
 
     public GHPoint getPoint() {
         return point;
-    }
-
-    public int getIndex() {
-        return index;
     }
 
     public double getAccumulatedLinearDistanceToPrevious() {
