@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage;
 
+import java.util.Map;
+
 /**
  * Maintains a collection of DataAccess objects stored at the same location. One GraphStorage per
  * Directory as we need one to maintain one DataAccess object for nodes, edges and location2id
@@ -69,4 +71,6 @@ public interface Directory {
     void close();
 
     Directory create();
+
+    Map<String, DataAccess> getDAs();
 }
