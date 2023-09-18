@@ -269,16 +269,16 @@ public final class PtRouterTripBasedImpl implements PtRouter {
             String previousBlockId = null;
             for (int i = 0; i < segments.size(); i++) {
                 TripBasedRouter.EnqueuedTripSegment segment = segments.get(i);
-                GTFSFeed feed = gtfsStorage.getGtfsFeeds().get(segment.tripAtStopTime.feedId);
+                GTFSFeed feed = gtfsStorage.getGtfsFeeds().get(segment.tripPointer.feedId);
                 ZoneId zoneId = ZoneId.of(feed.agency.values().stream().findFirst().get().agency_timezone);
                 LocalDate day = segment.serviceDay;
-                com.conveyal.gtfs.model.Trip trip = feed.trips.get(segment.tripAtStopTime.tripDescriptor.getTripId());
+                com.conveyal.gtfs.model.Trip trip = segment.tripPointer.trip;
                 int untilStopSequence;
                 if (i == segments.size() - 1)
-                    untilStopSequence = route.t.stop_sequence;
+                    untilStopSequence = route.stopTime;
                 else
                     untilStopSequence = segments.get(i+1).transferOrigin.stop_sequence;
-                List<Trip.Stop> stops = gtfsStorage.tripTransfers.trips.get(segment.tripAtStopTime.feedId).get(segment.tripAtStopTime.tripDescriptor).stopTimes.stream().filter(st -> st != null && st.stop_sequence >= segment.tripAtStopTime.stop_sequence && st.stop_sequence <= untilStopSequence)
+                List<Trip.Stop> stops = segment.tripPointer.stopTimes.stream().filter(st -> st != null && st.stop_sequence >= segment.tripAtStopTime.stop_sequence && st.stop_sequence <= untilStopSequence)
                         .map(st -> {
                             Instant departureTime = day.atStartOfDay().plusSeconds(st.departure_time).atZone(zoneId).toInstant();
                             Instant arrivalTime = day.atStartOfDay().plusSeconds(st.arrival_time).atZone(zoneId).toInstant();
@@ -287,7 +287,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                         })
                         .collect(Collectors.toList());
                 boolean isInSameVehicleAsPrevious = trip.block_id != null && trip.block_id.equals(previousBlockId);
-                legs.add(new Trip.PtLeg(segment.tripAtStopTime.feedId, isInSameVehicleAsPrevious, segment.tripAtStopTime.tripDescriptor.getTripId(),
+                legs.add(new Trip.PtLeg(segment.tripPointer.feedId, isInSameVehicleAsPrevious, segment.tripPointer.trip.trip_id,
                         trip.route_id, trip.trip_headsign, stops, 0, stops.get(stops.size() - 1).arrivalTime.toInstant().toEpochMilli() - stops.get(0).departureTime.toInstant().toEpochMilli(), geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
                 previousBlockId = trip.block_id;
             }

@@ -57,7 +57,7 @@ logging:
   appenders:
     - type: console
       time_zone: UTC
-      log_format: "%msg%n"
+      log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
     - type: file
       time_zone: UTC
       log_format: "%d{YYYY-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"

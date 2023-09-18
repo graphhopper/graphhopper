@@ -18,9 +18,6 @@
 
 package com.graphhopper.gtfs.analysis;
 
-import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.model.StopTime;
-import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.GraphHopperGtfs;
@@ -31,12 +28,11 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.io.*;
-import java.time.LocalDate;
-import java.util.*;
+import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AnalysisTest {
 
@@ -78,40 +74,6 @@ public class AnalysisTest {
         assertThat(singleElementComponents.stream().map(it -> it.get(0)))
                 .extracting("stopId")
                 .containsExactlyInAnyOrder("JUSTICE_COURT", "MUSEUM", "NEXT_TO_MUSEUM");
-    }
-
-    @Test
-    public void testComputeTransfers() {
-        GtfsStorage gtfsStorage = graphHopperGtfs.getGtfsStorage();
-        Trips.TripAtStopTime origin = new Trips.TripAtStopTime("gtfs_1", GtfsRealtime.TripDescriptor.newBuilder().setTripId("MUSEUM1").setRouteId("COURT2MUSEUM").build(), 2);
-        GTFSFeed gtfsFeed = graphHopperGtfs.getGtfsStorage().getGtfsFeeds().get("gtfs_1");
-        Trips tripTransfers = new Trips(gtfsStorage);
-        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> reducedTripTransfers = tripTransfers.findTripTransfers(origin.tripDescriptor, "gtfs_1", LocalDate.parse("2023-03-26"));
-        Collection<Trips.TripAtStopTime> destinations = reducedTripTransfers.get(origin);
-
-    }
-
-    private static StopTime findStoptime(Iterable<StopTime> stopTimes, Trips.TripAtStopTime destination) {
-        for (StopTime stopTime : stopTimes) {
-            if (stopTime.stop_sequence == destination.stop_sequence)
-                return stopTime;
-        }
-        return null;
-    }
-
-    @Test
-    public void testSerialize() throws IOException, ClassNotFoundException {
-        Trips.TripAtStopTime origin = new Trips.TripAtStopTime("gtfs_1", GtfsRealtime.TripDescriptor.newBuilder().setTripId("MUSEUM1").setRouteId("COURT2MUSEUM").build(), 2);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ObjectOutputStream objectOutputStream = new ObjectOutputStream(out);
-        objectOutputStream.writeObject(origin);
-        objectOutputStream.close();
-        byte[] bytes = out.toByteArray();
-
-        ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(bytes));
-        Trips.TripAtStopTime tripAtStopTime = (Trips.TripAtStopTime) objectInputStream.readObject();
-
-        assertEquals(origin, tripAtStopTime);
     }
 
 }

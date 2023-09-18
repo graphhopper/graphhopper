@@ -181,7 +181,8 @@ public class GTFSFeed implements Cloneable, Closeable {
 
 
     public class StopTimesForTripWithTripPatternKey {
-        public StopTimesForTripWithTripPatternKey(Trip trip, Service service, int routeType, List<StopTime> stopTimes, PatternFinder.Pattern pattern) {
+        public StopTimesForTripWithTripPatternKey(String feedId, Trip trip, Service service, int routeType, List<StopTime> stopTimes, PatternFinder.Pattern pattern) {
+            this.feedId = feedId;
             this.trip = trip;
             this.service = service;
             this.routeType = routeType;
@@ -189,6 +190,7 @@ public class GTFSFeed implements Cloneable, Closeable {
             this.pattern = pattern;
         }
 
+        public final String feedId;
         public final Trip trip;
         public final Service service;
         public final int routeType;
@@ -198,7 +200,7 @@ public class GTFSFeed implements Cloneable, Closeable {
         public int endIdxOfPattern; // exclusive
     }
 
-    public StopTimesForTripWithTripPatternKey getStopTimesForTripWithTripPatternKey(GtfsRealtime.TripDescriptor key) {
+    public StopTimesForTripWithTripPatternKey getStopTimesForTripWithTripPatternKey(String feedKey, GtfsRealtime.TripDescriptor key) {
         PatternFinder.TripPatternKey tripPatternKey = new PatternFinder.TripPatternKey();
         List<StopTime> orderedStopTimesForTrip = new ArrayList<>();
         Trip trip = trips.get(key.getTripId());
@@ -221,7 +223,7 @@ public class GTFSFeed implements Cloneable, Closeable {
             orderedStopTimesForTripWithPadding.add(stopTime);
         });
         PatternFinder.Pattern pattern = patterns.get(tripPatternKey);
-        return new StopTimesForTripWithTripPatternKey(trip, service, route.route_type, orderedStopTimesForTripWithPadding, pattern);
+        return new StopTimesForTripWithTripPatternKey(feedKey, trip, service, route.route_type, orderedStopTimesForTripWithPadding, pattern);
     }
 
     /**

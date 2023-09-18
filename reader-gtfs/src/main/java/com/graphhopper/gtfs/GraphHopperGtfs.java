@@ -25,8 +25,6 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.gtfs.analysis.Trips;
 import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.config.Profile;
-import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.weighting.Weighting;
@@ -80,8 +78,8 @@ public class GraphHopperGtfs extends GraphHopper {
             if (ghConfig.getBool("gtfs.trip_based", false)) {
                 for (String trafficDayString : ghConfig.getString("gtfs.schedule_day", null).split(",")) {
                     LocalDate trafficDay = LocalDate.parse(trafficDayString);
-                    LOGGER.info("Caching trip-based transfers for pt router. Schedule day: {}", trafficDay);
-                    gtfsStorage.tripTransfers.getTripTransfers(trafficDay);
+                    LOGGER.info("Loading trip-based transfers for pt router. Schedule day: {}", trafficDay);
+                    gtfsStorage.tripTransfers.getTripTransfers().put(trafficDay, gtfsStorage.deserializeTripTransfersMap("trip_transfers_" + trafficDayString));
                 }
                 for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
                     for (Stop stop : entry.getValue().stops.values()) {
@@ -127,8 +125,10 @@ public class GraphHopperGtfs extends GraphHopper {
                     for (String trafficDayString : ghConfig.getString("gtfs.schedule_day", null).split(",")) {
                         LocalDate trafficDay = LocalDate.parse(trafficDayString);
                         LOGGER.info("Computing trip-based transfers for pt router. Schedule day: {}", trafficDay);
-                        Trips.findAllTripTransfersInto(gtfsStorage.tripTransfers.getTripTransfersDB(trafficDay), gtfsStorage, trafficDay);
-                        gtfsStorage.tripTransfers.getTripTransfers(trafficDay);
+                        Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfersMap = gtfsStorage.tripTransfers.getTripTransfers(trafficDay);
+                        gtfsStorage.tripTransfers.findAllTripTransfersInto(tripTransfersMap, trafficDay);
+                        LOGGER.info("Writing. Schedule day: {}", trafficDay);
+                        gtfsStorage.serializeTripTransfersMap("trip_transfers_" + trafficDayString, tripTransfersMap);
                     }
                 }
             } catch (Exception e) {

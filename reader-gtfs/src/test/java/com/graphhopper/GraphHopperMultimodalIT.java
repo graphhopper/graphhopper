@@ -64,7 +64,7 @@ public class GraphHopperMultimodalIT {
         ghConfig.putObject("gtfs.trip_based", true);
         ghConfig.putObject("gtfs.schedule_day", "2007-01-01");
         ghConfig.putObject("graph.location", GRAPH_LOC);
-        CustomProfile carLocal = new CustomProfile("car_custom");
+        CustomProfile carLocal = new CustomProfile("car");
         carLocal.setVehicle("car");
         carLocal.setWeighting("custom");
         ghConfig.setProfiles(Arrays.asList(

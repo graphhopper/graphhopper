@@ -187,15 +187,23 @@ public class GtfsStorage {
 			feed.findPatterns();
 			this.gtfsFeeds.put(gtfsFeedId, feed);
 		}
-		ptToStreet = deserialize("pt_to_street");
-		streetToPt = deserialize("street_to_pt");
+		ptToStreet = deserializeIntoIntIntHashMap("pt_to_street");
+		streetToPt = deserializeIntoIntIntHashMap("street_to_pt");
 		skippedEdgesForTransfer = deserializeIntoIntObjectHashMap("skipped_edges_for_transfer");
 		postInit();
 		return true;
 	}
 
+	public Object deserialize(String filename) {
+		try (FileInputStream in = new FileInputStream(dir.getLocation() + filename)) {
+			ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(in));
+			return ois.readObject();
+		} catch (IOException | ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
+    }
 
-	private IntIntHashMap deserialize(String filename) {
+	private IntIntHashMap deserializeIntoIntIntHashMap(String filename) {
 		try (FileInputStream in = new FileInputStream(dir.getLocation() + filename)) {
 			ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(in));
 			int size = ois.readInt();
@@ -209,7 +217,7 @@ public class GtfsStorage {
 		}
 	}
 
-	private IntObjectHashMap<int[]> deserializeIntoIntObjectHashMap(String filename) {
+	public IntObjectHashMap<int[]> deserializeIntoIntObjectHashMap(String filename) {
 		try (FileInputStream in = new FileInputStream(dir.getLocation() + filename)) {
 			ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(in));
 			int size = ois.readInt();
@@ -302,7 +310,46 @@ public class GtfsStorage {
 		serialize("skipped_edges_for_transfer", skippedEdgesForTransfer);
 	}
 
-	private void serialize(String filename, IntObjectHashMap<int[]> data) {
+	public void serializeTripTransfersMap(String filename, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> data) {
+		try (ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(Files.newOutputStream(Paths.get(dir.getLocation() + filename))))) {
+			oos.writeInt(data.size());
+			for (Map.Entry<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> entry : data.entrySet()) {
+				oos.writeInt(entry.getKey().tripIdx);
+				oos.writeInt(entry.getKey().stop_sequence);
+				oos.writeInt(entry.getValue().size());
+				for (Trips.TripAtStopTime tripAtStopTime : entry.getValue()) {
+					oos.writeInt(tripAtStopTime.tripIdx);
+					oos.writeInt(tripAtStopTime.stop_sequence);
+				}
+			}
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> deserializeTripTransfersMap(String filename) {
+		try (FileInputStream in = new FileInputStream(dir.getLocation() + filename)) {
+			ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(in));
+			int size = ois.readInt();
+			Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> result = new TreeMap<>();
+			for (int i = 0; i < size; i++) {
+				Trips.TripAtStopTime origin = new Trips.TripAtStopTime(ois.readInt(), ois.readInt());
+				int nDestinations = ois.readInt();
+				List<Trips.TripAtStopTime> destinations = new ArrayList<>(nDestinations);
+				for (int j = 0; j < nDestinations; j++) {
+					int tripIdxTo = ois.readInt();
+					int stop_sequenceTo = ois.readInt();
+					destinations.add(new Trips.TripAtStopTime(tripIdxTo, stop_sequenceTo));
+				}
+				result.put(origin, destinations);
+			}
+			return result;
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	public void serialize(String filename, IntObjectHashMap<int[]> data) {
 		try (ObjectOutputStream oos = new ObjectOutputStream(new BufferedOutputStream(Files.newOutputStream(Paths.get(dir.getLocation() + filename))))) {
 			oos.writeInt(data.size());
 			for (IntObjectCursor<int[]> e : data) {
