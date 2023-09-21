@@ -100,17 +100,22 @@ public final class CustomWeighting extends AbstractWeighting {
 
     @Override
     public double getMinWeight(double distance) {
-        return 1 * distance;
+        return distance / maxSpeed / maxPriority + distance * distanceInfluence;
     }
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        final double distance = edgeState.getDistance();
+        double seconds = calcSeconds(distance, edgeState, reverse);
+        if (Double.isInfinite(seconds)) return Double.POSITIVE_INFINITY;
+        // add penalty at start/stop/via points
+        if (edgeState.get(EdgeIteratorState.UNFAVORED_EDGE)) seconds += headingPenaltySeconds;
+        double distanceCosts = distance * distanceInfluence;
+        if (Double.isInfinite(distanceCosts)) return Double.POSITIVE_INFINITY;
         double priority = edgeToPriorityMapping.get(edgeState, reverse);
-        if (priority == 0)
-            return Double.POSITIVE_INFINITY;
-        else if (priority < 1)
-            throw new IllegalArgumentException("priority must be >= 1 (or 0 for infinite weight), use 1 only for the **highest** 'priority' roads");
-        return priority * edgeState.getDistance();
+        // special case to avoid NaN for barrier edges (where time is often 0s)
+        if (priority == 0 && seconds == 0) return Double.POSITIVE_INFINITY;
+        return seconds / priority + distanceCosts;
     }
 
     double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
@@ -130,7 +135,7 @@ public final class CustomWeighting extends AbstractWeighting {
 
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        return Math.round(edgeState.getDistance());
+        return Math.round(calcSeconds(edgeState.getDistance(), edgeState, reverse) * 1000);
     }
 
     @Override
