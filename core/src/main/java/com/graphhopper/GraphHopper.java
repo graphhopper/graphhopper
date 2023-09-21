@@ -42,6 +42,7 @@ import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
+import com.graphhopper.routing.weighting.custom.CustomWeightingX;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -1124,9 +1125,9 @@ public class GraphHopper {
 
             if (CustomWeighting.NAME.equals(profile.getWeighting()) && profile.getCustomModel() == null)
                 throw new IllegalArgumentException("custom model for profile '" + profile.getName() + "' was empty");
-            if (!CustomWeighting.NAME.equals(profile.getWeighting()) && profile.getCustomModel() != null)
-                throw new IllegalArgumentException("profile '" + profile.getName() + "' has a custom model but " +
-                        "weighting=" + profile.getWeighting() + " was defined");
+//            if (!CustomWeighting.NAME.equals(profile.getWeighting()) && profile.getCustomModel() != null)
+//                throw new IllegalArgumentException("profile '" + profile.getName() + "' has a custom model but " +
+//                        "weighting=" + profile.getWeighting() + " was defined");
         }
 
         Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfiles().size());
@@ -1210,7 +1211,8 @@ public class GraphHopper {
         importPublicTransit();
 
         if (closeEarly) {
-            boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> CustomWeighting.NAME.equals(p.getWeighting()));
+            boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p ->
+                    CustomWeighting.NAME.equals(p.getWeighting()) || CustomWeightingX.NAME.equals(p.getWeighting()));
             if (!includesCustomProfiles)
                 // when there are custom profiles we must not close way geometry or KVStorage, because
                 // they might be needed to evaluate the custom weightings for the following preparations
