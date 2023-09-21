@@ -23,11 +23,11 @@ import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.EdgeIteratorState;
 
-public final class CustomWeighting2 extends AbstractWeighting {
-    public static final String NAME = "custom2";
+public final class CustomWeightingX extends AbstractWeighting {
+    public static final String NAME = "customx";
     private final CustomWeighting.EdgeToDoubleMapping edgeToPriorityMapping;
 
-    public CustomWeighting2(BooleanEncodedValue baseAccessEnc, DecimalEncodedValue baseSpeedEnc, TurnCostProvider turnCostProvider, CustomWeighting.Parameters parameters) {
+    public CustomWeightingX(BooleanEncodedValue baseAccessEnc, DecimalEncodedValue baseSpeedEnc, TurnCostProvider turnCostProvider, CustomWeighting.Parameters parameters) {
         super(baseAccessEnc, baseSpeedEnc, turnCostProvider);
         this.edgeToPriorityMapping = parameters.getEdgeToPriorityMapping();
     }

@@ -27,7 +27,7 @@ import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
-import com.graphhopper.routing.weighting.custom.CustomWeighting2;
+import com.graphhopper.routing.weighting.custom.CustomWeightingX;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
@@ -85,7 +85,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
             weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
                     priorityEnc, encodingManager, turnCostProvider, mergedCustomModel);
-        } else if (CustomWeighting2.NAME.equalsIgnoreCase(weightingStr)) {
+        } else if (CustomWeightingX.NAME.equalsIgnoreCase(weightingStr)) {
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
