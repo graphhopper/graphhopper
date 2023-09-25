@@ -695,13 +695,13 @@ public class GraphHopper {
                         osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
                 }
                 String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
-                if (encodingManager.hasEncodedValue(turnCostKey)
+                if (encodingManager.hasTurnEncodedValue(turnCostKey)
                         // need to make sure we do not add the same restriction parsers multiple times
                         && osmParsers.getRestrictionTagParsers().stream().noneMatch(r -> r.getTurnCostEnc().getName().equals(turnCostKey))) {
                     List<String> restrictions = tagParser instanceof AbstractAccessParser
                             ? ((AbstractAccessParser) tagParser).getRestrictions()
                             : OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(new PMap(vehicleStr).getString("transportation_mode", "VEHICLE")));
-                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(restrictions, encodingManager.getDecimalEncodedValue(turnCostKey)));
+                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(restrictions, encodingManager.getTurnDecimalEncodedValue(turnCostKey)));
                 }
             });
             vehicleTagParsers.getTagParsers().forEach(tagParser -> {
@@ -1098,8 +1098,8 @@ public class GraphHopper {
             if (!encodingManager.getVehicles().contains(profile.getVehicle()))
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". " +
                         "Available vehicles: " + String.join(",", encodingManager.getVehicles()));
-            DecimalEncodedValue turnCostEnc = encodingManager.hasEncodedValue(TurnCost.key(profile.getVehicle()))
-                    ? encodingManager.getDecimalEncodedValue(TurnCost.key(profile.getVehicle()))
+            DecimalEncodedValue turnCostEnc = encodingManager.hasTurnEncodedValue(TurnCost.key(profile.getVehicle()))
+                    ? encodingManager.getTurnDecimalEncodedValue(TurnCost.key(profile.getVehicle()))
                     : null;
             if (profile.isTurnCosts() && turnCostEnc == null) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +

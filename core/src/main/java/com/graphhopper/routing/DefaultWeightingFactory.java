@@ -58,7 +58,7 @@ public class DefaultWeightingFactory implements WeightingFactory {
         final String vehicle = profile.getVehicle();
         TurnCostProvider turnCostProvider;
         if (profile.isTurnCosts() && !disableTurnCosts) {
-            DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(vehicle));
+            DecimalEncodedValue turnCostEnc = encodingManager.getTurnDecimalEncodedValue(TurnCost.key(vehicle));
             if (turnCostEnc == null)
                 throw new IllegalArgumentException("Vehicle " + vehicle + " does not support turn costs");
             int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
