@@ -126,7 +126,7 @@ public class GraphHopperGtfs extends GraphHopper {
                         LocalDate trafficDay = LocalDate.parse(trafficDayString);
                         LOGGER.info("Computing trip-based transfers for pt router. Schedule day: {}", trafficDay);
                         Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> tripTransfersMap = gtfsStorage.tripTransfers.getTripTransfers(trafficDay);
-                        gtfsStorage.tripTransfers.findAllTripTransfersInto(tripTransfersMap, trafficDay);
+                        gtfsStorage.tripTransfers.findAllTripTransfersInto(tripTransfersMap, trafficDay, allTransfers);
                         LOGGER.info("Writing. Schedule day: {}", trafficDay);
                         gtfsStorage.serializeTripTransfersMap("trip_transfers_" + trafficDayString, tripTransfersMap);
                     }

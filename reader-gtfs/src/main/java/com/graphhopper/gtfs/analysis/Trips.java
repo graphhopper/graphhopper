@@ -21,7 +21,6 @@ import java.util.stream.Stream;
 public class Trips {
 
     private static final int MAXIMUM_TRANSFER_DURATION = 15 * 60;
-    private final Map<String, Transfers> transfers;
     public final Map<String, Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey>> tripsByFeed;
     public final List<GTFSFeed.StopTimesForTripWithTripPatternKey> trips;
     private Map<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>> boardingsForStopByPattern = new ConcurrentHashMap<>();
@@ -30,11 +29,6 @@ public class Trips {
 
     public Trips(GtfsStorage gtfsStorage) {
         this.gtfsStorage = gtfsStorage;
-
-        transfers = new HashMap<>();
-        for (Map.Entry<String, GTFSFeed> entry : this.gtfsStorage.getGtfsFeeds().entrySet()) {
-            transfers.put(entry.getKey(), new Transfers(entry.getValue()));
-        }
         tripsByFeed = new HashMap<>();
         trips = new ArrayList<>();
         idx = 0;
@@ -73,7 +67,7 @@ public class Trips {
 
     GtfsStorage gtfsStorage;
 
-    public Map<TripAtStopTime, Collection<TripAtStopTime>> findTripTransfers(GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer, String feedKey, LocalDate trafficDay) {
+    public Map<TripAtStopTime, Collection<TripAtStopTime>> findTripTransfers(GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer, String feedKey, LocalDate trafficDay, Map<String, Transfers> transfers) {
         Transfers transfersForFeed = transfers.get(feedKey);
         Map<TripAtStopTime, Collection<TripAtStopTime>> result = new HashMap<>();
         List<StopTime> stopTimesExceptFirst = tripPointer.stopTimes.subList(1, tripPointer.stopTimes.size());
@@ -163,7 +157,7 @@ public class Trips {
         }
     }
 
-    public void findAllTripTransfersInto(Map<TripAtStopTime, Collection<TripAtStopTime>> result, LocalDate trafficDay) {
+    public void findAllTripTransfersInto(Map<TripAtStopTime, Collection<TripAtStopTime>> result, LocalDate trafficDay, Map<String, Transfers> transfers) {
         Map<TripAtStopTime, Collection<TripAtStopTime>> r = Collections.synchronizedMap(result);
         for (Map.Entry<String, Map<GtfsRealtime.TripDescriptor, GTFSFeed.StopTimesForTripWithTripPatternKey>> e : tripsByFeed.entrySet()) {
             String feedKey = e.getKey();
@@ -172,7 +166,7 @@ public class Trips {
                     .filter(trip -> trip.service.activeOn(trafficDay))
                     .parallel()
                     .forEach(tripPointer -> {
-                        Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = findTripTransfers(tripPointer, feedKey, trafficDay);
+                        Map<TripAtStopTime, Collection<TripAtStopTime>> reducedTripTransfers = findTripTransfers(tripPointer, feedKey, trafficDay, transfers);
                         r.putAll(reducedTripTransfers);
                     });
         }
