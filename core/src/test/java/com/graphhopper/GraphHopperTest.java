@@ -2670,6 +2670,7 @@ public class GraphHopperTest {
         hopper.importOrLoad();
         GHPoint pointA = new GHPoint(28.77428, -81.61593);
         GHPoint pointB = new GHPoint(28.773038, -81.611595);
+        GHPoint pointC = new GHPoint(28.773235, -81.613038);
         {
             // A->B
             GHRequest request = new GHRequest(pointA, pointB);
@@ -2692,6 +2693,19 @@ public class GraphHopperTest {
             assertFalse(response.hasErrors(), response.getErrors().toString());
             double distance = response.getBest().getDistance();
             assertEquals(2318, distance, 1);
+        }
+        {
+            // A->C
+            // Stoneybrook Hills is only a 'dead-end' because of the subnetwork exclusion, but it
+            // still is a dead-end and needs to be marked as such, otherwise there would be a
+            // connection-not-found error.
+            GHRequest request = new GHRequest(pointA, pointC);
+            request.setProfile(profile);
+            request.setCurbsides(Arrays.asList("right", "right"));
+            GHResponse response = hopper.route(request);
+            assertFalse(response.hasErrors(), response.getErrors().toString());
+            double distance = response.getBest().getDistance();
+            assertEquals(488, distance, 1);
         }
     }
 

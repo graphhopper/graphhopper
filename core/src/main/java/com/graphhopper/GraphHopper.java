@@ -40,6 +40,7 @@ import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.*;
+import com.graphhopper.routing.weighting.AbstractAdjustedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
@@ -1410,18 +1411,21 @@ public class GraphHopper {
         properties.put("profiles", getProfilesString());
         logger.info("nodes: " + Helper.nf(baseGraph.getNodes()) + ", edges: " + Helper.nf(baseGraph.getEdges()));
 
-        // find dead-ends and make sure u-turns are allowed there
+        logger.info("Start marking dead-ends");
+        StopWatch sw = StopWatch.started();
         for (Profile profile : profilesByName.values()) {
             if (profile.isTurnCosts()) {
                 BooleanEncodedValue deadEndEnc = encodingManager.getBooleanEncodedValue(DeadEnd.key(profile.getVehicle()));
-                // we must disable turn costs for the dead-end search
+                BooleanEncodedValue subnetworkEnc = encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName()));
+                // We disable turn costs for the dead-end search.
                 Weighting weighting = createWeighting(profile, new PMap(), true);
-                findDeadEndUTurns(weighting, deadEndEnc);
+                findDeadEndUTurns(weighting, deadEndEnc, subnetworkEnc);
             }
         }
+        logger.info("Finished marking dead-ends, took: " + sw.stop().getSeconds() + "s");
     }
 
-    private void findDeadEndUTurns(Weighting weighting, BooleanEncodedValue deadEndEnc) {
+    private void findDeadEndUTurns(Weighting weighting, BooleanEncodedValue deadEndEnc, BooleanEncodedValue subnetworkEnc) {
         EdgeExplorer inExplorer = baseGraph.createEdgeExplorer();
         EdgeExplorer outExplorer = baseGraph.createEdgeExplorer();
         for (int node = 0; node < baseGraph.getNodes(); node++) {
@@ -1429,9 +1433,12 @@ public class GraphHopper {
             OUTER:
             while (fromEdge.next()) {
                 if (Double.isFinite(weighting.calcEdgeWeight(fromEdge, true))) {
+                    boolean subnetworkFrom = fromEdge.get(subnetworkEnc);
                     EdgeIterator toEdge = outExplorer.setBaseNode(node);
                     while (toEdge.next()) {
-                        if (toEdge.getEdge() != fromEdge.getEdge() && Double.isFinite(GHUtility.calcWeightWithTurnWeight(weighting, toEdge, false, fromEdge.getEdge())))
+                        if (toEdge.getEdge() != fromEdge.getEdge()
+                                && Double.isFinite(GHUtility.calcWeightWithTurnWeight(weighting, toEdge, false, fromEdge.getEdge()))
+                                && subnetworkFrom == toEdge.get(subnetworkEnc))
                             continue OUTER;
                     }
                     // the only way to continue from fromEdge is a u-turn. this is a dead-end u-turn
@@ -1448,38 +1455,16 @@ public class GraphHopper {
     private List<PrepareJob> buildSubnetworkRemovalJobs() {
         List<PrepareJob> jobs = new ArrayList<>();
         for (Profile profile : profilesByName.values()) {
-            // if turn costs are enabled use u-turn costs of zero as we only want to make sure the graph is fully connected assuming finite u-turn costs
             Weighting weighting = createWeighting(profile, new PMap());
-            Weighting w = new Weighting() {
-                @Override
-                public double getMinWeight(double distance) {
-                    return weighting.getMinWeight(distance);
-                }
-
-                @Override
-                public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-                    return weighting.calcEdgeWeight(edgeState, reverse);
-                }
-
-                @Override
-                public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-                    return weighting.calcEdgeMillis(edgeState, reverse);
-                }
-
+            Weighting w = new AbstractAdjustedWeighting(weighting) {
                 @Override
                 public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                    // We only want to make sure the graph is fully connected assuming finite u-turn
+                    // costs. Here we have to set it to zero explicitly, because otherwise the
+                    // u-turn costs would be infinite everywhere except at dead-ends. But we run the
+                    // dead-end detection after the subnetwork search.
                     if (inEdge == outEdge) return 0;
                     return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
-                }
-
-                @Override
-                public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-                    return weighting.calcTurnMillis(inEdge, viaNode, outEdge);
-                }
-
-                @Override
-                public boolean hasTurnCosts() {
-                    return weighting.hasTurnCosts();
                 }
 
                 @Override
