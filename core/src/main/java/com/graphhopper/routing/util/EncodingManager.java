@@ -301,6 +301,10 @@ public class EncodingManager implements EncodedValueLookup {
         return getTurnEncodedValue(key, DecimalEncodedValue.class);
     }
 
+    public BooleanEncodedValue getTurnBooleanEncodedValue(String key) {
+        return getTurnEncodedValue(key, BooleanEncodedValue.class);
+    }
+
     public <T extends EncodedValue> T getTurnEncodedValue(String key, Class<T> encodedValueType) {
         EncodedValue ev = turnEncodedValueMap.get(key);
         // todo: why do we not just return null when EV is missing? just like java.util.Map? -> https://github.com/graphhopper/graphhopper/pull/2561#discussion_r859770067

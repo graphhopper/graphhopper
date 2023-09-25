@@ -18,7 +18,7 @@
 
 package com.graphhopper.reader.osm;
 
-import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -30,15 +30,15 @@ import static java.util.Collections.emptyList;
  */
 public class RestrictionTagParser {
     private final List<String> vehicleTypes;
-    private final DecimalEncodedValue turnCostEnc;
+    private final BooleanEncodedValue turnRestrictionEnc;
 
-    public RestrictionTagParser(List<String> vehicleTypes, DecimalEncodedValue turnCostEnc) {
+    public RestrictionTagParser(List<String> vehicleTypes, BooleanEncodedValue turnRestrictionEnc) {
         this.vehicleTypes = vehicleTypes;
-        this.turnCostEnc = turnCostEnc;
+        this.turnRestrictionEnc = turnRestrictionEnc;
     }
 
-    public DecimalEncodedValue getTurnCostEnc() {
-        return turnCostEnc;
+    public BooleanEncodedValue getTurnRestrictionEnc() {
+        return turnRestrictionEnc;
     }
 
     public Result parseRestrictionTags(Map<String, Object> tags) throws OSMRestrictionException {

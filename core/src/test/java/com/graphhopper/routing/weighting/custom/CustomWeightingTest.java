@@ -31,7 +31,7 @@ class CustomWeightingTest {
     DecimalEncodedValue maxSpeedEnc;
     EnumEncodedValue<RoadClass> roadClassEnc;
     EncodingManager encodingManager;
-    DecimalEncodedValue turnCostEnc = TurnCost.create("car", 10);
+    BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create("car");
 
     @BeforeEach
     public void setup() {
@@ -41,7 +41,7 @@ class CustomWeightingTest {
                 .add(Toll.create())
                 .add(Hazmat.create())
                 .add(RouteNetwork.create(BikeNetwork.KEY))
-                .addTurnCostEncodedValue(turnCostEnc)
+                .addTurnCostEncodedValue(turnRestrictionEnc)
                 .build();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
@@ -409,20 +409,19 @@ class CustomWeightingTest {
     public void calcWeightAndTime_withTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         Weighting weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager,
-                new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()), new CustomModel());
+                new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage()), new CustomModel());
         GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(1, 2).setDistance(100));
-        // turn costs are given in seconds
-        setTurnCost(graph, 0, 1, 2, 5);
-        assertEquals(6 + 5, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
-        assertEquals(6000 + 5000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+        setTurnRestriction(graph, 0, 1, 2);
+        assertTrue(Double.isInfinite(GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0)));
+        assertEquals(Long.MAX_VALUE, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0));
     }
 
     @Test
     public void calcWeightAndTime_uTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         Weighting weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null,
-                encodingManager, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 40), new CustomModel());
+                encodingManager, new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), 40), new CustomModel());
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(0, 1).setDistance(100));
         assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
@@ -432,15 +431,12 @@ class CustomWeightingTest {
     public void calcWeightAndTime_withTurnCosts_shortest() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         Weighting weighting = new ShortestWeighting(accessEnc, avSpeedEnc,
-                new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()));
+                new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage()));
         GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(1, 2).setDistance(100));
-        // turn costs are given in seconds
-        setTurnCost(graph, 0, 1, 2, 5);
-        // todo: for the shortest weighting turn costs cannot be interpreted as seconds? at least when they are added
-        // to the weight? how much should they contribute ?
-//        assertEquals(105, AbstractWeighting.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
-        assertEquals(6000 + 5000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+        setTurnRestriction(graph, 0, 1, 2);
+        assertTrue(Double.isInfinite(GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0)));
+        assertEquals(Long.MAX_VALUE, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0));
     }
 
     @Test
@@ -508,7 +504,7 @@ class CustomWeightingTest {
         assertEquals(240, bikeWeighting.calcEdgeWeight(edge, false), .01);
     }
 
-    private void setTurnCost(Graph graph, int from, int via, int to, double turnCost) {
-        graph.getTurnCostStorage().set(turnCostEnc, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), turnCost);
+    private void setTurnRestriction(Graph graph, int from, int via, int to) {
+        graph.getTurnCostStorage().set(turnRestrictionEnc, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), true);
     }
 }
