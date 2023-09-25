@@ -108,7 +108,7 @@ public class TripBasedRouter {
             List<EnqueuedTripSegment> queue1 = enqueueTransfers(queue);
             queue = queue1;
             round = round + 1;
-            logger.error("Round {}: {}", round, queue.size());
+            logger.debug("Round {}: {}", round, queue.size());
             reportQueue(queue);
             checkArrivals(queue, round);
         }
@@ -122,19 +122,12 @@ public class TripBasedRouter {
         pairs.forEach(p -> {
                     EnqueuedTripSegment segment = p.first;
                     GTFSFeed.StopTimesForTripWithTripPatternKey trip = p.second;
-                    logger.error(" pattern: {}   trip: {},   stops: [{}, {}],   {}",
+                    logger.debug(" pattern: {}   trip: {},   stops: [{}, {}]",
                             trip.pattern.pattern_id,
-                            "wurst",
+                            p.first.tripPointer.trip.trip_id,
                             segment.tripAtStopTime.stop_sequence,
-                            segment.toStopSequence,
-                            p.first.tripPointer.trip.trip_id);
+                            segment.toStopSequence);
                 });
-
-//        queue.sort(
-//                Comparator.comparing(segment -> tripTransfers.trips.get(segment.tripAtStopTime.feedId).get(segment.tripAtStopTime.tripDescriptor).pattern.pattern_id)
-//
-//        );
-//        queue.sort(Comparator.comparing(segment -> tripTransfers.trips.get(segment.tripAtStopTime.feedId).get(segment.tripAtStopTime.tripDescriptor).pattern.trips.indexOf(segment.tripAtStopTime.tripDescriptor)));
     }
 
     static class EnqueuedTripSegment {
