@@ -25,6 +25,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.OSMReader;
+import com.graphhopper.reader.osm.PrepareDeadEnds;
 import com.graphhopper.reader.osm.RestrictionTagParser;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
@@ -1413,44 +1414,20 @@ public class GraphHopper {
 
         logger.info("Start marking dead-ends");
         StopWatch sw = StopWatch.started();
+        PrepareDeadEnds prepareDeadEnds = new PrepareDeadEnds(baseGraph);
         for (Profile profile : profilesByName.values()) {
             if (profile.isTurnCosts()) {
                 BooleanEncodedValue deadEndEnc = encodingManager.getBooleanEncodedValue(DeadEnd.key(profile.getVehicle()));
                 BooleanEncodedValue subnetworkEnc = encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName()));
                 // We disable turn costs for the dead-end search.
                 Weighting weighting = createWeighting(profile, new PMap(), true);
-                findDeadEndUTurns(weighting, deadEndEnc, subnetworkEnc);
+                prepareDeadEnds.findDeadEndUTurns(weighting, deadEndEnc, subnetworkEnc);
             }
         }
         logger.info("Finished marking dead-ends, took: " + sw.stop().getSeconds() + "s");
     }
 
-    private void findDeadEndUTurns(Weighting weighting, BooleanEncodedValue deadEndEnc, BooleanEncodedValue subnetworkEnc) {
-        EdgeExplorer inExplorer = baseGraph.createEdgeExplorer();
-        EdgeExplorer outExplorer = baseGraph.createEdgeExplorer();
-        for (int node = 0; node < baseGraph.getNodes(); node++) {
-            EdgeIterator fromEdge = inExplorer.setBaseNode(node);
-            OUTER:
-            while (fromEdge.next()) {
-                if (Double.isFinite(weighting.calcEdgeWeight(fromEdge, true))) {
-                    boolean subnetworkFrom = fromEdge.get(subnetworkEnc);
-                    EdgeIterator toEdge = outExplorer.setBaseNode(node);
-                    while (toEdge.next()) {
-                        if (toEdge.getEdge() != fromEdge.getEdge()
-                                && Double.isFinite(GHUtility.calcWeightWithTurnWeight(weighting, toEdge, false, fromEdge.getEdge()))
-                                && subnetworkFrom == toEdge.get(subnetworkEnc))
-                            continue OUTER;
-                    }
-                    // the only way to continue from fromEdge is a u-turn. this is a dead-end u-turn
-                    setDeadEndUTurn(baseGraph, deadEndEnc, fromEdge.getEdge(), node);
-                }
-            }
-        }
-    }
 
-    private void setDeadEndUTurn(BaseGraph baseGraph, BooleanEncodedValue deadEndEnc, int fromEdge, int viaNode) {
-        baseGraph.getTurnCostStorage().set(deadEndEnc, fromEdge, viaNode, fromEdge, true);
-    }
 
     private List<PrepareJob> buildSubnetworkRemovalJobs() {
         List<PrepareJob> jobs = new ArrayList<>();
