@@ -23,10 +23,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.RoadEnvironment;
-import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -1723,11 +1720,10 @@ public class GraphHopperTest {
         assertEquals(3587, response.getBest().getDistance(), 1);
     }
 
-    @Disabled("todonow")
     @Test
     public void testCreateWeightingHintsMerging() {
         final String profile = "profile";
-        final String vehicle = "mtb";
+        final String vehicle = "car";
 
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
@@ -1735,13 +1731,19 @@ public class GraphHopperTest {
                 setProfiles(new Profile(profile).setVehicle(vehicle).setTurnCosts(true).putHint(U_TURN_COSTS, 123));
         hopper.importOrLoad();
 
+        BooleanEncodedValue deadEndEnc = hopper.getEncodingManager().getBooleanEncodedValue(DeadEnd.key(vehicle));
+        final int edge = 389;
+        final int node = 57;
+        // make sure we chose an edge that is a dead-end for this test
+        assertTrue(hopper.getBaseGraph().getEdgeIteratorState(edge, node).get(deadEndEnc));
+
         // if we do not pass u_turn_costs with the request hints we get those from the profile
         Weighting w = hopper.createWeighting(hopper.getProfiles().get(0), new PMap());
-        assertEquals(123.0, w.calcTurnWeight(5, 6, 5));
+        assertEquals(123.0, w.calcTurnWeight(edge, node, edge));
 
         // we can overwrite the u_turn_costs given in the profile
         w = hopper.createWeighting(hopper.getProfiles().get(0), new PMap().putObject(U_TURN_COSTS, 46));
-        assertEquals(46.0, w.calcTurnWeight(5, 6, 5));
+        assertEquals(46.0, w.calcTurnWeight(edge, node, edge));
     }
 
     @Test
@@ -1925,7 +1927,6 @@ public class GraphHopperTest {
         assertEquals(149504, path.getTime());
     }
 
-    @Disabled("todonow")
     @Test
     public void testTurnCostsOnOff() {
         final String profile1 = "profile_no_turn_costs";
@@ -1952,7 +1953,7 @@ public class GraphHopperTest {
 
         req.setProfile("profile_turn_costs");
         best = hopper.route(req).getBest();
-        assertEquals(476, best.getDistance(), 1);
+        assertEquals(1043, best.getDistance(), 1);
         consistenceCheck(best);
     }
 
@@ -2262,7 +2263,6 @@ public class GraphHopperTest {
         return hopper.route(req);
     }
 
-    @Disabled("todonow")
     @Test
     public void testCHWithFiniteUTurnCosts() {
         GraphHopper h = new GraphHopper().
@@ -2278,14 +2278,14 @@ public class GraphHopperTest {
         GHPoint q = new GHPoint(43.73222, 7.415557);
         GHRequest req = new GHRequest(p, q);
         req.setProfile("my_profile");
-        // we force the start/target directions such that there are u-turns right after we start and right before
-        // we reach the target. at the start location we do a u-turn at the crossing with the *steps* ('ghost junction')
+        // we force the start/target directions such that we need to turn around after the start and
+        // before we reach the target
         req.setCurbsides(Arrays.asList("right", "right"));
         GHResponse res = h.route(req);
         assertFalse(res.hasErrors(), "routing should not fail");
-        assertEquals(242.5, res.getBest().getRouteWeight(), 0.1);
-        assertEquals(1917, res.getBest().getDistance(), 1);
-        assertEquals(243000, res.getBest().getTime(), 1000);
+        assertEquals(292.6, res.getBest().getRouteWeight(), 0.1);
+        assertEquals(2667, res.getBest().getDistance(), 1);
+        assertEquals(292000, res.getBest().getTime(), 1000);
     }
 
     @Test
@@ -2658,7 +2658,6 @@ public class GraphHopperTest {
         assertEquals(4186, distance, 1);
     }
 
-    @Disabled("todonow")
     @Test
     void curbsideWithSubnetwork_issue2502() {
         final String profile = "profile";
