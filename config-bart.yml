@@ -4,7 +4,7 @@ graphhopper:
   gtfs.file: /Users/michaelzilske/GTFSTransitData_RG
 
 
-  graph.location: graph-cache
+  graph.location: graph-bart
   graph.dataaccess.default_type: RAM_STORE
 
   gtfs.trip_based: true

@@ -186,7 +186,6 @@ public class GtfsStorage {
 			}
 
 			GTFSFeed feed = new GTFSFeed(dbFile);
-			feed.findPatterns();
 			this.gtfsFeeds.put(gtfsFeedId, feed);
 		}
 		ptToStreet = deserializeIntoIntIntHashMap("pt_to_street");
