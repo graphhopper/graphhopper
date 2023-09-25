@@ -86,12 +86,16 @@ public class ResponsePathSerializer {
         sb.append((char) (num));
     }
 
-    public static ObjectNode jsonObject(GHResponse ghRsp, boolean enableInstructions, boolean calcPoints, boolean enableElevation, boolean pointsEncoded, double took) {
+    public static ObjectNode jsonObject(GHResponse ghRsp, String osmDate, boolean enableInstructions,
+                                        boolean calcPoints, boolean enableElevation, boolean pointsEncoded, double took) {
         ObjectNode json = JsonNodeFactory.instance.objectNode();
         json.putPOJO("hints", ghRsp.getHints().toMap());
         final ObjectNode info = json.putObject("info");
         info.putPOJO("copyrights", COPYRIGHTS);
         info.put("took", Math.round(took));
+        if (!osmDate.isEmpty())
+            info.put("road_data_timestamp", osmDate);
+
         ArrayNode jsonPathList = json.putArray("paths");
         for (ResponsePath p : ghRsp.getAll()) {
             ObjectNode jsonPath = jsonPathList.addObject();

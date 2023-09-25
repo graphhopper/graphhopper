@@ -138,9 +138,17 @@ public class GraphHopper {
         return this;
     }
 
+    public String getEncodedValuesString() {
+        return encodedValuesString;
+    }
+
     public GraphHopper setVehiclesString(String vehiclesString) {
         this.vehiclesString = vehiclesString;
         return this;
+    }
+
+    public String getVehiclesString() {
+        return vehiclesString;
     }
 
     public EncodingManager getEncodingManager() {
