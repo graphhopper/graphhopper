@@ -425,6 +425,9 @@ class CustomWeightingTest {
         Weighting weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null,
                 encodingManager, new DefaultTurnCostProvider(turnRestrictionEnc, deadEndEnc, graph.getTurnCostStorage(), 40), new CustomModel());
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(0, 1).setDistance(100));
+        assertEquals(Double.POSITIVE_INFINITY, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
+        assertEquals(Long.MAX_VALUE, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+        graph.getTurnCostStorage().set(deadEndEnc, 0, 0, 0, true);
         assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
     }

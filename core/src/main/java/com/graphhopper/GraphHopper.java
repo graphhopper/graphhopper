@@ -1403,6 +1403,13 @@ public class GraphHopper {
      * Internal method to clean up the graph.
      */
     protected void cleanUp() {
+        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(baseGraph.getBaseGraph(), buildSubnetworkRemovalJobs());
+        preparation.setMinNetworkSize(minNetworkSize);
+        preparation.setThreads(subnetworksThreads);
+        preparation.doWork();
+        properties.put("profiles", getProfilesString());
+        logger.info("nodes: " + Helper.nf(baseGraph.getNodes()) + ", edges: " + Helper.nf(baseGraph.getEdges()));
+
         // find dead-ends and make sure u-turns are allowed there
         for (Profile profile : profilesByName.values()) {
             if (profile.isTurnCosts()) {
@@ -1412,13 +1419,6 @@ public class GraphHopper {
                 findDeadEndUTurns(weighting, deadEndEnc);
             }
         }
-
-        PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(baseGraph.getBaseGraph(), buildSubnetworkRemovalJobs());
-        preparation.setMinNetworkSize(minNetworkSize);
-        preparation.setThreads(subnetworksThreads);
-        preparation.doWork();
-        properties.put("profiles", getProfilesString());
-        logger.info("nodes: " + Helper.nf(baseGraph.getNodes()) + ", edges: " + Helper.nf(baseGraph.getEdges()));
     }
 
     private void findDeadEndUTurns(Weighting weighting, BooleanEncodedValue deadEndEnc) {
@@ -1449,8 +1449,45 @@ public class GraphHopper {
         List<PrepareJob> jobs = new ArrayList<>();
         for (Profile profile : profilesByName.values()) {
             // if turn costs are enabled use u-turn costs of zero as we only want to make sure the graph is fully connected assuming finite u-turn costs
-            Weighting weighting = createWeighting(profile, new PMap().putObject(Parameters.Routing.U_TURN_COSTS, 0));
-            jobs.add(new PrepareJob(encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())), weighting));
+            Weighting weighting = createWeighting(profile, new PMap());
+            Weighting w = new Weighting() {
+                @Override
+                public double getMinWeight(double distance) {
+                    return weighting.getMinWeight(distance);
+                }
+
+                @Override
+                public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+                    return weighting.calcEdgeWeight(edgeState, reverse);
+                }
+
+                @Override
+                public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+                    return weighting.calcEdgeMillis(edgeState, reverse);
+                }
+
+                @Override
+                public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                    if (inEdge == outEdge) return 0;
+                    return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
+                }
+
+                @Override
+                public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+                    return weighting.calcTurnMillis(inEdge, viaNode, outEdge);
+                }
+
+                @Override
+                public boolean hasTurnCosts() {
+                    return weighting.hasTurnCosts();
+                }
+
+                @Override
+                public String getName() {
+                    return weighting.getName();
+                }
+            };
+            jobs.add(new PrepareJob(encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())), w));
         }
         return jobs;
     }
