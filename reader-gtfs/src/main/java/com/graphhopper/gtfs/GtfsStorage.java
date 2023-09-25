@@ -195,15 +195,6 @@ public class GtfsStorage {
 		return true;
 	}
 
-	public Object deserialize(String filename) {
-		try (FileInputStream in = new FileInputStream(dir.getLocation() + filename)) {
-			ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(in));
-			return ois.readObject();
-		} catch (IOException | ClassNotFoundException e) {
-			throw new RuntimeException(e);
-		}
-    }
-
 	private IntIntHashMap deserializeIntoIntIntHashMap(String filename) {
 		try (FileInputStream in = new FileInputStream(dir.getLocation() + filename)) {
 			ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(in));
@@ -224,10 +215,16 @@ public class GtfsStorage {
 			int size = ois.readInt();
 			IntObjectHashMap<int[]> result = new IntObjectHashMap<>(size);
 			for (int i = 0; i < size; i++) {
-				result.put(ois.readInt(), ((int[]) ois.readObject()));
+				int key = ois.readInt();
+				int n = ois.readInt();
+				int[] ints = new int[n];
+				for (int j = 0; j < n; j++) {
+					ints[j] = ois.readInt();
+				}
+				result.put(key, ints);
 			}
 			return result;
-		} catch (IOException | ClassNotFoundException e) {
+		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
 	}
@@ -355,7 +352,10 @@ public class GtfsStorage {
 			oos.writeInt(data.size());
 			for (IntObjectCursor<int[]> e : data) {
 				oos.writeInt(e.key);
-				oos.writeObject(e.value);
+				oos.writeInt(e.value.length);
+				for (int v : e.value) {
+					oos.writeInt(v);
+				}
 			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
