@@ -40,14 +40,14 @@ public class RoutingExampleTC {
     }
 
     public static void routeWithTurnCostsAndOtherUTurnCosts(GraphHopper hopper) {
-        GHRequest req = new GHRequest(42.50822, 1.533966, 42.506899, 1.525372)
+        GHRequest req = new GHRequest(42.497644, 1.500471, 42.498669, 1.501275)
                 .setCurbsides(Arrays.asList(CURBSIDE_ANY, CURBSIDE_RIGHT))
                 // to change u-turn costs per request we have to disable CH. otherwise the u-turn costs we set per request
                 // will be ignored and those set for our profile will be used.
                 .putHint(Parameters.CH.DISABLE, true)
                 .setProfile("car");
-        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 10), 1370, 98_700);
-        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 15), 1370, 103_700);
+        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 10), 443, 63_100);
+        route(hopper, req.putHint(Parameters.Routing.U_TURN_COSTS, 15), 443, 68_100);
     }
 
     private static void route(GraphHopper hopper, GHRequest req, int expectedDistance, int expectedTime) {
