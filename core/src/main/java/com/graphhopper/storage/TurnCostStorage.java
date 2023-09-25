@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.IntsRefEdgeIntAccess;
@@ -82,6 +83,13 @@ public class TurnCostStorage {
         return true;
     }
 
+    public void set(BooleanEncodedValue bev, int fromEdge, int viaNode, int toEdge, boolean value) {
+        long pointer = findOrCreateTurnCostEntry(fromEdge, viaNode, toEdge);
+        if (pointer < 0)
+            throw new IllegalStateException("Invalid pointer: " + pointer + " at (" + fromEdge + ", " + viaNode + ", " + toEdge + ")");
+        bev.setBool(false, -1, createIntAccess(pointer), value);
+    }
+
     /**
      * Sets the turn cost at the viaNode when going from "fromEdge" to "toEdge"
      */
@@ -108,11 +116,12 @@ public class TurnCostStorage {
         return pointer;
     }
 
-    /**
-     * @return the turn cost of the viaNode when going from "fromEdge" to "toEdge"
-     */
-    public double get(DecimalEncodedValue turnCostEnc, int fromEdge, int viaNode, int toEdge) {
-        return turnCostEnc.getDecimal(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
+    public double get(DecimalEncodedValue dev, int fromEdge, int viaNode, int toEdge) {
+        return dev.getDecimal(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
+    }
+
+    public boolean get(BooleanEncodedValue bev, int fromEdge, int viaNode, int toEdge) {
+        return bev.getBool(false, -1, createIntAccess(findPointer(fromEdge, viaNode, toEdge)));
     }
 
     private EdgeIntAccess createIntAccess(long pointer) {
@@ -181,6 +190,8 @@ public class TurnCostStorage {
 
         int getToEdge();
 
+        boolean get(BooleanEncodedValue booleanEncodedValue);
+
         double getCost(DecimalEncodedValue encodedValue);
 
         boolean next();
@@ -209,6 +220,12 @@ public class TurnCostStorage {
         @Override
         public int getToEdge() {
             return turnCosts.getInt(turnCostPtr() + TC_TO);
+        }
+
+        @Override
+        public boolean get(BooleanEncodedValue booleanEncodedValue) {
+            intsRef.ints[0] = turnCosts.getInt(turnCostPtr() + TC_FLAGS);
+            return booleanEncodedValue.getBool(false, -1, edgeIntAccess);
         }
 
         @Override

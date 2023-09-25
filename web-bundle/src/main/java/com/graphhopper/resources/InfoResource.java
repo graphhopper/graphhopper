@@ -94,7 +94,7 @@ public class InfoResource {
             Info.ProfileData profileData = new Info.ProfileData(p.getName());
             info.profiles.add(profileData);
             defaultHiddenEVs.addAll(Arrays.asList(VehiclePriority.key(p.getName()), VehicleAccess.key(p.getName()),
-                    VehicleSpeed.key(p.getName()), TurnCost.key(p.getName()), Subnetwork.key(p.getName())));
+                    VehicleSpeed.key(p.getName()), TurnRestriction.key(p.getName()), Subnetwork.key(p.getName())));
         }
         if (config.has("gtfs.file"))
             info.profiles.add(new Info.ProfileData("pt"));

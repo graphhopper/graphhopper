@@ -690,7 +690,6 @@ public class CarTagParserTest {
         EncodingManager lowFactorEm = new EncodingManager.Builder()
                 .add(new SimpleBooleanEncodedValue(VehicleAccess.key("car"), true))
                 .add(lowFactorSpeedEnc)
-                .addTurnCostEncodedValue(TurnCost.create(TurnCost.key("car"), 1))
                 .build();
         edgeIntAccess = new ArrayEdgeIntAccess(lowFactorEm.getIntsForFlags());
         new CarAverageSpeedParser(lowFactorEm, new PMap()).handleWayTags(edgeId, edgeIntAccess, way);
