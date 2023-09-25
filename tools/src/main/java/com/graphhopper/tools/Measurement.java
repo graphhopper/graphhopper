@@ -296,7 +296,7 @@ public class Measurement {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         vehicle = args.getString("measurement.vehicle", "car");
         boolean turnCosts = args.getBool("measurement.turn_costs", false);
-        int uTurnCosts = args.getInt("measurement.u_turn_costs", 80);
+        int uTurnCosts = args.getInt("measurement.u_turn_costs", 0);
         String weighting = args.getString("measurement.weighting", "custom");
         boolean useCHEdge = args.getBool("measurement.ch.edge", true);
         boolean useCHNode = args.getBool("measurement.ch.node", true);
