@@ -1407,7 +1407,8 @@ public class GraphHopper {
         for (Profile profile : profilesByName.values()) {
             if (profile.isTurnCosts()) {
                 BooleanEncodedValue deadEndEnc = encodingManager.getBooleanEncodedValue(DeadEnd.key(profile.getVehicle()));
-                Weighting weighting = createWeighting(profile, new PMap().putObject(Parameters.Routing.U_TURN_COSTS, 0));
+                // we must disable turn costs for the dead-end search
+                Weighting weighting = createWeighting(profile, new PMap(), true);
                 findDeadEndUTurns(weighting, deadEndEnc);
             }
         }
