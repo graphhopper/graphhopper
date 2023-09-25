@@ -54,6 +54,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
@@ -250,7 +251,7 @@ public class GTFSFeed implements Cloneable, Closeable {
      */
     public Iterable<StopTime> getInterpolatedStopTimesForTrip (String trip_id) throws FirstAndLastStopsDoNotHaveTimes {
         // clone stop times so as not to modify base GTFS structures
-        StopTime[] stopTimes = StreamSupport.stream(getOrderedStopTimesForTrip(trip_id).spliterator(), false)
+        StopTime[] stopTimes = StreamSupport.stream(Spliterators.spliteratorUnknownSize(getOrderedStopTimesForTrip(trip_id).iterator(), 0), false)
                 .map(st -> st.clone())
                 .toArray(i -> new StopTime[i]);
 
@@ -554,6 +555,11 @@ public class GTFSFeed implements Cloneable, Closeable {
         for (PatternFinder.Pattern e : patterns.values()) {
             e.trips.sort(Comparator.comparingInt(t -> startTimes.get(t.getTripId())));
         }
+    }
+
+    // Utility to more efficiently stream MapDB collections -- by default, stream() expensively determines collection size
+    public static <T> Stream<T> stream(Collection<T> collection) {
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(collection.iterator(), 0), false);
     }
 
 }

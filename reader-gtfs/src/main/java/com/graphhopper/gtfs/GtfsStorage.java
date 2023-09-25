@@ -39,6 +39,8 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 public class GtfsStorage {
 
@@ -221,7 +223,7 @@ public class GtfsStorage {
 		try (FileInputStream in = new FileInputStream(dir.getLocation() + filename)) {
 			ObjectInputStream ois = new ObjectInputStream(new BufferedInputStream(in));
 			int size = ois.readInt();
-			IntObjectHashMap<int[]> result = new IntObjectHashMap<>();
+			IntObjectHashMap<int[]> result = new IntObjectHashMap<>(size);
 			for (int i = 0; i < size; i++) {
 				result.put(ois.readInt(), ((int[]) ois.readObject()));
 			}

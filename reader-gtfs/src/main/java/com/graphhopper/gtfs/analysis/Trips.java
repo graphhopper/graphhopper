@@ -59,12 +59,13 @@ public class Trips {
 
     public Map<String, List<TripAtStopTime>> getPatternBoardings(GtfsStorage.FeedIdWithStopId k) {
         return boardingsForStopByPattern.computeIfAbsent(k, key -> {
-            Stream<PtEdgeAttributes> sorted = RealtimeFeed.findAllBoardings(gtfsStorage, key)
+            Stream<Object[]> sorted = RealtimeFeed.findAllBoardings(gtfsStorage, key)
                     .map(PtGraph.PtEdge::getAttrs)
-                    .sorted(Comparator.comparingInt(boarding -> tripsByFeed.get(key.feedId).get(boarding.tripDescriptor).stopTimes.get(boarding.stop_sequence).departure_time));
+                    .map(boarding -> new Object[]{boarding, tripsByFeed.get(key.feedId).get(boarding.tripDescriptor)})
+                    .sorted(Comparator.comparingInt(e -> ((GTFSFeed.StopTimesForTripWithTripPatternKey) e[1]).stopTimes.get(((PtEdgeAttributes) e[0]).stop_sequence).departure_time));
             Map<String, List<TripAtStopTime>> collect = sorted
-                    .collect(Collectors.groupingBy(boarding -> tripsByFeed.get(key.feedId).get(boarding.tripDescriptor).pattern.pattern_id,
-                            Collectors.mapping(boarding -> new TripAtStopTime(tripsByFeed.get(key.feedId).get(boarding.tripDescriptor).idx, boarding.stop_sequence),
+                    .collect(Collectors.groupingBy(e -> ((GTFSFeed.StopTimesForTripWithTripPatternKey) e[1]).pattern.pattern_id,
+                            Collectors.mapping(e -> new TripAtStopTime(((GTFSFeed.StopTimesForTripWithTripPatternKey) e[1]).idx, ((PtEdgeAttributes) e[0]).stop_sequence),
                                     Collectors.toList())));
             return collect;
         });
