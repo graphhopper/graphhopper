@@ -42,7 +42,3 @@ or if you want to try to integrate your changes you have to:
 
 Only turn instructions are handled in the server-side routing engine. All other translations are on the client-side
 [in GraphHopper Maps](https://github.com/graphhopper/graphhopper-maps/blob/master/README.md#help-with-translations).
-
-## License Agreement
-
-Please sign the [GraphHopper License Agreement](../../CONTRIBUTING.md).

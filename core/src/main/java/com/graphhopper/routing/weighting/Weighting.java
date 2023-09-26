@@ -20,8 +20,7 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Specifies how the best route is calculated. E.g. the fastest or shortest route.
- * <p>
+ * Specifies how the best route is calculated.
  *
  * @author Peter Karich
  */
@@ -35,12 +34,6 @@ public interface Weighting {
      * way the return value is 'distance/max_velocity'
      */
     double getMinWeight(double distance);
-
-    /**
-     * @return true if the edge is not accessible in the given direction. Note that when false is returned it does
-     * **not** mean the weight is finite! But when true is returned the weight must be infinite as well.
-     */
-    boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse);
 
     /**
      * This method calculates the weight of a given {@link EdgeIteratorState}. E.g. a high value indicates that the edge

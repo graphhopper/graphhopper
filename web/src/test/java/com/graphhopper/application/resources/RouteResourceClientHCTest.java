@@ -27,7 +27,6 @@ import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.application.util.TestUtils;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointNotFoundException;
@@ -71,9 +70,9 @@ public class RouteResourceClientHCTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        new Profile("car").setVehicle("car").setWeighting("fastest"),
-                        new CustomProfile("bike").setVehicle("bike"),
-                        new CustomProfile("my_custom_car").setVehicle("car")
+                        new Profile("car").setVehicle("car"),
+                        new Profile("bike").setVehicle("bike"),
+                        new Profile("my_custom_car").setVehicle("car")
                 ))
                 .setCHProfiles(Arrays.asList(new CHProfile("car"), new CHProfile("bike")));
         return config;

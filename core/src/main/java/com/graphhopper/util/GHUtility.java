@@ -49,7 +49,8 @@ import java.io.Reader;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -160,13 +161,12 @@ public class GHUtility {
         return list;
     }
 
-    public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
-        printGraphForUnitTest(g, accessEnc, speedEnc, new BBox(
+    public static void printGraphForUnitTest(Graph g, DecimalEncodedValue speedEnc) {
+        printGraphForUnitTest(g, speedEnc, new BBox(
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY));
     }
 
-    public static void printGraphForUnitTest(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, BBox bBox) {
-        System.out.println("WARNING: printGraphForUnitTest does not pay attention to custom edge speeds at the moment");
+    public static void printGraphForUnitTest(Graph g, DecimalEncodedValue speedEnc, BBox bBox) {
         NodeAccess na = g.getNodeAccess();
         for (int node = 0; node < g.getNodes(); ++node) {
             if (bBox.contains(na.getLat(node), na.getLon(node))) {
@@ -177,37 +177,26 @@ public class GHUtility {
         while (iter.next()) {
             if (bBox.contains(na.getLat(iter.getBaseNode()), na.getLon(iter.getBaseNode())) &&
                     bBox.contains(na.getLat(iter.getAdjNode()), na.getLon(iter.getAdjNode()))) {
-                printUnitTestEdge(accessEnc, speedEnc, iter);
+                printUnitTestEdge(speedEnc, iter);
             }
         }
     }
 
-    private static void printUnitTestEdge(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EdgeIteratorState edge) {
-        boolean fwd = edge.get(accessEnc);
-        boolean bwd = edge.getReverse(accessEnc);
-        if (!fwd && !bwd) {
-            return;
-        }
+    private static void printUnitTestEdge(DecimalEncodedValue speedEnc, EdgeIteratorState edge) {
+        boolean fwd = edge.get(speedEnc) > 0;
         int from = fwd ? edge.getBaseNode() : edge.getAdjNode();
         int to = fwd ? edge.getAdjNode() : edge.getBaseNode();
-        if (speedEnc != null) {
-            System.out.printf(Locale.ROOT,
-                    "GHUtility.setSpeed(%f, %f, encoder, graph.edge(%d, %d).setDistance(%f)); // edgeId=%s\n",
-                    fwd ? edge.get(speedEnc) : 0, bwd ? edge.getReverse(speedEnc) : 0,
-                    from, to, edge.getDistance(), edge.getEdge());
-        } else {
-            System.out.printf(Locale.ROOT,
-                    "graph.edge(%d, %d).setDistance(%f).set(accessEnc, %b, %b); // edgeId=%s\n",
-                    from, to, edge.getDistance(),
-                    edge.get(accessEnc), edge.getReverse(accessEnc), edge.getEdge());
-        }
+        System.out.printf(Locale.ROOT,
+                "graph.edge(%d, %d).setDistance(%f).set(speedEnc, %f, %f); // edgeId=%s\n",
+                from, to, edge.getDistance(), edge.get(speedEnc), edge.getReverse(speedEnc),
+                edge.getEdge());
     }
 
     /**
      * @param speed if null a random speed will be assigned to every edge
      */
     public static void buildRandomGraph(Graph graph, Random random, int numNodes, double meanDegree,
-                                        boolean allowZeroDistance, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, Double speed,
+                                        boolean allowZeroDistance, DecimalEncodedValue speedEnc, Double speed,
                                         double pBothDir, double pRandomDistanceOffset) {
         if (numNodes < 2 || meanDegree < 1) {
             throw new IllegalArgumentException("numNodes must be >= 2, meanDegree >= 1");
@@ -237,8 +226,7 @@ public class GHUtility {
             maxDist = Math.max(maxDist, distance);
             // using bidirectional edges will increase mean degree of graph above given value
             boolean bothDirections = random.nextDouble() < pBothDir;
-            EdgeIteratorState edge = graph.edge(from, to).setDistance(distance).set(accessEnc, true);
-            if (bothDirections) edge.setReverse(accessEnc, true);
+            EdgeIteratorState edge = graph.edge(from, to).setDistance(distance);
             double fwdSpeed = 10 + random.nextDouble() * 110;
             double bwdSpeed = 10 + random.nextDouble() * 110;
             // if an explicit speed is given we discard the random speeds and use the given one instead
@@ -248,7 +236,7 @@ public class GHUtility {
             if (speedEnc != null) {
                 edge.set(speedEnc, fwdSpeed);
                 if (speedEnc.isStoreTwoDirections())
-                    edge.setReverse(speedEnc, bwdSpeed);
+                    edge.setReverse(speedEnc, !bothDirections ? 0 : bwdSpeed);
             }
             numEdges++;
         }
@@ -271,8 +259,8 @@ public class GHUtility {
         double pEdgePairHasTurnCosts = 0.6;
         double pCostIsRestriction = 0.1;
 
-        EdgeExplorer inExplorer = graph.createEdgeExplorer(AccessFilter.inEdges(accessEnc));
-        EdgeExplorer outExplorer = graph.createEdgeExplorer(AccessFilter.outEdges(accessEnc));
+        EdgeExplorer inExplorer = graph.createEdgeExplorer(accessEnc == null ? edge -> true : AccessFilter.inEdges(accessEnc));
+        EdgeExplorer outExplorer = graph.createEdgeExplorer(accessEnc == null ? edge -> true : AccessFilter.outEdges(accessEnc));
         for (int node = 0; node < graph.getNodes(); ++node) {
             if (random.nextDouble() < pNodeHasTurnCosts) {
                 EdgeIterator inIter = inExplorer.setBaseNode(node);
@@ -579,9 +567,10 @@ public class GHUtility {
      */
     public static long calcMillisWithTurnMillis(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         long edgeMillis = weighting.calcEdgeMillis(edgeState, reverse);
-        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
+        if (edgeMillis == Long.MAX_VALUE)
             return edgeMillis;
-        }
+        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId))
+            return edgeMillis;
         // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
         // todo: why no first/last orig edge here as in calcWeight ?
 //        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
@@ -589,6 +578,8 @@ public class GHUtility {
         long turnMillis = reverse
                 ? weighting.calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : weighting.calcTurnMillis(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+        if (turnMillis == Long.MAX_VALUE)
+            return turnMillis;
         return edgeMillis + turnMillis;
     }
 

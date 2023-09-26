@@ -2,6 +2,9 @@
 ### 8.0 [not yet released]
 
 - conditional access restriction tags are no longer considered from vehicle tag parsers and instead a car_access_conditional encoded value (similarly bike + foot) can be used in a custom model. Depending on the usage this fixes #2477. More details are accessible via path details "street_access_conditional" (i.e. converted from OSM access:conditional). See #2863
+- access "turn"-EncodedValue of EncodingManager through separate methods, see #2884
+- removed fastest weighting for public usage, use custom instead, see #2866
+- removed shortest weighting for public usage, use a high distance_influence instead, see #2865
 - removed duration:seconds as intermediate tag
 - /info endpoint does no longer return the vehicle used per profile and won't return encoded value of vehicles like car_average_speed
 - Country rules no longer contain maxspeed handling, enable a much better alternative via `max_speed_calculator.enabled: true`. On the client side use `max_speed_estimated` to determine if max_speed is from OSM or an estimation. See #2810

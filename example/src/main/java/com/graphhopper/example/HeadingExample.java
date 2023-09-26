@@ -4,9 +4,8 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.config.CHProfile;
+
 import com.graphhopper.config.Profile;
-import com.graphhopper.json.Statement;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
@@ -35,7 +34,7 @@ public class HeadingExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/heading-graph-cache");
-        hopper.setProfiles(new CustomProfile("car").setCustomModel(new CustomModel().
+        hopper.setProfiles(new Profile("car").setCustomModel(new CustomModel().
                 addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1"))).
                 setVehicle("car").setTurnCosts(false));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));

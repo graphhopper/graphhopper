@@ -41,13 +41,6 @@ public abstract class AbstractWeighting implements Weighting {
     }
 
     @Override
-    public boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse) {
-        if (edgeState.getBaseNode() == edgeState.getAdjNode())
-            throw new IllegalStateException("Unexpected loop-edge at node: " + edgeState.getBaseNode());
-        return reverse ? !edgeState.getReverse(accessEnc) : !edgeState.get(accessEnc);
-    }
-
-    @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
         if (reverse && !edgeState.getReverse(accessEnc) || !reverse && !edgeState.get(accessEnc))
             throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. " +
@@ -92,7 +85,7 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public String toString() {
-        return getName() + "|" + speedEnc.getName().split("$")[0];
+        return getName() + "|" + speedEnc.getName();
     }
 
 }
