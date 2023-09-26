@@ -290,6 +290,19 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
     }
 
     @Test
+    default void testRoute51() {
+        Request ghRequest = new Request(Arrays.asList(
+                new GHStationLocation("STAGECOACH"),
+                new GHStationLocation("BEATTY_AIRPORT")),
+                LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
+        GHResponse route = ptRouter().route(ghRequest);
+
+        assertFalse(route.hasErrors(), route.toString());
+        assertFalse(route.getAll().isEmpty());
+        assertEquals(time(6, 20), route.getBest().getTime(), "Expected travel time == scheduled travel time");
+    }
+
+    @Test
     default void testRoute5() {
         Request ghRequest = new Request(Arrays.asList(
                 new GHStationLocation("STAGECOACH"),
