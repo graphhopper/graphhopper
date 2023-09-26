@@ -58,8 +58,8 @@ public class Trips {
                     pattern.trips.add(tripPointer);
                 } else {
                     for (Frequency frequency : frequencies) {
-                        List<StopTime> orderedStopTimesForUnrolledTripWithPadding = new ArrayList<>();
                         for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
+                            List<StopTime> orderedStopTimesForUnrolledTripWithPadding = new ArrayList<>();
                             for (StopTime stopTime : orderedStopTimesForTripWithPadding) {
                                 if (stopTime != null) {
                                     StopTime stopTimeForUnrolledTrip = stopTime.clone();
@@ -70,9 +70,9 @@ public class Trips {
                                     orderedStopTimesForUnrolledTripWithPadding.add(null);
                                 }
                             }
+                            GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer = new GTFSFeed.StopTimesForTripWithTripPatternKey(entry.getKey(), trip, service, route.route_type, orderedStopTimesForUnrolledTripWithPadding, pattern);
+                            pattern.trips.add(tripPointer);
                         }
-                        GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer = new GTFSFeed.StopTimesForTripWithTripPatternKey(entry.getKey(), trip, service, route.route_type, orderedStopTimesForUnrolledTripWithPadding, pattern);
-                        pattern.trips.add(tripPointer);
                     }
                 }
             }
