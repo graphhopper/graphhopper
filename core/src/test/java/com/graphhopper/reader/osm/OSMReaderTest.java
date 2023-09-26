@@ -545,7 +545,7 @@ public class OSMReaderTest {
         // (2-3)->(3-4) only_straight_on = (2-3)->(3-8) restricted
         // (4-3)->(3-8) no_right_turn = (4-3)->(3-8) restricted
         // (2-3)->(3-8) no_entry = (2-3)->(3-8) restricted
-        BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getBooleanEncodedValue(TurnRestriction.key("car"));
+        BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("car"));
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8));
         assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8));
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8));
@@ -567,7 +567,7 @@ public class OSMReaderTest {
         assertFalse(tcStorage.get(carTCEnc, edge4_5, n5, edge5_6));
         assertTrue(tcStorage.get(carTCEnc, edge4_5, n5, edge5_1));
 
-        BooleanEncodedValue bikeTCEnc = hopper.getEncodingManager().getBooleanEncodedValue(TurnRestriction.key("bike"));
+        BooleanEncodedValue bikeTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("bike"));
         assertFalse(tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_6));
 
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 40, 10);
@@ -603,8 +603,8 @@ public class OSMReaderTest {
         int edge9_3 = GHUtility.getEdge(graph, n9, n3).getEdge();
         int edge3_8 = GHUtility.getEdge(graph, n3, n8).getEdge();
 
-        BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getBooleanEncodedValue(TurnRestriction.key("car"));
-        BooleanEncodedValue roadsTCEnc = hopper.getEncodingManager().getBooleanEncodedValue(TurnRestriction.key("roads"));
+        BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("car"));
+        BooleanEncodedValue roadsTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("roads"));
 
         assertFalse(tcStorage.get(carTCEnc, edge9_3, n3, edge3_8));
         assertTrue(tcStorage.get(roadsTCEnc, edge9_3, n3, edge3_8));
@@ -711,9 +711,9 @@ public class OSMReaderTest {
                 ).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
-        BooleanEncodedValue carTCEnc = manager.getBooleanEncodedValue(TurnRestriction.key("car"));
-        BooleanEncodedValue truckTCEnc = manager.getBooleanEncodedValue(TurnRestriction.key("truck"));
-        BooleanEncodedValue bikeTCEnc = manager.getBooleanEncodedValue(TurnRestriction.key("bike"));
+        BooleanEncodedValue carTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("car"));
+        BooleanEncodedValue truckTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("truck"));
+        BooleanEncodedValue bikeTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("bike"));
 
         Graph graph = hopper.getBaseGraph();
         TurnCostStorage tcStorage = graph.getTurnCostStorage();
@@ -775,7 +775,7 @@ public class OSMReaderTest {
         // (2-3)->(3-4) only_straight_on except bicycle = (2-3)->(3-8) restricted for car
         // (4-3)->(3-8) no_right_turn dedicated to motorcar = (4-3)->(3-8) restricted for car
 
-        BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getBooleanEncodedValue(TurnRestriction.key("car"));
+        BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("car"));
         assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8));
         assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8));
         assertFalse(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4));
@@ -784,7 +784,7 @@ public class OSMReaderTest {
         assertFalse(tcStorage.get(carTCEnc, edge4_3, n3, edge3_2));
         assertFalse(tcStorage.get(carTCEnc, edge8_3, n3, edge3_2));
 
-        BooleanEncodedValue bikeTCEnc = hopper.getEncodingManager().getBooleanEncodedValue(TurnRestriction.key("bike"));
+        BooleanEncodedValue bikeTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("bike"));
         assertFalse(tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_8));
         assertFalse(tcStorage.get(bikeTCEnc, edge4_3, n3, edge3_8));
         assertFalse(tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_4));
@@ -831,8 +831,8 @@ public class OSMReaderTest {
         int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
         int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
 
-        BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getBooleanEncodedValue(TurnRestriction.key("car"));
-        BooleanEncodedValue bikeTCEnc = hopper.getEncodingManager().getBooleanEncodedValue(TurnRestriction.key("bike"));
+        BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("car"));
+        BooleanEncodedValue bikeTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("bike"));
 
         // (1-2)->(2-3) no_right_turn for motorcar and bus
         assertTrue(tcStorage.get(carTCEnc, edge1_2, n2, edge2_3));
