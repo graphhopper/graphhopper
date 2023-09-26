@@ -43,12 +43,18 @@ import java.util.stream.Stream;
 import static com.graphhopper.gtfs.GtfsHelper.time;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public interface GraphHopperGtfsIT<T extends PtRouter> {
 
     String GRAPH_LOC = "target/GraphHopperGtfsIT";
     T ptRouter();
+
+    default GHResponse route(Request request) {
+        return ptRouter().route(request);
+    };
+
     GraphHopperGtfs graphHopperGtfs();
     ZoneId zoneId = ZoneId.of("America/Los_Angeles");
 
@@ -82,6 +88,12 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
 
         public PtRouterTripBasedImpl ptRouter() {
             return ptRouter;
+        }
+
+        @Override
+        public GHResponse route(Request request) {
+            assumeFalse(request.isArriveBy(), "We are excused from queries by arrival time so far");
+            return ptRouter().route(request);
         }
 
         @AfterAll
@@ -182,7 +194,7 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
                 new GHStationLocation("NANAA")),
                 LocalDateTime.of(2007, 1, 1, 6, 49).atZone(zoneId).toInstant());
         ghRequest.setArriveBy(true);
-        GHResponse route = ptRouter().route(ghRequest);
+        GHResponse route = route(ghRequest);
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
         assertEquals(time(0, 5), route.getBest().getTime(), "Expected travel time == scheduled travel time");
@@ -197,7 +209,7 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
                 LocalDateTime.of(2007, 1, 1, 6, 50).atZone(zoneId).toInstant());
         // Tests that it also works when the query arrival time is not exactly the scheduled arrival time of the solution
         ghRequest.setArriveBy(true);
-        GHResponse route = ptRouter().route(ghRequest);
+        GHResponse route = route(ghRequest);
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
         assertEquals(time(0, 6), route.getBest().getTime(), "Expected travel time == scheduled travel time");
@@ -263,7 +275,7 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
         ghRequest.setIgnoreTransfers(true);
         ghRequest.setLimitSolutions(4);
 
-        GHResponse response = ptRouter().route(ghRequest);
+        GHResponse response = route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()
                 .map(path -> LocalTime.from(path.getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId)))
                 .collect(Collectors.toList());
@@ -325,7 +337,7 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
                 new GHStationLocation("BULLFROG")),
                 LocalDateTime.of(2007, 1, 1, 8, 10).atZone(zoneId).toInstant());
         ghRequest.setArriveBy(true);
-        GHResponse route = ptRouter().route(ghRequest);
+        GHResponse route = route(ghRequest);
 
         assertFalse(route.hasErrors());
         assertFalse(route.getAll().isEmpty());
@@ -607,7 +619,7 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
         // I want to be there at 7:20
         ghRequest.setArriveBy(true);
 
-        GHResponse response = ptRouter().route(ghRequest);
+        GHResponse response = route(ghRequest);
 
         Trip.PtLeg lastLeg = ((Trip.PtLeg) response.getBest().getLegs().get(response.getBest().getLegs().size() - 1));
         Trip.Stop lastStop = lastLeg.stops.get(lastLeg.stops.size() - 1);

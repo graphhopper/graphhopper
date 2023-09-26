@@ -3,7 +3,6 @@ package com.graphhopper.gtfs;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
-import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.gtfs.analysis.Trips;
 import com.graphhopper.reader.osm.Pair;
 import org.slf4j.Logger;
@@ -50,7 +49,7 @@ public class TripBasedRouter {
 
     public List<ResultLabel> routeNaiveProfileWithNaiveBetas(Parameters parameters) {
         for (StopWithTimeDelta accessStation : parameters.getAccessStations()) {
-            Parameters newParameters = new Parameters(Collections.singletonList(accessStation), parameters.getEgressStations(), parameters.getProfileStartTime(), parameters.getProfileLength(), parameters.getTripFilter(), parameters.getBetaAccessTime(), parameters.getBetaEgressTime());
+            Parameters newParameters = new Parameters(Collections.singletonList(accessStation), parameters.getEgressStations(), parameters.getProfileStartTime(), parameters.getProfileLength(), parameters.getTripFilter(), parameters.getBetaAccessTime(), parameters.getBetaEgressTime(), parameters.getBetaTransfers());
             routeNaiveProfile(newParameters);
         }
         return result;
@@ -138,6 +137,7 @@ public class TripBasedRouter {
         Trips.TripAtStopTime transferOrigin;
         EnqueuedTripSegment parent;
         StopWithTimeDelta accessStation;
+        int nRealTransfers;
 
         public EnqueuedTripSegment(GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer, Trips.TripAtStopTime tripAtStopTime, int toStopSequence, LocalDate serviceDay, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, StopWithTimeDelta accessStation) {
             this.tripPointer = tripPointer;
@@ -214,14 +214,19 @@ public class TripBasedRouter {
 
     private int getArrivalTime(EnqueuedTripSegment enqueuedTripSegment, StopTime stopTime, int extraSeconds) {
         int extraDisutilityOfAccessSeconds = (int) (((long) (enqueuedTripSegment.accessStation.timeDelta * (parameters.getBetaAccessTime() - 1.0))) / 1000L);
-        return stopTime.arrival_time + extraDisutilityOfAccessSeconds + extraSeconds;
+        int extraDisutilityOfTransfersSeconds = (int) (((long) enqueuedTripSegment.nRealTransfers * parameters.getBetaTransfers()) / 1000L);
+        return stopTime.arrival_time + extraDisutilityOfAccessSeconds + extraDisutilityOfTransfersSeconds + extraSeconds;
     }
 
     private void enqueue(List<EnqueuedTripSegment> queue1, GTFSFeed.StopTimesForTripWithTripPatternKey destinationTripPointer, Trips.TripAtStopTime transferDestination, Trips.TripAtStopTime transferOrigin, EnqueuedTripSegment parent, LocalDate serviceDay, StopWithTimeDelta accessStation) {
         int thisTripDoneFromIndex = tripDoneFromIndex[destinationTripPointer.idx];
         if (transferDestination.stop_sequence < thisTripDoneFromIndex) {
             if (transferDestination.stop_sequence + 1 < thisTripDoneFromIndex) {
-                queue1.add(new EnqueuedTripSegment(destinationTripPointer, transferDestination, thisTripDoneFromIndex, serviceDay, transferOrigin, parent, accessStation));
+                EnqueuedTripSegment enqueuedTripSegment = new EnqueuedTripSegment(destinationTripPointer, transferDestination, thisTripDoneFromIndex, serviceDay, transferOrigin, parent, accessStation);
+                if (parent != null) {
+                    enqueuedTripSegment.nRealTransfers = parent.nRealTransfers + 1;
+                }
+                queue1.add(enqueuedTripSegment);
             }
             markAsDone(destinationTripPointer, transferDestination.stop_sequence);
         }
@@ -314,8 +319,9 @@ public class TripBasedRouter {
         private final Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter;
         private final double betaAccessTime;
         private final double betaEgressTime;
+        private final double betaTransfers;
 
-        Parameters(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant profileStartTime, Duration profileLength, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter, double betaAccessTime, double betaEgressTime) {
+        Parameters(List<StopWithTimeDelta> accessStations, List<StopWithTimeDelta> egressStations, Instant profileStartTime, Duration profileLength, Predicate<GTFSFeed.StopTimesForTripWithTripPatternKey> tripFilter, double betaAccessTime, double betaEgressTime, double betaTransfers) {
             this.accessStations = accessStations;
             this.egressStations = egressStations;
             this.profileStartTime = profileStartTime;
@@ -323,6 +329,7 @@ public class TripBasedRouter {
             this.tripFilter = tripFilter;
             this.betaAccessTime = betaAccessTime;
             this.betaEgressTime = betaEgressTime;
+            this.betaTransfers = betaTransfers;
         }
 
         public List<StopWithTimeDelta> getAccessStations() {
@@ -355,6 +362,10 @@ public class TripBasedRouter {
 
         public double getBetaEgressTime() {
             return betaEgressTime;
+        }
+
+        public double getBetaTransfers() {
+            return betaTransfers;
         }
     }
 }
