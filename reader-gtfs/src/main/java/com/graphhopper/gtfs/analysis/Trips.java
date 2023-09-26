@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class Trips {
 
-    private static final int MAXIMUM_TRANSFER_DURATION = 15 * 60;
+    private static final int MAXIMUM_TRANSFER_DURATION = 24 * 60 * 60;
     public final List<GTFSFeed.StopTimesForTripWithTripPatternKey> trips;
     private Map<GtfsStorage.FeedIdWithStopId, Map<String, List<TripAtStopTime>>> boardingsForStopByPattern = new ConcurrentHashMap<>();
     private Map<LocalDate, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>>> tripTransfersPerDay = new ConcurrentHashMap<>();
