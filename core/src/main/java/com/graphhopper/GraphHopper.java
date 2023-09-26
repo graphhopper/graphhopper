@@ -1417,7 +1417,7 @@ public class GraphHopper {
         PrepareDeadEnds prepareDeadEnds = new PrepareDeadEnds(baseGraph);
         for (Profile profile : profilesByName.values()) {
             if (profile.isTurnCosts()) {
-                BooleanEncodedValue deadEndEnc = encodingManager.getBooleanEncodedValue(DeadEnd.key(profile.getVehicle()));
+                BooleanEncodedValue deadEndEnc = encodingManager.getTurnBooleanEncodedValue(DeadEnd.key(profile.getVehicle()));
                 BooleanEncodedValue subnetworkEnc = encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName()));
                 // We disable turn costs for the dead-end search.
                 Weighting weighting = createWeighting(profile, new PMap(), true);

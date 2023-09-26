@@ -1731,7 +1731,7 @@ public class GraphHopperTest {
                 setProfiles(new Profile(profile).setVehicle(vehicle).setTurnCosts(true).putHint(U_TURN_COSTS, 123));
         hopper.importOrLoad();
 
-        BooleanEncodedValue deadEndEnc = hopper.getEncodingManager().getBooleanEncodedValue(DeadEnd.key(vehicle));
+        BooleanEncodedValue deadEndEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(DeadEnd.key(vehicle));
         final int edge = 389;
         final int node = 57;
         // make sure we chose an edge that is a dead-end for this test
