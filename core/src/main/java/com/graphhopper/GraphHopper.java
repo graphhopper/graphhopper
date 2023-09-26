@@ -705,13 +705,13 @@ public class GraphHopper {
                         osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
                 }
                 String turnRestrictionKey = TurnRestriction.key(new PMap(vehicleStr).getString("name", name));
-                if (encodingManager.hasEncodedValue(turnRestrictionKey)
+                if (encodingManager.hasTurnEncodedValue(turnRestrictionKey)
                         // need to make sure we do not add the same restriction parsers multiple times
                         && osmParsers.getRestrictionTagParsers().stream().noneMatch(r -> r.getTurnRestrictionEnc().getName().equals(turnRestrictionKey))) {
                     List<String> restrictions = tagParser instanceof AbstractAccessParser
                             ? ((AbstractAccessParser) tagParser).getRestrictions()
                             : OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(new PMap(vehicleStr).getString("transportation_mode", "VEHICLE")));
-                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(restrictions, encodingManager.getBooleanEncodedValue(turnRestrictionKey)));
+                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(restrictions, encodingManager.getTurnBooleanEncodedValue(turnRestrictionKey)));
                 }
             });
             vehicleTagParsers.getTagParsers().forEach(tagParser -> {
@@ -1108,8 +1108,8 @@ public class GraphHopper {
             if (!encodingManager.getVehicles().contains(profile.getVehicle()))
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". " +
                         "Available vehicles: " + String.join(",", encodingManager.getVehicles()));
-            BooleanEncodedValue turnRestrictionEnc = encodingManager.hasEncodedValue(TurnRestriction.key(profile.getVehicle()))
-                    ? encodingManager.getBooleanEncodedValue(TurnRestriction.key(profile.getVehicle()))
+            BooleanEncodedValue turnRestrictionEnc = encodingManager.hasTurnEncodedValue(TurnRestriction.key(profile.getVehicle()))
+                    ? encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getVehicle()))
                     : null;
             if (profile.isTurnCosts() && turnRestrictionEnc == null) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +

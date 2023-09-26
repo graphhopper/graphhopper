@@ -175,7 +175,7 @@ public class Measurement {
         BaseGraph g = hopper.getBaseGraph();
         EncodingManager encodingManager = hopper.getEncodingManager();
         BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key(vehicle));
-        boolean withTurnCosts = encodingManager.hasEncodedValue(TurnRestriction.key(vehicle));
+        boolean withTurnCosts = encodingManager.hasTurnEncodedValue(TurnRestriction.key(vehicle));
 
         StopWatch sw = new StopWatch().start();
         try {
