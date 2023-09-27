@@ -20,10 +20,8 @@ package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
-import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.ResponsePath;
-import com.graphhopper.Trip;
+import com.conveyal.gtfs.model.StopTime;
+import com.graphhopper.*;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.DefaultWeightingFactory;
 import com.graphhopper.routing.WeightingFactory;
@@ -63,13 +61,14 @@ public final class PtRouterTripBasedImpl implements PtRouter {
     private final LocationIndex locationIndex;
     private final GtfsStorage gtfsStorage;
     private final PtGraph ptGraph;
-    private final RealtimeFeed realtimeFeed;
     private final PathDetailsBuilderFactory pathDetailsBuilderFactory;
     private final WeightingFactory weightingFactory;
     private final Map<String, ZoneId> feedZoneIds = new ConcurrentHashMap<>(); // ad-hoc cache for timezone field of gtfs feed
+    private final GraphHopper graphHopper;
 
     @Inject
-    public PtRouterTripBasedImpl(GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
+    public PtRouterTripBasedImpl(GraphHopper graphHopper, GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage, PathDetailsBuilderFactory pathDetailsBuilderFactory) {
+        this.graphHopper = graphHopper;
         this.config = config;
         this.weightingFactory = new DefaultWeightingFactory(baseGraph, encodingManager);
         this.translationMap = translationMap;
@@ -78,35 +77,12 @@ public final class PtRouterTripBasedImpl implements PtRouter {
         this.locationIndex = locationIndex;
         this.gtfsStorage = gtfsStorage;
         this.ptGraph = gtfsStorage.getPtGraph();
-        this.realtimeFeed = realtimeFeed;
         this.pathDetailsBuilderFactory = pathDetailsBuilderFactory;
     }
 
     @Override
     public GHResponse route(Request request) {
         return new RequestHandler(request).route();
-    }
-
-    public static class Factory {
-        private final GraphHopperConfig config;
-        private final TranslationMap translationMap;
-        private final BaseGraph baseGraph;
-        private final EncodingManager encodingManager;
-        private final LocationIndex locationIndex;
-        private final GtfsStorage gtfsStorage;
-
-        public Factory(GraphHopperConfig config, TranslationMap translationMap, BaseGraph baseGraph, EncodingManager encodingManager, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-            this.config = config;
-            this.translationMap = translationMap;
-            this.baseGraph = baseGraph;
-            this.encodingManager = encodingManager;
-            this.locationIndex = locationIndex;
-            this.gtfsStorage = gtfsStorage;
-        }
-
-        public PtRouter createWithoutRealtimeFeed() {
-            return new PtRouterTripBasedImpl(config, translationMap, baseGraph, encodingManager, locationIndex, gtfsStorage, RealtimeFeed.empty(), new PathDetailsBuilderFactory());
-        }
     }
 
     private class RequestHandler {
@@ -236,7 +212,7 @@ public final class PtRouterTripBasedImpl implements PtRouter {
         }
 
         private List<Label> accessEgress(Label.NodeId startNode, Label.NodeId destNode, boolean isEgress) {
-            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, isEgress ? egressWeighting : accessWeighting, gtfsStorage, realtimeFeed, isEgress, true, false, walkSpeedKmH, false, blockedRouteTypes);
+            final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, ptGraph, isEgress ? egressWeighting : accessWeighting, gtfsStorage, RealtimeFeed.empty(), isEgress, true, false, walkSpeedKmH, false, blockedRouteTypes);
             GtfsStorage.EdgeType edgeType = isEgress ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, isEgress, false, false, 0, new ArrayList<>());
             stationRouter.setBetaStreetTime(betaStreetTime);
@@ -287,6 +263,20 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                         })
                         .collect(Collectors.toList());
                 boolean isInSameVehicleAsPrevious = trip.block_id != null && trip.block_id.equals(previousBlockId);
+                if (segment.transferOrigin != null) {
+                    GtfsStorage.FeedIdWithStopId stopA = new GtfsStorage.FeedIdWithStopId(segment.parent.tripPointer.feedId, segment.parent.tripPointer.stopTimes.get(segment.transferOrigin.stop_sequence).stop_id);
+                    GtfsStorage.FeedIdWithStopId stopB = new GtfsStorage.FeedIdWithStopId(segment.tripPointer.feedId, segment.tripPointer.stopTimes.get(segment.tripAtStopTime.stop_sequence).stop_id);
+                    GHRequest transferRequest = new GHRequest(baseGraph.getNodeAccess().getLat(gtfsStorage.getStationNodes().get(stopA)), baseGraph.getNodeAccess().getLon(gtfsStorage.getStationNodes().get(stopA)),
+                            baseGraph.getNodeAccess().getLat(gtfsStorage.getStationNodes().get(stopB)), baseGraph.getNodeAccess().getLon(gtfsStorage.getStationNodes().get(stopB)));
+                    transferRequest.setProfile("foot");
+                    GHResponse transferResponse = graphHopper.route(transferRequest);
+                    // int[] skippedEdgesForTransfer = null;
+                    // List<Label.Transition> transferPath = tripFromLabel.transferPath(skippedEdgesForTransfer, egressWeighting, segment.parent.tripPointer.stopTimes.get(segment.transferOrigin.stop_sequence).arrival_time);
+                    List<Trip.Stop> previousStops = ((Trip.PtLeg) legs.get(legs.size() - 1)).stops;
+                    Date walkLegStartTime = previousStops.get(previousStops.size() - 1).arrivalTime;
+                    Date walkLegEndTime = new Date(walkLegStartTime.getTime() + transferResponse.getBest().getTime());
+                    legs.add(new Trip.WalkLeg("Walk", walkLegStartTime, transferResponse.getBest().getPoints().toLineString(true), 0.0, transferResponse.getBest().getInstructions(), transferResponse.getBest().getPathDetails(), walkLegEndTime));
+                }
                 legs.add(new Trip.PtLeg(segment.tripPointer.feedId, isInSameVehicleAsPrevious, segment.tripPointer.trip.trip_id,
                         trip.route_id, trip.trip_headsign, stops, 0, stops.get(stops.size() - 1).arrivalTime.toInstant().toEpochMilli() - stops.get(0).departureTime.toInstant().toEpochMilli(), geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
                 previousBlockId = trip.block_id;

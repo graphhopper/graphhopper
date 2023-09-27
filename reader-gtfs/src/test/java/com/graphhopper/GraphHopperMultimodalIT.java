@@ -83,8 +83,7 @@ public class GraphHopperMultimodalIT {
         graphHopperGtfs.importOrLoad();
 
         locationIndex = graphHopperGtfs.getLocationIndex();
-        graphHopper = new PtRouterTripBasedImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), locationIndex, graphHopperGtfs.getGtfsStorage())
-                .createWithoutRealtimeFeed();
+        graphHopper = new PtRouterTripBasedImpl(graphHopperGtfs, ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), locationIndex, graphHopperGtfs.getGtfsStorage(), graphHopperGtfs.getPathDetailsBuilderFactory());
     }
 
     @AfterAll

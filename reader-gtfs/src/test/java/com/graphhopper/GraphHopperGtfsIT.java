@@ -78,8 +78,7 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
             graphHopperGtfs = new GraphHopperGtfs(ghConfig);
             graphHopperGtfs.init(ghConfig);
             graphHopperGtfs.importOrLoad();
-            ptRouter = ((PtRouterTripBasedImpl) new PtRouterTripBasedImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
-                    .createWithoutRealtimeFeed());
+            ptRouter = new PtRouterTripBasedImpl(graphHopperGtfs, ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage(), graphHopperGtfs.getPathDetailsBuilderFactory());
         }
 
         public GraphHopperGtfs graphHopperGtfs() {
