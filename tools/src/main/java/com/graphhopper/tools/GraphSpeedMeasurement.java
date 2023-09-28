@@ -20,9 +20,9 @@ package com.graphhopper.tools;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
 
@@ -46,7 +46,7 @@ public class GraphSpeedMeasurement {
                     .putObject("import.osm.ignored_highways", "")
                     .putObject("graph.vehicles", String.format("roads|speed_bits=%d,car|speed_bits=%d,bike|speed_bits=%d,foot|speed_bits=%d", speedBits, speedBits, speedBits, speedBits))
                     .setProfiles(Arrays.asList(
-                            new CustomProfile("car").setCustomModel(new CustomModel()).setVehicle("roads")
+                            new Profile("car").setCustomModel(new CustomModel()).setVehicle("roads")
                     ));
             GraphHopper hopper = new GraphHopper()
                     .init(ghConfig)
@@ -76,10 +76,14 @@ public class GraphSpeedMeasurement {
                                 // note that reading **all** the EVs should be in favor of the caching solution, while cases
                                 // with many encoded values where only a selected few are read should make the caching less
                                 // important. but even in this scenario the caching provides no speedup apparently!
-                                for (BooleanEncodedValue ev : booleanEncodedValues) sum += iter.get(ev) ? 1 : 0;
-                                for (IntEncodedValue ev : intEncodedValues) sum += iter.get(ev) > 5 ? 1 : 0;
-                                for (DecimalEncodedValue ev : decimalEncodedValues) sum += iter.get(ev) > 20 ? 1 : 0;
-                                for (EnumEncodedValue ev : enumEncodedValues) sum += iter.get(ev).ordinal();
+                                for (BooleanEncodedValue ev : booleanEncodedValues)
+                                    sum += iter.get(ev) ? 1 : 0;
+                                for (IntEncodedValue ev : intEncodedValues)
+                                    sum += iter.get(ev) > 5 ? 1 : 0;
+                                for (DecimalEncodedValue ev : decimalEncodedValues)
+                                    sum += iter.get(ev) > 20 ? 1 : 0;
+                                for (EnumEncodedValue ev : enumEncodedValues)
+                                    sum += iter.get(ev).ordinal();
                             }
                         }
                         return (int) sum;

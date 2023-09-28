@@ -7,8 +7,7 @@
     <packaging>jar</packaging>
     <version>8.0-SNAPSHOT</version>
     <properties>
-        <graphhopper-maps.version>0.0.0-98e72f57da3edbb44839bc4ce14f6329798936e6
-        </graphhopper-maps.version>
+        <graphhopper-maps.version>0.0.0-56cdfc78acf88b477457f8846c8715058b5375db</graphhopper-maps.version>
     </properties>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
@@ -169,9 +168,9 @@
                         <id>create target directory</id>
                         <phase>initialize</phase>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <mkdir dir="${basedir}/target"/>
-                            </tasks>
+                            </target>
                         </configuration>
                         <goals>
                             <goal>run</goal>
@@ -181,7 +180,7 @@
                         <id>unzip maps bundle</id>
                         <phase>process-resources</phase>
                         <configuration>
-                            <tasks>
+                            <target>
                                 <untar compression="gzip"
                                        src="${basedir}/target/graphhopper-graphhopper-maps-bundle-${graphhopper-maps.version}.tgz"
                                        dest="${basedir}/target/classes/com/graphhopper/maps">
@@ -191,7 +190,7 @@
                                     </patternset>
                                     <mapper type="regexp" from="package\/dist\/(.*)" to="\1"/>
                                 </untar>
-                            </tasks>
+                            </target>
                         </configuration>
                         <goals>
                             <goal>run</goal>

@@ -2,6 +2,7 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphhopper.config.Profile;
 import com.graphhopper.json.Statement;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.DefaultWeightingFactory;
@@ -34,6 +35,7 @@ class CustomWeightingTest {
     DecimalEncodedValue maxSpeedEnc;
     EnumEncodedValue<RoadClass> roadClassEnc;
     EncodingManager encodingManager;
+    BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create("car");
 
     @BeforeEach
     public void setup() {
@@ -44,6 +46,7 @@ class CustomWeightingTest {
                 .add(Toll.create())
                 .add(Hazmat.create())
                 .add(RouteNetwork.create(BikeNetwork.KEY))
+                .addTurnCostEncodedValue(turnRestrictionEnc)
                 .build();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
@@ -70,9 +73,9 @@ class CustomWeightingTest {
                 set(roadClassEnc, SECONDARY);
 
         // without priority costs fastest weighting is the same as custom weighting
-        assertEquals(144, new FastestWeighting(accessEnc, avSpeedEnc, NO_TURN_COST_PROVIDER).calcEdgeWeight(slow, false), .1);
-        assertEquals(72, new FastestWeighting(accessEnc, avSpeedEnc, NO_TURN_COST_PROVIDER).calcEdgeWeight(medium, false), .1);
-        assertEquals(36, new FastestWeighting(accessEnc, avSpeedEnc, NO_TURN_COST_PROVIDER).calcEdgeWeight(fast, false), .1);
+        assertEquals(144, CustomModelParser.createFastestWeighting(accessEnc, avSpeedEnc, encodingManager).calcEdgeWeight(slow, false), .1);
+        assertEquals(72, CustomModelParser.createFastestWeighting(accessEnc, avSpeedEnc, encodingManager).calcEdgeWeight(medium, false), .1);
+        assertEquals(36, CustomModelParser.createFastestWeighting(accessEnc, avSpeedEnc, encodingManager).calcEdgeWeight(fast, false), .1);
 
         CustomModel model = new CustomModel().setDistanceInfluence(0d);
         assertEquals(144, createWeighting(model).calcEdgeWeight(slow, false), .1);
@@ -408,7 +411,7 @@ class CustomWeightingTest {
         DecimalEncodedValue tcAvgSpeedEnc = VehicleSpeed.create("car", 5, 5, true);
         DecimalEncodedValue orientEnc = Orientation.create();
         EncodingManager em = new EncodingManager.Builder().add(tcAccessEnc).add(tcAvgSpeedEnc).
-                add(orientEnc).add(TurnCost.create("car", 1)).build();
+                add(orientEnc).addTurnCostEncodedValue(TurnRestriction.create("car")).build();
         BaseGraph turnGraph = new BaseGraph.Builder(em).withTurnCosts(true).create();
 
         //       4   5
@@ -423,9 +426,9 @@ class CustomWeightingTest {
         turnGraph.getNodeAccess().setNode(5, 51.0366, 13.726);
         turnGraph.getNodeAccess().setNode(6, 51.0358, 13.726);
 
-        CustomProfile profile = new CustomProfile("car");
-        TurnCostsConfig config = new TurnCostsConfig();
-        config.setLeftCost(6);
+        Profile profile = new Profile("car");
+        TurnCostsConfig config = new TurnCostsConfig().
+                setLeftCost(6);
         profile.setCustomModel(new CustomModel().setTurnCostsConfig(config)).
                 setTurnCosts(true);
         Weighting weighting = new DefaultWeightingFactory(turnGraph, em).createWeighting(profile, new PMap(), false);

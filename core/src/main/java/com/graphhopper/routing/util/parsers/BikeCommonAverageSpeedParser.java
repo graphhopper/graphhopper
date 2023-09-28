@@ -1,11 +1,11 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.Smoothness;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.Helper;
 
 import java.util.HashMap;
@@ -15,7 +15,6 @@ import java.util.Set;
 
 public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
-    public static double MAX_SPEED = 30;
     protected static final int PUSHING_SECTION_SPEED = 4;
     protected static final int MIN_SPEED = 2;
     // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
@@ -27,8 +26,8 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     private final EnumEncodedValue<Smoothness> smoothnessEnc;
     protected final Set<String> intendedValues = new HashSet<>(5);
 
-    protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc) {
-        super(speedEnc, speedEnc.getNextStorableValue(MAX_SPEED));
+    protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue ferrySpeedEnc) {
+        super(speedEnc, ferrySpeedEnc);
         this.smoothnessEnc = smoothnessEnc;
 
         // duplicate code as also in BikeCommonPriorityParser
@@ -124,26 +123,21 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
      * @param speed speed guessed e.g. from the road type or other tags
      * @return The assumed average speed.
      */
-    public double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
+    double applyMaxSpeed(ReaderWay way, double speed, boolean bwd) {
         double maxSpeed = getMaxSpeed(way, bwd);
         // We strictly obey speed limits, see #600
-        if (isValidSpeed(maxSpeed) && speed > maxSpeed) {
-            return maxSpeed;
-        }
-        if (isValidSpeed(speed) && speed > maxPossibleSpeed)
-            return maxPossibleSpeed;
-        return speed;
+        return isValidSpeed(maxSpeed) && speed > maxSpeed ? maxSpeed : speed;
     }
 
     @Override
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
-                double ferrySpeed = ferrySpeedCalc.getSpeed(way);
-                avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, ferrySpeed);
+            if (FerrySpeedCalculator.isFerry(way)) {
+                double ferrySpeed = FerrySpeedCalculator.minmax(ferrySpeedEnc.getDecimal(false, edgeId, edgeIntAccess), avgSpeedEnc);
+                setSpeed(false, edgeId, edgeIntAccess, ferrySpeed);
                 if (avgSpeedEnc.isStoreTwoDirections())
-                    avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, ferrySpeed);
+                    setSpeed(true, edgeId, edgeIntAccess, ferrySpeed);
             }
             if (!way.hasTag("railway", "platform") && !way.hasTag("man_made", "pier"))
                 return;
@@ -152,12 +146,9 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
         double speed = getSpeed(way);
         Smoothness smoothness = smoothnessEnc.getEnum(false, edgeId, edgeIntAccess);
         speed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * speed);
-        double speedFwd = applyMaxSpeed(way, speed, false);
-        avgSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, speedFwd);
-        if (avgSpeedEnc.isStoreTwoDirections()) {
-            double bwdSpeed = applyMaxSpeed(way, speed, true);
-            avgSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, bwdSpeed);
-        }
+        setSpeed(false, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, false));
+        if (avgSpeedEnc.isStoreTwoDirections())
+            setSpeed(true, edgeId, edgeIntAccess, applyMaxSpeed(way, speed, true));
     }
 
     int getSpeed(ReaderWay way) {

@@ -53,8 +53,8 @@ public class SPTResourceTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("car_without_turncosts").setVehicle("car").setWeighting("fastest"),
-                        new Profile("car_with_turncosts").setVehicle("car").setWeighting("fastest").setTurnCosts(true)
+                        new Profile("car_without_turncosts").setVehicle("car"),
+                        new Profile("car_with_turncosts").setVehicle("car").setTurnCosts(true)
                 ));
         return config;
     }
@@ -87,7 +87,7 @@ public class SPTResourceTest {
         assertNotEquals(-1, prevTimeIndex);
 
         row = lines[20].split(",");
-        assertEquals(50, Integer.parseInt(row[prevTimeIndex]) / 1000);
+        assertEquals(48, Integer.parseInt(row[prevTimeIndex]) / 1000);
     }
 
     @Test
@@ -98,8 +98,8 @@ public class SPTResourceTest {
         assertTrue(lines.length > 500);
         assertEquals("prev_node_id,edge_id,node_id,time,distance", lines[0]);
         assertEquals("-1,-1,2385,0,0", lines[1]);
-        assertEquals("2385,2821,1571,3817,74", lines[2]);
-        assertEquals("2385,2820,274,13496,262", lines[3]);
+        assertEquals("2385,2821,1571,3711,74", lines[2]);
+        assertEquals("2385,2820,274,13121,262", lines[3]);
     }
 
     @Test
@@ -108,15 +108,15 @@ public class SPTResourceTest {
         String rspCsvString = rsp.readEntity(String.class);
         String[] lines = rspCsvString.split("\n");
 
-        String[] row = lines[368].split(",");
+        String[] row = lines[362].split(",");
         assertEquals("Placeta Na Maria Pla", row[0]);
         assertEquals("residential", row[1]);
         assertEquals(50, Double.parseDouble(row[2]), .1);
 
         row = lines[249].split(",");
-        assertEquals("", row[0]);
-        assertEquals("primary", row[1]);
-        assertEquals(80, Double.parseDouble(row[2]), .1);
+        assertEquals("Carrer de la Plana", row[0]);
+        assertEquals("unclassified", row[1]);
+        assertEquals(Double.POSITIVE_INFINITY, Double.parseDouble(row[2]), .1);
     }
 
     @Test

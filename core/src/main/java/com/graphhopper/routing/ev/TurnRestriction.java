@@ -16,26 +16,17 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.jackson;
+package com.graphhopper.routing.ev;
 
-import java.util.Collections;
-import java.util.List;
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 
-public class MultiException extends RuntimeException {
+public class TurnRestriction {
 
-    private final List<Throwable> errors;
-
-    public MultiException(List<Throwable> errors) {
-        super(errors.toString());
-        this.errors = errors;
+    public static String key(String prefix) {
+        return getKey(prefix, "turn_restriction");
     }
 
-    public MultiException(Throwable e) {
-        this(Collections.singletonList(e));
+    public static BooleanEncodedValue create(String name) {
+        return new SimpleBooleanEncodedValue(key(name), false);
     }
-
-    public List<Throwable> getErrors() {
-        return errors;
-    }
-
 }

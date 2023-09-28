@@ -97,6 +97,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return Orientation.create();
         } else if (Crossing.KEY.equals(name)) {
             return new EnumEncodedValue<>(Crossing.KEY, Crossing.class);
+        } else if (FerrySpeed.KEY.equals(name)) {
+            return FerrySpeed.create();
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }

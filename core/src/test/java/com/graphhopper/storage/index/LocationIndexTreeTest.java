@@ -18,7 +18,10 @@
 package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -40,9 +43,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author Peter Karich
  */
 public class LocationIndexTreeTest {
-    private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
-    private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-    protected final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+    private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+    protected final EncodingManager encodingManager = EncodingManager.start().add(speedEnc).build();
 
     public static void initSimpleGraph(Graph g) {
         //  6 |        4
@@ -88,7 +90,7 @@ public class LocationIndexTreeTest {
     // |1----3-\|
     // |____/   4
     // 2-------/
-    Graph createTestGraph(EncodingManager em, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+    Graph createTestGraph(EncodingManager em, DecimalEncodedValue speedEnc) {
         BaseGraph graph = new BaseGraph.Builder(em).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.5, -0.5);
@@ -96,19 +98,19 @@ public class LocationIndexTreeTest {
         na.setNode(2, -1, -1);
         na.setNode(3, -0.4, 0.9);
         na.setNode(4, -0.6, 1.6);
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 4));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 4));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4));
+        graph.edge(0, 1).set(speedEnc, 60, 60);
+        graph.edge(0, 2).set(speedEnc, 60, 60);
+        graph.edge(0, 4).set(speedEnc, 60, 60);
+        graph.edge(1, 3).set(speedEnc, 60, 60);
+        graph.edge(2, 3).set(speedEnc, 60, 60);
+        graph.edge(2, 4).set(speedEnc, 60, 60);
+        graph.edge(3, 4).set(speedEnc, 60, 60);
         return graph;
     }
 
     @Test
     public void testSnappedPointAndGeometry() {
-        Graph graph = createTestGraph(encodingManager, accessEnc, speedEnc);
+        Graph graph = createTestGraph(encodingManager, speedEnc);
         LocationIndex index = createIndexNoPrepare(graph, 500000).prepareIndex();
         // query directly the tower node
         Snap res = index.findClosest(-0.4, 0.9, EdgeFilter.ALL_EDGES);
@@ -155,9 +157,9 @@ public class LocationIndexTreeTest {
         na.setNode(2, 51.2, 9.4);
         na.setNode(3, 49, 10);
 
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 0));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 3)).setWayGeometry(Helper.createPointList(51.21, 9.43));
+        graph.edge(1, 0).set(speedEnc, 60, 60);
+        graph.edge(0, 2).set(speedEnc, 60, 60);
+        graph.edge(0, 3).set(speedEnc, 60, 60).setWayGeometry(Helper.createPointList(51.21, 9.43));
         LocationIndex index = createIndexNoPrepare(graph, 500000).prepareIndex();
         assertEquals(1, findClosestEdge(index, 51.2, 9.4));
     }
@@ -179,14 +181,14 @@ public class LocationIndexTreeTest {
         na.setNode(2, -1, -1);
         na.setNode(3, -0.4, 0.9);
         na.setNode(4, -0.6, 1.6);
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 2));
+        graph.edge(0, 1).set(speedEnc, 60, 60);
+        graph.edge(0, 2).set(speedEnc, 60, 60);
         // insert A and B, without this we would get 0 for 0,0
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 4)).setWayGeometry(Helper.createPointList(1, 1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 3)).setWayGeometry(Helper.createPointList(0, 0));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 3));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(2, 4));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(3, 4));
+        graph.edge(0, 4).set(speedEnc, 60, 60).setWayGeometry(Helper.createPointList(1, 1));
+        graph.edge(1, 3).set(speedEnc, 60, 60).setWayGeometry(Helper.createPointList(0, 0));
+        graph.edge(2, 3).set(speedEnc, 60, 60);
+        graph.edge(2, 4).set(speedEnc, 60, 60);
+        graph.edge(3, 4).set(speedEnc, 60, 60);
         return graph;
     }
 
@@ -208,9 +210,9 @@ public class LocationIndexTreeTest {
         na.setNode(20, 52, 9);
         na.setNode(30, 51.2, 9.4);
         na.setNode(50, 49, 10);
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(20, 50)).setWayGeometry(Helper.createPointList(51.25, 9.43));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(10, 20));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, g.edge(20, 30));
+        g.edge(20, 50).set(speedEnc, 60, 60).setWayGeometry(Helper.createPointList(51.25, 9.43));
+        g.edge(10, 20).set(speedEnc, 60, 60);
+        g.edge(20, 30).set(speedEnc, 60, 60);
 
         LocationIndex index = createIndexNoPrepare(g, 2000).prepareIndex();
         assertEquals(0, findClosestEdge(index, 51.25, 9.43));
@@ -218,7 +220,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testEdgeFilter() {
-        Graph graph = createTestGraph(encodingManager, accessEnc, speedEnc);
+        Graph graph = createTestGraph(encodingManager, speedEnc);
         LocationIndexTree index = (LocationIndexTree) createIndexNoPrepare(graph, 500000).prepareIndex();
 
         assertEquals(1, index.findClosest(-.6, -.6, EdgeFilter.ALL_EDGES).getClosestNode());
@@ -278,51 +280,50 @@ public class LocationIndexTreeTest {
         // top right
         na.setNode(101, 49.96053, 11.58814);
 
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
-                graph.edge(0, 1),
-                graph.edge(1, 2),
-                graph.edge(2, 3),
-                graph.edge(3, 4),
-                graph.edge(4, 5),
-                graph.edge(6, 7),
-                graph.edge(2, 8),
-                graph.edge(2, 9),
-                graph.edge(3, 10),
-                graph.edge(4, 11),
-                graph.edge(5, 12),
-                graph.edge(6, 13),
+        graph.edge(0, 1).set(speedEnc, 60, 60);
+        graph.edge(1, 2).set(speedEnc, 60, 60);
+        graph.edge(2, 3).set(speedEnc, 60, 60);
+        graph.edge(3, 4).set(speedEnc, 60, 60);
+        graph.edge(4, 5).set(speedEnc, 60, 60);
+        graph.edge(6, 7).set(speedEnc, 60, 60);
+        graph.edge(2, 8).set(speedEnc, 60, 60);
+        graph.edge(2, 9).set(speedEnc, 60, 60);
+        graph.edge(3, 10).set(speedEnc, 60, 60);
+        graph.edge(4, 11).set(speedEnc, 60, 60);
+        graph.edge(5, 12).set(speedEnc, 60, 60);
+        graph.edge(6, 13).set(speedEnc, 60, 60);
 
-                graph.edge(1, 14),
-                graph.edge(2, 15),
-                graph.edge(5, 16),
-                graph.edge(14, 15),
-                graph.edge(16, 17),
-                graph.edge(16, 20),
-                graph.edge(16, 25),
+        graph.edge(1, 14).set(speedEnc, 60, 60);
+        graph.edge(2, 15).set(speedEnc, 60, 60);
+        graph.edge(5, 16).set(speedEnc, 60, 60);
+        graph.edge(14, 15).set(speedEnc, 60, 60);
+        graph.edge(16, 17).set(speedEnc, 60, 60);
+        graph.edge(16, 20).set(speedEnc, 60, 60);
+        graph.edge(16, 25).set(speedEnc, 60, 60);
 
-                graph.edge(18, 14),
-                graph.edge(18, 19),
-                graph.edge(18, 21),
-                graph.edge(19, 21),
-                graph.edge(21, 24),
-                graph.edge(23, 24),
-                graph.edge(24, 25),
-                graph.edge(26, 27),
-                graph.edge(27, 28),
-                graph.edge(28, 29),
+        graph.edge(18, 14).set(speedEnc, 60, 60);
+        graph.edge(18, 19).set(speedEnc, 60, 60);
+        graph.edge(18, 21).set(speedEnc, 60, 60);
+        graph.edge(19, 21).set(speedEnc, 60, 60);
+        graph.edge(21, 24).set(speedEnc, 60, 60);
+        graph.edge(23, 24).set(speedEnc, 60, 60);
+        graph.edge(24, 25).set(speedEnc, 60, 60);
+        graph.edge(26, 27).set(speedEnc, 60, 60);
+        graph.edge(27, 28).set(speedEnc, 60, 60);
+        graph.edge(28, 29).set(speedEnc, 60, 60);
 
-                graph.edge(24, 30),
-                graph.edge(24, 31),
-                graph.edge(26, 32),
-                graph.edge(26, 22),
-                graph.edge(27, 33),
-                graph.edge(28, 34));
+        graph.edge(24, 30).set(speedEnc, 60, 60);
+        graph.edge(24, 31).set(speedEnc, 60, 60);
+        graph.edge(26, 32).set(speedEnc, 60, 60);
+        graph.edge(26, 22).set(speedEnc, 60, 60);
+        graph.edge(27, 33).set(speedEnc, 60, 60);
+        graph.edge(28, 34).set(speedEnc, 60, 60);
         return graph;
     }
 
     @Test
     public void testRMin() {
-        Graph graph = createTestGraph(encodingManager, accessEnc, speedEnc);
+        Graph graph = createTestGraph(encodingManager, speedEnc);
         LocationIndexTree index = (LocationIndexTree) createIndexNoPrepare(graph, 50000).prepareIndex();
         DistanceCalc distCalc = new DistancePlaneProjection();
         double rmin2 = index.calculateRMin(0.05, -0.3, 1);
@@ -396,23 +397,21 @@ public class LocationIndexTreeTest {
         na.setNode(7, 0, -179.5);
 
         // just use 1 as distance which is incorrect but does not matter in this unit case
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
-                graph.edge(0, 1),
-                graph.edge(0, 4),
-                graph.edge(1, 5),
-                graph.edge(4, 5),
-
-                graph.edge(2, 3),
-                graph.edge(2, 6),
-                graph.edge(3, 7),
-                graph.edge(6, 7));
+        graph.edge(0, 1).set(speedEnc, 60, 60);
+        graph.edge(0, 4).set(speedEnc, 60, 60);
+        graph.edge(1, 5).set(speedEnc, 60, 60);
+        graph.edge(4, 5).set(speedEnc, 60, 60);
+        graph.edge(2, 3).set(speedEnc, 60, 60);
+        graph.edge(2, 6).set(speedEnc, 60, 60);
+        graph.edge(3, 7).set(speedEnc, 60, 60);
+        graph.edge(6, 7).set(speedEnc, 60, 60);
 
         // as last edges: create cross boundary edges
         // See #667 where the recommendation is to adjust the import and introduce two pillar nodes 
         // where the connection is cross boundary and would be okay if ignored as real length is 0
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2)).setWayGeometry(Helper.createPointList(0, 180, 0, -180));
+        graph.edge(1, 2).set(speedEnc, 60, 60).setWayGeometry(Helper.createPointList(0, 180, 0, -180));
         // but this unit test succeeds even without this adjusted import:
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(5, 6));
+        graph.edge(5, 6).set(speedEnc, 60, 60);
 
         LocationIndexTree index = createIndexNoPrepare(graph, 500);
         index.prepareIndex();
@@ -477,7 +476,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testSinglePoints120() {
-        BaseGraph g = createSampleGraph(encodingManager, accessEnc, speedEnc);
+        BaseGraph g = createSampleGraph(encodingManager, speedEnc);
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
 
         assertEquals(3, findClosestEdge(idx, 1.637, 2.23));
@@ -492,7 +491,7 @@ public class LocationIndexTreeTest {
 
     @Test
     public void testSinglePoints32() {
-        BaseGraph g = createSampleGraph(encodingManager, accessEnc, speedEnc);
+        BaseGraph g = createSampleGraph(encodingManager, speedEnc);
         LocationIndexTree idx = (LocationIndexTree) createIndexNoPrepare(g, 500000).prepareIndex();
 
         assertEquals(10, findClosestEdge(idx, 3.649, 1.375));
@@ -516,7 +515,7 @@ public class LocationIndexTreeTest {
         g.close();
     }
 
-    public BaseGraph createSampleGraph(EncodingManager encodingManager, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+    public BaseGraph createSampleGraph(EncodingManager encodingManager, DecimalEncodedValue speedEnc) {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
         // length does not matter here but lat,lon and outgoing edges do!
 
@@ -572,26 +571,26 @@ public class LocationIndexTreeTest {
         na.setNode(16, 5, 5);
         // => 17 locations
 
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(a0, b1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(c2, b1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(c2, d3));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(f5, b1));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(e4, f5));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(m12, d3));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(e4, k10));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(f5, d3));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(f5, i8));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(f5, j9));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(k10, g6));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(j9, l11));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(i8, l11));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(i8, h7));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(k10, n13));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(k10, o14));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(l11, p15));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(m12, p15));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(q16, p15));
-        GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(q16, m12));
+        graph.edge(a0, b1).set(speedEnc, 60, 60);
+        graph.edge(c2, b1).set(speedEnc, 60, 60);
+        graph.edge(c2, d3).set(speedEnc, 60, 60);
+        graph.edge(f5, b1).set(speedEnc, 60, 60);
+        graph.edge(e4, f5).set(speedEnc, 60, 60);
+        graph.edge(m12, d3).set(speedEnc, 60, 60);
+        graph.edge(e4, k10).set(speedEnc, 60, 60);
+        graph.edge(f5, d3).set(speedEnc, 60, 60);
+        graph.edge(f5, i8).set(speedEnc, 60, 60);
+        graph.edge(f5, j9).set(speedEnc, 60, 60);
+        graph.edge(k10, g6).set(speedEnc, 60, 60);
+        graph.edge(j9, l11).set(speedEnc, 60, 60);
+        graph.edge(i8, l11).set(speedEnc, 60, 60);
+        graph.edge(i8, h7).set(speedEnc, 60, 60);
+        graph.edge(k10, n13).set(speedEnc, 60, 60);
+        graph.edge(k10, o14).set(speedEnc, 60, 60);
+        graph.edge(l11, p15).set(speedEnc, 60, 60);
+        graph.edge(m12, p15).set(speedEnc, 60, 60);
+        graph.edge(q16, p15).set(speedEnc, 60, 60);
+        graph.edge(q16, m12).set(speedEnc, 60, 60);
         return graph;
     }
 

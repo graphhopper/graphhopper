@@ -1,5 +1,10 @@
 ### 8.0 [not yet released]
 
+- access "turn"-EncodedValue of EncodingManager through separate methods, see #2884
+- removed fastest weighting for public usage, use custom instead, see #2866
+- removed shortest weighting for public usage, use a high distance_influence instead, see #2865
+- removed duration:seconds as intermediate tag
+- /info endpoint does no longer return the vehicle used per profile and won't return encoded value of vehicles like car_average_speed
 - Country rules no longer contain maxspeed handling, enable a much better alternative via `max_speed_calculator.enabled: true`. On the client side use `max_speed_estimated` to determine if max_speed is from OSM or an estimation. See #2810
 - bike routing better avoids dangerous roads, see #2796 and #2802
 - routing requests can be configured to timeout after some time, see #2795
@@ -11,6 +16,8 @@
 - reduced memory usage for urban density calculation, see #2828
 - urban density is now based on road junctions, so the according parameters need adjustment in case
   the config file does not use the defaults, see #2842
+- removed heading penalty *time*, see #2563
+- base graph no longer allows loop edges, see #2862
 
 ### 7.0 [14 Mar 2023]
 

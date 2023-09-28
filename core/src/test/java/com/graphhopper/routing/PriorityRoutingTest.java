@@ -24,7 +24,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -33,7 +32,6 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -74,14 +72,6 @@ public class PriorityRoutingTest {
         assertEquals(43005, dist2, 1);
 
         // A* and Dijkstra should yield the same path (the max priority must be taken into account by weighting.getMinWeight)
-        {
-            PriorityWeighting weighting = new PriorityWeighting(accessEnc, speedEnc, priorityEnc, null, new PMap(), TurnCostProvider.NO_TURN_COST_PROVIDER);
-            Path pathDijkstra = new Dijkstra(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
-            Path pathAStar = new AStar(graph, weighting, TraversalMode.NODE_BASED).calcPath(0, 3);
-            assertEquals(pathDijkstra.calcNodes(), pathAStar.calcNodes());
-            assertEquals(IntArrayList.from(0, 4, 5, 3), pathAStar.calcNodes());
-        }
-
         {
             CustomModel customModel = new CustomModel();
             CustomWeighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,

@@ -67,6 +67,7 @@ public class MapMatchingResource {
     private final TranslationMap trMap;
     private final MapMatchingRouterFactory mapMatchingRouterFactory;
     private final ObjectMapper objectMapper = Jackson.newObjectMapper();
+    private final String osmDate;
 
     @Inject
     public MapMatchingResource(GraphHopper graphHopper, ProfileResolver profileResolver, TranslationMap trMap, MapMatchingRouterFactory mapMatchingRouterFactory) {
@@ -74,6 +75,7 @@ public class MapMatchingResource {
         this.profileResolver = profileResolver;
         this.trMap = trMap;
         this.mapMatchingRouterFactory = mapMatchingRouterFactory;
+        this.osmDate = graphHopper.getProperties().get("datareader.data.date");
     }
 
     @POST
@@ -162,7 +164,8 @@ public class MapMatchingResource {
                         header("X-GH-Took", "" + Math.round(sw.getMillisDouble())).
                         build();
             } else {
-                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, instructions, calcPoints, enableElevation, pointsEncoded, sw.getMillisDouble());
+                ObjectNode map = ResponsePathSerializer.jsonObject(rsp, osmDate, instructions,
+                        calcPoints, enableElevation, pointsEncoded, sw.getMillisDouble());
 
                 Map<String, Object> matchStatistics = new HashMap<>();
                 matchStatistics.put("distance", matchResult.getMatchLength());

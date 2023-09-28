@@ -7,11 +7,9 @@ import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
-import java.util.Arrays;
 import java.util.Locale;
 
 import static com.graphhopper.json.Statement.If;
@@ -38,7 +36,7 @@ public class RoutingExample {
         hopper.setGraphHopperLocation("target/routing-graph-cache");
 
         // see docs/core/profiles.md to learn more about profiles
-        hopper.setProfiles(new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(false));
+        hopper.setProfiles(new Profile("car").setVehicle("car").setTurnCosts(false));
 
         // this enables speed mode for the profile we called car
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
@@ -110,7 +108,7 @@ public class RoutingExample {
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-custom-graph-cache");
         CustomModel serverSideCustomModel = new CustomModel();
-        hopper.setProfiles(new CustomProfile("car_custom").setCustomModel(serverSideCustomModel).setVehicle("car"));
+        hopper.setProfiles(new Profile("car_custom").setCustomModel(serverSideCustomModel).setVehicle("car"));
 
         // The hybrid mode uses the "landmark algorithm" and is up to 15x faster than the flexible mode (Dijkstra).
         // Still it is slower than the speed mode ("contraction hierarchies algorithm") ...
@@ -126,7 +124,7 @@ public class RoutingExample {
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
 
-        assert Math.round(res.getBest().getTime() / 1000d) == 96;
+        assert Math.round(res.getBest().getTime() / 1000d) == 94;
 
         // 2. now avoid primary roads and reduce maximum speed, see docs/core/custom-models.md for an in-depth explanation
         // and also the blog posts https://www.graphhopper.com/?s=customizable+routing
@@ -141,6 +139,6 @@ public class RoutingExample {
         if (res.hasErrors())
             throw new RuntimeException(res.getErrors().toString());
 
-        assert Math.round(res.getBest().getTime() / 1000d) == 165;
+        assert Math.round(res.getBest().getTime() / 1000d) == 164;
     }
 }

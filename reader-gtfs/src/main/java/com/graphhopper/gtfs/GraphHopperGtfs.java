@@ -21,8 +21,7 @@ package com.graphhopper.gtfs;
 import com.conveyal.gtfs.model.Transfer;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
-import com.graphhopper.config.Profile;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.weighting.Weighting;
@@ -173,7 +172,7 @@ public class GraphHopperGtfs extends GraphHopper {
     private boolean isValidPath(int[] edgeKeys) {
         List<EdgeIteratorState> edges = Arrays.stream(edgeKeys).mapToObj(i -> getBaseGraph().getEdgeIteratorStateForKey(i)).collect(Collectors.toList());
         for (int i = 1; i < edges.size(); i++) {
-            if (edges.get(i).getBaseNode() != edges.get(i-1).getAdjNode())
+            if (edges.get(i).getBaseNode() != edges.get(i - 1).getAdjNode())
                 return false;
         }
         TripFromLabel tripFromLabel = new TripFromLabel(getBaseGraph(), getEncodingManager(), gtfsStorage, RealtimeFeed.empty(), getPathDetailsBuilderFactory(), 6.0);

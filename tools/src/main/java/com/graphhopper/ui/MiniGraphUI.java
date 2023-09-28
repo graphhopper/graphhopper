@@ -37,7 +37,7 @@ import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RoutingCHGraph;
@@ -103,7 +103,6 @@ public class MiniGraphUI {
                 new Profile("profile")
                         .setVehicle("car")
                         .setTurnCosts(true)
-                        .setWeighting("fastest")
         )).putObject("import.osm.ignored_highways", "");
         ghConfig.setCHProfiles(Arrays.asList(
                 new CHProfile("profile")
@@ -333,7 +332,7 @@ public class MiniGraphUI {
             };
             AlgorithmOptions algoOpts = new AlgorithmOptions().setAlgorithm(Algorithms.ASTAR_BI).
                     setTraversalMode(TraversalMode.EDGE_BASED);
-            return algoFactory.createAlgo(qGraph, new FastestWeighting(accessEnc, avSpeedEnc), algoOpts);
+            return algoFactory.createAlgo(qGraph, CustomModelParser.createFastestWeighting(accessEnc, avSpeedEnc, hopper.getEncodingManager()), algoOpts);
         }
     }
 

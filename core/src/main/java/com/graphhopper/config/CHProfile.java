@@ -43,10 +43,9 @@ public class CHProfile {
         return profile;
     }
 
-    CHProfile setProfile(String profile) {
+    void setProfile(String profile) {
         validateProfileName(profile);
         this.profile = profile;
-        return this;
     }
 
     @Override

@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.reader.osm.RestrictionTagParser;
@@ -40,7 +41,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -52,10 +52,7 @@ import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
@@ -141,9 +138,17 @@ public class GraphHopper {
         return this;
     }
 
+    public String getEncodedValuesString() {
+        return encodedValuesString;
+    }
+
     public GraphHopper setVehiclesString(String vehiclesString) {
         this.vehiclesString = vehiclesString;
         return this;
+    }
+
+    public String getVehiclesString() {
+        return vehiclesString;
     }
 
     public EncodingManager getEncodingManager() {
@@ -248,8 +253,8 @@ public class GraphHopper {
      * <pre>
      * {@code
      *   hopper.setProfiles(
-     *     new Profile("my_car").setVehicle("car").setWeighting("shortest"),
-     *     new Profile("your_bike").setVehicle("bike").setWeighting("fastest")
+     *     new Profile("my_car").setVehicle("car"),
+     *     new Profile("your_bike").setVehicle("bike")
      *   );
      *   hopper.getCHPreparationHandler().setCHProfiles(
      *     new CHProfile("my_car"),
@@ -536,7 +541,10 @@ public class GraphHopper {
         if (!ghConfig.getString("spatial_rules.max_bbox", "").isEmpty())
             throw new IllegalArgumentException("spatial_rules.max_bbox has been deprecated. There is no replacement, all custom areas will be considered.");
 
-        setProfiles(ghConfig.getProfiles());
+        String customAreasDirectory = ghConfig.getString("custom_areas.directory", "");
+        JsonFeatureCollection globalAreas = GraphHopper.resolveCustomAreas(customAreasDirectory);
+        String customModelFolder = ghConfig.getString("custom_models.directory", ghConfig.getString("custom_model_folder", ""));
+        setProfiles(GraphHopper.resolveCustomModelFiles(customModelFolder, ghConfig.getProfiles(), globalAreas));
 
         if (ghConfig.has("graph.vehicles") && ghConfig.has("graph.flag_encoders"))
             throw new IllegalArgumentException("Remove graph.flag_encoders as it cannot be used in parallel with graph.vehicles");
@@ -656,6 +664,8 @@ public class GraphHopper {
             osmParsers.addWayTagParser(new OSMMaxSpeedParser(encodingManager.getDecimalEncodedValue(MaxSpeed.KEY)));
         if (!encodedValueStrings.contains(RoadAccess.KEY))
             osmParsers.addWayTagParser(new OSMRoadAccessParser(encodingManager.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class), OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
+        if (!encodedValueStrings.contains(FerrySpeed.KEY))
+            osmParsers.addWayTagParser(new FerrySpeedCalculator(encodingManager.getDecimalEncodedValue(FerrySpeed.KEY)));
         if (encodingManager.hasEncodedValue(AverageSlope.KEY) || encodingManager.hasEncodedValue(MaxSlope.KEY)) {
             if (!encodingManager.hasEncodedValue(AverageSlope.KEY) || !encodingManager.hasEncodedValue(MaxSlope.KEY))
                 throw new IllegalArgumentException("Enable both, average_slope and max_slope");
@@ -694,14 +704,14 @@ public class GraphHopper {
                     if (encodingManager.hasEncodedValue(FootNetwork.KEY) && added.add(FootNetwork.KEY))
                         osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
                 }
-                String turnCostKey = TurnCost.key(new PMap(vehicleStr).getString("name", name));
-                if (encodingManager.hasEncodedValue(turnCostKey)
+                String turnRestrictionKey = TurnRestriction.key(new PMap(vehicleStr).getString("name", name));
+                if (encodingManager.hasTurnEncodedValue(turnRestrictionKey)
                         // need to make sure we do not add the same restriction parsers multiple times
-                        && osmParsers.getRestrictionTagParsers().stream().noneMatch(r -> r.getTurnCostEnc().getName().equals(turnCostKey))) {
+                        && osmParsers.getRestrictionTagParsers().stream().noneMatch(r -> r.getTurnRestrictionEnc().getName().equals(turnRestrictionKey))) {
                     List<String> restrictions = tagParser instanceof AbstractAccessParser
                             ? ((AbstractAccessParser) tagParser).getRestrictions()
                             : OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(new PMap(vehicleStr).getString("transportation_mode", "VEHICLE")));
-                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(restrictions, encodingManager.getDecimalEncodedValue(turnCostKey)));
+                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(restrictions, encodingManager.getTurnBooleanEncodedValue(turnRestrictionKey)));
                 }
             });
             vehicleTagParsers.getTagParsers().forEach(tagParser -> {
@@ -907,18 +917,6 @@ public class GraphHopper {
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
 
-        if (encodingManager.hasEncodedValue(UrbanDensity.KEY)) {
-            EnumEncodedValue<UrbanDensity> urbanDensityEnc = encodingManager.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
-            if (!encodingManager.hasEncodedValue(RoadClass.KEY))
-                throw new IllegalArgumentException("Urban density calculation requires " + RoadClass.KEY);
-            if (!encodingManager.hasEncodedValue(RoadClassLink.KEY))
-                throw new IllegalArgumentException("Urban density calculation requires " + RoadClassLink.KEY);
-            EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
-            BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
-            UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, roadClassEnc,
-                    roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
-        }
-
         if (maxSpeedCalculator != null) {
             maxSpeedCalculator.fillMaxSpeed(getBaseGraph(), encodingManager);
             maxSpeedCalculator.close();
@@ -964,6 +962,7 @@ public class GraphHopper {
         if (reader.getDataDate() != null)
             properties.put("datareader.data.date", f.format(reader.getDataDate()));
 
+        calculateUrbanDensity();
         writeEncodingManagerToProperties();
     }
 
@@ -973,6 +972,20 @@ public class GraphHopper {
         properties.create(100);
         if (maxSpeedCalculator != null)
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
+    }
+
+    protected void calculateUrbanDensity() {
+        if (encodingManager.hasEncodedValue(UrbanDensity.KEY)) {
+            EnumEncodedValue<UrbanDensity> urbanDensityEnc = encodingManager.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
+            if (!encodingManager.hasEncodedValue(RoadClass.KEY))
+                throw new IllegalArgumentException("Urban density calculation requires " + RoadClass.KEY);
+            if (!encodingManager.hasEncodedValue(RoadClassLink.KEY))
+                throw new IllegalArgumentException("Urban density calculation requires " + RoadClassLink.KEY);
+            EnumEncodedValue<RoadClass> roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+            BooleanEncodedValue roadClassLinkEnc = encodingManager.getBooleanEncodedValue(RoadClassLink.KEY);
+            UrbanDensityCalculator.calcUrbanDensity(baseGraph, urbanDensityEnc, roadClassEnc,
+                    roadClassLinkEnc, residentialAreaRadius, residentialAreaSensitivity, cityAreaRadius, cityAreaSensitivity, urbanDensityCalculationThreads);
+        }
     }
 
     protected void writeEncodingManagerToProperties() {
@@ -1095,10 +1108,10 @@ public class GraphHopper {
             if (!encodingManager.getVehicles().contains(profile.getVehicle()))
                 throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". " +
                         "Available vehicles: " + String.join(",", encodingManager.getVehicles()));
-            DecimalEncodedValue turnCostEnc = encodingManager.hasEncodedValue(TurnCost.key(profile.getVehicle()))
-                    ? encodingManager.getDecimalEncodedValue(TurnCost.key(profile.getVehicle()))
+            BooleanEncodedValue turnRestrictionEnc = encodingManager.hasTurnEncodedValue(TurnRestriction.key(profile.getVehicle()))
+                    ? encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getVehicle()))
                     : null;
-            if (profile.isTurnCosts() && turnCostEnc == null) {
+            if (profile.isTurnCosts() && turnRestrictionEnc == null) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +
                         "'turn_costs=true', but the corresponding vehicle '" + profile.getVehicle() + "' does not support turn costs." +
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.vehicles`");
@@ -1111,14 +1124,11 @@ public class GraphHopper {
                         "Error: " + e.getMessage());
             }
 
-            if (profile instanceof CustomProfile) {
-                CustomModel customModel = ((CustomProfile) profile).getCustomModel();
-                if (customModel == null)
-                    throw new IllegalArgumentException("custom model for profile '" + profile.getName() + "' was empty");
-                if (!CustomWeighting.NAME.equals(profile.getWeighting()))
-                    throw new IllegalArgumentException("profile '" + profile.getName() + "' has a custom model but " +
-                            "weighting=" + profile.getWeighting() + " was defined");
-            }
+            if (CustomWeighting.NAME.equals(profile.getWeighting()) && profile.getCustomModel() == null)
+                throw new IllegalArgumentException("custom model for profile '" + profile.getName() + "' was empty");
+            if (!CustomWeighting.NAME.equals(profile.getWeighting()) && profile.getCustomModel() != null)
+                throw new IllegalArgumentException("profile '" + profile.getName() + "' has a custom model but " +
+                        "weighting=" + profile.getWeighting() + " was defined");
         }
 
         Set<String> chProfileSet = new LinkedHashSet<>(chPreparationHandler.getCHProfiles().size());
@@ -1202,7 +1212,7 @@ public class GraphHopper {
         importPublicTransit();
 
         if (closeEarly) {
-            boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> p instanceof CustomProfile);
+            boolean includesCustomProfiles = profilesByName.values().stream().anyMatch(p -> CustomWeighting.NAME.equals(p.getWeighting()));
             if (!includesCustomProfiles)
                 // when there are custom profiles we must not close way geometry or KVStorage, because
                 // they might be needed to evaluate the custom weightings for the following preparations
@@ -1481,5 +1491,90 @@ public class GraphHopper {
 
     public OSMReaderConfig getReaderConfig() {
         return osmReaderConfig;
+    }
+
+    public static JsonFeatureCollection resolveCustomAreas(String customAreasDirectory) {
+        JsonFeatureCollection globalAreas = new JsonFeatureCollection();
+        if (!customAreasDirectory.isEmpty()) {
+            ObjectMapper mapper = new ObjectMapper().registerModule(new JtsModule());
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(customAreasDirectory), "*.{geojson,json}")) {
+                for (Path customAreaFile : stream) {
+                    try (BufferedReader reader = Files.newBufferedReader(customAreaFile, StandardCharsets.UTF_8)) {
+                        globalAreas.getFeatures().addAll(mapper.readValue(reader, JsonFeatureCollection.class).getFeatures());
+                    }
+                }
+                logger.info("Will make " + globalAreas.getFeatures().size() + " areas available to all custom profiles. Found in " + customAreasDirectory);
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+        }
+        return globalAreas;
+    }
+
+    public static List<Profile> resolveCustomModelFiles(String customModelFolder, List<Profile> profiles, JsonFeatureCollection globalAreas) {
+        ObjectMapper jsonOM = Jackson.newObjectMapper();
+        List<Profile> newProfiles = new ArrayList<>();
+        for (Profile profile : profiles) {
+            if (!CustomWeighting.NAME.equals(profile.getWeighting())) {
+                newProfiles.add(profile);
+                continue;
+            }
+            Object cm = profile.getHints().getObject(CustomModel.KEY, null);
+            CustomModel customModel;
+            if (cm != null) {
+                if (!profile.getHints().getObject("custom_model_files", Collections.emptyList()).isEmpty())
+                    throw new IllegalArgumentException("Do not use custom_model_files and custom_model together");
+                try {
+                    // custom_model can be an object tree (read from config) or an object (e.g. from tests)
+                    customModel = jsonOM.readValue(jsonOM.writeValueAsBytes(cm), CustomModel.class);
+                    newProfiles.add(profile.setCustomModel(customModel));
+                } catch (Exception ex) {
+                    throw new RuntimeException("Cannot load custom_model from " + cm + " for profile " + profile.getName()
+                            + ". If you are trying to load from a file, use 'custom_model_files' instead.", ex);
+                }
+            } else {
+                if (!profile.getHints().getString("custom_model_file", "").isEmpty())
+                    throw new IllegalArgumentException("Since 8.0 you must use a custom_model_files array instead of custom_model_file string");
+                List<String> customModelFileNames = profile.getHints().getObject("custom_model_files", null);
+                if (customModelFileNames == null)
+                    throw new IllegalArgumentException("Missing 'custom_model' or 'custom_model_files' field in profile '"
+                            + profile.getName() + "'. To use default specify custom_model_files: []");
+                if (customModelFileNames.isEmpty()) {
+                    newProfiles.add(profile.setCustomModel(customModel = new CustomModel()));
+                } else {
+                    customModel = new CustomModel();
+                    for (String file : customModelFileNames) {
+                        if (file.contains(File.separator))
+                            throw new IllegalArgumentException("Use custom_models.directory for the custom_model_files parent");
+                        if (!file.endsWith(".json"))
+                            throw new IllegalArgumentException("Yaml is no longer supported, see #2672. Use JSON with optional comments //");
+
+                        try {
+                            String string;
+                            // 1. try to load custom model from jar
+                            InputStream is = GHUtility.class.getResourceAsStream("/com/graphhopper/custom_models/" + file);
+                            if (is != null) {
+                                string = readJSONFileWithoutComments(new InputStreamReader(is));
+                            } else {
+                                // 2. try to load custom model file from external location
+                                // dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
+                                string = readJSONFileWithoutComments(Paths.get(customModelFolder).
+                                        resolve(file).toFile().getAbsolutePath());
+                            }
+                            customModel = CustomModel.merge(customModel, jsonOM.readValue(string, CustomModel.class));
+                        } catch (IOException ex) {
+                            throw new RuntimeException("Cannot load custom_model from location " + file + ", profile:" + profile.getName(), ex);
+                        }
+                    }
+
+                    newProfiles.add(profile.setCustomModel(customModel));
+                }
+            }
+
+            // we can fill in all areas here as in the created template we include only the areas that are used in
+            // statements (see CustomModelParser)
+            customModel.addAreas(globalAreas);
+        }
+        return newProfiles;
     }
 }

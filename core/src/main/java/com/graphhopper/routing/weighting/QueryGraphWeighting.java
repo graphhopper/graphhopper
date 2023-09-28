@@ -47,11 +47,6 @@ public class QueryGraphWeighting implements Weighting {
     }
 
     @Override
-    public boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse) {
-        return weighting.edgeHasNoAccess(edgeState, reverse);
-    }
-
-    @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
         return weighting.calcEdgeWeight(edgeState, reverse);
     }

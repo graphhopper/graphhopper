@@ -166,7 +166,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
                 if (!accept(iter, prevEdgeId))
                     continue;
 
-                double tmpWeight = GHUtility.calcWeightWithTurnWeightWithAccess(weighting, iter, false, prevEdgeId) + weights[currNode];
+                double tmpWeight = GHUtility.calcWeightWithTurnWeight(weighting, iter, false, prevEdgeId) + weights[currNode];
                 if (Double.isInfinite(tmpWeight))
                     continue;
 
