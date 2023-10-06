@@ -51,12 +51,14 @@ public class IsochroneResource {
     private final GraphHopper graphHopper;
     private final Triangulator triangulator;
     private final ProfileResolver profileResolver;
+    private final String osmDate;
 
     @Inject
     public IsochroneResource(GraphHopper graphHopper, Triangulator triangulator, ProfileResolver profileResolver) {
         this.graphHopper = graphHopper;
         this.triangulator = triangulator;
         this.profileResolver = profileResolver;
+        this.osmDate = graphHopper.getProperties().get("datareader.data.date");
     }
 
     public enum ResponseType {json, geojson}
@@ -160,6 +162,7 @@ public class IsochroneResource {
             final ObjectNode info = json.putObject("info");
             info.putPOJO("copyrights", ResponsePathSerializer.COPYRIGHTS);
             info.put("took", Math.round((float) sw.getMillis()));
+            if (!osmDate.isEmpty()) info.put("road_data_timestamp", osmDate);
             finalJson = json;
         }
 

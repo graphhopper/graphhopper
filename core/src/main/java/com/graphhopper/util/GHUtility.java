@@ -567,9 +567,10 @@ public class GHUtility {
      */
     public static long calcMillisWithTurnMillis(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         long edgeMillis = weighting.calcEdgeMillis(edgeState, reverse);
-        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
+        if (edgeMillis == Long.MAX_VALUE)
             return edgeMillis;
-        }
+        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId))
+            return edgeMillis;
         // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
         // todo: why no first/last orig edge here as in calcWeight ?
 //        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
@@ -577,6 +578,8 @@ public class GHUtility {
         long turnMillis = reverse
                 ? weighting.calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : weighting.calcTurnMillis(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+        if (turnMillis == Long.MAX_VALUE)
+            return turnMillis;
         return edgeMillis + turnMillis;
     }
 

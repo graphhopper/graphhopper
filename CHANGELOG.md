@@ -1,5 +1,6 @@
 ### 8.0 [not yet released]
 
+- access "turn"-EncodedValue of EncodingManager through separate methods, see #2884
 - removed fastest weighting for public usage, use custom instead, see #2866
 - removed shortest weighting for public usage, use a high distance_influence instead, see #2865
 - removed duration:seconds as intermediate tag
