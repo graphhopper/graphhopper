@@ -9,6 +9,7 @@ import com.graphhopper.gtfs.*;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -250,6 +251,14 @@ public class Trips {
         @Override
         public int compareTo(TripAtStopTime o) {
             return TRIP_AT_STOP_TIME_COMPARATOR.compare(this, o);
+        }
+
+        public enum ArrivalDeparture { ARRIVAL, DEPARTURE };
+
+        public static String print(Trips.TripAtStopTime transferDestination, Trips tripTransfers, ArrivalDeparture arrivalDeparture) {
+            GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer = tripTransfers.trips.get(transferDestination.tripIdx);
+            StopTime stopTime = tripPointer.stopTimes.get(transferDestination.stop_sequence);
+            return tripPointer.idx + " " + tripPointer.trip.trip_id + " @ " + stopTime.stop_sequence + " " + stopTime.stop_id + " " + LocalTime.ofSecondOfDay(arrivalDeparture == ArrivalDeparture.ARRIVAL ? stopTime.arrival_time : stopTime.departure_time);
         }
     }
 

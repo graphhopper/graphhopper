@@ -18,9 +18,11 @@
 
 package com.graphhopper;
 
+import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
 import com.graphhopper.config.Profile;
 import com.graphhopper.gtfs.*;
+import com.graphhopper.gtfs.analysis.Trips;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.TranslationMap;
@@ -31,16 +33,17 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.graphhopper.gtfs.GtfsHelper.time;
+import static com.graphhopper.gtfs.analysis.Trips.TripAtStopTime.ArrivalDeparture.ARRIVAL;
+import static com.graphhopper.gtfs.analysis.Trips.TripAtStopTime.ArrivalDeparture.DEPARTURE;
+import static com.graphhopper.gtfs.analysis.Trips.TripAtStopTime.print;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
@@ -93,6 +96,31 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
         public GHResponse route(Request request) {
             assumeFalse(request.isArriveBy(), "We are excused from queries by arrival time so far");
             return ptRouter().route(request);
+        }
+
+        @Test
+        public void testTransferForRoute5IsAvailable() {
+            Trips tripTransfers = graphHopperGtfs().getGtfsStorage().tripTransfers;
+            int tripIdx = findTrip("STBA", LocalTime.of(7, 50), 2, ARRIVAL);
+            Collection<Trips.TripAtStopTime> transferDestinations = tripTransfers.getTripTransfers(LocalDate.of(2007, 1, 1)).get(new Trips.TripAtStopTime(tripIdx, 2));
+            assertThat(transferDestinations).extracting(td -> print(td, tripTransfers, DEPARTURE)).contains("4 AB1 @ 1 BEATTY_AIRPORT 08:00");
+        }
+
+        @Override
+        public void testRoute5() {
+            assumeTrue(false, "This transfer is longer than 15 minutes because we are greedy with the first leg.");
+        }
+
+        private int findTrip(String tripId, LocalTime time, int stopSequence, Trips.TripAtStopTime.ArrivalDeparture arrivalDeparture) {
+            Trips tripTransfers = graphHopperGtfs().getGtfsStorage().tripTransfers;
+            int tripIdx = 0;
+            for (GTFSFeed.StopTimesForTripWithTripPatternKey trip : tripTransfers.trips) {
+                if (trip.trip.trip_id.equals(tripId) && LocalTime.ofSecondOfDay(arrivalDeparture == ARRIVAL ? trip.stopTimes.get(stopSequence).arrival_time : trip.stopTimes.get(stopSequence).departure_time).equals(time)) {
+                    return tripIdx;
+                }
+                tripIdx++;
+            }
+            throw new RuntimeException();
         }
 
         @AfterAll
@@ -325,6 +353,12 @@ public interface GraphHopperGtfsIT<T extends PtRouter> {
         assertFalse(route.getAll().isEmpty());
         assertEquals(time(8, 10), route.getBest().getTime(), "Expected travel time == scheduled travel time");
         assertEquals("STBA", (((Trip.PtLeg) route.getBest().getLegs().get(0)).trip_id), "Using expected route");
+        List<Trip.Stop> leg1stops = ((Trip.PtLeg) route.getBest().getLegs().get(0)).stops;
+        assertEquals(LocalTime.of(7, 50), leg1stops.get(leg1stops.size() - 1).arrivalTime.toInstant().atZone(zoneId).toLocalTime(), "Arrival time first leg");
+        assertEquals(2, leg1stops.get(leg1stops.size() - 1).stop_sequence, "Stop sequence first leg arrival");
+        List<Trip.Stop> leg2stops = ((Trip.PtLeg) route.getBest().getLegs().get(1)).stops;
+        assertEquals(LocalTime.of(8, 0), leg2stops.get(0).departureTime.toInstant().atZone(zoneId).toLocalTime(), "Departure time second leg");
+        assertEquals(1, leg2stops.get(0).stop_sequence, "Stop sequence second leg departure");
         assertEquals("AB1", (((Trip.PtLeg) route.getBest().getLegs().get(1)).trip_id), "Using expected route");
         assertEquals(250, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue(), "Paid expected fare"); // Two legs, no transfers allowed. Need two 'p' tickets costing 125 cents each.
     }

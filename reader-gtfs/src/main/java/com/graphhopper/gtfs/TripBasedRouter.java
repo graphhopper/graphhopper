@@ -15,6 +15,8 @@ import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 
+import static com.graphhopper.gtfs.analysis.Trips.TripAtStopTime.ArrivalDeparture.ARRIVAL;
+import static com.graphhopper.gtfs.analysis.Trips.TripAtStopTime.print;
 import static java.util.Comparator.comparingInt;
 
 public class TripBasedRouter {
@@ -161,7 +163,7 @@ public class TripBasedRouter {
     private List<EnqueuedTripSegment> enqueueTransfers(List<EnqueuedTripSegment> queue0) {
         List<EnqueuedTripSegment> queue1 = new ArrayList<>();
         for (EnqueuedTripSegment enqueuedTripSegment : queue0) {
-            logger.trace("{}", enqueuedTripSegment);
+            logger.debug("{}", enqueuedTripSegment);
             int toStopSequence = Math.min(enqueuedTripSegment.toStopSequence, enqueuedTripSegment.tripPointer.stopTimes.size());
             for (int i = enqueuedTripSegment.tripAtStopTime.stop_sequence + 1; i < toStopSequence; i++) {
                 StopTime stopTime = enqueuedTripSegment.tripPointer.stopTimes.get(i);
@@ -169,13 +171,13 @@ public class TripBasedRouter {
                 if (! (getArrivalTime(enqueuedTripSegment, stopTime, 0) < earliestArrivalTime))
                     break;
                 Trips.TripAtStopTime transferOrigin = new Trips.TripAtStopTime(enqueuedTripSegment.tripPointer.idx, stopTime.stop_sequence);
-                logger.trace("  {}", stopTime);
+                logger.debug("  {}", print(transferOrigin, tripTransfers, ARRIVAL));
                 Collection<Trips.TripAtStopTime> transferDestinations = gtfsStorage.tripTransfers.getTripTransfers(enqueuedTripSegment.serviceDay).get(transferOrigin);
                 for (Trips.TripAtStopTime transferDestination : transferDestinations) {
                     GTFSFeed.StopTimesForTripWithTripPatternKey destinationTripPointer = tripTransfers.getTrip(transferDestination.tripIdx);
                     StopTime transferStopTime = destinationTripPointer.stopTimes.get(transferDestination.stop_sequence);
                     if (transferStopTime.departure_time >= stopTime.arrival_time && destinationTripPointer.service.activeOn(enqueuedTripSegment.serviceDay) && parameters.getTripFilter().test(destinationTripPointer)) {
-                        logger.trace("    {}", transferDestination);
+                        logger.debug("    {}", transferDestination);
                         enqueue(queue1, destinationTripPointer, transferDestination, transferOrigin, enqueuedTripSegment, enqueuedTripSegment.serviceDay, enqueuedTripSegment.accessStation);
                     }
                 }
