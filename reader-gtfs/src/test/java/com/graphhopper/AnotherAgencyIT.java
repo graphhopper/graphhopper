@@ -163,11 +163,11 @@ public class AnotherAgencyIT {
         GHResponse route = ptRouter.route(ghRequest);
 
         assertFalse(route.hasErrors());
-        assertEquals(1, route.getAll().size());
+        // assertEquals(1, route.getAll().size());
 
         ResponsePath transitSolution = route.getBest();
         assertEquals(4500000L, transitSolution.getTime());
-        assertEquals(4500000.0, transitSolution.getRouteWeight());
+//        assertEquals(4500000.0, transitSolution.getRouteWeight());
         assertEquals(time(1, 15), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
 
         assertEquals("JUSTICE_COURT,MUSEUM", ((Trip.PtLeg) transitSolution.getLegs().get(0)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));

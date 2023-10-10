@@ -24,8 +24,17 @@ import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MappingIterator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SequenceWriter;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.dataformat.ion.IonObjectMapper;
 import com.google.common.collect.HashMultimap;
 import com.graphhopper.gtfs.analysis.Trips;
+import com.graphhopper.reader.osm.Pair;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.index.LineIntIndex;
 import org.mapdb.DB;
@@ -39,12 +48,13 @@ import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public class GtfsStorage {
 
 	private static final Logger LOGGER = LoggerFactory.getLogger(GtfsStorage.class);
+
+	static ObjectMapper ionMapper = new ObjectMapper();
+
 	private LineIntIndex stopIndex;
 	private PtGraph ptGraph;
 	public Trips tripTransfers;
@@ -117,10 +127,15 @@ public class GtfsStorage {
 	}
 
 	public static class FeedIdWithStopId implements Serializable {
+
+		@JsonProperty("feed_id")
 		public final String feedId;
+
+		@JsonProperty("stop_id")
 		public final String stopId;
 
-		public FeedIdWithStopId(String feedId, String stopId) {
+		public FeedIdWithStopId(@JsonProperty("feed_id") String feedId,
+								@JsonProperty("stop_id") String stopId) {
 			this.feedId = feedId;
 			this.stopId = stopId;
 		}
@@ -191,7 +206,23 @@ public class GtfsStorage {
 		ptToStreet = deserializeIntoIntIntHashMap("pt_to_street");
 		streetToPt = deserializeIntoIntIntHashMap("street_to_pt");
 		skippedEdgesForTransfer = deserializeIntoIntObjectHashMap("skipped_edges_for_transfer");
-		postInit();
+		try (InputStream is = Files.newInputStream(Paths.get(dir.getLocation() + "interpolated_transfers"))) {
+			MappingIterator<JsonNode> objectMappingIterator = ionMapper.reader(JsonNode.class).readValues(is);
+			objectMappingIterator.forEachRemaining(e -> {
+				try {
+					FeedIdWithStopId key = ionMapper.treeToValue(e.get(0), FeedIdWithStopId.class);
+					for (JsonNode jsonNode : e.get(1)) {
+						InterpolatedTransfer interpolatedTransfer = ionMapper.treeToValue(jsonNode, InterpolatedTransfer.class);
+						interpolatedTransfers.put(key, interpolatedTransfer);
+					}
+				} catch (JsonProcessingException ex) {
+					throw new RuntimeException(ex);
+				}
+			});
+		} catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        postInit();
 		return true;
 	}
 
@@ -306,6 +337,15 @@ public class GtfsStorage {
 		serialize("pt_to_street", ptToStreet);
 		serialize("street_to_pt", streetToPt);
 		serialize("skipped_edges_for_transfer", skippedEdgesForTransfer);
+		try (OutputStream os = Files.newOutputStream(Paths.get(dir.getLocation() + "interpolated_transfers"))) {
+			SequenceWriter sequenceWriter = ionMapper.writer().writeValuesAsArray(os);
+			for (Map.Entry<FeedIdWithStopId, Collection<InterpolatedTransfer>> e : interpolatedTransfers.asMap().entrySet()) {
+				sequenceWriter.write(ionMapper.createArrayNode().addPOJO(e.getKey()).addPOJO(e.getValue()));
+			}
+			sequenceWriter.close();
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	public void serializeTripTransfersMap(String filename, Map<Trips.TripAtStopTime, Collection<Trips.TripAtStopTime>> data) {
@@ -468,27 +508,22 @@ public class GtfsStorage {
 
 
 	public static class InterpolatedTransfer {
-		public final GtfsStorage.PlatformDescriptor fromPlatformDescriptor;
-		public final GtfsStorage.PlatformDescriptor toPlatformDescriptor;
+
+		@JsonProperty("to_stop")
+		public final FeedIdWithStopId toPlatformDescriptor;
+
+		@JsonProperty("street_time")
 		public final int streetTime;
 
-		public InterpolatedTransfer(GtfsStorage.PlatformDescriptor fromPlatformDescriptor, GtfsStorage.PlatformDescriptor toPlatformDescriptor, int streetTime) {
-			this.fromPlatformDescriptor = fromPlatformDescriptor;
+		@JsonProperty("skipped_edges")
+		public final int[] skippedEdgesForTransfer;
+
+		public InterpolatedTransfer(@JsonProperty("to_stop") FeedIdWithStopId toPlatformDescriptor,
+									@JsonProperty("street_time") int streetTime,
+									@JsonProperty("skipped_edges") int[] skippedEdgesForTransfer) {
 			this.toPlatformDescriptor = toPlatformDescriptor;
 			this.streetTime = streetTime;
-		}
-
-		@Override
-		public boolean equals(Object o) {
-			if (this == o) return true;
-			if (o == null || getClass() != o.getClass()) return false;
-			InterpolatedTransfer that = (InterpolatedTransfer) o;
-			return streetTime == that.streetTime && Objects.equals(fromPlatformDescriptor, that.fromPlatformDescriptor) && Objects.equals(toPlatformDescriptor, that.toPlatformDescriptor);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(fromPlatformDescriptor, toPlatformDescriptor, streetTime);
+			this.skippedEdgesForTransfer = skippedEdgesForTransfer;
 		}
 	}
 

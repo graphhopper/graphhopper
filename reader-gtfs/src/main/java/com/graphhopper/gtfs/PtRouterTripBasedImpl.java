@@ -266,16 +266,12 @@ public final class PtRouterTripBasedImpl implements PtRouter {
                 if (segment.transferOrigin != null) {
                     GtfsStorage.FeedIdWithStopId stopA = new GtfsStorage.FeedIdWithStopId(segment.parent.tripPointer.feedId, segment.parent.tripPointer.stopTimes.get(segment.transferOrigin.stop_sequence).stop_id);
                     GtfsStorage.FeedIdWithStopId stopB = new GtfsStorage.FeedIdWithStopId(segment.tripPointer.feedId, segment.tripPointer.stopTimes.get(segment.tripAtStopTime.stop_sequence).stop_id);
-                    GHRequest transferRequest = new GHRequest(baseGraph.getNodeAccess().getLat(gtfsStorage.getStationNodes().get(stopA)), baseGraph.getNodeAccess().getLon(gtfsStorage.getStationNodes().get(stopA)),
-                            baseGraph.getNodeAccess().getLat(gtfsStorage.getStationNodes().get(stopB)), baseGraph.getNodeAccess().getLon(gtfsStorage.getStationNodes().get(stopB)));
-                    transferRequest.setProfile("foot");
-                    GHResponse transferResponse = graphHopper.route(transferRequest);
-                    // int[] skippedEdgesForTransfer = null;
-                    // List<Label.Transition> transferPath = tripFromLabel.transferPath(skippedEdgesForTransfer, egressWeighting, segment.parent.tripPointer.stopTimes.get(segment.transferOrigin.stop_sequence).arrival_time);
                     List<Trip.Stop> previousStops = ((Trip.PtLeg) legs.get(legs.size() - 1)).stops;
-                    Date walkLegStartTime = previousStops.get(previousStops.size() - 1).arrivalTime;
-                    Date walkLegEndTime = new Date(walkLegStartTime.getTime() + transferResponse.getBest().getTime());
-                    legs.add(new Trip.WalkLeg("Walk", walkLegStartTime, transferResponse.getBest().getPoints().toLineString(true), 0.0, transferResponse.getBest().getInstructions(), transferResponse.getBest().getPathDetails(), walkLegEndTime));
+                    gtfsStorage.interpolatedTransfers.get(stopA).stream().filter(it -> it.toPlatformDescriptor.equals(stopB)).findAny().ifPresent(it -> {
+                        List<Label.Transition> transferTransitions = tripFromLabel.transferPath(it.skippedEdgesForTransfer, egressWeighting, previousStops.get(previousStops.size() - 1).arrivalTime.toInstant().toEpochMilli());
+                        List<Trip.Leg> transferLegs = tripFromLabel.parsePartitionToLegs(transferTransitions, queryGraph, encodingManager, egressWeighting, translation, requestedPathDetails);
+                        legs.add(transferLegs.get(0));
+                    });
                 }
                 legs.add(new Trip.PtLeg(segment.tripPointer.feedId, isInSameVehicleAsPrevious, segment.tripPointer.trip.trip_id,
                         trip.route_id, trip.trip_headsign, stops, 0, stops.get(stops.size() - 1).arrivalTime.toInstant().toEpochMilli() - stops.get(0).departureTime.toInstant().toEpochMilli(), geometryFactory.createLineString(stops.stream().map(s -> s.geometry.getCoordinate()).toArray(Coordinate[]::new))));
