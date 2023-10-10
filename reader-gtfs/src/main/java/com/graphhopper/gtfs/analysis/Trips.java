@@ -258,7 +258,7 @@ public class Trips {
         public static String print(Trips.TripAtStopTime transferDestination, Trips tripTransfers, ArrivalDeparture arrivalDeparture) {
             GTFSFeed.StopTimesForTripWithTripPatternKey tripPointer = tripTransfers.trips.get(transferDestination.tripIdx);
             StopTime stopTime = tripPointer.stopTimes.get(transferDestination.stop_sequence);
-            return tripPointer.idx + " " + tripPointer.trip.trip_id + " @ " + stopTime.stop_sequence + " " + stopTime.stop_id + " " + LocalTime.ofSecondOfDay(arrivalDeparture == ArrivalDeparture.ARRIVAL ? stopTime.arrival_time : stopTime.departure_time);
+            return tripPointer.idx + " " + tripPointer.trip.trip_id + " @ " + stopTime.stop_sequence + " " + stopTime.stop_id + " " + (arrivalDeparture == ArrivalDeparture.ARRIVAL ? stopTime.arrival_time : stopTime.departure_time);
         }
     }
 

@@ -182,7 +182,9 @@ public class GraphHopperGtfs extends GraphHopper {
 
 
     private void insertInterpolatedTripTransfer(GtfsStorage.PlatformDescriptor fromPlatformDescriptor, GtfsStorage.PlatformDescriptor toPlatformDescriptor, int streetTime, int[] skippedEdgesForTransfer) {
-        gtfsStorage.interpolatedTransfers.put(new GtfsStorage.FeedIdWithStopId(fromPlatformDescriptor.feed_id, fromPlatformDescriptor.stop_id), new GtfsStorage.InterpolatedTransfer(new GtfsStorage.FeedIdWithStopId(toPlatformDescriptor.feed_id, toPlatformDescriptor.stop_id), streetTime, skippedEdgesForTransfer));
+        if (skippedEdgesForTransfer.length > 0) { // TODO: Elsewhere, we distinguish empty path ("at" a node) from no path
+            gtfsStorage.interpolatedTransfers.put(new GtfsStorage.FeedIdWithStopId(fromPlatformDescriptor.feed_id, fromPlatformDescriptor.stop_id), new GtfsStorage.InterpolatedTransfer(new GtfsStorage.FeedIdWithStopId(toPlatformDescriptor.feed_id, toPlatformDescriptor.stop_id), streetTime, skippedEdgesForTransfer));
+        }
     }
 
     private void insertInterpolatedTransfer(Label label, GtfsStorage.PlatformDescriptor toPlatformDescriptor, HashMap<String, GtfsReader> readers, int[] skippedEdgesForTransfer) {
