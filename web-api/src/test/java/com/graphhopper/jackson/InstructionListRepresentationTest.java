@@ -20,7 +20,9 @@ package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.util.*;
+import org.json.JSONException;
 import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -46,7 +48,12 @@ public class InstructionListRepresentationTest {
                 .setExitNumber(2)
                 .setExited();
         il.add(instr);
-        assertEquals(objectMapper.readTree(getClass().getClassLoader().getResourceAsStream("fixtures/roundabout1.json")).toString(), objectMapper.valueToTree(il).toString());
+        try{
+            JSONAssert.assertEquals(objectMapper.readTree(getClass().getClassLoader().getResourceAsStream("fixtures/roundabout1.json")).toString(), objectMapper.valueToTree(il).toString(),false);
+        }
+        catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
@@ -65,7 +72,12 @@ public class InstructionListRepresentationTest {
                 .setExitNumber(2)
                 .setExited();
         il.add(instr);
-        assertEquals(objectMapper.readTree(getClass().getClassLoader().getResourceAsStream("fixtures/roundabout2.json")).toString(), objectMapper.valueToTree(il).toString());
+        try{
+            JSONAssert.assertEquals(objectMapper.readTree(getClass().getClassLoader().getResourceAsStream("fixtures/roundabout2.json")).toString(), objectMapper.valueToTree(il).toString(),false);
+        }
+        catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static Translation usTR = new Translation() {
