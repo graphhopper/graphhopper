@@ -56,7 +56,8 @@ public class OSMValueExtractor {
             if (index > 0) {
                 int lastIndex = value.indexOf(')', index); // (value) or value
                 if (lastIndex < 0) lastIndex = value.length() - 1;
-                if(lastIndex > index) return OSMValueExtractor.stringToTons(value.substring(index, lastIndex));
+                if (lastIndex > index)
+                    return OSMValueExtractor.stringToTons(value.substring(index, lastIndex));
             }
             return Double.NaN;
         } catch (Exception ex) {
@@ -174,18 +175,12 @@ public class OSMValueExtractor {
         if (Helper.isEmpty(str))
             return Double.NaN;
 
+        if ("walk".equals(str))
+            return 6;
+
         // on some German autobahns and a very few other places
         if ("none".equals(str))
             return MaxSpeed.UNLIMITED_SIGN_SPEED;
-
-        if (str.endsWith(":rural") || str.endsWith(":trunk"))
-            return 80;
-
-        if (str.endsWith(":urban"))
-            return 50;
-
-        if (str.equals("walk") || str.endsWith(":living_street"))
-            return 6;
 
         int mpInteger = str.indexOf("mp");
         int knotInteger = str.indexOf("knots");

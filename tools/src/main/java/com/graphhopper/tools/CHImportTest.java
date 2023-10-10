@@ -46,9 +46,7 @@ public class CHImportTest {
         GraphHopperConfig config = new GraphHopperConfig(map);
         config.putObject("datareader.file", map.getString("pbf", "map-matching/files/leipzig_germany.osm.pbf"));
         config.putObject("graph.location", map.getString("gh", "ch-import-test-gh"));
-        config.setProfiles(Arrays.asList(
-                new Profile(vehicle).setVehicle(vehicle).setWeighting("fastest")
-        ));
+        config.setProfiles(Arrays.asList(new Profile(vehicle).setVehicle(vehicle)));
         config.setCHProfiles(Collections.singletonList(new CHProfile(vehicle)));
         config.putObject(CHParameters.PERIODIC_UPDATES, map.getInt("periodic", 0));
         config.putObject(CHParameters.LAST_LAZY_NODES_UPDATES, map.getInt("lazy", 100));

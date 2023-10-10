@@ -18,16 +18,15 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.TurnCost;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -47,22 +46,19 @@ public class AlternativeRouteTest {
         final Weighting weighting;
         final TraversalMode traversalMode;
         final BaseGraph graph;
-        final BooleanEncodedValue accessEnc;
         final DecimalEncodedValue speedEnc;
         final DecimalEncodedValue turnCostEnc;
 
         public Fixture(TraversalMode tMode) {
             this.traversalMode = tMode;
-            accessEnc = new SimpleBooleanEncodedValue("access", true);
-            speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+            speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
             turnCostEnc = TurnCost.create("car", 1);
 
-            EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).add(turnCostEnc).build();
+            EncodingManager em = EncodingManager.start().add(speedEnc).add(turnCostEnc).build();
             graph = new BaseGraph.Builder(em).withTurnCosts(true).create();
-            TurnCostProvider turnCostProvider = tMode.isEdgeBased()
-                    ? new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage())
-                    : TurnCostProvider.NO_TURN_COST_PROVIDER;
-            weighting = new FastestWeighting(accessEnc, speedEnc, turnCostProvider);
+            weighting = tMode.isEdgeBased()
+                    ? new SpeedWeighting(speedEnc, turnCostEnc, graph.getTurnCostStorage(), Double.POSITIVE_INFINITY)
+                    : new SpeedWeighting(speedEnc);
         }
 
         @Override
@@ -73,7 +69,7 @@ public class AlternativeRouteTest {
 
     private static class FixtureProvider implements ArgumentsProvider {
         @Override
-        public Stream<? extends Arguments> provideArguments(ExtensionContext context) throws Exception {
+        public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
             return Stream.of(
                     new Fixture(TraversalMode.NODE_BASED),
                     new Fixture(TraversalMode.EDGE_BASED)
@@ -81,7 +77,7 @@ public class AlternativeRouteTest {
         }
     }
 
-    public static void initTestGraph(Graph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+    public static void initTestGraph(Graph graph, DecimalEncodedValue speedEnc) {
         /* 9
          _/\
          1  2-3-4-10
@@ -89,18 +85,17 @@ public class AlternativeRouteTest {
          5--6-7---8
         
          */
-        GHUtility.setSpeed(60, 60, accessEnc, speedEnc,
-                graph.edge(1, 9).setDistance(1),
-                graph.edge(9, 2).setDistance(1),
-                graph.edge(2, 3).setDistance(1),
-                graph.edge(3, 4).setDistance(1),
-                graph.edge(4, 10).setDistance(1),
-                graph.edge(5, 6).setDistance(1),
-                graph.edge(6, 7).setDistance(1),
-                graph.edge(7, 8).setDistance(1),
-                graph.edge(1, 5).setDistance(2),
-                graph.edge(6, 3).setDistance(1),
-                graph.edge(4, 8).setDistance(1));
+        graph.edge(1, 9).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(9, 2).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(2, 3).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(3, 4).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(4, 10).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(5, 6).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(6, 7).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(7, 8).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(1, 5).setDistance(2).set(speedEnc, 60, 60);
+        graph.edge(6, 3).setDistance(1).set(speedEnc, 60, 60);
+        graph.edge(4, 8).setDistance(1).set(speedEnc, 60, 60);
 
         updateDistancesFor(graph, 5, 0.00, 0.05);
         updateDistancesFor(graph, 6, 0.00, 0.10);
@@ -118,7 +113,7 @@ public class AlternativeRouteTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcAlternatives(Fixture f) {
-        initTestGraph(f.graph, f.accessEnc, f.speedEnc);
+        initTestGraph(f.graph, f.speedEnc);
         PMap hints = new PMap().
                 putObject("alternative_route.max_share_factor", 0.5).
                 putObject("alternative_route.max_weight_factor", 2).
@@ -143,13 +138,13 @@ public class AlternativeRouteTest {
         // so which alternative is better? longer plateau.weight with bigger path.weight or smaller path.weight with smaller plateau.weight
         // assertEquals(IntArrayList.from(5, 1, 9, 2, 3, 4), secondAlt.calcNodes());
         assertEquals(IntArrayList.from(5, 6, 7, 8, 4), secondAlt.calcNodes());
-        assertEquals(1667.9, secondAlt.getWeight(), .1);
+        assertEquals(463.3, secondAlt.getWeight(), .1);
     }
 
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testCalcAlternatives2(Fixture f) {
-        initTestGraph(f.graph, f.accessEnc, f.speedEnc);
+        initTestGraph(f.graph, f.speedEnc);
         PMap hints = new PMap().putObject("alternative_route.max_paths", 3).
                 putObject("alternative_route.max_share_factor", 0.7).
                 putObject("alternative_route.min_plateau_factor", 0.15).
@@ -164,7 +159,7 @@ public class AlternativeRouteTest {
         assertEquals(IntArrayList.from(5, 6, 3, 4), pathInfos.get(0).getPath().calcNodes());
         assertEquals(IntArrayList.from(5, 6, 7, 8, 4), pathInfos.get(1).getPath().calcNodes());
         assertEquals(IntArrayList.from(5, 1, 9, 2, 3, 4), pathInfos.get(2).getPath().calcNodes());
-        assertEquals(2416.0, pathInfos.get(2).getPath().getWeight(), .1);
+        assertEquals(671.1, pathInfos.get(2).getPath().getWeight(), .1);
     }
 
     private void checkAlternatives(List<AlternativeRoute.AlternativeInfo> alternativeInfos) {
@@ -184,7 +179,7 @@ public class AlternativeRouteTest {
     @ParameterizedTest
     @ArgumentsSource(FixtureProvider.class)
     public void testDisconnectedAreas(Fixture f) {
-        initTestGraph(f.graph, f.accessEnc, f.speedEnc);
+        initTestGraph(f.graph, f.speedEnc);
 
         // one single disconnected node
         updateDistancesFor(f.graph, 20, 0.00, -0.01);

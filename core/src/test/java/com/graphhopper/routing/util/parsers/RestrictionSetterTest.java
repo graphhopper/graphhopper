@@ -5,15 +5,12 @@ import com.graphhopper.reader.osm.GraphRestriction;
 import com.graphhopper.reader.osm.Pair;
 import com.graphhopper.reader.osm.RestrictionType;
 import com.graphhopper.routing.Dijkstra;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.EdgeIteratorState;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,12 +21,15 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class RestrictionSetterTest {
     private static final IntArrayList NO_PATH = IntArrayList.from();
+    private DecimalEncodedValue speedEnc;
     private BaseGraph graph;
     private RestrictionSetter r;
 
     @BeforeEach
     void setup() {
-        graph = new BaseGraph.Builder(1).withTurnCosts(true).create();
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+        EncodingManager encodingManager = EncodingManager.start().add(speedEnc).build();
+        graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         r = new RestrictionSetter(graph);
     }
 
@@ -44,9 +44,9 @@ public class RestrictionSetterTest {
         edge(2, 4);
         edge(3, 4);
         GraphRestriction graphRestriction = GraphRestriction.node(a, 1, b);
-        DecimalEncodedValue turnCostEnc = createTurnCostEnc("car");
-        r.setRestrictions(Arrays.asList(new Pair<>(graphRestriction, RestrictionType.NO)), turnCostEnc);
-        assertEquals(nodes(0, 1, 3, 4, 2), calcPath(0, 2, turnCostEnc));
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        r.setRestrictions(Arrays.asList(new Pair<>(graphRestriction, RestrictionType.NO)), turnRestrictionEnc);
+        assertEquals(nodes(0, 1, 3, 4, 2), calcPath(0, 2, turnRestrictionEnc));
     }
 
     @Test
@@ -60,9 +60,9 @@ public class RestrictionSetterTest {
         edge(2, 4);
         edge(3, 4);
         GraphRestriction graphRestriction = GraphRestriction.node(a, 1, b);
-        DecimalEncodedValue turnCostEnc = createTurnCostEnc("car");
-        r.setRestrictions(Arrays.asList(new Pair<>(graphRestriction, RestrictionType.ONLY)), turnCostEnc);
-        assertEquals(nodes(0, 1, 2, 4, 3), calcPath(0, 3, turnCostEnc));
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        r.setRestrictions(Arrays.asList(new Pair<>(graphRestriction, RestrictionType.ONLY)), turnRestrictionEnc);
+        assertEquals(nodes(0, 1, 2, 4, 3), calcPath(0, 3, turnRestrictionEnc));
     }
 
     @Test
@@ -84,15 +84,15 @@ public class RestrictionSetterTest {
         edge(6, 9);
         edge(8, 9);
         GraphRestriction graphRestriction = GraphRestriction.way(a, b, c, nodes(1, 2));
-        DecimalEncodedValue turnCostEnc = createTurnCostEnc("car");
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
         r.setRestrictions(Arrays.asList(
                 new Pair<>(graphRestriction, RestrictionType.NO)
-        ), turnCostEnc);
+        ), turnRestrictionEnc);
         // turning from a to b and then to c is not allowed
-        assertEquals(nodes(0, 1, 5, 8, 9, 6, 2, 3), calcPath(0, 3, turnCostEnc));
+        assertEquals(nodes(0, 1, 5, 8, 9, 6, 2, 3), calcPath(0, 3, turnRestrictionEnc));
         // turning from a to b, or b to c is still allowed
-        assertEquals(nodes(0, 1, 2, 4), calcPath(0, 4, turnCostEnc));
-        assertEquals(nodes(5, 1, 2, 3), calcPath(5, 3, turnCostEnc));
+        assertEquals(nodes(0, 1, 2, 4), calcPath(0, 4, turnRestrictionEnc));
+        assertEquals(nodes(5, 1, 2, 3), calcPath(5, 3, turnRestrictionEnc));
     }
 
     @Test
@@ -109,21 +109,21 @@ public class RestrictionSetterTest {
         int t = edge(2, 6);
         int u = edge(3, 7);
 
-        DecimalEncodedValue turnCostEnc = createTurnCostEnc("car");
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
         r.setRestrictions(Arrays.asList(
                 new Pair<>(GraphRestriction.way(a, b, c, nodes(1, 2)), RestrictionType.NO),
                 new Pair<>(GraphRestriction.way(b, c, d, nodes(2, 3)), RestrictionType.NO)
-        ), turnCostEnc);
+        ), turnRestrictionEnc);
 
-        assertEquals(NO_PATH, calcPath(0, 3, turnCostEnc)); // a-b-c
-        assertEquals(nodes(0, 1, 2, 6), calcPath(0, 6, turnCostEnc)); // a-b-t
-        assertEquals(nodes(5, 1, 2, 3), calcPath(5, 3, turnCostEnc)); // s-b-c
-        assertEquals(nodes(5, 1, 2, 6), calcPath(5, 6, turnCostEnc)); // s-b-t
+        assertEquals(NO_PATH, calcPath(0, 3, turnRestrictionEnc)); // a-b-c
+        assertEquals(nodes(0, 1, 2, 6), calcPath(0, 6, turnRestrictionEnc)); // a-b-t
+        assertEquals(nodes(5, 1, 2, 3), calcPath(5, 3, turnRestrictionEnc)); // s-b-c
+        assertEquals(nodes(5, 1, 2, 6), calcPath(5, 6, turnRestrictionEnc)); // s-b-t
 
-        assertEquals(NO_PATH, calcPath(1, 4, turnCostEnc)); // b-c-d
-        assertEquals(nodes(1, 2, 3, 7), calcPath(1, 7, turnCostEnc)); // b-c-u
-        assertEquals(nodes(6, 2, 3, 4), calcPath(6, 4, turnCostEnc)); // t-c-d
-        assertEquals(nodes(6, 2, 3, 7), calcPath(6, 7, turnCostEnc)); // t-c-u
+        assertEquals(NO_PATH, calcPath(1, 4, turnRestrictionEnc)); // b-c-d
+        assertEquals(nodes(1, 2, 3, 7), calcPath(1, 7, turnRestrictionEnc)); // b-c-u
+        assertEquals(nodes(6, 2, 3, 4), calcPath(6, 4, turnRestrictionEnc)); // t-c-d
+        assertEquals(nodes(6, 2, 3, 7), calcPath(6, 7, turnRestrictionEnc)); // t-c-u
     }
 
     @Test
@@ -148,7 +148,7 @@ public class RestrictionSetterTest {
         edge(7, 10);
         edge(8, 11);
         edge(10, 11);
-        DecimalEncodedValue turnCostEnc = createTurnCostEnc("car");
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
         r.setRestrictions(Arrays.asList(
                 new Pair<>(GraphRestriction.node(t, 4, d), RestrictionType.NO),
                 new Pair<>(GraphRestriction.node(s, 3, a), RestrictionType.NO),
@@ -156,13 +156,13 @@ public class RestrictionSetterTest {
                 new Pair<>(GraphRestriction.way(b, c, d, nodes(7, 8)), RestrictionType.NO),
                 new Pair<>(GraphRestriction.way(c, d, a, nodes(8, 4)), RestrictionType.NO),
                 new Pair<>(GraphRestriction.way(d, a, b, nodes(4, 3)), RestrictionType.NO)
-        ), turnCostEnc);
+        ), turnRestrictionEnc);
 
-        assertEquals(nodes(0, 3, 7, 8, 9), calcPath(0, 9, turnCostEnc));
-        assertEquals(nodes(5, 4, 3, 7, 10, 11, 8, 9), calcPath(5, 9, turnCostEnc));
-        assertEquals(nodes(5, 4, 3, 2), calcPath(5, 2, turnCostEnc));
-        assertEquals(nodes(0, 3, 7, 10), calcPath(0, 10, turnCostEnc));
-        assertEquals(nodes(6, 7, 8, 9), calcPath(6, 9, turnCostEnc));
+        assertEquals(nodes(0, 3, 7, 8, 9), calcPath(0, 9, turnRestrictionEnc));
+        assertEquals(nodes(5, 4, 3, 7, 10, 11, 8, 9), calcPath(5, 9, turnRestrictionEnc));
+        assertEquals(nodes(5, 4, 3, 2), calcPath(5, 2, turnRestrictionEnc));
+        assertEquals(nodes(0, 3, 7, 10), calcPath(0, 10, turnRestrictionEnc));
+        assertEquals(nodes(6, 7, 8, 9), calcPath(6, 9, turnRestrictionEnc));
     }
 
     @Test
@@ -181,22 +181,22 @@ public class RestrictionSetterTest {
         int e = edge(4, 5);
         int f = edge(5, 7);
         int g = edge(5, 6);
-        DecimalEncodedValue turnCostEnc = createTurnCostEnc("car");
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
         r.setRestrictions(Arrays.asList(
                 new Pair<>(GraphRestriction.way(a, d, f, nodes(2, 5)), RestrictionType.ONLY),
                 // we add a few more restrictions, because that happens a lot in real data
                 new Pair<>(GraphRestriction.way(c, d, g, nodes(2, 5)), RestrictionType.NO),
                 new Pair<>(GraphRestriction.node(e, 5, f), RestrictionType.NO)
-        ), turnCostEnc);
+        ), turnRestrictionEnc);
         // following the restriction is allowed of course
-        assertEquals(nodes(1, 2, 5, 7), calcPath(1, 7, turnCostEnc));
+        assertEquals(nodes(1, 2, 5, 7), calcPath(1, 7, turnRestrictionEnc));
         // taking another turn at the beginning is not allowed
-        assertEquals(nodes(), calcPath(1, 3, turnCostEnc));
+        assertEquals(nodes(), calcPath(1, 3, turnRestrictionEnc));
         // taking another turn after the first turn is not allowed either
-        assertEquals(nodes(), calcPath(1, 4, turnCostEnc));
+        assertEquals(nodes(), calcPath(1, 4, turnRestrictionEnc));
         // coming from somewhere we can go anywhere
-        assertEquals(nodes(0, 2, 5, 6), calcPath(0, 6, turnCostEnc));
-        assertEquals(nodes(0, 2, 5, 7), calcPath(0, 7, turnCostEnc));
+        assertEquals(nodes(0, 2, 5, 6), calcPath(0, 6, turnRestrictionEnc));
+        assertEquals(nodes(0, 2, 5, 7), calcPath(0, 7, turnRestrictionEnc));
     }
 
     @Test
@@ -210,7 +210,7 @@ public class RestrictionSetterTest {
         int c = edge(1, 2);
         int d = edge(2, 3);
         int e = edge(2, 4);
-        DecimalEncodedValue turnCostEnc = createTurnCostEnc("car");
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
         assertThrows(IllegalStateException.class, () -> r.setRestrictions(Arrays.asList(
                         // These are two 'only' via-way restrictions that share the same via way. A real-world example can
                         // be found in Rüdesheim am Rhein where vehicles either have to go straight or enter the ferry depending
@@ -218,77 +218,36 @@ public class RestrictionSetterTest {
                         // We have to make sure such cases are ignored already when we parse the OSM data.
                         new Pair<>(GraphRestriction.way(a, c, d, nodes(1, 2)), RestrictionType.ONLY),
                         new Pair<>(GraphRestriction.way(b, c, e, nodes(1, 2)), RestrictionType.ONLY)
-                ), turnCostEnc)
+                ), turnRestrictionEnc)
         );
     }
 
-    private static DecimalEncodedValue createTurnCostEnc(String name) {
-        DecimalEncodedValue turnCostEnc = TurnCost.create(name, 1);
-        turnCostEnc.init(new EncodedValue.InitializerConfig());
-        return turnCostEnc;
+    private static BooleanEncodedValue createTurnRestrictionEnc(String name) {
+        BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create(name);
+        turnRestrictionEnc.init(new EncodedValue.InitializerConfig());
+        return turnRestrictionEnc;
     }
 
-    private IntArrayList calcPath(int from, int to, DecimalEncodedValue turnCostEnc) {
-        return new IntArrayList(new Dijkstra(graph, new MyWeighting(graph, turnCostEnc), TraversalMode.EDGE_BASED).calcPath(from, to).calcNodes());
+    private IntArrayList calcPath(int from, int to, BooleanEncodedValue turnRestrictionEnc) {
+        return new IntArrayList(new Dijkstra(graph, new SpeedWeighting(speedEnc, new TurnCostProvider() {
+            @Override
+            public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                if (inEdge == outEdge) return Double.POSITIVE_INFINITY;
+                return graph.getTurnCostStorage().get(turnRestrictionEnc, inEdge, viaNode, outEdge) ? Double.POSITIVE_INFINITY : 0;
+            }
+
+            @Override
+            public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+                return Double.isInfinite(calcTurnWeight(inEdge, viaNode, outEdge)) ? Long.MAX_VALUE : 0L;
+            }
+        }), TraversalMode.EDGE_BASED).calcPath(from, to).calcNodes());
     }
 
     private IntArrayList nodes(int... nodes) {
         return IntArrayList.from(nodes);
     }
 
-    private IntArrayList edges(int... edges) {
-        return IntArrayList.from(edges);
-    }
-
     private int edge(int from, int to) {
-        return graph.edge(from, to).setDistance(10).getEdge();
-    }
-
-    private static class MyWeighting implements Weighting {
-        private final TurnCostProvider turnCostProvider;
-
-        public MyWeighting(BaseGraph graph, DecimalEncodedValue turnCostEnc) {
-            turnCostProvider = new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage());
-        }
-
-        @Override
-        public double getMinWeight(double distance) {
-            return 0;
-        }
-
-        @Override
-        public boolean edgeHasNoAccess(EdgeIteratorState edgeState, boolean reverse) {
-            return false;
-        }
-
-        @Override
-        public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
-            return edgeState.getDistance();
-        }
-
-        @Override
-        public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-            return 0;
-        }
-
-        @Override
-        public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
-            return turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
-        }
-
-        @Override
-        public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
-            return 0;
-        }
-
-        @Override
-        public boolean hasTurnCosts() {
-            return true;
-        }
-
-        @Override
-        public String getName() {
-            return "test";
-        }
+        return graph.edge(from, to).setDistance(100).set(speedEnc, 10, 10).getEdge();
     }
 }

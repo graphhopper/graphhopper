@@ -23,6 +23,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
+
 import com.graphhopper.config.Profile;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -89,7 +90,7 @@ public class CHMeasurement {
         if (withTurnCosts) {
             ghConfig.putObject("graph.vehicles", "car|turn_costs=true");
             ghConfig.setProfiles(Collections.singletonList(
-                    new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(true).putHint(Parameters.Routing.U_TURN_COSTS, uTurnCosts)
+                    new Profile(profile).setVehicle("car").setTurnCosts(true).putHint(Parameters.Routing.U_TURN_COSTS, uTurnCosts)
             ));
             ghConfig.setCHProfiles(Collections.singletonList(
                     new CHProfile(profile)
@@ -103,7 +104,7 @@ public class CHMeasurement {
         } else {
             ghConfig.putObject("graph.vehicles", "car");
             ghConfig.setProfiles(Collections.singletonList(
-                    new Profile(profile).setVehicle("car").setWeighting("fastest").setTurnCosts(false)
+                    new Profile(profile).setVehicle("car").setTurnCosts(false)
             ));
         }
 

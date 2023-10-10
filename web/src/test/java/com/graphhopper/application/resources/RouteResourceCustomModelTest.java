@@ -24,8 +24,8 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -40,6 +40,7 @@ import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
@@ -62,36 +63,35 @@ public class RouteResourceCustomModelTest {
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
                 putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,track_type,hgv,average_slope,max_slope").
-                putObject("custom_models.directory", "../custom_models/").
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Arrays.asList(
-                        new Profile("wheelchair"),
-                        new CustomProfile("roads").setCustomModel(new CustomModel()).setVehicle("roads"),
-                        new CustomProfile("car").setCustomModel(new CustomModel().setDistanceInfluence(70d)).setVehicle("car"),
-                        new CustomProfile("car_with_area").setCustomModel(new CustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
-                        new CustomProfile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0d)).setVehicle("bike"),
-                        new Profile("bike_fastest").setWeighting("fastest").setVehicle("bike"),
-                        new CustomProfile("bus").setCustomModel(null).setVehicle("roads").putHint("custom_model_files", Arrays.asList("bus.json")),
-                        new CustomProfile("cargo_bike").setCustomModel(null).setVehicle("bike").
+                        new Profile("wheelchair")/* TODO .setVehicle("wheelchair") */,
+                        new Profile("roads").setCustomModel(new CustomModel()).setVehicle("roads"),
+                        new Profile("car").setCustomModel(new CustomModel().setDistanceInfluence(70d)).setVehicle("car"),
+                        new Profile("car_with_area").setCustomModel(new CustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
+                        new Profile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0d)).setVehicle("bike"),
+                        new Profile("bike_fastest").setVehicle("bike"),
+                        new Profile("bus").setCustomModel(null).setVehicle("roads").putHint("custom_model_files", Arrays.asList("bus.json")),
+                        new Profile("cargo_bike").setCustomModel(null).setVehicle("bike").
                                 putHint("custom_model_files", Arrays.asList("cargo_bike.json")),
-                        new CustomProfile("json_bike").setCustomModel(null).setVehicle("roads").
+                        new Profile("json_bike").setCustomModel(null).setVehicle("roads").
                                 putHint("custom_model_files", Arrays.asList("bike.json", "bike_elevation.json")),
-                        new Profile("foot_profile").setVehicle("foot").setWeighting("fastest"),
-                        new CustomProfile("car_no_unclassified").setCustomModel(
+                        new Profile("foot_profile").setVehicle("foot"),
+                        new Profile("car_no_unclassified").setCustomModel(
                                         new CustomModel(new CustomModel().
                                                 addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0")))).
                                 setVehicle("car"),
-                        new CustomProfile("custom_bike").
+                        new Profile("custom_bike").
                                 setCustomModel(new CustomModel().
                                         addToSpeed(If("road_class == PRIMARY", LIMIT, "28")).
                                         addToPriority(If("max_width < 1.2", MULTIPLY, "0"))).
                                 setVehicle("bike"),
-                        new CustomProfile("custom_bike2").setCustomModel(
+                        new Profile("custom_bike2").setCustomModel(
                                         new CustomModel(new CustomModel().setDistanceInfluence(70d).
                                                 addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0")))).
                                 setVehicle("bike"),
-                        new CustomProfile("custom_bike3").setCustomModel(
+                        new Profile("custom_bike3").setCustomModel(
                                         new CustomModel(new CustomModel().
                                                 addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "10")).
                                                 addToSpeed(If("true", LIMIT, "40")))).
@@ -118,8 +118,8 @@ public class RouteResourceCustomModelTest {
         // the bus profile is a custom profile and we can use its CH preparation as long as we do not add a custom model
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bus\"}";
         JsonNode path = getPath(body);
-        assertEquals(path.get("distance").asDouble(), 1500, 10);
-        assertEquals(path.get("time").asLong(), 168_000, 1_000);
+        assertEquals(1500, path.get("distance").asDouble(), 10);
+        assertEquals(162_000, path.get("time").asLong(), 1_000);
     }
 
     @Test
@@ -147,13 +147,6 @@ public class RouteResourceCustomModelTest {
         String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"unknown\", \"custom_model\": {}, \"ch.disable\": true}";
         JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
         assertMessageStartsWith(jsonNode, "The requested profile 'unknown' does not exist.\nAvailable profiles: ");
-    }
-
-    @Test
-    public void testCustomWeightingRequired() {
-        String body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"foot_profile\", \"custom_model\": {}, \"ch.disable\": true}";
-        JsonNode jsonNode = query(body, 400).readEntity(JsonNode.class);
-        assertEquals("The requested profile 'foot_profile' cannot be used with `custom_model`, because it has weighting=fastest", jsonNode.get("message").asText());
     }
 
     @Test
@@ -205,7 +198,7 @@ public class RouteResourceCustomModelTest {
         JsonNode path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 661, 5);
 
-        String json = Helper.readJSONFileWithoutComments(new File("../custom_models/cargo_bike.json").getAbsolutePath());
+        String json = Helper.readJSONFileWithoutComments(new InputStreamReader(GHUtility.class.getResourceAsStream("/com/graphhopper/custom_models/cargo_bike.json")));
         body = "{\"points\": [[11.58199, 50.0141], [11.5865, 50.0095]], \"profile\": \"bike\", \"custom_model\":" + json + ", \"ch.disable\": true}";
         path = getPath(body);
         assertEquals(path.get("distance").asDouble(), 1007, 5);
@@ -344,7 +337,7 @@ public class RouteResourceCustomModelTest {
                 "   \"priority\": [{\"if\": \"car_access == false || hgv == NO || max_width < 3 || max_height < 4\", \"multiply_by\": \"0\"}]}}";
         JsonNode path = getPath(body);
         assertEquals(7314, path.get("distance").asDouble(), 10);
-        assertEquals(957 * 1000, path.get("time").asLong(), 1_000);
+        assertEquals(943 * 1000, path.get("time").asLong(), 1_000);
     }
 
     private void assertMessageStartsWith(JsonNode jsonNode, String message) {

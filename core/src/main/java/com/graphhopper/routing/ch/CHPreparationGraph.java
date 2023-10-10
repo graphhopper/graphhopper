@@ -100,70 +100,19 @@ public class CHPreparationGraph {
                     graph.getEdges() + " vs. " + prepareGraph.getOriginalEdges());
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-            double weightFwd = weighting.calcEdgeWeightWithAccess(iter, false);
-            double weightBwd = weighting.calcEdgeWeightWithAccess(iter, true);
+            double weightFwd = weighting.calcEdgeWeight(iter, false);
+            double weightBwd = weighting.calcEdgeWeight(iter, true);
             prepareGraph.addEdge(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(), weightFwd, weightBwd);
         }
         prepareGraph.prepareForContraction();
     }
 
-    /**
-     * Builds a turn cost function for a given graph('s turn cost storage) and given uTurnCosts.
-     * The trivial implementation would be simply using {@link Weighting#calcTurnWeight}. However, it turned out
-     * that storing all turn costs in separate arrays upfront speeds up edge-based CH preparation by about 25%. See #2084
-     */
     public static TurnCostFunction buildTurnCostFunctionFromTurnCostStorage(Graph graph, Weighting weighting) {
-        if (!(weighting instanceof AbstractWeighting))
-            return weighting::calcTurnWeight;
-        TurnCostProvider turnCostProvider = ((AbstractWeighting) weighting).getTurnCostProvider();
-        if (!(turnCostProvider instanceof DefaultTurnCostProvider))
-            return weighting::calcTurnWeight;
-        DecimalEncodedValue turnCostEnc = ((DefaultTurnCostProvider) turnCostProvider).getTurnCostEnc();
-        TurnCostStorage turnCostStorage = graph.getTurnCostStorage();
-        // we maintain a list of inEdge/outEdge/turn-cost triples (we use two arrays for this) that is sorted by nodes
-        LongArrayList turnCostEdgePairs = new LongArrayList();
-        DoubleArrayList turnCosts = new DoubleArrayList();
-        // for each node we store the index of the first turn cost entry/triple in the list
-        final int[] turnCostNodes = new int[graph.getNodes() + 1];
-        TurnCostStorage.Iterator tcIter = turnCostStorage.getAllTurnCosts();
-        int lastNode = -1;
-        while (tcIter.next()) {
-            int viaNode = tcIter.getViaNode();
-            if (viaNode < lastNode)
-                throw new IllegalStateException();
-            long edgePair = BitUtil.LITTLE.combineIntsToLong(tcIter.getFromEdge(), tcIter.getToEdge());
-            // note that as long as we only use OSM turn restrictions all the turn costs are infinite anyway
-            double turnCost = tcIter.getCost(turnCostEnc);
-            int index = turnCostEdgePairs.size();
-            turnCostEdgePairs.add(edgePair);
-            turnCosts.add(turnCost);
-            if (viaNode != lastNode) {
-                for (int i = lastNode + 1; i <= viaNode; i++) {
-                    turnCostNodes[i] = index;
-                }
-            }
-            lastNode = viaNode;
-        }
-        for (int i = lastNode + 1; i <= turnCostNodes.length - 1; i++) {
-            turnCostNodes[i] = turnCostEdgePairs.size();
-        }
-        turnCostNodes[turnCostNodes.length - 1] = turnCostEdgePairs.size();
-
-        // currently the u-turn costs are the same for all junctions, so for now we just get them for one of them
-        double uTurnCosts = weighting.calcTurnWeight(1, 0, 1);
-        return (inEdge, viaNode, outEdge) -> {
-            if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge))
-                return 0;
-            else if (inEdge == outEdge)
-                return uTurnCosts;
-            // traverse all turn cost entries we have for this viaNode and return the turn costs if we find a match
-            for (int i = turnCostNodes[viaNode]; i < turnCostNodes[viaNode + 1]; i++) {
-                long l = turnCostEdgePairs.get(i);
-                if (inEdge == BitUtil.LITTLE.getIntLow(l) && outEdge == BitUtil.LITTLE.getIntHigh(l))
-                    return turnCosts.get(i);
-            }
-            return 0;
-        };
+        // At some point we used an optimized version where we copied the turn costs to sorted arrays
+        // temporarily. This seemed to be around 25% faster according to measurements on the Bavaria
+        // map, but later this turned out to be no real improvement for large maps (planet, Europe, a
+        // and even Germany). See also #2084
+        return weighting::calcTurnWeight;
     }
 
     public int getNodes() {
@@ -180,6 +129,8 @@ public class CHPreparationGraph {
 
     public void addEdge(int from, int to, int edge, double weightFwd, double weightBwd) {
         checkNotReady();
+        if (from == to)
+            throw new IllegalArgumentException("Loop edges are no longer supported since #2862");
         boolean fwd = Double.isFinite(weightFwd);
         boolean bwd = Double.isFinite(weightBwd);
         if (!fwd && !bwd)
@@ -578,12 +529,12 @@ public class CHPreparationGraph {
 
         @Override
         public int getOrigEdgeKeyFirstAB() {
-            return GHUtility.createEdgeKey(prepareEdge, nodeA == nodeB, false);
+            return GHUtility.createEdgeKey(prepareEdge, false);
         }
 
         @Override
         public int getOrigEdgeKeyFirstBA() {
-            return GHUtility.createEdgeKey(prepareEdge, nodeA == nodeB, true);
+            return GHUtility.createEdgeKey(prepareEdge, true);
         }
 
         @Override
@@ -884,13 +835,13 @@ public class CHPreparationGraph {
             void addEdge(int from, int to, int edge, boolean fwd, boolean bwd) {
                 fromNodes.add(from);
                 toNodes.add(to);
-                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, from == to, false), fwd, bwd));
+                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, false), fwd, bwd));
                 maxFrom = Math.max(maxFrom, from);
                 maxTo = Math.max(maxTo, to);
 
                 fromNodes.add(to);
                 toNodes.add(from);
-                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, from == to, true), bwd, fwd));
+                keysAndFlags.add(getKeyWithFlags(GHUtility.createEdgeKey(edge, true), bwd, fwd));
                 maxFrom = Math.max(maxFrom, to);
                 maxTo = Math.max(maxTo, from);
             }

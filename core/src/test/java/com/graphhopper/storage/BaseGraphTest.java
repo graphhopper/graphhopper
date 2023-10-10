@@ -253,21 +253,6 @@ public class BaseGraphTest extends AbstractGraphStorageTester {
         assertEdge(g.getEdgeIteratorStateForKey(1), 1, 0, true, 0, 1);
     }
 
-    @Test
-    public void testEdgeKey_loop() {
-        BaseGraph g = new BaseGraph.Builder(encodingManager).create();
-        GHUtility.setSpeed(60, true, true, carAccessEnc, carSpeedEnc, g.edge(0, 0).setDistance(10));
-        // storage direction
-        assertEdge(g.getEdgeIteratorState(0, Integer.MIN_VALUE), 0, 0, false, 0, 0);
-        // reverse direction cannot be retrieved, we get forward direction anyway
-        assertEdge(g.getEdgeIteratorState(0, 0), 0, 0, false, 0, 0);
-        // now use the edge key to retrieve the edge
-        assertEdge(g.getEdgeIteratorStateForKey(0), 0, 0, false, 0, 0);
-        // opposite direction could be retrieved like this but to be consistent with getEdgeIteratorState(edge,adj)
-        // we return the forward direction anyway! todo: is this really what we should do? probably related to #1631
-        assertEdge(g.getEdgeIteratorStateForKey(1), 0, 0, false, 0, 0);
-    }
-
     private void assertEdge(EdgeIteratorState edge, int base, int adj, boolean reverse, int edgeId, int key) {
         assertEquals(base, edge.getBaseNode());
         assertEquals(adj, edge.getAdjNode());

@@ -20,6 +20,7 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -75,6 +76,12 @@ public class CustomModelParser {
         return new CustomWeighting(accessEnc, speedEnc, turnCostProvider, parameters);
     }
 
+    public static CustomWeighting createFastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EncodingManager lookup) {
+        CustomModel cm = new CustomModel();
+
+        return createWeighting(accessEnc, speedEnc, null, lookup, TurnCostProvider.NO_TURN_COST_PROVIDER, cm);
+    }
+
     /**
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
@@ -115,7 +122,8 @@ public class CustomModelParser {
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
             prio.init(lookup, avgSpeedEnc, priorityEnc, CustomModel.getAreasAsMap(customModel.getAreas()));
             return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority, prio.getMaxSpeed(), prio.getMaxPriority(),
-                    customModel.getDistanceInfluence() == null ? 0 : customModel.getDistanceInfluence(), customModel.getHeadingPenalty());
+                    customModel.getDistanceInfluence() == null ? 0 : customModel.getDistanceInfluence(),
+                    customModel.getHeadingPenalty() == null ? Parameters.Routing.DEFAULT_HEADING_PENALTY : customModel.getHeadingPenalty());
         } catch (ReflectiveOperationException ex) {
             throw new IllegalArgumentException("Cannot compile expression " + ex.getMessage(), ex);
         }

@@ -18,10 +18,10 @@ public enum State {
     AU_VIC("AU-VIC", AUS),
     AU_WA("AU-WA", AUS),
 
-    // Belgium
-    BE_BRU("BE-BRU", BEL),
-    BE_VLG("BE-VLG", BEL),
-    BE_WAL("BE-WAL", BEL),
+    // the sub regions of Belgium have no data in countries.geojson
+    // BE_BRU("BE-BRU", BEL),
+    // BE_VLG("BE-VLG", BEL),
+    // BE_WAL("BE-WAL", BEL),
 
     // Canada
     CA_AB("CA-AB", CAN),
@@ -45,12 +45,15 @@ public enum State {
     FM_YAP("FM-YAP", FSM),
 
     // United Kingdom
-    GB_SCT("GB-SCT", GBR),
+    // TODO currently it isn't supported when the states list does not cover the entire country
+    //  furthermore the speed limits for Scotland are not different for car
+    // GB_SCT("GB-SCT", GBR),
 
     // Netherlands
-    NL_BQ1("NL-BQ1", NLD),
-    NL_BQ2("NL-BQ2", NLD),
-    NL_BQ3("NL-BQ3", NLD),
+    // TODO same problem here
+    // NL_BQ1("NL-BQ1", NLD),
+    // NL_BQ2("NL-BQ2", NLD),
+    // NL_BQ3("NL-BQ3", NLD),
 
     // United States
     US_AL("US-AL", USA),

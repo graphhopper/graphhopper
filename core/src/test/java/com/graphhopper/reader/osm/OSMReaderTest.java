@@ -218,13 +218,13 @@ public class OSMReaderTest {
         int n80 = AbstractGraphStorageTester.getIdOf(graph, 54.1);
         EdgeIterator iter = carOutExplorer.setBaseNode(n80);
         iter.next();
-        assertEquals(5, iter.get(carSpeedEnc), 1e-1);
+        assertEquals(6, iter.get(carSpeedEnc), 1e-1);
 
         // duration 01:10 is given => more precise speed calculation!
-        // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 71km/h
+        // ~111km (from 54.0,10.1 to 55.0,10.2) in duration=70 minutes => 95km/h => / 1.4 => 68km/h
         iter = carOutExplorer.setBaseNode(n40);
         iter.next();
-        assertEquals(70, iter.get(carSpeedEnc), 1e-1);
+        assertEquals(62, iter.get(carSpeedEnc), 1e-1);
     }
 
     @Test
@@ -239,7 +239,7 @@ public class OSMReaderTest {
         int n60 = AbstractGraphStorageTester.getIdOf(graph, 56.0);
         EdgeIterator iter = carOutExplorer.setBaseNode(n60);
         iter.next();
-        assertEquals(35, iter.get(carSpeedEnc), 1e-1);
+        assertEquals(36, iter.get(carSpeedEnc), 1e-1);
     }
 
     @Test
@@ -390,9 +390,7 @@ public class OSMReaderTest {
         hopper.setVehiclesString("car|block_fords=true");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
-                setProfiles(
-                        new Profile("car").setVehicle("car").setWeighting("fastest")
-                ).
+                setProfiles(new Profile("car").setVehicle("car")).
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getBaseGraph();
@@ -547,30 +545,30 @@ public class OSMReaderTest {
         // (2-3)->(3-4) only_straight_on = (2-3)->(3-8) restricted
         // (4-3)->(3-8) no_right_turn = (4-3)->(3-8) restricted
         // (2-3)->(3-8) no_entry = (2-3)->(3-8) restricted
-        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
-        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8) > 0);
-        assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8) > 0);
-        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8) > 0);
-        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4) == 0);
-        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_2) == 0);
-        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4) == 0);
-        assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_2) == 0);
-        assertTrue(tcStorage.get(carTCEnc, edge8_3, n3, edge3_2) == 0);
+        BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("car"));
+        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8));
+        assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8));
+        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8));
+        assertFalse(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4));
+        assertFalse(tcStorage.get(carTCEnc, edge2_3, n3, edge3_2));
+        assertFalse(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4));
+        assertFalse(tcStorage.get(carTCEnc, edge4_3, n3, edge3_2));
+        assertFalse(tcStorage.get(carTCEnc, edge8_3, n3, edge3_2));
 
         // u-turn restriction for (6-1)->(1-6) but not for (1-6)->(6-1)
-        assertTrue(tcStorage.get(carTCEnc, edge1_6, n1, edge1_6) > 0);
-        assertTrue(tcStorage.get(carTCEnc, edge1_6, n6, edge1_6) == 0);
+        assertTrue(tcStorage.get(carTCEnc, edge1_6, n1, edge1_6));
+        assertFalse(tcStorage.get(carTCEnc, edge1_6, n6, edge1_6));
 
         int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
         int edge5_6 = GHUtility.getEdge(graph, n5, n6).getEdge();
         int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
 
         // (4-5)->(5-1) right_turn_only = (4-5)->(5-6) restricted
-        assertTrue(tcStorage.get(carTCEnc, edge4_5, n5, edge5_6) == 0);
-        assertTrue(tcStorage.get(carTCEnc, edge4_5, n5, edge5_1) > 0);
+        assertFalse(tcStorage.get(carTCEnc, edge4_5, n5, edge5_6));
+        assertTrue(tcStorage.get(carTCEnc, edge4_5, n5, edge5_1));
 
-        DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("bike"));
-        assertTrue(tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_6) == 0);
+        BooleanEncodedValue bikeTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("bike"));
+        assertFalse(tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_6));
 
         int n10 = AbstractGraphStorageTester.getIdOf(graph, 40, 10);
         int n11 = AbstractGraphStorageTester.getIdOf(graph, 40, 11);
@@ -579,12 +577,12 @@ public class OSMReaderTest {
         int edge10_11 = GHUtility.getEdge(graph, n10, n11).getEdge();
         int edge11_14 = GHUtility.getEdge(graph, n11, n14).getEdge();
 
-        assertTrue(tcStorage.get(carTCEnc, edge11_14, n11, edge10_11) == 0);
-        assertTrue(tcStorage.get(bikeTCEnc, edge11_14, n11, edge10_11) == 0);
+        assertFalse(tcStorage.get(carTCEnc, edge11_14, n11, edge10_11));
+        assertFalse(tcStorage.get(bikeTCEnc, edge11_14, n11, edge10_11));
 
         // the turn is restricted for car even though it turns into a one-way, but we treat this separately now
-        assertTrue(tcStorage.get(carTCEnc, edge10_11, n11, edge11_14) > 0);
-        assertTrue(tcStorage.get(bikeTCEnc, edge10_11, n11, edge11_14) > 0);
+        assertTrue(tcStorage.get(carTCEnc, edge10_11, n11, edge11_14));
+        assertTrue(tcStorage.get(bikeTCEnc, edge10_11, n11, edge11_14));
     }
 
     @Test
@@ -605,11 +603,11 @@ public class OSMReaderTest {
         int edge9_3 = GHUtility.getEdge(graph, n9, n3).getEdge();
         int edge3_8 = GHUtility.getEdge(graph, n3, n8).getEdge();
 
-        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
-        DecimalEncodedValue roadsTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("roads"));
+        BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("car"));
+        BooleanEncodedValue roadsTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("roads"));
 
-        assertTrue(tcStorage.get(carTCEnc, edge9_3, n3, edge3_8) == 0);
-        assertTrue(tcStorage.get(roadsTCEnc, edge9_3, n3, edge3_8) > 0);
+        assertFalse(tcStorage.get(carTCEnc, edge9_3, n3, edge3_8));
+        assertTrue(tcStorage.get(roadsTCEnc, edge9_3, n3, edge3_8));
     }
 
     @Test
@@ -698,7 +696,7 @@ public class OSMReaderTest {
                 return new VehicleTagParsers(
                         new CarAccessParser(lookup.getBooleanEncodedValue(VehicleAccess.key("truck")), lookup.getBooleanEncodedValue(Roundabout.KEY), config, TransportationMode.HGV)
                                 .init(config.getObject("date_range_parser", new DateRangeParser())),
-                        new CarAverageSpeedParser(lookup.getDecimalEncodedValue(VehicleSpeed.key("truck")), 120),
+                        new CarAverageSpeedParser(lookup.getDecimalEncodedValue(VehicleSpeed.key("truck")), lookup.getDecimalEncodedValue(FerrySpeed.KEY)),
                         null
                 );
             }
@@ -707,15 +705,15 @@ public class OSMReaderTest {
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
-                        new Profile("bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(true),
-                        new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(true),
-                        new Profile("truck").setVehicle("truck").setWeighting("fastest").setTurnCosts(true)
+                        new Profile("bike").setVehicle("bike").setTurnCosts(true),
+                        new Profile("car").setVehicle("car").setTurnCosts(true),
+                        new Profile("truck").setVehicle("truck").setTurnCosts(true)
                 ).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
-        DecimalEncodedValue carTCEnc = manager.getDecimalEncodedValue(TurnCost.key("car"));
-        DecimalEncodedValue truckTCEnc = manager.getDecimalEncodedValue(TurnCost.key("truck"));
-        DecimalEncodedValue bikeTCEnc = manager.getDecimalEncodedValue(TurnCost.key("bike"));
+        BooleanEncodedValue carTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("car"));
+        BooleanEncodedValue truckTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("truck"));
+        BooleanEncodedValue bikeTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("bike"));
 
         Graph graph = hopper.getBaseGraph();
         TurnCostStorage tcStorage = graph.getTurnCostStorage();
@@ -723,22 +721,22 @@ public class OSMReaderTest {
         int edge1 = GHUtility.getEdge(graph, 1, 0).getEdge();
         int edge2 = GHUtility.getEdge(graph, 0, 2).getEdge();
         // the 2nd entry provides turn flags for bike only
-        assertTrue(Double.isInfinite(tcStorage.get(carTCEnc, edge1, 0, edge2)));
-        assertTrue(Double.isInfinite(tcStorage.get(truckTCEnc, edge1, 0, edge2)));
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge1, 0, edge2), .1);
+        assertTrue(tcStorage.get(carTCEnc, edge1, 0, edge2));
+        assertTrue(tcStorage.get(truckTCEnc, edge1, 0, edge2));
+        assertFalse(tcStorage.get(bikeTCEnc, edge1, 0, edge2));
 
         edge1 = GHUtility.getEdge(graph, 2, 0).getEdge();
         edge2 = GHUtility.getEdge(graph, 0, 3).getEdge();
         // the first entry provides turn flags for car and foot only
-        assertEquals(0, tcStorage.get(carTCEnc, edge1, 0, edge2), .1);
-        assertEquals(0, tcStorage.get(truckTCEnc, edge1, 0, edge2), .1);
-        assertTrue(Double.isInfinite(tcStorage.get(bikeTCEnc, edge1, 0, edge2)));
+        assertFalse(tcStorage.get(carTCEnc, edge1, 0, edge2));
+        assertFalse(tcStorage.get(truckTCEnc, edge1, 0, edge2));
+        assertTrue(tcStorage.get(bikeTCEnc, edge1, 0, edge2));
 
         edge1 = GHUtility.getEdge(graph, 3, 0).getEdge();
         edge2 = GHUtility.getEdge(graph, 0, 2).getEdge();
-        assertEquals(0, tcStorage.get(carTCEnc, edge1, 0, edge2), .1);
-        assertTrue(Double.isInfinite(tcStorage.get(truckTCEnc, edge1, 0, edge2)));
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge1, 0, edge2), .1);
+        assertFalse(tcStorage.get(carTCEnc, edge1, 0, edge2));
+        assertTrue(tcStorage.get(truckTCEnc, edge1, 0, edge2));
+        assertFalse(tcStorage.get(bikeTCEnc, edge1, 0, edge2));
     }
 
     @Test
@@ -777,37 +775,37 @@ public class OSMReaderTest {
         // (2-3)->(3-4) only_straight_on except bicycle = (2-3)->(3-8) restricted for car
         // (4-3)->(3-8) no_right_turn dedicated to motorcar = (4-3)->(3-8) restricted for car
 
-        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
-        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8) > 0);
-        assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8) > 0);
-        assertEquals(0, tcStorage.get(carTCEnc, edge2_3, n3, edge3_4), .1);
-        assertEquals(0, tcStorage.get(carTCEnc, edge2_3, n3, edge3_2), .1);
-        assertEquals(0, tcStorage.get(carTCEnc, edge2_3, n3, edge3_4), .1);
-        assertEquals(0, tcStorage.get(carTCEnc, edge4_3, n3, edge3_2), .1);
-        assertEquals(0, tcStorage.get(carTCEnc, edge8_3, n3, edge3_2), .1);
+        BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("car"));
+        assertTrue(tcStorage.get(carTCEnc, edge2_3, n3, edge3_8));
+        assertTrue(tcStorage.get(carTCEnc, edge4_3, n3, edge3_8));
+        assertFalse(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4));
+        assertFalse(tcStorage.get(carTCEnc, edge2_3, n3, edge3_2));
+        assertFalse(tcStorage.get(carTCEnc, edge2_3, n3, edge3_4));
+        assertFalse(tcStorage.get(carTCEnc, edge4_3, n3, edge3_2));
+        assertFalse(tcStorage.get(carTCEnc, edge8_3, n3, edge3_2));
 
-        DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("bike"));
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_8), .1);
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge4_3, n3, edge3_8), .1);
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_4), .1);
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_2), .1);
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_4), .1);
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge4_3, n3, edge3_2), .1);
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge8_3, n3, edge3_2), .1);
+        BooleanEncodedValue bikeTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("bike"));
+        assertFalse(tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_8));
+        assertFalse(tcStorage.get(bikeTCEnc, edge4_3, n3, edge3_8));
+        assertFalse(tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_4));
+        assertFalse(tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_2));
+        assertFalse(tcStorage.get(bikeTCEnc, edge2_3, n3, edge3_4));
+        assertFalse(tcStorage.get(bikeTCEnc, edge4_3, n3, edge3_2));
+        assertFalse(tcStorage.get(bikeTCEnc, edge8_3, n3, edge3_2));
 
         // u-turn except bus;bicycle restriction for (6-1)->(1-6) but not for (1-6)->(6-1)
-        assertTrue(tcStorage.get(carTCEnc, edge1_6, n1, edge1_6) > 0);
-        assertEquals(0, tcStorage.get(carTCEnc, edge1_6, n6, edge1_6), .1);
+        assertTrue(tcStorage.get(carTCEnc, edge1_6, n1, edge1_6));
+        assertFalse(tcStorage.get(carTCEnc, edge1_6, n6, edge1_6));
 
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge1_6, n1, edge1_6), .1);
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge1_6, n6, edge1_6), .1);
+        assertFalse(tcStorage.get(bikeTCEnc, edge1_6, n1, edge1_6));
+        assertFalse(tcStorage.get(bikeTCEnc, edge1_6, n6, edge1_6));
 
         // (4-5)->(5-6) right_turn_only dedicated to motorcar = (4-5)->(5-1) restricted
-        assertEquals(0, tcStorage.get(carTCEnc, edge4_5, n5, edge5_6), .1);
-        assertTrue(tcStorage.get(carTCEnc, edge4_5, n5, edge5_1) > 0);
+        assertFalse(tcStorage.get(carTCEnc, edge4_5, n5, edge5_6));
+        assertTrue(tcStorage.get(carTCEnc, edge4_5, n5, edge5_1));
 
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_6), .1);
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_1), .1);
+        assertFalse(tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_6));
+        assertFalse(tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_1));
     }
 
     @Test
@@ -833,24 +831,24 @@ public class OSMReaderTest {
         int edge4_5 = GHUtility.getEdge(graph, n4, n5).getEdge();
         int edge5_1 = GHUtility.getEdge(graph, n5, n1).getEdge();
 
-        DecimalEncodedValue carTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("car"));
-        DecimalEncodedValue bikeTCEnc = hopper.getEncodingManager().getDecimalEncodedValue(TurnCost.key("bike"));
+        BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("car"));
+        BooleanEncodedValue bikeTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("bike"));
 
         // (1-2)->(2-3) no_right_turn for motorcar and bus
-        assertTrue(tcStorage.get(carTCEnc, edge1_2, n2, edge2_3) > 0);
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge1_2, n2, edge2_3), .1);
+        assertTrue(tcStorage.get(carTCEnc, edge1_2, n2, edge2_3));
+        assertFalse(tcStorage.get(bikeTCEnc, edge1_2, n2, edge2_3));
 
         // (3-4)->(4-5) no_right_turn for motorcycle and motorcar
-        assertTrue(Double.isInfinite(tcStorage.get(carTCEnc, edge3_4, n4, edge4_5)));
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge3_4, n4, edge4_5), .1);
+        assertTrue(tcStorage.get(carTCEnc, edge3_4, n4, edge4_5));
+        assertFalse(tcStorage.get(bikeTCEnc, edge3_4, n4, edge4_5));
 
         // (5-1)->(1-2) no_right_turn for bus and psv except for motorcar and bicycle
-        assertEquals(0, tcStorage.get(carTCEnc, edge4_5, n5, edge5_1), .1);
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_1), .1);
+        assertFalse(tcStorage.get(carTCEnc, edge4_5, n5, edge5_1));
+        assertFalse(tcStorage.get(bikeTCEnc, edge4_5, n5, edge5_1));
 
         // (5-1)->(1-2) no_right_turn for motorcar and motorcycle except for bus and bicycle
-        assertTrue(Double.isInfinite(tcStorage.get(carTCEnc, edge5_1, n1, edge1_2)));
-        assertEquals(0, tcStorage.get(bikeTCEnc, edge5_1, n1, edge1_2), .1);
+        assertTrue(tcStorage.get(carTCEnc, edge5_1, n1, edge1_2));
+        assertFalse(tcStorage.get(bikeTCEnc, edge5_1, n1, edge1_2));
     }
 
     @Test
@@ -906,7 +904,7 @@ public class OSMReaderTest {
                 return new File(getClass().getResource(file2).getFile());
             }
         }.setOSMFile("dummy").
-                setProfiles(new Profile("profile").setVehicle("car").setWeighting("fastest")).
+                setProfiles(new Profile("profile").setVehicle("car")).
                 setMinNetworkSize(0).
                 setGraphHopperLocation(dir).
                 importOrLoad();
@@ -998,10 +996,10 @@ public class OSMReaderTest {
             setGraphHopperLocation(dir);
             if (turnCosts) setVehiclesString("roads|turn_costs=true|transportation_mode=HGV");
             setProfiles(
-                    new Profile("foot").setVehicle("foot").setWeighting("fastest"),
-                    new Profile("car").setVehicle("car").setWeighting("fastest").setTurnCosts(turnCosts),
-                    new Profile("bike").setVehicle("bike").setWeighting("fastest").setTurnCosts(turnCosts),
-                    new Profile("roads").setVehicle("roads").setWeighting("fastest").setTurnCosts(turnCosts)
+                    new Profile("foot").setVehicle("foot"),
+                    new Profile("car").setVehicle("car").setTurnCosts(turnCosts),
+                    new Profile("bike").setVehicle("bike").setTurnCosts(turnCosts),
+                    new Profile("roads").setVehicle("roads").setTurnCosts(turnCosts)
             );
             getReaderConfig().setPreferredLanguage(prefLang);
         }

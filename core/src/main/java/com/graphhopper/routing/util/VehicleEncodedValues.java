@@ -33,19 +33,19 @@ public class VehicleEncodedValues {
     private final BooleanEncodedValue accessEnc;
     private final DecimalEncodedValue avgSpeedEnc;
     private final DecimalEncodedValue priorityEnc;
-    private final DecimalEncodedValue turnCostEnc;
+    private final BooleanEncodedValue turnRestrictionEnc;
 
     public static VehicleEncodedValues foot(PMap properties) {
         String name = properties.getString("name", "foot");
         int speedBits = properties.getInt("speed_bits", 4);
         double speedFactor = properties.getDouble("speed_factor", 1);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
-        int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
+        boolean turnCosts = properties.getBool("turn_costs", false);
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
-        DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnCostEnc);
+        BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnRestrictionEnc);
     }
 
     public static VehicleEncodedValues wheelchair(PMap properties) {
@@ -62,12 +62,12 @@ public class VehicleEncodedValues {
         int speedBits = properties.getInt("speed_bits", 4);
         double speedFactor = properties.getDouble("speed_factor", 2);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
-        int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
+        boolean turnCosts = properties.getBool("turn_costs", false);
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
-        DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnCostEnc);
+        BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnRestrictionEnc);
     }
 
     public static VehicleEncodedValues racingbike(PMap properties) {
@@ -80,13 +80,13 @@ public class VehicleEncodedValues {
 
     public static VehicleEncodedValues car(PMap properties) {
         String name = properties.getString("name", "car");
-        int speedBits = properties.getInt("speed_bits", 5);
-        double speedFactor = properties.getDouble("speed_factor", 5);
-        int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
+        int speedBits = properties.getInt("speed_bits", 7);
+        double speedFactor = properties.getDouble("speed_factor", 2);
+        boolean turnCosts = properties.getBool("turn_costs", false);
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, true);
-        DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnCostEnc);
+        BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnRestrictionEnc);
     }
 
     public static VehicleEncodedValues roads(PMap properties) {
@@ -94,20 +94,20 @@ public class VehicleEncodedValues {
         int speedBits = properties.getInt("speed_bits", 7);
         double speedFactor = properties.getDouble("speed_factor", 2);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", true);
-        int maxTurnCosts = properties.getInt("max_turn_costs", properties.getBool("turn_costs", false) ? 1 : 0);
+        boolean turnCosts = properties.getBool("turn_costs", false);
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
-        DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnCostEnc);
+        BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnRestrictionEnc);
     }
 
     public VehicleEncodedValues(String name, BooleanEncodedValue accessEnc, DecimalEncodedValue avgSpeedEnc,
-                                DecimalEncodedValue priorityEnc, DecimalEncodedValue turnCostEnc) {
+                                DecimalEncodedValue priorityEnc, BooleanEncodedValue turnRestrictionEnc) {
         this.name = name;
         this.accessEnc = accessEnc;
         this.avgSpeedEnc = avgSpeedEnc;
         this.priorityEnc = priorityEnc;
-        this.turnCostEnc = turnCostEnc;
+        this.turnRestrictionEnc = turnRestrictionEnc;
     }
 
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
@@ -120,8 +120,8 @@ public class VehicleEncodedValues {
     }
 
     public void createTurnCostEncodedValues(List<EncodedValue> registerNewTurnCostEncodedValues) {
-        if (turnCostEnc != null)
-            registerNewTurnCostEncodedValues.add(turnCostEnc);
+        if (turnRestrictionEnc != null)
+            registerNewTurnCostEncodedValues.add(turnRestrictionEnc);
     }
 
     public BooleanEncodedValue getAccessEnc() {
@@ -136,8 +136,8 @@ public class VehicleEncodedValues {
         return priorityEnc;
     }
 
-    public DecimalEncodedValue getTurnCostEnc() {
-        return turnCostEnc;
+    public BooleanEncodedValue getTurnRestrictionEnc() {
+        return turnRestrictionEnc;
     }
 
     public String getName() {

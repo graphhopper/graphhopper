@@ -78,11 +78,6 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertPriorityAndSpeed(AVOID, PUSHING_SECTION_SPEED, way);
 
         way.clearTags();
-        way.setTag("highway", "secondary");
-        way.setTag("hazmat", "designated");
-        assertPriorityAndSpeed(BAD, 18, way);
-
-        way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("bicycle", "yes");
         assertPriorityAndSpeed(PREFER, 10, way);

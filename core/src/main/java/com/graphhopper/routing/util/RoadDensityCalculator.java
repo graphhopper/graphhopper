@@ -84,18 +84,23 @@ public class RoadDensityCalculator {
         visited.add(adjNode);
         // we just do a BFS search and sum up all the road lengths
         final double radiusNormalized = DIST_PLANE.calcNormalizedDist(radius);
+        // for long tunnels or motorway sections where the distance between the exit points and the
+        // center is larger than the radius it is important to continue the search even outside the radius
+        final int minPolls = (int) (radius / 2);
+        int polls = 0;
         while (!deque.isEmpty()) {
             int node = deque.removeFirst();
+            polls++;
+            double distance = DIST_PLANE.calcNormalizedDist(center.lat, center.lon, na.getLat(node), na.getLon(node));
+            if (polls > minPolls && distance > radiusNormalized)
+                continue;
             EdgeIterator iter = edgeExplorer.setBaseNode(node);
             while (iter.next()) {
                 if (visited.contains(iter.getAdjNode()))
                     continue;
                 visited.add(iter.getAdjNode());
-                double distance = DIST_PLANE.calcNormalizedDist(center.lat, center.lon, getLat(na, iter.getBaseNode(), iter.getAdjNode()), getLon(na, iter.getBaseNode(), iter.getAdjNode()));
-                if (distance > radiusNormalized)
-                    continue;
-                double roadLength = Math.min(2 * radius, iter.getDistance());
-                totalRoadWeight += roadLength * calcRoadFactor.applyAsDouble(iter);
+                if (distance <= radiusNormalized)
+                    totalRoadWeight += calcRoadFactor.applyAsDouble(iter);
                 deque.addLast(iter.getAdjNode());
             }
         }

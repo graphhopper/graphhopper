@@ -54,7 +54,7 @@ public class RouteResourceIssue2020Test {
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car").setWeighting("fastest"))).
+                setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car"))).
                 setLMProfiles(Collections.singletonList(new LMProfile("my_car")));
         return config;
     }

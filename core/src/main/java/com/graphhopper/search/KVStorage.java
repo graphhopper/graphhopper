@@ -110,7 +110,7 @@ public class KVStorage {
     public boolean loadExisting() {
         if (vals.loadExisting()) {
             if (!keys.loadExisting()) throw new IllegalStateException("Loaded values but cannot load keys");
-            bytePointer = bitUtil.combineIntsToLong(vals.getHeader(0), vals.getHeader(4));
+            bytePointer = bitUtil.toLong(vals.getHeader(0), vals.getHeader(4));
             GHUtility.checkDAVersion(vals.getName(), Constants.VERSION_KV_STORAGE, vals.getHeader(8));
             GHUtility.checkDAVersion(keys.getName(), Constants.VERSION_KV_STORAGE, keys.getHeader(0));
 

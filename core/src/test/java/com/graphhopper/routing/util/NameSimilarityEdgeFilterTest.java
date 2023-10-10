@@ -307,7 +307,7 @@ public class NameSimilarityEdgeFilterTest {
     private EdgeIteratorState createTestEdgeIterator(String name) {
         PointList pointList = new PointList();
         pointList.add(basePoint);
-        EdgeIteratorState edge = new BaseGraph.Builder(1).create().edge(0, 0)
+        EdgeIteratorState edge = new BaseGraph.Builder(1).create().edge(0, 1)
                 .setWayGeometry(pointList);
         if (name != null)
             edge.setKeyValues(KVStorage.KeyValue.createKV(KVStorage.KeyValue.STREET_NAME, name));

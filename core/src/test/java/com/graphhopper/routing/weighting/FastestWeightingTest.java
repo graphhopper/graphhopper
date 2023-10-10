@@ -31,6 +31,7 @@ import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FAC
 import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * @author Peter Karich
@@ -38,8 +39,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class FastestWeightingTest {
     private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-    private final DecimalEncodedValue turnCostEnc = TurnCost.create("car", 10);
-    private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+    private final BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create("car");
+    private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnRestrictionEnc).build();
     private final BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
 
     @Test
@@ -52,27 +53,31 @@ public class FastestWeightingTest {
 
     @Test
     public void testWeightWrongHeading() {
-        Weighting instance = new FastestWeighting(accessEnc, speedEnc, null, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, 100), TurnCostProvider.NO_TURN_COST_PROVIDER);
+        final double penalty = 100;
+        Weighting instance = new FastestWeighting(accessEnc, speedEnc, null, new PMap().putObject(Parameters.Routing.HEADING_PENALTY, penalty), TurnCostProvider.NO_TURN_COST_PROVIDER);
         EdgeIteratorState edge = graph.edge(1, 2).setDistance(10).setWayGeometry(Helper.createPointList(51, 0, 51, 1));
-        GHUtility.setSpeed(10, 0, accessEnc, speedEnc, edge);
+        GHUtility.setSpeed(10, 10, accessEnc, speedEnc, edge);
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(edge.getEdgeKey(), 99, 5, 6, edge.getDistance(), edge.getFlags(),
                 edge.getKeyValues(), edge.fetchWayGeometry(FetchMode.PILLAR_ONLY), false);
         double time = instance.calcEdgeWeight(virtEdge, false);
 
+        // no penalty on edge
+        assertEquals(time, instance.calcEdgeWeight(virtEdge, false), 1e-8);
+        assertEquals(time, instance.calcEdgeWeight(virtEdge, true), 1e-8);
+        // ... unless setting it to unfavored (in both directions)
         virtEdge.setUnfavored(true);
-        // heading penalty on edge
-        assertEquals(time + 100, instance.calcEdgeWeight(virtEdge, false), 1e-8);
-        // only after setting it
-        virtEdge.setUnfavored(true);
-        assertEquals(time + 100, instance.calcEdgeWeight(virtEdge, true), 1e-8);
+        assertEquals(time + penalty, instance.calcEdgeWeight(virtEdge, false), 1e-8);
+        assertEquals(time + penalty, instance.calcEdgeWeight(virtEdge, true), 1e-8);
         // but not after releasing it
         virtEdge.setUnfavored(false);
+        assertEquals(time, instance.calcEdgeWeight(virtEdge, false), 1e-8);
         assertEquals(time, instance.calcEdgeWeight(virtEdge, true), 1e-8);
 
         // test default penalty
         virtEdge.setUnfavored(true);
         instance = new FastestWeighting(accessEnc, speedEnc);
         assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcEdgeWeight(virtEdge, false), 1e-8);
+        assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcEdgeWeight(virtEdge, true), 1e-8);
     }
 
     @Test
@@ -80,11 +85,11 @@ public class FastestWeightingTest {
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(10);
         Weighting instance = new FastestWeighting(accessEnc, speedEnc);
         edge.set(speedEnc, 0);
-        assertEquals(1.0 / 0, instance.calcEdgeWeight(edge, false), 1e-8);
+        assertTrue(Double.isInfinite(instance.calcEdgeWeight(edge, false)));
 
         // 0 / 0 returns NaN but calcWeight should not return NaN!
         edge.setDistance(0);
-        assertEquals(1.0 / 0, instance.calcEdgeWeight(edge, false), 1e-8);
+        assertTrue(Double.isInfinite(instance.calcEdgeWeight(edge, false)));
     }
 
     @Test
@@ -103,19 +108,18 @@ public class FastestWeightingTest {
     @Test
     public void calcWeightAndTime_withTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()));
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage()));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100));
-        // turn costs are given in seconds
-        setTurnCost(graph, 0, 1, 2, 5);
-        assertEquals(6 + 5, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
-        assertEquals(6000 + 5000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+        setTurnRestriction(graph, 0, 1, 2);
+        assertTrue(Double.isInfinite(GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0)));
+        assertEquals(Long.MAX_VALUE, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0));
     }
 
     @Test
     public void calcWeightAndTime_uTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), 40));
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), 40));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
@@ -124,15 +128,13 @@ public class FastestWeightingTest {
     @Test
     public void calcWeightAndTime_withTurnCosts_shortest() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-        Weighting weighting = new ShortestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage()));
+        Weighting weighting = new ShortestWeighting(accessEnc, speedEnc,
+                new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage()));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100));
-        // turn costs are given in seconds
-        setTurnCost(graph, 0, 1, 2, 5);
-        // todo: for the shortest weighting turn costs cannot be interpreted as seconds? at least when they are added
-        // to the weight? how much should they contribute ?
-//        assertEquals(105, AbstractWeighting.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
-        assertEquals(6000 + 5000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+        setTurnRestriction(graph, 0, 1, 2);
+        assertTrue(Double.isInfinite(GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0)));
+        assertEquals(Long.MAX_VALUE, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0));
     }
 
     @Test
@@ -198,8 +200,8 @@ public class FastestWeightingTest {
         assertEquals(240, bikeWeighting.calcEdgeWeight(edge, false), 1.e-6);
     }
 
-    private void setTurnCost(Graph graph, int from, int via, int to, double turnCost) {
-        graph.getTurnCostStorage().set(turnCostEnc, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), turnCost);
+    private void setTurnRestriction(Graph graph, int from, int via, int to) {
+        graph.getTurnCostStorage().set(turnRestrictionEnc, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), true);
     }
 
 }

@@ -17,8 +17,10 @@
  */
 package com.graphhopper.routing.ev;
 
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.routing.ev.State.*;
 
@@ -41,7 +43,7 @@ public enum Country {
     AUT("Austria", "AUT", "AT"),
     AZE("Azerbaijan", "AZE", "AZ"),
     BDI("Burundi", "BDI", "BI"),
-    BEL("Belgium", "BEL", "BE", BE_BRU, BE_VLG, BE_WAL),
+    BEL("Belgium", "BEL", "BE"),
     BEN("Benin", "BEN", "BJ"),
     BFA("Burkina Faso", "BFA", "BF"),
     BGD("Bangladesh", "BGD", "BD"),
@@ -95,7 +97,7 @@ public enum Country {
     FRO("Faroe Islands", "FRO", "FO"),
     FSM("Federated States of Micronesia", "FSM", "FM", FM_KSA, FM_PNI, FM_TRK, FM_YAP),
     GAB("Gabon", "GAB", "GA"),
-    GBR("United Kingdom", "GBR", "GB", GB_SCT),
+    GBR("United Kingdom", "GBR", "GB"),
     GEO("Georgia", "GEO", "GE"),
     GGY("Guernsey", "GGY", "GG"),
     GHA("Ghana", "GHA", "GH"),
@@ -170,7 +172,7 @@ public enum Country {
     NGA("Nigeria", "NGA", "NG"),
     NIC("Nicaragua", "NIC", "NI"),
     NIU("Niue", "NIU", "NU"),
-    NLD("Netherlands", "NLD", "NL", NL_BQ1, NL_BQ2, NL_BQ3),
+    NLD("Netherlands", "NLD", "NL"),
     NOR("Norway", "NOR", "NO"),
     NPL("Nepal", "NPL", "NP"),
     NRU("Nauru", "NRU", "NR"),

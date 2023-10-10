@@ -139,6 +139,9 @@ class AreaIndexTest {
         assertEquals("FR", countryIndex.query(48.86471, 2.349014).get(0).getProperties().get(State.ISO_3166_2));
         assertEquals("US-NM", countryIndex.query(35.67514, -105.94665).get(0).getProperties().get(State.ISO_3166_2));
         assertEquals("AT", countryIndex.query(48.20448, 16.10788).get(0).getProperties().get(State.ISO_3166_2));
+        assertEquals("GB", countryIndex.query(51.6730876, 0.0041691).get(0).getProperties().get(State.ISO_3166_2));
+        assertEquals("BE", countryIndex.query(50.846931, 4.332262).get(0).getProperties().get(State.ISO_3166_2));
+        assertEquals("NL", countryIndex.query(52.208451, 5.500524).get(0).getProperties().get(State.ISO_3166_2));
     }
 
     private AreaIndex<CustomArea> createCountryIndex() {

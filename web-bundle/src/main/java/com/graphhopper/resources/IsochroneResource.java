@@ -51,12 +51,14 @@ public class IsochroneResource {
     private final GraphHopper graphHopper;
     private final Triangulator triangulator;
     private final ProfileResolver profileResolver;
+    private final String osmDate;
 
     @Inject
     public IsochroneResource(GraphHopper graphHopper, Triangulator triangulator, ProfileResolver profileResolver) {
         this.graphHopper = graphHopper;
         this.triangulator = triangulator;
         this.profileResolver = profileResolver;
+        this.osmDate = graphHopper.getProperties().get("datareader.data.date");
     }
 
     public enum ResponseType {json, geojson}
@@ -104,7 +106,7 @@ public class IsochroneResource {
         ToDoubleFunction<ShortestPathTree.IsoLabel> fz;
         if (weightLimit.orElseThrow(() -> new IllegalArgumentException("query param weight_limit is not a number.")) > 0) {
             limit = weightLimit.getAsLong();
-            shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 2_000));
+            shortestPathTree.setWeightLimit(limit + Math.max(limit * 0.14, 200));
             fz = l -> l.weight;
         } else if (distanceLimitInMeter.orElseThrow(() -> new IllegalArgumentException("query param distance_limit is not a number.")) > 0) {
             limit = distanceLimitInMeter.getAsLong();
@@ -160,6 +162,7 @@ public class IsochroneResource {
             final ObjectNode info = json.putObject("info");
             info.putPOJO("copyrights", ResponsePathSerializer.COPYRIGHTS);
             info.put("took", Math.round((float) sw.getMillis()));
+            if (!osmDate.isEmpty()) info.put("road_data_timestamp", osmDate);
             finalJson = json;
         }
 

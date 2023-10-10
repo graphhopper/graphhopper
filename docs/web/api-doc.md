@@ -1,10 +1,16 @@
 ## Routing Web API Docs
 
-In order to communicate with your or [our](http://graphhopper.com/#enterprise) hosted GraphHopper 
-server you need to understand how to use it. There is a separate [JavaScript](https://github.com/graphhopper/directions-api-js-client) and [Java](https://github.com/graphhopper/directions-api-java-client) client for this API or use the plain JSON response for your language.
-To find out how to use the hosted GraphHopper Directions API you should refer to the online documentation [here](https://docs.graphhopper.com/). This file describes the web API of the open source routing server.
+In order to communicate with your own GraphHopper server or [a hosted one](https://www.graphhopper.com/products/) 
+you need to understand how to use it. There is a separate [JavaScript](https://github.com/graphhopper/directions-api-js-client) 
+and [Java](https://github.com/graphhopper/directions-api-java-client) client for this API or
+you use the plain JSON response for a different language.
+
+To find out how to use the hosted GraphHopper Directions API you should refer to the online documentation [here](https://docs.graphhopper.com/). 
+
+This file here describes the web API of the open source routing server.
 
 ### A simple example
+
 [http://localhost:8989/route?point=52.5300591%2C13.3565022&point=52.5060440%2C13.4378107](http://localhost:8989/route?point=52.5300591%2C13.3565022&point=52.5060440%2C13.4378107)
 
 The URL path of the local instance is [http://localhost:8989](http://localhost:8989)
@@ -13,7 +19,9 @@ The endpoint to obtain the route is `/route` via GET.
 
 ## HTTP POST
 
-The GET request has an URL length limitation, so it won't work for many locations per request. In those cases use a HTTP POST request with JSON data as input. The POST request is identical except that all singular parameter names are named as their plural for a POST request. All effected parameters are: `points`, `snap_preventions`, `curbsides` and `point_hints`. (`details` stays `details`)
+The GET request has an URL length limitation, so it won't work for many locations per request. In those cases use a HTTP POST request with JSON data as input. 
+The POST request is identical except that all singular parameter names are named as their plural for a POST request. All effected parameters are: `points`, `snap_preventions`, 
+`curbsides` and `point_hints`. (`details` stays `details`)
 
 Please note that unlike to the GET endpoint, points are specified in `[longitude, latitude]` order. For example `point=10,11&point=20,22` will be the following JSON:
 
@@ -40,7 +48,7 @@ All official parameters are shown in the following table
  details         | -       | Optional parameter. You can request additional details for the route: `average_speed`, `street_name`, `edge_id`, `road_class`, `road_environment`, `max_speed` and `time` (and see which other values are configured in `graph.encoded_values`).  Multiple values are specified like `details=average_speed&details=time`. The returned format for one detail segment is `[fromRef, toRef, value]`. The `ref` references the points of the response. Value can also be `null` if the property does not exist for one detail segment.                                                                                                                                                                                                               
  curbside        | any     | Optional parameter applicable to edge-based routing only. It specifies on which side a query point should be relative to the driver when she leaves/arrives at a start/target/via point. Possible values: right, left, any. Specify for every point parameter. See similar heading parameter.                                                                                                                                                                                                                                                                                                                                                                                                                                                      
  force_curbside  | true    | Optional parameter. If it is set to true there will be an exception in case the curbside parameters cannot be fulfilled (e.g. specifying the wrong side for one-ways).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             
- timeout_ms      | inf     | Optional parameter. Limits the request runtime to the minimum between the given value in milli-seconds and the server-side timeout configuration                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+ timeout_ms      | infinity| Optional parameter. Limits the request runtime to the minimum between the given value in milli-seconds and the server-side timeout configuration
 
 ### Hybrid
 
@@ -54,14 +62,14 @@ lm.active_landmarks| 4        | Not recommended to change this
 
 ### Flexible
 
-Unlock certain flexible features via `ch.disable=true` per request or disable CH on the server-side by using an 
-empty list for `profiles_ch`.
+Unlock certain flexible features via `ch.disable=true` per request or disable CH on the server-side by using an
+empty list for `profiles_ch`. The only exception is the parameter `algorithm=alternative_route` which is also available without specifying `ch.disable=true`.
 
 Parameter        | Default    | Description
 :----------------|:-----------|:-----------
 ch.disable       | `false`    | Use this parameter in combination with one or more parameters of this table
-custom_model     | -          | Customize the route calculations. See [the documentation](../core/custom-models.md) for more information.
-algorithm        |`astarbi`   | The algorithm to calculate the route. Other options are `dijkstra`, `astar`, `astarbi`, `alternative_route` and `round_trip`
+custom_model     | -          | Customize the route calculations. See [the documentation](../core/custom-models.md) for more information. Only available for POST requests.
+algorithm        |`astarbi`   | The algorithm to calculate the route. Other options are `dijkstra`, `astar`, `astarbi`, `alternative_route` and `round_trip`.
 heading          | NaN        | Favour a heading direction for a certain point. Specify either one heading for the start point or as many as there are points. In this case headings are associated by their order to the specific points. Headings are given as north based clockwise angle between 0 and 360 degree. This parameter also influences the tour generated with `algorithm=round_trip` and forces the initial direction.
 heading_penalty  | 120        | Penalty for omitting a specified heading. The penalty corresponds to the accepted time delay in seconds in comparison to the route without a heading.
 pass_through     | `false`    | If `true` u-turns are avoided at via-points with regard to the `heading_penalty`.
@@ -87,7 +95,7 @@ pt.limit_street_time       | unlimited  | Maximum duration on street for access 
 pt.ignore_transfers        | false      | Specifies if transfers as criterion should be ignored.
 pt.limit_solutions         | unlimited  | The number of maximum solutions that should be searched.
 
-## Example output for the case `type=json`
+## Example JSON output
 
 Keep in mind that attributes which are not documented here can be removed in the future - 
 you should not rely on them! The JSON result contains the following structure:
@@ -194,11 +202,14 @@ If you need to find out details about the area or need to ping the service use '
 
 ### Example output:
 ```json
-{ "build_date":"2014-02-21T16:52",
+{ "build_date":"2023-02-21T16:52",
   "bbox":[13.072624,52.333508,13.763972,52.679616],
-  "version":"0.3",
-  "features": { "foot" : { "elevation" : true  }, 
-                "car"  : { "elevation" : false } }
+  "version":"8.0",
+  "elevation": false,
+  "profiles": [{
+    "name": "foot",
+  }],
+  ...
 }
 ```
 
@@ -209,8 +220,8 @@ bbox                | The maximum bounding box of the area, format: <br> minLon,
 features            | A json object per supported vehicles with name and supported features like elevation
 build_date          | [optional] The GraphHopper build date
 import_date         | [optional] The date time at which the OSM import was done
-prepare_date        | [optional] The date time at which the preparation (contraction hierarchies) was done. If nothing was done this is empty
-supported_vehicles  | [deprecated] An array of strings for all supported vehicles
+encoded_values      | The encoded values that can be used as path details or in a custom_model
+profiles            | The supported profiles array
 
 ### Error Output
 ```json
