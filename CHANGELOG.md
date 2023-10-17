@@ -1,4 +1,7 @@
-### 8.0 [not yet released]
+### 9.0 [not yet released]
+
+
+### 8.0 [18 Oct 2023]
 
 - access "turn"-EncodedValue of EncodingManager through separate methods, see #2884
 - removed fastest weighting for public usage, use custom instead, see #2866
