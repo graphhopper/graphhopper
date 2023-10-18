@@ -22,8 +22,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.routing.SPTEntry;
 
 import java.awt.*;
 
@@ -47,11 +46,11 @@ public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements 
     }
 
     @Override
-    public void updateBestPath(EdgeIteratorState es, SPTEntry entry, int traversalId, boolean reverse) {
+    public void updateBestPath(double edgeWeight, SPTEntry entry, int origEdgeId, int traversalId, boolean reverse) {
         if (g2 != null) {
             mg.plotEdge(g2, na.getLat(entry.parent.adjNode), na.getLon(entry.parent.adjNode), na.getLat(entry.adjNode), na.getLon(entry.adjNode), .8f);
         }
         // System.out.println("new node:" + currLoc);
-        super.updateBestPath(es, entry, traversalId, reverse);
+        super.updateBestPath(edgeWeight, entry, origEdgeId, traversalId, reverse);
     }
 }

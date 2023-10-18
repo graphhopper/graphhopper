@@ -32,46 +32,21 @@ public class PrepareEncoder {
     /**
      * A bitmask for two directions
      */
-    public static final int getScDirMask() {
+    public static int getScDirMask() {
         return scDirMask;
     }
 
     /**
      * The bit for forward direction
      */
-    public static final int getScFwdDir() {
+    public static int getScFwdDir() {
         return scFwdDir;
     }
 
     /**
      * The bit for backward direction
      */
-    public static final int getScBwdDir() {
+    public static int getScBwdDir() {
         return scBwdDir;
-    }
-
-    /**
-     * Returns 1 if existingScFlags of an existing shortcut can be overwritten with a new shortcut by
-     * newScFlags without limiting or changing the directions of the existing shortcut.
-     * The method returns 2 for the same condition but only if the new shortcut has to be added
-     * even if weight is higher than existing shortcut weight.
-     * <pre>
-     *                 | newScFlags:
-     * existingScFlags | -> | <- | <->
-     * ->              |  1 | 0  | 2
-     * <-              |  0 | 1  | 2
-     * <->             |  0 | 0  | 1
-     * </pre>
-     *
-     * @return 1 if newScFlags is identical to existingScFlags for the two direction bits and 0 otherwise.
-     * There are two special cases when it returns 2.
-     */
-    public static final int getScMergeStatus(int existingScFlags, int newScFlags) {
-        if ((existingScFlags & scDirMask) == (newScFlags & scDirMask))
-            return 1;
-        else if ((newScFlags & scDirMask) == scDirMask)
-            return 2;
-
-        return 0;
     }
 }

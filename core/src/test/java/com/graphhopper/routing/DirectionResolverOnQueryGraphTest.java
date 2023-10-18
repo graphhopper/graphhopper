@@ -18,29 +18,31 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.SimpleBooleanEncodedValue;
+import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.util.AccessFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import org.junit.Before;
-import org.junit.Test;
+import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.routing.DirectionResolverResult.unrestricted;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.Helper.createPointList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * This test simulates incoming lat/lon coordinates that get snapped to graph edges (using {@link QueryGraph}) and the
@@ -51,15 +53,18 @@ import static org.junit.Assert.fail;
 public class DirectionResolverOnQueryGraphTest {
     private QueryGraph queryGraph;
     private NodeAccess na;
-    private FlagEncoder encoder;
-    private Graph g;
-    private LocationIndex locationIndex;
+    private BooleanEncodedValue accessEnc;
+    private DecimalEncodedValue speedEnc;
+    private BaseGraph graph;
+    private LocationIndexTree locationIndex;
 
-    @Before
+    @BeforeEach
     public void setup() {
-        encoder = new CarFlagEncoder();
-        g = new GraphBuilder(EncodingManager.create(encoder)).create();
-        na = g.getNodeAccess();
+        accessEnc = new SimpleBooleanEncodedValue("access", true);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
+        EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
+        graph = new BaseGraph.Builder(em).create();
+        na = graph.getNodeAccess();
     }
 
     @Test
@@ -255,16 +260,53 @@ public class DirectionResolverOnQueryGraphTest {
         checkResult(0.9, 0.9, restricted(edge(0, 2), edge(2, 1), edge(1, 2), edge(2, 0)));
     }
 
+    @Test
+    public void closeToTowerNode_issue2443() {
+        // 0x-1
+        addNode(0, 51.986000, 19.255000);
+        addNode(1, 51.985500, 19.254000);
+        DistancePlaneProjection distCalc = new DistancePlaneProjection();
+        addEdge(0, 1, true).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+        init();
+
+        double lat = 51.9855003;
+        double lon = 19.2540003;
+        Snap snap = snapCoordinate(lat, lon);
+        queryGraph = QueryGraph.create(graph, snap);
+        DirectionResolver resolver = new DirectionResolver(queryGraph, this::isAccessible);
+        DirectionResolverResult result = resolver.resolveDirections(snap.getClosestNode(), snap.getQueryPoint());
+        assertEquals(0, result.getInEdgeRight());
+        assertEquals(0, result.getOutEdgeRight());
+        assertEquals(0, result.getInEdgeLeft());
+        assertEquals(0, result.getOutEdgeRight());
+    }
+
+    @Test
+    public void unblockedBarrierEdge_issue2443() {
+        // 0---1-2
+        addNode(0, 51.9860, 19.2550);
+        addNode(1, 51.9861, 19.2551);
+        addNode(2, 51.9861, 19.2551);
+        DistancePlaneProjection distCalc = new DistancePlaneProjection();
+        addEdge(0, 1, true).setDistance(distCalc.calcDist(na.getLat(0), na.getLon(0), na.getLat(1), na.getLon(1)));
+        // a barrier edge connects two different nodes (it is not a loop), but they have the same coordinates (distance is 0)
+        // barrier edges **can** be accessible, for example they could be blocked only for certain vehicles
+        addEdge(1, 2, true).setDistance(0);
+        init();
+        // currently we just use unrestricted when we snap to a barrier edge node, see #2447
+        assertUnrestricted(51.9861, 19.2551);
+    }
+
     private void addNode(int nodeId, double lat, double lon) {
         na.setNode(nodeId, lat, lon);
     }
 
     private EdgeIteratorState addEdge(int from, int to, boolean bothDirections) {
-        return g.edge(from, to, 1, bothDirections);
+        return GHUtility.setSpeed(60, true, bothDirections, accessEnc, speedEnc, graph.edge(from, to).setDistance(1));
     }
 
     private void init() {
-        locationIndex = new LocationIndexTree(g, new RAMDirectory());
+        locationIndex = new LocationIndexTree(graph, new RAMDirectory());
         locationIndex.prepareIndex();
     }
 
@@ -273,17 +315,17 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private void checkResults(ExpectedResult... expectedResults) {
-        List<QueryResult> qrs = new ArrayList<>(expectedResults.length);
+        List<Snap> snaps = new ArrayList<>(expectedResults.length);
         for (ExpectedResult r : expectedResults) {
-            qrs.add(getQueryResult(r.lat, r.lon));
+            snaps.add(snapCoordinate(r.lat, r.lon));
         }
-        queryGraph = new QueryGraph(g);
-        queryGraph.lookup(qrs);
-        DirectionResolver resolver = new DirectionResolver(queryGraph, encoder);
+        queryGraph = QueryGraph.create(graph, snaps);
+        DirectionResolver resolver = new DirectionResolver(queryGraph, this::isAccessible);
         for (int i = 0; i < expectedResults.length; i++) {
-            assertEquals("unexpected resolved direction",
+            assertEquals(
                     restrictedDirection(expectedResults[i]),
-                    resolver.resolveDirections(qrs.get(i).getClosestNode(), qrs.get(i).getQueryPoint()));
+                    resolver.resolveDirections(snaps.get(i).getClosestNode(), snaps.get(i).getQueryPoint()),
+                    "unexpected resolved direction");
         }
     }
 
@@ -300,11 +342,10 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private void assertUnrestricted(double lat, double lon) {
-        QueryResult qr = getQueryResult(lat, lon);
-        queryGraph = new QueryGraph(g);
-        queryGraph.lookup(Collections.singletonList(qr));
-        DirectionResolver resolver = new DirectionResolver(queryGraph, encoder);
-        assertEquals(unrestricted(), resolver.resolveDirections(qr.getClosestNode(), qr.getQueryPoint()));
+        Snap snap = snapCoordinate(lat, lon);
+        queryGraph = QueryGraph.create(graph, snap);
+        DirectionResolver resolver = new DirectionResolver(queryGraph, this::isAccessible);
+        assertEquals(unrestricted(), resolver.resolveDirections(snap.getClosestNode(), snap.getQueryPoint()));
     }
 
     private DirectionResolverResult restrictedDirection(ExpectedResult restriction) {
@@ -316,7 +357,7 @@ public class DirectionResolverOnQueryGraphTest {
     }
 
     private int findEdge(int from, int to) {
-        EdgeExplorer explorer = queryGraph.createEdgeExplorer(DefaultEdgeFilter.outEdges(encoder.getAccessEnc()));
+        EdgeExplorer explorer = queryGraph.createEdgeExplorer(AccessFilter.outEdges(accessEnc));
         EdgeIterator iter = explorer.setBaseNode(from);
         while (iter.next()) {
             if (iter.getAdjNode() == to) {
@@ -326,7 +367,11 @@ public class DirectionResolverOnQueryGraphTest {
         throw new IllegalStateException("Could not find edge from: " + from + ", to: " + to);
     }
 
-    private QueryResult getQueryResult(double lat, double lon) {
+    private boolean isAccessible(EdgeIteratorState edge, boolean reverse) {
+        return reverse ? edge.getReverse(accessEnc) : edge.get(accessEnc);
+    }
+
+    private Snap snapCoordinate(double lat, double lon) {
         return locationIndex.findClosest(lat, lon, EdgeFilter.ALL_EDGES);
     }
 

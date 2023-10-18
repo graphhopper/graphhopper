@@ -17,18 +17,16 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
 
 /**
- * Specifies how the best route is calculated. E.g. the fastest or shortest route.
- * <p>
+ * Specifies how the best route is calculated.
  *
  * @author Peter Karich
  */
 public interface Weighting {
+    int INFINITE_U_TURN_COSTS = -1;
+
     /**
      * Used only for the heuristic estimation in A*
      *
@@ -38,34 +36,35 @@ public interface Weighting {
     double getMinWeight(double distance);
 
     /**
-     * This method calculates the weighting a certain edgeState should be associated. E.g. a high
-     * value indicates that the edge should be avoided. Make sure that this method is very fast and
-     * optimized as this is called potentially millions of times for one route or a lot more for
-     * nearly any preprocessing phase.
+     * This method calculates the weight of a given {@link EdgeIteratorState}. E.g. a high value indicates that the edge
+     * should be avoided during shortest path search. Make sure that this method is very fast and optimized as this is
+     * called potentially millions of times for one route or a lot more for nearly any preprocessing phase.
      *
-     * @param edgeState        the edge for which the weight should be calculated
-     * @param reverse          if the specified edge is specified in reverse direction e.g. from the reverse
-     *                         case of a bidirectional search.
-     * @param prevOrNextEdgeId if reverse is false this has to be the previous edgeId, if true it
-     *                         has to be the next edgeId in the direction from start to end.
+     * @param edgeState the edge for which the weight should be calculated
+     * @param reverse   if the specified edge is specified in reverse direction e.g. from the reverse
+     *                  case of a bidirectional search.
      * @return the calculated weight with the specified velocity has to be in the range of 0 and
      * +Infinity. Make sure your method does not return NaN which can e.g. occur for 0/0.
      */
-    double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
+    double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse);
 
     /**
-     * This method calculates the time taken (in milli seconds) for the specified edgeState and
-     * optionally include the turn costs (in seconds) of the previous (or next) edgeId via
-     * prevOrNextEdgeId. Typically used for post-processing and on only a few thousand edges.
+     * This method calculates the time taken (in milliseconds) to travel along the specified edgeState.
+     * It is typically used for post-processing and on only a few thousand edges.
      */
-    long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
+    long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse);
 
-    FlagEncoder getFlagEncoder();
+    double calcTurnWeight(int inEdge, int viaNode, int outEdge);
+
+    long calcTurnMillis(int inEdge, int viaNode, int outEdge);
+
+    /**
+     * This method can be used to check whether or not this weighting returns turn costs (or if they are all zero).
+     * This is sometimes needed to do safety checks as not all graph algorithms can be run edge-based and might yield
+     * wrong results when turn costs are applied while running node-based.
+     */
+    boolean hasTurnCosts();
 
     String getName();
 
-    /**
-     * Returns true if the specified weighting and encoder matches to this Weighting.
-     */
-    boolean matches(HintsMap map);
 }

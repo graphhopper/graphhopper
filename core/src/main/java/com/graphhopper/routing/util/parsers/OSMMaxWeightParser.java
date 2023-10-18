@@ -17,42 +17,40 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.MaxWeight;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class OSMMaxWeightParser implements TagParser {
 
-    private DecimalEncodedValue weightEncoder;
-    private boolean enableLog;
+    // do not include OSM tag "height" here as it has completely different meaning (height of peak)
+    private static final List<String> MAX_WEIGHT_TAGS = Arrays.asList("maxweight", "maxgcweight"/*abandoned*/, "maxweightrating:hgv");
+    private static final List<String> HGV_RESTRICTIONS = OSMRoadAccessParser.toOSMRestrictions(TransportationMode.HGV).stream()
+            .map(e -> e + ":conditional").collect(Collectors.toList());
+    private final DecimalEncodedValue weightEncoder;
 
-    public OSMMaxWeightParser() {
-        this(MaxWeight.create(), false);
-    }
-
-    public OSMMaxWeightParser(DecimalEncodedValue weightEncoder, boolean enableLog) {
+    public OSMMaxWeightParser(DecimalEncodedValue weightEncoder) {
         this.weightEncoder = weightEncoder;
-        this.enableLog = enableLog;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(weightEncoder);
-    }
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+        OSMValueExtractor.extractTons(edgeId, edgeIntAccess, way, weightEncoder, MAX_WEIGHT_TAGS);
 
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
-        // do not include OSM tag "height" here as it has completely different meaning (height of peak)
-        List<String> weightTags = Arrays.asList("maxweight", "maxgcweight");
-        OSMValueExtractor.extractTons(edgeFlags, way, weightEncoder, weightTags, enableLog);
-        return edgeFlags;
+        // vehicle:conditional no @ (weight > 7.5)
+        for (String restriction : HGV_RESTRICTIONS) {
+            String value = way.getTag(restriction, "");
+            if (value.startsWith("no") && value.indexOf("@") < 6) { // no,none[ ]@
+                double dec = OSMValueExtractor.conditionalWeightToTons(value);
+                if (!Double.isNaN(dec)) weightEncoder.setDecimal(false, edgeId, edgeIntAccess, dec);
+            }
+        }
     }
 }

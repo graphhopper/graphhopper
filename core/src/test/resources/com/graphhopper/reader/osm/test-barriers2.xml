@@ -1,0 +1,88 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm">
+    <node id="10" lat="51" lon="9.4" version="1"/>
+    <node id="20" lat="52" lon="9.4" version="1">
+        <tag k="barrier" v="bollard"/>
+    </node>
+    <node id="30" lat="53" lon="9.4" version="1"/>
+    <node id="40" lat="54" lon="9.4" version="1">
+        <tag k="barrier" v="bollard"/>
+    </node>
+    <node id="50" lat="55" lon="9.4" version="1"/>
+    <node id="60" lat="56" lon="9.4" version="1">
+        <tag k="barrier" v="bollard"/>
+    </node>
+    <node id="70" lat="57" lon="9.4" version="1"/>
+    <node id="80" lat="58" lon="9.4" version="1"/>
+    <node id="90" lat="59" lon="9.4" version="1"/>
+    <node id="100" lat="60" lon="9.4" version="1">
+        <tag k="barrier" v="bollard"/>
+    </node>
+    <node id="110" lat="61" lon="9.4" version="1"/>
+
+    <node id="120" lat="62" lon="9.4" version="1">
+        <tag k="barrier" v="bollard"/>
+    </node>
+    <node id="130" lat="63" lon="9.4" version="1"/>
+    <node id="140" lat="64" lon="9.4" version="1"/>
+
+    <!--    b       b       b               b
+        10->20->30->40<-50<-60->70->80<-90<-100<-110
+
+        b
+        120->130
+           \/
+           140
+        -->
+    <way id="10" version="1">
+        <nd ref="10"/>
+        <!-- barrier connects end and beginning of two OSM ways (but is still not a 'junction') -->
+        <nd ref="20"/>
+        <tag k="highway" v="residential"/>
+    </way>
+
+    <way id="20" version="1">
+        <nd ref="20"/>
+        <nd ref="30"/>
+        <nd ref="40"/>
+        <tag k="highway" v="residential"/>
+    </way>
+
+    <way id="30" version="1">
+        <nd ref="60"/>
+        <nd ref="50"/>
+        <!-- barrier connects the two ends of two OSM ways (but is still not a 'junction') -->
+        <nd ref="40"/>
+        <tag k="highway" v="residential"/>
+    </way>
+
+    <way id="40" version="1">
+        <!-- barrier connects the two beginnings of two OSM ways (but is still not a 'junction') -->
+        <nd ref="60"/>
+        <nd ref="70"/>
+        <nd ref="80"/>
+        <tag k="highway" v="residential"/>
+    </way>
+
+    <way id="50" version="1">
+        <!-- barrier connects the beginning and the end of two OSM ways (but is still not a 'junction') -->
+        <nd ref="100"/>
+        <nd ref="90"/>
+        <nd ref="80"/>
+        <tag k="highway" v="residential"/>
+    </way>
+
+    <way id="60" version="1">
+        <nd ref="110"/>
+        <nd ref="100"/>
+        <tag k="highway" v="residential"/>
+    </way>
+
+    <way id="70" version="1">
+        <nd ref="120"/>
+        <nd ref="130"/>
+        <nd ref="140"/>
+        <nd ref="120"/>
+        <tag k="highway" v="residential"/>
+    </way>
+</osm>

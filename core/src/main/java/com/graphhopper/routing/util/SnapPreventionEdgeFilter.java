@@ -1,16 +1,16 @@
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RoadClass;
-import com.graphhopper.routing.profiles.RoadEnvironment;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
 
 import java.util.List;
 
-import static com.graphhopper.routing.profiles.RoadClass.MOTORWAY;
-import static com.graphhopper.routing.profiles.RoadClass.TRUNK;
-import static com.graphhopper.routing.profiles.RoadEnvironment.*;
+import static com.graphhopper.routing.ev.RoadClass.MOTORWAY;
+import static com.graphhopper.routing.ev.RoadClass.TRUNK;
+import static com.graphhopper.routing.ev.RoadEnvironment.*;
 
 public class SnapPreventionEdgeFilter implements EdgeFilter {
 

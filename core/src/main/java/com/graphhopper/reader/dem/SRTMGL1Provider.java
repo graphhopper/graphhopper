@@ -17,8 +17,6 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.util.Helper;
-
 import java.io.*;
 
 import static com.graphhopper.util.Helper.*;
@@ -33,7 +31,7 @@ import static com.graphhopper.util.Helper.*;
  * <p>
  * When using this data we have to acknowledge:
  * This material is based on data services provided by the OpenTopography Facility with support from the
- * National Science Foundation under NSF Award Numbers 1226353 & 1225810
+ * National Science Foundation under NSF Award Numbers 1226353 &amp; 1225810
  * National Geospatial-Intelligence Agency (NGA) and the National Aeronautics and Space Administration (NASA), 2013,
  * SRTMGL1: NASA Shuttle Radar Topography Mission Global 1 arc second V003. [Version]. NASA EOSDIS Land Processes DAAC,
  * USGS Earth Resources Observation and Science (EROS) Center, Sioux Falls, South Dakota (https://lpdaac.usgs.gov),
@@ -56,6 +54,8 @@ public class SRTMGL1Provider extends AbstractSRTMElevationProvider {
         super("https://cloud.sdsc.edu/v1/AUTH_opentopography/Raster/SRTM_GL1/SRTM_GL1_srtm/",
                 cacheDir.isEmpty() ? "/tmp/srtmgl1" : cacheDir,
                 "GraphHopper SRTMReader",
+                -56,
+                60,
                 3601
         );
     }
@@ -110,26 +110,10 @@ public class SRTMGL1Provider extends AbstractSRTMElevationProvider {
         return (int) (Math.floor((180 + lon) / lonDegree) * lonDegree) - 180;
     }
 
-    private String getLonString(int lonInt) {
-        lonInt = Math.abs(lonInt);
-        String lonString = lonInt < 100 ? "0" : "";
-        if (lonInt < 10)
-            lonString += "0";
-        lonString += lonInt;
-        return lonString;
-    }
-
-    private String getLatString(int latInt) {
-        latInt = Math.abs(latInt);
-        String latString = latInt < 10 ? "0" : "";
-        latString += latInt;
-        return latString;
-    }
-
     String getFileName(double lat, double lon) {
         int lonInt = getMinLonForTile(lon);
         int latInt = getMinLatForTile(lat);
-        return toLowerCase(getNorthString(latInt) + getLatString(latInt) + getEastString(lonInt) + getLonString(lonInt));
+        return toLowerCase(getNorthString(latInt) + getPaddedLatString(latInt) + getEastString(lonInt) + getPaddedLonString(lonInt));
     }
 
     String getDownloadURL(double lat, double lon) {
@@ -147,7 +131,7 @@ public class SRTMGL1Provider extends AbstractSRTMElevationProvider {
             dir = "South/";
         }
 
-        return dir + north + getLatString(latInt) + getEastString(lonInt) + getLonString(lonInt) + ".hgt";
+        return dir + north + getPaddedLatString(latInt) + getEastString(lonInt) + getPaddedLonString(lonInt) + ".hgt";
     }
 
     private String getNorthString(int lat) {

@@ -18,10 +18,10 @@
 
 package com.graphhopper.http;
 
-import com.graphhopper.util.CmdArgs;
+import com.graphhopper.GraphHopperConfig;
 
 public interface GraphHopperBundleConfiguration {
 
-    CmdArgs getGraphHopperConfiguration();
+    GraphHopperConfig getGraphHopperConfiguration();
 
 }

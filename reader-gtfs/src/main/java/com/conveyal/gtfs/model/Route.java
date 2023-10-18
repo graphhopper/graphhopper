@@ -30,20 +30,51 @@ import com.conveyal.gtfs.GTFSFeed;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Iterator;
+import java.util.HashMap;
+import java.util.Map;
+
 
 public class Route extends Entity { // implements Entity.Factory<Route>
 
     private static final long serialVersionUID = -819444896818029068L;
 
-    public static final int TRAM = 0;
-    public static final int SUBWAY = 1;
-    public static final int RAIL = 2;
-    public static final int BUS = 3;
-    public static final int FERRY = 4;
-    public static final int CABLE_CAR = 4;
-    public static final int GONDOLA = 4;
-    public static final int FUNICULAR = 5;
+    //Used for converting extended route types to simple route types
+    //based on codes found here: https://developers.google.com/transit/gtfs/reference/extended-route-types    
+    public static final Map<Integer, Integer> EXTENTED_ROUTE_TYPE_MAPPING = new HashMap<>();
+    
+    static {
+        EXTENTED_ROUTE_TYPE_MAPPING.put(100, 2);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(101, 2);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(102, 2);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(103, 2);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(105, 2);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(106, 2);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(107, 2);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(108, 2);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(109, 2);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(200, 3);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(201, 3);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(202, 3);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(204, 3);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(208, 3);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(400, 1);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(401, 1);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(402, 1);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(405, 1);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(700, 3);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(701, 3);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(702, 3);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(704, 3);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(715, 3);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(717, 3);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(800, 3);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(900, 0);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(1000, 4);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(1300, 6);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(1400, 7);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(1501, 3);
+        EXTENTED_ROUTE_TYPE_MAPPING.put(1700, 3);
+    }
 
     public String route_id;
     public String agency_id;
@@ -88,7 +119,7 @@ public class Route extends Entity { // implements Entity.Factory<Route>
             r.route_short_name = getStringField("route_short_name", false); // one or the other required, needs a special validator
             r.route_long_name = getStringField("route_long_name", false);
             r.route_desc = getStringField("route_desc", false);
-            r.route_type = getIntField("route_type", true, 0, 7);
+            r.route_type = getIntField("route_type", true, 0, 7, 0, EXTENTED_ROUTE_TYPE_MAPPING);
             r.route_url = getUrlField("route_url", false);
             r.route_color = getStringField("route_color", false);
             r.route_text_color = getStringField("route_text_color", false);
@@ -98,46 +129,5 @@ public class Route extends Entity { // implements Entity.Factory<Route>
             feed.routes.put(r.route_id, r);
         }
 
-    }
-
-    public static class Writer extends Entity.Writer<Route> {    	
-        public Writer (GTFSFeed feed) {
-            super(feed, "routes");
-        }
-
-        @Override
-        public void writeHeaders() throws IOException {
-            writeStringField("agency_id");
-            writeStringField("route_id");
-            writeStringField("route_short_name");
-            writeStringField("route_long_name");
-            writeStringField("route_desc");
-            writeStringField("route_type");
-            writeStringField("route_url");
-            writeStringField("route_color");
-            writeStringField("route_text_color");
-            writeStringField("route_branding_url");
-            endRecord();
-        }
-
-        @Override
-        public void writeOneRow(Route r) throws IOException {
-            writeStringField(r.agency_id);
-            writeStringField(r.route_id);
-            writeStringField(r.route_short_name);
-            writeStringField(r.route_long_name);
-            writeStringField(r.route_desc);
-            writeIntField(r.route_type);
-            writeUrlField(r.route_url);
-            writeStringField(r.route_color);
-            writeStringField(r.route_text_color);
-            writeUrlField(r.route_branding_url);
-            endRecord();
-        }
-
-        @Override
-        public Iterator<Route> iterator() {
-            return feed.routes.values().iterator();
-        }   	
     }
 }

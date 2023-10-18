@@ -17,30 +17,37 @@
  */
 package com.graphhopper.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.PathWrapper;
-import com.graphhopper.http.WebHelper;
+import com.graphhopper.ResponsePath;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.jackson.PathWrapperDeserializer;
+import com.graphhopper.jackson.ResponsePathDeserializer;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static com.graphhopper.api.GraphHopperMatrixWeb.*;
+import static com.graphhopper.api.Version.GH_VERSION_FROM_MAVEN;
 import static com.graphhopper.util.Helper.round6;
 import static com.graphhopper.util.Helper.toLowerCase;
-import static com.graphhopper.util.Parameters.CurbSides.CURBSIDE_ANY;
+import static com.graphhopper.util.Parameters.Routing.CALC_POINTS;
+import static com.graphhopper.util.Parameters.Routing.INSTRUCTIONS;
 
 /**
  * Main wrapper of the GraphHopper Directions API for a simple and efficient
@@ -48,17 +55,21 @@ import static com.graphhopper.util.Parameters.CurbSides.CURBSIDE_ANY;
  *
  * @author Peter Karich
  */
-public class GraphHopperWeb implements GraphHopperAPI {
+public class GraphHopperWeb {
 
+    public static final String X_GH_CLIENT_VERSION = "X-GH-Client-Version";
     private final ObjectMapper objectMapper;
+    private final String routeServiceUrl;
     private OkHttpClient downloader;
-    private String routeServiceUrl;
     private String key = "";
     private boolean instructions = true;
     private boolean calcPoints = true;
     private boolean elevation = false;
     private String optimize = "false";
+    private boolean postRequest = true;
+    private int maxUnzippedLength = 1000;
     private final Set<String> ignoreSet;
+    private final Set<String> ignoreSetForPost;
 
     public static final String TIMEOUT = "timeout";
     private final long DEFAULT_TIMEOUT = 5000;
@@ -72,28 +83,41 @@ public class GraphHopperWeb implements GraphHopperAPI {
         downloader = new OkHttpClient.Builder().
                 connectTimeout(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS).
                 readTimeout(DEFAULT_TIMEOUT, TimeUnit.MILLISECONDS).
+                addInterceptor(new GzipRequestInterceptor()).
                 build();
-
         // some parameters are supported directly via Java API so ignore them when writing the getHints map
+        ignoreSetForPost = new HashSet<>();
+        ignoreSetForPost.add(KEY);
+        ignoreSetForPost.add(SERVICE_URL);
+        ignoreSetForPost.add(CALC_POINTS);
+        ignoreSetForPost.add(INSTRUCTIONS);
+        ignoreSetForPost.add("elevation");
+        ignoreSetForPost.add("optimize");
+        ignoreSetForPost.add("points_encoded");
+
         ignoreSet = new HashSet<>();
-        ignoreSet.add("calc_points");
+        ignoreSet.add(KEY);
+        ignoreSet.add(CALC_POINTS);
         ignoreSet.add("calcpoints");
-        ignoreSet.add("instructions");
+        ignoreSet.add(INSTRUCTIONS);
         ignoreSet.add("elevation");
-        ignoreSet.add("key");
         ignoreSet.add("optimize");
 
         // some parameters are in the request:
         ignoreSet.add("algorithm");
         ignoreSet.add("locale");
         ignoreSet.add("point");
-        ignoreSet.add("vehicle");
 
         // some are special and need to be avoided
         ignoreSet.add("points_encoded");
         ignoreSet.add("pointsencoded");
         ignoreSet.add("type");
         objectMapper = Jackson.newObjectMapper();
+    }
+
+    public GraphHopperWeb setMaxUnzippedLength(int maxUnzippedLength) {
+        this.maxUnzippedLength = maxUnzippedLength;
+        return this;
     }
 
     public GraphHopperWeb setDownloader(OkHttpClient downloader) {
@@ -105,18 +129,22 @@ public class GraphHopperWeb implements GraphHopperAPI {
         return downloader;
     }
 
-    @Override
-    public boolean load(String serviceUrl) {
-        this.routeServiceUrl = serviceUrl;
-        return true;
-    }
-
     public GraphHopperWeb setKey(String key) {
-        if (key == null || key.isEmpty()) {
-            throw new IllegalStateException("Key cannot be empty");
+        Objects.requireNonNull(key, "Key must not be null");
+        if (key.isEmpty()) {
+            throw new IllegalArgumentException("Key must not be empty");
         }
 
         this.key = key;
+        return this;
+    }
+
+
+    /**
+     * Use new endpoint 'POST /route' instead of 'GET /route'
+     */
+    public GraphHopperWeb setPostRequest(boolean postRequest) {
+        this.postRequest = postRequest;
         return this;
     }
 
@@ -159,40 +187,43 @@ public class GraphHopperWeb implements GraphHopperAPI {
         return this;
     }
 
-
-    @Override
-    public GHResponse route(GHRequest request) {
+    public GHResponse route(GHRequest ghRequest) {
         ResponseBody rspBody = null;
         try {
-            Request okRequest = createRequest(request);
-            rspBody = getClientForRequest(request).newCall(okRequest).execute().body();
+            boolean tmpElevation = ghRequest.getHints().getBool("elevation", elevation);
+            boolean tmpTurnDescription = ghRequest.getHints().getBool("turn_description", true);
+            ghRequest.getHints().remove("turn_description"); // do not include in request
+
+            Request okRequest = postRequest ? createPostRequest(ghRequest) : createGetRequest(ghRequest);
+            rspBody = getClientForRequest(ghRequest).newCall(okRequest).execute().body();
             JsonNode json = objectMapper.reader().readTree(rspBody.byteStream());
 
             GHResponse res = new GHResponse();
-            res.addErrors(PathWrapperDeserializer.readErrors(objectMapper, json));
+            res.addErrors(ResponsePathDeserializer.readErrors(objectMapper, json));
             if (res.hasErrors())
                 return res;
 
             JsonNode paths = json.get("paths");
-
-            boolean tmpElevation = request.getHints().getBool("elevation", elevation);
-            boolean tmpTurnDescription = request.getHints().getBool("turn_description", true);
-
             for (JsonNode path : paths) {
-                PathWrapper altRsp = PathWrapperDeserializer.createPathWrapper(objectMapper, path, tmpElevation, tmpTurnDescription);
+                ResponsePath altRsp = ResponsePathDeserializer.createResponsePath(objectMapper, path, tmpElevation, tmpTurnDescription);
                 res.add(altRsp);
             }
+
+            JsonNode b = json.get("hints");
+            PMap hints = new PMap();
+            b.fields().forEachRemaining(f -> hints.putObject(f.getKey(), Helper.toObject(f.getValue().asText())));
+            res.setHints(hints);
 
             return res;
 
         } catch (Exception ex) {
-            throw new RuntimeException("Problem while fetching path " + request.getPoints() + ": " + ex.getMessage(), ex);
+            throw new RuntimeException("Problem while fetching path " + ghRequest.getPoints() + ": " + ex.getMessage(), ex);
         } finally {
             Helper.close(rspBody);
         }
     }
 
-    private OkHttpClient getClientForRequest(GHRequest request) {
+    OkHttpClient getClientForRequest(GHRequest request) {
         OkHttpClient client = this.downloader;
         if (request.getHints().has(TIMEOUT)) {
             long timeout = request.getHints().getLong(TIMEOUT, DEFAULT_TIMEOUT);
@@ -205,76 +236,137 @@ public class GraphHopperWeb implements GraphHopperAPI {
         return client;
     }
 
-    private Request createRequest(GHRequest request) {
-        boolean tmpInstructions = request.getHints().getBool("instructions", instructions);
-        boolean tmpCalcPoints = request.getHints().getBool("calc_points", calcPoints);
-        String tmpOptimize = request.getHints().get("optimize", optimize);
+    Request createPostRequest(GHRequest ghRequest) {
+        String tmpServiceURL = ghRequest.getHints().getString(SERVICE_URL, routeServiceUrl);
+        String url = tmpServiceURL + "?";
+        if (!Helper.isEmpty(key))
+            url += "key=" + key;
+
+        ObjectNode requestJson = requestToJson(ghRequest);
+        String body;
+        try {
+            body = objectMapper.writeValueAsString(requestJson);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Could not write request body", e);
+        }
+        Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, body));
+        builder.header(X_GH_CLIENT_VERSION, GH_VERSION_FROM_MAVEN);
+        // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
+        if (body.length() < maxUnzippedLength)
+            builder.header("Content-Encoding", "identity");
+        return builder.build();
+    }
+
+    ObjectNode requestToJson(GHRequest ghRequest) {
+        ObjectNode requestJson = objectMapper.createObjectNode();
+        requestJson.putArray("points").addAll(createPointList(ghRequest.getPoints()));
+        if (!ghRequest.getPointHints().isEmpty())
+            requestJson.putArray("point_hints").addAll(createStringList(ghRequest.getPointHints()));
+        if (!ghRequest.getHeadings().isEmpty())
+            requestJson.putArray("headings").addAll(createDoubleList(ghRequest.getHeadings()));
+        if (!ghRequest.getCurbsides().isEmpty())
+            requestJson.putArray("curbsides").addAll(createStringList(ghRequest.getCurbsides()));
+        if (!ghRequest.getSnapPreventions().isEmpty())
+            requestJson.putArray("snap_preventions").addAll(createStringList(ghRequest.getSnapPreventions()));
+        if (!ghRequest.getPathDetails().isEmpty())
+            requestJson.putArray("details").addAll(createStringList(ghRequest.getPathDetails()));
+
+        requestJson.put("locale", ghRequest.getLocale().toString());
+        if (!ghRequest.getProfile().isEmpty())
+            requestJson.put("profile", ghRequest.getProfile());
+        if (!ghRequest.getAlgorithm().isEmpty())
+            requestJson.put("algorithm", ghRequest.getAlgorithm());
+
+        requestJson.put("points_encoded", true);
+        requestJson.put(INSTRUCTIONS, ghRequest.getHints().getBool(INSTRUCTIONS, instructions));
+        requestJson.put(CALC_POINTS, ghRequest.getHints().getBool(CALC_POINTS, calcPoints));
+        requestJson.put("elevation", ghRequest.getHints().getBool("elevation", elevation));
+        requestJson.put("optimize", ghRequest.getHints().getString("optimize", optimize));
+        if (ghRequest.getCustomModel() != null)
+            requestJson.putPOJO(CustomModel.KEY, ghRequest.getCustomModel());
+
+        Map<String, Object> hintsMap = ghRequest.getHints().toMap();
+        for (Map.Entry<String, Object> entry : hintsMap.entrySet()) {
+            String hintKey = entry.getKey();
+            if (ignoreSetForPost.contains(hintKey))
+                continue;
+
+            // special case for String required, see testPutPOJO
+            if (entry.getValue() instanceof String)
+                requestJson.put(hintKey, (String) entry.getValue());
+            else
+                requestJson.putPOJO(hintKey, entry.getValue());
+        }
+        return requestJson;
+    }
+
+    Request createGetRequest(GHRequest ghRequest) {
+        if (ghRequest.getCustomModel() != null)
+            throw new IllegalArgumentException("Custom models cannot be used for GET requests. Use setPostRequest(true)");
+
+        boolean tmpInstructions = ghRequest.getHints().getBool(INSTRUCTIONS, instructions);
+        boolean tmpCalcPoints = ghRequest.getHints().getBool(CALC_POINTS, calcPoints);
+        String tmpOptimize = ghRequest.getHints().getString("optimize", optimize);
 
         if (tmpInstructions && !tmpCalcPoints) {
             throw new IllegalStateException("Cannot calculate instructions without points (only points without instructions). "
                     + "Use calc_points=false and instructions=false to disable point and instruction calculation");
         }
 
-        boolean tmpElevation = request.getHints().getBool("elevation", elevation);
+        boolean tmpElevation = ghRequest.getHints().getBool("elevation", elevation);
 
         String places = "";
-        for (GHPoint p : request.getPoints()) {
-            places += "point=" + round6(p.lat) + "," + round6(p.lon) + "&";
+        for (GHPoint p : ghRequest.getPoints()) {
+            places += "&point=" + round6(p.lat) + "," + round6(p.lon);
         }
 
-        String type = request.getHints().get("type", "json");
+        String type = ghRequest.getHints().getString("type", "json");
 
         String url = routeServiceUrl
                 + "?"
+                + "profile=" + ghRequest.getProfile()
                 + places
                 + "&type=" + type
                 + "&instructions=" + tmpInstructions
                 + "&points_encoded=true"
                 + "&calc_points=" + tmpCalcPoints
-                + "&algorithm=" + request.getAlgorithm()
-                + "&locale=" + request.getLocale().toString()
+                + "&algorithm=" + ghRequest.getAlgorithm()
+                + "&locale=" + ghRequest.getLocale().toString()
                 + "&elevation=" + tmpElevation
                 + "&optimize=" + tmpOptimize;
 
-        if (!request.getVehicle().isEmpty()) {
-            url += "&vehicle=" + request.getVehicle();
-        }
-
-        for (String details : request.getPathDetails()) {
+        for (String details : ghRequest.getPathDetails()) {
             url += "&" + Parameters.Details.PATH_DETAILS + "=" + details;
         }
 
-        // append *all* point hints only if at least *one* is not empty
-        for (String checkEmptyHint : request.getPointHints()) {
-            if (!checkEmptyHint.isEmpty()) {
-                for (String hint : request.getPointHints()) {
-                    url += "&" + Parameters.Routing.POINT_HINT + "=" + WebHelper.encodeURL(hint);
-                }
-                break;
-            }
-        }
+        // append *all* point hints if at least one is not empty
+        if (ghRequest.getPointHints().stream().anyMatch(h -> !h.isEmpty()))
+            for (String hint : ghRequest.getPointHints())
+                url += "&" + Parameters.Routing.POINT_HINT + "=" + encodeURL(hint);
 
-        // append *all* curbsides only if at least *one* is not CURBSIDE_ANY
-        for (String checkEitherSide : request.getCurbSides()) {
-            if (!checkEitherSide.equals(CURBSIDE_ANY)) {
-                for (String curbSide : request.getCurbSides()) {
-                    url += "&" + Parameters.Routing.CURBSIDE + "=" + WebHelper.encodeURL(curbSide);
-                }
-                break;
-            }
-        }
 
-        for (String snapPrevention : request.getSnapPreventions()) {
-            url += "&" + Parameters.Routing.SNAP_PREVENTION + "=" + WebHelper.encodeURL(snapPrevention);
+        // append *all* curbsides if at least one is not empty
+        if (ghRequest.getCurbsides().stream().anyMatch(c -> !c.isEmpty()))
+            for (String curbside : ghRequest.getCurbsides())
+                url += "&" + Parameters.Routing.CURBSIDE + "=" + encodeURL(curbside);
+
+        // append *all* headings only if at least *one* is not NaN
+        if (ghRequest.getHeadings().stream().anyMatch(h -> !Double.isNaN(h)))
+            for (Double heading : ghRequest.getHeadings())
+                url += "&heading=" + heading;
+
+
+        for (String snapPrevention : ghRequest.getSnapPreventions()) {
+            url += "&" + Parameters.Routing.SNAP_PREVENTION + "=" + encodeURL(snapPrevention);
         }
 
         if (!key.isEmpty()) {
-            url += "&key=" + WebHelper.encodeURL(key);
+            url += "&key=" + encodeURL(key);
         }
 
-        for (Map.Entry<String, String> entry : request.getHints().toMap().entrySet()) {
+        for (Map.Entry<String, Object> entry : ghRequest.getHints().toMap().entrySet()) {
             String urlKey = entry.getKey();
-            String urlValue = entry.getValue();
+            String urlValue = entry.getValue().toString();
 
             // use lower case conversion for check only!
             if (ignoreSet.contains(toLowerCase(urlKey))) {
@@ -282,23 +374,62 @@ public class GraphHopperWeb implements GraphHopperAPI {
             }
 
             if (urlValue != null && !urlValue.isEmpty()) {
-                url += "&" + WebHelper.encodeURL(urlKey) + "=" + WebHelper.encodeURL(urlValue);
+                url += "&" + encodeURL(urlKey) + "=" + encodeURL(urlValue);
             }
         }
 
-        return new Request.Builder().url(url).build();
+        return new Request.Builder().url(url)
+                .header(X_GH_CLIENT_VERSION, GH_VERSION_FROM_MAVEN)
+                .build();
     }
 
     public String export(GHRequest ghRequest) {
         String str = "Creating request failed";
         try {
-            Request okRequest = createRequest(ghRequest);
+            if (postRequest)
+                throw new IllegalArgumentException("GPX export only works for GET requests, make sure to use `setPostRequest(false)`");
+            Request okRequest = createGetRequest(ghRequest);
             str = getClientForRequest(ghRequest).newCall(okRequest).execute().body().string();
 
             return str;
         } catch (Exception ex) {
             throw new RuntimeException("Problem while fetching export " + ghRequest.getPoints()
                     + ", error: " + ex.getMessage() + " response: " + str, ex);
+        }
+    }
+
+    private ArrayNode createStringList(List<String> list) {
+        ArrayNode outList = objectMapper.createArrayNode();
+        for (String str : list) {
+            outList.add(str);
+        }
+        return outList;
+    }
+
+    private ArrayNode createDoubleList(List<Double> list) {
+        ArrayNode outList = objectMapper.createArrayNode();
+        for (Double d : list) {
+            outList.add(d);
+        }
+        return outList;
+    }
+
+    private ArrayNode createPointList(List<GHPoint> list) {
+        ArrayNode outList = objectMapper.createArrayNode();
+        for (GHPoint p : list) {
+            ArrayNode entry = objectMapper.createArrayNode();
+            entry.add(p.lon);
+            entry.add(p.lat);
+            outList.add(entry);
+        }
+        return outList;
+    }
+
+    private static String encodeURL(String str) {
+        try {
+            return URLEncoder.encode(str, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
         }
     }
 }

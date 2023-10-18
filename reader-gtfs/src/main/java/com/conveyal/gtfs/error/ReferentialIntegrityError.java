@@ -50,7 +50,7 @@ public class ReferentialIntegrityError extends GTFSError implements Serializable
     }
 
     @Override public String getMessage() {
-        return String.format(Locale.getDefault(), badReference);
+        return String.format("Invalid reference %s", badReference);
     }
 
 }

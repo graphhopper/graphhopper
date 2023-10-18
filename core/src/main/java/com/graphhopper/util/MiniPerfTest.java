@@ -17,9 +17,6 @@
  */
 package com.graphhopper.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.util.Locale;
@@ -27,23 +24,31 @@ import java.util.Locale;
 /**
  * @author Peter Karich
  */
-public abstract class MiniPerfTest {
-    protected Logger logger = LoggerFactory.getLogger(getClass());
+public class MiniPerfTest {
+
+    private static final double NS_PER_S = 1e9;
+    private static final double NS_PER_MS = 1e6;
+    private static final double NS_PER_US = 1e3;
+
     private int counts = 100;
-    private double fullTime = 0;
-    private double max;
-    private double min = Double.MAX_VALUE;
+    private long fullTime = 0;
+    private long max;
+    private long min = Long.MAX_VALUE;
     private int dummySum;
 
-    public MiniPerfTest start() {
+    /**
+     * Important: Make sure to use the dummy sum in your program somewhere such that it's calculation cannot be skipped
+     * by the JVM. Either use {@link #getDummySum()} or {@link #getReport()} after running this method.
+     */
+    public MiniPerfTest start(Task m) {
         int warmupCount = Math.max(1, counts / 3);
         for (int i = 0; i < warmupCount; i++) {
-            dummySum += doCalc(true, i);
+            dummySum += m.doCalc(true, i);
         }
         long startFull = System.nanoTime();
         for (int i = 0; i < counts; i++) {
             long start = System.nanoTime();
-            dummySum += doCalc(false, i);
+            dummySum += m.doCalc(false, i);
             long time = System.nanoTime() - start;
             if (time < min)
                 min = time;
@@ -52,8 +57,16 @@ public abstract class MiniPerfTest {
                 max = time;
         }
         fullTime = System.nanoTime() - startFull;
-        logger.info("dummySum:" + dummySum);
         return this;
+    }
+
+    public interface Task {
+
+        /**
+         * @return return some integer as result from your processing to make sure that the JVM cannot
+         * optimize (away) the call or within the call something.
+         */
+        int doCalc(boolean warmup, int run);
     }
 
     public MiniPerfTest setIterations(int counts) {
@@ -65,21 +78,21 @@ public abstract class MiniPerfTest {
      * @return minimum time of every call, in ms
      */
     public double getMin() {
-        return min / 1e6;
+        return min / NS_PER_MS;
     }
 
     /**
      * @return maximum time of every calls, in ms
      */
     public double getMax() {
-        return max / 1e6;
+        return max / NS_PER_MS;
     }
 
     /**
      * @return time for all calls accumulated, in ms
      */
     public double getSum() {
-        return fullTime / 1e6;
+        return fullTime / NS_PER_MS;
     }
 
     /**
@@ -89,21 +102,32 @@ public abstract class MiniPerfTest {
         return getSum() / counts;
     }
 
+    private String formatDuration(double durationNs) {
+        double divisor;
+        String unit;
+        if (durationNs > 1e7d) {
+            divisor = NS_PER_S;
+            unit = "s";
+        } else if (durationNs > 1e4d) {
+            divisor = NS_PER_MS;
+            unit = "ms";
+        } else {
+            divisor = NS_PER_US;
+            unit = "µs";
+        }
+        return nf(durationNs / divisor) + unit;
+    }
+
     public String getReport() {
-        return "sum:" + nf(getSum() / 1000f) + "s, time/call:" + nf(getMean() / 1000f) + "s";
+        double meanNs = ((double) fullTime) / counts;
+        return "sum:" + formatDuration(fullTime) + ", time/call:" + formatDuration(meanNs) + ", dummy: " + dummySum;
     }
 
     public int getDummySum() {
         return dummySum;
     }
 
-    public String nf(Number num) {
+    private String nf(Number num) {
         return new DecimalFormat("#.###", DecimalFormatSymbols.getInstance(Locale.ROOT)).format(num);
     }
-
-    /**
-     * @return return some integer as result from your processing to make sure that the JVM cannot
-     * optimize (away) the call or within the call something.
-     */
-    public abstract int doCalc(boolean warmup, int run);
 }

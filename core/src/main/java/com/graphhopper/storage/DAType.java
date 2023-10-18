@@ -53,10 +53,6 @@ public class DAType {
      * embedded data stores.
      */
     public static final DAType MMAP_RO = new DAType(MemRef.MMAP, true, false, false);
-    /**
-     * Experimental API. Do not use yet.
-     */
-    public static final DAType UNSAFE_STORE = new DAType(MemRef.UNSAFE, true, false, true);
     private final MemRef memRef;
     private final boolean storing;
     private final boolean integ;
@@ -78,23 +74,16 @@ public class DAType {
         DAType type;
         if (dataAccess.contains("SYNC"))
             throw new IllegalArgumentException("SYNC option is no longer supported, see #982");
+        else if (dataAccess.contains("MMAP_RO"))
+            type = DAType.MMAP_RO;
         else if (dataAccess.contains("MMAP"))
             type = DAType.MMAP;
         else if (dataAccess.contains("UNSAFE"))
-            type = DAType.UNSAFE_STORE;
+            throw new IllegalArgumentException("UNSAFE option is no longer supported, see #1620");
         else if (dataAccess.contains("RAM_STORE"))
             type = DAType.RAM_STORE;
         else
             type = DAType.RAM;
-        return type;
-    }
-
-    /**
-     * This method returns RAM_INT if the specified type is in-memory.
-     */
-    public static DAType getPreferredInt(DAType type) {
-        if (type.isInMemory())
-            return type.isStoring() ? RAM_INT_STORE : RAM_INT;
         return type;
     }
 
@@ -139,10 +128,8 @@ public class DAType {
         String str;
         if (getMemRef() == MemRef.MMAP)
             str = "MMAP";
-        else if (getMemRef() == MemRef.HEAP)
-            str = "RAM";
         else
-            str = "UNSAFE";
+            str = "RAM";
 
         if (isInteg())
             str += "_INT";
@@ -177,8 +164,6 @@ public class DAType {
     }
 
     public enum MemRef {
-        HEAP, MMAP, UNSAFE
-        /*, DIRECT */
-
+        HEAP, MMAP
     }
 }

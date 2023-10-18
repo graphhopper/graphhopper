@@ -18,27 +18,17 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.MaxSpeed;
-import com.graphhopper.routing.util.AbstractFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.MaxSpeed;
+import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.shapes.GHPoint;
 
-import java.util.List;
-
-import static com.graphhopper.routing.profiles.MaxSpeed.UNSET_SPEED;
+import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
 
 public class OSMMaxSpeedParser implements TagParser {
 
     private final DecimalEncodedValue carMaxSpeedEnc;
-
-    public OSMMaxSpeedParser() {
-        this(MaxSpeed.create());
-    }
 
     public OSMMaxSpeedParser(DecimalEncodedValue carMaxSpeedEnc) {
         if (!carMaxSpeedEnc.isStoreTwoDirections())
@@ -48,41 +38,25 @@ public class OSMMaxSpeedParser implements TagParser {
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(carMaxSpeedEnc);
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+        carMaxSpeedEnc.setDecimal(false, edgeId, edgeIntAccess, getMaxSpeed(way, false));
+        carMaxSpeedEnc.setDecimal(true, edgeId, edgeIntAccess, getMaxSpeed(way, true));
     }
 
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
-        double maxSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
+    private double getMaxSpeed(ReaderWay way, boolean reverse) {
+        final double maxSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed"));
+        final double directedMaxSpeed = OSMValueExtractor.stringToKmh(way.getTag(reverse ? "maxspeed:backward" : "maxspeed:forward"));
+        return isValidSpeed(directedMaxSpeed)
+                ? Math.min(directedMaxSpeed, MaxSpeed.UNLIMITED_SIGN_SPEED)
+                : isValidSpeed(maxSpeed)
+                ? Math.min(maxSpeed, MaxSpeed.UNLIMITED_SIGN_SPEED)
+                : UNSET_SPEED;
+    }
 
-        if (maxSpeed < 0) {
-            GHPoint estmCentre = way.getTag("estimated_center", null);
-            SpatialRule spatialRule = way.getTag("spatial_rule", null);
-            if (estmCentre != null && spatialRule != null)
-                maxSpeed = spatialRule.getMaxSpeed(way.getTag("highway", ""), maxSpeed);
-        }
-
-        double fwdSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed:forward"));
-        if (fwdSpeed < 0 && maxSpeed > 0)
-            fwdSpeed = maxSpeed;
-        double maxPossibleSpeed = MaxSpeed.UNLIMITED_SIGN_SPEED;
-        if (fwdSpeed > maxPossibleSpeed)
-            fwdSpeed = maxPossibleSpeed;
-
-        double bwdSpeed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed:backward"));
-        if (bwdSpeed < 0 && maxSpeed > 0)
-            bwdSpeed = maxSpeed;
-        if (bwdSpeed > maxPossibleSpeed)
-            bwdSpeed = maxPossibleSpeed;
-
-        if (fwdSpeed <= 0)
-            fwdSpeed = UNSET_SPEED;
-        carMaxSpeedEnc.setDecimal(false, edgeFlags, fwdSpeed);
-
-        if (bwdSpeed <= 0)
-            bwdSpeed = UNSET_SPEED;
-        carMaxSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
-        return edgeFlags;
+    /**
+     * @return <i>true</i> if the given speed is not {@link Double#NaN}
+     */
+    private boolean isValidSpeed(double speed) {
+        return !Double.isNaN(speed);
     }
 }

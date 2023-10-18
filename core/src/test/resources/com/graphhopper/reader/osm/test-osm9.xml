@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6">
+    <node id="20" lat="51.21" lon="9.41" version="24854"/>
+    <node id="30" lat="51.22" lon="9.42" version="24856"/>
+    <way id="300" version="85761">
+        <!-- this node does not exist. this situation is rather common when extracting a bounding box using e.g. osmosis
+             because it removes nodes that are located outside the box, but leaves the ways unchanged -->
+        <nd ref="10"/>
+        <nd ref="20"/>
+        <nd ref="30"/>
+        <tag k="highway" v="motorway"/>
+    </way>
+</osm>

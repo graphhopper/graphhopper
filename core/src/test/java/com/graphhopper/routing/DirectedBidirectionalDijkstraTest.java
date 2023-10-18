@@ -1,34 +1,36 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.Repeat;
-import com.graphhopper.RepeatRule;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.DirectedRoutingTest;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
+import com.carrotsearch.hppc.IntHashSet;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
+import com.graphhopper.routing.ev.TurnCost;
+import com.graphhopper.routing.querygraph.QueryGraph;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
+import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.*;
-import com.graphhopper.storage.*;
-import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import org.junit.Before;
-import org.junit.Ignore;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.RepeatedTest;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Random;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * This test makes sure that {@link DijkstraBidirectionRef#calcPath(int from, int to, int fromOutEdge, int toInEdge)}, i.e.
@@ -37,40 +39,34 @@ import static org.junit.Assert.assertEquals;
  * For other bidirectional algorithms we simply compare with {@link DijkstraBidirectionRef} in {@link DirectedRoutingTest}
  */
 public class DirectedBidirectionalDijkstraTest {
-    private Directory dir;
-    private TurnCostExtension turnCostExtension;
+    private TurnCostStorage turnCostStorage;
     private int maxTurnCosts;
-    private GraphHopperStorage graph;
-    private FlagEncoder encoder;
-    private EncodingManager encodingManager;
+    private BaseGraph graph;
+    private DecimalEncodedValue speedEnc;
     private Weighting weighting;
-    private LocationIndex locationIndex;
-    private QueryGraph queryGraph;
+    private DecimalEncodedValue turnCostEnc;
 
-    @Rule
-    public RepeatRule repeatRule = new RepeatRule();
-
-    @Before
+    @BeforeEach
     public void setup() {
-        dir = new RAMDirectory();
         maxTurnCosts = 10;
-        encoder = new CarFlagEncoder(5, 5, maxTurnCosts);
-        encodingManager = EncodingManager.create(encoder);
-        turnCostExtension = new TurnCostExtension();
-        graph = new GraphHopperStorage(dir, encodingManager, false, turnCostExtension).create(1000);
+        speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
+        turnCostEnc = TurnCost.create("car", maxTurnCosts);
+        EncodingManager encodingManager = EncodingManager.start().add(speedEnc).addTurnCostEncodedValue(turnCostEnc).build();
+        graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
+        turnCostStorage = graph.getTurnCostStorage();
         weighting = createWeighting(Double.POSITIVE_INFINITY);
     }
 
-    private Weighting createWeighting(double defaultUTurnCosts) {
-        return new TurnWeighting(new FastestWeighting(encoder), turnCostExtension, defaultUTurnCosts);
+    private Weighting createWeighting(double uTurnCosts) {
+        return new SpeedWeighting(speedEnc, turnCostEnc, turnCostStorage, uTurnCosts);
     }
 
     @Test
     public void connectionNotFound() {
         // nodes 0 and 2 are not connected
         // 0 -> 1     2 -> 3
-        graph.edge(0, 1, 1, false);
-        graph.edge(2, 3, 1, false);
+        graph.edge(0, 1).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(1).set(speedEnc, 10, 0);
 
         Path path = calcPath(0, 3, 0, 1);
         assertNotFound(path);
@@ -78,7 +74,7 @@ public class DirectedBidirectionalDijkstraTest {
 
     @Test
     public void singleEdge() {
-        graph.edge(0, 1, 1, true);
+        graph.edge(0, 1).setDistance(1).set(speedEnc, 10, 10);
 
         // source edge does not exist -> no path
         assertNotFound(calcPath(0, 1, 5, 0));
@@ -88,17 +84,17 @@ public class DirectedBidirectionalDijkstraTest {
         assertNotFound(calcPath(0, 1, NO_EDGE, 0));
         assertNotFound(calcPath(0, 1, 0, NO_EDGE));
         // using ANY_EDGE -> no restriction
-        assertPath(calcPath(0, 1, ANY_EDGE, 0), 0.06, 1, 60, nodes(0, 1));
-        assertPath(calcPath(0, 1, 0, ANY_EDGE), 0.06, 1, 60, nodes(0, 1));
+        assertPath(calcPath(0, 1, ANY_EDGE, 0), 0.1, 1, 100, nodes(0, 1));
+        assertPath(calcPath(0, 1, 0, ANY_EDGE), 0.1, 1, 100, nodes(0, 1));
         // edges exist -> they are used as restrictions
-        assertPath(calcPath(0, 1, 0, 0), 0.06, 1, 60, nodes(0, 1));
+        assertPath(calcPath(0, 1, 0, 0), 0.1, 1, 100, nodes(0, 1));
     }
 
     @Test
     public void simpleGraph() {
         // 0 -> 1 -> 2
-        graph.edge(0, 1, 1, true);
-        graph.edge(1, 2, 1, true);
+        graph.edge(0, 1).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(1).set(speedEnc, 10, 10);
 
         // source edge does not exist -> no path
         assertNotFound(calcPath(0, 2, 5, 0));
@@ -108,10 +104,10 @@ public class DirectedBidirectionalDijkstraTest {
         assertNotFound(calcPath(0, 2, NO_EDGE, 0));
         assertNotFound(calcPath(0, 2, 0, NO_EDGE));
         // using ANY_EDGE -> no restriction
-        assertPath(calcPath(0, 2, ANY_EDGE, 1), 0.12, 2, 120, nodes(0, 1, 2));
-        assertPath(calcPath(0, 2, 0, ANY_EDGE), 0.12, 2, 120, nodes(0, 1, 2));
+        assertPath(calcPath(0, 2, ANY_EDGE, 1), 0.2, 2, 200, nodes(0, 1, 2));
+        assertPath(calcPath(0, 2, 0, ANY_EDGE), 0.2, 2, 200, nodes(0, 1, 2));
         // edges exist -> they are used as restrictions
-        assertPath(calcPath(0, 2, 0, 1), 0.12, 2, 120, nodes(0, 1, 2));
+        assertPath(calcPath(0, 2, 0, 1), 0.2, 2, 200, nodes(0, 1, 2));
     }
 
     @Test
@@ -122,11 +118,11 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 - 1
         //  \  |
         //   - 2
-        graph.edge(0, 1, 1, true);
-        graph.edge(0, 2, 1, true);
-        graph.edge(1, 2, 1, true);
-        assertPath(calcPath(0, 0, 0, 1), 0.18, 3, 180, nodes(0, 1, 2, 0));
-        assertPath(calcPath(0, 0, 1, 0), 0.18, 3, 180, nodes(0, 2, 1, 0));
+        graph.edge(0, 1).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(0, 2).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(1).set(speedEnc, 10, 10);
+        assertPath(calcPath(0, 0, 0, 1), 0.3, 3, 300, nodes(0, 1, 2, 0));
+        assertPath(calcPath(0, 0, 1, 0), 0.3, 3, 300, nodes(0, 2, 1, 0));
         // without restrictions the weight should be zero
         assertPath(calcPath(0, 0, ANY_EDGE, ANY_EDGE), 0, 0, 0, nodes(0));
         // in some cases no path is possible
@@ -140,20 +136,20 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 = 1 - 2 - 3 = 4
         //  \      |      /
         //   - 5 - 6 - 7 -
-        int costlySource = graph.edge(0, 1, 5, true).getEdge();
-        graph.edge(1, 2, 1, true);
-        graph.edge(2, 3, 1, true);
-        int costlyTarget = graph.edge(3, 4, 5, true).getEdge();
-        int cheapSource = graph.edge(0, 5, 1, true).getEdge();
-        graph.edge(5, 6, 1, true);
-        graph.edge(6, 7, 1, true);
-        int cheapTarget = graph.edge(7, 4, 1, true).getEdge();
-        graph.edge(2, 6, 1, true);
+        int costlySource = graph.edge(0, 1).setDistance(5).set(speedEnc, 10, 10).getEdge();
+        graph.edge(1, 2).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(2, 3).setDistance(1).set(speedEnc, 10, 10);
+        int costlyTarget = graph.edge(3, 4).setDistance(5).set(speedEnc, 10, 10).getEdge();
+        int cheapSource = graph.edge(0, 5).setDistance(1).set(speedEnc, 10, 10).getEdge();
+        graph.edge(5, 6).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(6, 7).setDistance(1).set(speedEnc, 10, 10);
+        int cheapTarget = graph.edge(7, 4).setDistance(1).set(speedEnc, 10, 10).getEdge();
+        graph.edge(2, 6).setDistance(1).set(speedEnc, 10, 10);
 
-        assertPath(calcPath(0, 4, cheapSource, cheapTarget), 0.24, 4, 240, nodes(0, 5, 6, 7, 4));
-        assertPath(calcPath(0, 4, cheapSource, costlyTarget), 0.54, 9, 540, nodes(0, 5, 6, 2, 3, 4));
-        assertPath(calcPath(0, 4, costlySource, cheapTarget), 0.54, 9, 540, nodes(0, 1, 2, 6, 7, 4));
-        assertPath(calcPath(0, 4, costlySource, costlyTarget), 0.72, 12, 720, nodes(0, 1, 2, 3, 4));
+        assertPath(calcPath(0, 4, cheapSource, cheapTarget), 0.4, 4, 400, nodes(0, 5, 6, 7, 4));
+        assertPath(calcPath(0, 4, cheapSource, costlyTarget), 0.9, 9, 900, nodes(0, 5, 6, 2, 3, 4));
+        assertPath(calcPath(0, 4, costlySource, cheapTarget), 0.9, 9, 900, nodes(0, 1, 2, 6, 7, 4));
+        assertPath(calcPath(0, 4, costlySource, costlyTarget), 1.2, 12, 1200, nodes(0, 1, 2, 3, 4));
     }
 
     @Test
@@ -164,15 +160,15 @@ public class DirectedBidirectionalDijkstraTest {
         //  \     /
         //   - 3 -
         // we cannot go from 0 to 2 if we enforce north-south or south-north
-        int sourceNorth = graph.edge(0, 1, 1, true).getEdge();
-        int sourceSouth = graph.edge(0, 3, 2, true).getEdge();
-        int targetNorth = graph.edge(1, 2, 3, true).getEdge();
-        int targetSouth = graph.edge(3, 2, 4, true).getEdge();
+        int sourceNorth = graph.edge(0, 1).setDistance(1).set(speedEnc, 10, 10).getEdge();
+        int sourceSouth = graph.edge(0, 3).setDistance(2).set(speedEnc, 10, 10).getEdge();
+        int targetNorth = graph.edge(1, 2).setDistance(3).set(speedEnc, 10, 10).getEdge();
+        int targetSouth = graph.edge(3, 2).setDistance(4).set(speedEnc, 10, 10).getEdge();
 
-        assertPath(calcPath(0, 2, sourceNorth, targetNorth), 0.24, 4, 240, nodes(0, 1, 2));
+        assertPath(calcPath(0, 2, sourceNorth, targetNorth), 0.4, 4, 400, nodes(0, 1, 2));
         assertNotFound(calcPath(0, 2, sourceNorth, targetSouth));
         assertNotFound(calcPath(0, 2, sourceSouth, targetNorth));
-        assertPath(calcPath(0, 2, sourceSouth, targetSouth), 0.36, 6, 360, nodes(0, 3, 2));
+        assertPath(calcPath(0, 2, sourceSouth, targetSouth), 0.6, 6, 600, nodes(0, 3, 2));
     }
 
     @Test
@@ -180,13 +176,13 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 <- 1 <- 2
         //  \   |   /
         //   >--3-->
-        graph.edge(0, 3, 1, false);
-        graph.edge(1, 0, 1, false);
-        graph.edge(3, 2, 1, false);
-        graph.edge(2, 1, 1, false);
-        graph.edge(1, 3, 1, true);
+        graph.edge(0, 3).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(1, 0).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(3, 2).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(2, 1).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(1, 3).setDistance(1).set(speedEnc, 10, 10);
 
-        assertPath(calcPath(0, 2, 0, 2), 0.12, 2, 120, nodes(0, 3, 2));
+        assertPath(calcPath(0, 2, 0, 2), 0.2, 2, 200, nodes(0, 3, 2));
         assertNotFound(calcPath(0, 2, 1, 2));
         assertNotFound(calcPath(0, 2, 0, 3));
         assertNotFound(calcPath(0, 2, 1, 3));
@@ -201,17 +197,17 @@ public class DirectedBidirectionalDijkstraTest {
         // 2 - 3
         // |   |
         // 5 - 4
-        int north = graph.edge(1, 0, 1, true).getEdge();
-        int south = graph.edge(1, 2, 1, true).getEdge();
-        graph.edge(2, 5, 1, false);
-        graph.edge(5, 4, 1, false);
-        graph.edge(4, 3, 1, false);
-        graph.edge(3, 2, 1, false);
-        graph.edge(1, 0, 1, false);
-        graph.edge(0, 6, 1, false);
-        int targetEdge = graph.edge(6, 7, 1, false).getEdge();
-        assertPath(calcPath(1, 7, north, targetEdge), 0.18, 3, 180, nodes(1, 0, 6, 7));
-        assertPath(calcPath(1, 7, south, targetEdge), 0.54, 9, 540, nodes(1, 2, 5, 4, 3, 2, 1, 0, 6, 7));
+        int north = graph.edge(1, 0).setDistance(1).set(speedEnc, 10, 10).getEdge();
+        int south = graph.edge(1, 2).setDistance(1).set(speedEnc, 10, 10).getEdge();
+        graph.edge(2, 5).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(5, 4).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(4, 3).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(3, 2).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(1, 0).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(0, 6).setDistance(1).set(speedEnc, 10, 0);
+        int targetEdge = graph.edge(6, 7).setDistance(1).set(speedEnc, 10, 0).getEdge();
+        assertPath(calcPath(1, 7, north, targetEdge), 0.3, 3, 300, nodes(1, 0, 6, 7));
+        assertPath(calcPath(1, 7, south, targetEdge), 0.9, 9, 900, nodes(1, 2, 5, 4, 3, 2, 1, 0, 6, 7));
     }
 
     @Test
@@ -219,14 +215,14 @@ public class DirectedBidirectionalDijkstraTest {
         // 0---6--1 -> 2
         // |          /
         // 5 <- 4 <- 3
-        graph.edge(0, 6, 1, true);
-        graph.edge(6, 1, 1, true);
-        graph.edge(1, 2, 1, false);
-        graph.edge(2, 3, 1, false);
-        graph.edge(3, 4, 1, false);
-        graph.edge(4, 5, 1, false);
-        graph.edge(5, 0, 1, false);
-        assertPath(calcPath(6, 0, 1, 6), 0.36, 6, 360, nodes(6, 1, 2, 3, 4, 5, 0));
+        graph.edge(0, 6).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(6, 1).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(4, 5).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(5, 0).setDistance(1).set(speedEnc, 10, 0);
+        assertPath(calcPath(6, 0, 1, 6), 0.6, 6, 600, nodes(6, 1, 2, 3, 4, 5, 0));
     }
 
     @Test
@@ -237,68 +233,52 @@ public class DirectedBidirectionalDijkstraTest {
         //   9     2     10
         //   |    / \    |
         //   8 = 7   6 = 5
-        graph.edge(0, 1, 1, true);
-        graph.edge(1, 2, 1, true);
-        graph.edge(2, 3, 1, true);
-        graph.edge(3, 4, 3, true);
-        int rightNorth = graph.edge(4, 10, 1, true).getEdge();
-        int rightSouth = graph.edge(10, 5, 1, true).getEdge();
-        graph.edge(5, 6, 2, true);
-        graph.edge(6, 2, 1, true);
-        graph.edge(2, 7, 1, true);
-        graph.edge(7, 8, 9, true);
-        int leftSouth = graph.edge(8, 9, 1, true).getEdge();
-        int leftNorth = graph.edge(9, 0, 1, true).getEdge();
+        EdgeIteratorState rightNorth, rightSouth, leftSouth, leftNorth;
+        graph.edge(0, 1).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(2, 3).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(3, 4).setDistance(3).set(speedEnc, 10, 10);
+        rightNorth = graph.edge(4, 10).setDistance(1).set(speedEnc, 10, 10);
+        rightSouth = graph.edge(10, 5).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(5, 6).setDistance(2).set(speedEnc, 10, 10);
+        graph.edge(6, 2).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(2, 7).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(7, 8).setDistance(9).set(speedEnc, 10, 10);
+        leftSouth = graph.edge(8, 9).setDistance(1).set(speedEnc, 10, 10);
+        leftNorth = graph.edge(9, 0).setDistance(1).set(speedEnc, 10, 10);
 
         // make paths fully deterministic by applying some turn costs at junction node 2
-        addTurnCost(7, 2, 3, 1);
-        addTurnCost(7, 2, 6, 3);
-        addTurnCost(1, 2, 3, 5);
-        addTurnCost(1, 2, 6, 7);
-        addTurnCost(1, 2, 7, 9);
+        setTurnCost(7, 2, 3, 1);
+        setTurnCost(7, 2, 6, 3);
+        setTurnCost(1, 2, 3, 5);
+        setTurnCost(1, 2, 6, 7);
+        setTurnCost(1, 2, 7, 9);
 
-        final double unitEdgeWeight = 0.06;
-        assertPath(calcPath(9, 9, leftNorth, leftSouth),
+        final double unitEdgeWeight = 0.1;
+        assertPath(calcPath(9, 9, leftNorth.getEdge(), leftSouth.getEdge()),
                 23 * unitEdgeWeight + 5, 23, (long) ((23 * unitEdgeWeight + 5) * 1000),
                 nodes(9, 0, 1, 2, 3, 4, 10, 5, 6, 2, 7, 8, 9));
-        assertPath(calcPath(9, 9, leftSouth, leftNorth),
+        assertPath(calcPath(9, 9, leftSouth.getEdge(), leftNorth.getEdge()),
                 14 * unitEdgeWeight, 14, (long) ((14 * unitEdgeWeight) * 1000),
                 nodes(9, 8, 7, 2, 1, 0, 9));
-        assertPath(calcPath(9, 10, leftSouth, rightSouth),
+        assertPath(calcPath(9, 10, leftSouth.getEdge(), rightSouth.getEdge()),
                 15 * unitEdgeWeight + 3, 15, (long) ((15 * unitEdgeWeight + 3) * 1000),
                 nodes(9, 8, 7, 2, 6, 5, 10));
-        assertPath(calcPath(9, 10, leftSouth, rightNorth),
+        assertPath(calcPath(9, 10, leftSouth.getEdge(), rightNorth.getEdge()),
                 16 * unitEdgeWeight + 1, 16, (long) ((16 * unitEdgeWeight + 1) * 1000),
                 nodes(9, 8, 7, 2, 3, 4, 10));
     }
 
     @Test
-    public void enforceLoopEdge() {
-        //  o       o
-        //  0 - 1 - 2
-        graph.edge(0, 0, 1, true);
-        graph.edge(0, 1, 1, true);
-        graph.edge(1, 2, 1, true);
-        graph.edge(2, 2, 1, true);
-
-        assertPath(calcPath(0, 2, ANY_EDGE, ANY_EDGE), 0.12, 2, 120, nodes(0, 1, 2));
-        assertPath(calcPath(0, 2, 1, 2), 0.12, 2, 120, nodes(0, 1, 2));
-        // we can enforce taking the loop at start/target
-        assertPath(calcPath(0, 2, 0, 2), 0.18, 3, 180, nodes(0, 0, 1, 2));
-        assertPath(calcPath(0, 2, 1, 3), 0.18, 3, 180, nodes(0, 1, 2, 2));
-        assertPath(calcPath(0, 2, 0, 3), 0.24, 4, 240, nodes(0, 0, 1, 2, 2));
-    }
-
-    @Test
     public void sourceAndTargetAreNeighbors() {
         // 0-1-2-3
-        graph.edge(0, 1, 100, true);
-        graph.edge(1, 2, 100, true);
-        graph.edge(2, 3, 100, true);
-        assertPath(calcPath(1, 2, ANY_EDGE, ANY_EDGE), 6, 100, 6000, nodes(1, 2));
-        assertPath(calcPath(1, 2, 1, ANY_EDGE), 6, 100, 6000, nodes(1, 2));
-        assertPath(calcPath(1, 2, ANY_EDGE, 1), 6, 100, 6000, nodes(1, 2));
-        assertPath(calcPath(1, 2, 1, 1), 6, 100, 6000, nodes(1, 2));
+        graph.edge(0, 1).setDistance(100).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(100).set(speedEnc, 10, 10);
+        graph.edge(2, 3).setDistance(100).set(speedEnc, 10, 10);
+        assertPath(calcPath(1, 2, ANY_EDGE, ANY_EDGE), 10, 100, 10000, nodes(1, 2));
+        assertPath(calcPath(1, 2, 1, ANY_EDGE), 10, 100, 10000, nodes(1, 2));
+        assertPath(calcPath(1, 2, ANY_EDGE, 1), 10, 100, 10000, nodes(1, 2));
+        assertPath(calcPath(1, 2, 1, 1), 10, 100, 10000, nodes(1, 2));
         // this case is a bit sketchy: we may not find a valid path just because the from/to
         // node initialization hits the target/source node, but we have to also consider the
         // edge restriction at the source/target nodes
@@ -307,9 +287,9 @@ public class DirectedBidirectionalDijkstraTest {
         assertNotFound(calcPath(1, 2, 0, 2));
 
         // if we allow u-turns it is of course different again
-        assertPath(calcPath(1, 2, 1, 2, createWeighting(100)), 118, 300, 118000, nodes(1, 2, 3, 2));
-        assertPath(calcPath(1, 2, 0, 1, createWeighting(100)), 118, 300, 118000, nodes(1, 0, 1, 2));
-        assertPath(calcPath(1, 2, 0, 2, createWeighting(100)), 230, 500, 230000, nodes(1, 0, 1, 2, 3, 2));
+        assertPath(calcPath(1, 2, 1, 2, createWeighting(100)), 30 + 100, 300, 130000, nodes(1, 2, 3, 2));
+        assertPath(calcPath(1, 2, 0, 1, createWeighting(100)), 30 + 100, 300, 130000, nodes(1, 0, 1, 2));
+        assertPath(calcPath(1, 2, 0, 2, createWeighting(100)), 50 + 200, 500, 250000, nodes(1, 0, 1, 2, 3, 2));
     }
 
     @Test
@@ -317,23 +297,23 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 - 1 - 2
         // |   |   |
         // 3 - 4 - 5
-        graph.edge(0, 1, 1, true);
-        graph.edge(1, 2, 1, true);
-        graph.edge(1, 4, 1, true);
-        graph.edge(0, 3, 1, true);
-        graph.edge(3, 4, 1, true);
-        graph.edge(4, 5, 1, true);
-        graph.edge(5, 2, 1, true);
+        graph.edge(0, 1).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(1, 4).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(0, 3).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(3, 4).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(4, 5).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(5, 2).setDistance(1).set(speedEnc, 10, 10);
 
-        addRestriction(0, 3, 4);
-        addTurnCost(4, 5, 2, 6);
+        setRestriction(0, 3, 4);
+        setTurnCost(4, 5, 2, 6);
 
         // due to the restrictions we have to take the expensive path with turn costs
-        assertPath(calcPath(0, 2, 0, 6), 6.24, 4, 6240, nodes(0, 1, 4, 5, 2));
+        assertPath(calcPath(0, 2, 0, 6), 6.4, 4, 6400, nodes(0, 1, 4, 5, 2));
         // enforcing going south from node 0 yields no path, because of the restricted turn 0->3->4
         assertNotFound(calcPath(0, 2, 3, ANY_EDGE));
         // without the restriction its possible
-        assertPath(calcPath(0, 2, ANY_EDGE, ANY_EDGE), 0.12, 2, 120, nodes(0, 1, 2));
+        assertPath(calcPath(0, 2, ANY_EDGE, ANY_EDGE), 0.2, 2, 200, nodes(0, 1, 2));
     }
 
     @Test
@@ -346,41 +326,39 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 -- 1 -- 6
         // |         |
         // 7 -- 8 -- 9
-        int right0 = graph.edge(0, 1, 10, true).getEdge();
-        graph.edge(1, 2, 10, true);
-        graph.edge(2, 3, 10, true);
-        graph.edge(3, 4, 10, true);
-        graph.edge(4, 5, 10, true);
-        graph.edge(5, 2, 1000, true);
-        int left6 = graph.edge(1, 6, 10, true).getEdge();
-        int left0 = graph.edge(0, 7, 10, true).getEdge();
-        graph.edge(7, 8, 10, true);
-        graph.edge(8, 9, 10, true);
-        int right6 = graph.edge(9, 6, 10, true).getEdge();
+        int right0 = graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 10).getEdge();
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(3, 4).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(4, 5).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(5, 2).setDistance(1000).set(speedEnc, 10, 10);
+        int left6 = graph.edge(1, 6).setDistance(10).set(speedEnc, 10, 10).getEdge();
+        int left0 = graph.edge(0, 7).setDistance(10).set(speedEnc, 10, 10).getEdge();
+        graph.edge(7, 8).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(8, 9).setDistance(10).set(speedEnc, 10, 10);
+        int right6 = graph.edge(9, 6).setDistance(10).set(speedEnc, 10, 10).getEdge();
 
         // enforce p-turn (using the loop in clockwise direction)
-        addRestriction(0, 1, 6);
-        addRestriction(5, 4, 3);
+        setRestriction(0, 1, 6);
+        setRestriction(5, 4, 3);
 
-        assertPath(calcPath(0, 6, right0, left6), 64.2, 1070, 64200, nodes(0, 1, 2, 3, 4, 5, 2, 1, 6));
+        assertPath(calcPath(0, 6, right0, left6), 107.0, 1070, 107000, nodes(0, 1, 2, 3, 4, 5, 2, 1, 6));
         // if the u-turn cost is finite it depends on its value if we rather do the p-turn or do an immediate u-turn at node 2
-        assertPath(calcPath(0, 6, right0, left6, createWeighting(65)), 64.2, 1070, 64200, nodes(0, 1, 2, 3, 4, 5, 2, 1, 6));
-        assertPath(calcPath(0, 6, right0, left6, createWeighting(40)), 42.4, 40, 42400, nodes(0, 1, 2, 1, 6));
+        assertPath(calcPath(0, 6, right0, left6, createWeighting(5000)), 107.0, 1070, 107000, nodes(0, 1, 2, 3, 4, 5, 2, 1, 6));
+        assertPath(calcPath(0, 6, right0, left6, createWeighting(40)), 44, 40, 44000, nodes(0, 1, 2, 1, 6));
 
-        assertPath(calcPath(0, 6, left0, right6), 2.4, 40, 2400, nodes(0, 7, 8, 9, 6));
-        assertPath(calcPath(0, 6, left0, left6), 66.6, 1110, 66600, nodes(0, 7, 8, 9, 6, 1, 2, 3, 4, 5, 2, 1, 6));
+        assertPath(calcPath(0, 6, left0, right6), 4, 40, 4000, nodes(0, 7, 8, 9, 6));
+        assertPath(calcPath(0, 6, left0, left6), 111, 1110, 111000, nodes(0, 7, 8, 9, 6, 1, 2, 3, 4, 5, 2, 1, 6));
         // if the u-turn cost is finite we do a u-turn at node 1 (not at node 7 at the beginning!)
-        assertPath(calcPath(0, 6, left0, left6, createWeighting(40)), 43.6, 60, 43600, nodes(0, 7, 8, 9, 6, 1, 6));
+        assertPath(calcPath(0, 6, left0, left6, createWeighting(40)), 46.0, 60, 46000, nodes(0, 7, 8, 9, 6, 1, 6));
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void compare_standard_dijkstra() {
         compare_with_dijkstra(weighting);
     }
 
-    @Test
-    @Repeat(times = 10)
+    @RepeatedTest(10)
     public void compare_standard_dijkstra_finite_uturn_costs() {
         compare_with_dijkstra(createWeighting(40));
     }
@@ -391,12 +369,11 @@ public class DirectedBidirectionalDijkstraTest {
         // start/target edges.
         final long seed = System.nanoTime();
         final int numQueries = 1000;
-        System.out.println("compare_standard_dijkstra seed: " + seed);
 
         Random rnd = new Random(seed);
         int numNodes = 100;
-        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.2, true, true, encoder.getAverageSpeedEnc(), 0.7, 0.8, 0.8);
-        GHUtility.addRandomTurnCosts(graph, seed, encoder, maxTurnCosts, turnCostExtension);
+        GHUtility.buildRandomGraph(graph, rnd, numNodes, 2.2, true, speedEnc, null, 0.8, 0.8);
+        GHUtility.addRandomTurnCosts(graph, seed, null, turnCostEnc, maxTurnCosts, turnCostStorage);
 
         long numStrictViolations = 0;
         for (int i = 0; i < numQueries; i++) {
@@ -404,8 +381,8 @@ public class DirectedBidirectionalDijkstraTest {
             int target = rnd.nextInt(numNodes);
             Path dijkstraPath = new Dijkstra(graph, w, TraversalMode.EDGE_BASED).calcPath(source, target);
             Path path = calcPath(source, target, ANY_EDGE, ANY_EDGE, w);
-            assertEquals("dijkstra found/did not find a path, from: " + source + ", to: " + target, dijkstraPath.isFound(), path.isFound());
-            assertEquals("weight does not match dijkstra, from: " + source + ", to: " + target, dijkstraPath.getWeight(), path.getWeight(), 1.e-6);
+            assertEquals(dijkstraPath.isFound(), path.isFound(), "dijkstra found/did not find a path, from: " + source + ", to: " + target + ", seed: " + seed);
+            assertEquals(dijkstraPath.getWeight(), path.getWeight(), 1.e-6, "weight does not match dijkstra, from: " + source + ", to: " + target + ", seed: " + seed);
             // we do not do a strict check because there can be ambiguity, for example when there are zero weight loops.
             // however, when there are too many deviations we fail
             if (
@@ -416,7 +393,7 @@ public class DirectedBidirectionalDijkstraTest {
             }
         }
         if (numStrictViolations > Math.max(1, 0.05 * numQueries)) {
-            fail("Too many strict violations: " + numStrictViolations + " / " + numQueries);
+            fail("Too many strict violations, seed: " + seed + " - " + numStrictViolations + " / " + numQueries);
         }
     }
 
@@ -425,24 +402,24 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 - 1 - 2 - 3
         // |           |
         // 4 --- 5 --- 6
-        EdgeIteratorState edge1 = graph.edge(0, 1, 10, true);
-        graph.edge(1, 2, 10, true);
-        EdgeIteratorState edge2 = graph.edge(2, 3, 10, true);
-        graph.edge(0, 4, 100, true);
-        graph.edge(4, 5, 100, true);
-        graph.edge(5, 6, 100, true);
-        graph.edge(6, 3, 100, true);
+        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(10).set(speedEnc, 10, 10);
+        EdgeIteratorState edge2 = graph.edge(2, 3).setDistance(10).set(speedEnc, 10, 10);
+        graph.edge(0, 4).setDistance(100).set(speedEnc, 10, 10);
+        graph.edge(4, 5).setDistance(100).set(speedEnc, 10, 10);
+        graph.edge(5, 6).setDistance(100).set(speedEnc, 10, 10);
+        graph.edge(6, 3).setDistance(100).set(speedEnc, 10, 10);
 
         // usually we would take the direct route
-        assertPath(calcPath(0, 3, ANY_EDGE, ANY_EDGE), 1.8, 30, 1800, nodes(0, 1, 2, 3));
+        assertPath(calcPath(0, 3, ANY_EDGE, ANY_EDGE), 3, 30, 3000, nodes(0, 1, 2, 3));
 
         // with forced edges we might have to go around
-        assertPath(calcPath(0, 3, 3, ANY_EDGE), 24, 400, 24000, nodes(0, 4, 5, 6, 3));
-        assertPath(calcPath(0, 3, ANY_EDGE, 6), 24, 400, 24000, nodes(0, 4, 5, 6, 3));
+        assertPath(calcPath(0, 3, 3, ANY_EDGE), 40, 400, 40000, nodes(0, 4, 5, 6, 3));
+        assertPath(calcPath(0, 3, ANY_EDGE, 6), 40, 400, 40000, nodes(0, 4, 5, 6, 3));
 
         // with avoided edges we also have to take a longer route
-        assertPath(calcPath(0, 3, ANY_EDGE, ANY_EDGE, createAvoidEdgeWeighting(edge1)), 24, 400, 24000, nodes(0, 4, 5, 6, 3));
-        assertPath(calcPath(0, 3, ANY_EDGE, ANY_EDGE, createAvoidEdgeWeighting(edge2)), 24, 400, 24000, nodes(0, 4, 5, 6, 3));
+        assertPath(calcPath(0, 3, ANY_EDGE, ANY_EDGE, createAvoidEdgeWeighting(edge1)), 40, 400, 40000, nodes(0, 4, 5, 6, 3));
+        assertPath(calcPath(0, 3, ANY_EDGE, ANY_EDGE, createAvoidEdgeWeighting(edge2)), 40, 400, 40000, nodes(0, 4, 5, 6, 3));
 
         // enforcing forbidden start/target edges still does not allow using them
         assertNotFound(calcPath(0, 3, edge1.getEdge(), edge2.getEdge(), createAvoidEdgeWeighting(edge1)));
@@ -456,7 +433,7 @@ public class DirectedBidirectionalDijkstraTest {
     private AvoidEdgesWeighting createAvoidEdgeWeighting(EdgeIteratorState edgeOut) {
         AvoidEdgesWeighting avoidEdgesWeighting = new AvoidEdgesWeighting(weighting);
         avoidEdgesWeighting.setEdgePenaltyFactor(Double.POSITIVE_INFINITY);
-        avoidEdgesWeighting.addEdges(Collections.singletonList(edgeOut));
+        avoidEdgesWeighting.setAvoidedEdges(IntHashSet.from(edgeOut.getEdge()));
         return avoidEdgesWeighting;
     }
 
@@ -470,12 +447,12 @@ public class DirectedBidirectionalDijkstraTest {
         // 0 -- 1 -> 2
         // |         |
         // 5 <- 4 <- 3
-        graph.edge(0, 1, 1, true);
-        graph.edge(1, 2, 1, false);
-        graph.edge(2, 3, 1, false);
-        graph.edge(3, 4, 1, false);
-        graph.edge(4, 5, 1, false);
-        graph.edge(5, 0, 1, false);
+        graph.edge(0, 1).setDistance(1).set(speedEnc, 10, 10);
+        graph.edge(1, 2).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(2, 3).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(3, 4).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(4, 5).setDistance(1).set(speedEnc, 10, 0);
+        graph.edge(5, 0).setDistance(1).set(speedEnc, 10, 0);
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 1, 0);
         na.setNode(1, 1, 1);
@@ -483,11 +460,14 @@ public class DirectedBidirectionalDijkstraTest {
         na.setNode(3, 0, 2);
         na.setNode(4, 0, 1);
         na.setNode(5, 0, 0);
-        initQueryGraph();
 
-        QueryResult qr = findClosest();
-        assertEquals("wanted to get EDGE", QueryResult.Position.EDGE, qr.getSnappedPosition());
-        assertEquals(6, qr.getClosestNode());
+        LocationIndexTree locationIndex = new LocationIndexTree(graph, graph.getDirectory());
+        locationIndex.prepareIndex();
+        Snap snap = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
+        QueryGraph queryGraph = QueryGraph.create(graph, snap);
+
+        assertEquals(Snap.Position.EDGE, snap.getSnappedPosition(), "wanted to get EDGE");
+        assertEquals(6, snap.getClosestNode());
 
         // check what edges there are on the query graph directly, there should not be a direct connection from 1 to 0
         // anymore, but only the virtual edge from 1 to 6 (this is how the u-turn is prevented).
@@ -496,22 +476,10 @@ public class DirectedBidirectionalDijkstraTest {
 
         EdgeIteratorState virtualEdge = GHUtility.getEdge(queryGraph, 6, 1);
         int outEdge = virtualEdge.getEdge();
-        AbstractBidirAlgo algo = createAlgo(queryGraph, weighting);
+        EdgeToEdgeRoutingAlgorithm algo = createAlgo(queryGraph, weighting);
         Path path = algo.calcPath(6, 0, outEdge, ANY_EDGE);
         assertEquals(nodes(6, 1, 2, 3, 4, 5, 0), path.calcNodes());
         assertEquals(5 + virtualEdge.getDistance(), path.getDistance(), 1.e-3);
-    }
-
-    private void initQueryGraph() {
-        queryGraph = new QueryGraph(graph);
-        locationIndex = new LocationIndexTree(graph, dir);
-        locationIndex.prepareIndex();
-    }
-
-    private QueryResult findClosest() {
-        QueryResult qr = locationIndex.findClosest(1.1, 0.5, EdgeFilter.ALL_EDGES);
-        queryGraph.lookup(Collections.singletonList(qr));
-        return qr;
     }
 
     private Path calcPath(int source, int target, int sourceOutEdge, int targetInEdge) {
@@ -519,30 +487,12 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     private Path calcPath(int source, int target, int sourceOutEdge, int targetInEdge, Weighting w) {
-        AbstractBidirAlgo algo = createAlgo(graph, w);
+        EdgeToEdgeRoutingAlgorithm algo = createAlgo(graph, w);
         return algo.calcPath(source, target, sourceOutEdge, targetInEdge);
     }
 
-    private AbstractBidirAlgo createAlgo(Graph graph, Weighting weighting) {
+    private EdgeToEdgeRoutingAlgorithm createAlgo(Graph graph, Weighting weighting) {
         return new DijkstraBidirectionRef(graph, weighting, TraversalMode.EDGE_BASED);
-    }
-
-    private void addRestriction(int fromNode, int node, int toNode) {
-        turnCostExtension.addTurnInfo(
-                GHUtility.getEdge(graph, fromNode, node).getEdge(),
-                node,
-                GHUtility.getEdge(graph, node, toNode).getEdge(),
-                encoder.getTurnFlags(true, 0)
-        );
-    }
-
-    private void addTurnCost(int fromNode, int node, int toNode, double turnCost) {
-        turnCostExtension.addTurnInfo(
-                GHUtility.getEdge(graph, fromNode, node).getEdge(),
-                node,
-                GHUtility.getEdge(graph, node, toNode).getEdge(),
-                encoder.getTurnFlags(false, turnCost)
-        );
     }
 
     private IntArrayList nodes(int... nodes) {
@@ -550,19 +500,27 @@ public class DirectedBidirectionalDijkstraTest {
     }
 
     private void assertPath(Path path, double weight, double distance, long time, IntArrayList nodes) {
-        assertTrue("expected a path, but no path was found", path.isFound());
-        assertEquals("unexpected weight", weight, path.getWeight(), 1.e-6);
-        assertEquals("unexpected distance", distance, path.getDistance(), 1.e-6);
-        assertEquals("unexpected time", time, path.getTime());
-        assertEquals("unexpected nodes", nodes, path.calcNodes());
+        assertTrue(path.isFound(), "expected a path, but no path was found");
+        assertEquals(nodes, path.calcNodes(), "unexpected nodes");
+        assertEquals(weight, path.getWeight(), 1.e-6, "unexpected weight");
+        assertEquals(distance, path.getDistance(), 1.e-6, "unexpected distance");
+        assertEquals(time, path.getTime(), "unexpected time");
     }
 
     private void assertNotFound(Path path) {
-        assertFalse("expected no path, but a path was found", path.isFound());
+        assertFalse(path.isFound(), "expected no path, but a path was found");
         assertEquals(Double.MAX_VALUE, path.getWeight(), 1.e-6);
         // if no path is found dist&time are zero, see core #1566
         assertEquals(0, path.getDistance(), 1.e-6);
         assertEquals(0, path.getTime());
         assertEquals(nodes(), path.calcNodes());
+    }
+
+    private void setRestriction(int fromNode, int node, int toNode) {
+        setTurnCost(fromNode, node, toNode, Double.POSITIVE_INFINITY);
+    }
+
+    private void setTurnCost(int fromNode, int node, int toNode, double turnCost) {
+        turnCostStorage.set(turnCostEnc, GHUtility.getEdge(graph, fromNode, node).getEdge(), node, GHUtility.getEdge(graph, node, toNode).getEdge(), turnCost);
     }
 }

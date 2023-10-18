@@ -21,12 +21,12 @@ import java.util.Objects;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
-import static com.graphhopper.util.Parameters.CurbSides.*;
+import static com.graphhopper.util.Parameters.Curbsides.*;
 import static com.graphhopper.util.Parameters.Routing.CURBSIDE;
 
 public class DirectionResolverResult {
-    private static DirectionResolverResult UNRESTRICTED = new DirectionResolverResult(ANY_EDGE, ANY_EDGE, ANY_EDGE, ANY_EDGE);
-    private static DirectionResolverResult IMPOSSIBLE = new DirectionResolverResult(NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE);
+    private static final DirectionResolverResult UNRESTRICTED = new DirectionResolverResult(ANY_EDGE, ANY_EDGE, ANY_EDGE, ANY_EDGE);
+    private static final DirectionResolverResult IMPOSSIBLE = new DirectionResolverResult(NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE);
 
     private final int inEdgeRight;
     private final int outEdgeRight;
@@ -60,11 +60,11 @@ public class DirectionResolverResult {
         this.outEdgeLeft = outEdgeLeft;
     }
 
-    public static int getOutEdge(DirectionResolverResult directionResolverResult, String curbSide) {
-        if (curbSide.trim().isEmpty()) {
-            curbSide = CURBSIDE_ANY;
+    public static int getOutEdge(DirectionResolverResult directionResolverResult, String curbside) {
+        if (curbside.trim().isEmpty()) {
+            curbside = CURBSIDE_ANY;
         }
-        switch (curbSide) {
+        switch (curbside) {
             case CURBSIDE_RIGHT:
                 return directionResolverResult.getOutEdgeRight();
             case CURBSIDE_LEFT:
@@ -72,15 +72,15 @@ public class DirectionResolverResult {
             case CURBSIDE_ANY:
                 return ANY_EDGE;
             default:
-                throw new IllegalArgumentException("Unknown value for " + CURBSIDE + " : '" + curbSide + "'. allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY);
+                throw new IllegalArgumentException("Unknown value for " + CURBSIDE + " : '" + curbside + "'. allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY);
         }
     }
 
-    public static int getInEdge(DirectionResolverResult directionResolverResult, String curbSide) {
-        if (curbSide.trim().isEmpty()) {
-            curbSide = CURBSIDE_ANY;
+    public static int getInEdge(DirectionResolverResult directionResolverResult, String curbside) {
+        if (curbside.trim().isEmpty()) {
+            curbside = CURBSIDE_ANY;
         }
-        switch (curbSide) {
+        switch (curbside) {
             case CURBSIDE_RIGHT:
                 return directionResolverResult.getInEdgeRight();
             case CURBSIDE_LEFT:
@@ -88,7 +88,7 @@ public class DirectionResolverResult {
             case CURBSIDE_ANY:
                 return ANY_EDGE;
             default:
-                throw new IllegalArgumentException("Unknown value for '" + CURBSIDE + " : " + curbSide + "'. allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY);
+                throw new IllegalArgumentException("Unknown value for '" + CURBSIDE + " : " + curbside + "'. allowed: " + CURBSIDE_LEFT + ", " + CURBSIDE_RIGHT + ", " + CURBSIDE_ANY);
         }
     }
 

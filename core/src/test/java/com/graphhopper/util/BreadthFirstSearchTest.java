@@ -21,14 +21,11 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.coll.GHTBitSet;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import org.junit.Before;
-import org.junit.Test;
+import com.graphhopper.storage.BaseGraph;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Peter Karich
@@ -38,7 +35,7 @@ public class BreadthFirstSearchTest {
     GHIntHashSet set = new GHIntHashSet();
     IntArrayList list = new IntArrayList();
 
-    @Before
+    @BeforeEach
     public void setup() {
         counter = 0;
     }
@@ -54,26 +51,26 @@ public class BreadthFirstSearchTest {
             @Override
             public boolean goFurther(int v) {
                 counter++;
-                assertTrue("v " + v + " is already contained in set. iteration:" + counter, !set.contains(v));
+                assertFalse(set.contains(v), "v " + v + " is already contained in set. iteration:" + counter);
                 set.add(v);
                 list.add(v);
                 return super.goFurther(v);
             }
         };
 
-        Graph g = new GraphBuilder(EncodingManager.create("car")).create();
-        g.edge(0, 1, 85, true);
-        g.edge(0, 2, 217, true);
-        g.edge(0, 3, 173, true);
-        g.edge(0, 5, 173, true);
-        g.edge(1, 6, 75, true);
-        g.edge(2, 7, 51, true);
-        g.edge(3, 8, 23, true);
-        g.edge(4, 8, 793, true);
-        g.edge(8, 10, 343, true);
-        g.edge(6, 9, 72, true);
-        g.edge(9, 10, 8, true);
-        g.edge(5, 10, 1, true);
+        BaseGraph g = new BaseGraph.Builder(1).create();
+        g.edge(0, 1);
+        g.edge(0, 2);
+        g.edge(0, 3);
+        g.edge(0, 5);
+        g.edge(1, 6);
+        g.edge(2, 7);
+        g.edge(3, 8);
+        g.edge(4, 8);
+        g.edge(8, 10);
+        g.edge(6, 9);
+        g.edge(9, 10);
+        g.edge(5, 10);
 
         bfs.start(g.createEdgeExplorer(), 0);
 
@@ -93,20 +90,20 @@ public class BreadthFirstSearchTest {
             @Override
             public boolean goFurther(int v) {
                 counter++;
-                assertTrue("v " + v + " is already contained in set. iteration:" + counter, !set.contains(v));
+                assertFalse(set.contains(v), "v " + v + " is already contained in set. iteration:" + counter);
                 set.add(v);
                 list.add(v);
                 return super.goFurther(v);
             }
         };
 
-        Graph g = new GraphBuilder(EncodingManager.create("car")).create();
-        g.edge(1, 2, 1, false);
-        g.edge(2, 3, 1, false);
-        g.edge(3, 4, 1, false);
-        g.edge(1, 5, 1, false);
-        g.edge(5, 6, 1, false);
-        g.edge(6, 4, 1, false);
+        BaseGraph g = new BaseGraph.Builder(1).create();
+        g.edge(1, 2);
+        g.edge(2, 3);
+        g.edge(3, 4);
+        g.edge(1, 5);
+        g.edge(5, 6);
+        g.edge(6, 4);
 
         bfs.start(g.createEdgeExplorer(), 1);
 

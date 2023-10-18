@@ -26,13 +26,15 @@ public class Trip {
 
     public static class Segment {
 
+        public final String feed_id;
         private final String route;
         private long startTime;
         private String originId;
         private String destinationId;
         private Set<String> zones;
 
-        public Segment(String route, long startTime, String originId, String destinationId, Set<String> zones) {
+        public Segment(String feed_id, String route, long startTime, String originId, String destinationId, Set<String> zones) {
+            this.feed_id = feed_id;
             this.route = route;
             this.startTime = startTime;
             this.originId = originId;

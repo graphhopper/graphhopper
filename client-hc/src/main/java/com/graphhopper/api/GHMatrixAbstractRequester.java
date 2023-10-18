@@ -1,45 +1,67 @@
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 
 import java.io.IOException;
-import java.net.URLEncoder;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.api.GraphHopperMatrixWeb.*;
+import static com.graphhopper.api.GraphHopperWeb.X_GH_CLIENT_VERSION;
 
 /**
  * @author Peter Karich
  */
 public abstract class GHMatrixAbstractRequester {
 
+    static final String MATRIX_URL = "https://graphhopper.com/api/1/matrix";
     protected final ObjectMapper objectMapper;
-    protected final Set<String> ignoreSet = new HashSet<>(10);
     protected final String serviceUrl;
+    private final Set<String> ignoreSet = new HashSet<>();
     private OkHttpClient downloader;
+    int maxUnzippedLength = 1000;
 
     public GHMatrixAbstractRequester() {
-        this("https://graphhopper.com/api/1/matrix");
+        this(MATRIX_URL);
     }
 
     public GHMatrixAbstractRequester(String serviceUrl) {
         this(serviceUrl, new OkHttpClient.Builder().
                 connectTimeout(5, TimeUnit.SECONDS).
-                readTimeout(5, TimeUnit.SECONDS).build());
+                readTimeout(5, TimeUnit.SECONDS).build(), true);
     }
 
-    public GHMatrixAbstractRequester(String serviceUrl, OkHttpClient downloader) {
+    public GHMatrixAbstractRequester(String serviceUrl, OkHttpClient client, boolean doRequestGzip) {
         if (serviceUrl.endsWith("/")) {
             serviceUrl = serviceUrl.substring(0, serviceUrl.length() - 1);
         }
-        this.downloader = downloader;
+        this.downloader = doRequestGzip ? client.newBuilder().addInterceptor(new GzipRequestInterceptor()).build() : client;
         this.serviceUrl = serviceUrl;
 
         ignoreSet.add("key");
@@ -58,29 +80,60 @@ public abstract class GHMatrixAbstractRequester {
         return downloader;
     }
 
-    protected String getJson(String url) throws IOException {
-        Request okRequest = new Request.Builder().url(url).build();
-        ResponseBody body = null;
-        try {
-            body = downloader.newCall(okRequest).execute().body();
-            return body.string();
-        } finally {
-            Helper.close(body);
+    protected JsonNode createPostRequest(GHMRequest ghRequest) {
+        if (ghRequest.getHints().getObject("profile", null) != null)
+            throw new IllegalArgumentException("use setProfile instead of hint 'profile'");
+        if (ghRequest.getProfile() == null)
+            throw new IllegalArgumentException("profile cannot be empty");
+        if (ghRequest.getHints().getObject("fail_fast", null) != null)
+            throw new IllegalArgumentException("use setFailFast instead of hint 'fail_fast'");
+
+        ObjectNode requestJson = objectMapper.createObjectNode();
+        if (ghRequest.getPoints() != null) {
+            if (ghRequest.getFromPoints() != null)
+                throw new IllegalArgumentException("if points are set do not use setFromPoints");
+            if (ghRequest.getToPoints() != null)
+                throw new IllegalArgumentException("if points are set do not use setToPoints");
+
+            putPoints(requestJson, "points", ghRequest.getPoints());
+            putStrings(requestJson, "point_hints", ghRequest.getPointHints());
+            putStrings(requestJson, "curbsides", ghRequest.getCurbsides());
+        } else {
+            if (ghRequest.getFromPoints() == null)
+                throw new IllegalArgumentException("if points are not set you have to use setFromPoints but was null");
+            if (ghRequest.getToPoints() == null)
+                throw new IllegalArgumentException("if points are not set you have to use setToPoints but was null");
+
+            putPoints(requestJson, "from_points", ghRequest.getFromPoints());
+            putStrings(requestJson, "from_point_hints", ghRequest.getFromPointHints());
+
+            putPoints(requestJson, "to_points", ghRequest.getToPoints());
+            putStrings(requestJson, "to_point_hints", ghRequest.getToPointHints());
+
+            putStrings(requestJson, "from_curbsides", ghRequest.getFromCurbsides());
+            putStrings(requestJson, "to_curbsides", ghRequest.getToCurbsides());
         }
+
+        putStrings(requestJson, "snap_preventions", ghRequest.getSnapPreventions());
+        putStrings(requestJson, "out_arrays", ghRequest.getOutArrays());
+        requestJson.put("fail_fast", ghRequest.getFailFast());
+        requestJson.put("profile", ghRequest.getProfile());
+
+        Map<String, Object> hintsMap = ghRequest.getHints().toMap();
+        for (String hintKey : hintsMap.keySet()) {
+            if (ignoreSet.contains(hintKey))
+                continue;
+
+            Object hint = hintsMap.get(hintKey);
+            if (hint instanceof String)
+                requestJson.put(hintKey, (String) hint);
+            else
+                requestJson.putPOJO(hintKey, hint);
+        }
+        return requestJson;
     }
 
-    protected String postJson(String url, JsonNode data) throws IOException {
-        Request okRequest = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, data.toString())).build();
-        ResponseBody body = null;
-        try {
-            body = downloader.newCall(okRequest).execute().body();
-            return body.string();
-        } finally {
-            Helper.close(body);
-        }
-    }
-
-    protected JsonNode toJSON(String url, String str) {
+    protected JsonNode fromStringToJSON(String url, String str) {
         try {
             return objectMapper.readTree(str);
         } catch (Exception ex) {
@@ -88,7 +141,7 @@ public abstract class GHMatrixAbstractRequester {
         }
     }
 
-    public List<Throwable> readUsableEntityError(List<String> outArraysList, JsonNode solution) {
+    public List<Throwable> readUsableEntityError(Collection<String> outArraysList, JsonNode solution) {
         boolean readWeights = outArraysList.contains("weights") && solution.has("weights");
         boolean readDistances = outArraysList.contains("distances") && solution.has("distances");
         boolean readTimes = outArraysList.contains("times") && solution.has("times");
@@ -98,10 +151,6 @@ public abstract class GHMatrixAbstractRequester {
         } else {
             return Collections.emptyList();
         }
-    }
-
-    public void fillResponseFromJson(MatrixResponse matrixResponse, String responseAsString, boolean failFast) throws IOException {
-        fillResponseFromJson(matrixResponse, objectMapper.reader().readTree(responseAsString), failFast);
     }
 
     /**
@@ -249,35 +298,51 @@ public abstract class GHMatrixAbstractRequester {
 
     protected String buildURLNoHints(String path, GHMRequest ghRequest) {
         // allow per request service URLs
-        String tmpServiceURL = ghRequest.getHints().get(SERVICE_URL, serviceUrl);
-        String url = tmpServiceURL;
-        url += path + "?";
-
-        String key = ghRequest.getHints().get(KEY, "");
+        String url = ghRequest.getHints().getString(SERVICE_URL, serviceUrl) + path + "?";
+        String key = ghRequest.getHints().getString(KEY, "");
         if (!Helper.isEmpty(key)) {
             url += "key=" + key;
         }
         return url;
     }
 
-    protected String buildURL(String path, GHMRequest ghRequest) {
-        String url = buildURLNoHints(path, ghRequest);
-        for (Map.Entry<String, String> entry : ghRequest.getHints().toMap().entrySet()) {
-            if (ignoreSet.contains(entry.getKey())) {
-                continue;
-            }
-
-            url += "&" + encode(entry.getKey()) + "=" + encode(entry.getValue());
-        }
-        return url;
-    }
-
-    protected static String encode(String str) {
+    protected String postJson(String url, JsonNode data) throws IOException {
+        String stringData = data.toString();
+        Request.Builder builder = new Request.Builder().url(url).post(RequestBody.create(MT_JSON, stringData));
+        builder.header(X_GH_CLIENT_VERSION, Version.GH_VERSION_FROM_MAVEN);
+        // force avoiding our GzipRequestInterceptor for smaller requests ~30 locations
+        if (stringData.length() < maxUnzippedLength)
+            builder.header("Content-Encoding", "identity");
+        Request okRequest = builder.build();
+        ResponseBody body = null;
         try {
-            return URLEncoder.encode(str, "UTF-8");
-        } catch (Exception ex) {
-            return str;
+            body = getDownloader().newCall(okRequest).execute().body();
+            return body.string();
+        } finally {
+            Helper.close(body);
         }
     }
 
+    private void putStrings(ObjectNode requestJson, String name, Collection<String> stringList) {
+        if (stringList == null || stringList.isEmpty())
+            return;
+        ArrayNode outList = objectMapper.createArrayNode();
+        for (String str : stringList) {
+            outList.add(str);
+        }
+        requestJson.putArray(name).addAll(outList);
+    }
+
+    private void putPoints(ObjectNode requestJson, String name, List<GHPoint> pList) {
+        if (pList.isEmpty())
+            return;
+        ArrayNode outList = objectMapper.createArrayNode();
+        for (GHPoint p : pList) {
+            ArrayNode entry = objectMapper.createArrayNode();
+            entry.add(p.lon);
+            entry.add(p.lat);
+            outList.add(entry);
+        }
+        requestJson.putArray(name).addAll(outList);
+    }
 }

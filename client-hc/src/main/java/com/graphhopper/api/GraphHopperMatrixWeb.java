@@ -4,23 +4,22 @@ import com.graphhopper.util.Helper;
 import okhttp3.MediaType;
 
 /**
- *
  * @author Peter Karich
  */
 public class GraphHopperMatrixWeb {
 
-    public static final String SERVICE_URL = "service_url";
+    static final String SERVICE_URL = "service_url";
     public static final String KEY = "key";
-    public static final MediaType MT_JSON = MediaType.parse("application/json; charset=utf-8");
+    static final MediaType MT_JSON = MediaType.parse("application/json; charset=utf-8");
     private final GHMatrixAbstractRequester requester;
     private String key;
 
     public GraphHopperMatrixWeb() {
-        this(new GHMatrixBatchRequester());
+        this(new GHMatrixSyncRequester());
     }
 
     public GraphHopperMatrixWeb(String serviceUrl) {
-        this(new GHMatrixBatchRequester(serviceUrl));
+        this(new GHMatrixSyncRequester(serviceUrl));
     }
 
     public GraphHopperMatrixWeb(GHMatrixAbstractRequester requester) {
@@ -37,11 +36,8 @@ public class GraphHopperMatrixWeb {
     }
 
     public MatrixResponse route(GHMRequest request) {
-        if (!Helper.isEmpty(key)) {
-            request.getHints().put(KEY, key);
-        }
-
-        request.compactPointHints();
+        if (!Helper.isEmpty(key))
+            request.getHints().putObject(KEY, key);
         return requester.route(request);
     }
 }

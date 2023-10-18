@@ -18,72 +18,192 @@
 
 package com.graphhopper;
 
-import com.graphhopper.reader.gtfs.*;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FootFlagEncoder;
-import com.graphhopper.storage.GHDirectory;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.config.Profile;
+import com.graphhopper.gtfs.*;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.shapes.GHPoint;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import com.graphhopper.util.TranslationMap;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKTReader;
 
 import java.io.File;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
-import static com.graphhopper.reader.gtfs.GtfsHelper.time;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static com.graphhopper.gtfs.GtfsHelper.time;
+import static com.graphhopper.util.Parameters.Details.EDGE_KEY;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 public class AnotherAgencyIT {
 
     private static final String GRAPH_LOC = "target/AnotherAgencyIT";
-    private static GraphHopperGtfs graphHopper;
+    private static PtRouter ptRouter;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
-    private static GraphHopperStorage graphHopperStorage;
-    private static LocationIndex locationIndex;
-    private static GtfsStorage gtfsStorage;
+    private static GraphHopperGtfs graphHopperGtfs;
 
-    @BeforeClass
+    @BeforeAll
     public static void init() {
+        GraphHopperConfig ghConfig = new GraphHopperConfig();
+        ghConfig.putObject("graph.location", GRAPH_LOC);
+        ghConfig.putObject("import.osm.ignored_highways", "");
+        ghConfig.putObject("datareader.file", "files/beatty.osm");
+        ghConfig.putObject("gtfs.file", "files/sample-feed,files/another-sample-feed");
+        ghConfig.setProfiles(Arrays.asList(
+                new Profile("foot").setVehicle("foot"),
+                new Profile("car").setVehicle("car")));
         Helper.removeDir(new File(GRAPH_LOC));
-        final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
-        EncodingManager encodingManager = EncodingManager.create(Arrays.asList(ptFlagEncoder, new FootFlagEncoder()), 8);
-        GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
-        gtfsStorage = GraphHopperGtfs.createGtfsStorage();
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, Arrays.asList("files/sample-feed.zip", "files/another-sample-feed.zip"), Collections.emptyList());
-        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
-        graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
+        graphHopperGtfs = new GraphHopperGtfs(ghConfig);
+        graphHopperGtfs.init(ghConfig);
+        graphHopperGtfs.importOrLoad();
+        ptRouter = new PtRouterImpl.Factory(ghConfig, new TranslationMap().doImport(), graphHopperGtfs.getBaseGraph(), graphHopperGtfs.getEncodingManager(), graphHopperGtfs.getLocationIndex(), graphHopperGtfs.getGtfsStorage())
                 .createWithoutRealtimeFeed();
     }
 
-    @AfterClass
+    @AfterAll
     public static void close() {
-        graphHopperStorage.close();
-        locationIndex.close();
+        graphHopperGtfs.close();
     }
 
     @Test
     public void testRoute1() {
-        final double FROM_LAT = 36.9010208, FROM_LON = -116.7659466;
-        final double TO_LAT =  36.9059371, TO_LON = -116.7618071;
         Request ghRequest = new Request(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
+                Arrays.asList(
+                        new GHStationLocation("JUSTICE_COURT"),
+                        new GHStationLocation("MUSEUM")
+                ),
+                LocalDateTime.of(2007, 1, 1, 8, 30, 0).atZone(zoneId).toInstant()
         );
-        ghRequest.setEarliestDepartureTime(LocalDateTime.of(2007,1,1,9,0,0).atZone(zoneId).toInstant());
         ghRequest.setIgnoreTransfers(true);
-        GHResponse route = graphHopper.route(ghRequest);
+        ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
+        GHResponse route = ptRouter.route(ghRequest);
 
         assertFalse(route.hasErrors());
         assertEquals(1, route.getAll().size());
-        assertEquals("Expected travel time == scheduled arrival time", time(1, 0), route.getBest().getTime(), 0.1);
+        ResponsePath transitSolution = route.getBest();
+        assertEquals(time(1, 30), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
+    }
+
+    @Test
+    public void testRoute2() {
+        Request ghRequest = new Request(
+                Arrays.asList(
+                        new GHStationLocation("JUSTICE_COURT"),
+                        new GHStationLocation("AIRPORT")
+                ),
+                LocalDateTime.of(2007, 1, 1, 8, 30, 0).atZone(zoneId).toInstant()
+        );
+        ghRequest.setIgnoreTransfers(true);
+        ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
+        GHResponse route = ptRouter.route(ghRequest);
+
+        assertFalse(route.hasErrors());
+        assertEquals(1, route.getAll().size());
+        ResponsePath transitSolution = route.getBest();
+        assertEquals(2, transitSolution.getLegs().size());
+        Trip.PtLeg ptLeg1 = (Trip.PtLeg) transitSolution.getLegs().get(0);
+        assertEquals("COURT2MUSEUM", ptLeg1.route_id);
+        assertEquals("MUSEUM1", ptLeg1.trip_id);
+        assertEquals("JUSTICE_COURT", ptLeg1.stops.get(0).stop_id);
+        assertEquals("MUSEUM", ptLeg1.stops.get(1).stop_id);
+
+        Trip.PtLeg ptLeg2 = (Trip.PtLeg) transitSolution.getLegs().get(1);
+        assertEquals("MUSEUM2AIRPORT", ptLeg2.route_id);
+        assertEquals("MUSEUMAIRPORT1", ptLeg2.trip_id);
+        assertEquals("NEXT_TO_MUSEUM", ptLeg2.stops.get(0).stop_id);
+        assertEquals("AIRPORT", ptLeg2.stops.get(1).stop_id);
+
+        assertEquals(time(2, 10), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
+    }
+
+    @Test
+    public void testTransferBetweenFeeds() {
+        Request ghRequest = new Request(
+                Arrays.asList(
+                        new GHStationLocation("NEXT_TO_MUSEUM"),
+                        new GHStationLocation("BULLFROG")
+                ),
+                LocalDateTime.of(2007, 1, 1, 10, 0, 0).atZone(zoneId).toInstant()
+        );
+        ghRequest.setIgnoreTransfers(true);
+        ghRequest.setWalkSpeedKmH(0.005); // Prevent walk solution
+        ResponsePath transitSolution = ptRouter.route(ghRequest).getBest();
+        List<Trip.Leg> ptLegs = transitSolution.getLegs().stream().filter(l -> l instanceof Trip.PtLeg).collect(Collectors.toList());
+        assertEquals("NEXT_TO_MUSEUM,AIRPORT", ((Trip.PtLeg) ptLegs.get(0)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        assertEquals("BEATTY_AIRPORT,BULLFROG", ((Trip.PtLeg) ptLegs.get(1)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        Instant arrivalTime = Instant.ofEpochMilli(transitSolution.getLegs().get(1).getArrivalTime().getTime());
+        assertEquals("14:10", LocalDateTime.ofInstant(arrivalTime, zoneId).toLocalTime().toString());
+        assertEquals(15_000_000, Duration.between(ghRequest.getEarliestDepartureTime(), arrivalTime).toMillis());
+        assertEquals(1.5E7, transitSolution.getRouteWeight());
+    }
+
+    @Test
+    public void testWalkTransferBetweenFeeds() {
+        Request ghRequest = new Request(
+                Arrays.asList(
+                        new GHStationLocation("JUSTICE_COURT"),
+                        new GHStationLocation("DADAN")
+                ),
+                LocalDateTime.of(2007, 1, 1, 9, 0, 0).atZone(zoneId).toInstant()
+        );
+        ghRequest.setIgnoreTransfers(true);
+        ghRequest.setWalkSpeedKmH(0.5); // Prevent walk solution
+        ghRequest.setPathDetails(Arrays.asList(EDGE_KEY));
+        GHResponse route = ptRouter.route(ghRequest);
+
+        assertFalse(route.hasErrors());
+        assertEquals(1, route.getAll().size());
+
+        ResponsePath transitSolution = route.getBest();
+        assertEquals(4500000L, transitSolution.getTime());
+        assertEquals(4500000.0, transitSolution.getRouteWeight());
+        assertEquals(time(1, 15), transitSolution.getTime(), "Expected total travel time == scheduled travel time + wait time");
+
+        assertEquals("JUSTICE_COURT,MUSEUM", ((Trip.PtLeg) transitSolution.getLegs().get(0)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+        Instant walkDepartureTime = Instant.ofEpochMilli(transitSolution.getLegs().get(1).getDepartureTime().getTime());
+        assertEquals("10:00", LocalDateTime.ofInstant(walkDepartureTime, zoneId).toLocalTime().toString());
+        assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), transitSolution.getLegs().get(1).geometry);
+        Instant walkArrivalTime = Instant.ofEpochMilli(transitSolution.getLegs().get(1).getArrivalTime().getTime());
+        assertEquals("10:08:06.670", LocalDateTime.ofInstant(walkArrivalTime, zoneId).toLocalTime().toString());
+        assertEquals("EMSI,DADAN", ((Trip.PtLeg) transitSolution.getLegs().get(2)).stops.stream().map(s -> s.stop_id).collect(Collectors.joining(",")));
+    }
+
+    @Test
+    public void testMuseumToEmsi() {
+        Request ghRequest = new Request(
+                Arrays.asList(
+                        new GHStationLocation("MUSEUM"),
+                        new GHStationLocation("EMSI")
+                ),
+                LocalDateTime.of(2007, 1, 1, 9, 0, 0).atZone(zoneId).toInstant()
+        );
+        ghRequest.setWalkSpeedKmH(0.5);
+        ghRequest.setIgnoreTransfers(true);
+        GHResponse route = ptRouter.route(ghRequest);
+        ResponsePath walkRoute = route.getBest();
+        assertEquals(1, walkRoute.getLegs().size());
+        assertEquals(486670, walkRoute.getTime()); // < 10 min, so the transfer in test above works ^^
+        assertEquals(readWktLineString("LINESTRING (-116.76164 36.906093, -116.761812 36.905928, -116.76217 36.905659)"), walkRoute.getLegs().get(0).geometry);
+        assertFalse(route.hasErrors());
+    }
+
+    private LineString readWktLineString(String wkt) {
+        WKTReader wktReader = new WKTReader();
+        LineString expectedGeometry = null;
+        try {
+            expectedGeometry = (LineString) wktReader.read(wkt);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return expectedGeometry;
     }
 
 }

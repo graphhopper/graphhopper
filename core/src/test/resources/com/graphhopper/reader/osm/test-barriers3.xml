@@ -1,0 +1,23 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm">
+    <node id="10" lat="51" lon="9.4" version="1"/>
+    <node id="20" lat="52" lon="9.4" version="1">
+        <tag k="ford" v="yes"/>
+    </node>
+    <node id="30" lat="53" lon="9.4" version="1"/>
+    <node id="40" lat="54" lon="9.4" version="1">
+        <tag k="ford" v="yes"/>
+    </node>
+    <node id="50" lat="55" lon="9.4" version="1"/>
+    <!--    b       b
+        10-20-30-40-50
+        -->
+    <way id="10" version="1">
+        <nd ref="10"/>
+        <nd ref="20"/>
+        <nd ref="30"/>
+        <nd ref="40"/>
+        <nd ref="50"/>
+        <tag k="highway" v="residential"/>
+    </way>
+</osm>

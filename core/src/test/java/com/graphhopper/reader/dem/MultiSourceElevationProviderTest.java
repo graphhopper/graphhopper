@@ -17,11 +17,11 @@
  */
 package com.graphhopper.reader.dem;
 
-import org.junit.After;
-import org.junit.Ignore;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Robin Boldt
@@ -29,7 +29,7 @@ import static org.junit.Assert.assertEquals;
 public class MultiSourceElevationProviderTest {
     MultiSourceElevationProvider instance;
 
-    @After
+    @AfterEach
     public void tearDown() {
         instance.release();
     }
@@ -60,7 +60,8 @@ public class MultiSourceElevationProviderTest {
     Enabling this test requires you to change the pom.xml and increase the memory limit for running tests.
     Change to: <argLine>-Xmx500m -Xms500m</argLine>
     */
-    @Ignore
+    @Disabled
+    @Test
     public void testGetEle() {
         instance = new MultiSourceElevationProvider();
         double precision = .1;

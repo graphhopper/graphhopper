@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.PointList;
 
@@ -28,11 +28,11 @@ import com.graphhopper.util.PointList;
  */
 public class NodeElevationInterpolator {
 
-    private final GraphHopperStorage storage;
+    private final BaseGraph graph;
     private final ElevationInterpolator elevationInterpolator = new ElevationInterpolator();
 
-    public NodeElevationInterpolator(GraphHopperStorage storage) {
-        this.storage = storage;
+    public NodeElevationInterpolator(BaseGraph graph) {
+        this.graph = graph;
     }
 
     public void interpolateElevationsOfInnerNodes(int[] outerNodeIds, int[] innerNodeIds) {
@@ -51,7 +51,7 @@ public class NodeElevationInterpolator {
     }
 
     private void interpolateElevationsOfInnerNodesForOneOuterNode(int outerNodeId, int[] innerNodeIds) {
-        NodeAccess nodeAccess = storage.getNodeAccess();
+        NodeAccess nodeAccess = graph.getNodeAccess();
         double ele = nodeAccess.getEle(outerNodeId);
         for (int innerNodeId : innerNodeIds) {
             double lat = nodeAccess.getLat(innerNodeId);
@@ -62,7 +62,7 @@ public class NodeElevationInterpolator {
 
     private void interpolateElevationsOfInnerNodesForTwoOuterNodes(int firstOuterNodeId,
                                                                    int secondOuterNodeId, int[] innerNodeIds) {
-        final NodeAccess nodeAccess = storage.getNodeAccess();
+        final NodeAccess nodeAccess = graph.getNodeAccess();
         double lat0 = nodeAccess.getLat(firstOuterNodeId);
         double lon0 = nodeAccess.getLon(firstOuterNodeId);
         double ele0 = nodeAccess.getEle(firstOuterNodeId);
@@ -82,7 +82,7 @@ public class NodeElevationInterpolator {
 
     private void interpolateElevationsOfInnerNodesForThreeOuterNodes(int firstOuterNodeId, int secondOuterNodeId,
                                                                      int thirdOuterNodeId, int[] innerNodeIds) {
-        NodeAccess nodeAccess = storage.getNodeAccess();
+        NodeAccess nodeAccess = graph.getNodeAccess();
         double lat0 = nodeAccess.getLat(firstOuterNodeId);
         double lon0 = nodeAccess.getLon(firstOuterNodeId);
         double ele0 = nodeAccess.getEle(firstOuterNodeId);
@@ -106,7 +106,7 @@ public class NodeElevationInterpolator {
 
     private void interpolateElevationsOfInnerNodesForNOuterNodes(int[] outerNodeIds,
                                                                  int[] innerNodeIds) {
-        NodeAccess nodeAccess = storage.getNodeAccess();
+        NodeAccess nodeAccess = graph.getNodeAccess();
         PointList pointList = new PointList(outerNodeIds.length, true);
         for (int outerNodeId : outerNodeIds) {
             pointList.add(nodeAccess.getLat(outerNodeId), nodeAccess.getLon(outerNodeId),

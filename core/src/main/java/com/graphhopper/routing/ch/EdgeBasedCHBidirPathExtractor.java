@@ -18,26 +18,26 @@
 
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.BidirPathExtractor;
-import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.DefaultBidirPathExtractor;
+import com.graphhopper.routing.SPTEntry;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.storage.ShortcutUnpacker;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.storage.RoutingCHGraph;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
 
 /**
  * @author easbar
  */
-public class EdgeBasedCHBidirPathExtractor extends BidirPathExtractor {
+public class EdgeBasedCHBidirPathExtractor extends DefaultBidirPathExtractor {
+    private final RoutingCHGraph routingGraph;
     private final ShortcutUnpacker shortcutUnpacker;
+    private final Weighting weighting;
 
-    public EdgeBasedCHBidirPathExtractor(Graph routingGraph, Graph baseGraph, Weighting weighting) {
-        super(baseGraph, weighting);
-        shortcutUnpacker = createShortcutUnpacker(routingGraph, weighting);
-        if (!(weighting instanceof TurnWeighting)) {
-            throw new IllegalArgumentException("Need a TurnWeighting for edge-based CH");
-        }
+    public EdgeBasedCHBidirPathExtractor(RoutingCHGraph routingGraph) {
+        super(routingGraph.getBaseGraph(), null);
+        this.routingGraph = routingGraph;
+        shortcutUnpacker = createShortcutUnpacker();
+        weighting = routingGraph.getBaseGraph().wrapWeighting(routingGraph.getWeighting());
     }
 
     @Override
@@ -49,14 +49,20 @@ public class EdgeBasedCHBidirPathExtractor extends BidirPathExtractor {
         }
     }
 
-    private ShortcutUnpacker createShortcutUnpacker(Graph routingGraph, final Weighting weighting) {
-        return new ShortcutUnpacker(routingGraph, new ShortcutUnpacker.Visitor() {
-            @Override
-            public void visit(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-                path.addDistance(edge.getDistance());
-                path.addTime(weighting.calcMillis(edge, reverse, prevOrNextEdgeId));
-                path.addEdge(edge.getEdge());
-            }
+    @Override
+    protected void onMeetingPoint(int inEdge, int viaNode, int outEdge) {
+        if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge)) {
+            return;
+        }
+        // its important to use the wrapped weighting here, otherwise turn costs involving virtual edges will be wrong
+        path.addTime(weighting.calcTurnMillis(inEdge, viaNode, outEdge));
+    }
+
+    private ShortcutUnpacker createShortcutUnpacker() {
+        return new ShortcutUnpacker(routingGraph, (edge, reverse, prevOrNextEdgeId) -> {
+            path.addDistance(edge.getDistance());
+            path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edge, reverse, prevOrNextEdgeId));
+            path.addEdge(edge.getEdge());
         }, true);
     }
 

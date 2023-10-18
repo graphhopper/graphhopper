@@ -1,103 +1,82 @@
 package com.graphhopper.api;
 
+import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.GHRequest;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.GHPoint;
 
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Peter Karich
  */
-public class GHMRequest extends GHRequest {
-
+public class GHMRequest {
+    private String profile;
+    private List<GHPoint> points;
     private List<GHPoint> fromPoints;
     private List<GHPoint> toPoints;
+
+    private List<String> pointHints;
     private List<String> fromPointHints;
     private List<String> toPointHints;
-    private int called = 0;
-    boolean identicalLists = true;
-    private final Set<String> outArrays = new HashSet<>(5);
+
+    private List<String> curbsides;
+    private List<String> fromCurbsides;
+    private List<String> toCurbsides;
+
+    private List<String> snapPreventions;
+    private final PMap hints = new PMap();
+    private List<String> outArrays = Collections.EMPTY_LIST;
     private boolean failFast = true;
 
-    public GHMRequest() {
-        this(10);
-    }
-
-    public GHMRequest(int size) {
-        super(0);
-        fromPoints = new ArrayList<>(size);
-        toPoints = new ArrayList<>(size);
-        fromPointHints = new ArrayList<>(size);
-        toPointHints = new ArrayList<>(size);
-    }
-
-    /**
-     * Currently: weights, times, distances and paths possible. Where paths is
-     * the most expensive to calculate and limited to maximum 10*10 points (via
-     * API end point).
-     */
-    public GHMRequest addOutArray(String type) {
-        outArrays.add(type);
+    public GHMRequest setProfile(String profile) {
+        this.profile = profile;
         return this;
     }
 
-    public Set<String> getOutArrays() {
-        return outArrays;
+    public String getProfile() {
+        return profile;
     }
 
-    public GHMRequest addAllPoints(List<GHPoint> points) {
-        for (GHPoint p : points) {
-            addPoint(p);
-        }
+    public GHMRequest setPoints(List<GHPoint> points) {
+        this.points = points;
         return this;
     }
 
-    @Override
     public List<GHPoint> getPoints() {
-        throw new IllegalStateException("use getFromPoints or getToPoints");
+        return points;
+    }
+
+    public GHMRequest setFromPoints(List<GHPoint> fromPoints) {
+        this.fromPoints = fromPoints;
+        return this;
     }
 
     public List<GHPoint> getFromPoints() {
         return fromPoints;
     }
 
+    public GHMRequest setToPoints(List<GHPoint> toPoints) {
+        this.toPoints = toPoints;
+        return this;
+    }
+
     public List<GHPoint> getToPoints() {
         return toPoints;
     }
 
-    /**
-     * This methods adds the coordinate as 'from' and 'to' to the request.
-     */
-    @Override
-    public GHMRequest addPoint(GHPoint point) {
-        fromPoints.add(point);
-        toPoints.add(point);
+    public GHMRequest setPointHints(List<String> pointHints) {
+        this.pointHints = pointHints;
         return this;
     }
 
-    public GHMRequest addFromPoint(GHPoint point) {
-        fromPoints.add(point);
-        identicalLists = false;
-        return this;
+    public List<String> getPointHints() {
+        return pointHints;
     }
 
-    public GHMRequest setFromPoints(List<GHPoint> points) {
-        fromPoints = points;
-        identicalLists = false;
-        return this;
-    }
-
-    public GHRequest addFromPointHint(String pointHint) {
-        this.fromPointHints.add(pointHint);
-        return this;
-    }
-
-    public GHRequest setFromPointHints(List<String> pointHints) {
-        this.fromPointHints = pointHints;
+    public GHMRequest setFromPointHints(List<String> fromPointHints) {
+        this.fromPointHints = fromPointHints;
         return this;
     }
 
@@ -105,25 +84,8 @@ public class GHMRequest extends GHRequest {
         return fromPointHints;
     }
 
-    public GHMRequest addToPoint(GHPoint point) {
-        toPoints.add(point);
-        identicalLists = false;
-        return this;
-    }
-
-    public GHMRequest setToPoints(List<GHPoint> points) {
-        toPoints = points;
-        identicalLists = false;
-        return this;
-    }
-
-    public GHRequest addToPointHint(String pointHint) {
-        this.toPointHints.add(pointHint);
-        return this;
-    }
-
-    public GHRequest setToPointHints(List<String> pointHints) {
-        this.toPointHints = pointHints;
+    public GHMRequest setToPointHints(List<String> toPointHints) {
+        this.toPointHints = toPointHints;
         return this;
     }
 
@@ -131,22 +93,63 @@ public class GHMRequest extends GHRequest {
         return toPointHints;
     }
 
-    @Override
-    public GHRequest setPointHints(List<String> pointHints) {
-        this.fromPointHints = pointHints;
-        this.toPointHints = pointHints;
+    public GHMRequest setCurbsides(List<String> curbsides) {
+        this.curbsides = curbsides;
         return this;
     }
 
-    @Override
-    public List<String> getPointHints() {
-        throw new IllegalStateException("Use getFromPointHints or getToPointHints");
+    public List<String> getCurbsides() {
+        return curbsides;
     }
 
-    @Override
-    public boolean hasPointHints() {
-        return this.fromPointHints.size() == this.fromPoints.size() && !fromPoints.isEmpty() &&
-                this.toPointHints.size() == this.toPoints.size() && !toPoints.isEmpty();
+    public GHMRequest setFromCurbsides(List<String> fromCurbsides) {
+        this.fromCurbsides = fromCurbsides;
+        return this;
+    }
+
+    public List<String> getFromCurbsides() {
+        return fromCurbsides;
+    }
+
+    public GHMRequest setToCurbsides(List<String> toCurbsides) {
+        this.toCurbsides = toCurbsides;
+        return this;
+    }
+
+    public List<String> getToCurbsides() {
+        return toCurbsides;
+    }
+
+    public GHMRequest setSnapPreventions(List<String> snapPreventions) {
+        this.snapPreventions = snapPreventions;
+        return this;
+    }
+
+    public List<String> getSnapPreventions() {
+        return snapPreventions;
+    }
+
+    // a good trick to serialize unknown properties into the HintsMap
+    @JsonAnySetter
+    public GHMRequest putHint(String fieldName, Object value) {
+        hints.putObject(fieldName, value);
+        return this;
+    }
+
+    public PMap getHints() {
+        return hints;
+    }
+
+    /**
+     * Possible values are 'weights', 'times', 'distances'
+     */
+    public GHMRequest setOutArrays(List<String> outArrays) {
+        this.outArrays = outArrays;
+        return this;
+    }
+
+    public List<String> getOutArrays() {
+        return outArrays;
     }
 
     /**
@@ -161,32 +164,4 @@ public class GHMRequest extends GHRequest {
         return failFast;
     }
 
-    /**
-     * This method makes it more likely that hasPointHints returns true as often point hints are added although the
-     * strings are empty. But because they could be used as placeholder we do not know earlier if they are meaningless.
-     */
-    void compactPointHints() {
-        if (called > 0)
-            throw new IllegalStateException("cannot call more than once");
-        called++;
-        boolean clear = true;
-        for (String hint : toPointHints) {
-            if (!hint.isEmpty()) {
-                clear = false;
-                break;
-            }
-        }
-        if (clear)
-            toPointHints.clear();
-
-        clear = true;
-        for (String hint : fromPointHints) {
-            if (!hint.isEmpty()) {
-                clear = false;
-                break;
-            }
-        }
-        if (clear)
-            fromPointHints.clear();
-    }
 }

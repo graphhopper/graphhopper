@@ -1,15 +1,15 @@
 package com.graphhopper.routing.subnetwork;
 
 import com.graphhopper.storage.RAMDirectory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class SubnetworkStorageTest {
 
     @Test
     public void testSimple() {
-        SubnetworkStorage storage = new SubnetworkStorage(new RAMDirectory(), "fastest");
+        SubnetworkStorage storage = new SubnetworkStorage(new RAMDirectory().create("test"));
         storage.create(2000);
         storage.setSubnetwork(1, 88);
         assertEquals(88, storage.getSubnetwork(1));

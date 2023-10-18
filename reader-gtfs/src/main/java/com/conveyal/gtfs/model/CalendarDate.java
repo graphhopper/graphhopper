@@ -28,13 +28,10 @@ package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.error.DuplicateKeyError;
-import com.google.common.base.Function;
-import com.google.common.collect.Iterators;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.Iterator;
 import java.util.Map;
 
 public class CalendarDate extends Entity implements Cloneable, Serializable {
@@ -90,33 +87,4 @@ public class CalendarDate extends Entity implements Cloneable, Serializable {
         }
     }
 
-    public static class Writer extends Entity.Writer<CalendarDate> {
-        public Writer (GTFSFeed feed) {
-            super(feed, "calendar_dates");
-        }
-
-        @Override
-        protected void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {"service_id", "date", "exception_type"});
-        }
-
-        @Override
-        protected void writeOneRow(CalendarDate d) throws IOException {
-            writeStringField(d.service_id);
-            writeDateField(d.date);
-            writeIntField(d.exception_type);
-            endRecord();
-        }
-
-        @Override
-        protected Iterator<CalendarDate> iterator() {
-            Iterator<Service> serviceIterator = feed.services.values().iterator();
-            return Iterators.concat(Iterators.transform(serviceIterator, new Function<Service, Iterator<CalendarDate>> () {
-                @Override
-                public Iterator<CalendarDate> apply(Service service) {
-                    return service.calendar_dates.values().iterator();
-                }
-            }));
-        }
-    }
 }

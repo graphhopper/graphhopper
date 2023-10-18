@@ -17,15 +17,13 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.coll.MapEntry;
-import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Graph;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import static com.graphhopper.util.Parameters.Details.*;
 
@@ -36,42 +34,67 @@ import static com.graphhopper.util.Parameters.Details.*;
  */
 public class PathDetailsBuilderFactory {
 
-    public List<PathDetailsBuilder> createPathDetailsBuilders(List<String> requestedPathDetails, FlagEncoder encoder, Weighting weighting) {
+    public List<PathDetailsBuilder> createPathDetailsBuilders(List<String> requestedPathDetails, Path path, EncodedValueLookup evl, Weighting weighting, Graph graph) {
         List<PathDetailsBuilder> builders = new ArrayList<>();
 
-        if (requestedPathDetails.contains(AVERAGE_SPEED))
-            builders.add(new DecimalDetails(AVERAGE_SPEED, encoder.getAverageSpeedEnc()));
+        if (requestedPathDetails.contains(LEG_TIME))
+            builders.add(new ConstantDetailsBuilder(LEG_TIME, path.getTime()));
+        if (requestedPathDetails.contains(LEG_DISTANCE))
+            builders.add(new ConstantDetailsBuilder(LEG_DISTANCE, path.getDistance()));
+        if (requestedPathDetails.contains(LEG_WEIGHT))
+            builders.add(new ConstantDetailsBuilder(LEG_WEIGHT, path.getWeight()));
 
         if (requestedPathDetails.contains(STREET_NAME))
-            builders.add(new StreetNameDetails());
+            builders.add(new KVStringDetails(STREET_NAME));
+        if (requestedPathDetails.contains(STREET_REF))
+            builders.add(new KVStringDetails(STREET_REF));
+        if (requestedPathDetails.contains(STREET_DESTINATION))
+            builders.add(new KVStringDetails(STREET_DESTINATION));
+
+        if (requestedPathDetails.contains(AVERAGE_SPEED))
+            builders.add(new AverageSpeedDetails(weighting));
 
         if (requestedPathDetails.contains(EDGE_ID))
             builders.add(new EdgeIdDetails());
 
+        if (requestedPathDetails.contains(EDGE_KEY))
+            builders.add(new EdgeKeyDetails());
+
         if (requestedPathDetails.contains(TIME))
             builders.add(new TimeDetails(weighting));
+
+        if (requestedPathDetails.contains(WEIGHT))
+            builders.add(new WeightDetails(weighting));
 
         if (requestedPathDetails.contains(DISTANCE))
             builders.add(new DistanceDetails());
 
-        for (String key : Arrays.asList(MaxSpeed.KEY, MaxWidth.KEY, MaxHeight.KEY, MaxWeight.KEY,
-                        MaxAxleLoad.KEY, MaxLength.KEY)) {
-            if (requestedPathDetails.contains(key) && encoder.hasEncodedValue(key))
-                builders.add(new DecimalDetails(key, encoder.getDecimalEncodedValue(key)));
+        if (requestedPathDetails.contains(INTERSECTION))
+            builders.add(new IntersectionDetails(graph, weighting));
+
+        for (String pathDetail : requestedPathDetails) {
+            if (!evl.hasEncodedValue(pathDetail)) continue; // path details like "time" won't be found
+
+            EncodedValue ev = evl.getEncodedValue(pathDetail, EncodedValue.class);
+            if (ev instanceof DecimalEncodedValue)
+                builders.add(new DecimalDetails(pathDetail, (DecimalEncodedValue) ev));
+            else if (ev instanceof BooleanEncodedValue)
+                builders.add(new BooleanDetails(pathDetail, (BooleanEncodedValue) ev));
+            else if (ev instanceof EnumEncodedValue)
+                builders.add(new EnumDetails<>(pathDetail, (EnumEncodedValue) ev));
+            else if (ev instanceof StringEncodedValue)
+                builders.add(new StringDetails(pathDetail, (StringEncodedValue) ev));
+            else if (ev instanceof IntEncodedValue)
+                builders.add(new IntDetails(pathDetail, (IntEncodedValue) ev));
+            else throw new IllegalArgumentException("unknown EncodedValue class " + ev.getClass().getName());
         }
 
-        for (Map.Entry entry : Arrays.asList(new MapEntry<>(RoadClass.KEY, RoadClass.class),
-                new MapEntry<>(RoadEnvironment.KEY, RoadEnvironment.class), new MapEntry<>(Surface.KEY, Surface.class),
-                new MapEntry<>(RoadAccess.KEY, RoadAccess.class), new MapEntry<>(Toll.KEY, Toll.class),
-                new MapEntry<>(TrackType.KEY, TrackType.class), new MapEntry<>(Country.KEY, Country.class))) {
-            String key = (String) entry.getKey();
-            if (requestedPathDetails.contains(key) && encoder.hasEncodedValue(key))
-                builders.add(new EnumDetails(key, encoder.getEnumEncodedValue(key, (Class<Enum>) entry.getValue())));
-        }
-
-        if (requestedPathDetails.size() != builders.size()) {
-            throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we could only find " + builders);
-        }
+        if (requestedPathDetails.size() > builders.size()) {
+            ArrayList<String> clonedArr = new ArrayList<>(requestedPathDetails); // avoid changing request parameter
+            for (PathDetailsBuilder pdb : builders) clonedArr.remove(pdb.getName());
+            throw new IllegalArgumentException("Cannot find the path details: " + clonedArr);
+        } else if (requestedPathDetails.size() < builders.size())
+            throw new IllegalStateException("It should not happen that there are more path details added " + builders + " than requested " + requestedPathDetails);
 
         return builders;
     }

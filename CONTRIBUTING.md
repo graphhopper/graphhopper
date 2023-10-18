@@ -25,24 +25,13 @@ appear on your fork its github page afterwards.
 
 ## License Agreement
 
-For contributions like pull requests, bug fixes and translations please read 
-the <a href="https://graphhopper.com/agreements/individual-cla.html">GraphHopper License Agreement</a>, which includes our
-<a href="https://graphhopper.com/agreements/cccoc.html">contributor covenant code of conduct</a>.
-<a href="https://graphhopper.com/#contact">Send us</a> an email with the signed print out of this CLA. Or, if you prefer
-the faster electronically method via signaturit.com, please send us an email with a request for this - 
-keep in mind that this requires storing your Email there.
-
-For companies that would like that their developers work for us, we need an additional [corporate CLA signed](https://graphhopper.com/agreements/corporate-cla.html).
-
-Note, our CLA does not influence your rights on your contribution but it makes sure for others that you agree to the Apache License, Version 2.
-After this you'll appear in the <a href="CONTRIBUTORS.md">contributors list</a> and your pull request can also be discussed technically.
-
-Read more in [this issue](https://github.com/graphhopper/graphhopper/pull/1129#issuecomment-375820168) why it is not that easy to make this CLA-signing process simpler for first-time contributors and maintainers.
+All contributions like pull requests, bug fixes, documentation changes and translations fall under the Apache License and contributors agree to our
+<a href="https://www.graphhopper.com/code-of-conduct/">contributor covenant code of conduct</a>.
 
 ## Code formatting
 
-We use IntelliJ defaults and a very similar configuration for NetBeans defined in the root pom.xml. For eclipse there is this [configuration](https://github.com/graphhopper/graphhopper/files/481920/GraphHopper.Formatter.zip). Also for other IDEs 
-it should be simple to match:
+We use IntelliJ defaults. For eclipse there is this [configuration](https://github.com/graphhopper/graphhopper/files/481920/GraphHopper.Formatter.zip). 
+For other IDEs we use [editorconfig](https://github.com/graphhopper/graphhopper/pull/2791) or the following rules:
 
  * Java indent is 4 spaces
  * Line width is 100 characters

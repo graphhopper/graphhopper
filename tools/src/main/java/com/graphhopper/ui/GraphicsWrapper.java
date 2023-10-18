@@ -32,7 +32,7 @@ import java.awt.geom.Path2D;
  */
 public class GraphicsWrapper {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final NodeAccess na;
+    private NodeAccess na;
     private double scaleX;
     private double scaleY;
     private double offsetX;
@@ -45,6 +45,10 @@ public class GraphicsWrapper {
         scaleX = scaleY = 0.002 * (b.maxLat - b.minLat);
         offsetY = b.maxLat - 90;
         offsetX = -b.minLon;
+    }
+
+    public void setNodeAccess(Graph graph) {
+        this.na = graph.getNodeAccess();
     }
 
     public double getOffsetX() {
@@ -133,8 +137,8 @@ public class GraphicsWrapper {
     }
 
     public void plotNode(Graphics2D g2, NodeAccess na, int loc, Color c, int size, String text) {
-        double lat = na.getLatitude(loc);
-        double lon = na.getLongitude(loc);
+        double lat = na.getLat(loc);
+        double lon = na.getLon(loc);
         if (lat < bounds.minLat || lat > bounds.maxLat || lon < bounds.minLon || lon > bounds.maxLon) {
             return;
         }

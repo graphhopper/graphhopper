@@ -18,39 +18,22 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.Roundabout;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 public class OSMRoundaboutParser implements TagParser {
 
     private final BooleanEncodedValue roundaboutEnc;
-
-    public OSMRoundaboutParser() {
-        this(Roundabout.create());
-    }
 
     public OSMRoundaboutParser(BooleanEncodedValue roundaboutEnc) {
         this.roundaboutEnc = roundaboutEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(roundaboutEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags) {
-        if (!access.isWay())
-            return edgeFlags;
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
         if (isRoundabout)
-            roundaboutEnc.setBool(false, edgeFlags, true);
-        return edgeFlags;
+            roundaboutEnc.setBool(false, edgeId, edgeIntAccess, true);
     }
 }

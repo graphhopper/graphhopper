@@ -17,34 +17,26 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.ch.NodeBasedCHBidirPathExtractor;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.RoutingCHGraph;
 
-public class DijkstraBidirectionCHNoSOD extends DijkstraBidirectionRef {
-    public DijkstraBidirectionCHNoSOD(Graph graph, Weighting weighting) {
-        super(graph, weighting, TraversalMode.NODE_BASED);
+public class DijkstraBidirectionCHNoSOD extends AbstractBidirCHAlgo {
+    public DijkstraBidirectionCHNoSOD(RoutingCHGraph graph) {
+        super(graph, TraversalMode.NODE_BASED);
     }
 
     @Override
-    protected void initCollections(int size) {
-        super.initCollections(Math.min(size, 2000));
+    protected SPTEntry createStartEntry(int node, double weight, boolean reverse) {
+        return new SPTEntry(node, weight);
     }
 
     @Override
-    public boolean finished() {
-        // we need to finish BOTH searches for CH!
-        if (finishedFrom && finishedTo)
-            return true;
-
-        // changed also the final finish condition for CH
-        return currFrom.weight >= bestWeight && currTo.weight >= bestWeight;
+    protected SPTEntry createEntry(int edge, int adjNode, int incEdge, double weight, SPTEntry parent, boolean reverse) {
+        return new SPTEntry(edge, adjNode, weight, parent);
     }
 
-    @Override
-    protected BidirPathExtractor createPathExtractor(Graph graph, Weighting weighting) {
-        return new NodeBasedCHBidirPathExtractor(graph, graph.getBaseGraph(), weighting);
+    protected SPTEntry getParent(SPTEntry entry) {
+        return entry.getParent();
     }
 
     @Override
@@ -52,8 +44,4 @@ public class DijkstraBidirectionCHNoSOD extends DijkstraBidirectionRef {
         return "dijkstrabi|ch|no_sod";
     }
 
-    @Override
-    public String toString() {
-        return getName() + "|" + weighting;
-    }
 }

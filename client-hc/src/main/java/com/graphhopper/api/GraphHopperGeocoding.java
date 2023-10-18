@@ -20,12 +20,18 @@ package com.graphhopper.api;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.api.model.GHGeocodingRequest;
 import com.graphhopper.api.model.GHGeocodingResponse;
-import com.graphhopper.http.WebHelper;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.Response;
 import okhttp3.ResponseBody;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.concurrent.TimeUnit;
+
+import static com.graphhopper.api.GraphHopperWeb.X_GH_CLIENT_VERSION;
+import static com.graphhopper.api.Version.GH_VERSION_FROM_MAVEN;
 
 /**
  * Client implementation for the GraphHopper Directions API Geocoding. For details on how to use it, please consult
@@ -72,13 +78,18 @@ public class GraphHopperGeocoding {
      */
     public GHGeocodingResponse geocode(GHGeocodingRequest request) {
         String url = buildUrl(request);
-
         try {
-            Request okRequest = new Request.Builder().url(url).build();
-            ResponseBody rspBody = getClientForRequest(request).newCall(okRequest).execute().body();
-            return objectMapper.readValue(rspBody.bytes(), GHGeocodingResponse.class);
-        } catch (Exception ex) {
-            throw new RuntimeException("Problem performing geocoding for " + url + ": " + ex.getMessage(), ex);
+            Request okRequest = new Request.Builder().url(url)
+                    .header(X_GH_CLIENT_VERSION, GH_VERSION_FROM_MAVEN)
+                    .build();
+            Response rsp = getClientForRequest(request).newCall(okRequest).execute();
+            ResponseBody rspBody = rsp.body();
+            if (!rsp.isSuccessful())
+                throw new RuntimeException(rspBody.string());
+            GHGeocodingResponse geoRsp = objectMapper.readValue(rspBody.bytes(), GHGeocodingResponse.class);
+            return geoRsp;
+        } catch (IOException ex) {
+            throw new RuntimeException("IO problem for geocoding URL " + url + ": " + ex.getMessage(), ex);
         }
     }
 
@@ -119,21 +130,29 @@ public class GraphHopperGeocoding {
             if (request.getQuery() == null)
                 throw new IllegalArgumentException("For forward geocoding you have to a string for the query");
             url += "reverse=false";
-            url += "&q=" + request.getQuery();
+            url += "&q=" + encodeURL(request.getQuery());
         }
 
         if (request.getPoint().isValid())
             url += "&point=" + request.getPoint().getLat() + "," + request.getPoint().getLon();
 
         url += "&limit=" + request.getLimit();
-        url += "&locale=" + request.getLocale();
-        url += "&provider=" + request.getProvider();
+        url += "&locale=" + encodeURL(request.getLocale());
+        url += "&provider=" + encodeURL(request.getProvider());
 
         if (!key.isEmpty()) {
-            url += "&key=" + WebHelper.encodeURL(key);
+            url += "&key=" + encodeURL(key);
         }
 
         return url;
+    }
+
+    private static String encodeURL(String str) {
+        try {
+            return URLEncoder.encode(str, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 }

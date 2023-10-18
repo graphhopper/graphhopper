@@ -30,7 +30,6 @@ import com.conveyal.gtfs.GTFSFeed;
 import org.mapdb.Fun.Tuple2;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 public class ShapePoint extends Entity {
 
@@ -76,29 +75,4 @@ public class ShapePoint extends Entity {
         }
     }
 
-    public static class Writer extends Entity.Writer<ShapePoint> {
-        public Writer (GTFSFeed feed) {
-            super(feed, "shapes");
-        }
-
-        @Override
-        protected void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {"shape_id", "shape_pt_lat", "shape_pt_lon", "shape_pt_sequence", "shape_dist_traveled"});
-        }
-
-        @Override
-        protected void writeOneRow(ShapePoint s) throws IOException {
-            writeStringField(s.shape_id);
-            writeDoubleField(s.shape_pt_lat);
-            writeDoubleField(s.shape_pt_lon);
-            writeIntField(s.shape_pt_sequence);
-            writeDoubleField(s.shape_dist_traveled);
-            endRecord();
-        }
-
-        @Override
-        protected Iterator<ShapePoint> iterator() {
-            return feed.shape_points.values().iterator();
-        }
-    }
 }

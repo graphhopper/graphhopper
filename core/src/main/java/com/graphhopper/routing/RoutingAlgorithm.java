@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.util.NotThreadSafe;
-
 import java.util.List;
 
 /**
@@ -27,7 +25,6 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-@NotThreadSafe
 public interface RoutingAlgorithm {
     /**
      * Calculates the best path between the specified nodes.
@@ -47,6 +44,11 @@ public interface RoutingAlgorithm {
      * Limit the search to numberOfNodes. See #681
      */
     void setMaxVisitedNodes(int numberOfNodes);
+
+    /**
+     * Limit the search to the given time in milliseconds
+     */
+    void setTimeoutMillis(long timeoutMillis);
 
     /**
      * @return name of this algorithm

@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm" timestamp="2013-01-02T01:10:14Z">
+    <node id="10" lat="52.534602" lon="13.385468" version="24853">
+        <tag k="name" v="Berlin1"/>
+    </node>
+    <node id="20" lat="52.535438" lon="13.40332" version="24853">
+        <tag k="name" v="Berlin2"/>
+    </node>
+    <node id="30" lat="48.880973" lon="2.337341" version="24853">
+        <tag k="name" v="Paris1"/>
+    </node>
+    <node id="40" lat="48.877587" lon="2.343521" version="24853">
+        <tag k="name" v="Paris2"/>
+    </node>
+
+    <way id="100" version="85761">
+        <nd ref="10"/>
+        <nd ref="20"/>
+        <tag k="highway" v="track"/>
+        <tag k="name" v="berlin"/>
+    </way>
+    <way id="200" version="85761">
+        <nd ref="30"/>
+        <nd ref="40"/>
+        <tag k="highway" v="track"/>
+        <tag k="name" v="paris"/>
+    </way>
+</osm>

@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>0.14-SNAPSHOT</version>
+    <version>9.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>https://www.graphhopper.com</url>
     <inceptionYear>2012</inceptionYear>
@@ -15,34 +15,13 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <slf4j.version>1.7.26</slf4j.version>
-        <log4j.version>1.2.17</log4j.version>
-        <commons-compress.version>1.18</commons-compress.version>
 
-        <!-- for the correct jackson and guava versions see https://github.com/dropwizard/dropwizard/blob/release/1.3.x/dropwizard-bom/pom.xml -->
-        <!-- make also sure that the dropwizard version is working with 1.3.5 of dropwizard-configurable-assets-bundle used in web -->
-        <dropwizard.version>1.3.12</dropwizard.version>
-        <jackson.version>2.9.9</jackson.version>
-        <guava.version>24.1.1-jre</guava.version>
+        <maven.compiler.target>17</maven.compiler.target>
 
-        <directions-api-client.version>0.10.1-3</directions-api-client.version>
-        <maven.compiler.target>1.8</maven.compiler.target>
-
-        <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>4</org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
-        <org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>4</org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>
-        <org-netbeans-modules-editor-indent.CodeStyle.project.tab-size>8</org-netbeans-modules-editor-indent.CodeStyle.project.tab-size>
-        <org-netbeans-modules-editor-indent.CodeStyle.project.text-limit-width>100</org-netbeans-modules-editor-indent.CodeStyle.project.text-limit-width>
-        <org-netbeans-modules-editor-indent.CodeStyle.project.expand-tabs>true</org-netbeans-modules-editor-indent.CodeStyle.project.expand-tabs>
-        <org-netbeans-modules-editor-indent.CodeStyle.usedProfile>project</org-netbeans-modules-editor-indent.CodeStyle.usedProfile>
-        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.redundantIfBraces>LEAVE_ALONE</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.redundantIfBraces>
-        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignJavadocExceptionDescriptions>true</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignJavadocExceptionDescriptions>
-        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignJavadocParameterDescriptions>true</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignJavadocParameterDescriptions>
-        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.blankLinesAfterClassHeader>0</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.blankLinesAfterClassHeader>
-        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.wrapCommentText>false</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.wrapCommentText>
-        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.wrapOneLineComment>false</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.wrapOneLineComment>
-        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineMethodParams>true</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineMethodParams>
-        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineFor>true</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineFor>
-        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineTryResources>true</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineTryResources>
+        <!-- We always had this disabled as it is disabled by default in debian JDK builds, but when we
+             switched to another JDK on travis it was enabled implicitly. Our javadocs are not ready for this
+             so we disable it explicitly now -->
+        <doclint>none</doclint>
     </properties>
 
     <scm>
@@ -80,60 +59,172 @@
 
     <modules>
         <module>core</module>
-        <module>reader-osm</module>
-        <module>isochrone</module>
         <module>reader-gtfs</module>
         <module>tools</module>
+        <module>map-matching</module>
         <module>web-bundle</module>
-        <module>api</module>
         <module>web-api</module>
         <module>web</module>
         <module>client-hc</module>
+        <module>navigation</module>
+        <module>example</module>
     </modules>
+    <dependencyManagement>
+        <dependencies>
+            <!-- provides compatible versions for jackson, guava, slf4j etc. -->
+            <dependency>
+                <groupId>io.dropwizard</groupId>
+                <artifactId>dropwizard-dependencies</artifactId>
+                <version>2.1.6</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.graphhopper.external</groupId>
+                <artifactId>jackson-datatype-jts</artifactId>
+                <version>2.14</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.fasterxml.jackson.core</groupId>
+                        <artifactId>jackson-databind</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.carrotsearch</groupId>
+                <artifactId>hppc</artifactId>
+                <version>0.8.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.locationtech.jts</groupId>
+                <artifactId>jts-core</artifactId>
+                <version>1.19.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>1.21</version>
+            </dependency>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>5.9.1</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>net.sourceforge.javacsv</groupId>
+                <artifactId>javacsv</artifactId>
+                <version>2.0</version>
+            </dependency>
+            <dependency>
+                <groupId>commons-io</groupId>
+                <artifactId>commons-io</artifactId>
+                <version>2.11.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.mapdb</groupId>
+                <artifactId>mapdb</artifactId>
+                <version>1.0.8</version>
+            </dependency>
+            <dependency>
+                <groupId>io.mobilitydata.transit</groupId>
+                <artifactId>gtfs-realtime-bindings</artifactId>
+                <version>0.0.5</version>
+                <exclusions>
+                    <exclusion>
+                        <!-- use newer protobuf version  -->
+                        <groupId>com.google.protobuf</groupId>
+                        <artifactId>protobuf-java</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>javax.inject</groupId>
+                <artifactId>javax.inject</artifactId>
+                <version>1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.hamcrest</groupId>
+                <artifactId>hamcrest-library</artifactId>
+                <version>1.3</version>
+                <scope>test</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.8.1</version>
+                    <configuration>
+                        <!--
+                        <compilerArgument>-Xlint:unchecked</compilerArgument>
+                        <compilerArgument>-Xlint:deprecation</compilerArgument>
+                        -->
+                        <fork>true</fork>
+                        <release>17</release>
+                    </configuration>
+                </plugin>
+
+                <!-- to run single tests -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>2.22.2</version>
+                    <configuration>
+                        <argLine>-Xmx190m -Xms190m -Duser.language=en</argLine>
+                    </configuration>
+                </plugin>
+
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-failsafe-plugin</artifactId>
+                    <version>2.22.2</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>integration-test</goal>
+                                <goal>verify</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+                <plugin>
+                    <artifactId>maven-antrun-plugin</artifactId>
+                    <version>1.8</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <!--
-                    <compilerArgument>-Xlint:unchecked</compilerArgument>
-                    <compilerArgument>-Xlint:deprecation</compilerArgument>
-                    -->
-
-                    <!-- suppress warning about Unsafe functionality -->
-                    <compilerArgument>-XDignore.symbol.file</compilerArgument>
-                    <fork>true</fork>
-                    <source>13</source>
-                    <target>13</target>
-                </configuration>
-            </plugin>
-
-            <!-- to run single tests -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.22.2</version>
-                <configuration>
-                    <argLine>-Xmx100m -Xms100m</argLine>
-                </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-failsafe-plugin</artifactId>
-                <version>2.22.2</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>integration-test</goal>
-                            <goal>verify</goal>
-                        </goals>
-                    </execution>
-                </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -157,23 +248,6 @@
                 </configuration>
             </plugin>
 
-	    <!--
-            <plugin>
-                <groupId>com.github.spotbugs</groupId>
-                <artifactId>spotbugs-maven-plugin</artifactId>
-                <version>3.1.11</version>
-                <configuration>
-                    <maxRank>4</maxRank>
-                    <failOnError>true</failOnError>
-                    <excludeFilterFile>core/files/spotbugs-exclude.xml</excludeFilterFile>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.12.0</version>
-            </plugin>
-            -->
             <plugin>
                 <groupId>de.thetaphi</groupId>
                 <artifactId>forbiddenapis</artifactId>
@@ -189,15 +263,9 @@
                           This will automatically choose the right
                           signatures based on 'maven.compiler.target':
                         -->
-                        <bundledSignature>jdk-unsafe</bundledSignature>
                         <bundledSignature>jdk-deprecated</bundledSignature>
-                        <!-- disallow undocumented classes like sun.misc.Unsafe: -->
-                        <bundledSignature>jdk-non-portable</bundledSignature>
                     </bundledSignatures>
                     <excludes>
-                        <exclude>
-                            com/graphhopper/storage/UnsafeDataAccess.class
-                        </exclude>
                         <!-- Has a couple of issues with the FileWriter -->
                         <exclude>
                             com/graphhopper/tools/Measurement.class
@@ -209,10 +277,11 @@
     </build>
 
     <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
+        <repository>
+            <id>github</id>
+            <name>GitHub GraphHopper Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/graphhopper/graphhopper</url>
+        </repository>
     </distributionManagement>
 
     <!-- mvn clean deploy -P release -->
@@ -227,7 +296,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
+                        <version>3.0.1</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -241,21 +310,22 @@
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.8</version>
+                        <version>1.6.13</version>
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>ossrh</serverId>
                             <nexusUrl>https://oss.sonatype.org/</nexusUrl>
                             <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                            <stagingProgressTimeoutMinutes>10</stagingProgressTimeoutMinutes>
                         </configuration>
                     </plugin>
-
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.4.1</version>
                         <configuration>
-                          <quiet>true</quiet>
+                            <!-- note that we disable doclint via properties globally, using <doclint>none</doclint> did not seem to work -->
+                            <quiet>true</quiet>
                         </configuration>
                         <executions>
                             <execution>
@@ -269,7 +339,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.1</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>
@@ -282,16 +352,5 @@
                 </plugins>
             </build>
         </profile>
-        <profile>
-            <id>include-android</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <modules>
-                <module>android/app</module>
-            </modules>
-        </profile>
-
     </profiles>
-
 </project>

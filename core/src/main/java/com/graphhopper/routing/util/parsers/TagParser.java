@@ -18,20 +18,14 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.IntsRef;
-
-import java.util.List;
 
 /**
  * This interface defines how parts of the information from 'way' is converted into IntsRef. A TagParser usually
- * has one corresponding EncodedValue. Other situations like multiple tags for one EncodedValue are possible too.
+ * has one corresponding EncodedValue but more are possible too.
  */
 public interface TagParser {
 
-    void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> registerNewEncodedValue);
-
-    IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access, long relationFlags);
+    void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags);
 }

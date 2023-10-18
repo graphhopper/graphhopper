@@ -17,27 +17,31 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
 public class DecimalDetails extends AbstractPathDetailsBuilder {
 
     private final DecimalEncodedValue ev;
-    private double decimalValue = -1;
+    private Double decimalValue;
     private final String infinityJsonValue;
+    private final double precision;
 
     public DecimalDetails(String name, DecimalEncodedValue ev) {
-        this(name, ev, null);
+        this(name, ev, null, 0.001);
     }
 
     /**
-     * DecimalEncodedValue can return infinity as default value, but JSON cannot include this
-     * https://stackoverflow.com/a/9218955/194609
+     * @param infinityJsonValue DecimalEncodedValue can return infinity as default value, but JSON cannot include this
+     *                          https://stackoverflow.com/a/9218955/194609 so we need a special string to handle this or null.
+     * @param precision         e.g. 0.1 to avoid creating too many path details, i.e. round the speed to the specified precision
+     *                          *                  before detecting a change.
      */
-    public DecimalDetails(String name, DecimalEncodedValue ev, String infinityJsonValue) {
+    public DecimalDetails(String name, DecimalEncodedValue ev, String infinityJsonValue, double precision) {
         super(name);
         this.ev = ev;
         this.infinityJsonValue = infinityJsonValue;
+        this.precision = precision;
     }
 
     @Override
@@ -51,8 +55,8 @@ public class DecimalDetails extends AbstractPathDetailsBuilder {
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         double tmpVal = edge.get(ev);
-        if (Math.abs(tmpVal - decimalValue) > 0.0001) {
-            this.decimalValue = tmpVal;
+        if (decimalValue == null || Math.abs(tmpVal - decimalValue) >= precision) {
+            this.decimalValue = Double.isInfinite(tmpVal) ? tmpVal : Math.round(tmpVal / precision) * precision;
             return true;
         }
         return false;

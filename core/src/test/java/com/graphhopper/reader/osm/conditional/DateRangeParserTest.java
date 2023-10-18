@@ -17,12 +17,12 @@
  */
 package com.graphhopper.reader.osm.conditional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.text.ParseException;
 import java.util.Calendar;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * @author Robin Boldt
@@ -37,6 +37,13 @@ public class DateRangeParserTest extends CalendarBasedTest {
         assertSameDate(2015, Calendar.MARCH, 1, "2015 Mar");
         assertSameDate(1970, Calendar.MARCH, 31, "Mar 31");
         assertSameDate(1970, Calendar.DECEMBER, 1, "Dec");
+    }
+
+    @Test
+    public void testCreate() throws ParseException {
+        DateRangeParser dateRangeParser = DateRangeParser.createInstance("2019-10-08");
+        assertFalse(dateRangeParser.checkCondition("2014 Oct 8-2014 Dec 12").isCheckPassed());
+        assertTrue(dateRangeParser.checkCondition("2019 Oct 8-2019 Dec 12").isCheckPassed());
     }
 
     @Test
@@ -197,10 +204,9 @@ public class DateRangeParserTest extends CalendarBasedTest {
         assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 28)));
     }
 
-    @Test(expected = ParseException.class)
-    public void testParseUnparsableDate() throws ParseException {
-        dateRangeParser.getRange("Sat");
-        fail();
+    @Test
+    public void testParseUnparsableDate() {
+        assertThrows(ParseException.class, () -> dateRangeParser.getRange("Sat"));
     }
 
     private void assertSameDate(int year, int month, int day, String dateString) throws ParseException {

@@ -1,0 +1,20 @@
+graphhopper:
+  datareader.file: brandenburg-latest.osm.pbf
+  # for multiple files you can use: gtfs.file: file1.zip,file2.zip,file3.zip
+  gtfs.file: gtfs-vbb.zip
+  graph.location: graphs/brandenburg-with-transit
+
+  profiles:
+    - name: foot
+      vehicle: foot
+      weighting: custom
+
+server:
+  application_connectors:
+    - type: http
+      port: 8989
+      bind_host: localhost
+  admin_connectors:
+    - type: http
+      port: 8990
+      bind_host: localhost

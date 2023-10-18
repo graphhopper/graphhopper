@@ -4,50 +4,65 @@ This guide is written for everyone interested in deploying graphhopper on a serv
 
 ## Basics
 
-For simplicity you could just start jetty from maven and schedule it as background job:
-`./graphhopper.sh -a web -i europe_germany_berlin.pbf -d --port 11111`.
-Then the service will be accessible on port 11111.
+See the [installation section](../../README.md#installation) on how to start the server.
 
-For production usage you have a web service included. Copy [this configuration](https://raw.githubusercontent.com/graphhopper/graphhopper/master/config-example.yml)
-also there and use `-c config.yml` in the script to point to it. Increase the -Xmx/-Xms values of your server server e.g.
-for world wide coverage with a hierarchical graph do the following before calling graphhopper.sh:
+Then you can embed these commands in a shell script and use this from e.g. [Docker](../../README.md#docker) or systemd.
+
+For production usage you have a web service included where you can use [this configuration](https://raw.githubusercontent.com/graphhopper/graphhopper/master/config-example.yml)
+Increase the -Xmx/-Xms parameters of the command accordingly.
+
+You can reduce the memory requirements for the import step when you run the `import` command explicitly before the `server` command:
 
 ```
-export JAVA_OPTS="-server -Xconcurrentio -Xmx17000m -Xms17000m"
+java [options] -jar *.jar import config.yml
+java [options] -jar *.jar server config.yml # calls the import command implicitly, if not done before
 ```
 
-Notes:
+To further reduce memory usage for `import` try a special garbage collector (GC): `-XX:+UseParallelGC`.
 
- * none-hierarchical graphs should be limited to a certain distance otherwise you'll require lots of RAM per request! See [#104](https://github.com/graphhopper/graphhopper/issues/734) or use landmarks.
+However after the import, for serving the routing requests GCs like ZGC or Shenandoah could be better than the default G1 as those are optimized for JVMs with bigger heaps (>32GB) and low pauses.
+They can be enabled with `-XX:+UseZGC` or `-XX:+UseShenandoahGC`. Please note that especially ZGC and G1 require quite a
+bit memory additionally to the heap and so sometimes overall speed could be increased when lowering the `Xmx` value.
+
+If you want to support none-CH requests you should consider enabling landmarks or limit requests to a
+certain distance via `routing.non_ch.max_waypoint_distance` (in meter, default is 1) or
+to a node count via `routing.max_visited_nodes`.
+Otherwise it might require lots of RAM per request! See [#734](https://github.com/graphhopper/graphhopper/issues/734).
 
 ### API Tokens
 
-By default, GraphHopper uses [Omniscale](http://omniscale.com/) and/or [Thunderforest](http://thunderforest.com/) as layer service.
-Either you get a plan there, then set the API key in the options.js file or you
-have to remove Omniscale from the [JavaScript file](https://github.com/graphhopper/graphhopper/blob/master/web/src/main/resources/assets/js/main.js).
+The GraphHopper Maps UI uses the [GraphHopper Directions API](https://docs.graphhopper.com/#tag/Geocoding-API) for geocoding.
+To be able to use the autocomplete feature of the point inputs you get your API Token at
+[graphhopper.com](https://www.graphhopper.com/) and set this in the config.js file, see
+web-bundle/src/main/resources/com/graphhopper/maps/config.js
 
-GraphHopper uses the [GraphHopper Directions API](https://graphhopper.com/api/1/docs/) for geocoding. To be able to use the autocomplete feature of the point inputs you have to:
+The Maps UI also uses [Omniscale](http://omniscale.com/) and [Thunderforest](http://thunderforest.com/) as layer service.
+You can get a plan there too and set the API keys in the config.js file.
 
- * Get your API Token at: https://graphhopper.com/ and set this in the options.js
- * Don't forget the Attribution
 
-## World Wide
+## Worldwide Setup
 
-GraphHopper is able to handle coverage for the whole [OpenStreetMap road network](http://planet.osm.org/).
-It needs approximately 22GB RAM for the import (CAR only) and ~1 hour (plus ~5h for contraction).
-If you can accept slower import times this can be reduced to 14GB RAM - you'll need to set datareader.dataaccess=MMAP
+GraphHopper can handle the world-wide [OpenStreetMap road network](http://planet.osm.org/).
 
-Then 'only' 15GB are necessary. Without contraction hierarchy this would be about 9GB.
+Parsing this planet file and creating the GraphHopper base graph requires ~60GB RAM and takes ~3h for the import. If you can accept
+much slower import times (3 days!) this can be reduced to 31GB RAM when you set `datareader.dataaccess=MMAP` in the config file.
+As of May 2022 the graph has around 415M edges (150M for Europe, 86M for North America).
 
-With CH the service is able to handle about 180 queries per second (from localhost to localhost this was 300qps).
-Measured for CAR routing, real world requests, at least 100km long, on a linux machine with 8 cores and 32GB,
-java 1.7.0_25, jetty 8.1.10 via the QueryTorture class (10 worker threads).
+Running the CH preparation, required for best response times, needs ~120GB RAM and the additional CH preparation takes ~25 hours
+(for the car profile with turn cost) but heavily depends on the CPU and memory speed. Without turn cost
+support, e.g. sufficient for bike, it takes much less (~5 hours).
 
-### System and JVM tuning
+Running the LM preparation for the car profile needs ~80GB RAM and
+the additional LM preparation takes ~4 hours.
 
-Especially for large heaps you should use `-XX:+UseG1GC`. Optionally add `-XX:MetaspaceSize=100M`.
+It is also possible to add CH/LM preparations for existing profiles after the initial import.
+Adding or modifying profiles is not possible and you need to run a new import instead.
+
+### System tuning
 
 Avoid swapping e.g. on linux via `vm.swappiness=0` in /etc/sysctl.conf. See some tuning discussion in the answers [here](http://stackoverflow.com/q/38905739/194609).
+
+When using the MMAP setting (default for elevation data), then ensure `/proc/sys/vm/max_map_count` is enough or set it via `sysctl -w vm.max_map_count=500000`. see also https://github.com/graphhopper/graphhopper/issues/1866.
 
 ### Elevation Data
 
@@ -60,3 +75,4 @@ If you want to use elevation data you need to increase the allowed number of ope
  * add: `fs.file-max = 90000`
  * reboot now (or sudo sysctl -p; and re-login)
  * afterwards `ulimit -Hn` and `ulimit -Sn` should give you 100000
+ 

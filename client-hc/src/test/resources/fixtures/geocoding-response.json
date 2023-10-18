@@ -1,0 +1,32 @@
+{
+  "copyrights": [
+    "OpenCageData",
+    "OpenStreetMap",
+    "GraphHopper"
+  ],
+  "hits": [
+    {
+      "point": {
+        "lat": 53.7445489,
+        "lng": 10.0612079
+      },
+      "extent": [
+        10.0598605,
+        53.7445489,
+        10.0612079,
+        53.7456315
+      ],
+      "name": "Am Heidberg, 22889 Tangstedt, Germany",
+      "country": "Germany",
+      "city": "Tangstedt",
+      "state": "Schleswig-Holstein",
+      "county": "Stormarn",
+      "street": "Am Heidberg",
+      "postcode": "22889",
+      "osm_id": 25014113,
+      "osm_type": "W",
+      "osm_value": "road"
+    }
+  ],
+  "locale": "en"
+}

@@ -17,28 +17,26 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.routing.SPTEntry;
+import com.graphhopper.storage.RoutingCHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 
 public class CHEntry extends SPTEntry {
     /**
      * The id of the incoming original edge at this shortest path tree entry. For original edges this is the same
      * as the edge id, but for shortcuts this is the id of the last original edge of the shortcut.
      *
-     * @see CHEdgeIteratorState#setFirstAndLastOrigEdges(int, int)
-     * @see EdgeIteratorState#getOrigEdgeLast()
+     * @see RoutingCHEdgeIteratorState#getOrigEdgeKeyLast()
      */
     public int incEdge;
 
-    public CHEntry(int edge, int incEdge, int adjNode, double weight) {
-        super(edge, adjNode, weight);
-        this.incEdge = incEdge;
+    public CHEntry(int node, double weight) {
+        this(EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE, node, weight, null);
     }
 
-    public CHEntry(int node, double weight) {
-        this(EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE, node, weight);
+    public CHEntry(int edge, int incEdge, int adjNode, double weight, SPTEntry parent) {
+        super(edge, adjNode, weight, parent);
+        this.incEdge = incEdge;
     }
 
     public CHEntry getParent() {

@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing.subnetwork;
 
-import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Storable;
 
 /**
  * This class handles storage of subnetwork ids for every node. Useful to pick the correct set of
@@ -28,12 +25,11 @@ import com.graphhopper.storage.Storable;
  *
  * @author Peter Karich
  */
-public class SubnetworkStorage implements Storable<SubnetworkStorage> {
-    private final DataAccess da;
+public class SubnetworkStorage {
+    final DataAccess da;
 
-    public SubnetworkStorage(Directory dir, String postfix) {
-        DAType type = dir.getDefaultType();
-        da = dir.find("subnetwork_" + postfix, type.isMMap() ? DAType.MMAP : (type.isStoring() ? DAType.RAM_STORE : DAType.RAM));
+    public SubnetworkStorage(DataAccess da) {
+        this.da = da;
     }
 
     /**
@@ -41,10 +37,7 @@ public class SubnetworkStorage implements Storable<SubnetworkStorage> {
      * subnetwork is too small.
      */
     public int getSubnetwork(int nodeId) {
-        byte[] bytes = new byte[1];
-        da.getBytes(nodeId, bytes, bytes.length);
-
-        return (int) bytes[0];
+        return da.getByte(nodeId);
     }
 
     /**
@@ -55,40 +48,31 @@ public class SubnetworkStorage implements Storable<SubnetworkStorage> {
         if (subnetwork > 127)
             throw new IllegalArgumentException("Number of subnetworks is currently limited to 127 but requested " + subnetwork);
 
-        byte[] bytes = new byte[1];
-        bytes[0] = (byte) subnetwork;
-        da.setBytes(nodeId, bytes, bytes.length);
+        da.setByte(nodeId, (byte) subnetwork);
     }
-
-    @Override
 
     public boolean loadExisting() {
         return da.loadExisting();
     }
 
-    @Override
     public SubnetworkStorage create(long byteCount) {
         da.create(2000);
         da.ensureCapacity(byteCount);
         return this;
     }
 
-    @Override
     public void flush() {
         da.flush();
     }
 
-    @Override
     public void close() {
         da.close();
     }
 
-    @Override
     public boolean isClosed() {
         return da.isClosed();
     }
 
-    @Override
     public long getCapacity() {
         return da.getCapacity();
     }

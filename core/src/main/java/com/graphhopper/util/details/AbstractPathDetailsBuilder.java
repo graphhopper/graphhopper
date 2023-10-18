@@ -33,7 +33,7 @@ public abstract class AbstractPathDetailsBuilder implements PathDetailsBuilder {
     private final String name;
     private boolean isOpen = false;
     private PathDetail currentDetail;
-    private List<PathDetail> pathDetails = new ArrayList<>();
+    private final List<PathDetail> pathDetails = new ArrayList<>();
 
     public AbstractPathDetailsBuilder(String name) {
         this.name = name;

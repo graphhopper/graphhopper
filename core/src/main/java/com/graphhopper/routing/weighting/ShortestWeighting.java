@@ -17,29 +17,63 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Calculates the shortest route - independent of a vehicle as the calculation is based on the
  * distance only.
- * <p>
  *
  * @author Peter Karich
  */
-public class ShortestWeighting extends AbstractWeighting {
-    public ShortestWeighting(FlagEncoder flagEncoder) {
-        super(flagEncoder);
+public class ShortestWeighting implements Weighting {
+
+    final BooleanEncodedValue accessEnc;
+    final DecimalEncodedValue speedEnc;
+    final TurnCostProvider tcProvider;
+
+    public ShortestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc) {
+        this(accessEnc, speedEnc, TurnCostProvider.NO_TURN_COST_PROVIDER);
+    }
+
+    public ShortestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, TurnCostProvider tcProvider) {
+        this.accessEnc = accessEnc;
+        this.speedEnc = speedEnc;
+        this.tcProvider = tcProvider;
     }
 
     @Override
-    public double getMinWeight(double currDistToGoal) {
-        return currDistToGoal;
+    public double getMinWeight(double distance) {
+        return distance;
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        if (reverse ? !edgeState.getReverse(accessEnc) : !edgeState.get(accessEnc))
+            return Double.POSITIVE_INFINITY;
         return edgeState.getDistance();
+    }
+
+    @Override
+    public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
+        double speed = reverse ? edgeState.getReverse(speedEnc) : edgeState.get(speedEnc);
+        return Math.round(edgeState.getDistance() / speed * 3.6 * 1000);
+    }
+
+    @Override
+    public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+        return tcProvider.calcTurnWeight(inEdge, viaNode, outEdge);
+    }
+
+    @Override
+    public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+        return tcProvider.calcTurnMillis(inEdge, viaNode, outEdge);
+    }
+
+    @Override
+    public boolean hasTurnCosts() {
+        return tcProvider != TurnCostProvider.NO_TURN_COST_PROVIDER;
     }
 
     @Override

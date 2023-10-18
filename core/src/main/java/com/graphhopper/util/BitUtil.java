@@ -19,34 +19,13 @@ package com.graphhopper.util;
 
 import com.graphhopper.storage.IntsRef;
 
-import java.nio.ByteOrder;
-
 /**
- * Examples for BIG endianness (default for Java and computer network).
- * <pre>
- * 0=&gt;0100 0001
- * 1=&gt;1110 1011
- * 2=&gt;...
- * </pre> LITTLE endianness is default for GraphHopper and most microprocessors.
+ * LITTLE endianness is default for GraphHopper and most microprocessors.
  *
  * @author Peter Karich
  */
-public abstract class BitUtil {
-    /**
-     * Default for GraphHopper
-     */
-    public static final BitUtil LITTLE = new BitUtilLittle();
-    /**
-     * BIG endianness. Little is the default for GraphHopper.
-     */
-    public static final BitUtil BIG = new BitUtilBig();
-
-    public static BitUtil get(ByteOrder order) {
-        if (order.equals(ByteOrder.BIG_ENDIAN))
-            return BitUtil.BIG;
-        else
-            return BitUtil.LITTLE;
-    }
+public class BitUtil {
+    public static final BitUtil LITTLE = new BitUtil();
 
     public final double toDouble(byte[] bytes) {
         return toDouble(bytes, 0);
@@ -96,13 +75,18 @@ public abstract class BitUtil {
         return toShort(b, 0);
     }
 
-    public abstract short toShort(byte[] b, int offset);
+    public final short toShort(byte[] b, int offset) {
+        return (short) ((b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF));
+    }
 
     public final int toInt(byte[] b) {
         return toInt(b, 0);
     }
 
-    public abstract int toInt(byte[] b, int offset);
+    public final int toInt(byte[] b, int offset) {
+        return (b[offset + 3] & 0xFF) << 24 | (b[offset + 2] & 0xFF) << 16
+                | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
+    }
 
     public final byte[] fromInt(int value) {
         byte[] bytes = new byte[4];
@@ -124,17 +108,32 @@ public abstract class BitUtil {
         fromShort(bytes, value, 0);
     }
 
-    public abstract void fromShort(byte[] bytes, short value, int offset);
+    public void fromShort(byte[] bytes, short value, int offset) {
+        bytes[offset + 1] = (byte) (value >>> 8);
+        bytes[offset] = (byte) (value);
+    }
 
-    public abstract void fromInt(byte[] bytes, int value, int offset);
+    public final void fromInt(byte[] bytes, int value, int offset) {
+        bytes[offset + 3] = (byte) (value >>> 24);
+        bytes[offset + 2] = (byte) (value >>> 16);
+        bytes[offset + 1] = (byte) (value >>> 8);
+        bytes[offset] = (byte) (value);
+    }
 
+    /**
+     * See the counterpart {@link #fromLong(long)}
+     */
     public final long toLong(byte[] b) {
         return toLong(b, 0);
     }
 
-    public abstract long toLong(int high, int low);
+    public final long toLong(int intLow, int intHigh) {
+        return ((long) intHigh << 32) | (intLow & 0xFFFFFFFFL);
+    }
 
-    public abstract long toLong(byte[] b, int offset);
+    public final long toLong(byte[] b, int offset) {
+        return ((long) toInt(b, offset + 4) << 32) | (toInt(b, offset) & 0xFFFFFFFFL);
+    }
 
     public final byte[] fromLong(long value) {
         byte[] bytes = new byte[8];
@@ -146,28 +145,39 @@ public abstract class BitUtil {
         fromLong(bytes, value, 0);
     }
 
-    public abstract void fromLong(byte[] bytes, long value, int offset);
-
-    /**
-     * The only purpose of this method is to test 'reverse'. toBitString is the reverse and both are
-     * independent of the endianness.
-     */
-    public final long fromBitString2Long(String str) {
-        if (str.length() > 64)
-            throw new UnsupportedOperationException("Strings needs to fit into a 'long' but length was " + str.length());
-
-        long res = 0;
-        int strLen = str.length();
-        for (int charIndex = 0; charIndex < strLen; charIndex++) {
-            res <<= 1;
-            if (str.charAt(charIndex) != '0')
-                res |= 1;
-        }
-        res <<= (64 - strLen);
-        return res;
+    public final void fromLong(byte[] bytes, long value, int offset) {
+        bytes[offset + 7] = (byte) (value >> 56);
+        bytes[offset + 6] = (byte) (value >> 48);
+        bytes[offset + 5] = (byte) (value >> 40);
+        bytes[offset + 4] = (byte) (value >> 32);
+        bytes[offset + 3] = (byte) (value >> 24);
+        bytes[offset + 2] = (byte) (value >> 16);
+        bytes[offset + 1] = (byte) (value >> 8);
+        bytes[offset] = (byte) (value);
     }
 
-    public abstract byte[] fromBitString(String str);
+    public byte[] fromBitString(String str) {
+        // no need for performance or memory tuning ...
+        int strLen = str.length();
+        int bLen = str.length() / 8;
+        if (strLen % 8 != 0)
+            bLen++;
+
+        byte[] bytes = new byte[bLen];
+        int charI = 0;
+        for (int b = bLen - 1; b >= 0; b--) {
+            byte res = 0;
+            for (int i = 0; i < 8; i++) {
+                res <<= 1;
+                if (charI < strLen && str.charAt(charI) != '0')
+                    res |= 1;
+
+                charI++;
+            }
+            bytes[b] = res;
+        }
+        return bytes;
+    }
 
     public final String toBitString(IntsRef intsRef) {
         StringBuilder str = new StringBuilder();
@@ -221,27 +231,21 @@ public abstract class BitUtil {
     /**
      * Higher order bits comes first in the returned string.
      */
-    public abstract String toBitString(byte[] bytes);
+    public String toBitString(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length * 8);
+        byte lastBit = (byte) (1 << 7);
+        for (int bIndex = bytes.length - 1; bIndex >= 0; bIndex--) {
+            byte b = bytes[bIndex];
+            for (int i = 0; i < 8; i++) {
+                if ((b & lastBit) == 0)
+                    sb.append('0');
+                else
+                    sb.append('1');
 
-    /**
-     * Reverses the bits in the specified long value and it removes the remaining higher bits. See
-     * also http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
-     * <p>
-     *
-     * @param maxBits the maximum number of recognized bits for reversal
-     */
-    public final long reverse(long value, int maxBits) {
-        long res = 0;
-        for (; maxBits > 0; value >>>= 1) {
-            res <<= 1;
-            res |= value & 1;
-            maxBits--;
-            if (value == 0) {
-                res <<= maxBits;
-                break;
+                b <<= 1;
             }
         }
-        return res;
+        return sb.toString();
     }
 
     public final int getIntLow(long longValue) {
@@ -252,25 +256,30 @@ public abstract class BitUtil {
         return (int) (longValue >> 32);
     }
 
-    public final long combineIntsToLong(int intLow, int intHigh) {
-        return ((long) intHigh << 32) | (intLow & 0xFFFFFFFFL);
+    public static int countBitValue(int maxTurnCosts) {
+        if (maxTurnCosts < 0)
+            throw new IllegalArgumentException("maxTurnCosts cannot be negative " + maxTurnCosts);
+
+        int counter = 0;
+        while (maxTurnCosts > 0) {
+            maxTurnCosts >>= 1;
+            counter++;
+        }
+        return counter;
     }
 
-    public final long reverseLeft(long value, int maxBits) {
-        long res = 0;
-        int delta = 64 - maxBits;
-        long maxBit = 1L << delta;
-        for (; maxBits > 0; res <<= 1) {
-            if ((value & maxBit) != 0)
-                res |= 1;
+    /**
+     * This method handles the specified (potentially negative) int as unsigned bit representation
+     * and returns the positive converted long.
+     */
+    public static long toUnsignedLong(int x) {
+        return ((long) x) & 0xFFFF_FFFFL;
+    }
 
-            maxBit <<= 1;
-            maxBits--;
-            if (maxBit == 0) {
-                res <<= delta;
-                break;
-            }
-        }
-        return res;
+    /**
+     * Converts the specified long back into a signed int (reverse method for toUnsignedLong)
+     */
+    public static int toSignedInt(long x) {
+        return (int) x;
     }
 }

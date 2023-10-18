@@ -18,34 +18,30 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RoadEnvironment;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-import static com.graphhopper.routing.profiles.RoadEnvironment.*;
+import static com.graphhopper.routing.ev.RoadEnvironment.*;
 
 public class OSMRoadEnvironmentParser implements TagParser {
 
     private final EnumEncodedValue<RoadEnvironment> roadEnvEnc;
 
-    public OSMRoadEnvironmentParser() {
-        this.roadEnvEnc = new EnumEncodedValue<>(RoadEnvironment.KEY, RoadEnvironment.class);
+    public OSMRoadEnvironmentParser(EnumEncodedValue<RoadEnvironment> roadEnvEnc) {
+        this.roadEnvEnc = roadEnvEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(roadEnvEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, long relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         RoadEnvironment roadEnvironment = OTHER;
-        if (access.isFerry())
+        if (FerrySpeedCalculator.isFerry(readerWay))
             roadEnvironment = FERRY;
         else if (readerWay.hasTag("bridge") && !readerWay.hasTag("bridge", "no"))
             roadEnvironment = BRIDGE;
@@ -53,14 +49,16 @@ public class OSMRoadEnvironmentParser implements TagParser {
             roadEnvironment = TUNNEL;
         else if (readerWay.hasTag("ford") || readerWay.hasTag("highway", "ford"))
             roadEnvironment = FORD;
-        else if (readerWay.hasTag("route", "shuttle_train"))
-            // TODO how to feed this information from a relation like https://www.openstreetmap.org/relation/1932780
-            roadEnvironment = SHUTTLE_TRAIN;
-        else if (readerWay.hasTag("highway"))
-            roadEnvironment = ROAD;
+        else {
+            List<Map<String, Object>> nodeTags = readerWay.getTag("node_tags", Collections.emptyList());
+            // a barrier edge has the restriction in both nodes and the tags are the same
+            if (readerWay.hasTag("gh:barrier_edge") && nodeTags.get(0).containsKey("ford"))
+                roadEnvironment = FORD;
+            else if (readerWay.hasTag("highway"))
+                roadEnvironment = ROAD;
+        }
 
         if (roadEnvironment != OTHER)
-            roadEnvEnc.setEnum(false, edgeFlags, roadEnvironment);
-        return edgeFlags;
+            roadEnvEnc.setEnum(false, edgeId, edgeIntAccess, roadEnvironment);
     }
 }

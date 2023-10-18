@@ -25,12 +25,7 @@ import com.graphhopper.util.EdgeIteratorState;
  * @author Peter Karich
  */
 public interface EdgeFilter {
-    EdgeFilter ALL_EDGES = new EdgeFilter() {
-        @Override
-        public final boolean accept(EdgeIteratorState edgeState) {
-            return true;
-        }
-    };
+    EdgeFilter ALL_EDGES = edgeState -> true;
 
     /**
      * @return true if the current edge should be processed and false otherwise.

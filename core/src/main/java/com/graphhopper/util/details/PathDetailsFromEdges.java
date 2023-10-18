@@ -18,9 +18,14 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.FetchMode;
 
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This class calculates a PathDetail list in a similar fashion to the instruction calculation,
@@ -42,6 +47,38 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
         this.lastIndex = previousIndex;
     }
 
+    /**
+     * Calculates the PathDetails for a Path. This method will return fast, if there are no calculators.
+     *
+     * @param pathBuilderFactory Generates the relevant PathBuilders
+     * @return List of PathDetails for this Path
+     */
+    public static Map<String, List<PathDetail>> calcDetails(Path path, EncodedValueLookup evLookup, Weighting weighting,
+                                                            List<String> requestedPathDetails, PathDetailsBuilderFactory pathBuilderFactory,
+                                                            int previousIndex, Graph graph) {
+        if (!path.isFound() || requestedPathDetails.isEmpty())
+            return Collections.emptyMap();
+        HashSet<String> uniquePD = new HashSet<>(requestedPathDetails.size());
+        Collection<String> res = requestedPathDetails.stream().filter(pd -> !uniquePD.add(pd)).collect(Collectors.toList());
+        if (!res.isEmpty()) throw new IllegalArgumentException("Do not use duplicate path details: " + res);
+
+        List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, path, evLookup, weighting, graph);
+        if (pathBuilders.isEmpty())
+            return Collections.emptyMap();
+
+        path.forEveryEdge(new PathDetailsFromEdges(pathBuilders, previousIndex));
+
+        Map<String, List<PathDetail>> pathDetails = new HashMap<>(pathBuilders.size());
+        for (PathDetailsBuilder builder : pathBuilders) {
+            Map.Entry<String, List<PathDetail>> entry = builder.build();
+            List<PathDetail> existing = pathDetails.put(entry.getKey(), entry.getValue());
+            if (existing != null)
+                throw new IllegalStateException("Some PathDetailsBuilders use duplicate key: " + entry.getKey());
+        }
+
+        return pathDetails;
+    }
+
     @Override
     public void next(EdgeIteratorState edge, int index, int prevEdgeId) {
         for (PathDetailsBuilder calc : calculators) {
@@ -50,7 +87,7 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
                 calc.startInterval(lastIndex);
             }
         }
-        lastIndex += edge.fetchWayGeometry(2).size();
+        lastIndex += edge.fetchWayGeometry(FetchMode.PILLAR_AND_ADJ).size();
     }
 
     @Override

@@ -29,7 +29,7 @@ public class ReaderWay extends ReaderElement {
     protected final LongArrayList nodes = new LongArrayList(5);
 
     public ReaderWay(long id) {
-        super(id, WAY);
+        super(id, Type.WAY);
     }
 
     public LongArrayList getNodes() {

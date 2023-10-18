@@ -19,28 +19,17 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.coll.GHIntObjectHashMap;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.PriorityQueue;
 
 import static com.graphhopper.util.EdgeIterator.ANY_EDGE;
 
-/**
- * Common subclass for bidirectional algorithms.
- * <p>
- *
- * @author Peter Karich
- * @author easbar
- */
-public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
+public abstract class AbstractBidirAlgo implements EdgeToEdgeRoutingAlgorithm {
+    protected final TraversalMode traversalMode;
     protected int from;
     protected int to;
     protected int fromOutEdge;
@@ -52,22 +41,23 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     protected SPTEntry currTo;
     protected SPTEntry bestFwdEntry;
     protected SPTEntry bestBwdEntry;
-    protected double bestWeight;
+    protected double bestWeight = Double.MAX_VALUE;
+    protected int maxVisitedNodes = Integer.MAX_VALUE;
+    protected long timeoutMillis = Long.MAX_VALUE;
+    private long finishTimeMillis = Long.MAX_VALUE;
     PriorityQueue<SPTEntry> pqOpenSetFrom;
     PriorityQueue<SPTEntry> pqOpenSetTo;
-    private boolean updateBestPath = true;
+    protected boolean updateBestPath = true;
     protected boolean finishedFrom;
     protected boolean finishedTo;
     int visitedCountFrom;
     int visitedCountTo;
+    private boolean alreadyRun;
 
-    public AbstractBidirAlgo(Graph graph, Weighting weighting, TraversalMode tMode) {
-        super(graph, weighting, tMode);
+    public AbstractBidirAlgo(TraversalMode traversalMode) {
+        this.traversalMode = traversalMode;
         fromOutEdge = ANY_EDGE;
         toInEdge = ANY_EDGE;
-        bestWeight = Double.MAX_VALUE;
-        int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
-        initCollections(size);
     }
 
     protected void initCollections(int size) {
@@ -83,34 +73,17 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
      */
     protected abstract SPTEntry createStartEntry(int node, double weight, boolean reverse);
 
-    /**
-     * Creates a new entry of the shortest path tree (a {@link SPTEntry} or one of its subclasses) during a dijkstra
-     * expansion.
-     *
-     * @param edge    the edge that is currently processed for the expansion
-     * @param incEdge the id of the edge that is incoming to the node the edge is pointed at. usually this is the same as
-     *                edge.getEdge(), but for edge-based CH and in case edge is a shortcut incEdge is the original edge
-     *                that is incoming to the node
-     * @param weight  the weight the shortest path three entry should carry
-     * @param parent  the parent entry of in the shortest path tree
-     * @param reverse true if we are currently looking at the backward search, false otherwise
-     */
-    protected abstract SPTEntry createEntry(EdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse);
+    @Override
+    public List<Path> calcPaths(int from, int to) {
+        return Collections.singletonList(calcPath(from, to));
+    }
 
     @Override
     public Path calcPath(int from, int to) {
         return calcPath(from, to, ANY_EDGE, ANY_EDGE);
     }
 
-    /**
-     * like {@link #calcPath(int, int)}, but this method also allows to strictly restrict the edge the
-     * path will begin with and the edge it will end with.
-     *
-     * @param fromOutEdge the edge id of the first edge of the path. using {@link EdgeIterator#ANY_EDGE} means
-     *                    not enforcing the first edge of the path
-     * @param toInEdge    the edge id of the last edge of the path. using {@link EdgeIterator#ANY_EDGE} means
-     *                    not enforcing the last edge of the path
-     */
+    @Override
     public Path calcPath(int from, int to, int fromOutEdge, int toInEdge) {
         if ((fromOutEdge != ANY_EDGE || toInEdge != ANY_EDGE) && !traversalMode.isEdgeBased()) {
             throw new IllegalArgumentException("Restricting the start/target edges is only possible for edge-based graph traversal");
@@ -118,13 +91,10 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         this.fromOutEdge = fromOutEdge;
         this.toInEdge = toInEdge;
         checkAlreadyRun();
+        setupFinishTime();
         init(from, 0, to, 0);
         runAlgo();
         return extractPath();
-    }
-
-    protected BidirPathExtractor createPathExtractor(Graph graph, Weighting weighting) {
-        return new BidirPathExtractor(graph, weighting);
     }
 
     void init(int from, double fromWeight, int to, double toWeight) {
@@ -155,7 +125,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         if (!traversalMode.isEdgeBased()) {
             if (updateBestPath) {
                 bestWeightMapOther = bestWeightMapFrom;
-                updateBestPath(GHUtility.getEdge(graph, currFrom.adjNode, to), currFrom, to, true);
+                updateBestPath(Double.POSITIVE_INFINITY, currFrom, EdgeIterator.NO_EDGE, to, true);
             }
         } else if (from == to && fromOutEdge == ANY_EDGE && toInEdge == ANY_EDGE) {
             // special handling if start and end are the same and no directions are restricted
@@ -174,60 +144,12 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         postInitTo();
     }
 
-    protected void postInitFrom() {
-        if (fromOutEdge == ANY_EDGE) {
-            fillEdgesFromUsingFilter(additionalEdgeFilter);
-        } else {
-            // need to use a local reference here, because additionalEdgeFilter is modified when calling fillEdgesFromUsingFilter
-            final EdgeFilter tmpFilter = additionalEdgeFilter;
-            fillEdgesFromUsingFilter(new EdgeFilter() {
-                @Override
-                public boolean accept(EdgeIteratorState edgeState) {
-                    return (tmpFilter == null || tmpFilter.accept(edgeState)) && edgeState.getOrigEdgeFirst() == fromOutEdge;
-                }
-            });
-        }
-    }
+    protected abstract void postInitFrom();
 
-    protected void postInitTo() {
-        if (toInEdge == ANY_EDGE) {
-            fillEdgesToUsingFilter(additionalEdgeFilter);
-        } else {
-            final EdgeFilter tmpFilter = additionalEdgeFilter;
-            fillEdgesToUsingFilter(new EdgeFilter() {
-                @Override
-                public boolean accept(EdgeIteratorState edgeState) {
-                    return (tmpFilter == null || tmpFilter.accept(edgeState)) && edgeState.getOrigEdgeLast() == toInEdge;
-                }
-            });
-        }
-    }
-
-    /**
-     * @param edgeFilter edge filter used to fill edges. the {@link #additionalEdgeFilter} reference will be set to
-     *                   edgeFilter by this method, so make sure edgeFilter does not use it directly.
-     */
-    protected void fillEdgesFromUsingFilter(EdgeFilter edgeFilter) {
-        // we temporarily ignore the additionalEdgeFilter
-        EdgeFilter tmpFilter = additionalEdgeFilter;
-        additionalEdgeFilter = edgeFilter;
-        finishedFrom = !fillEdgesFrom();
-        additionalEdgeFilter = tmpFilter;
-    }
-
-    /**
-     * @see #fillEdgesFromUsingFilter(EdgeFilter)
-     */
-    protected void fillEdgesToUsingFilter(EdgeFilter edgeFilter) {
-        // we temporarily ignore the additionalEdgeFilter
-        EdgeFilter tmpFilter = additionalEdgeFilter;
-        additionalEdgeFilter = edgeFilter;
-        finishedTo = !fillEdgesTo();
-        additionalEdgeFilter = tmpFilter;
-    }
+    protected abstract void postInitTo();
 
     protected void runAlgo() {
-        while (!finished() && !isMaxVisitedNodesExceeded()) {
+        while (!finished() && !isMaxVisitedNodesExceeded() && !isTimeoutExceeded()) {
             if (!finishedFrom)
                 finishedFrom = !fillEdgesFrom();
 
@@ -240,7 +162,6 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     // a node from overlap may not be on the best path!
     // => when scanning an arc (v, w) in the forward search and w is scanned in the reverseOrder
     //    search, update extractPath = μ if df (v) + (v, w) + dr (w) < μ
-    @Override
     protected boolean finished() {
         if (finishedFrom || finishedTo)
             return true;
@@ -248,71 +169,12 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         return currFrom.weight + currTo.weight >= bestWeight;
     }
 
-    boolean fillEdgesFrom() {
-        if (pqOpenSetFrom.isEmpty()) {
-            return false;
-        }
-        currFrom = pqOpenSetFrom.poll();
-        visitedCountFrom++;
-        if (fromEntryCanBeSkipped()) {
-            return true;
-        }
-        if (fwdSearchCanBeStopped()) {
-            return false;
-        }
-        bestWeightMapOther = bestWeightMapTo;
-        fillEdges(currFrom, pqOpenSetFrom, bestWeightMapFrom, outEdgeExplorer, false);
-        return true;
-    }
+    abstract boolean fillEdgesFrom();
 
-    boolean fillEdgesTo() {
-        if (pqOpenSetTo.isEmpty()) {
-            return false;
-        }
-        currTo = pqOpenSetTo.poll();
-        visitedCountTo++;
-        if (toEntryCanBeSkipped()) {
-            return true;
-        }
-        if (bwdSearchCanBeStopped()) {
-            return false;
-        }
-        bestWeightMapOther = bestWeightMapFrom;
-        fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, inEdgeExplorer, true);
-        return true;
-    }
+    abstract boolean fillEdgesTo();
 
-    private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
-                           IntObjectMap<SPTEntry> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
-        EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
-        while (iter.next()) {
-            if (!accept(iter, currEdge, reverse))
-                continue;
-
-            final double weight = calcWeight(iter, currEdge, reverse);
-            if (Double.isInfinite(weight)) {
-                continue;
-            }
-            final int origEdgeId = getOrigEdgeId(iter, reverse);
-            final int traversalId = getTraversalId(iter, origEdgeId, reverse);
-            SPTEntry entry = bestWeightMap.get(traversalId);
-            if (entry == null) {
-                entry = createEntry(iter, origEdgeId, weight, currEdge, reverse);
-                bestWeightMap.put(traversalId, entry);
-                prioQueue.add(entry);
-            } else if (entry.getWeightOfVisitedPath() > weight) {
-                prioQueue.remove(entry);
-                updateEntry(entry, iter, origEdgeId, weight, currEdge, reverse);
-                prioQueue.add(entry);
-            } else
-                continue;
-
-            if (updateBestPath)
-                updateBestPath(iter, entry, traversalId, reverse);
-        }
-    }
-
-    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry entry, int traversalId, boolean reverse) {
+    protected void updateBestPath(double edgeWeight, SPTEntry entry, int origEdgeIdForCH, int traversalId, boolean reverse) {
+        assert traversalMode.isEdgeBased() != Double.isInfinite(edgeWeight);
         SPTEntry entryOther = bestWeightMapOther.get(traversalId);
         if (entryOther == null)
             return;
@@ -325,7 +187,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
 
             // prevents the path to contain the edge at the meeting point twice and subtracts the weight (excluding turn weight => no previous edge)
             entry = entry.getParent();
-            weight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
+            weight -= edgeWeight;
         }
 
         if (weight < bestWeight) {
@@ -335,39 +197,13 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         }
     }
 
-    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge.getEdge();
-        entry.weight = weight;
-        entry.parent = parent;
-    }
-
-    protected boolean accept(EdgeIteratorState edge, SPTEntry currEdge, boolean reverse) {
-        return accept(edge, getIncomingEdge(currEdge));
-    }
-
-    protected int getOrigEdgeId(EdgeIteratorState edge, boolean reverse) {
-        return edge.getEdge();
-    }
+    protected abstract double getInEdgeWeight(SPTEntry entry);
 
     protected int getIncomingEdge(SPTEntry entry) {
         return entry.edge;
     }
 
-    protected int getTraversalId(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
-        return traversalMode.createTraversalId(edge, reverse);
-    }
-
-    protected double calcWeight(EdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
-        return weighting.calcWeight(iter, reverse, getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
-    }
-
-    @Override
-    protected Path extractPath() {
-        if (finished())
-            return createPathExtractor(graph, weighting).extract(bestFwdEntry, bestBwdEntry, bestWeight);
-
-        return createEmptyPath();
-    }
+    abstract protected Path extractPath();
 
     protected boolean fromEntryCanBeSkipped() {
         return false;
@@ -414,17 +250,6 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         return visitedCountFrom + visitedCountTo;
     }
 
-    void setFromDataStructures(AbstractBidirAlgo other) {
-        from = other.from;
-        fromOutEdge = other.fromOutEdge;
-        pqOpenSetFrom = other.pqOpenSetFrom;
-        bestWeightMapFrom = other.bestWeightMapFrom;
-        finishedFrom = other.finishedFrom;
-        currFrom = other.currFrom;
-        visitedCountFrom = other.visitedCountFrom;
-        // outEdgeExplorer
-    }
-
     void setToDataStructures(AbstractBidirAlgo other) {
         to = other.to;
         toInEdge = other.toInEdge;
@@ -435,4 +260,43 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
         visitedCountTo = other.visitedCountTo;
         // inEdgeExplorer
     }
+
+    @Override
+    public void setMaxVisitedNodes(int numberOfNodes) {
+        this.maxVisitedNodes = numberOfNodes;
+    }
+
+    @Override
+    public void setTimeoutMillis(long timeoutMillis) {
+        this.timeoutMillis = timeoutMillis;
+    }
+
+    protected void checkAlreadyRun() {
+        if (alreadyRun)
+            throw new IllegalStateException("Create a new instance per call");
+
+        alreadyRun = true;
+    }
+
+    protected void setupFinishTime() {
+        try {
+            this.finishTimeMillis = Math.addExact(System.currentTimeMillis(), timeoutMillis);
+        } catch (ArithmeticException e) {
+            this.finishTimeMillis = Long.MAX_VALUE;
+        }
+    }
+
+    @Override
+    public String getName() {
+        return getClass().getSimpleName();
+    }
+
+    protected boolean isMaxVisitedNodesExceeded() {
+        return maxVisitedNodes < getVisitedNodes();
+    }
+
+    protected boolean isTimeoutExceeded() {
+        return finishTimeMillis < Long.MAX_VALUE && System.currentTimeMillis() > finishTimeMillis;
+    }
+
 }

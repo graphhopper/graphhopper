@@ -66,7 +66,7 @@ public class DateRange {
 
     public boolean isInRange(Calendar date) {
         if (!yearless && !dayOnly)
-            return date.after(from) && date.before(to);
+            return date.after(from) && date.before(to) || date.equals(from) || date.equals(to);
 
         if (dayOnly) {
             int currentDayOfWeek = date.get(Calendar.DAY_OF_WEEK);

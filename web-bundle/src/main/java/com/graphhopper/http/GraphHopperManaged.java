@@ -18,53 +18,23 @@
 
 package com.graphhopper.http;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.gtfs.GraphHopperGtfs;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-
-import static com.graphhopper.util.Helper.UTF_CS;
-
 public class GraphHopperManaged implements Managed {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final static Logger logger = LoggerFactory.getLogger(GraphHopperManaged.class);
     private final GraphHopper graphHopper;
 
-    public GraphHopperManaged(CmdArgs configuration, ObjectMapper objectMapper) {
-        ObjectMapper localObjectMapper = objectMapper.copy();
-        localObjectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        String splitAreaLocation = configuration.get(Parameters.Landmark.PREPARE + "split_area_location", "");
-        JsonFeatureCollection landmarkSplittingFeatureCollection;
-        try (Reader reader = splitAreaLocation.isEmpty() ? new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream(), UTF_CS) : new InputStreamReader(new FileInputStream(splitAreaLocation), UTF_CS)) {
-            landmarkSplittingFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
-        } catch (IOException e1) {
-            logger.error("Problem while reading border map GeoJSON. Skipping this.", e1);
-            landmarkSplittingFeatureCollection = null;
-        }
-        graphHopper = new GraphHopperOSM(landmarkSplittingFeatureCollection).forServer();
-        String spatialRuleLocation = configuration.get("spatial_rules.location", "");
-        if (!spatialRuleLocation.isEmpty()) {
-            final BBox maxBounds = BBox.parseBBoxString(configuration.get("spatial_rules.max_bbox", "-180, 180, -90, 90"));
-            try (final InputStreamReader reader = new InputStreamReader(new FileInputStream(spatialRuleLocation), UTF_CS)) {
-                JsonFeatureCollection jsonFeatureCollection = localObjectMapper.readValue(reader, JsonFeatureCollection.class);
-                SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, maxBounds, jsonFeatureCollection);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+    public GraphHopperManaged(GraphHopperConfig configuration) {
+        if (configuration.has("gtfs.file")) {
+            graphHopper = new GraphHopperGtfs(configuration);
+        } else {
+            graphHopper = new GraphHopper();
         }
         graphHopper.init(configuration);
     }
@@ -72,13 +42,14 @@ public class GraphHopperManaged implements Managed {
     @Override
     public void start() {
         graphHopper.importOrLoad();
-        logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
-                + ", data_reader_file:" + graphHopper.getDataReaderFile()
-                + ", encoded values:" + graphHopper.getEncodingManager().toEncodedValuesAsString()
-                + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
+        logger.info("loaded graph at:{}, data_reader_file:{}, encoded values:{}, {} ints for edge flags, {}",
+                graphHopper.getGraphHopperLocation(), graphHopper.getOSMFile(),
+                graphHopper.getEncodingManager().toEncodedValuesAsString(),
+                graphHopper.getEncodingManager().getIntsForFlags(),
+                graphHopper.getBaseGraph().toDetailsString());
     }
 
-    GraphHopper getGraphHopper() {
+    public GraphHopper getGraphHopper() {
         return graphHopper;
     }
 

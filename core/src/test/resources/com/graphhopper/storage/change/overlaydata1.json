@@ -17,7 +17,7 @@
         {
             "id": "2",
             "type": "Feature",
-            "bbox": [-0.01, -0.01, 0.015, 0.005],
+            "bbox": [-0.01, -0.01, 0.005, 0.005],
             "properties": {
                 "access": false,
                 "assert_nodes": [3, 4]

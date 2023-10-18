@@ -54,7 +54,7 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
 
     public CGIARProvider(String cacheDir) {
         // Alternative URLs for the CGIAR data can be found in #346
-        super("http://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/",
+        super("https://srtm.csi.cgiar.org/wp-content/uploads/files/srtm_5x5/TIFF/",
                 cacheDir.isEmpty() ? "/tmp/cgiar" : cacheDir,
                 "GraphHopper CGIARReader",
                 6000, 6000,
@@ -94,7 +94,7 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     }
 
     @Override
-    Raster generateRasterFromFile(File file, String tifName) {
+    Raster readFile(File file, String tifName) {
         SeekableStream ss = null;
         try {
             InputStream is = new FileInputStream(file);

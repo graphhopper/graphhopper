@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?><gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Graphhopper" version="1.1" xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1">
+<metadata><copyright author="OpenStreetMap contributors"/><link href="http://graphhopper.com"><text>GraphHopper GPX</text></link><time>1970-01-01T00:00:00+00:00</time></metadata>
+<rte>
+<rtept lat="51.377719" lon="12.338217"><desc>continue onto Fučikstraße</desc><extensions><gh:distance>101.0</gh:distance><gh:time>14545</gh:time><gh:direction>SE</gh:direction><gh:azimuth>126</gh:azimuth></extensions></rtept>
+<rtept lat="51.37703" lon="12.339166"><desc>turn left onto Chamissoweg</desc><extensions><gh:distance>86.7</gh:distance><gh:time>20814</gh:time><gh:direction>NE</gh:direction><gh:azimuth>61</gh:azimuth></extensions></rtept>
+<rtept lat="51.37754" lon="12.340111"><desc>turn right onto Swiftstraße</desc><extensions><gh:distance>201.1</gh:distance><gh:time>28963</gh:time><gh:direction>SE</gh:direction><gh:azimuth>127</gh:azimuth></extensions></rtept>
+<rtept lat="51.376151" lon="12.34196"><desc>turn left onto Defoestraße</desc><extensions><gh:distance>179.6</gh:distance><gh:time>25866</gh:time><gh:direction>E</gh:direction><gh:azimuth>84</gh:azimuth></extensions></rtept>
+<rtept lat="51.375622" lon="12.343643"><extensions><gh:distance>54.5</gh:distance><gh:time>7840</gh:time><gh:direction>SE</gh:direction><gh:azimuth>134</gh:azimuth></extensions></rtept>
+</rte>
+<wpt lat="51.377719" lon="12.338217"><time>1970-01-01T00:00:00+00:00</time></wpt>
+<wpt lat="51.37703" lon="12.339166"><time>1970-01-01T00:00:14+00:00</time></wpt>
+<wpt lat="51.37754" lon="12.340111"><time>1970-01-01T00:00:35+00:00</time></wpt>
+<wpt lat="51.376201" lon="12.341925"><time>1970-01-01T00:01:03+00:00</time></wpt>
+<wpt lat="51.376151" lon="12.34196"><time>1970-01-01T00:01:04+00:00</time></wpt>
+<wpt lat="51.376307" lon="12.343399"><time>1970-01-01T00:01:18+00:00</time></wpt>
+<wpt lat="51.37578" lon="12.343556"><time>1970-01-01T00:01:27+00:00</time></wpt>
+<wpt lat="51.375622" lon="12.343643"><time>1970-01-01T00:01:30+00:00</time></wpt>
+</gpx>

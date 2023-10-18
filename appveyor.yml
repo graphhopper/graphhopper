@@ -1,26 +1,17 @@
 version: '{build}'
 skip_tags: true
 clone_depth: 10
+image: Visual Studio 2022
 environment:
-  matrix:
-    # - JAVA_HOME: C:\Program Files\Java\jdk1.7.0
-    - JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+  MAVEN_OPTS: -Xmx1g
+  JAVA_OPTS: -Xmx1g
+  JAVA_HOME: C:\Program Files\Java\jdk1.8.0
+install:
+  - java -version
+  - mvn --version
 branches:
   only:
-    - master
-os: Windows Server 2012
-install:
-  - ps: |
-      Add-Type -AssemblyName System.IO.Compression.FileSystem
-      if (!(Test-Path -Path "C:\maven" )) {
-        (new-object System.Net.WebClient).DownloadFile('http://www.us.apache.org/dist/maven/maven-3/3.3.9/binaries/apache-maven-3.3.9-bin.zip', 'C:\maven-bin.zip')
-        [System.IO.Compression.ZipFile]::ExtractToDirectory("C:\maven-bin.zip", "C:\maven")
-      }
-  - cmd: SET PATH=C:\maven\apache-maven-3.3.9\bin;%JAVA_HOME%\bin;%PATH%
-  - cmd: SET MAVEN_OPTS=-Xmx1g
-  - cmd: SET JAVA_OPTS=-Xmx1g
-  - cmd: mvn --version
-  - cmd: java -version
+    - master      
 build_script:
   - mvn clean install -DskipTests=true -B
 test_script:
@@ -28,3 +19,5 @@ test_script:
 cache:
   - C:\maven\
   - C:\Users\appveyor\.m2
+artifacts:
+- path: web/target/*.jar

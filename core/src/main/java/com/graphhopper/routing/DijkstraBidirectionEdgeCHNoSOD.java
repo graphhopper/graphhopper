@@ -18,17 +18,14 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.ch.CHEntry;
-import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.storage.RoutingCHGraph;
 
 /**
  * @author easbar
  */
 public class DijkstraBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoSOD {
-    public DijkstraBidirectionEdgeCHNoSOD(Graph graph, TurnWeighting weighting) {
-        super(graph, weighting);
+    public DijkstraBidirectionEdgeCHNoSOD(RoutingCHGraph graph) {
+        super(graph);
     }
 
     @Override
@@ -37,16 +34,15 @@ public class DijkstraBidirectionEdgeCHNoSOD extends AbstractBidirectionEdgeCHNoS
     }
 
     @Override
-    protected CHEntry createEntry(EdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
-        CHEntry entry = new CHEntry(edge.getEdge(), incEdge, edge.getAdjNode(), weight);
-        entry.parent = parent;
-        return entry;
+    protected CHEntry createEntry(int edge, int adjNode, int incEdge, double weight, SPTEntry parent, boolean reverse) {
+        return new CHEntry(edge, incEdge, adjNode, weight, parent);
     }
 
     @Override
-    protected void updateEntry(SPTEntry entry, EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent, boolean reverse) {
-        entry.edge = edge.getEdge();
-        ((CHEntry) entry).incEdge = edgeId;
+    protected void updateEntry(SPTEntry entry, int edge, int adjNode, int incEdge, double weight, SPTEntry parent, boolean reverse) {
+        assert entry.adjNode == adjNode;
+        entry.edge = edge;
+        ((CHEntry) entry).incEdge = incEdge;
         entry.weight = weight;
         entry.parent = parent;
     }

@@ -3,9 +3,9 @@
 To avoid confusion with alternative route search we talk not about ALT but about
 the 'landmarks' algorithm. The landmarks algorithm is like CH a post-import 
 process which makes routing faster. It is disable by default. To enable it
-set e.g. `prepare.lm.weightings=fastest` in the configuration.
+add the profiles for which you want this to `profiles_lm` in the config.yml.
 
-The interesting part is that we just have to set a special landmarks WeightApproximator
+The interesting part is that we set a special landmarks WeightApproximator
 for (bidirectional) A* and are done. It is important that although a weight
 **approximation** is used the landmarks algorithm is still not heuristic per
 default. You can make it faster and more heuristical behaving when you set
@@ -21,4 +21,4 @@ mean several additional GB per weighting.
 Furthermore this short value has the problem that smaller distances cannot be
 differentiated sometimes which could lead to very slightly suboptimal routes.
 If just small areas (country or city) are imported this can be avoided via setting a 
-the maximum weighting explicitely.
+the maximum weighting explicitly if no good default was found.

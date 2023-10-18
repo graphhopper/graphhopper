@@ -17,12 +17,14 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.PathWrapper;
+import com.graphhopper.ResponsePath;
+import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.Roundabout;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.details.PathDetailsFromEdges;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 
 import java.util.ArrayList;
@@ -31,7 +33,7 @@ import java.util.List;
 
 /**
  * This class merges multiple {@link Path} objects into one continuous object that
- * can be used in the {@link PathWrapper}. There will be a Path between every waypoint.
+ * can be used in the {@link ResponsePath}. There will be a Path between every waypoint.
  * So for two waypoints there will be only one Path object. For three waypoints there will be
  * two Path objects.
  * <p>
@@ -43,22 +45,30 @@ import java.util.List;
  * @author Robin Boldt
  */
 public class PathMerger {
-    private static final DouglasPeucker DP = new DouglasPeucker();
+    private static final RamerDouglasPeucker RDP = new RamerDouglasPeucker();
+    private final Graph graph;
+    private final Weighting weighting;
+
     private boolean enableInstructions = true;
     private boolean simplifyResponse = true;
-    private DouglasPeucker douglasPeucker = DP;
+    private RamerDouglasPeucker ramerDouglasPeucker = RDP;
     private boolean calcPoints = true;
     private PathDetailsBuilderFactory pathBuilderFactory;
-    private List<String> requestedPathDetails = Collections.EMPTY_LIST;
+    private List<String> requestedPathDetails = Collections.emptyList();
     private double favoredHeading = Double.NaN;
+
+    public PathMerger(Graph graph, Weighting weighting) {
+        this.graph = graph;
+        this.weighting = graph.wrapWeighting(weighting);
+    }
 
     public PathMerger setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
         return this;
     }
 
-    public PathMerger setDouglasPeucker(DouglasPeucker douglasPeucker) {
-        this.douglasPeucker = douglasPeucker;
+    public PathMerger setRamerDouglasPeucker(RamerDouglasPeucker ramerDouglasPeucker) {
+        this.ramerDouglasPeucker = ramerDouglasPeucker;
         return this;
     }
 
@@ -78,7 +88,8 @@ public class PathMerger {
         return this;
     }
 
-    public void doWork(PathWrapper altRsp, List<Path> paths, EncodingManager encodingManager, Translation tr) {
+    public ResponsePath doWork(PointList waypoints, List<Path> paths, EncodedValueLookup evLookup, Translation tr) {
+        ResponsePath responsePath = new ResponsePath();
         int origPoints = 0;
         long fullTimeInMillis = 0;
         double fullWeight = 0;
@@ -88,7 +99,7 @@ public class PathMerger {
         InstructionList fullInstructions = new InstructionList(tr);
         PointList fullPoints = PointList.EMPTY;
         List<String> description = new ArrayList<>();
-        BooleanEncodedValue roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
+        List<Integer> wayPointIndices = new ArrayList<>();
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++) {
             Path path = paths.get(pathIndex);
             if (!path.isFound()) {
@@ -100,12 +111,12 @@ public class PathMerger {
             fullDistance += path.getDistance();
             fullWeight += path.getWeight();
             if (enableInstructions) {
-                InstructionList il = path.calcInstructions(roundaboutEnc, tr);
+                InstructionList il = InstructionsFromEdges.calcInstructions(path, graph, weighting, evLookup, tr);
 
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);
 
-                    // for all paths except the last replace the FinishInstruction with a ViaInstructionn
+                    // for all paths except the last replace the FinishInstruction with a ViaInstruction
                     if (pathIndex + 1 < paths.size()) {
                         ViaInstruction newInstr = new ViaInstruction(fullInstructions.get(fullInstructions.size() - 1));
                         newInstr.setViaCount(pathIndex + 1);
@@ -125,39 +136,49 @@ public class PathMerger {
                 }
 
                 fullPoints.add(tmpPoints);
-                altRsp.addPathDetails(path.calcDetails(requestedPathDetails, pathBuilderFactory, origPoints));
+                responsePath.addPathDetails(PathDetailsFromEdges.calcDetails(path, evLookup, weighting, requestedPathDetails, pathBuilderFactory, origPoints, graph));
+                wayPointIndices.add(origPoints);
+                if (pathIndex == paths.size() - 1)
+                    wayPointIndices.add(fullPoints.size() - 1);
                 origPoints = fullPoints.size();
             }
 
             allFound = allFound && path.isFound();
         }
 
-        if (!fullPoints.isEmpty()) {
-            String debug = altRsp.getDebugInfo() + ", simplify (" + origPoints + "->" + fullPoints.getSize() + ")";
-            altRsp.addDebugInfo(debug);
-            if (fullPoints.is3D)
-                calcAscendDescend(altRsp, fullPoints);
-        }
+        if (!fullPoints.isEmpty() && fullPoints.is3D)
+            calcAscendDescend(responsePath, fullPoints);
 
         if (enableInstructions) {
             fullInstructions = updateInstructionsWithContext(fullInstructions);
-            altRsp.setInstructions(fullInstructions);
+            responsePath.setInstructions(fullInstructions);
         }
 
         if (!allFound) {
-            altRsp.addError(new ConnectionNotFoundException("Connection between locations not found", Collections.<String, Object>emptyMap()));
+            responsePath.addError(new ConnectionNotFoundException("Connection between locations not found", Collections.emptyMap()));
         }
 
-        altRsp.setDescription(description).
+        // make sure the way point indices actually point to the points in waypoints...
+        if (allFound && !waypoints.isEmpty()) { // we use empty waypoints for map-matching...
+            for (int i = 0; i < wayPointIndices.size(); i++) {
+                int index = wayPointIndices.get(i);
+                if (waypoints.getLat(i) != fullPoints.getLat(index) || waypoints.getLon(i) != fullPoints.getLon(index))
+                    throw new IllegalStateException("waypoints are not included in points, or waypoint indices are wrong");
+            }
+        }
+
+        responsePath.setDescription(description).
                 setPoints(fullPoints).
                 setRouteWeight(fullWeight).
                 setDistance(fullDistance).
-                setTime(fullTimeInMillis);
+                setTime(fullTimeInMillis).
+                setWaypoints(waypoints).
+                setWaypointIndices(wayPointIndices);
 
         if (allFound && simplifyResponse && (calcPoints || enableInstructions)) {
-            PathSimplification ps = new PathSimplification(altRsp, douglasPeucker, enableInstructions);
-            ps.simplify();
+            PathSimplification.simplify(responsePath, ramerDouglasPeucker, enableInstructions);
         }
+        return responsePath;
     }
 
     /**
@@ -205,12 +226,12 @@ public class PathMerger {
         return instructions;
     }
 
-    private void calcAscendDescend(final PathWrapper rsp, final PointList pointList) {
+    private void calcAscendDescend(final ResponsePath responsePath, final PointList pointList) {
         double ascendMeters = 0;
         double descendMeters = 0;
-        double lastEle = pointList.getElevation(0);
+        double lastEle = pointList.getEle(0);
         for (int i = 1; i < pointList.size(); ++i) {
-            double ele = pointList.getElevation(i);
+            double ele = pointList.getEle(i);
             double diff = Math.abs(ele - lastEle);
 
             if (ele > lastEle)
@@ -221,8 +242,8 @@ public class PathMerger {
             lastEle = ele;
 
         }
-        rsp.setAscend(ascendMeters);
-        rsp.setDescend(descendMeters);
+        responsePath.setAscend(ascendMeters);
+        responsePath.setDescend(descendMeters);
     }
 
     public void setFavoredHeading(double favoredHeading) {

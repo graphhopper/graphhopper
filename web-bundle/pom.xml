@@ -3,17 +3,19 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-web-bundle</artifactId>
     <packaging>jar</packaging>
-    <version>0.14-SNAPSHOT</version>
+    <version>9.0-SNAPSHOT</version>
+    <properties>
+        <graphhopper-maps.version>0.0.0-56cdfc78acf88b477457f8846c8715058b5375db</graphhopper-maps.version>
+    </properties>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>0.14-SNAPSHOT</version>
+        <version>9.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>
@@ -24,7 +26,7 @@
         </dependency>
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-reader-osm</artifactId>
+            <artifactId>graphhopper-core</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
@@ -32,10 +34,9 @@
             <artifactId>graphhopper-reader-gtfs</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-isochrone</artifactId>
+            <artifactId>graphhopper-map-matching</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
 
@@ -49,18 +50,72 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
-            <version>${dropwizard.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard</groupId>
+            <artifactId>dropwizard-client</artifactId>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-testing</artifactId>
-            <version>${dropwizard.version}</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.locationtech.jts</groupId>
+            <artifactId>jts-core</artifactId>
+            <version>1.19.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.jaxrs</groupId>
+            <artifactId>jackson-jaxrs-xml-provider</artifactId>
+        </dependency>
+
+        <!-- Pt and/or map-matching and/or isochrone web client dependencies-->
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>react</artifactId>
+            <version>16.10.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>react-dom</artifactId>
+            <version>16.10.2</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>leaflet</artifactId>
+            <version>1.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>momentjs</artifactId>
+            <version>2.24.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>jquery</artifactId>
+            <version>2.2.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>mapbox-gl</artifactId>
+            <!-- this was the last mapbox release with an open license, the license was changed for 2.0+ -->
+            <version>1.13.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>vue</artifactId>
+            <version>2.6.12</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>papaparse</artifactId>
+            <version>5.2.0</version>
         </dependency>
 
         <!-- for integration tests of service -->
@@ -70,28 +125,81 @@
             <version>${project.parent.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>directions-api-client</artifactId>
-            <version>${directions-api-client.version}</version>
-            <scope>test</scope>
-        </dependency>
-
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
+                <groupId>com.github.eirslett</groupId>
+                <artifactId>frontend-maven-plugin</artifactId>
+                <version>1.12.1</version>
+                <executions>
+                    <execution>
+                        <id>install node and npm</id>
+                        <goals>
+                            <goal>install-node-and-npm</goal>
+                        </goals>
+                        <configuration>
+                            <nodeVersion>v16.17.0</nodeVersion>
+                            <npmVersion>8.15.0</npmVersion>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>download graphhopper maps</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>npm</goal>
+                        </goals>
+                        <configuration>
+                            <!--suppress UnresolvedMavenProperty (IntelliJ shows an error otherwise...)-->
+                            <arguments>
+                                pack --pack-destination=${basedir}/target
+                                @graphhopper/graphhopper-maps-bundle@${graphhopper-maps.version}
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <!-- this is needed because we want to download the maps bundle to the target folder -->
+                        <id>create target directory</id>
+                        <phase>initialize</phase>
+                        <configuration>
+                            <target>
+                                <mkdir dir="${basedir}/target"/>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>unzip maps bundle</id>
+                        <phase>process-resources</phase>
+                        <configuration>
+                            <target>
+                                <untar compression="gzip"
+                                       src="${basedir}/target/graphhopper-graphhopper-maps-bundle-${graphhopper-maps.version}.tgz"
+                                       dest="${basedir}/target/classes/com/graphhopper/maps">
+                                    <patternset>
+                                        <include name="package/dist/**"/>
+                                        <exclude name="package/dist/config.js"/>
+                                    </patternset>
+                                    <mapper type="regexp" from="package\/dist\/(.*)" to="\1"/>
+                                </untar>
+                            </target>
+                        </configuration>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
-
 </project>
 
 

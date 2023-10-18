@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 
 /**
@@ -28,5 +29,5 @@ public interface RoutingAlgorithmFactory {
     /**
      * This method creates an algorithm out of this factory based on the specified opts and graph.
      */
-    RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts);
+    RoutingAlgorithm createAlgo(Graph g, Weighting w, AlgorithmOptions opts);
 }

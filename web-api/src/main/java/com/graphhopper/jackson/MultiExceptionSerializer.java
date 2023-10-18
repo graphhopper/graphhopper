@@ -15,7 +15,6 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.graphhopper.jackson;
 
 import com.fasterxml.jackson.core.JsonGenerator;
@@ -24,7 +23,6 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.graphhopper.MultiException;
 import com.graphhopper.util.exceptions.GHException;
 
 import java.io.IOException;

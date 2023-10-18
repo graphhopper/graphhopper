@@ -23,7 +23,6 @@ import static com.graphhopper.util.Parameters.Details.DISTANCE;
 
 public class DistanceDetails extends AbstractPathDetailsBuilder {
 
-    private int edgeId = -1;
     private double distance = 0;
 
     public DistanceDetails() {
@@ -32,12 +31,8 @@ public class DistanceDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        if (edge.getEdge() != edgeId) {
-            edgeId = edge.getEdge();
-            distance = edge.getDistance();
-            return true;
-        }
-        return false;
+        distance = edge.getDistance();
+        return true;
     }
 
     @Override

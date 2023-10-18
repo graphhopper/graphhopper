@@ -1,0 +1,62 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm">
+
+    <!--  _>B_>
+         /  |  \
+        A__ D__C
+         \  |  /
+          \_E_/    
+    -->
+
+    <node id="10" lat="11.1" lon="50" version="24853">
+        <tag k="name" v="A"/>
+    </node>
+    <node id="20" lat="12" lon="51" version="24854">
+        <tag k="name" v="B"/>
+    </node>
+    <node id="30" lat="11.2" lon="52" version="24855">
+        <tag k="name" v="C"/>
+    </node>
+    <node id="40" lat="11.3" lon="51" version="24854">
+        <tag k="name" v="D"/>
+    </node>
+    <node id="50" lat="10" lon="51" version="1">
+        <tag k="name" v="E"/>
+    </node>
+
+    <way id="10" version="85761">
+        <nd ref="10"/>
+        <nd ref="20"/>
+        <nd ref="30"/>
+        <tag k="name" v="A B C"/>
+        <tag k="oneway" v="true"/>
+        <tag k="highway" v="secondary"/>
+    </way>
+
+    <way id="12" version="85762">
+        <nd ref="10"/>
+        <nd ref="40"/>
+        <nd ref="30"/>
+        <tag k="name" v="A D C"/>
+        <tag k="highway" v="motorway"/>
+    </way>
+
+    <way id="11" version="85761">
+        <nd ref="10"/>
+        <nd ref="50"/>
+        <nd ref="30"/>
+        <tag k="name" v="A E C"/>
+        <tag k="highway" v="footway"/>
+    </way>
+
+    <way id="13" version="1">
+        <nd ref="20"/>
+        <nd ref="40"/>
+        <nd ref="50"/>
+        <tag k="name" v="B D E"/>
+        <tag k="highway" v="motorway"/>
+        <tag k="maxspeed" v="40"/>
+    </way>
+
+    <!-- TODO relations -->
+</osm>

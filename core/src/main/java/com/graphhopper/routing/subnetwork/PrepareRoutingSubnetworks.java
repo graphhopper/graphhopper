@@ -17,257 +17,192 @@
  */
 package com.graphhopper.routing.subnetwork;
 
+import com.carrotsearch.hppc.BitSet;
+import com.carrotsearch.hppc.BitSetIterator;
 import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntIndexedContainer;
-import com.graphhopper.coll.GHBitSet;
-import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.*;
+import com.carrotsearch.hppc.cursors.IntCursor;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
+
+import static com.graphhopper.util.GHUtility.getEdgeFromEdgeKey;
 
 /**
- * Removes nodes which are not part of the large networks. Ie. mostly nodes with no edges at all but
- * also small subnetworks which could be bugs in OSM data or indicate otherwise disconnected areas
- * e.g. via barriers or one way problems - see #86.
+ * Detects and marks 'subnetworks' with a dedicated subnetwork encoded value. Subnetworks are parts of the road network
+ * that are not connected to the rest of the network and that are below a certain size. These can be isolated nodes with
+ * no edges at all, but also small subnetworks which could be bugs in OSM data or 'islands' that are separated from
+ * the rest of the network because of some missing link, barrier or some closed road for example.
  * <p>
+ * Sometimes there are also subnetworks that can be reached from the main network but not the other way around (or the
+ * opposite). For example this can be parking lots that can only be accessed by a single one-way road (a mapping error).
+ * These are called 'one-way subnetworks' and are marked using the same subnetwork encoded value, see #86. To find such
+ * one-way subnetworks it is important to search for strongly connected components on the directed graph and not do a
+ * simple connectivity check for one direction.
+ * <p>
+ * Note that it depends on the weighting whether or not edges belong to a subnetwork or not. For example if a weighting
+ * 'closes' a bridge to an island the island might become a subnetwork, but if the bridge was open it would belong to
+ * the main network. There can even be subnetworks that are due to turn restrictions.
+ * <p>
+ * We always run an edge-based connected component search, because this way we retrieve the edges (not the nodes) that
+ * belong to each component and can include turn restrictions as well. Node-based component search is faster, but since
+ * the subnetwork search goes relatively fast anyway using it has no real benefit.
  *
  * @author Peter Karich
+ * @author easbar
  */
 public class PrepareRoutingSubnetworks {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final GraphHopperStorage ghStorage;
-    private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
-    private final List<FlagEncoder> encoders;
-    private final List<BooleanEncodedValue> accessEncList;
+    private final BaseGraph graph;
+    private final List<PrepareJob> prepareJobs;
     private int minNetworkSize = 200;
-    private int minOneWayNetworkSize = 0;
-    private int subnetworks = -1;
+    private int threads = 1;
 
-    public PrepareRoutingSubnetworks(GraphHopperStorage ghStorage, List<FlagEncoder> encoders) {
-        this.ghStorage = ghStorage;
-        this.encoders = encoders;
-        this.accessEncList = new ArrayList<>();
-        for (FlagEncoder flagEncoder : encoders) {
-            accessEncList.add(flagEncoder.getAccessEnc());
-        }
+    public PrepareRoutingSubnetworks(BaseGraph graph, List<PrepareJob> prepareJobs) {
+        this.graph = graph;
+        this.prepareJobs = prepareJobs;
     }
 
+    /**
+     * All components of the graph with less than 2*{@link #minNetworkSize} directed edges (edge keys) will be marked
+     * as subnetworks. The biggest component will never be marked as subnetwork, even when it is below this size.
+     */
     public PrepareRoutingSubnetworks setMinNetworkSize(int minNetworkSize) {
         this.minNetworkSize = minNetworkSize;
         return this;
     }
 
-    public PrepareRoutingSubnetworks setMinOneWayNetworkSize(int minOnewayNetworkSize) {
-        this.minOneWayNetworkSize = minOnewayNetworkSize;
+    public PrepareRoutingSubnetworks setThreads(int threads) {
+        this.threads = threads;
         return this;
     }
 
-    public void doWork() {
-        if (minNetworkSize <= 0 && minOneWayNetworkSize <= 0)
-            return;
-
-        logger.info("start finding subnetworks (min:" + minNetworkSize + ", min one way:" + minOneWayNetworkSize + ") " + Helper.getMemInfo());
-        int unvisitedDeadEnds = 0;
-        for (FlagEncoder encoder : encoders) {
-            // mark edges for one vehicle as inaccessible
-            DefaultEdgeFilter filter = DefaultEdgeFilter.allEdges(encoder);
-            if (minOneWayNetworkSize > 0)
-                unvisitedDeadEnds += removeDeadEndUnvisitedNetworks(filter);
-
-            List<IntArrayList> components = findSubnetworks(filter);
-            keepLargeNetworks(filter, components);
-            subnetworks = Math.max(components.size(), subnetworks);
-            logger.info(components.size() + " subnetworks found for " + encoder + ", " + Helper.getMemInfo());
-        }
-
-        markNodesRemovedIfUnreachable();
-
-        logger.info("optimize to remove subnetworks (" + subnetworks + "), "
-                + "unvisited-dead-end-nodes (" + unvisitedDeadEnds + "), "
-                + "maxEdges/node (" + maxEdgesPerNode.get() + ")");
-        ghStorage.optimize();
-    }
-
-    public int getMaxSubnetworks() {
-        return subnetworks;
-    }
-
     /**
-     * This method finds the double linked components according to the specified filter.
+     * Finds and marks all subnetworks according to {@link #setMinNetworkSize(int)}
+     *
+     * @return the total number of marked edges
      */
-    List<IntArrayList> findSubnetworks(DefaultEdgeFilter filter) {
-        final BooleanEncodedValue accessEnc = filter.getAccessEnc();
-        final EdgeExplorer explorer = ghStorage.createEdgeExplorer(filter);
-        int locs = ghStorage.getNodes();
-        List<IntArrayList> list = new ArrayList<>(100);
-        final GHBitSet bs = new GHBitSetImpl(locs);
-        for (int start = 0; start < locs; start++) {
-            if (bs.contains(start))
+    public int doWork() {
+        if (minNetworkSize <= 0) {
+            logger.info("Skipping subnetwork search: prepare.min_network_size: " + minNetworkSize);
+            return 0;
+        }
+        StopWatch sw = new StopWatch().start();
+        logger.info("Start marking subnetworks, prepare.min_network_size: " + minNetworkSize + ", threads: " + threads + ", nodes: " +
+                Helper.nf(graph.getNodes()) + ", edges: " + Helper.nf(graph.getEdges()) + ", jobs: " + prepareJobs + ", " + Helper.getMemInfo());
+        AtomicInteger total = new AtomicInteger(0);
+        List<BitSet> flags = Stream.generate(() -> new BitSet(graph.getEdges())).limit(prepareJobs.size()).collect(Collectors.toList());
+        Stream<Runnable> runnables = IntStream.range(0, prepareJobs.size()).mapToObj(i -> () -> {
+            PrepareJob job = prepareJobs.get(i);
+            total.addAndGet(setSubnetworks(job.weighting, job.subnetworkEnc.getName().replaceAll("_subnetwork", ""), flags.get(i)));
+        });
+        GHUtility.runConcurrently(runnables, threads);
+        AllEdgesIterator iter = graph.getAllEdges();
+        while (iter.next()) {
+            for (int i = 0; i < prepareJobs.size(); i++) {
+                PrepareJob prepareJob = prepareJobs.get(i);
+                iter.set(prepareJob.subnetworkEnc, flags.get(i).get(iter.getEdge()));
+            }
+        }
+        logger.info("Finished finding and marking subnetworks for " + prepareJobs.size() + " jobs, took: " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
+        return total.get();
+    }
+
+    private int setSubnetworks(Weighting weighting, String jobName, BitSet subnetworkFlags) {
+        // partition graph into strongly connected components using Tarjan's algorithm
+        StopWatch sw = new StopWatch().start();
+        EdgeBasedTarjanSCC.ConnectedComponents ccs = EdgeBasedTarjanSCC.findComponents(graph,
+                (prev, edge) -> Double.isFinite(GHUtility.calcWeightWithTurnWeight(weighting, edge, false, prev)),
+                false);
+        List<IntArrayList> components = ccs.getComponents();
+        BitSet singleEdgeComponents = ccs.getSingleEdgeComponents();
+        long numSingleEdgeComponents = singleEdgeComponents.cardinality();
+        logger.info(jobName + " - Found " + ccs.getTotalComponents() + " subnetworks (" + numSingleEdgeComponents + " single edges and "
+                + components.size() + " components with more than one edge, total nodes: " + ccs.getEdgeKeys() + "), took: " + sw.stop().getSeconds() + "s");
+
+        final int minNetworkSizeEdgeKeys = 2 * minNetworkSize;
+
+        // make all small components subnetworks, but keep the biggest (even when its smaller than the given min_network_size)
+        sw = new StopWatch().start();
+        int subnetworks = 0;
+        int markedEdges = 0;
+        int smallestNonSubnetwork = ccs.getBiggestComponent().size();
+        int biggestSubnetwork = 0;
+
+        for (IntArrayList component : components) {
+            if (component == ccs.getBiggestComponent())
                 continue;
 
-            final IntArrayList intList = new IntArrayList(20);
-            list.add(intList);
-            new BreadthFirstSearch() {
-                int tmpCounter = 0;
-
-                @Override
-                protected GHBitSet createBitSet() {
-                    return bs;
-                }
-
-                @Override
-                protected final boolean goFurther(int nodeId) {
-                    if (tmpCounter > maxEdgesPerNode.get())
-                        maxEdgesPerNode.set(tmpCounter);
-
-                    tmpCounter = 0;
-                    intList.add(nodeId);
-                    return true;
-                }
-
-                @Override
-                protected final boolean checkAdjacent(EdgeIteratorState edge) {
-                    if (edge.get(accessEnc) || edge.getReverse(accessEnc)) {
-                        tmpCounter++;
-                        return true;
-                    }
-                    return false;
-                }
-
-            }.start(explorer, start);
-            intList.trimToSize();
+            if (component.size() < minNetworkSizeEdgeKeys) {
+                for (IntCursor cursor : component)
+                    markedEdges += setSubnetworkEdge(cursor.value, weighting, subnetworkFlags);
+                subnetworks++;
+                biggestSubnetwork = Math.max(biggestSubnetwork, component.size());
+            } else {
+                smallestNonSubnetwork = Math.min(smallestNonSubnetwork, component.size());
+            }
         }
-        return list;
+
+        if (minNetworkSizeEdgeKeys > 0) {
+            BitSetIterator iter = singleEdgeComponents.iterator();
+            for (int edgeKey = iter.nextSetBit(); edgeKey >= 0; edgeKey = iter.nextSetBit()) {
+                markedEdges += setSubnetworkEdge(edgeKey, weighting, subnetworkFlags);
+                subnetworks++;
+                biggestSubnetwork = Math.max(biggestSubnetwork, 1);
+            }
+        } else if (numSingleEdgeComponents > 0) {
+            smallestNonSubnetwork = Math.min(smallestNonSubnetwork, 1);
+        }
+
+        int allowedMarked = graph.getEdges() / 2;
+        if (markedEdges / 2 > allowedMarked)
+            throw new IllegalStateException("Too many total (directed) edges were marked as subnetwork edges: " + markedEdges + " out of " + (2 * graph.getEdges()) + "\n" +
+                    "The maximum number of subnetwork edges is: " + (2 * allowedMarked));
+
+        logger.info(jobName + " - Marked " + subnetworks + " subnetworks (biggest: " + biggestSubnetwork + " edges) -> " +
+                (ccs.getTotalComponents() - subnetworks) + " components(s) remain (smallest: " + smallestNonSubnetwork + ", biggest: " + ccs.getBiggestComponent().size() + " edges)"
+                + ", total marked edges: " + markedEdges + ", took: " + sw.stop().getSeconds() + "s");
+        return markedEdges;
     }
 
-    /**
-     * Deletes all but the largest subnetworks.
-     */
-    int keepLargeNetworks(DefaultEdgeFilter filter, List<IntArrayList> components) {
-        if (components.size() <= 1)
+    private int setSubnetworkEdge(int edgeKey, Weighting weighting, BitSet subnetworkFlags) {
+        // edges that are not accessible anyway are not marked as subnetworks additionally
+        if (!Double.isFinite(weighting.calcEdgeWeight(graph.getEdgeIteratorStateForKey(edgeKey), false)))
             return 0;
 
-        int maxCount = -1;
-        IntIndexedContainer oldComponent = null;
-        int allRemoved = 0;
-        BooleanEncodedValue accessEnc = filter.getAccessEnc();
-        EdgeExplorer explorer = ghStorage.createEdgeExplorer(filter);
-        for (IntArrayList component : components) {
-            if (maxCount < 0) {
-                maxCount = component.size();
-                oldComponent = component;
-                continue;
-            }
-
-            int removedEdges;
-            if (maxCount < component.size()) {
-                // new biggest area found. remove old
-                removedEdges = removeEdges(explorer, accessEnc, oldComponent, minNetworkSize);
-
-                maxCount = component.size();
-                oldComponent = component;
-            } else {
-                removedEdges = removeEdges(explorer, accessEnc, component, minNetworkSize);
-            }
-
-            allRemoved += removedEdges;
-        }
-
-        if (allRemoved > ghStorage.getAllEdges().length() / 2)
-            throw new IllegalStateException("Too many total edges were removed: " + allRemoved + ", all edges:" + ghStorage.getAllEdges().length());
-        return allRemoved;
-    }
-
-    /**
-     * This method removes networks that will be never be visited by this filter. See #235 for
-     * example, small areas like parking lots are sometimes connected to the whole network through a
-     * one-way road. This is clearly an error - but it causes the routing to fail when a point gets
-     * connected to this small area. This routine removes all these networks from the graph.
-     *
-     * @return number of removed edges
-     */
-    int removeDeadEndUnvisitedNetworks(final DefaultEdgeFilter bothFilter) {
-        StopWatch sw = new StopWatch(bothFilter.getAccessEnc() + " findComponents").start();
-        final EdgeFilter outFilter = DefaultEdgeFilter.outEdges(bothFilter.getAccessEnc());
-
-        // partition graph into strongly connected components using Tarjan's algorithm        
-        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, outFilter, true);
-        List<IntArrayList> components = tarjan.findComponents();
-        logger.info(sw.stop() + ", size:" + components.size());
-
-        return removeEdges(bothFilter, components, minOneWayNetworkSize);
-    }
-
-    /**
-     * This method removes the access to edges available from the nodes contained in the components.
-     * But only if a components' size is smaller then the specified min value.
-     *
-     * @return number of removed edges
-     */
-    int removeEdges(final DefaultEdgeFilter bothFilter, List<IntArrayList> components, int min) {
-        // remove edges determined from nodes but only if less than minimum size
-        EdgeExplorer explorer = ghStorage.createEdgeExplorer(bothFilter);
-        int removedEdges = 0;
-        for (IntArrayList component : components) {
-            removedEdges += removeEdges(explorer, bothFilter.getAccessEnc(), component, min);
-        }
-        return removedEdges;
-    }
-
-    int removeEdges(EdgeExplorer explorer, BooleanEncodedValue accessEnc, IntIndexedContainer component, int min) {
-        int removedEdges = 0;
-        if (component.size() < min) {
-            for (int i = 0; i < component.size(); i++) {
-                EdgeIterator edge = explorer.setBaseNode(component.get(i));
-                while (edge.next()) {
-                    edge.set(accessEnc, false).setReverse(accessEnc, false);
-                    removedEdges++;
-                }
-            }
-        }
-
-        return removedEdges;
-    }
-
-    /**
-     * Removes nodes if all edges are not accessible. I.e. removes zero degree nodes.
-     */
-    void markNodesRemovedIfUnreachable() {
-        EdgeExplorer edgeExplorer = ghStorage.createEdgeExplorer();
-        for (int nodeIndex = 0; nodeIndex < ghStorage.getNodes(); nodeIndex++) {
-            if (detectNodeRemovedForAllEncoders(edgeExplorer, nodeIndex))
-                ghStorage.markNodeRemoved(nodeIndex);
+        // now get edge again but in stored direction so that subnetwork EV is not overwritten (as it is unidirectional)
+        int edge = getEdgeFromEdgeKey(edgeKey);
+        if (!subnetworkFlags.get(edge)) {
+            subnetworkFlags.set(edge);
+            return 1;
+        } else {
+            return 0;
         }
     }
 
-    /**
-     * This method checks if the node is removed or inaccessible for ALL encoders.
-     *
-     * @return true if no edges are reachable from the specified nodeIndex for any flag encoder.
-     */
-    boolean detectNodeRemovedForAllEncoders(EdgeExplorer edgeExplorerAllEdges, int nodeIndex) {
-        // we could implement a 'fast check' for several previously marked removed nodes via GHBitSet 
-        // removedNodesPerVehicle. The problem is that we would need long-indices but BitSet only supports int (due to nodeIndex*numberOfEncoders)
+    public static class PrepareJob {
+        private final BooleanEncodedValue subnetworkEnc;
+        private final Weighting weighting;
 
-        // if no edges are reachable return true
-        EdgeIterator iter = edgeExplorerAllEdges.setBaseNode(nodeIndex);
-        while (iter.next()) {
-            // if at least on encoder allows one direction return false
-            for (BooleanEncodedValue accessEnc : accessEncList) {
-                if (iter.get(accessEnc) || iter.getReverse(accessEnc))
-                    return false;
-            }
+        public PrepareJob(BooleanEncodedValue subnetworkEnc, Weighting weighting) {
+            this.weighting = weighting;
+            this.subnetworkEnc = subnetworkEnc;
         }
 
-        return true;
+        @Override
+        public String toString() {
+            return subnetworkEnc.getName() + "|" + weighting;
+        }
     }
 }

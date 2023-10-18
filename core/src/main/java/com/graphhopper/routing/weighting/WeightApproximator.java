@@ -39,4 +39,6 @@ public interface WeightApproximator {
      * towards the 'to'.
      */
     WeightApproximator reverse();
+
+    double getSlack();
 }

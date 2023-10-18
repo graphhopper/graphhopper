@@ -30,7 +30,6 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.error.DuplicateKeyError;
 
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.Map;
 
 public class FareAttribute extends Entity {
@@ -72,8 +71,8 @@ public class FareAttribute extends Entity {
                 fa.price = getDoubleField("price", true, 0, Integer.MAX_VALUE);
                 fa.currency_type = getStringField("currency_type", true);
                 fa.payment_method = getIntField("payment_method", true, 0, 1);
-                fa.transfers = getIntField("transfers", false, 0, 10); // TODO missing means "unlimited" in this case (rather than 0), supply default value or just use the NULL to mean unlimited
-                fa.transfer_duration = getIntField("transfer_duration", false, 0, 24 * 60 * 60);
+                fa.transfers = getIntField("transfers", false, 0, Integer.MAX_VALUE, Integer.MAX_VALUE);
+                fa.transfer_duration = getIntField("transfer_duration", false, 0, 24*60*60, 24*60*60);
                 fa.feed = feed;
                 fa.feed_id = feed.feedId;
                 fare.fare_attribute = fa;
@@ -81,36 +80,6 @@ public class FareAttribute extends Entity {
 
         }
 
-    }
-
-    public static class Writer extends Entity.Writer<FareAttribute> {
-        public Writer(GTFSFeed feed) {
-            super(feed, "fare_attributes");
-        }
-
-        @Override
-        public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {"fare_id", "price", "currency_type", "payment_method",
-                    "transfers", "transfer_duration"});
-        }
-
-        @Override
-        public void writeOneRow(FareAttribute fa) throws IOException {
-            writeStringField(fa.fare_id);
-            writeDoubleField(fa.price);
-            writeStringField(fa.currency_type);
-            writeIntField(fa.payment_method);
-            writeIntField(fa.transfers);
-            writeIntField(fa.transfer_duration);
-            endRecord();
-        }
-
-        @Override
-        public Iterator<FareAttribute> iterator() {
-            return feed.fares.values().stream()
-                    .map(f -> f.fare_attribute)
-                    .iterator();
-        }
     }
 
 }

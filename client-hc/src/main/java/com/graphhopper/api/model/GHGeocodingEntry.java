@@ -20,7 +20,7 @@ package com.graphhopper.api.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.graphhopper.util.shapes.BBox;
+import org.locationtech.jts.geom.Envelope;
 
 /**
  * Contains the results of a geocoding request.
@@ -48,9 +48,9 @@ public class GHGeocodingEntry {
     private String osmKey;
     private String osmValue;
 
-    private BBox extent;
+    private Envelope extent;
 
-    public GHGeocodingEntry(Long osmId, String type, double lat, double lng, String name, String osmKey, String osmValue, String country, String city, String state, String street, String houseNumber, String postcode, BBox extent) {
+    public GHGeocodingEntry(Long osmId, String type, double lat, double lng, String name, String osmKey, String osmValue, String country, String city, String state, String street, String houseNumber, String postcode, Envelope extent) {
         this.osmId = osmId;
         this.osmType = type;
         this.point = new Point(lat, lng);
@@ -149,12 +149,12 @@ public class GHGeocodingEntry {
         this.street = street;
     }
 
-    @JsonProperty("house_number")
+    @JsonProperty("housenumber")
     public String getHouseNumber() {
         return houseNumber;
     }
 
-    @JsonProperty("house_number")
+    @JsonProperty("housenumber")
     public void setHouseNumber(String houseNumber) {
         this.houseNumber = houseNumber;
     }
@@ -189,27 +189,17 @@ public class GHGeocodingEntry {
         this.osmValue = osmValue;
     }
 
-    @JsonProperty
-    public Double[] getExtent() {
-        if (this.extent == null) {
-            // TODO should we return null instead?
-            return new Double[0];
-        }
-        return this.extent.toGeoJson().toArray(new Double[4]);
-    }
-
-    public BBox getExtendBBox(){
+    public Envelope getExtent(){
         return this.extent;
     }
 
     @JsonProperty
     public void setExtent(Double[] extent) {
-        if (extent == null || extent.length == 0) {
-            return;
-        }
-        if (extent.length == 4) {
+        if (extent == null) {
+            this.extent = null;
+        } else if (extent.length == 4) {
             // Extend is in Left, Top, Right, Bottom; which is very uncommon, Photon uses the same
-            this.extent = new BBox(extent[0], extent[2], extent[3], extent[1]);
+            this.extent = new Envelope(extent[0], extent[2], extent[3], extent[1]);
         } else {
             throw new RuntimeException("Extent had an unexpected length: " + extent.length);
         }

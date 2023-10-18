@@ -29,7 +29,6 @@ package com.conveyal.gtfs.model;
 import com.conveyal.gtfs.GTFSFeed;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 public class Transfer extends Entity {
 
@@ -42,6 +41,20 @@ public class Transfer extends Entity {
     public String to_route_id;
     public String from_trip_id;
     public String to_trip_id;
+
+    @Override
+    public String toString() {
+        return "Transfer{" +
+                "from_stop_id='" + from_stop_id + '\'' +
+                ", to_stop_id='" + to_stop_id + '\'' +
+                ", transfer_type=" + transfer_type +
+                ", min_transfer_time=" + min_transfer_time +
+                ", from_route_id='" + from_route_id + '\'' +
+                ", to_route_id='" + to_route_id + '\'' +
+                ", from_trip_id='" + from_trip_id + '\'' +
+                ", to_trip_id='" + to_trip_id + '\'' +
+                '}';
+    }
 
     public static class Loader extends Entity.Loader<Transfer> {
 
@@ -80,30 +93,12 @@ public class Transfer extends Entity {
 
     }
 
-    public static class Writer extends Entity.Writer<Transfer> {
-        public Writer (GTFSFeed feed) {
-            super(feed, "transfers");
+    @Override
+    public Transfer clone() {
+        try {
+            return (Transfer) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new RuntimeException(e);
         }
-
-        @Override
-        protected void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {"from_stop_id", "to_stop_id", "transfer_type", "min_transfer_time"});
-        }
-
-        @Override
-        protected void writeOneRow(Transfer t) throws IOException {
-            writeStringField(t.from_stop_id);
-            writeStringField(t.to_stop_id);
-            writeIntField(t.transfer_type);
-            writeIntField(t.min_transfer_time);
-            endRecord();
-        }
-
-        @Override
-        protected Iterator<Transfer> iterator() {
-            return feed.transfers.values().iterator();
-        }
-
-
     }
 }

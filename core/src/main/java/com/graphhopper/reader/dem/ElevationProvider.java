@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.storage.DAType;
+import com.graphhopper.reader.ReaderNode;
 
 /**
  * @author Peter Karich
@@ -30,25 +30,12 @@ public interface ElevationProvider {
         }
 
         @Override
-        public ElevationProvider setBaseURL(String baseURL) {
-            return this;
-        }
-
-        @Override
-        public ElevationProvider setDAType(DAType daType) {
-            return this;
-        }
-
-        @Override
         public void release() {
         }
 
         @Override
-        public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
-        }
-
-        @Override
-        public void setCalcMean(boolean eleCalcMean) {
+        public boolean canInterpolate() {
+            return false;
         }
     };
 
@@ -58,31 +45,20 @@ public interface ElevationProvider {
     double getEle(double lat, double lon);
 
     /**
-     * Specifies the service URL where to download the elevation data. An empty string should set it
-     * to the default URL. Default is a provider-dependent URL which should work out of the box.
+     * @param node Node to read
+     * @return returns the height in meters or Double.NaN if invalid
      */
-    ElevationProvider setBaseURL(String baseURL);
+    default double getEle(ReaderNode node) {
+        return getEle(node.getLat(), node.getLon());
+    }
 
     /**
-     * Set to true if you have a small area and need high speed access. Default is DAType.MMAP
+     * Returns true if bilinear interpolation is enabled.
      */
-    ElevationProvider setDAType(DAType daType);
-
-    /**
-     * Configuration option to include surrounding elevation points when fetching the elevation. Has
-     * only an effect if called before the first getEle call. Turned off by default.
-     */
-    void setCalcMean(boolean calcMean);
+    boolean canInterpolate();
 
     /**
      * Release resources.
      */
     void release();
-
-    /**
-     * Creating temporary files can take a long time as we need to unpack them as well as to fill
-     * our DataAccess object, so this option can be used to disable the default clear mechanism via
-     * specifying 'false'.
-     */
-    void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary);
 }

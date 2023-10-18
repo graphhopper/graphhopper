@@ -18,22 +18,24 @@
 
 package com.graphhopper.resources;
 
-import com.graphhopper.http.WebHelper;
+import com.conveyal.gtfs.model.Stop;
+import com.graphhopper.gtfs.*;
+import com.graphhopper.http.GHLocationParam;
+import com.graphhopper.http.OffsetDateTimeParam;
 import com.graphhopper.isochrone.algorithm.ContourBuilder;
-import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.reader.gtfs.*;
-import com.graphhopper.routing.QueryGraph;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.isochrone.algorithm.ReadableTriangulation;
+import com.graphhopper.jackson.ResponsePathSerializer;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.custom.CustomModelParser;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.JsonFeature;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
 import org.locationtech.jts.geom.*;
 import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
 import org.locationtech.jts.triangulate.ConstraintVertex;
@@ -42,28 +44,28 @@ import org.locationtech.jts.triangulate.quadedge.QuadEdge;
 import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
 import org.locationtech.jts.triangulate.quadedge.Vertex;
 
+import javax.inject.Inject;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import java.time.Instant;
 import java.util.*;
-import java.util.function.Function;
 
-@Path("isochrone")
+@Path("isochrone-pt")
 public class PtIsochroneResource {
 
     private static final double JTS_TOLERANCE = 0.00001;
 
-    private GtfsStorage gtfsStorage;
-    private EncodingManager encodingManager;
-    private GraphHopperStorage graphHopperStorage;
-    private LocationIndex locationIndex;
+    private final GtfsStorage gtfsStorage;
+    private final EncodingManager encodingManager;
+    private final BaseGraph baseGraph;
+    private final LocationIndex locationIndex;
 
-    private final Function<Label, Double> z = label -> (double) label.currentTime;
-
-    public PtIsochroneResource(GtfsStorage gtfsStorage, EncodingManager encodingManager, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex) {
+    @Inject
+    public PtIsochroneResource(GtfsStorage gtfsStorage, EncodingManager encodingManager, BaseGraph baseGraph, LocationIndex locationIndex) {
         this.gtfsStorage = gtfsStorage;
         this.encodingManager = encodingManager;
-        this.graphHopperStorage = graphHopperStorage;
+        this.baseGraph = baseGraph;
         this.locationIndex = locationIndex;
     }
 
@@ -79,62 +81,61 @@ public class PtIsochroneResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON})
     public Response doGet(
-            @QueryParam("point") GHPoint source,
+            @QueryParam("point") GHLocationParam sourceParam,
             @QueryParam("time_limit") @DefaultValue("600") long seconds,
             @QueryParam("reverse_flow") @DefaultValue("false") boolean reverseFlow,
-            @QueryParam(Parameters.PT.EARLIEST_DEPARTURE_TIME) String departureTimeString,
-            @QueryParam(Parameters.PT.BLOCKED_ROUTE_TYPES) @DefaultValue("0") int blockedRouteTypes,
+            @QueryParam("pt.earliest_departure_time") @NotNull OffsetDateTimeParam departureTimeParam,
+            @QueryParam("pt.blocked_route_types") @DefaultValue("0") int blockedRouteTypes,
             @QueryParam("result") @DefaultValue("multipolygon") String format) {
-        Instant initialTime;
-        try {
-            initialTime = Instant.parse(departureTimeString);
-        } catch (Exception e) {
-            throw new IllegalArgumentException(String.format(Locale.ROOT, "Illegal value for required parameter %s: [%s]", Parameters.PT.EARLIEST_DEPARTURE_TIME, departureTimeString));
-        }
+        Instant initialTime = departureTimeParam.get().toInstant();
+        GHLocation location = sourceParam.get();
 
-        double targetZ = initialTime.toEpochMilli() + seconds * 1000;
+        double targetZ = seconds * 1000;
 
         GeometryFactory geometryFactory = new GeometryFactory();
-        QueryGraph queryGraph = new QueryGraph(graphHopperStorage);
-        final EdgeFilter filter = DefaultEdgeFilter.allEdges(graphHopperStorage.getEncodingManager().getEncoder("foot"));
-        QueryResult queryResult = locationIndex.findClosest(source.lat, source.lon, filter);
-        queryGraph.lookup(Collections.singletonList(queryResult));
-        if (!queryResult.isValid()) {
-            throw new IllegalArgumentException("Cannot find point: " + source);
-        }
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key("foot"));
+        DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(VehicleSpeed.key("foot"));
+        final Weighting weighting = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
+        DefaultSnapFilter snapFilter = new DefaultSnapFilter(weighting, encodingManager.getBooleanEncodedValue(Subnetwork.key("foot")));
 
-        PtFlagEncoder ptFlagEncoder = (PtFlagEncoder) encodingManager.getEncoder("pt");
-        GraphExplorer graphExplorer = new GraphExplorer(queryGraph, new FastestWeighting(encodingManager.getEncoder("foot")), ptFlagEncoder, gtfsStorage, RealtimeFeed.empty(gtfsStorage), reverseFlow, false, 5.0);
-        MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, ptFlagEncoder, reverseFlow, Double.MAX_VALUE, false, false, false, 1000000, Collections.emptyList());
+        PtLocationSnapper.Result snapResult = new PtLocationSnapper(baseGraph, locationIndex, gtfsStorage).snapAll(Arrays.asList(location), Arrays.asList(snapFilter));
+        GraphExplorer graphExplorer = new GraphExplorer(snapResult.queryGraph, gtfsStorage.getPtGraph(), weighting, gtfsStorage, RealtimeFeed.empty(), reverseFlow, false, false, 5.0, reverseFlow, blockedRouteTypes);
+        MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, reverseFlow, false, false, 0, Collections.emptyList());
 
         Map<Coordinate, Double> z1 = new HashMap<>();
-        NodeAccess nodeAccess = queryGraph.getNodeAccess();
+        NodeAccess nodeAccess = snapResult.queryGraph.getNodeAccess();
 
-        MultiCriteriaLabelSetting.SPTVisitor sptVisitor = nodeLabel -> {
-            Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(nodeLabel.adjNode), nodeAccess.getLatitude(nodeLabel.adjNode));
-            z1.merge(nodeCoordinate, this.z.apply(nodeLabel), Math::min);
-        };
+        for (Label label : router.calcLabels(snapResult.nodes.get(0), initialTime)) {
+            if (!((label.currentTime - initialTime.toEpochMilli()) * (reverseFlow ? -1 : 1) <= targetZ)) {
+                break;
+            }
+            if (label.node.streetNode != -1) {
+                Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLon(label.node.streetNode), nodeAccess.getLat(label.node.streetNode));
+                z1.merge(nodeCoordinate, (double) (label.currentTime - initialTime.toEpochMilli()) * (reverseFlow ? -1 : 1), Math::min);
+            } else if (label.edge != null && (label.edge.getType() == GtfsStorage.EdgeType.EXIT_PT || label.edge.getType() == GtfsStorage.EdgeType.ENTER_PT)) {
+                GtfsStorage.PlatformDescriptor platformDescriptor = label.edge.getPlatformDescriptor();
+                Stop stop = gtfsStorage.getGtfsFeeds().get(platformDescriptor.feed_id).stops.get(platformDescriptor.stop_id);
+                Coordinate nodeCoordinate = new Coordinate(stop.stop_lon, stop.stop_lat);
+                z1.merge(nodeCoordinate, (double) (label.currentTime - initialTime.toEpochMilli()) * (reverseFlow ? -1 : 1), Math::min);
+            }
+        }
 
         if (format.equals("multipoint")) {
-            router.calcLabels(queryResult.getClosestNode(), -1, initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
             MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
             return wrap(exploredPoints);
         } else {
-            router.calcLabelsAndNeighbors(queryResult.getClosestNode(), -1, initialTime, blockedRouteTypes, sptVisitor, label -> label.currentTime <= targetZ);
-            MultiPoint exploredPointsAndNeighbors = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
+            MultiPoint exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
 
             // Get at least all nodes within our bounding box (I think convex hull would be enough.)
             // I think then we should have all possible encroaching points. (Proof needed.)
-            locationIndex.query(BBox.fromEnvelope(exploredPointsAndNeighbors.getEnvelopeInternal()), new LocationIndex.Visitor() {
-                @Override
-                public void onNode(int nodeId) {
-                    Coordinate nodeCoordinate = new Coordinate(nodeAccess.getLongitude(nodeId), nodeAccess.getLatitude(nodeId));
-                    z1.merge(nodeCoordinate, Double.MAX_VALUE, Math::min);
-                }
+            locationIndex.query(BBox.fromEnvelope(exploredPoints.getEnvelopeInternal()), edgeId -> {
+                EdgeIteratorState edge = snapResult.queryGraph.getEdgeIteratorStateForKey(edgeId * 2);
+                z1.merge(new Coordinate(nodeAccess.getLon(edge.getBaseNode()), nodeAccess.getLat(edge.getBaseNode())), Double.MAX_VALUE, Math::min);
+                z1.merge(new Coordinate(nodeAccess.getLon(edge.getAdjNode()), nodeAccess.getLat(edge.getAdjNode())), Double.MAX_VALUE, Math::min);
             });
-            exploredPointsAndNeighbors = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
+            exploredPoints = geometryFactory.createMultiPointFromCoords(z1.keySet().toArray(new Coordinate[0]));
 
-            CoordinateList siteCoords = DelaunayTriangulationBuilder.extractUniqueCoordinates(exploredPointsAndNeighbors);
+            CoordinateList siteCoords = DelaunayTriangulationBuilder.extractUniqueCoordinates(exploredPoints);
             List<ConstraintVertex> constraintVertices = new ArrayList<>();
             for (Object siteCoord : siteCoords) {
                 Coordinate coord = (Coordinate) siteCoord;
@@ -160,8 +161,9 @@ public class PtIsochroneResource {
                 }
             }
 
-            ContourBuilder contourBuilder = new ContourBuilder(tin);
-            MultiPolygon isoline = contourBuilder.computeIsoline(targetZ);
+            ReadableTriangulation triangulation = ReadableTriangulation.wrap(tin);
+            ContourBuilder contourBuilder = new ContourBuilder(triangulation);
+            MultiPolygon isoline = contourBuilder.computeIsoline(targetZ, triangulation.getEdges());
 
             // debugging tool
             if (format.equals("triangulation")) {
@@ -187,7 +189,7 @@ public class PtIsochroneResource {
                 properties.put("z", targetZ);
                 feature.setProperties(properties);
                 response.polygons.add(feature);
-                response.info.copyrights.addAll(WebHelper.COPYRIGHTS);
+                response.info.copyrights.addAll(ResponsePathSerializer.COPYRIGHTS);
                 return response;
             } else {
                 return wrap(isoline);
@@ -205,7 +207,7 @@ public class PtIsochroneResource {
 
         Response response = new Response();
         response.polygons.add(feature);
-        response.info.copyrights.addAll(WebHelper.COPYRIGHTS);
+        response.info.copyrights.addAll(ResponsePathSerializer.COPYRIGHTS);
         return response;
     }
 

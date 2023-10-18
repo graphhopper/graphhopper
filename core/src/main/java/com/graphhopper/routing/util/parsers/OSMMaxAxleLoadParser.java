@@ -17,43 +17,24 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import java.util.Collections;
-import java.util.List;
-
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.MaxAxleLoad;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.ev.DecimalEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Collections;
+
 public class OSMMaxAxleLoadParser implements TagParser {
-    
+
     private final DecimalEncodedValue maxAxleLoadEncoder;
-    private final boolean enableLog;
 
-    public OSMMaxAxleLoadParser() {
-        this(MaxAxleLoad.create(), false);
-    }
-
-    public OSMMaxAxleLoadParser(DecimalEncodedValue maxAxleLoadEncoder, boolean enableLog) {
+    public OSMMaxAxleLoadParser(DecimalEncodedValue maxAxleLoadEncoder) {
         this.maxAxleLoadEncoder = maxAxleLoadEncoder;
-        this.enableLog = enableLog;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup,
-                    List<EncodedValue> registerNewEncodedValue) {
-        registerNewEncodedValue.add(maxAxleLoadEncoder);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way, EncodingManager.Access access,
-                    long relationFlags) {
-        OSMValueExtractor.extractTons(edgeFlags, way, maxAxleLoadEncoder,
-                        Collections.singletonList("maxaxleload"), enableLog);
-        return edgeFlags;
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
+        OSMValueExtractor.extractTons(edgeId, edgeIntAccess, way, maxAxleLoadEncoder, Collections.singletonList("maxaxleload"));
     }
 }

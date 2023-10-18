@@ -1,69 +1,68 @@
 package com.graphhopper.routing.util.parsers;
 
-import static com.graphhopper.routing.util.EncodingManager.Access.WAY;
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.MaxAxleLoad;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class OSMMaxAxleLoadParserTest {
-
-    private EncodingManager em;
     private DecimalEncodedValue malEnc;
     private OSMMaxAxleLoadParser parser;
+    private IntsRef relFlags;
 
-    @Before
+    @BeforeEach
     public void setUp() {
-        parser = new OSMMaxAxleLoadParser();
-        em = new EncodingManager.Builder(4).add(parser).build();
-        malEnc = em.getDecimalEncodedValue(MaxAxleLoad.KEY);
+        malEnc = MaxAxleLoad.create();
+        malEnc.init(new EncodedValue.InitializerConfig());
+        parser = new OSMMaxAxleLoadParser(malEnc);
+        relFlags = new IntsRef(2);
     }
 
     @Test
     public void testSimpleTags() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = em.createEdgeFlags();
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
         readerWay.setTag("maxaxleload", "11.5");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
-        assertEquals(11.5, malEnc.getDecimal(false, intsRef), .01);
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(11.5, malEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
 
         // if value is beyond the maximum then do not use infinity instead fallback to more restrictive maximum
-        intsRef = em.createEdgeFlags();
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("maxaxleload", "80");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
-        assertEquals(malEnc.getMaxDecimal(), malEnc.getDecimal(false, intsRef), .01);
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(63.0, malEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
     }
 
     @Test
     public void testRounding() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = em.createEdgeFlags();
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
         readerWay.setTag("maxaxleload", "4.8");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
-        assertEquals(5.0, malEnc.getDecimal(false, intsRef), .01);
-        
-        intsRef = em.createEdgeFlags();
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(5.0, malEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("maxaxleload", "3.6");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
-        assertEquals(3.5, malEnc.getDecimal(false, intsRef), .01);
-        
-        intsRef = em.createEdgeFlags();
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(3.5, malEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
+
+        edgeIntAccess = new ArrayEdgeIntAccess(1);
         readerWay.setTag("maxaxleload", "2.4");
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
-        assertEquals(2.5, malEnc.getDecimal(false, intsRef), .01);
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(2.5, malEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
     }
-    
+
     @Test
     public void testNoLimit() {
         ReaderWay readerWay = new ReaderWay(1);
-        IntsRef intsRef = em.createEdgeFlags();
-        parser.handleWayTags(intsRef, readerWay, WAY, 0);
-        assertEquals(Double.POSITIVE_INFINITY, malEnc.getDecimal(false, intsRef), .01);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(Double.POSITIVE_INFINITY, malEnc.getDecimal(false, edgeId, edgeIntAccess), .01);
     }
 }

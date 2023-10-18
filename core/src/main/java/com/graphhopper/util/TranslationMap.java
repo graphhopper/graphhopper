@@ -32,11 +32,12 @@ import static com.graphhopper.util.Helper.*;
  */
 public class TranslationMap {
     // ISO codes (639-1), use 'en_US' as reference
-    private static final List<String> LOCALES = Arrays.asList("ar", "ast", "bg", "ca",
+    private static final List<String> LOCALES = Arrays.asList("ar", "ast", "bg", "bn_BN", "ca",
             "cs_CZ", "da_DK", "de_DE", "el", "eo", "es", "en_US", "fa", "fil", "fi",
-            "fr_FR", "fr_CH", "gl", "he", "hr_HR", "hsb", "hu_HU", "in_ID", "it", "ja", "ko", "lt_LT", "ne",
-            "nl", "pl_PL", "pt_BR", "pt_PT", "ro", "ru", "sk", "sl_SI", "sr_RS", "sv_SE", "tr", "uk",
-            "vi_VN", "zh_CN", "zh_HK", "zh_TW");
+            "fr_FR", "fr_CH", "gl", "he", "hr_HR", "hsb", "hu_HU", "in_ID", "it", "ja", "ko",
+            "kz", "lt_LT", "nb_NO", "ne", "nl", "pl_PL", "pt_BR", "pt_PT", "ro", "ru", "sk",
+            "sl_SI", "sr_RS", "sv_SE", "tr", "uk", "uz", "vi_VN", "zh_CN", "zh_HK", "zh_TW");
+
     private final Map<String, Translation> translations = new HashMap<>();
 
     public static int countOccurence(String phrase, String splitter) {
@@ -85,14 +86,18 @@ public class TranslationMap {
         if (!locale.getCountry().isEmpty() && !translations.containsKey(tr.getLanguage()))
             translations.put(tr.getLanguage(), tr);
 
-        // Map old Java 'standard' to latest, Java is a bit ugly here: http://stackoverflow.com/q/13974169/194609
-        // Hebrew
-        if ("iw".equals(locale.getLanguage()))
-            translations.put("he", tr);
+        // Hebrew locale was "iw" in old JDKs but is now he
+        // required in old JDKs:
+        if ("iw".equals(locale.getLanguage())) translations.put("he", tr);
+        // required since jdk17 to still provide translation for "iw":
+        if ("he".equals(locale.getLanguage())) translations.put("iw", tr);
 
-        // Indonesia
-        if ("in".equals(locale.getLanguage()))
-            translations.put("id", tr);
+        // Indonesia locale was "in_ID" in old JDKs but is now id_ID
+        // required in old JDKs:
+        if ("in".equals(locale.getLanguage())) translations.put("id", tr);
+        // required since jdk17 to still provide translation for "in":
+        if ("id".equals(locale.getLanguage())) translations.put("in", tr);
+        // Indian locales are: en-IN and hi-IN and are not overwritten by that
     }
 
     /**

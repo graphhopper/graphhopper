@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: GraphHopper Forum
+    url: https://discuss.graphhopper.com/c/graphhopper
+    about: Please ask and answer questions here.
+  - name: GraphHopper Security Bug Reporting
+    url: https://www.graphhopper.com/contact-form/
+    about: Please report security vulnerabilities here.

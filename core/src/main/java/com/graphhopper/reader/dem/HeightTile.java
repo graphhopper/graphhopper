@@ -24,7 +24,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * One rectangle of height data from Shuttle Radar Topography Mission.
@@ -43,7 +42,9 @@ public class HeightTile {
     private final double lonHigherBound;
     private final double latHigherBound;
     private DataAccess heights;
-    private boolean calcMean;
+    private boolean interpolate;
+    private final double MIN_ELEVATION_METERS = -12_000;
+    private final double MAX_ELEVATION_METERS = 9_000;
 
     public HeightTile(int minLat, int minLon, int width, int height, double precision, int horizontalDegree, int verticalDegree) {
         this.minLat = minLat;
@@ -59,8 +60,8 @@ public class HeightTile {
         this.verticalDegree = verticalDegree;
     }
 
-    public HeightTile setCalcMean(boolean b) {
-        this.calcMean = b;
+    public HeightTile setInterpolate(boolean interpolate) {
+        this.interpolate = interpolate;
         return this;
     }
 
@@ -77,6 +78,20 @@ public class HeightTile {
         this.heights = da;
     }
 
+    private short getHeightSample(int x, int y) {
+        // always keep in mind factor 2 because of short value
+        return heights.getShort(2L * ((long) y * width + x));
+    }
+
+    private boolean isValidElevation(double elevation) {
+        return elevation > MIN_ELEVATION_METERS && elevation < MAX_ELEVATION_METERS;
+    }
+
+    private double linearInterpolate(double a, double b, double f) {
+        // interpolate between a and b but if either are invalid, return the other
+        return !isValidElevation(a) ? b : !isValidElevation(b) ? a : (a + (b - a) * f);
+    }
+
     public double getHeight(double lat, double lon) {
         double deltaLat = Math.abs(lat - minLat);
         double deltaLon = Math.abs(lon - minLon);
@@ -85,47 +100,37 @@ public class HeightTile {
         if (deltaLon > lonHigherBound || deltaLon < lowerBound)
             throw new IllegalStateException("longitude not in boundary of this file:" + lat + "," + lon + ", this:" + this.toString());
 
-        // first row in the file is the northernmost one
-        // http://gis.stackexchange.com/a/43756/9006
-        int lonSimilar = (int) (width / horizontalDegree * deltaLon);
-        // different fallback methods for lat and lon as we have different rounding (lon -> positive, lat -> negative)
-        if (lonSimilar >= width)
-            lonSimilar = width - 1;
-        int latSimilar = height - 1 - (int) (height / verticalDegree * deltaLat);
-        if (latSimilar < 0)
-            latSimilar = 0;
+        double elevation;
+        if (interpolate) {
+            double x = (width - 1) * deltaLon / horizontalDegree;
+            double y = (height - 1) * (1 - deltaLat / verticalDegree);
+            int left = (int) x;
+            int top = (int) y;
+            int right = left + 1;
+            int bottom = top + 1;
 
-        // always keep in mind factor 2 because of short value
-        int daPointer = 2 * (latSimilar * width + lonSimilar);
-        int value = heights.getShort(daPointer);
-        AtomicInteger counter = new AtomicInteger(1);
-        if (value == Short.MIN_VALUE)
-            return Double.NaN;
+            double w00 = getHeightSample(left, top);
+            double w01 = getHeightSample(left, bottom);
+            double w10 = getHeightSample(right, top);
+            double w11 = getHeightSample(right, bottom);
 
-        if (calcMean) {
-            if (lonSimilar > 0)
-                value += includePoint(daPointer - 2, counter);
+            double topEle = linearInterpolate(w00, w10, x - left);
+            double bottomEle = linearInterpolate(w01, w11, x - left);
+            elevation = linearInterpolate(topEle, bottomEle, y - top);
+        } else {
+            // first row in the file is the northernmost one
+            // http://gis.stackexchange.com/a/43756/9006
+            int x = (int) (width / horizontalDegree * deltaLon);
+            // different fallback methods for lat and lon as we have different rounding (lon -> positive, lat -> negative)
+            if (x >= width)
+                x = width - 1;
+            int y = height - 1 - (int) (height / verticalDegree * deltaLat);
+            if (y < 0)
+                y = 0;
 
-            if (lonSimilar < width - 1)
-                value += includePoint(daPointer + 2, counter);
-
-            if (latSimilar > 0)
-                value += includePoint(daPointer - 2 * width, counter);
-
-            if (latSimilar < height - 1)
-                value += includePoint(daPointer + 2 * width, counter);
+            elevation = getHeightSample(x, y);
         }
-
-        return (double) value / counter.get();
-    }
-
-    private double includePoint(int pointer, AtomicInteger counter) {
-        short value = heights.getShort(pointer);
-        if (value == Short.MIN_VALUE)
-            return 0;
-
-        counter.incrementAndGet();
-        return value;
+        return isValidElevation(elevation) ? elevation : Double.NaN;
     }
 
     public void toImage(String imageFile) throws IOException {

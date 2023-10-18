@@ -1,0 +1,17 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm">
+    <node id="10" lat="51.2492152" lon="9.4317166" version="24853">
+        <tag k="name" v="Wiesbaden-Naurod"/>
+    </node>
+    <node id="30" lat="51.2" lon="9.4" version="24855">
+        <tag k="name" v="Dresden"/>
+    </node>
+
+    <way id="10" version="85761">
+        <nd ref="10"/>
+        <!-- this node does not exist -->
+        <nd ref="20"/>
+        <nd ref="30"/>
+        <tag k="highway" v="motorway"/>
+    </way>
+</osm>

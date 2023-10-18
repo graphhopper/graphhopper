@@ -19,7 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.DistanceCalcEarth;
 
 /**
  * Approximates the distance to the goal node by weighting the beeline distance according to the
@@ -30,7 +30,7 @@ import com.graphhopper.util.Helper;
 public class BeelineWeightApproximator implements WeightApproximator {
     private final NodeAccess nodeAccess;
     private final Weighting weighting;
-    private DistanceCalc distanceCalc = Helper.DIST_EARTH;
+    private DistanceCalc distanceCalc = DistanceCalcEarth.DIST_EARTH;
     private double toLat, toLon;
     private double epsilon = 1;
 
@@ -41,8 +41,8 @@ public class BeelineWeightApproximator implements WeightApproximator {
 
     @Override
     public void setTo(int toNode) {
-        toLat = nodeAccess.getLatitude(toNode);
-        toLon = nodeAccess.getLongitude(toNode);
+        toLat = nodeAccess.getLat(toNode);
+        toLon = nodeAccess.getLon(toNode);
     }
 
     public WeightApproximator setEpsilon(double epsilon) {
@@ -56,9 +56,14 @@ public class BeelineWeightApproximator implements WeightApproximator {
     }
 
     @Override
+    public double getSlack() {
+        return 0;
+    }
+
+    @Override
     public double approximate(int fromNode) {
-        double fromLat = nodeAccess.getLatitude(fromNode);
-        double fromLon = nodeAccess.getLongitude(fromNode);
+        double fromLat = nodeAccess.getLat(fromNode);
+        double fromLon = nodeAccess.getLon(fromNode);
         double dist2goal = distanceCalc.calcDist(toLat, toLon, fromLat, fromLon);
         double weight2goal = weighting.getMinWeight(dist2goal);
         return weight2goal * epsilon;

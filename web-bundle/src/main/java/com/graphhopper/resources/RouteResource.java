@@ -19,31 +19,31 @@ package com.graphhopper.resources;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.MultiException;
-import com.graphhopper.http.WebHelper;
-import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.gpx.GpxFromInstructions;
+import com.graphhopper.GraphHopper;
+import com.graphhopper.gpx.GpxConversions;
+import com.graphhopper.http.GHPointParam;
+import com.graphhopper.http.GHRequestTransformer;
+import com.graphhopper.http.ProfileResolver;
+import com.graphhopper.jackson.MultiException;
+import com.graphhopper.jackson.ResponsePathSerializer;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+import io.dropwizard.jersey.params.AbstractParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.*;
-import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.util.Parameters.Details.PATH_DETAILS;
 import static com.graphhopper.util.Parameters.Routing.*;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Resource to use GraphHopper in a remote client application like mobile or browser. Note: If type
@@ -57,13 +57,19 @@ public class RouteResource {
 
     private static final Logger logger = LoggerFactory.getLogger(RouteResource.class);
 
-    private final GraphHopperAPI graphHopper;
+    private final GraphHopper graphHopper;
+    private final ProfileResolver profileResolver;
+    private final GHRequestTransformer ghRequestTransformer;
     private final Boolean hasElevation;
+    private final String osmDate;
 
     @Inject
-    public RouteResource(GraphHopperAPI graphHopper, @Named("hasElevation") Boolean hasElevation) {
+    public RouteResource(GraphHopper graphHopper, ProfileResolver profileResolver, GHRequestTransformer ghRequestTransformer, @Named("hasElevation") Boolean hasElevation) {
         this.graphHopper = graphHopper;
+        this.profileResolver = profileResolver;
+        this.ghRequestTransformer = ghRequestTransformer;
         this.hasElevation = hasElevation;
+        this.osmDate = graphHopper.getProperties().get("datareader.data.date");
     }
 
     @GET
@@ -71,122 +77,144 @@ public class RouteResource {
     public Response doGet(
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
-            @Context ContainerRequestContext rc,
             @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
-            @QueryParam("point") List<GHPoint> requestPoints,
+            @QueryParam(ELEVATION_WAY_POINT_MAX_DISTANCE) Double minPathElevationPrecision,
+            @QueryParam("point") @NotNull List<GHPointParam> pointParams,
             @QueryParam("type") @DefaultValue("json") String type,
             @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
             @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
-            @QueryParam("vehicle") @DefaultValue("car") String vehicleStr,
-            @QueryParam("weighting") @DefaultValue("fastest") String weighting,
-            @QueryParam("algorithm") @DefaultValue("") String algoStr,
+            @QueryParam("profile") String profileName,
+            @QueryParam(ALGORITHM) @DefaultValue("") String algoStr,
             @QueryParam("locale") @DefaultValue("en") String localeStr,
             @QueryParam(POINT_HINT) List<String> pointHints,
-            @QueryParam(CURBSIDE) List<String> curbSides,
+            @QueryParam(CURBSIDE) List<String> curbsides,
             @QueryParam(SNAP_PREVENTION) List<String> snapPreventions,
             @QueryParam(PATH_DETAILS) List<String> pathDetails,
-            @QueryParam("heading") List<Double> favoredHeadings,
+            @QueryParam("heading") @NotNull List<Double> headings,
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute /* default to false for the route part in next API version, see #437 */,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
             @QueryParam("gpx.trackname") @DefaultValue("GraphHopper Track") String trackName,
             @QueryParam("gpx.millis") String timeString) {
+        StopWatch sw = new StopWatch().start();
+        List<GHPoint> points = pointParams.stream().map(AbstractParam::get).collect(toList());
         boolean writeGPX = "gpx".equalsIgnoreCase(type);
         instructions = writeGPX || instructions;
-
-        StopWatch sw = new StopWatch().start();
-
-        if (requestPoints.isEmpty())
-            throw new IllegalArgumentException("You have to pass at least one point");
         if (enableElevation && !hasElevation)
             throw new IllegalArgumentException("Elevation not supported!");
-        if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size())
-            throw new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
-                    + "or equal to the number of points (" + requestPoints.size() + ")");
-        if (pointHints.size() > 0 && pointHints.size() != requestPoints.size())
-            throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass exactly one hint for every point, empty hints will be ignored");
-        if (curbSides.size() > 0 && curbSides.size() != requestPoints.size())
-            throw new IllegalArgumentException("If you pass " + CURBSIDE + ", you need to pass exactly one curbside for every point, empty curbsides will be ignored");
 
-        GHRequest request;
-        if (favoredHeadings.size() > 0) {
-            // if only one favored heading is specified take as start heading
-            if (favoredHeadings.size() == 1) {
-                List<Double> paddedHeadings = new ArrayList<>(Collections.nCopies(requestPoints.size(), Double.NaN));
-                paddedHeadings.set(0, favoredHeadings.get(0));
-                request = new GHRequest(requestPoints, paddedHeadings);
-            } else {
-                request = new GHRequest(requestPoints, favoredHeadings);
-            }
-        } else {
-            request = new GHRequest(requestPoints);
-        }
-
+        GHRequest request = new GHRequest();
         initHints(request.getHints(), uriInfo.getQueryParameters());
-        translateTurnCostsParamToEdgeBased(request, uriInfo.getQueryParameters());
-        enableEdgeBasedIfThereAreCurbSides(curbSides, request);
-        request.setVehicle(vehicleStr).
-                setWeighting(weighting).
+
+        if (minPathElevationPrecision != null)
+            request.getHints().putObject(ELEVATION_WAY_POINT_MAX_DISTANCE, minPathElevationPrecision);
+
+        request.setPoints(points).
+                setProfile(profileName).
                 setAlgorithm(algoStr).
                 setLocale(localeStr).
+                setHeadings(headings).
                 setPointHints(pointHints).
-                setCurbSides(curbSides).
+                setCurbsides(curbsides).
                 setSnapPreventions(snapPreventions).
                 setPathDetails(pathDetails).
                 getHints().
-                put(CALC_POINTS, calcPoints).
-                put(INSTRUCTIONS, instructions).
-                put(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+                putObject(CALC_POINTS, calcPoints).
+                putObject(INSTRUCTIONS, instructions).
+                putObject(WAY_POINT_MAX_DISTANCE, minPathPrecision);
+
+        request = ghRequestTransformer.transformRequest(request);
+
+        PMap profileResolverHints = new PMap(request.getHints());
+        profileResolverHints.putObject("profile", profileName);
+        profileResolverHints.putObject("has_curbsides", !curbsides.isEmpty());
+        profileName = profileResolver.resolveProfile(profileResolverHints);
+        removeLegacyParameters(request.getHints());
+        request.setProfile(profileName);
 
         GHResponse ghResponse = graphHopper.route(request);
 
-        // TODO: Request logging and timing should perhaps be done somewhere outside
-        float took = sw.stop().getSeconds();
-        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
-        String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
-                + took + ", " + algoStr + ", " + weighting + ", " + vehicleStr;
+        double took = sw.stop().getMillisDouble();
+        String logStr = (httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent")) + " " + points + ", took: " + String.format("%.1f", took) + "ms, algo: " + algoStr + ", profile: " + profileName;
 
         if (ghResponse.hasErrors()) {
-            logger.error(logStr + ", errors:" + ghResponse.getErrors());
+            logger.info(logStr + " " + ghResponse);
+            return Response.status(Response.Status.BAD_REQUEST).
+                    entity(new MultiException(ghResponse.getErrors())).
+                    type(writeGPX ? "application/gpx+xml" : MediaType.APPLICATION_JSON).
+                    build();
+        } else {
+            logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
+                    + ", distance0: " + ghResponse.getBest().getDistance()
+                    + ", weight0: " + ghResponse.getBest().getRouteWeight()
+                    + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
+                    + ", points0: " + ghResponse.getBest().getPoints().size()
+                    + ", debugInfo: " + ghResponse.getDebugInfo());
+            return writeGPX ?
+                    gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
+                            header("X-GH-Took", "" + Math.round(took)).
+                            build()
+                    :
+                    Response.ok(ResponsePathSerializer.jsonObject(ghResponse, osmDate, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+                            header("X-GH-Took", "" + Math.round(took)).
+                            type(MediaType.APPLICATION_JSON).
+                            build();
+        }
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response doPost(@NotNull GHRequest request, @Context HttpServletRequest httpReq) {
+        StopWatch sw = new StopWatch().start();
+        request = ghRequestTransformer.transformRequest(request);
+
+        if (Helper.isEmpty(request.getProfile()) && request.getCustomModel() != null)
+            // throw a dedicated exception here, otherwise a missing profile is still caught in Router
+            throw new IllegalArgumentException("The 'profile' parameter is required when you use the `custom_model` parameter");
+
+        PMap profileResolverHints = new PMap(request.getHints());
+        profileResolverHints.putObject("profile", request.getProfile());
+        profileResolverHints.putObject("has_curbsides", !request.getCurbsides().isEmpty());
+        request.setProfile(profileResolver.resolveProfile(profileResolverHints));
+        removeLegacyParameters(request.getHints());
+
+        GHResponse ghResponse = graphHopper.route(request);
+        boolean instructions = request.getHints().getBool(INSTRUCTIONS, true);
+        boolean enableElevation = request.getHints().getBool("elevation", false);
+        boolean calcPoints = request.getHints().getBool(CALC_POINTS, true);
+        boolean pointsEncoded = request.getHints().getBool("points_encoded", true);
+
+        double took = sw.stop().getMillisDouble();
+        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
+        String logStr = infoStr + " " + request.getPoints().size() + ", took: "
+                + String.format("%.1f", took) + " ms, algo: " + request.getAlgorithm() + ", profile: " + request.getProfile()
+                + ", custom_model: " + request.getCustomModel();
+
+        if (ghResponse.hasErrors()) {
             throw new MultiException(ghResponse.getErrors());
         } else {
             logger.info(logStr + ", alternatives: " + ghResponse.getAll().size()
                     + ", distance0: " + ghResponse.getBest().getDistance()
                     + ", weight0: " + ghResponse.getBest().getRouteWeight()
                     + ", time0: " + Math.round(ghResponse.getBest().getTime() / 60000f) + "min"
-                    + ", points0: " + ghResponse.getBest().getPoints().getSize()
+                    + ", points0: " + ghResponse.getBest().getPoints().size()
                     + ", debugInfo: " + ghResponse.getDebugInfo());
-            return writeGPX ?
-                    gpxSuccessResponseBuilder(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints, Constants.VERSION).
-                            header("X-GH-Took", "" + Math.round(took * 1000)).
-                            build()
-                    :
-                    Response.ok(WebHelper.jsonObject(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took)).
-                            header("X-GH-Took", "" + Math.round(took * 1000)).
-                            build();
+            return Response.ok(ResponsePathSerializer.jsonObject(ghResponse, osmDate, instructions, calcPoints, enableElevation, pointsEncoded, took)).
+                    header("X-GH-Took", "" + Math.round(took)).
+                    type(MediaType.APPLICATION_JSON).
+                    build();
         }
     }
 
-    private void enableEdgeBasedIfThereAreCurbSides(List<String> curbSides, GHRequest request) {
-        if (!curbSides.isEmpty()) {
-            if (!request.getHints().getBool(EDGE_BASED, true)) {
-                throw new IllegalArgumentException("Disabling '" + EDGE_BASED + "' when using '" + CURBSIDE + "' is not allowed");
-            } else {
-                request.getHints().put(EDGE_BASED, true);
-            }
-        }
-    }
-
-    private void translateTurnCostsParamToEdgeBased(GHRequest request, MultivaluedMap<String, String> queryParams) {
-        if (queryParams.containsKey(TURN_COSTS)) {
-            List<String> turnCosts = queryParams.get(TURN_COSTS);
-            if (turnCosts.size() != 1) {
-                throw new IllegalArgumentException("You may only specify the turn_costs parameter once");
-            }
-            request.getHints().put(EDGE_BASED, turnCosts.get(0));
-        }
+    public static void removeLegacyParameters(PMap hints) {
+        // these parameters should only be used to resolve the profile, but should not be passed to GraphHopper
+        hints.remove("weighting");
+        hints.remove("vehicle");
+        hints.remove("edge_based");
+        hints.remove("turn_costs");
     }
 
     private static Response.ResponseBuilder gpxSuccessResponseBuilder(GHResponse ghRsp, String timeString, String
@@ -197,29 +225,22 @@ public class RouteResource {
 
         long time = timeString != null ? Long.parseLong(timeString) : System.currentTimeMillis();
         InstructionList instructions = ghRsp.getBest().getInstructions();
-        return Response.ok(GpxFromInstructions.createGPX(instructions, trackName, time, enableElevation, withRoute, withTrack, withWayPoints, version, instructions.getTr()), "application/gpx+xml").
+        return Response.ok(GpxConversions.createGPX(instructions, trackName, time, enableElevation, withRoute, withTrack, withWayPoints, version, instructions.getTr()), "application/gpx+xml").
                 header("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
     }
 
-    static void initHints(HintsMap m, MultivaluedMap<String, String> parameterMap) {
+    static void initHints(PMap m, MultivaluedMap<String, String> parameterMap) {
         for (Map.Entry<String, List<String>> e : parameterMap.entrySet()) {
             if (e.getValue().size() == 1) {
-                m.put(e.getKey(), e.getValue().get(0));
+                m.putObject(Helper.camelCaseToUnderScore(e.getKey()), Helper.toObject(e.getValue().get(0)));
             } else {
-                // Do nothing.
-                // TODO: this is dangerous: I can only silently swallow
-                // the forbidden multiparameter. If I comment-in the line below,
-                // I get an exception, because "point" regularly occurs
-                // multiple times.
-                // I think either unknown parameters (hints) should be allowed
-                // to be multiparameters, too, or we shouldn't use them for
-                // known parameters either, _or_ known parameters
-                // must be filtered before they come to this code point,
-                // _or_ we stop passing unknown parameters alltogether..
-                //
+                // TODO e.g. 'point' parameter occurs multiple times and we cannot throw an exception here
+                //  unknown parameters (hints) should be allowed to be multiparameters, too, or we shouldn't use them for
+                //  known parameters either, _or_ known parameters must be filtered before they come to this code point,
+                //  _or_ we stop passing unknown parameters altogether.
                 // throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", e.getKey()));
+                // see also #1976
             }
         }
     }
-
 }

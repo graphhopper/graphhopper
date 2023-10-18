@@ -1,0 +1,11 @@
+datareader.file: map-matching/files/leipzig_germany.osm.pbf
+graph.location: graphs/leipzig-regular/graph
+graph.vehicles: car
+profiles:
+  - name: car
+    vehicle: car
+    weighting: fastest
+
+index.max_region_search: 100
+index:
+  pups: 200

@@ -25,14 +25,15 @@ import com.graphhopper.storage.DAType;
  *
  * @author Robin Boldt
  */
-public class MultiSourceElevationProvider implements ElevationProvider {
+public class MultiSourceElevationProvider extends TileBasedElevationProvider {
 
     // Usually a high resolution provider in the SRTM area
-    private ElevationProvider srtmProvider;
+    private final TileBasedElevationProvider srtmProvider;
     // The fallback provider that provides elevation data globally
-    private ElevationProvider globalProvider;
+    private final TileBasedElevationProvider globalProvider;
 
-    public MultiSourceElevationProvider(ElevationProvider srtmProvider, ElevationProvider globalProvider) {
+    public MultiSourceElevationProvider(TileBasedElevationProvider srtmProvider, TileBasedElevationProvider globalProvider) {
+        super(srtmProvider.cacheDir.getAbsolutePath());
         this.srtmProvider = srtmProvider;
         this.globalProvider = globalProvider;
     }
@@ -59,7 +60,7 @@ public class MultiSourceElevationProvider implements ElevationProvider {
      * The first for cgiar, the second for gmted.
      */
     @Override
-    public ElevationProvider setBaseURL(String baseURL) {
+    public MultiSourceElevationProvider setBaseURL(String baseURL) {
         String[] urls = baseURL.split(";");
         if (urls.length != 2) {
             throw new IllegalArgumentException("The base url must consist of two urls separated by a ';'. The first for cgiar, the second for gmted");
@@ -70,16 +71,22 @@ public class MultiSourceElevationProvider implements ElevationProvider {
     }
 
     @Override
-    public ElevationProvider setDAType(DAType daType) {
+    public MultiSourceElevationProvider setDAType(DAType daType) {
         srtmProvider.setDAType(daType);
         globalProvider.setDAType(daType);
         return this;
     }
 
     @Override
-    public void setCalcMean(boolean calcMean) {
-        srtmProvider.setCalcMean(calcMean);
-        globalProvider.setCalcMean(calcMean);
+    public MultiSourceElevationProvider setInterpolate(boolean interpolate) {
+        srtmProvider.setInterpolate(interpolate);
+        globalProvider.setInterpolate(interpolate);
+        return this;
+    }
+
+    @Override
+    public boolean canInterpolate() {
+        return srtmProvider.canInterpolate() && globalProvider.canInterpolate();
     }
 
     @Override
@@ -89,9 +96,10 @@ public class MultiSourceElevationProvider implements ElevationProvider {
     }
 
     @Override
-    public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
+    public MultiSourceElevationProvider setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
         srtmProvider.setAutoRemoveTemporaryFiles(autoRemoveTemporary);
         globalProvider.setAutoRemoveTemporaryFiles(autoRemoveTemporary);
+        return this;
     }
 
     @Override

@@ -1,43 +1,38 @@
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.RoadClass;
-import com.graphhopper.routing.profiles.RoadEnvironment;
-import com.graphhopper.storage.IntsRef;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.RoadEnvironment;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class SnapPreventionEdgeFilterTest {
 
     @Test
     public void accept() {
-        EdgeFilter trueFilter = new EdgeFilter() {
-            @Override
-            public boolean accept(EdgeIteratorState edgeState) {
-                return true;
-            }
-        };
-        EncodingManager em = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder(4)).build();
+        EdgeFilter trueFilter = edgeState -> true;
+        EncodingManager em = new EncodingManager.Builder().build();
         EnumEncodedValue<RoadClass> rcEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         EnumEncodedValue<RoadEnvironment> reEnc = em.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         SnapPreventionEdgeFilter filter = new SnapPreventionEdgeFilter(trueFilter, rcEnc, reEnc, Arrays.asList("motorway", "ferry"));
+        BaseGraph graph = new BaseGraph.Builder(em).create();
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(1);
 
-        IntsRef intsRef = em.createEdgeFlags();
-        assertTrue(filter.accept(GHUtility.createMockedEdgeIteratorState(1, intsRef)));
-        reEnc.setEnum(false, intsRef, RoadEnvironment.FERRY);
-        assertFalse(filter.accept(GHUtility.createMockedEdgeIteratorState(1, intsRef)));
-        reEnc.setEnum(false, intsRef, RoadEnvironment.FORD);
-        assertTrue(filter.accept(GHUtility.createMockedEdgeIteratorState(1, intsRef)));
+        assertTrue(filter.accept(edge));
+        edge.set(reEnc, RoadEnvironment.FERRY);
+        assertFalse(filter.accept(edge));
+        edge.set(reEnc, RoadEnvironment.FORD);
+        assertTrue(filter.accept(edge));
 
-        rcEnc.setEnum(false, intsRef, RoadClass.RESIDENTIAL);
-        assertTrue(filter.accept(GHUtility.createMockedEdgeIteratorState(1, intsRef)));
-        rcEnc.setEnum(false, intsRef, RoadClass.MOTORWAY);
-        assertFalse(filter.accept(GHUtility.createMockedEdgeIteratorState(1, intsRef)));
+        edge.set(rcEnc, RoadClass.RESIDENTIAL);
+        assertTrue(filter.accept(edge));
+        edge.set(rcEnc, RoadClass.MOTORWAY);
+        assertFalse(filter.accept(edge));
     }
 }

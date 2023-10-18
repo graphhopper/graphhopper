@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.util.PointAccess;
+import java.util.Map;
 
 /**
  * Represents a node received from the reader.
@@ -29,18 +29,14 @@ public class ReaderNode extends ReaderElement {
     private final double lat;
     private final double lon;
 
-    public ReaderNode(long id, PointAccess pointAccess, int accessId) {
-        super(id, NODE);
-
-        this.lat = pointAccess.getLatitude(accessId);
-        this.lon = pointAccess.getLongitude(accessId);
-        if (pointAccess.is3D())
-            setTag("ele", pointAccess.getElevation(accessId));
+    public ReaderNode(long id, double lat, double lon) {
+        super(id, Type.NODE);
+        this.lat = lat;
+        this.lon = lon;
     }
 
-    public ReaderNode(long id, double lat, double lon) {
-        super(id, NODE);
-
+    public ReaderNode(long id, double lat, double lon, Map<String, Object> tags) {
+        super(id, Type.NODE, tags);
         this.lat = lat;
         this.lon = lon;
     }
@@ -53,36 +49,6 @@ public class ReaderNode extends ReaderElement {
         return lon;
     }
 
-    public double getEle() {
-        Object ele = getTags().get("ele");
-        if (ele == null)
-            return Double.NaN;
-        return (Double) ele;
-    }
-
-    @Override
-    public void setTag(String name, Object value) {
-        if ("ele".equals(name)) {
-            if (value == null)
-                value = null;
-            else if (value instanceof String) {
-                String str = (String) value;
-                str = str.trim().replaceAll("\\,", ".");
-                if (str.isEmpty())
-                    value = null;
-                else
-                    try {
-                        value = Double.parseDouble(str);
-                    } catch (NumberFormatException ex) {
-                        return;
-                    }
-            } else
-                // force cast
-                value = ((Number) value).doubleValue();
-        }
-        super.setTag(name, value);
-    }
-
     @Override
     public String toString() {
         StringBuilder txt = new StringBuilder();
@@ -92,7 +58,7 @@ public class ReaderNode extends ReaderElement {
         txt.append(getLat());
         txt.append(" lon=");
         txt.append(getLon());
-        if (!getTags().isEmpty()) {
+        if (hasTags()) {
             txt.append("\n");
             txt.append(tagsToString());
         }

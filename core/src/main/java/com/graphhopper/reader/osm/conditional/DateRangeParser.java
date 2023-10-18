@@ -20,7 +20,9 @@ package com.graphhopper.reader.osm.conditional;
 import com.graphhopper.util.Helper;
 
 import java.text.DateFormat;
+import java.text.DateFormatSymbols;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
@@ -37,14 +39,12 @@ import static com.graphhopper.util.Helper.createFormatter;
  * @author Robin Boldt
  */
 public class DateRangeParser implements ConditionalValueParser {
-    private static final DateFormat YEAR_MONTH_DAY_DF = createFormatter("yyyy MMM dd");
-    private static final DateFormat MONTH_DAY_DF = createFormatter("MMM dd");
+    private static final DateFormat YEAR_MONTH_DAY_DF = create3CharMonthFormatter("yyyy MMM dd");
+    private static final DateFormat MONTH_DAY_DF = create3CharMonthFormatter("MMM dd");
     private static final DateFormat MONTH_DAY2_DF = createFormatter("dd.MM");
-    private static final DateFormat YEAR_MONTH_DF = createFormatter("yyyy MMM");
-    private static final DateFormat MONTH_DF = createFormatter("MMM");
-    private static final List<String> DAY_NAMES = Arrays.asList(new String[]{
-            "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"
-    });
+    private static final DateFormat YEAR_MONTH_DF = create3CharMonthFormatter("yyyy MMM");
+    private static final DateFormat MONTH_DF = create3CharMonthFormatter("MMM");
+    private static final List<String> DAY_NAMES = Arrays.asList("Su", "Mo", "Tu", "We", "Th", "Fr", "Sa");
 
     private Calendar date;
 
@@ -63,7 +63,7 @@ public class DateRangeParser implements ConditionalValueParser {
     }
 
     static ParsedCalendar parseDateString(String dateString) throws ParseException {
-        // Replace occurences of public holidays
+        // Replace occurrences of public holidays
         dateString = dateString.replaceAll("(,( )*)?(PH|SH)", "");
         dateString = dateString.trim();
         Calendar calendar = createCalendar();
@@ -90,7 +90,7 @@ public class DateRangeParser implements ConditionalValueParser {
                         } catch (ParseException e5) {
                             int index = DAY_NAMES.indexOf(dateString);
                             if (index < 0)
-                                throw new ParseException("Unparseable date: \"" + dateString + "\"", 0);
+                                throw new ParseException("Unparsable date: \"" + dateString + "\"", 0);
 
                             // Ranges from 1-7
                             calendar.set(Calendar.DAY_OF_WEEK, index + 1);
@@ -135,5 +135,24 @@ public class DateRangeParser implements ConditionalValueParser {
             return ConditionState.TRUE;
         else
             return ConditionState.FALSE;
+    }
+
+    public static DateRangeParser createInstance(String day) {
+        Calendar calendar = createCalendar();
+        try {
+            if (!day.isEmpty())
+                calendar.setTime(Helper.createFormatter("yyyy-MM-dd").parse(day));
+        } catch (ParseException e) {
+            throw new IllegalArgumentException(e);
+        }
+        return new DateRangeParser(calendar);
+    }
+
+    private static SimpleDateFormat create3CharMonthFormatter(String pattern) {
+        DateFormatSymbols formatSymbols = new DateFormatSymbols(Locale.ENGLISH);
+        formatSymbols.setShortMonths(new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"});
+        SimpleDateFormat df = new SimpleDateFormat(pattern, formatSymbols);
+        df.setTimeZone(Helper.UTC);
+        return df;
     }
 }

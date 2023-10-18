@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.topografix.com/GPX/1/0" version="1.0" xsi:schemaLocation="http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd" creator="gpx.py -- https://github.com/tkrajina/gpxpy">
+<trk><name>GraphHopper Track</name>
+<trkseg>
+<trkpt lat="51.343657" lon="12.360708"><time>2015-02-06T07:36:46Z</time></trkpt>
+<trkpt lat="51.344095" lon="12.362617"><time>2015-02-06T07:37:06Z</time></trkpt>
+<trkpt lat="51.344439" lon="12.36419"><time>2015-02-06T07:37:23Z</time></trkpt>
+<trkpt lat="51.344967" lon="12.363973"><time>2015-02-06T07:37:32Z</time></trkpt>
+<trkpt lat="51.344967" lon="12.363973"><time>2015-02-06T07:37:32Z</time></trkpt>
+<trkpt lat="51.345371" lon="12.363807"><time>2015-02-06T07:37:39Z</time></trkpt>
+<trkpt lat="51.345011" lon="12.36216"><time>2015-02-06T07:37:56Z</time></trkpt>
+<trkpt lat="51.344814" lon="12.361238"><time>2015-02-06T07:38:06Z</time></trkpt>
+<trkpt lat="51.344814" lon="12.361238"><time>2015-02-06T07:38:06Z</time></trkpt>
+<trkpt lat="51.344768" lon="12.361025"><time>2015-02-06T07:38:08Z</time></trkpt>
+<trkpt lat="51.344735" lon="12.36082"><time>2015-02-06T07:38:10Z</time></trkpt>
+<trkpt lat="51.344632" lon="12.3609"><time>2015-02-06T07:38:12Z</time></trkpt>
+<trkpt lat="51.343796" lon="12.361337"><time>2015-02-06T07:38:23Z</time></trkpt>
+<trkpt lat="51.342784" lon="12.361882"><time>2015-02-06T07:38:38Z</time></trkpt>
+</trkseg>
+</trk>
+</gpx>

@@ -18,48 +18,28 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.Surface;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.Surface;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.Helper;
 
-import java.util.List;
-
-import static com.graphhopper.routing.profiles.Surface.*;
+import static com.graphhopper.routing.ev.Surface.*;
 
 public class OSMSurfaceParser implements TagParser {
 
     private final EnumEncodedValue<Surface> surfaceEnc;
-
-    public OSMSurfaceParser() {
-        this(new EnumEncodedValue<>(KEY, Surface.class));
-    }
 
     public OSMSurfaceParser(EnumEncodedValue<Surface> surfaceEnc) {
         this.surfaceEnc = surfaceEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(surfaceEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, long relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         String surfaceTag = readerWay.getTag("surface");
         Surface surface = Surface.find(surfaceTag);
-        if (surface == OTHER && !Helper.isEmpty(surfaceTag)) {
-            if (surfaceTag.equals("paving_stones") || surfaceTag.equals("metal") || surfaceTag.startsWith("concrete"))
-                surface = PAVED;
-            else if (surfaceTag.equals("sett"))
-                surface = COBBLESTONE;
-        }
+        if (surface == MISSING)
+            return;
 
-        if (surface != OTHER)
-            surfaceEnc.setEnum(false, edgeFlags, surface);
-        return edgeFlags;
+        surfaceEnc.setEnum(false, edgeId, edgeIntAccess, surface);
     }
 }

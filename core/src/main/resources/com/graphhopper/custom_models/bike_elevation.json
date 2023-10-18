@@ -1,0 +1,9 @@
+{
+  "speed": [
+      { "if":      "average_slope >= 15", "limit_to": "3"},
+      { "if":      "average_slope >= 12", "limit_to": "6"},
+      { "else_if": "average_slope >=  8", "multiply_by": "0.80"},
+      { "else_if": "average_slope >=  4", "multiply_by": "0.90"},
+      { "else_if": "average_slope <= -4", "multiply_by": "1.10"}
+  ]
+}

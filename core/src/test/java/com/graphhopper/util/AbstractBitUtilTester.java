@@ -17,9 +17,9 @@
  */
 package com.graphhopper.util;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich
@@ -81,6 +81,15 @@ public abstract class AbstractBitUtilTester {
     }
 
     @Test
+    public void testIntsToLong() {
+        int high = 2565;
+        int low = 9421;
+        long l = bitUtil.toLong(low, high);
+        assertEquals(high, bitUtil.getIntHigh(l));
+        assertEquals(low, bitUtil.getIntLow(l));
+    }
+
+    @Test
     public void testToLastBitString() {
         assertEquals("1", bitUtil.toLastBitString(1L, 1));
         assertEquals("01", bitUtil.toLastBitString(1L, 2));
@@ -89,23 +98,4 @@ public abstract class AbstractBitUtilTester {
         assertEquals("011", bitUtil.toLastBitString(3L, 3));
     }
 
-    @Test
-    public void testBitString2Long() {
-        String str = "01000000000110000011100000011110";
-        assertEquals(str + "00000000000000000000000000000000", bitUtil.toBitString(bitUtil.fromBitString2Long(str)));
-        assertEquals("1000000000000000000000000000000000000000000000000000000000000000", bitUtil.toBitString(1L << 63));
-    }
-
-    @Test
-    public void testReverse() {
-        String str48 = "000000000000000000000000000000000000000000000000";
-        long ret = bitUtil.reverse(bitUtil.fromBitString2Long(str48 + "0111000000000101"), 16);
-        assertEquals(str48 + "1010000000001110", bitUtil.toBitString(ret, 64));
-
-        ret = bitUtil.reverse(bitUtil.fromBitString2Long(str48 + "0111000000000101"), 8);
-        assertEquals(str48 + "0000000010100000", bitUtil.toBitString(ret, 64));
-
-//        ret = BitUtil.BIG.reversePart(bitUtil.fromBitString2Long("0111000000000101"), 8);
-//        assertEquals("0111000010100000", bitUtil.toBitString(ret, 16));
-    }
 }

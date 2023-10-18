@@ -19,12 +19,15 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
 
 /**
  * A simple factory creating normal algorithms (RoutingAlgorithm) without preparation.
@@ -34,55 +37,51 @@ import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
  */
 public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
     @Override
-    public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
+    public RoutingAlgorithm createAlgo(Graph g, Weighting w, AlgorithmOptions opts) {
         RoutingAlgorithm ra;
         String algoStr = opts.getAlgorithm();
+        Weighting weighting = g.wrapWeighting(w);
         if (DIJKSTRA_BI.equalsIgnoreCase(algoStr)) {
-            ra = new DijkstraBidirectionRef(g, opts.getWeighting(), opts.getTraversalMode());
+            ra = new DijkstraBidirectionRef(g, weighting, opts.getTraversalMode());
         } else if (DIJKSTRA.equalsIgnoreCase(algoStr)) {
-            ra = new Dijkstra(g, opts.getWeighting(), opts.getTraversalMode());
+            ra = new Dijkstra(g, weighting, opts.getTraversalMode());
 
-        } else if (ASTAR_BI.equalsIgnoreCase(algoStr)) {
-            AStarBidirection aStarBi = new AStarBidirection(g, opts.getWeighting(),
+        } else if (ASTAR_BI.equalsIgnoreCase(algoStr) || Helper.isEmpty(algoStr)) {
+            AStarBidirection aStarBi = new AStarBidirection(g, weighting,
                     opts.getTraversalMode());
-            aStarBi.setApproximation(getApproximation(ASTAR_BI, opts, g.getNodeAccess()));
+            aStarBi.setApproximation(getApproximation(ASTAR_BI, opts.getHints(), weighting, g.getNodeAccess()));
             ra = aStarBi;
 
         } else if (DIJKSTRA_ONE_TO_MANY.equalsIgnoreCase(algoStr)) {
-            ra = new DijkstraOneToMany(g, opts.getWeighting(), opts.getTraversalMode());
+            ra = new DijkstraOneToMany(g, weighting, opts.getTraversalMode());
 
         } else if (ASTAR.equalsIgnoreCase(algoStr)) {
-            AStar aStar = new AStar(g, opts.getWeighting(), opts.getTraversalMode());
-            aStar.setApproximation(getApproximation(ASTAR, opts, g.getNodeAccess()));
+            AStar aStar = new AStar(g, weighting, opts.getTraversalMode());
+            aStar.setApproximation(getApproximation(ASTAR, opts.getHints(), w, g.getNodeAccess()));
             ra = aStar;
 
         } else if (ALT_ROUTE.equalsIgnoreCase(algoStr)) {
-            AlternativeRoute altRouteAlgo = new AlternativeRoute(g, opts.getWeighting(), opts.getTraversalMode());
-            altRouteAlgo.setMaxPaths(opts.getHints().getInt(MAX_PATHS, 2));
-            altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
-            altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
-            altRouteAlgo.setMinPlateauFactor(opts.getHints().getDouble("alternative_route.min_plateau_factor", 0.2));
-            altRouteAlgo.setMaxExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
-            ra = altRouteAlgo;
+            ra = new AlternativeRoute(g, weighting, opts.getTraversalMode(), opts.getHints());
 
         } else {
             throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());
         }
 
         ra.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+        ra.setTimeoutMillis(opts.getTimeoutMillis());
         return ra;
     }
 
-    public static WeightApproximator getApproximation(String prop, AlgorithmOptions opts, NodeAccess na) {
-        String approxAsStr = opts.getHints().get(prop + ".approximation", "BeelineSimplification");
-        double epsilon = opts.getHints().getDouble(prop + ".epsilon", 1);
+    public static WeightApproximator getApproximation(String prop, PMap opts, Weighting weighting, NodeAccess na) {
+        String approxAsStr = opts.getString(prop + ".approximation", "BeelineSimplification");
+        double epsilon = opts.getDouble(prop + ".epsilon", 1);
 
-        BeelineWeightApproximator approx = new BeelineWeightApproximator(na, opts.getWeighting());
+        BeelineWeightApproximator approx = new BeelineWeightApproximator(na, weighting);
         approx.setEpsilon(epsilon);
         if ("BeelineSimplification".equals(approxAsStr))
-            approx.setDistanceCalc(Helper.DIST_PLANE);
+            approx.setDistanceCalc(DistancePlaneProjection.DIST_PLANE);
         else if ("BeelineAccurate".equals(approxAsStr))
-            approx.setDistanceCalc(Helper.DIST_EARTH);
+            approx.setDistanceCalc(DistanceCalcEarth.DIST_EARTH);
         else
             throw new IllegalArgumentException("Approximation " + approxAsStr + " not found in " + RoutingAlgorithmFactorySimple.class.getName());
 

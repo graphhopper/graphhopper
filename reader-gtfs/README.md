@@ -10,22 +10,22 @@ non-highlighted alternatives have fewer transfers. They include a walk-only rout
 ```bash
 git clone https://github.com/graphhopper/graphhopper
 cd graphhopper
+
 # download GTFS from Berlin & Brandenburg in Germany (VBB) and the 'surrounding' OpenStreetMap data for the walk network
-wget -O gtfs-vbb.zip http://transitfeeds.com/p/verkehrsverbund-berlin-brandenburg/213/latest/download
+wget -O gtfs-vbb.zip https://www.vbb.de/fileadmin/user_upload/VBB/Dokumente/API-Datensaetze/gtfs-mastscharf/GTFS.zip
 wget http://download.geofabrik.de/europe/germany/brandenburg-latest.osm.pbf
-./graphhopper.sh build
+
+mvn clean package -DskipTests
+
 # The following process will take roughly 5 minutes on a modern laptop when it is executed for the first time.
 # It imports the previously downloaded OSM data of the Brandenburg area as well as the GTFS.
-java -Xmx8g -Xms8g \
-  -Dgraphhopper.datareader.file=brandenburg-latest.osm.pbf \
-  -Dgraphhopper.gtfs.file=gtfs-vbb.zip \
-  -Dgraphhopper.graph.flag_encoders=pt \
-  -Dgraphhopper.prepare.ch.weightings=no \
-  -Dgraphhopper.graph.location=./graph-cache \
-  -jar web/target/graphhopper-web-*.jar server config.yml
-# view the web UI e.g. via:
-firefox http://localhost:8989
+java -Xmx8g -jar web/target/graphhopper-web-*.jar server reader-gtfs/config-example-pt.yml
 ```
+
+When this is finished you can point your browser to http://localhost:8989
+
+Alternatively, for a more specialized but more minimal demo of transit routing, to http://localhost:8989/maps/pt/
+(make sure to include the trailing slash).
 
 # Graph schema
 

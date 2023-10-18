@@ -20,8 +20,8 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Parameters;
 
 /**
  * Calculates best path in bidirectional way.
@@ -31,7 +31,7 @@ import com.graphhopper.util.*;
  *
  * @author Peter Karich
  */
-public class DijkstraBidirectionRef extends AbstractBidirAlgo {
+public class DijkstraBidirectionRef extends AbstractNonCHBidirAlgo {
     public DijkstraBidirectionRef(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
     }
@@ -42,10 +42,8 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
     }
 
     @Override
-    protected SPTEntry createEntry(EdgeIteratorState edge, int incEdge, double weight, SPTEntry parent, boolean reverse) {
-        SPTEntry entry = new SPTEntry(edge.getEdge(), edge.getAdjNode(), weight);
-        entry.parent = parent;
-        return entry;
+    protected SPTEntry createEntry(EdgeIteratorState edge, double weight, SPTEntry parent, boolean reverse) {
+        return new SPTEntry(edge.getEdge(), edge.getAdjNode(), weight, parent);
     }
 
     protected SPTEntry getParent(SPTEntry entry) {

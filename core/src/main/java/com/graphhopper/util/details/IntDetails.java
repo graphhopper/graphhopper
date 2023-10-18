@@ -17,13 +17,13 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.ev.IntEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 
 public class IntDetails extends AbstractPathDetailsBuilder {
 
     private final IntEncodedValue ev;
-    private int intVal = -1;
+    private Integer intVal;
 
     public IntDetails(String name, IntEncodedValue ev) {
         super(name);
@@ -38,7 +38,7 @@ public class IntDetails extends AbstractPathDetailsBuilder {
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         int val = edge.get(ev);
-        if (val != intVal) {
+        if (intVal == null || val != intVal) {
             this.intVal = val;
             return true;
         }

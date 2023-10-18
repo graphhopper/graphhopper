@@ -17,12 +17,9 @@
  */
 package com.graphhopper.storage;
 
-import org.slf4j.LoggerFactory;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 
 /**
@@ -36,8 +33,8 @@ public class RAMDataAccess extends AbstractDataAccess {
     private byte[][] segments = new byte[0][];
     private boolean store;
 
-    RAMDataAccess(String name, String location, boolean store, ByteOrder order) {
-        super(name, location, order);
+    RAMDataAccess(String name, String location, boolean store, int segmentSize) {
+        super(name, location, segmentSize);
         this.store = store;
     }
 
@@ -55,30 +52,10 @@ public class RAMDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public DataAccess copyTo(DataAccess da) {
-        if (da instanceof RAMDataAccess) {
-            copyHeader(da);
-            RAMDataAccess rda = (RAMDataAccess) da;
-            // TODO PERFORMANCE we could reuse rda segments!
-            rda.segments = new byte[segments.length][];
-            for (int i = 0; i < segments.length; i++) {
-                byte[] area = segments[i];
-                rda.segments[i] = Arrays.copyOf(area, area.length);
-            }
-            rda.setSegmentSize(segmentSizeInBytes);
-            // leave id, store and close unchanged
-            return da;
-        } else {
-            return super.copyTo(da);
-        }
-    }
-
-    @Override
     public RAMDataAccess create(long bytes) {
         if (segments.length > 0)
             throw new IllegalThreadStateException("already created");
 
-        setSegmentSize(segmentSizeInBytes);
         ensureCapacity(Math.max(10 * 4, bytes));
         return this;
     }
@@ -127,14 +104,13 @@ public class RAMDataAccess extends AbstractDataAccess {
             return false;
 
         try {
-            RandomAccessFile raFile = new RandomAccessFile(getFullName(), "r");
-            try {
+            try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "r")) {
                 long byteCount = readHeader(raFile) - HEADER_OFFSET;
                 if (byteCount < 0)
                     return false;
 
                 raFile.seek(HEADER_OFFSET);
-                // raFile.readInt() <- too slow                
+                // raFile.readInt() <- too slow
                 int segmentCount = (int) (byteCount / segmentSizeInBytes);
                 if (byteCount % segmentSizeInBytes != 0)
                     segmentCount++;
@@ -149,8 +125,6 @@ public class RAMDataAccess extends AbstractDataAccess {
                     segments[s] = bytes;
                 }
                 return true;
-            } finally {
-                raFile.close();
             }
         } catch (IOException ex) {
             throw new RuntimeException("Problem while loading " + getFullName(), ex);
@@ -166,18 +140,15 @@ public class RAMDataAccess extends AbstractDataAccess {
             return;
 
         try {
-            RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw");
-            try {
+            try (RandomAccessFile raFile = new RandomAccessFile(getFullName(), "rw")) {
                 long len = getCapacity();
                 writeHeader(raFile, len, segmentSizeInBytes);
                 raFile.seek(HEADER_OFFSET);
                 // raFile.writeInt() <- too slow, so copy into byte array
                 for (int s = 0; s < segments.length; s++) {
-                    byte area[] = segments[s];
+                    byte[] area = segments[s];
                     raFile.write(area);
                 }
-            } finally {
-                raFile.close();
             }
         } catch (Exception ex) {
             throw new RuntimeException("Couldn't store bytes to " + toString(), ex);
@@ -189,46 +160,50 @@ public class RAMDataAccess extends AbstractDataAccess {
         assert segmentSizePower > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 4 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
+        if (index + 4 > segmentSizeInBytes)
+            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         bitUtil.fromInt(segments[bufferIndex], value, index);
     }
 
     @Override
     public final int getInt(long bytePos) {
-        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 4 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
-        if (bufferIndex > segments.length) {
-            LoggerFactory.getLogger(getClass()).error(getName() + ", segments:" + segments.length
-                    + ", bufIndex:" + bufferIndex + ", bytePos:" + bytePos
-                    + ", segPower:" + segmentSizePower);
-        }
+        if (index + 4 > segmentSizeInBytes)
+            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         return bitUtil.toInt(segments[bufferIndex], index);
     }
 
     @Override
     public final void setShort(long bytePos, short value) {
-        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 2 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
-        bitUtil.fromShort(segments[bufferIndex], value, index);
+        if (index + 2 > segmentSizeInBytes) {
+            // special case if short has to be written into two separate segments
+            segments[bufferIndex][index] = (byte) (value);
+            segments[bufferIndex + 1][0] = (byte) (value >>> 8);
+        } else {
+            bitUtil.fromShort(segments[bufferIndex], value, index);
+        }
     }
 
     @Override
     public final short getShort(long bytePos) {
-        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
-        assert index + 2 <= segmentSizeInBytes : "integer cannot be distributed over two segments";
-        return bitUtil.toShort(segments[bufferIndex], index);
+        if (index + 2 > segmentSizeInBytes)
+            return (short) ((segments[bufferIndex + 1][0] & 0xFF) << 8 | (segments[bufferIndex][index] & 0xFF));
+        else
+            return bitUtil.toShort(segments[bufferIndex], index);
     }
 
     @Override
     public void setBytes(long bytePos, byte[] values, int length) {
         assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
-        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         byte[] seg = segments[bufferIndex];
@@ -246,7 +221,7 @@ public class RAMDataAccess extends AbstractDataAccess {
     @Override
     public void getBytes(long bytePos, byte[] values, int length) {
         assert length <= segmentSizeInBytes : "the length has to be smaller or equal to the segment size: " + length + " vs. " + segmentSizeInBytes;
-        assert segmentSizePower > 0 : "call create or loadExisting before usage!";
+        assert segments.length > 0 : "call create or loadExisting before usage!";
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         byte[] seg = segments[bufferIndex];
@@ -259,6 +234,22 @@ public class RAMDataAccess extends AbstractDataAccess {
         } else {
             System.arraycopy(seg, index, values, 0, length);
         }
+    }
+
+    @Override
+    public final void setByte(long bytePos, byte value) {
+        assert segments.length > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        segments[bufferIndex][index] = value;
+    }
+
+    @Override
+    public final byte getByte(long bytePos) {
+        assert segments.length > 0 : "call create or loadExisting before usage!";
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        return segments[bufferIndex][index];
     }
 
     @Override
@@ -276,37 +267,6 @@ public class RAMDataAccess extends AbstractDataAccess {
     @Override
     public int getSegments() {
         return segments.length;
-    }
-
-    @Override
-    public void trimTo(long capacity) {
-        if (capacity > getCapacity()) {
-            throw new IllegalStateException("Cannot increase capacity (" + getCapacity() + ") to " + capacity
-                    + " via trimTo. Use ensureCapacity instead. ");
-        }
-
-        if (capacity < segmentSizeInBytes)
-            capacity = segmentSizeInBytes;
-
-        int remainingSegments = (int) (capacity / segmentSizeInBytes);
-        if (capacity % segmentSizeInBytes != 0) {
-            remainingSegments++;
-        }
-
-        segments = Arrays.copyOf(segments, remainingSegments);
-    }
-
-    @Override
-    public void rename(String newName) {
-        if (!checkBeforeRename(newName)) {
-            return;
-        }
-        if (store) {
-            super.rename(newName);
-        }
-
-        // in every case set the name
-        name = newName;
     }
 
     @Override

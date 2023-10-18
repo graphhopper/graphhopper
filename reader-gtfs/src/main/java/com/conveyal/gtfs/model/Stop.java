@@ -30,7 +30,6 @@ import com.conveyal.gtfs.GTFSFeed;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.Iterator;
 
 public class Stop extends Entity {
 
@@ -73,7 +72,7 @@ public class Stop extends Entity {
             s.stop_lon  = getDoubleField("stop_lon", true, -180D, 180D);
             s.zone_id   = getStringField("zone_id", false);
             s.stop_url  = getUrlField("stop_url", false);
-            s.location_type  = getIntField("location_type", false, 0, 1);
+            s.location_type  = getIntField("location_type", false, 0, 4);
             s.parent_station = getStringField("parent_station", false);
             s.stop_timezone  = getStringField("stop_timezone", false);
             s.wheelchair_boarding = getStringField("wheelchair_boarding", false);
@@ -86,37 +85,10 @@ public class Stop extends Entity {
 
     }
 
-    public static class Writer extends Entity.Writer<Stop> {
-        public Writer (GTFSFeed feed) {
-            super(feed, "stops");
-        }
-
-        @Override
-        public void writeHeaders() throws IOException {
-            writer.writeRecord(new String[] {"stop_id", "stop_code", "stop_name", "stop_desc", "stop_lat", "stop_lon", "zone_id",					
-                    "stop_url", "location_type", "parent_station", "stop_timezone", "wheelchair_boarding"});
-        }
-
-        @Override
-        public void writeOneRow(Stop s) throws IOException {
-            writeStringField(s.stop_id);
-            writeStringField(s.stop_code);
-            writeStringField(s.stop_name);
-            writeStringField(s.stop_desc);
-            writeDoubleField(s.stop_lat);
-            writeDoubleField(s.stop_lon);
-            writeStringField(s.zone_id);
-            writeUrlField(s.stop_url);
-            writeIntField(s.location_type);
-            writeStringField(s.parent_station);
-            writeStringField(s.stop_timezone);
-            writeStringField(s.wheelchair_boarding);
-            endRecord();
-        }
-
-        @Override
-        public Iterator<Stop> iterator() {
-            return feed.stops.values().iterator();
-        }   	
+    @Override
+    public String toString() {
+        return "Stop{" +
+                "stop_id='" + stop_id + '\'' +
+                '}';
     }
 }

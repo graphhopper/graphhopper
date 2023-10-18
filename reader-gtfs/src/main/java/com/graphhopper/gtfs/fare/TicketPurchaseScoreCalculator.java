@@ -23,6 +23,7 @@ import com.conveyal.gtfs.model.Fare;
 class TicketPurchaseScoreCalculator {
 
     static class TempTicket {
+        String feed_id;
         Fare fare;
         int totalNumber = 0;
         long validUntil;

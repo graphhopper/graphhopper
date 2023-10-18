@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
+import java.util.Map;
+import java.util.TreeMap;
+
 /**
  * Used to store a priority value in the way flags of an edge. Used in combination with
  * PriorityWeighting
@@ -24,15 +27,28 @@ package com.graphhopper.routing.util;
  * @author Peter Karich
  */
 public enum PriorityCode {
-    WORST(0),
-    AVOID_AT_ALL_COSTS(1),
-    REACH_DEST(2),
-    AVOID_IF_POSSIBLE(3),
-    UNCHANGED(4),
-    PREFER(5),
-    VERY_NICE(6),
-    BEST(7);
+    EXCLUDE(0),
+    REACH_DESTINATION(1),
+    VERY_BAD(3),
+    BAD(5),
+    AVOID_MORE(6),
+    AVOID(8),
+    SLIGHT_AVOID(9),
+    UNCHANGED(10),
+    SLIGHT_PREFER(11),
+    PREFER(12),
+    VERY_NICE(13),
+    BEST(15);
+
     private final int value;
+    public static final TreeMap<Integer, PriorityCode> VALUES = new TreeMap<>();
+
+    static {
+        PriorityCode[] v = values();
+        for (PriorityCode priorityCode : v) {
+            VALUES.put(priorityCode.getValue(), priorityCode);
+        }
+    }
 
     PriorityCode(int value) {
         this.value = value;
@@ -42,11 +58,26 @@ public enum PriorityCode {
         return value;
     }
 
-    /**
-     * This method returns the PriorityCode.value in a range between 0 and 1 suitable for direct usage in a Weighting.
-     */
-    public static double getFactor(int val) {
-        return (double) val / BEST.getValue();
+    public static double getFactor(int value) {
+        return (double) value / 10.0;
     }
 
+    public static double getValue(int value) {
+        return getFactor(value);
+    }
+
+    public PriorityCode worse() {
+        Map.Entry<Integer, PriorityCode> ret = VALUES.lowerEntry(this.getValue());
+        return ret == null ? EXCLUDE : ret.getValue();
+    }
+
+    public static PriorityCode valueOf(int integ) {
+        Map.Entry<Integer, PriorityCode> ret = VALUES.ceilingEntry(integ);
+        return ret == null ? BEST : ret.getValue();
+    }
+
+    public PriorityCode better() {
+        Map.Entry<Integer, PriorityCode> ret = VALUES.higherEntry(this.getValue());
+        return ret == null ? BEST : ret.getValue();
+    }
 }

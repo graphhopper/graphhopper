@@ -19,6 +19,7 @@ package com.graphhopper.reader;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -31,7 +32,7 @@ public class ReaderRelation extends ReaderElement {
     protected List<Member> members;
 
     public ReaderRelation(long id) {
-        super(id, RELATION, 2);
+        super(id, Type.RELATION, new HashMap<>(2));
     }
 
     @Override
@@ -49,7 +50,7 @@ public class ReaderRelation extends ReaderElement {
     public boolean isMetaRelation() {
         if (members != null)
             for (Member member : members) {
-                if (member.getType() == RELATION) {
+                if (member.getType() == Type.RELATION) {
                     return true;
                 }
             }
@@ -66,14 +67,11 @@ public class ReaderRelation extends ReaderElement {
      * Container class for relation members
      */
     public static class Member {
-        public static final int NODE = 0;
-        public static final int WAY = 1;
-        public static final int RELATION = 2;
-        private final int type;
+        private final Type type;
         private final long ref;
         private final String role;
 
-        public Member(int type, long ref, String role) {
+        public Member(Type type, long ref, String role) {
             this.type = type;
             this.ref = ref;
             this.role = role;
@@ -84,7 +82,7 @@ public class ReaderRelation extends ReaderElement {
             return "Member " + type + ":" + ref;
         }
 
-        public int getType() {
+        public Type getType() {
             return type;
         }
 

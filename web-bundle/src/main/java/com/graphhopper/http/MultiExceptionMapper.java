@@ -18,7 +18,7 @@
 
 package com.graphhopper.http;
 
-import com.graphhopper.MultiException;
+import com.graphhopper.jackson.MultiException;
 import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,7 +33,9 @@ public class MultiExceptionMapper implements ExceptionMapper<MultiException> {
 
     @Override
     public Response toResponse(MultiException e) {
-        logger.info("bad request: " + (Helper.isEmpty(e.getMessage()) ? "unknown reason" : e.getErrors()));
+        logger.info("bad request: " + (Helper.isEmpty(e.getMessage())
+                ? (e.getErrors().isEmpty() ? "unknown reason" : e.getErrors().toString())
+                : e.getErrors()));
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity(e)
                 .build();

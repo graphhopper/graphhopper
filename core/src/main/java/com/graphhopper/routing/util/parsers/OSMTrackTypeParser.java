@@ -17,44 +17,28 @@
  */
 package com.graphhopper.routing.util.parsers;
 
-import static com.graphhopper.routing.profiles.TrackType.OTHER;
-
-import java.util.List;
-
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.EncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
-import com.graphhopper.routing.profiles.EnumEncodedValue;
-import com.graphhopper.routing.profiles.TrackType;
-import com.graphhopper.routing.util.EncodingManager.Access;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.TrackType;
 import com.graphhopper.storage.IntsRef;
+
+import static com.graphhopper.routing.ev.TrackType.MISSING;
 
 public class OSMTrackTypeParser implements TagParser {
 
     private final EnumEncodedValue<TrackType> trackTypeEnc;
 
-    public OSMTrackTypeParser() {
-        this.trackTypeEnc = new EnumEncodedValue<>(TrackType.KEY, TrackType.class);
+    public OSMTrackTypeParser(EnumEncodedValue<TrackType> trackTypeEnc) {
+        this.trackTypeEnc = trackTypeEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> link) {
-        link.add(trackTypeEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, Access access,
-                    long relationFlags) {
-        if (!access.isWay())
-            return edgeFlags;
-
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         String trackTypeTag = readerWay.getTag("tracktype");
-        if (trackTypeTag == null)
-            return edgeFlags;
         TrackType trackType = TrackType.find(trackTypeTag);
-        if (trackType != OTHER)
-            trackTypeEnc.setEnum(false, edgeFlags, trackType);
-        return edgeFlags;
+        if (trackType != MISSING)
+            trackTypeEnc.setEnum(false, edgeId, edgeIntAccess, trackType);
     }
 
 }

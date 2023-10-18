@@ -1,5 +1,8 @@
 Getting started with GraphHopper in Eclipse
 =========
+
+*Note: this documentation is potentially out of date. Please let us know where to improve it.*
+
 This manual covers step by step instructions on setting up a development and run environment for GraphHopper (web App only) using Eclipse. The instructions and tools used are platform independent and should be applicable for windows, Linux and Mac operating systems. 
 Instructions for Android branch will be provided in future.
 
@@ -10,9 +13,6 @@ This document covers configuring Eclipse for cloning and importing GraphHopper r
 The first step is to download latest version of Eclipse. We recommend that you download the ["Eclipse IDE for Java EE Developers"](http://www.eclipse.org/downloads/) package, instead of the package "for Java developers", as it includes many of the necessary plugins for webapp and API development.  
 
 **Note:** Make sure you grab the correct 32-bit or 64-bit version, depending on your machine and the version of the java installed in your computer. If for example you have a 32 bit java in your x64 machine, you still need to download a 32 bit version of eclipse or you may get an error while trying to open the eclipse.exe file.
-
-**Note:** GraphHopper is set to run with JRE 1.6. This document is written based on setting Eclipse Luna using JRE 1.6.  It may also work with newer versions of JRE, but it has not been tested yet.
-
 
 ### 2.	Eclipse Addition al Plugins
 Before getting started, you'll need to have a few Eclipse plugins installed to help with development. GraphHopper is versioned using Git and its build process and dependencies are managed by Maven, so certain additional Eclipse components will be needed to tie everything together:
@@ -33,7 +33,7 @@ You should take the below steps to install your needed components:
 
 * In Eclipse, under _help_ menu, choose _Eclipse Marketplace_. 
 
-* In the opened window, search all _markets/all categories_ and in the _find_ dialoge box type the name of the needed component and click on _Go_ button:
+* In the opened window, search all _markets/all categories_ and in the _find_ dialog box type the name of the needed component and click on _Go_ button:
 
  * Search for “egit” if you need “EGIT” and “EGit – Git Team Provider” should be among first items to appear.
  

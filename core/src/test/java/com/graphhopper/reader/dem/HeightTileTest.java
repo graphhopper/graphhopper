@@ -19,9 +19,9 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.RAMDirectory;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich
@@ -34,7 +34,7 @@ public class HeightTileTest {
         int width = 10;
         int height = 20;
         HeightTile instance = new HeightTile(0, 0, width, height, 1e-6, 10, 20);
-        DataAccess heights = new RAMDirectory().find("tmp");
+        DataAccess heights = new RAMDirectory().create("tmp");
         heights.create(2 * width * height);
         instance.setHeights(heights);
         init(heights, width, height, 1);
@@ -77,7 +77,7 @@ public class HeightTileTest {
     public void testGetHeightForNegativeTile() {
         int width = 10;
         HeightTile instance = new HeightTile(-20, -20, width, width, 1e-6, 10, 10);
-        DataAccess heights = new RAMDirectory().find("tmp");
+        DataAccess heights = new RAMDirectory().create("tmp");
         heights.create(2 * 10 * 10);
         instance.setHeights(heights);
         init(heights, width, width, 1);
@@ -96,37 +96,63 @@ public class HeightTileTest {
     }
 
     @Test
-    public void testCalcMean() {
-        int width = 10;
-        HeightTile instance = new HeightTile(0, 0, width, width, 1e-6, 10, 10).setCalcMean(true);
-        DataAccess heights = new RAMDirectory().find("tmp");
-        heights.create(2 * 10 * 10);
+    public void testInterpolate() {
+        HeightTile instance = new HeightTile(0, 0, 2, 2, 1e-6, 10, 10).setInterpolate(true);
+        DataAccess heights = new RAMDirectory().create("tmp");
+        heights.create(2 * 2 * 2);
         instance.setHeights(heights);
-        init(heights, width, width, 1);
+        double topLeft = 0;
+        double topRight = 1;
+        double bottomLeft = 2;
+        double bottomRight = 3;
+        set(heights, 2, 0, 0, (short) topLeft);
+        set(heights, 2, 1, 0, (short) topRight);
+        set(heights, 2, 0, 1, (short) bottomLeft);
+        set(heights, 2, 1, 1, (short) bottomRight);
 
-        // x,y=0,9
-        heights.setShort(2 * (9 * width + 0), (short) 10);
+        // corners
+        assertEquals(bottomLeft, instance.getHeight(0, 0), 1e-3);
+        assertEquals(topLeft, instance.getHeight(10, 0), 1e-3);
+        assertEquals(bottomRight, instance.getHeight(0, 10), 1e-3);
+        assertEquals(topRight, instance.getHeight(10, 10), 1e-3);
 
-        // x,y=1,7
-        heights.setShort(2 * (7 * width + 1), (short) 70);
+        // midpoints
+        assertEquals(avg(topLeft, topRight), instance.getHeight(10, 5), 1e-3);
+        assertEquals(avg(bottomLeft, bottomRight), instance.getHeight(0, 5), 1e-3);
+        assertEquals(avg(topLeft, bottomLeft), instance.getHeight(5, 0), 1e-3);
+        assertEquals(avg(topRight, bottomRight, topLeft, bottomLeft), instance.getHeight(5, 5), 1e-3);
 
-        // x,y=2,8
-        heights.setShort(2 * (8 * width + 2), (short) 90);
+        // missing data uses whatever remains
+        set(heights, 2, 1, 0, Short.MIN_VALUE);
+        set(heights, 2, 0, 1, Short.MIN_VALUE);
+        set(heights, 2, 1, 1, Short.MIN_VALUE);
+        assertEquals(topLeft, instance.getHeight(0, 0), 1e-3);
+        assertEquals(topLeft, instance.getHeight(10, 0), 1e-3);
+        assertEquals(topLeft, instance.getHeight(0, 10), 1e-3);
+        assertEquals(topLeft, instance.getHeight(10, 10), 1e-3);
 
-        assertEquals((70 + 4) / 5d, instance.getHeight(2, 1), 1e-3);
-
-        assertEquals((70 + 90 + 3) / 5d, instance.getHeight(2.5, 2.5), 1e-3);
-
-        assertEquals((90 + 3) / 4d, instance.getHeight(-0.5, 2.5), 1e-3);
-
-        assertEquals((10 + 2) / 3d, instance.getHeight(-0.5, -0.5), 1e-3);
+        // when all data missing, returns NaN
+        set(heights, 2, 0, 0, Short.MIN_VALUE);
+        assertEquals(Double.NaN, instance.getHeight(5, 5), 1e-3);
     }
 
     private void init(DataAccess da, int width, int height, int i) {
         for (int x = 0; x < width; x++) {
             for (int y = 0; y < height; y++) {
-                da.setShort(2 * (y * width + x), (short) 1);
+                set(da, width, x, y, (short) 1);
             }
         }
+    }
+
+    private void set(DataAccess da, int width, int x, int y, short height) {
+        da.setShort(2 * (y * width + x), height);
+    }
+
+    private double avg(double... ns) {
+        double sum = 0;
+        for (double n : ns) {
+            sum += n;
+        }
+        return sum / ns.length;
     }
 }

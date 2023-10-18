@@ -18,11 +18,9 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.storage.RoutingCHEdgeExplorer;
+import com.graphhopper.storage.RoutingCHEdgeIterator;
+import com.graphhopper.storage.RoutingCHGraph;
 
 /**
  * Uses a very simple version of stall-on-demand (SOD) for CH queries to prevent exploring nodes that can not be part
@@ -34,8 +32,8 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
 
-    public DijkstraBidirectionCH(Graph graph, Weighting weighting) {
-        super(graph, weighting);
+    public DijkstraBidirectionCH(RoutingCHGraph graph) {
+        super(graph);
     }
 
     @Override
@@ -48,35 +46,30 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
         return entryIsStallable(currTo, bestWeightMapTo, outEdgeExplorer, true);
     }
 
-    @Override
-    public String getName() {
-        return "dijkstrabi|ch";
-    }
-
-    @Override
-    public String toString() {
-        return getName() + "|" + weighting;
-    }
-
-    private boolean entryIsStallable(SPTEntry entry, IntObjectMap<SPTEntry> bestWeightMap, EdgeExplorer edgeExplorer,
+    private boolean entryIsStallable(SPTEntry entry, IntObjectMap<SPTEntry> bestWeightMap, RoutingCHEdgeExplorer edgeExplorer,
                                      boolean reverse) {
         // We check for all 'incoming' edges if we can prove that the current node (that is about to be settled) is 
         // reached via a suboptimal path. We do this regardless of the CH level of the adjacent nodes.
-        EdgeIterator iter = edgeExplorer.setBaseNode(entry.adjNode);
+        RoutingCHEdgeIterator iter = edgeExplorer.setBaseNode(entry.adjNode);
         while (iter.next()) {
             // no need to inspect the edge we are coming from
             if (iter.getEdge() == entry.edge) {
                 continue;
             }
-            int traversalId = traversalMode.createTraversalId(iter, reverse);
-            SPTEntry adjNode = bestWeightMap.get(traversalId);
+            SPTEntry adjNode = bestWeightMap.get(iter.getAdjNode());
             // we have to be careful because of rounded shortcut weights in combination with virtual via nodes, see #1574
             final double precision = 0.001;
             if (adjNode != null &&
-                    adjNode.weight + weighting.calcWeight(iter, !reverse, getIncomingEdge(entry)) - entry.weight < -precision) {
+                    adjNode.weight + calcWeight(iter, !reverse, getIncomingEdge(entry)) - entry.weight < -precision) {
                 return true;
             }
         }
         return false;
     }
+
+    @Override
+    public String getName() {
+        return "dijkstrabi|ch";
+    }
+
 }

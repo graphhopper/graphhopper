@@ -1,7 +1,0 @@
-{
-    "destination_addresses": [],
-    "error_message": "You have exceeded your rate-limit for this API.",
-    "origin_addresses": [],
-    "rows": [],
-    "status": "OVER_QUERY_LIMIT"
-}

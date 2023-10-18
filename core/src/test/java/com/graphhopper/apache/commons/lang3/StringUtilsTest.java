@@ -16,10 +16,10 @@
  */
 package com.graphhopper.apache.commons.lang3;
 
-import com.graphhopper.apache.commons.lang3.StringUtils;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * This class is a partial Copy of the org.apache.commons.lang3.StringUtils
@@ -45,14 +45,14 @@ public class StringUtilsTest {
         assertEquals(1, StringUtils.getLevenshteinDistance("hello", "hallo"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testGetLevenshteinDistance_NullString() throws Exception {
-        StringUtils.getLevenshteinDistance("a", null);
+    @Test
+    public void testGetLevenshteinDistance_NullString() {
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.getLevenshteinDistance("a", null));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testGetLevenshteinDistance_StringNull() throws Exception {
-        StringUtils.getLevenshteinDistance(null, "a");
+    @Test
+    public void testGetLevenshteinDistance_StringNull() {
+        assertThrows(IllegalArgumentException.class, () -> StringUtils.getLevenshteinDistance(null, "a"));
     }
 
 

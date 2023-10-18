@@ -12,11 +12,11 @@ only a sub-set of them are actual junctions, which are the ones we are intereste
 Those junction nodes (and end-standing nodes of dead alleys) we call *tower nodes* which also 
 have a graphhopper node ID associated, going from 0 to graph.getNodes(). 
 The helper nodes between the junctions we call 'pillar nodes' which can be fetched via
-`edgeIteratorState.fetchWayGeometry(0)`. Avoiding the traversal of pillar nodes while routing makes 
+`edgeIteratorState.fetchWayGeometry(FetchMode.PILLAR_ONLY)`. Avoiding the traversal of pillar nodes makes 
 routing a lot faster (~8 times).
 
 That splitting into pillar and tower nodes is also the reason why there can't be a unique mapping from 
-one OSM node ID to exactly one GraphHopper node ID. And as one OSM Way is often splitted into multiple 
+one OSM node ID to exactly one GraphHopper node ID. And as one OSM Way is often split into multiple 
 edges the same applies for edge IDs too.
 
 ### What are virtual edges and nodes?
@@ -39,91 +39,9 @@ But we need to decouple requests from each other and therefor we create a very l
 
 The virtual nodes and edges have a higher `int` ID than `graph.getNodes()` or `allEdges.length()`
 
-A call `queryGraph.lookup(allQRs)` will determine the correct node for all `QueryResult`s: and either 
+A call `QueryGraph.create(graph, allQRs)` will determine the correct node for all `Snap`s: and either 
 create new virtual nodes or if close enough use the existing junction node.
 
-### Create and save the graph
+### Handle graph and routing algorithms
 
-```java
-FlagEncoder encoder = new CarFlagEncoder();
-EncodingManager em = EncodingManager.create(encoder);
-GraphBuilder gb = new GraphBuilder(em).setLocation("graphhopper_folder").setStore(true);
-GraphStorage graph = gb.create();
-// Make a weighted edge between two nodes.
-EdgeIteratorState edge = graph.edge(fromId, toId);
-edge.setDistance(distance);
-edge.setFlags(encoder.setProperties(speed, true, true));
-// Flush to disc
-graph.flush();
-```
-
-### Load the graph
-
-```java
-...
-GraphStorage graph = gb.load();
-// Load index
-LocationIndex index = new LocationIndexTree(graph.getBaseGraph(), new RAMDirectory("graphhopper_folder", true));
-if (!index.loadExisting())
-    throw new IllegalStateException("location index cannot be loaded!");
-```
-
-### Calculate Path with LocationIndex
-
-```java
-QueryResult fromQR = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
-QueryResult toQR = index.findClosest(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
-QueryGraph queryGraph = new QueryGraph(graph);
-queryGraph.lookup(fromQR, toQR);
-Path path = new Dijkstra(queryGraph, encoder).calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
-```
-
-### Calculate Path without LocationIndex
-
-```java
-// get the fromId and toId nodes from other code parts
-Path path = new Dijkstra(graph, encoder).calcPath(fromId, toId);
-```
-
-### Use CHGraph to make queries faster
-
-```java
-// Creating and saving the graph
-GraphBuilder gb = new GraphBuilder(em).
-    setLocation("graphhopper_folder").
-    setStore(true).
-    setCHGraph(true);
-GraphHopperStorage graph = gb.create();
-// Create a new edge between two nodes, set access, distance, speed, geometry, ..
-EdgeIteratorState edge = graph.edge(fromId, toId);
-...
-
-// Prepare the graph for fast querying ...
-TraversalMode tMode = TraversalMode.NODE_BASED;
-PrepareContractionHierarchies pch = new PrepareContractionHierarchies(ghStorage, encoder, weighting, tMode);
-pch.doWork();
-
-// flush after preparation!
-graph.flush();
-
-// Load and use the graph
-GraphStorage graph = gb.load();
-
- // Load index
-LocationIndex index = new LocationIndexTree(graph.getBaseGraph(), new RAMDirectory("graphhopper_folder", true));
-if (!index.loadExisting())
-    throw new IllegalStateException("location index cannot be loaded!");
-
-// calculate path is identical
-QueryResult fromQR = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
-QueryResult toQR = index.findClosest(latitudeTo, longituteTo, EdgeFilter.ALL_EDGES);
-QueryGraph queryGraph = new QueryGraph(graph);
-queryGraph.lookup(fromQR, toQR);
-
-// create the algorithm using the PrepareContractionHierarchies object
-AlgorithmOptions algoOpts = AlgorithmOptions.start().
-   algorithm(Parameters.Algorithms.DIJKSTRA_BI).traversalMode(tMode).weighting(weighting).
-   build();
-RoutingAlgorithm algorithm = pch.createAlgo(queryGraph, algoOpts);
-Path path = algorithm.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
-```
+See [this code](../../example/src/main/java/com/graphhopper/example/LowLevelAPIExample.java) for more details about using the low level API.

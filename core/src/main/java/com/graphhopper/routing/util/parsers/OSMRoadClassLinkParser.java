@@ -18,30 +18,22 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
-
-import java.util.List;
 
 public class OSMRoadClassLinkParser implements TagParser {
     private final BooleanEncodedValue linkEnc;
 
-    public OSMRoadClassLinkParser() {
-        this.linkEnc = new SimpleBooleanEncodedValue(RoadClassLink.KEY);
+    public OSMRoadClassLinkParser(BooleanEncodedValue linkEnc) {
+        this.linkEnc = linkEnc;
     }
 
     @Override
-    public void createEncodedValues(EncodedValueLookup lookup, List<EncodedValue> list) {
-        list.add(linkEnc);
-    }
-
-    @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, EncodingManager.Access access, long relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         String highwayTag = readerWay.getTag("highway");
         if (!Helper.isEmpty(highwayTag) && highwayTag.endsWith("_link"))
-            linkEnc.setBool(false, edgeFlags, true);
-        return edgeFlags;
+            linkEnc.setBool(false, edgeId, edgeIntAccess, true);
     }
 }

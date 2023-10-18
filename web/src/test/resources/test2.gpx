@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?><gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" creator="Graphhopper" version="1.1" xmlns:gh="https://graphhopper.com/public/schema/gpx/1.1">
+    <metadata>
+        <copyright author="OpenStreetMap contributors"/>
+        <link href="http://graphhopper.com">
+            <text>GraphHopper GPX</text>
+        </link>
+        <time>1970-01-01T00:00:00+00:00</time>
+    </metadata>
+    <rte>
+        <rtept lat="51.377719" lon="12.338217">
+            <desc>continue onto Fučikstraße</desc>
+            <extensions>
+                <gh:distance>101.0</gh:distance>
+                <gh:time>14545</gh:time>
+                <gh:direction>SE</gh:direction>
+                <gh:azimuth>126</gh:azimuth>
+            </extensions>
+        </rtept>
+    </rte>
+    <trk>
+        <name>GraphHopper</name>
+        <trkseg>
+            <trkpt lat="51.377719" lon="12.338217">
+                <time>1970-01-01T00:00:00.001Z</time>
+            </trkpt>
+            <trkpt lat="51.37703" lon="12.339166">
+                <time>1970-01-01T00:00:14.002Z</time>
+            </trkpt>
+        </trkseg>
+    </trk>
+</gpx>

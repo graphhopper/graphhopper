@@ -35,6 +35,14 @@ public class StopWatch {
     public StopWatch() {
     }
 
+    public static StopWatch started() {
+        return started("");
+    }
+
+    public static StopWatch started(String name) {
+        return new StopWatch(name).start();
+    }
+
     public StopWatch setName(String name) {
         this.name = name;
         return this;
@@ -73,6 +81,13 @@ public class StopWatch {
         return elapsedNanos / 1_000_000;
     }
 
+    /**
+     * returns the elapsed time in ms but includes the fraction as well to get a precise value
+     */
+    public double getMillisDouble() {
+        return elapsedNanos / 1_000_000.0;
+    }
+
     public long getNanos() {
         return elapsedNanos;
     }
@@ -84,7 +99,26 @@ public class StopWatch {
             str += name + " ";
         }
 
-        return str + "time:" + getSeconds();
+        return str + "time:" + getSeconds() + "s";
+    }
+
+    public String getTimeString() {
+        if (elapsedNanos < 1e3) {
+            return elapsedNanos + "ns";
+        } else if (elapsedNanos < 1e6) {
+            return String.format("%.2fµs", elapsedNanos / 1.e3);
+        } else if (elapsedNanos < 1e9) {
+            return String.format("%.2fms", elapsedNanos / 1.e6);
+        } else {
+            double seconds = elapsedNanos / 1.e9;
+            if (seconds < 60) {
+                return String.format("%.2fs", elapsedNanos / 1e9);
+            } else if (seconds < 60 * 60) {
+                return String.format("%dmin %ds", ((int) seconds / 60), (((int) seconds) % 60));
+            } else {
+                return String.format("%dh %dmin", ((int) seconds / (60 * 60)), ((int) seconds) % (60 * 60) / 60);
+            }
+        }
     }
 
     private boolean notStarted() {

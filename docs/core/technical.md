@@ -1,20 +1,17 @@
 ## Technical Overview of GraphHopper
 
-To get a better understanding also take a look in the source code, especially in the unit tests and in 
-some resources we [published](http://karussell.wordpress.com/2014/01/23/graphhopper-news-article-in-java-magazine-and-fosdem-2014/)
-or [here](http://graphhopper.com/public/slides/).
+To get a better understanding also take a look in the source code, especially in the unit tests.
 
 There are mainly three parts:
 
 ### 1. Data Import
 
-The default import is done via OSMReader which imports OpenStreetMap data. You can configure it via API 
-or use the `graphhopper.sh` script which utilizes the config.yml where you can specify if it should 
-read `car`, `foot` or all vehicles at once. You'll have to make sure that you allocate enough memory for your 
-specific graph (E.g. ~2GB for Germany) e.g. `export JAVA_OPTS="-Xmx2g"`. The import process is fast e.g. 
-complete Germany takes roughly 10 minutes. Additionally it will take time if you choose 
-`prepare.ch.weightings=fastest` in the config.yml which will dramatically improve query time
-but requires more RAM on import.
+The default import is done via OSMReader which imports OpenStreetMap data. You can change the configuration
+in the config.yml to read `car`, `foot` or all vehicles. See the [installation section](../../README.md#installation)
+for more details.
+The import process is fast e.g. complete Germany takes roughly 10 minutes. Additionally, it will take time if you
+enable speed mode by using `profiles_ch` in the config.yml which will dramatically improve query time
+but requires more RAM for the import.
 
 ### 2. The Graph
 
@@ -40,14 +37,11 @@ Some explanations:
  * For you custom data import keep in mind that although the nodes 4 and 6 have no edges they still 'exist' and consume space in the current implementations of DataAccess. For OSMReader this cannot be the case as separate networks with only a small number of nodes are removed (very likely OSM bugs).
  * If CH is enabled the storage adds information for shortcuts, see [this issue](https://github.com/graphhopper/graphhopper/pull/447) for more details.
 
-For some algorithms there are special implementations of the Graph (CHGraph). You enable this in GraphHopperStorage
-to store shortcut edges and a level for every node. This special storage is necessary for _Contraction Hierarchies_. 
-For this the graph needs also some preprocessing (which can take several minutes for bigger areas) 
-which is done in the OSMReader when configured or via API in PrepareContractionHierarchies. 
-In order to use the shortcuts and get the benefits of the optimized graph you must use the algorithm returned from 
-createAlgo() in the preparation class.
+For some algorithms like Landmarks or Contraction Hierarchies there additional storages necessary and the 'table'
+layout is special. Furthermore there is a key value storage to store street
+names, conditional tags and more - preferable where the storage size is unknown.
 
-Also there is a version in every vehicle and every data structure which is changed if the 
+Also there is a version in every data structure which is changed if the 
 data structure of GraphHopper gets incompatible to the previous versions.
 
 ### 3. The Algorithms
@@ -59,8 +53,8 @@ An algorithm needs the path extraction: from the shortest-path-tree one needs to
 (list of edges) including the distance and time. Afterwards from this list the exact point (latitude,longitude) 
 can be determined. For bidirectional algorithms this is a bit more complicated and done in PathBidirRef. 
 For [_Contraction Hierarchies_](http://ad-wiki.informatik.uni-freiburg.de/teaching/EfficientRoutePlanningSS2012)
- we use the _CHGraph_ which additionally holds shortcuts. While path extraction we need to identify those
- shortcuts and get the edges recursively, this is done in Path4CH.
+we use the _RoutingCHGraph_ which additionally holds shortcuts. While path extraction we need to identify those
+shortcuts and get the edges recursively, this is done in Path4CH.
 
 ## 3.1 Base Graph
 
@@ -75,13 +69,11 @@ or similar. See issue #116 for more information.
 ## 4.1 LocationIndex
 
 In real world we have addresses and/or coordinates for the start and end point. 
-To get the coordinate from an address you will need a geocoding solution not part of GraphHopper.
+To get the coordinate from an address you will need a geocoding solution
+which is not part of this GraphHopper routing engine.
 
 To get the closest node or edge id from a coordinate we provide you with an efficient lookup concept:
-the LocationIndex. There are multiple implementations
-where the LocationIndexTree is the most precise and scalable one and used in almost all places.
-See [here](./location-index.md) for more information. See #17 and #221.
-
+the LocationIndexTree. See [here](../example/src/main/java/com/graphhopper/example/LocationIndexExample.java) for more information. See #17 and #221.
 
 ## 4.2 QueryGraph
 

@@ -129,7 +129,7 @@ public class MatrixResponse {
      */
     public double getDistance(int from, int to) {
         if (hasErrors()) {
-            throw new IllegalStateException("Cannot return distance (" + from + "," + to + ") if errors occured " + getErrors());
+            throw new IllegalStateException("Cannot return distance (" + from + "," + to + ") if errors occurred " + getErrors());
         }
 
         if (from >= distances.length) {
@@ -147,7 +147,7 @@ public class MatrixResponse {
      */
     public double getWeight(int from, int to) {
         if (hasErrors()) {
-            throw new IllegalStateException("Cannot return weight (" + from + "," + to + ") if errors occured " + getErrors());
+            throw new IllegalStateException("Cannot return weight (" + from + "," + to + ") if errors occurred " + getErrors());
         }
 
         if (from >= weights.length) {

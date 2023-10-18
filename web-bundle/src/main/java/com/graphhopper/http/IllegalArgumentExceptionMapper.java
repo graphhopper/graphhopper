@@ -1,6 +1,6 @@
 package com.graphhopper.http;
 
-import com.graphhopper.MultiException;
+import com.graphhopper.jackson.MultiException;
 import com.graphhopper.util.Helper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +15,7 @@ public class IllegalArgumentExceptionMapper implements ExceptionMapper<IllegalAr
 
     @Override
     public Response toResponse(IllegalArgumentException e) {
-        logger.info("bad request: " + (Helper.isEmpty(e.getMessage()) ? "unknown reason" : e.getMessage()));
+        logger.info("bad request: " + (Helper.isEmpty(e.getMessage()) ? "unknown reason" : e.getMessage()), e);
         return Response.status(Response.Status.BAD_REQUEST)
                 .entity(new MultiException(e))
                 .build();

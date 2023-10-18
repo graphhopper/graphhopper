@@ -38,6 +38,7 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -45,12 +46,13 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
 
+
 /**
  * An abstract base class that represents a row in a GTFS table, e.g. a Stop, Trip, or Agency.
  * One concrete subclass is defined for each table in a GTFS feed.
  */
 // TODO K is the key type for this table
-public abstract class Entity implements Serializable {
+public abstract class Entity implements Serializable, Cloneable {
 
     private static final long serialVersionUID = -3576441868127607448L;
     public static final int INT_MISSING = Integer.MIN_VALUE;
@@ -120,13 +122,24 @@ public abstract class Entity implements Serializable {
             return getIntField(column, required, min, max, 0);
         }
 
-        protected int getIntField(String column, boolean required, int min, int max, int defaultValue) throws IOException {
+
+        protected int getIntField (String column, boolean required, int min, int max, int defaultValue) throws IOException {            
+            Map<Integer, Integer> mapping = null;            
+            return getIntField (column, required, min, max, defaultValue, mapping);            
+        }
+
+        protected int getIntField(String column, boolean required, int min, int max, int defaultValue, final Map<Integer, Integer> mapping) throws IOException {
             String str = getFieldCheckRequired(column, required);
             int val = INT_MISSING;
             if (str == null) {
                 val = defaultValue; // defaults to 0 per overloaded function, unless provided.
             } else try {
                 val = Integer.parseInt(str);
+                if (mapping != null) {
+                    Integer mappedVal = mapping.get(new Integer(val));
+                    if (mappedVal != null)
+                        val = mappedVal.intValue();
+                }
                 checkRangeInclusive(min, max, val);
             } catch (NumberFormatException nfe) {
                 feed.errors.add(new NumberParseError(tableName, row, column));
@@ -217,6 +230,9 @@ public abstract class Entity implements Serializable {
             V val = null;
             if (str != null) {
                 val = target.get(str);
+                if (val == null) {
+                    feed.errors.add(new ReferentialIntegrityError(tableName, row, column, str));
+                }
             }
             return val;
         }
@@ -230,31 +246,37 @@ public abstract class Entity implements Serializable {
          * The main entry point into an Entity.Loader. Interprets each row of a CSV file within a zip file as a sinle
          * GTFS entity, and loads them into a table.
          *
-         * @param zip the zip file from which to read a table
+         * @param zipOrDirectory the zip file or directory from which to read a table
          */
-        public void loadTable(ZipFile zip) throws IOException {
-            ZipEntry entry = zip.getEntry(tableName + ".txt");
-            if (entry == null) {
-                Enumeration<? extends ZipEntry> entries = zip.entries();
-                // check if table is contained within sub-directory
-                while (entries.hasMoreElements()) {
-                    ZipEntry e = entries.nextElement();
-                    if (e.getName().endsWith(tableName + ".txt")) {
-                        entry = e;
-                        feed.errors.add(new TableInSubdirectoryError(tableName, entry.getName().replace(tableName + ".txt", "")));
+        public void loadTable(File zipOrDirectory) throws IOException {
+            InputStream zis;
+            if (zipOrDirectory.isDirectory()) {
+                Path path = zipOrDirectory.toPath().resolve(tableName + ".txt");
+                if (!path.toFile().exists()) {
+                    missing();
+                    return;
+                }
+                zis = new FileInputStream(path.toFile());
+                LOG.info("Loading GTFS table {} from {}", tableName, path);
+            } else {
+                ZipFile zip = new ZipFile(zipOrDirectory);
+                ZipEntry entry = zip.getEntry(tableName + ".txt");
+                if (entry == null) {
+                    Enumeration<? extends ZipEntry> entries = zip.entries();
+                    // check if table is contained within sub-directory
+                    while (entries.hasMoreElements()) {
+                        ZipEntry e = entries.nextElement();
+                        if (e.getName().endsWith(tableName + ".txt")) {
+                            entry = e;
+                            feed.errors.add(new TableInSubdirectoryError(tableName, entry.getName().replace(tableName + ".txt", "")));
+                        }
                     }
+                    missing();
+                    if (entry == null) return;
                 }
-                /* This GTFS table did not exist in the zip. */
-                if (this.isRequired()) {
-                    feed.errors.add(new MissingTableError(tableName));
-                } else {
-                    LOG.info("Table {} was missing but it is not required.", tableName);
-                }
-
-                if (entry == null) return;
+                zis = zip.getInputStream(entry);
+                LOG.info("Loading GTFS table {} from {}", tableName, entry);
             }
-            LOG.info("Loading GTFS table {} from {}", tableName, entry);
-            InputStream zis = zip.getInputStream(entry);
             // skip any byte order mark that may be present. Files must be UTF-8,
             // but the GTFS spec says that "files that include the UTF byte order mark are acceptable"
             InputStream bis = new BOMInputStream(zis);
@@ -270,6 +292,13 @@ public abstract class Entity implements Serializable {
             }
         }
 
+        private void missing() {
+            if (this.isRequired()) {
+                feed.errors.add(new MissingTableError(tableName));
+            } else {
+                LOG.info("Table {} was missing but it is not required.", tableName);
+            }
+        }
     }
 
     /**

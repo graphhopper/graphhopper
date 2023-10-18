@@ -17,35 +17,26 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
  * A DataAccess implementation using a memory-mapped file, i.e. a facility of the
  * operating system to access a file like an area of RAM.
  * <p>
- * Java presents the mapped memory as a ByteBuffer, and ByteBuffer can be made
- * thread-safe since JDK 13, which means that access to a ByteBuffer must no longer
- * be externally synchronized.
+ * Java presents the mapped memory as a ByteBuffer, and ByteBuffer is not
+ * thread-safe, which means that access to a ByteBuffer must be externally
+ * synchronized.
  * <p>
  * This class itself is intended to be as thread-safe as other DataAccess
  * implementations are.
@@ -57,107 +48,38 @@ import java.util.StringTokenizer;
  */
 public final class MMapDataAccess extends AbstractDataAccess {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(MMapDataAccess.class);
-
     private final boolean allowWrites;
     private RandomAccessFile raFile;
-    private List<ByteBuffer> segments = new ArrayList<>();
+    private final List<MappedByteBuffer> segments = new ArrayList<>();
 
-    MMapDataAccess(String name, String location, ByteOrder order, boolean allowWrites) {
-        super(name, location, order);
+    MMapDataAccess(String name, String location, boolean allowWrites, int segmentSize) {
+        super(name, location, segmentSize);
         this.allowWrites = allowWrites;
-    }
-
-    public static boolean jreIsMinimumJava9() {
-        final StringTokenizer st = new StringTokenizer(System.getProperty("java.specification.version"), ".");
-        int JVM_MAJOR_VERSION = Integer.parseInt(st.nextToken());
-        int JVM_MINOR_VERSION;
-        if (st.hasMoreTokens()) {
-            JVM_MINOR_VERSION = Integer.parseInt(st.nextToken());
-        } else {
-            JVM_MINOR_VERSION = 0;
-        }
-        return JVM_MAJOR_VERSION > 1 || (JVM_MAJOR_VERSION == 1 && JVM_MINOR_VERSION >= 9);
     }
 
     public static void cleanMappedByteBuffer(final ByteBuffer buffer) {
         // TODO avoid reflection on every call
         try {
-            AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-                @Override
-                public Object run() throws Exception {
-                    if (jreIsMinimumJava9()) {
-                        // >=JDK9 class sun.misc.Unsafe { void invokeCleaner(ByteBuffer buf) }
-                        final Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
-                        // fetch the unsafe instance and bind it to the virtual MethodHandle
-                        final Field f = unsafeClass.getDeclaredField("theUnsafe");
-                        f.setAccessible(true);
-                        final Object theUnsafe = f.get(null);
-                        final Method method = unsafeClass.getDeclaredMethod("invokeCleaner", ByteBuffer.class);
-                        try {
-                            method.invoke(theUnsafe, buffer);
-                            return null;
-                        } catch (Throwable t) {
-                            throw new RuntimeException(t);
-                        }
-                    }
-
-                    if (buffer.getClass().getSimpleName().equals("MappedByteBufferAdapter")) {
-                        if (!Constants.ANDROID)
-                            throw new RuntimeException("MappedByteBufferAdapter only supported for Android at the moment");
-
-                        // For Android 4.1 call ((MappedByteBufferAdapter)buffer).free() see #914
-                        Class<?> directByteBufferClass = Class.forName("java.nio.MappedByteBufferAdapter");
-                        callBufferFree(buffer, directByteBufferClass);
-                    } else {
-                        // <=JDK8 class DirectByteBuffer { sun.misc.Cleaner cleaner(Buffer buf) }
-                        //        then call sun.misc.Cleaner.clean
-                        final Class<?> directByteBufferClass = Class.forName("java.nio.DirectByteBuffer");
-                        try {
-                            final Method dbbCleanerMethod = directByteBufferClass.getMethod("cleaner");
-                            dbbCleanerMethod.setAccessible(true);
-                            // call: cleaner = ((DirectByteBuffer)buffer).cleaner()
-                            final Object cleaner = dbbCleanerMethod.invoke(buffer);
-                            if (cleaner != null) {
-                                final Class<?> cleanerMethodReturnType = dbbCleanerMethod.getReturnType();
-                                final Method cleanMethod = cleanerMethodReturnType.getDeclaredMethod("clean");
-                                cleanMethod.setAccessible(true);
-                                // call: ((sun.misc.Cleaner)cleaner).clean()
-                                cleanMethod.invoke(cleaner);
-                            }
-                        } catch (NoSuchMethodException ex2) {
-                            if (Constants.ANDROID)
-                                // For Android 5.1.1 call ((DirectByteBuffer)buffer).free() see #933
-                                callBufferFree(buffer, directByteBufferClass);
-                            else
-                                // ignore if method cleaner or clean is not available
-                                LOGGER.warn("NoSuchMethodException | " + System.getProperty("java.version"), ex2);
-                        }
-                    }
-
-                    return null;
-                }
-            });
-        } catch (PrivilegedActionException e) {
-            throw new RuntimeException("Unable to unmap the mapped buffer", e);
-        }
-    }
-
-    private static void callBufferFree(ByteBuffer buffer, Class<?> directByteBufferClass)
-            throws InvocationTargetException, IllegalAccessException {
-        try {
-            final Method dbbFreeMethod = directByteBufferClass.getMethod("free");
-            dbbFreeMethod.setAccessible(true);
-            dbbFreeMethod.invoke(buffer);
-        } catch (NoSuchMethodException ex2) {
-            LOGGER.warn("NoSuchMethodException | " + System.getProperty("java.version"), ex2);
+            // >=JDK9 class sun.misc.Unsafe { void invokeCleaner(ByteBuffer buf) }
+            final Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+            // fetch the unsafe instance and bind it to the virtual MethodHandle
+            final Field f = unsafeClass.getDeclaredField("theUnsafe");
+            f.setAccessible(true);
+            final Object theUnsafe = f.get(null);
+            final Method method = unsafeClass.getDeclaredMethod("invokeCleaner", ByteBuffer.class);
+            try {
+                method.invoke(theUnsafe, buffer);
+            } catch (Throwable t) {
+                throw new RuntimeException(t);
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("Unable to unmap the mapped buffer", ex);
         }
     }
 
     private void initRandomAccessFile() {
-        if (raFile != null) {
+        if (raFile != null)
             return;
-        }
 
         try {
             // raFile necessary for loadExisting and create
@@ -174,19 +96,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
         }
         initRandomAccessFile();
         bytes = Math.max(10 * 4, bytes);
-        setSegmentSize(segmentSizeInBytes);
         ensureCapacity(bytes);
         return this;
-    }
-
-    @Override
-    public DataAccess copyTo(DataAccess da) {
-        // if(da instanceof MMapDataAccess) {
-        // TODO PERFORMANCE make copying into mmap a lot faster via bytebuffer
-        // also copying into RAMDataAccess could be faster via bytebuffer
-        // is a flush necessary then?
-        // }
-        return super.copyTo(da);
     }
 
     @Override
@@ -234,24 +145,23 @@ public final class MMapDataAccess extends AbstractDataAccess {
         } catch (IOException ex) {
             // we could get an exception here if buffer is too small and area too large
             // e.g. I got an exception for the 65421th buffer (probably around 2**16 == 65536)
-            throw new RuntimeException("Couldn't map buffer " + i + " of " + segmentsToMap
-                    + " for " + name + " at position " + bufferStart + " for " + byteCount
-                    + " bytes with offset " + offset + ", new fileLength:" + newFileLength, ex);
+            throw new RuntimeException("Couldn't map buffer " + i + " of " + segmentsToMap + " with " + longSegmentSize
+                    + " for " + name + " at position " + bufferStart + " for " + byteCount + " bytes with offset " + offset
+                    + ", new fileLength:" + newFileLength + ", " + Helper.getMemInfo(), ex);
         }
     }
 
-    private ByteBuffer newByteBuffer(long offset, long byteCount) throws IOException {
+    private MappedByteBuffer newByteBuffer(long offset, long byteCount) throws IOException {
         // If we request a buffer larger than the file length, it will automatically increase the file length!
         // Will this cause problems? http://stackoverflow.com/q/14011919/194609
         // For trimTo we need to reset the file length later to reduce that size
-        ByteBuffer buf = null;
+        MappedByteBuffer buf = null;
         IOException ioex = null;
         // One retry if it fails. It could fail e.g. if previously buffer wasn't yet unmapped from the jvm
         for (int trial = 0; trial < 1; ) {
             try {
                 buf = raFile.getChannel().map(
-                        allowWrites ? FileChannel.MapMode.READ_WRITE : FileChannel.MapMode.READ_ONLY,
-                        offset, byteCount);
+                        allowWrites ? FileChannel.MapMode.READ_WRITE : FileChannel.MapMode.READ_ONLY, offset, byteCount);
                 break;
             } catch (IOException tmpex) {
                 ioex = tmpex;
@@ -306,10 +216,8 @@ public final class MMapDataAccess extends AbstractDataAccess {
             throw new IllegalStateException("already closed");
 
         try {
-            if (!segments.isEmpty() && segments.get(0) instanceof MappedByteBuffer) {
-                for (ByteBuffer bb : segments) {
-                    ((MappedByteBuffer) bb).force();
-                }
+            for (MappedByteBuffer bb : segments) {
+                bb.force();
             }
             writeHeader(raFile, raFile.length(), segmentSizeInBytes);
 
@@ -322,6 +230,18 @@ public final class MMapDataAccess extends AbstractDataAccess {
         }
     }
 
+    /**
+     * Load memory mapped files into physical memory.
+     */
+    public void load(int percentage) {
+        if (percentage < 0 || percentage > 100)
+            throw new IllegalArgumentException("Percentage for MMapDataAccess.load for " + getName() + " must be in [0,100] but was " + percentage);
+        int max = Math.round(segments.size() * percentage / 100f);
+        for (int i = 0; i < max; i++) {
+            segments.get(i).load();
+        }
+    }
+
     @Override
     public void close() {
         super.close();
@@ -331,34 +251,49 @@ public final class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public final void setInt(long bytePos, int value) {
+    public void setInt(long bytePos, int value) {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
+        if (index + 4 > segmentSizeInBytes)
+            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
         byteBuffer.putInt(index, value);
     }
 
     @Override
-    public final int getInt(long bytePos) {
+    public int getInt(long bytePos) {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
+        if (index + 4 > segmentSizeInBytes)
+            throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
         return byteBuffer.getInt(index);
     }
 
     @Override
-    public final void setShort(long bytePos, short value) {
+    public void setShort(long bytePos, short value) {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
-        byteBuffer.putShort(index, value);
+        if (index + 2 > segmentSizeInBytes) {
+            ByteBuffer byteBufferNext = segments.get(bufferIndex + 1);
+            // special case if short has to be written into two separate segments
+            byteBuffer.put(index, (byte) value);
+            byteBufferNext.put(0, (byte) (value >>> 8));
+        } else {
+            byteBuffer.putShort(index, value);
+        }
     }
 
     @Override
-    public final short getShort(long bytePos) {
+    public short getShort(long bytePos) {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
+        if (index + 2 > segmentSizeInBytes) {
+            ByteBuffer byteBufferNext = segments.get(bufferIndex + 1);
+            return (short) ((byteBufferNext.get(0) & 0xFF) << 8 | byteBuffer.get(index) & 0xFF);
+        }
         return byteBuffer.getShort(index);
     }
 
@@ -391,22 +326,35 @@ public final class MMapDataAccess extends AbstractDataAccess {
         if (delta > 0) {
             length -= delta;
             bb1.get(index, values, 0, length);
+
+            final ByteBuffer bb2 = segments.get(bufferIndex + 1);
+            bb2.get(0, values, length, delta);
         } else {
             bb1.get(index, values, 0, length);
         }
-        if (delta > 0) {
-            final ByteBuffer bb2 = segments.get(bufferIndex + 1);
-            bb2.get(0, values, length, delta);
-        }
+    }
+
+    @Override
+    public void setByte(long bytePos, byte value) {
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        final ByteBuffer bb1 = segments.get(bufferIndex);
+        bb1.put(index, value);
+    }
+
+    @Override
+    public byte getByte(long bytePos) {
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        final ByteBuffer bb1 = segments.get(bufferIndex);
+        return bb1.get(index);
     }
 
     @Override
     public long getCapacity() {
         long cap = 0;
         for (ByteBuffer bb : segments) {
-            synchronized (bb) {
-                cap += bb.capacity();
-            }
+            cap += bb.capacity();
         }
         return cap;
     }
@@ -430,44 +378,6 @@ public final class MMapDataAccess extends AbstractDataAccess {
             cleanMappedByteBuffer(bb);
             segments.set(i, null);
         }
-    }
-
-    @Override
-    public void trimTo(long capacity) {
-        if (capacity < segmentSizeInBytes) {
-            capacity = segmentSizeInBytes;
-        }
-        int remainingSegNo = (int) (capacity / segmentSizeInBytes);
-        if (capacity % segmentSizeInBytes != 0) {
-            remainingSegNo++;
-        }
-
-        clean(remainingSegNo, segments.size());
-        segments = new ArrayList<>(segments.subList(0, remainingSegNo));
-
-        try {
-            // windows does not allow changing the length of an open files
-            if (!Constants.WINDOWS) {
-                // reduce file size
-                raFile.setLength(HEADER_OFFSET + remainingSegNo * segmentSizeInBytes);
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
-        }
-    }
-
-    @Override
-    public void rename(String newName) {
-        if (!checkBeforeRename(newName)) {
-            return;
-        }
-        close();
-
-        super.rename(newName);
-        // 'reopen' with newName
-        raFile = null;
-        closed = false;
-        loadExisting();
     }
 
     @Override

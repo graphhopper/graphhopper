@@ -21,17 +21,15 @@ import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.Collection;
-
 /**
- * Rates already used Paths worse.
+ * Increases the weight for a certain set of edges by a given factor and thus makes them less likely to be part of
+ * a shortest path
  *
  * @author Robin Boldt
  */
 public class AvoidEdgesWeighting extends AbstractAdjustedWeighting {
     // contains the edge IDs of the already visited edges
-    protected final IntSet visitedEdges = new GHIntHashSet();
-
+    protected IntSet avoidedEdges = new GHIntHashSet();
     private double edgePenaltyFactor = 5.0;
 
     public AvoidEdgesWeighting(Weighting superWeighting) {
@@ -43,25 +41,15 @@ public class AvoidEdgesWeighting extends AbstractAdjustedWeighting {
         return this;
     }
 
-    /**
-     * This method adds the specified path to this weighting which should be penalized in the
-     * calcWeight method.
-     */
-    public void addEdges(Collection<EdgeIteratorState> edges) {
-        for (EdgeIteratorState edge : edges) {
-            visitedEdges.add(edge.getEdge());
-        }
+    public AvoidEdgesWeighting setAvoidedEdges(IntSet avoidedEdges) {
+        this.avoidedEdges = avoidedEdges;
+        return this;
     }
 
     @Override
-    public double getMinWeight(double distance) {
-        return superWeighting.getMinWeight(distance);
-    }
-
-    @Override
-    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        double weight = superWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
-        if (visitedEdges.contains(edgeState.getEdge()))
+    public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        double weight = superWeighting.calcEdgeWeight(edgeState, reverse);
+        if (avoidedEdges.contains(edgeState.getEdge()))
             return weight * edgePenaltyFactor;
 
         return weight;
