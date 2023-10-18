@@ -24,18 +24,16 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodHandles.Lookup;
+import java.lang.invoke.MethodType;
+import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.security.AccessController;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 
 /**
  * A DataAccess implementation using a memory-mapped file, i.e. a facility of the
@@ -55,6 +53,9 @@ import java.util.StringTokenizer;
  */
 public final class MMapDataAccess extends AbstractDataAccess {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(MMapDataAccess.class);
+    private static final MethodHandle BYTE_BUFFER_CLEANER = getByteBufferCleaner();
+
     private final boolean allowWrites;
     private RandomAccessFile raFile;
     private final List<MappedByteBuffer> segments = new ArrayList<>();
@@ -64,28 +65,29 @@ public final class MMapDataAccess extends AbstractDataAccess {
         this.allowWrites = allowWrites;
     }
 
-    public static void cleanMappedByteBuffer(final ByteBuffer buffer) {
-        // TODO avoid reflection on every call
+    private static MethodHandle getByteBufferCleaner() {
         try {
-            AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
-                @Override
-                public Object run() throws Exception {
-                    // >=JDK9 class sun.misc.Unsafe { void invokeCleaner(ByteBuffer buf) }
-                    final Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
-                    // fetch the unsafe instance and bind it to the virtual MethodHandle
-                    final Field f = unsafeClass.getDeclaredField("theUnsafe");
-                    f.setAccessible(true);
-                    final Object theUnsafe = f.get(null);
-                    final Method method = unsafeClass.getDeclaredMethod("invokeCleaner", ByteBuffer.class);
-                    try {
-                        method.invoke(theUnsafe, buffer);
-                        return null;
-                    } catch (Throwable t) {
-                        throw new RuntimeException(t);
-                    }
-                }
-            });
-        } catch (PrivilegedActionException e) {
+            Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+            Lookup lookup = MethodHandles.privateLookupIn(unsafeClass, MethodHandles.lookup());
+            MethodType type = MethodType.methodType(void.class, ByteBuffer.class);
+            MethodHandle handle = lookup.findVirtual(unsafeClass, "invokeCleaner", type);
+            VarHandle field = lookup.findStaticVarHandle(unsafeClass, "theUnsafe", unsafeClass);
+            Object unsafe = field.get();
+            return handle.bindTo(unsafe);
+        } catch (ReflectiveOperationException e) {
+            LOGGER.error("Failed to obtain method handle for ByteBuffer cleaner.", e);
+            return null;
+        }
+    }
+
+    public static void cleanMappedByteBuffer(final ByteBuffer buffer) {
+        if (BYTE_BUFFER_CLEANER == null) {
+            throw new RuntimeException("Cleaner is not available");
+        }
+
+        try {
+            BYTE_BUFFER_CLEANER.invokeExact(buffer);
+        } catch (Throwable e) {
             throw new RuntimeException("Unable to unmap the mapped buffer", e);
         }
     }
