@@ -65,26 +65,26 @@ public interface LocationIndex {
         /**
          * @return true if all edges within the given bounding box shall be accepted
          */
-        boolean acceptAll(BBox bbox);
+        boolean acceptAll(BBox tile);
 
         /**
-         * @return true if edges within the given bounding box shall be potentially accepted. In this
+         * @return true if edges within the given bounding box shall potentially be accepted. In this
          * case the tile filter will be applied again for smaller bounding boxes on a lower level.
-         * If this is the lowest level already all edges will be simply accepted.
+         * If this is the lowest level already simply all edges will be accepted.
          */
-        boolean acceptPotentially(BBox bbox);
+        boolean acceptPartially(BBox tile);
     }
 
     static TileFilter createBBoxTileFilter(BBox queryBBox) {
         return queryBBox == null ? null : new TileFilter() {
             @Override
-            public boolean acceptAll(BBox bbox) {
-                return queryBBox.contains(bbox);
+            public boolean acceptAll(BBox tile) {
+                return queryBBox.contains(tile);
             }
 
             @Override
-            public boolean acceptPotentially(BBox bbox) {
-                return queryBBox.intersects(bbox);
+            public boolean acceptPartially(BBox tile) {
+                return queryBBox.intersects(tile);
             }
         };
     }

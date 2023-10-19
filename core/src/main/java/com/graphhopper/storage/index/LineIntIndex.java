@@ -223,7 +223,7 @@ public class LineIntIndex {
             if (tileFilter == null || tileFilter.acceptAll(bbox)) {
                 // fill without a restriction!
                 query(nextIntPointer, null, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, function, depth + 1);
-            } else if (tileFilter.acceptPotentially(bbox)) {
+            } else if (tileFilter.acceptPartially(bbox)) {
                 query(nextIntPointer, tileFilter, tmpMinLat, tmpMinLon, deltaLatPerDepth, deltaLonPerDepth, function, depth + 1);
             }
         }
