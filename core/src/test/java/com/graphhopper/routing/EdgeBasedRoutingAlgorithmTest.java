@@ -196,7 +196,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         }
         if (strictViolations.size() > 0.05 * numQueries) {
             fail("Too many strict violations: " + strictViolations.size() + "/" + numQueries + "\n" +
-                    Helper.join("\n", strictViolations));
+                    String.join("\n", strictViolations));
         }
     }
 
