@@ -3,9 +3,11 @@ package com.graphhopper.routing;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperConfig;
+import com.graphhopper.config.Profile;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.FootAccessConditional;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
+import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.details.PathDetail;
@@ -34,13 +36,15 @@ public class CustomizableConditionalRestrictionsTest {
     public void testConditionalAccess() {
         GraphHopper hopper = new GraphHopper().
                 setStoreOnFlush(false).
-                setOSMFile("../core/files/conditional-restrictions.osm.xml").
-                setProfiles(new CustomProfile("foot").setVehicle("foot")).
-                setMinNetworkSize(0).
-                setEncodedValuesString(FootAccessConditional.KEY).
-                setGraphHopperLocation(GH_LOCATION);
+                setEncodedValuesString(FootAccessConditional.KEY);
 
-        hopper.getRouterConfig().setSimplifyResponse(false);
+        hopper.init(new GraphHopperConfig().
+                setProfiles(Arrays.asList(new Profile("foot").setVehicle("foot"))).
+                putObject("graph.location", GH_LOCATION).
+                putObject("datareader.file", "../core/files/conditional-restrictions.osm.xml").
+                putObject("prepare.min_network_size", "0").
+                putObject("import.osm.ignored_highways", "").
+                putObject("datareader.date_range_parser_day", "2023-08-01"));
         hopper.importOrLoad();
 
         String PD_KEY = "street_access_conditional";
