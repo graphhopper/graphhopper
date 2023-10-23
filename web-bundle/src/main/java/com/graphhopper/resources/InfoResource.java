@@ -89,12 +89,9 @@ public class InfoResource {
     public Info getInfo() {
         final Info info = new Info();
         info.bbox = new Envelope(baseGraph.getBounds().minLon, baseGraph.getBounds().maxLon, baseGraph.getBounds().minLat, baseGraph.getBounds().maxLat);
-        Set<String> defaultHiddenEVs = new HashSet<>();
         for (Profile p : config.getProfiles()) {
             Info.ProfileData profileData = new Info.ProfileData(p.getName());
             info.profiles.add(profileData);
-            defaultHiddenEVs.addAll(Arrays.asList(VehiclePriority.key(p.getName()), VehicleAccess.key(p.getName()),
-                    VehicleSpeed.key(p.getName()), TurnRestriction.key(p.getName()), Subnetwork.key(p.getName())));
         }
         if (config.has("gtfs.file"))
             info.profiles.add(new Info.ProfileData("pt"));
@@ -108,7 +105,7 @@ public class InfoResource {
         for (EncodedValue encodedValue : evList) {
             List<Object> possibleValueList = new ArrayList<>();
             String name = encodedValue.getName();
-            if (privateEV.contains(name) || defaultHiddenEVs.contains(name)) {
+            if (privateEV.contains(name)) {
                 continue;
             } else if (encodedValue instanceof EnumEncodedValue) {
                 for (Enum o : ((EnumEncodedValue) encodedValue).getValues()) {
