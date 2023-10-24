@@ -26,10 +26,12 @@ import com.graphhopper.util.EdgeIteratorState;
 public final class CustomWeightingX extends AbstractWeighting {
     public static final String NAME = "customx";
     private final CustomWeighting.EdgeToDoubleMapping edgeToPriorityMapping;
+    private final CustomWeighting.EdgeToDoubleMapping edgeToSpeedMapping;
 
     public CustomWeightingX(BooleanEncodedValue baseAccessEnc, DecimalEncodedValue baseSpeedEnc, TurnCostProvider turnCostProvider, CustomWeighting.Parameters parameters) {
         super(baseAccessEnc, baseSpeedEnc, turnCostProvider);
-        this.edgeToPriorityMapping = parameters.getEdgeToPriorityMapping();
+        edgeToPriorityMapping = parameters.getEdgeToPriorityMapping();
+        edgeToSpeedMapping = parameters.getEdgeToSpeedMapping();
     }
 
     @Override
@@ -49,7 +51,9 @@ public final class CustomWeightingX extends AbstractWeighting {
 
     @Override
     public long calcEdgeMillis(EdgeIteratorState edgeState, boolean reverse) {
-        return Math.round(edgeState.getDistance());
+        double speed = edgeToSpeedMapping.get(edgeState, reverse);
+        if (speed == 0) return Long.MAX_VALUE;
+        return Math.round(1000 * edgeState.getDistance() / (speed / 3.6));
     }
 
     @Override
