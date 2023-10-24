@@ -188,18 +188,19 @@ public class GtfsStorage {
 		}
 		this.data = DBMaker.newFileDB(file).transactionDisable().mmapFileEnable().readOnly().make();
 		init();
-		for (String gtfsFeedId : this.gtfsFeedIds) {
-			File dbFile = new File(dir.getLocation() + "/" + gtfsFeedId);
+        for (int i = 0; i < gtfsFeedIds.size(); i++) {
+            String gtfsFeedId = "gtfs_" + i;
+            File dbFile = new File(dir.getLocation() + "/" + gtfsFeedId);
 
-			if (!dbFile.exists()) {
-				throw new RuntimeException(String.format("The mapping of the gtfsFeeds in the transit_schedule DB does not reflect the files in %s. "
-								+ "dbFile %s is missing.",
-						dir.getLocation(), dbFile.getName()));
-			}
+            if (!dbFile.exists()) {
+                throw new RuntimeException(String.format("The mapping of the gtfsFeeds in the transit_schedule DB does not reflect the files in %s. "
+                                + "dbFile %s is missing.",
+                        dir.getLocation(), dbFile.getName()));
+            }
 
-			GTFSFeed feed = new GTFSFeed(dbFile);
-			this.gtfsFeeds.put(gtfsFeedId, feed);
-		}
+            GTFSFeed feed = new GTFSFeed(dbFile);
+            this.gtfsFeeds.put(gtfsFeedId, feed);
+        }
 		ptToStreet = deserializeIntoIntIntHashMap("pt_to_street");
 		streetToPt = deserializeIntoIntIntHashMap("street_to_pt");
 		skippedEdgesForTransfer = deserializeIntoIntObjectHashMap("skipped_edges_for_transfer");
