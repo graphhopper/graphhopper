@@ -19,3 +19,7 @@ ij_formatter_tags_enabled = true
 ij_smart_tabs = false
 ij_visual_guides = none
 ij_wrap_on_typing = false
+
+[*.{yml,yaml}]
+indent_size = 2
+indent_style = space
