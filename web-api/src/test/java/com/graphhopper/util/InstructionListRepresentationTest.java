@@ -30,7 +30,7 @@ public class InstructionListRepresentationTest {
                 .setExitNumber(2)
                 .setExited();
         il.add(instr);
-        assertEquals(objectMapper.readTree(fixture("fixtures/roundabout1.json")).toString(), objectMapper.valueToTree(il).toString());
+        assertEquals(objectMapper.readTree(fixture("fixtures/roundabout1.json")), objectMapper.readTree(objectMapper.writeValueAsString(il)));
     }
 
 
@@ -50,7 +50,7 @@ public class InstructionListRepresentationTest {
                 .setExitNumber(2)
                 .setExited();
         il.add(instr);
-        assertEquals(objectMapper.readTree(fixture("fixtures/roundabout2.json")).toString(), objectMapper.valueToTree(il).toString());
+        assertEquals(objectMapper.readTree(fixture("fixtures/roundabout2.json")),objectMapper.readTree(objectMapper.writeValueAsString(il)));
     }
 
     private static Translation usTR = new Translation() {
