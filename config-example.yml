@@ -33,13 +33,13 @@ graphhopper:
       vehicle: car
       custom_model:
         distance_influence: 70
-  #       turn_costs: true
-  #       u_turn_costs: 60
+#      turn_costs: true
+#      u_turn_costs: 60
 
-  #   - name: bike
-  #     # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
-  #     vehicle: bike
-  #     custom_model_files: [bike.json, bike_elevation.json]
+#    - name: bike
+#      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
+#      vehicle: bike
+#      custom_model_files: [bike.json, bike_elevation.json]
 
   # instead of the inbuilt custom models (see ./core/src/main/resources/com/graphhopper/custom_models)
   # you can specify a folder where to find your own custom model files
