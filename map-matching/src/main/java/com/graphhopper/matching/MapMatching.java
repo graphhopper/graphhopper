@@ -380,6 +380,10 @@ public class MapMatching {
     }
 
     private List<SequenceState<State, Observation, Path>> computeViterbiSequence(List<ObservationWithCandidateStates> timeSteps) {
+        if (timeSteps.isEmpty()) {
+            return Collections.emptyList();
+        }
+
         final HmmProbabilities probabilities = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
         final Map<State, Label> labels = new HashMap<>();
         Map<Transition<State>, Path> roadPaths = new HashMap<>();

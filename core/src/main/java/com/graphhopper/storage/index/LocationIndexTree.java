@@ -309,8 +309,8 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     @Override
-    public void query(BBox queryBBox, Visitor function) {
-        lineIntIndex.query(queryBBox, function);
+    public void query(TileFilter tileFilter, Visitor function) {
+        lineIntIndex.query(tileFilter, function);
     }
 
     public interface EdgeCheck {
