@@ -95,6 +95,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return Curvature.create();
         } else if (Crossing.KEY.equals(name)) {
             return new EnumEncodedValue<>(Crossing.KEY, Crossing.class);
+        } else if (Barrier.KEY.equals(name)) {
+            return new EnumEncodedValue<>(Barrier.KEY, Barrier.class);
         } else if (FerrySpeed.KEY.equals(name)) {
             return FerrySpeed.create();
         } else {
