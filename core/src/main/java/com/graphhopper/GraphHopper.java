@@ -532,7 +532,7 @@ public class GraphHopper {
                 dataAccessConfig.put(entry.getKey().substring("graph.dataaccess.mmap.".length()), entry.getValue().toString());
         }
 
-        if (ghConfig.getBool("max_speed_calculator.enabled", false) && maxSpeedCalculator == null)
+        if (ghConfig.getBool("max_speed_calculator.enabled", false))
             maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds());
 
         sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
