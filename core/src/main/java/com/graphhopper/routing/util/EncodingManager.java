@@ -190,6 +190,7 @@ public class EncodingManager implements EncodedValueLookup {
             ));
             if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("bike") || vehicle.contains("mtb") || vehicle.contains("racingbike"))) {
                 keys.add(BikeNetwork.KEY);
+                keys.add(MtbNetwork.KEY);
                 keys.add(GetOffBike.KEY);
                 keys.add(Smoothness.KEY);
             }
