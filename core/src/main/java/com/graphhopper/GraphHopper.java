@@ -347,6 +347,11 @@ public class GraphHopper {
         return this;
     }
 
+    public GraphHopper setMaxSpeedCalculator(MaxSpeedCalculator maxSpeedCalculator) {
+        this.maxSpeedCalculator = maxSpeedCalculator;
+        return this;
+    }
+
     /**
      * The underlying graph used in algorithms.
      *
@@ -674,10 +679,7 @@ public class GraphHopper {
         }
 
         if (maxSpeedCalculator != null) {
-            if (!encodingManager.hasEncodedValue(Country.KEY))
-                throw new IllegalArgumentException("max_speed_calculator needs country");
-            if (!encodingManager.hasEncodedValue(UrbanDensity.KEY))
-                throw new IllegalArgumentException("max_speed_calculator needs urban_density");
+            maxSpeedCalculator.checkEncodedValues(encodingManager);
             osmParsers.addWayTagParser(maxSpeedCalculator.getParser());
         }
 
