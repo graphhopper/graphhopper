@@ -9,6 +9,7 @@ import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.StopWatch;
 import de.westnordost.osm_legal_default_speeds.LegalDefaultSpeeds;
 import de.westnordost.osm_legal_default_speeds.RoadType;
@@ -20,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 public class MaxSpeedCalculator {
 
@@ -129,7 +131,13 @@ public class MaxSpeedCalculator {
      * the default speed library which is country-dependent.
      */
     public void fillMaxSpeed(Graph graph, EncodingManager em) {
-        EnumEncodedValue<UrbanDensity> urbanDensityEnc = em.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
+        // In DefaultMaxSpeedParser and in OSMMaxSpeedParser we don't have the rural/urban info,
+        // but now we have and can fill the country-dependent max_speed value where missing.
+        EnumEncodedValue<UrbanDensity> udEnc = em.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
+        fillMaxSpeed(graph, em, edge -> edge.get(udEnc) != UrbanDensity.RURAL);
+    }
+
+    public void fillMaxSpeed(Graph graph, EncodingManager em, Function<EdgeIteratorState, Boolean> isUrbanDensityFun) {
         DecimalEncodedValue maxSpeedEnc = em.getDecimalEncodedValue(MaxSpeed.KEY);
         BooleanEncodedValue maxSpeedEstEnc = em.getBooleanEncodedValue(MaxSpeedEstimated.KEY);
 
@@ -143,11 +151,9 @@ public class MaxSpeedCalculator {
             if (fwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED
                     && bwdMaxSpeedPureOSM != MaxSpeed.UNSET_SPEED) continue;
 
-            // In DefaultMaxSpeedParser and in OSMMaxSpeedParser we don't have the rural/urban info,
-            // but now we have and can fill the country-dependent max_speed value where missing.
-            double maxSpeed = iter.get(urbanDensityEnc) == UrbanDensity.RURAL
-                    ? ruralMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage)
-                    : urbanMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
+            double maxSpeed = isUrbanDensityFun.apply(iter)
+                    ? urbanMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage)
+                    : ruralMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
             if (maxSpeed != MaxSpeed.UNSET_SPEED) {
                 iter.set(maxSpeedEnc,
                         fwdMaxSpeedPureOSM == MaxSpeed.UNSET_SPEED ? maxSpeed : fwdMaxSpeedPureOSM,
@@ -161,6 +167,13 @@ public class MaxSpeedCalculator {
 
     public void close() {
         dataAccess.close();
+    }
+
+    public void checkEncodedValues(EncodingManager encodingManager) {
+        if (!encodingManager.hasEncodedValue(Country.KEY))
+            throw new IllegalArgumentException("max_speed_calculator needs country");
+        if (!encodingManager.hasEncodedValue(UrbanDensity.KEY))
+            throw new IllegalArgumentException("max_speed_calculator needs urban_density");
     }
 
     static class SpeedLimitsJson {
