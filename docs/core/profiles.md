@@ -23,7 +23,6 @@ profiles:
 The vehicle field must correspond to one of GraphHopper's built-in vehicle types:
 
 - foot
-- wheelchair
 - bike
 - racingbike
 - mtb

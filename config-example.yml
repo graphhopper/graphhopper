@@ -72,7 +72,7 @@ graphhopper:
   # option or, only for the roads vehicle, there is the transportation_mode option:
   # name=mycustomvehicle,turn_costs=true,transportation_mode=MOTOR_VEHICLE
   # But you should prefer to configure the turn_costs via the profile configuration.
-  # Other standard vehicles: foot,bike,mtb,racingbike,wheelchair
+  # Other standard vehicles: foot,bike,mtb,racingbike
 
 
   #### Encoded Values ####
