@@ -59,7 +59,7 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
 
         if (name.equals(WHEELCHAIR))
             return VehicleEncodedValues.wheelchair(configuration);
-            
+ 
         if (name.equals(VISUALLY_IMPAIRED))
             return VehicleEncodedValues.visually_impaired(configuration);
 
