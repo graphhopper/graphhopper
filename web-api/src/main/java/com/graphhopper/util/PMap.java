@@ -54,7 +54,7 @@ public class PMap {
             if (index < 0)
                 continue;
 
-            put(s.substring(0, index), s.substring(index + 1));
+            putObject(Helper.camelCaseToUnderScore(s.substring(0, index)), Helper.toObject(s.substring(index + 1)));
         }
     }
 
@@ -89,17 +89,6 @@ public class PMap {
 
     public PMap putAll(PMap map) {
         this.map.putAll(map.map);
-        return this;
-    }
-
-    /**
-     * @deprecated use {@link #putObject(String, Object)} instead
-     */
-    @Deprecated
-    public PMap put(String key, String str) {
-        if (str == null)
-            throw new NullPointerException("Value cannot be null. Use remove instead.");
-        map.put(Helper.camelCaseToUnderScore(key), Helper.toObject(str));
         return this;
     }
 
