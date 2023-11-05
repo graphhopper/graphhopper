@@ -54,6 +54,14 @@ public class Profile {
         setCustomModel(new CustomModel());
     }
 
+    public Profile(Profile p) {
+        setName(p.getName());
+        setVehicle(p.getVehicle());
+        setWeighting(p.getWeighting());
+        setTurnCosts(p.isTurnCosts());
+        hints = new PMap(p.getHints());
+    }
+
     public String getName() {
         return name;
     }
