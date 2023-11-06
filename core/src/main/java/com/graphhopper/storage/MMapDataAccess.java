@@ -266,65 +266,50 @@ public final class MMapDataAccess extends AbstractDataAccess {
     }
 
     @Override
-    public final void setInt(long bytePos, int value) {
+    public void setInt(long bytePos, int value) {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         if (index + 4 > segmentSizeInBytes)
             throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
-        synchronized (byteBuffer) {
-            byteBuffer.putInt(index, value);
-        }
+        byteBuffer.putInt(index, value);
     }
 
     @Override
-    public final int getInt(long bytePos) {
+    public int getInt(long bytePos) {
         int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         if (index + 4 > segmentSizeInBytes)
             throw new IllegalStateException("Padding required. Currently an int cannot be distributed over two segments. " + bytePos);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
-        synchronized (byteBuffer) {
-            return byteBuffer.getInt(index);
-        }
+        return byteBuffer.getInt(index);
     }
 
     @Override
-    public final void setShort(long bytePos, short value) {
-        int bufferIndex = (int) (bytePos >>> segmentSizePower);
-        int index = (int) (bytePos & indexDivisor);
-        ByteBuffer byteBuffer = segments.get(bufferIndex);
-        synchronized (byteBuffer) {
-            if (index + 2 > segmentSizeInBytes) {
-                ByteBuffer byteBufferNext = segments.get(bufferIndex + 1);
-                synchronized (byteBufferNext) {
-                    // special case if short has to be written into two separate segments
-                    byteBuffer.put(index, (byte) value);
-                    byteBufferNext.put(0, (byte) (value >>> 8));
-                }
-            } else {
-                byteBuffer.putShort(index, value);
-            }
-        }
-    }
-
-    @Override
-    public final short getShort(long bytePos) {
+    public void setShort(long bytePos, short value) {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         ByteBuffer byteBuffer = segments.get(bufferIndex);
         if (index + 2 > segmentSizeInBytes) {
             ByteBuffer byteBufferNext = segments.get(bufferIndex + 1);
-            // never lock byteBuffer and byteBufferNext in a different order to avoid deadlocks (shouldn't happen)
-            synchronized (byteBuffer) {
-                synchronized (byteBufferNext) {
-                    return (short) ((byteBufferNext.get(0) & 0xFF) << 8 | byteBuffer.get(index) & 0xFF);
-                }
-            }
+            // special case if short has to be written into two separate segments
+            byteBuffer.put(index, (byte) value);
+            byteBufferNext.put(0, (byte) (value >>> 8));
+        } else {
+            byteBuffer.putShort(index, value);
         }
-        synchronized (byteBuffer) {
-            return byteBuffer.getShort(index);
+    }
+
+    @Override
+    public short getShort(long bytePos) {
+        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int index = (int) (bytePos & indexDivisor);
+        ByteBuffer byteBuffer = segments.get(bufferIndex);
+        if (index + 2 > segmentSizeInBytes) {
+            ByteBuffer byteBufferNext = segments.get(bufferIndex + 1);
+            return (short) ((byteBufferNext.get(0) & 0xFF) << 8 | byteBuffer.get(index) & 0xFF);
         }
+        return byteBuffer.getShort(index);
     }
 
     @Override
@@ -334,21 +319,15 @@ public final class MMapDataAccess extends AbstractDataAccess {
         final int index = (int) (bytePos & indexDivisor);
         final int delta = index + length - segmentSizeInBytes;
         final ByteBuffer bb1 = segments.get(bufferIndex);
-        synchronized (bb1) {
-            bb1.position(index);
-            if (delta > 0) {
-                length -= delta;
-                bb1.put(values, 0, length);
-            } else {
-                bb1.put(values, 0, length);
-            }
+        if (delta > 0) {
+            length -= delta;
+            bb1.put(index, values, 0, length);
+        } else {
+            bb1.put(index, values, 0, length);
         }
         if (delta > 0) {
             final ByteBuffer bb2 = segments.get(bufferIndex + 1);
-            synchronized (bb2) {
-                bb2.position(0);
-                bb2.put(values, length, delta);
-            }
+            bb2.put(0, values, length, delta);
         }
     }
 
@@ -359,21 +338,14 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int index = (int) (bytePos & indexDivisor);
         int delta = index + length - segmentSizeInBytes;
         final ByteBuffer bb1 = segments.get(bufferIndex);
-        synchronized (bb1) {
-            bb1.position(index);
-            if (delta > 0) {
-                length -= delta;
-                bb1.get(values, 0, length);
-            } else {
-                bb1.get(values, 0, length);
-            }
-        }
         if (delta > 0) {
+            length -= delta;
+            bb1.get(index, values, 0, length);
+
             final ByteBuffer bb2 = segments.get(bufferIndex + 1);
-            synchronized (bb2) {
-                bb2.position(0);
-                bb2.get(values, length, delta);
-            }
+            bb2.get(0, values, length, delta);
+        } else {
+            bb1.get(index, values, 0, length);
         }
     }
 
@@ -382,10 +354,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         final ByteBuffer bb1 = segments.get(bufferIndex);
-        synchronized (bb1) {
-            bb1.position(index);
-            bb1.put(value);
-        }
+        bb1.put(index, value);
     }
 
     @Override
@@ -393,19 +362,14 @@ public final class MMapDataAccess extends AbstractDataAccess {
         int bufferIndex = (int) (bytePos >>> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         final ByteBuffer bb1 = segments.get(bufferIndex);
-        synchronized (bb1) {
-            bb1.position(index);
-            return bb1.get();
-        }
+        return bb1.get(index);
     }
 
     @Override
     public long getCapacity() {
         long cap = 0;
         for (ByteBuffer bb : segments) {
-            synchronized (bb) {
-                cap += bb.capacity();
-            }
+            cap += bb.capacity();
         }
         return cap;
     }

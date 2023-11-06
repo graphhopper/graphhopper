@@ -57,8 +57,8 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
         if (name.equals("motorcycle"))
             throw new IllegalArgumentException("Instead of motorcycle use custom_models/motorcycle.json, see #2781");
 
-        if (name.equals(WHEELCHAIR))
-            return VehicleEncodedValues.wheelchair(configuration);
+        if (name.equals("wheelchair"))
+            throw new IllegalArgumentException("wheelchair is no longer supported, see #");
 
         throw new IllegalArgumentException("entry in vehicle list not supported: " + name);
     }

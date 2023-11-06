@@ -1,5 +1,7 @@
 ### 9.0 [not yet released]
 
+- removed wheelchair vehicle and related parsers, with currently no complete replacement as it needs to be redone properly with a custom model
+- removed deprecated PMap.put
 
 ### 8.0 [18 Oct 2023]
 
