@@ -41,7 +41,7 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
         RouteNetwork oldBikeNetwork = transformerRouteRelEnc.getEnum(false, -1, relIntAccess);
         if (relation.hasTag("route", "bicycle")) {
             String tag = Helper.toLowerCase(relation.getTag("network", ""));
-            RouteNetwork newBikeNetwork = BikeNetworkParser.determine(tag);
+            RouteNetwork newBikeNetwork = BikeNetworkParserHelper.determine(tag);
             if (oldBikeNetwork == RouteNetwork.MISSING || oldBikeNetwork.ordinal() > newBikeNetwork.ordinal())
                 transformerRouteRelEnc.setEnum(false, -1, relIntAccess, newBikeNetwork);
         }

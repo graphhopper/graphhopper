@@ -2,7 +2,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.routing.ev.RouteNetwork;
 
-public class BikeNetworkParser {
+public class BikeNetworkParserHelper {
     static RouteNetwork determine(String tag) {
         RouteNetwork newBikeNetwork = RouteNetwork.LOCAL;
         if ("lcn".equals(tag)) {
