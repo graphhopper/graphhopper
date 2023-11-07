@@ -145,7 +145,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
+        assertPriorityAndSpeed(BEST, 18, osmWay, osmRel);
 
         // relation code is PREFER
         osmRel.setTag("network", "rcn");
@@ -162,7 +162,7 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
+        assertPriorityAndSpeed(BEST, 18, osmWay, osmRel);
 
         osmWay.clearTags();
         osmRel.clearTags();
@@ -172,20 +172,20 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
         osmRel.setTag("route", "mtb");
         osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(BEST, 18, osmWay, osmRel);
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
 
         osmRel.setTag("network", "rcn");
-        assertPriorityAndSpeed(BEST, 18, osmWay, osmRel);
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
 
         osmRel.setTag("network", "ncn");
-        assertPriorityAndSpeed(BEST, 18, osmWay, osmRel);
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
 
         osmWay.clearTags();
         osmWay.setTag("highway", "tertiary");
 
         osmRel.setTag("route", "mtb");
         osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(BEST, 18, osmWay, osmRel);
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
     }
 
     // Issue 407 : Always block kissing_gate except for mountainbikes

@@ -22,9 +22,9 @@ public class MountainBikePriorityParser extends BikeCommonPriorityParser {
                                          EnumEncodedValue<RouteNetwork> bikeRouteEnc) {
         super(priorityEnc, speedEnc, bikeRouteEnc);
 
-        routeMap.put(INTERNATIONAL, BEST.getValue());
-        routeMap.put(NATIONAL, BEST.getValue());
-        routeMap.put(REGIONAL, BEST.getValue());
+        routeMap.put(INTERNATIONAL, PREFER.getValue());
+        routeMap.put(NATIONAL, PREFER.getValue());
+        routeMap.put(REGIONAL, PREFER.getValue());
         routeMap.put(LOCAL, BEST.getValue());
 
         preferHighwayTags.add("road");
