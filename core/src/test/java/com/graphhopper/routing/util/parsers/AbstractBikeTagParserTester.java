@@ -60,6 +60,7 @@ public abstract class AbstractBikeTagParserTester {
         priorityParser = (BikeCommonPriorityParser) parsers.getPriorityParser();
         osmParsers = new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
+                .addRelationTagParser(relConfig -> new OSMMtbNetworkTagParser(encodingManager.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig))
                 .addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
                 .addWayTagParser(accessParser).addWayTagParser(speedParser).addWayTagParser(priorityParser);
         priorityEnc = priorityParser.getPriorityEnc();
@@ -664,7 +665,6 @@ public abstract class AbstractBikeTagParserTester {
     private void assertAccess(ReaderWay way, boolean fwd, boolean bwd) {
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edge = 0;
-        IntsRef edgeFlags = new IntsRef(1);
         IntsRef relationFlags = new IntsRef(1);
         accessParser.handleWayTags(edge, edgeIntAccess, way, relationFlags);
         if (fwd) assertTrue(accessEnc.getBool(false, edge, edgeIntAccess));
