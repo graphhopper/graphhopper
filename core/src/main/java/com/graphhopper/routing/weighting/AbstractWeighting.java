@@ -33,7 +33,7 @@ public abstract class AbstractWeighting implements Weighting {
     private final TurnCostProvider turnCostProvider;
 
     protected AbstractWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, TurnCostProvider turnCostProvider) {
-        if (!isValidName(getName()))
+        if (!Weighting.isValidName(getName()))
             throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
         this.accessEnc = accessEnc;
         this.speedEnc = speedEnc;
@@ -70,17 +70,6 @@ public abstract class AbstractWeighting implements Weighting {
     @Override
     public boolean hasTurnCosts() {
         return turnCostProvider != NO_TURN_COST_PROVIDER;
-    }
-
-    public TurnCostProvider getTurnCostProvider() {
-        return turnCostProvider;
-    }
-
-    static boolean isValidName(String name) {
-        if (name == null || name.isEmpty())
-            return false;
-
-        return name.matches("[\\|_a-z]+");
     }
 
     @Override

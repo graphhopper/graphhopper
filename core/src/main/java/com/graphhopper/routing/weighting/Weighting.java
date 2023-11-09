@@ -67,4 +67,11 @@ public interface Weighting {
 
     String getName();
 
+    static boolean isValidName(String name) {
+        if (name == null || name.isEmpty())
+            return false;
+
+        return name.matches("[\\|_a-z]+");
+    }
+
 }

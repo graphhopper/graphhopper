@@ -28,10 +28,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class AbstractWeightingTest {
     @Test
     public void testToString() {
-        assertTrue(AbstractWeighting.isValidName("blup"));
-        assertTrue(AbstractWeighting.isValidName("blup_a"));
-        assertTrue(AbstractWeighting.isValidName("blup|a"));
-        assertFalse(AbstractWeighting.isValidName("Blup"));
-        assertFalse(AbstractWeighting.isValidName("Blup!"));
+        assertTrue(Weighting.isValidName("blup"));
+        assertTrue(Weighting.isValidName("blup_a"));
+        assertTrue(Weighting.isValidName("blup|a"));
+        assertFalse(Weighting.isValidName("Blup"));
+        assertFalse(Weighting.isValidName("Blup!"));
     }
 }

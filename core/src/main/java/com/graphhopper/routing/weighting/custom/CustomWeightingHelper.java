@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
@@ -29,19 +28,14 @@ import com.graphhopper.util.shapes.Polygon;
 import java.util.Map;
 
 /**
- * This class is for internal usage only. It is subclassed by Janino, then special expressions are injected into init,
- * getSpeed and getPriority. At the end an instance is created and used in CustomWeighting.
+ * This class is for internal usage only. It is subclassed by Janino, then special expressions are
+ * injected into init, getSpeed and getPriority. At the end an instance is created and used in CustomWeighting.
  */
-public class CustomWeightingHelper {
-    protected DecimalEncodedValue avg_speed_enc;
-    protected DecimalEncodedValue priority_enc;
-
+public abstract class CustomWeightingHelper {
     protected CustomWeightingHelper() {
     }
 
-    public void init(EncodedValueLookup lookup, DecimalEncodedValue avgSpeedEnc, DecimalEncodedValue priorityEnc, Map<String, JsonFeature> areas) {
-        this.avg_speed_enc = avgSpeedEnc;
-        this.priority_enc = priorityEnc;
+    public void init(EncodedValueLookup lookup, Map<String, JsonFeature> areas) {
     }
 
     public double getPriority(EdgeIteratorState edge, boolean reverse) {
@@ -49,31 +43,12 @@ public class CustomWeightingHelper {
     }
 
     public double getSpeed(EdgeIteratorState edge, boolean reverse) {
-        return getRawSpeed(edge, reverse);
-    }
-
-    protected final double getRawSpeed(EdgeIteratorState edge, boolean reverse) {
-        double speed = reverse ? edge.getReverse(avg_speed_enc) : edge.get(avg_speed_enc);
-        if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
-            throw new IllegalStateException("Invalid estimated speed " + speed);
-        return speed;
-    }
-
-    protected final double getRawPriority(EdgeIteratorState edge, boolean reverse) {
-        if (priority_enc == null) return 1;
-        double priority = reverse ? edge.getReverse(priority_enc) : edge.get(priority_enc);
-        if (Double.isInfinite(priority) || Double.isNaN(priority) || priority < 0)
-            throw new IllegalStateException("Invalid priority " + priority);
-        return priority;
-    }
-
-    protected double getMaxPriority() {
         return 1;
     }
 
-    protected double getMaxSpeed() {
-        return 1;
-    }
+    protected abstract double getMaxPriority();
+
+    protected abstract double getMaxSpeed();
 
     public static boolean in(Polygon p, EdgeIteratorState edge) {
         BBox edgeBBox = GHUtility.createBBox(edge);

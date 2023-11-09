@@ -17,12 +17,12 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
+
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
 /**
  * The CustomWeighting allows adjusting the edge weights relative to those we'd obtain for a given base flag encoder.
@@ -69,7 +69,7 @@ import com.graphhopper.util.EdgeIteratorState;
  * calculated via the speed_factor is simply overwritten. Edges that are not accessible according to the access flags of
  * the base vehicle always get assigned an infinite weight and this cannot be changed (yet) using this weighting.
  */
-public final class CustomWeighting extends AbstractWeighting {
+public final class CustomWeighting implements Weighting {
     public static final String NAME = "custom";
 
     /**
@@ -83,9 +83,12 @@ public final class CustomWeighting extends AbstractWeighting {
     private final double headingPenaltySeconds;
     private final EdgeToDoubleMapping edgeToSpeedMapping;
     private final EdgeToDoubleMapping edgeToPriorityMapping;
+    private final TurnCostProvider turnCostProvider;
 
-    public CustomWeighting(BooleanEncodedValue baseAccessEnc, DecimalEncodedValue baseSpeedEnc, TurnCostProvider turnCostProvider, Parameters parameters) {
-        super(baseAccessEnc, baseSpeedEnc, turnCostProvider);
+    public CustomWeighting(TurnCostProvider turnCostProvider, Parameters parameters) {
+        if (!Weighting.isValidName(getName()))
+            throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
+        this.turnCostProvider = turnCostProvider;
         this.edgeToSpeedMapping = parameters.getEdgeToSpeedMapping();
         this.edgeToPriorityMapping = parameters.getEdgeToPriorityMapping();
         this.headingPenaltySeconds = parameters.getHeadingPenaltySeconds();
@@ -100,11 +103,17 @@ public final class CustomWeighting extends AbstractWeighting {
 
     @Override
     public double getMinWeight(double distance) {
+//        System.out.println("max speed: " + maxSpeed);
+//        System.out.println("max prio: " + maxPriority);
+//        System.out.println("influence: " + distanceInfluence);
         return distance / maxSpeed / maxPriority + distance * distanceInfluence;
     }
 
     @Override
     public double calcEdgeWeight(EdgeIteratorState edgeState, boolean reverse) {
+        double priority = edgeToPriorityMapping.get(edgeState, reverse);
+        if (priority == 0) return Double.POSITIVE_INFINITY;
+
         final double distance = edgeState.getDistance();
         double seconds = calcSeconds(distance, edgeState, reverse);
         if (Double.isInfinite(seconds)) return Double.POSITIVE_INFINITY;
@@ -112,16 +121,10 @@ public final class CustomWeighting extends AbstractWeighting {
         if (edgeState.get(EdgeIteratorState.UNFAVORED_EDGE)) seconds += headingPenaltySeconds;
         double distanceCosts = distance * distanceInfluence;
         if (Double.isInfinite(distanceCosts)) return Double.POSITIVE_INFINITY;
-        double priority = edgeToPriorityMapping.get(edgeState, reverse);
-        // special case to avoid NaN for barrier edges (where time is often 0s)
-        if (priority == 0 && seconds == 0) return Double.POSITIVE_INFINITY;
         return seconds / priority + distanceCosts;
     }
 
     double calcSeconds(double distance, EdgeIteratorState edgeState, boolean reverse) {
-        if (reverse ? !edgeState.getReverse(accessEnc) : !edgeState.get(accessEnc))
-            return Double.POSITIVE_INFINITY;
-
         double speed = edgeToSpeedMapping.get(edgeState, reverse);
         if (speed > maxSpeed * SPEED_CONV)
             throw new IllegalStateException("for " + getName() + " speed <= maxSpeed is violated, " + speed + " <= " + maxSpeed * SPEED_CONV);
@@ -146,6 +149,26 @@ public final class CustomWeighting extends AbstractWeighting {
     @FunctionalInterface
     public interface EdgeToDoubleMapping {
         double get(EdgeIteratorState edge, boolean reverse);
+    }
+
+    @Override
+    public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+        return turnCostProvider.calcTurnWeight(inEdge, viaNode, outEdge);
+    }
+
+    @Override
+    public long calcTurnMillis(int inEdge, int viaNode, int outEdge) {
+        return turnCostProvider.calcTurnMillis(inEdge, viaNode, outEdge);
+    }
+
+    @Override
+    public boolean hasTurnCosts() {
+        return turnCostProvider != NO_TURN_COST_PROVIDER;
+    }
+
+    @Override
+    public String toString() {
+        return getName();
     }
 
     public static class Parameters {

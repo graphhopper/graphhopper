@@ -98,7 +98,8 @@ public class Statement {
 
     @Override
     public String toString() {
-        return "{" + str(keyword.getName()) + ": " + str(condition) + ", " + str(operation.getName()) + ": " + value + "}";
+        String c = str(keyword == Keyword.ELSE ? "" : condition);
+        return "{" + str(keyword.getName()) + ": " + c + ", " + str(operation.getName()) + ": " + value + "}";
     }
 
     private String str(String str) {

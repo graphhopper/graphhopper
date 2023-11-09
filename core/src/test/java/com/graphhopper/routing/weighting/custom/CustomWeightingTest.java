@@ -348,10 +348,13 @@ class CustomWeightingTest {
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
-        EdgeIteratorState edge = graph.edge(0, 1).setDistance(10);
-        GHUtility.setSpeed(140, 0, accessEnc, avSpeedEnc, edge);
+        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(10);
+        EdgeIteratorState edge2 = graph.edge(0, 1).setDistance(10);
+        GHUtility.setSpeed(140, 0, accessEnc, avSpeedEnc, edge1);
+        GHUtility.setSpeed(155, 0, accessEnc, avSpeedEnc, edge2);
         Weighting instance = CustomModelParser.createFastestWeighting(accessEnc, avSpeedEnc, encodingManager);
-        assertEquals(instance.getMinWeight(10), instance.calcEdgeWeight(edge, false), 1e-8);
+//        assertEquals(instance.getMinWeight(10), instance.calcEdgeWeight(edge, false), 1e-8);
+        assertEquals(10.0 / 140 * 3.6, instance.calcEdgeWeight(edge1, false), 1e-8);
     }
 
     @Test
@@ -398,7 +401,7 @@ class CustomWeightingTest {
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 2, true);
         EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
         BaseGraph g = new BaseGraph.Builder(em).create();
-        Weighting w = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, encodingManager);
+        Weighting w = CustomModelParser.createFastestWeighting(accessEnc, speedEnc, em);
         EdgeIteratorState edge = g.edge(0, 1).setDistance(100_000);
         GHUtility.setSpeed(15, 10, accessEnc, speedEnc, edge);
         assertEquals(375 * 60 * 1000, w.calcEdgeMillis(edge, false));

@@ -40,6 +40,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class CustomModelParser {
+    private static double GLOBAL_MAX_SPEED = 999;
+    private static double GLOBAL_MAX_PRIORITY = 1;
     private static final AtomicLong longVal = new AtomicLong(1);
     static final String IN_AREA_PREFIX = "in_";
     static final String BACKWARD_PREFIX = "backward_";
@@ -71,31 +73,38 @@ public class CustomModelParser {
                                                   EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-        double maxSpeed = speedEnc.getMaxOrMaxStorableDecimal();
-        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, speedEnc, maxSpeed, priorityEnc);
-        return new CustomWeighting(accessEnc, speedEnc, turnCostProvider, parameters);
+        CustomModel tmp = new CustomModel();
+        if (priorityEnc != null) {
+            tmp.addToPriority(Statement.If(accessEnc.getName(), Statement.Op.MULTIPLY, priorityEnc.getName()));
+            tmp.addToPriority(Statement.Else(Statement.Op.MULTIPLY, "0"));
+        } else {
+            tmp.addToPriority(Statement.If("!" + accessEnc.getName(), Statement.Op.MULTIPLY, "0"));
+        }
+        tmp.addToSpeed(Statement.If("true", Statement.Op.LIMIT, speedEnc.getName()));
+
+        CustomWeighting.Parameters parameters = createWeightingParameters(CustomModel.merge(tmp, customModel), lookup);
+        return new CustomWeighting(turnCostProvider, parameters);
+    }
+
+    // TODO NOW use this method: it comes without "base" parsers!
+    public static CustomWeighting createNewWeighting(EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
+        if (customModel == null)
+            throw new IllegalStateException("CustomModel cannot be null");
+        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup);
+        return new CustomWeighting(turnCostProvider, parameters);
     }
 
     public static CustomWeighting createFastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EncodingManager lookup) {
         CustomModel cm = new CustomModel();
-
         return createWeighting(accessEnc, speedEnc, null, lookup, TurnCostProvider.NO_TURN_COST_PROVIDER, cm);
     }
 
     /**
      * This method compiles a new subclass of CustomWeightingHelper composed from the provided CustomModel caches this
      * and returns an instance.
-     *
-     * @param priorityEnc can be null
      */
-    public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup,
-                                                                       DecimalEncodedValue avgSpeedEnc, double globalMaxSpeed,
-                                                                       DecimalEncodedValue priorityEnc) {
-
-        double globalMaxPriority = priorityEnc == null ? 1 : priorityEnc.getMaxStorableDecimal();
-        // if the same custom model is used with a different base profile we cannot use the cached version
-        String key = customModel + ",speed:" + avgSpeedEnc.getName() + ",global_max_speed:" + globalMaxSpeed
-                + (priorityEnc == null ? "" : "prio:" + priorityEnc.getName() + ",global_max_priority:" + globalMaxPriority);
+    public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup) {
+        String key = customModel.toString();
         if (key.length() > 100_000)
             throw new IllegalArgumentException("Custom Model too big: " + key.length());
 
@@ -103,7 +112,7 @@ public class CustomModelParser {
         if (CACHE_SIZE > 0 && clazz == null)
             clazz = CACHE.get(key);
         if (clazz == null) {
-            clazz = createClazz(customModel, lookup, globalMaxSpeed, globalMaxPriority);
+            clazz = createClazz(customModel, lookup);
             if (customModel.isInternal()) {
                 INTERNAL_CACHE.put(key, clazz);
                 if (INTERNAL_CACHE.size() > 100) {
@@ -120,7 +129,7 @@ public class CustomModelParser {
         try {
             // The class does not need to be thread-safe as we create an instance per request
             CustomWeightingHelper prio = (CustomWeightingHelper) clazz.getDeclaredConstructor().newInstance();
-            prio.init(lookup, avgSpeedEnc, priorityEnc, CustomModel.getAreasAsMap(customModel.getAreas()));
+            prio.init(lookup, CustomModel.getAreasAsMap(customModel.getAreas()));
             return new CustomWeighting.Parameters(prio::getSpeed, prio::getPriority, prio.getMaxSpeed(), prio.getMaxPriority(),
                     customModel.getDistanceInfluence() == null ? 0 : customModel.getDistanceInfluence(),
                     customModel.getHeadingPenalty() == null ? Parameters.Routing.DEFAULT_HEADING_PENALTY : customModel.getHeadingPenalty());
@@ -146,12 +155,11 @@ public class CustomModelParser {
      * </li>
      * </ul>
      */
-    private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup,
-                                        double globalMaxSpeed, double globalMaxPriority) {
+    private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup) {
         try {
             HashSet<String> priorityVariables = new LinkedHashSet<>();
             // initial value of minimum has to be >0 so that multiple_by with a negative value leads to a negative value and not 0
-            MinMax minMaxPriority = new MinMax(1, globalMaxPriority);
+            MinMax minMaxPriority = new MinMax(1, GLOBAL_MAX_PRIORITY);
             FindMinMax.findMinMax(priorityVariables, minMaxPriority, customModel.getPriority(), lookup);
             if (minMaxPriority.min < 0)
                 throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + minMaxPriority.min + ")");
@@ -160,7 +168,7 @@ public class CustomModelParser {
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
 
             HashSet<String> speedVariables = new LinkedHashSet<>();
-            MinMax minMaxSpeed = new MinMax(1, globalMaxSpeed);
+            MinMax minMaxSpeed = new MinMax(1, GLOBAL_MAX_SPEED);
             FindMinMax.findMinMax(speedVariables, minMaxSpeed, customModel.getSpeed(), lookup);
             if (minMaxSpeed.min < 0)
                 throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + minMaxSpeed.min + ")");
@@ -193,7 +201,7 @@ public class CustomModelParser {
                                                                       CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> speedStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "speed entry", speedVariables, customModel.getSpeed(), lookup));
-        String speedMethodStartBlock = "double value = super.getRawSpeed(edge, reverse);\n";
+        String speedMethodStartBlock = "double value = getMaxSpeed();\n";
         // a bit inefficient to possibly define variables twice, but for now we have two separate methods
         for (String arg : speedVariables) {
             speedMethodStartBlock += getVariableDeclaration(lookup, arg);
@@ -212,7 +220,7 @@ public class CustomModelParser {
                                                                          CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> priorityStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "priority entry", priorityVariables, customModel.getPriority(), lookup));
-        String priorityMethodStartBlock = "double value = super.getRawPriority(edge, reverse);\n";
+        String priorityMethodStartBlock = "double value = 1;\n";
         for (String arg : priorityVariables) {
             priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
@@ -285,8 +293,7 @@ public class CustomModelParser {
         final StringBuilder classSourceCode = new StringBuilder(100);
         boolean includedAreaImports = false;
 
-        final StringBuilder initSourceCode = new StringBuilder("this.avg_speed_enc = avgSpeedEnc;\n");
-        initSourceCode.append("this.priority_enc = priorityEnc;\n");
+        final StringBuilder initSourceCode = new StringBuilder();
         Set<String> set = new HashSet<>();
         for (String prioVar : priorityVariables)
             set.add(prioVar.startsWith(BACKWARD_PREFIX) ? prioVar.substring(BACKWARD_PREFIX.length()) : prioVar);
@@ -340,8 +347,7 @@ public class CustomModelParser {
                 + "\npublic class JaninoCustomWeightingHelperSubclass" + counter + " extends " + CustomWeightingHelper.class.getSimpleName() + " {\n"
                 + classSourceCode
                 + "   @Override\n"
-                + "   public void init(EncodedValueLookup lookup, " + DecimalEncodedValue.class.getName() + " avgSpeedEnc, "
-                + DecimalEncodedValue.class.getName() + " priorityEnc, Map<String, " + JsonFeature.class.getName() + "> areas) {\n"
+                + "   public void init(EncodedValueLookup lookup, Map<String, " + JsonFeature.class.getName() + "> areas) {\n"
                 + initSourceCode
                 + "   }\n\n"
                 // we need these placeholder methods so that the hooks in DeepCopier are invoked
@@ -351,7 +357,7 @@ public class CustomModelParser {
                 + "   }\n"
                 + "   @Override\n"
                 + "   public double getSpeed(EdgeIteratorState edge, boolean reverse) {\n"
-                + "      return getRawSpeed(edge, reverse); //will be overwritten by code injected in DeepCopier\n"
+                + "      return getMaxSpeed(); //will be overwritten by code injected in DeepCopier\n"
                 + "   }\n"
                 + "   @Override\n"
                 + "   protected double getMaxSpeed() {\n"
