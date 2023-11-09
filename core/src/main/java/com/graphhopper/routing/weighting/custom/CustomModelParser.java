@@ -64,6 +64,7 @@ public class CustomModelParser {
     // E.g. we do not care for the race condition where two identical classes are requested and one of them is overwritten.
     // TODO perf compare with ConcurrentHashMap, but I guess, if there is a difference at all, it is not big for small maps
     private static final Map<String, Class<?>> INTERNAL_CACHE = Collections.synchronizedMap(new HashMap<>());
+    private static final AtomicLong CACHE_HASH = new AtomicLong(0);
 
     private CustomModelParser() {
         // utility class
@@ -107,6 +108,17 @@ public class CustomModelParser {
         String key = customModel.toString();
         if (key.length() > 100_000)
             throw new IllegalArgumentException("Custom Model too big: " + key.length());
+
+        // if max storable int has changed we have to recalculate our custom models to be sure
+        long hashFromStorableInts = lookup.getEncodedValues().stream().filter(ev -> (ev instanceof IntEncodedValue)).
+                mapToLong(ev -> Integer.hashCode(((IntEncodedValue) ev).getMaxOrMaxStorableInt())).
+                reduce(1, (end, tmp) -> 31 * end + tmp);
+        // don't synchronize as not finding the entry in the cache is not a disaster
+        if (CACHE_HASH.get() != hashFromStorableInts) {
+            CACHE.clear();
+            INTERNAL_CACHE.clear();
+            CACHE_HASH.set(hashFromStorableInts);
+        }
 
         Class<?> clazz = customModel.isInternal() ? INTERNAL_CACHE.get(key) : null;
         if (CACHE_SIZE > 0 && clazz == null)
@@ -174,6 +186,10 @@ public class CustomModelParser {
                 throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + minMaxSpeed.min + ")");
             if (minMaxSpeed.max <= 0)
                 throw new IllegalArgumentException("maximum speed has to be >0 but was " + minMaxSpeed.max);
+            if (customModel.getSpeed().isEmpty())
+                throw new IllegalArgumentException("At least one statement under 'speed' is required.");
+            if (minMaxSpeed.max == GLOBAL_MAX_SPEED)
+                throw new IllegalArgumentException("The first statement for 'speed' must be unconditionally to set the speed. But it was " + customModel.getSpeed().get(0));
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
             // Create different class name, which is required only for debugging.
             // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes
@@ -201,7 +217,7 @@ public class CustomModelParser {
                                                                       CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> speedStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "speed entry", speedVariables, customModel.getSpeed(), lookup));
-        String speedMethodStartBlock = "double value = getMaxSpeed();\n";
+        String speedMethodStartBlock = "double value = " + GLOBAL_MAX_SPEED + ";\n";
         // a bit inefficient to possibly define variables twice, but for now we have two separate methods
         for (String arg : speedVariables) {
             speedMethodStartBlock += getVariableDeclaration(lookup, arg);
@@ -357,7 +373,7 @@ public class CustomModelParser {
                 + "   }\n"
                 + "   @Override\n"
                 + "   public double getSpeed(EdgeIteratorState edge, boolean reverse) {\n"
-                + "      return getMaxSpeed(); //will be overwritten by code injected in DeepCopier\n"
+                + "      return 1; //will be overwritten by code injected in DeepCopier\n"
                 + "   }\n"
                 + "   @Override\n"
                 + "   protected double getMaxSpeed() {\n"

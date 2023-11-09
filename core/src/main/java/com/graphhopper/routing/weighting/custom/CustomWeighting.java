@@ -103,9 +103,6 @@ public final class CustomWeighting implements Weighting {
 
     @Override
     public double getMinWeight(double distance) {
-//        System.out.println("max speed: " + maxSpeed);
-//        System.out.println("max prio: " + maxPriority);
-//        System.out.println("influence: " + distanceInfluence);
         return distance / maxSpeed / maxPriority + distance * distanceInfluence;
     }
 

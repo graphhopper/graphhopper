@@ -48,6 +48,14 @@ class CustomWeightingTest {
         graph = new BaseGraph.Builder(encodingManager).create();
     }
 
+    private void setTurnRestriction(Graph graph, int from, int via, int to) {
+        graph.getTurnCostStorage().set(turnRestrictionEnc, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), true);
+    }
+
+    private Weighting createWeighting(CustomModel vehicleModel) {
+        return CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+    }
+
     @Test
     public void speedOnly() {
         // 50km/h -> 72s per km, 100km/h -> 36s per km
@@ -329,7 +337,9 @@ class CustomWeightingTest {
     void sameTimeAsFastestWeighting() {
         // we make sure the returned times are the same, so we can check for regressions more easily when we migrate from fastest to custom
         FastestWeighting fastestWeighting = new FastestWeighting(accessEnc, avSpeedEnc);
-        Weighting customWeighting = createWeighting(new CustomModel().setDistanceInfluence(0d));
+        // TODO NOW for now use explicitly a CustomModel different to the one in the speedOnly test to avoid that
+        //  the CustomModel cache is filled with a CustomModel that uses the incorrect maximum due to a different avgSpeedEnc.getMaxOrMaxStorableDecimal
+        Weighting customWeighting = createWeighting(new CustomModel());
         Random rnd = new Random();
         for (int i = 0; i < 100; i++) {
             double speed = 5 + rnd.nextDouble() * 100;
@@ -342,19 +352,12 @@ class CustomWeightingTest {
         }
     }
 
-    private Weighting createWeighting(CustomModel vehicleModel) {
-        return CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
-    }
-
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
-        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(10);
-        EdgeIteratorState edge2 = graph.edge(0, 1).setDistance(10);
-        GHUtility.setSpeed(140, 0, accessEnc, avSpeedEnc, edge1);
-        GHUtility.setSpeed(155, 0, accessEnc, avSpeedEnc, edge2);
+        EdgeIteratorState edge = graph.edge(0, 1).setDistance(10);
+        GHUtility.setSpeed(140, 0, accessEnc, avSpeedEnc, edge);
         Weighting instance = CustomModelParser.createFastestWeighting(accessEnc, avSpeedEnc, encodingManager);
-//        assertEquals(instance.getMinWeight(10), instance.calcEdgeWeight(edge, false), 1e-8);
-        assertEquals(10.0 / 140 * 3.6, instance.calcEdgeWeight(edge1, false), 1e-8);
+        assertEquals(instance.getMinWeight(10), instance.calcEdgeWeight(edge, false), 1e-8);
     }
 
     @Test
@@ -505,9 +508,5 @@ class CustomWeightingTest {
         assertEquals(600, weighting.calcEdgeWeight(edge, false), .01);
         // private should influence bike only slightly
         assertEquals(240, bikeWeighting.calcEdgeWeight(edge, false), .01);
-    }
-
-    private void setTurnRestriction(Graph graph, int from, int via, int to) {
-        graph.getTurnCostStorage().set(turnRestrictionEnc, getEdge(graph, from, via).getEdge(), via, getEdge(graph, via, to).getEdge(), true);
     }
 }
