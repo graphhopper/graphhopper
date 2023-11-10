@@ -33,7 +33,6 @@ import org.codehaus.janino.*;
 import org.codehaus.janino.util.DeepCopier;
 import org.locationtech.jts.geom.Polygonal;
 import org.locationtech.jts.geom.prep.PreparedPolygon;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
@@ -91,6 +90,13 @@ public class CustomModelParser {
     public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup,
                                                                        DecimalEncodedValue avgSpeedEnc, double globalMaxSpeed,
                                                                        DecimalEncodedValue priorityEnc) {
+
+        if (customModel.getAreas().getFeatures().size() > 500)
+            throw new IllegalArgumentException("too many areas: " + customModel.getAreas().getFeatures().size());
+        if (customModel.getSpeed().size() > 2000)
+            throw new IllegalArgumentException("too many speed statements: " + customModel.getSpeed().size());
+        if (customModel.getPriority().size() > 2000)
+            throw new IllegalArgumentException("too many priority statements: " + customModel.getPriority().size());
 
         double globalMaxPriority = priorityEnc == null ? 1 : priorityEnc.getMaxStorableDecimal();
         Class<?> clazz = createClazz(customModel, lookup, globalMaxSpeed, globalMaxPriority);
