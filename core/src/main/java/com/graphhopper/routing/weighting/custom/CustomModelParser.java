@@ -93,29 +93,7 @@ public class CustomModelParser {
                                                                        DecimalEncodedValue priorityEnc) {
 
         double globalMaxPriority = priorityEnc == null ? 1 : priorityEnc.getMaxStorableDecimal();
-        // if the same custom model is used with a different base profile we cannot use the cached version
-        String key = customModel + ",speed:" + avgSpeedEnc.getName() + ",global_max_speed:" + globalMaxSpeed
-                + (priorityEnc == null ? "" : "prio:" + priorityEnc.getName() + ",global_max_priority:" + globalMaxPriority);
-        if (key.length() > 100_000)
-            throw new IllegalArgumentException("Custom Model too big: " + key.length());
-
-        Class<?> clazz = customModel.isInternal() ? INTERNAL_CACHE.get(key) : null;
-        if (CACHE_SIZE > 0 && clazz == null)
-            clazz = CACHE.get(key);
-        if (clazz == null) {
-            clazz = createClazz(customModel, lookup, globalMaxSpeed, globalMaxPriority);
-            if (customModel.isInternal()) {
-                INTERNAL_CACHE.put(key, clazz);
-                if (INTERNAL_CACHE.size() > 100) {
-                    CACHE.putAll(INTERNAL_CACHE);
-                    INTERNAL_CACHE.clear();
-                    LoggerFactory.getLogger(CustomModelParser.class).warn("Internal cache must stay small but was "
-                            + INTERNAL_CACHE.size() + ". Cleared it. Misuse of CustomModel::internal?");
-                }
-            } else if (CACHE_SIZE > 0) {
-                CACHE.put(key, clazz);
-            }
-        }
+        Class<?> clazz = createClazz(customModel, lookup, globalMaxSpeed, globalMaxPriority);
 
         try {
             // The class does not need to be thread-safe as we create an instance per request
