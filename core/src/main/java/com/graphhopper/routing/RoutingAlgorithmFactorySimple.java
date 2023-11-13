@@ -51,7 +51,10 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
                     opts.getTraversalMode());
             aStarBi.setApproximation(getApproximation(ASTAR_BI, opts.getHints(), weighting, g.getNodeAccess()));
             ra = aStarBi;
-
+        } else if ("astarbix".equalsIgnoreCase(algoStr)) {
+            AStarBidirectionX aStarBix = new AStarBidirectionX(g, weighting, opts.getTraversalMode());
+            aStarBix.setApproximation(getApproximation(ASTAR_BI, opts.getHints(), weighting, g.getNodeAccess()));
+            ra = aStarBix;
         } else if (DIJKSTRA_ONE_TO_MANY.equalsIgnoreCase(algoStr)) {
             ra = new DijkstraOneToMany(g, weighting, opts.getTraversalMode());
 
