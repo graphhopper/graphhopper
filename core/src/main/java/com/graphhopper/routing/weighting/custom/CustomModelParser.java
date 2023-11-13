@@ -105,26 +105,21 @@ public class CustomModelParser {
      * and returns an instance.
      */
     public static CustomWeighting.Parameters createWeightingParameters(CustomModel customModel, EncodedValueLookup lookup) {
-        String key = customModel.toString();
+        // initial value of minimum has to be >0 so that multiple_by with a negative value leads to a negative value and not 0
+        MinMax minMaxPriority = new MinMax(1, GLOBAL_MAX_PRIORITY);
+        HashSet<String> priorityVariables = new LinkedHashSet<>();
+        MinMax minMaxSpeed = new MinMax(1, GLOBAL_MAX_SPEED);
+        HashSet<String> speedVariables = new LinkedHashSet<>();
+        findMinMax(customModel, lookup, minMaxPriority, priorityVariables, minMaxSpeed, speedVariables);
+        String key = customModel + "," + minMaxSpeed + "," + minMaxPriority;
         if (key.length() > 100_000)
             throw new IllegalArgumentException("Custom Model too big: " + key.length());
-
-        // if max storable int has changed we have to recalculate our custom models to be sure
-        long hashFromStorableInts = lookup.getEncodedValues().stream().filter(ev -> (ev instanceof IntEncodedValue)).
-                mapToLong(ev -> Integer.hashCode(((IntEncodedValue) ev).getMaxOrMaxStorableInt())).
-                reduce(1, (end, tmp) -> 31 * end + tmp);
-        // don't synchronize as not finding the entry in the cache is not a disaster
-        if (CACHE_HASH.get() != hashFromStorableInts) {
-            CACHE.clear();
-            INTERNAL_CACHE.clear();
-            CACHE_HASH.set(hashFromStorableInts);
-        }
 
         Class<?> clazz = customModel.isInternal() ? INTERNAL_CACHE.get(key) : null;
         if (CACHE_SIZE > 0 && clazz == null)
             clazz = CACHE.get(key);
         if (clazz == null) {
-            clazz = createClazz(customModel, lookup);
+            clazz = createClazz(customModel, lookup, minMaxPriority, priorityVariables, minMaxSpeed, speedVariables);
             if (customModel.isInternal()) {
                 INTERNAL_CACHE.put(key, clazz);
                 if (INTERNAL_CACHE.size() > 100) {
@@ -150,6 +145,27 @@ public class CustomModelParser {
         }
     }
 
+    private static void findMinMax(CustomModel customModel, EncodedValueLookup lookup,
+                                   MinMax minMaxPriority, Set<String> priorityVariables,
+                                   MinMax minMaxSpeed, Set<String> speedVariables) {
+
+        FindMinMax.findMinMax(priorityVariables, minMaxPriority, customModel.getPriority(), lookup);
+        if (minMaxPriority.min < 0)
+            throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + minMaxPriority.min + ")");
+        if (minMaxPriority.max < 0)
+            throw new IllegalArgumentException("maximum priority has to be >=0 but was " + minMaxPriority.max);
+
+        FindMinMax.findMinMax(speedVariables, minMaxSpeed, customModel.getSpeed(), lookup);
+        if (minMaxSpeed.min < 0)
+            throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + minMaxSpeed.min + ")");
+        if (minMaxSpeed.max <= 0)
+            throw new IllegalArgumentException("maximum speed has to be >0 but was " + minMaxSpeed.max);
+        if (customModel.getSpeed().isEmpty())
+            throw new IllegalArgumentException("At least one statement under 'speed' is required.");
+        if (minMaxSpeed.max == GLOBAL_MAX_SPEED)
+            throw new IllegalArgumentException("The first statement for 'speed' must be unconditionally to set the speed. But it was " + customModel.getSpeed().get(0));
+    }
+
     /**
      * This method does the following:
      * <ul>
@@ -167,29 +183,11 @@ public class CustomModelParser {
      * </li>
      * </ul>
      */
-    private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup) {
+    private static Class<?> createClazz(CustomModel customModel, EncodedValueLookup lookup,
+                                        MinMax minMaxPriority, Set<String> priorityVariables,
+                                        MinMax minMaxSpeed, Set<String> speedVariables) {
         try {
-            HashSet<String> priorityVariables = new LinkedHashSet<>();
-            // initial value of minimum has to be >0 so that multiple_by with a negative value leads to a negative value and not 0
-            MinMax minMaxPriority = new MinMax(1, GLOBAL_MAX_PRIORITY);
-            FindMinMax.findMinMax(priorityVariables, minMaxPriority, customModel.getPriority(), lookup);
-            if (minMaxPriority.min < 0)
-                throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + minMaxPriority.min + ")");
-            if (minMaxPriority.max < 0)
-                throw new IllegalArgumentException("maximum priority has to be >=0 but was " + minMaxPriority.max);
             List<Java.BlockStatement> priorityStatements = createGetPriorityStatements(priorityVariables, customModel, lookup);
-
-            HashSet<String> speedVariables = new LinkedHashSet<>();
-            MinMax minMaxSpeed = new MinMax(1, GLOBAL_MAX_SPEED);
-            FindMinMax.findMinMax(speedVariables, minMaxSpeed, customModel.getSpeed(), lookup);
-            if (minMaxSpeed.min < 0)
-                throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + minMaxSpeed.min + ")");
-            if (minMaxSpeed.max <= 0)
-                throw new IllegalArgumentException("maximum speed has to be >0 but was " + minMaxSpeed.max);
-            if (customModel.getSpeed().isEmpty())
-                throw new IllegalArgumentException("At least one statement under 'speed' is required.");
-            if (minMaxSpeed.max == GLOBAL_MAX_SPEED)
-                throw new IllegalArgumentException("The first statement for 'speed' must be unconditionally to set the speed. But it was " + customModel.getSpeed().get(0));
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
             // Create different class name, which is required only for debugging.
             // TODO does it improve performance too? I.e. it could be that the JIT is confused if different classes

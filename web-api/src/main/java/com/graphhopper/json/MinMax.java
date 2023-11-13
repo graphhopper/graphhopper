@@ -8,4 +8,9 @@ public class MinMax {
         this.min = min;
         this.max = max;
     }
+
+    @Override
+    public String toString() {
+        return "min=" + min + ", max=" + max;
+    }
 }
