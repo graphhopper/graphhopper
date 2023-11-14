@@ -1041,5 +1041,4 @@ public class QueryGraphTest {
     private QueryGraph lookup(List<Snap> snaps) {
         return QueryGraph.create(g, snaps);
     }
-
 }
