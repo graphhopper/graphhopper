@@ -48,7 +48,7 @@ public class FastestWeightingTest {
         EdgeIteratorState edge = graph.edge(0, 1).setDistance(10);
         GHUtility.setSpeed(140, 0, accessEnc, speedEnc, edge);
         Weighting instance = new FastestWeighting(accessEnc, speedEnc);
-        assertEquals(instance.getMinWeight(10), instance.calcEdgeWeight(edge, false), 1e-8);
+        assertEquals(instance.calcMinWeight(10), instance.calcEdgeWeight(edge, false), 1e-8);
     }
 
     @Test

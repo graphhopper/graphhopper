@@ -75,7 +75,7 @@ public class FastestWeighting extends AbstractWeighting {
     }
 
     @Override
-    public double getMinWeight(double distance) {
+    public double calcMinWeight(double distance) {
         return distance / maxSpeed;
     }
 

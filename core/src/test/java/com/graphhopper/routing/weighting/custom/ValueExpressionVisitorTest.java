@@ -6,14 +6,17 @@ import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValueImpl;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.util.CustomModel;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.findMinMax;
-import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.parse;
+import static com.graphhopper.json.Statement.Else;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
+import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ValueExpressionVisitorTest {
@@ -68,25 +71,30 @@ class ValueExpressionVisitorTest {
 
     @Test
     public void testErrors() {
-        Set<String> objs = new HashSet<>();
         DecimalEncodedValue prio1 = new DecimalEncodedValueImpl("my_priority", 5, 1, false);
         IntEncodedValueImpl prio2 = new IntEncodedValueImpl("my_priority2", 5, -5, false, false);
         EncodedValueLookup lookup = new EncodingManager.Builder().add(prio1).add(prio2).build();
 
-        String msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "unknown*3", lookup)).getMessage();
+        String msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("unknown*3", lookup)).getMessage();
         assertTrue(msg.contains("'unknown' not available"), msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "my_priority - my_priority2 * 3", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("my_priority - my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("a single EncodedValue"), msg);
         // unary minus is also a minus operator
-        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "-my_priority + my_priority2 * 3", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("-my_priority + my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("a single EncodedValue"), msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "1/my_priority", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("1/my_priority", lookup)).getMessage();
         assertTrue(msg.contains("invalid operation '/'"), msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax(objs, "my_priority*my_priority2 * 3", lookup)).getMessage();
+        msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("my_priority*my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("Currently only a single EncodedValue is allowed on the right-hand side"), msg);
+
+        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("my_prio*my_priority2 * 3", lookup)).getMessage();
+        assertEquals("'my_prio' not available", msg);
+
+        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("-my_priority + my_priority2 * 3", lookup)).getMessage();
+        assertTrue(msg.contains("a single EncodedValue"), msg);
     }
 
     @Test
@@ -100,10 +108,12 @@ class ValueExpressionVisitorTest {
         assertInterval(0, 62, "2*my_priority", lookup);
 
         assertInterval(-52, 10, "-2*my_priority2", lookup);
+
+        assertEquals(Set.of("my_priority"), findVariables("-2*my_priority", lookup));
     }
 
     void assertInterval(double min, double max, String expression, EncodedValueLookup lookup) {
-        MinMax minmax = findMinMax(new HashSet<>(), expression, lookup);
+        MinMax minmax = findMinMax(expression, lookup);
         assertEquals(min, minmax.min, 0.1, expression);
         assertEquals(max, minmax.max, 0.1, expression);
     }

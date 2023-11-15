@@ -1,19 +1,20 @@
 package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.json.MinMax;
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.*;
+import org.codehaus.janino.Scanner;
 
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
+
+import static com.graphhopper.json.Statement.Keyword.IF;
 
 /**
  * Expression visitor for right-hand side value of limit_to or multiply_by.
@@ -135,7 +136,51 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return result;
     }
 
-    static MinMax findMinMax(Set<String> createdObjects, String valueExpression, EncodedValueLookup lookup) {
+    public static Set<String> findVariables(List<Statement> statements, EncodedValueLookup lookup) {
+        List<List<Statement>> blocks = splitIntoBlocks(statements);
+        Set<String> variables = new LinkedHashSet<>();
+        for (List<Statement> block : blocks) findVariablesForBlock(variables, block, lookup);
+        return variables;
+    }
+
+    /**
+     * Splits the specified list into several list of statements starting with if
+     */
+    static List<List<Statement>> splitIntoBlocks(List<Statement> statements) {
+        List<List<Statement>> result = new ArrayList<>();
+        List<Statement> block = null;
+        for (Statement st : statements) {
+            if (IF.equals(st.getKeyword())) result.add(block = new ArrayList<>());
+            if (block == null)
+                throw new IllegalArgumentException("Every block must start with an if-statement");
+            block.add(st);
+        }
+        return result;
+    }
+
+    private static void findVariablesForBlock(Set<String> createdObjects, List<Statement> block, EncodedValueLookup lookup) {
+        if (block.isEmpty() || !IF.equals(block.get(0).getKeyword()))
+            throw new IllegalArgumentException("Every block must start with an if-statement");
+
+        if (block.get(0).getCondition().trim().equals("true")) {
+            createdObjects.addAll(ValueExpressionVisitor.findVariables(block.get(0).getValue(), lookup));
+        } else {
+            for (Statement s : block) {
+                createdObjects.addAll(ValueExpressionVisitor.findVariables(s.getValue(), lookup));
+            }
+        }
+    }
+
+    static Set<String> findVariables(String valueExpression, EncodedValueLookup lookup) {
+        ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
+        if (!result.ok)
+            throw new IllegalArgumentException(result.invalidMessage);
+        if (result.guessedVariables.size() > 1)
+            throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
+        return result.guessedVariables;
+    }
+
+    static MinMax findMinMax(String valueExpression, EncodedValueLookup lookup) {
         ParseResult result = parse(valueExpression, lookup::hasEncodedValue);
         if (!result.ok)
             throw new IllegalArgumentException(result.invalidMessage);
@@ -159,7 +204,6 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                 return new MinMax(val, val);
             }
 
-            createdObjects.addAll(result.guessedVariables);
             if (lookup.hasEncodedValue(valueExpression)) { // speed up for common case that complete right-hand side is the encoded value
                 EncodedValue enc = lookup.getEncodedValue(valueExpression, EncodedValue.class);
                 double min = getMin(enc), max = getMax(enc);

@@ -906,7 +906,7 @@ public class RoutingAlgorithmTest {
             private final Weighting tmpW = new SpeedWeighting(f.carSpeedEnc);
 
             @Override
-            public double getMinWeight(double distance) {
+            public double calcMinWeight(double distance) {
                 return 0.8 * distance;
             }
 

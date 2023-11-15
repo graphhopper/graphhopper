@@ -65,7 +65,7 @@ public class BeelineWeightApproximator implements WeightApproximator {
         double fromLat = nodeAccess.getLat(fromNode);
         double fromLon = nodeAccess.getLon(fromNode);
         double dist2goal = distanceCalc.calcDist(toLat, toLon, fromLat, fromLon);
-        double weight2goal = weighting.getMinWeight(dist2goal);
+        double weight2goal = weighting.calcMinWeight(dist2goal);
         return weight2goal * epsilon;
     }
 
