@@ -6,16 +6,11 @@ import com.graphhopper.routing.ev.DecimalEncodedValueImpl;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValueImpl;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.util.CustomModel;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
-import static com.graphhopper.json.Statement.Else;
-import static com.graphhopper.json.Statement.If;
-import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.weighting.custom.ValueExpressionVisitor.*;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -90,11 +85,23 @@ class ValueExpressionVisitorTest {
         msg = assertThrows(IllegalArgumentException.class, () -> findMinMax("my_priority*my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("Currently only a single EncodedValue is allowed on the right-hand side"), msg);
 
-        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("my_prio*my_priority2 * 3", lookup)).getMessage();
-        assertEquals("'my_prio' not available", msg);
+        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("unknown*3", lookup)).getMessage();
+        assertTrue(msg.contains("'unknown' not available"), msg);
 
+        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("my_priority - my_priority2 * 3", lookup)).getMessage();
+        assertTrue(msg.contains("a single EncodedValue"), msg);
+        // unary minus is also a minus operator
         msg = assertThrows(IllegalArgumentException.class, () -> findVariables("-my_priority + my_priority2 * 3", lookup)).getMessage();
         assertTrue(msg.contains("a single EncodedValue"), msg);
+
+        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("1/my_priority", lookup)).getMessage();
+        assertTrue(msg.contains("invalid operation '/'"), msg);
+
+        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("my_priority*my_priority2 * 3", lookup)).getMessage();
+        assertTrue(msg.contains("Currently only a single EncodedValue is allowed on the right-hand side"), msg);
+
+        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("my_prio*my_priority2 * 3", lookup)).getMessage();
+        assertEquals("'my_prio' not available", msg);
     }
 
     @Test
@@ -108,7 +115,15 @@ class ValueExpressionVisitorTest {
         assertInterval(0, 62, "2*my_priority", lookup);
 
         assertInterval(-52, 10, "-2*my_priority2", lookup);
+    }
 
+    @Test
+    public void runVariables() {
+        DecimalEncodedValue prio1 = new DecimalEncodedValueImpl("my_priority", 5, 1, false);
+        IntEncodedValueImpl prio2 = new IntEncodedValueImpl("my_priority2", 5, -5, false, false);
+        EncodedValueLookup lookup = new EncodingManager.Builder().add(prio1).add(prio2).build();
+
+        assertEquals(Set.of(), findVariables("2", lookup));
         assertEquals(Set.of("my_priority"), findVariables("-2*my_priority", lookup));
     }
 
