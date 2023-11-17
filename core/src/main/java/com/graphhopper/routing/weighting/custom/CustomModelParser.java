@@ -91,7 +91,7 @@ public class CustomModelParser {
                                                                        DecimalEncodedValue priorityEnc) {
 
         // if the same custom model is used with a different base profile we cannot use the cached version
-        String key = customModel.toString();
+        String key = customModel.toString() + "," + avgSpeedEnc.getName() + "," + (priorityEnc == null ? "-" : priorityEnc.getName());
         if (key.length() > 100_000)
             throw new IllegalArgumentException("Custom Model too big: " + key.length());
 

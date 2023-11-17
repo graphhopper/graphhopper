@@ -60,8 +60,8 @@ public class SpeedWeighting implements Weighting {
     }
 
     @Override
-    public double calcMinWeight(double distance) {
-        return distance / speedEnc.getMaxStorableDecimal();
+    public double calcMinWeightPerDistance() {
+        return 1 / speedEnc.getMaxStorableDecimal();
     }
 
     @Override

@@ -42,8 +42,8 @@ public class QueryGraphWeighting implements Weighting {
     }
 
     @Override
-    public double calcMinWeight(double distance) {
-        return weighting.calcMinWeight(distance);
+    public double calcMinWeightPerDistance() {
+        return weighting.calcMinWeightPerDistance();
     }
 
     @Override

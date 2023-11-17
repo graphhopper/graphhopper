@@ -82,7 +82,7 @@ public class CustomWeightingHelper {
 
     public final double calcMaxPriority() {
         // initial value of minimum has to be >0 so that multiple_by with a negative value leads to a negative value and not 0
-        MinMax minMaxPriority = new MinMax(1, 1);
+        MinMax minMaxPriority = new MinMax(1, priority_enc == null ? 1 : priority_enc.getMaxOrMaxStorableDecimal());
         FindMinMax.findMinMax(minMaxPriority, customModel.getPriority(), lookup);
         if (minMaxPriority.min < 0)
             throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + minMaxPriority.min + ")");

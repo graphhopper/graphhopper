@@ -44,8 +44,8 @@ public class ShortestWeighting implements Weighting {
     }
 
     @Override
-    public double calcMinWeight(double distance) {
-        return distance;
+    public double calcMinWeightPerDistance() {
+        return 1;
     }
 
     @Override

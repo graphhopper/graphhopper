@@ -206,9 +206,9 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         }
 
         @Override
-        public double calcMinWeight(double distance) {
+        public double calcMinWeightPerDistance() {
             // left as is, ok for now, but do not use with astar, at least as long as deviations can be negative!!
-            return this.baseWeighting.calcMinWeight(distance);
+            return this.baseWeighting.calcMinWeightPerDistance();
         }
 
         @Override

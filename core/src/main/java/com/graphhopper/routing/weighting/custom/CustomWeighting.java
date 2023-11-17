@@ -102,8 +102,8 @@ public final class CustomWeighting extends AbstractWeighting {
     }
 
     @Override
-    public double calcMinWeight(double distance) {
-        return distance / (maxSpeedCalc.calcMax() / SPEED_CONV) / maxPrioCalc.calcMax() + distance * distanceInfluence;
+    public double calcMinWeightPerDistance() {
+        return 1d / (maxSpeedCalc.calcMax() / SPEED_CONV) / maxPrioCalc.calcMax() + distanceInfluence;
     }
 
     @Override
