@@ -126,9 +126,6 @@ public final class CustomWeighting extends AbstractWeighting {
             return Double.POSITIVE_INFINITY;
 
         double speed = edgeToSpeedMapping.get(edgeState, reverse);
-        // TODO NOW
-//        if (speed > maxSpeed * SPEED_CONV)
-//            throw new IllegalStateException("for " + getName() + " speed <= maxSpeed is violated, " + speed + " <= " + maxSpeed * SPEED_CONV);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
         if (speed < 0)
