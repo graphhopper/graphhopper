@@ -258,14 +258,7 @@ class CustomModelParserTest {
 
         IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
                 () -> CustomModelParser.createWeightingParameters(customModel1, encodingManager));
-        assertEquals("'unknown' not available", ret.getMessage());
-
-        CustomModel customModel2 = new CustomModel();
-        customModel2.addToSpeed(If("road_class == PRIMARY", MULTIPLY, "0.5"));
-        customModel2.addToSpeed(Else(MULTIPLY, "-0.5"));
-        ret = assertThrows(IllegalArgumentException.class,
-                () -> CustomModelParser.createWeightingParameters(customModel2, encodingManager));
-        assertEquals("speed has to be >=0 but can be negative (-0.5)", ret.getMessage());
+        assertEquals("Cannot compile expression: 'unknown' not available", ret.getMessage());
 
         CustomModel customModel3 = new CustomModel();
         customModel3.addToSpeed(If("road_class == PRIMARY", MULTIPLY, "0.5"));

@@ -30,10 +30,10 @@ public interface Weighting {
     /**
      * Used only for the heuristic estimation in A*
      *
-     * @return minimal weight for the specified distance in meter. E.g. if you calculate the fastest
-     * way the return value is 'distance/max_velocity'
+     * @return minimal weight per meter. E.g. if you calculate the fastest way the return value
+     * is '1/max_velocity' or a shortest weighting would return 1.
      */
-    double getMinWeight(double distance);
+    double calcMinWeightPerDistance();
 
     /**
      * This method calculates the weight of a given {@link EdgeIteratorState}. E.g. a high value indicates that the edge

@@ -72,6 +72,13 @@ public abstract class AbstractWeighting implements Weighting {
         return turnCostProvider != NO_TURN_COST_PROVIDER;
     }
 
+    static boolean isValidName(String name) {
+        if (name == null || name.isEmpty())
+            return false;
+
+        return name.matches("[\\|_a-z]+");
+    }
+
     @Override
     public String toString() {
         return getName() + "|" + speedEnc.getName();

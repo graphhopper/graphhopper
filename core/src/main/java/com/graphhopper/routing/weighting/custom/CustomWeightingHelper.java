@@ -17,38 +17,77 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.json.MinMax;
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 
+import java.util.List;
 import java.util.Map;
 
 /**
  * This class is for internal usage only. It is subclassed by Janino, then special expressions are
  * injected into init, getSpeed and getPriority. At the end an instance is created and used in CustomWeighting.
  */
-public abstract class CustomWeightingHelper {
+public class CustomWeightingHelper {
+    protected EncodedValueLookup lookup;
+    protected CustomModel customModel;
+
     protected CustomWeightingHelper() {
     }
 
-    public void init(EncodedValueLookup lookup, Map<String, JsonFeature> areas) {
+    public void init(CustomModel customModel, EncodedValueLookup lookup, Map<String, JsonFeature> areas) {
+        this.lookup = lookup;
+        this.customModel = customModel;
     }
 
     public double getPriority(EdgeIteratorState edge, boolean reverse) {
-        return 1;
+        return getRawPriority(edge, reverse);
     }
 
     public double getSpeed(EdgeIteratorState edge, boolean reverse) {
+        return getRawSpeed(edge, reverse);
+    }
+
+    protected final double getRawSpeed(EdgeIteratorState edge, boolean reverse) {
         return 1;
     }
 
-    protected abstract double getMaxPriority();
+    protected final double getRawPriority(EdgeIteratorState edge, boolean reverse) {
+        return 1;
+    }
 
-    protected abstract double getMaxSpeed();
+    public final double calcMaxSpeed() {
+        MinMax minMaxSpeed = new MinMax(1, 999);
+        FindMinMax.findMinMax(minMaxSpeed, customModel.getSpeed(), lookup);
+        if (minMaxSpeed.min < 0)
+            throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + minMaxSpeed.min + ")");
+        if (minMaxSpeed.max <= 0)
+            throw new IllegalArgumentException("maximum speed has to be >0 but was " + minMaxSpeed.max);
+        if (minMaxSpeed.max == 999)
+            throw new IllegalArgumentException("The first statement for 'speed' must be unconditionally to set the speed. But it was " + customModel.getSpeed().get(0));
+
+        return minMaxSpeed.max;
+    }
+
+    public final double calcMaxPriority() {
+        // initial value of minimum has to be >0 so that multiple_by with a negative value leads to a negative value and not 0
+        MinMax minMaxPriority = new MinMax(1, 1);
+        List<Statement> statements = customModel.getPriority();
+        if (!statements.isEmpty() && "true".equals(statements.get(0).getCondition())) {
+            String value = statements.get(0).getValue();
+            if (lookup.hasEncodedValue(value))
+                minMaxPriority.max = lookup.getDecimalEncodedValue(value).getMaxOrMaxStorableDecimal();
+        }
+        FindMinMax.findMinMax(minMaxPriority, statements, lookup);
+        if (minMaxPriority.min < 0)
+            throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + minMaxPriority.min + ")");
+        if (minMaxPriority.max < 0)
+            throw new IllegalArgumentException("maximum priority has to be >=0 but was " + minMaxPriority.max);
+        return minMaxPriority.max;
+    }
 
     public static boolean in(Polygon p, EdgeIteratorState edge) {
         BBox edgeBBox = GHUtility.createBBox(edge);
