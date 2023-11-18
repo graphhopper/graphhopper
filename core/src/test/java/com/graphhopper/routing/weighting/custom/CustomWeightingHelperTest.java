@@ -1,18 +1,10 @@
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.json.MinMax;
-import com.graphhopper.routing.ev.VehicleSpeed;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.Polygon;
 import org.junit.jupiter.api.Test;
 
-import static com.graphhopper.json.Statement.Else;
-import static com.graphhopper.json.Statement.If;
-import static com.graphhopper.json.Statement.Op.LIMIT;
-import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CustomWeightingHelperTest {

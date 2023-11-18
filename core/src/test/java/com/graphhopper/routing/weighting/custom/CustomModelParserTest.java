@@ -216,6 +216,7 @@ class CustomModelParserTest {
                 new HashMap<>()));
         customModel.setAreas(areas);
 
+        customModel.addToSpeed(If("true", LIMIT, avgSpeedEnc.getName()));
         customModel.addToSpeed(If("in_area_1", LIMIT, "100"));
         customModel.addToSpeed(If("!in_area_2", LIMIT, "25"));
         customModel.addToSpeed(Else(LIMIT, "15"));
@@ -226,6 +227,7 @@ class CustomModelParserTest {
         CustomModel customModel2 = new CustomModel();
         customModel2.setAreas(areas);
 
+        customModel2.addToSpeed(If("true", LIMIT, avgSpeedEnc.getName()));
         customModel2.addToSpeed(If("in_area_1", LIMIT, "100"));
         customModel2.addToSpeed(If("in_area_2", LIMIT, "25"));
         customModel2.addToSpeed(If("in_area_3", LIMIT, "150"));
@@ -261,6 +263,7 @@ class CustomModelParserTest {
         assertEquals("Cannot compile expression: 'unknown' not available", ret.getMessage());
 
         CustomModel customModel3 = new CustomModel();
+        customModel3.addToSpeed(If("true", LIMIT, avgSpeedEnc.getName()));
         customModel3.addToSpeed(If("road_class == PRIMARY", MULTIPLY, "0.5"));
         customModel3.addToSpeed(Else(MULTIPLY, "road_class"));
         ret = assertThrows(IllegalArgumentException.class,

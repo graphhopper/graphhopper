@@ -32,6 +32,9 @@ import java.util.Map;
  * injected into init, getSpeed and getPriority. At the end an instance is created and used in CustomWeighting.
  */
 public class CustomWeightingHelper {
+    static double GLOBAL_MAX_SPEED = 999;
+    static double GLOBAL_PRIORITY = 1;
+
     protected EncodedValueLookup lookup;
     protected CustomModel customModel;
 
@@ -60,13 +63,13 @@ public class CustomWeightingHelper {
     }
 
     public final double calcMaxSpeed() {
-        MinMax minMaxSpeed = new MinMax(1, 999);
+        MinMax minMaxSpeed = new MinMax(1, GLOBAL_MAX_SPEED);
         FindMinMax.findMinMax(minMaxSpeed, customModel.getSpeed(), lookup);
         if (minMaxSpeed.min < 0)
             throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + minMaxSpeed.min + ")");
         if (minMaxSpeed.max <= 0)
             throw new IllegalArgumentException("maximum speed has to be >0 but was " + minMaxSpeed.max);
-        if (minMaxSpeed.max == 999)
+        if (minMaxSpeed.max == GLOBAL_MAX_SPEED)
             throw new IllegalArgumentException("The first statement for 'speed' must be unconditionally to set the speed. But it was " + customModel.getSpeed().get(0));
 
         return minMaxSpeed.max;
@@ -74,7 +77,7 @@ public class CustomWeightingHelper {
 
     public final double calcMaxPriority() {
         // initial value of minimum has to be >0 so that multiple_by with a negative value leads to a negative value and not 0
-        MinMax minMaxPriority = new MinMax(1, 1);
+        MinMax minMaxPriority = new MinMax(1, GLOBAL_PRIORITY);
         List<Statement> statements = customModel.getPriority();
         if (!statements.isEmpty() && "true".equals(statements.get(0).getCondition())) {
             String value = statements.get(0).getValue();

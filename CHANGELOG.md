@@ -1,5 +1,6 @@
 ### 9.0 [not yet released]
 
+- the custom models do no longer include the speed, access and priority encoded values only implicitly, see #1234 for a migration guide 
 - removed wheelchair vehicle and related parsers, with currently no complete replacement as it needs to be redone properly with a custom model
 - removed deprecated PMap.put
 

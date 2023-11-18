@@ -39,8 +39,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class CustomModelParser {
-    private static double GLOBAL_MAX_SPEED = 999;
-    private static double GLOBAL_MAX_PRIORITY = 1;
     private static final AtomicLong longVal = new AtomicLong(1);
     static final String IN_AREA_PREFIX = "in_";
     static final String BACKWARD_PREFIX = "backward_";
@@ -63,7 +61,6 @@ public class CustomModelParser {
     // E.g. we do not care for the race condition where two identical classes are requested and one of them is overwritten.
     // TODO perf compare with ConcurrentHashMap, but I guess, if there is a difference at all, it is not big for small maps
     private static final Map<String, Class<?>> INTERNAL_CACHE = Collections.synchronizedMap(new HashMap<>());
-    private static final AtomicLong CACHE_HASH = new AtomicLong(0);
 
     private CustomModelParser() {
         // utility class
@@ -164,6 +161,19 @@ public class CustomModelParser {
 
             if (customModel.getSpeed().isEmpty())
                 throw new IllegalArgumentException("At least one initial statement under 'speed' is required.");
+
+            // TODO NOW move splitIntoBlocks into different class
+            List<Statement> firstBlock = ValueExpressionVisitor.splitIntoBlocks(customModel.getSpeed()).get(0);
+            if (firstBlock.size() > 1) {
+                Statement lastSt = firstBlock.get(firstBlock.size() - 1);
+                if (lastSt.getOperation() != Statement.Op.LIMIT || lastSt.getKeyword() != Statement.Keyword.ELSE)
+                    throw new IllegalArgumentException("The first block needs to end with an 'else' or start with an unconditional 'if' statement.");
+            } else {
+                Statement firstSt = firstBlock.get(0);
+                if (!"true".equals(firstSt.getCondition()) || firstSt.getOperation() != Statement.Op.LIMIT || firstSt.getKeyword() != Statement.Keyword.IF)
+                    throw new IllegalArgumentException("The first statement currently needs to be an unconditional 'if' statement.");
+            }
+
             Set<String> speedVariables = ValueExpressionVisitor.findVariables(customModel.getSpeed(), lookup);
             List<Java.BlockStatement> speedStatements = createGetSpeedStatements(speedVariables, customModel, lookup);
 
@@ -192,8 +202,8 @@ public class CustomModelParser {
                                                                       CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> speedStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "speed entry", speedVariables, customModel.getSpeed(), lookup));
-        String speedMethodStartBlock = "double value = " + GLOBAL_MAX_SPEED + ";\n";
-        // a bit inefficient to possibly define variables twice, but for now we have two separate methods
+        String speedMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_MAX_SPEED + ";\n";
+        // potentially we fetch EncodedValues twice (one time here and one time for priority)
         for (String arg : speedVariables) {
             speedMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
@@ -211,7 +221,7 @@ public class CustomModelParser {
                                                                          CustomModel customModel, EncodedValueLookup lookup) throws Exception {
         List<Java.BlockStatement> priorityStatements = new ArrayList<>(verifyExpressions(new StringBuilder(),
                 "priority entry", priorityVariables, customModel.getPriority(), lookup));
-        String priorityMethodStartBlock = "double value = 1;\n";
+        String priorityMethodStartBlock = "double value = " + CustomWeightingHelper.GLOBAL_PRIORITY + ";\n";
         for (String arg : priorityVariables) {
             priorityMethodStartBlock += getVariableDeclaration(lookup, arg);
         }
