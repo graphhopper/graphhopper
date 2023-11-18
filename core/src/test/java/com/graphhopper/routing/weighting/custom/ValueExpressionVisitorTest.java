@@ -102,6 +102,12 @@ class ValueExpressionVisitorTest {
 
         msg = assertThrows(IllegalArgumentException.class, () -> findVariables("my_prio*my_priority2 * 3", lookup)).getMessage();
         assertEquals("'my_prio' not available", msg);
+
+        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("-0.5", lookup)).getMessage();
+        assertEquals("illegal expression as it can result in a negative weight: -0.5", msg);
+
+        msg = assertThrows(IllegalArgumentException.class, () -> findVariables("-my_priority", lookup)).getMessage();
+        assertEquals("illegal expression as it can result in a negative weight: -my_priority", msg);
     }
 
     @Test
@@ -124,7 +130,7 @@ class ValueExpressionVisitorTest {
         EncodedValueLookup lookup = new EncodingManager.Builder().add(prio1).add(prio2).build();
 
         assertEquals(Set.of(), findVariables("2", lookup));
-        assertEquals(Set.of("my_priority"), findVariables("-2*my_priority", lookup));
+        assertEquals(Set.of("my_priority"), findVariables("2*my_priority", lookup));
     }
 
     void assertInterval(double min, double max, String expression, EncodedValueLookup lookup) {

@@ -337,9 +337,7 @@ class CustomWeightingTest {
     void sameTimeAsFastestWeighting() {
         // we make sure the returned times are the same, so we can check for regressions more easily when we migrate from fastest to custom
         FastestWeighting fastestWeighting = new FastestWeighting(accessEnc, avSpeedEnc);
-        // TODO NOW for now use explicitly a CustomModel different to the one in the speedOnly test to avoid that
-        //  the CustomModel cache is filled with a CustomModel that uses the incorrect maximum due to a different avgSpeedEnc.getMaxOrMaxStorableDecimal
-        Weighting customWeighting = createWeighting(new CustomModel());
+        Weighting customWeighting = createWeighting(new CustomModel().setDistanceInfluence(0d));
         Random rnd = new Random();
         for (int i = 0; i < 100; i++) {
             double speed = 5 + rnd.nextDouble() * 100;

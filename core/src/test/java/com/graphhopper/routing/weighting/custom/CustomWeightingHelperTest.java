@@ -1,10 +1,20 @@
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.routing.ev.VehicleSpeed;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.Polygon;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.json.Statement.Else;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CustomWeightingHelperTest {
@@ -45,21 +55,17 @@ class CustomWeightingHelperTest {
         assertFalse(CustomWeightingHelper.in(square, edge));
     }
 
-    // TODO NOW
-    // because the first statement is now
-    // this is a general limitation it seems that a negative value after an encoded value with minimum of 0 stays undetected
+    @Test
+    public void testNegativeMax() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(If("true", LIMIT, VehicleSpeed.key("car")));
+        customModel.addToSpeed(If("road_class == PRIMARY", MULTIPLY, "0.5"));
+        customModel.addToSpeed(Else(MULTIPLY, "-0.5"));
 
-//    @Test
-//    public void testNegativeMax() {
-//        CustomModel customModel = new CustomModel();
-//        customModel.addToSpeed(If("true", LIMIT, VehicleSpeed.key("car")));
-//        customModel.addToSpeed(If("road_class == PRIMARY", MULTIPLY, "0.5"));
-//        customModel.addToSpeed(Else(MULTIPLY, "-0.5"));
-//
-//        CustomWeightingHelper helper = new CustomWeightingHelper();
-//        EncodingManager lookup = new EncodingManager.Builder().add(VehicleEncodedValues.car(new PMap())).build();
-//        helper.init(customModel, lookup, null);
-//        IllegalArgumentException ret = assertThrows(IllegalArgumentException.class, helper::calcMaxSpeed);
-//        assertEquals("speed has to be >=0 but can be negative (-0.5)" ,ret.getMessage());
-//    }
+        CustomWeightingHelper helper = new CustomWeightingHelper();
+        EncodingManager lookup = new EncodingManager.Builder().add(VehicleEncodedValues.car(new PMap())).build();
+        helper.init(customModel, lookup, null);
+        IllegalArgumentException ret = assertThrows(IllegalArgumentException.class, helper::calcMaxSpeed);
+        assertTrue(ret.getMessage().startsWith("statement resulted in negative value"));
+    }
 }

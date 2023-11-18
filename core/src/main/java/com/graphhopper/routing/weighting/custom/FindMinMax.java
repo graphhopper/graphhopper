@@ -5,7 +5,7 @@ import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.util.CustomModel;
 
-import java.util.*;
+import java.util.List;
 
 import static com.graphhopper.json.Statement.Keyword.ELSE;
 import static com.graphhopper.json.Statement.Keyword.IF;
@@ -61,12 +61,16 @@ public class FindMinMax {
         MinMax minMaxBlock;
         if (block.get(0).getCondition().trim().equals("true")) {
             minMaxBlock = block.get(0).getOperation().apply(minMax, ValueExpressionVisitor.findMinMax(block.get(0).getValue(), lookup));
+            if (minMaxBlock.max < 0)
+                throw new IllegalArgumentException("statement resulted in negative value: " + block.get(0));
         } else {
             minMaxBlock = new MinMax(Double.MAX_VALUE, 0);
             boolean foundElse = false;
             for (Statement s : block) {
                 if (s.getKeyword() == ELSE) foundElse = true;
                 MinMax tmp = s.getOperation().apply(minMax, ValueExpressionVisitor.findMinMax(s.getValue(), lookup));
+                if (tmp.max < 0)
+                    throw new IllegalArgumentException("statement resulted in negative value: " + s);
                 minMaxBlock.min = Math.min(minMaxBlock.min, tmp.min);
                 minMaxBlock.max = Math.max(minMaxBlock.max, tmp.max);
             }

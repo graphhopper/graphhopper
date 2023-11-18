@@ -63,7 +63,7 @@ public class CustomWeightingHelper {
     }
 
     public final double calcMaxSpeed() {
-        MinMax minMaxSpeed = new MinMax(1, GLOBAL_MAX_SPEED);
+        MinMax minMaxSpeed = new MinMax(0, GLOBAL_MAX_SPEED);
         FindMinMax.findMinMax(minMaxSpeed, customModel.getSpeed(), lookup);
         if (minMaxSpeed.min < 0)
             throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + minMaxSpeed.min + ")");
@@ -76,8 +76,7 @@ public class CustomWeightingHelper {
     }
 
     public final double calcMaxPriority() {
-        // initial value of minimum has to be >0 so that multiple_by with a negative value leads to a negative value and not 0
-        MinMax minMaxPriority = new MinMax(1, GLOBAL_PRIORITY);
+        MinMax minMaxPriority = new MinMax(0, GLOBAL_PRIORITY);
         List<Statement> statements = customModel.getPriority();
         if (!statements.isEmpty() && "true".equals(statements.get(0).getCondition())) {
             String value = statements.get(0).getValue();

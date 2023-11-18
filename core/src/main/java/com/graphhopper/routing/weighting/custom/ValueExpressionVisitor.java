@@ -7,8 +7,8 @@ import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.IntEncodedValue;
 import org.codehaus.commons.compiler.CompileException;
-import org.codehaus.janino.*;
 import org.codehaus.janino.Scanner;
+import org.codehaus.janino.*;
 
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
@@ -177,6 +177,41 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
             throw new IllegalArgumentException(result.invalidMessage);
         if (result.guessedVariables.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
+
+        double value;
+        try {
+            // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
+            // We still call the parse() method before as it is only ~3x slower and might increase security slightly. Because certain
+            // expressions are accepted from Double.parseDouble but parse() rejects them. With this call order we avoid unexpected security problems.
+            value = Double.parseDouble(valueExpression);
+        } catch (NumberFormatException ex) {
+            try {
+                if (result.guessedVariables.isEmpty()) { // without encoded values
+                    ExpressionEvaluator ee = new ExpressionEvaluator();
+                    ee.cook(valueExpression);
+                    value = ((Number) ee.evaluate()).doubleValue();
+                } else if (lookup.hasEncodedValue(valueExpression)) { // speed up for common case that complete right-hand side is the encoded value
+                    EncodedValue enc = lookup.getEncodedValue(valueExpression, EncodedValue.class);
+                    value = getMax(enc);
+                } else {
+                    // single encoded value
+                    ExpressionEvaluator ee = new ExpressionEvaluator();
+                    String var = result.guessedVariables.iterator().next();
+                    ee.setParameters(new String[]{var}, new Class[]{double.class});
+                    ee.cook(valueExpression);
+                    double max = getMax(lookup.getEncodedValue(var, EncodedValue.class));
+                    Number val1 = (Number) ee.evaluate(max);
+                    double min = getMin(lookup.getEncodedValue(var, EncodedValue.class));
+                    Number val2 = (Number) ee.evaluate(min);
+                    value = Math.min(val1.doubleValue(), val2.doubleValue());
+                }
+            } catch (CompileException | InvocationTargetException ex2) {
+                throw new IllegalArgumentException(ex2);
+            }
+        }
+        if (value < 0)
+            throw new IllegalArgumentException("illegal expression as it can result in a negative weight: " + valueExpression);
+
         return result.guessedVariables;
     }
 
@@ -225,14 +260,17 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
     }
 
     static double getMin(EncodedValue enc) {
-        if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMinStorableDecimal();
+        if (enc instanceof DecimalEncodedValue)
+            return ((DecimalEncodedValue) enc).getMinStorableDecimal();
         else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMinStorableInt();
         throw new IllegalArgumentException("Cannot use non-number data '" + enc.getName() + "' in value expression");
     }
 
     static double getMax(EncodedValue enc) {
-        if (enc instanceof DecimalEncodedValue) return ((DecimalEncodedValue) enc).getMaxOrMaxStorableDecimal();
-        else if (enc instanceof IntEncodedValue) return ((IntEncodedValue) enc).getMaxOrMaxStorableInt();
+        if (enc instanceof DecimalEncodedValue)
+            return ((DecimalEncodedValue) enc).getMaxOrMaxStorableDecimal();
+        else if (enc instanceof IntEncodedValue)
+            return ((IntEncodedValue) enc).getMaxOrMaxStorableInt();
         throw new IllegalArgumentException("Cannot use non-number data '" + enc.getName() + "' in value expression");
     }
 }
