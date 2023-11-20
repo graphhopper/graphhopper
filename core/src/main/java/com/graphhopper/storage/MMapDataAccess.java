@@ -65,7 +65,7 @@ public final class MMapDataAccess extends AbstractDataAccess {
         this.allowWrites = allowWrites;
     }
 
-    private static MethodHandle getByteBufferCleaner() {
+    static MethodHandle getByteBufferCleaner() {
         try {
             Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
             Lookup lookup = MethodHandles.privateLookupIn(unsafeClass, MethodHandles.lookup());

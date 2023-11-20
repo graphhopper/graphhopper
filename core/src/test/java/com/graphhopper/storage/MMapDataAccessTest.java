@@ -19,6 +19,9 @@ package com.graphhopper.storage;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.invoke.MethodHandle;
+import java.nio.ByteBuffer;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -58,5 +61,18 @@ public class MMapDataAccessTest extends DataAccessTest {
         assertTrue(da.loadExisting());
         assertEquals(123, da.getInt(7 * 4));
         da.close();
+    }
+
+    @Test
+    public void testByteBufferCleaner() {
+        MethodHandle bufferCleaner = MMapDataAccess.getByteBufferCleaner();
+        assertNotNull(bufferCleaner);
+        try {
+            bufferCleaner.invokeExact(ByteBuffer.allocate(10));
+            fail("Cleaner invocation should fail for a non-direct buffer");
+        } catch (Throwable t) {
+            assertInstanceOf(IllegalArgumentException.class, t);
+            assertEquals("buffer is non-direct", t.getMessage());
+        }
     }
 }
