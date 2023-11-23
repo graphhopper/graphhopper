@@ -136,26 +136,11 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         return result;
     }
 
-    public static Set<String> findVariables(List<Statement> statements, EncodedValueLookup lookup) {
-        List<List<Statement>> blocks = splitIntoBlocks(statements);
+    static Set<String> findVariables(List<Statement> statements, EncodedValueLookup lookup) {
+        List<List<Statement>> blocks = CustomModelParser.splitIntoBlocks(statements);
         Set<String> variables = new LinkedHashSet<>();
-        for (List<Statement> block : blocks) findVariablesForBlock(variables, block, lookup);
+        for (List<Statement> block : blocks) ValueExpressionVisitor.findVariablesForBlock(variables, block, lookup);
         return variables;
-    }
-
-    /**
-     * Splits the specified list into several list of statements starting with if
-     */
-    static List<List<Statement>> splitIntoBlocks(List<Statement> statements) {
-        List<List<Statement>> result = new ArrayList<>();
-        List<Statement> block = null;
-        for (Statement st : statements) {
-            if (IF.equals(st.getKeyword())) result.add(block = new ArrayList<>());
-            if (block == null)
-                throw new IllegalArgumentException("Every block must start with an if-statement");
-            block.add(st);
-        }
-        return result;
     }
 
     private static void findVariablesForBlock(Set<String> createdObjects, List<Statement> block, EncodedValueLookup lookup) {
@@ -192,7 +177,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
                     value = ((Number) ee.evaluate()).doubleValue();
                 } else if (lookup.hasEncodedValue(valueExpression)) { // speed up for common case that complete right-hand side is the encoded value
                     EncodedValue enc = lookup.getEncodedValue(valueExpression, EncodedValue.class);
-                    value = getMax(enc);
+                    value = Math.min(getMin(enc), getMax(enc));
                 } else {
                     // single encoded value
                     ExpressionEvaluator ee = new ExpressionEvaluator();

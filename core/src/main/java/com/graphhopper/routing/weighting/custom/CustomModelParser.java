@@ -38,6 +38,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.graphhopper.json.Statement.Keyword.IF;
+
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
     static final String IN_AREA_PREFIX = "in_";
@@ -165,16 +167,15 @@ public class CustomModelParser {
             if (customModel.getSpeed().isEmpty())
                 throw new IllegalArgumentException("At least one initial statement under 'speed' is required.");
 
-            // TODO NOW move splitIntoBlocks into different class
-            List<Statement> firstBlock = ValueExpressionVisitor.splitIntoBlocks(customModel.getSpeed()).get(0);
+            List<Statement> firstBlock = splitIntoBlocks(customModel.getSpeed()).get(0);
             if (firstBlock.size() > 1) {
                 Statement lastSt = firstBlock.get(firstBlock.size() - 1);
                 if (lastSt.getOperation() != Statement.Op.LIMIT || lastSt.getKeyword() != Statement.Keyword.ELSE)
-                    throw new IllegalArgumentException("The first block needs to end with an 'else' or start with an unconditional 'if' statement.");
+                    throw new IllegalArgumentException("The first block needs to end with an 'else' (or contain a single unconditional 'if' statement).");
             } else {
                 Statement firstSt = firstBlock.get(0);
                 if (!"true".equals(firstSt.getCondition()) || firstSt.getOperation() != Statement.Op.LIMIT || firstSt.getKeyword() != Statement.Keyword.IF)
-                    throw new IllegalArgumentException("The first statement currently needs to be an unconditional 'if' statement.");
+                    throw new IllegalArgumentException("The first block needs to contain a single unconditional 'if' statement (or end with an 'else').");
             }
 
             Set<String> speedVariables = ValueExpressionVisitor.findVariables(customModel.getSpeed(), lookup);
@@ -194,6 +195,21 @@ public class CustomModelParser {
             String errString = "Cannot compile expression";
             throw new IllegalArgumentException(errString + ": " + ex.getMessage(), ex);
         }
+    }
+
+    /**
+     * Splits the specified list into several list of statements starting with if
+     */
+    static List<List<Statement>> splitIntoBlocks(List<Statement> statements) {
+        List<List<Statement>> result = new ArrayList<>();
+        List<Statement> block = null;
+        for (Statement st : statements) {
+            if (IF.equals(st.getKeyword())) result.add(block = new ArrayList<>());
+            if (block == null)
+                throw new IllegalArgumentException("Every block must start with an if-statement");
+            block.add(st);
+        }
+        return result;
     }
 
     /**

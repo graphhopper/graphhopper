@@ -49,7 +49,7 @@ public class FindMinMax {
      */
     static MinMax findMinMax(MinMax minMax, List<Statement> statements, EncodedValueLookup lookup) {
         // 'blocks' of the statements are applied one after the other. A block consists of one (if) or more statements (elseif+else)
-        List<List<Statement>> blocks = ValueExpressionVisitor.splitIntoBlocks(statements);
+        List<List<Statement>> blocks = CustomModelParser.splitIntoBlocks(statements);
         for (List<Statement> block : blocks) findMinMaxForBlock(minMax, block, lookup);
         return minMax;
     }
