@@ -48,8 +48,8 @@ public class GraphHopperConfig {
     public GraphHopperConfig(GraphHopperConfig otherConfig) {
         map = new PMap(otherConfig.map);
         otherConfig.profiles.forEach(p -> profiles.add(new Profile(p)));
-        otherConfig.chProfiles.forEach(p -> chProfiles.add(new CHProfile(p.getProfile())));
-        otherConfig.lmProfiles.forEach(p -> lmProfiles.add(new LMProfile(p.getProfile())));
+        otherConfig.chProfiles.forEach(p -> chProfiles.add(new CHProfile(p)));
+        otherConfig.lmProfiles.forEach(p -> lmProfiles.add(new LMProfile(p)));
     }
 
     public GraphHopperConfig(PMap pMap) {
