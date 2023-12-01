@@ -37,6 +37,12 @@ public class LMProfile {
         // default constructor needed for jackson
     }
 
+    public LMProfile(LMProfile profile) {
+        this.profile = profile.profile;
+        this.preparationProfile = profile.preparationProfile;
+        this.maximumLMWeight = profile.maximumLMWeight;
+    }
+
     public LMProfile(String profile) {
         setProfile(profile);
     }

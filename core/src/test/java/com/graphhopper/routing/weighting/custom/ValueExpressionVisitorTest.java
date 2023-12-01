@@ -131,6 +131,9 @@ class ValueExpressionVisitorTest {
 
         assertEquals(Set.of(), findVariables("2", lookup));
         assertEquals(Set.of("my_priority"), findVariables("2*my_priority", lookup));
+
+        Exception ex = assertThrows(IllegalArgumentException.class, () ->  findVariables("-2*my_priority", lookup));
+        assertTrue(ex.getMessage().contains("illegal expression as it can result in a negative weight"));
     }
 
     void assertInterval(double min, double max, String expression, EncodedValueLookup lookup) {

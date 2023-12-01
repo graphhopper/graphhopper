@@ -9,6 +9,7 @@ import com.graphhopper.routing.ev.IntEncodedValue;
 import org.codehaus.commons.compiler.CompileException;
 import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
+import org.codehaus.janino.Scanner;
 
 import java.io.StringReader;
 import java.lang.reflect.InvocationTargetException;
