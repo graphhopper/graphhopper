@@ -161,7 +161,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(1094, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(1022, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
         assertEquals(3535, res.getDistance(), 1);

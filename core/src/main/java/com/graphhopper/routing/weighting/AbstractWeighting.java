@@ -72,10 +72,6 @@ public abstract class AbstractWeighting implements Weighting {
         return turnCostProvider != NO_TURN_COST_PROVIDER;
     }
 
-    public TurnCostProvider getTurnCostProvider() {
-        return turnCostProvider;
-    }
-
     static boolean isValidName(String name) {
         if (name == null || name.isEmpty())
             return false;
