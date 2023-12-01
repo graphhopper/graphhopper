@@ -142,18 +142,11 @@ public class CustomModelParser {
     /**
      * This method does the following:
      * <ul>
-     * <li>-1. optionally we already checked the right-hand side expressions before this method call in FindMinMax.checkLMConstraints
-     *     (only the client-side custom model statements)
-     * </li>
-     * <li>0. optionally and on demand determine minimum and maximum speed and priority via parsing
-     *     the value expressions (right-hand side=RHS) which is done in CustomWeightingHelper -> FindMinMax.findMinMax.
-     *     We need the maximum values for A* due to Weighting.calcMinWeightPerDistance.
-     * </li>
      * <li>
-     *     1. we parse the value expressions (RHS) to know about additional encoded values ('findVariables')
+     *     1. parse the value expressions (RHS) to know about additional encoded values ('findVariables')
      *     and check for multiplications with negative values.
      * </li>
-     * <li>2. parse condition value of priority and speed statements -> done in ConditionalExpressionVisitor (don't parse RHS expressions again)
+     * <li>2. parse conditional expression of priority and speed statements -> done in ConditionalExpressionVisitor (don't parse RHS expressions again)
      * </li>
      * <li>3. create class template as String, inject the created statements and create the Class
      * </li>

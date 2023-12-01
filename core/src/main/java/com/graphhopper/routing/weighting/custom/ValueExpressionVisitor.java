@@ -164,6 +164,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         if (result.guessedVariables.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
 
+        // TODO Nearly duplicate code as in findMinMax
         double value;
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
@@ -208,6 +209,7 @@ public class ValueExpressionVisitor implements Visitor.AtomVisitor<Boolean, Exce
         if (result.guessedVariables.size() > 1)
             throw new IllegalArgumentException("Currently only a single EncodedValue is allowed on the right-hand side, but was " + result.guessedVariables.size() + ". Value expression: " + valueExpression);
 
+        // TODO Nearly duplicate as in findVariables
         try {
             // Speed optimization for numbers only as its over 200x faster than ExpressionEvaluator+cook+evaluate!
             // We still call the parse() method before as it is only ~3x slower and might increase security slightly. Because certain
