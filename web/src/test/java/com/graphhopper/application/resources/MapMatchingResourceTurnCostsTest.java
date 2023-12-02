@@ -24,9 +24,12 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.ResponsePathDeserializer;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.TurnCostsConfig;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
+import org.checkerframework.checker.units.qual.C;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -43,6 +46,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.util.TransportationMode.CAR;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -62,7 +66,7 @@ public class MapMatchingResourceTurnCostsTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("car").setVehicle("car").setTurnCosts(true),
+                        new Profile("car").setVehicle("car").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(CAR))),
                         new Profile("car_no_tc").setVehicle("car"),
                         new Profile("bike").setVehicle("bike"))
                 ).

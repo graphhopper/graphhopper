@@ -43,11 +43,8 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Algorithms;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,7 +99,7 @@ public class MiniGraphUI {
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("profile")
                         .setVehicle("car")
-                        .setTurnCosts(true)
+                        .setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(TransportationMode.CAR)))
         )).putObject("import.osm.ignored_highways", "");
         ghConfig.setCHProfiles(Arrays.asList(
                 new CHProfile("profile")

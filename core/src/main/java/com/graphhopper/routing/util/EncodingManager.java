@@ -302,6 +302,7 @@ public class EncodingManager implements EncodedValueLookup {
         return getTurnEncodedValue(key, DecimalEncodedValue.class);
     }
 
+    @Override
     public BooleanEncodedValue getTurnBooleanEncodedValue(String key) {
         return getTurnEncodedValue(key, BooleanEncodedValue.class);
     }

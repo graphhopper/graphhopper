@@ -34,6 +34,7 @@ public class CustomModel {
     private boolean internal;
     private List<Statement> speedStatements = new ArrayList<>();
     private List<Statement> priorityStatements = new ArrayList<>();
+    private TurnCostsConfig turnCostsConfig = new TurnCostsConfig();
     private JsonFeatureCollection areas = new JsonFeatureCollection();
 
     public CustomModel() {
@@ -46,6 +47,7 @@ public class CustomModel {
 
         speedStatements = deepCopy(toCopy.getSpeed());
         priorityStatements = deepCopy(toCopy.getPriority());
+        turnCostsConfig = new TurnCostsConfig(toCopy.turnCostsConfig);
 
         addAreas(toCopy.getAreas());
     }
@@ -123,6 +125,15 @@ public class CustomModel {
         return this;
     }
 
+    public CustomModel setTurnCosts(TurnCostsConfig turnCostsConfig) {
+        this.turnCostsConfig = turnCostsConfig;
+        return this;
+    }
+
+    public TurnCostsConfig getTurnCosts() {
+        return turnCostsConfig;
+    }
+
     @JsonDeserialize(using = CustomModelAreasDeserializer.class)
     public CustomModel setAreas(JsonFeatureCollection areas) {
         this.areas = areas;
@@ -179,6 +190,8 @@ public class CustomModel {
         mergedCM.speedStatements.addAll(queryModel.getSpeed());
         mergedCM.priorityStatements.addAll(queryModel.getPriority());
         mergedCM.addAreas(queryModel.getAreas());
+
+        // TODO NOW instead of ignoring turn_costs entry, throw exception!
 
         return mergedCM;
     }

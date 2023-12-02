@@ -4,7 +4,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.MaxWeightExcept;
-import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.util.TransportationMode;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 

@@ -34,9 +34,8 @@ import com.graphhopper.util.PMap;
  */
 public class Profile {
     private String name = null;
-    private String vehicle = null;
     private String weighting = "custom";
-    private boolean turnCosts = false;
+    private CustomModel customModel = new CustomModel();
     private PMap hints = new PMap();
 
     public static void validateProfileName(String profileName) {
@@ -51,14 +50,12 @@ public class Profile {
 
     public Profile(String name) {
         setName(name);
-        setCustomModel(new CustomModel());
     }
 
     public Profile(Profile p) {
         setName(p.getName());
-        setVehicle(p.getVehicle());
         setWeighting(p.getWeighting());
-        setTurnCosts(p.isTurnCosts());
+        setCustomModel(p.getCustomModel());
         hints = new PMap(p.getHints());
     }
 
@@ -69,15 +66,6 @@ public class Profile {
     public Profile setName(String name) {
         validateProfileName(name);
         this.name = name;
-        return this;
-    }
-
-    public String getVehicle() {
-        return vehicle;
-    }
-
-    public Profile setVehicle(String vehicle) {
-        this.vehicle = vehicle;
         return this;
     }
 
@@ -93,21 +81,12 @@ public class Profile {
     public Profile setCustomModel(CustomModel customModel) {
         if (customModel != null)
             customModel.internal();
-        getHints().putObject(CustomModel.KEY, customModel);
+        this.customModel = customModel;
         return this;
     }
 
     public CustomModel getCustomModel() {
-        return getHints().getObject(CustomModel.KEY, null);
-    }
-
-    public boolean isTurnCosts() {
-        return turnCosts;
-    }
-
-    public Profile setTurnCosts(boolean turnCosts) {
-        this.turnCosts = turnCosts;
-        return this;
+        return customModel;
     }
 
     @JsonIgnore
@@ -136,7 +115,7 @@ public class Profile {
 
     private String createContentString() {
         // used to check against stored custom models, see #2026
-        return "name=" + name + "|vehicle=" + vehicle + "|weighting=" + weighting + "|turnCosts=" + turnCosts + "|hints=" + hints;
+        return "name=" + name + "|weighting=" + weighting + "|custom_model=" + getCustomModel() + "|hints=" + hints;
     }
 
     @Override

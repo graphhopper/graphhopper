@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import static com.graphhopper.util.GHUtility.readCountries;
+import static com.graphhopper.util.TransportationMode.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -390,7 +391,7 @@ public class OSMReaderTest {
         hopper.setVehiclesString("car|block_fords=true");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
-                setProfiles(new Profile("car").setVehicle("car")).
+                setProfiles(new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", true))).
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getBaseGraph();
@@ -733,9 +734,9 @@ public class OSMReaderTest {
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
-                        new Profile("bike").setVehicle("bike").setTurnCosts(true),
-                        new Profile("car").setVehicle("car").setTurnCosts(true),
-                        new Profile("truck").setVehicle("truck").setTurnCosts(true)
+                        new Profile("bike").setCustomModel(Helper.createBaseCustomModel("bike", true).setTurnCosts(new TurnCostsConfig(BIKE))),
+                        new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR))),
+                        new Profile("truck").setCustomModel(Helper.createBaseCustomModel("car", true).setTurnCosts(new TurnCostsConfig(HGV)))
                 ).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
@@ -932,7 +933,7 @@ public class OSMReaderTest {
                 return new File(getClass().getResource(file2).getFile());
             }
         }.setOSMFile("dummy").
-                setProfiles(new Profile("profile").setVehicle("car")).
+                setProfiles(new Profile("profile").setCustomModel(Helper.createBaseCustomModel("car", false))).
                 setMinNetworkSize(0).
                 setGraphHopperLocation(dir).
                 importOrLoad();
@@ -957,7 +958,7 @@ public class OSMReaderTest {
         EncodingManager em = new EncodingManager.Builder().build();
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         OSMParsers osmParsers = new OSMParsers();
-        osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
+        osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(CAR)));
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
@@ -1024,10 +1025,10 @@ public class OSMReaderTest {
             setGraphHopperLocation(dir);
             if (turnCosts) setVehiclesString("roads|turn_costs=true|transportation_mode=HGV");
             setProfiles(
-                    new Profile("foot").setVehicle("foot"),
-                    new Profile("car").setVehicle("car").setTurnCosts(turnCosts),
-                    new Profile("bike").setVehicle("bike").setTurnCosts(turnCosts),
-                    new Profile("roads").setVehicle("roads").setTurnCosts(turnCosts)
+                    new Profile("foot").setCustomModel(Helper.createBaseCustomModel("foot", true)),
+                    new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR).setRestrictions(turnCosts))),
+                    new Profile("bike").setCustomModel(Helper.createBaseCustomModel("bike", true).setTurnCosts(new TurnCostsConfig(BIKE).setRestrictions(turnCosts))),
+                    new Profile("roads").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(VEHICLE).setRestrictions(turnCosts)))
             );
             getReaderConfig().setPreferredLanguage(prefLang);
         }

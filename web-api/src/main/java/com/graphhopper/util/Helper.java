@@ -452,13 +452,16 @@ public class Helper {
     }
 
     public static CustomModel createBaseCustomModel(String vehicle, boolean priority) {
+        final CustomModel cm;
         if (priority)
-            return new CustomModel().
+            cm = new CustomModel().
                     addToPriority(If(vehicle + "_access", MULTIPLY, vehicle + "_priority")).
                     addToPriority(Else(MULTIPLY, "0")).
                     addToSpeed(If("true", LIMIT, vehicle + "_average_speed"));
-        return new CustomModel().
-                addToPriority(If("!" + vehicle + "_access", MULTIPLY, "0")).
-                addToSpeed(If("true", LIMIT, vehicle + "_average_speed"));
+        else
+            cm = new CustomModel().
+                    addToPriority(If("!" + vehicle + "_access", MULTIPLY, "0")).
+                    addToSpeed(If("true", LIMIT, vehicle + "_average_speed"));
+        return cm;
     }
 }

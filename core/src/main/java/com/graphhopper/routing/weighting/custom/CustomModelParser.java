@@ -20,7 +20,9 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
@@ -39,6 +41,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.graphhopper.json.Statement.Keyword.IF;
+import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
@@ -91,9 +94,20 @@ public class CustomModelParser {
      *  <code>{ "if": "true", "limit_to": "car_average_speed" }<code/> for speed and
      *  <code>{ "if": "!car_access", "multiply_by": "0" }</code> for priority.
      */
-    public static CustomWeighting createWeighting(EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
+    public static CustomWeighting createWeighting(EncodedValueLookup lookup, TurnCostStorage turnCostStorage, CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
+
+        TurnCostProvider turnCostProvider;
+        if (customModel.getTurnCosts().isRestrictions()) {
+            String vehicle = Helper.toLowerCase(customModel.getTurnCosts().getTransportationMode().name());
+            BooleanEncodedValue turnRestrictionEnc = lookup.getTurnBooleanEncodedValue(TurnRestriction.key(vehicle));
+            int uTurnCosts = customModel.getTurnCosts().getUTurnCosts();
+            turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, turnCostStorage, uTurnCosts);
+        } else {
+            turnCostProvider = NO_TURN_COST_PROVIDER;
+        }
+
         CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup);
         return new CustomWeighting(turnCostProvider, parameters);
     }
