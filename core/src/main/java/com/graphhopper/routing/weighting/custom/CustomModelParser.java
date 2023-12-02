@@ -68,8 +68,9 @@ public class CustomModelParser {
         // utility class
     }
 
-    public static CustomWeighting createWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
-                                                  EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
+    @Deprecated
+    public static CustomWeighting createLegacyWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                                                        EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
         CustomModel tmp = new CustomModel();
@@ -85,8 +86,12 @@ public class CustomModelParser {
         return new CustomWeighting(turnCostProvider, parameters);
     }
 
-    // TODO NOW use this method: it comes without "base" parsers!
-    public static CustomWeighting createNewWeighting(EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
+    /**
+     * This method creates a weighting from a CustomModel that must already contain base parsers. E.g.
+     *  <code>{ "if": "true", "limit_to": "car_average_speed" }<code/> for speed and
+     *  <code>{ "if": "!car_access", "multiply_by": "0" }</code> for priority.
+     */
+    public static CustomWeighting createWeighting(EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
         CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup);
@@ -95,7 +100,7 @@ public class CustomModelParser {
 
     public static CustomWeighting createFastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EncodingManager lookup) {
         CustomModel cm = new CustomModel();
-        return createWeighting(accessEnc, speedEnc, null, lookup, TurnCostProvider.NO_TURN_COST_PROVIDER, cm);
+        return createLegacyWeighting(accessEnc, speedEnc, null, lookup, TurnCostProvider.NO_TURN_COST_PROVIDER, cm);
     }
 
     /**

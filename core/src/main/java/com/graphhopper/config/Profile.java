@@ -33,8 +33,8 @@ import com.graphhopper.util.PMap;
  * @see LMProfile
  */
 public class Profile {
-    private String name = "car";
-    private String vehicle = "car";
+    private String name = null;
+    private String vehicle = null;
     private String weighting = "custom";
     private boolean turnCosts = false;
     private PMap hints = new PMap();

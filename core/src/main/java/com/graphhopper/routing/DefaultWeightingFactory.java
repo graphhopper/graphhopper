@@ -29,6 +29,7 @@ import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
@@ -72,18 +73,24 @@ public class DefaultWeightingFactory implements WeightingFactory {
             throw new IllegalArgumentException("You have to specify a weighting");
 
         Weighting weighting = null;
-        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key(vehicle));
-        DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(VehicleSpeed.key(vehicle));
-        DecimalEncodedValue priorityEnc = encodingManager.hasEncodedValue(VehiclePriority.key(vehicle))
-                ? encodingManager.getDecimalEncodedValue(VehiclePriority.key(vehicle))
-                : null;
-        if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
+        if (!Helper.isEmpty(vehicle) && CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
+            BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key(vehicle));
+            DecimalEncodedValue speedEnc = encodingManager.getDecimalEncodedValue(VehicleSpeed.key(vehicle));
+            DecimalEncodedValue priorityEnc = encodingManager.hasEncodedValue(VehiclePriority.key(vehicle))
+                    ? encodingManager.getDecimalEncodedValue(VehiclePriority.key(vehicle))
+                    : null;
             final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
             final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
             if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
                 mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
-            weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
+            weighting = CustomModelParser.createLegacyWeighting(accessEnc, speedEnc,
                     priorityEnc, encodingManager, turnCostProvider, mergedCustomModel);
+        } else if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
+            final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
+            final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
+            if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
+                mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
+            weighting = CustomModelParser.createWeighting(encodingManager, turnCostProvider, mergedCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             throw new IllegalArgumentException("Instead of weighting=shortest use weighting=custom with a high distance_influence");
         } else if ("fastest".equalsIgnoreCase(weightingStr)) {

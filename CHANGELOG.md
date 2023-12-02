@@ -1,5 +1,8 @@
 ### 9.0 [not yet released]
 
+- now an initial statement for priority and speed is required like 
+  { "if": "true", "limit_to": "car_average_speed" } for speed and 
+  { "if": "!car_access", "multiply_by": "0" } for priority, see #1234   
 - the custom models do no longer include the speed, access and priority encoded values only implicitly, see #1234 for a migration guide 
 - removed wheelchair vehicle and related parsers, with currently no complete replacement as it needs to be redone properly with a custom model
 - removed deprecated PMap.put

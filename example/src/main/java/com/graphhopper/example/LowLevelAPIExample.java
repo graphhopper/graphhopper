@@ -79,7 +79,7 @@ public class LowLevelAPIExample {
             Snap fromSnap = index.findClosest(15.15, 20.20, EdgeFilter.ALL_EDGES);
             Snap toSnap = index.findClosest(15.25, 20.21, EdgeFilter.ALL_EDGES);
             QueryGraph queryGraph = QueryGraph.create(graph, fromSnap, toSnap);
-            Weighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, em, TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel());
+            Weighting weighting = CustomModelParser.createLegacyWeighting(accessEnc, speedEnc, null, em, TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel());
             Path path = new Dijkstra(queryGraph, weighting, TraversalMode.NODE_BASED).calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
             assert Helper.round(path.getDistance(), -2) == 1500;
 
@@ -94,7 +94,7 @@ public class LowLevelAPIExample {
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 7, 2, false);
         EncodingManager em = EncodingManager.start().add(accessEnc).add(speedEnc).build();
-        Weighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, em, TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel());
+        Weighting weighting = CustomModelParser.createLegacyWeighting(accessEnc, speedEnc, null, em, TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel());
         CHConfig chConfig = CHConfig.nodeBased("my_profile", weighting);
         BaseGraph graph = new BaseGraph.Builder(em)
                 .setDir(new RAMDirectory(graphLocation, true))

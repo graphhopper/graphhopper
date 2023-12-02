@@ -188,7 +188,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> list = new ArrayList<>();
         list.add(new Query(-0.49, 0.0, 0.0, -0.49, 298792.107, 6));
         GraphHopper hopper = createHopper(DIR + "/test_simple_turncosts.osm.xml",
-                new Profile("car").setVehicle("car").setTurnCosts(true));
+                new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false)).setTurnCosts(true));
         hopper.importOrLoad();
         checkQueries(hopper, list);
     }

@@ -53,7 +53,7 @@ class CustomWeightingTest {
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {
-        return CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        return CustomModelParser.createLegacyWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
     }
 
     @Test
@@ -138,11 +138,11 @@ class CustomWeightingTest {
                 set(avSpeedEnc, 15).set(specialEnc, false).setReverse(specialEnc, true).setDistance(10);
 
         CustomModel vehicleModel = new CustomModel().setDistanceInfluence(70d);
-        Weighting weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        Weighting weighting = CustomModelParser.createLegacyWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(3.1, weighting.calcEdgeWeight(edge, false), 0.01);
         vehicleModel.addToPriority(If("special == true", MULTIPLY, "0.8"));
         vehicleModel.addToPriority(If("special == false", MULTIPLY, "0.4"));
-        weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
+        weighting = CustomModelParser.createLegacyWeighting(accessEnc, avSpeedEnc, null, encodingManager, NO_TURN_COST_PROVIDER, vehicleModel);
         assertEquals(6.7, weighting.calcEdgeWeight(edge, false), 0.01);
         assertEquals(3.7, weighting.calcEdgeWeight(edge, true), 0.01);
     }
@@ -360,7 +360,7 @@ class CustomWeightingTest {
 
     @Test
     public void testWeightWrongHeading() {
-        Weighting instance = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager,
+        Weighting instance = CustomModelParser.createLegacyWeighting(accessEnc, avSpeedEnc, null, encodingManager,
                 TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel().setHeadingPenalty(100));
         EdgeIteratorState edge = graph.edge(1, 2).setDistance(10).setWayGeometry(Helper.createPointList(51, 0, 51, 1));
         GHUtility.setSpeed(10, 10, accessEnc, avSpeedEnc, edge);
@@ -412,7 +412,7 @@ class CustomWeightingTest {
     @Test
     public void calcWeightAndTime_withTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-        Weighting weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null, encodingManager,
+        Weighting weighting = CustomModelParser.createLegacyWeighting(accessEnc, avSpeedEnc, null, encodingManager,
                 new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage()), new CustomModel());
         GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(1, 2).setDistance(100));
@@ -424,7 +424,7 @@ class CustomWeightingTest {
     @Test
     public void calcWeightAndTime_uTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-        Weighting weighting = CustomModelParser.createWeighting(accessEnc, avSpeedEnc, null,
+        Weighting weighting = CustomModelParser.createLegacyWeighting(accessEnc, avSpeedEnc, null,
                 encodingManager, new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), 40), new CustomModel());
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, avSpeedEnc, graph.edge(0, 1).setDistance(100));
         assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
@@ -458,10 +458,10 @@ class CustomWeightingTest {
         edge.set(bikeSpeedEnc, 18);
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
 
-        Weighting weighting = CustomModelParser.createWeighting(carAccessEnc, carSpeedEnc, null, em,
+        Weighting weighting = CustomModelParser.createLegacyWeighting(carAccessEnc, carSpeedEnc, null, em,
                 TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel().addToPriority(If("road_access == DESTINATION", MULTIPLY, ".1")));
 
-        Weighting bikeWeighting = CustomModelParser.createWeighting(bikeAccessEnc, bikeSpeedEnc, null, em,
+        Weighting bikeWeighting = CustomModelParser.createLegacyWeighting(bikeAccessEnc, bikeSpeedEnc, null, em,
                 TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel());
 
         edge.set(roadAccessEnc, RoadAccess.YES);
@@ -489,10 +489,10 @@ class CustomWeightingTest {
         edge.set(bikeSpeedEnc, 18);
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
 
-        Weighting weighting = CustomModelParser.createWeighting(carAccessEnc, carSpeedEnc, null, em,
+        Weighting weighting = CustomModelParser.createLegacyWeighting(carAccessEnc, carSpeedEnc, null, em,
                 TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel().addToPriority(If("road_access == PRIVATE", MULTIPLY, ".1")));
 
-        Weighting bikeWeighting = CustomModelParser.createWeighting(bikeAccessEnc, bikeSpeedEnc, null, em,
+        Weighting bikeWeighting = CustomModelParser.createLegacyWeighting(bikeAccessEnc, bikeSpeedEnc, null, em,
                 TurnCostProvider.NO_TURN_COST_PROVIDER, new CustomModel().addToPriority(If("road_access == PRIVATE", MULTIPLY, "0.8333")));
 
         ReaderWay way = new ReaderWay(1);
