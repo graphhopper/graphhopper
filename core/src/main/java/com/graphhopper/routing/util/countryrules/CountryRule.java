@@ -21,7 +21,7 @@ package com.graphhopper.routing.util.countryrules;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.RoadAccess;
 import com.graphhopper.routing.ev.Toll;
-import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.util.TransportationMode;
 
 /**
  * GraphHopper uses country rules to adjust the routing behavior based on the country an edge is located in

@@ -36,7 +36,7 @@ public class HeadingExample {
         hopper.setGraphHopperLocation("target/heading-graph-cache");
         hopper.setProfiles(new Profile("car").setCustomModel(new CustomModel().
                 addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1"))).
-                setVehicle("car").setTurnCosts(false));
+                setVehicle("car"));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
         hopper.importOrLoad();
         return hopper;

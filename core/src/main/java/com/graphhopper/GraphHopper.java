@@ -748,8 +748,9 @@ public class GraphHopper {
         for (Profile profile : profiles) {
             // if a profile uses a vehicle with turn costs make sure we add that vehicle with turn costs
             String vehicle = profile.getVehicle().trim();
-            if (!vehiclesFromProfiles.containsKey(vehicle) || profile.isTurnCosts())
-                vehiclesFromProfiles.put(vehicle, vehicle + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
+            boolean tc = profile.getCustomModel().getTurnCosts().isRestrictions();
+            if (!vehiclesFromProfiles.containsKey(vehicle) || tc)
+                vehiclesFromProfiles.put(vehicle, vehicle + (tc ? "|turn_costs=true" : ""));
         }
         // vehicles from profiles are only taken into account when they were not given explicitly
         vehiclesFromProfiles.forEach(vehiclesMap::putIfAbsent);
@@ -1113,7 +1114,7 @@ public class GraphHopper {
             BooleanEncodedValue turnRestrictionEnc = encodingManager.hasTurnEncodedValue(TurnRestriction.key(profile.getVehicle()))
                     ? encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getVehicle()))
                     : null;
-            if (profile.isTurnCosts() && turnRestrictionEnc == null) {
+            if (profile.getCustomModel().getTurnCosts().isRestrictions() && turnRestrictionEnc == null) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +
                         "'turn_costs=true', but the corresponding vehicle '" + profile.getVehicle() + "' does not support turn costs." +
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.vehicles`");
@@ -1174,7 +1175,7 @@ public class GraphHopper {
         List<CHConfig> chConfigs = new ArrayList<>();
         for (CHProfile chProfile : chProfiles) {
             Profile profile = profilesByName.get(chProfile.getProfile());
-            if (profile.isTurnCosts()) {
+            if (profile.getCustomModel().getTurnCosts().isRestrictions()) {
                 chConfigs.add(CHConfig.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
             } else {
                 chConfigs.add(CHConfig.nodeBased(profile.getName(), createWeighting(profile, new PMap())));
@@ -1419,7 +1420,7 @@ public class GraphHopper {
         List<PrepareJob> jobs = new ArrayList<>();
         for (Profile profile : profilesByName.values()) {
             // if turn costs are enabled use u-turn costs of zero as we only want to make sure the graph is fully connected assuming finite u-turn costs
-            Weighting weighting = createWeighting(profile, new PMap().putObject(Parameters.Routing.U_TURN_COSTS, 0));
+            Weighting weighting = createWeighting(profile, new PMap().putObject(TurnCostsConfig.U_TURN_COSTS, 0));
             jobs.add(new PrepareJob(encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())), weighting));
         }
         return jobs;
@@ -1521,17 +1522,14 @@ public class GraphHopper {
                 newProfiles.add(profile);
                 continue;
             }
-            Object cm = profile.getHints().getObject(CustomModel.KEY, null);
-            CustomModel customModel;
-            if (cm != null) {
+            CustomModel customModel = profile.getCustomModel();
+            if (customModel != null) {
                 if (!profile.getHints().getObject("custom_model_files", Collections.emptyList()).isEmpty())
                     throw new IllegalArgumentException("Do not use custom_model_files and custom_model together");
                 try {
-                    // custom_model can be an object tree (read from config) or an object (e.g. from tests)
-                    customModel = jsonOM.readValue(jsonOM.writeValueAsBytes(cm), CustomModel.class);
-                    newProfiles.add(profile.setCustomModel(customModel));
+                    newProfiles.add(profile);
                 } catch (Exception ex) {
-                    throw new RuntimeException("Cannot load custom_model from " + cm + " for profile " + profile.getName()
+                    throw new RuntimeException("Cannot load custom_model from " + customModel + " for profile " + profile.getName()
                             + ". If you are trying to load from a file, use 'custom_model_files' instead.", ex);
                 }
             } else {

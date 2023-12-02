@@ -25,7 +25,6 @@ import com.graphhopper.util.EdgeIteratorState;
  * @author Peter Karich
  */
 public interface Weighting {
-    int INFINITE_U_TURN_COSTS = -1;
 
     /**
      * Used only for the heuristic estimation in A*

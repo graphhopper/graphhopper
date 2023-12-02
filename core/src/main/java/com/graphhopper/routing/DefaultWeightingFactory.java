@@ -31,9 +31,9 @@ import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.TurnCostsConfig;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
@@ -55,13 +55,23 @@ public class DefaultWeightingFactory implements WeightingFactory {
         hints.putAll(profile.getHints());
         hints.putAll(requestHints);
 
+        final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
+        final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
+        if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
+            mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
+
         final String vehicle = profile.getVehicle();
         TurnCostProvider turnCostProvider;
-        if (profile.isTurnCosts() && !disableTurnCosts) {
+        if (mergedCustomModel.getTurnCosts().isRestrictions() && !disableTurnCosts) {
             BooleanEncodedValue turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(vehicle));
             if (turnRestrictionEnc == null)
                 throw new IllegalArgumentException("Vehicle " + vehicle + " does not support turn costs");
-            int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+
+            // for certain cases like subnetwork removal we need to overwrite the u turn costs
+            int uTurnCosts = requestHints.has(Parameters.Routing.U_TURN_COSTS)
+                    ? requestHints.getInt(Parameters.Routing.U_TURN_COSTS, TurnCostsConfig.INFINITE_U_TURN_COSTS)
+                    : mergedCustomModel.getTurnCosts().getUTurnCosts();
+
             turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), uTurnCosts);
         } else {
             turnCostProvider = NO_TURN_COST_PROVIDER;
@@ -78,10 +88,6 @@ public class DefaultWeightingFactory implements WeightingFactory {
                 ? encodingManager.getDecimalEncodedValue(VehiclePriority.key(vehicle))
                 : null;
         if (CustomWeighting.NAME.equalsIgnoreCase(weightingStr)) {
-            final CustomModel queryCustomModel = requestHints.getObject(CustomModel.KEY, null);
-            final CustomModel mergedCustomModel = CustomModel.merge(profile.getCustomModel(), queryCustomModel);
-            if (requestHints.has(Parameters.Routing.HEADING_PENALTY))
-                mergedCustomModel.setHeadingPenalty(requestHints.getDouble(Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY));
             weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
                     priorityEnc, encodingManager, turnCostProvider, mergedCustomModel);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {

@@ -23,11 +23,15 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
+import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.TransportationMode;
+import com.graphhopper.util.TurnCostsConfig;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
 
+import static com.graphhopper.util.TransportationMode.CAR;
 import static org.junit.jupiter.api.Assertions.*;
 
 public class GraphHopperProfileTest {
@@ -37,12 +41,12 @@ public class GraphHopperProfileTest {
     @Test
     public void deserialize() throws IOException {
         ObjectMapper objectMapper = Jackson.newObjectMapper();
-        String json = "{\"name\":\"my_car\",\"vehicle\":\"car\",\"weighting\":\"custom\",\"turn_costs\":true,\"foo\":\"bar\",\"baz\":\"buzz\"}";
+        String json = "{\"name\":\"my_car\",\"vehicle\":\"car\",\"weighting\":\"custom\",\"foo\":\"bar\",\"baz\":\"buzz\",\"custom_model\":{\"turn_costs\":{\"restrictions\":true}}}";
         Profile profile = objectMapper.readValue(json, Profile.class);
         assertEquals("my_car", profile.getName());
         assertEquals("car", profile.getVehicle());
         assertEquals("custom", profile.getWeighting());
-        assertTrue(profile.isTurnCosts());
+        assertTrue(profile.getCustomModel().getTurnCosts().isRestrictions());
         assertEquals(2, profile.getHints().toMap().size());
         assertEquals("bar", profile.getHints().getString("foo", ""));
         assertEquals("buzz", profile.getHints().getString("baz", ""));
@@ -77,8 +81,8 @@ public class GraphHopperProfileTest {
     public void oneVehicleTwoProfilesWithAndWithoutTC_noError() {
         final GraphHopper hopper = createHopper();
         hopper.setProfiles(
-                new Profile("profile1").setVehicle("car").setTurnCosts(false),
-                new Profile("profile2").setVehicle("car").setTurnCosts(true));
+                new Profile("profile1").setVehicle("car"),
+                new Profile("profile2").setVehicle("car").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(CAR))));
         hopper.load();
     }
 
@@ -86,8 +90,8 @@ public class GraphHopperProfileTest {
     public void oneVehicleTwoProfilesWithAndWithoutTC2_noError() {
         final GraphHopper hopper = createHopper();
         hopper.setProfiles(
-                new Profile("profile2").setVehicle("car").setTurnCosts(true),
-                new Profile("profile1").setVehicle("car").setTurnCosts(false));
+                new Profile("profile2").setVehicle("car").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(CAR))),
+                new Profile("profile1").setVehicle("car"));
         hopper.load();
     }
 

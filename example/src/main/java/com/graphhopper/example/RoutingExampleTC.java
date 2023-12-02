@@ -7,7 +7,10 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.TransportationMode;
+import com.graphhopper.util.TurnCostsConfig;
 
 import java.util.Arrays;
 
@@ -68,11 +71,10 @@ public class RoutingExampleTC {
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-tc-graph-cache");
         Profile profile = new Profile("car").setVehicle("car")
-                // enabling turn costs means OSM turn restriction constraints like 'no_left_turn' will be taken into account
-                .setTurnCosts(true)
-                // we can also set u_turn_costs (in seconds). by default no u-turns are allowed, but with this setting
+                // Enabling turn costs means OSM turn restriction constraints like 'no_left_turn' will be taken into account.
+                // We can also set u_turn_costs (in seconds). by default no u-turns are allowed, but with this setting
                 // we will consider u-turns at all junctions with a 40s time penalty
-                .putHint("u_turn_costs", 40);
+                .setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(TransportationMode.CAR, 40)));
         hopper.setProfiles(profile);
         // enable CH for our profile. since turn costs are enabled this will take more time and memory to prepare than
         // without turn costs.

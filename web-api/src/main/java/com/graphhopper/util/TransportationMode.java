@@ -15,7 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.util;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Define disjunct ways of transportation that are used to create and populate our encoded values from a data source
@@ -25,8 +27,24 @@ package com.graphhopper.routing.util;
  * @author Peter Karich
  */
 public enum TransportationMode {
-    OTHER(false), FOOT(false), VEHICLE(false), BIKE(false),
-    CAR(true), MOTORCYCLE(true), HGV(true), PSV(true), BUS(true);
+    @JsonProperty("other")
+    OTHER(false),
+    @JsonProperty("foot")
+    FOOT(false),
+    @JsonProperty("vehicle")
+    VEHICLE(false),
+    @JsonProperty("bike")
+    BIKE(false),
+    @JsonProperty("car")
+    CAR(true),
+    @JsonProperty("motorcycle")
+    MOTORCYCLE(true),
+    @JsonProperty("hgv")
+    HGV(true),
+    @JsonProperty("psv")
+    PSV(true),
+    @JsonProperty("bus")
+    BUS(true);
 
     private final boolean motorVehicle;
 
@@ -36,5 +54,15 @@ public enum TransportationMode {
 
     public boolean isMotorVehicle() {
         return motorVehicle;
+    }
+
+    public static TransportationMode find(String name) {
+        if (name == null || name.isEmpty())
+            return OTHER;
+        try {
+            return TransportationMode.valueOf(Helper.toUpperCase(name));
+        } catch (IllegalArgumentException ex) {
+            return OTHER;
+        }
     }
 }

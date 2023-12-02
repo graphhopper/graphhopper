@@ -33,8 +33,10 @@ graphhopper:
       vehicle: car
       custom_model:
         distance_influence: 70
-#      turn_costs: true
-#      u_turn_costs: 60
+#        turn_costs:
+#          transportation_mode: car # for now this is duplicated info
+#          restrictions: true
+#          u_turn_costs: 60
 
 #    - name: bike
 #      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below

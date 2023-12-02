@@ -50,6 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import static com.graphhopper.util.GHUtility.readCountries;
+import static com.graphhopper.util.TransportationMode.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -733,9 +734,9 @@ public class OSMReaderTest {
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
-                        new Profile("bike").setVehicle("bike").setTurnCosts(true),
-                        new Profile("car").setVehicle("car").setTurnCosts(true),
-                        new Profile("truck").setVehicle("truck").setTurnCosts(true)
+                        new Profile("bike").setVehicle("bike").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(BIKE))),
+                        new Profile("car").setVehicle("car").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(CAR))),
+                        new Profile("truck").setVehicle("truck").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(HGV)))
                 ).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
@@ -957,7 +958,7 @@ public class OSMReaderTest {
         EncodingManager em = new EncodingManager.Builder().build();
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         OSMParsers osmParsers = new OSMParsers();
-        osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
+        osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(CAR)));
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
@@ -1025,9 +1026,9 @@ public class OSMReaderTest {
             if (turnCosts) setVehiclesString("roads|turn_costs=true|transportation_mode=HGV");
             setProfiles(
                     new Profile("foot").setVehicle("foot"),
-                    new Profile("car").setVehicle("car").setTurnCosts(turnCosts),
-                    new Profile("bike").setVehicle("bike").setTurnCosts(turnCosts),
-                    new Profile("roads").setVehicle("roads").setTurnCosts(turnCosts)
+                    new Profile("car").setVehicle("car").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(CAR).setRestrictions(turnCosts))),
+                    new Profile("bike").setVehicle("bike").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(BIKE).setRestrictions(turnCosts))),
+                    new Profile("roads").setVehicle("roads").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(VEHICLE).setRestrictions(turnCosts)))
             );
             getReaderConfig().setPreferredLanguage(prefLang);
         }

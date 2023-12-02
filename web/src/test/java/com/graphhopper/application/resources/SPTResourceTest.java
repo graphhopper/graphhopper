@@ -23,7 +23,9 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.TurnCostsConfig;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.AfterAll;
@@ -37,6 +39,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
+import static com.graphhopper.util.TransportationMode.CAR;
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
@@ -54,7 +57,7 @@ public class SPTResourceTest {
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
                         new Profile("car_without_turncosts").setVehicle("car"),
-                        new Profile("car_with_turncosts").setVehicle("car").setTurnCosts(true)
+                        new Profile("car_with_turncosts").setVehicle("car").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(CAR)))
                 ));
         return config;
     }

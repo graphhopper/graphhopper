@@ -44,6 +44,7 @@ import java.util.function.Function;
 import static com.graphhopper.json.Statement.If;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.Parameters.Algorithms.*;
+import static com.graphhopper.util.TransportationMode.CAR;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -177,7 +178,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
         queries.add(new Query(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
         GraphHopper hopper = createHopper(MOSCOW,
-                new Profile("car").setVehicle("car").setTurnCosts(true));
+                new Profile("car").setVehicle("car").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(CAR))));
         hopper.setMinNetworkSize(200);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -188,7 +189,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> list = new ArrayList<>();
         list.add(new Query(-0.49, 0.0, 0.0, -0.49, 298792.107, 6));
         GraphHopper hopper = createHopper(DIR + "/test_simple_turncosts.osm.xml",
-                new Profile("car").setVehicle("car").setTurnCosts(true));
+                new Profile("car").setVehicle("car").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(CAR))));
         hopper.importOrLoad();
         checkQueries(hopper, list);
     }
@@ -198,7 +199,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> list = new ArrayList<>();
         list.add(new Query(0, 0.00099, -0.00099, 0, 664, 6));
         GraphHopper hopper = createHopper(DIR + "/test_simple_pturn.osm.xml",
-                new Profile("car").setVehicle("car").setTurnCosts(true));
+                new Profile("car").setVehicle("car").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(CAR))));
         hopper.importOrLoad();
         checkQueries(hopper, list);
     }
@@ -735,7 +736,7 @@ public class RoutingAlgorithmWithOSMTest {
                 String expectedAlgo = request.getHints().getString("expected_algo", "no_expected_algo");
                 checkResponse(expectedAlgo, res, query);
                 // for edge-based routing we expect a slightly different algo name for CH
-                if (profile.isTurnCosts())
+                if (profile.getCustomModel().getTurnCosts().isRestrictions())
                     expectedAlgo = expectedAlgo.replaceAll("\\|ch-routing", "|ch|edge_based|no_sod-routing");
                 assertTrue(res.getBest().getDebugInfo().contains(expectedAlgo),
                         "Response does not contain expected algo string. Expected: '" + expectedAlgo +

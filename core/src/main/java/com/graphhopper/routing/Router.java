@@ -49,7 +49,6 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
 
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.DistanceCalcEarth.DIST_EARTH;
 import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
 import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
@@ -135,8 +134,6 @@ public class Router {
             throw new IllegalArgumentException("GHRequest may no longer contain a vehicle, use the profile parameter instead, see docs/core/profiles.md");
         if (request.getHints().has("weighting"))
             throw new IllegalArgumentException("GHRequest may no longer contain a weighting, use the profile parameter instead, see docs/core/profiles.md");
-        if (request.getHints().has(Parameters.Routing.TURN_COSTS))
-            throw new IllegalArgumentException("GHRequest may no longer contain the turn_costs=true/false parameter, use the profile parameter instead, see docs/core/profiles.md");
         if (request.getHints().has(Parameters.Routing.EDGE_BASED))
             throw new IllegalArgumentException("GHRequest may no longer contain the edge_based=true/false parameter, use the profile parameter instead, see docs/core/profiles.md");
     }
@@ -387,14 +384,15 @@ public class Router {
         }
 
         protected void checkProfileCompatibility() {
-            if (!profile.isTurnCosts() && !request.getCurbsides().isEmpty())
+            boolean restrictions = profile.getCustomModel().getTurnCosts().isRestrictions();
+            if (!restrictions && !request.getCurbsides().isEmpty())
                 throw new IllegalArgumentException("To make use of the " + CURBSIDE + " parameter you need to use a profile that supports turn costs" +
                         "\nThe following profiles do support turn costs: " + getTurnCostProfiles());
             if (request.getCustomModel() != null && !CustomWeighting.NAME.equals(profile.getWeighting()))
                 throw new IllegalArgumentException("The requested profile '" + request.getProfile() + "' cannot be used with `custom_model`, because it has weighting=" + profile.getWeighting());
 
-            final int uTurnCostsInt = request.getHints().getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-            if (uTurnCostsInt != INFINITE_U_TURN_COSTS && !profile.isTurnCosts()) {
+            final int uTurnCostsInt = request.getHints().getInt(Parameters.Routing.U_TURN_COSTS, TurnCostsConfig.INFINITE_U_TURN_COSTS);
+            if (uTurnCostsInt != TurnCostsConfig.INFINITE_U_TURN_COSTS && !restrictions) {
                 throw new IllegalArgumentException("Finite u-turn costs can only be used for edge-based routing, you need to use a profile that" +
                         " supports turn costs. Currently the following profiles that support turn costs are available: " + getTurnCostProfiles());
             }
@@ -416,7 +414,7 @@ public class Router {
         private List<String> getTurnCostProfiles() {
             List<String> turnCostProfiles = new ArrayList<>();
             for (Profile p : profilesByName.values()) {
-                if (p.isTurnCosts()) {
+                if (p.getCustomModel().getTurnCosts().isRestrictions()) {
                     turnCostProfiles.add(p.getName());
                 }
             }
@@ -523,9 +521,10 @@ public class Router {
         }
 
         protected AlgorithmOptions getAlgoOpts() {
+            boolean restrictions = profile.getCustomModel().getTurnCosts().isRestrictions();
             AlgorithmOptions algoOpts = new AlgorithmOptions().
                     setAlgorithm(request.getAlgorithm()).
-                    setTraversalMode(profile.isTurnCosts() ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED).
+                    setTraversalMode(restrictions ? TraversalMode.EDGE_BASED : TraversalMode.NODE_BASED).
                     setMaxVisitedNodes(getMaxVisitedNodes(request.getHints())).
                     setTimeoutMillis(getTimeoutMillis(request.getHints())).
                     setHints(request.getHints());

@@ -19,7 +19,7 @@ package com.graphhopper.routing.util.countryrules;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.RoadAccess;
-import com.graphhopper.routing.util.TransportationMode;
+import com.graphhopper.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.europe.AustriaCountryRule;
 import com.graphhopper.routing.util.countryrules.europe.GermanyCountryRule;
 
