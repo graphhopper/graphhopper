@@ -21,8 +21,4 @@ server:
     - type: http
       port: 8990
       bind_host: localhost
-logging:
-  level: INFO
-  loggers:
-    "com.graphhopper": 
-      level: DEBUG
+
