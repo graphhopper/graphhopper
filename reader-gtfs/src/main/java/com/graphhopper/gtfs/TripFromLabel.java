@@ -110,7 +110,7 @@ class TripFromLabel {
             Trip.Leg leg = legs.get(i);
             if (leg instanceof Trip.WalkLeg) {
                 final Trip.WalkLeg walkLeg = ((Trip.WalkLeg) leg);
-                List<Instruction> theseInstructions = walkLeg.instructions.subList(0, i < path.getLegs().size() - 1 ? walkLeg.instructions.size() - 1 : walkLeg.instructions.size());
+                List<Instruction> theseInstructions = walkLeg.instructions.subList(0, i < legs.size() - 1 ? walkLeg.instructions.size() - 1 : walkLeg.instructions.size());
                 int previousPointsCount = pointsList.size();
                 for (Instruction instruction : theseInstructions) {
                     pointsList.add(instruction.getPoints());
