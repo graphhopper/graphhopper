@@ -393,7 +393,9 @@ public class GTFSFeed implements Cloneable, Closeable {
     // get shape_id by Trip
     public String resolveShapeIdByTrip(String tripId){
         Trip trip = trips.get(tripId);
-        return trip.shape_id;
+        if (trip != null)
+            return trip.shape_id;
+        return null;
     }
 
     // get shape_id by averaging stop distance
