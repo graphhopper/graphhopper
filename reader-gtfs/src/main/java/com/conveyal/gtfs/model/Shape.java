@@ -27,6 +27,7 @@
 package com.conveyal.gtfs.model;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.graphhopper.Trip;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
@@ -43,7 +44,6 @@ public class Shape {
     public static GeometryFactory geometryFactory = new GeometryFactory();
     /** The shape itself */
     public LineString geometry;
-
     /** shape_dist_traveled for each point in the geometry. TODO how to handle shape dist traveled not specified, or not specified on all stops? */
     public double[] shape_dist_traveled;
 
@@ -57,7 +57,112 @@ public class Shape {
         geometry = geometryFactory.createLineString(coords);
         shape_dist_traveled = points.values().stream().mapToDouble(point -> point.shape_dist_traveled).toArray();
     }
-    // do pointA -> pointB combination, closest point, without shape dist traveled
+    // goes through the path in stop order
+    public static List<Shape> fromStops(GTFSFeed feed, String shapeId, List<Trip.Stop> stops){
+        Map<Fun.Tuple2<String, Integer>, ShapePoint> points = feed.shape_points.subMap(
+                new Fun.Tuple2(shapeId, null), new Fun.Tuple2(shapeId, Fun.HI)
+        );
+        int cursor = 1;
+        final Trip.Stop start = stops.get(0);
+        final double startLat = start.geometry.getY();
+        final double startLon = start.geometry.getX();
+        List<List<ShapePoint>> shps = new ArrayList<>();
+        List<ShapePoint> shp = new ArrayList<>();
+        List<ShapePoint> shapePoints = points.values()
+                .stream()
+                .sorted(Comparator.comparing(x -> x.shape_pt_sequence))
+                .toList(); // ensure correct order
+        Iterator<Fun.Tuple2<Double, ShapePoint>> closestToStart = points.values()
+                .stream()
+                .map(s -> {
+                    final double distance = distanceLatLon(startLat, startLon,
+                            s.shape_pt_lat, s.shape_pt_lon);
+                    return new Fun.Tuple2<>(distance, s);
+                })
+                .sorted(Comparator.comparing(x -> x.a))
+                .iterator();
+
+        final double stopLat = stops.get(cursor).geometry.getY();
+        final double stopLon = stops.get(cursor).geometry.getX();
+        double previousTotalDistance = -1;
+        int previousStopIndex = -1;
+        int closestPoints = 0;
+        while (closestToStart.hasNext()) {
+            Fun.Tuple2<Double, ShapePoint> close = closestToStart.next();
+            if (closestPoints > 2) // 2 closest point is enough
+                break;
+
+            int i = shapePoints.indexOf(close.b);
+            double prevCloseDistance = -1;
+            int prevCloseDistanceIndex = -1;
+            for(int j = Math.max(i, 0); j < shapePoints.size(); j++){
+                ShapePoint stopPoint1 = shapePoints.get(j);
+                double distance;
+                if (j == i)
+                    distance = distanceLatLon(stopLat, stopLon,
+                            stopPoint1.shape_pt_lat, stopPoint1.shape_pt_lon);
+                else {
+                    ShapePoint stopPoint2 = shapePoints.get(j - 1);
+                    distance = closestPointToLine(stopLat, stopLon,
+                            stopPoint1.shape_pt_lat, stopPoint1.shape_pt_lon,
+                            stopPoint2.shape_pt_lat, stopPoint2.shape_pt_lon);
+                }
+                if (prevCloseDistance == -1 || prevCloseDistance > distance){
+                    prevCloseDistance = distance;
+                    prevCloseDistanceIndex = Math.min(j + 1, shapePoints.size() - 1);
+                }
+            }
+            if (prevCloseDistanceIndex == -1) // Start point at End point?
+                continue;
+
+            closestPoints++;
+            double totalDistance = prevCloseDistance + close.a;
+            if (previousTotalDistance == -1 || (previousTotalDistance > totalDistance)){
+                previousTotalDistance = totalDistance;
+                shp = new ArrayList<>(shapePoints.subList(i, prevCloseDistanceIndex));
+                previousStopIndex = prevCloseDistanceIndex;
+            }
+        }
+        cursor++;
+        shps.add(shp);
+        for(; cursor < stops.size(); cursor++){
+            final double tripStopLatitude = stops.get(cursor).geometry.getY();
+            final double tripStopLongitude = stops.get(cursor).geometry.getX();
+            List<ShapePoint> currentPoints = shapePoints.subList(previousStopIndex,
+                    shapePoints.size());
+            Fun.Tuple2<Double, ShapePoint> bestPointDistance = null;
+            for(int i = 1; i < currentPoints.size(); i++){
+                final ShapePoint startPoint = currentPoints.get(i - 1);
+                final ShapePoint stopPoint = currentPoints.get(i);
+                double pointDistance = closestPointToLine(
+                        tripStopLatitude, tripStopLongitude,
+                        startPoint.shape_pt_lat, startPoint.shape_pt_lon,
+                        stopPoint.shape_pt_lat, stopPoint.shape_pt_lon
+                );
+                if (bestPointDistance == null || (bestPointDistance.a > pointDistance))
+                    bestPointDistance = new Fun.Tuple2<>(pointDistance, startPoint);
+            }
+            ShapePoint bestPoint = bestPointDistance == null?
+                    currentPoints.get(0): bestPointDistance.b;
+            int bestStopPointIndex = shapePoints.indexOf(bestPoint) + 1;
+            shps.add(new ArrayList<>(shapePoints.subList(previousStopIndex - 1, bestStopPointIndex)));
+            previousStopIndex = bestStopPointIndex;
+        }
+        return shps.stream().map(Shape::new).toList();
+    }
+    public Shape(List<ShapePoint> shp){
+        Coordinate[] coords = shp.stream()
+                .map(point -> new Coordinate(point.shape_pt_lon, point.shape_pt_lat))
+                .toArray(Coordinate[]::new);
+        if (coords.length > 1)
+            geometry = geometryFactory.createLineString(coords);
+        else
+            geometry = geometryFactory.createLineString();
+        shape_dist_traveled = shp.stream()
+                .mapToDouble(point -> point.shape_dist_traveled)
+                .toArray();
+    }
+    // do pointA -> pointB combination, closest point, without shape dist traveled & shape_id
     public Shape(GTFSFeed feed, Point start, Point stop){
         Set<String> uniqueIds = feed.shape_points.keySet()
                 .stream()
@@ -77,7 +182,7 @@ public class Shape {
             List<ShapePoint> shp = new ArrayList<>();
             List<ShapePoint> shapePoints = points.values()
                     .stream()
-                    .sorted(Comparator.comparing(x -> x.shape_dist_traveled))
+                    .sorted(Comparator.comparing(x -> x.shape_pt_sequence))
                     .toList();
             Iterator<Fun.Tuple2<Double, ShapePoint>> closestToStart = points.values()
                     .stream()
@@ -99,7 +204,7 @@ public class Shape {
                 int i = shapePoints.indexOf(close.b);
                 double prevCloseDistance = -1;
                 int prevCloseDistanceIndex = -1;
-                for(int j = i; j < shapePoints.size(); j++){
+                for(int j = Math.max(i, 0); j < shapePoints.size(); j++){
                     ShapePoint stopPoint1 = shapePoints.get(j);
                     double distance;
                     if (j == i)
@@ -143,7 +248,7 @@ public class Shape {
                 .mapToDouble(point -> point.shape_dist_traveled)
                 .toArray();
     }
-    private static double closestPointToLine(double lat0, double lon0, // target point
+    public static double closestPointToLine(double lat0, double lon0, // target point
                                              double lat1, double lon1, double lat2, double lon2){
         double distance;
         // this should only be use on close distances
@@ -164,7 +269,7 @@ public class Shape {
         }
         return distance;
     }
-    private static double distanceLatLon(double pt_lat1, double pt_lon1, double pt_lat2, double pt_lon2) {
+    public static double distanceLatLon(double pt_lat1, double pt_lon1, double pt_lat2, double pt_lon2) {
         // haversine formula
         final double deltaLat = numberToRadius(pt_lat2 - pt_lat1);
         final double deltaLon = numberToRadius(pt_lon2 - pt_lon1);

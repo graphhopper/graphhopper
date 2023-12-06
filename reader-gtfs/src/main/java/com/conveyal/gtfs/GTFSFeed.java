@@ -344,7 +344,63 @@ public class GTFSFeed implements Cloneable, Closeable {
 
         return ls;
     }
+    public List<Shape> getShapesByLeg(com.graphhopper.Trip.PtLeg leg){
+        String shapeId = resolveShapeIdByLeg(leg);
+        if (shapeId.isEmpty())
+            shapeId = resolveShapeIdByStops(leg.stops);
 
+        List<Shape> shapes = new ArrayList<>();
+        if (shapeId.isEmpty())
+            for(int j = 1; j < leg.stops.size(); j++) {
+                shapes.add(new Shape(
+                        this,
+                        leg.stops.get(j - 1).geometry,
+                        leg.stops.get(j).geometry)
+                );
+            }
+        else
+            shapes.addAll(Shape.fromStops(this, shapeId, leg.stops));
+        return shapes;
+    }
+    private Set<String> getUniqueShapeIds(){
+        return shape_points.keySet()
+                        .stream()
+                        .map(pair -> pair.a)
+                        .collect(Collectors.toSet());
+    }
+    public String resolveShapeIdByLeg(com.graphhopper.Trip.PtLeg ptLeg){
+        String tripId = ptLeg.trip_id;
+        Set<String> ids = getUniqueShapeIds();
+        for (String id: ids) {
+            if (tripId.equalsIgnoreCase(id))
+                return id;
+        }
+        // TODO: create proper trip resolve
+        return "";
+    }
+    // get shape_id by averaging stop distance
+    public String resolveShapeIdByStops(List<com.graphhopper.Trip.Stop> stops){
+        Set<String> uniqueIds = getUniqueShapeIds();
+        Fun.Tuple2<Double, String> id = uniqueIds.stream()
+                .parallel()
+                .map(shapeId -> {
+                    Map<Fun.Tuple2<String, Integer>, ShapePoint> points = shape_points.subMap(
+                            new Fun.Tuple2(shapeId, null), new Fun.Tuple2(shapeId, Fun.HI)
+                    );
+                    List<ShapePoint> shapePoints = new ArrayList<>(points.values());
+                    double totalAverageDistance = stops.stream().mapToDouble(x ->
+                            shapePoints.stream()
+                                    .mapToDouble(p -> Shape.distanceLatLon(
+                                            x.geometry.getY(), x.geometry.getX(),
+                                            p.shape_pt_lat, p.shape_pt_lon))
+                                    .min().orElse(Double.POSITIVE_INFINITY)
+                    ).reduce(0, Double::sum) / stops.size();
+                    return new Fun.Tuple2<>(totalAverageDistance, shapeId);
+                })
+                .min(Comparator.comparing(x -> x.a))
+                .orElse(new Fun.Tuple2<>(-1., ""));
+        return id.b;
+    }
     /**
      * Cloning can be useful when you want to make only a few modifications to an existing feed.
      * Keep in mind that this is a shallow copy, so you'll have to create new maps in the clone for tables you want

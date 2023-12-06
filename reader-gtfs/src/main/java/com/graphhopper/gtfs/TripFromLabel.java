@@ -20,6 +20,7 @@ package com.graphhopper.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Shape;
+import com.conveyal.gtfs.model.ShapePoint;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
 import com.google.common.collect.Iterables;
@@ -39,6 +40,7 @@ import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.locationtech.jts.geom.*;
+import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -132,14 +134,7 @@ class TripFromLabel {
                 }
                 final GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(ptLegInitial.feed_id);
                 GeometryFactory geometryFactory = new GeometryFactory();
-                List<Shape> shapes = new ArrayList<>();
-                for(int j = 1; j < ptLegInitial.stops.size(); j++){
-                    Trip.Stop stop1 = ptLegInitial.stops.get(j - 1);
-                    Trip.Stop stop2 = ptLegInitial.stops.get(j);
-                    Shape s = new Shape(gtfsFeed, stop1.geometry, stop2.geometry);
-                    shapes.add(s);
-                }
-
+                List<Shape> shapes = gtfsFeed.getShapesByLeg(ptLegInitial);
                 MultiLineString geom = geometryFactory.createMultiLineString(
                         shapes.stream().map(e -> e.geometry).toArray(j -> new LineString[j])
                 );
@@ -206,7 +201,6 @@ class TripFromLabel {
                 });
         return path;
     }
-
     private Map<String, List<PathDetail>> shift(Map<String, List<PathDetail>> pathDetailss, int previousPointsCount) {
         return Maps.transformEntries(pathDetailss, (s, pathDetails) -> pathDetails.stream().map(p -> {
             PathDetail pathDetail = new PathDetail(p.getValue());
