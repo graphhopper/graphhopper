@@ -375,9 +375,20 @@ public class GTFSFeed implements Cloneable, Closeable {
             if (tripId.equalsIgnoreCase(id))
                 return id;
         }
+        String resolvedId = resolveShapeIdByTrip(tripId);
+        if (resolvedId != null)
+            return resolvedId;
+
         // TODO: create proper trip resolve
         return "";
+        return resolveShapeIdByStops(ptLeg.stops);
     }
+    // get shape_id by Trip
+    public String resolveShapeIdByTrip(String tripId){
+        Trip trip = trips.get(tripId);
+        return trip.shape_id;
+    }
+
     // get shape_id by averaging stop distance
     public String resolveShapeIdByStops(List<com.graphhopper.Trip.Stop> stops){
         Set<String> uniqueIds = getUniqueShapeIds();
