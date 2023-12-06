@@ -57,6 +57,30 @@ public class Shape {
         geometry = geometryFactory.createLineString(coords);
         shape_dist_traveled = points.values().stream().mapToDouble(point -> point.shape_dist_traveled).toArray();
     }
+    // use dist traveled in stop order
+    public static List<Shape> fromDist(GTFSFeed feed, String shapeId, List<Fun.Tuple2<Trip.Stop, StopTime>> stops) {
+        Map<Fun.Tuple2<String, Integer>, ShapePoint> points = feed.shape_points.subMap(
+                new Fun.Tuple2(shapeId, null), new Fun.Tuple2(shapeId, Fun.HI)
+        );
+        List<ShapePoint> shapePoints = points.values().stream().toList();
+        List<List<ShapePoint>> shps = new ArrayList<>();
+        double lowerBoundary = -1;
+        for(int i = 1; i < stops.size(); i++){
+            Fun.Tuple2<Trip.Stop, StopTime> start = stops.get(i - 1);
+            Fun.Tuple2<Trip.Stop, StopTime> stop = stops.get(i);
+            lowerBoundary = i == 1? start.b.shape_dist_traveled: lowerBoundary;
+            final double upperBoundary = stop.b.shape_dist_traveled;
+            final double finalLowerBoundary = lowerBoundary;
+            shps.add(shapePoints.stream()
+                    .filter(p -> finalLowerBoundary <= p.shape_dist_traveled &&
+                            p.shape_dist_traveled < upperBoundary)
+                    .toList()
+            );
+            lowerBoundary = upperBoundary;
+        }
+
+        return shps.stream().map(Shape::new).toList();
+    }
     // goes through the path in stop order
     public static List<Shape> fromStops(GTFSFeed feed, String shapeId, List<Trip.Stop> stops){
         Map<Fun.Tuple2<String, Integer>, ShapePoint> points = feed.shape_points.subMap(
@@ -141,6 +165,10 @@ public class Shape {
                 );
                 if (bestPointDistance == null || (bestPointDistance.a > pointDistance))
                     bestPointDistance = new Fun.Tuple2<>(pointDistance, startPoint);
+            }
+            if (currentPoints.size() == 0){
+                // it can be empty due to previous stop unable to be derived from.
+                break;
             }
             ShapePoint bestPoint = bestPointDistance == null?
                     currentPoints.get(0): bestPointDistance.b;
