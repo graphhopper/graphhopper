@@ -346,11 +346,9 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
     public List<Shape> getShapesByLeg(com.graphhopper.Trip.PtLeg leg){
         String shapeId = resolveShapeIdByLeg(leg);
-        if (shapeId.isEmpty())
-            shapeId = resolveShapeIdByStops(leg.stops);
-
         List<Shape> shapes = new ArrayList<>();
         if (shapeId.isEmpty())
+            // Failed to get shape id, infer stop individually. Works well, but not guaranteed.
             for(int j = 1; j < leg.stops.size(); j++) {
                 shapes.add(new Shape(
                         this,
@@ -358,8 +356,23 @@ public class GTFSFeed implements Cloneable, Closeable {
                         leg.stops.get(j).geometry)
                 );
             }
-        else
-            shapes.addAll(Shape.fromStops(this, shapeId, leg.stops));
+        else{
+            Iterator<StopTime> allStopTimes = getOrderedStopTimesForTrip(leg.trip_id).iterator();
+            List<Fun.Tuple2<com.graphhopper.Trip.Stop, StopTime>> stopTimes = leg.stops.stream()
+                    .map(s -> {
+                        while (allStopTimes.hasNext()){
+                            StopTime target = allStopTimes.next();
+                            if (target.stop_id.equals(s.stop_id))
+                                return new Fun.Tuple2<>(s, target);
+                        }
+                        return new Fun.Tuple2<com.graphhopper.Trip.Stop, StopTime>(s, null);
+                    })
+                    .toList();
+            if (stopTimes.stream().allMatch(s -> Double.isNaN(s.b.shape_dist_traveled)))
+                shapes.addAll(Shape.fromStops(this, shapeId, leg.stops));
+            else
+                shapes.addAll(Shape.fromDist(this, shapeId, stopTimes));
+        }
         return shapes;
     }
     private Set<String> getUniqueShapeIds(){
@@ -370,17 +383,11 @@ public class GTFSFeed implements Cloneable, Closeable {
     }
     public String resolveShapeIdByLeg(com.graphhopper.Trip.PtLeg ptLeg){
         String tripId = ptLeg.trip_id;
-        Set<String> ids = getUniqueShapeIds();
-        for (String id: ids) {
-            if (tripId.equalsIgnoreCase(id))
-                return id;
-        }
         String resolvedId = resolveShapeIdByTrip(tripId);
         if (resolvedId != null)
             return resolvedId;
 
         // TODO: create proper trip resolve
-        return "";
         return resolveShapeIdByStops(ptLeg.stops);
     }
     // get shape_id by Trip
