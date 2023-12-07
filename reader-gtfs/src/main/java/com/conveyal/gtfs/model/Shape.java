@@ -33,6 +33,8 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.geom.Point;
 import org.mapdb.Fun;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -41,6 +43,7 @@ import java.util.stream.Collectors;
  * Represents a collection of GTFS shape points. Never saved in MapDB but constructed on the fly.
  */
 public class Shape {
+    private static final Logger LOG = LoggerFactory.getLogger(Shape.class);
     public static GeometryFactory geometryFactory = new GeometryFactory();
     /** The shape itself */
     public LineString geometry;
@@ -150,6 +153,8 @@ public class Shape {
         cursor++;
         shps.add(shp);
         for(; cursor < stops.size(); cursor++){
+            int lookStopAhead = cursor + 1 < stops.size()? cursor + 1: -1;
+            double lookAheadDistance = -1;
             final double tripStopLatitude = stops.get(cursor).geometry.getY();
             final double tripStopLongitude = stops.get(cursor).geometry.getX();
             List<ShapePoint> currentPoints = shapePoints.subList(previousStopIndex,
@@ -163,8 +168,34 @@ public class Shape {
                         startPoint.shape_pt_lat, startPoint.shape_pt_lon,
                         stopPoint.shape_pt_lat, stopPoint.shape_pt_lon
                 );
-                if (bestPointDistance == null || (bestPointDistance.a > pointDistance))
-                    bestPointDistance = new Fun.Tuple2<>(pointDistance, startPoint);
+                LOG.info(stops.get(cursor).stop_id +
+                        " | " + i + " | " + startPoint.shape_pt_lat + " | " +
+                        startPoint.shape_pt_lon + ":" +pointDistance);
+                if (bestPointDistance == null || (bestPointDistance.a > pointDistance)) {
+                    if (lookStopAhead != -1){
+                        // special case: check if current stop goes past other stops
+                        final double aheadStopLatitude = stops.get(lookStopAhead).geometry.getY();
+                        final double aheadStopLongitude = stops.get(lookStopAhead).geometry.getX();
+                        double bestAheadDistance = -1;
+                        for(int j = i; j < currentPoints.size(); j++){
+                            final ShapePoint aheadStartPoint = currentPoints.get(j - 1);
+                            final ShapePoint aheadStopPoint = currentPoints.get(j);
+                            double aheadPointDistance = closestPointToLine(
+                                    aheadStopLatitude, aheadStopLongitude,
+                                    aheadStartPoint.shape_pt_lat, aheadStartPoint.shape_pt_lon,
+                                    aheadStopPoint.shape_pt_lat, aheadStopPoint.shape_pt_lon
+                            );
+                            if (bestAheadDistance == -1 || bestAheadDistance > aheadPointDistance)
+                                bestAheadDistance = aheadPointDistance;
+                        }
+                        if (bestAheadDistance != -1 &&
+                                (lookAheadDistance == -1 || bestAheadDistance < lookAheadDistance)){
+                            lookAheadDistance = bestAheadDistance;
+                            bestPointDistance = new Fun.Tuple2<>(pointDistance, startPoint);
+                        }
+                    }else
+                        bestPointDistance = new Fun.Tuple2<>(pointDistance, startPoint);
+                }
             }
             if (currentPoints.size() == 0){
                 // it can be empty due to previous stop unable to be derived from.
