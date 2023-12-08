@@ -65,17 +65,17 @@ public class HikeCustomModelTest {
         ReaderWay way = new ReaderWay(0L);
         way.setTag("highway", "track");
         EdgeIteratorState edge = createEdge(way);
-        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, 30, null);
+        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, null);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("motor_vehicle", "private");
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, 30, null);
+        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, null);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("sac_scale", "alpine_hiking");
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, 30, null);
+        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, null);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(2, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
@@ -83,12 +83,12 @@ public class HikeCustomModelTest {
         way.setTag("highway", "track");
         way.setTag("access", "private");
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, 30, null);
+        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, null);
         assertEquals(0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("sac_scale", "alpine_hiking");
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, 30, null);
+        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, null);
         // TODO this would be wrong tagging but still we should exclude the way - will be fixed with #2819
         // assertEquals(0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
     }

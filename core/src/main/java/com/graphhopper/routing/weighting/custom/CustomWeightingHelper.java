@@ -17,12 +17,10 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.json.MinMax;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.JsonFeature;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
 
@@ -35,11 +33,15 @@ import java.util.Map;
 public class CustomWeightingHelper {
     protected DecimalEncodedValue avg_speed_enc;
     protected DecimalEncodedValue priority_enc;
+    protected EncodedValueLookup lookup;
+    protected CustomModel customModel;
 
     protected CustomWeightingHelper() {
     }
 
-    public void init(EncodedValueLookup lookup, DecimalEncodedValue avgSpeedEnc, DecimalEncodedValue priorityEnc, Map<String, JsonFeature> areas) {
+    public void init(CustomModel customModel, EncodedValueLookup lookup, DecimalEncodedValue avgSpeedEnc, DecimalEncodedValue priorityEnc, Map<String, JsonFeature> areas) {
+        this.lookup = lookup;
+        this.customModel = customModel;
         this.avg_speed_enc = avgSpeedEnc;
         this.priority_enc = priorityEnc;
     }
@@ -67,12 +69,26 @@ public class CustomWeightingHelper {
         return priority;
     }
 
-    protected double getMaxPriority() {
-        return 1;
+    public final double calcMaxSpeed() {
+        MinMax minMaxSpeed = new MinMax(1, avg_speed_enc.getMaxOrMaxStorableDecimal());
+        FindMinMax.findMinMax(minMaxSpeed, customModel.getSpeed(), lookup);
+        if (minMaxSpeed.min < 0)
+            throw new IllegalArgumentException("speed has to be >=0 but can be negative (" + minMaxSpeed.min + ")");
+        if (minMaxSpeed.max <= 0)
+            throw new IllegalArgumentException("maximum speed has to be >0 but was " + minMaxSpeed.max);
+
+        return minMaxSpeed.max;
     }
 
-    protected double getMaxSpeed() {
-        return 1;
+    public final double calcMaxPriority() {
+        // initial value of minimum has to be >0 so that multiple_by with a negative value leads to a negative value and not 0
+        MinMax minMaxPriority = new MinMax(1, priority_enc == null ? 1 : priority_enc.getMaxOrMaxStorableDecimal());
+        FindMinMax.findMinMax(minMaxPriority, customModel.getPriority(), lookup);
+        if (minMaxPriority.min < 0)
+            throw new IllegalArgumentException("priority has to be >=0 but can be negative (" + minMaxPriority.min + ")");
+        if (minMaxPriority.max < 0)
+            throw new IllegalArgumentException("maximum priority has to be >=0 but was " + minMaxPriority.max);
+        return minMaxPriority.max;
     }
 
     public static boolean in(Polygon p, EdgeIteratorState edge) {
