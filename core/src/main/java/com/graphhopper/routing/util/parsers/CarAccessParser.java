@@ -31,8 +31,8 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
     protected final Set<String> trackTypeValues = new HashSet<>();
     protected final Set<String> highwayValues = new HashSet<>();
     protected final BooleanEncodedValue roundaboutEnc;
-    private final List<String> vehicleForward;
-    private final List<String> vehicleBackward;
+    protected final List<String> vehicleForward;
+    protected final List<String> vehicleBackward;
     private final Set<String> onewaysForward = new HashSet<>(Arrays.asList("yes", "true", "1"));
 
     public CarAccessParser(EncodedValueLookup lookup, PMap properties) {
