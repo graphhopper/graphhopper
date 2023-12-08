@@ -31,9 +31,6 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
     protected final Set<String> trackTypeValues = new HashSet<>();
     protected final Set<String> highwayValues = new HashSet<>();
     protected final BooleanEncodedValue roundaboutEnc;
-    protected final List<String> vehicleForward;
-    protected final List<String> vehicleBackward;
-    private final Set<String> onewaysForward = new HashSet<>(Arrays.asList("yes", "true", "1"));
 
     public CarAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(
@@ -48,10 +45,6 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
                            BooleanEncodedValue roundaboutEnc, PMap properties,
                            TransportationMode transportationMode) {
         super(accessEnc, transportationMode);
-
-        vehicleForward = restrictions.stream().map(r -> r + ":forward").toList();
-        vehicleBackward = restrictions.stream().map(r -> r + ":backward").toList();
-
         this.roundaboutEnc = roundaboutEnc;
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -143,9 +136,11 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
         if (!access.isFerry()) {
             boolean isRoundabout = roundaboutEnc.getBool(false, edgeId, edgeIntAccess);
-            boolean isBwd = isBackwardOneway(way);
-            if (isBwd || isRoundabout || isForwardOneway(way)) {
-                accessEnc.setBool(isBwd, edgeId, edgeIntAccess, true);
+            if (isOneway(way) || isRoundabout) {
+                if (isForwardOneway(way))
+                    accessEnc.setBool(false, edgeId, edgeIntAccess, true);
+                if (isBackwardOneway(way))
+                    accessEnc.setBool(true, edgeId, edgeIntAccess, true);
             } else {
                 accessEnc.setBool(false, edgeId, edgeIntAccess, true);
                 accessEnc.setBool(true, edgeId, edgeIntAccess, true);
@@ -162,11 +157,29 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         }
     }
 
+    /**
+     * make sure that isOneway is called before
+     */
     protected boolean isBackwardOneway(ReaderWay way) {
-        return way.hasTag("oneway", "-1") || vehicleForward.stream().anyMatch(s -> way.hasTag(s, restrictedValues));
+        return way.hasTag("oneway", "-1")
+                || way.hasTag("vehicle:forward", restrictedValues)
+                || way.hasTag("motor_vehicle:forward", restrictedValues);
     }
 
+    /**
+     * make sure that isOneway is called before
+     */
     protected boolean isForwardOneway(ReaderWay way) {
-        return way.hasTag("oneway", onewaysForward) || vehicleBackward.stream().anyMatch(s -> way.hasTag(s, restrictedValues));
+        return !way.hasTag("oneway", "-1")
+                && !way.hasTag("vehicle:forward", restrictedValues)
+                && !way.hasTag("motor_vehicle:forward", restrictedValues);
+    }
+
+    protected boolean isOneway(ReaderWay way) {
+        return way.hasTag("oneway", oneways)
+                || way.hasTag("vehicle:backward", restrictedValues)
+                || way.hasTag("vehicle:forward", restrictedValues)
+                || way.hasTag("motor_vehicle:backward", restrictedValues)
+                || way.hasTag("motor_vehicle:forward", restrictedValues);
     }
 }
