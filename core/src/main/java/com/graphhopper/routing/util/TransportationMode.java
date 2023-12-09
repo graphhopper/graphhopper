@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.Helper;
-
 /**
  * Define disjunct ways of transportation that are used to create and populate our encoded values from a data source
  * like OpenStreetMap.
@@ -38,9 +36,5 @@ public enum TransportationMode {
 
     public boolean isMotorVehicle() {
         return motorVehicle;
-    }
-
-    public String toOSMString() {
-        return Helper.toLowerCase(name());
     }
 }
