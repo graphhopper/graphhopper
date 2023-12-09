@@ -57,7 +57,11 @@ public class ModeAccessParser implements TagParser {
     }
 
     private static String getFirstPriorityNodeTag(Map<String, Object> nodeTags, List<String> restrictionKeys) {
-        return restrictionKeys.stream().map(key -> (String) nodeTags.get(key)).findFirst().orElse("");
+        for (String key : restrictionKeys) {
+            String val = (String) nodeTags.get(key);
+            if (val != null) return val;
+        }
+        return "";
     }
 
     protected boolean isBackwardOneway(ReaderWay way) {
