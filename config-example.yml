@@ -72,7 +72,7 @@ graphhopper:
   # option or, only for the roads vehicle, there is the transportation_mode option:
   # name=mycustomvehicle,turn_costs=true,transportation_mode=MOTOR_VEHICLE
   # But you should prefer to configure the turn_costs via the profile configuration.
-  # Other standard vehicles: foot,bike,mtb,racingbike,wheelchair
+  # Other standard vehicles: foot,bike,mtb,racingbike
 
 
   #### Encoded Values ####
@@ -132,45 +132,45 @@ graphhopper:
   # graph.elevation.way_point_max_distance: 10
 
 
-    #### Country-dependent defaults for max speeds ####
+  #### Country-dependent defaults for max speeds ####
 
-    # This features sets a maximum speed in 'max_speed' encoded value if no maxspeed tag was found. It is country-dependent
-    # and based on several rules. See https://github.com/westnordost/osm-legal-default-speeds
-    # To use it uncomment the following, then enable urban density below and add 'country' to graph.encoded_values
-    # max_speed_calculator.enabled: true
-
-
-    #### Urban density (built-up areas) ####
-
-    # This feature allows classifying roads into 'rural', 'residential' and 'city' areas (encoded value 'urban_density')
-    # Use 1 or more threads to enable the feature
-    # graph.urban_density.threads: 8
-    # Use higher/lower sensitivities if too little/many roads fall into the according categories.
-    # Using smaller radii will speed up the classification, but only change these values if you know what you are doing.
-    # If you do not need the (rather slow) city classification set city_radius to zero.
-    # graph.urban_density.residential_radius: 400
-    # graph.urban_density.residential_sensitivity: 6000
-    # graph.urban_density.city_radius: 1500
-    # graph.urban_density.city_sensitivity: 1000
+  # This features sets a maximum speed in 'max_speed' encoded value if no maxspeed tag was found. It is country-dependent
+  # and based on several rules. See https://github.com/westnordost/osm-legal-default-speeds
+  # To use it uncomment the following, then enable urban density below and add 'country' to graph.encoded_values
+  # max_speed_calculator.enabled: true
 
 
-    #### Subnetworks ####
+  #### Urban density (built-up areas) ####
 
-    # In many cases the road network consists of independent components without any routes going in between. In
-    # the most simple case you can imagine an island without a bridge or ferry connection. The following parameter
-    # allows setting a minimum size (number of edges) for such detached components. This can be used to reduce the number
-    # of cases where a connection between locations might not be found.
+  # This feature allows classifying roads into 'rural', 'residential' and 'city' areas (encoded value 'urban_density')
+  # Use 1 or more threads to enable the feature
+  # graph.urban_density.threads: 8
+  # Use higher/lower sensitivities if too little/many roads fall into the according categories.
+  # Using smaller radii will speed up the classification, but only change these values if you know what you are doing.
+  # If you do not need the (rather slow) city classification set city_radius to zero.
+  # graph.urban_density.residential_radius: 400
+  # graph.urban_density.residential_sensitivity: 6000
+  # graph.urban_density.city_radius: 1500
+  # graph.urban_density.city_sensitivity: 1000
+
+
+  #### Subnetworks ####
+
+  # In many cases the road network consists of independent components without any routes going in between. In
+  # the most simple case you can imagine an island without a bridge or ferry connection. The following parameter
+  # allows setting a minimum size (number of edges) for such detached components. This can be used to reduce the number
+  # of cases where a connection between locations might not be found.
   prepare.min_network_size: 200
   prepare.subnetworks.threads: 1
 
 
-    #### Routing ####
+  #### Routing ####
 
-    # You can define the maximum visited nodes when routing. This may result in not found connections if there is no
-    # connection between two points within the given visited nodes. The default is Integer.MAX_VALUE. Useful for flexibility mode
-    # routing.max_visited_nodes: 1000000
+  # You can define the maximum visited nodes when routing. This may result in not found connections if there is no
+  # connection between two points within the given visited nodes. The default is Integer.MAX_VALUE. Useful for flexibility mode
+  # routing.max_visited_nodes: 1000000
 
-    # The maximum time in milliseconds after which a routing request will be aborted. This has some routing algorithm
+  # The maximum time in milliseconds after which a routing request will be aborted. This has some routing algorithm
   # specific caveats, but generally it should allow the prevention of long-running requests. The default is Long.MAX_VALUE
   # routing.timeout_ms: 300000
 

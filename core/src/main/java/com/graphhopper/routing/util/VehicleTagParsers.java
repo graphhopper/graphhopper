@@ -78,14 +78,6 @@ public class VehicleTagParsers {
         );
     }
 
-    public static VehicleTagParsers wheelchair(EncodedValueLookup lookup, PMap properties) {
-        return new VehicleTagParsers(
-                new WheelchairAccessParser(lookup, properties),
-                new WheelchairAverageSpeedParser(lookup, properties),
-                new WheelchairPriorityParser(lookup, properties)
-        );
-    }
-
     public VehicleTagParsers(TagParser accessParser, TagParser speedParser, TagParser priorityParser) {
         this.accessParser = accessParser;
         this.speedParser = speedParser;

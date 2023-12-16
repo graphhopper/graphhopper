@@ -477,11 +477,14 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testRelation() {
+    public void testBikeAndMtbRelation() {
         EnumEncodedValue<RouteNetwork> bikeNetworkEnc = new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class);
-        EncodingManager manager = new EncodingManager.Builder().add(bikeNetworkEnc).build();
+        EnumEncodedValue<RouteNetwork> mtbNetworkEnc = new EnumEncodedValue<>(MtbNetwork.KEY, RouteNetwork.class);
+        EncodingManager manager = new EncodingManager.Builder().add(mtbNetworkEnc).add(bikeNetworkEnc).build();
         OSMParsers osmParsers = new OSMParsers()
-                .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConf));
+                .addRelationTagParser(relConf -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConf))
+                .addRelationTagParser(relConf -> new OSMMtbNetworkTagParser(mtbNetworkEnc, relConf));
+
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 1, ""));
         osmRel.add(new ReaderRelation.Member(ReaderElement.Type.WAY, 2, ""));
@@ -493,6 +496,7 @@ public class OSMReaderTest {
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
 
+        // bikeNetworkEnc and MtbNetworkEnc share the same instance of the relFlags
         IntsRef relFlags = manager.createRelationFlags();
         IntsRefEdgeIntAccess intAccess = new IntsRefEdgeIntAccess(relFlags);
         int edgeId = 0;
@@ -503,6 +507,30 @@ public class OSMReaderTest {
         IntsRef before = IntsRef.deepCopyOf(relFlags);
         osmParsers.handleRelationTags(osmRel, relFlags);
         assertEquals(before, relFlags);
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
+
+        // overwrite network
+        osmRel.setTag("network", "ncn");
+        osmParsers.handleRelationTags(osmRel, relFlags);
+        assertEquals(RouteNetwork.NATIONAL, transformEnc.getEnum(false, edgeId, intAccess));
+        assertNotEquals(before, relFlags);
+
+        // The further tests below are for an edge which is part of a bike and another mountainbike relation
+        osmRel.clearTags();
+
+        // this is pretty ugly: the mtb network parser writes to the edge flags we pass into it, but at a location we
+        // don't know, so we need to get the internal enc to read the flags below
+        transformEnc = ((OSMMtbNetworkTagParser) osmParsers.getRelationTagParsers().get(1)).getTransformerRouteRelEnc();
+
+        osmRel.setTag("route", "mtb");
+        osmRel.setTag("network", "lcn");
+
+        osmParsers.handleRelationTags(osmRel, relFlags);
+        assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
+
+        // unchanged network
+        osmParsers.handleRelationTags(osmRel, relFlags);
         assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
         assertEquals(RouteNetwork.LOCAL, transformEnc.getEnum(false, edgeId, intAccess));
 

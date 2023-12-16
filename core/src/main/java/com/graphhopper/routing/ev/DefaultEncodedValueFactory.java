@@ -61,7 +61,7 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return Toll.create();
         } else if (TrackType.KEY.equals(name)) {
             return TrackType.create();
-        } else if (BikeNetwork.KEY.equals(name) || FootNetwork.KEY.equals(name)) {
+        } else if (BikeNetwork.KEY.equals(name) || MtbNetwork.KEY.equals(name) || FootNetwork.KEY.equals(name)) {
             return RouteNetwork.create(name);
         } else if (Hazmat.KEY.equals(name)) {
             return Hazmat.create();

@@ -77,20 +77,23 @@ public final class CustomWeighting extends AbstractWeighting {
      * costs or traffic light costs etc)
      */
     private final static double SPEED_CONV = 3.6;
-    private final double maxSpeed;
-    private final double maxPriority;
     private final double distanceInfluence;
     private final double headingPenaltySeconds;
     private final EdgeToDoubleMapping edgeToSpeedMapping;
     private final EdgeToDoubleMapping edgeToPriorityMapping;
+    private final MaxCalc maxPrioCalc;
+    private final MaxCalc maxSpeedCalc;
 
     public CustomWeighting(BooleanEncodedValue baseAccessEnc, DecimalEncodedValue baseSpeedEnc, TurnCostProvider turnCostProvider, Parameters parameters) {
         super(baseAccessEnc, baseSpeedEnc, turnCostProvider);
+
         this.edgeToSpeedMapping = parameters.getEdgeToSpeedMapping();
+        this.maxSpeedCalc = parameters.getMaxSpeedCalc();
+
         this.edgeToPriorityMapping = parameters.getEdgeToPriorityMapping();
+        this.maxPrioCalc = parameters.getMaxPrioCalc();
+
         this.headingPenaltySeconds = parameters.getHeadingPenaltySeconds();
-        this.maxSpeed = parameters.getMaxSpeed() / SPEED_CONV;
-        this.maxPriority = parameters.getMaxPriority();
 
         // given unit is s/km -> convert to s/m
         this.distanceInfluence = parameters.getDistanceInfluence() / 1000.0;
@@ -99,8 +102,8 @@ public final class CustomWeighting extends AbstractWeighting {
     }
 
     @Override
-    public double getMinWeight(double distance) {
-        return distance / maxSpeed / maxPriority + distance * distanceInfluence;
+    public double calcMinWeightPerDistance() {
+        return 1d / (maxSpeedCalc.calcMax() / SPEED_CONV) / maxPrioCalc.calcMax() + distanceInfluence;
     }
 
     @Override
@@ -123,8 +126,6 @@ public final class CustomWeighting extends AbstractWeighting {
             return Double.POSITIVE_INFINITY;
 
         double speed = edgeToSpeedMapping.get(edgeState, reverse);
-        if (speed > maxSpeed * SPEED_CONV)
-            throw new IllegalStateException("for " + getName() + " speed <= maxSpeed is violated, " + speed + " <= " + maxSpeed * SPEED_CONV);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
         if (speed < 0)
@@ -148,20 +149,26 @@ public final class CustomWeighting extends AbstractWeighting {
         double get(EdgeIteratorState edge, boolean reverse);
     }
 
+    @FunctionalInterface
+    public interface MaxCalc {
+        double calcMax();
+    }
+
     public static class Parameters {
         private final EdgeToDoubleMapping edgeToSpeedMapping;
         private final EdgeToDoubleMapping edgeToPriorityMapping;
-        private final double maxSpeed;
-        private final double maxPriority;
+        private final MaxCalc maxSpeedCalc;
+        private final MaxCalc maxPrioCalc;
         private final double distanceInfluence;
         private final double headingPenaltySeconds;
 
-        public Parameters(EdgeToDoubleMapping edgeToSpeedMapping, EdgeToDoubleMapping edgeToPriorityMapping,
-                          double maxSpeed, double maxPriority, double distanceInfluence, double headingPenaltySeconds) {
+        public Parameters(EdgeToDoubleMapping edgeToSpeedMapping, MaxCalc maxSpeedCalc,
+                          EdgeToDoubleMapping edgeToPriorityMapping, MaxCalc maxPrioCalc,
+                          double distanceInfluence, double headingPenaltySeconds) {
             this.edgeToSpeedMapping = edgeToSpeedMapping;
+            this.maxSpeedCalc = maxSpeedCalc;
             this.edgeToPriorityMapping = edgeToPriorityMapping;
-            this.maxSpeed = maxSpeed;
-            this.maxPriority = maxPriority;
+            this.maxPrioCalc = maxPrioCalc;
             this.distanceInfluence = distanceInfluence;
             this.headingPenaltySeconds = headingPenaltySeconds;
         }
@@ -174,8 +181,12 @@ public final class CustomWeighting extends AbstractWeighting {
             return edgeToPriorityMapping;
         }
 
-        public double getMaxSpeed() {
-            return maxSpeed;
+        public MaxCalc getMaxSpeedCalc() {
+            return maxSpeedCalc;
+        }
+
+        public MaxCalc getMaxPrioCalc() {
+            return maxPrioCalc;
         }
 
         public double getDistanceInfluence() {
@@ -184,10 +195,6 @@ public final class CustomWeighting extends AbstractWeighting {
 
         public double getHeadingPenaltySeconds() {
             return headingPenaltySeconds;
-        }
-
-        public double getMaxPriority() {
-            return maxPriority;
         }
     }
 }
