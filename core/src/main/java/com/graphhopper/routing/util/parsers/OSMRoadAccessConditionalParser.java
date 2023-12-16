@@ -36,9 +36,9 @@ import java.util.Map;
  * This parser fills the different XYAccessConditional enums from the OSM conditional restrictions.
  * Node tags will be ignored.
  */
-public class OSMConditionalRestrictionsParser implements TagParser {
+public class OSMRoadAccessConditionalParser implements TagParser {
 
-    private static final Logger logger = LoggerFactory.getLogger(OSMConditionalRestrictionsParser.class);
+    private static final Logger logger = LoggerFactory.getLogger(OSMRoadAccessConditionalParser.class);
     private final Collection<String> conditionals;
     private final Setter restrictionSetter;
     private final DateRangeParser parser;
@@ -49,7 +49,7 @@ public class OSMConditionalRestrictionsParser implements TagParser {
         void setBoolean(int edgeId, EdgeIntAccess edgeIntAccess, boolean b);
     }
 
-    public OSMConditionalRestrictionsParser(Collection<String> conditionals, Setter restrictionSetter, String dateRangeParserDate) {
+    public OSMRoadAccessConditionalParser(Collection<String> conditionals, Setter restrictionSetter, String dateRangeParserDate) {
         this.conditionals = conditionals;
         this.restrictionSetter = restrictionSetter;
         if (dateRangeParserDate.isEmpty())

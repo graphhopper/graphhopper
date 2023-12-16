@@ -26,18 +26,18 @@ import java.util.HashSet;
 
 /**
  * Stores temporary so-called conditional restrictions from access:conditional and other conditional
- * tags affecting cars.
+ * tags affecting foot.
  */
-public enum CarAccessConditional {
+public enum FootRoadAccessConditional {
 
     MISSING, YES, NO;
 
     public static final Collection<String> CONDITIONALS = new HashSet<>(Arrays.asList("access:conditional",
-            "vehicle:conditional", "motor_vehicle:conditional", "motorcar:conditional"));
-    public static final String KEY = "car_access_conditional";
+            "foot:conditional"));
+    public static final String KEY = "foot_road_access_conditional";
 
-    public static EnumEncodedValue<CarAccessConditional> create() {
-        return new EnumEncodedValue<>(KEY, CarAccessConditional.class);
+    public static EnumEncodedValue<FootRoadAccessConditional> create() {
+        return new EnumEncodedValue<>(KEY, FootRoadAccessConditional.class);
     }
 
     @Override

@@ -1,6 +1,6 @@
 ### 9.0 [not yet released]
 
-- conditional access restriction tags are no longer considered from vehicle tag parsers and instead a car_access_conditional encoded value (similarly bike + foot) can be used in a custom model. Depending on the usage this fixes #2477. More details are accessible via path details "street_access_conditional" (i.e. converted from OSM access:conditional). See #2863
+- conditional access restriction tags are no longer considered from vehicle tag parsers and instead a car_road_access_conditional encoded value (similarly for bike + foot) can be used in a custom model. This fixes #2477. More details are accessible via path details "tag_access_conditional" (i.e. converted from OSM access:conditional). See #2863
 - removed wheelchair vehicle and related parsers, with currently no complete replacement as it needs to be redone properly with a custom model
 - removed deprecated PMap.put
 

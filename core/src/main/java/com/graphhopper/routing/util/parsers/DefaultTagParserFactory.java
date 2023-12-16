@@ -20,7 +20,7 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
-import com.graphhopper.routing.util.parsers.OSMConditionalRestrictionsParser.Setter;
+import com.graphhopper.routing.util.parsers.OSMRoadAccessConditionalParser.Setter;
 import com.graphhopper.util.PMap;
 
 public class DefaultTagParserFactory implements TagParserFactory {
@@ -85,18 +85,18 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new StateParser(lookup.getEnumEncodedValue(State.KEY, State.class));
         else if (name.equals(Crossing.KEY))
             return new OSMCrossingParser(lookup.getEnumEncodedValue(Crossing.KEY, Crossing.class));
-        else if (name.equals(CarAccessConditional.KEY)) {
-            EnumEncodedValue<CarAccessConditional> enc = lookup.getEnumEncodedValue(CarAccessConditional.KEY, CarAccessConditional.class);
-            Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? CarAccessConditional.YES : CarAccessConditional.NO);
-            return new OSMConditionalRestrictionsParser(CarAccessConditional.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
-        } else if (name.equals(BikeAccessConditional.KEY)) {
-            EnumEncodedValue<BikeAccessConditional> enc = lookup.getEnumEncodedValue(BikeAccessConditional.KEY, BikeAccessConditional.class);
-            Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? BikeAccessConditional.YES : BikeAccessConditional.NO);
-            return new OSMConditionalRestrictionsParser(BikeAccessConditional.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
-        } else if (name.equals(FootAccessConditional.KEY)) {
-            EnumEncodedValue<FootAccessConditional> enc = lookup.getEnumEncodedValue(FootAccessConditional.KEY, FootAccessConditional.class);
-            Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? FootAccessConditional.YES : FootAccessConditional.NO);
-            return new OSMConditionalRestrictionsParser(FootAccessConditional.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
+        else if (name.equals(CarRoadAccessConditional.KEY)) {
+            EnumEncodedValue<CarRoadAccessConditional> enc = lookup.getEnumEncodedValue(CarRoadAccessConditional.KEY, CarRoadAccessConditional.class);
+            Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? CarRoadAccessConditional.YES : CarRoadAccessConditional.NO);
+            return new OSMRoadAccessConditionalParser(CarRoadAccessConditional.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
+        } else if (name.equals(BikeRoadAccessConditional.KEY)) {
+            EnumEncodedValue<BikeRoadAccessConditional> enc = lookup.getEnumEncodedValue(BikeRoadAccessConditional.KEY, BikeRoadAccessConditional.class);
+            Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? BikeRoadAccessConditional.YES : BikeRoadAccessConditional.NO);
+            return new OSMRoadAccessConditionalParser(BikeRoadAccessConditional.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
+        } else if (name.equals(FootRoadAccessConditional.KEY)) {
+            EnumEncodedValue<FootRoadAccessConditional> enc = lookup.getEnumEncodedValue(FootRoadAccessConditional.KEY, FootRoadAccessConditional.class);
+            Setter fct = (edgeId, edgeIntAccess, b) -> enc.setEnum(false, edgeId, edgeIntAccess, b ? FootRoadAccessConditional.YES : FootRoadAccessConditional.NO);
+            return new OSMRoadAccessConditionalParser(FootRoadAccessConditional.CONDITIONALS, fct, properties.getString("date_range_parser_day", ""));
         } else if (name.equals(FerrySpeed.KEY))
             return new FerrySpeedCalculator(lookup.getDecimalEncodedValue(FerrySpeed.KEY));
         return null;
