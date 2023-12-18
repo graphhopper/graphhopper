@@ -203,11 +203,7 @@ public class OSMReaderTest {
 
     @Test
     public void testFerry() {
-        GraphHopper hopper = new GraphHopperFacade(file2) {
-            @Override
-            public void cleanUp() {
-            }
-        }.importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade(file2).importOrLoad();
         Graph graph = hopper.getBaseGraph();
 
         int n40 = AbstractGraphStorageTester.getIdOf(graph, 54.0);
@@ -229,11 +225,7 @@ public class OSMReaderTest {
 
     @Test
     public void testMaxSpeed() {
-        GraphHopper hopper = new GraphHopperFacade(file2) {
-            @Override
-            public void cleanUp() {
-            }
-        }.importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade(file2).importOrLoad();
         Graph graph = hopper.getBaseGraph();
 
         int n60 = AbstractGraphStorageTester.getIdOf(graph, 56.0);
