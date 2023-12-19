@@ -58,9 +58,12 @@ public class StringIndex {
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
     public StringIndex(Directory dir, final int cacheSize) {
-        keys = dir.find("string_index_keys");
-        keys.setSegmentSize(10 * 1024);
-        vals = dir.find("string_index_vals");
+        this(dir, cacheSize, 10 * 1024);
+    }
+
+    public StringIndex(Directory dir, final int cacheSize, int segmentSize) {
+        keys = dir.create("string_index_keys", segmentSize);
+        vals = dir.create("string_index_vals");
         smallCache = new LinkedHashMap<String, Long>(cacheSize, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<String, Long> entry) {
@@ -325,11 +328,6 @@ public class StringIndex {
 
     public boolean isClosed() {
         return vals.isClosed() && keys.isClosed();
-    }
-
-    public void setSegmentSize(int segments) {
-        keys.setSegmentSize(segments);
-        vals.setSegmentSize(segments);
     }
 
     public long getCapacity() {

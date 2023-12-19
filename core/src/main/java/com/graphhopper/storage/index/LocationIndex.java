@@ -20,8 +20,6 @@ package com.graphhopper.storage.index;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.shapes.BBox;
 
-import java.util.List;
-
 /**
  * Provides a way to map real world data "lat,lon" to internal ids/indices of a memory efficient graph
  * - often just implemented as an array.
@@ -48,15 +46,48 @@ public interface LocationIndex {
      */
     Snap findClosest(double lat, double lon, EdgeFilter edgeFilter);
 
-    List<Snap> findCandidateSnaps(final double queryLat, final double queryLon, final EdgeFilter edgeFilter);
     /**
      * This method explores the LocationIndex with the specified Visitor. It visits only the stored edges (and only once)
      * and limited by the queryBBox. Also (a few) more edges slightly outside of queryBBox could be
      * returned that you can avoid via doing an explicit BBox check of the coordinates.
      */
-    void query(BBox queryBBox, Visitor function);
+    default void query(BBox queryBBox, Visitor function) {
+        query(createBBoxTileFilter(queryBBox), function);
+    }
+
+    void query(TileFilter tileFilter, Visitor function);
 
     void close();
+
+
+    interface TileFilter {
+
+        /**
+         * @return true if all edges within the given bounding box shall be accepted
+         */
+        boolean acceptAll(BBox tile);
+
+        /**
+         * @return true if edges within the given bounding box shall potentially be accepted. In this
+         * case the tile filter will be applied again for smaller bounding boxes on a lower level.
+         * If this is the lowest level already simply all edges will be accepted.
+         */
+        boolean acceptPartially(BBox tile);
+    }
+
+    static TileFilter createBBoxTileFilter(BBox queryBBox) {
+        return queryBBox == null ? null : new TileFilter() {
+            @Override
+            public boolean acceptAll(BBox tile) {
+                return queryBBox.contains(tile);
+            }
+
+            @Override
+            public boolean acceptPartially(BBox tile) {
+                return queryBBox.intersects(tile);
+            }
+        };
+    }
 
     /**
      * This interface allows to visit edges stored in the LocationIndex.
@@ -76,5 +107,4 @@ public interface LocationIndex {
         default void onTile(BBox bbox, int depth) {
         }
     }
-
 }

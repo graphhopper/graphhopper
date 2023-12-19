@@ -54,10 +54,6 @@ public class TurnCostStorage {
         this.turnCosts = turnCosts;
     }
 
-    public void setSegmentSize(int bytes) {
-        turnCosts.setSegmentSize(bytes);
-    }
-
     public TurnCostStorage create(long initBytes) {
         turnCosts.create(initBytes);
         return this;

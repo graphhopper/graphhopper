@@ -79,7 +79,7 @@ public class OSMIDMap implements LongIntMap {
     }
 
     public void remove() {
-        dir.remove(keys);
+        dir.remove(keys.getName());
     }
 
     @Override

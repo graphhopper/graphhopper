@@ -24,7 +24,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.nio.ByteOrder;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -33,11 +32,14 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public abstract class DataAccessTest {
     private final File folder = new File("./target/tmp/da");
-    protected ByteOrder defaultOrder = ByteOrder.LITTLE_ENDIAN;
     protected String directory;
     protected String name = "dataacess";
 
-    public abstract DataAccess createDataAccess(String location);
+    public DataAccess createDataAccess(String location) {
+        return createDataAccess(location, 128);
+    }
+
+    public abstract DataAccess createDataAccess(String location, int segmentSize);
 
     @BeforeEach
     public void setUp() {
@@ -89,11 +91,10 @@ public abstract class DataAccessTest {
     public void testExceptionIfNoEnsureCapacityWasCalled() {
         DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
-        // throw some undefined exception if no ensureCapacity was called
         try {
             da.setInt(2 * 4, 321);
-            assertTrue(false);
-        } catch (Exception ex) {
+            fail();
+        } catch (Throwable t) {
         }
     }
 
@@ -154,8 +155,7 @@ public abstract class DataAccessTest {
 
     @Test
     public void testSegments() {
-        DataAccess da = createDataAccess(name);
-        da.setSegmentSize(128);
+        DataAccess da = createDataAccess(name, 128);
         da.create(10);
         assertEquals(1, da.getSegments());
         da.ensureCapacity(500);
@@ -175,8 +175,16 @@ public abstract class DataAccessTest {
 
     @Test
     public void testSegmentSize() {
-        DataAccess da = createDataAccess(name);
-        da.setSegmentSize(20);
+        DataAccess da = createDataAccess(name, 20);
+        da.create(10);
+        // a minimum segment size is applied
+        assertEquals(128, da.getSegmentSize());
+        da.flush();
+        da.close();
+
+        da = createDataAccess(name, 256);
+        da.loadExisting();
+        // we chose a different segment size, but it is ignored
         assertEquals(128, da.getSegmentSize());
         da.close();
     }
@@ -186,15 +194,15 @@ public abstract class DataAccessTest {
         DataAccess da = createDataAccess(name);
         da.create(300);
         assertEquals(128, da.getSegmentSize());
-        byte[] bytes = BitUtil.BIG.fromInt(Integer.MAX_VALUE / 3);
+        byte[] bytes = BitUtil.LITTLE.fromInt(Integer.MAX_VALUE / 3);
         da.setBytes(8, bytes, bytes.length);
         bytes = new byte[4];
         da.getBytes(8, bytes, bytes.length);
-        assertEquals(Integer.MAX_VALUE / 3, BitUtil.BIG.toInt(bytes));
+        assertEquals(Integer.MAX_VALUE / 3, BitUtil.LITTLE.toInt(bytes));
 
         da.setBytes(127, bytes, bytes.length);
         da.getBytes(127, bytes, bytes.length);
-        assertEquals(Integer.MAX_VALUE / 3, BitUtil.BIG.toInt(bytes));
+        assertEquals(Integer.MAX_VALUE / 3, BitUtil.LITTLE.toInt(bytes));
 
         da.close();
 
