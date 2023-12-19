@@ -1,5 +1,6 @@
 ### 9.0 [not yet released]
 
+- minor changes for import hooks, #2917
 - removed wheelchair vehicle and related parsers, with currently no complete replacement as it needs to be redone properly with a custom model
 - removed deprecated PMap.put
 
