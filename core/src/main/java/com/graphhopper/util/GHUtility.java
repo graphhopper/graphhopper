@@ -24,9 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.querygraph.EdgeIteratorStateHelper;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.QueryGraphWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -514,6 +512,15 @@ public class GHUtility {
                 return origLast;
             }
         };
+    }
+
+    public static void checkDAVersion(String name, int expectedVersion, int version) {
+        if (version != expectedVersion) {
+            throw new IllegalStateException("Unexpected version for '" + name + "'. Got: " + version + ", " +
+                                            "expected: " + expectedVersion + ". "
+                                            + "Make sure you are using the same GraphHopper version for reading the files that was used for creating them. "
+                                            + "See https://discuss.graphhopper.com/t/722");
+        }
     }
 
     /**

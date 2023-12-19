@@ -18,7 +18,7 @@
 package com.graphhopper.storage;
 
 import java.nio.ByteOrder;
-import java.util.Collection;
+import java.util.Map;
 
 /**
  * Maintains a collection of DataAccess objects stored at the same location. One GraphStorage per
@@ -36,26 +36,78 @@ public interface Directory {
 
     /**
      * @return the order in which the data is stored
+     * @deprecated
      */
-    ByteOrder getByteOrder();
+    @Deprecated
+    default ByteOrder getByteOrder() {
+        return  ByteOrder.LITTLE_ENDIAN;
+    }
 
     /**
-     * Tries to find the object with that name if not existent it creates one and associates the
-     * location with it. A name is unique in one Directory.
+     * Creates a new DataAccess object with the given name in the location of this Directory. Each name can only
+     * be used once.
      */
-    DataAccess find(String name);
+    DataAccess create(String name);
 
-    DataAccess find(String name, DAType type);
+    /**
+     * @deprecated use {@link #create(String)} instead.
+     */
+    @Deprecated
+    default DataAccess find(String name) {
+        return create(name);
+    }
+
+    /**
+     * @param segmentSize segment size in bytes or -1 to use the default of the corresponding DataAccess implementation
+     */
+    DataAccess create(String name, int segmentSize);
+
+    /**
+     * @deprecated use {@link #create(String, int)} instead.
+     */
+    @Deprecated
+    default DataAccess find(String name, int segmentSize) {
+        return create(name, segmentSize);
+    }
+
+    DataAccess create(String name, DAType type);
+
+    /**
+     * @deprecated use {@link #create(String, DAType)} instead.
+     */
+    @Deprecated
+    default DataAccess find(String name, DAType type) {
+        return create(name, type);
+    }
+
+    DataAccess create(String name, DAType type, int segmentSize);
+
+    /**
+     * @deprecated use {@link #create(String, DAType, int)} instead.
+     */
+    @Deprecated
+    default DataAccess find(String name, DAType type, int segmentSize) {
+        return create(name, type, segmentSize);
+    }
 
     /**
      * Removes the specified object from the directory.
      */
-    void remove(DataAccess da);
+    void remove(String name);
 
+    /**
+     * @deprecated use {@link #remove(String)} instead.
+     */
+    @Deprecated
+    default void remove(DataAccess da) {
+        remove(da.getName());
+    }
     /**
      * @return the default type of a newly created DataAccess object
      */
     DAType getDefaultType();
+
+    DAType getDefaultType(String dataAccess, boolean preferInts);
 
     /**
      * Removes all contained objects from the directory and releases its resources.
@@ -66,11 +118,6 @@ public interface Directory {
      * Releases all allocated resources from the directory without removing backing files.
      */
     void close();
-
-    /**
-     * Returns all created directories.
-     */
-    Collection<DataAccess> getAll();
 
     Directory create();
 }

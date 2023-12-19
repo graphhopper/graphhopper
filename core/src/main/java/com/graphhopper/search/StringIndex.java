@@ -50,17 +50,12 @@ public class StringIndex {
     private long lastEntryPointer = -1;
     private Map<String, String> lastEntryMap;
 
-    public StringIndex(Directory dir) {
-        this(dir, 1000);
-    }
-
     /**
      * Specify a larger cacheSize to reduce disk usage. Note that this increases the memory usage of this object.
      */
-    public StringIndex(Directory dir, final int cacheSize) {
-        keys = dir.find("string_index_keys");
-        keys.setSegmentSize(10 * 1024);
-        vals = dir.find("string_index_vals");
+    public StringIndex(Directory dir, final int cacheSize, final int segmentSize) {
+        keys = dir.create("string_index_keys", segmentSize);
+        vals = dir.create("string_index_vals", segmentSize);
         smallCache = new LinkedHashMap<String, Long>(cacheSize, 0.75f, true) {
             @Override
             protected boolean removeEldestEntry(Map.Entry<String, Long> entry) {
@@ -196,7 +191,7 @@ public class StringIndex {
         if (keyCount == 0)
             return Collections.emptyMap();
 
-        Map<String, String> map = new HashMap<>(keyCount);
+        Map<String, String> map = new LinkedHashMap<>(keyCount);
         long tmpPointer = entryPointer + 1;
         for (int i = 0; i < keyCount; i++) {
             int currentKeyIndex = vals.getShort(tmpPointer);
@@ -282,7 +277,7 @@ public class StringIndex {
             tmpPointer += 1 + valueLength;
         }
 
-        // value for specified key does not existing for the specified pointer
+        // value for specified key does not exist for the specified pointer
         return null;
     }
 
@@ -325,11 +320,6 @@ public class StringIndex {
 
     public boolean isClosed() {
         return vals.isClosed() && keys.isClosed();
-    }
-
-    public void setSegmentSize(int segments) {
-        keys.setSegmentSize(segments);
-        vals.setSegmentSize(segments);
     }
 
     public long getCapacity() {

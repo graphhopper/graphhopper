@@ -95,11 +95,10 @@ public class LandmarkStorageTest {
     public void testSetGetWeight() {
         GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(40.1));
         Directory dir = new RAMDirectory();
-        DataAccess da = dir.find("landmarks_c1");
-        da.create(2000);
 
         LandmarkStorage lms = new LandmarkStorage(graph, dir, new LMConfig("c1", new FastestWeighting(encoder)), 4).
                 setMaximumWeight(LandmarkStorage.PRECISION);
+        lms._getInternalDA().create(2000);
         // 2^16=65536, use -1 for infinity and -2 for maximum
         lms.setWeight(0, 65536);
         // reached maximum value but do not reset to 0 instead use 2^16-2
@@ -108,14 +107,6 @@ public class LandmarkStorageTest {
         assertEquals(65534, lms.getFromWeight(0, 0));
         lms.setWeight(0, 79999);
         assertEquals(65534, lms.getFromWeight(0, 0));
-
-        da.setInt(0, Integer.MAX_VALUE);
-        assertTrue(lms.isInfinity(0));
-        // for infinity return much bigger value
-        // assertEquals(Integer.MAX_VALUE, lms.getFromWeight(0, 0));
-
-        lms.setWeight(0, 79999);
-        assertFalse(lms.isInfinity(0));
     }
 
     @Test

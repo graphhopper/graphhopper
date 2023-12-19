@@ -41,9 +41,9 @@ public class StorableProperties {
     private final DataAccess da;
 
     public StorableProperties(Directory dir) {
-        this.da = dir.find("properties");
         // reduce size
-        da.setSegmentSize(1 << 15);
+        int segmentSize = 1 << 15;
+        this.da = dir.create("properties", segmentSize);
     }
 
     public synchronized boolean loadExisting() {
@@ -103,12 +103,11 @@ public class StorableProperties {
     public synchronized String get(String key) {
         if (!key.equals(toLowerCase(key)))
             throw new IllegalArgumentException("Do not use upper case keys (" + key + ") for StorableProperties since 0.7");
+        return map.getOrDefault(key, "");
+    }
 
-        String ret = map.get(key);
-        if (ret == null)
-            return "";
-
-        return ret;
+    public synchronized Map<String, String> getAll() {
+        return map;
     }
 
     public synchronized void close() {
@@ -177,6 +176,14 @@ public class StorableProperties {
                     + "See https://discuss.graphhopper.com/t/722");
         }
         return true;
+    }
+
+    public synchronized boolean containsVersion() {
+        return map.containsKey("nodes.version") ||
+               map.containsKey("edges.version") ||
+               map.containsKey("geometry.version") ||
+               map.containsKey("location_index.version") ||
+               map.containsKey("string_index.version");
     }
 
     @Override
