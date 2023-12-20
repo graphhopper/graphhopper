@@ -2,13 +2,8 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.HikeRating;
-import com.graphhopper.routing.ev.IntEncodedValue;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.OSMParsers;
-import com.graphhopper.routing.util.VehicleEncodedValues;
-import com.graphhopper.routing.util.VehicleTagParsers;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -29,16 +24,15 @@ public class HikeCustomModelTest {
     public void setup() {
         IntEncodedValue hikeRating = HikeRating.create();
         em = new EncodingManager.Builder().
-                add(VehicleEncodedValues.roads(new PMap())).
-                add(VehicleEncodedValues.foot(new PMap())).
+                add(VehicleAccess.create("foot")).
+                add(VehicleSpeed.create("foot", 4, 1, false)).
+                add(VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false)).
                 add(hikeRating).build();
 
         parsers = new OSMParsers().
                 addWayTagParser(new OSMHikeRatingParser(hikeRating));
 
         for (TagParser p : VehicleTagParsers.foot(em, new PMap()).getTagParsers())
-            parsers.addWayTagParser(p);
-        for (TagParser p : VehicleTagParsers.roads(em, new PMap()).getTagParsers())
             parsers.addWayTagParser(p);
     }
 

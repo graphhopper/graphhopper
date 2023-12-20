@@ -126,18 +126,6 @@ public class EncodingManager implements EncodedValueLookup {
         private final EncodedValue.InitializerConfig turnCostConfig = new EncodedValue.InitializerConfig();
         private EncodingManager em = new EncodingManager();
 
-        public Builder add(VehicleEncodedValues v) {
-            checkNotBuiltAlready();
-            List<EncodedValue> list = new ArrayList<>();
-            v.createEncodedValues(list);
-            list.forEach(this::add);
-
-            list = new ArrayList<>();
-            v.createTurnCostEncodedValues(list);
-            list.forEach(this::addTurnCostEncodedValue);
-            return this;
-        }
-
         public Builder add(EncodedValue encodedValue) {
             checkNotBuiltAlready();
             if (em.hasEncodedValue(encodedValue.getName()))

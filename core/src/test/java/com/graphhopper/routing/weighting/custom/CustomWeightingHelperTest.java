@@ -63,7 +63,7 @@ class CustomWeightingHelperTest {
         customModel.addToSpeed(Else(MULTIPLY, "-0.5"));
 
         CustomWeightingHelper helper = new CustomWeightingHelper();
-        EncodingManager lookup = new EncodingManager.Builder().add(VehicleEncodedValues.car(new PMap())).build();
+        EncodingManager lookup = new EncodingManager.Builder().add(VehicleSpeed.create("car", 5, 5, true)).build();
         helper.init(customModel, lookup, null);
         IllegalArgumentException ret = assertThrows(IllegalArgumentException.class, helper::calcMaxSpeed);
         assertTrue(ret.getMessage().startsWith("statement resulted in negative value"));

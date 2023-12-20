@@ -39,9 +39,9 @@ public class EncodingManagerTest {
     @Test
     public void testSupportFords() {
         EncodingManager manager = new EncodingManager.Builder()
-                .add(VehicleEncodedValues.car(new PMap()))
-                .add(VehicleEncodedValues.bike(new PMap()))
-                .add(VehicleEncodedValues.foot(new PMap())).
+                .add(VehicleAccess.create("car"))
+                .add(VehicleAccess.create("bike"))
+                .add(VehicleAccess.create("foot")).
                 build();
 
         // 1) default -> no block fords

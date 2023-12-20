@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.util.PMap;
 
 public class DefaultEncodedValueFactory implements EncodedValueFactory {
@@ -97,6 +98,29 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return new EnumEncodedValue<>(Crossing.KEY, Crossing.class);
         } else if (FerrySpeed.KEY.equals(name)) {
             return FerrySpeed.create();
+        } else if (name.endsWith(TurnRestriction.suffix())) {
+            // TODO NOW ensure it is added as turn encoded value
+            if (properties.getBool("turn_costs", true))
+                return new SimpleBooleanEncodedValue(name, false);
+            throw new IllegalArgumentException("to disable turn costs do not add '" + name + "' to graph.encoded_values");
+        } else if (name.endsWith(VehicleAccess.key(""))) {
+            return new SimpleBooleanEncodedValue(name, true);
+        } else if (name.endsWith(VehiclePriority.key(""))) {
+            return new DecimalEncodedValueImpl(name, 4, PriorityCode.getFactor(1), false);
+        } else if (name.equals(VehicleSpeed.key("foot"))) {
+            int speedBits = properties.getInt("speed_bits", 4);
+            double speedFactor = properties.getDouble("speed_factor", 1);
+            boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
+            return new DecimalEncodedValueImpl(name, speedBits, speedFactor, speedTwoDirections);
+        } else if (name.equals(VehicleSpeed.key("bike")) || name.equals(VehicleSpeed.key("racingbike")) || name.equals(VehicleSpeed.key("mtb"))) {
+            int speedBits = properties.getInt("speed_bits", 4);
+            double speedFactor = properties.getDouble("speed_factor", 2);
+            boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
+            return new DecimalEncodedValueImpl(name, speedBits, speedFactor, speedTwoDirections);
+        } else if (name.equals(VehicleSpeed.key("car"))) {
+            int speedBits = properties.getInt("speed_bits", 7);
+            double speedFactor = properties.getDouble("speed_factor", 2);
+            return new DecimalEncodedValueImpl(name, speedBits, speedFactor, true);
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }

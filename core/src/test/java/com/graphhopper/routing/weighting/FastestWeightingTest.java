@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import static com.graphhopper.routing.weighting.FastestWeighting.DESTINATION_FACTOR;
 import static com.graphhopper.routing.weighting.FastestWeighting.PRIVATE_FACTOR;
 import static com.graphhopper.util.GHUtility.getEdge;
+import static com.graphhopper.util.TransportationMode.CAR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -39,7 +40,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class FastestWeightingTest {
     private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-    private final BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create("car");
+    private final BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create(CAR);
     private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnRestrictionEnc).build();
     private final BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
 

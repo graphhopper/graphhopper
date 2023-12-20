@@ -35,62 +35,62 @@ public class VehicleEncodedValues {
     private final DecimalEncodedValue priorityEnc;
     private final BooleanEncodedValue turnRestrictionEnc;
 
-    public static VehicleEncodedValues foot(PMap properties) {
-        String name = properties.getString("name", "foot");
-        int speedBits = properties.getInt("speed_bits", 4);
-        double speedFactor = properties.getDouble("speed_factor", 1);
-        boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
-        boolean turnCosts = properties.getBool("turn_costs", false);
-        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
-        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
-        DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
-        BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnRestrictionEnc);
-    }
-
-    public static VehicleEncodedValues bike(PMap properties) {
-        String name = properties.getString("name", "bike");
-        int speedBits = properties.getInt("speed_bits", 4);
-        double speedFactor = properties.getDouble("speed_factor", 2);
-        boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
-        boolean turnCosts = properties.getBool("turn_costs", false);
-        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
-        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
-        DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
-        BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnRestrictionEnc);
-    }
-
-    public static VehicleEncodedValues racingbike(PMap properties) {
-        return bike(new PMap(properties).putObject("name", properties.getString("name", "racingbike")));
-    }
-
-    public static VehicleEncodedValues mountainbike(PMap properties) {
-        return bike(new PMap(properties).putObject("name", properties.getString("name", "mtb")));
-    }
-
-    public static VehicleEncodedValues car(PMap properties) {
-        String name = properties.getString("name", "car");
-        int speedBits = properties.getInt("speed_bits", 7);
-        double speedFactor = properties.getDouble("speed_factor", 2);
-        boolean turnCosts = properties.getBool("turn_costs", false);
-        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
-        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, true);
-        BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnRestrictionEnc);
-    }
-
-    public static VehicleEncodedValues roads(PMap properties) {
-        String name = properties.getString("name", "roads");
-        int speedBits = properties.getInt("speed_bits", 7);
-        double speedFactor = properties.getDouble("speed_factor", 2);
-        boolean speedTwoDirections = properties.getBool("speed_two_directions", true);
-        boolean turnCosts = properties.getBool("turn_costs", false);
-        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
-        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
-        BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnRestrictionEnc);
-    }
+//    public static VehicleEncodedValues foot(PMap properties) {
+//        String name = properties.getString("name", "foot");
+//        int speedBits = properties.getInt("speed_bits", 4);
+//        double speedFactor = properties.getDouble("speed_factor", 1);
+//        boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
+//        boolean turnCosts = properties.getBool("turn_costs", false);
+//        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
+//        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
+//        DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
+//        BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
+//        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnRestrictionEnc);
+//    }
+//
+//    public static VehicleEncodedValues bike(PMap properties) {
+//        String name = properties.getString("name", "bike");
+//        int speedBits = properties.getInt("speed_bits", 4);
+//        double speedFactor = properties.getDouble("speed_factor", 2);
+//        boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
+//        boolean turnCosts = properties.getBool("turn_costs", false);
+//        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
+//        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
+//        DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
+//        BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
+//        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnRestrictionEnc);
+//    }
+//
+//    public static VehicleEncodedValues racingbike(PMap properties) {
+//        return bike(new PMap(properties).putObject("name", properties.getString("name", "racingbike")));
+//    }
+//
+//    public static VehicleEncodedValues mountainbike(PMap properties) {
+//        return bike(new PMap(properties).putObject("name", properties.getString("name", "mtb")));
+//    }
+//
+//    public static VehicleEncodedValues car(PMap properties) {
+//        String name = properties.getString("name", "car");
+//        int speedBits = properties.getInt("speed_bits", 7);
+//        double speedFactor = properties.getDouble("speed_factor", 2);
+//        boolean turnCosts = properties.getBool("turn_costs", false);
+//        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
+//        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, true);
+//        BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
+//        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnRestrictionEnc);
+//    }
+//
+//    public static VehicleEncodedValues roads(PMap properties) {
+//        String name = properties.getString("name", "roads");
+//        int speedBits = properties.getInt("speed_bits", 7);
+//        double speedFactor = properties.getDouble("speed_factor", 2);
+//        boolean speedTwoDirections = properties.getBool("speed_two_directions", true);
+//        boolean turnCosts = properties.getBool("turn_costs", false);
+//        BooleanEncodedValue accessEnc = VehicleAccess.create(name);
+//        DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
+//        BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
+//        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnRestrictionEnc);
+//    }
 
     public VehicleEncodedValues(String name, BooleanEncodedValue accessEnc, DecimalEncodedValue avgSpeedEnc,
                                 DecimalEncodedValue priorityEnc, BooleanEncodedValue turnRestrictionEnc) {

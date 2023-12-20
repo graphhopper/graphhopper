@@ -473,7 +473,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(BAYREUTH).
-                setProfiles(new Profile(profile).setCustomModel(Helper.createBaseCustomModel("car",false)));
+                setProfiles(new Profile(profile).setCustomModel(Helper.createBaseCustomModel("car", false)));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(50.023513, 11.548862, 49.969441, 11.537876).
@@ -499,12 +499,12 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(LAUF).
+                setEncodedValuesString("car_access,car_average_speed").
                 setProfiles(new Profile(profile).setCustomModel(Helper.createBaseCustomModel("car", false)));
         hopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.46553, 11.154669, 49.465244, 11.152577).
                 setProfile(profile);
-
         req.setPointHints(new ArrayList<>(asList("Laufamholzstraße, 90482, Nürnberg, Deutschland", "")));
         GHResponse rsp = hopper.route(req);
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
@@ -1835,7 +1835,7 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MOSCOW).
                 setProfiles(new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false).
-                                setTurnCosts(new TurnCostsConfig(TransportationMode.CAR).setRestrictions(turnCosts))));
+                        setTurnCosts(new TurnCostsConfig(TransportationMode.CAR).setRestrictions(turnCosts))));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
         hopper.importOrLoad();
 
@@ -2473,7 +2473,7 @@ public class GraphHopperTest {
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
-                setVehiclesString("car|block_private=false").
+                setEncodedValuesString("car_access|block_private=false").
                 setProfiles(
                         new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false)),
                         new Profile("bike").setCustomModel(Helper.createBaseCustomModel("bike", true)),
@@ -2722,26 +2722,23 @@ public class GraphHopperTest {
         int nodes = hopper.getBaseGraph().getNodes();
         hopper.close();
 
-        // load without configured graph.vehicles
-        hopper = new GraphHopper();
-        hopper.setProfiles(Arrays.asList(
-                new Profile("p_car").setCustomModel(Helper.createBaseCustomModel("car", false)),
-                new Profile("p_bike").setCustomModel(Helper.createBaseCustomModel("bike", false)))
-        );
-        hopper.setGraphHopperLocation(GH_LOCATION);
+        hopper = new GraphHopper()
+                .setProfiles(
+                        new Profile("p_car").setCustomModel(Helper.createBaseCustomModel("car", false)),
+                        new Profile("p_bike").setCustomModel(Helper.createBaseCustomModel("bike", true))
+                )
+                .setGraphHopperLocation(GH_LOCATION);
         assertTrue(hopper.load());
         hopper.getBaseGraph();
         assertEquals(nodes, hopper.getBaseGraph().getNodes());
         hopper.close();
 
-        // load via explicitly configured graph.vehicles
-        hopper = new GraphHopper();
-        hopper.setVehiclesString("car,bike");
-        hopper.setProfiles(Arrays.asList(
-                new Profile("p_car").setCustomModel(Helper.createBaseCustomModel("car", false)),
-                new Profile("p_bike").setCustomModel(Helper.createBaseCustomModel("bike", true)))
-        );
-        hopper.setGraphHopperLocation(GH_LOCATION);
+        hopper = new GraphHopper()
+                .setProfiles(
+                        new Profile("p_car").setCustomModel(Helper.createBaseCustomModel("car", false)),
+                        new Profile("p_bike").setCustomModel(Helper.createBaseCustomModel("bike", true))
+                )
+                .setGraphHopperLocation(GH_LOCATION);
         assertTrue(hopper.load());
         assertEquals(nodes, hopper.getBaseGraph().getNodes());
         hopper.close();
@@ -2751,19 +2748,19 @@ public class GraphHopperTest {
     void testLoadingWithAnotherSpeedFactorWorks() {
         {
             GraphHopper hopper = new GraphHopper()
-                    .setVehiclesString("car|speed_factor=3")
+                    .setEncodedValuesString("car_average_speed|speed_factor=3")
                     .setProfiles(new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false)))
                     .setGraphHopperLocation(GH_LOCATION)
                     .setOSMFile(BAYREUTH);
             hopper.importOrLoad();
         }
         {
-            // now we use another speed_factor, but changing the flag encoder string has no effect when we are loading
+            // now we use another speed_factor, but changing the encoded value string has no effect when we are loading
             // a graph. This API is a bit confusing, but we have been mixing configuration options that only matter
             // during import with those that only matter when routing for some time already. At some point we should
             // separate the 'import' from the 'routing' config (and split the GraphHopper class).
             GraphHopper hopper = new GraphHopper()
-                    .setVehiclesString("car|speed_factor=9")
+                    .setEncodedValuesString("car_averager_speed|speed_factor=9")
                     .setProfiles(new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false)))
                     .setGraphHopperLocation(GH_LOCATION);
             hopper.load();

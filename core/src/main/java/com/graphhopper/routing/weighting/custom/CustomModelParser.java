@@ -55,7 +55,7 @@ public class CustomModelParser {
     // Use accessOrder==true to remove oldest accessed entry, not oldest inserted.
     private static final int CACHE_SIZE = Integer.getInteger("graphhopper.custom_weighting.cache_size", 1000);
     private static final Map<String, Class<?>> CACHE = Collections.synchronizedMap(
-            new LinkedHashMap<String, Class<?>>(CACHE_SIZE, 0.75f, true) {
+            new LinkedHashMap<>(CACHE_SIZE, 0.75f, true) {
                 protected boolean removeEldestEntry(Map.Entry eldest) {
                     return size() > CACHE_SIZE;
                 }
@@ -91,8 +91,8 @@ public class CustomModelParser {
 
     /**
      * This method creates a weighting from a CustomModel that must already contain base parsers. E.g.
-     *  <code>{ "if": "true", "limit_to": "car_average_speed" }<code/> for speed and
-     *  <code>{ "if": "!car_access", "multiply_by": "0" }</code> for priority.
+     * <code>{ "if": "true", "limit_to": "car_average_speed" }<code/> for speed and
+     * <code>{ "if": "!car_access", "multiply_by": "0" }</code> for priority.
      */
     public static CustomWeighting createWeighting(EncodedValueLookup lookup, TurnCostStorage turnCostStorage, CustomModel customModel) {
         if (customModel == null)
@@ -100,8 +100,7 @@ public class CustomModelParser {
 
         TurnCostProvider turnCostProvider;
         if (customModel.getTurnCosts().isRestrictions()) {
-            String vehicle = Helper.toLowerCase(customModel.getTurnCosts().getTransportationMode().name());
-            BooleanEncodedValue turnRestrictionEnc = lookup.getTurnBooleanEncodedValue(TurnRestriction.key(vehicle));
+            BooleanEncodedValue turnRestrictionEnc = lookup.getTurnBooleanEncodedValue(TurnRestriction.key(customModel.getTurnCosts().getTransportationMode()));
             int uTurnCosts = customModel.getTurnCosts().getUTurnCosts();
             turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, turnCostStorage, uTurnCosts);
         } else {
@@ -206,6 +205,27 @@ public class CustomModelParser {
         } catch (Exception ex) {
             String errString = "Cannot compile expression";
             throw new IllegalArgumentException(errString + ": " + ex.getMessage(), ex);
+        }
+    }
+
+    public static List<String> findVariablesForEncodedValuesString(CustomModel model, EncodedValueFactory factory) {
+        Set<String> variables = new LinkedHashSet<>();
+        NameValidator nameValidator = s -> factory.create(s, new PMap()) != null;
+        findVariablesForEncodedValuesString(model.getPriority(), variables, nameValidator);
+        findVariablesForEncodedValuesString(model.getSpeed(), variables, nameValidator);
+        return new ArrayList<>(variables);
+    }
+
+    private static void findVariablesForEncodedValuesString(List<Statement> statements, Set<String> variables, NameValidator nameValidator) {
+        List<List<Statement>> blocks = CustomModelParser.splitIntoBlocks(statements);
+        for (List<Statement> block : blocks) {
+            for (Statement statement : block) {
+                ParseResult result = ConditionalExpressionVisitor.parse(statement.getCondition(), nameValidator);
+                if (result.ok) variables.addAll(result.guessedVariables);
+                // ignore potential problems; collect only variables in this step
+                result = ValueExpressionVisitor.parse(statement.getValue(), nameValidator);
+                if (result.ok) variables.addAll(result.guessedVariables);
+            }
         }
     }
 

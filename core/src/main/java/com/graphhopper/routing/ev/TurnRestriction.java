@@ -18,15 +18,22 @@
 
 package com.graphhopper.routing.ev;
 
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.TransportationMode;
+
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 public class TurnRestriction {
 
-    public static String key(String prefix) {
-        return getKey(prefix, "turn_restriction");
+    public static String suffix() {
+        return getKey("", "turn_restriction");
     }
 
-    public static BooleanEncodedValue create(String name) {
+    public static String key(TransportationMode mode) {
+        return getKey(Helper.toLowerCase(mode.name()), "turn_restriction");
+    }
+
+    public static BooleanEncodedValue create(TransportationMode name) {
         return new SimpleBooleanEncodedValue(key(name), false);
     }
 }

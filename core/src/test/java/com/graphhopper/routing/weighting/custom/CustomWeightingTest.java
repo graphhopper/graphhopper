@@ -22,6 +22,7 @@ import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 import static com.graphhopper.util.GHUtility.getEdge;
+import static com.graphhopper.util.TransportationMode.CAR;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CustomWeightingTest {
@@ -31,7 +32,7 @@ class CustomWeightingTest {
     DecimalEncodedValue maxSpeedEnc;
     EnumEncodedValue<RoadClass> roadClassEnc;
     EncodingManager encodingManager;
-    BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create("car");
+    BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create(CAR);
 
     @BeforeEach
     public void setup() {

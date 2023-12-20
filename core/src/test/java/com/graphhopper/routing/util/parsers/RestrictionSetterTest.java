@@ -11,11 +11,13 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.SpeedWeighting;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.util.TransportationMode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
+import static com.graphhopper.util.TransportationMode.CAR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -44,7 +46,7 @@ public class RestrictionSetterTest {
         edge(2, 4);
         edge(3, 4);
         GraphRestriction graphRestriction = GraphRestriction.node(a, 1, b);
-        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc(CAR);
         r.setRestrictions(Arrays.asList(new Pair<>(graphRestriction, RestrictionType.NO)), turnRestrictionEnc);
         assertEquals(nodes(0, 1, 3, 4, 2), calcPath(0, 2, turnRestrictionEnc));
     }
@@ -60,7 +62,7 @@ public class RestrictionSetterTest {
         edge(2, 4);
         edge(3, 4);
         GraphRestriction graphRestriction = GraphRestriction.node(a, 1, b);
-        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc(CAR);
         r.setRestrictions(Arrays.asList(new Pair<>(graphRestriction, RestrictionType.ONLY)), turnRestrictionEnc);
         assertEquals(nodes(0, 1, 2, 4, 3), calcPath(0, 3, turnRestrictionEnc));
     }
@@ -84,7 +86,7 @@ public class RestrictionSetterTest {
         edge(6, 9);
         edge(8, 9);
         GraphRestriction graphRestriction = GraphRestriction.way(a, b, c, nodes(1, 2));
-        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc(CAR);
         r.setRestrictions(Arrays.asList(
                 new Pair<>(graphRestriction, RestrictionType.NO)
         ), turnRestrictionEnc);
@@ -109,7 +111,7 @@ public class RestrictionSetterTest {
         int t = edge(2, 6);
         int u = edge(3, 7);
 
-        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc(CAR);
         r.setRestrictions(Arrays.asList(
                 new Pair<>(GraphRestriction.way(a, b, c, nodes(1, 2)), RestrictionType.NO),
                 new Pair<>(GraphRestriction.way(b, c, d, nodes(2, 3)), RestrictionType.NO)
@@ -148,7 +150,7 @@ public class RestrictionSetterTest {
         edge(7, 10);
         edge(8, 11);
         edge(10, 11);
-        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc(CAR);
         r.setRestrictions(Arrays.asList(
                 new Pair<>(GraphRestriction.node(t, 4, d), RestrictionType.NO),
                 new Pair<>(GraphRestriction.node(s, 3, a), RestrictionType.NO),
@@ -181,7 +183,7 @@ public class RestrictionSetterTest {
         int e = edge(4, 5);
         int f = edge(5, 7);
         int g = edge(5, 6);
-        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc(CAR);
         r.setRestrictions(Arrays.asList(
                 new Pair<>(GraphRestriction.way(a, d, f, nodes(2, 5)), RestrictionType.ONLY),
                 // we add a few more restrictions, because that happens a lot in real data
@@ -210,7 +212,7 @@ public class RestrictionSetterTest {
         int c = edge(1, 2);
         int d = edge(2, 3);
         int e = edge(2, 4);
-        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc(CAR);
         assertThrows(IllegalStateException.class, () -> r.setRestrictions(Arrays.asList(
                         // These are two 'only' via-way restrictions that share the same via way. A real-world example can
                         // be found in Rüdesheim am Rhein where vehicles either have to go straight or enter the ferry depending
@@ -222,8 +224,8 @@ public class RestrictionSetterTest {
         );
     }
 
-    private static BooleanEncodedValue createTurnRestrictionEnc(String name) {
-        BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create(name);
+    private static BooleanEncodedValue createTurnRestrictionEnc(TransportationMode mode) {
+        BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create(mode);
         turnRestrictionEnc.init(new EncodedValue.InitializerConfig());
         return turnRestrictionEnc;
     }

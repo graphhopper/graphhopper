@@ -118,7 +118,6 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
         GraphHopper hopper = createHopper(MONACO, new Profile("car").setCustomModel(
                 CustomModel.merge(getCustomModel("motorcycle.json"), getCustomModel("curvature.json"))));
-        hopper.setVehiclesString("car,roads");
         hopper.setEncodedValuesString("curvature,track_type,surface");
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
@@ -311,7 +310,6 @@ public class RoutingAlgorithmWithOSMTest {
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
         queries.add(new Query(49.990967, 11.545258, 50.023182, 11.555386, 5636, 97));
         GraphHopper hopper = createHopper(BAYREUTH, new Profile("hike").setCustomModel(getCustomModel("hike.json")));
-        hopper.setVehiclesString("roads,foot");
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -320,7 +318,6 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testHikeCanUseExtremeSacScales() {
         GraphHopper hopper = createHopper(HOHEWARTE, new Profile("hike").setCustomModel(getCustomModel("hike.json")));
-        hopper.setVehiclesString("foot,roads");
         // do not pull elevation data: hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         GHResponse res = hopper.route(new GHRequest(47.290322, 11.333889, 47.301593, 11.333489).setProfile("hike"));
@@ -352,7 +349,6 @@ public class RoutingAlgorithmWithOSMTest {
         GraphHopper hopper = createHopper(MONACO,
                 new Profile("bike").setCustomModel(CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_elevation.json")).
                         addToPriority(If("!bike_access", MULTIPLY, "0"))));
-        hopper.setVehiclesString("roads,bike");
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -597,7 +593,6 @@ public class RoutingAlgorithmWithOSMTest {
 
         GraphHopper hopper = createHopper(BAYREUTH, new Profile("bike").setCustomModel(
                 CustomModel.merge(getCustomModel("bike.json"), getCustomModel("bike_elevation.json"))));
-        hopper.setVehiclesString("bike,roads");
         hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
         checkQueries(hopper, list);

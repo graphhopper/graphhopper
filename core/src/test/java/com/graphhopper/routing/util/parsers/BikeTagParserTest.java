@@ -42,7 +42,11 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Override
     protected EncodingManager createEncodingManager() {
-        return new EncodingManager.Builder().add(VehicleEncodedValues.bike(new PMap())).build();
+        return new EncodingManager.Builder().
+                add(VehicleAccess.create("bike")).
+                add(VehicleSpeed.create("bike", 4, 2, false)).
+                add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false)).
+                build();
     }
 
     @Override

@@ -56,4 +56,11 @@ public class TurnCostsConfig {
         this.uTurnCosts = uTurnCosts;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "transportationMode=" + transportationMode +
+                ", restrictions=" + restrictions +
+                ", uTurnCosts=" + uTurnCosts;
+    }
 }

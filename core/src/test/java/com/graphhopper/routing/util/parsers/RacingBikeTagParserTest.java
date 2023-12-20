@@ -42,7 +42,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
     protected EncodingManager createEncodingManager() {
-        return new EncodingManager.Builder().add(VehicleEncodedValues.racingbike(new PMap())).build();
+        return new EncodingManager.Builder().
+                add(VehicleAccess.create("racingbike")).
+                add(VehicleSpeed.create("racingbike", 4, 2, false)).
+                add(VehiclePriority.create("racingbike", 4, PriorityCode.getFactor(1), false)).
+                build();
     }
 
     @Override

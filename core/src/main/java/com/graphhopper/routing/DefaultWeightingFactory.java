@@ -61,8 +61,6 @@ public class DefaultWeightingFactory implements WeightingFactory {
             if (requestHints.has(Parameters.Routing.U_TURN_COSTS))
                 mergedCustomModel.getTurnCosts().setUTurnCosts(requestHints.getInt(Parameters.Routing.U_TURN_COSTS, TurnCostsConfig.INFINITE_U_TURN_COSTS));
         } else {
-            // "disableTurnCosts == true"
-            // TODO NOW use setTurnCosts(null) instead?
             mergedCustomModel.getTurnCosts().setRestrictions(false);
         }
 
