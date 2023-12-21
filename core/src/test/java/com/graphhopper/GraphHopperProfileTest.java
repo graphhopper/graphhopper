@@ -66,7 +66,7 @@ public class GraphHopperProfileTest {
     public void vehicleDoesNotExist_error() {
         final GraphHopper hopper = new GraphHopper().setGraphHopperLocation(GH_LOCATION).setStoreOnFlush(false).
                 setProfiles(new Profile("profile").setCustomModel(Helper.createBaseCustomModel("your_car", false)));
-        assertIllegalArgument(hopper::importOrLoad, "entry in vehicle list not supported: your_car");
+        assertIllegalArgument(hopper::importOrLoad, "Cannot compile expression: 'your_car_average_speed' not available");
     }
 
     @Test

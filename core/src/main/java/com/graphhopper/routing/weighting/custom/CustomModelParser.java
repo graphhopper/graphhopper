@@ -208,23 +208,31 @@ public class CustomModelParser {
         }
     }
 
-    public static List<String> findVariablesForEncodedValuesString(CustomModel model, EncodedValueFactory factory) {
+    public static List<String> findVariablesForEncodedValuesString(CustomModel model, NameValidator nameValidator) {
         Set<String> variables = new LinkedHashSet<>();
-        NameValidator nameValidator = s -> factory.create(s, new PMap()) != null;
-        findVariablesForEncodedValuesString(model.getPriority(), variables, nameValidator);
-        findVariablesForEncodedValuesString(model.getSpeed(), variables, nameValidator);
+        // avoid parsing exception for backward_xy or in_xy ...
+        NameValidator nameValidatorIntern = s -> {
+            // some literals are no variables and would throw an exception (encoded value not found)
+            if (Character.isUpperCase(s.charAt(0)) || s.startsWith(BACKWARD_PREFIX) || s.startsWith(IN_AREA_PREFIX))
+                return true;
+            if (nameValidator.isValid(s)) {
+                variables.add(s);
+                return true;
+            }
+            return false;
+        };
+        findVariablesForEncodedValuesString(model.getPriority(), nameValidatorIntern);
+        findVariablesForEncodedValuesString(model.getSpeed(), nameValidatorIntern);
         return new ArrayList<>(variables);
     }
 
-    private static void findVariablesForEncodedValuesString(List<Statement> statements, Set<String> variables, NameValidator nameValidator) {
+    private static void findVariablesForEncodedValuesString(List<Statement> statements, NameValidator nameValidator) {
         List<List<Statement>> blocks = CustomModelParser.splitIntoBlocks(statements);
         for (List<Statement> block : blocks) {
             for (Statement statement : block) {
-                ParseResult result = ConditionalExpressionVisitor.parse(statement.getCondition(), nameValidator);
-                if (result.ok) variables.addAll(result.guessedVariables);
                 // ignore potential problems; collect only variables in this step
-                result = ValueExpressionVisitor.parse(statement.getValue(), nameValidator);
-                if (result.ok) variables.addAll(result.guessedVariables);
+                ConditionalExpressionVisitor.parse(statement.getCondition(), nameValidator);
+                ValueExpressionVisitor.parse(statement.getValue(), nameValidator);
             }
         }
     }

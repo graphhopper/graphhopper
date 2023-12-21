@@ -43,6 +43,7 @@ import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
+import com.graphhopper.routing.weighting.custom.NameValidator;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -681,6 +682,7 @@ public class GraphHopper {
                     osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
                 if (encodingManager.hasEncodedValue(MtbNetwork.KEY) && added.add(MtbNetwork.KEY))
                     osmParsers.addRelationTagParser(relConfig -> new OSMMtbNetworkTagParser(encodingManager.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig));
+            } else if (tagParser instanceof BikeAverageSpeedParser) {
                 if (encodingManager.hasEncodedValue(Smoothness.KEY) && added.add(Smoothness.KEY))
                     osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
             } else if (tagParser instanceof FootAccessParser) {
@@ -691,6 +693,7 @@ public class GraphHopper {
             osmParsers.addWayTagParser(tagParser);
 
             if (tagParser instanceof BikeCommonAccessParser && encodingManager.hasEncodedValue(GetOffBike.KEY) && added.add(GetOffBike.KEY))
+                // TODO NOW first bike_access is used -> what if bike_access is different to racingbike_access !?
                 osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY), ((BikeCommonAccessParser) tagParser).getAccessEnc()));
         }
 
@@ -817,8 +820,9 @@ public class GraphHopper {
             if (!evStr.isEmpty()) map.put(evStr.split("\\|")[0], evStr);
         }
 
+        NameValidator nameValidator = s -> encodedValueFactory.create(s, new PMap()) != null;
         profilesByName.values().
-                forEach(profile -> CustomModelParser.findVariablesForEncodedValuesString(profile.getCustomModel(), encodedValueFactory).
+                forEach(profile -> CustomModelParser.findVariablesForEncodedValuesString(profile.getCustomModel(), nameValidator).
                         forEach(var -> map.putIfAbsent(var, var)));
 
         List<String> encodedValueStrings = new ArrayList<>(map.values());
@@ -1055,6 +1059,10 @@ public class GraphHopper {
         if (profilesByName.isEmpty())
             throw new IllegalArgumentException("There has to be at least one profile");
         for (Profile profile : profilesByName.values()) {
+            if (profile.getCustomModel().getTurnCosts().isRestrictions()) {
+                if (profile.getCustomModel().getTurnCosts().getTransportationMode() == null)
+                    throw new IllegalArgumentException("missing transportation_mode: " + profile.getName());
+            }
             try {
                 createWeighting(profile, new PMap());
             } catch (IllegalArgumentException e) {

@@ -21,23 +21,19 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.JsonFeature;
-import com.graphhopper.util.JsonFeatureCollection;
+import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 
 import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
+import static com.graphhopper.routing.weighting.custom.CustomModelParser.findVariablesForEncodedValuesString;
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.parseExpressions;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -313,4 +309,17 @@ class CustomModelParserTest {
         assertEquals(1.0, priorityMapping.get(edge2, false), 1.e-6);
     }
 
+    @Test
+    public void findVariablesForEncodedValueString() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToPriority(If("backward_car_access != car_access", MULTIPLY, "0.5"));
+        List<String> variables = findVariablesForEncodedValuesString(customModel, s -> new DefaultEncodedValueFactory().create(s, new PMap()) != null);
+        assertEquals(List.of("car_access"), variables);
+
+        customModel = new CustomModel();
+        customModel.addToPriority(If("!foot_access && (hike_rating < 4 || road_access == PRIVATE)", MULTIPLY, "0"));
+    //, {"if": "true", "multiply_by": foot_priority}, {"if": "foot_network == INTERNATIONAL || foot_network == NATIONAL", "multiply_by": 1.7}, {"else_if": "foot_network == REGIONAL || foot_network == LOCAL", "multiply_by": 1.5}]|areas=[]|turnCostsConfig=transportationMode=null, restrictions=false, uTurnCosts=-1
+        variables = findVariablesForEncodedValuesString(customModel, s -> new DefaultEncodedValueFactory().create(s, new PMap()) != null);
+        assertEquals(List.of("foot_access", "hike_rating", "road_access"), variables);
+    }
 }

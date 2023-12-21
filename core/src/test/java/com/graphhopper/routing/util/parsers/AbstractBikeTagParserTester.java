@@ -24,7 +24,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -54,10 +53,14 @@ public abstract class AbstractBikeTagParserTester {
     @BeforeEach
     public void setUp() {
         encodingManager = createEncodingManager();
-        VehicleTagParsers parsers = createBikeTagParsers(encodingManager, new PMap("block_fords=true"));
-        accessParser = (BikeCommonAccessParser) parsers.getAccessParser();
-        speedParser = (BikeCommonAverageSpeedParser) parsers.getSpeedParser();
-        priorityParser = (BikeCommonPriorityParser) parsers.getPriorityParser();
+        PMap pMap = new PMap("block_fords=true");
+        String type = getBikeType();
+
+        OSMParsers parsers = new OSMParsers();
+        parsers.addWayTagParser(accessParser = (BikeCommonAccessParser) new DefaultTagParserFactory().create(encodingManager, VehicleAccess.key(type), pMap));
+        parsers.addWayTagParser(speedParser = (BikeCommonAverageSpeedParser) new DefaultTagParserFactory().create(encodingManager, VehicleSpeed.key(type), pMap));
+        parsers.addWayTagParser(priorityParser = (BikeCommonPriorityParser) new DefaultTagParserFactory().create(encodingManager, VehiclePriority.key(type), pMap));
+
         osmParsers = new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
                 .addRelationTagParser(relConfig -> new OSMMtbNetworkTagParser(encodingManager.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig))
@@ -68,9 +71,15 @@ public abstract class AbstractBikeTagParserTester {
         accessEnc = accessParser.getAccessEnc();
     }
 
-    protected abstract EncodingManager createEncodingManager();
+    protected EncodingManager createEncodingManager() {
+        return new EncodingManager.Builder().
+                add(VehicleAccess.create(getBikeType())).
+                add(VehicleSpeed.create(getBikeType(), 4, 2, false)).
+                add(VehiclePriority.create(getBikeType(), 4, PriorityCode.getFactor(1), false)).
+                build();
+    }
 
-    protected abstract VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap);
+    protected abstract String getBikeType();
 
     protected void assertPriority(PriorityCode expectedPrio, ReaderWay way) {
         IntsRef relFlags = osmParsers.handleRelationTags(new ReaderRelation(0), osmParsers.createRelationFlags());
@@ -528,7 +537,8 @@ public abstract class AbstractBikeTagParserTester {
     @Test
     void privateAndFords() {
         // defaults: do not block fords, block private
-        BikeCommonAccessParser bike = (BikeCommonAccessParser) createBikeTagParsers(encodingManager, new PMap()).getAccessParser();
+        ;
+        BikeCommonAccessParser bike = (BikeCommonAccessParser) new DefaultTagParserFactory().create(encodingManager, VehicleAccess.key(getBikeType()), new PMap());
         assertFalse(bike.isBlockFords());
         assertTrue(bike.restrictedValues.contains("private"));
         assertFalse(bike.intendedValues.contains("private"));
@@ -537,7 +547,7 @@ public abstract class AbstractBikeTagParserTester {
         assertTrue(bike.isBarrier(node));
 
         // block fords, unblock private
-        bike = (BikeCommonAccessParser) createBikeTagParsers(encodingManager, new PMap("block_fords=true|block_private=false")).getAccessParser();
+        bike = (BikeCommonAccessParser) new DefaultTagParserFactory().create(encodingManager, VehicleAccess.key(getBikeType()), new PMap("block_fords=true|block_private=false"));
         assertTrue(bike.isBlockFords());
         assertFalse(bike.restrictedValues.contains("private"));
         assertTrue(bike.intendedValues.contains("private"));

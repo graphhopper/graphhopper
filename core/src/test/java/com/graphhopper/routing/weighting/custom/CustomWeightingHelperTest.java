@@ -2,12 +2,10 @@ package com.graphhopper.routing.weighting.custom;
 
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.Polygon;
 import org.junit.jupiter.api.Test;
 

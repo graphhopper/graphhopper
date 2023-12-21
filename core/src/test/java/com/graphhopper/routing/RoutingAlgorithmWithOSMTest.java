@@ -177,7 +177,7 @@ public class RoutingAlgorithmWithOSMTest {
         queries.add(new Query(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
         queries.add(new Query(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
         GraphHopper hopper = createHopper(MOSCOW,
-                new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false)).setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(CAR))));
+                new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR))));
         hopper.setMinNetworkSize(200);
         hopper.importOrLoad();
         checkQueries(hopper, queries);
@@ -198,7 +198,7 @@ public class RoutingAlgorithmWithOSMTest {
         List<Query> list = new ArrayList<>();
         list.add(new Query(0, 0.00099, -0.00099, 0, 664, 6));
         GraphHopper hopper = createHopper(DIR + "/test_simple_pturn.osm.xml",
-                new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false)).setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(CAR))));
+                new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR))));
         hopper.importOrLoad();
         checkQueries(hopper, list);
     }

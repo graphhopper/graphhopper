@@ -20,13 +20,12 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
+import com.graphhopper.routing.ev.BikeNetwork;
+import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.VehicleEncodedValues;
-import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
@@ -41,17 +40,8 @@ import static org.junit.jupiter.api.Assertions.*;
 public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Override
-    protected EncodingManager createEncodingManager() {
-        return new EncodingManager.Builder().
-                add(VehicleAccess.create("bike")).
-                add(VehicleSpeed.create("bike", 4, 2, false)).
-                add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false)).
-                build();
-    }
-
-    @Override
-    protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap) {
-        return VehicleTagParsers.bike(lookup, pMap);
+    protected String getBikeType() {
+        return "bike";
     }
 
     @Test

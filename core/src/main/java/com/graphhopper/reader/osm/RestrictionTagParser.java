@@ -26,14 +26,14 @@ import java.util.stream.Collectors;
 import static java.util.Collections.emptyList;
 
 /**
- * Parses the OSM restriction tags for given vehicle types / transportation modes.
+ * Parses the OSM restriction tags for given restrictions.
  */
 public class RestrictionTagParser {
-    private final List<String> vehicleTypes;
+    private final List<String> restrictions;
     private final BooleanEncodedValue turnRestrictionEnc;
 
-    public RestrictionTagParser(List<String> vehicleTypes, BooleanEncodedValue turnRestrictionEnc) {
-        this.vehicleTypes = vehicleTypes;
+    public RestrictionTagParser(List<String> restrictions, BooleanEncodedValue turnRestrictionEnc) {
+        this.restrictions = restrictions;
         this.turnRestrictionEnc = turnRestrictionEnc;
     }
 
@@ -60,7 +60,7 @@ public class RestrictionTagParser {
             if (!limitedRestrictions.isEmpty())
                 // note that there is no warning if there is a restriction tag and restriction:*=give_way
                 throw new OSMRestrictionException("has a 'restriction' tag, but also 'restriction:' tags");
-            if (!Collections.disjoint(vehicleTypes, exceptVehicles))
+            if (!Collections.disjoint(restrictions, exceptVehicles))
                 return null;
             return buildResult(restriction);
         } else {
@@ -76,7 +76,7 @@ public class RestrictionTagParser {
             Set<String> restrictions = limitedRestrictions.stream()
                     // We do not consider the restriction[:<transportation_mode>]:conditional tag so far
                     .filter(r -> !r.contains("conditional"))
-                    .filter(r -> vehicleTypes.contains(r.replace("restriction:", "").trim()))
+                    .filter(r -> this.restrictions.contains(r.replace("restriction:", "").trim()))
                     .map(r -> (String) tags.get(r))
                     .collect(Collectors.toSet());
             if (restrictions.size() > 1)

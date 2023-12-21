@@ -32,8 +32,9 @@ public class HikeCustomModelTest {
         parsers = new OSMParsers().
                 addWayTagParser(new OSMHikeRatingParser(hikeRating));
 
-        for (TagParser p : VehicleTagParsers.foot(em, new PMap()).getTagParsers())
-            parsers.addWayTagParser(p);
+        parsers.addWayTagParser(new DefaultTagParserFactory().create(em, VehicleAccess.key("foot"), new PMap()));
+        parsers.addWayTagParser(new DefaultTagParserFactory().create(em, VehicleSpeed.key("foot"), new PMap()));
+        parsers.addWayTagParser(new DefaultTagParserFactory().create(em, VehiclePriority.key("foot"), new PMap()));
     }
 
     EdgeIteratorState createEdge(ReaderWay way) {

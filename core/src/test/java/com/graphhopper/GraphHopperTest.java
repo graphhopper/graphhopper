@@ -65,6 +65,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.util.GHUtility.createCircle;
 import static com.graphhopper.util.GHUtility.createRectangle;
@@ -2405,7 +2406,7 @@ public class GraphHopperTest {
             }.
                     setGraphHopperLocation(GH_LOCATION).
                     setOSMFile(BAYREUTH).
-                    setProfiles(new Profile("profile")).
+                    setProfiles(new Profile("profile").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "100")))).
                     setElevation(true).
                     setStoreOnFlush(true);
             hopper.importOrLoad();
@@ -2421,7 +2422,7 @@ public class GraphHopperTest {
                     super.interpolateBridgesTunnelsAndFerries();
                 }
             }.
-                    setProfiles(new Profile("profile")).
+                    setProfiles(new Profile("profile").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "100")))).
                     setElevation(true).
                     setGraphHopperLocation(GH_LOCATION);
             hopper.load();

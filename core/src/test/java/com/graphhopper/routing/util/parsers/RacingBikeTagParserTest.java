@@ -22,8 +22,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.VehicleEncodedValues;
-import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -41,17 +39,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  */
 public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
-    protected EncodingManager createEncodingManager() {
-        return new EncodingManager.Builder().
-                add(VehicleAccess.create("racingbike")).
-                add(VehicleSpeed.create("racingbike", 4, 2, false)).
-                add(VehiclePriority.create("racingbike", 4, PriorityCode.getFactor(1), false)).
-                build();
-    }
-
-    @Override
-    protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap) {
-        return VehicleTagParsers.racingbike(lookup, pMap);
+    protected String getBikeType() {
+        return "racingbike";
     }
 
     @Test

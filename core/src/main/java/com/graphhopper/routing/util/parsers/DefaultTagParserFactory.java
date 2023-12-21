@@ -20,12 +20,8 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
-import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.TransportationMode;
-
-import static com.graphhopper.routing.util.VehicleEncodedValuesFactory.FOOT;
-import static com.graphhopper.routing.util.VehicleEncodedValuesFactory.MOUNTAINBIKE;
 
 public class DefaultTagParserFactory implements TagParserFactory {
 
@@ -91,33 +87,33 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMCrossingParser(lookup.getEnumEncodedValue(Crossing.KEY, Crossing.class));
         else if (name.equals(FerrySpeed.KEY))
             return new FerrySpeedCalculator(lookup.getDecimalEncodedValue(FerrySpeed.KEY));
-        else if (name.equals("car_access"))
+        else if (name.equals(VehicleAccess.key("car")))
             return new CarAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser()));
-        else if (name.equals("car_average_speed"))
+        else if (name.equals(VehicleSpeed.key("car")))
             return new CarAverageSpeedParser(lookup, properties);
-        else if (name.equals("bike_access"))
+        else if (name.equals(VehicleAccess.key("bike")))
             return new BikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser()));
-        else if (name.equals("bike_average_speed"))
+        else if (name.equals(VehicleSpeed.key("bike")))
             return new BikeAverageSpeedParser(lookup, properties);
-        else if (name.equals("bike_priority"))
+        else if (name.equals(VehiclePriority.key("bike")))
             return new BikePriorityParser(lookup, properties);
-        else if (name.equals("racing_bike_access"))
+        else if (name.equals(VehicleAccess.key("racingbike")))
             return new RacingBikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser()));
-        else if (name.equals("racing_average_speed"))
+        else if (name.equals(VehicleSpeed.key("racingbike")))
             return new RacingBikeAverageSpeedParser(lookup, properties);
-        else if (name.equals("racing_priority"))
+        else if (name.equals(VehiclePriority.key("racingbike")))
             return new RacingBikePriorityParser(lookup, properties);
-        else if (name.equals("mtb_access"))
+        else if (name.equals(VehicleAccess.key("mtb")))
             return new MountainBikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser()));
-        else if (name.equals("mtb_average_speed"))
+        else if (name.equals(VehicleSpeed.key("mtb")))
             return new MountainBikeAverageSpeedParser(lookup, properties);
-        else if (name.equals("mtb_priority"))
+        else if (name.equals(VehiclePriority.key("mtb")))
             return new MountainBikePriorityParser(lookup, properties);
-        else if (name.equals("foot_access"))
+        else if (name.equals(VehicleAccess.key("foot")))
             return new FootAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser()));
-        else if (name.equals("foot_average_speed"))
+        else if (name.equals(VehicleSpeed.key("foot")))
             return new FootAverageSpeedParser(lookup, properties);
-        else if (name.equals("foot_priority"))
+        else if (name.equals(VehiclePriority.key("foot")))
             return new FootPriorityParser(lookup, properties);
         return null;
     }

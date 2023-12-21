@@ -20,7 +20,6 @@ package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -86,9 +85,5 @@ public class DefaultWeightingFactory implements WeightingFactory {
             throw new IllegalArgumentException("Weighting '" + weightingStr + "' not supported");
 
         return weighting;
-    }
-
-    public boolean isOutdoorVehicle(String name) {
-        return VehicleEncodedValues.OUTDOOR_VEHICLES.contains(name);
     }
 }

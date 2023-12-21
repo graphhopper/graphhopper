@@ -25,9 +25,8 @@ import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.ev.VehiclePriority;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.VehicleEncodedValues;
-import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -37,18 +36,10 @@ import static com.graphhopper.routing.util.parsers.BikeCommonAverageSpeedParser.
 import static org.junit.jupiter.api.Assertions.*;
 
 public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
-    @Override
-    protected EncodingManager createEncodingManager() {
-        return new EncodingManager.Builder().
-                add(VehicleAccess.create("mtb")).
-                add(VehicleSpeed.create("mtb", 4, 2, false)).
-                add(VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false)).
-        build();
-    }
 
     @Override
-    protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap) {
-        return VehicleTagParsers.mtb(lookup, pMap);
+    protected String getBikeType() {
+        return "mtb";
     }
 
     @Test
