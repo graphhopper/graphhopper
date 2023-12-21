@@ -50,4 +50,9 @@ public class OSMHikeRatingParser implements TagParser {
         if (rating != 0)
             sacScaleEnc.setInt(false, edgeId, edgeIntAccess, rating);
     }
+
+    @Override
+    public String getName() {
+        return sacScaleEnc.getName();
+    }
 }

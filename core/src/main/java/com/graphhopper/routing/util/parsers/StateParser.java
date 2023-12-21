@@ -35,4 +35,9 @@ public class StateParser implements TagParser {
         State country = way.getTag("country_state", State.MISSING);
         stateEnc.setEnum(false, edgeId, edgeIntAccess, country);
     }
+
+    @Override
+    public String getName() {
+        return stateEnc.getName();
+    }
 }

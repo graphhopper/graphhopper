@@ -45,4 +45,9 @@ public class OSMRoadClassParser implements TagParser {
         if (roadClass != OTHER)
             roadClassEnc.setEnum(false, edgeId, edgeIntAccess, roadClass);
     }
+
+    @Override
+    public String getName() {
+        return roadClassEnc.getName();
+    }
 }

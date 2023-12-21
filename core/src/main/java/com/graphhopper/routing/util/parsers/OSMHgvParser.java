@@ -23,4 +23,9 @@ public class OSMHgvParser implements TagParser {
         Hgv hgvValue = index > 0 && conditionalWeightToTons(value) == 3.5 ? Hgv.find(value.substring(0, index).trim()) : Hgv.find(way.getTag("hgv"));
         hgvEnc.setEnum(false, edgeId, edgeIntAccess, hgvValue);
     }
+
+    @Override
+    public String getName() {
+        return hgvEnc.getName();
+    }
 }

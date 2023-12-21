@@ -53,4 +53,9 @@ public class OSMMaxWeightParser implements TagParser {
             }
         }
     }
+
+    @Override
+    public String getName() {
+        return weightEncoder.getName();
+    }
 }

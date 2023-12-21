@@ -56,4 +56,9 @@ public class MaxWeightExceptParser implements TagParser {
             }
         }
     }
+
+    @Override
+    public String getName() {
+        return mweEnc.getName();
+    }
 }

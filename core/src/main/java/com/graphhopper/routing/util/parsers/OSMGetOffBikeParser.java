@@ -5,9 +5,7 @@ import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * This parser scans different OSM tags to identify ways where a cyclist has to get off her bike. Like on footway but
@@ -20,6 +18,7 @@ public class OSMGetOffBikeParser implements TagParser {
     private final HashSet<String> GET_OFF_BIKE = new HashSet<>(Arrays.asList("footway", "pedestrian", "platform"));
     private final BooleanEncodedValue getOffBikeEnc;
     private final BooleanEncodedValue bikeAccessEnc;
+    private final List<String> required;
 
     /**
      * @param bikeAccessEnc used to find out if way is oneway and so it does not matter which bike type is used.
@@ -27,6 +26,7 @@ public class OSMGetOffBikeParser implements TagParser {
     public OSMGetOffBikeParser(BooleanEncodedValue getOffBikeEnc, BooleanEncodedValue bikeAccessEnc) {
         this.getOffBikeEnc = getOffBikeEnc;
         this.bikeAccessEnc = bikeAccessEnc;
+        this.required = Collections.singletonList(bikeAccessEnc.getName());
     }
 
     @Override
@@ -47,5 +47,15 @@ public class OSMGetOffBikeParser implements TagParser {
             if (!fwd) getOffBikeEnc.setBool(false, edgeId, edgeIntAccess, true);
             if (!bwd) getOffBikeEnc.setBool(true, edgeId, edgeIntAccess, true);
         }
+    }
+
+    @Override
+    public String getName() {
+        return getOffBikeEnc.getName();
+    }
+
+    @Override
+    public List<String> getRequired() {
+        return required;
     }
 }

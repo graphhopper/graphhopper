@@ -59,4 +59,9 @@ public class OSMCrossingParser implements TagParser {
                 crossingEnc.setEnum(false, edgeId, edgeIntAccess, crossing);
         }
     }
+
+    @Override
+    public String getName() {
+        return crossingEnc.getName();
+    }
 }

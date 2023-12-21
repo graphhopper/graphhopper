@@ -19,4 +19,9 @@ public class OSMHazmatParser implements TagParser {
         if (readerWay.hasTag("hazmat", "no"))
             hazEnc.setEnum(false, edgeId, edgeIntAccess, Hazmat.NO);
     }
+
+    @Override
+    public String getName() {
+        return hazEnc.getName();
+    }
 }

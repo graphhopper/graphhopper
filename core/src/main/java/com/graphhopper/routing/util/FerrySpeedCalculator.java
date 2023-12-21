@@ -61,4 +61,9 @@ public class FerrySpeedCalculator implements TagParser {
             ferrySpeedEnc.setDecimal(false, edgeId, edgeIntAccess, ferrySpeed);
         }
     }
+
+    @Override
+    public String getName() {
+        return ferrySpeedEnc.getName();
+    }
 }

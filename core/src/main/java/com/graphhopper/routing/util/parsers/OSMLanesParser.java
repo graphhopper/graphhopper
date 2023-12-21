@@ -56,4 +56,9 @@ public class OSMLanesParser implements TagParser {
         }
         lanesEnc.setInt(false, edgeId, edgeIntAccess, laneCount);
     }
+
+    @Override
+    public String getName() {
+        return lanesEnc.getName();
+    }
 }

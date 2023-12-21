@@ -50,4 +50,9 @@ public class OSMHorseRatingParser implements TagParser {
         if (rating != 0)
             horseScale.setInt(false, edgeId, edgeIntAccess, rating);
     }
+
+    @Override
+    public String getName() {
+        return horseScale.getName();
+    }
 }

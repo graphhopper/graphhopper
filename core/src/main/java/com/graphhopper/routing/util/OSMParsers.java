@@ -21,15 +21,16 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.RestrictionTagParser;
-import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EncodedValue;
 import com.graphhopper.routing.util.parsers.RelationTagParser;
 import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.storage.IntsRef;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
+
+import static java.util.stream.Collectors.toMap;
 
 public class OSMParsers {
     private final List<String> ignoredHighways;
@@ -122,5 +123,53 @@ public class OSMParsers {
 
     public List<RestrictionTagParser> getRestrictionTagParsers() {
         return restrictionTagParsers;
+    }
+
+    public void sort() {
+        Map<String, TagParser> map = getWayTagParsers().stream().collect(toMap(TagParser::getName, t -> t));
+        TopoSorter topoSorter = new TopoSorter(map);
+        List<String> sorted = topoSorter.sort();
+        if (wayTagParsers.size() != sorted.size())
+            throw new IllegalArgumentException("Lists have to be identical but were not: " + wayTagParsers.size() + " vs " + sorted.size());
+        wayTagParsers.clear();
+        for (String s : sorted) {
+            wayTagParsers.add(map.get(s));
+        }
+    }
+
+    // topological sort with a depth first search
+    private static class TopoSorter {
+        Set<String> permanentMarked = new HashSet<>();
+        Set<String> temporaryMarked = new HashSet<>();
+        List<String> result = new ArrayList<>();
+        final Map<String, TagParser> map;
+
+        public TopoSorter(Map<String, TagParser> map) {
+            this.map = map;
+        }
+
+        List<String> sort() {
+            for (String strN : map.keySet()) {
+                visit(strN);
+            }
+            return result;
+        }
+
+        void visit(String strN) {
+            if (permanentMarked.contains(strN)) return;
+            TagParser parser = map.get(strN);
+            if (parser == null)
+                throw new IllegalArgumentException("cannot find parser " + strN);
+            if (temporaryMarked.contains(strN))
+                throw new IllegalArgumentException("cyclic required parsers are not allowed: " + parser + " " + parser.getRequired());
+
+            temporaryMarked.add(strN);
+            for (String strM : parser.getRequired()) {
+                visit(strM);
+            }
+            temporaryMarked.remove(strN);
+            permanentMarked.add(strN);
+            result.add(strN);
+        }
     }
 }

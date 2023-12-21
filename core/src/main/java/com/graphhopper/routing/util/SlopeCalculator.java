@@ -79,4 +79,9 @@ public class SlopeCalculator implements TagParser {
     static double calcSlope(double eleDelta, double distance2D) {
         return eleDelta * 100 / distance2D;
     }
+
+    @Override
+    public String getName() {
+        return "slope_calculator";
+    }
 }

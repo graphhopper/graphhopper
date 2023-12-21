@@ -23,10 +23,7 @@ import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 

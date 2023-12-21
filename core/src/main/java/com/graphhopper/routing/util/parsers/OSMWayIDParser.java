@@ -39,4 +39,9 @@ public class OSMWayIDParser implements TagParser {
         int wayId = Math.toIntExact(way.getId());
         osmWayIdEnc.setInt(false, edgeId, edgeIntAccess, wayId);
     }
+
+    @Override
+    public String getName() {
+        return osmWayIdEnc.getName();
+    }
 }

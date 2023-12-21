@@ -39,4 +39,9 @@ public class OSMFootwayParser implements TagParser {
         String footway = way.getTag("footway");
         footwayEnc.setEnum(false, edgeId, edgeIntAccess, Footway.find(footway));
     }
+
+    @Override
+    public String getName() {
+        return footwayEnc.getName();
+    }
 }

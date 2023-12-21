@@ -3,6 +3,9 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.util.PMap;
 
+import java.util.Arrays;
+import java.util.List;
+
 public class BikePriorityParser extends BikeCommonPriorityParser {
 
     public BikePriorityParser(EncodedValueLookup lookup, PMap properties) {

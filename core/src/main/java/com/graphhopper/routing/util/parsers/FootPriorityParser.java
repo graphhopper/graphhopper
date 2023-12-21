@@ -126,4 +126,9 @@ public class FootPriorityParser implements TagParser {
         if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))
             weightToPrioMap.put(44d, SLIGHT_AVOID.getValue());
     }
+
+    @Override
+    public String getName() {
+        return priorityWayEncoder.getName();
+    }
 }

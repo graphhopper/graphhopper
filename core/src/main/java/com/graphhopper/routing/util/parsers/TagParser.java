@@ -21,6 +21,9 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * This interface defines how parts of the information from 'way' is converted into IntsRef. A TagParser usually
  * has one corresponding EncodedValue but more are possible too.
@@ -28,4 +31,13 @@ import com.graphhopper.storage.IntsRef;
 public interface TagParser {
 
     void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags);
+
+    String getName();
+
+    /**
+     * @return the required tag parsers to be run before
+     */
+    default List<String> getRequired() {
+        return Collections.emptyList();
+    }
 }

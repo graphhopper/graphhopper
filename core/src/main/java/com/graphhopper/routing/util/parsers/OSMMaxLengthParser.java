@@ -37,4 +37,9 @@ public class OSMMaxLengthParser implements TagParser {
     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay way, IntsRef relationFlags) {
         OSMValueExtractor.extractMeter(edgeId, edgeIntAccess, way, lengthEncoder, Collections.singletonList("maxlength"));
     }
+
+    @Override
+    public String getName() {
+        return lengthEncoder.getName();
+    }
 }

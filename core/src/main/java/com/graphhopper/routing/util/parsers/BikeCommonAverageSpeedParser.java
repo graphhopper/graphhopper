@@ -8,10 +8,7 @@ import com.graphhopper.routing.ev.Smoothness;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.Helper;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedParser implements TagParser {
 
@@ -25,10 +22,13 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
     private final Map<String, Integer> highwaySpeeds = new HashMap<>();
     private final EnumEncodedValue<Smoothness> smoothnessEnc;
     protected final Set<String> intendedValues = new HashSet<>(5);
+    private final List<String> required;
 
     protected BikeCommonAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue ferrySpeedEnc) {
         super(speedEnc, ferrySpeedEnc);
         this.smoothnessEnc = smoothnessEnc;
+
+        this.required = Arrays.asList(ferrySpeedEnc.getName(), smoothnessEnc.getName());
 
         // duplicate code as also in BikeCommonPriorityParser
         addPushingSection("footway");
@@ -233,5 +233,10 @@ public abstract class BikeCommonAverageSpeedParser extends AbstractAverageSpeedP
 
     void setSmoothnessSpeedFactor(Smoothness smoothness, double speedfactor) {
         smoothnessFactor.put(smoothness, speedfactor);
+    }
+
+    @Override
+    public List<String> getRequired() {
+        return required;
     }
 }

@@ -14,11 +14,13 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
     private static final Set<String> OPP_LANES = new HashSet<>(Arrays.asList("opposite", "opposite_lane", "opposite_track"));
     private final Set<String> allowedHighways = new HashSet<>();
     private final BooleanEncodedValue roundaboutEnc;
+    private final List<String> required;
 
     protected BikeCommonAccessParser(BooleanEncodedValue accessEnc, BooleanEncodedValue roundaboutEnc) {
         super(accessEnc, TransportationMode.BIKE);
 
         this.roundaboutEnc = roundaboutEnc;
+        this.required = Arrays.asList(roundaboutEnc.getName());
 
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -164,5 +166,10 @@ public abstract class BikeCommonAccessParser extends AbstractAccessParser implem
             accessEnc.setBool(true, edgeId, edgeIntAccess, true);
             accessEnc.setBool(false, edgeId, edgeIntAccess, true);
         }
+    }
+
+    @Override
+    public List<String> getRequired() {
+        return required;
     }
 }

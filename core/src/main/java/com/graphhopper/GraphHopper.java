@@ -685,19 +685,19 @@ public class GraphHopper {
                     osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
                 if (encodingManager.hasEncodedValue(MtbNetwork.KEY) && added.add(MtbNetwork.KEY))
                     osmParsers.addRelationTagParser(relConfig -> new OSMMtbNetworkTagParser(encodingManager.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig));
-            } else if (tagParser instanceof BikeAverageSpeedParser) {
-                if (encodingManager.hasEncodedValue(Smoothness.KEY) && added.add(Smoothness.KEY))
-                    osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
             } else if (tagParser instanceof FootAccessParser) {
                 if (encodingManager.hasEncodedValue(FootNetwork.KEY) && added.add(FootNetwork.KEY))
                     osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
             }
 
-            osmParsers.addWayTagParser(tagParser);
+            if (encodingManager.hasEncodedValue(Smoothness.KEY) && added.add(Smoothness.KEY))
+                osmParsers.addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)));
 
             if (tagParser instanceof BikeCommonAccessParser && encodingManager.hasEncodedValue(GetOffBike.KEY) && added.add(GetOffBike.KEY))
-                // TODO NOW first bike_access is used -> what if bike_access is different to racingbike_access !?
+                // TODO first bike_access is used -> what if bike_access is different to racingbike_access !?
                 osmParsers.addWayTagParser(new OSMGetOffBikeParser(encodingManager.getBooleanEncodedValue(GetOffBike.KEY), ((BikeCommonAccessParser) tagParser).getAccessEnc()));
+
+            osmParsers.addWayTagParser(tagParser);
         }
 
         return osmParsers;
@@ -833,6 +833,9 @@ public class GraphHopper {
                 withMaxSpeedEstimation, profilesByName.values());
         List<TurnCostsConfig> tcc = profilesByName.values().stream().map(p -> p.getCustomModel().getTurnCosts()).filter(TurnCostsConfig::isRestrictions).toList();
         osmParsers = buildOSMParsers(encodedValueStrings, tcc, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
+
+        osmParsers.sort();
+
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())

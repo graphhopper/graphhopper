@@ -42,4 +42,9 @@ public class OSMSurfaceParser implements TagParser {
 
         surfaceEnc.setEnum(false, edgeId, edgeIntAccess, surface);
     }
+
+    @Override
+    public String getName() {
+        return surfaceEnc.getName();
+    }
 }

@@ -36,4 +36,9 @@ public class OSMRoadClassLinkParser implements TagParser {
         if (!Helper.isEmpty(highwayTag) && highwayTag.endsWith("_link"))
             linkEnc.setBool(false, edgeId, edgeIntAccess, true);
     }
+
+    @Override
+    public String getName() {
+        return linkEnc.getName();
+    }
 }

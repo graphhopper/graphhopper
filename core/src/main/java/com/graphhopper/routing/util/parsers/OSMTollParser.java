@@ -56,4 +56,9 @@ public class OSMTollParser implements TagParser {
 
         tollEnc.setEnum(false, edgeId, edgeIntAccess, toll);
     }
+
+    @Override
+    public String getName() {
+        return tollEnc.getName();
+    }
 }

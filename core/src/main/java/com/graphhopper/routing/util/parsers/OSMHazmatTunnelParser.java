@@ -42,4 +42,9 @@ public class OSMHazmatTunnelParser implements TagParser {
             }
         }
     }
+
+    @Override
+    public String getName() {
+        return hazTunnelEnc.getName();
+    }
 }

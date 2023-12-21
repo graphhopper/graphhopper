@@ -41,4 +41,8 @@ public class OSMTrackTypeParser implements TagParser {
             trackTypeEnc.setEnum(false, edgeId, edgeIntAccess, trackType);
     }
 
+    @Override
+    public String getName() {
+        return trackTypeEnc.getName();
+    }
 }

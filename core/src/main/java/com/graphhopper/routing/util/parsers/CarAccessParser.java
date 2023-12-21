@@ -31,6 +31,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
     protected final Set<String> trackTypeValues = new HashSet<>();
     protected final Set<String> highwayValues = new HashSet<>();
     protected final BooleanEncodedValue roundaboutEnc;
+    private final List<String> required;
 
     public CarAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(
@@ -46,6 +47,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
                            TransportationMode transportationMode) {
         super(accessEnc, transportationMode);
         this.roundaboutEnc = roundaboutEnc;
+        this.required = Collections.singletonList(roundaboutEnc.getName());
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
         restrictedValues.add("delivery");
@@ -181,5 +183,10 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
                 || way.hasTag("vehicle:forward", restrictedValues)
                 || way.hasTag("motor_vehicle:backward", restrictedValues)
                 || way.hasTag("motor_vehicle:forward", restrictedValues);
+    }
+
+    @Override
+    public List<String> getRequired() {
+        return required;
     }
 }

@@ -58,4 +58,9 @@ public class OSMBikeNetworkTagParser implements RelationTagParser {
     public EnumEncodedValue<RouteNetwork> getTransformerRouteRelEnc() {
         return transformerRouteRelEnc;
     }
+
+    @Override
+    public String getName() {
+        return bikeRouteEnc.getName();
+    }
 }

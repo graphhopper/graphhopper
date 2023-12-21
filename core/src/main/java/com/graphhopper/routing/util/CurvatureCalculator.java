@@ -31,4 +31,9 @@ public class CurvatureCalculator implements TagParser {
             curvatureEnc.setDecimal(false, edgeId, edgeIntAccess, 1.0);
         }
     }
+
+    @Override
+    public String getName() {
+        return "curvatur_calculator";
+    }
 }

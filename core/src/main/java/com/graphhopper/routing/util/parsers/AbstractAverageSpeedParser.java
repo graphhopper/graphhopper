@@ -6,15 +6,21 @@ import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.util.parsers.helpers.OSMValueExtractor;
 import com.graphhopper.storage.IntsRef;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 
 public abstract class AbstractAverageSpeedParser implements TagParser {
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final DecimalEncodedValue avgSpeedEnc;
     protected final DecimalEncodedValue ferrySpeedEnc;
+    private final List<String> required;
 
     protected AbstractAverageSpeedParser(DecimalEncodedValue speedEnc, DecimalEncodedValue ferrySpeedEnc) {
         this.avgSpeedEnc = speedEnc;
         this.ferrySpeedEnc = ferrySpeedEnc;
+        this.required = Collections.singletonList(ferrySpeedEnc.getName());
     }
 
     /**
@@ -59,5 +65,10 @@ public abstract class AbstractAverageSpeedParser implements TagParser {
     @Override
     public String toString() {
         return getName();
+    }
+
+    @Override
+    public List<String> getRequired() {
+        return required;
     }
 }

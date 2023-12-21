@@ -63,4 +63,9 @@ public class OSMFootNetworkTagParser implements RelationTagParser {
         RouteNetwork footNetwork = transformerRouteRelEnc.getEnum(false, -1, relIntAccess);
         footRouteEnc.setEnum(false, edgeId, edgeIntAccess, footNetwork);
     }
+
+    @Override
+    public String getName() {
+        return footRouteEnc.getName();
+    }
 }

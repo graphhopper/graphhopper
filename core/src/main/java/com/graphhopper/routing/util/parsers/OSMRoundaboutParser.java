@@ -36,4 +36,9 @@ public class OSMRoundaboutParser implements TagParser {
         if (isRoundabout)
             roundaboutEnc.setBool(false, edgeId, edgeIntAccess, true);
     }
+
+    @Override
+    public String getName() {
+        return roundaboutEnc.getName();
+    }
 }

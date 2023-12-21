@@ -21,9 +21,9 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadAccess;
-import com.graphhopper.util.TransportationMode;
 import com.graphhopper.routing.util.countryrules.CountryRule;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.TransportationMode;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -99,5 +99,10 @@ public class OSMRoadAccessParser implements TagParser {
             default:
                 throw new IllegalArgumentException("Cannot convert TransportationMode " + mode + " to list of restrictions");
         }
+    }
+
+    @Override
+    public String getName() {
+        return roadAccessEnc.getName();
     }
 }

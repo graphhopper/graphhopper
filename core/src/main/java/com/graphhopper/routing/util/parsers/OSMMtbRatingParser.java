@@ -52,4 +52,9 @@ public class OSMMtbRatingParser implements TagParser {
         if (rating > 0 && rating < 8)
             mtbRatingEnc.setInt(false, edgeId, edgeIntAccess, rating);
     }
+
+    @Override
+    public String getName() {
+        return mtbRatingEnc.getName();
+    }
 }

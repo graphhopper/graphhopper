@@ -92,6 +92,11 @@ public class DefaultMaxSpeedParser implements TagParser {
         return map;
     }
 
+    @Override
+    public String getName() {
+        return "default_max_speed";
+    }
+
     private static class Result {
         Integer urban, rural;
     }

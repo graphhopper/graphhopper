@@ -59,4 +59,9 @@ public class OSMMaxSpeedParser implements TagParser {
     private boolean isValidSpeed(double speed) {
         return !Double.isNaN(speed);
     }
+
+    @Override
+    public String getName() {
+        return carMaxSpeedEnc.getName();
+    }
 }

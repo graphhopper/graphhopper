@@ -42,4 +42,9 @@ public class OSMSmoothnessParser implements TagParser {
 
         smoothnessEnc.setEnum(false, edgeId, edgeIntAccess, smoothness);
     }
+
+    @Override
+    public String getName() {
+        return smoothnessEnc.getName();
+    }
 }

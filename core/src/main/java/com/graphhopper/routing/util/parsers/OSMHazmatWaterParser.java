@@ -24,4 +24,8 @@ public class OSMHazmatWaterParser implements TagParser {
         }
     }
 
+    @Override
+    public String getName() {
+        return hazWaterEnc.getName();
+    }
 }
