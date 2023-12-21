@@ -27,7 +27,6 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
@@ -393,7 +392,7 @@ public class OSMReaderTest {
         hopper.setEncodedValuesString("car_access|block_fords=true,car_average_speed");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
-                setProfiles(new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false))).
+                setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car"))).
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getBaseGraph();
@@ -718,9 +717,9 @@ public class OSMReaderTest {
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
-                        new Profile("bike").setCustomModel(Helper.createBaseCustomModel("bike", true).setTurnCosts(new TurnCostsConfig(BIKE))),
-                        new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR))),
-                        new Profile("truck").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(HGV)))
+                        new Profile("bike").setCustomModel(Helper.createBaseModel("bike").setTurnCosts(new TurnCostsConfig(BIKE))),
+                        new Profile("car").setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(CAR))),
+                        new Profile("truck").setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(HGV)))
                 ).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
@@ -918,7 +917,7 @@ public class OSMReaderTest {
             }
         }.setOSMFile("dummy").
                 setEncodedValuesString("car_access,car_average_speed").
-                setProfiles(new Profile("profile").setCustomModel(Helper.createBaseCustomModel("car", false))).
+                setProfiles(new Profile("profile").setCustomModel(Helper.createBaseModel("car"))).
                 setMinNetworkSize(0).
                 setGraphHopperLocation(dir).
                 importOrLoad();
@@ -1011,9 +1010,9 @@ public class OSMReaderTest {
             String str = "foot_access,foot_average_speed,foot_priority,bike_access,bike_average_speed,bike_priority,car_access,car_average_speed,max_width,max_height,max_weight";
             setEncodedValuesString(str);
             setProfiles(
-                    new Profile("foot").setCustomModel(Helper.createBaseCustomModel("foot", true)),
-                    new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR).setRestrictions(turnCosts))),
-                    new Profile("bike").setCustomModel(Helper.createBaseCustomModel("bike", true).setTurnCosts(new TurnCostsConfig(BIKE).setRestrictions(turnCosts))),
+                    new Profile("foot").setCustomModel(Helper.createBaseModel("foot")),
+                    new Profile("car").setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(CAR).setRestrictions(turnCosts))),
+                    new Profile("bike").setCustomModel(Helper.createBaseModel("bike").setTurnCosts(new TurnCostsConfig(BIKE).setRestrictions(turnCosts))),
                     new Profile("roads").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "100")).setTurnCosts(new TurnCostsConfig(HGV).setRestrictions(turnCosts)))
             );
             getReaderConfig().setPreferredLanguage(prefLang);

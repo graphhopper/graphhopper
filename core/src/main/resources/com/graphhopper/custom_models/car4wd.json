@@ -1,5 +1,4 @@
 // to use this custom model you need to set the following option in the config.yml
-// graph.encoded_values: track_type
 // profiles:
 //    - name: car4wd
 //      custom_model_files: [car4wd.json]

@@ -98,7 +98,7 @@ public class MiniGraphUI {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("profile")
-                        .setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(TransportationMode.CAR)))
+                        .setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(TransportationMode.CAR)))
         )).putObject("import.osm.ignored_highways", "");
         ghConfig.setCHProfiles(Arrays.asList(
                 new CHProfile("profile")

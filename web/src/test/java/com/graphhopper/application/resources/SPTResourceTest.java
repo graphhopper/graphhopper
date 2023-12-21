@@ -23,7 +23,6 @@ import com.graphhopper.application.GraphHopperApplication;
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.Profile;
-import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TurnCostsConfig;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -56,8 +55,8 @@ public class SPTResourceTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("car_without_turncosts").setCustomModel(Helper.createBaseCustomModel("car", false)),
-                        new Profile("car_with_turncosts").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR)))
+                        new Profile("car_without_turncosts").setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("car_with_turncosts").setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(CAR)))
                 ));
         return config;
     }

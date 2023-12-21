@@ -24,12 +24,10 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.ResponsePathDeserializer;
-import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TurnCostsConfig;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
-import org.checkerframework.checker.units.qual.C;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -66,9 +64,9 @@ public class MapMatchingResourceTurnCostsTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR))),
-                        new Profile("car_no_tc").setCustomModel(Helper.createBaseCustomModel("car", false)),
-                        new Profile("bike").setCustomModel(Helper.createBaseCustomModel("bike", true)))
+                        new Profile("car").setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(CAR))),
+                        new Profile("car_no_tc").setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("bike").setCustomModel(Helper.createBaseModel("bike")))
                 ).
                 setLMProfiles(Arrays.asList(
                         new LMProfile("car"),

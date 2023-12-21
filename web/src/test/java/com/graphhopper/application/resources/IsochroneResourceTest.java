@@ -58,9 +58,9 @@ public class IsochroneResourceTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("fast_car").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR))),
-                        new Profile("short_car").setCustomModel(Helper.createBaseCustomModel("car", false).setDistanceInfluence(1_000d).setTurnCosts(new TurnCostsConfig(CAR))),
-                        new Profile("fast_car_no_turn_restrictions").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR)))
+                        new Profile("fast_car").setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(CAR))),
+                        new Profile("short_car").setCustomModel(Helper.createBaseModel("car").setDistanceInfluence(1_000d).setTurnCosts(new TurnCostsConfig(CAR))),
+                        new Profile("fast_car_no_turn_restrictions").setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(CAR)))
                 ));
         return config;
     }

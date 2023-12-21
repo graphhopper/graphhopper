@@ -70,9 +70,9 @@ public class RouteResourceClientHCTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false)),
-                        new Profile("bike").setCustomModel(Helper.createBaseCustomModel("bike", true)),
-                        new Profile("my_custom_car").setCustomModel(Helper.createBaseCustomModel("car", false))
+                        new Profile("car").setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("bike").setCustomModel(Helper.createBaseModel("bike")),
+                        new Profile("my_custom_car").setCustomModel(Helper.createBaseModel("car"))
                 ))
                 .setCHProfiles(Arrays.asList(new CHProfile("car"), new CHProfile("bike")));
         return config;

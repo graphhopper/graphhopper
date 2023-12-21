@@ -25,7 +25,6 @@ import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TurnCostsConfig;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
@@ -62,10 +61,10 @@ public class RouteResourceTurnCostsTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        new Profile("my_car_turn_costs").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR))),
-                        new Profile("my_car_no_turn_costs").setCustomModel(Helper.createBaseCustomModel("car", false)),
-                        new Profile("my_custom_car_turn_costs").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR))),
-                        new Profile("my_custom_car_no_turn_costs").setCustomModel(Helper.createBaseCustomModel("car", false))
+                        new Profile("my_car_turn_costs").setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(CAR))),
+                        new Profile("my_car_no_turn_costs").setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("my_custom_car_turn_costs").setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(CAR))),
+                        new Profile("my_custom_car_no_turn_costs").setCustomModel(Helper.createBaseModel("car"))
                 ))
                 .setCHProfiles(Arrays.asList(
                         new CHProfile("my_car_turn_costs"),

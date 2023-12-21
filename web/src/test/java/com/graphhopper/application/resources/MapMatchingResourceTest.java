@@ -59,8 +59,8 @@ public class MapMatchingResourceTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("fast_car").setCustomModel(Helper.createBaseCustomModel("car", false)),
-                        new Profile("fast_bike").setCustomModel(Helper.createBaseCustomModel("bike", true))));
+                        new Profile("fast_car").setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("fast_bike").setCustomModel(Helper.createBaseModel("bike"))));
         return config;
     }
 

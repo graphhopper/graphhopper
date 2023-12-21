@@ -1,9 +1,8 @@
 // to use this custom model you need to set the following option in the config.yml
 // graph.urban_density.threads: 4 # expensive to calculate but very useful
-// graph.encoded_values: curvature,track_type,surface
 // profiles:
 //    - name: motorcycle
-//      custom_model_files: [motorcycle.json,curvature.json]
+//      custom_model_files: [motorcycle.json, curvature.json]
 
 {
   "distance_influence": 90,

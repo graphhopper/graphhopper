@@ -71,7 +71,7 @@ public class RoutingExampleTC {
                 // Enabling turn costs means OSM turn restriction constraints like 'no_left_turn' will be taken into account.
                 // We can also set u_turn_costs (in seconds). by default no u-turns are allowed, but with this setting
                 // we will consider u-turns at all junctions with a 40s time penalty
-                .setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(TransportationMode.CAR, 40)));
+                .setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(TransportationMode.CAR, 40)));
         hopper.setProfiles(profile);
         // enable CH for our profile. since turn costs are enabled this will take more time and memory to prepare than
         // without turn costs.

@@ -451,9 +451,9 @@ public class Helper {
         return val;
     }
 
-    public static CustomModel createBaseCustomModel(String vehicle, boolean priority) {
+    public static CustomModel createBaseModel(String vehicle) {
         final CustomModel cm;
-        if (priority)
+        if (!"car".equals(vehicle))
             cm = new CustomModel().
                     addToPriority(If(vehicle + "_access", MULTIPLY, vehicle + "_priority")).
                     addToPriority(Else(MULTIPLY, "0")).

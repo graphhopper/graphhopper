@@ -20,7 +20,7 @@ public class LocationIndexExample {
 
     public static void graphhopperLocationIndex(String relDir) {
         GraphHopper hopper = new GraphHopper();
-        hopper.setProfiles(new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false)));
+        hopper.setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car")));
         hopper.setOSMFile(relDir + "core/files/andorra.osm.pbf");
         hopper.setGraphHopperLocation("./target/locationindex-graph-cache");
         hopper.importOrLoad();

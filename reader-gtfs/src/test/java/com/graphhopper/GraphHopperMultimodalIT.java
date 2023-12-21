@@ -60,10 +60,10 @@ public class GraphHopperMultimodalIT {
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("gtfs.file", "files/sample-feed");
         ghConfig.putObject("graph.location", GRAPH_LOC);
-        Profile carLocal = new Profile("car_custom").setCustomModel(Helper.createBaseCustomModel("car", false));
+        Profile carLocal = new Profile("car_custom").setCustomModel(Helper.createBaseModel("car"));
         ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setCustomModel(Helper.createBaseCustomModel("foot", true)),
-                new Profile("car_default").setCustomModel(Helper.createBaseCustomModel("car", false)),
+                new Profile("foot").setCustomModel(Helper.createBaseModel("foot")),
+                new Profile("car_default").setCustomModel(Helper.createBaseModel("car")),
                 carLocal));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);

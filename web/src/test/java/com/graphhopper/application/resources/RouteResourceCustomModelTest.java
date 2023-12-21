@@ -29,7 +29,6 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
-import org.checkerframework.checker.units.qual.C;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -68,28 +67,28 @@ public class RouteResourceCustomModelTest {
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Arrays.asList(
                         new Profile("roads").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "120"))),
-                        new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false).setDistanceInfluence(70d)),
-                        new Profile("car_with_area").setCustomModel(Helper.createBaseCustomModel("car", false).addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
-                        new Profile("bike").setCustomModel(Helper.createBaseCustomModel("bike", true).setDistanceInfluence(0d)),
-                        new Profile("bike_fastest").setCustomModel(Helper.createBaseCustomModel("bike", true)),
+                        new Profile("car").setCustomModel(Helper.createBaseModel("car").setDistanceInfluence(70d)),
+                        new Profile("car_with_area").setCustomModel(Helper.createBaseModel("car").addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
+                        new Profile("bike").setCustomModel(Helper.createBaseModel("bike").setDistanceInfluence(0d)),
+                        new Profile("bike_fastest").setCustomModel(Helper.createBaseModel("bike")),
                         new Profile("bus").setCustomModel(null).putHint("custom_model_files", Arrays.asList("bus.json")),
                         new Profile("cargo_bike").setCustomModel(null).
                                 putHint("custom_model_files", Arrays.asList("cargo_bike.json")),
                         new Profile("json_bike").setCustomModel(null).
                                 putHint("custom_model_files", Arrays.asList("bike.json", "bike_elevation.json")),
-                        new Profile("foot_profile").setCustomModel(Helper.createBaseCustomModel("foot", true)),
+                        new Profile("foot_profile").setCustomModel(Helper.createBaseModel("foot")),
                         new Profile("car_no_unclassified").setCustomModel(
-                                        new CustomModel(Helper.createBaseCustomModel("car", false).
+                                        new CustomModel(Helper.createBaseModel("car").
                                                 addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0")))),
                         new Profile("custom_bike").
-                                setCustomModel(Helper.createBaseCustomModel("bike", true).
+                                setCustomModel(Helper.createBaseModel("bike").
                                         addToSpeed(If("road_class == PRIMARY", LIMIT, "28")).
                                         addToPriority(If("max_width < 1.2", MULTIPLY, "0"))),
                         new Profile("custom_bike2").setCustomModel(
-                                        new CustomModel(Helper.createBaseCustomModel("bike", true).setDistanceInfluence(70d).
+                                        new CustomModel(Helper.createBaseModel("bike").setDistanceInfluence(70d).
                                                 addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0")))),
                         new Profile("custom_bike3").setCustomModel(
-                                        new CustomModel(Helper.createBaseCustomModel("bike", true).
+                                        new CustomModel(Helper.createBaseModel("bike").
                                                 addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "10")).
                                                 addToSpeed(If("true", LIMIT, "40")))))).
                 setCHProfiles(Arrays.asList(new CHProfile("bus"), new CHProfile("car_no_unclassified")));

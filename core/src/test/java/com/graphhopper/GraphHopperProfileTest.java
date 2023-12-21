@@ -23,9 +23,7 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
-import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.TransportationMode;
 import com.graphhopper.util.TurnCostsConfig;
 import org.junit.jupiter.api.Test;
 
@@ -65,7 +63,7 @@ public class GraphHopperProfileTest {
     @Test
     public void vehicleDoesNotExist_error() {
         final GraphHopper hopper = new GraphHopper().setGraphHopperLocation(GH_LOCATION).setStoreOnFlush(false).
-                setProfiles(new Profile("profile").setCustomModel(Helper.createBaseCustomModel("your_car", false)));
+                setProfiles(new Profile("profile").setCustomModel(Helper.createBaseModel("your_car")));
         assertIllegalArgument(hopper::importOrLoad, "Cannot compile expression: 'your_car_average_speed' not available");
     }
 
@@ -73,8 +71,8 @@ public class GraphHopperProfileTest {
     public void oneVehicleTwoProfilesWithAndWithoutTC_noError() {
         final GraphHopper hopper = createHopper();
         hopper.setProfiles(
-                new Profile("profile1").setCustomModel(Helper.createBaseCustomModel("car", false)),
-                new Profile("profile2").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR))));
+                new Profile("profile1").setCustomModel(Helper.createBaseModel("car")),
+                new Profile("profile2").setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(CAR))));
         hopper.load();
     }
 
@@ -82,8 +80,8 @@ public class GraphHopperProfileTest {
     public void oneVehicleTwoProfilesWithAndWithoutTC2_noError() {
         final GraphHopper hopper = createHopper();
         hopper.setProfiles(
-                new Profile("profile2").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR))),
-                new Profile("profile1").setCustomModel(Helper.createBaseCustomModel("car", false)));
+                new Profile("profile2").setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(CAR))),
+                new Profile("profile1").setCustomModel(Helper.createBaseModel("car")));
         hopper.load();
     }
 
@@ -100,7 +98,7 @@ public class GraphHopperProfileTest {
     @Test
     public void chProfileDoesNotExist_error() {
         final GraphHopper hopper = createHopper();
-        hopper.setProfiles(new Profile("profile1").setCustomModel(Helper.createBaseCustomModel("car", false)));
+        hopper.setProfiles(new Profile("profile1").setCustomModel(Helper.createBaseModel("car")));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("other_profile"));
         assertIllegalArgument(hopper::importOrLoad, "CH profile references unknown profile 'other_profile'");
     }
@@ -108,7 +106,7 @@ public class GraphHopperProfileTest {
     @Test
     public void duplicateCHProfile_error() {
         final GraphHopper hopper = createHopper();
-        hopper.setProfiles(new Profile("profile").setCustomModel(Helper.createBaseCustomModel("car", false)));
+        hopper.setProfiles(new Profile("profile").setCustomModel(Helper.createBaseModel("car")));
         hopper.getCHPreparationHandler().setCHProfiles(
                 new CHProfile("profile"),
                 new CHProfile("profile")
@@ -119,7 +117,7 @@ public class GraphHopperProfileTest {
     @Test
     public void lmProfileDoesNotExist_error() {
         final GraphHopper hopper = createHopper();
-        hopper.setProfiles(new Profile("profile1").setCustomModel(Helper.createBaseCustomModel("car", false)));
+        hopper.setProfiles(new Profile("profile1").setCustomModel(Helper.createBaseModel("car")));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("other_profile"));
         assertIllegalArgument(hopper::importOrLoad, "LM profile references unknown profile 'other_profile'");
     }
@@ -127,7 +125,7 @@ public class GraphHopperProfileTest {
     @Test
     public void duplicateLMProfile_error() {
         final GraphHopper hopper = createHopper();
-        hopper.setProfiles(new Profile("profile").setCustomModel(Helper.createBaseCustomModel("car", false)));
+        hopper.setProfiles(new Profile("profile").setCustomModel(Helper.createBaseModel("car")));
         hopper.getLMPreparationHandler().setLMProfiles(
                 new LMProfile("profile"),
                 new LMProfile("profile")
@@ -138,7 +136,7 @@ public class GraphHopperProfileTest {
     @Test
     public void unknownLMPreparationProfile_error() {
         final GraphHopper hopper = createHopper();
-        hopper.setProfiles(new Profile("profile").setCustomModel(Helper.createBaseCustomModel("car", false)));
+        hopper.setProfiles(new Profile("profile").setCustomModel(Helper.createBaseModel("car")));
         hopper.getLMPreparationHandler().setLMProfiles(
                 new LMProfile("profile").setPreparationProfile("xyz")
         );
@@ -149,9 +147,9 @@ public class GraphHopperProfileTest {
     public void lmPreparationProfileChain_error() {
         final GraphHopper hopper = createHopper();
         hopper.setProfiles(
-                new Profile("profile1").setCustomModel(Helper.createBaseCustomModel("car", false)),
-                new Profile("profile2").setCustomModel(Helper.createBaseCustomModel("bike", true)),
-                new Profile("profile3").setCustomModel(Helper.createBaseCustomModel("foot", true))
+                new Profile("profile1").setCustomModel(Helper.createBaseModel("car")),
+                new Profile("profile2").setCustomModel(Helper.createBaseModel("bike")),
+                new Profile("profile3").setCustomModel(Helper.createBaseModel("foot"))
         );
         hopper.getLMPreparationHandler().setLMProfiles(
                 new LMProfile("profile1"),
@@ -165,9 +163,9 @@ public class GraphHopperProfileTest {
     public void noLMProfileForPreparationProfile_error() {
         final GraphHopper hopper = createHopper();
         hopper.setProfiles(
-                new Profile("profile1").setCustomModel(Helper.createBaseCustomModel("car", false)),
-                new Profile("profile2").setCustomModel(Helper.createBaseCustomModel("bike", true)),
-                new Profile("profile3").setCustomModel(Helper.createBaseCustomModel("foot", true))
+                new Profile("profile1").setCustomModel(Helper.createBaseModel("car")),
+                new Profile("profile2").setCustomModel(Helper.createBaseModel("bike")),
+                new Profile("profile3").setCustomModel(Helper.createBaseModel("foot"))
         );
         hopper.getLMPreparationHandler().setLMProfiles(
                 new LMProfile("profile1").setPreparationProfile("profile2")

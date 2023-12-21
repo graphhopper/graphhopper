@@ -54,7 +54,7 @@ public class IsochroneExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/isochrone-graph-cache");
-        hopper.setProfiles(new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(TransportationMode.CAR))));
+        hopper.setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car").setTurnCosts(new TurnCostsConfig(TransportationMode.CAR))));
         hopper.importOrLoad();
         return hopper;
     }

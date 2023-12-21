@@ -23,7 +23,6 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -58,9 +57,9 @@ public class RouteResourceCustomModelLMTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.encoded_values", "surface").
                 setProfiles(Arrays.asList(
-                        new Profile("car_custom").setCustomModel(Helper.createBaseCustomModel("car", false).setDistanceInfluence(15d)),
-                        new Profile("foot_profile").setCustomModel(Helper.createBaseCustomModel("foot", true)),
-                        new Profile("foot_custom").setCustomModel(Helper.createBaseCustomModel("foot", true)))).
+                        new Profile("car_custom").setCustomModel(Helper.createBaseModel("car").setDistanceInfluence(15d)),
+                        new Profile("foot_profile").setCustomModel(Helper.createBaseModel("foot")),
+                        new Profile("foot_custom").setCustomModel(Helper.createBaseModel("foot")))).
                 setLMProfiles(Arrays.asList(new LMProfile("car_custom"), new LMProfile("foot_custom")));
         return config;
     }
