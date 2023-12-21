@@ -51,7 +51,6 @@ public class RouteResourceProfileSelectionTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "bike,car,foot").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
@@ -60,7 +59,7 @@ public class RouteResourceProfileSelectionTest {
                 .setProfiles(Arrays.asList(
                         new Profile("my_car").setCustomModel(Helper.createBaseCustomModel("car", false)),
                         new Profile("my_bike").setCustomModel(Helper.createBaseCustomModel("bike", true).setDistanceInfluence(200d)),
-                        new Profile("my_feet").setCustomModel(Helper.createBaseCustomModel("car", false))
+                        new Profile("my_feet").setCustomModel(Helper.createBaseCustomModel("foot", true))
                 ))
                 .setCHProfiles(Arrays.asList(
                         new CHProfile("my_car"),

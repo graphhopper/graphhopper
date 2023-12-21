@@ -111,12 +111,10 @@ public class GraphHopperTest {
             DIJKSTRA_BI + ",true,51"
     })
     public void testMonacoDifferentAlgorithms(String algo, boolean withCH, int expectedVisitedNodes) {
-        final String vehicle = "car";
-
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
-                setProfiles(new Profile("profile").setCustomModel(Helper.createBaseCustomModel(vehicle, true))).
+                setProfiles(new Profile("profile").setCustomModel(Helper.createBaseCustomModel("car", false))).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler()
                 .setCHProfiles(new CHProfile("profile"));

@@ -21,6 +21,7 @@ package com.graphhopper.tools;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.config.Profile;
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
@@ -31,6 +32,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
+
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
 
 public class GraphSpeedMeasurement {
 
@@ -46,7 +50,7 @@ public class GraphSpeedMeasurement {
                     .putObject("import.osm.ignored_highways", "")
                     .putObject("graph.vehicles", String.format("roads|speed_bits=%d,car|speed_bits=%d,bike|speed_bits=%d,foot|speed_bits=%d", speedBits, speedBits, speedBits, speedBits))
                     .setProfiles(Arrays.asList(
-                            new Profile("car").setCustomModel(new CustomModel()).setVehicle("roads")
+                            new Profile("car").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "100")))
                     ));
             GraphHopper hopper = new GraphHopper()
                     .init(ghConfig)

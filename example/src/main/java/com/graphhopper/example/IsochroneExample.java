@@ -12,6 +12,9 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.TransportationMode;
+import com.graphhopper.util.TurnCostsConfig;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -51,7 +54,7 @@ public class IsochroneExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/isochrone-graph-cache");
-        hopper.setProfiles(new Profile("car").setVehicle("car").setTurnCosts(false));
+        hopper.setProfiles(new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(TransportationMode.CAR))));
         hopper.importOrLoad();
         return hopper;
     }

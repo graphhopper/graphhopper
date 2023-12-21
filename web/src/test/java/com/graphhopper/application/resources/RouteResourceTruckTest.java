@@ -34,7 +34,6 @@ public class RouteResourceTruckTest {
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
-                putObject("graph.encoded_values", "max_height,max_weight,max_width,hazmat,toll,surface,hgv").
                 putObject("import.osm.ignored_highways", "").
                 putObject("custom_models.directory", "./src/test/resources/com/graphhopper/application/resources").
                 setProfiles(Arrays.asList(new Profile("truck").setCustomModel(null).

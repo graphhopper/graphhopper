@@ -98,8 +98,7 @@ public class MiniGraphUI {
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
         ghConfig.setProfiles(Arrays.asList(
                 new Profile("profile")
-                        .setVehicle("car")
-                        .setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(TransportationMode.CAR)))
+                        .setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(TransportationMode.CAR)))
         )).putObject("import.osm.ignored_highways", "");
         ghConfig.setCHProfiles(Arrays.asList(
                 new CHProfile("profile")
@@ -116,7 +115,7 @@ public class MiniGraphUI {
     public MiniGraphUI(GraphHopper hopper, boolean debug, boolean useCH) {
         this.graph = hopper.getBaseGraph();
         this.na = graph.getNodeAccess();
-        String vehicle = hopper.getProfiles().get(0).getVehicle();
+        String vehicle = hopper.getEncodingManager().getVehicles().get(0);
         accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(VehicleAccess.key(vehicle));
         avSpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key(vehicle));
         this.useCH = useCH;

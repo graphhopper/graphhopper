@@ -13,6 +13,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.util.Arrays;
 
 import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 
 public class HeadingExample {
@@ -35,8 +36,9 @@ public class HeadingExample {
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/heading-graph-cache");
         hopper.setProfiles(new Profile("car").setCustomModel(new CustomModel().
-                addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1"))).
-                setVehicle("car"));
+                addToSpeed(If("true", LIMIT, "car_average_speed")).
+                addToPriority(If("!car_access", MULTIPLY, "0")).
+                addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1"))));
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile("car"));
         hopper.importOrLoad();
         return hopper;

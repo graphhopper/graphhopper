@@ -176,7 +176,7 @@ public class Measurement {
         BaseGraph g = hopper.getBaseGraph();
         EncodingManager encodingManager = hopper.getEncodingManager();
         BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(VehicleAccess.key(vehicle));
-        boolean withTurnCosts = encodingManager.hasTurnEncodedValue(TurnRestriction.key(vehicle));
+        boolean withTurnCosts = encodingManager.hasTurnEncodedValue(TurnRestriction.key(TransportationMode.valueOf(vehicle.toUpperCase(Locale.ROOT))));
 
         StopWatch sw = new StopWatch().start();
         try {
@@ -310,14 +310,14 @@ public class Measurement {
                 throw new IllegalArgumentException("To make use of a custom model you need to set measurement.weighting to 'custom'");
             // use custom profile(s) as specified in the given custom model file
             CustomModel customModel = loadCustomModel(customModelFile);
-            profiles.add(new Profile("profile_no_tc").setVehicle(vehicle).setCustomModel(customModel));
+            profiles.add(new Profile("profile_no_tc").setCustomModel(customModel));
             if (turnCosts)
-                profiles.add(new Profile("profile_tc").setVehicle(vehicle).setCustomModel(customModel.setTurnCosts(new TurnCostsConfig(tm, uTurnCosts))));
+                profiles.add(new Profile("profile_tc").setCustomModel(customModel.setTurnCosts(new TurnCostsConfig(tm, uTurnCosts))));
         } else {
             // use standard profiles
-            profiles.add(new Profile("profile_no_tc").setVehicle(vehicle));
+            profiles.add(new Profile("profile_no_tc").setCustomModel(Helper.createBaseCustomModel(vehicle, !vehicle.equals("car"))));
             if (turnCosts)
-                profiles.add(new Profile("profile_tc").setVehicle(vehicle).setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(tm, uTurnCosts))));
+                profiles.add(new Profile("profile_tc").setCustomModel(Helper.createBaseCustomModel(vehicle, !vehicle.equals("car")).setTurnCosts(new TurnCostsConfig(tm, uTurnCosts))));
         }
         ghConfig.setProfiles(profiles);
 

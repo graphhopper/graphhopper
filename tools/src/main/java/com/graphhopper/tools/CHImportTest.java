@@ -26,6 +26,7 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ch.CHParameters;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.MiniPerfTest;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
@@ -46,7 +47,7 @@ public class CHImportTest {
         GraphHopperConfig config = new GraphHopperConfig(map);
         config.putObject("datareader.file", map.getString("pbf", "map-matching/files/leipzig_germany.osm.pbf"));
         config.putObject("graph.location", map.getString("gh", "ch-import-test-gh"));
-        config.setProfiles(Arrays.asList(new Profile(vehicle).setVehicle(vehicle)));
+        config.setProfiles(Collections.singletonList(new Profile(vehicle).setCustomModel(Helper.createBaseCustomModel(vehicle, !vehicle.equals("car")))));
         config.setCHProfiles(Collections.singletonList(new CHProfile(vehicle)));
         config.putObject(CHParameters.PERIODIC_UPDATES, map.getInt("periodic", 0));
         config.putObject(CHParameters.LAST_LAZY_NODES_UPDATES, map.getInt("lazy", 100));

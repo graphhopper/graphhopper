@@ -90,7 +90,7 @@ public class CHMeasurement {
         if (withTurnCosts) {
             ghConfig.putObject("graph.vehicles", "car|turn_costs=true");
             ghConfig.setProfiles(Collections.singletonList(
-                    new Profile(profile).setVehicle("car").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(TransportationMode.CAR, uTurnCosts)))
+                    new Profile(profile).setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(TransportationMode.CAR, uTurnCosts)))
             ));
             ghConfig.setCHProfiles(Collections.singletonList(
                     new CHProfile(profile)
@@ -104,7 +104,7 @@ public class CHMeasurement {
         } else {
             ghConfig.putObject("graph.vehicles", "car");
             ghConfig.setProfiles(Collections.singletonList(
-                    new Profile(profile).setVehicle("car")
+                    new Profile(profile).setCustomModel(Helper.createBaseCustomModel("car", false))
             ));
         }
 
