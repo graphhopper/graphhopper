@@ -72,9 +72,8 @@ public class MapMatchingTest {
         graphHopper.setOSMFile("../map-matching/files/leipzig_germany.osm.pbf");
         graphHopper.setGraphHopperLocation(GH_LOCATION);
         graphHopper.setProfiles(new Profile("my_profile").
-                setCustomModel(new CustomModel().
-                        addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1"))).
-                setVehicle("car"));
+                setCustomModel(Helper.createBaseCustomModel("car", false).
+                        addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1"))));
         graphHopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         graphHopper.importOrLoad();
     }

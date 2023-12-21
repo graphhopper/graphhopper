@@ -24,7 +24,6 @@ import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.application.util.GraphHopperServerTestConfiguration;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
@@ -60,8 +59,8 @@ public class RouteResourceLeipzigTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Collections.singletonList(new Profile("my_car").
-                        setCustomModel(new CustomModel().
-                                addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1"))).setVehicle("car")))
+                        setCustomModel(Helper.createBaseCustomModel("car", false).
+                                addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1")))))
                 .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }

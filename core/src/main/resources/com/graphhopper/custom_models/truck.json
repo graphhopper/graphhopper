@@ -1,10 +1,7 @@
 // to use this custom model you need to set the following option in the config.yml
-// graph.vehicles: roads|transportation_mode=HGV,car
 // graph.encoded_values: toll,hgv,surface,max_width,max_height
 // profiles:
 //    - name: truck
-//      vehicle: roads
-//      weighting: custom
 //      custom_model_files: [truck.json]
 
 {

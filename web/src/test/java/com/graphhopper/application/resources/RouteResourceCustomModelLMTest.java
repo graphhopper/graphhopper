@@ -58,9 +58,9 @@ public class RouteResourceCustomModelLMTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.encoded_values", "surface").
                 setProfiles(Arrays.asList(
-                        new Profile("car_custom").setCustomModel(new CustomModel().setDistanceInfluence(15d)).setVehicle("car"),
-                        new Profile("foot_profile").setVehicle("foot"),
-                        new Profile("foot_custom").setVehicle("foot"))).
+                        new Profile("car_custom").setCustomModel(Helper.createBaseCustomModel("car", false).setDistanceInfluence(15d)),
+                        new Profile("foot_profile").setCustomModel(Helper.createBaseCustomModel("foot", true)),
+                        new Profile("foot_custom").setCustomModel(Helper.createBaseCustomModel("foot", true)))).
                 setLMProfiles(Arrays.asList(new LMProfile("car_custom"), new LMProfile("foot_custom")));
         return config;
     }

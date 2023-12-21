@@ -612,12 +612,15 @@ public class GraphHopper {
     protected EncodingManager buildEncodingManager(List<String> encodedValueStrings,
                                                    boolean withUrbanDensity, boolean withMaxSpeedEst, Collection<Profile> profiles) {
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
+        Set<TransportationMode> modes = new LinkedHashSet<>();
         profiles.forEach(profile -> {
             if (profile.getCustomModel().getTurnCosts().isRestrictions())
-                emBuilder.addTurnCostEncodedValue(TurnRestriction.create(profile.getCustomModel().getTurnCosts().getTransportationMode()));
+                modes.add(profile.getCustomModel().getTurnCosts().getTransportationMode());
 
             emBuilder.add(Subnetwork.create(profile.getName()));
         });
+        modes.forEach(m -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(m)));
+
         if (withMaxSpeedEst)
             emBuilder.add(MaxSpeedEstimated.create());
         if (withUrbanDensity)

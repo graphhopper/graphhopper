@@ -56,8 +56,8 @@ public class SPTResourceTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("car_without_turncosts").setVehicle("car"),
-                        new Profile("car_with_turncosts").setVehicle("car").setCustomModel(new CustomModel().setTurnCosts(new TurnCostsConfig(CAR)))
+                        new Profile("car_without_turncosts").setCustomModel(Helper.createBaseCustomModel("car", false)),
+                        new Profile("car_with_turncosts").setCustomModel(Helper.createBaseCustomModel("car", false).setTurnCosts(new TurnCostsConfig(CAR)))
                 ));
         return config;
     }

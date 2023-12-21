@@ -61,8 +61,8 @@ public class FreeWalkIT {
         // TODO: to the street router.
         ghConfig.putObject("gtfs.free_walk", true);
         ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setVehicle("foot"),
-                new Profile("car").setVehicle("car")));
+                new Profile("foot").setCustomModel(Helper.createBaseCustomModel("foot", true)),
+                new Profile("car").setCustomModel(Helper.createBaseCustomModel("car", false))));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);
