@@ -71,10 +71,10 @@ public class RouteResourceCustomModelTest {
                         new Profile("car_with_area").setCustomModel(Helper.createBaseModel("car").addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
                         new Profile("bike").setCustomModel(Helper.createBaseModel("bike").setDistanceInfluence(0d)),
                         new Profile("bike_fastest").setCustomModel(Helper.createBaseModel("bike")),
-                        new Profile("bus").setCustomModel(null).putHint("custom_model_files", Arrays.asList("bus.json")),
-                        new Profile("cargo_bike").setCustomModel(null).
+                        new Profile("bus").putHint("custom_model_files", Arrays.asList("bus.json")),
+                        new Profile("cargo_bike").
                                 putHint("custom_model_files", Arrays.asList("cargo_bike.json")),
-                        new Profile("json_bike").setCustomModel(null).
+                        new Profile("json_bike").
                                 putHint("custom_model_files", Arrays.asList("bike.json", "bike_elevation.json")),
                         new Profile("foot_profile").setCustomModel(Helper.createBaseModel("foot")),
                         new Profile("car_no_unclassified").setCustomModel(

@@ -1,0 +1,18 @@
+// to use this custom model you set the following option in the config.yml:
+// graph.encoded_values: hike_rating,average_slope,max_slope
+// graph.elevation.provider: srtm   # enables elevation
+// profiles:
+//    - name: racingbike
+//      custom_model_files: [racingbike.json, bike_elevation.json]
+
+{
+  "priority": [
+    { "if": "true",  "multiply_by": "racingbike_priority" },
+    { "if": "!racingbike_access && (!backward_racingbike_access || roundabout)",  "multiply_by": "0" },
+    { "else_if": "!racingbike_access && backward_racingbike_access",  "multiply_by": "0.2" }
+  ],
+  "speed": [
+    { "if": "true", "limit_to": "racingbike_average_speed" },
+    { "if": "!racingbike_access && backward_racingbike_access && !roundabout", "limit_to": "5" }
+  ]
+}

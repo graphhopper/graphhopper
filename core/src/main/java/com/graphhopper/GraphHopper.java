@@ -1468,9 +1468,12 @@ public class GraphHopper {
                 continue;
             }
             CustomModel customModel = profile.getCustomModel();
-            if (customModel != null) {
+
+            // TODO the CustomModel object is always != null but we can detect a model from config
+            //  via the "internal" property set in setCustomModel. Still, is this a good idea?
+            if (customModel.isInternal()) {
                 if (!profile.getHints().getObject("custom_model_files", Collections.emptyList()).isEmpty())
-                    throw new IllegalArgumentException("Do not use custom_model_files and custom_model together");
+                    throw new IllegalArgumentException("For " + profile.getName() + " do not use custom_model_files and custom_model together");
                 try {
                     newProfiles.add(profile);
                 } catch (Exception ex) {

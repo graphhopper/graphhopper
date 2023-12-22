@@ -16,7 +16,7 @@ graphhopper:
   # - custom_model_files: when you specified "weighting: custom" you need to set one or more json files which are searched in
   #   custom_models.directory or the working directory that defines the custom_model. If you want an empty model you can
   #   set "custom_model_files: []
-  # - you can also use the `custom_model` field instead and specify your custom model in the profile directly.
+  # - you can also use the `custom_model` field instead and specify your custom model directly in the profile configuration without an external file
   #
   # To prevent long-running routing queries you should usually enable either speed or hybrid mode for all the given
   # profiles (see below). Or at least limit the number of `routing.max_visited_nodes`.
@@ -26,17 +26,16 @@ graphhopper:
       custom_model_files: [car.json]
 
 #    - name: foot
-#      custom_model: {
-#         "speed": [{
-#           "if": "!foot_access", "multiply_by": "0"
-#         }],
-#         "priority": [{
-#           "if": "true", "limit_to": "foot_average_speed"
-#         }]
-#      }
+#      custom_model_files: [foot.json, foot_elevation.json]
 #
 #    - name: bike
 #      custom_model_files: [bike.json, bike_elevation.json]
+#
+#    - name: racingbike
+#      custom_model_files: [racingbike.json, bike_elevation.json]
+#
+#    - name: mtb
+#      custom_model_files: [mtb.json, bike_elevation.json]
 
   # instead of the inbuilt custom models (see ./core/src/main/resources/com/graphhopper/custom_models)
   # you can specify a folder where to find your own custom model files
