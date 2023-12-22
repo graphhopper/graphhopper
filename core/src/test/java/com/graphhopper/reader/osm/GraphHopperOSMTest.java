@@ -830,9 +830,9 @@ public class GraphHopperOSMTest {
         {
             // problem: we add another profile, which is not allowed, because there would be no subnetwork ev for it
             GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
-                    new Profile("car"),
+                    new Profile("car").setCustomModel(Helper.createBaseModel("car")),
                     new Profile("custom").setCustomModel(new CustomModel().setDistanceInfluence(3d)),
-                    new Profile("car2")
+                    new Profile("car2").setCustomModel(Helper.createBaseModel("car"))
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
             assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
@@ -842,7 +842,7 @@ public class GraphHopperOSMTest {
             // problem: we remove a profile, which would technically be possible, but does not save memory either. it
             //          could be useful to disable a profile, but currently we just force a new import.
             GraphHopper hopper = createHopperWithProfiles(Arrays.asList(
-                    new Profile("car")
+                    new Profile("car").setCustomModel(Helper.createBaseModel("car"))
             ));
             IllegalStateException e = assertThrows(IllegalStateException.class, hopper::importOrLoad);
             assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
