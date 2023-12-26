@@ -242,14 +242,12 @@ public class GHLongLongBTree implements LongLongMap {
         long[] keys;
         byte[] values;
         BTreeEntry[] children;
-        boolean isLeaf;
 
         public BTreeEntry(int tmpSize, boolean leaf) {
-            this.isLeaf = leaf;
             keys = new long[tmpSize];
             values = new byte[tmpSize * bytesPerValue];
 
-            if (!isLeaf) {
+            if (!leaf) {
                 // in a b-tree we need one more entry to point to all children!
                 children = new BTreeEntry[tmpSize + 1];
             }
@@ -272,7 +270,7 @@ public class GHLongLongBTree implements LongLongMap {
 
             index = ~index;
             ReturnValue downTreeRV;
-            if (isLeaf || children[index] == null) {
+            if (isLeaf()) {
                 // insert
                 downTreeRV = new ReturnValue(null);
                 downTreeRV.tree = checkSplitEntry();
@@ -292,13 +290,13 @@ public class GHLongLongBTree implements LongLongMap {
 
             if (downTreeRV.tree != null) {
                 // split this treeEntry if it is too big
-                BTreeEntry returnTree, downTree = returnTree = checkSplitEntry();
-                if (downTree == null) {
+                BTreeEntry returnTree = checkSplitEntry();
+                if (returnTree == null) {
                     insertTree(index, downTreeRV.tree);
                 } else if (index <= splitIndex) {
-                    downTree.children[0].insertTree(index, downTreeRV.tree);
+                    returnTree.children[0].insertTree(index, downTreeRV.tree);
                 } else {
-                    downTree.children[1].insertTree(index - splitIndex - 1, downTreeRV.tree);
+                    returnTree.children[1].insertTree(index - splitIndex - 1, downTreeRV.tree);
                 }
 
                 downTreeRV.tree = returnTree;
@@ -317,12 +315,12 @@ public class GHLongLongBTree implements LongLongMap {
 
             // right child: copy from this
             int count = entrySize - splitIndex - 1;
-            BTreeEntry newRightChild = new BTreeEntry(Math.max(initLeafSize, count), isLeaf);
+            BTreeEntry newRightChild = new BTreeEntry(Math.max(initLeafSize, count), isLeaf());
             copy(this, newRightChild, splitIndex + 1, count);
 
             // left child: copy from this
             // avoid: http://stackoverflow.com/q/15897869/194609
-            BTreeEntry newLeftChild = new BTreeEntry(Math.max(initLeafSize, splitIndex), isLeaf);
+            BTreeEntry newLeftChild = new BTreeEntry(Math.max(initLeafSize, splitIndex), isLeaf());
             copy(this, newLeftChild, 0, splitIndex);
 
             // new tree pointing to left + right tree only
@@ -339,7 +337,7 @@ public class GHLongLongBTree implements LongLongMap {
         void copy(BTreeEntry fromChild, BTreeEntry toChild, int from, int count) {
             System.arraycopy(fromChild.keys, from, toChild.keys, 0, count);
             System.arraycopy(fromChild.values, from * bytesPerValue, toChild.values, 0, count * bytesPerValue);
-            if (!fromChild.isLeaf) {
+            if (!fromChild.isLeaf()) {
                 System.arraycopy(fromChild.children, from, toChild.children, 0, count + 1);
             }
 
@@ -352,7 +350,7 @@ public class GHLongLongBTree implements LongLongMap {
             if (count > 0) {
                 System.arraycopy(keys, index, keys, index + 1, count);
                 System.arraycopy(values, index * bytesPerValue, values, index * bytesPerValue + bytesPerValue, count * bytesPerValue);
-                if (!isLeaf) {
+                if (!isLeaf()) {
                     System.arraycopy(children, index + 1, children, index + 2, count);
                 }
             }
@@ -364,7 +362,7 @@ public class GHLongLongBTree implements LongLongMap {
 
         void insertTree(int index, BTreeEntry tree) {
             insertKeyValue(index, tree.keys[0], tree.values);
-            if (!isLeaf) {
+            if (!isLeaf()) {
                 // overwrite children
                 children[index] = tree.children[0];
                 // set
@@ -378,9 +376,8 @@ public class GHLongLongBTree implements LongLongMap {
                 return toLong(values, index * bytesPerValue);
             }
             index = ~index;
-            if (isLeaf || children[index] == null) {
+            if (isLeaf())
                 return emptyValue;
-            }
             return children[index].get(key);
         }
 
@@ -389,7 +386,7 @@ public class GHLongLongBTree implements LongLongMap {
          */
         long getCapacity() {
             long cap = keys.length * (8 + 4) + 3 * 12 + 4 + 1;
-            if (!isLeaf) {
+            if (!isLeaf()) {
                 cap += children.length * 4;
                 for (int i = 0; i < children.length; i++) {
                     if (children[i] != null) {
@@ -402,7 +399,7 @@ public class GHLongLongBTree implements LongLongMap {
 
         int getEntries() {
             int entries = 1;
-            if (!isLeaf) {
+            if (!isLeaf()) {
                 for (int i = 0; i < children.length; i++) {
                     if (children[i] != null) {
                         entries += children[i].getEntries();
@@ -412,6 +409,10 @@ public class GHLongLongBTree implements LongLongMap {
             return entries;
         }
 
+        private boolean isLeaf() {
+            return children == null;
+        }
+
         void ensureSize(int size) {
             if (size <= keys.length) {
                 return;
@@ -419,7 +420,7 @@ public class GHLongLongBTree implements LongLongMap {
             int newSize = Math.min(maxLeafEntries, Math.max(size + 1, Math.round(size * factor)));
             keys = Arrays.copyOf(keys, newSize);
             values = Arrays.copyOf(values, newSize * bytesPerValue);
-            if (!isLeaf) {
+            if (!isLeaf()) {
                 children = Arrays.copyOf(children, newSize + 1);
             }
         }
@@ -429,12 +430,12 @@ public class GHLongLongBTree implements LongLongMap {
             if (entrySize + tolerance < keys.length) {
                 keys = Arrays.copyOf(keys, entrySize);
                 values = Arrays.copyOf(values, entrySize * bytesPerValue);
-                if (!isLeaf) {
+                if (!isLeaf()) {
                     children = Arrays.copyOf(children, entrySize + 1);
                 }
             }
 
-            if (!isLeaf) {
+            if (!isLeaf()) {
                 for (int i = 0; i < children.length; i++) {
                     if (children[i] != null) {
                         children[i].compact();
@@ -452,7 +453,7 @@ public class GHLongLongBTree implements LongLongMap {
                 str += keys[i];
             }
             str += "\n";
-            if (!isLeaf) {
+            if (!isLeaf()) {
                 for (int i = 0; i < entrySize + 1; i++) {
                     if (children[i] != null) {
                         str += children[i].toString(height + 1) + "| ";
