@@ -89,4 +89,4 @@ Here is an overview:
 ## Translations
 
 A lot people helped to create translations - thanks!
-See [this spreadsheet](https://docs.google.com/spreadsheet/ccc?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc#gid=0)
+See [this spreadsheet](https://docs.google.com/spreadsheets/d/e/2PACX-1vTjOxfOBVw9VvEroPw30w77XA-JCCbraf4GeL9URMgK0kjfS-YT5R8TT6PACF8O7o6fhPKMsWKFf9M-/pubhtml)
