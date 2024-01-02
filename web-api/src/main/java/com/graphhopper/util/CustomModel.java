@@ -167,10 +167,10 @@ public class CustomModel {
      * queryModel is null.
      */
     public static CustomModel merge(CustomModel baseModel, CustomModel queryModel) {
-        if (queryModel == null) return baseModel;
         // avoid changing the specified CustomModel via deep copy otherwise the server-side CustomModel would be
         // modified (same problem if queryModel would be used as target)
         CustomModel mergedCM = new CustomModel(baseModel);
+        if (queryModel == null) return mergedCM;
 
         if (queryModel.getDistanceInfluence() != null)
             mergedCM.distanceInfluence = queryModel.distanceInfluence;

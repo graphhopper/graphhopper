@@ -155,10 +155,16 @@ public class MaxSpeedCalculator {
                     ? urbanMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage)
                     : ruralMaxSpeedEnc.getDecimal(false, iter.getEdge(), internalMaxSpeedStorage);
             if (maxSpeed != MaxSpeed.UNSET_SPEED) {
-                iter.set(maxSpeedEnc,
-                        fwdMaxSpeedPureOSM == MaxSpeed.UNSET_SPEED ? maxSpeed : fwdMaxSpeedPureOSM,
-                        bwdMaxSpeedPureOSM == MaxSpeed.UNSET_SPEED ? maxSpeed : bwdMaxSpeedPureOSM);
-                iter.set(maxSpeedEstEnc, true);
+                if (maxSpeed == 0) {
+                    // TODO fix properly: RestrictionSetter adds artificial edges for which
+                    //  we didn't set the speed in DefaultMaxSpeedParser, #2914
+                    iter.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
+                } else {
+                    iter.set(maxSpeedEnc,
+                            fwdMaxSpeedPureOSM == MaxSpeed.UNSET_SPEED ? maxSpeed : fwdMaxSpeedPureOSM,
+                            bwdMaxSpeedPureOSM == MaxSpeed.UNSET_SPEED ? maxSpeed : bwdMaxSpeedPureOSM);
+                    iter.set(maxSpeedEstEnc, true);
+                }
             }
         }
 
