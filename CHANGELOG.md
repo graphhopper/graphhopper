@@ -1,6 +1,6 @@
 ### 9.0 [not yet released]
 
-- removed the ability to sort the graph (graph.do_sort) due to incomplete support, #1234
+- removed the ability to sort the graph (graph.do_sort) due to incomplete support, #2919
 - minor changes for import hooks, #2917
 - removed wheelchair vehicle and related parsers, with currently no complete replacement as it needs to be redone properly with a custom model
 - removed deprecated PMap.put
