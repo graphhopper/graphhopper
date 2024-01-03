@@ -1218,7 +1218,7 @@ public class EdgeBasedNodeContractorTest {
         CHPreparationGraph.TurnCostFunction turnCostFunction = CHPreparationGraph.buildTurnCostFunctionFromTurnCostStorage(graph, weighting);
         CHPreparationGraph prepareGraph = CHPreparationGraph.edgeBased(graph.getNodes(), graph.getEdges(), turnCostFunction);
         CHPreparationGraph.buildFromGraph(prepareGraph, graph, weighting);
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(prepareGraph, chBuilder, new PMap());
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(prepareGraph, chBuilder, new PMap(), graph.getNodeAccess());
         nodeContractor.initFromGraph();
         return nodeContractor;
     }

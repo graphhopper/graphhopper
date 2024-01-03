@@ -182,7 +182,7 @@ public class PrepareContractionHierarchies {
             logger.info("Creating CH prepare graph, {}", getMemInfo());
             CHPreparationGraph.TurnCostFunction turnCostFunction = CHPreparationGraph.buildTurnCostFunctionFromTurnCostStorage(graph, chConfig.getWeighting());
             prepareGraph = CHPreparationGraph.edgeBased(graph.getNodes(), graph.getEdges(), turnCostFunction);
-            nodeContractor = new EdgeBasedNodeContractor(prepareGraph, chBuilder, pMap);
+            nodeContractor = new EdgeBasedNodeContractor(prepareGraph, chBuilder, pMap, graph.getNodeAccess());
         } else {
             logger.info("Creating CH prepare graph, {}", getMemInfo());
             prepareGraph = CHPreparationGraph.nodeBased(graph.getNodes(), graph.getEdges());
