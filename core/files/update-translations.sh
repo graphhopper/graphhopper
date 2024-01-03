@@ -16,6 +16,6 @@ for tr in $translations; do
   if [[ "x$tr" = "xSKIP" ]]; then
     continue
   fi
-  echo -e '# do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh\n' > $destination/$tr.txt
+  echo -e '# do not edit manually, instead use spreadsheet from translations.md and script ./core/files/update-translations.sh\n' > $destination/$tr.txt
   tail -n+5 "$file" | cut -s -f1,$INDEX --output-delimiter='=' >> $destination/$tr.txt
 done
