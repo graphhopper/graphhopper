@@ -301,6 +301,9 @@ class EdgeBasedNodeContractor implements NodeContractor {
     }
 
     private PrepareCHEntry addShortcutsToPrepareGraph(PrepareCHEntry edgeFrom, PrepareCHEntry edgeTo, int origEdgeCount) {
+        if (edgeTo.parent == null) {
+            throw new IllegalStateException("edgeTo.parent is null! " + edgeTo.weight + " | " + edgeTo.adjNode + " | " + edgeTo.incEdgeKey + " | " + edgeTo.prepareEdge + " | " + edgeTo.firstEdgeKey + " | " + edgeTo.origEdges);
+        }
         if (edgeTo.parent.prepareEdge != edgeFrom.prepareEdge) {
             // counting origEdgeCount correctly is tricky with loop shortcuts and the recursion we use here. so we
             // simply ignore this, it probably does not matter that much
