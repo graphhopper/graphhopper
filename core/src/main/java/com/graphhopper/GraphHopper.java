@@ -893,9 +893,14 @@ public class GraphHopper {
                     throw new RuntimeException("To avoid multiple writers we need to obtain a write lock but it failed. In " + ghLocation, lock.getObtainFailedReason());
             }
             ensureWriteAccess();
+
             importOSM();
+            postImportOSM();
             cleanUp();
-            postImport();
+
+            properties.put("profiles", getProfilesString());
+            writeEncodingManagerToProperties();
+
             postProcessing(closeEarly);
             flush();
         } finally {
@@ -904,7 +909,14 @@ public class GraphHopper {
         }
     }
 
-    protected void postImport() {
+    protected void postImportOSM() {
+        calculateUrbanDensity();
+
+        if (maxSpeedCalculator != null) {
+            maxSpeedCalculator.fillMaxSpeed(getBaseGraph(), encodingManager);
+            maxSpeedCalculator.close();
+        }
+
         // Important note: To deal with via-way turn restrictions we introduce artificial edges in OSMReader (#2689).
         // These are simply copies of real edges. Any further modifications of the graph edges must take care of keeping
         // the artificial edges in sync with their real counterparts. So if an edge attribute shall be changed this change
@@ -918,11 +930,6 @@ public class GraphHopper {
 
         if (hasElevation())
             interpolateBridgesTunnelsAndFerries();
-
-        if (maxSpeedCalculator != null) {
-            maxSpeedCalculator.fillMaxSpeed(getBaseGraph(), encodingManager);
-            maxSpeedCalculator.close();
-        }
     }
 
     protected void importOSM() {
@@ -963,9 +970,6 @@ public class GraphHopper {
         properties.put("datareader.import.date", f.format(new Date()));
         if (reader.getDataDate() != null)
             properties.put("datareader.data.date", f.format(reader.getDataDate()));
-
-        calculateUrbanDensity();
-        writeEncodingManagerToProperties();
     }
 
     protected void createBaseGraphAndProperties() {
@@ -976,7 +980,7 @@ public class GraphHopper {
             maxSpeedCalculator.createDataAccessForParser(baseGraph.getDirectory());
     }
 
-    protected void calculateUrbanDensity() {
+    private void calculateUrbanDensity() {
         if (encodingManager.hasEncodedValue(UrbanDensity.KEY)) {
             EnumEncodedValue<UrbanDensity> urbanDensityEnc = encodingManager.getEnumEncodedValue(UrbanDensity.KEY, UrbanDensity.class);
             if (!encodingManager.hasEncodedValue(RoadClass.KEY))
@@ -990,7 +994,7 @@ public class GraphHopper {
         }
     }
 
-    protected void writeEncodingManagerToProperties() {
+    private void writeEncodingManagerToProperties() {
         EncodingManager.putEncodingManagerIntoProperties(encodingManager, properties);
     }
 
@@ -1411,7 +1415,6 @@ public class GraphHopper {
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.setThreads(subnetworksThreads);
         preparation.doWork();
-        properties.put("profiles", getProfilesString());
         logger.info("nodes: " + Helper.nf(baseGraph.getNodes()) + ", edges: " + Helper.nf(baseGraph.getEdges()));
     }
 
