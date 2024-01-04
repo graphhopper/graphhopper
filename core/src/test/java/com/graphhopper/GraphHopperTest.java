@@ -291,14 +291,13 @@ public class GraphHopperTest {
         }
     }
 
-    private void testImportCloseAndLoad(boolean ch, boolean lm, boolean sort) {
+    private void testImportCloseAndLoad(boolean ch, boolean lm) {
         final String vehicle = "foot";
         final String profileName = "profile";
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
-                setStoreOnFlush(true).
-                setSortGraph(sort);
+                setStoreOnFlush(true);
 
         JsonFeature area51Feature = new JsonFeature();
         area51Feature.setId("area51");
@@ -391,27 +390,22 @@ public class GraphHopperTest {
 
     @Test
     public void testImportThenLoadCH() {
-        testImportCloseAndLoad(true, false, false);
+        testImportCloseAndLoad(true, false);
     }
 
     @Test
     public void testImportThenLoadLM() {
-        testImportCloseAndLoad(false, true, false);
+        testImportCloseAndLoad(false, true);
     }
 
     @Test
     public void testImportThenLoadCHLM() {
-        testImportCloseAndLoad(true, true, false);
-    }
-
-    @Test
-    public void testImportThenLoadCHLMAndSort() {
-        testImportCloseAndLoad(true, true, true);
+        testImportCloseAndLoad(true, true);
     }
 
     @Test
     public void testImportThenLoadFlexible() {
-        testImportCloseAndLoad(false, false, false);
+        testImportCloseAndLoad(false, false);
     }
 
     @Test
@@ -1450,13 +1444,13 @@ public class GraphHopperTest {
     @Test
     public void testIfCHIsUsed() {
         // route directly after import
-        executeCHFootRoute(false);
+        executeCHFootRoute();
 
         // now only load is called
-        executeCHFootRoute(false);
+        executeCHFootRoute();
     }
 
-    private void executeCHFootRoute(boolean sort) {
+    private void executeCHFootRoute() {
         final String profile = "profile";
         final String vehicle = "foot";
 
@@ -1464,8 +1458,7 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setProfiles(new Profile(profile).setVehicle(vehicle)).
-                setStoreOnFlush(true).
-                setSortGraph(sort);
+                setStoreOnFlush(true);
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         hopper.importOrLoad();
 
@@ -1482,15 +1475,6 @@ public class GraphHopperTest {
         assertEquals(115, bestPath.getPoints().size());
 
         hopper.close();
-    }
-
-    @Test
-    public void testSortWhileImporting() {
-        // route after importing a sorted graph
-        executeCHFootRoute(true);
-
-        // route after loading a sorted graph
-        executeCHFootRoute(false);
     }
 
     @Test

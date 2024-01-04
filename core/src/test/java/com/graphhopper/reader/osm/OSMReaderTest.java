@@ -143,14 +143,6 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testSort() {
-        GraphHopper hopper = new GraphHopperFacade(file1).setSortGraph(true).importOrLoad();
-        NodeAccess na = hopper.getBaseGraph().getNodeAccess();
-        assertEquals(10, na.getLon(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
-        assertEquals(51.249, na.getLat(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
-    }
-
-    @Test
     public void testOneWay() {
         GraphHopper hopper = new GraphHopperFacade(file2)
                 .setMinNetworkSize(0)

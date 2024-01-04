@@ -92,7 +92,6 @@ public class GraphHopper {
     private String ghLocation = "";
     private DAType dataAccessDefaultType = DAType.RAM_STORE;
     private final LinkedHashMap<String, String> dataAccessConfig = new LinkedHashMap<>();
-    private boolean sortGraph = false;
     private boolean elevation = false;
     private LockFactory lockFactory = new NativeFSLockFactory();
     private boolean allowWrites = true;
@@ -405,15 +404,6 @@ public class GraphHopper {
         this.locationIndex = locationIndex;
     }
 
-    /**
-     * Sorts the graph which requires more RAM while import. See #12
-     */
-    public GraphHopper setSortGraph(boolean sortGraph) {
-        ensureNotLoaded();
-        this.sortGraph = sortGraph;
-        return this;
-    }
-
     public boolean isAllowWrites() {
         return allowWrites;
     }
@@ -535,7 +525,6 @@ public class GraphHopper {
         if (ghConfig.getBool("max_speed_calculator.enabled", false))
             maxSpeedCalculator = new MaxSpeedCalculator(MaxSpeedCalculator.createLegalDefaultSpeeds());
 
-        sortGraph = ghConfig.getBool("graph.do_sort", sortGraph);
         removeZipped = ghConfig.getBool("graph.remove_zipped", removeZipped);
 
         if (!ghConfig.getString("spatial_rules.location", "").isEmpty())
@@ -910,22 +899,17 @@ public class GraphHopper {
     }
 
     protected void postImportOSM() {
+        // Important note: To deal with via-way turn restrictions we introduce artificial edges in OSMReader (#2689).
+        // These are simply copies of real edges. Any further modifications of the graph edges must take care of keeping
+        // the artificial edges in sync with their real counterparts. So if an edge attribute shall be changed this change
+        // must also be applied to the corresponding artificial edge.
+
+
         calculateUrbanDensity();
 
         if (maxSpeedCalculator != null) {
             maxSpeedCalculator.fillMaxSpeed(getBaseGraph(), encodingManager);
             maxSpeedCalculator.close();
-        }
-
-        // Important note: To deal with via-way turn restrictions we introduce artificial edges in OSMReader (#2689).
-        // These are simply copies of real edges. Any further modifications of the graph edges must take care of keeping
-        // the artificial edges in sync with their real counterparts. So if an edge attribute shall be changed this change
-        // must also be applied to the corresponding artificial edge.
-        if (sortGraph) {
-            BaseGraph newGraph = GHUtility.newGraph(baseGraph);
-            GHUtility.sortDFS(baseGraph, newGraph);
-            logger.info("graph sorted (" + getMemInfo() + ")");
-            baseGraph = newGraph;
         }
 
         if (hasElevation())
