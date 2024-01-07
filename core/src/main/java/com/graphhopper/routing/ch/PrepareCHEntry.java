@@ -55,7 +55,7 @@ public class PrepareCHEntry implements Comparable<PrepareCHEntry> {
 
     @Override
     public String toString() {
-        return (adjNode + " (" + prepareEdge + ") weight: " + weight) + ", incEdgeKey: " + incEdgeKey;
+        return (adjNode + " (" + prepareEdge + ") weight: " + weight) + ", incEdgeKey: " + incEdgeKey + ", firstEdgeKey: " + firstEdgeKey + ", origEdges: " + origEdges;
     }
 
     @Override

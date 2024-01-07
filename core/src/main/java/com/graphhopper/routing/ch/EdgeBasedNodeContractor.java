@@ -225,7 +225,12 @@ class EdgeBasedNodeContractor implements NodeContractor {
                     LOGGER.trace("Adding shortcuts for target entry {}", bridgePath.value.chEntry);
                     // todo: re-implement loop-avoidance heuristic as it existed in GH 1.0? it did not work the
                     //       way it was implemented so it was removed at some point
-                    shortcutHandler.handleShortcut(root, bridgePath.value.chEntry, bridgePath.value.chEntry.origEdges);
+                    PrepareCHEntry prepareCHEntry = shortcutHandler.handleShortcut(root, bridgePath.value.chEntry, bridgePath.value.chEntry.origEdges);
+                    if (prepareCHEntry == null) {
+                        // oops, something went wrong!
+                        throw new IllegalStateException("Something went wrong during EBNC#findAndHandlePrepareShortcuts, when calling shortcutHandler.handleShortcut with input:\n"
+                         + "edgeFrom: " + root + "\nedgeTo: " + bridgePath.value.chEntry + "\ninitialTurnCost: " + initialTurnCost + "\nweight: " + weight);
+                    }
                 }
                 witnessPathSearcher.finishSearch();
             }
@@ -306,15 +311,18 @@ class EdgeBasedNodeContractor implements NodeContractor {
 
     private PrepareCHEntry addShortcutsToPrepareGraph(PrepareCHEntry edgeFrom, PrepareCHEntry edgeTo, int origEdgeCount) {
         if (edgeTo.parent == null) {
-            throw new IllegalStateException("edgeTo.parent is null! " + edgeTo.weight + " | " + edgeTo.adjNode + " | " + edgeTo.incEdgeKey + " | " + edgeTo.prepareEdge + " | " + edgeTo.firstEdgeKey + " | " + edgeTo.origEdges + "\n" +
+            System.out.println("edgeTo.parent is null! " + edgeTo.weight + " | " + edgeTo.adjNode + " | " + edgeTo.incEdgeKey + " | " + edgeTo.prepareEdge + " | " + edgeTo.firstEdgeKey + " | " + edgeTo.origEdges + "\n" +
                     "edgeTo.adjNode=" + edgeTo.adjNode + " coordinates: " + nodeAccess.getLat(edgeTo.adjNode) + ", " + nodeAccess.getLon(edgeTo.adjNode) + "\n" +
                     "edgeFrom.parent.adjNode=" + (edgeFrom.parent != null ? (edgeFrom.parent.adjNode + " coordinates: " + nodeAccess.getLat(edgeFrom.parent.adjNode) + ", " + nodeAccess.getLon(edgeFrom.parent.adjNode)) : "null!")
             );
+            return null;
         }
         if (edgeTo.parent.prepareEdge != edgeFrom.prepareEdge) {
             // counting origEdgeCount correctly is tricky with loop shortcuts and the recursion we use here. so we
             // simply ignore this, it probably does not matter that much
             PrepareCHEntry prev = addShortcutsToPrepareGraph(edgeFrom, edgeTo.getParent(), origEdgeCount);
+            if (prev == null)
+                return null;
             return doAddShortcut(prev, edgeTo, origEdgeCount);
         } else {
             return doAddShortcut(edgeFrom, edgeTo, origEdgeCount);
@@ -396,10 +404,10 @@ class EdgeBasedNodeContractor implements NodeContractor {
 
     @FunctionalInterface
     private interface PrepareShortcutHandler {
-        void handleShortcut(PrepareCHEntry edgeFrom, PrepareCHEntry edgeTo, int origEdgeCount);
+        PrepareCHEntry handleShortcut(PrepareCHEntry edgeFrom, PrepareCHEntry edgeTo, int origEdgeCount);
     }
 
-    private void countShortcuts(PrepareCHEntry edgeFrom, PrepareCHEntry edgeTo, int origEdgeCount) {
+    private PrepareCHEntry countShortcuts(PrepareCHEntry edgeFrom, PrepareCHEntry edgeTo, int origEdgeCount) {
         int fromNode = edgeFrom.parent.adjNode;
         int toNode = edgeTo.adjNode;
         int firstOrigEdgeKey = edgeFrom.firstEdgeKey;
@@ -411,7 +419,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
             if (isSameShortcut(iter, toNode, firstOrigEdgeKey, lastOrigEdgeKey)) {
                 // this shortcut exists already, maybe its weight will be updated but we should not count it as
                 // a new edge
-                return;
+                return new PrepareCHEntry(0, 0, 0, 0, 0, 0);
             }
         }
 
@@ -421,6 +429,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
             edgeTo = edgeTo.parent;
         }
         numOrigEdges += origEdgeCount;
+        return new PrepareCHEntry(0, 0, 0, 0, 0, 0);
     }
 
     long getNumPolledEdges() {
