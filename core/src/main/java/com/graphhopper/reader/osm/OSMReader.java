@@ -581,7 +581,7 @@ public class OSMReader {
         // The restriction type depends on the vehicle, or at least not all restrictions affect every vehicle type.
         // We handle the restrictions for one vehicle after another.
         for (RestrictionTagParser restrictionTagParser : osmParsers.getRestrictionTagParsers()) {
-            LongSet viaWaysUsedByOnlyRestrictions = new LongHashSet();
+            LongSet directedViaWaysUsedByRestrictions = new LongHashSet();
             List<Pair<GraphRestriction, RestrictionType>> restrictionsWithType = new ArrayList<>(restrictions.size());
             for (Triple<ReaderRelation, GraphRestriction, RestrictionMembers> r : restrictions) {
                 if (r.second == null)
@@ -593,12 +593,15 @@ public class OSMReader {
                         // this relation is ignored by the current restriction tag parser
                         continue;
                     RestrictionConverter.checkIfCompatibleWithRestriction(r.second, res.getRestriction());
-                    // we ignore 'only' via-way restrictions that share the same via way, because these would require adding
-                    // multiple artificial edges, see here: https://github.com/graphhopper/graphhopper/pull/2689#issuecomment-1306769694
-                    if (r.second.isViaWayRestriction() && res.getRestrictionType() == RestrictionType.ONLY)
-                        for (LongCursor viaWay : r.third.getViaWays())
-                            if (!viaWaysUsedByOnlyRestrictions.add(viaWay.value))
-                                throw new OSMRestrictionException("has a member with role 'via' that is also used as 'via' member by another 'only' restriction. GraphHopper cannot handle this.");
+                    // we ignore via-way restrictions that share the same via-way in the same direction, because these would require adding
+                    // multiple artificial edges, see here: https://github.com/graphhopper/graphhopper/pull/2689#issuecomment-1306769694 and #2907
+                    if (r.second.isViaWayRestriction())
+                        for (LongCursor viaWay : r.third.getViaWays()) {
+                            // We simply use the first and last via-node to determine the direction of the way, but for multiple via-ways maybe we need to reconsider this!
+                            long directedViaWay = viaWay.value * (r.second.getViaNodes().get(0) < r.second.getViaNodes().get(r.second.getViaNodes().size() - 1) ? +1 : -1);
+                            if (!directedViaWaysUsedByRestrictions.add(directedViaWay))
+                                throw new OSMRestrictionException("has a member with role 'via' (" + viaWay.value + ") that is also used as 'via' member by another restriction in the same direction. GraphHopper cannot handle this.");
+                        }
                     restrictionsWithType.add(new Pair<>(r.second, res.getRestrictionType()));
                 } catch (OSMRestrictionException e) {
                     warnOfRestriction(r.first, e);
