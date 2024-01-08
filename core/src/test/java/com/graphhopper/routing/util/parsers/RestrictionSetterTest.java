@@ -16,8 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class RestrictionSetterTest {
     private static final IntArrayList NO_PATH = IntArrayList.from();
@@ -166,6 +165,83 @@ public class RestrictionSetterTest {
     }
 
     @Test
+    void viaWay_common_via_edge_opposite_direction() {
+        //    a   b
+        //  0---1---2
+        //      |c
+        //  3---4---5
+        //    d   e
+        int a = edge(0, 1);
+        int b = edge(1, 2);
+        int c = edge(1, 4);
+        int d = edge(3, 4);
+        int e = edge(4, 5);
+
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        r.setRestrictions(Arrays.asList(
+                // A rather common case where u-turns between the a-b and d-e lanes are forbidden.
+                // Importantly, the via-edge c is used only once per direction so a single artificial edge is sufficient.
+                new Pair<>(GraphRestriction.way(b, c, e, nodes(1, 4)), RestrictionType.NO),
+                new Pair<>(GraphRestriction.way(d, c, a, nodes(4, 1)), RestrictionType.NO)
+        ), turnRestrictionEnc);
+
+        assertEquals(nodes(0, 1, 2), calcPath(0, 2, turnRestrictionEnc));
+        assertEquals(nodes(0, 1, 4, 5), calcPath(0, 5, turnRestrictionEnc));
+        assertEquals(nodes(0, 1, 4, 3), calcPath(0, 3, turnRestrictionEnc));
+        assertEquals(nodes(2, 1, 0), calcPath(2, 0, turnRestrictionEnc));
+        assertEquals(nodes(2, 1, 4, 3), calcPath(2, 3, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(2, 5, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(3, 0, turnRestrictionEnc));
+        assertEquals(nodes(3, 4, 1, 2), calcPath(3, 2, turnRestrictionEnc));
+        assertEquals(nodes(3, 4, 5), calcPath(3, 5, turnRestrictionEnc));
+        assertEquals(nodes(5, 4, 1, 0), calcPath(5, 0, turnRestrictionEnc));
+        assertEquals(nodes(5, 4, 1, 2), calcPath(5, 2, turnRestrictionEnc));
+        assertEquals(nodes(5, 4, 3), calcPath(5, 3, turnRestrictionEnc));
+    }
+
+    @Test
+    void viaWay_common_via_edge_opposite_direction_edge0() {
+        //    a   v   b
+        //  0---1---2---3
+        int v = edge(1, 2);
+        int a = edge(0, 1);
+        int b = edge(2, 3);
+
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () -> r.setRestrictions(Arrays.asList(
+                // This is rather academic, but for the special case where the via edge is edge 0
+                // we cannot use two restrictions even though the edge is used in opposite directions.
+                new Pair<>(GraphRestriction.way(a, v, b, nodes(1, 2)), RestrictionType.NO),
+                new Pair<>(GraphRestriction.way(b, v, a, nodes(2, 1)), RestrictionType.NO)
+        ), turnRestrictionEnc));
+        assertTrue(ex.getMessage().contains("We cannot deal with multiple via-way restrictions if the via-edge is edge 0"));
+    }
+
+    @Test
+    void viaWay_common_via_edge_same_direction() {
+        //    a   b
+        //  0---1---2
+        //      |c
+        //  3---4---5
+        //    d   e
+        int a = edge(0, 1);
+        int b = edge(1, 2);
+        int c = edge(1, 4);
+        int d = edge(3, 4);
+        int e = edge(4, 5);
+
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        // Here edge c is used by both restrictions in the same direction. Supporting this
+        // with our current approach would require a second artificial edge. See #2907
+        IllegalStateException ex = assertThrows(IllegalStateException.class, () ->
+                r.setRestrictions(Arrays.asList(
+                        new Pair<>(GraphRestriction.way(a, c, d, nodes(1, 4)), RestrictionType.NO),
+                        new Pair<>(GraphRestriction.way(b, c, e, nodes(1, 4)), RestrictionType.NO)
+                ), turnRestrictionEnc));
+        assertTrue(ex.getMessage().contains("We cannot deal with multiple via-way restrictions that use the same via edge in the same direction"), ex.getMessage());
+    }
+
+    @Test
     void viaWay_only() {
         //      0
         //  a   |b  c
@@ -185,7 +261,7 @@ public class RestrictionSetterTest {
         r.setRestrictions(Arrays.asList(
                 new Pair<>(GraphRestriction.way(a, d, f, nodes(2, 5)), RestrictionType.ONLY),
                 // we add a few more restrictions, because that happens a lot in real data
-                new Pair<>(GraphRestriction.way(c, d, g, nodes(2, 5)), RestrictionType.NO),
+                new Pair<>(GraphRestriction.node(d, 5, e), RestrictionType.NO),
                 new Pair<>(GraphRestriction.node(e, 5, f), RestrictionType.NO)
         ), turnRestrictionEnc);
         // following the restriction is allowed of course
@@ -194,7 +270,7 @@ public class RestrictionSetterTest {
         assertEquals(nodes(), calcPath(1, 3, turnRestrictionEnc));
         // taking another turn after the first turn is not allowed either
         assertEquals(nodes(), calcPath(1, 4, turnRestrictionEnc));
-        // coming from somewhere we can go anywhere
+        // coming from somewhere else we can go anywhere
         assertEquals(nodes(0, 2, 5, 6), calcPath(0, 6, turnRestrictionEnc));
         assertEquals(nodes(0, 2, 5, 7), calcPath(0, 7, turnRestrictionEnc));
     }
@@ -213,13 +289,45 @@ public class RestrictionSetterTest {
         BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
         assertThrows(IllegalStateException.class, () -> r.setRestrictions(Arrays.asList(
                         // These are two 'only' via-way restrictions that share the same via way. A real-world example can
-                        // be found in Rüdesheim am Rhein where vehicles either have to go straight or enter the ferry depending
-                        // on the from-way, even though they use the same via way before.
+                // be found in Rüdesheim am Rhein (49.97645, 7.91309) where vehicles either have to go straight or enter the ferry depending
+                // on the from-way, even though they use the same via way before. This is the same
+                // problem we saw in #2907.
                         // We have to make sure such cases are ignored already when we parse the OSM data.
                         new Pair<>(GraphRestriction.way(a, c, d, nodes(1, 2)), RestrictionType.ONLY),
                         new Pair<>(GraphRestriction.way(b, c, e, nodes(1, 2)), RestrictionType.ONLY)
                 ), turnRestrictionEnc)
         );
+    }
+
+    @Test
+    void viaWay_only_twoRestrictionsSharingSameVia_different_directions() {
+        //   a   c   d
+        // 0---1---2---3
+        //     |b  |e
+        // 5--/     \--4
+        int a = edge(0, 1);
+        int b = edge(5, 1);
+        int c = edge(1, 2);
+        int d = edge(2, 3);
+        int e = edge(2, 4);
+        BooleanEncodedValue turnRestrictionEnc = createTurnRestrictionEnc("car");
+        r.setRestrictions(Arrays.asList(
+                // since the via-edge is used in opposite directions we can deal with these restrictions
+                new Pair<>(GraphRestriction.way(a, c, d, nodes(1, 2)), RestrictionType.ONLY),
+                new Pair<>(GraphRestriction.way(e, c, b, nodes(2, 1)), RestrictionType.ONLY)
+        ), turnRestrictionEnc);
+        assertEquals(nodes(0, 1, 2, 3), calcPath(0, 3, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(0, 4, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(0, 5, turnRestrictionEnc));
+        assertEquals(nodes(3, 2, 1, 0), calcPath(3, 0, turnRestrictionEnc));
+        assertEquals(nodes(3, 2, 4), calcPath(3, 4, turnRestrictionEnc));
+        assertEquals(nodes(3, 2, 1, 5), calcPath(3, 5, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(4, 0, turnRestrictionEnc));
+        assertEquals(NO_PATH, calcPath(4, 3, turnRestrictionEnc));
+        assertEquals(nodes(4, 2, 1, 5), calcPath(4, 5, turnRestrictionEnc));
+        assertEquals(nodes(5, 1, 0), calcPath(5, 0, turnRestrictionEnc));
+        assertEquals(nodes(5, 1, 2, 3), calcPath(5, 3, turnRestrictionEnc));
+        assertEquals(nodes(5, 1, 2, 4), calcPath(5, 4, turnRestrictionEnc));
     }
 
     private static BooleanEncodedValue createTurnRestrictionEnc(String name) {
