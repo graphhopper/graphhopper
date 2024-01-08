@@ -80,6 +80,7 @@ public class OSMReader {
     private static final Pattern WAY_NAME_PATTERN = Pattern.compile("; *");
 
     private final OSMReaderConfig config;
+    private final boolean ignoreAmerica;
     private final BaseGraph baseGraph;
     private final EdgeIntAccess edgeIntAccess;
     private final NodeAccess nodeAccess;
@@ -105,6 +106,7 @@ public class OSMReader {
         this.baseGraph = baseGraph;
         this.edgeIntAccess = baseGraph.createEdgeIntAccess();
         this.config = config;
+        this.ignoreAmerica = config.getIgnoredHighways().contains("america");
         this.nodeAccess = baseGraph.getNodeAccess();
         this.osmParsers = osmParsers;
         this.restrictionSetter = new RestrictionSetter(baseGraph);
@@ -365,6 +367,10 @@ public class OSMReader {
             LOGGER.warn("Bug in OSM or GraphHopper. Too big tower node distance " + distance + " reset to large value, osm way " + way.getId());
             distance = maxDistance;
         }
+
+        // skip the Americas, hopefully the error persists and the import takes less time?
+        if (ignoreAmerica && pointList.get(0).lon < -30)
+            return;
 
         setArtificialWayTags(pointList, way, distance, nodeTags);
         IntsRef relationFlags = getRelFlagsMap(way.getId());
