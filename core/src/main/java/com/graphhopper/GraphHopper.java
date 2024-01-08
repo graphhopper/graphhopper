@@ -1542,13 +1542,15 @@ public class GraphHopper {
                             String string;
                             // 1. try to load custom model from jar
                             InputStream is = GHUtility.class.getResourceAsStream("/com/graphhopper/custom_models/" + file);
+                            // dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
+                            Path customModelFile = Paths.get(customModelFolder).resolve(file);
                             if (is != null) {
+                                if (Files.exists(customModelFile))
+                                    throw new RuntimeException("Custom model file name '" + file + "' is already used for built-in profiles. Use another name");
                                 string = readJSONFileWithoutComments(new InputStreamReader(is));
                             } else {
                                 // 2. try to load custom model file from external location
-                                // dropwizard makes it very hard to find out the folder of config.yml -> use an extra parameter for the folder
-                                string = readJSONFileWithoutComments(Paths.get(customModelFolder).
-                                        resolve(file).toFile().getAbsolutePath());
+                                string = readJSONFileWithoutComments(customModelFile.toFile().getAbsolutePath());
                             }
                             customModel = CustomModel.merge(customModel, jsonOM.readValue(string, CustomModel.class));
                         } catch (IOException ex) {
