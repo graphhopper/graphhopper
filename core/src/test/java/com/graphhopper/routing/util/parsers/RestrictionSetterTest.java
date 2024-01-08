@@ -261,7 +261,7 @@ public class RestrictionSetterTest {
         r.setRestrictions(Arrays.asList(
                 new Pair<>(GraphRestriction.way(a, d, f, nodes(2, 5)), RestrictionType.ONLY),
                 // we add a few more restrictions, because that happens a lot in real data
-                new Pair<>(GraphRestriction.way(c, d, g, nodes(2, 5)), RestrictionType.NO),
+                new Pair<>(GraphRestriction.node(d, 5, e), RestrictionType.NO),
                 new Pair<>(GraphRestriction.node(e, 5, f), RestrictionType.NO)
         ), turnRestrictionEnc);
         // following the restriction is allowed of course
