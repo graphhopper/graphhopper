@@ -209,7 +209,7 @@ public class CustomModelParser {
      * For the methods getSpeed and getPriority we declare variables that contain the encoded value of the current edge
      * or if an area contains the current edge.
      */
-    static String getVariableDeclaration(EncodedValueLookup lookup, final String arg) {
+    private static String getVariableDeclaration(EncodedValueLookup lookup, final String arg) {
         if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             return getReturnType(enc) + " " + arg + " = (" + getReturnType(enc) + ") (reverse ? " +

@@ -38,7 +38,6 @@ import static com.graphhopper.json.Statement.*;
 import static com.graphhopper.json.Statement.Op.LIMIT;
 import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static com.graphhopper.routing.ev.RoadClass.*;
-import static com.graphhopper.routing.weighting.custom.CustomModelParser.getVariableDeclaration;
 import static com.graphhopper.routing.weighting.custom.CustomModelParser.parseExpressions;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -52,7 +51,7 @@ class CustomModelParserTest {
     EnumEncodedValue<State> stateEnc;
     double maxSpeed;
 
-    public enum Bus {
+    public enum MyBus {
         MISSING, YES, DESIGNATED, DESTINATION, NO
     }
 
@@ -62,7 +61,7 @@ class CustomModelParserTest {
         avgSpeedEnc = VehicleSpeed.create("car", 5, 5, false);
         countryEnc = Country.create();
         stateEnc = State.create();
-        encodingManager = new EncodingManager.Builder().add(accessEnc).add(avgSpeedEnc).add(new EnumEncodedValue<>("bus", Bus.class))
+        encodingManager = new EncodingManager.Builder().add(accessEnc).add(avgSpeedEnc).add(new EnumEncodedValue<>("bus", MyBus.class))
                 .add(stateEnc).add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).build();
         graph = new BaseGraph.Builder(encodingManager).create();
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
@@ -292,7 +291,7 @@ class CustomModelParserTest {
                 () -> parseExpressions(new StringBuilder(),
                         validVariable, "[HERE]", new HashSet<>(),
                         Arrays.asList(If("max_weight > 10", MULTIPLY, "0")),
-                        key -> getVariableDeclaration(encodingManager, key)));
+                        key -> encodingManager.getEncodedValue(key, EncodedValue.class).getName()));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"max_weight > 10\": 'max_weight' not available"), ret.getMessage());
 
         // invalid variable or constant (NameValidator returns false)
@@ -300,7 +299,7 @@ class CustomModelParserTest {
                 () -> parseExpressions(new StringBuilder(),
                         validVariable, "[HERE]", new HashSet<>(),
                         Arrays.asList(If("country == GERMANY", MULTIPLY, "0")),
-                        key -> getVariableDeclaration(encodingManager, key)));
+                        key -> encodingManager.getEncodedValue(key, EncodedValue.class).getName()));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"country == GERMANY\": 'GERMANY' not available"), ret.getMessage());
 
         // not whitelisted method
@@ -308,7 +307,7 @@ class CustomModelParserTest {
                 () -> parseExpressions(new StringBuilder(),
                         validVariable, "[HERE]", new HashSet<>(),
                         Arrays.asList(If("edge.fetchWayGeometry().size() > 2", MULTIPLY, "0")),
-                        key -> getVariableDeclaration(encodingManager, key)));
+                        key -> encodingManager.getEncodedValue(key, EncodedValue.class).getName()));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"edge.fetchWayGeometry().size() > 2\": size is an illegal method"), ret.getMessage());
     }
 
@@ -335,7 +334,7 @@ class CustomModelParserTest {
                 avgSpeedEnc, null).getEdgeToPriorityMapping();
 
         BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
-        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(encodingManager.getEnumEncodedValue("bus", Bus.class), Bus.NO);
+        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(100).set(encodingManager.getEnumEncodedValue("bus", MyBus.class), MyBus.NO);
         EdgeIteratorState edge2 = graph.edge(1, 2).setDistance(100);
 
         assertEquals(0.5, priorityMapping.get(edge1, false), 1.e-6);
