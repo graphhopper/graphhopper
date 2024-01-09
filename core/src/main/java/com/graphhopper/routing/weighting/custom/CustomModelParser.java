@@ -209,7 +209,7 @@ public class CustomModelParser {
      * For the methods getSpeed and getPriority we declare variables that contain the encoded value of the current edge
      * or if an area contains the current edge.
      */
-    private static String getVariableDeclaration(EncodedValueLookup lookup, final String arg) {
+    static String getVariableDeclaration(EncodedValueLookup lookup, final String arg) {
         if (lookup.hasEncodedValue(arg)) {
             EncodedValue enc = lookup.getEncodedValue(arg, EncodedValue.class);
             return getReturnType(enc) + " " + arg + " = (" + getReturnType(enc) + ") (reverse ? " +
@@ -245,8 +245,11 @@ public class CustomModelParser {
 
     private static String getReturnType(EncodedValue encodedValue) {
         // order is important
-        if (encodedValue instanceof EnumEncodedValue)
-            return ((EnumEncodedValue) encodedValue).getEnumSimpleName();
+        if (encodedValue instanceof EnumEncodedValue) {
+            Class cl = ((EnumEncodedValue) encodedValue).getEnumType();
+            // use getSimpleName for inbuilt EncodedValues and more readability of generated source
+            return cl.getPackage().equals(EnumEncodedValue.class.getPackage()) ? cl.getSimpleName() : cl.getName();
+        }
         if (encodedValue instanceof StringEncodedValue) return "int"; // we use indexOf
         if (encodedValue instanceof DecimalEncodedValue) return "double";
         if (encodedValue instanceof BooleanEncodedValue) return "boolean";
@@ -356,14 +359,16 @@ public class CustomModelParser {
         NameValidator nameInConditionValidator = name -> lookup.hasEncodedValue(name)
                 || name.toUpperCase(Locale.ROOT).equals(name) || name.startsWith(IN_AREA_PREFIX)
                 || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()));
+        ClassHelper helper = key -> getReturnType(lookup.getEncodedValue(key, EncodedValue.class));
 
-        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list);
+        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper);
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
-                                 String exceptionInfo, Set<String> createObjects, List<Statement> list) {
+                                 String exceptionInfo, Set<String> createObjects, List<Statement> list,
+                                 ClassHelper helper) {
 
         for (Statement statement : list) {
             // avoid parsing the RHS value expression again as we just did it to get the maximum values in createClazz
@@ -373,7 +378,7 @@ public class CustomModelParser {
 
                 expressions.append("else {").append(statement.getOperation().build(statement.getValue())).append("; }\n");
             } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator);
+                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator, helper);
                 if (!parseResult.ok)
                     throw new IllegalArgumentException(exceptionInfo + " invalid condition \"" + statement.getCondition() + "\"" +
                             (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));
