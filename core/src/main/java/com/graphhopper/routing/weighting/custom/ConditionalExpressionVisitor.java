@@ -124,7 +124,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                     if (variableValidator.isValid(lhVarAsString) && Helper.toUpperCase(rhValueAsString).equals(rhValueAsString)) {
                         if (!eqOps)
                             throw new IllegalArgumentException("Operator " + binOp.operator + " not allowed for enum");
-                        String value = classHelper.getPackageName(binOp.lhs.toString());
+                        String value = classHelper.getClassName(binOp.lhs.toString());
                         replacements.put(startRH, new Replacement(startRH, rhValueAsString.length(), value + "." + rhValueAsString));
                     }
                 }
