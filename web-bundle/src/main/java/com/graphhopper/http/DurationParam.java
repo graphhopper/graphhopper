@@ -20,7 +20,7 @@ package com.graphhopper.http;
 
 import io.dropwizard.jersey.params.AbstractParam;
 
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import java.time.Duration;
 
 public class DurationParam extends AbstractParam<Duration> {

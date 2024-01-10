@@ -20,8 +20,8 @@ package com.graphhopper.application.cli;
 
 import com.graphhopper.application.GraphHopperServerConfiguration;
 import com.graphhopper.http.GraphHopperManaged;
-import io.dropwizard.cli.ConfiguredCommand;
-import io.dropwizard.setup.Bootstrap;
+import io.dropwizard.core.cli.ConfiguredCommand;
+import io.dropwizard.core.setup.Bootstrap;
 import net.sourceforge.argparse4j.inf.Namespace;
 
 public class ImportCommand extends ConfiguredCommand<GraphHopperServerConfiguration> {

@@ -31,8 +31,8 @@ import com.graphhopper.gtfs.Transfers;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
 import io.dropwizard.lifecycle.Managed;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.glassfish.hk2.api.Factory;
 
 import javax.inject.Inject;
@@ -47,7 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed {
 
-    private final HttpClient httpClient;
+    private final CloseableHttpClient httpClient;
     private final BaseGraph baseGraph;
     private final EncodingManager encodingManager;
     private final GtfsStorage gtfsStorage;
@@ -57,7 +57,7 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed 
     private Map<String, Transfers> transfers;
 
     @Inject
-    RealtimeFeedLoadingCache(BaseGraph baseGraph, EncodingManager encodingManager, GtfsStorage gtfsStorage, HttpClient httpClient, RealtimeBundleConfiguration bundleConfiguration) {
+    RealtimeFeedLoadingCache(BaseGraph baseGraph, EncodingManager encodingManager, GtfsStorage gtfsStorage, CloseableHttpClient httpClient, RealtimeBundleConfiguration bundleConfiguration) {
         this.baseGraph = baseGraph;
         this.encodingManager = encodingManager;
         this.gtfsStorage = gtfsStorage;
@@ -112,7 +112,8 @@ public class RealtimeFeedLoadingCache implements Factory<RealtimeFeed>, Managed 
         Map<String, GtfsRealtime.FeedMessage> feedMessageMap = new HashMap<>();
         for (FeedConfiguration configuration : bundleConfiguration.gtfsrealtime().getFeeds()) {
             try {
-                GtfsRealtime.FeedMessage feedMessage = GtfsRealtime.FeedMessage.parseFrom(httpClient.execute(new HttpGet(configuration.getUrl().toURI())).getEntity().getContent());
+                GtfsRealtime.FeedMessage feedMessage = httpClient.execute(new HttpGet(configuration.getUrl().toURI()),
+                        response -> GtfsRealtime.FeedMessage.parseFrom(response.getEntity().getContent()));
                 feedMessageMap.put(configuration.getFeedId(), feedMessage);
             } catch (IOException | URISyntaxException e) {
                 throw new RuntimeException(e);

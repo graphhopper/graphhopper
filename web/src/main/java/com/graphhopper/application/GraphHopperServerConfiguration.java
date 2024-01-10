@@ -22,7 +22,7 @@ import com.graphhopper.GraphHopperConfig;
 import com.graphhopper.http.GraphHopperBundleConfiguration;
 import com.graphhopper.http.RealtimeBundleConfiguration;
 import com.graphhopper.http.RealtimeConfiguration;
-import io.dropwizard.Configuration;
+import io.dropwizard.core.Configuration;
 
 import javax.validation.constraints.NotNull;
 

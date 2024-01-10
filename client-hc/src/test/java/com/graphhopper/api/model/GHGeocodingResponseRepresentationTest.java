@@ -18,22 +18,22 @@
 
 package com.graphhopper.api.model;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.jackson.Jackson;
 import org.junit.jupiter.api.Test;
 import org.locationtech.jts.geom.Envelope;
 
-import static io.dropwizard.testing.FixtureHelpers.fixture;
+import java.io.IOException;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 public class GHGeocodingResponseRepresentationTest {
 
     @Test
-    public void testGeocodingRepresentation() throws JsonProcessingException {
+    public void testGeocodingRepresentation() throws IOException {
         ObjectMapper objectMapper = Jackson.newObjectMapper();
-        GHGeocodingResponse geocodingResponse = objectMapper.readValue(fixture("fixtures/geocoding-response.json"), GHGeocodingResponse.class);
+        GHGeocodingResponse geocodingResponse = objectMapper.readValue(getClass().getResource("/fixtures/geocoding-response.json"), GHGeocodingResponse.class);
         Envelope extent = geocodingResponse.getHits().get(0).getExtent();
         // Despite the unusual representation of the bounding box...
         assertEquals(10.0598605, extent.getMinX(), 0.0);

@@ -21,7 +21,7 @@ package com.graphhopper.http;
 import com.graphhopper.util.shapes.GHPoint;
 import io.dropwizard.jersey.params.AbstractParam;
 
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * This is a glue type, used to plug GHPoint as a custom web resource parameter type into Dropwizard,

@@ -21,7 +21,7 @@ package com.graphhopper.http;
 import com.graphhopper.gtfs.GHLocation;
 import io.dropwizard.jersey.params.AbstractParam;
 
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 public class GHLocationParam extends AbstractParam<GHLocation> {
 

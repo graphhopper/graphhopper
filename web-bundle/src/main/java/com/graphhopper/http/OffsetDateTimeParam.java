@@ -20,9 +20,8 @@ package com.graphhopper.http;
 
 import io.dropwizard.jersey.params.AbstractParam;
 
-import javax.annotation.Nullable;
+import org.checkerframework.checker.nullness.qual.Nullable;
 import java.time.OffsetDateTime;
-import java.time.ZonedDateTime;
 
 public class OffsetDateTimeParam extends AbstractParam<OffsetDateTime> {
     public OffsetDateTimeParam(@Nullable String input) {

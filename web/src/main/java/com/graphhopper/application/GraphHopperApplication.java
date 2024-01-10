@@ -24,10 +24,10 @@ import com.graphhopper.http.CORSFilter;
 import com.graphhopper.http.GraphHopperBundle;
 import com.graphhopper.http.RealtimeBundle;
 import com.graphhopper.navigation.NavigateResource;
-import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
-import io.dropwizard.setup.Bootstrap;
-import io.dropwizard.setup.Environment;
+import io.dropwizard.core.Application;
+import io.dropwizard.core.setup.Bootstrap;
+import io.dropwizard.core.setup.Environment;
 
 import javax.servlet.DispatcherType;
 import java.util.EnumSet;
