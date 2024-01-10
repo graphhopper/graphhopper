@@ -18,45 +18,50 @@
 
 package com.graphhopper.application.resources;
 
-import com.graphhopper.application.GraphHopperApplication;
-import com.graphhopper.application.GraphHopperServerConfiguration;
-import com.graphhopper.config.Profile;
-import com.graphhopper.util.Helper;
+import io.dropwizard.core.Application;
+import io.dropwizard.core.Configuration;
+import io.dropwizard.core.setup.Environment;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
 import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 import javax.ws.rs.client.Entity;
-import java.io.File;
-import java.util.Arrays;
+import javax.ws.rs.core.Response;
 
 @ExtendWith(DropwizardExtensionsSupport.class)
 public class Dropwizard3Test {
-    private static final String DIR = "./target/dropwizard3-test-gh";
-    private static final DropwizardAppExtension<GraphHopperServerConfiguration> app = new DropwizardAppExtension<>(GraphHopperApplication.class, createConfig());
 
-    private static GraphHopperServerConfiguration createConfig() {
-        Helper.removeDir(new File(DIR));
-        GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
-        config.getGraphHopperConfiguration()
-                .putObject("datareader.file", "../core/files/andorra.osm.pbf")
-                .putObject("graph.location", DIR)
-                .putObject("import.osm.ignored_highways", "")
-                .setProfiles(Arrays.asList(
-                        new Profile("car").setVehicle("car")
-                ));
-        return config;
+    @Path("/")
+    public static class MyResource {
+        @POST
+        public Response doPost() {
+            return Response.ok().build();
+        }
     }
 
+    public static class MyApp extends Application<Configuration> {
+
+        @Override
+        public void run(Configuration configuration, Environment environment) throws Exception {
+            environment.jersey().register(new MyResource());
+        }
+    }
+
+    private static final DropwizardAppExtension<Configuration> app = new DropwizardAppExtension<>(MyApp.class, new Configuration());
+
     @Test
-    public void boundsWithFeatureCollection() {
-        app.client().target("http://localhost:8080/route/").request().post(Entity.json("{\"profile\": \"car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]]}"));
-        app.client().target("http://localhost:8080/route/").request().post(Entity.json("{\"profile\": \"car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]]}"));
-        app.client().target("http://localhost:8080/route/").request().post(Entity.json("{\"profile\": \"car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]]}"));
-        app.client().target("http://localhost:8080/route/").request().post(Entity.json("{\"profile\": \"car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]]}"));
-        app.client().target("http://localhost:8080/route/").request().post(Entity.json("{\"profile\": \"car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]]}"));
-        app.client().target("http://localhost:8080/route/").request().post(Entity.json("{\"profile\": \"car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]]}"));
-        app.client().target("http://localhost:8080/route/").request().post(Entity.json("{\"profile\": \"car\", \"points\": [[1.536198,42.554851], [1.548128, 42.510071]]}"));
+    public void myTest() {
+        for (int i = 0; i < 10; i++) {
+            post();
+            System.out.println("post " + i + " complete");
+        }
+    }
+
+    private static void post() {
+        Response response = app.client().target("http://localhost:8080/not_found").request().post(Entity.json("{}"));
+        System.out.println("success: " + response.getStatus());
     }
 }
