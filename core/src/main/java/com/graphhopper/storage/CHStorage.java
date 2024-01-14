@@ -200,6 +200,8 @@ public class CHStorage {
     }
 
     private int shortcut(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2) {
+        if (shortcutCount > Integer.MAX_VALUE - 100)
+            LOGGER.warn("Very high shortcut count: " + shortcutCount);
         if (shortcutCount == Integer.MAX_VALUE)
             throw new IllegalStateException("Maximum shortcut count exceeded: " + shortcutCount);
         if (lowShortcutWeightConsumer != null && weight < MIN_WEIGHT)
