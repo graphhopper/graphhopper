@@ -215,6 +215,8 @@ class EdgeBasedNodeContractor implements NodeContractor {
                     PrepareCHEntry root = bridgePath.value.chEntry;
                     while (EdgeIterator.Edge.isValid(root.parent.prepareEdge))
                         root = root.getParent();
+                    if (root == bridgePath.value.chEntry)
+                        throw new IllegalStateException("Invalid root entry!\n" + bridgePath.value.chEntry + "\n" + bridgePath.value.chEntry.parent);
                     // we make sure to add each shortcut only once. when we are actually adding shortcuts we check for existing
                     // shortcuts anyway, but at least this is important when we *count* shortcuts.
                     long addedShortcutKey = BitUtil.LITTLE.toLong(root.firstEdgeKey, bridgePath.value.chEntry.incEdgeKey);
