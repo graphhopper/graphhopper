@@ -18,20 +18,18 @@
 
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntContainer;
+import com.carrotsearch.hppc.IntScatterSet;
+import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.sorting.IndirectComparator;
 import com.carrotsearch.hppc.sorting.IndirectSort;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.graphhopper.util.ArrayUtil.zero;
 
@@ -42,6 +40,7 @@ import static com.graphhopper.util.ArrayUtil.zero;
  * @author easbar
  */
 public class CHPreparationGraph {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CHPreparationGraph.class);
     private final int nodes;
     private final int edges;
     private final boolean edgeBased;
@@ -156,6 +155,10 @@ public class CHPreparationGraph {
         addOutEdge(from, prepareEdge);
         if (from != to)
             addInEdge(to, prepareEdge);
+        if (nextShortcutId > Integer.MAX_VALUE - 10)
+            LOGGER.warn("nextShortcutId is very large! " + nextShortcutId);
+        if (nextShortcutId == Integer.MAX_VALUE - 1)
+            throw new IllegalStateException("Maximum shortcut number exceeded!");
         return nextShortcutId++;
     }
 
