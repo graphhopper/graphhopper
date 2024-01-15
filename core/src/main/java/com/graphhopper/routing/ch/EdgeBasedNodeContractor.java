@@ -32,6 +32,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Locale;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.GHUtility.reverseEdgeKey;
 import static com.graphhopper.util.Helper.nf;
 
@@ -213,8 +214,13 @@ class EdgeBasedNodeContractor implements NodeContractor {
                         // we found a witness, nothing to do
                         continue;
                     PrepareCHEntry root = bridgePath.value.chEntry;
-                    while (EdgeIterator.Edge.isValid(root.parent.prepareEdge))
+                    if (root.parent.prepareEdge < 0 && root.parent.prepareEdge != NO_EDGE)
+                        throw new IllegalStateException("Invalid prepareEdge: " + root.parent.prepareEdge);
+                    while (EdgeIterator.Edge.isValid(root.parent.prepareEdge)) {
                         root = root.getParent();
+                        if (root.parent.prepareEdge < 0 && root.parent.prepareEdge != NO_EDGE)
+                            throw new IllegalStateException("(in loop) Invalid prepareEdge: " + root.parent.prepareEdge);
+                    }
                     if (root == bridgePath.value.chEntry)
                         throw new IllegalStateException("Invalid root entry!\n" + bridgePath.value.chEntry + "\n" + bridgePath.value.chEntry.parent);
                     // we make sure to add each shortcut only once. when we are actually adding shortcuts we check for existing
@@ -229,6 +235,10 @@ class EdgeBasedNodeContractor implements NodeContractor {
                     //       way it was implemented so it was removed at some point
                     PrepareCHEntry prepareCHEntry = shortcutHandler.handleShortcut(root, bridgePath.value.chEntry, bridgePath.value.chEntry.origEdges);
                     if (prepareCHEntry == null) {
+//                        edgeFrom: 68120314 (1950966218) weight: 550.0559265613556, incEdgeKey: 380546039, firstEdgeKey: 660925181, origEdges: 17
+//                        edgeTo:   68120314 (1950966218) weight: 550.0559265613556, incEdgeKey: 380546039, firstEdgeKey: 660925181, origEdges: 17
+//                        initialTurnCost: 0.0
+//                        weight: Infinity
                         // oops, something went wrong!
                         throw new IllegalStateException("Something went wrong during EBNC#findAndHandlePrepareShortcuts, when calling shortcutHandler.handleShortcut with input:\n"
                          + "edgeFrom: " + root + "\nedgeTo: " + bridgePath.value.chEntry + "\ninitialTurnCost: " + initialTurnCost + "\nweight: " + weight);
