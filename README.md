@@ -254,3 +254,32 @@ Here is a list of the more detailed features:
  * Shows the whole road network in the browser for debugging purposes ("vector tile support") [#1572](https://github.com/graphhopper/graphhopper/pull/1572)
  * Shows details along a route like road_class or max_speed ("path details") [#1142](https://github.com/graphhopper/graphhopper/pull/1142)
  * Written Java and simple start for developers via Maven.
+
+Dear GraphHopper Developers,
+
+I highly recommend adding additional charts that visualize important route features, for example:
+
+Top Speed Graph: Visualizing speed limits along a route allows users to:
+Anticipate possible delays due to speed restrictions.
+For time-sensitive trips, choose speed-first routes.
+Optimize routes for fuel efficiency by adhering to optimum speeds.
+
+Slope Graph: Visualizing elevation changes along a route will be extremely useful for:
+Cyclists and pedestrians who want to measure their physical exertion levels. Route planning for individuals with limited mobility.
+Logistics companies optimizing routes for fuel efficiency and vehicle wear.
+Outdoor enthusiasts looking for challenging or enjoyable trails depending on their altitude profiles.
+
+As of now the graph only highlights the elevation even when speed or slope graphs are selected and 
+there is no selection feature to highlight roads with specified speed limit or slopes.
+
+
+Potential benefits of these changes are that these charts will enable users to make more informed route choices based on their specific needs and preferences, and appeal to a wider range of individuals and industries by addressing different use cases. By offering this unique information, GraphHopper can differentiate itself as a pioneer in route planning and optimization.
+
+Application Considerations:
+Data Integration: Explore possible integrations with OpenStreetMap or other data sources that provide elevation and speed limit information, and design intuitive and visually engaging graphs that integrate seamlessly with existing GraphHopper interfaces for a nice user experience. Give users the ability to turn these charts on or off based on their needs and preferences.
+
+I am confident that the inclusion of these additional graphs will significantly increase GraphHopper's value proposition and attract a wider audience. I look forward to witnessing the project's continued progress and continued commitment to supporting its growth.
+
+Thank you for your commitment to this outstanding open source project. Please feel free to contact us if you have any questions or would like to discuss this proposal in more detail.
+
+
