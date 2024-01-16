@@ -141,7 +141,7 @@ public class LandmarkStorage {
         // In this sense its even 'better' to use node-based.
         this.traversalMode = TraversalMode.NODE_BASED;
 // ORS-GH MOD START
-        this.landmarkWeightDA = dir.find(getLandmarksFileName() + lmConfig.getName());
+        this.landmarkWeightDA = dir.create(getLandmarksFileName() + lmConfig.getName());
 // ORS-GH MOD END
 
         this.landmarks = landmarks;
@@ -837,6 +837,14 @@ public class LandmarkStorage {
 
         void initLandmarkWeights(final int lmIdx, int lmNodeId, final long rowSize, final int offset);
     }
+
+    /**
+     * For testing only
+     */
+    DataAccess _getInternalDA() {
+        return landmarkWeightDA;
+    }
+
     /**
      * This class is used to calculate landmark location (equally distributed).
      * It derives from DijkstraBidirectionRef, but is only used as forward or backward search.

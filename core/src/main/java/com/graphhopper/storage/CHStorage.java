@@ -75,14 +75,10 @@ public class CHStorage {
 
     public CHStorage(Directory dir, String name, int segmentSize, boolean edgeBased, String type) {
         this.isTypeCore =  CHConfig.TYPE_CORE.equals(type);
-        this.nodesCH = dir.find("nodes_" + type + "_" + name, DAType.getPreferredInt(dir.getDefaultType()));
-        this.shortcuts = dir.find("shortcuts_" + type + "_" + name, DAType.getPreferredInt(dir.getDefaultType()));
+        this.nodesCH = dir.create("nodes_" + type + "_" + name, DAType.getPreferredInt(dir.getDefaultType()), segmentSize);
+        this.shortcuts = dir.create("shortcuts_" + type + "_" + name, DAType.getPreferredInt(dir.getDefaultType()), segmentSize);
 // ORS-GH MOD END
         this.edgeBased = edgeBased;
-        if (segmentSize >= 0) {
-            nodesCH.setSegmentSize(segmentSize);
-            shortcuts.setSegmentSize(segmentSize);
-        }
         // shortcuts are stored consecutively using this layout (the last two entries only exist for edge-based):
         // NODEA | NODEB | WEIGHT | SKIP_EDGE1 | SKIP_EDGE2 | S_ORIG_FIRST | S_ORIG_LAST
         S_NODEA = 0;
@@ -122,6 +118,25 @@ public class CHStorage {
         // loadExisting() later, see #2384
         nodesCH.create(0);
         shortcuts.create(0);
+    }
+
+    /**
+     * Creates a new storage. Alternatively we could load an existing one using {@link #loadExisting()}}.
+     * The number of nodes must be given here while the expected number of shortcuts can
+     * be given to prevent some memory allocations, but is not a requirement. When in doubt rather use a small value
+     * so the resulting files/byte arrays won't be unnecessarily large.
+     * todo: we could also trim down the shortcuts DataAccess when we are done adding shortcuts
+     */
+    public void create(int nodes, int expectedShortcuts) {
+        if (nodeCount >= 0)
+            throw new IllegalStateException("CHStorage can only be created once");
+        if (nodes < 0)
+            throw new IllegalStateException("CHStorage must be created with a positive number of nodes");
+        nodesCH.create((long) nodes * nodeCHEntryBytes);
+        nodeCount = nodes;
+        for (int node = 0; node < nodes; node++)
+            setLastShortcut(toNodePointer(node), -1);
+        shortcuts.create((long) expectedShortcuts * shortcutEntryBytes);
     }
 
     /**

@@ -137,10 +137,6 @@ public class NameIndex implements Storable<NameIndex> {
         return names.isClosed();
     }
 
-    public void setSegmentSize(int segments) {
-        names.setSegmentSize(segments);
-    }
-
     public long getCapacity() {
         return names.getCapacity();
     }

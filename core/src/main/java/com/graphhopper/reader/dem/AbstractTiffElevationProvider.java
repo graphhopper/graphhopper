@@ -135,7 +135,7 @@ public abstract class AbstractTiffElevationProvider extends TileBasedElevationPr
                 } catch (IOException e) {
                     demProvider.setSeaLevel(true);
                     // use small size on disc and in-memory
-                    heights.setSegmentSize(100).create(10).
+                    heights.create(10).
                             flush();
                     return 0;
                 }

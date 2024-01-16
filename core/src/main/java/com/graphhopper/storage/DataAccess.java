@@ -125,12 +125,6 @@ public interface DataAccess extends Closeable {
     int getSegmentSize();
 
     /**
-     * In order to increase allocated space one needs to layout the underlying storage in segments.
-     * This is how you can customize the size.
-     */
-    DataAccess setSegmentSize(int bytes);
-
-    /**
      * @return the number of segments.
      */
     int getSegments();

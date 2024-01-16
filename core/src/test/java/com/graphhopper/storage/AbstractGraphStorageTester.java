@@ -658,7 +658,6 @@ public abstract class AbstractGraphStorageTester {
 
     @Test
     public void test8AndMoreBytesForEdgeFlags() {
-        Directory dir = new RAMDirectory();
         List<FlagEncoder> list = new ArrayList<>();
         list.add(new CarFlagEncoder(29, 0.001, 0) {
             @Override
@@ -668,7 +667,7 @@ public abstract class AbstractGraphStorageTester {
         });
         list.add(new CarFlagEncoder(29, 0.001, 0));
         EncodingManager manager = EncodingManager.create(list);
-        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+        graph = new GraphHopperStorage(new RAMDirectory(), manager, false).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);
         IntsRef intsRef = manager.createEdgeFlags();
@@ -678,7 +677,7 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(Integer.MAX_VALUE / 3, edge.getFlags().ints[0]);
         graph.close();
 
-        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+        graph = new GraphHopperStorage(new RAMDirectory(), manager, false).create(defaultSize);
 
         DecimalEncodedValue avSpeed0Enc = manager.getDecimalEncodedValue(getKey("car0", "average_speed"));
         BooleanEncodedValue access0Enc = manager.getBooleanEncodedValue(getKey("car0", "access"));

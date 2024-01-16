@@ -90,20 +90,16 @@ class BaseGraph implements Graph {
     public BaseGraph(Directory dir, int intsForFlags, boolean withElevation, boolean withTurnCosts, int segmentSize) {
         this.dir = dir;
         this.intsForFlags = intsForFlags;
-        this.bitUtil = BitUtil.get(dir.getByteOrder());
-        this.wayGeometry = dir.find("geometry");
-        this.stringIndex = new StringIndex(dir);
-        this.nodes = dir.find("nodes", DAType.getPreferredInt(dir.getDefaultType()));
-        this.edges = dir.find("edges", DAType.getPreferredInt(dir.getDefaultType()));
+        this.bitUtil = BitUtil.LITTLE;
+        this.wayGeometry = dir.create("geometry", segmentSize);
+        this.stringIndex = new StringIndex(dir, 1000, segmentSize);
+        this.nodes = dir.create("nodes", dir.getDefaultType("nodes", true), segmentSize);
+        this.edges = dir.create("edges", dir.getDefaultType("edges", true), segmentSize);
         this.bounds = BBox.createInverse(withElevation);
         this.nodeAccess = new GHNodeAccess(this, withElevation);
-        if (withTurnCosts) {
-            turnCostStorage = new TurnCostStorage(this, dir.find("turn_costs"));
-        } else {
-            turnCostStorage = null;
-        }
+        this.turnCostStorage = withTurnCosts ? new TurnCostStorage(this, dir.create("turn_costs", dir.getDefaultType("turn_costs", true), segmentSize)) : null;
         if (segmentSize >= 0) {
-            setSegmentSize(segmentSize);
+            checkNotInitialized();
         }
     }
 
@@ -328,17 +324,6 @@ class BaseGraph implements Graph {
     @Override
     public BBox getBounds() {
         return bounds;
-    }
-
-    private void setSegmentSize(int bytes) {
-        checkNotInitialized();
-        nodes.setSegmentSize(bytes);
-        edges.setSegmentSize(bytes);
-        wayGeometry.setSegmentSize(bytes);
-        stringIndex.setSegmentSize(bytes);
-        if (supportsTurnCosts()) {
-            turnCostStorage.setSegmentSize(bytes);
-        }
     }
 
     synchronized void freeze() {
