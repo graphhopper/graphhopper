@@ -35,14 +35,14 @@
     <developers>
         <developer>
             <organization>BMW Car IT GmbH, BMW AG</organization>
-            <organizationUrl>http://www.bmw-carit.com, http://www.bmw.com</organizationUrl>
+            <organizationUrl>https://www.bmw-carit.com, https://www.bmw.com</organizationUrl>
         </developer>
     </developers>
 
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
