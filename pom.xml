@@ -36,13 +36,6 @@
         <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineTryResources>true</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineTryResources>
     </properties>
 
-    <!-- ORS: remove? repositories>
-        <repository><id>simonpoole</id>
-            <name>OpeningHoursParser Repository</name>
-            <url>https://dl.bintray.com/simonpoole/osm</url>
-        </repository>
-    </repositories-->
-
     <scm>
         <connection>scm:git:git@github.com:graphhopper/graphhopper.git</connection>
         <developerConnection>scm:git:git@github.com:graphhopper/graphhopper.git</developerConnection>
@@ -52,7 +45,7 @@
     <licenses>
         <license>
             <name>Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0</url>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
         </license>
     </licenses>
 
@@ -97,7 +90,7 @@
             <dependency>
                 <groupId>io.dropwizard</groupId>
                 <artifactId>dropwizard-dependencies</artifactId>
-                <version>2.0.21</version>
+                <version>4.0.5</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -130,7 +123,7 @@
             <dependency>
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-compress</artifactId>
-                <version>1.21</version>
+                <version>1.25.0</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.logging.log4j</groupId>
