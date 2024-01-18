@@ -55,8 +55,8 @@ class TagParsingTest {
                 .add(bikeNetworkEnc)
                 .add(Smoothness.create())
                 .build();
-        BikePriorityParser bike1Parser = new BikePriorityParser(em, new PMap("name=bike1"));
-        BikePriorityParser bike2Parser = new BikePriorityParser(em, new PMap("name=bike2")) {
+        BikePriorityParser bike1Parser = new BikePriorityParser(bike1PriorityEnc, bike1SpeedEnc, bikeNetworkEnc);
+        BikePriorityParser bike2Parser = new BikePriorityParser(bike2PriorityEnc, bike2SpeedEnc, bikeNetworkEnc) {
             @Override
             public void handleWayTags(int edgeId, EdgeIntAccess intAccess, ReaderWay way, IntsRef relTags) {
                 // accept less relations
