@@ -1,11 +1,10 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.util.PMap;
 
 public class BikePriorityParser extends BikeCommonPriorityParser {
 
-    public BikePriorityParser(EncodedValueLookup lookup, PMap properties) {
+    public BikePriorityParser(EncodedValueLookup lookup) {
         this(
                 lookup.getDecimalEncodedValue(VehiclePriority.key("bike")),
                 lookup.getDecimalEncodedValue(VehicleSpeed.key("bike")),

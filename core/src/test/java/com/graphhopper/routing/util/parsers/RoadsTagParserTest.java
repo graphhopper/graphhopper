@@ -17,7 +17,7 @@ class RoadsTagParserTest {
     private final RoadsAverageSpeedParser parser;
 
     public RoadsTagParserTest() {
-        parser = new RoadsAverageSpeedParser(encodingManager, new PMap());
+        parser = new RoadsAverageSpeedParser(encodingManager);
     }
 
     @Test

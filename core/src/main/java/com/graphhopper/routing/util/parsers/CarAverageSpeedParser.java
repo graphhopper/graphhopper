@@ -21,7 +21,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,7 +41,7 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
      */
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
 
-    public CarAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
+    public CarAverageSpeedParser(EncodedValueLookup lookup) {
         this(lookup.getDecimalEncodedValue(VehicleSpeed.key("car")),
                 lookup.getDecimalEncodedValue(FerrySpeed.KEY));
     }

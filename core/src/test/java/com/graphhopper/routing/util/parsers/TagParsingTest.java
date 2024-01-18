@@ -103,8 +103,8 @@ class TagParsingTest {
                 .add(bikeNetworkEnc)
                 .add(Smoothness.create())
                 .build();
-        BikePriorityParser bikeTagParser = new BikePriorityParser(em, new PMap());
-        MountainBikePriorityParser mtbTagParser = new MountainBikePriorityParser(em, new PMap());
+        BikePriorityParser bikeTagParser = new BikePriorityParser(em);
+        MountainBikePriorityParser mtbTagParser = new MountainBikePriorityParser(em);
         OSMParsers osmParsers = new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(bikeNetworkEnc, relConfig))
                 .addWayTagParser(new OSMRoadClassParser(em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class)))

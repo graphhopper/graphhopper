@@ -1,11 +1,10 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.util.PMap;
 
 public class RacingBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
 
-    public RacingBikeAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
+    public RacingBikeAverageSpeedParser(EncodedValueLookup lookup) {
         this(lookup.getDecimalEncodedValue(VehicleSpeed.key("racingbike")),
                 lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
                 lookup.getDecimalEncodedValue(FerrySpeed.KEY));

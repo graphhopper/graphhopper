@@ -6,7 +6,6 @@ import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.storage.IntsRef;
-import com.graphhopper.util.PMap;
 
 /**
  * Access parser (boolean) for the 'roads' vehicle. Not to be confused with OSMRoadAccessParser that fills road_access
@@ -15,7 +14,7 @@ import com.graphhopper.util.PMap;
 public class RoadsAccessParser implements TagParser {
     private final BooleanEncodedValue accessEnc;
 
-    public RoadsAccessParser(EncodedValueLookup lookup, PMap properties) {
+    public RoadsAccessParser(EncodedValueLookup lookup) {
         this(lookup.getBooleanEncodedValue(VehicleAccess.key("roads")));
     }
 

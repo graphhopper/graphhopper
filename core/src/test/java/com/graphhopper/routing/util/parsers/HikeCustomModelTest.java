@@ -14,7 +14,6 @@ import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.InputStreamReader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -39,7 +38,7 @@ public class HikeCustomModelTest {
 
         for (TagParser p : VehicleTagParsers.foot(em, new PMap()).getTagParsers())
             parsers.addWayTagParser(p);
-        for (TagParser p : VehicleTagParsers.roads(em, new PMap()).getTagParsers())
+        for (TagParser p : VehicleTagParsers.roads(em).getTagParsers())
             parsers.addWayTagParser(p);
     }
 
