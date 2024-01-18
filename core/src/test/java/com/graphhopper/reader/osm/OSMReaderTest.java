@@ -27,12 +27,14 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.OSMReaderConfig;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
-import com.graphhopper.routing.util.parsers.*;
+import com.graphhopper.routing.util.parsers.CountryParser;
+import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
+import com.graphhopper.routing.util.parsers.OSMMtbNetworkTagParser;
+import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.Snap;
@@ -696,35 +698,18 @@ public class OSMReaderTest {
     @Test
     public void testTurnFlagCombination() {
         GraphHopper hopper = new GraphHopper();
-        hopper.setVehicleEncodedValuesFactory((name, config) -> {
-            if (name.equals("truck")) {
-                return VehicleEncodedValues.car(new PMap(config).putObject("name", "truck"));
-            } else {
-                return new DefaultVehicleEncodedValuesFactory().createVehicleEncodedValues(name, config);
-            }
-        });
-        hopper.setVehicleTagParserFactory((lookup, name, config) -> {
-            if (name.equals("truck")) {
-                return new VehicleTagParsers(
-                        new CarAccessParser(lookup.getBooleanEncodedValue(VehicleAccess.key("truck")), lookup.getBooleanEncodedValue(Roundabout.KEY), config, TransportationMode.HGV)
-                                .init(config.getObject("date_range_parser", new DateRangeParser())),
-                        new CarAverageSpeedParser(lookup.getDecimalEncodedValue(VehicleSpeed.key("truck")), lookup.getDecimalEncodedValue(FerrySpeed.KEY)),
-                        null
-                );
-            }
-            return new DefaultVehicleTagParserFactory().createParsers(lookup, name, config);
-        });
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
+                setVehiclesString("roads|transportation_mode=HGV|turn_costs=true").
                 setProfiles(
                         new Profile("bike").setVehicle("bike").setTurnCosts(true),
                         new Profile("car").setVehicle("car").setTurnCosts(true),
-                        new Profile("truck").setVehicle("truck").setTurnCosts(true)
+                        new Profile("truck").setVehicle("roads").setTurnCosts(true)
                 ).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
         BooleanEncodedValue carTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("car"));
-        BooleanEncodedValue truckTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("truck"));
+        BooleanEncodedValue truckTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("roads"));
         BooleanEncodedValue bikeTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("bike"));
 
         Graph graph = hopper.getBaseGraph();

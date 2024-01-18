@@ -2,8 +2,8 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EdgeIntAccess;
+import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
@@ -13,7 +13,7 @@ public class RoadsAverageSpeedParser implements TagParser {
     private final double maxPossibleSpeed;
 
     public RoadsAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "roads"))));
+        this(lookup.getDecimalEncodedValue(VehicleSpeed.key("roads")));
     }
 
     public RoadsAverageSpeedParser(DecimalEncodedValue avgSpeedEnc) {

@@ -43,7 +43,7 @@ public class CarAverageSpeedParser extends AbstractAverageSpeedParser implements
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<>();
 
     public CarAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "car"))),
+        this(lookup.getDecimalEncodedValue(VehicleSpeed.key("car")),
                 lookup.getDecimalEncodedValue(FerrySpeed.KEY));
     }
 
