@@ -23,9 +23,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.RoadEnvironment;
-import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -1144,8 +1142,8 @@ public class GraphHopperTest {
                 @Override
                 public RegEntry getRegEntry(String name) {
                     RegEntry regEntry = super.getRegEntry(name);
-                    if (name.equals("road_environment"))
-                        regEntry = RegEntry.create(props -> RoadEnvironment.create(),
+                    if ("road_environment".equals(name))
+                        regEntry = RegEntry.create(name, props -> RoadEnvironment.create(),
                                 (lookup, props) -> new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
                                     @Override
                                     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {

@@ -62,6 +62,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.*;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.util.GHUtility.readCountries;
@@ -597,9 +598,9 @@ public class GraphHopper {
         return this;
     }
 
-    protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps, Map<String, RegEntry> activeRegs, Map<String, String> vehiclesByName) {
-        List<EncodedValue> encodedValues = activeRegs.entrySet().stream()
-                .map(e -> e.getValue().getEVFactory()
+    protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps, Map<String, RegEntry> activeRegEntries, Map<String, String> vehiclesByName) {
+        List<EncodedValue> encodedValues = activeRegEntries.entrySet().stream()
+                .map(e -> e.getValue().getCreateEncodedValue()
                         .apply(encodedValuesWithProps.getOrDefault(e.getKey(), new PMap())))
                 .toList();
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
@@ -613,15 +614,15 @@ public class GraphHopper {
 
     protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps, Map<String, RegEntry> activeRegEntries, Map<String, String> vehiclesByName,
                                          List<String> ignoredHighways, String dateRangeParserString) {
-        TopoSorter sorter = new TopoSorter(activeRegEntries);
+        RegEntrySorter sorter = new RegEntrySorter(activeRegEntries);
         Map<String, RegEntry> sortedRegEntries = new LinkedHashMap<>();
         sorter.sort().forEach(name -> sortedRegEntries.put(name, activeRegEntries.get(name)));
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         List<TagParser> sortedParsers = new ArrayList<>();
         sortedRegEntries.forEach((name, regEntry) -> {
-            TagParserFactory tagParserFactory = regEntry.getTagParserFactory();
-            if (tagParserFactory != null)
-                sortedParsers.add(tagParserFactory.create(encodingManager, encodedValuesWithProps.getOrDefault(name, new PMap().putObject("date_range_parser", dateRangeParser))));
+            BiFunction<EncodedValueLookup, PMap, TagParser> createTagParser = regEntry.getCreateTagParser();
+            if (createTagParser != null)
+                sortedParsers.add(createTagParser.apply(encodingManager, encodedValuesWithProps.getOrDefault(name, new PMap().putObject("date_range_parser", dateRangeParser))));
         });
 
         OSMParsers osmParsers = new OSMParsers();
@@ -660,11 +661,12 @@ public class GraphHopper {
         return osmParsers;
     }
 
-    public static List<String> getEncodedValueStrings(String encodedValuesStr) {
-        return Arrays.stream(encodedValuesStr.split(","))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .collect(Collectors.toList());
+    public static Map<String, PMap> parseEncodedValueString(String encodedValuesStr) {
+        Map<String, PMap> encodedValuesWithProps = new LinkedHashMap<>();
+        Arrays.stream(encodedValuesStr.split(","))
+                .filter(evStr -> !evStr.isBlank())
+                .forEach(evStr -> encodedValuesWithProps.put(evStr.trim().split("\\|")[0], new PMap(evStr)));
+        return encodedValuesWithProps;
     }
 
     public static Map<String, String> getVehiclesByName(String vehiclesStr, Collection<Profile> profiles) {
@@ -795,42 +797,6 @@ public class GraphHopper {
         close();
     }
 
-    // topological sort with a depth first search
-    private static class TopoSorter {
-        Set<String> permanentMarked = new HashSet<>();
-        Set<String> temporaryMarked = new HashSet<>();
-        List<String> result = new ArrayList<>();
-        final Map<String, RegEntry> map;
-
-        public TopoSorter(Map<String, RegEntry> map) {
-            this.map = map;
-        }
-
-        List<String> sort() {
-            for (String strN : map.keySet()) {
-                visit(strN);
-            }
-            return result;
-        }
-
-        void visit(String strN) {
-            if (permanentMarked.contains(strN)) return;
-            RegEntry regEntry = map.get(strN);
-            if (regEntry == null)
-                throw new IllegalArgumentException("cannot find reg " + strN);
-            if (temporaryMarked.contains(strN))
-                throw new IllegalArgumentException("cyclic required parsers are not allowed: " + regEntry + " " + regEntry.getReqdRegs());
-
-            temporaryMarked.add(strN);
-            for (String strM : regEntry.getReqdRegs()) {
-                visit(strM);
-            }
-            temporaryMarked.remove(strN);
-            permanentMarked.add(strN);
-            result.add(strN);
-        }
-    }
-
     /**
      * Creates the graph from OSM data.
      */
@@ -838,20 +804,8 @@ public class GraphHopper {
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
 
-        Map<String, PMap> encodedValuesWithProps = new LinkedHashMap<>();
-        // todonow: still missing props from graph.vehicles!
-        Arrays.stream(encodedValuesString.split(","))
-                .filter(evStr -> !evStr.isBlank())
-                .forEach(evStr -> encodedValuesWithProps.put(evStr.trim().split("\\|")[0], new PMap(evStr)));
-        NameValidator nameValidator = s -> {
-            // todonow
-            try {
-                reg.getRegEntry(s);
-                return true;
-            } catch (IllegalArgumentException t) {
-                return false;
-            }
-        };
+        Map<String, PMap> encodedValuesWithProps = parseEncodedValueString(encodedValuesString);
+        NameValidator nameValidator = s -> reg.getRegEntry(s) != null;
         profilesByName.values().
                 forEach(profile -> CustomModelParser.findVariablesForEncodedValuesString(profile.getCustomModel(), nameValidator).
                         forEach(var -> encodedValuesWithProps.putIfAbsent(var, new PMap())));
@@ -890,7 +844,7 @@ public class GraphHopper {
             if (regEntry == null)
                 throw new IllegalArgumentException("Unknown encoded value: " + ev);
             if (activeRegEntries.put(ev, regEntry) == null)
-                deque.addAll(regEntry.getReqdRegs());
+                deque.addAll(regEntry.getRequiredRegEntries());
         }
         encodingManager = buildEncodingManager(encodedValuesWithProps, activeRegEntries, vehiclesByName);
         osmParsers = buildOSMParsers(encodedValuesWithProps, activeRegEntries, vehiclesByName, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);

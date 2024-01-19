@@ -16,7 +16,7 @@
  *  limitations under the License.
  */
 
-package com.graphhopper;
+package com.graphhopper.routing.ev;
 
 public interface Reg {
     RegEntry getRegEntry(String name);
