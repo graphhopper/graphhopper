@@ -1,5 +1,5 @@
 package com.graphhopper.routing.weighting.custom;
 
-interface NameValidator {
+public interface NameValidator {
     boolean isValid(String name);
 }

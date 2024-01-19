@@ -26,7 +26,10 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.*;
+import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
+import com.graphhopper.routing.weighting.SpeedWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
@@ -56,7 +59,8 @@ public class InstructionListTest {
     @BeforeEach
     public void setUp() {
         speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, true);
-        carManager = EncodingManager.start().add(speedEnc).build();
+        carManager = EncodingManager.start().add(speedEnc).add(Roundabout.create())
+                .add(MaxSpeed.create()).add(RoadClass.create()).add(RoadClassLink.create()).build();
     }
 
     private static List<String> getTurnDescriptions(InstructionList instructionList) {
@@ -299,7 +303,8 @@ public class InstructionListTest {
     @Test
     public void testNoInstructionIfSlightTurnAndAlternativeIsSharp3() {
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 2, true);
-        EncodingManager tmpEM = new EncodingManager.Builder().add(speedEnc).build();
+        EncodingManager tmpEM = new EncodingManager.Builder().add(speedEnc).add(RoadClass.create())
+                .add(RoadClassLink.create()).add(Roundabout.create()).add(MaxSpeed.create()).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=48.411549,15.599567&point=48.411663%2C15.600527&profile=bike
@@ -337,7 +342,7 @@ public class InstructionListTest {
     @Test
     public void testInstructionIfTurn() {
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 2, true);
-        EncodingManager tmpEM = new EncodingManager.Builder().add(speedEnc).build();
+        EncodingManager tmpEM = new EncodingManager.Builder().add(speedEnc).add(RoadClass.create()).add(RoadClassLink.create()).add(Roundabout.create()).add(MaxSpeed.create()).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=48.412169%2C15.604888&point=48.412251%2C15.60543&profile=bike
@@ -376,7 +381,8 @@ public class InstructionListTest {
         BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 4, 1, false);
         DecimalEncodedValue priorityEnc = new DecimalEncodedValueImpl("priority", 4, PriorityCode.getFactor(1), false);
-        EncodingManager tmpEM = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(priorityEnc).build();
+        EncodingManager tmpEM = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(priorityEnc)
+                .add(Roundabout.create()).add(RoadClass.create()).add(RoadClassLink.create()).add(MaxSpeed.create()).build();
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=43.729379,7.417697&point=43.729798,7.417263&profile=foot
         // From 4 to 3 and 4 to 1
@@ -428,7 +434,8 @@ public class InstructionListTest {
     public void testInstructionWithHighlyCustomProfileWithRoadsBase() {
         BooleanEncodedValue roadsAccessEnc = new SimpleBooleanEncodedValue("access", true);
         DecimalEncodedValue roadsSpeedEnc = new DecimalEncodedValueImpl("speed", 7, 2, true);
-        EncodingManager tmpEM = EncodingManager.start().add(roadsAccessEnc).add(roadsSpeedEnc).build();
+        EncodingManager tmpEM = EncodingManager.start().add(roadsAccessEnc).add(roadsSpeedEnc)
+                .add(RoadClass.create()).add(Roundabout.create()).add(RoadClassLink.create()).add(MaxSpeed.create()).build();
         EnumEncodedValue<RoadClass> rcEV = tmpEM.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         BaseGraph g = new BaseGraph.Builder(tmpEM).create();
         // real world example: https://graphhopper.com/maps/?point=55.691214%2C12.57065&point=55.689957%2C12.570387

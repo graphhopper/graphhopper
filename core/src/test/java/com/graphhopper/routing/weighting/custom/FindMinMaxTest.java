@@ -3,6 +3,7 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.MinMax;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.CustomModel;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 
 import static com.graphhopper.json.Statement.*;
@@ -26,7 +26,7 @@ class FindMinMaxTest {
 
     @BeforeEach
     void setup() {
-        lookup = new EncodingManager.Builder().build();
+        lookup = new EncodingManager.Builder().add(RoadEnvironment.create()).build();
     }
 
     @Test

@@ -46,13 +46,18 @@ import static org.junit.jupiter.api.Assertions.*;
 public class PathTest {
     private final BooleanEncodedValue carAccessEnc = new SimpleBooleanEncodedValue("access", true);
     private final DecimalEncodedValue carAvSpeedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
-    private final EncodingManager carManager = EncodingManager.start().add(carAccessEnc).add(carAvSpeedEnc).build();
+    private final EncodingManager carManager = EncodingManager.start().add(carAccessEnc).add(carAvSpeedEnc)
+            .add(Roundabout.create()).add(RoadClass.create()).add(RoadClassLink.create()).add(MaxSpeed.create()).build();
     private final BooleanEncodedValue mixedCarAccessEnc = new SimpleBooleanEncodedValue("mixed_car_access", true);
     private final DecimalEncodedValue mixedCarSpeedEnc = new DecimalEncodedValueImpl("mixed_car_speed", 5, 5, false);
     private final BooleanEncodedValue mixedFootAccessEnc = new SimpleBooleanEncodedValue("mixed_foot_access", true);
     private final DecimalEncodedValue mixedFootSpeedEnc = new DecimalEncodedValueImpl("mixed_foot_speed", 4, 1, false);
     private final EncodingManager mixedEncodingManager = EncodingManager.start().add(mixedCarAccessEnc).
-            add(mixedCarSpeedEnc).add(mixedFootAccessEnc).add(mixedFootSpeedEnc).build();
+            add(mixedCarSpeedEnc).add(mixedFootAccessEnc).add(mixedFootSpeedEnc).
+            add(RoadClass.create()).
+            add(RoadClassLink.create()).
+            add(MaxSpeed.create()).
+            add(Roundabout.create()).build();
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
     private final RoundaboutGraph roundaboutGraph = new RoundaboutGraph();

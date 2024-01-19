@@ -24,16 +24,13 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
 import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.RoadEnvironment;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
-import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
-import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.IntsRef;
@@ -1143,21 +1140,21 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
 
         if (!withTunnelInterpolation) {
-            hopper.setTagParserFactory(new DefaultTagParserFactory() {
+            hopper.setReg(new DefaultReg() {
                 @Override
-                public TagParser create(EncodedValueLookup lookup, String name, PMap properties) {
-                    TagParser parser = super.create(lookup, name, properties);
+                public RegEntry getRegEntry(String name) {
+                    RegEntry regEntry = super.getRegEntry(name);
                     if (name.equals("road_environment"))
-                        parser = new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
-                            @Override
-                            public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
-                                // do not change RoadEnvironment to avoid triggering tunnel interpolation
-                            }
-                        };
-                    return parser;
+                        regEntry = RegEntry.create(props -> RoadEnvironment.create(),
+                                (lookup, props) -> new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
+                                    @Override
+                                    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
+                                        // do not change RoadEnvironment to avoid triggering tunnel interpolation
+                                    }
+                                });
+                    return regEntry;
                 }
             });
-            hopper.setEncodedValuesString("road_environment");
         }
 
         hopper.setElevationProvider(new SRTMProvider(DIR));
@@ -2510,6 +2507,7 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
                 setVehiclesString("car|block_private=false").
+                setEncodedValuesString("road_access").
                 setProfiles(
                         new Profile("car").setVehicle("car"),
                         new Profile("bike").setVehicle("bike"),

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.routing.ev.RouteNetwork;
 import com.graphhopper.util.Helper;
 import org.codehaus.janino.Scanner;
 import org.codehaus.janino.*;
@@ -37,13 +38,11 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
     private final ParseResult result;
     private final TreeMap<Integer, Replacement> replacements = new TreeMap<>();
     private final NameValidator variableValidator;
-    private final ClassHelper classHelper;
     private String invalidMessage;
 
-    public ConditionalExpressionVisitor(ParseResult result, NameValidator variableValidator, ClassHelper classHelper) {
+    public ConditionalExpressionVisitor(ParseResult result, NameValidator variableValidator) {
         this.result = result;
         this.variableValidator = variableValidator;
-        this.classHelper = classHelper;
     }
 
     // allow only methods and other identifiers (constants and encoded values)
@@ -124,7 +123,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
                     if (variableValidator.isValid(lhVarAsString) && Helper.toUpperCase(rhValueAsString).equals(rhValueAsString)) {
                         if (!eqOps)
                             throw new IllegalArgumentException("Operator " + binOp.operator + " not allowed for enum");
-                        String value = classHelper.getClassName(binOp.lhs.toString());
+                        String value = toEncodedValueClassName(binOp.lhs.toString());
                         replacements.put(startRH, new Replacement(startRH, rhValueAsString.length(), value + "." + rhValueAsString));
                     }
                 }
@@ -156,7 +155,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
      * converted expression that includes class names for constants to avoid conflicts e.g. when doing "toll == Toll.NO"
      * instead of "toll == NO".
      */
-    static ParseResult parse(String expression, NameValidator validator, ClassHelper helper) {
+    static ParseResult parse(String expression, NameValidator validator) {
         ParseResult result = new ParseResult();
         try {
             Parser parser = new Parser(new Scanner("ignore", new StringReader(expression)));
@@ -164,7 +163,7 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
             // after parsing the expression the input should end (otherwise it is not "simple")
             if (parser.peek().type == TokenType.END_OF_INPUT) {
                 result.guessedVariables = new LinkedHashSet<>();
-                ConditionalExpressionVisitor visitor = new ConditionalExpressionVisitor(result, validator, helper);
+                ConditionalExpressionVisitor visitor = new ConditionalExpressionVisitor(result, validator);
                 result.ok = atom.accept(visitor);
                 result.invalidMessage = visitor.invalidMessage;
                 if (result.ok) {
@@ -180,6 +179,13 @@ class ConditionalExpressionVisitor implements Visitor.AtomVisitor<Boolean, Excep
         } catch (Exception ex) {
         }
         return result;
+    }
+
+    static String toEncodedValueClassName(String arg) {
+        if (arg.isEmpty()) throw new IllegalArgumentException("Cannot be empty");
+        if (arg.endsWith(RouteNetwork.key(""))) return RouteNetwork.class.getSimpleName();
+        String clazz = Helper.underScoreToCamelCase(arg);
+        return Character.toUpperCase(clazz.charAt(0)) + clazz.substring(1);
     }
 
     static class Replacement {

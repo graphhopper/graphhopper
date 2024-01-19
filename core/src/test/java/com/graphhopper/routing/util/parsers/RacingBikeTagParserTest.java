@@ -19,11 +19,10 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.VehicleEncodedValues;
-import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -42,12 +41,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
     protected EncodingManager createEncodingManager() {
-        return new EncodingManager.Builder().add(VehicleEncodedValues.racingbike(new PMap())).build();
+        return new EncodingManager.Builder()
+                .add(VehicleAccess.create("racingbike"))
+                .add(VehicleSpeed.create("racingbike", 4, 2, false))
+                .add(VehiclePriority.create("racingbike", 4, PriorityCode.getFactor(1), false))
+                .add(Roundabout.create())
+                .add(Smoothness.create())
+                .add(FerrySpeed.create())
+                .add(RouteNetwork.create(BikeNetwork.KEY))
+                .add(RouteNetwork.create(MtbNetwork.KEY))
+                .build();
     }
 
     @Override
-    protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap) {
-        return VehicleTagParsers.racingbike(lookup, pMap);
+    protected BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup, PMap pMap) {
+        return (BikeCommonAccessParser) new RacingBikeAccessParser(lookup, pMap).init(new DateRangeParser());
+    }
+
+    @Override
+    protected BikeCommonAverageSpeedParser createAverageSpeedParser(EncodedValueLookup lookup) {
+        return new RacingBikeAverageSpeedParser(lookup);
+    }
+
+    @Override
+    protected BikeCommonPriorityParser createPriorityParser(EncodedValueLookup lookup) {
+        return new RacingBikePriorityParser(lookup);
     }
 
     @Test
@@ -220,6 +238,7 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
                 .add(accessEnc).add(speedEnc).add(priorityEnc)
                 .add(RouteNetwork.create(BikeNetwork.KEY))
                 .add(Smoothness.create())
+                .add(FerrySpeed.create())
                 .build();
         List<TagParser> parsers = Arrays.asList(
                 new RacingBikeAverageSpeedParser(encodingManager),

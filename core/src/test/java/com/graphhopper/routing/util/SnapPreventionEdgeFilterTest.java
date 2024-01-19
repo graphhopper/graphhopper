@@ -17,7 +17,7 @@ public class SnapPreventionEdgeFilterTest {
     @Test
     public void accept() {
         EdgeFilter trueFilter = edgeState -> true;
-        EncodingManager em = new EncodingManager.Builder().build();
+        EncodingManager em = new EncodingManager.Builder().add(RoadClass.create()).add(RoadEnvironment.create()).build();
         EnumEncodedValue<RoadClass> rcEnc = em.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         EnumEncodedValue<RoadEnvironment> reEnc = em.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class);
         SnapPreventionEdgeFilter filter = new SnapPreventionEdgeFilter(trueFilter, rcEnc, reEnc, Arrays.asList("motorway", "ferry"));

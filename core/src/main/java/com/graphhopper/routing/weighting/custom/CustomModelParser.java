@@ -38,6 +38,8 @@ import java.io.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.graphhopper.json.Statement.Keyword.IF;
+
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
     static final String IN_AREA_PREFIX = "in_";
@@ -166,6 +168,50 @@ public class CustomModelParser {
             String errString = "Cannot compile expression";
             throw new IllegalArgumentException(errString + ": " + ex.getMessage(), ex);
         }
+    }
+
+    public static List<String> findVariablesForEncodedValuesString(CustomModel model, NameValidator nameValidator) {
+        Set<String> variables = new LinkedHashSet<>();
+        // avoid parsing exception for backward_xy or in_xy ...
+        NameValidator nameValidatorIntern = s -> {
+            // some literals are no variables and would throw an exception (encoded value not found)
+            if (Character.isUpperCase(s.charAt(0)) || s.startsWith(BACKWARD_PREFIX) || s.startsWith(IN_AREA_PREFIX))
+                return true;
+            if (nameValidator.isValid(s)) {
+                variables.add(s);
+                return true;
+            }
+            return false;
+        };
+        findVariablesForEncodedValuesString(model.getPriority(), nameValidatorIntern);
+        findVariablesForEncodedValuesString(model.getSpeed(), nameValidatorIntern);
+        return new ArrayList<>(variables);
+    }
+
+    private static void findVariablesForEncodedValuesString(List<Statement> statements, NameValidator nameValidator) {
+        List<List<Statement>> blocks = CustomModelParser.splitIntoBlocks(statements);
+        for (List<Statement> block : blocks) {
+            for (Statement statement : block) {
+                // ignore potential problems; collect only variables in this step
+                ConditionalExpressionVisitor.parse(statement.getCondition(), nameValidator);
+                ValueExpressionVisitor.parse(statement.getValue(), nameValidator);
+            }
+        }
+    }
+
+    /**
+     * Splits the specified list into several list of statements starting with if
+     */
+    static List<List<Statement>> splitIntoBlocks(List<Statement> statements) {
+        List<List<Statement>> result = new ArrayList<>();
+        List<Statement> block = null;
+        for (Statement st : statements) {
+            if (IF.equals(st.getKeyword())) result.add(block = new ArrayList<>());
+            if (block == null)
+                throw new IllegalArgumentException("Every block must start with an if-statement");
+            block.add(st);
+        }
+        return result;
     }
 
     /**
@@ -361,14 +407,13 @@ public class CustomModelParser {
                 || name.startsWith(BACKWARD_PREFIX) && lookup.hasEncodedValue(name.substring(BACKWARD_PREFIX.length()));
         ClassHelper helper = key -> getReturnType(lookup.getEncodedValue(key, EncodedValue.class));
 
-        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list, helper);
+        parseExpressions(expressions, nameInConditionValidator, info, createObjects, list);
         return new Parser(new org.codehaus.janino.Scanner(info, new StringReader(expressions.toString()))).
                 parseBlockStatements();
     }
 
     static void parseExpressions(StringBuilder expressions, NameValidator nameInConditionValidator,
-                                 String exceptionInfo, Set<String> createObjects, List<Statement> list,
-                                 ClassHelper helper) {
+                                 String exceptionInfo, Set<String> createObjects, List<Statement> list) {
 
         for (Statement statement : list) {
             // avoid parsing the RHS value expression again as we just did it to get the maximum values in createClazz
@@ -377,8 +422,8 @@ public class CustomModelParser {
                     throw new IllegalArgumentException("condition must be empty but was " + statement.getCondition());
 
                 expressions.append("else {").append(statement.getOperation().build(statement.getValue())).append("; }\n");
-            } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == Statement.Keyword.IF) {
-                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator, helper);
+            } else if (statement.getKeyword() == Statement.Keyword.ELSEIF || statement.getKeyword() == IF) {
+                ParseResult parseResult = ConditionalExpressionVisitor.parse(statement.getCondition(), nameInConditionValidator);
                 if (!parseResult.ok)
                     throw new IllegalArgumentException(exceptionInfo + " invalid condition \"" + statement.getCondition() + "\"" +
                             (parseResult.invalidMessage == null ? "" : ": " + parseResult.invalidMessage));

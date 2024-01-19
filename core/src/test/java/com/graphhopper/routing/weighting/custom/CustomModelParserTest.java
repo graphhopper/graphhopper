@@ -62,7 +62,7 @@ class CustomModelParserTest {
         countryEnc = Country.create();
         stateEnc = State.create();
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avgSpeedEnc).add(new EnumEncodedValue<>("bus", MyBus.class))
-                .add(stateEnc).add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).build();
+                .add(stateEnc).add(countryEnc).add(MaxSpeed.create()).add(Surface.create()).add(RoadClass.create()).add(RoadEnvironment.create()).build();
         graph = new BaseGraph.Builder(encodingManager).create();
         roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
         maxSpeed = 140;
@@ -290,24 +290,24 @@ class CustomModelParserTest {
         IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
                 () -> parseExpressions(new StringBuilder(),
                         validVariable, "[HERE]", new HashSet<>(),
-                        Arrays.asList(If("max_weight > 10", MULTIPLY, "0")),
-                        key -> encodingManager.getEncodedValue(key, EncodedValue.class).getName()));
+                        Arrays.asList(If("max_weight > 10", MULTIPLY, "0"))
+                ));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"max_weight > 10\": 'max_weight' not available"), ret.getMessage());
 
         // invalid variable or constant (NameValidator returns false)
         ret = assertThrows(IllegalArgumentException.class,
                 () -> parseExpressions(new StringBuilder(),
                         validVariable, "[HERE]", new HashSet<>(),
-                        Arrays.asList(If("country == GERMANY", MULTIPLY, "0")),
-                        key -> encodingManager.getEncodedValue(key, EncodedValue.class).getName()));
+                        Arrays.asList(If("country == GERMANY", MULTIPLY, "0"))
+                ));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"country == GERMANY\": 'GERMANY' not available"), ret.getMessage());
 
         // not whitelisted method
         ret = assertThrows(IllegalArgumentException.class,
                 () -> parseExpressions(new StringBuilder(),
                         validVariable, "[HERE]", new HashSet<>(),
-                        Arrays.asList(If("edge.fetchWayGeometry().size() > 2", MULTIPLY, "0")),
-                        key -> encodingManager.getEncodedValue(key, EncodedValue.class).getName()));
+                        Arrays.asList(If("edge.fetchWayGeometry().size() > 2", MULTIPLY, "0"))
+                ));
         assertTrue(ret.getMessage().startsWith("[HERE] invalid condition \"edge.fetchWayGeometry().size() > 2\": size is an illegal method"), ret.getMessage());
     }
 

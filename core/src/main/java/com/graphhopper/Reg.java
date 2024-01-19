@@ -16,11 +16,8 @@
  *  limitations under the License.
  */
 
-package com.graphhopper.routing.util;
+package com.graphhopper;
 
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.util.PMap;
-
-public interface VehicleTagParserFactory {
-    VehicleTagParsers createParsers(EncodedValueLookup lookup, String name, PMap configuration);
+public interface Reg {
+    RegEntry getRegEntry(String name);
 }
