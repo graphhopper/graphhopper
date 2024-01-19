@@ -695,7 +695,7 @@ public class GraphHopper {
                     if (encodingManager.hasEncodedValue(FootNetwork.KEY) && added.add(FootNetwork.KEY))
                         osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
                 }
-                String turnRestrictionKey = TurnRestriction.key(new PMap(vehicleStr).getString("name", name));
+                String turnRestrictionKey = TurnRestriction.key(name);
                 if (encodingManager.hasTurnEncodedValue(turnRestrictionKey)
                         // need to make sure we do not add the same restriction parsers multiple times
                         && osmParsers.getRestrictionTagParsers().stream().noneMatch(r -> r.getTurnRestrictionEnc().getName().equals(turnRestrictionKey))) {

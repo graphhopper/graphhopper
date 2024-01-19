@@ -3,7 +3,6 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.FerrySpeedCalculator;
-import com.graphhopper.util.PMap;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,8 +15,8 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
     static final int MEAN_SPEED = 5;
     protected Map<RouteNetwork, Integer> routeMap = new HashMap<>();
 
-    public FootAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
-        this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "foot"))),
+    public FootAverageSpeedParser(EncodedValueLookup lookup) {
+        this(lookup.getDecimalEncodedValue(VehicleSpeed.key("foot")),
                 lookup.getDecimalEncodedValue(FerrySpeed.KEY));
     }
 

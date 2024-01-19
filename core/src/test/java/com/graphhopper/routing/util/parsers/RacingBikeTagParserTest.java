@@ -222,8 +222,8 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
                 .add(Smoothness.create())
                 .build();
         List<TagParser> parsers = Arrays.asList(
-                new RacingBikeAverageSpeedParser(encodingManager, new PMap()),
-                new RacingBikePriorityParser(encodingManager, new PMap())
+                new RacingBikeAverageSpeedParser(encodingManager),
+                new RacingBikePriorityParser(encodingManager)
         );
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");

@@ -31,10 +31,10 @@ public class VehicleTagParsers {
     private final TagParser speedParser;
     private final TagParser priorityParser;
 
-    public static VehicleTagParsers roads(EncodedValueLookup lookup, PMap properties) {
+    public static VehicleTagParsers roads(EncodedValueLookup lookup) {
         return new VehicleTagParsers(
-                new RoadsAccessParser(lookup, properties),
-                new RoadsAverageSpeedParser(lookup, properties),
+                new RoadsAccessParser(lookup),
+                new RoadsAverageSpeedParser(lookup),
                 null
         );
     }
@@ -42,7 +42,7 @@ public class VehicleTagParsers {
     public static VehicleTagParsers car(EncodedValueLookup lookup, PMap properties) {
         return new VehicleTagParsers(
                 new CarAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
-                new CarAverageSpeedParser(lookup, properties),
+                new CarAverageSpeedParser(lookup),
                 null
         );
     }
@@ -50,32 +50,32 @@ public class VehicleTagParsers {
     public static VehicleTagParsers bike(EncodedValueLookup lookup, PMap properties) {
         return new VehicleTagParsers(
                 new BikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
-                new BikeAverageSpeedParser(lookup, properties),
-                new BikePriorityParser(lookup, properties)
+                new BikeAverageSpeedParser(lookup),
+                new BikePriorityParser(lookup)
         );
     }
 
     public static VehicleTagParsers racingbike(EncodedValueLookup lookup, PMap properties) {
         return new VehicleTagParsers(
                 new RacingBikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
-                new RacingBikeAverageSpeedParser(lookup, properties),
-                new RacingBikePriorityParser(lookup, properties)
+                new RacingBikeAverageSpeedParser(lookup),
+                new RacingBikePriorityParser(lookup)
         );
     }
 
     public static VehicleTagParsers mtb(EncodedValueLookup lookup, PMap properties) {
         return new VehicleTagParsers(
                 new MountainBikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
-                new MountainBikeAverageSpeedParser(lookup, properties),
-                new MountainBikePriorityParser(lookup, properties)
+                new MountainBikeAverageSpeedParser(lookup),
+                new MountainBikePriorityParser(lookup)
         );
     }
 
     public static VehicleTagParsers foot(EncodedValueLookup lookup, PMap properties) {
         return new VehicleTagParsers(
                 new FootAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
-                new FootAverageSpeedParser(lookup, properties),
-                new FootPriorityParser(lookup, properties)
+                new FootAverageSpeedParser(lookup),
+                new FootPriorityParser(lookup)
         );
     }
 
