@@ -807,7 +807,7 @@ public class GraphHopper {
         Map<String, PMap> encodedValuesWithProps = parseEncodedValueString(encodedValuesString);
         NameValidator nameValidator = s -> reg.getRegEntry(s) != null;
         profilesByName.values().
-                forEach(profile -> CustomModelParser.findVariablesForEncodedValuesString(profile.getCustomModel(), nameValidator).
+                forEach(profile -> CustomModelParser.findVariablesForEncodedValuesString(profile.getCustomModel(), nameValidator, encodingManager).
                         forEach(var -> encodedValuesWithProps.putIfAbsent(var, new PMap())));
 
         // these are used in the snap prevention filter (avoid motorway, tunnel, etc.) so they have to be there

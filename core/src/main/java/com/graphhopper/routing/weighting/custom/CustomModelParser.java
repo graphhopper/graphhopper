@@ -170,7 +170,9 @@ public class CustomModelParser {
         }
     }
 
-    public static List<String> findVariablesForEncodedValuesString(CustomModel model, NameValidator nameValidator) {
+    public static List<String> findVariablesForEncodedValuesString(CustomModel model,
+                                                                   NameValidator nameValidator,
+                                                                   EncodedValueLookup lookup) {
         Set<String> variables = new LinkedHashSet<>();
         // avoid parsing exception for backward_xy or in_xy ...
         NameValidator nameValidatorIntern = s -> {
@@ -183,17 +185,20 @@ public class CustomModelParser {
             }
             return false;
         };
-        findVariablesForEncodedValuesString(model.getPriority(), nameValidatorIntern);
-        findVariablesForEncodedValuesString(model.getSpeed(), nameValidatorIntern);
+        ClassHelper helper = key -> getReturnType(lookup.getEncodedValue(key, EncodedValue.class));
+        findVariablesForEncodedValuesString(model.getPriority(), nameValidatorIntern, helper);
+        findVariablesForEncodedValuesString(model.getSpeed(), nameValidatorIntern, helper);
         return new ArrayList<>(variables);
     }
 
-    private static void findVariablesForEncodedValuesString(List<Statement> statements, NameValidator nameValidator) {
+    private static void findVariablesForEncodedValuesString(List<Statement> statements,
+                                                            NameValidator nameValidator,
+                                                            ClassHelper helper) {
         List<List<Statement>> blocks = CustomModelParser.splitIntoBlocks(statements);
         for (List<Statement> block : blocks) {
             for (Statement statement : block) {
                 // ignore potential problems; collect only variables in this step
-                ConditionalExpressionVisitor.parse(statement.getCondition(), nameValidator);
+                ConditionalExpressionVisitor.parse(statement.getCondition(), nameValidator, helper);
                 ValueExpressionVisitor.parse(statement.getValue(), nameValidator);
             }
         }
