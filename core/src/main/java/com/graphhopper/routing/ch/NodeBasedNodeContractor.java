@@ -134,7 +134,7 @@ class NodeBasedNodeContractor implements NodeContractor {
         insertInShortcuts(node);
         int origEdges = prepareGraph.getOriginalEdges();
         for (Shortcut sc : shortcuts) {
-            int shortcut = chBuilder.addShortcutNodeBased(sc.from, sc.to, sc.flags, sc.weight, sc.skippedEdge1, sc.skippedEdge2);
+            long shortcut = chBuilder.addShortcutNodeBased(sc.from, sc.to, sc.flags, sc.weight, sc.skippedEdge1, sc.skippedEdge2);
             if (sc.flags == PrepareEncoder.getScFwdDir()) {
                 prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeFwd, origEdges + shortcut);
             } else if (sc.flags == PrepareEncoder.getScBwdDir()) {

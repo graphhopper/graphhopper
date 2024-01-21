@@ -380,10 +380,10 @@ public class NodeBasedNodeContractorTest {
         double weight;
         boolean fwd;
         boolean bwd;
-        int skipEdge1;
-        int skipEdge2;
+        long skipEdge1;
+        long skipEdge2;
 
-        Shortcut(int baseNode, int adjNode, double weight, boolean fwd, boolean bwd, int skipEdge1, int skipEdge2) {
+        Shortcut(int baseNode, int adjNode, double weight, boolean fwd, boolean bwd, long skipEdge1, long skipEdge2) {
             this.baseNode = baseNode;
             this.adjNode = adjNode;
             this.weight = weight;

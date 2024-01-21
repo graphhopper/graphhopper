@@ -64,9 +64,9 @@ public class ShortcutUnpacker {
         }
     }
 
-    private void expandSkippedEdgesEdgeBased(int skippedEdge1, int skippedEdge2, int base, int adj, boolean reverse, int prevOrNextEdgeId) {
+    private void expandSkippedEdgesEdgeBased(long skippedEdge1, long skippedEdge2, int base, int adj, boolean reverse, int prevOrNextEdgeId) {
         if (reverse) {
-            int tmp = skippedEdge1;
+            long tmp = skippedEdge1;
             skippedEdge1 = skippedEdge2;
             skippedEdge2 = tmp;
         }
@@ -89,7 +89,7 @@ public class ShortcutUnpacker {
         }
     }
 
-    private void expandSkippedEdgesNodeBased(int skippedEdge1, int skippedEdge2, int base, int adj, boolean reverse) {
+    private void expandSkippedEdgesNodeBased(long skippedEdge1, long skippedEdge2, int base, int adj, boolean reverse) {
         RoutingCHEdgeIteratorState sk2 = getEdge(skippedEdge2, adj);
         RoutingCHEdgeIteratorState sk1;
         if (sk2 == null) {
@@ -115,7 +115,7 @@ public class ShortcutUnpacker {
         return GHUtility.getEdgeFromEdgeKey(adjacentToNode ? edgeState.getOrigEdgeKeyFirst() : edgeState.getOrigEdgeKeyLast());
     }
 
-    private RoutingCHEdgeIteratorState getEdge(int edgeId, int adjNode) {
+    private RoutingCHEdgeIteratorState getEdge(long edgeId, int adjNode) {
         return graph.getEdgeIteratorState(edgeId, adjNode);
     }
 

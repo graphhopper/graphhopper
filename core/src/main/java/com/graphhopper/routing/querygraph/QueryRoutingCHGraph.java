@@ -69,12 +69,12 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     @Override
-    public int getEdges() {
+    public long getEdges() {
         return routingCHGraph.getEdges() + queryOverlay.getNumVirtualEdges();
     }
 
     @Override
-    public int getShortcuts() {
+    public long getShortcuts() {
         return routingCHGraph.getShortcuts();
     }
 
@@ -111,12 +111,14 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     @Override
-    public RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode) {
+    public RoutingCHEdgeIteratorState getEdgeIteratorState(long chEdge, int adjNode) {
         if (!isVirtualEdge(chEdge))
             return routingCHGraph.getEdgeIteratorState(chEdge, adjNode);
         // todo: possible optimization - instead of building a new virtual edge object use the ones we already
         // built for virtualEdgesAtReal/VirtualNodes
-        return buildVirtualCHEdgeState(getVirtualEdgeState(chEdge, adjNode));
+
+        // TODO NOW not good
+        return buildVirtualCHEdgeState(getVirtualEdgeState((int) chEdge, adjNode));
     }
 
     @Override
@@ -236,19 +238,26 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
                 edgeState.getEdgeKey(), edgeState.getEdgeKey(), NO_EDGE, NO_EDGE, fwdWeight, bwdWeight);
     }
 
+    // TODO NOW shifting will make ID too big to fit into signed int
     private int shiftVirtualEdgeIDForCH(int edge) {
-        return edge + routingCHGraph.getEdges() - routingCHGraph.getBaseGraph().getEdges();
+        long res = edge + routingCHGraph.getEdges() - routingCHGraph.getBaseGraph().getEdges();
+        if (res > Integer.MAX_VALUE)
+            throw new IllegalArgumentException("Cannot shift edge to more than Integer.MAX_VALUE but was: " + res);
+        return (int) res;
     }
 
     private int getInternalVirtualEdgeId(int edge) {
-        return 2 * (edge - routingCHGraph.getEdges());
+        long internalEdgeId = 2 * (edge - routingCHGraph.getEdges());
+        if (internalEdgeId > Integer.MAX_VALUE)
+            throw new IllegalArgumentException("Cannot create more than " + internalEdgeId + " internal edges");
+        return (int) internalEdgeId;
     }
 
     private boolean isVirtualNode(int node) {
         return node >= routingCHGraph.getNodes();
     }
 
-    private boolean isVirtualEdge(int edge) {
+    private boolean isVirtualEdge(long edge) {
         return edge >= routingCHGraph.getEdges();
     }
 
@@ -259,12 +268,13 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         private final int adjNode;
         private final int origEdgeKeyFirst;
         private final int origEdgeKeyLast;
-        private final int skippedEdge1;
-        private final int skippedEdge2;
+        private final long skippedEdge1;
+        private final long skippedEdge2;
         private final double weightFwd;
         private final double weightBwd;
 
-        public VirtualCHEdgeIteratorState(int edge, int origEdge, int baseNode, int adjNode, int origEdgeKeyFirst, int origEdgeKeyLast, int skippedEdge1, int skippedEdge2, double weightFwd, double weightBwd) {
+        public VirtualCHEdgeIteratorState(int edge, int origEdge, int baseNode, int adjNode,
+                                          int origEdgeKeyFirst, int origEdgeKeyLast, long skippedEdge1, long skippedEdge2, double weightFwd, double weightBwd) {
             this.edge = edge;
             this.origEdge = origEdge;
             this.baseNode = baseNode;
@@ -313,12 +323,12 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         }
 
         @Override
-        public int getSkippedEdge1() {
+        public long getSkippedEdge1() {
             return skippedEdge1;
         }
 
         @Override
-        public int getSkippedEdge2() {
+        public long getSkippedEdge2() {
             return skippedEdge2;
         }
 
@@ -385,14 +395,14 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         }
 
         @Override
-        public int getSkippedEdge1() {
+        public long getSkippedEdge1() {
             if (!isShortcut())
                 throw new IllegalStateException("Skipped edges are only available for shortcuts");
             return getCurrent().getSkippedEdge1();
         }
 
         @Override
-        public int getSkippedEdge2() {
+        public long getSkippedEdge2() {
             if (!isShortcut())
                 throw new IllegalStateException("Skipped edges are only available for shortcuts");
             return getCurrent().getSkippedEdge2();

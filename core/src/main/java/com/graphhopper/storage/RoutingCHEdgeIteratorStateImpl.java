@@ -19,6 +19,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 
 import static com.graphhopper.util.EdgeIterator.NO_EDGE;
@@ -27,7 +28,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     final CHStorage store;
     final BaseGraph baseGraph;
     private final Weighting weighting;
-    int edgeId = -1;
+    long edgeId = -1;
     int baseNode;
     int adjNode;
     final BaseGraph.EdgeIteratorStateImpl baseEdgeState;
@@ -40,7 +41,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
         this.weighting = weighting;
     }
 
-    boolean init(int edge, int expectedAdjNode) {
+    boolean init(long edge, int expectedAdjNode) {
         if (edge < 0 || edge >= baseGraph.getEdges() + store.getShortcuts())
             throw new IllegalArgumentException("edge must be in bounds: [0," + (baseGraph.getEdges() + store.getShortcuts()) + "[");
         edgeId = edge;
@@ -58,14 +59,15 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
             }
             return false;
         } else {
-            return baseEdgeState.init(edge, expectedAdjNode);
+            return baseEdgeState.init(BitUtil.toSignedInt(edge), expectedAdjNode);
         }
     }
 
     @Override
     public int getEdge() {
         // we maintain this even for base edges, maybe try if not maintaining it is faster
-        return edgeId;
+        // TODO NOW not good
+        return (int) edgeId;
     }
 
     @Override
@@ -103,13 +105,13 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     }
 
     @Override
-    public int getSkippedEdge1() {
+    public long getSkippedEdge1() {
         checkShortcut(true, "getSkippedEdge1");
         return store.getSkippedEdge1(shortcutPointer);
     }
 
     @Override
-    public int getSkippedEdge2() {
+    public long getSkippedEdge2() {
         checkShortcut(true, "getSkippedEdge2");
         return store.getSkippedEdge2(shortcutPointer);
     }

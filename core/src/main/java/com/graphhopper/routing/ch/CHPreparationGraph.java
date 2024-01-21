@@ -18,19 +18,18 @@
 
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntContainer;
+import com.carrotsearch.hppc.IntScatterSet;
+import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.sorting.IndirectComparator;
 import com.carrotsearch.hppc.sorting.IndirectSort;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.TurnCostStorage;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.ArrayUtil.zero;
@@ -55,7 +54,8 @@ public class CHPreparationGraph {
     //       and because basegraph has multi-edges. the advantage of storing the skipped node is that we could just write
     //       it to one of the skipped edges fields temporarily, so we would not need this array and save memory during
     //       the preparation.
-    private IntArrayList shortcutsByPrepareEdges;
+    // for now reserve only 4 bytes per entry (store them "unsigned"), but allow more than Integer.MAX_VALUE entries
+    private DataAccess shortcutsByPrepareEdges;
     // todo: maybe we can get rid of this
     private int[] degrees;
     private IntSet neighborSet;
@@ -84,7 +84,7 @@ public class CHPreparationGraph {
         this.edgeBased = edgeBased;
         prepareEdgesOut = new PrepareEdge[nodes];
         prepareEdgesIn = new PrepareEdge[nodes];
-        shortcutsByPrepareEdges = new IntArrayList();
+        shortcutsByPrepareEdges = new RAMDirectory().create("shortcuts_by_prepared_edges");
         degrees = new int[nodes];
         origGraphBuilder = edgeBased ? new OrigGraph.Builder() : null;
         neighborSet = new IntScatterSet();
@@ -166,18 +166,17 @@ public class CHPreparationGraph {
         ready = true;
     }
 
-    public void setShortcutForPrepareEdge(int prepareEdge, int shortcut) {
-        int index = prepareEdge - edges;
-        if (index >= shortcutsByPrepareEdges.size())
-            shortcutsByPrepareEdges.resize(index + 1);
-        shortcutsByPrepareEdges.set(index, shortcut);
+    public void setShortcutForPrepareEdge(long prepareEdge, long shortcut) {
+        long pointer = (prepareEdge - edges) * 4L;
+        shortcutsByPrepareEdges.ensureCapacity(pointer + 4);
+        shortcutsByPrepareEdges.setInt(pointer, BitUtil.toSignedInt(shortcut));
     }
 
-    public int getShortcutForPrepareEdge(int prepareEdge) {
+    public long getShortcutForPrepareEdge(long prepareEdge) {
         if (prepareEdge < edges)
             return prepareEdge;
-        int index = prepareEdge - edges;
-        return shortcutsByPrepareEdges.get(index);
+        long pointer = (prepareEdge - edges) * 4L;
+        return BitUtil.toUnsignedLong(shortcutsByPrepareEdges.getInt(pointer));
     }
 
     public PrepareGraphEdgeExplorer createOutEdgeExplorer() {

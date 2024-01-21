@@ -24,9 +24,9 @@ import com.graphhopper.routing.weighting.Weighting;
 public interface RoutingCHGraph {
     int getNodes();
 
-    int getEdges();
+    long getEdges();
 
-    int getShortcuts();
+    long getShortcuts();
 
     /**
      * Traverses the base edges and shortcuts at a given node. This will only include shortcuts coming from higher
@@ -39,7 +39,7 @@ public interface RoutingCHGraph {
      */
     RoutingCHEdgeExplorer createOutEdgeExplorer();
 
-    RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode);
+    RoutingCHEdgeIteratorState getEdgeIteratorState(long chEdge, int adjNode);
 
     int getLevel(int node);
 

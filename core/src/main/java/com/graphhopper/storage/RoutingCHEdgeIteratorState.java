@@ -59,12 +59,12 @@ public interface RoutingCHEdgeIteratorState {
     /**
      * The CH edge ID of the first skipped edge/shortcut of this edge state
      */
-    int getSkippedEdge1();
+    long getSkippedEdge1();
 
     /**
      * The CH edge ID of the second skipped edge/shortcut of this edge state
      */
-    int getSkippedEdge2();
+    long getSkippedEdge2();
 
     double getWeight(boolean reverse);
 

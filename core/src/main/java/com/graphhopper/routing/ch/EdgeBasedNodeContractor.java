@@ -243,7 +243,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
         while (iter.next()) {
             if (!iter.isShortcut())
                 continue;
-            int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
+            long shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
                     PrepareEncoder.getScFwdDir(), iter.getWeight(),
                     iter.getSkipped1(), iter.getSkipped2(),
                     iter.getOrigEdgeKeyFirst(),
@@ -261,7 +261,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
             // we added loops already using the outEdgeExplorer
             if (iter.getAdjNode() == node)
                 continue;
-            int shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
+            long shortcut = chBuilder.addShortcutEdgeBased(node, iter.getAdjNode(),
                     PrepareEncoder.getScBwdDir(), iter.getWeight(),
                     iter.getSkipped1(), iter.getSkipped2(),
                     iter.getOrigEdgeKeyFirst(),

@@ -18,7 +18,10 @@
 
 package com.graphhopper.storage;
 
+import com.graphhopper.util.BitUtil;
+
 import java.util.function.IntUnaryOperator;
+import java.util.function.LongUnaryOperator;
 
 /**
  * Builds a valid {@link CHStorage}, i.e. makes sure that
@@ -49,9 +52,9 @@ public class CHStorageBuilder {
             setLevel(node, node);
     }
 
-    public int addShortcutNodeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2) {
+    public long addShortcutNodeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2) {
         checkNewShortcut(a, b);
-        int shortcut = storage.shortcutNodeBased(a, b, accessFlags, weight, skippedEdge1, skippedEdge2);
+        long shortcut = storage.shortcutNodeBased(a, b, accessFlags, weight, skippedEdge1, skippedEdge2);
         // we keep track of the last shortcut for each node (-1 if there are no shortcuts), but
         // we do not register the shortcut at node b, because b is the higher level node (so no need to 'see' the lower
         // level node a)
@@ -66,20 +69,20 @@ public class CHStorageBuilder {
      *                     which skips the shortcuts x->v and v->y the first original edge key would be the one of the edge x->u
      * @param origKeyLast  like origKeyFirst, but the last orig edge key, i.e. the key of w->y in above example
      */
-    public int addShortcutEdgeBased(int a, int b, int accessFlags, double weight, int skippedEdge1, int skippedEdge2,
+    public long addShortcutEdgeBased(int a, int b, int accessFlags, double weight, long skippedEdge1, long skippedEdge2,
                                     int origKeyFirst, int origKeyLast) {
         checkNewShortcut(a, b);
-        int shortcut = storage.shortcutEdgeBased(a, b, accessFlags, weight, skippedEdge1, skippedEdge2, origKeyFirst, origKeyLast);
+        long shortcut = storage.shortcutEdgeBased(a, b, accessFlags, weight, skippedEdge1, skippedEdge2, origKeyFirst, origKeyLast);
         setLastShortcut(a, shortcut);
         return shortcut;
     }
 
-    public void replaceSkippedEdges(IntUnaryOperator mapping) {
+    public void replaceSkippedEdges(LongUnaryOperator mapping) {
         for (int i = 0; i < storage.getShortcuts(); ++i) {
             long shortcutPointer = storage.toShortcutPointer(i);
-            int skip1 = storage.getSkippedEdge1(shortcutPointer);
-            int skip2 = storage.getSkippedEdge2(shortcutPointer);
-            storage.setSkippedEdges(shortcutPointer, mapping.applyAsInt(skip1), mapping.applyAsInt(skip2));
+            long skip1 = storage.getSkippedEdge1(shortcutPointer);
+            long skip2 = storage.getSkippedEdge2(shortcutPointer);
+            storage.setSkippedEdges(shortcutPointer, mapping.applyAsLong(skip1), mapping.applyAsLong(skip2));
         }
     }
 
@@ -106,7 +109,7 @@ public class CHStorageBuilder {
         }
     }
 
-    private void setLastShortcut(int node, int shortcut) {
+    private void setLastShortcut(int node, long shortcut) {
         storage.setLastShortcut(storage.toNodePointer(node), shortcut);
     }
 

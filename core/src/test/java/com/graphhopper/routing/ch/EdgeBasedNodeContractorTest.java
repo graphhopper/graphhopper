@@ -1310,10 +1310,11 @@ public class EdgeBasedNodeContractorTest {
         double weight;
         boolean fwd;
         boolean bwd;
-        int skipEdge1;
-        int skipEdge2;
+        long skipEdge1;
+        long skipEdge2;
 
-        public Shortcut(int baseNode, int adjNode, int firstOrigEdgeKey, int lastOrigEdgeKey, int skipEdge1, int skipEdge2, double weight,
+        public Shortcut(int baseNode, int adjNode, int firstOrigEdgeKey, int lastOrigEdgeKey,
+                        long skipEdge1, long skipEdge2, double weight,
                         boolean fwd, boolean bwd) {
             this.baseNode = baseNode;
             this.adjNode = adjNode;

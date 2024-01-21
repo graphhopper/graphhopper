@@ -43,12 +43,12 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     }
 
     @Override
-    public int getEdges() {
+    public long getEdges() {
         return baseGraph.getEdges() + chStorage.getShortcuts();
     }
 
     @Override
-    public int getShortcuts() {
+    public long getShortcuts() {
         return chStorage.getShortcuts();
     }
 
@@ -63,7 +63,7 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     }
 
     @Override
-    public RoutingCHEdgeIteratorState getEdgeIteratorState(int chEdge, int adjNode) {
+    public RoutingCHEdgeIteratorState getEdgeIteratorState(long chEdge, int adjNode) {
         RoutingCHEdgeIteratorStateImpl edgeState =
                 new RoutingCHEdgeIteratorStateImpl(chStorage, baseGraph, new BaseGraph.EdgeIteratorStateImpl(baseGraph), weighting);
         if (edgeState.init(chEdge, adjNode))

@@ -27,7 +27,7 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
     private final BaseGraph.EdgeIteratorImpl baseIterator;
     private final boolean outgoing;
     private final boolean incoming;
-    private int nextEdgeId;
+    private long nextEdgeId;
 
     public static RoutingCHEdgeIteratorImpl outEdges(CHStorage chStore, BaseGraph baseGraph, Weighting weighting) {
         return new RoutingCHEdgeIteratorImpl(chStore, baseGraph, weighting, true, false);
@@ -53,8 +53,8 @@ public class RoutingCHEdgeIteratorImpl extends RoutingCHEdgeIteratorStateImpl im
     public RoutingCHEdgeIterator setBaseNode(int baseNode) {
         assert baseGraph.isFrozen();
         baseIterator.setBaseNode(baseNode);
-        int lastShortcut = store.getLastShortcut(store.toNodePointer(baseNode));
-        nextEdgeId = edgeId = lastShortcut < 0 ? baseIterator.edgeId : baseGraph.getEdges() + lastShortcut;
+        long lastShortcut = store.getLastShortcut(store.toNodePointer(baseNode));
+        nextEdgeId = edgeId = CHStorage.isValidShortcut(lastShortcut) ? baseGraph.getEdges() + lastShortcut : baseIterator.edgeId;
         return this;
     }
 
