@@ -127,12 +127,12 @@ public class Measurement {
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 if (result.get("profile_no_tc") != null) {
-                    int shortcuts = result.get("profile_no_tc").getCHStorage().getShortcuts();
+                    long shortcuts = result.get("profile_no_tc").getCHStorage().getShortcuts();
                     put(Parameters.CH.PREPARE + "node.shortcuts", shortcuts);
                     put(Parameters.CH.PREPARE + "node.time", result.get("profile_no_tc").getTotalPrepareTime());
                 }
                 if (result.get("profile_tc") != null) {
-                    int shortcuts = result.get("profile_tc").getCHStorage().getShortcuts();
+                    long shortcuts = result.get("profile_tc").getCHStorage().getShortcuts();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", shortcuts);
                     put(Parameters.CH.PREPARE + "edge.time", result.get("profile_tc").getTotalPrepareTime());
                 }
@@ -455,9 +455,9 @@ public class Measurement {
 
     private void measureGraphTraversalCH(final RoutingCHGraph lg, int count) {
         final Random rand = new Random(seed);
-        final int maxEdgesId = lg.getEdges();
+        final long maxEdgesId = lg.getEdges();
         MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
-            int edgeId = rand.nextInt(maxEdgesId);
+            long edgeId = rand.nextLong(maxEdgesId);
             return lg.getEdgeIteratorState(edgeId, Integer.MIN_VALUE).getEdge();
         });
         print("unit_testsCH.get_edge_state", miniPerf);
