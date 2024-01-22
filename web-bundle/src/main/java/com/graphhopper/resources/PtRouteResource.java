@@ -70,7 +70,8 @@ public class PtRouteResource {
                             @QueryParam("pt.beta_pt_edge_time") Double betaPtEdgeTime,
                             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
                             @QueryParam("include_edges") @DefaultValue("false") boolean includeEdges,
-                            @QueryParam("details") List<String> pathDetails) {
+                            @QueryParam("details") List<String> pathDetails,
+                            @QueryParam("pt.block_route_types") List<Integer> blockRouteTypes) {
         StopWatch stopWatch = new StopWatch().start();
         List<GHLocation> points = requestPoints.stream().map(AbstractParam::get).collect(toList());
         Instant departureTime = departureTimeParam.get().toInstant();
@@ -90,6 +91,18 @@ public class PtRouteResource {
         Optional.ofNullable(enableElevation).ifPresent(request::setEnableElevation);
         Optional.ofNullable(includeEdges).ifPresent(request::setIncludeEdges);
         Optional.ofNullable(pathDetails).ifPresent(request::setPathDetails);
+
+        if (blockRouteTypes != null) {
+          int blockedRouteTypesBitflag = 0;
+          for (Integer routeType : blockRouteTypes) {
+            // Sanity check by making sure the route type fits in a bitflag, which
+            // it should for all valid GTFS route types.
+            if (routeType >= 0 && routeType < 32) {
+              blockedRouteTypesBitflag = blockedRouteTypesBitflag | (1 << routeType);
+            }
+          }
+          request.setBlockedRouteTypes(blockedRouteTypesBitflag);
+        }
 
         GHResponse route = ptRouter.route(request);
         return ResponsePathSerializer.jsonObject(route, true, includeEdges, true, enableElevation, false, stopWatch.stop().getMillis());
