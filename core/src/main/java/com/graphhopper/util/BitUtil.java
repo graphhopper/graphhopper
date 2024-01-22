@@ -269,15 +269,7 @@ public class BitUtil {
     }
 
     /**
-     * This method handles the specified (potentially negative) int as unsigned bit representation
-     * and returns the positive converted long.
-     */
-    public static long toUnsignedLong(int x) {
-        return ((long) x) & 0xFFFF_FFFFL;
-    }
-
-    /**
-     * Converts the specified long back into a signed int (reverse method for toUnsignedLong)
+     * Converts the specified long into a signed int ('reverse' method for Integer.toUnsignedLong).
      */
     public static int toSignedInt(long x) {
         return (int) x;
