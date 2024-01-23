@@ -57,7 +57,7 @@ public class CHPreparationGraph {
     private IntSet neighborSet;
     private OrigGraph origGraph;
     private OrigGraph.Builder origGraphBuilder;
-    private int nextShortcutId;
+    private int nextPrepareEdge;
     private boolean ready;
 
     public static CHPreparationGraph nodeBased(int nodes, int edges) {
@@ -84,7 +84,7 @@ public class CHPreparationGraph {
         degrees = new int[nodes];
         origGraphBuilder = edgeBased ? new OrigGraph.Builder() : null;
         neighborSet = new IntScatterSet();
-        nextShortcutId = edges;
+        nextPrepareEdge = edges;
     }
 
     public static void buildFromGraph(CHPreparationGraph prepareGraph, Graph graph, Weighting weighting) {
@@ -147,12 +147,12 @@ public class CHPreparationGraph {
                            int skipped2, double weight, int origEdgeCount) {
         checkReady();
         PrepareEdge prepareEdge = edgeBased
-                ? new EdgeBasedPrepareShortcut(nextShortcutId, from, to, origEdgeKeyFirst, origEdgeKeyLast, weight, skipped1, skipped2, origEdgeCount)
-                : new PrepareShortcut(nextShortcutId, from, to, weight, skipped1, skipped2, origEdgeCount);
+                ? new EdgeBasedPrepareShortcut(nextPrepareEdge, from, to, origEdgeKeyFirst, origEdgeKeyLast, weight, skipped1, skipped2, origEdgeCount)
+                : new PrepareShortcut(nextPrepareEdge, from, to, weight, skipped1, skipped2, origEdgeCount);
         addOutEdge(from, prepareEdge);
         if (from != to)
             addInEdge(to, prepareEdge);
-        return nextShortcutId++;
+        return nextPrepareEdge++;
     }
 
     public void prepareForContraction() {

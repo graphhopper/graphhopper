@@ -156,6 +156,7 @@ public class RoutingCHGraphImplTest {
         CHStorage chStore = CHStorage.fromGraph(ghStorage, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
+        // todo4bsc: arithmetic?
         int sc1 = ghStorage.getEdges() + chBuilder.addShortcutNodeBased(0, 1, PrepareEncoder.getScFwdDir(), 100.123, NO_EDGE, NO_EDGE);
         RoutingCHGraph lg = RoutingCHGraphImpl.fromGraph(ghStorage, chStore, chConfig);
         assertEquals(1, lg.getEdgeIteratorState(sc1, 1).getAdjNode());
@@ -163,6 +164,7 @@ public class RoutingCHGraphImplTest {
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 1).getWeight(false), 1e-3);
         assertEquals(100.123, lg.getEdgeIteratorState(sc1, 0).getWeight(false), 1e-3);
 
+        // todo4bsc: arithmetic?
         int sc2 = ghStorage.getEdges() + chBuilder.addShortcutNodeBased(2, 3, PrepareEncoder.getScDirMask(), 1.011011, NO_EDGE, NO_EDGE);
         assertEquals(3, lg.getEdgeIteratorState(sc2, 3).getAdjNode());
         assertEquals(2, lg.getEdgeIteratorState(sc2, 3).getBaseNode());

@@ -220,7 +220,7 @@ public class CHStorage {
         setNodesAB(shortcutPointer, nodeA, nodeB, accessFlags);
         setWeightInt(shortcutPointer, weightInt);
         setSkippedEdges(shortcutPointer, skip1, skip2);
-        // cast to int -> signed value (returned value can be negative and we use the full four byte range)
+        // cast to int -> signed value (returned value can be negative, and we use the full four byte range)
         return (int) (shortcutCount - 1);
     }
 
