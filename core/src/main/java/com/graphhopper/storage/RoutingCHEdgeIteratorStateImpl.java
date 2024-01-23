@@ -41,6 +41,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     }
 
     boolean init(int edge, int expectedAdjNode) {
+        // todo4bsc
         if (edge < 0 || edge >= baseGraph.getEdges() + store.getShortcuts())
             throw new IllegalArgumentException("edge must be in bounds: [0," + (baseGraph.getEdges() + store.getShortcuts()) + "[");
         edgeId = edge;
@@ -99,6 +100,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
 
     @Override
     public boolean isShortcut() {
+        // todo4bsc
         return edgeId >= baseGraph.getEdges();
     }
 

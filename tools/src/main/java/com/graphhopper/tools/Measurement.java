@@ -27,12 +27,14 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.TurnRestriction;
+import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
-
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -127,12 +129,12 @@ public class Measurement {
                 // note that we measure the total time of all (possibly edge&node) CH preparations
                 put(Parameters.CH.PREPARE + "time", sw.stop().getMillis());
                 if (result.get("profile_no_tc") != null) {
-                    int shortcuts = result.get("profile_no_tc").getCHStorage().getShortcuts();
+                    long shortcuts = result.get("profile_no_tc").getCHStorage().getShortcuts();
                     put(Parameters.CH.PREPARE + "node.shortcuts", shortcuts);
                     put(Parameters.CH.PREPARE + "node.time", result.get("profile_no_tc").getTotalPrepareTime());
                 }
                 if (result.get("profile_tc") != null) {
-                    int shortcuts = result.get("profile_tc").getCHStorage().getShortcuts();
+                    long shortcuts = result.get("profile_tc").getCHStorage().getShortcuts();
                     put(Parameters.CH.PREPARE + "edge.shortcuts", shortcuts);
                     put(Parameters.CH.PREPARE + "edge.time", result.get("profile_tc").getTotalPrepareTime());
                 }
@@ -455,15 +457,16 @@ public class Measurement {
 
     private void measureGraphTraversalCH(final RoutingCHGraph lg, int count) {
         final Random rand = new Random(seed);
-        final int maxEdgesId = lg.getEdges();
-        MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
-            int edgeId = rand.nextInt(maxEdgesId);
-            return lg.getEdgeIteratorState(edgeId, Integer.MIN_VALUE).getEdge();
-        });
-        print("unit_testsCH.get_edge_state", miniPerf);
+        // todo4bsc
+//        final int maxEdgesId = lg.getEdges();
+//        MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
+//            int edgeId = rand.nextInt(maxEdgesId);
+//            return lg.getEdgeIteratorState(edgeId, Integer.MIN_VALUE).getEdge();
+//        });
+//        print("unit_testsCH.get_edge_state", miniPerf);
 
         final RoutingCHEdgeExplorer chOutEdgeExplorer = lg.createOutEdgeExplorer();
-        miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
+        MiniPerfTest miniPerf = new MiniPerfTest().setIterations(count).start((warmup, run) -> {
             int nodeId = rand.nextInt(maxNode);
             RoutingCHEdgeIterator iter = chOutEdgeExplorer.setBaseNode(nodeId);
             while (iter.next()) {

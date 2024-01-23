@@ -235,11 +235,11 @@ public class RoutingCHGraphImplTest {
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
-        chBuilder.addShortcutNodeBased(1, 4, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
+        int shortcutId = chBuilder.addShortcutNodeBased(1, 4, PrepareEncoder.getScDirMask(), 10, NO_EDGE, NO_EDGE);
 
-        chStore.setSkippedEdges(chStore.toShortcutPointer(0), edge1.getEdge(), edge2.getEdge());
-        assertEquals(edge1.getEdge(), chStore.getSkippedEdge1(chStore.toShortcutPointer(0)));
-        assertEquals(edge2.getEdge(), chStore.getSkippedEdge2(chStore.toShortcutPointer(0)));
+        chStore.setSkippedEdges(chStore.toShortcutPointer(shortcutId), edge1.getEdge(), edge2.getEdge());
+        assertEquals(edge1.getEdge(), chStore.getSkippedEdge1(chStore.toShortcutPointer(shortcutId)));
+        assertEquals(edge2.getEdge(), chStore.getSkippedEdge2(chStore.toShortcutPointer(shortcutId)));
     }
 
     @Test
@@ -257,9 +257,9 @@ public class RoutingCHGraphImplTest {
         CHStorage chStore = CHStorage.fromGraph(graph, chConfig);
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
-        chBuilder.addShortcutNodeBased(1, 4, PrepareEncoder.getScDirMask(), 10, edge1.getEdge(), edge2.getEdge());
-        assertEquals(edge1.getEdge(), chStore.getSkippedEdge1(chStore.toShortcutPointer(0)));
-        assertEquals(edge2.getEdge(), chStore.getSkippedEdge2(chStore.toShortcutPointer(0)));
+        int shortcutId = chBuilder.addShortcutNodeBased(1, 4, PrepareEncoder.getScDirMask(), 10, edge1.getEdge(), edge2.getEdge());
+        assertEquals(edge1.getEdge(), chStore.getSkippedEdge1(chStore.toShortcutPointer(shortcutId)));
+        assertEquals(edge2.getEdge(), chStore.getSkippedEdge2(chStore.toShortcutPointer(shortcutId)));
     }
 
     @Test
@@ -297,9 +297,9 @@ public class RoutingCHGraphImplTest {
 
         CHStorageBuilder chBuilder = new CHStorageBuilder(chStore);
         chBuilder.setIdentityLevels();
-        chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 2);
-        assertEquals(0, chStore.getOrigEdgeKeyFirst(chStore.toShortcutPointer(0)));
-        assertEquals(2, chStore.getOrigEdgeKeyLast(chStore.toShortcutPointer(0)));
+        int shortcutId = chBuilder.addShortcutEdgeBased(0, 2, PrepareEncoder.getScFwdDir(), 10, 0, 1, 0, 2);
+        assertEquals(0, chStore.getOrigEdgeKeyFirst(chStore.toShortcutPointer(shortcutId)));
+        assertEquals(2, chStore.getOrigEdgeKeyLast(chStore.toShortcutPointer(shortcutId)));
     }
 
     @Test

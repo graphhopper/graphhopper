@@ -75,8 +75,8 @@ public class CHStorageBuilder {
     }
 
     public void replaceSkippedEdges(IntUnaryOperator mapping) {
-        for (int i = 0; i < storage.getShortcuts(); ++i) {
-            long shortcutPointer = storage.toShortcutPointer(i);
+        for (long i = 0; i < storage.getShortcuts(); ++i) {
+            long shortcutPointer = storage.toShortcutPointer((int) i);
             int skip1 = storage.getSkippedEdge1(shortcutPointer);
             int skip2 = storage.getSkippedEdge2(shortcutPointer);
             storage.setSkippedEdges(shortcutPointer, mapping.applyAsInt(skip1), mapping.applyAsInt(skip2));
@@ -96,7 +96,7 @@ public class CHStorageBuilder {
             throw new IllegalArgumentException("The level of nodeA must be smaller than the level of nodeB, but got: " +
                     getLevel(a) + " and " + getLevel(b) + ". When inserting shortcut: " + a + "-" + b);
         if (storage.getShortcuts() > 0) {
-            int prevNodeA = storage.getNodeA(storage.toShortcutPointer(storage.getShortcuts() - 1));
+            int prevNodeA = storage.getNodeA(storage.toShortcutPointer((int) (storage.getShortcuts() - 1)));
             int prevLevelA = getLevel(prevNodeA);
             if (getLevel(a) < prevLevelA) {
                 throw new IllegalArgumentException("Invalid level for node " + a + ": " + getLevel(a) + ". The level " +
