@@ -21,6 +21,8 @@ package com.graphhopper.routing.ch;
 import com.carrotsearch.hppc.IntContainer;
 
 public interface NodeContractor {
+    long MAX_EDGE_AND_SHORTCUT_COUNT = (1L << 32) - 1;
+
     void initFromGraph();
 
     void close();

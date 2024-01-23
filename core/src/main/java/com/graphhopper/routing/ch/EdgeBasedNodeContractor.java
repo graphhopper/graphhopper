@@ -22,7 +22,6 @@ import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
 import com.graphhopper.storage.CHStorageBuilder;
 import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
@@ -31,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Locale;
 
 import static com.graphhopper.routing.ch.CHParameters.*;
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
 import static com.graphhopper.util.GHUtility.reverseEdgeKey;
 import static com.graphhopper.util.Helper.nf;
 
@@ -209,7 +209,7 @@ class EdgeBasedNodeContractor implements NodeContractor {
                         // we found a witness, nothing to do
                         continue;
                     PrepareCHEntry root = bridgePath.value.chEntry;
-                    while (EdgeIterator.Edge.isValid(root.parent.prepareEdge))
+                    while (root.parent.prepareEdge != NO_EDGE)
                         root = root.getParent();
                     // we make sure to add each shortcut only once. when we are actually adding shortcuts we check for existing
                     // shortcuts anyway, but at least this is important when we *count* shortcuts.
@@ -266,7 +266,10 @@ class EdgeBasedNodeContractor implements NodeContractor {
                     iter.getSkipped1(), iter.getSkipped2(),
                     iter.getOrigEdgeKeyFirst(),
                     iter.getOrigEdgeKeyLast());
-            prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), prepareGraph.getOriginalEdges() + shortcut);
+            if (Integer.toUnsignedLong(shortcut) + prepareGraph.getOriginalEdges() > MAX_EDGE_AND_SHORTCUT_COUNT)
+                throw new IllegalStateException("Maximum number of edges (base graph + shortcuts) exceeded: " + MAX_EDGE_AND_SHORTCUT_COUNT);
+            int shortcutId = prepareGraph.getOriginalEdges() + shortcut;
+            prepareGraph.setShortcutForPrepareEdge(iter.getPrepareEdge(), shortcutId);
             addedShortcutsCount++;
         }
     }

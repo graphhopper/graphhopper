@@ -135,13 +135,16 @@ class NodeBasedNodeContractor implements NodeContractor {
         int origEdges = prepareGraph.getOriginalEdges();
         for (Shortcut sc : shortcuts) {
             int shortcut = chBuilder.addShortcutNodeBased(sc.from, sc.to, sc.flags, sc.weight, sc.skippedEdge1, sc.skippedEdge2);
+            if (Integer.toUnsignedLong(shortcut) + origEdges > MAX_EDGE_AND_SHORTCUT_COUNT)
+                throw new IllegalStateException("Maximum number of edges (base graph + shortcuts) exceeded: " + MAX_EDGE_AND_SHORTCUT_COUNT);
+            int shortcutId = origEdges + shortcut;
             if (sc.flags == PrepareEncoder.getScFwdDir()) {
-                prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeFwd, origEdges + shortcut);
+                prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeFwd, shortcutId);
             } else if (sc.flags == PrepareEncoder.getScBwdDir()) {
-                prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeBwd, origEdges + shortcut);
+                prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeBwd, shortcutId);
             } else {
-                prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeFwd, origEdges + shortcut);
-                prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeBwd, origEdges + shortcut);
+                prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeFwd, shortcutId);
+                prepareGraph.setShortcutForPrepareEdge(sc.prepareEdgeBwd, shortcutId);
             }
         }
         addedShortcutsCount += shortcuts.size();
