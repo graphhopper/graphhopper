@@ -1138,19 +1138,19 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
 
         if (!withTunnelInterpolation) {
-            hopper.setReg(new DefaultReg() {
+            hopper.setImportUnitFactory(new DefaultImportUnitFactory() {
                 @Override
-                public RegEntry getRegEntry(String name) {
-                    RegEntry regEntry = super.getRegEntry(name);
+                public ImportUnit createImportUnit(String name) {
+                    ImportUnit ImportUnit = super.createImportUnit(name);
                     if ("road_environment".equals(name))
-                        regEntry = RegEntry.create(name, props -> RoadEnvironment.create(),
+                        ImportUnit = ImportUnit.create(name, props -> RoadEnvironment.create(),
                                 (lookup, props) -> new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
                                     @Override
                                     public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
                                         // do not change RoadEnvironment to avoid triggering tunnel interpolation
                                     }
                                 });
-                    return regEntry;
+                    return ImportUnit;
                 }
             });
         }

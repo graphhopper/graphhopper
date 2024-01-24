@@ -18,6 +18,6 @@
 
 package com.graphhopper.routing.ev;
 
-public interface Reg {
-    RegEntry getRegEntry(String name);
+public interface ImportUnitFactory {
+    ImportUnit createImportUnit(String name);
 }

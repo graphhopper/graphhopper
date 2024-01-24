@@ -21,13 +21,13 @@ package com.graphhopper.routing.ev;
 import java.util.*;
 
 // topological sort with a depth first search
-public class RegEntrySorter {
+public class ImportUnitSorter {
     Set<String> permanentMarked = new HashSet<>();
     Set<String> temporaryMarked = new HashSet<>();
     List<String> result = new ArrayList<>();
-    final Map<String, RegEntry> map;
+    final Map<String, ImportUnit> map;
 
-    public RegEntrySorter(Map<String, RegEntry> map) {
+    public ImportUnitSorter(Map<String, ImportUnit> map) {
         this.map = map;
     }
 
@@ -40,14 +40,14 @@ public class RegEntrySorter {
 
     private void visit(String strN) {
         if (permanentMarked.contains(strN)) return;
-        RegEntry regEntry = map.get(strN);
-        if (regEntry == null)
+        ImportUnit ImportUnit = map.get(strN);
+        if (ImportUnit == null)
             throw new IllegalArgumentException("cannot find reg " + strN);
         if (temporaryMarked.contains(strN))
-            throw new IllegalArgumentException("cyclic required parsers are not allowed: " + regEntry + " " + regEntry.getRequiredRegEntries());
+            throw new IllegalArgumentException("cyclic required parsers are not allowed: " + ImportUnit + " " + ImportUnit.getRequiredImportUnits());
 
         temporaryMarked.add(strN);
-        for (String strM : regEntry.getRequiredRegEntries()) {
+        for (String strM : ImportUnit.getRequiredImportUnits()) {
             visit(strM);
         }
         temporaryMarked.remove(strN);

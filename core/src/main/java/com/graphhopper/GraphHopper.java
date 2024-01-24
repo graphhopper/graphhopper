@@ -125,7 +125,7 @@ public class GraphHopper {
     // for data reader
     private String osmFile;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
-    private Reg reg = new DefaultReg();
+    private ImportUnitFactory importUnitFactory = new DefaultImportUnitFactory();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     private String dateRangeParserString = "";
@@ -421,13 +421,13 @@ public class GraphHopper {
         return trMap;
     }
 
-    public GraphHopper setReg(Reg reg) {
-        this.reg = reg;
+    public GraphHopper setImportUnitFactory(ImportUnitFactory importUnitFactory) {
+        this.importUnitFactory = importUnitFactory;
         return this;
     }
 
-    public Reg getReg() {
-        return reg;
+    public ImportUnitFactory getReg() {
+        return importUnitFactory;
     }
 
     public GraphHopper setCustomAreasDirectory(String customAreasDirectory) {
@@ -598,8 +598,8 @@ public class GraphHopper {
         return this;
     }
 
-    protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps, Map<String, RegEntry> activeRegEntries, Map<String, String> vehiclesByName) {
-        List<EncodedValue> encodedValues = activeRegEntries.entrySet().stream()
+    protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, String> vehiclesByName) {
+        List<EncodedValue> encodedValues = activeImportUnits.entrySet().stream()
                 .map(e -> e.getValue().getCreateEncodedValue()
                         .apply(encodedValuesWithProps.getOrDefault(e.getKey(), new PMap())))
                 .toList();
@@ -612,15 +612,15 @@ public class GraphHopper {
         return emBuilder.build();
     }
 
-    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps, Map<String, RegEntry> activeRegEntries, Map<String, String> vehiclesByName,
+    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, String> vehiclesByName,
                                          List<String> ignoredHighways, String dateRangeParserString) {
-        RegEntrySorter sorter = new RegEntrySorter(activeRegEntries);
-        Map<String, RegEntry> sortedRegEntries = new LinkedHashMap<>();
-        sorter.sort().forEach(name -> sortedRegEntries.put(name, activeRegEntries.get(name)));
+        ImportUnitSorter sorter = new ImportUnitSorter(activeImportUnits);
+        Map<String, ImportUnit> sortedImportUnits = new LinkedHashMap<>();
+        sorter.sort().forEach(name -> sortedImportUnits.put(name, activeImportUnits.get(name)));
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         List<TagParser> sortedParsers = new ArrayList<>();
-        sortedRegEntries.forEach((name, regEntry) -> {
-            BiFunction<EncodedValueLookup, PMap, TagParser> createTagParser = regEntry.getCreateTagParser();
+        sortedImportUnits.forEach((name, importUnit) -> {
+            BiFunction<EncodedValueLookup, PMap, TagParser> createTagParser = importUnit.getCreateTagParser();
             if (createTagParser != null)
                 sortedParsers.add(createTagParser.apply(encodingManager, encodedValuesWithProps.getOrDefault(name, new PMap().putObject("date_range_parser", dateRangeParser))));
         });
@@ -805,7 +805,7 @@ public class GraphHopper {
         directory.configure(dataAccessConfig);
 
         Map<String, PMap> encodedValuesWithProps = parseEncodedValueString(encodedValuesString);
-        NameValidator nameValidator = s -> reg.getRegEntry(s) != null;
+        NameValidator nameValidator = s -> importUnitFactory.createImportUnit(s) != null;
         profilesByName.values().
                 forEach(profile -> CustomModelParser.findVariablesForEncodedValuesString(profile.getCustomModel(), nameValidator, encodingManager).
                         forEach(var -> encodedValuesWithProps.putIfAbsent(var, new PMap())));
@@ -836,18 +836,18 @@ public class GraphHopper {
         if (maxSpeedCalculator != null)
             encodedValuesWithProps.put(MaxSpeedEstimated.KEY, new PMap());
 
-        Map<String, RegEntry> activeRegEntries = new LinkedHashMap<>();
+        Map<String, ImportUnit> activeImportUnits = new LinkedHashMap<>();
         ArrayDeque<String> deque = new ArrayDeque<>(encodedValuesWithProps.keySet());
         while (!deque.isEmpty()) {
             String ev = deque.removeFirst();
-            RegEntry regEntry = reg.getRegEntry(ev);
-            if (regEntry == null)
+            ImportUnit ImportUnit = importUnitFactory.createImportUnit(ev);
+            if (ImportUnit == null)
                 throw new IllegalArgumentException("Unknown encoded value: " + ev);
-            if (activeRegEntries.put(ev, regEntry) == null)
-                deque.addAll(regEntry.getRequiredRegEntries());
+            if (activeImportUnits.put(ev, ImportUnit) == null)
+                deque.addAll(ImportUnit.getRequiredImportUnits());
         }
-        encodingManager = buildEncodingManager(encodedValuesWithProps, activeRegEntries, vehiclesByName);
-        osmParsers = buildOSMParsers(encodedValuesWithProps, activeRegEntries, vehiclesByName, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
+        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, vehiclesByName);
+        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, vehiclesByName, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
 
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)

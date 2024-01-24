@@ -25,21 +25,21 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class RegEntry {
+public class ImportUnit {
     private final String name;
     private final Function<PMap, EncodedValue> createEncodedValue;
     private final BiFunction<EncodedValueLookup, PMap, TagParser> createTagParser;
-    private final List<String> requiredRegEntries;
+    private final List<String> requiredImportUnits;
 
-    public static RegEntry create(String name, Function<PMap, EncodedValue> createEncodedValue, BiFunction<EncodedValueLookup, PMap, TagParser> createTagParser, String... requiredRegEntries) {
-        return new RegEntry(name, createEncodedValue, createTagParser, List.of(requiredRegEntries));
+    public static ImportUnit create(String name, Function<PMap, EncodedValue> createEncodedValue, BiFunction<EncodedValueLookup, PMap, TagParser> createTagParser, String... requiredImportUnits) {
+        return new ImportUnit(name, createEncodedValue, createTagParser, List.of(requiredImportUnits));
     }
 
-    private RegEntry(String name, Function<PMap, EncodedValue> createEncodedValue, BiFunction<EncodedValueLookup, PMap, TagParser> createTagParser, List<String> requiredRegEntries) {
+    private ImportUnit(String name, Function<PMap, EncodedValue> createEncodedValue, BiFunction<EncodedValueLookup, PMap, TagParser> createTagParser, List<String> requiredImportUnits) {
         this.name = name;
         this.createEncodedValue = createEncodedValue;
         this.createTagParser = createTagParser;
-        this.requiredRegEntries = requiredRegEntries;
+        this.requiredImportUnits = requiredImportUnits;
     }
 
     public Function<PMap, EncodedValue> getCreateEncodedValue() {
@@ -50,12 +50,12 @@ public class RegEntry {
         return createTagParser;
     }
 
-    public List<String> getRequiredRegEntries() {
-        return requiredRegEntries;
+    public List<String> getRequiredImportUnits() {
+        return requiredImportUnits;
     }
 
     @Override
     public String toString() {
-        return "RegEntry: " + name + " (requires: " + requiredRegEntries + ")";
+        return "ImportUnit: " + name + " (requires: " + requiredImportUnits + ")";
     }
 }
