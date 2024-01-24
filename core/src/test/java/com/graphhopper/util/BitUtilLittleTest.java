@@ -67,20 +67,20 @@ public class BitUtilLittleTest extends AbstractBitUtilTester {
 
     @Test
     public void testUnsignedConversions() {
-        long l = BitUtil.toUnsignedLong(-1);
+        long l = Integer.toUnsignedLong(-1);
         assertEquals(4294967295L, l);
         assertEquals(-1, BitUtil.toSignedInt(l));
 
         int intVal = Integer.MAX_VALUE;
-        long maxInt = (long) intVal;
+        long maxInt = intVal;
         assertEquals(intVal, BitUtil.toSignedInt(maxInt));
 
         intVal++;
-        maxInt = BitUtil.toUnsignedLong(intVal);
+        maxInt = Integer.toUnsignedLong(intVal);
         assertEquals(intVal, BitUtil.toSignedInt(maxInt));
 
         intVal++;
-        maxInt = BitUtil.toUnsignedLong(intVal);
+        maxInt = Integer.toUnsignedLong(intVal);
         assertEquals(intVal, BitUtil.toSignedInt(maxInt));
 
         assertEquals(0xFFFFffffL, (1L << 32) - 1);
