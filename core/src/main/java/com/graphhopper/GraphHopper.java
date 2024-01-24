@@ -426,7 +426,7 @@ public class GraphHopper {
         return this;
     }
 
-    public ImportUnitFactory getReg() {
+    public ImportUnitFactory getImportUnitFactory() {
         return importUnitFactory;
     }
 
