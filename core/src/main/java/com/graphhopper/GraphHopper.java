@@ -801,54 +801,11 @@ public class GraphHopper {
      * Creates the graph from OSM data.
      */
     protected void process(boolean closeEarly) {
+        prepareImport();
+        if (encodingManager == null)
+            throw new IllegalStateException("The EncodingManager must be created in `prepareImport()`");
         GHDirectory directory = new GHDirectory(ghLocation, dataAccessDefaultType);
         directory.configure(dataAccessConfig);
-
-        Map<String, PMap> encodedValuesWithProps = parseEncodedValueString(encodedValuesString);
-        NameValidator nameValidator = s -> importUnitFactory.createImportUnit(s) != null;
-        profilesByName.values().
-                forEach(profile -> CustomModelParser.findVariablesForEncodedValuesString(profile.getCustomModel(), nameValidator, encodingManager).
-                        forEach(var -> encodedValuesWithProps.putIfAbsent(var, new PMap())));
-
-        // these are used in the snap prevention filter (avoid motorway, tunnel, etc.) so they have to be there
-        encodedValuesWithProps.putIfAbsent(RoadClass.KEY, new PMap());
-        encodedValuesWithProps.putIfAbsent(RoadEnvironment.KEY, new PMap());
-        // used by instructions...
-        encodedValuesWithProps.putIfAbsent(Roundabout.KEY, new PMap());
-        encodedValuesWithProps.putIfAbsent(RoadClassLink.KEY, new PMap());
-        encodedValuesWithProps.putIfAbsent(MaxSpeed.KEY, new PMap());
-
-        // we still need these as long as we use vehicle in profiles instead of explicit xyz_access/average_speed/priority
-        Map<String, String> vehiclesByName = getVehiclesByName(vehiclesString, profilesByName.values());
-        vehiclesByName.forEach((vehicle, vehicleStr) -> {
-            if (List.of("car", "roads", "bike", "racingbike", "mtb", "foot").contains(vehicle)) {
-                encodedValuesWithProps.merge(VehicleAccess.key(vehicle), new PMap(vehicleStr), PMap::putAll);
-                encodedValuesWithProps.merge(VehicleSpeed.key(vehicle), new PMap(vehicleStr), PMap::putAll);
-            }
-            if (List.of("bike", "racingbike", "mtb", "foot").contains(vehicle)) {
-                encodedValuesWithProps.merge(VehiclePriority.key(vehicle), new PMap(vehicleStr), PMap::putAll);
-            }
-            // todonow: throw error early here for unknown vehicles? otherwise this will only be caught in checkprofilesconsistency
-        });
-
-        if (urbanDensityCalculationThreads > 0)
-            encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());
-        if (maxSpeedCalculator != null)
-            encodedValuesWithProps.put(MaxSpeedEstimated.KEY, new PMap());
-
-        Map<String, ImportUnit> activeImportUnits = new LinkedHashMap<>();
-        ArrayDeque<String> deque = new ArrayDeque<>(encodedValuesWithProps.keySet());
-        while (!deque.isEmpty()) {
-            String ev = deque.removeFirst();
-            ImportUnit ImportUnit = importUnitFactory.createImportUnit(ev);
-            if (ImportUnit == null)
-                throw new IllegalArgumentException("Unknown encoded value: " + ev);
-            if (activeImportUnits.put(ev, ImportUnit) == null)
-                deque.addAll(ImportUnit.getRequiredImportUnits());
-        }
-        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, vehiclesByName);
-        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, vehiclesByName, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
-
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())
@@ -883,12 +840,62 @@ public class GraphHopper {
         }
     }
 
+    protected void prepareImport() {
+        Map<String, PMap> encodedValuesWithProps = parseEncodedValueString(encodedValuesString);
+        NameValidator nameValidator = s -> importUnitFactory.createImportUnit(s) != null;
+        profilesByName.values().
+                forEach(profile -> CustomModelParser.findVariablesForEncodedValuesString(profile.getCustomModel(), nameValidator, encodingManager).
+                        forEach(var -> encodedValuesWithProps.putIfAbsent(var, new PMap())));
+
+        // these are used in the snap prevention filter (avoid motorway, tunnel, etc.) so they have to be there
+        encodedValuesWithProps.putIfAbsent(RoadClass.KEY, new PMap());
+        encodedValuesWithProps.putIfAbsent(RoadEnvironment.KEY, new PMap());
+        // used by instructions...
+        encodedValuesWithProps.putIfAbsent(Roundabout.KEY, new PMap());
+        encodedValuesWithProps.putIfAbsent(RoadClassLink.KEY, new PMap());
+        encodedValuesWithProps.putIfAbsent(MaxSpeed.KEY, new PMap());
+
+        // we still need these as long as we use vehicle in profiles instead of explicit xyz_access/average_speed/priority
+        Map<String, String> vehiclesByName = getVehiclesByName(vehiclesString, profilesByName.values());
+        vehiclesByName.forEach((vehicle, vehicleStr) -> addEncodedValuesWithPropsForVehicle(vehicle, vehicleStr, encodedValuesWithProps));
+
+        if (urbanDensityCalculationThreads > 0)
+            encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());
+        if (maxSpeedCalculator != null)
+            encodedValuesWithProps.put(MaxSpeedEstimated.KEY, new PMap());
+
+        Map<String, ImportUnit> activeImportUnits = new LinkedHashMap<>();
+        ArrayDeque<String> deque = new ArrayDeque<>(encodedValuesWithProps.keySet());
+        while (!deque.isEmpty()) {
+            String ev = deque.removeFirst();
+            ImportUnit ImportUnit = importUnitFactory.createImportUnit(ev);
+            if (ImportUnit == null)
+                throw new IllegalArgumentException("Unknown encoded value: " + ev);
+            if (activeImportUnits.put(ev, ImportUnit) == null)
+                deque.addAll(ImportUnit.getRequiredImportUnits());
+        }
+        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, vehiclesByName);
+        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, vehiclesByName, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
+    }
+
+    protected void addEncodedValuesWithPropsForVehicle(String vehicle, String vehicleStr, Map<String, PMap> encodedValuesWithProps) {
+        if (List.of("car", "roads").contains(vehicle)) {
+            encodedValuesWithProps.merge(VehicleAccess.key(vehicle), new PMap(vehicleStr), PMap::putAll);
+            encodedValuesWithProps.merge(VehicleSpeed.key(vehicle), new PMap(vehicleStr), PMap::putAll);
+        } else if (List.of("bike", "racingbike", "mtb", "foot").contains(vehicle)) {
+            encodedValuesWithProps.merge(VehicleAccess.key(vehicle), new PMap(vehicleStr), PMap::putAll);
+            encodedValuesWithProps.merge(VehicleSpeed.key(vehicle), new PMap(vehicleStr), PMap::putAll);
+            encodedValuesWithProps.merge(VehiclePriority.key(vehicle), new PMap(vehicleStr), PMap::putAll);
+        } else {
+            throw new IllegalArgumentException("Unknown vehicle: " + vehicle);
+        }
+    }
+
     protected void postImportOSM() {
         // Important note: To deal with via-way turn restrictions we introduce artificial edges in OSMReader (#2689).
         // These are simply copies of real edges. Any further modifications of the graph edges must take care of keeping
         // the artificial edges in sync with their real counterparts. So if an edge attribute shall be changed this change
         // must also be applied to the corresponding artificial edge.
-
 
         calculateUrbanDensity();
 
