@@ -605,14 +605,14 @@ public class GraphHopper {
                 .toList();
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         profilesByName.values().forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
-        vehiclesByName.entrySet().stream()
-                .filter(e -> new PMap(e.getValue()).getBool("turn_costs", false))
+        vehiclePropsByVehicle.entrySet().stream()
+                .filter(e -> e.getValue().getBool("turn_costs", false))
                 .forEach(e -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(e.getKey())));
         encodedValues.forEach(emBuilder::add);
         return emBuilder.build();
     }
 
-    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, String> vehiclePropsByVehicle,
+    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, PMap> vehiclesWithProps,
                                          List<String> ignoredHighways, String dateRangeParserString) {
         ImportUnitSorter sorter = new ImportUnitSorter(activeImportUnits);
         Map<String, ImportUnit> sortedImportUnits = new LinkedHashMap<>();
@@ -642,8 +642,8 @@ public class GraphHopper {
         if (encodingManager.hasEncodedValue(FootNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
 
-        vehiclesByName.entrySet().stream()
-                .filter(e -> new PMap(e.getValue()).getBool("turn_costs", false))
+        vehiclesWithProps.entrySet().stream()
+                .filter(e -> e.getValue().getBool("turn_costs", false))
                 .forEach(e -> {
                     String vehicle = e.getKey();
                     TransportationMode transportationMode =
@@ -653,7 +653,7 @@ public class GraphHopper {
                                     ? TransportationMode.BIKE
                                     : "foot".equals(vehicle)
                                     ? TransportationMode.FOOT
-                                    : TransportationMode.valueOf(new PMap(e.getValue()).getString("transportation_mode", "VEHICLE"));
+                                    : TransportationMode.valueOf(e.getValue().getString("transportation_mode", "VEHICLE"));
                     List<String> osmRestrictions = OSMRoadAccessParser.toOSMRestrictions(transportationMode);
                     osmParsers.addRestrictionTagParser(new RestrictionTagParser(
                             osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(vehicle))));
@@ -864,8 +864,8 @@ public class GraphHopper {
         encodedValuesWithProps.putIfAbsent(MaxSpeed.KEY, new PMap());
 
         // we still need these as long as we use vehicle in profiles instead of explicit xyz_access/average_speed/priority
-        Map<String, String> vehiclesByName = getVehiclesByName(vehiclesString, profilesByName.values());
-        vehiclesByName.forEach((vehicle, vehicleStr) -> addEncodedValuesWithPropsForVehicle(vehicle, vehicleStr, encodedValuesWithProps));
+        Map<String, PMap> vehiclesWithProps = getVehiclePropsByVehicle(vehiclesString, profilesByName.values());
+        vehiclesWithProps.forEach((vehicle, props) -> addEncodedValuesWithPropsForVehicle(vehicle, props, encodedValuesWithProps));
 
         if (urbanDensityCalculationThreads > 0)
             encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());
@@ -882,18 +882,18 @@ public class GraphHopper {
             if (activeImportUnits.put(ev, ImportUnit) == null)
                 deque.addAll(ImportUnit.getRequiredImportUnits());
         }
-        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, vehiclesByName);
-        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, vehiclesByName, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
+        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, vehiclesWithProps);
+        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, vehiclesWithProps, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
     }
 
-    protected void addEncodedValuesWithPropsForVehicle(String vehicle, String vehicleStr, Map<String, PMap> encodedValuesWithProps) {
+    protected void addEncodedValuesWithPropsForVehicle(String vehicle, PMap props, Map<String, PMap> encodedValuesWithProps) {
         if (List.of("car", "roads").contains(vehicle)) {
-            encodedValuesWithProps.merge(VehicleAccess.key(vehicle), new PMap(vehicleStr), PMap::putAll);
-            encodedValuesWithProps.merge(VehicleSpeed.key(vehicle), new PMap(vehicleStr), PMap::putAll);
+            encodedValuesWithProps.merge(VehicleAccess.key(vehicle), props, PMap::putAll);
+            encodedValuesWithProps.merge(VehicleSpeed.key(vehicle), props, PMap::putAll);
         } else if (List.of("bike", "racingbike", "mtb", "foot").contains(vehicle)) {
-            encodedValuesWithProps.merge(VehicleAccess.key(vehicle), new PMap(vehicleStr), PMap::putAll);
-            encodedValuesWithProps.merge(VehicleSpeed.key(vehicle), new PMap(vehicleStr), PMap::putAll);
-            encodedValuesWithProps.merge(VehiclePriority.key(vehicle), new PMap(vehicleStr), PMap::putAll);
+            encodedValuesWithProps.merge(VehicleAccess.key(vehicle), props, PMap::putAll);
+            encodedValuesWithProps.merge(VehicleSpeed.key(vehicle), props, PMap::putAll);
+            encodedValuesWithProps.merge(VehiclePriority.key(vehicle), props, PMap::putAll);
         } else {
             throw new IllegalArgumentException("Unknown vehicle: " + vehicle);
         }
