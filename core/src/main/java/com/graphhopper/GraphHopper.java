@@ -621,10 +621,10 @@ public class GraphHopper {
         return this;
     }
 
-    protected EncodingManager buildEncodingManager(Map<String, String> vehiclesByName, List<String> encodedValueStrings,
+    protected EncodingManager buildEncodingManager(Map<String, PMap> vehiclePropsByVehicle, List<String> encodedValueStrings,
                                                    boolean withUrbanDensity, boolean withMaxSpeedEst, Collection<Profile> profiles) {
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
-        vehiclesByName.forEach((name, vehicleStr) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, new PMap(vehicleStr))));
+        vehiclePropsByVehicle.forEach((name, props) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, props)));
         profiles.forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
         if (withMaxSpeedEst)
             emBuilder.add(MaxSpeedEstimated.create());
@@ -634,7 +634,7 @@ public class GraphHopper {
         return emBuilder.build();
     }
 
-    protected OSMParsers buildOSMParsers(Map<String, String> vehiclesByName, List<String> encodedValueStrings,
+    protected OSMParsers buildOSMParsers(Map<String, PMap> vehiclePropsByVehicle, List<String> encodedValueStrings,
                                          List<String> ignoredHighways, String dateRangeParserString) {
         OSMParsers osmParsers = new OSMParsers();
         ignoredHighways.forEach(osmParsers::addIgnoredHighway);
@@ -677,9 +677,9 @@ public class GraphHopper {
 
         DateRangeParser dateRangeParser = DateRangeParser.createInstance(dateRangeParserString);
         Set<String> added = new HashSet<>();
-        vehiclesByName.forEach((name, vehicleStr) -> {
+        vehiclePropsByVehicle.forEach((name, props) -> {
             VehicleTagParsers vehicleTagParsers = vehicleTagParserFactory.createParsers(encodingManager, name,
-                    new PMap(vehicleStr).putObject("date_range_parser", dateRangeParser));
+                    new PMap(props).putObject("date_range_parser", dateRangeParser));
             if (vehicleTagParsers == null)
                 return;
             vehicleTagParsers.getTagParsers().forEach(tagParser -> {
@@ -701,7 +701,7 @@ public class GraphHopper {
                         && osmParsers.getRestrictionTagParsers().stream().noneMatch(r -> r.getTurnRestrictionEnc().getName().equals(turnRestrictionKey))) {
                     List<String> restrictions = tagParser instanceof AbstractAccessParser
                             ? ((AbstractAccessParser) tagParser).getRestrictions()
-                            : OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(new PMap(vehicleStr).getString("transportation_mode", "VEHICLE")));
+                            : OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(props.getString("transportation_mode", "VEHICLE")));
                     osmParsers.addRestrictionTagParser(new RestrictionTagParser(restrictions, encodingManager.getTurnBooleanEncodedValue(turnRestrictionKey)));
                 }
             });
@@ -723,26 +723,34 @@ public class GraphHopper {
                 .collect(Collectors.toList());
     }
 
-    public static Map<String, String> getVehiclesByName(String vehiclesStr, Collection<Profile> profiles) {
-        Map<String, String> vehiclesMap = new LinkedHashMap<>();
+    public static Map<String, PMap> getVehiclePropsByVehicle(String vehiclesStr, Collection<Profile> profiles) {
+        Map<String, PMap> vehicleProps = new LinkedHashMap<>();
         for (String encoderStr : vehiclesStr.split(",")) {
             String name = encoderStr.split("\\|")[0].trim();
             if (name.isEmpty())
                 continue;
-            if (vehiclesMap.containsKey(name))
-                throw new IllegalArgumentException("Duplicate vehicle: " + name + " in: " + encoderStr);
-            vehiclesMap.put(name, encoderStr);
+            if (vehicleProps.containsKey(name))
+                throw new IllegalArgumentException("Duplicate vehicle: " + name + " in: " + vehicleProps);
+            vehicleProps.put(name, new PMap(encoderStr));
         }
-        Map<String, String> vehiclesFromProfiles = new LinkedHashMap<>();
+        Map<String, PMap> vehiclePropsFromProfiles = new LinkedHashMap<>();
         for (Profile profile : profiles) {
+            if (profile.isTurnCosts() && vehicleProps.containsKey(profile.getVehicle())
+                    && vehicleProps.get(profile.getVehicle()).has("turn_costs") && !vehicleProps.get(profile.getVehicle()).getBool("turn_costs", false))
+                throw new IllegalArgumentException("turn_costs=false was set explicitly for vehicle '" + profile.getVehicle() + "', but profile '" + profile.getName() + "' using it uses turn costs");
             // if a profile uses a vehicle with turn costs make sure we add that vehicle with turn costs
             String vehicle = profile.getVehicle().trim();
-            if (!vehiclesFromProfiles.containsKey(vehicle) || profile.isTurnCosts())
-                vehiclesFromProfiles.put(vehicle, vehicle + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
+            if (!vehiclePropsFromProfiles.containsKey(vehicle) || profile.isTurnCosts())
+                vehiclePropsFromProfiles.put(vehicle, new PMap(profile.isTurnCosts() ? "turn_costs=true" : ""));
         }
         // vehicles from profiles are only taken into account when they were not given explicitly
-        vehiclesFromProfiles.forEach(vehiclesMap::putIfAbsent);
-        return vehiclesMap;
+        vehiclePropsFromProfiles.forEach(vehicleProps::putIfAbsent);
+        // ... but the turn costs property is always determined by the profile
+        vehiclePropsFromProfiles.forEach((vehicle, props) -> {
+            if (props.getBool("turn_costs", false) && !vehicleProps.get(vehicle).getBool("turn_costs", false))
+                vehicleProps.get(vehicle).putObject("turn_costs", true);
+        });
+        return vehicleProps;
     }
 
     private static ElevationProvider createElevationProvider(GraphHopperConfig ghConfig) {
@@ -859,11 +867,11 @@ public class GraphHopper {
         directory.configure(dataAccessConfig);
         boolean withUrbanDensity = urbanDensityCalculationThreads > 0;
         boolean withMaxSpeedEstimation = maxSpeedCalculator != null;
-        Map<String, String> vehiclesByName = getVehiclesByName(vehiclesString, profilesByName.values());
+        Map<String, PMap> vehiclePropsByVehicle = getVehiclePropsByVehicle(vehiclesString, profilesByName.values());
         List<String> encodedValueStrings = getEncodedValueStrings(encodedValuesString);
-        encodingManager = buildEncodingManager(vehiclesByName, encodedValueStrings, withUrbanDensity,
+        encodingManager = buildEncodingManager(vehiclePropsByVehicle, encodedValueStrings, withUrbanDensity,
                 withMaxSpeedEstimation, profilesByName.values());
-        osmParsers = buildOSMParsers(vehiclesByName, encodedValueStrings, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
+        osmParsers = buildOSMParsers(vehiclePropsByVehicle, encodedValueStrings, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
         baseGraph = new BaseGraph.Builder(getEncodingManager())
                 .setDir(directory)
                 .set3D(hasElevation())
