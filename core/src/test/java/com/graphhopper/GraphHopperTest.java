@@ -2805,5 +2805,32 @@ public class GraphHopperTest {
         }
     }
 
+    @Test
+    void testGetVehiclePropsByVehicle() {
+        Profile car = new Profile("car").setVehicle("car").setTurnCosts(false);
+        Profile carTC = new Profile("car_tc").setVehicle("car").setTurnCosts(true);
+
+        assertTurnCostsProp("", List.of(car), null);
+        assertTurnCostsProp("car", List.of(car), null);
+        assertTurnCostsProp("car|turn_costs=false", List.of(car), false);
+        assertTurnCostsProp("car|turn_costs=true", List.of(car), true);
+
+        assertTurnCostsProp("", List.of(car, carTC), true);
+        assertTurnCostsProp("car", List.of(car, carTC), true);
+        assertTrue(assertThrows(IllegalArgumentException.class, () -> assertTurnCostsProp("car|turn_costs=false", List.of(car, carTC), true))
+                .getMessage().contains("turn_costs=false was set explicitly for vehicle 'car', but profile 'car_tc' using it uses turn costs"));
+        assertTurnCostsProp("car|turn_costs=true", List.of(car, carTC), true);
+    }
+
+    private void assertTurnCostsProp(String vehicleStr, List<Profile> profiles, Boolean turnCosts) {
+        Map<String, PMap> p = GraphHopper.getVehiclePropsByVehicle(vehicleStr, profiles);
+        assertEquals(1, p.size());
+        PMap props = p.get("car");
+        if (turnCosts == null)
+            assertFalse(props.has("turn_costs"));
+        else
+            assertEquals(turnCosts, props.getBool("turn_costs", false));
+    }
+
 }
 

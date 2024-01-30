@@ -598,7 +598,7 @@ public class GraphHopper {
         return this;
     }
 
-    protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, String> vehiclesByName) {
+    protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, PMap> vehiclePropsByVehicle) {
         List<EncodedValue> encodedValues = activeImportUnits.entrySet().stream()
                 .map(e -> e.getValue().getCreateEncodedValue()
                         .apply(encodedValuesWithProps.getOrDefault(e.getKey(), new PMap())))
@@ -612,7 +612,7 @@ public class GraphHopper {
         return emBuilder.build();
     }
 
-    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, String> vehiclesByName,
+    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, String> vehiclePropsByVehicle,
                                          List<String> ignoredHighways, String dateRangeParserString) {
         ImportUnitSorter sorter = new ImportUnitSorter(activeImportUnits);
         Map<String, ImportUnit> sortedImportUnits = new LinkedHashMap<>();
@@ -669,26 +669,34 @@ public class GraphHopper {
         return encodedValuesWithProps;
     }
 
-    public static Map<String, String> getVehiclesByName(String vehiclesStr, Collection<Profile> profiles) {
-        Map<String, String> vehiclesMap = new LinkedHashMap<>();
+    public static Map<String, PMap> getVehiclePropsByVehicle(String vehiclesStr, Collection<Profile> profiles) {
+        Map<String, PMap> vehicleProps = new LinkedHashMap<>();
         for (String encoderStr : vehiclesStr.split(",")) {
             String name = encoderStr.split("\\|")[0].trim();
             if (name.isEmpty())
                 continue;
-            if (vehiclesMap.containsKey(name))
-                throw new IllegalArgumentException("Duplicate vehicle: " + name + " in: " + encoderStr);
-            vehiclesMap.put(name, encoderStr);
+            if (vehicleProps.containsKey(name))
+                throw new IllegalArgumentException("Duplicate vehicle: " + name + " in: " + vehicleProps);
+            vehicleProps.put(name, new PMap(encoderStr));
         }
-        Map<String, String> vehiclesFromProfiles = new LinkedHashMap<>();
+        Map<String, PMap> vehiclePropsFromProfiles = new LinkedHashMap<>();
         for (Profile profile : profiles) {
+            if (profile.isTurnCosts() && vehicleProps.containsKey(profile.getVehicle())
+                    && vehicleProps.get(profile.getVehicle()).has("turn_costs") && !vehicleProps.get(profile.getVehicle()).getBool("turn_costs", false))
+                throw new IllegalArgumentException("turn_costs=false was set explicitly for vehicle '" + profile.getVehicle() + "', but profile '" + profile.getName() + "' using it uses turn costs");
             // if a profile uses a vehicle with turn costs make sure we add that vehicle with turn costs
             String vehicle = profile.getVehicle().trim();
-            if (!vehiclesFromProfiles.containsKey(vehicle) || profile.isTurnCosts())
-                vehiclesFromProfiles.put(vehicle, vehicle + (profile.isTurnCosts() ? "|turn_costs=true" : ""));
+            if (!vehiclePropsFromProfiles.containsKey(vehicle) || profile.isTurnCosts())
+                vehiclePropsFromProfiles.put(vehicle, new PMap(profile.isTurnCosts() ? "turn_costs=true" : ""));
         }
         // vehicles from profiles are only taken into account when they were not given explicitly
-        vehiclesFromProfiles.forEach(vehiclesMap::putIfAbsent);
-        return vehiclesMap;
+        vehiclePropsFromProfiles.forEach(vehicleProps::putIfAbsent);
+        // ... but the turn costs property is always determined by the profile
+        vehiclePropsFromProfiles.forEach((vehicle, props) -> {
+            if (props.getBool("turn_costs", false) && !vehicleProps.get(vehicle).getBool("turn_costs", false))
+                vehicleProps.get(vehicle).putObject("turn_costs", true);
+        });
+        return vehicleProps;
     }
 
     private static ElevationProvider createElevationProvider(GraphHopperConfig ghConfig) {
