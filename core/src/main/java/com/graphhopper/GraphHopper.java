@@ -599,16 +599,35 @@ public class GraphHopper {
     }
 
     protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, PMap> vehiclePropsByVehicle) {
-        List<EncodedValue> encodedValues = activeImportUnits.entrySet().stream()
+        List<EncodedValue> encodedValues = new ArrayList<>(activeImportUnits.entrySet().stream()
                 .map(e -> e.getValue().getCreateEncodedValue()
                         .apply(encodedValuesWithProps.getOrDefault(e.getKey(), new PMap())))
-                .toList();
+                .toList());
+        profilesByName.values().forEach(profile -> encodedValues.add(Subnetwork.create(profile.getName())));
+
+        // sort the encoded values, just so it is easier to compare with previous versions...
+        List<String> sortedEVs = new ArrayList<>();
+        vehiclePropsByVehicle.keySet().forEach(vehicle -> {
+            sortedEVs.add(VehicleAccess.key(vehicle));
+            sortedEVs.add(VehicleSpeed.key(vehicle));
+            sortedEVs.add(VehiclePriority.key(vehicle));
+        });
+        profilesByName.keySet().forEach(profile -> {
+            sortedEVs.add(Subnetwork.key(profile));
+        });
+        sortedEVs.add(MaxSpeedEstimated.KEY);
+        sortedEVs.add(UrbanDensity.KEY);
+        sortedEVs.addAll(List.of("max_speed", "road_class", "road_class_link", "road_environment", "road_access", "surface", "smoothness",
+                "hazmat", "hazmat_tunnel", "hazmat_water", "toll", "track_type", "max_weight", "max_width", "max_height", "max_length", "lanes",
+                "hike_rating", "mtb_rating", "horse_rating", "average_slope", "max_slope", "curvature", "bike_network", "foot_network",
+                "country", "urban_ee", "hgv", "crossing", "roundabout", "ferry_speed", "get_off_bike"));
+        encodedValues.sort(Comparator.comparingInt(ev -> sortedEVs.indexOf(ev.getName())));
+
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
-        profilesByName.values().forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
+        encodedValues.forEach(emBuilder::add);
         vehiclePropsByVehicle.entrySet().stream()
                 .filter(e -> e.getValue().getBool("turn_costs", false))
                 .forEach(e -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(e.getKey())));
-        encodedValues.forEach(emBuilder::add);
         return emBuilder.build();
     }
 
@@ -898,6 +917,7 @@ public class GraphHopper {
             encodedValuesWithProps.merge(VehicleSpeed.key(vehicle), props, PMap::putAll);
             encodedValuesWithProps.merge(VehiclePriority.key(vehicle), props, PMap::putAll);
         } else {
+            // todonow: throw more specific error for: car4wd (custom_models/car4wd.json), bike2 (custom_models/bike.json, see #2668), hike (custom_models/hike.json, #2759), motorcycle (custom_models/motorcycle.json, #2781), wheelchair
             throw new IllegalArgumentException("Unknown vehicle: '" + vehicle + "'");
         }
     }
