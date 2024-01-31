@@ -645,21 +645,21 @@ public class GraphHopper {
         vehiclesWithProps.entrySet().stream()
                 .filter(e -> e.getValue().getBool("turn_costs", false))
                 .forEach(e -> {
-                    TransportationMode transportationMode = getTransportationModeForVehicle(e.getKey(), e.getValue());
-                    List<String> osmRestrictions = OSMRoadAccessParser.toOSMRestrictions(transportationMode);
+                    List<String> osmRestrictions = getTurnRestrictionsForVehicle(e.getKey(), e.getValue());
                     osmParsers.addRestrictionTagParser(new RestrictionTagParser(
                             osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(e.getKey()))));
                 });
         return osmParsers;
     }
 
-    protected TransportationMode getTransportationModeForVehicle(String vehicle, PMap props) {
+    protected List<String> getTurnRestrictionsForVehicle(String vehicle, PMap props) {
         return switch (vehicle) {
-            case "car" -> TransportationMode.CAR;
-            case "bike", "mtb", "racingbike" -> TransportationMode.BIKE;
-            case "foot" -> TransportationMode.FOOT;
+            case "car" -> OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR);
+            case "bike", "mtb", "racingbike" ->
+                    OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE);
+            case "foot" -> OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT);
             case "roads" ->
-                    TransportationMode.valueOf(props.getString("transportation_mode", "VEHICLE"));
+                    OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(props.getString("transportation_mode", "VEHICLE")));
             default -> throw new IllegalArgumentException("Unknown vehicle: " + vehicle);
         };
     }
