@@ -22,7 +22,7 @@ import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.parsers.*;
 
-public class DefaultImportUnitFactory implements ImportUnitFactory {
+public class DefaultImportRegistry implements ImportRegistry {
     @Override
     public ImportUnit createImportUnit(String name) {
         if (Roundabout.KEY.equals(name))

@@ -1138,7 +1138,7 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
 
         if (!withTunnelInterpolation) {
-            hopper.setImportUnitFactory(new DefaultImportUnitFactory() {
+            hopper.setImportRegistry(new DefaultImportRegistry() {
                 @Override
                 public ImportUnit createImportUnit(String name) {
                     ImportUnit ImportUnit = super.createImportUnit(name);

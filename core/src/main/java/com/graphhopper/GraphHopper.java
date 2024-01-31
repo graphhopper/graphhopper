@@ -125,7 +125,7 @@ public class GraphHopper {
     // for data reader
     private String osmFile;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
-    private ImportUnitFactory importUnitFactory = new DefaultImportUnitFactory();
+    private ImportRegistry importRegistry = new DefaultImportRegistry();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     private String dateRangeParserString = "";
@@ -421,13 +421,13 @@ public class GraphHopper {
         return trMap;
     }
 
-    public GraphHopper setImportUnitFactory(ImportUnitFactory importUnitFactory) {
-        this.importUnitFactory = importUnitFactory;
+    public GraphHopper setImportRegistry(ImportRegistry importRegistry) {
+        this.importRegistry = importRegistry;
         return this;
     }
 
-    public ImportUnitFactory getImportUnitFactory() {
-        return importUnitFactory;
+    public ImportRegistry getImportRegistry() {
+        return importRegistry;
     }
 
     public GraphHopper setCustomAreasDirectory(String customAreasDirectory) {
@@ -853,7 +853,7 @@ public class GraphHopper {
 
     protected void prepareImport() {
         Map<String, PMap> encodedValuesWithProps = parseEncodedValueString(encodedValuesString);
-        NameValidator nameValidator = s -> importUnitFactory.createImportUnit(s) != null;
+        NameValidator nameValidator = s -> importRegistry.createImportUnit(s) != null;
         profilesByName.values().
                 forEach(profile -> CustomModelParser.findVariablesForEncodedValuesString(profile.getCustomModel(), nameValidator, encodingManager).
                         forEach(var -> encodedValuesWithProps.putIfAbsent(var, new PMap())));
@@ -879,7 +879,7 @@ public class GraphHopper {
         ArrayDeque<String> deque = new ArrayDeque<>(encodedValuesWithProps.keySet());
         while (!deque.isEmpty()) {
             String ev = deque.removeFirst();
-            ImportUnit ImportUnit = importUnitFactory.createImportUnit(ev);
+            ImportUnit ImportUnit = importRegistry.createImportUnit(ev);
             if (ImportUnit == null)
                 throw new IllegalArgumentException("Unknown encoded value: " + ev);
             if (activeImportUnits.put(ev, ImportUnit) == null)

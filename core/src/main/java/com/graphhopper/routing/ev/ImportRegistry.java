@@ -18,6 +18,6 @@
 
 package com.graphhopper.routing.ev;
 
-public interface ImportUnitFactory {
+public interface ImportRegistry {
     ImportUnit createImportUnit(String name);
 }

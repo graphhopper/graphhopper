@@ -40,14 +40,14 @@ public class ImportUnitSorter {
 
     private void visit(String strN) {
         if (permanentMarked.contains(strN)) return;
-        ImportUnit ImportUnit = map.get(strN);
-        if (ImportUnit == null)
+        ImportUnit importUnit = map.get(strN);
+        if (importUnit == null)
             throw new IllegalArgumentException("cannot find reg " + strN);
         if (temporaryMarked.contains(strN))
-            throw new IllegalArgumentException("cyclic required parsers are not allowed: " + ImportUnit + " " + ImportUnit.getRequiredImportUnits());
+            throw new IllegalArgumentException("cyclic required parsers are not allowed: " + importUnit + " " + importUnit.getRequiredImportUnits());
 
         temporaryMarked.add(strN);
-        for (String strM : ImportUnit.getRequiredImportUnits()) {
+        for (String strM : importUnit.getRequiredImportUnits()) {
             visit(strM);
         }
         temporaryMarked.remove(strN);
