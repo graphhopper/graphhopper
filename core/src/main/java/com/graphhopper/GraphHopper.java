@@ -898,7 +898,7 @@ public class GraphHopper {
             encodedValuesWithProps.merge(VehicleSpeed.key(vehicle), props, PMap::putAll);
             encodedValuesWithProps.merge(VehiclePriority.key(vehicle), props, PMap::putAll);
         } else {
-            throw new IllegalArgumentException("Unknown vehicle: " + vehicle);
+            throw new IllegalArgumentException("Unknown vehicle: '" + vehicle + "'");
         }
     }
 

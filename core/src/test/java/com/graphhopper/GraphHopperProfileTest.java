@@ -63,7 +63,7 @@ public class GraphHopperProfileTest {
         final GraphHopper hopper = new GraphHopper();
         hopper.setGraphHopperLocation(GH_LOCATION).setStoreOnFlush(false).
                 setProfiles(new Profile("profile").setVehicle("your_car"));
-        assertIllegalArgument(hopper::importOrLoad, "Unknown vehicle 'your_car' in profile");
+        assertIllegalArgument(hopper::importOrLoad, "Unknown vehicle: 'your_car'");
     }
 
     @Test
