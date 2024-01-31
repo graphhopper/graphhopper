@@ -654,11 +654,14 @@ public class GraphHopper {
         }
 
         // todonow: why do we do this in a loop with the 'added' set in master? can we not just add the rel parsers based on the existence of the network evs like this?
-        if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
+        // todonow: add the relation tag parsers no matter what 'vehicles' there are? but keep it consistent with master first...
+        final boolean hasBike = vehiclesWithProps.containsKey("bike") || vehiclesWithProps.containsKey("mtb") || vehiclesWithProps.containsKey("racingbike");
+        final boolean hasFoot = vehiclesWithProps.containsKey("foot");
+        if (hasBike && encodingManager.hasEncodedValue(BikeNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
-        if (encodingManager.hasEncodedValue(MtbNetwork.KEY))
+        if (hasBike && encodingManager.hasEncodedValue(MtbNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMMtbNetworkTagParser(encodingManager.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig));
-        if (encodingManager.hasEncodedValue(FootNetwork.KEY))
+        if (hasFoot && encodingManager.hasEncodedValue(FootNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
 
         vehiclesWithProps.entrySet().stream()
