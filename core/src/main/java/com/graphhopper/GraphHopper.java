@@ -645,20 +645,23 @@ public class GraphHopper {
         vehiclesWithProps.entrySet().stream()
                 .filter(e -> e.getValue().getBool("turn_costs", false))
                 .forEach(e -> {
-                    String vehicle = e.getKey();
-                    TransportationMode transportationMode =
-                            "car".equals(vehicle)
-                                    ? TransportationMode.CAR
-                                    : "bike".equals(vehicle) || "mtb".equals(vehicle) || "racingbike".equals(vehicle)
-                                    ? TransportationMode.BIKE
-                                    : "foot".equals(vehicle)
-                                    ? TransportationMode.FOOT
-                                    : TransportationMode.valueOf(e.getValue().getString("transportation_mode", "VEHICLE"));
+                    TransportationMode transportationMode = getTransportationModeForVehicle(e.getKey(), e.getValue());
                     List<String> osmRestrictions = OSMRoadAccessParser.toOSMRestrictions(transportationMode);
                     osmParsers.addRestrictionTagParser(new RestrictionTagParser(
-                            osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(vehicle))));
+                            osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(e.getKey()))));
                 });
         return osmParsers;
+    }
+
+    protected TransportationMode getTransportationModeForVehicle(String vehicle, PMap props) {
+        return switch (vehicle) {
+            case "car" -> TransportationMode.CAR;
+            case "bike", "mtb", "racingbike" -> TransportationMode.BIKE;
+            case "foot" -> TransportationMode.FOOT;
+            case "roads" ->
+                    TransportationMode.valueOf(props.getString("transportation_mode", "VEHICLE"));
+            default -> throw new IllegalArgumentException("Unknown vehicle: " + vehicle);
+        };
     }
 
     public static Map<String, PMap> parseEncodedValueString(String encodedValuesStr) {
