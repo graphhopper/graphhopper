@@ -915,12 +915,30 @@ public class GraphHopper {
         if (List.of("car", "roads").contains(vehicle)) {
             encodedValuesWithProps.merge(VehicleAccess.key(vehicle), props, PMap::putAll);
             encodedValuesWithProps.merge(VehicleSpeed.key(vehicle), props, PMap::putAll);
-        } else if (List.of("bike", "racingbike", "mtb", "foot").contains(vehicle)) {
+        } else if (List.of("bike", "racingbike", "mtb").contains(vehicle)) {
             encodedValuesWithProps.merge(VehicleAccess.key(vehicle), props, PMap::putAll);
             encodedValuesWithProps.merge(VehicleSpeed.key(vehicle), props, PMap::putAll);
             encodedValuesWithProps.merge(VehiclePriority.key(vehicle), props, PMap::putAll);
+            encodedValuesWithProps.merge(BikeNetwork.KEY, props, PMap::putAll);
+            encodedValuesWithProps.merge(MtbNetwork.KEY, props, PMap::putAll);
+            encodedValuesWithProps.merge(GetOffBike.KEY, props, PMap::putAll);
+            encodedValuesWithProps.merge(Smoothness.KEY, props, PMap::putAll);
+        } else if ("foot".equals(vehicle)) {
+            encodedValuesWithProps.merge(VehicleAccess.key(vehicle), props, PMap::putAll);
+            encodedValuesWithProps.merge(VehicleSpeed.key(vehicle), props, PMap::putAll);
+            encodedValuesWithProps.merge(VehiclePriority.key(vehicle), props, PMap::putAll);
+            encodedValuesWithProps.merge(FootNetwork.KEY, props, PMap::putAll);
+        } else if ("car4wd".equals(vehicle)) {
+            throw new IllegalArgumentException("Vehicle 'car4wd' is no longer supported, use custom_models/car4wd.json instead. See #2651");
+        } else if ("bike2".equals(vehicle)) {
+            throw new IllegalArgumentException("Vehicle 'bike2' is no longer supported, use custom_models/bike.json instead. See #2668");
+        } else if ("hike".equals(vehicle)) {
+            throw new IllegalArgumentException("Vehicle 'hike' is no longer supported, use custom_models/hike.json instead. See #2759");
+        } else if ("motorcycle".equals(vehicle)) {
+            throw new IllegalArgumentException("Vehicle 'motorcycle' is no longer supported, use custom_models/motorcycle.json instead. See #2781");
+        } else if ("wheelchair".equals(vehicle)) {
+            throw new IllegalArgumentException("Vehicle 'wheelchair' is no longer supported. See #2900");
         } else {
-            // todonow: throw more specific error for: car4wd (custom_models/car4wd.json), bike2 (custom_models/bike.json, see #2668), hike (custom_models/hike.json, #2759), motorcycle (custom_models/motorcycle.json, #2781), wheelchair
             throw new IllegalArgumentException("Unknown vehicle: '" + vehicle + "'");
         }
     }
