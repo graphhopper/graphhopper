@@ -2,7 +2,10 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.parsers.CountryParser;
 import com.graphhopper.routing.util.parsers.OSMMaxSpeedParser;
+import com.graphhopper.routing.util.parsers.OSMRoadClassParser;
+import com.graphhopper.routing.util.parsers.StateParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
@@ -12,10 +15,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.routing.ev.MaxSpeed.UNLIMITED_SIGN_SPEED;
 import static com.graphhopper.routing.ev.MaxSpeed.UNSET_SPEED;
+import static com.graphhopper.routing.ev.State.*;
 import static com.graphhopper.routing.ev.UrbanDensity.CITY;
 import static com.graphhopper.routing.ev.UrbanDensity.RURAL;
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,13 +43,18 @@ class MaxSpeedCalculatorTest {
         EnumEncodedValue<RoadClass> roadClassEnc = RoadClass.create();
         urbanDensity = UrbanDensity.create();
         EnumEncodedValue<Country> countryEnc = Country.create();
+        EnumEncodedValue<State> stateEnc = State.create();
         maxSpeedEnc = MaxSpeed.create();
         maxSpeedEstEnc = MaxSpeedEstimated.create();
-        em = EncodingManager.start().add(urbanDensity).add(countryEnc).add(Roundabout.create()).add(Surface.create()).
-                add(Lanes.create()).add(roadClassEnc).add(maxSpeedEnc).add(maxSpeedEstEnc).add(accessEnc).add(speedEnc).build();
+        em = EncodingManager.start().add(urbanDensity).add(stateEnc).add(countryEnc).
+                add(Roundabout.create()).add(Surface.create()).add(Lanes.create()).add(roadClassEnc).
+                add(maxSpeedEnc).add(maxSpeedEstEnc).add(accessEnc).add(speedEnc).build();
         graph = new BaseGraph.Builder(em).create();
         calc = new MaxSpeedCalculator(defaultSpeeds);
         parsers = new OSMParsers();
+        parsers.addWayTagParser(new StateParser(stateEnc));
+        parsers.addWayTagParser(new CountryParser(countryEnc));
+        parsers.addWayTagParser(new OSMRoadClassParser(roadClassEnc));
         parsers.addWayTagParser(new OSMMaxSpeedParser(maxSpeedEnc));
         parsers.addWayTagParser(calc.getParser());
 
@@ -239,6 +249,94 @@ class MaxSpeedCalculatorTest {
         calc.fillMaxSpeed(graph, em);
         assertEquals(50, edge.get(maxSpeedEnc), 1);
         assertEquals(100, edge.getReverse(maxSpeedEnc), 1);
+    }
+
+    @Test
+    public void testAllCountriesForMissingSpeedLimitOfFreeways() {
+        List<EdgeIteratorState> edges = new ArrayList<>();
+        for (Country c : Country.values()) {
+            if (c == Country.MISSING) continue;
+
+            ReaderWay way = new ReaderWay(0L);
+            way.setTag("country", c);
+            way.setTag("highway", "motorway");
+            if (c.getStates().isEmpty()) {
+                edges.add(createEdge(way).set(urbanDensity, CITY));
+                edges.add(createEdge(way).set(urbanDensity, RURAL));
+            } else
+                for (State s : c.getStates()) {
+                    way.setTag("country_state", s);
+                    edges.add(createEdge(way).set(urbanDensity, CITY));
+                    edges.add(createEdge(way).set(urbanDensity, RURAL));
+                }
+        }
+        calc.fillMaxSpeed(graph, em);
+
+        Map<String, Double> maxSpeedMap = new HashMap<>();
+        maxSpeedMap.put(Country.ATG + "|" + MISSING + "|" + RURAL, 64.); // wiki is correct
+        maxSpeedMap.put(Country.BHS + "|" + MISSING + "|" + RURAL, 48.); // TODO without state the rural speed limit should be 72
+        maxSpeedMap.put(Country.BRB + "|" + MISSING + "|" + RURAL, 60.); // wiki is correct
+        maxSpeedMap.put(Country.BTN + "|" + MISSING + "|" + RURAL, 50.); // wiki is correct
+        maxSpeedMap.put(Country.CAN + "|" + CA_YT + "|" + RURAL, 50.); // TODO wiki incomplete
+        maxSpeedMap.put(Country.CRI + "|" + MISSING + "|" + RURAL, 60.); // TODO wiki: speed limit seems to be 90
+        maxSpeedMap.put(Country.DOM + "|" + MISSING + "|" + RURAL, 60.); // TODO wiki: seems to be 80 or for highways 120
+        maxSpeedMap.put(Country.FSM + "|" + FM_KSA + "|" + RURAL, 40.); // wiki is correct
+        maxSpeedMap.put(Country.FSM + "|" + FM_PNI + "|" + RURAL, 40.); // wiki is correct
+        maxSpeedMap.put(Country.FSM + "|" + FM_TRK + "|" + RURAL, 40.); // wiki is correct
+        maxSpeedMap.put(Country.FSM + "|" + FM_YAP + "|" + RURAL, 40.); // wiki is correct
+        maxSpeedMap.put(Country.GGY + "|" + MISSING + "|" + RURAL, 56.);// wiki is correct
+        maxSpeedMap.put(Country.GRD + "|" + MISSING + "|" + RURAL, 64.);// wiki is correct
+        maxSpeedMap.put(Country.GUY + "|" + MISSING + "|" + RURAL, 64.);
+        maxSpeedMap.put(Country.JEY + "|" + MISSING + "|" + RURAL, 64.);
+        maxSpeedMap.put(Country.KIR + "|" + MISSING + "|" + RURAL, 60.);
+        maxSpeedMap.put(Country.KNA + "|" + MISSING + "|" + RURAL, 64.);
+        maxSpeedMap.put(Country.LBR + "|" + MISSING + "|" + RURAL, 72.);
+        maxSpeedMap.put(Country.MCO + "|" + MISSING + "|" + RURAL, 50.);
+        maxSpeedMap.put(Country.MHL + "|" + MISSING + "|" + RURAL, 64.);
+        maxSpeedMap.put(Country.MSR + "|" + MISSING + "|" + RURAL, 64.);
+        maxSpeedMap.put(Country.MUS + "|" + MISSING + "|" + RURAL, 60.);
+        maxSpeedMap.put(Country.NIC + "|" + MISSING + "|" + RURAL, 60.);
+        maxSpeedMap.put(Country.NRU + "|" + MISSING + "|" + RURAL, 50.);
+        maxSpeedMap.put(Country.PCN + "|" + MISSING + "|" + RURAL, 48.);
+        maxSpeedMap.put(Country.PER + "|" + MISSING + "|" + RURAL, 60.);
+        maxSpeedMap.put(Country.PHL + "|" + MISSING + "|" + RURAL, 40.);
+        maxSpeedMap.put(Country.SGP + "|" + MISSING + "|" + RURAL, 50.);
+        maxSpeedMap.put(Country.SHN + "|" + MISSING + "|" + RURAL, 48.);
+        maxSpeedMap.put(Country.TUV + "|" + MISSING + "|" + RURAL, 40.);
+        maxSpeedMap.put(Country.TWN + "|" + MISSING + "|" + RURAL, 50.);
+        maxSpeedMap.put(Country.USA + "|" + US_AL + "|" + RURAL, 72.);
+        maxSpeedMap.put(Country.USA + "|" + US_DC + "|" + RURAL, 32.);
+        maxSpeedMap.put(Country.USA + "|" + US_ME + "|" + RURAL, 72.);
+        maxSpeedMap.put(Country.USA + "|" + US_MA + "|" + RURAL, 64.);
+        maxSpeedMap.put(Country.WSM + "|" + MISSING + "|" + RURAL, 56.);
+
+        for (EdgeIteratorState edge : edges) {
+            State state = edge.get(em.getEnumEncodedValue(State.KEY, State.class));
+            Country country = edge.get(em.getEnumEncodedValue(Country.KEY, Country.class));
+            UrbanDensity ub = edge.get(urbanDensity);
+            Double value = maxSpeedMap.get(country + "|" + state + "|" + ub);
+            String msg = edge.getEdge() + ", max:" + edge.get(maxSpeedEnc) + ", " + country + ", " + state + ", " + ub;
+            if (value == null) {
+                assertTrue(edge.get(maxSpeedEnc) >= 80, msg);
+            } else {
+                assertEquals(value, edge.get(maxSpeedEnc), msg);
+            }
+        }
+    }
+
+    @Test
+    public void testMissingSpeedLimitForTrunk() {
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("country", Country.USA);
+        way.setTag("highway", "trunk");
+        way.setTag("country_state", State.US_CA);
+        EdgeIteratorState edge = createEdge(way).set(urbanDensity, CITY);
+        calc.fillMaxSpeed(graph, em);
+        assertTrue(edge.get(maxSpeedEnc) > 100, "max:" + edge.get(maxSpeedEnc));
+
+        edge = createEdge(way).set(urbanDensity, RURAL);
+        calc.fillMaxSpeed(graph, em);
+        assertTrue(edge.get(maxSpeedEnc) > 100, "max:" + edge.get(maxSpeedEnc));
     }
 
     @Test
