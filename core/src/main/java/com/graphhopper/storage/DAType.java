@@ -52,6 +52,10 @@ public class DAType {
      */
     public static final DAType MMAP_FOREIGN = new DAType(MemRef.MMAP_FOREIGN, true, false, true);
     /**
+     * Access off-heap memory via foreign memory access API.
+     */
+    public static final DAType OFF_HEAP = new DAType(MemRef.OFF_HEAP, true, false, true);
+    /**
      * Read-only memory mapped DA object. To avoid write access useful for reading on mobile or
      * embedded data stores.
      */
@@ -79,6 +83,8 @@ public class DAType {
         if (dataAccess.contains("SYNC"))
             throw new IllegalArgumentException("SYNC option is no longer supported, see #982");
         else if (dataAccess.contains("OFF_HEAP"))
+            type = DAType.OFF_HEAP;
+        else if (dataAccess.contains("MMAP_FOREIGN"))
             type = DAType.MMAP_FOREIGN;
         else if (dataAccess.contains("MMAP_RO"))
             type = DAType.MMAP_RO;
@@ -170,6 +176,6 @@ public class DAType {
     }
 
     public enum MemRef {
-        HEAP, MMAP, MMAP_FOREIGN
+        HEAP, OFF_HEAP, MMAP, MMAP_FOREIGN
     }
 }

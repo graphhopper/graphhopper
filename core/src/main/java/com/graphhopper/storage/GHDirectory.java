@@ -129,7 +129,9 @@ public class GHDirectory implements Directory {
             throw new IllegalStateException("DataAccess " + name + " has already been created");
 
         DataAccess da;
-        if (type.isInMemory()) {
+        if (type == OFF_HEAP) {
+            da = new OffHeapDataAccess(name, location, segmentSize);
+        } else if (type.isInMemory()) {
             if (type.isInteg()) {
                 if (type.isStoring())
                     da = new RAMIntDataAccess(name, location, true, segmentSize);
