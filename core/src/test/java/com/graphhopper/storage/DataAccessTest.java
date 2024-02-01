@@ -201,6 +201,8 @@ public abstract class DataAccessTest {
         assertEquals(Integer.MAX_VALUE / 3, BitUtil.LITTLE.toInt(bytes));
 
         da.setBytes(127, bytes, bytes.length);
+
+        bytes = new byte[4];
         da.getBytes(127, bytes, bytes.length);
         assertEquals(Integer.MAX_VALUE / 3, BitUtil.LITTLE.toInt(bytes));
 

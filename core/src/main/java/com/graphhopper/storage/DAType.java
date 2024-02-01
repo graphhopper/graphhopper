@@ -47,12 +47,16 @@ public class DAType {
      * Memory mapped DA object. See MMapDataAccess.
      */
     public static final DAType MMAP = new DAType(MemRef.MMAP, true, false, true);
-
+    /**
+     * Access MMAP via foreign memory access API.
+     */
+    public static final DAType MMAP_FOREIGN = new DAType(MemRef.MMAP_FOREIGN, true, false, true);
     /**
      * Read-only memory mapped DA object. To avoid write access useful for reading on mobile or
      * embedded data stores.
      */
     public static final DAType MMAP_RO = new DAType(MemRef.MMAP, true, false, false);
+
     private final MemRef memRef;
     private final boolean storing;
     private final boolean integ;
@@ -74,6 +78,8 @@ public class DAType {
         DAType type;
         if (dataAccess.contains("SYNC"))
             throw new IllegalArgumentException("SYNC option is no longer supported, see #982");
+        else if (dataAccess.contains("OFF_HEAP"))
+            type = DAType.MMAP_FOREIGN;
         else if (dataAccess.contains("MMAP_RO"))
             type = DAType.MMAP_RO;
         else if (dataAccess.contains("MMAP"))
@@ -106,7 +112,7 @@ public class DAType {
     }
 
     public boolean isMMap() {
-        return memRef == MemRef.MMAP;
+        return memRef == MemRef.MMAP || memRef == MemRef.MMAP_FOREIGN;
     }
 
     /**
@@ -164,6 +170,6 @@ public class DAType {
     }
 
     public enum MemRef {
-        HEAP, MMAP
+        HEAP, MMAP, MMAP_FOREIGN
     }
 }

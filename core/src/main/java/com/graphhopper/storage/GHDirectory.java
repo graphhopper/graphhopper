@@ -18,10 +18,12 @@
 package com.graphhopper.storage;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
-import static com.graphhopper.storage.DAType.RAM_INT;
-import static com.graphhopper.storage.DAType.RAM_INT_STORE;
+import static com.graphhopper.storage.DAType.*;
 import static com.graphhopper.util.Helper.*;
 
 /**
@@ -138,7 +140,10 @@ public class GHDirectory implements Directory {
             else
                 da = new RAMDataAccess(name, location, false, segmentSize);
         } else if (type.isMMap()) {
-            da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
+            if (type == MMAP_FOREIGN)
+                da = new MMAPForeignDataAccess(name, location, type.isAllowWrites(), segmentSize);
+            else
+                da = new MMapDataAccess(name, location, type.isAllowWrites(), segmentSize);
         } else {
             throw new IllegalArgumentException("DAType not supported " + type);
         }
