@@ -34,6 +34,7 @@ public class VehicleEncodedValues {
     private final DecimalEncodedValue avgSpeedEnc;
     private final DecimalEncodedValue priorityEnc;
     private final BooleanEncodedValue turnRestrictionEnc;
+    private final BooleanEncodedValue deadEndEnc;
 
     public static VehicleEncodedValues foot(PMap properties) {
         String name = "foot";
@@ -45,7 +46,8 @@ public class VehicleEncodedValues {
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
         BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnRestrictionEnc);
+        BooleanEncodedValue deadEndEnc = turnCosts ? DeadEnd.create(name) : null;
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnRestrictionEnc, deadEndEnc);
     }
 
     public static VehicleEncodedValues bike(PMap properties) {
@@ -69,7 +71,8 @@ public class VehicleEncodedValues {
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
         DecimalEncodedValue priorityEnc = VehiclePriority.create(name, 4, PriorityCode.getFactor(1), false);
         BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnRestrictionEnc);
+        BooleanEncodedValue deadEndEnc = turnCosts ? DeadEnd.create(name) : null;
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnRestrictionEnc, deadEndEnc);
     }
 
     public static VehicleEncodedValues car(PMap properties) {
@@ -80,7 +83,8 @@ public class VehicleEncodedValues {
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, true);
         BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnRestrictionEnc);
+        BooleanEncodedValue deadEndEnc = turnCosts ? DeadEnd.create(name) : null;
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnRestrictionEnc, deadEndEnc);
     }
 
     public static VehicleEncodedValues roads(PMap properties) {
@@ -92,16 +96,18 @@ public class VehicleEncodedValues {
         BooleanEncodedValue accessEnc = VehicleAccess.create(name);
         DecimalEncodedValue speedEnc = VehicleSpeed.create(name, speedBits, speedFactor, speedTwoDirections);
         BooleanEncodedValue turnRestrictionEnc = turnCosts ? TurnRestriction.create(name) : null;
-        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnRestrictionEnc);
+        BooleanEncodedValue deadEndEnc = turnCosts ? DeadEnd.create(name) : null;
+        return new VehicleEncodedValues(name, accessEnc, speedEnc, null, turnRestrictionEnc, deadEndEnc);
     }
 
     public VehicleEncodedValues(String name, BooleanEncodedValue accessEnc, DecimalEncodedValue avgSpeedEnc,
-                                DecimalEncodedValue priorityEnc, BooleanEncodedValue turnRestrictionEnc) {
+                                DecimalEncodedValue priorityEnc, BooleanEncodedValue turnRestrictionEnc, BooleanEncodedValue deadEndEnc) {
         this.name = name;
         this.accessEnc = accessEnc;
         this.avgSpeedEnc = avgSpeedEnc;
         this.priorityEnc = priorityEnc;
         this.turnRestrictionEnc = turnRestrictionEnc;
+        this.deadEndEnc = deadEndEnc;
     }
 
     public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
@@ -116,6 +122,8 @@ public class VehicleEncodedValues {
     public void createTurnCostEncodedValues(List<EncodedValue> registerNewTurnCostEncodedValues) {
         if (turnRestrictionEnc != null)
             registerNewTurnCostEncodedValues.add(turnRestrictionEnc);
+        if (deadEndEnc != null)
+            registerNewTurnCostEncodedValues.add(deadEndEnc);
     }
 
     public BooleanEncodedValue getAccessEnc() {
@@ -132,6 +140,10 @@ public class VehicleEncodedValues {
 
     public BooleanEncodedValue getTurnRestrictionEnc() {
         return turnRestrictionEnc;
+    }
+
+    public BooleanEncodedValue getDeadEndEnc() {
+        return deadEndEnc;
     }
 
     public String getName() {

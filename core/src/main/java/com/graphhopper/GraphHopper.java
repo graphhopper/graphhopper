@@ -25,6 +25,7 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.reader.osm.OSMReader;
+import com.graphhopper.reader.osm.PrepareDeadEnds;
 import com.graphhopper.reader.osm.RestrictionTagParser;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.*;
@@ -40,6 +41,7 @@ import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepareJob;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.*;
+import com.graphhopper.routing.weighting.AbstractAdjustedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
@@ -1408,14 +1410,45 @@ public class GraphHopper {
         preparation.setThreads(subnetworksThreads);
         preparation.doWork();
         logger.info("nodes: " + Helper.nf(baseGraph.getNodes()) + ", edges: " + Helper.nf(baseGraph.getEdges()));
+
+        logger.info("Start marking dead-ends");
+        StopWatch sw = StopWatch.started();
+        PrepareDeadEnds prepareDeadEnds = new PrepareDeadEnds(baseGraph);
+        for (Profile profile : profilesByName.values()) {
+            if (profile.isTurnCosts()) {
+                BooleanEncodedValue deadEndEnc = encodingManager.getTurnBooleanEncodedValue(DeadEnd.key(profile.getVehicle()));
+                BooleanEncodedValue subnetworkEnc = encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName()));
+                // We disable turn costs for the dead-end search.
+                Weighting weighting = createWeighting(profile, new PMap(), true);
+                prepareDeadEnds.findDeadEndUTurns(weighting, deadEndEnc, subnetworkEnc);
+            }
+        }
+        logger.info("Finished marking dead-ends, took: " + sw.stop().getSeconds() + "s");
     }
+
+
 
     private List<PrepareJob> buildSubnetworkRemovalJobs() {
         List<PrepareJob> jobs = new ArrayList<>();
         for (Profile profile : profilesByName.values()) {
-            // if turn costs are enabled use u-turn costs of zero as we only want to make sure the graph is fully connected assuming finite u-turn costs
-            Weighting weighting = createWeighting(profile, new PMap().putObject(Parameters.Routing.U_TURN_COSTS, 0));
-            jobs.add(new PrepareJob(encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())), weighting));
+            Weighting weighting = createWeighting(profile, new PMap());
+            Weighting w = new AbstractAdjustedWeighting(weighting) {
+                @Override
+                public double calcTurnWeight(int inEdge, int viaNode, int outEdge) {
+                    // We only want to make sure the graph is fully connected assuming finite u-turn
+                    // costs. Here we have to set it to zero explicitly, because otherwise the
+                    // u-turn costs would be infinite everywhere except at dead-ends. But we run the
+                    // dead-end detection after the subnetwork search.
+                    if (inEdge == outEdge) return 0;
+                    return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
+                }
+
+                @Override
+                public String getName() {
+                    return weighting.getName();
+                }
+            };
+            jobs.add(new PrepareJob(encodingManager.getBooleanEncodedValue(Subnetwork.key(profile.getName())), w));
         }
         return jobs;
     }

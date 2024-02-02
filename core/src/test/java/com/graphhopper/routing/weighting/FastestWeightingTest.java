@@ -40,7 +40,9 @@ public class FastestWeightingTest {
     private final BooleanEncodedValue accessEnc = new SimpleBooleanEncodedValue("access", true);
     private final DecimalEncodedValue speedEnc = new DecimalEncodedValueImpl("speed", 5, 5, false);
     private final BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create("car");
-    private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc).addTurnCostEncodedValue(turnRestrictionEnc).build();
+    private final BooleanEncodedValue deadEndEnc = DeadEnd.create("car");
+    private final EncodingManager encodingManager = EncodingManager.start().add(accessEnc).add(speedEnc)
+            .addTurnCostEncodedValue(turnRestrictionEnc).addTurnCostEncodedValue(deadEndEnc).build();
     private final BaseGraph graph = new BaseGraph.Builder(encodingManager).create();
 
     @Test
@@ -108,7 +110,7 @@ public class FastestWeightingTest {
     @Test
     public void calcWeightAndTime_withTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage()));
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnRestrictionEnc, deadEndEnc, graph.getTurnCostStorage()));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100));
         setTurnRestriction(graph, 0, 1, 2);
@@ -119,8 +121,11 @@ public class FastestWeightingTest {
     @Test
     public void calcWeightAndTime_uTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), 40));
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnRestrictionEnc, deadEndEnc, graph.getTurnCostStorage(), 40));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
+        assertEquals(Double.POSITIVE_INFINITY, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
+        assertEquals(Long.MAX_VALUE, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
+        graph.getTurnCostStorage().set(deadEndEnc, 0, 0, 0, true);
         assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
     }
@@ -129,7 +134,7 @@ public class FastestWeightingTest {
     public void calcWeightAndTime_withTurnCosts_shortest() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         Weighting weighting = new ShortestWeighting(accessEnc, speedEnc,
-                new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage()));
+                new DefaultTurnCostProvider(turnRestrictionEnc, deadEndEnc, graph.getTurnCostStorage()));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100));
         setTurnRestriction(graph, 0, 1, 2);
