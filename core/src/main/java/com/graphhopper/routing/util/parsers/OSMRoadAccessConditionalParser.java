@@ -33,7 +33,7 @@ import java.util.Date;
 import java.util.Map;
 
 /**
- * This parser fills the different XYAccessConditional enums from the OSM conditional restrictions.
+ * This parser fills the different XYRoadAccessConditional enums from the OSM conditional restrictions.
  * Node tags will be ignored.
  */
 public class OSMRoadAccessConditionalParser implements TagParser {
