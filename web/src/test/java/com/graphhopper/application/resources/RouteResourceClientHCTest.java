@@ -397,17 +397,23 @@ public class RouteResourceClientHCTest {
                 addPoint(new GHPoint(42.49833, 1.504619)).
                 addPoint(new GHPoint(42.498217, 1.504377)).
                 addPoint(new GHPoint(42.495611, 1.498368)).
+                // #2915: duplicating the last point yields an empty leg, but there should still be path details for it
+                        addPoint(new GHPoint(42.495611, 1.498368)).
                 setPathDetails(legDetails).
                 setProfile("bike");
 
         GHResponse response = gh.route(req);
         ResponsePath path = response.getBest();
         assertEquals(5428, path.getDistance(), 5);
-        assertEquals(9, path.getWaypoints().size());
+        assertEquals(10, path.getWaypoints().size());
 
         assertEquals(path.getTime(), path.getPathDetails().get("leg_time").stream().mapToLong(d -> (long) d.getValue()).sum(), 1);
         assertEquals(path.getDistance(), path.getPathDetails().get("leg_distance").stream().mapToDouble(d -> (double) d.getValue()).sum(), 1);
         assertEquals(path.getRouteWeight(), path.getPathDetails().get("leg_weight").stream().mapToDouble(d -> (double) d.getValue()).sum(), 1);
+
+        assertEquals(9, path.getPathDetails().get("leg_time").size());
+        assertEquals(9, path.getPathDetails().get("leg_distance").size());
+        assertEquals(9, path.getPathDetails().get("leg_weight").size());
 
         List<PointList> pointListFromInstructions = getPointListFromInstructions(path);
         for (String detail : legDetails) {
@@ -423,7 +429,7 @@ public class RouteResourceClientHCTest {
                 assertEquals(path.getWaypoints().get(i), path.getPoints().get(pathDetails.get(i - 1).getLast()));
 
             List<PointList> pointListFromLegDetails = getPointListFromLegDetails(path, detail);
-            assertEquals(8, pointListFromLegDetails.size());
+            assertEquals(9, pointListFromLegDetails.size());
             assertPointListsEquals(pointListFromInstructions, pointListFromLegDetails);
         }
     }

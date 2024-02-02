@@ -367,27 +367,6 @@ public class GraphHopperOSMTest {
     }
 
     @Test
-    public void testSortedGraph_noCH() {
-        final String profile = "profile";
-        final String vehicle = "car";
-        instance = new GraphHopper().
-                setProfiles(new Profile(profile).setVehicle(vehicle)).
-                setStoreOnFlush(false).
-                setSortGraph(true).
-                setGraphHopperLocation(ghLoc).
-                setOSMFile(testOsm);
-        instance.importOrLoad();
-        ResponsePath rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
-                setProfile(profile).
-                setAlgorithm(DIJKSTRA_BI)).getBest();
-        assertFalse(rsp.hasErrors());
-        assertEquals(3, rsp.getPoints().size());
-        assertEquals(new GHPoint(51.24921503475044, 9.431716451757769), rsp.getPoints().get(0));
-        assertEquals(new GHPoint(52.0, 9.0), rsp.getPoints().get(1));
-        assertEquals(new GHPoint(51.199999850988384, 9.39999970197677), rsp.getPoints().get(2));
-    }
-
-    @Test
     public void testFootAndCar() {
         final String profile1 = "profile1";
         final String profile2 = "profile2";

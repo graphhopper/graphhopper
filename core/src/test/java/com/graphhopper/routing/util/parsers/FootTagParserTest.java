@@ -22,15 +22,16 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.Test;
 
 import java.text.DateFormat;
-import java.util.*;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import static com.graphhopper.routing.util.parsers.FootAverageSpeedParser.MEAN_SPEED;
 import static com.graphhopper.routing.util.parsers.FootAverageSpeedParser.SLOW_SPEED;
@@ -53,8 +54,8 @@ public class FootTagParserTest {
             .add(carAccessEnc).add(carAvSpeedEnc)
             .build();
     private final FootAccessParser accessParser = new FootAccessParser(encodingManager, new PMap());
-    private final FootAverageSpeedParser speedParser = new FootAverageSpeedParser(encodingManager, new PMap());
-    private final FootPriorityParser prioParser = new FootPriorityParser(encodingManager, new PMap());
+    private final FootAverageSpeedParser speedParser = new FootAverageSpeedParser(encodingManager);
+    private final FootPriorityParser prioParser = new FootPriorityParser(encodingManager);
 
     public FootTagParserTest() {
     }

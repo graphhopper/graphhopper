@@ -26,7 +26,7 @@ import static com.graphhopper.routing.util.VehicleEncodedValuesFactory.*;
 public class DefaultVehicleTagParserFactory implements VehicleTagParserFactory {
     public VehicleTagParsers createParsers(EncodedValueLookup lookup, String name, PMap configuration) {
         if (name.equals(ROADS))
-            return VehicleTagParsers.roads(lookup, configuration);
+            return VehicleTagParsers.roads(lookup);
         if (name.equals(CAR))
             return VehicleTagParsers.car(lookup, configuration);
         if (name.equals(BIKE))

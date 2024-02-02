@@ -352,7 +352,7 @@ public class BaseGraph implements Graph, Closeable {
                 throw new IllegalArgumentException("Cannot use pointlist which is " + pillarNodes.getDimension()
                         + "D for graph which is " + nodeAccess.getDimension() + "D");
 
-            long existingGeoRef = BitUtil.toUnsignedLong(store.getGeoRef(edgePointer));
+            long existingGeoRef = Integer.toUnsignedLong(store.getGeoRef(edgePointer));
 
             int len = pillarNodes.size();
             int dim = nodeAccess.getDimension();
@@ -432,7 +432,7 @@ public class BaseGraph implements Graph, Closeable {
             pillarNodes.add(nodeAccess, adjNode);
             return pillarNodes;
         }
-        long geoRef = BitUtil.toUnsignedLong(store.getGeoRef(edgePointer));
+        long geoRef = Integer.toUnsignedLong(store.getGeoRef(edgePointer));
         int count = 0;
         byte[] bytes = null;
         if (geoRef > 0) {
@@ -963,13 +963,13 @@ public class BaseGraph implements Graph, Closeable {
 
         @Override
         public List<KVStorage.KeyValue> getKeyValues() {
-            long kvEntryRef = BitUtil.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
             return baseGraph.edgeKVStorage.getAll(kvEntryRef);
         }
 
         @Override
         public Object getValue(String key) {
-            long kvEntryRef = BitUtil.toUnsignedLong(store.getKeyValuesRef(edgePointer));
+            long kvEntryRef = Integer.toUnsignedLong(store.getKeyValuesRef(edgePointer));
             return baseGraph.edgeKVStorage.get(kvEntryRef, key, reverse);
         }
 

@@ -110,8 +110,7 @@ public class CHPreparationGraph {
     public static TurnCostFunction buildTurnCostFunctionFromTurnCostStorage(Graph graph, Weighting weighting) {
         // At some point we used an optimized version where we copied the turn costs to sorted arrays
         // temporarily. This seemed to be around 25% faster according to measurements on the Bavaria
-        // map, but later this turned out to be no real improvement for large maps (planet, Europe, a
-        // and even Germany). See also #2084
+        // map, but for bigger maps the improvement is less, around 10% for planet. See also #2084
         return weighting::calcTurnWeight;
     }
 

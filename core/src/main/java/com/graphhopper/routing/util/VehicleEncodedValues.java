@@ -36,7 +36,7 @@ public class VehicleEncodedValues {
     private final BooleanEncodedValue turnRestrictionEnc;
 
     public static VehicleEncodedValues foot(PMap properties) {
-        String name = properties.getString("name", "foot");
+        String name = "foot";
         int speedBits = properties.getInt("speed_bits", 4);
         double speedFactor = properties.getDouble("speed_factor", 1);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
@@ -49,7 +49,18 @@ public class VehicleEncodedValues {
     }
 
     public static VehicleEncodedValues bike(PMap properties) {
-        String name = properties.getString("name", "bike");
+        return createBike(properties, "bike");
+    }
+
+    public static VehicleEncodedValues racingbike(PMap properties) {
+        return createBike(properties, "racingbike");
+    }
+
+    public static VehicleEncodedValues mountainbike(PMap properties) {
+        return createBike(properties, "mtb");
+    }
+
+    private static VehicleEncodedValues createBike(PMap properties, String name) {
         int speedBits = properties.getInt("speed_bits", 4);
         double speedFactor = properties.getDouble("speed_factor", 2);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", false);
@@ -61,16 +72,8 @@ public class VehicleEncodedValues {
         return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, turnRestrictionEnc);
     }
 
-    public static VehicleEncodedValues racingbike(PMap properties) {
-        return bike(new PMap(properties).putObject("name", properties.getString("name", "racingbike")));
-    }
-
-    public static VehicleEncodedValues mountainbike(PMap properties) {
-        return bike(new PMap(properties).putObject("name", properties.getString("name", "mtb")));
-    }
-
     public static VehicleEncodedValues car(PMap properties) {
-        String name = properties.getString("name", "car");
+        String name = "car";
         int speedBits = properties.getInt("speed_bits", 7);
         double speedFactor = properties.getDouble("speed_factor", 2);
         boolean turnCosts = properties.getBool("turn_costs", false);
@@ -81,7 +84,7 @@ public class VehicleEncodedValues {
     }
 
     public static VehicleEncodedValues roads(PMap properties) {
-        String name = properties.getString("name", "roads");
+        String name = "roads";
         int speedBits = properties.getInt("speed_bits", 7);
         double speedFactor = properties.getDouble("speed_factor", 2);
         boolean speedTwoDirections = properties.getBool("speed_two_directions", true);

@@ -198,10 +198,6 @@ graphhopper:
   # will write way names in the preferred language (language code as defined in ISO 639-1 or ISO 639-2):
   # datareader.preferred_language: en
 
-  # Sort the graph after import to make requests roughly ~10% faster. Note that this requires significantly more RAM on import.
-  # graph.do_sort: true
-
-
   #### Custom Areas ####
 
   # GraphHopper reads GeoJSON polygon files including their properties from this directory and makes them available

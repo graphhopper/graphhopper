@@ -400,6 +400,6 @@ public class KVStorageTest {
         long pointer = Integer.MAX_VALUE;
         int storedPointer = (int) (pointer + 100);
         assertTrue(storedPointer < 0);
-        assertEquals(pointer + 100, BitUtil.toUnsignedLong(storedPointer));
+        assertEquals(pointer + 100, Integer.toUnsignedLong(storedPointer));
     }
 }
