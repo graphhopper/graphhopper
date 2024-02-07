@@ -157,9 +157,6 @@ public class EncodingManager implements EncodedValueLookup {
 
         public EncodingManager build() {
             checkNotBuiltAlready();
-            // todonow: not really needed?!
-//            if (em.encodedValueMap.isEmpty())
-//                throw new IllegalStateException("No EncodedValues were added to the EncodingManager");
             em.intsForFlags = edgeConfig.getRequiredInts();
             em.intsForTurnCostFlags = turnCostConfig.getRequiredInts();
             EncodingManager result = em;
