@@ -212,9 +212,7 @@ public class DefaultImportRegistry implements ImportRegistry {
                     "roundabout"
             );
         else if (VehicleAccess.key("roads").equals(name))
-            return ImportUnit.create(name, props -> VehicleAccess.create("roads"),
-                    (lookup, props) -> new RoadsAccessParser(lookup)
-            );
+            throw new IllegalArgumentException("roads_access parser no longer necessary");
         else if (VehicleAccess.key("bike").equals(name))
             return ImportUnit.create(name, props -> VehicleAccess.create("bike"),
                     (lookup, props) -> new BikeAccessParser(lookup, props).init(props.getObject("date_range_parser", new DateRangeParser())),
@@ -241,10 +239,7 @@ public class DefaultImportRegistry implements ImportRegistry {
                     "ferry_speed"
             );
         else if (VehicleSpeed.key("roads").equals(name))
-            return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
-                            name, props.getInt("speed_bits", 7), props.getDouble("speed_factor", 2), true),
-                    (lookup, props) -> new RoadsAverageSpeedParser(lookup)
-            );
+            throw new IllegalArgumentException("roads_average_speed parser no longer necessary");
         else if (VehicleSpeed.key("bike").equals(name))
             return ImportUnit.create(name, props -> new DecimalEncodedValueImpl(
                             name, props.getInt("speed_bits", 4), props.getDouble("speed_factor", 2), false),

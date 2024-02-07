@@ -52,17 +52,16 @@ public class RouteResourceTurnCostsTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/moscow.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        new Profile("my_car_turn_costs").setVehicle("car").setTurnCosts(true),
-                        new Profile("my_car_no_turn_costs").setVehicle("car").setTurnCosts(false),
-                        new Profile("my_custom_car_turn_costs").setVehicle("car").setTurnCosts(true),
-                        new Profile("my_custom_car_no_turn_costs").setVehicle("car").setTurnCosts(false)
+                        new Profile("my_car_turn_costs").setVehicle("car").setTurnCosts(true).setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("my_car_no_turn_costs").setVehicle("car").setTurnCosts(false).setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("my_custom_car_turn_costs").setVehicle("car").setTurnCosts(true).setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("my_custom_car_no_turn_costs").setVehicle("car").setTurnCosts(false).setCustomModel(Helper.createBaseModel("car"))
                 ))
                 .setCHProfiles(Arrays.asList(
                         new CHProfile("my_car_turn_costs"),

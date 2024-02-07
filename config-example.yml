@@ -14,7 +14,7 @@ graphhopper:
   #
   # In general a profile consists of the following
   # - name (required): a unique string identifier for the profile
-  # - vehicle (required): refers to the `graph.vehicles` used for this profile
+  # - vehicle (required): refers to the turn restriction defaults
   # - weighting (required): the weighting used for this profile like custom
   # - turn_costs (true/false, default: false): whether or not turn restrictions should be applied for this profile.
   #
@@ -29,24 +29,32 @@ graphhopper:
   # profiles (see below). Or at least limit the number of `routing.max_visited_nodes`.
 
   profiles:
-    - name: car
-      vehicle: car
-      custom_model:
-        distance_influence: 70
-#      turn_costs: true
-#      u_turn_costs: 60
+   - name: car
+     vehicle: car
+     custom_model_files: [car.json]
 
+#    - name: foot
+#      vehicle: roads
+#      custom_model_files: [foot.json, foot_elevation.json]
+#
 #    - name: bike
-#      # to use the bike vehicle make sure to not ignore cycleways etc., see import.osm.ignored_highways below
-#      vehicle: bike
+#      vehicle: roads
 #      custom_model_files: [bike.json, bike_elevation.json]
+#
+#    - name: racingbike
+#      vehicle: roads
+#      custom_model_files: [racingbike.json, bike_elevation.json]
+#
+#    - name: mtb
+#      vehicle: roads
+#      custom_model_files: [mtb.json, bike_elevation.json]
 
   # instead of the inbuilt custom models (see ./core/src/main/resources/com/graphhopper/custom_models)
   # you can specify a folder where to find your own custom model files
   # custom_models.directory: custom_models
 
   # Speed mode:
-  # Its possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
+  # It's possible to speed up routing by doing a special graph preparation (Contraction Hierarchies, CH). This requires
   # more RAM/disk space for holding the prepared graph but also means less memory usage per request. Using the following
   # list you can define for which of the above routing profiles such preparation shall be performed. Note that to support
   # profiles with `turn_costs: true` a more elaborate preparation is required (longer preparation time and more memory
@@ -64,15 +72,6 @@ graphhopper:
   # calculated for the profile are equal or larger (for every edge) than those calculated for the profile that was used
   # for the preparation (`my_other_profile`)
   profiles_lm: []
-
-
-  #### Vehicles ####
-
-  # The vehicle defines the base for how the routing of a profile behaves. It can be adjusted with the turn_costs=true
-  # option or, only for the roads vehicle, there is the transportation_mode option:
-  # name=mycustomvehicle,turn_costs=true,transportation_mode=MOTOR_VEHICLE
-  # But you should prefer to configure the turn_costs via the profile configuration.
-  # Other standard vehicles: foot,bike,mtb,racingbike
 
 
   #### Encoded Values ####
@@ -201,7 +200,7 @@ graphhopper:
   #### Custom Areas ####
 
   # GraphHopper reads GeoJSON polygon files including their properties from this directory and makes them available
-  # to all tag parsers, vehicles and custom models. All GeoJSON Features require to have the "id" property.
+  # to all tag parsers and custom models. All GeoJSON Features require to have the "id" property.
   # Country borders are included automatically (see countries.geojson).
   # custom_areas.directory: path/to/custom_areas
 

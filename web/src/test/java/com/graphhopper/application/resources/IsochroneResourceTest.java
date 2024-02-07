@@ -54,14 +54,13 @@ public class IsochroneResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("fast_car").setVehicle("car").setTurnCosts(true),
-                        new Profile("short_car").setCustomModel(new CustomModel().setDistanceInfluence(1_000d)).setVehicle("car").setTurnCosts(true),
-                        new Profile("fast_car_no_turn_restrictions").setVehicle("car").setTurnCosts(false)
+                        new Profile("fast_car").setVehicle("car").setTurnCosts(true).setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("short_car").setCustomModel(Helper.createBaseModel("car").setDistanceInfluence(1_000d)).setVehicle("car").setTurnCosts(true),
+                        new Profile("fast_car_no_turn_restrictions").setVehicle("car").setTurnCosts(false).setCustomModel(Helper.createBaseModel("car"))
                 ));
         return config;
     }

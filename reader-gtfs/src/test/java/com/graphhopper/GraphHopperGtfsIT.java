@@ -59,8 +59,8 @@ public class GraphHopperGtfsIT {
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.putObject("gtfs.file", "files/sample-feed");
         ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setVehicle("foot"),
-                new Profile("car").setVehicle("car")));
+                new Profile("foot").setVehicle("foot").setCustomModel(Helper.createBaseModel("foot")),
+                new Profile("car").setVehicle("car").setCustomModel(Helper.createBaseModel("car"))));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

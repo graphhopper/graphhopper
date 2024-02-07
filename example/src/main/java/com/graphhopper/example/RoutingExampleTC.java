@@ -7,6 +7,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 
 import java.util.Arrays;
@@ -68,6 +69,8 @@ public class RoutingExampleTC {
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/routing-tc-graph-cache");
         Profile profile = new Profile("car").setVehicle("car")
+                // define a custom model
+                .setCustomModel(Helper.createBaseModel("car"))
                 // enabling turn costs means OSM turn restriction constraints like 'no_left_turn' will be taken into account
                 .setTurnCosts(true)
                 // we can also set u_turn_costs (in seconds). by default no u-turns are allowed, but with this setting

@@ -61,7 +61,6 @@ public class RouteResourceClientHCTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car,bike").
                 putObject("prepare.min_network_size", 0).
                 putObject("graph.elevation.provider", "srtm").
                 putObject("graph.elevation.cache_dir", "../core/files/").
@@ -70,9 +69,9 @@ public class RouteResourceClientHCTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        new Profile("car").setVehicle("car"),
-                        new Profile("bike").setVehicle("bike"),
-                        new Profile("my_custom_car").setVehicle("car")
+                        new Profile("car").setVehicle("car").setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("bike").setVehicle("bike").setCustomModel(Helper.createBaseModel("bike")),
+                        new Profile("my_custom_car").setVehicle("car").setCustomModel(Helper.createBaseModel("car"))
                 ))
                 .setCHProfiles(Arrays.asList(new CHProfile("car"), new CHProfile("bike")));
         return config;

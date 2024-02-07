@@ -51,6 +51,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.routing.util.TransportationMode.CAR;
 import static com.graphhopper.util.GHUtility.readCountries;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -197,7 +200,11 @@ public class OSMReaderTest {
 
     @Test
     public void testFerry() {
-        GraphHopper hopper = new GraphHopperFacade(file2).importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade(file2) {
+            @Override
+            public void cleanUp() {
+            }
+        }.importOrLoad();
         Graph graph = hopper.getBaseGraph();
 
         int n40 = AbstractGraphStorageTester.getIdOf(graph, 54.0);
@@ -219,7 +226,11 @@ public class OSMReaderTest {
 
     @Test
     public void testMaxSpeed() {
-        GraphHopper hopper = new GraphHopperFacade(file2).importOrLoad();
+        GraphHopper hopper = new GraphHopperFacade(file2) {
+            @Override
+            public void cleanUp() {
+            }
+        }.importOrLoad();
         Graph graph = hopper.getBaseGraph();
 
         int n60 = AbstractGraphStorageTester.getIdOf(graph, 56.0);
@@ -373,10 +384,10 @@ public class OSMReaderTest {
     @Test
     public void testFords() {
         GraphHopper hopper = new GraphHopper();
-        hopper.setVehiclesString("car|block_fords=true");
+        hopper.setEncodedValuesString("car_access|block_fords=true,car_average_speed");
         hopper.setOSMFile(getClass().getResource("test-barriers3.xml").getFile()).
                 setGraphHopperLocation(dir).
-                setProfiles(new Profile("car").setVehicle("car")).
+                setProfiles(new Profile("car").setCustomModel(Helper.createBaseModel("car"))).
                 setMinNetworkSize(0).
                 importOrLoad();
         Graph graph = hopper.getBaseGraph();
@@ -618,7 +629,7 @@ public class OSMReaderTest {
         int edge3_8 = GHUtility.getEdge(graph, n3, n8).getEdge();
 
         BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("car"));
-        BooleanEncodedValue roadsTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("roads"));
+        BooleanEncodedValue roadsTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("hgv"));
 
         assertFalse(tcStorage.get(carTCEnc, edge9_3, n3, edge3_8));
         assertTrue(tcStorage.get(roadsTCEnc, edge9_3, n3, edge3_8));
@@ -628,7 +639,6 @@ public class OSMReaderTest {
     public void testRoadAttributes() {
         String fileRoadAttributes = "test-road-attributes.xml";
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
-        hopper.setEncodedValuesString("max_width,max_height,max_weight");
         hopper.importOrLoad();
 
         DecimalEncodedValue widthEnc = hopper.getEncodingManager().getDecimalEncodedValue(MaxWidth.KEY);
@@ -698,18 +708,18 @@ public class OSMReaderTest {
     @Test
     public void testTurnFlagCombination() {
         GraphHopper hopper = new GraphHopper();
+        hopper.setEncodedValuesString("car_average_speed,car_access,bike_access,bike_average_speed,bike_priority");
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
-                setVehiclesString("roads|transportation_mode=HGV|turn_costs=true").
                 setProfiles(
-                        new Profile("bike").setVehicle("bike").setTurnCosts(true),
-                        new Profile("car").setVehicle("car").setTurnCosts(true),
-                        new Profile("truck").setVehicle("roads").setTurnCosts(true)
+                        new Profile("bike").setVehicle("bike").setCustomModel(Helper.createBaseModel("bike")).setTurnCosts(true),
+                        new Profile("car").setVehicle("car").setCustomModel(Helper.createBaseModel("car")).setTurnCosts(true),
+                        new Profile("truck").setVehicle("hgv").setCustomModel(Helper.createBaseModel("car")).setTurnCosts(true)
                 ).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
         BooleanEncodedValue carTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("car"));
-        BooleanEncodedValue truckTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("roads"));
+        BooleanEncodedValue truckTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("hgv"));
         BooleanEncodedValue bikeTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("bike"));
 
         Graph graph = hopper.getBaseGraph();
@@ -901,7 +911,8 @@ public class OSMReaderTest {
                 return new File(getClass().getResource(file2).getFile());
             }
         }.setOSMFile("dummy").
-                setProfiles(new Profile("profile").setVehicle("car")).
+                setEncodedValuesString("car_access,car_average_speed").
+                setProfiles(new Profile("profile").setCustomModel(Helper.createBaseModel("car"))).
                 setMinNetworkSize(0).
                 setGraphHopperLocation(dir).
                 importOrLoad();
@@ -923,10 +934,10 @@ public class OSMReaderTest {
 
     @Test
     public void testCountries() throws IOException {
-        EncodingManager em = new EncodingManager.Builder().add(RoadAccess.create()).build();
-        EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
+        EnumEncodedValue<RoadAccess> roadAccessEnc = RoadAccess.create();
+        EncodingManager em = new EncodingManager.Builder().add(roadAccessEnc).build();
         OSMParsers osmParsers = new OSMParsers();
-        osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
+        osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(CAR)));
         BaseGraph graph = new BaseGraph.Builder(em).create();
         OSMReader reader = new OSMReader(graph, osmParsers, new OSMReaderConfig());
         reader.setCountryRuleFactory(new CountryRuleFactory());
@@ -955,6 +966,7 @@ public class OSMReaderTest {
         // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
         EnumEncodedValue<Country> countryEnc = Country.create();
         EncodingManager em = EncodingManager.start()
+                .add(VehicleSpeed.create("car", 5, 5, false)).add(VehicleAccess.create("car"))
                 .add(countryEnc)
                 .build();
         OSMParsers osmParsers = new OSMParsers()
@@ -990,12 +1002,13 @@ public class OSMReaderTest {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
-            if (turnCosts) setVehiclesString("roads|turn_costs=true|transportation_mode=HGV");
+            String str = "max_width,max_height,max_weight";
+            setEncodedValuesString(str);
             setProfiles(
-                    new Profile("foot").setVehicle("foot"),
-                    new Profile("car").setVehicle("car").setTurnCosts(turnCosts),
-                    new Profile("bike").setVehicle("bike").setTurnCosts(turnCosts),
-                    new Profile("roads").setVehicle("roads").setTurnCosts(turnCosts)
+                    new Profile("foot").setVehicle("foot").setCustomModel(Helper.createBaseModel("foot")),
+                    new Profile("car").setVehicle("car").setCustomModel(Helper.createBaseModel("car")).setTurnCosts(turnCosts),
+                    new Profile("bike").setVehicle("bike").setCustomModel(Helper.createBaseModel("bike")).setTurnCosts(turnCosts),
+                    new Profile("roads").setVehicle("hgv").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "100"))).setTurnCosts(turnCosts)
             );
             getReaderConfig().setPreferredLanguage(prefLang);
         }

@@ -47,14 +47,13 @@ public class SPTResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerTestConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car|turn_costs=true").
                 putObject("graph.encoded_values", "max_speed,road_class").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("car_without_turncosts").setVehicle("car"),
-                        new Profile("car_with_turncosts").setVehicle("car").setTurnCosts(true)
+                        new Profile("car_without_turncosts").setVehicle("car").setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("car_with_turncosts").setVehicle("car").setTurnCosts(true).setCustomModel(Helper.createBaseModel("car"))
                 ));
         return config;
     }

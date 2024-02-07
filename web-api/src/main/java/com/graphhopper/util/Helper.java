@@ -28,6 +28,11 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Map.Entry;
 
+import static com.graphhopper.json.Statement.Else;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.LIMIT;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
+
 /**
  * @author Peter Karich
  */
@@ -444,5 +449,19 @@ public class Helper {
             val = 31 * val + str.charAt(idx);
         }
         return val;
+    }
+
+    public static CustomModel createBaseModel(String vehicle) {
+        final CustomModel cm;
+        if (!"car".equals(vehicle))
+            cm = new CustomModel().
+                    addToPriority(If(vehicle + "_access", MULTIPLY, vehicle + "_priority")).
+                    addToPriority(Else(MULTIPLY, "0")).
+                    addToSpeed(If("true", LIMIT, vehicle + "_average_speed"));
+        else
+            cm = new CustomModel().
+                    addToPriority(If("!" + vehicle + "_access", MULTIPLY, "0")).
+                    addToSpeed(If("true", LIMIT, vehicle + "_average_speed"));
+        return cm;
     }
 }

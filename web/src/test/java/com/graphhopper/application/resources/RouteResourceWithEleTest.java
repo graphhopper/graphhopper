@@ -51,12 +51,11 @@ public class RouteResourceWithEleTest {
                 putObject("graph.elevation.provider", "srtm").
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("prepare.min_network_size", 0).
-                putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("graph.location", dir).
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Collections.singletonList(
-                        new Profile("profile").setVehicle("car")
+                        new Profile("profile").setVehicle("car").setCustomModel(Helper.createBaseModel("car"))
                 ));
         return config;
     }

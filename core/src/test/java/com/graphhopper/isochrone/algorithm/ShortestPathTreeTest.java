@@ -13,10 +13,7 @@ import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.CustomModel;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.*;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -187,7 +184,7 @@ public class ShortestPathTreeTest {
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
         CustomModel cm = new CustomModel();
         cm.addToPriority(If("ferry", MULTIPLY, "0.005"));
-        CustomWeighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager, TurnCostProvider.NO_TURN_COST_PROVIDER, cm);
+        CustomWeighting weighting = CustomModelParser.createLegacyWeighting(accessEnc, speedEnc, null, encodingManager, TurnCostProvider.NO_TURN_COST_PROVIDER, cm);
         ShortestPathTree instance = new ShortestPathTree(graph, weighting, false, TraversalMode.NODE_BASED);
         instance.setTimeLimit(30_000);
         instance.search(0, result::add);
@@ -237,7 +234,7 @@ public class ShortestPathTreeTest {
 
     @Test
     public void testEdgeBasedWithForbiddenUTurns() {
-        Weighting fastestWeighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager, FORBIDDEN_UTURNS, new CustomModel());
+        Weighting fastestWeighting = CustomModelParser.createLegacyWeighting(accessEnc, speedEnc, null, encodingManager, FORBIDDEN_UTURNS, new CustomModel());
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
         ShortestPathTree instance = new ShortestPathTree(graph, fastestWeighting, false, TraversalMode.EDGE_BASED);
         instance.setTimeLimit(Double.MAX_VALUE);
@@ -271,7 +268,7 @@ public class ShortestPathTreeTest {
     @Test
     public void testEdgeBasedWithFinitePositiveUTurnCost() {
         TimeBasedUTurnCost turnCost = new TimeBasedUTurnCost(80000);
-        Weighting fastestWeighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager, turnCost, new CustomModel());
+        Weighting fastestWeighting = CustomModelParser.createLegacyWeighting(accessEnc, speedEnc, null, encodingManager, turnCost, new CustomModel());
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
         ShortestPathTree instance = new ShortestPathTree(graph, fastestWeighting, false, TraversalMode.EDGE_BASED);
         instance.setTimeLimit(Double.MAX_VALUE);
@@ -306,7 +303,7 @@ public class ShortestPathTreeTest {
     @Test
     public void testEdgeBasedWithSmallerUTurnCost() {
         TimeBasedUTurnCost turnCost = new TimeBasedUTurnCost(20000);
-        Weighting fastestWeighting = CustomModelParser.createWeighting(accessEnc, speedEnc, null, encodingManager, turnCost, new CustomModel());
+        Weighting fastestWeighting = CustomModelParser.createLegacyWeighting(accessEnc, speedEnc, null, encodingManager, turnCost, new CustomModel());
         List<ShortestPathTree.IsoLabel> result = new ArrayList<>();
         ShortestPathTree instance = new ShortestPathTree(graph, fastestWeighting, false, TraversalMode.EDGE_BASED);
         instance.setTimeLimit(Double.MAX_VALUE);

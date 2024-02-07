@@ -23,9 +23,9 @@ require edge-based (vs. node-based) traversal of the graph. You have to configur
 preparation should be run using e.g. `profiles_ch`, just like when you use the 'speed mode' without turn restrictions.
 
 You can also specify a time penalty for taking u-turns in the profile (turning from one road back to the same road at a junction).
-Note, that this time-penalty only works reasonably when your weighting is time-based (like "fastest"). To use u-turn 
-costs with speed mode you need to specify the time penalty for each u-turn (again in the profile configuration):
- `u_turn_costs: 60`. See `config-example.yml` for further details regarding these configurations. 
+Note, that this time-penalty only works reasonably when your weighting is time-based (like "fastest"). To use u-turn
+costs with speed mode you need to specify the time penalty for each u-turn in the custom_model configuration:
+`u_turn_costs: 60`. See `config-example.yml` for further details regarding these configurations.
 If you prepare multiple 'speed mode' profiles you have to specify which 
 one to use at request time: Use the `edge_based=true/false` parameter to enforce edge-based or node-based routing and 
 the `u_turn_costs` parameter to specify the u-turn costs (only needed if there are multiple edge-based 'speed mode'

@@ -54,13 +54,12 @@ public class MapMatchingResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car,bike").
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("fast_car").setVehicle("car"),
-                        new Profile("fast_bike").setVehicle("bike")));
+                        new Profile("fast_car").setVehicle("car").setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("fast_bike").setVehicle("bike").setCustomModel(Helper.createBaseModel("bike"))));
         return config;
     }
 

@@ -60,7 +60,7 @@ public class RouteResourceLeipzigTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Collections.singletonList(new Profile("my_car").
-                        setCustomModel(new CustomModel().
+                        setCustomModel(Helper.createBaseModel("car").
                                 addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1"))).setVehicle("car")))
                 .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;

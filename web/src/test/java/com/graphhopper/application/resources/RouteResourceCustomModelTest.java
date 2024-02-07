@@ -58,7 +58,6 @@ public class RouteResourceCustomModelTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "bike,car,foot,roads").
                 putObject("prepare.min_network_size", 200).
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.location", DIR).
@@ -66,35 +65,31 @@ public class RouteResourceCustomModelTest {
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Arrays.asList(
-                        new Profile("wheelchair"),
-                        new Profile("roads").setCustomModel(new CustomModel()).setVehicle("roads"),
-                        new Profile("car").setCustomModel(new CustomModel().setDistanceInfluence(70d)).setVehicle("car"),
-                        new Profile("car_with_area").setCustomModel(new CustomModel().addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
-                        new Profile("bike").setCustomModel(new CustomModel().setDistanceInfluence(0d)).setVehicle("bike"),
-                        new Profile("bike_fastest").setVehicle("bike"),
-                        new Profile("bus").setCustomModel(null).setVehicle("roads").putHint("custom_model_files", Arrays.asList("bus.json")),
-                        new Profile("cargo_bike").setCustomModel(null).setVehicle("bike").
-                                putHint("custom_model_files", Arrays.asList("cargo_bike.json")),
-                        new Profile("json_bike").setCustomModel(null).setVehicle("roads").
-                                putHint("custom_model_files", Arrays.asList("bike.json", "bike_elevation.json")),
-                        new Profile("foot_profile").setVehicle("foot"),
-                        new Profile("car_no_unclassified").setCustomModel(
-                                        new CustomModel(new CustomModel().
-                                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0")))).
+                        new Profile("roads").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "120"))).setVehicle("roads"),
+                        new Profile("car").setCustomModel(Helper.createBaseModel("car").setDistanceInfluence(70d)).setVehicle("car"),
+                        new Profile("car_with_area").setCustomModel(Helper.createBaseModel("car").addToPriority(If("in_external_area52", MULTIPLY, "0.05"))).setVehicle("car"),
+                        new Profile("bike").setCustomModel(Helper.createBaseModel("bike").setDistanceInfluence(0d)).setVehicle("bike"),
+                        new Profile("bike_fastest").setCustomModel(Helper.createBaseModel("bike")).setVehicle("bike"),
+                        new Profile("bus").setVehicle("hgv").setCustomModel(null).putHint("custom_model_files", Arrays.asList("bus.json")),
+                        new Profile("cargo_bike").setVehicle("bike").setCustomModel(null).putHint("custom_model_files", Arrays.asList("cargo_bike.json")),
+                        new Profile("json_bike").setVehicle("bike").setCustomModel(null).putHint("custom_model_files", Arrays.asList("bike.json", "bike_elevation.json")),
+                        new Profile("foot_profile").setVehicle("foot").setCustomModel(Helper.createBaseModel("foot")),
+                        new Profile("car_no_unclassified").setCustomModel(Helper.createBaseModel("car").
+                                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0"))).
                                 setVehicle("car"),
                         new Profile("custom_bike").
-                                setCustomModel(new CustomModel().
+                                setCustomModel(Helper.createBaseModel("bike").
                                         addToSpeed(If("road_class == PRIMARY", LIMIT, "28")).
                                         addToPriority(If("max_width < 1.2", MULTIPLY, "0"))).
                                 setVehicle("bike"),
                         new Profile("custom_bike2").setCustomModel(
-                                        new CustomModel(new CustomModel().setDistanceInfluence(70d).
-                                                addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0")))).
+                                        Helper.createBaseModel("bike").setDistanceInfluence(70d).
+                                                addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0"))).
                                 setVehicle("bike"),
                         new Profile("custom_bike3").setCustomModel(
-                                        new CustomModel(new CustomModel().
+                                        Helper.createBaseModel("bike").
                                                 addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "10")).
-                                                addToSpeed(If("true", LIMIT, "40")))).
+                                                addToSpeed(If("true", LIMIT, "40"))).
                                 setVehicle("bike"))).
                 setCHProfiles(Arrays.asList(new CHProfile("bus"), new CHProfile("car_no_unclassified")));
         return config;
@@ -316,17 +311,6 @@ public class RouteResourceCustomModelTest {
         path = getPath(jsonQuery);
         assertEquals(660, path.get("distance").asDouble(), 10);
         assertEquals(77, path.get("time").asLong() / 1000, 1);
-    }
-
-    @Test
-    public void wheelchair() {
-        String jsonQuery = "{" +
-                " \"points\": [[11.58199, 50.0141], [11.5865, 50.0095]]," +
-                " \"profile\": \"wheelchair\"," +
-                " \"ch.disable\": true" +
-                "}";
-        JsonNode path = getPath(jsonQuery);
-        assertEquals(1500, path.get("distance").asDouble(), 10);
     }
 
     @Test

@@ -49,11 +49,10 @@ public class NearestResourceTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", dir).
                 putObject("import.osm.ignored_highways", "").
-                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car")));
+                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setCustomModel(Helper.createBaseModel("car"))));
         return config;
     }
 

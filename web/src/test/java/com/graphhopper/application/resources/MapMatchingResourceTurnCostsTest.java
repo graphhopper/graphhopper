@@ -57,14 +57,13 @@ public class MapMatchingResourceTurnCostsTest {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car|turn_costs=true,bike").
                 putObject("datareader.file", "../map-matching/files/leipzig_germany.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("car").setVehicle("car").setTurnCosts(true),
-                        new Profile("car_no_tc").setVehicle("car"),
-                        new Profile("bike").setVehicle("bike"))
+                        new Profile("car").setVehicle("car").setTurnCosts(true).setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("car_no_tc").setVehicle("car").setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("bike").setVehicle("bike").setCustomModel(Helper.createBaseModel("bike")))
                 ).
                 setLMProfiles(Arrays.asList(
                         new LMProfile("car"),

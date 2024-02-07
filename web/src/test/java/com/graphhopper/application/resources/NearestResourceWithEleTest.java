@@ -51,11 +51,10 @@ public class NearestResourceWithEleTest {
                 putObject("graph.elevation.provider", "srtm").
                 putObject("graph.elevation.cache_dir", "../core/files/").
                 putObject("prepare.min_network_size", 0).
-                putObject("graph.vehicles", "car").
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", dir).
-                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car")));
+                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setCustomModel(Helper.createBaseModel("car"))));
         return config;
     }
 

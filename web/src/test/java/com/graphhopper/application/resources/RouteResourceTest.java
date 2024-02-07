@@ -80,7 +80,6 @@ public class RouteResourceTest {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
                 putObject("profiles_mapbox", mapboxResolver).
-                putObject("graph.vehicles", "car").
                 putObject("prepare.min_network_size", 0).
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed,country").
@@ -91,7 +90,7 @@ public class RouteResourceTest {
                 putObject("graph.location", DIR)
                 // adding this so the corresponding check is not just skipped...
                 .putObject(MAX_NON_CH_POINT_DISTANCE, 10e6)
-                .setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car")))
+                .setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car").setCustomModel(Helper.createBaseModel("car"))))
                 .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }

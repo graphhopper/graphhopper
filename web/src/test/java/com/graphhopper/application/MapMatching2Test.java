@@ -59,7 +59,7 @@ public class MapMatching2Test {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
-        hopper.setProfiles(new Profile("my_profile").setVehicle("car"));
+        hopper.setProfiles(new Profile("my_profile").setVehicle("car").setCustomModel(Helper.createBaseModel("car")));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
 
@@ -84,7 +84,7 @@ public class MapMatching2Test {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/issue-70.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
-        hopper.setProfiles(new Profile("my_profile").setVehicle("car"));
+        hopper.setProfiles(new Profile("my_profile").setVehicle("car").setCustomModel(Helper.createBaseModel("car")));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
 
@@ -104,7 +104,7 @@ public class MapMatching2Test {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile("../map-matching/files/map-issue13.osm.gz");
         hopper.setGraphHopperLocation(GH_LOCATION);
-        hopper.setProfiles(new Profile("my_profile").setVehicle("car"));
+        hopper.setProfiles(new Profile("my_profile").setVehicle("car").setCustomModel(Helper.createBaseModel("car")));
         hopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         hopper.importOrLoad();
 

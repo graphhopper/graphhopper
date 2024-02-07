@@ -1,0 +1,16 @@
+// to use this custom model you need to set the following option in the config.yml
+// profiles:
+//    - name: car
+//      vehicle: car
+//      turn_costs: true
+//      custom_model_files: [car.json]
+
+{
+  "distance_influence": 90,
+  "priority": [
+    { "if": "!car_access", "multiply_by": "0" }
+  ],
+  "speed": [
+    { "if": "true", "limit_to": "car_average_speed" }
+  ]
+}

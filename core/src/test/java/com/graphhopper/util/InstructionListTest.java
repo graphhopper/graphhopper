@@ -411,7 +411,7 @@ public class InstructionListTest {
         GHUtility.setSpeed(5, true, true, accessEnc, speedEnc, g.edge(2, 4).setDistance(20).
                 setKeyValues(createKV(STREET_NAME, "myroad")).set(priorityEnc, 1).setWayGeometry(pointList));
 
-        Weighting weighting = CustomModelParser.createWeighting(accessEnc, speedEnc,
+        Weighting weighting = CustomModelParser.createLegacyWeighting(accessEnc, speedEnc,
                 priorityEnc, tmpEM, DefaultTurnCostProvider.NO_TURN_COST_PROVIDER,
                 new CustomModel().setDistanceInfluence(0d));
         Path p = new Dijkstra(g, weighting, tMode).calcPath(4, 3);
@@ -461,7 +461,7 @@ public class InstructionListTest {
 
         CustomModel customModel = new CustomModel();
         customModel.addToPriority(Statement.If("road_class == PEDESTRIAN", Statement.Op.MULTIPLY, "0"));
-        Weighting weighting = CustomModelParser.createWeighting(roadsAccessEnc, roadsSpeedEnc, null, tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
+        Weighting weighting = CustomModelParser.createLegacyWeighting(roadsAccessEnc, roadsSpeedEnc, null, tmpEM, TurnCostProvider.NO_TURN_COST_PROVIDER, customModel);
         Path p = new Dijkstra(g, weighting, tMode).calcPath(3, 4);
         InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, tmpEM, usTR);
         List<String> tmpList = getTurnDescriptions(wayList);
