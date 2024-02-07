@@ -88,9 +88,8 @@ public class CHMeasurement {
         final GraphHopper graphHopper = new GraphHopper();
         String profile = "car_profile";
         if (withTurnCosts) {
-            ghConfig.putObject("graph.vehicles", "car|turn_costs=true");
             ghConfig.setProfiles(Collections.singletonList(
-                    new Profile(profile).setVehicle("car").setTurnCosts(true).putHint(Parameters.Routing.U_TURN_COSTS, uTurnCosts)
+                    new Profile(profile).setVehicle("car").setCustomModel(Helper.createBaseModel("car")).setTurnCosts(true).putHint(Parameters.Routing.U_TURN_COSTS, uTurnCosts)
             ));
             ghConfig.setCHProfiles(Collections.singletonList(
                     new CHProfile(profile)
@@ -102,9 +101,8 @@ public class CHMeasurement {
                 ghConfig.putObject("prepare.lm.landmarks", landmarks);
             }
         } else {
-            ghConfig.putObject("graph.vehicles", "car");
             ghConfig.setProfiles(Collections.singletonList(
-                    new Profile(profile).setVehicle("car").setTurnCosts(false)
+                    new Profile(profile).setVehicle("car").setCustomModel(Helper.createBaseModel("car")).setTurnCosts(false)
             ));
         }
 

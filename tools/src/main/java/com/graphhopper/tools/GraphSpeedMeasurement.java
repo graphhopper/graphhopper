@@ -44,9 +44,9 @@ public class GraphSpeedMeasurement {
                     .putObject("graph.location", args.getString("location", "graph-speed-measurement") + "-" + speedBits + "-gh")
                     .putObject("graph.dataaccess", args.getString("da", "RAM_STORE"))
                     .putObject("import.osm.ignored_highways", "")
-                    .putObject("graph.vehicles", String.format("roads|speed_bits=%d,car|speed_bits=%d,bike|speed_bits=%d,foot|speed_bits=%d", speedBits, speedBits, speedBits, speedBits))
+                    .putObject("graph.encoded_values", String.format("car_average_speed|speed_bits=%d,bike_average_speed|speed_bits=%d,foot_average_speed|speed_bits=%d", speedBits, speedBits, speedBits, speedBits))
                     .setProfiles(Arrays.asList(
-                            new Profile("car").setCustomModel(new CustomModel()).setVehicle("roads")
+                            new Profile("car").setCustomModel(Helper.createBaseModel("car")).setVehicle("roads")
                     ));
             GraphHopper hopper = new GraphHopper()
                     .init(ghConfig)

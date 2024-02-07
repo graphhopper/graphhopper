@@ -448,7 +448,6 @@ public class GraphHopperOSMTest {
                         new GraphHopperConfig().
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
-                                putObject("graph.vehicles", "foot").
                                 putObject("import.osm.ignored_highways", "").
                                 setProfiles(Collections.singletonList(
                                         new Profile("foot").setVehicle("foot").setCustomModel(Helper.createBaseModel("foot"))
@@ -458,28 +457,12 @@ public class GraphHopperOSMTest {
         IllegalStateException e = assertThrows(IllegalStateException.class, tmpGH::load);
         assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
 
-        // different order of graph.vehicles is also fine, but profiles must be in same order
-        tmpGH = new GraphHopper().init(new GraphHopperConfig().
-                        putObject("datareader.file", testOsm3).
-                        putObject("datareader.dataaccess", "RAM").
-                        putObject("graph.vehicles", "car,foot").
-                        putObject("import.osm.ignored_highways", "").
-                        setProfiles(Arrays.asList(
-                                new Profile("car").setVehicle("car").setCustomModel(Helper.createBaseModel("car")),
-                                new Profile("foot").setVehicle("foot").setCustomModel(Helper.createBaseModel("foot"))
-                        ))).
-                setOSMFile(testOsm3)
-                .setGraphHopperLocation(ghLoc);
-        e = assertThrows(IllegalStateException.class, tmpGH::load);
-        assertTrue(e.getMessage().contains("Profiles do not match"), e.getMessage());
-
         // different encoded values do not matter either
         instance = new GraphHopper().init(
                         new GraphHopperConfig().
                                 putObject("datareader.file", testOsm3).
                                 putObject("datareader.dataaccess", "RAM").
                                 putObject("graph.encoded_values", "road_class").
-                                putObject("graph.vehicles", "foot,car").
                                 putObject("import.osm.ignored_highways", "").
                                 setProfiles(Arrays.asList(
                                         new Profile("foot").setVehicle("foot").setCustomModel(Helper.createBaseModel("foot")),

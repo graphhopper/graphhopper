@@ -11,9 +11,7 @@ Without turn restrictions the route will look like:
 
 ![turn with turn restrictions](./images/turn-restrictions-correct.png)
 
-Turn restrictions have to be enabled on a vehicle basis. To enable it for one vehicle add
-`|turn_costs=true` in the config, for example: `graph.vehicles=car|turn_costs=true`
-and set `turn_costs: true` it for the profile too.
+To enable turn restrictions for a profile set `turn_costs: true`.
 
 When using the Java API you can either create the encoding manager like `EncodingManager.create("car|turn_costs=true")` or
 `new EncodingManager.Builder().add(new CarFlagEncoder(5, 5, 1)` where the last parameter of `CarFlagEncoder` represents

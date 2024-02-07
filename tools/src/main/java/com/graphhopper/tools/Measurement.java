@@ -313,9 +313,9 @@ public class Measurement {
                 profiles.add(new Profile("profile_tc").setCustomModel(customModel).setVehicle(vehicle).setTurnCosts(true).putHint(U_TURN_COSTS, uTurnCosts));
         } else {
             // use standard profiles
-            profiles.add(new Profile("profile_no_tc").setVehicle(vehicle).setTurnCosts(false));
+            profiles.add(new Profile("profile_no_tc").setVehicle(vehicle).setCustomModel(Helper.createBaseModel(vehicle)).setTurnCosts(false));
             if (turnCosts)
-                profiles.add(new Profile("profile_tc").setVehicle(vehicle).setTurnCosts(true).putHint(U_TURN_COSTS, uTurnCosts));
+                profiles.add(new Profile("profile_tc").setVehicle(vehicle).setCustomModel(Helper.createBaseModel(vehicle)).setTurnCosts(true).putHint(U_TURN_COSTS, uTurnCosts));
         }
         ghConfig.setProfiles(profiles);
 

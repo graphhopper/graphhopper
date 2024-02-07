@@ -48,7 +48,6 @@ public class RouteResourceIssue2020Test {
     private static GraphHopperServerConfiguration createConfig() {
         GraphHopperServerConfiguration config = new GraphHopperServerTestConfiguration();
         config.getGraphHopperConfiguration().
-                putObject("graph.vehicles", "car").
                 putObject("prepare.lm.split_area_location", "../core/files/split.geo.json").
                 putObject("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 putObject("graph.encoded_values", "road_class,surface,road_environment,max_speed").
