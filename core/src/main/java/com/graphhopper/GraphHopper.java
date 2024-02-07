@@ -63,6 +63,7 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.util.GHUtility.readCountries;
@@ -600,8 +601,10 @@ public class GraphHopper {
 
     protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, PMap> vehiclePropsByVehicle) {
         List<EncodedValue> encodedValues = new ArrayList<>(activeImportUnits.entrySet().stream()
-                .map(e -> e.getValue().getCreateEncodedValue()
-                        .apply(encodedValuesWithProps.getOrDefault(e.getKey(), new PMap())))
+                .map(e -> {
+                    Function<PMap, EncodedValue> f = e.getValue().getCreateEncodedValue();
+                    return f == null ? null : f.apply(encodedValuesWithProps.getOrDefault(e.getKey(), new PMap()));
+                })
                 .filter(Objects::nonNull)
                 .toList());
         profilesByName.values().forEach(profile -> encodedValues.add(Subnetwork.create(profile.getName())));
