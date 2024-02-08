@@ -1,11 +1,11 @@
 package com.graphhopper.routing.weighting.custom;
 
-import com.graphhopper.json.MinMax;
 import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.storage.BaseGraph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CustomModel;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.Polygon;
 import org.junit.jupiter.api.Test;
 
@@ -59,7 +59,7 @@ class CustomWeightingHelperTest {
         customModel.addToSpeed(Else(MULTIPLY, "-0.5"));
 
         CustomWeightingHelper helper = new CustomWeightingHelper();
-        EncodingManager lookup = new EncodingManager.Builder().add(VehicleEncodedValues.car(new PMap())).build();
+        EncodingManager lookup = new EncodingManager.Builder().add(VehicleSpeed.create("car", 7, 2, false)).build();
         helper.init(customModel, lookup, lookup.getDecimalEncodedValue(VehicleSpeed.key("car")), null, null);
         IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
                 helper::calcMaxSpeed);
