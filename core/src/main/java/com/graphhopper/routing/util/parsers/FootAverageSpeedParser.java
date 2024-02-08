@@ -20,7 +20,7 @@ public class FootAverageSpeedParser extends AbstractAverageSpeedParser implement
                 lookup.getDecimalEncodedValue(FerrySpeed.KEY));
     }
 
-    protected FootAverageSpeedParser(DecimalEncodedValue speedEnc, DecimalEncodedValue ferrySpeedEnc) {
+    public FootAverageSpeedParser(DecimalEncodedValue speedEnc, DecimalEncodedValue ferrySpeedEnc) {
         super(speedEnc, ferrySpeedEnc);
 
         routeMap.put(INTERNATIONAL, UNCHANGED.getValue());

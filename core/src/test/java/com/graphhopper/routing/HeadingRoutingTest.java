@@ -56,7 +56,13 @@ class HeadingRoutingTest {
         // Test enforce start direction
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
-        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc)
+                .add(RoadClass.create())
+                .add(RoadClassLink.create())
+                .add(RoadEnvironment.create())
+                .add(Roundabout.create())
+                .add(MaxSpeed.create())
+                .add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
 
@@ -80,7 +86,13 @@ class HeadingRoutingTest {
         // Test enforce south start direction and east end direction
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
-        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc)
+                .add(RoadClass.create())
+                .add(RoadClassLink.create())
+                .add(RoadEnvironment.create())
+                .add(Roundabout.create())
+                .add(MaxSpeed.create())
+                .add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
 
@@ -108,7 +120,13 @@ class HeadingRoutingTest {
     public void headingTest3() {
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
-        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc)
+                .add(RoadClass.create())
+                .add(RoadClassLink.create())
+                .add(RoadEnvironment.create())
+                .add(Roundabout.create())
+                .add(MaxSpeed.create())
+                .add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
 
@@ -134,7 +152,13 @@ class HeadingRoutingTest {
         // Test straight via routing
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
-        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc)
+                .add(RoadClass.create())
+                .add(RoadClassLink.create())
+                .add(RoadEnvironment.create())
+                .add(Roundabout.create())
+                .add(MaxSpeed.create())
+                .add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
 
@@ -160,7 +184,13 @@ class HeadingRoutingTest {
         // Test independence of previous enforcement for subsequent paths
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
-        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc)
+                .add(RoadClass.create())
+                .add(RoadClassLink.create())
+                .add(RoadEnvironment.create())
+                .add(Roundabout.create())
+                .add(MaxSpeed.create())
+                .add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
 
@@ -185,7 +215,13 @@ class HeadingRoutingTest {
     public void testHeadingWithSnapFilter() {
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
-        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc)
+                .add(RoadClass.create())
+                .add(RoadClassLink.create())
+                .add(RoadEnvironment.create())
+                .add(Roundabout.create())
+                .add(MaxSpeed.create())
+                .add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraphWithTunnel(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
         // Start at 8 (slightly north to make it independent on some edge ordering and always use 8-3 or 3-8 as fallback)
@@ -248,7 +284,13 @@ class HeadingRoutingTest {
     public void testHeadingWithSnapFilter2() {
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
-        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc)
+                .add(RoadClass.create())
+                .add(RoadClassLink.create())
+                .add(RoadEnvironment.create())
+                .add(Roundabout.create())
+                .add(MaxSpeed.create())
+                .add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraphWithTunnel(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
         // Start at 8 (slightly east to snap to edge 1->5 per default)
@@ -282,7 +324,13 @@ class HeadingRoutingTest {
         // Test if snaps at tower nodes are ignored
         BooleanEncodedValue accessEnc = VehicleAccess.create("car");
         DecimalEncodedValue speedEnc = VehicleSpeed.create("car", 5, 5, false);
-        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc).add(Subnetwork.create("profile")).build();
+        EncodingManager encodingManager = new EncodingManager.Builder().add(accessEnc).add(speedEnc)
+                .add(RoadClass.create())
+                .add(RoadClassLink.create())
+                .add(RoadEnvironment.create())
+                .add(Roundabout.create())
+                .add(MaxSpeed.create())
+                .add(Subnetwork.create("profile")).build();
         BaseGraph graph = createSquareGraph(encodingManager, accessEnc, speedEnc);
         Router router = createRouter(graph, encodingManager);
 
