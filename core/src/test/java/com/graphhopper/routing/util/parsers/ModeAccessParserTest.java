@@ -147,7 +147,7 @@ class ModeAccessParserTest {
     @Test
     public void testMotorcycleYes() {
         BooleanEncodedValue mcAccessEnc = new SimpleBooleanEncodedValue("motorcycle_access", true);
-        EncodingManager mcEM = new EncodingManager.Builder().add(mcAccessEnc).build();
+        EncodingManager mcEM = new EncodingManager.Builder().add(mcAccessEnc).add(Roundabout.create()).build();
         ModeAccessParser mcParser = new ModeAccessParser(TransportationMode.MOTORCYCLE, mcAccessEnc, mcEM.getBooleanEncodedValue(Roundabout.KEY));
 
         int edgeId = 0;
