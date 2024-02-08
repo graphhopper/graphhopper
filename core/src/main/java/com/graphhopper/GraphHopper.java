@@ -63,6 +63,7 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.util.GHUtility.readCountries;
@@ -591,8 +592,11 @@ public class GraphHopper {
                                                    Map<String, ImportUnit> activeImportUnits,
                                                    Map<String, PMap> vehiclePropsByVehicle) {
         List<EncodedValue> encodedValues = new ArrayList<>(activeImportUnits.entrySet().stream()
-                .map(e -> e.getValue().getCreateEncodedValue()
-                        .apply(encodedValuesWithProps.getOrDefault(e.getKey(), new PMap())))
+                .map(e -> {
+                    Function<PMap, EncodedValue> f = e.getValue().getCreateEncodedValue();
+                    return f == null ? null : f.apply(encodedValuesWithProps.getOrDefault(e.getKey(), new PMap()));
+                })
+                .filter(Objects::nonNull)
                 .toList());
         profilesByName.values().forEach(profile -> encodedValues.add(Subnetwork.create(profile.getName())));
 
@@ -641,8 +645,7 @@ public class GraphHopper {
             osmParsers.addWayTagParser(maxSpeedCalculator.getParser());
         }
 
-        // todonow: why do we do this in a loop with the 'added' set in master? can we not just add the rel parsers based on the existence of the network evs like this?
-        // todonow: add the relation tag parsers no matter what 'vehicles' there are? but keep it consistent with master first...
+        // todo: no real need to make this dependent on 'vehicles', but keep it as it used to be for now
         final boolean hasBike = vehiclesWithProps.containsKey("bike") || vehiclesWithProps.containsKey("mtb") || vehiclesWithProps.containsKey("racingbike");
         final boolean hasFoot = vehiclesWithProps.containsKey("foot");
         if (hasBike && encodingManager.hasEncodedValue(BikeNetwork.KEY))

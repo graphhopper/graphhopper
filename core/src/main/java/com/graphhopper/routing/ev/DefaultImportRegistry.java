@@ -34,7 +34,6 @@ public class DefaultImportRegistry implements ImportRegistry {
             return ImportUnit.create(name, props -> GetOffBike.create(),
                     (lookup, pros) -> new OSMGetOffBikeParser(
                             lookup.getBooleanEncodedValue(GetOffBike.KEY),
-                            // todonow: in master we use the *first* bike?!
                             lookup.getBooleanEncodedValue("bike_access")
                     ), "bike_access");
         else if (RoadClass.KEY.equals(name))
@@ -194,17 +193,29 @@ public class DefaultImportRegistry implements ImportRegistry {
                             lookup.getDecimalEncodedValue(Curvature.KEY))
             );
         else if (AverageSlope.KEY.equals(name))
-            return ImportUnit.create(name, props -> AverageSlope.create(),
-                    (lookup, props) -> new SlopeCalculator(
-                            lookup.getDecimalEncodedValue(MaxSlope.KEY),
-                            lookup.getDecimalEncodedValue(AverageSlope.KEY)
-                    ));
+            return ImportUnit.create(name, props -> AverageSlope.create(), null, "slope_calculator");
         else if (MaxSlope.KEY.equals(name))
-            return ImportUnit.create(name, props -> MaxSlope.create(),
-                    // todonow: we need to make sure that if one of average/max_slope is enabled the other is too
-                    null, AverageSlope.KEY);
+            return ImportUnit.create(name, props -> MaxSlope.create(), null, "slope_calculator");
+        else if ("slope_calculator".equals(name))
+            return ImportUnit.create(name, null,
+                    (lookup, props) -> new SlopeCalculator(
+                            lookup.hasEncodedValue(MaxSlope.KEY) ? lookup.getDecimalEncodedValue(MaxSlope.KEY) : null,
+                            lookup.hasEncodedValue(AverageSlope.KEY) ? lookup.getDecimalEncodedValue(AverageSlope.KEY) : null
+                    ));
         else if (BikeNetwork.KEY.equals(name) || MtbNetwork.KEY.equals(name) || FootNetwork.KEY.equals(name))
             return ImportUnit.create(name, props -> RouteNetwork.create(name), null);
+
+        else if (BusAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> BusAccess.create(),
+                    (lookup, props) -> new ModeAccessParser(TransportationMode.BUS, lookup.getBooleanEncodedValue(BusAccess.KEY), lookup.getBooleanEncodedValue(Roundabout.KEY)),
+                    "roundabout"
+            );
+
+        else if (HovAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> HovAccess.create(),
+                    (lookup, props) -> new ModeAccessParser(TransportationMode.HOV, lookup.getBooleanEncodedValue(HovAccess.KEY), lookup.getBooleanEncodedValue(Roundabout.KEY)),
+                    "roundabout"
+            );
 
         else if (VehicleAccess.key("car").equals(name))
             return ImportUnit.create(name, props -> VehicleAccess.create("car"),

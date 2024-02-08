@@ -42,9 +42,9 @@ public class ImportUnitSorter {
         if (permanentMarked.contains(strN)) return;
         ImportUnit importUnit = map.get(strN);
         if (importUnit == null)
-            throw new IllegalArgumentException("cannot find reg " + strN);
+            throw new IllegalArgumentException("cannot find import unit " + strN);
         if (temporaryMarked.contains(strN))
-            throw new IllegalArgumentException("cyclic required parsers are not allowed: " + importUnit + " " + importUnit.getRequiredImportUnits());
+            throw new IllegalArgumentException("import units with cyclic dependencies are not allowed: " + importUnit + " " + importUnit.getRequiredImportUnits());
 
         temporaryMarked.add(strN);
         for (String strM : importUnit.getRequiredImportUnits()) {
