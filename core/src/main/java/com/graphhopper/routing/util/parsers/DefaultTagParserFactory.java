@@ -86,6 +86,8 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMCrossingParser(lookup.getEnumEncodedValue(Crossing.KEY, Crossing.class));
         else if (name.equals(FerrySpeed.KEY))
             return new FerrySpeedCalculator(lookup.getDecimalEncodedValue(FerrySpeed.KEY));
+        else if (name.equals(BusAccess.KEY))
+            return new ModeAccessParser(TransportationMode.BUS, lookup.getBooleanEncodedValue(BusAccess.KEY), lookup.getBooleanEncodedValue(Roundabout.KEY));
         return null;
     }
 }
