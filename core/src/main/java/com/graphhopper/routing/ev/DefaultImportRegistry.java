@@ -211,6 +211,12 @@ public class DefaultImportRegistry implements ImportRegistry {
                     "roundabout"
             );
 
+        else if (HovAccess.KEY.equals(name))
+            return ImportUnit.create(name, props -> HovAccess.create(),
+                    (lookup, props) -> new ModeAccessParser(TransportationMode.HOV, lookup.getBooleanEncodedValue(HovAccess.KEY), lookup.getBooleanEncodedValue(Roundabout.KEY)),
+                    "roundabout"
+            );
+
         else if (VehicleAccess.key("car").equals(name))
             return ImportUnit.create(name, props -> VehicleAccess.create("car"),
                     (lookup, props) -> new CarAccessParser(lookup, props).init(props.getObject("date_range_parser", new DateRangeParser())),
