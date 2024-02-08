@@ -665,10 +665,8 @@ public class GraphHopper {
 
     protected List<String> getTurnRestrictionsForVehicle(String vehicle) {
         return switch (vehicle) {
-            case "car" -> OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR);
-            case "bike", "mtb", "racingbike" ->
+            case "mtb", "racingbike" ->
                     OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE);
-            case "foot" -> OSMRoadAccessParser.toOSMRestrictions(TransportationMode.FOOT);
             case "roads" -> OSMRoadAccessParser.toOSMRestrictions(TransportationMode.VEHICLE);
             default ->
                     OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(vehicle.toUpperCase(Locale.ROOT)));

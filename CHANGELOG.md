@@ -1,7 +1,6 @@
 ### 9.0 [not yet released]
 
-- the custom models do no longer include the speed, access and priority encoded values only implicitly, see #1234 for a migration guide
-  you have to specify an initial statement like `{ "if": "true", "limit_to": "car_average_speed" }` for `speed` and `{ "if": "!car_access", "multiply_by": "0" }` for `priority`
+- the custom models do no longer include the speed, access and priority encoded values only implicitly, see #2938 for a migration guide. You have to specify an initial statement like `{ "if": "true", "limit_to": "car_average_speed" }` for `speed` and `{ "if": "!car_access", "multiply_by": "0" }` for `priority`
 - removed the ability to sort the graph (graph.do_sort) due to incomplete support, #2919
 - minor changes for import hooks, #2917
 - removed wheelchair vehicle and related parsers, with currently no complete replacement as it needs to be redone properly with a custom model
