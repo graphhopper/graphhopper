@@ -99,6 +99,8 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return FerrySpeed.create();
         } else if (BusAccess.KEY.equals(name)) {
             return BusAccess.create();
+        } else if (HovAccess.KEY.equals(name)) {
+            return HovAccess.create();
         } else {
             throw new IllegalArgumentException("DefaultEncodedValueFactory cannot find EncodedValue " + name);
         }
