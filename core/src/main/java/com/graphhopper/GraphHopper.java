@@ -609,7 +609,7 @@ public class GraphHopper {
                 .toList());
         profilesByName.values().forEach(profile -> encodedValues.add(Subnetwork.create(profile.getName())));
 
-        List<String> sortedEVs = getEVSortIndex();
+        List<String> sortedEVs = getEVSortIndex(vehiclePropsByVehicle, profilesByName);
         encodedValues.sort(Comparator.comparingInt(ev -> sortedEVs.indexOf(ev.getName())));
 
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
@@ -620,7 +620,7 @@ public class GraphHopper {
         return emBuilder.build();
     }
 
-    protected List<String> getEVSortIndex() {
+    protected List<String> getEVSortIndex(Map<String, PMap> vehiclePropsByVehicle, Map<String, Profile> profilesByName) {
         return Collections.emptyList();
     }
 
