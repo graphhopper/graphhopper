@@ -590,7 +590,7 @@ public class GraphHopper {
 
     protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps,
                                                    Map<String, ImportUnit> activeImportUnits,
-                                                   Map<String, PMap> vehiclePropsByVehicle) {
+                                                   Set<String> turnCostVehicles) {
         List<EncodedValue> encodedValues = new ArrayList<>(activeImportUnits.entrySet().stream()
                 .map(e -> {
                     Function<PMap, EncodedValue> f = e.getValue().getCreateEncodedValue();
@@ -600,22 +600,20 @@ public class GraphHopper {
                 .toList());
         profilesByName.values().forEach(profile -> encodedValues.add(Subnetwork.create(profile.getName())));
 
-        List<String> sortedEVs = getEVSortIndex(vehiclePropsByVehicle, profilesByName);
+        List<String> sortedEVs = getEVSortIndex(profilesByName);
         encodedValues.sort(Comparator.comparingInt(ev -> sortedEVs.indexOf(ev.getName())));
 
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         encodedValues.forEach(emBuilder::add);
-        vehiclePropsByVehicle.entrySet().stream()
-                .filter(e -> e.getValue().getBool("turn_costs", false))
-                .forEach(e -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(e.getKey())));
+        turnCostVehicles.forEach(v -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(v)));
         return emBuilder.build();
     }
 
-    protected List<String> getEVSortIndex(Map<String, PMap> vehiclePropsByVehicle, Map<String, Profile> profilesByName) {
+    protected List<String> getEVSortIndex(Map<String, Profile> profilesByName) {
         return Collections.emptyList();
     }
 
-    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, PMap> vehiclesWithProps,
+    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Set<String> turnCostVehicles,
                                          List<String> ignoredHighways, String dateRangeParserString) {
         ImportUnitSorter sorter = new ImportUnitSorter(activeImportUnits);
         Map<String, ImportUnit> sortedImportUnits = new LinkedHashMap<>();
@@ -637,24 +635,18 @@ public class GraphHopper {
             osmParsers.addWayTagParser(maxSpeedCalculator.getParser());
         }
 
-        // todo: no real need to make this dependent on 'vehicles', but keep it as it used to be for now
-        final boolean hasBike = vehiclesWithProps.containsKey("bike") || vehiclesWithProps.containsKey("mtb") || vehiclesWithProps.containsKey("racingbike");
-        final boolean hasFoot = vehiclesWithProps.containsKey("foot");
-        if (hasBike && encodingManager.hasEncodedValue(BikeNetwork.KEY))
+        if (encodingManager.hasEncodedValue(BikeNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig));
-        if (hasBike && encodingManager.hasEncodedValue(MtbNetwork.KEY))
+        if (encodingManager.hasEncodedValue(MtbNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMMtbNetworkTagParser(encodingManager.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig));
-        if (hasFoot && encodingManager.hasEncodedValue(FootNetwork.KEY))
+        if (encodingManager.hasEncodedValue(FootNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
 
-        // TODO NOW: vehicle can no longer have properties, except turn_costs=true/false
-        vehiclesWithProps.entrySet().stream()
-                .filter(e -> e.getValue().getBool("turn_costs", false))
-                .forEach(e -> {
-                    List<String> osmRestrictions = getTurnRestrictionsForVehicle(e.getKey());
-                    osmParsers.addRestrictionTagParser(new RestrictionTagParser(
-                            osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(e.getKey()))));
-                });
+        turnCostVehicles.forEach(v -> {
+            List<String> osmRestrictions = getTurnRestrictionsForVehicle(v);
+            osmParsers.addRestrictionTagParser(new RestrictionTagParser(
+                    osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(v))));
+        });
         return osmParsers;
     }
 
@@ -676,15 +668,12 @@ public class GraphHopper {
         return encodedValuesWithProps;
     }
 
-    public static Map<String, PMap> getVehiclePropsByVehicle(Collection<Profile> profiles) {
-        Map<String, PMap> vehiclePropsFromProfiles = new LinkedHashMap<>();
-        for (Profile profile : profiles) {
-            // if a profile uses a vehicle with turn costs make sure we add that vehicle with turn costs
-            String vehicle = profile.getVehicle().trim();
-            if (!vehiclePropsFromProfiles.containsKey(vehicle) || profile.isTurnCosts())
-                vehiclePropsFromProfiles.put(vehicle, new PMap(profile.isTurnCosts() ? "turn_costs=true" : ""));
-        }
-        return vehiclePropsFromProfiles;
+    public static Set<String> getTurnCostVehicles(Collection<Profile> profiles) {
+        Set<String> turnCostVehicles = new LinkedHashSet<>();
+        for (Profile profile : profiles)
+            if (profile.isTurnCosts())
+                turnCostVehicles.add(profile.getVehicle().trim());
+        return turnCostVehicles;
     }
 
     private static ElevationProvider createElevationProvider(GraphHopperConfig ghConfig) {
@@ -851,7 +840,7 @@ public class GraphHopper {
         encodedValuesWithProps.putIfAbsent(RoadClassLink.KEY, new PMap());
         encodedValuesWithProps.putIfAbsent(MaxSpeed.KEY, new PMap());
 
-        Map<String, PMap> turnCostConfig = getVehiclePropsByVehicle(profilesByName.values());
+        Set<String> turnCostVehicles = getTurnCostVehicles(profilesByName.values());
 
         if (urbanDensityCalculationThreads > 0)
             encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());
@@ -862,14 +851,14 @@ public class GraphHopper {
         ArrayDeque<String> deque = new ArrayDeque<>(encodedValuesWithProps.keySet());
         while (!deque.isEmpty()) {
             String ev = deque.removeFirst();
-            ImportUnit ImportUnit = importRegistry.createImportUnit(ev);
-            if (ImportUnit == null)
+            ImportUnit importUnit = importRegistry.createImportUnit(ev);
+            if (importUnit == null)
                 throw new IllegalArgumentException("Unknown encoded value: " + ev);
-            if (activeImportUnits.put(ev, ImportUnit) == null)
-                deque.addAll(ImportUnit.getRequiredImportUnits());
+            if (activeImportUnits.put(ev, importUnit) == null)
+                deque.addAll(importUnit.getRequiredImportUnits());
         }
-        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, turnCostConfig);
-        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, turnCostConfig, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
+        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, turnCostVehicles);
+        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, turnCostVehicles, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
     }
 
     protected void postImportOSM() {
@@ -1066,7 +1055,6 @@ public class GraphHopper {
     private void checkProfilesConsistency() {
         if (profilesByName.isEmpty())
             throw new IllegalArgumentException("There has to be at least one profile");
-        EncodingManager encodingManager = getEncodingManager();
         for (Profile profile : profilesByName.values()) {
             try {
                 createWeighting(profile, new PMap());

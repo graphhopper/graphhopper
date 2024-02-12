@@ -20,9 +20,7 @@ package com.graphhopper.routing.weighting.custom;
 import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
-import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Polygon;
@@ -41,7 +39,6 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.graphhopper.json.Statement.Keyword.IF;
-import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
 
 public class CustomModelParser {
     private static final AtomicLong longVal = new AtomicLong(1);
