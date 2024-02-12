@@ -52,6 +52,7 @@ public class FootTagParserTest {
             .add(footAccessEnc).add(footAvgSpeedEnc).add(footPriorityEnc).add(RouteNetwork.create(FootNetwork.KEY))
             .add(bikeAccessEnc).add(bikeAvgSpeedEnc).add(RouteNetwork.create(BikeNetwork.KEY))
             .add(carAccessEnc).add(carAvSpeedEnc)
+            .add(FerrySpeed.create())
             .build();
     private final FootAccessParser accessParser = new FootAccessParser(encodingManager, new PMap());
     private final FootAverageSpeedParser speedParser = new FootAverageSpeedParser(encodingManager);

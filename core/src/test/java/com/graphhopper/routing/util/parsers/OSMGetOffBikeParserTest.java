@@ -1,12 +1,8 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.ArrayEdgeIntAccess;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.GetOffBike;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -20,7 +16,7 @@ public class OSMGetOffBikeParserTest {
     private final OSMGetOffBikeParser getOffParser;
 
     public OSMGetOffBikeParserTest() {
-        EncodingManager em = new EncodingManager.Builder().add(offBikeEnc).add(VehicleEncodedValues.bike(new PMap()).getAccessEnc()).build();
+        EncodingManager em = new EncodingManager.Builder().add(offBikeEnc).add(VehicleAccess.create("bike")).add(Roundabout.create()).build();
         accessParser = new BikeAccessParser(em, new PMap());
         getOffParser = new OSMGetOffBikeParser(offBikeEnc, accessParser.getAccessEnc());
     }

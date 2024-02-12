@@ -53,6 +53,7 @@ class TagParsingTest {
                 .add(bike2AccessEnc).add(bike2SpeedEnc).add(bike2PriorityEnc)
                 .add(bikeNetworkEnc)
                 .add(Smoothness.create())
+                .add(RoadClass.create())
                 .build();
         BikePriorityParser bike1Parser = new BikePriorityParser(bike1PriorityEnc, bike1SpeedEnc, bikeNetworkEnc);
         BikePriorityParser bike2Parser = new BikePriorityParser(bike2PriorityEnc, bike2SpeedEnc, bikeNetworkEnc) {
@@ -101,6 +102,7 @@ class TagParsingTest {
                 .add(mtbAccessEnc).add(mtbSpeedEnc).add(mtbPriorityEnc)
                 .add(bikeNetworkEnc)
                 .add(Smoothness.create())
+                .add(RoadClass.create())
                 .build();
         BikePriorityParser bikeTagParser = new BikePriorityParser(em);
         MountainBikePriorityParser mtbTagParser = new MountainBikePriorityParser(em);
@@ -137,6 +139,7 @@ class TagParsingTest {
                 .add(mtbAccessEnc).add(VehicleSpeed.create("mtb", 4, 2, false)).add(VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false))
                 .add(RouteNetwork.create(FootNetwork.KEY))
                 .add(RouteNetwork.create(BikeNetwork.KEY))
+                .add(Roundabout.create())
                 .add(Smoothness.create())
                 .build();
 

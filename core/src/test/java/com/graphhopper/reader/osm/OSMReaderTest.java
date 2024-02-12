@@ -923,7 +923,7 @@ public class OSMReaderTest {
 
     @Test
     public void testCountries() throws IOException {
-        EncodingManager em = new EncodingManager.Builder().build();
+        EncodingManager em = new EncodingManager.Builder().add(RoadAccess.create()).build();
         EnumEncodedValue<RoadAccess> roadAccessEnc = em.getEnumEncodedValue(RoadAccess.KEY, RoadAccess.class);
         OSMParsers osmParsers = new OSMParsers();
         osmParsers.addWayTagParser(new OSMRoadAccessParser(roadAccessEnc, OSMRoadAccessParser.toOSMRestrictions(TransportationMode.CAR)));
@@ -955,7 +955,6 @@ public class OSMReaderTest {
         // see https://discuss.graphhopper.com/t/country-of-way-is-wrong-on-road-near-border-with-curvature/6908/2
         EnumEncodedValue<Country> countryEnc = Country.create();
         EncodingManager em = EncodingManager.start()
-                .add(VehicleEncodedValues.car(new PMap()))
                 .add(countryEnc)
                 .build();
         OSMParsers osmParsers = new OSMParsers()

@@ -56,6 +56,8 @@ public class CarTagParserTest {
                 .add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
                 .add(RouteNetwork.create(BikeNetwork.KEY))
                 .add(Smoothness.create())
+                .add(Roundabout.create())
+                .add(FerrySpeed.create())
                 .build();
     }
 
@@ -583,6 +585,7 @@ public class CarTagParserTest {
         EncodingManager em = new EncodingManager.Builder()
                 .add(new SimpleBooleanEncodedValue("car_access", true))
                 .add(smallFactorSpeedEnc)
+                .add(FerrySpeed.create())
                 .addTurnCostEncodedValue(TurnCost.create("car", 1))
                 .build();
         CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em);
@@ -664,6 +667,7 @@ public class CarTagParserTest {
         EncodingManager lowFactorEm = new EncodingManager.Builder()
                 .add(new SimpleBooleanEncodedValue(VehicleAccess.key("car"), true))
                 .add(lowFactorSpeedEnc)
+                .add(FerrySpeed.create())
                 .build();
         edgeIntAccess = new ArrayEdgeIntAccess(lowFactorEm.getIntsForFlags());
         new CarAverageSpeedParser(lowFactorEm).handleWayTags(edgeId, edgeIntAccess, way);

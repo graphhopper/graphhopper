@@ -2,11 +2,11 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
-import com.graphhopper.routing.util.VehicleEncodedValues;
-import com.graphhopper.routing.util.VehicleTagParsers;
+import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -28,18 +28,26 @@ public class HikeCustomModelTest {
     public void setup() {
         IntEncodedValue hikeRating = HikeRating.create();
         em = new EncodingManager.Builder().
-                add(VehicleEncodedValues.roads(new PMap())).
-                add(VehicleEncodedValues.foot(new PMap())).
+                add(VehicleAccess.create("roads")).
+                add(VehicleSpeed.create("roads", 7, 2, true)).
+                add(VehicleAccess.create("foot")).
+                add(VehicleSpeed.create("foot", 4, 1, false)).
+                add(VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false)).
+                add(FerrySpeed.create()).
+                add(RouteNetwork.create(FootNetwork.KEY)).
+                add(RoadAccess.create()).
                 add(hikeRating).build();
 
         roadsSpeedEnc = em.getDecimalEncodedValue(VehicleSpeed.key("roads"));
         parsers = new OSMParsers().
                 addWayTagParser(new OSMHikeRatingParser(hikeRating));
 
-        for (TagParser p : VehicleTagParsers.foot(em, new PMap()).getTagParsers())
-            parsers.addWayTagParser(p);
-        for (TagParser p : VehicleTagParsers.roads(em).getTagParsers())
-            parsers.addWayTagParser(p);
+        parsers.addWayTagParser(new FootAccessParser(em, new PMap()));
+        parsers.addWayTagParser(new FootAverageSpeedParser(em));
+        parsers.addWayTagParser(new FootPriorityParser(em));
+
+        parsers.addWayTagParser(new RoadsAccessParser(em));
+        parsers.addWayTagParser(new RoadsAverageSpeedParser(em));
     }
 
     EdgeIteratorState createEdge(ReaderWay way) {
