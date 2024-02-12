@@ -108,7 +108,7 @@ public class FastestWeightingTest {
     @Test
     public void calcWeightAndTime_withTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage()));
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnRestrictionEnc, encodingManager, graph));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100));
         setTurnRestriction(graph, 0, 1, 2);
@@ -119,7 +119,7 @@ public class FastestWeightingTest {
     @Test
     public void calcWeightAndTime_uTurnCosts() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
-        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), 40));
+        Weighting weighting = new FastestWeighting(accessEnc, speedEnc, new DefaultTurnCostProvider(turnRestrictionEnc, encodingManager, graph, 40));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         assertEquals(6 + 40, GHUtility.calcWeightWithTurnWeight(weighting, edge, false, 0), 1.e-6);
         assertEquals((6 + 40) * 1000, GHUtility.calcMillisWithTurnMillis(weighting, edge, false, 0), 1.e-6);
@@ -129,7 +129,7 @@ public class FastestWeightingTest {
     public void calcWeightAndTime_withTurnCosts_shortest() {
         BaseGraph graph = new BaseGraph.Builder(encodingManager).withTurnCosts(true).create();
         Weighting weighting = new ShortestWeighting(accessEnc, speedEnc,
-                new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage()));
+                new DefaultTurnCostProvider(turnRestrictionEnc, encodingManager, graph));
         GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(0, 1).setDistance(100));
         EdgeIteratorState edge = GHUtility.setSpeed(60, true, true, accessEnc, speedEnc, graph.edge(1, 2).setDistance(100));
         setTurnRestriction(graph, 0, 1, 2);

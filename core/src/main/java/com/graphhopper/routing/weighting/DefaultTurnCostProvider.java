@@ -19,6 +19,10 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.EnumEncodedValue;
+import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.TurnCostStorage;
 import com.graphhopper.util.EdgeIterator;
 
@@ -26,30 +30,34 @@ import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 
 public class DefaultTurnCostProvider implements TurnCostProvider {
     private final BooleanEncodedValue turnRestrictionEnc;
+    private final EnumEncodedValue<RoadClass> roadClassEnc;
+    private final BaseGraph graph;
     private final TurnCostStorage turnCostStorage;
     private final int uTurnCostsInt;
     private final double uTurnCosts;
 
-    public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, TurnCostStorage turnCostStorage) {
-        this(turnRestrictionEnc, turnCostStorage, Weighting.INFINITE_U_TURN_COSTS);
+    public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, EncodingManager encodingManager, BaseGraph graph) {
+        this(turnRestrictionEnc, encodingManager, graph, Weighting.INFINITE_U_TURN_COSTS);
     }
 
     /**
      * @param uTurnCosts the costs of a u-turn in seconds, for {@link Weighting#INFINITE_U_TURN_COSTS} the u-turn costs
      *                   will be infinite
      */
-    public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, TurnCostStorage turnCostStorage, int uTurnCosts) {
+    public DefaultTurnCostProvider(BooleanEncodedValue turnRestrictionEnc, EncodingManager encodingManager, BaseGraph baseGraph, int uTurnCosts) {
         if (uTurnCosts < 0 && uTurnCosts != INFINITE_U_TURN_COSTS) {
             throw new IllegalArgumentException("u-turn costs must be positive, or equal to " + INFINITE_U_TURN_COSTS + " (=infinite costs)");
         }
         this.uTurnCostsInt = uTurnCosts;
         this.uTurnCosts = uTurnCosts < 0 ? Double.POSITIVE_INFINITY : uTurnCosts;
-        if (turnCostStorage == null) {
+        if (baseGraph.getTurnCostStorage() == null) {
             throw new IllegalArgumentException("No storage set to calculate turn weight");
         }
         // if null the TurnCostProvider can be still useful for edge-based routing
         this.turnRestrictionEnc = turnRestrictionEnc;
-        this.turnCostStorage = turnCostStorage;
+        this.roadClassEnc = encodingManager.getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
+        this.graph = baseGraph;
+        this.turnCostStorage = baseGraph.getTurnCostStorage();
     }
 
     public BooleanEncodedValue getTurnRestrictionEnc() {
@@ -68,6 +76,12 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
         } else {
             if (turnRestrictionEnc != null)
                 tCost = turnCostStorage.get(turnRestrictionEnc, edgeFrom, nodeVia, edgeTo) ? Double.POSITIVE_INFINITY : 0;
+            else {
+                RoadClass roadClassFrom = graph.getEdgeIteratorState(edgeFrom, nodeVia).get(roadClassEnc);
+                RoadClass roadClassTo = graph.getEdgeIteratorState(edgeTo, nodeVia).getReverse(roadClassEnc);
+                if (roadClassFrom != roadClassTo)
+                    tCost = 5;
+            }
         }
         return tCost;
     }
