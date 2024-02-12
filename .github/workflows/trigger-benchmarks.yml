@@ -2,7 +2,7 @@ name: Trigger Benchmarks
 on: push
 jobs:
   trigger_measurement:
-    if: github.repository_owner == 'graphhopper'
+    if: github.repository_owner == 'Apaq'
     runs-on: ubuntu-22.04
     environment: benchmarks
     steps:

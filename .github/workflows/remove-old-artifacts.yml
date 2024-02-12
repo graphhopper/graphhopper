@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 jobs:
   remove-old-artifacts:
-    if: github.repository_owner == 'graphhopper'
+    if: github.repository_owner == 'Apaq'
     name: Remove old artifacts
     runs-on: ubuntu-latest
     timeout-minutes: 10 # stop the task if it takes longer
@@ -19,7 +19,7 @@ jobs:
         skip-recent: 300
 
   remove-old-artifacts-2:
-    if: github.repository_owner == 'graphhopper'
+    if: github.repository_owner == 'Apaq'
     name: Remove old artifacts
     runs-on: ubuntu-latest
     timeout-minutes: 10 # stop the task if it takes longer
@@ -47,7 +47,7 @@ jobs:
         min-versions-to-keep: 300
 
   remove-old-artifacts-3:
-    if: github.repository_owner == 'graphhopper'
+    if: github.repository_owner == 'Apaq'
     name: Remove old artifacts 3
     runs-on: ubuntu-latest
     timeout-minutes: 10 # stop the task if it takes longer

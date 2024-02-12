@@ -30,6 +30,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
     protected final Set<String> trackTypeValues = new HashSet<>();
     protected final Set<String> highwayValues = new HashSet<>();
+    protected final Set<String> pedestrianAccessValues = new HashSet<>();
     protected final BooleanEncodedValue roundaboutEnc;
 
     public CarAccessParser(EncodedValueLookup lookup, PMap properties) {
@@ -71,7 +72,9 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
         highwayValues.addAll(Arrays.asList("motorway", "motorway_link", "trunk", "trunk_link",
                 "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-                "unclassified", "residential", "living_street", "service", "road", "track"));
+                "unclassified", "residential", "living_street", "service", "road", "track", "pedestrian"));
+
+        pedestrianAccessValues.addAll(Arrays.asList("destination", "yes", "customers"));
 
         trackTypeValues.addAll(Arrays.asList("grade1", "grade2", "grade3", null));
     }
@@ -154,6 +157,20 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
         if (way.hasTag("gh:barrier_edge")) {
             List<Map<String, Object>> nodeTags = way.getTag("node_tags", Collections.emptyList());
             handleBarrierEdge(edgeId, edgeIntAccess, nodeTags.get(0));
+        }
+
+        if("pedestrian".equals(way.getTag("highway"))) {
+            boolean allowed = way.hasTag("motor_vehicle", pedestrianAccessValues) ||
+                    way.hasTag("vehicle", pedestrianAccessValues);
+            if (isOneway(way)) {
+                if (isForwardOneway(way))
+                    accessEnc.setBool(false, edgeId, edgeIntAccess, allowed);
+                if (isBackwardOneway(way))
+                    accessEnc.setBool(true, edgeId, edgeIntAccess, allowed);
+            } else {
+                accessEnc.setBool(false, edgeId, edgeIntAccess, allowed);
+                accessEnc.setBool(true, edgeId, edgeIntAccess, allowed);
+            }
         }
     }
 

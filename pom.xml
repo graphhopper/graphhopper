@@ -280,7 +280,7 @@
         <repository>
             <id>github</id>
             <name>GitHub GraphHopper Apache Maven Packages</name>
-            <url>https://maven.pkg.github.com/graphhopper/graphhopper</url>
+            <url>https://maven.pkg.github.com/apaq/graphhopper</url>
         </repository>
     </distributionManagement>
 
