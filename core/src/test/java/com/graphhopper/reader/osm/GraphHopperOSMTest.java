@@ -472,7 +472,7 @@ public class GraphHopperOSMTest {
                 setGraphHopperLocation(ghLoc);
         instance.load();
         assertEquals(5, instance.getBaseGraph().getNodes());
-        assertEquals("foot_access,foot_priority,foot_average_speed,car_access,car_average_speed,foot_subnetwork,car_subnetwork,max_speed,road_class,road_class_link,road_environment,foot_network,roundabout,ferry_speed",
+        assertEquals("road_class,road_environment,roundabout,road_class_link,max_speed,foot_access,foot_average_speed,foot_priority,foot_network,car_access,car_average_speed,ferry_speed,foot_subnetwork,car_subnetwork",
                 instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
     }
 
@@ -510,7 +510,7 @@ public class GraphHopperOSMTest {
                 setOSMFile(testOsm3);
         instance.load();
         assertEquals(5, instance.getBaseGraph().getNodes());
-        assertEquals("foot_access,foot_priority,foot_average_speed,car_access,car_average_speed,foot_subnetwork,car_subnetwork,max_speed,road_class,road_class_link,road_environment,foot_network,roundabout,ferry_speed", instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
+        assertEquals("road_class,road_environment,roundabout,road_class_link,max_speed,foot_access,foot_average_speed,foot_priority,foot_network,car_access,car_average_speed,ferry_speed,foot_subnetwork,car_subnetwork", instance.getEncodingManager().getEncodedValues().stream().map(EncodedValue::getName).collect(Collectors.joining(",")));
     }
 
     @Test

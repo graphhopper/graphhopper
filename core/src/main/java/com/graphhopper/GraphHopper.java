@@ -600,17 +600,7 @@ public class GraphHopper {
                 .toList());
         profilesByName.values().forEach(profile -> encodedValues.add(Subnetwork.create(profile.getName())));
 
-        // sort the encoded values, just so it is easier to compare with previous versions...
-        List<String> sortedEVs = new ArrayList<>();
-        profilesByName.keySet().forEach(profile -> {
-            sortedEVs.add(Subnetwork.key(profile));
-        });
-        sortedEVs.add(MaxSpeedEstimated.KEY);
-        sortedEVs.add(UrbanDensity.KEY);
-        sortedEVs.addAll(List.of("max_speed", "road_class", "road_class_link", "road_environment", "road_access", "surface", "smoothness",
-                "hazmat", "hazmat_tunnel", "hazmat_water", "toll", "track_type", "max_weight", "max_width", "max_height", "max_length", "lanes",
-                "hike_rating", "mtb_rating", "horse_rating", "average_slope", "max_slope", "curvature", "bike_network", "mtb_network", "foot_network",
-                "country", "urban_ee", "hgv", "crossing", "roundabout", "ferry_speed", "get_off_bike"));
+        List<String> sortedEVs = getEVSortIndex(vehiclePropsByVehicle, profilesByName);
         encodedValues.sort(Comparator.comparingInt(ev -> sortedEVs.indexOf(ev.getName())));
 
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
@@ -621,9 +611,11 @@ public class GraphHopper {
         return emBuilder.build();
     }
 
-    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps,
-                                         Map<String, ImportUnit> activeImportUnits,
-                                         Map<String, PMap> vehiclesWithProps,
+    protected List<String> getEVSortIndex(Map<String, PMap> vehiclePropsByVehicle, Map<String, Profile> profilesByName) {
+        return Collections.emptyList();
+    }
+
+    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Map<String, PMap> vehiclesWithProps,
                                          List<String> ignoredHighways, String dateRangeParserString) {
         ImportUnitSorter sorter = new ImportUnitSorter(activeImportUnits);
         Map<String, ImportUnit> sortedImportUnits = new LinkedHashMap<>();
