@@ -24,10 +24,12 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.Constants;
-import com.graphhopper.util.PMap;
 
 import java.io.UncheckedIOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -41,6 +43,7 @@ import java.util.stream.Collectors;
  */
 public class EncodingManager implements EncodedValueLookup {
     private final LinkedHashMap<String, EncodedValue> encodedValueMap;
+    private final LinkedHashMap<String, EncodedValue> turnEncodedValueMap;
     private int intsForFlags;
     private int intsForTurnCostFlags;
 
@@ -49,6 +52,7 @@ public class EncodingManager implements EncodedValueLookup {
         properties.put("graph.em.ints_for_flags", encodingManager.intsForFlags);
         properties.put("graph.em.ints_for_turn_cost_flags", encodingManager.intsForTurnCostFlags);
         properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
+        properties.put("graph.turn_encoded_values", encodingManager.toTurnEncodedValuesAsString());
     }
 
     public static EncodingManager fromProperties(StorableProperties properties) {
@@ -69,7 +73,16 @@ public class EncodingManager implements EncodedValueLookup {
                 throw new IllegalStateException("Duplicate encoded value name: " + encodedValue.getName() + " in: graph.encoded_values=" + encodedValueStr);
         });
 
-        return new EncodingManager(encodedValues,
+        String turnEncodedValueStr = properties.get("graph.turn_encoded_values");
+        ArrayNode tevList = deserializeEncodedValueList(turnEncodedValueStr);
+        LinkedHashMap<String, EncodedValue> turnEncodedValues = new LinkedHashMap<>();
+        tevList.forEach(serializedEV -> {
+            EncodedValue encodedValue = EncodedValueSerializer.deserializeEncodedValue(serializedEV.textValue());
+            if (turnEncodedValues.put(encodedValue.getName(), encodedValue) != null)
+                throw new IllegalStateException("Duplicate turn encoded value name: " + encodedValue.getName() + " in: graph.turn_encoded_values=" + turnEncodedValueStr);
+        });
+
+        return new EncodingManager(encodedValues, turnEncodedValues,
                 getIntegerProperty(properties, "graph.em.ints_for_flags"),
                 getIntegerProperty(properties, "graph.em.ints_for_turn_cost_flags")
         );
@@ -97,14 +110,17 @@ public class EncodingManager implements EncodedValueLookup {
         return new Builder();
     }
 
-    public EncodingManager(LinkedHashMap<String, EncodedValue> encodedValueMap, int intsForFlags, int intsForTurnCostFlags) {
+    public EncodingManager(LinkedHashMap<String, EncodedValue> encodedValueMap,
+                           LinkedHashMap<String, EncodedValue> turnEncodedValueMap,
+                           int intsForFlags, int intsForTurnCostFlags) {
         this.encodedValueMap = encodedValueMap;
+        this.turnEncodedValueMap = turnEncodedValueMap;
         this.intsForFlags = intsForFlags;
         this.intsForTurnCostFlags = intsForTurnCostFlags;
     }
 
     private EncodingManager() {
-        this(new LinkedHashMap<>(), 0, 0);
+        this(new LinkedHashMap<>(), new LinkedHashMap<>(), 0, 0);
     }
 
     public static class Builder {
@@ -112,22 +128,12 @@ public class EncodingManager implements EncodedValueLookup {
         private final EncodedValue.InitializerConfig turnCostConfig = new EncodedValue.InitializerConfig();
         private EncodingManager em = new EncodingManager();
 
-        public Builder add(VehicleEncodedValues v) {
-            checkNotBuiltAlready();
-            List<EncodedValue> list = new ArrayList<>();
-            v.createEncodedValues(list);
-            list.forEach(this::add);
-
-            list = new ArrayList<>();
-            v.createTurnCostEncodedValues(list);
-            list.forEach(this::addTurnCostEncodedValue);
-            return this;
-        }
-
         public Builder add(EncodedValue encodedValue) {
             checkNotBuiltAlready();
             if (em.hasEncodedValue(encodedValue.getName()))
                 throw new IllegalArgumentException("EncodedValue already exists: " + encodedValue.getName());
+            if (em.hasTurnEncodedValue(encodedValue.getName()))
+                throw new IllegalArgumentException("Already defined as 'turn'-EncodedValue: " + encodedValue.getName());
             encodedValue.init(edgeConfig);
             em.encodedValueMap.put(encodedValue.getName(), encodedValue);
             return this;
@@ -135,11 +141,12 @@ public class EncodingManager implements EncodedValueLookup {
 
         public Builder addTurnCostEncodedValue(EncodedValue turnCostEnc) {
             checkNotBuiltAlready();
+            if (em.hasTurnEncodedValue(turnCostEnc.getName()))
+                throw new IllegalArgumentException("Already defined: " + turnCostEnc.getName());
             if (em.hasEncodedValue(turnCostEnc.getName()))
-                throw new IllegalArgumentException("Already defined: " + turnCostEnc.getName() + ". Please note that " +
-                        "EncodedValues for edges and turn costs are in the same namespace.");
+                throw new IllegalArgumentException("Already defined as EncodedValue: " + turnCostEnc.getName());
             turnCostEnc.init(turnCostConfig);
-            em.encodedValueMap.put(turnCostEnc.getName(), turnCostEnc);
+            em.turnEncodedValueMap.put(turnCostEnc.getName(), turnCostEnc);
             return this;
         }
 
@@ -150,9 +157,6 @@ public class EncodingManager implements EncodedValueLookup {
 
         public EncodingManager build() {
             checkNotBuiltAlready();
-            addDefaultEncodedValues();
-            if (em.encodedValueMap.isEmpty())
-                throw new IllegalStateException("No EncodedValues were added to the EncodingManager");
             em.intsForFlags = edgeConfig.getRequiredInts();
             em.intsForTurnCostFlags = turnCostConfig.getRequiredInts();
             EncodingManager result = em;
@@ -160,30 +164,6 @@ public class EncodingManager implements EncodedValueLookup {
             return result;
         }
 
-        private void addDefaultEncodedValues() {
-            // todo: I think ultimately these should all be removed and must be added explicitly
-            List<String> keys = new ArrayList<>(Arrays.asList(
-                    Roundabout.KEY,
-                    RoadClass.KEY,
-                    RoadClassLink.KEY,
-                    RoadEnvironment.KEY,
-                    MaxSpeed.KEY,
-                    RoadAccess.KEY,
-                    FerrySpeed.KEY
-            ));
-            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("bike") || vehicle.contains("mtb") || vehicle.contains("racingbike"))) {
-                keys.add(BikeNetwork.KEY);
-                keys.add(GetOffBike.KEY);
-                keys.add(Smoothness.KEY);
-            }
-            if (em.getVehicles().stream().anyMatch(vehicle -> vehicle.contains("foot") || vehicle.contains("hike") || vehicle.contains("wheelchair")))
-                keys.add(FootNetwork.KEY);
-
-            DefaultEncodedValueFactory evFactory = new DefaultEncodedValueFactory();
-            for (String key : keys)
-                if (!em.hasEncodedValue(key))
-                    add(evFactory.create(key, new PMap()));
-        }
     }
 
     public int getIntsForFlags() {
@@ -192,6 +172,10 @@ public class EncodingManager implements EncodedValueLookup {
 
     public boolean hasEncodedValue(String key) {
         return encodedValueMap.get(key) != null;
+    }
+
+    public boolean hasTurnEncodedValue(String key) {
+        return turnEncodedValueMap.get(key) != null;
     }
 
     public List<String> getVehicles() {
@@ -268,8 +252,37 @@ public class EncodingManager implements EncodedValueLookup {
         EncodedValue ev = encodedValueMap.get(key);
         // todo: why do we not just return null when EV is missing? just like java.util.Map? -> https://github.com/graphhopper/graphhopper/pull/2561#discussion_r859770067
         if (ev == null)
-            throw new IllegalArgumentException("Cannot find EncodedValue " + key + " in collection: " + encodedValueMap.keySet());
+            throw new IllegalArgumentException("Cannot find EncodedValue '" + key + "' in collection: " + encodedValueMap.keySet());
         return (T) ev;
+    }
+
+    public List<EncodedValue> getTurnEncodedValues() {
+        return Collections.unmodifiableList(new ArrayList<>(turnEncodedValueMap.values()));
+    }
+
+    public DecimalEncodedValue getTurnDecimalEncodedValue(String key) {
+        return getTurnEncodedValue(key, DecimalEncodedValue.class);
+    }
+
+    public BooleanEncodedValue getTurnBooleanEncodedValue(String key) {
+        return getTurnEncodedValue(key, BooleanEncodedValue.class);
+    }
+
+    public <T extends EncodedValue> T getTurnEncodedValue(String key, Class<T> encodedValueType) {
+        EncodedValue ev = turnEncodedValueMap.get(key);
+        // todo: why do we not just return null when EV is missing? just like java.util.Map? -> https://github.com/graphhopper/graphhopper/pull/2561#discussion_r859770067
+        if (ev == null)
+            throw new IllegalArgumentException("Cannot find Turn-EncodedValue " + key + " in collection: " + encodedValueMap.keySet());
+        return (T) ev;
+    }
+
+    private String toTurnEncodedValuesAsString() {
+        List<String> serializedEVsList = turnEncodedValueMap.values().stream().map(EncodedValueSerializer::serializeEncodedValue).collect(Collectors.toList());
+        try {
+            return Jackson.newObjectMapper().writeValueAsString(serializedEVsList);
+        } catch (JsonProcessingException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     public static String getKey(String prefix, String str) {

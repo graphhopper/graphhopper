@@ -35,7 +35,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
 
     public CarAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "car"))),
+                lookup.getBooleanEncodedValue(VehicleAccess.key("car")),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 properties,
                 TransportationMode.CAR
@@ -90,7 +90,7 @@ public class CarAccessParser extends AbstractAccessParser implements TagParser {
                 if (intendedValues.contains(firstValue) ||
                         // implied default is allowed only if foot and bicycle is not specified:
                         firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle") ||
-                        // if hgv is allowed than smaller trucks and cars are allowed too
+                        // if hgv is allowed then smaller trucks and cars are allowed too
                         way.hasTag("hgv", "yes"))
                     return WayAccess.FERRY;
             }

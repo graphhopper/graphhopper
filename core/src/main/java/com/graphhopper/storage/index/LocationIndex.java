@@ -51,9 +51,43 @@ public interface LocationIndex {
      * and limited by the queryBBox. Also (a few) more edges slightly outside of queryBBox could be
      * returned that you can avoid via doing an explicit BBox check of the coordinates.
      */
-    void query(BBox queryBBox, Visitor function);
+    default void query(BBox queryBBox, Visitor function) {
+        query(createBBoxTileFilter(queryBBox), function);
+    }
+
+    void query(TileFilter tileFilter, Visitor function);
 
     void close();
+
+
+    interface TileFilter {
+
+        /**
+         * @return true if all edges within the given bounding box shall be accepted
+         */
+        boolean acceptAll(BBox tile);
+
+        /**
+         * @return true if edges within the given bounding box shall potentially be accepted. In this
+         * case the tile filter will be applied again for smaller bounding boxes on a lower level.
+         * If this is the lowest level already simply all edges will be accepted.
+         */
+        boolean acceptPartially(BBox tile);
+    }
+
+    static TileFilter createBBoxTileFilter(BBox queryBBox) {
+        return queryBBox == null ? null : new TileFilter() {
+            @Override
+            public boolean acceptAll(BBox tile) {
+                return queryBBox.contains(tile);
+            }
+
+            @Override
+            public boolean acceptPartially(BBox tile) {
+                return queryBBox.intersects(tile);
+            }
+        };
+    }
 
     /**
      * This interface allows to visit edges stored in the LocationIndex.

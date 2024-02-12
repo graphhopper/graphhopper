@@ -22,6 +22,7 @@ public class MatrixResponse {
     private double[][] weights = new double[0][];
     private final int fromCount;
     private final int toCount;
+    private int statusCode;
 
     public MatrixResponse() {
         this(10, 10, true, true, true);
@@ -174,6 +175,14 @@ public class MatrixResponse {
      */
     public boolean hasErrors() {
         return !errors.isEmpty();
+    }
+
+    public int getStatusCode() {
+        return statusCode;
+    }
+
+    public void setStatusCode(int statusCode) {
+        this.statusCode = statusCode;
     }
 
     public List<Throwable> getErrors() {

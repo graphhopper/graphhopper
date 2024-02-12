@@ -23,17 +23,12 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.SkadiProvider;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.RoadEnvironment;
-import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultSnapFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
-import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
 import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
-import com.graphhopper.routing.util.parsers.TagParser;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.search.KVStorage;
 import com.graphhopper.storage.IntsRef;
@@ -161,7 +156,7 @@ public class GraphHopperTest {
                 setAlgorithm(ASTAR).setProfile(profile));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(1094, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(1022, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         ResponsePath res = rsp.getBest();
         assertEquals(3535, res.getDistance(), 1);
@@ -291,14 +286,13 @@ public class GraphHopperTest {
         }
     }
 
-    private void testImportCloseAndLoad(boolean ch, boolean lm, boolean sort) {
+    private void testImportCloseAndLoad(boolean ch, boolean lm) {
         final String vehicle = "foot";
         final String profileName = "profile";
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
-                setStoreOnFlush(true).
-                setSortGraph(sort);
+                setStoreOnFlush(true);
 
         JsonFeature area51Feature = new JsonFeature();
         area51Feature.setId("area51");
@@ -391,27 +385,22 @@ public class GraphHopperTest {
 
     @Test
     public void testImportThenLoadCH() {
-        testImportCloseAndLoad(true, false, false);
+        testImportCloseAndLoad(true, false);
     }
 
     @Test
     public void testImportThenLoadLM() {
-        testImportCloseAndLoad(false, true, false);
+        testImportCloseAndLoad(false, true);
     }
 
     @Test
     public void testImportThenLoadCHLM() {
-        testImportCloseAndLoad(true, true, false);
-    }
-
-    @Test
-    public void testImportThenLoadCHLMAndSort() {
-        testImportCloseAndLoad(true, true, true);
+        testImportCloseAndLoad(true, true);
     }
 
     @Test
     public void testImportThenLoadFlexible() {
-        testImportCloseAndLoad(false, false, false);
+        testImportCloseAndLoad(false, false);
     }
 
     @Test
@@ -1149,21 +1138,21 @@ public class GraphHopperTest {
                 setStoreOnFlush(true);
 
         if (!withTunnelInterpolation) {
-            hopper.setTagParserFactory(new DefaultTagParserFactory() {
+            hopper.setImportRegistry(new DefaultImportRegistry() {
                 @Override
-                public TagParser create(EncodedValueLookup lookup, String name, PMap properties) {
-                    TagParser parser = super.create(lookup, name, properties);
-                    if (name.equals("road_environment"))
-                        parser = new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
-                            @Override
-                            public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
-                                // do not change RoadEnvironment to avoid triggering tunnel interpolation
-                            }
-                        };
-                    return parser;
+                public ImportUnit createImportUnit(String name) {
+                    ImportUnit ImportUnit = super.createImportUnit(name);
+                    if ("road_environment".equals(name))
+                        ImportUnit = ImportUnit.create(name, props -> RoadEnvironment.create(),
+                                (lookup, props) -> new OSMRoadEnvironmentParser(lookup.getEnumEncodedValue(RoadEnvironment.KEY, RoadEnvironment.class)) {
+                                    @Override
+                                    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
+                                        // do not change RoadEnvironment to avoid triggering tunnel interpolation
+                                    }
+                                });
+                    return ImportUnit;
                 }
             });
-            hopper.setEncodedValuesString("road_environment");
         }
 
         hopper.setElevationProvider(new SRTMProvider(DIR));
@@ -1450,13 +1439,13 @@ public class GraphHopperTest {
     @Test
     public void testIfCHIsUsed() {
         // route directly after import
-        executeCHFootRoute(false);
+        executeCHFootRoute();
 
         // now only load is called
-        executeCHFootRoute(false);
+        executeCHFootRoute();
     }
 
-    private void executeCHFootRoute(boolean sort) {
+    private void executeCHFootRoute() {
         final String profile = "profile";
         final String vehicle = "foot";
 
@@ -1464,8 +1453,7 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setProfiles(new Profile(profile).setVehicle(vehicle)).
-                setStoreOnFlush(true).
-                setSortGraph(sort);
+                setStoreOnFlush(true);
         hopper.getCHPreparationHandler().setCHProfiles(new CHProfile(profile));
         hopper.importOrLoad();
 
@@ -1482,15 +1470,6 @@ public class GraphHopperTest {
         assertEquals(115, bestPath.getPoints().size());
 
         hopper.close();
-    }
-
-    @Test
-    public void testSortWhileImporting() {
-        // route after importing a sorted graph
-        executeCHFootRoute(true);
-
-        // route after loading a sorted graph
-        executeCHFootRoute(false);
     }
 
     @Test
@@ -2526,6 +2505,7 @@ public class GraphHopperTest {
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile("../map-matching/files/leipzig_germany.osm.pbf").
                 setVehiclesString("car|block_private=false").
+                setEncodedValuesString("road_access").
                 setProfiles(
                         new Profile("car").setVehicle("car"),
                         new Profile("bike").setVehicle("bike"),
@@ -2823,6 +2803,33 @@ public class GraphHopperTest {
             hopper.load();
             assertEquals(2969, hopper.getBaseGraph().getNodes());
         }
+    }
+
+    @Test
+    void testGetVehiclePropsByVehicle() {
+        Profile car = new Profile("car").setVehicle("car").setTurnCosts(false);
+        Profile carTC = new Profile("car_tc").setVehicle("car").setTurnCosts(true);
+
+        assertTurnCostsProp("", List.of(car), null);
+        assertTurnCostsProp("car", List.of(car), null);
+        assertTurnCostsProp("car|turn_costs=false", List.of(car), false);
+        assertTurnCostsProp("car|turn_costs=true", List.of(car), true);
+
+        assertTurnCostsProp("", List.of(car, carTC), true);
+        assertTurnCostsProp("car", List.of(car, carTC), true);
+        assertTrue(assertThrows(IllegalArgumentException.class, () -> assertTurnCostsProp("car|turn_costs=false", List.of(car, carTC), true))
+                .getMessage().contains("turn_costs=false was set explicitly for vehicle 'car', but profile 'car_tc' using it uses turn costs"));
+        assertTurnCostsProp("car|turn_costs=true", List.of(car, carTC), true);
+    }
+
+    private void assertTurnCostsProp(String vehicleStr, List<Profile> profiles, Boolean turnCosts) {
+        Map<String, PMap> p = GraphHopper.getVehiclePropsByVehicle(vehicleStr, profiles);
+        assertEquals(1, p.size());
+        PMap props = p.get("car");
+        if (turnCosts == null)
+            assertFalse(props.has("turn_costs"));
+        else
+            assertEquals(turnCosts, props.getBool("turn_costs", false));
     }
 
 }

@@ -242,6 +242,23 @@ class MaxSpeedCalculatorTest {
     }
 
     @Test
+    public void testDifferentStates() {
+        ReaderWay way = new ReaderWay(0L);
+        way.setTag("country", Country.USA);
+        way.setTag("highway", "primary");
+
+        way.setTag("country_state", State.US_CA);
+        EdgeIteratorState edge1 = createEdge(way);
+        way.setTag("country_state", State.US_FL);
+        EdgeIteratorState edge2 = createEdge(way);
+
+        calc.fillMaxSpeed(graph, em);
+
+        assertEquals(106, edge1.get(maxSpeedEnc));
+        assertEquals(90, edge2.get(maxSpeedEnc));
+    }
+
+    @Test
     public void testRawAccess_RuralIsDefault_IfNoUrbanDensityWasSet() {
         Map<String, String> tags = new HashMap<>();
         tags.put("highway", "primary");

@@ -22,14 +22,18 @@ We even have [good first issues](https://github.com/graphhopper/graphhopper/issu
 
 To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read through our documentation and install the GraphHopper Web Service locally.
 
-* 7.x: [documentation](https://github.com/graphhopper/graphhopper/blob/7.x/docs/index.md)
-  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/7.0/graphhopper-web-7.0.jar)
-  , [announcement](https://www.graphhopper.com/blog/2023/03/14/graphhopper-routing-engine-7-0-released/)
+* 8.x: [documentation](https://github.com/graphhopper/graphhopper/blob/8.x/docs/index.md)
+  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/8.0/graphhopper-web-8.0.jar)
+  , [announcement](https://www.graphhopper.com/blog/2023/10/18/graphhopper-routing-engine-8-0-released/)
 * unstable master: [documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)
 
 <details><summary>Click to see older releases</summary>
 
 * See our [changelog file](./CHANGELOG.md) for Java API Changes.
+
+* 7.x: [documentation](https://github.com/graphhopper/graphhopper/blob/7.x/docs/index.md)
+  , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/7.0/graphhopper-web-7.0.jar)
+  , [announcement](https://www.graphhopper.com/blog/2023/03/14/graphhopper-routing-engine-7-0-released/)
 * 6.x: [documentation](https://github.com/graphhopper/graphhopper/blob/6.x/docs/index.md)
   , [web service jar](https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/6.2/graphhopper-web-6.2.jar)
   , [announcement](https://www.graphhopper.com/blog/2022/09/19/graphhopper-routing-engine-6-0-released/)
@@ -81,10 +85,10 @@ To get started you can try [GraphHopper Maps](README.md#graphhopper-maps), read 
 
 ## Installation
 
-To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptium.net) (>= Java 8) and do:
+To install the [GraphHopper Maps](https://graphhopper.com/maps/) UI and the web service locally you [need a JVM](https://adoptium.net) (>= Java 17) and do:
 
 ```bash
-wget https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/7.0/graphhopper-web-7.0.jar https://raw.githubusercontent.com/graphhopper/graphhopper/7.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
+wget https://repo1.maven.org/maven2/com/graphhopper/graphhopper-web/8.0/graphhopper-web-8.0.jar https://raw.githubusercontent.com/graphhopper/graphhopper/8.x/config-example.yml http://download.geofabrik.de/europe/germany/berlin-latest.osm.pbf
 java -D"dw.graphhopper.datareader.file=berlin-latest.osm.pbf" -jar graphhopper*.jar server config-example.yml
 ```
 
@@ -232,7 +236,7 @@ Here is a list of the more detailed features:
  * OpenStreetMap integration: stores and considers road type, speed limit, the surface, barriers, access restrictions, ferries, [conditional access restrictions](https://github.com/graphhopper/graphhopper/pull/621), ...
  * GraphHopper is fast. And with the so called "Contraction Hierarchies" it can be even faster (enabled by default).
  * Memory efficient data structures, algorithms and [the low and high level API](./docs/core/low-level-api.md) is tuned towards ease of use and efficiency
- * Pre-built routing profiles: car, bike, racing bike, mountain bike, foot, hike, motorcycle, wheelchair, ...
+ * Pre-built routing profiles: car, bike, racing bike, mountain bike, foot, hike, motorcycle, ...
  * [Customization of these profiles](./docs/core/profiles.md#custom-profiles) are possible and e.g. get truck routing or support for cargo bikes and [many other changes](https://www.graphhopper.com/blog/2020/05/31/examples-for-customizable-routing/)
  * Provides a powerful [web API](./docs/web/api-doc.md) that exposes the data from OpenStreetMap and allows customizing the vehicle profiles per request. With JavaScript and Java clients.
  * Does [map matching](./map-matching)

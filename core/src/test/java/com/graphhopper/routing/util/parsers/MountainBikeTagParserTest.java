@@ -20,10 +20,10 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValueLookup;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.VehicleEncodedValues;
-import com.graphhopper.routing.util.VehicleTagParsers;
+import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
@@ -35,12 +35,31 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
     protected EncodingManager createEncodingManager() {
-        return new EncodingManager.Builder().add(VehicleEncodedValues.mountainbike(new PMap())).build();
+        return new EncodingManager.Builder()
+                .add(VehicleAccess.create("mtb"))
+                .add(VehicleSpeed.create("mtb", 4, 2, false))
+                .add(VehiclePriority.create("mtb", 4, PriorityCode.getFactor(1), false))
+                .add(Roundabout.create())
+                .add(Smoothness.create())
+                .add(FerrySpeed.create())
+                .add(RouteNetwork.create(BikeNetwork.KEY))
+                .add(RouteNetwork.create(MtbNetwork.KEY))
+                .build();
     }
 
     @Override
-    protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap) {
-        return VehicleTagParsers.mtb(lookup, pMap);
+    protected BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup, PMap pMap) {
+        return (BikeCommonAccessParser) new MountainBikeAccessParser(lookup, pMap).init(new DateRangeParser());
+    }
+
+    @Override
+    protected BikeCommonAverageSpeedParser createAverageSpeedParser(EncodedValueLookup lookup) {
+        return new MountainBikeAverageSpeedParser(lookup);
+    }
+
+    @Override
+    protected BikeCommonPriorityParser createPriorityParser(EncodedValueLookup lookup) {
+        return new MountainBikePriorityParser(lookup);
     }
 
     @Test
@@ -134,26 +153,26 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     }
 
     @Test
-    public void testHandleWayTagsInfluencedByRelation() {
+    public void testHandleWayTagsInfluencedByBikeAndMtbRelation() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
 
         ReaderRelation osmRel = new ReaderRelation(1);
         // unchanged
-        assertPriorityAndSpeed(PREFER, 18, osmWay);
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
 
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(PREFER, 18, osmWay);
+        assertPriorityAndSpeed(BEST, 18, osmWay, osmRel);
 
         // relation code is PREFER
         osmRel.setTag("network", "rcn");
-        assertPriorityAndSpeed(PREFER, 18, osmWay);
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
 
         // relation code is PREFER
         osmRel.setTag("network", "ncn");
-        assertPriorityAndSpeed(PREFER, 18, osmWay);
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
 
         // PREFER relation, but tertiary road
         // => no pushing section but road wayTypeCode and faster
@@ -162,10 +181,33 @@ public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
-        assertPriorityAndSpeed(PREFER, 18, osmWay);
+        assertPriorityAndSpeed(BEST, 18, osmWay, osmRel);
+
+        osmWay.clearTags();
+        osmRel.clearTags();
+        osmWay.setTag("highway", "track");
+        // unchanged
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
+
+        osmRel.setTag("route", "mtb");
+        osmRel.setTag("network", "lcn");
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
+
+        osmRel.setTag("network", "rcn");
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
+
+        osmRel.setTag("network", "ncn");
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
+
+        osmWay.clearTags();
+        osmWay.setTag("highway", "tertiary");
+
+        osmRel.setTag("route", "mtb");
+        osmRel.setTag("network", "lcn");
+        assertPriorityAndSpeed(PREFER, 18, osmWay, osmRel);
     }
 
-    // Issue 407 : Always block kissing_gate execpt for mountainbikes
+    // Issue 407 : Always block kissing_gate except for mountainbikes
     @Test
     @Override
     public void testBarrierAccess() {

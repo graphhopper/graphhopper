@@ -311,124 +311,6 @@ public class GHUtility {
         return min + rnd.nextDouble() * (max - min);
     }
 
-    public static Graph shuffle(Graph g, Graph sortedGraph) {
-        if (g.getTurnCostStorage() != null)
-            throw new IllegalArgumentException("Shuffling the graph is currently not supported in the presence of turn costs");
-        IntArrayList nodes = ArrayUtil.permutation(g.getNodes(), new Random());
-        IntArrayList edges = ArrayUtil.permutation(g.getEdges(), new Random());
-        return createSortedGraph(g, sortedGraph, nodes, edges);
-    }
-
-    /**
-     * Sorts the graph according to depth-first search traversal. Other traversals have either no
-     * significant difference (bfs) for querying or are worse (z-curve).
-     */
-    public static Graph sortDFS(Graph g, Graph sortedGraph) {
-        if (g.getTurnCostStorage() != null) {
-            // not only would we have to sort the turn cost storage when we re-sort the graph, but we'd also have to make
-            // sure that the location index always snaps to real edges and not the corresponding artificial edge that we
-            // introduced to deal with via-way restrictions. Without sorting this works automatically because the real
-            // edges use lower edge ids. Otherwise we'd probably have to use some kind of is_artificial flag for each
-            // edge.
-            throw new IllegalArgumentException("Sorting the graph is currently not supported in the presence of turn costs");
-        }
-        int nodes = g.getNodes();
-        final IntArrayList nodeList = ArrayUtil.constant(nodes, -1);
-        final GHBitSetImpl nodeBitset = new GHBitSetImpl(nodes);
-        final AtomicInteger nodeRef = new AtomicInteger(-1);
-
-        int edges = g.getEdges();
-        final IntArrayList edgeList = ArrayUtil.constant(edges, -1);
-        final GHBitSetImpl edgeBitset = new GHBitSetImpl(edges);
-        final AtomicInteger edgeRef = new AtomicInteger(-1);
-
-        EdgeExplorer explorer = g.createEdgeExplorer();
-        for (int startNode = 0; startNode >= 0 && startNode < nodes;
-             startNode = nodeBitset.nextClear(startNode + 1)) {
-            new DepthFirstSearch() {
-                @Override
-                protected GHBitSet createBitSet() {
-                    return nodeBitset;
-                }
-
-                @Override
-                protected boolean checkAdjacent(EdgeIteratorState edge) {
-                    int edgeId = edge.getEdge();
-                    if (!edgeBitset.contains(edgeId)) {
-                        edgeBitset.add(edgeId);
-                        edgeList.set(edgeRef.incrementAndGet(), edgeId);
-                    }
-                    return super.checkAdjacent(edge);
-                }
-
-                @Override
-                protected boolean goFurther(int nodeId) {
-                    nodeList.set(nodeId, nodeRef.incrementAndGet());
-                    return super.goFurther(nodeId);
-                }
-            }.start(explorer, startNode);
-        }
-        return createSortedGraph(g, sortedGraph, nodeList, edgeList);
-    }
-
-    static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final IntIndexedContainer oldToNewNodeList, final IntIndexedContainer newToOldEdgeList) {
-        if (fromGraph.getTurnCostStorage() != null) {
-            throw new IllegalArgumentException("Sorting the graph is currently not supported in the presence of turn costs");
-        }
-        int edges = fromGraph.getEdges();
-        for (int i = 0; i < edges; i++) {
-            int edgeId = newToOldEdgeList.get(i);
-            if (edgeId < 0)
-                continue;
-
-            EdgeIteratorState eIter = fromGraph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
-
-            int base = eIter.getBaseNode();
-            int newBaseIndex = oldToNewNodeList.get(base);
-            int adj = eIter.getAdjNode();
-            int newAdjIndex = oldToNewNodeList.get(adj);
-
-            // ignore empty entries
-            if (newBaseIndex < 0 || newAdjIndex < 0)
-                continue;
-
-            toSortedGraph.edge(newBaseIndex, newAdjIndex).copyPropertiesFrom(eIter);
-        }
-
-        int nodes = fromGraph.getNodes();
-        NodeAccess na = fromGraph.getNodeAccess();
-        NodeAccess sna = toSortedGraph.getNodeAccess();
-        for (int old = 0; old < nodes; old++) {
-            int newIndex = oldToNewNodeList.get(old);
-            if (sna.is3D())
-                sna.setNode(newIndex, na.getLat(old), na.getLon(old), na.getEle(old));
-            else
-                sna.setNode(newIndex, na.getLat(old), na.getLon(old));
-        }
-        return toSortedGraph;
-    }
-
-    static Directory guessDirectory(BaseGraph graph) {
-        if (graph.getDirectory() instanceof MMapDirectory) {
-            throw new IllegalStateException("not supported yet: mmap will overwrite existing storage at the same location");
-        }
-        String location = graph.getDirectory().getLocation();
-        boolean isStoring = ((GHDirectory) graph.getDirectory()).isStoring();
-        return new RAMDirectory(location, isStoring);
-    }
-
-    /**
-     * Create a new storage from the specified one without copying the data. CHGraphs won't be copied.
-     */
-    public static BaseGraph newGraph(BaseGraph baseGraph) {
-        Directory outdir = guessDirectory(baseGraph);
-        return new BaseGraph.Builder(baseGraph.getIntsForFlags())
-                .withTurnCosts(baseGraph.getTurnCostStorage() != null)
-                .set3D(baseGraph.getNodeAccess().is3D())
-                .setDir(outdir)
-                .create();
-    }
-
     public static int getAdjNode(Graph g, int edge, int adjNode) {
         if (EdgeIterator.Edge.isValid(edge)) {
             EdgeIteratorState iterTo = g.getEdgeIteratorState(edge, adjNode);
@@ -567,9 +449,10 @@ public class GHUtility {
      */
     public static long calcMillisWithTurnMillis(Weighting weighting, EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         long edgeMillis = weighting.calcEdgeMillis(edgeState, reverse);
-        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId)) {
+        if (edgeMillis == Long.MAX_VALUE)
             return edgeMillis;
-        }
+        if (!EdgeIterator.Edge.isValid(prevOrNextEdgeId))
+            return edgeMillis;
         // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
         // todo: why no first/last orig edge here as in calcWeight ?
 //        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
@@ -577,6 +460,8 @@ public class GHUtility {
         long turnMillis = reverse
                 ? weighting.calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : weighting.calcTurnMillis(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+        if (turnMillis == Long.MAX_VALUE)
+            return turnMillis;
         return edgeMillis + turnMillis;
     }
 

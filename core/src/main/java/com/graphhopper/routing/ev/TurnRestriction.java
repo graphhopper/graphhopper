@@ -15,10 +15,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
 package com.graphhopper.routing.ev;
 
-import com.graphhopper.util.PMap;
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 
-public interface EncodedValueFactory {
-    EncodedValue create(String name, PMap properties);
+public class TurnRestriction {
+
+    public static String key(String prefix) {
+        return getKey(prefix, "turn_restriction");
+    }
+
+    public static BooleanEncodedValue create(String name) {
+        return new SimpleBooleanEncodedValue(key(name), false);
+    }
 }

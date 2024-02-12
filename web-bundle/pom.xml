@@ -5,9 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
     <artifactId>graphhopper-web-bundle</artifactId>
     <packaging>jar</packaging>
-    <version>8.0-SNAPSHOT</version>
+    <version>9.0-SNAPSHOT</version>
     <properties>
-        <graphhopper-maps.version>0.0.0-b1c9428bc0b01294867c6b944c9ce5c211a133b0</graphhopper-maps.version>
+        <graphhopper-maps.version>0.0.0-56cdfc78acf88b477457f8846c8715058b5375db</graphhopper-maps.version>
     </properties>
     <name>GraphHopper Dropwizard Bundle</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
@@ -15,7 +15,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>8.0-SNAPSHOT</version>
+        <version>9.0-SNAPSHOT</version>
     </parent>
 
     <dependencies>

@@ -21,7 +21,6 @@ package com.graphhopper.routing;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
@@ -58,11 +57,11 @@ public class DefaultWeightingFactory implements WeightingFactory {
         final String vehicle = profile.getVehicle();
         TurnCostProvider turnCostProvider;
         if (profile.isTurnCosts() && !disableTurnCosts) {
-            DecimalEncodedValue turnCostEnc = encodingManager.getDecimalEncodedValue(TurnCost.key(vehicle));
-            if (turnCostEnc == null)
+            BooleanEncodedValue turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(vehicle));
+            if (turnRestrictionEnc == null)
                 throw new IllegalArgumentException("Vehicle " + vehicle + " does not support turn costs");
             int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
-            turnCostProvider = new DefaultTurnCostProvider(turnCostEnc, graph.getTurnCostStorage(), uTurnCosts);
+            turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), uTurnCosts);
         } else {
             turnCostProvider = NO_TURN_COST_PROVIDER;
         }
@@ -101,7 +100,4 @@ public class DefaultWeightingFactory implements WeightingFactory {
         return weighting;
     }
 
-    public boolean isOutdoorVehicle(String name) {
-        return VehicleEncodedValues.OUTDOOR_VEHICLES.contains(name);
-    }
 }

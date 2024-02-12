@@ -8,8 +8,8 @@ on:
 
 jobs:
   publish:
-    if: github.repository_owner == 'Apaq'
-    runs-on: ubuntu-20.04
+    if: github.repository_owner == 'graphhopper'
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
       packages: write

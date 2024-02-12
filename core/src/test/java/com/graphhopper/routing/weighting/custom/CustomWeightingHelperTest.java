@@ -1,12 +1,17 @@
 package com.graphhopper.routing.weighting.custom;
 
+import com.graphhopper.routing.ev.VehicleSpeed;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
+import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.FetchMode;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.Polygon;
 import org.junit.jupiter.api.Test;
 
+import static com.graphhopper.json.Statement.Else;
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CustomWeightingHelperTest {
@@ -45,5 +50,19 @@ class CustomWeightingHelperTest {
         g.getNodeAccess().setNode(7, 30, 0);
         edge = g.edge(6, 7).setWayGeometry(Helper.createPointList(30, 30));
         assertFalse(CustomWeightingHelper.in(square, edge));
+    }
+
+    @Test
+    public void testNegativeMax() {
+        CustomModel customModel = new CustomModel();
+        customModel.addToSpeed(If("road_class == PRIMARY", MULTIPLY, "0.5"));
+        customModel.addToSpeed(Else(MULTIPLY, "-0.5"));
+
+        CustomWeightingHelper helper = new CustomWeightingHelper();
+        EncodingManager lookup = new EncodingManager.Builder().add(VehicleSpeed.create("car", 7, 2, false)).build();
+        helper.init(customModel, lookup, lookup.getDecimalEncodedValue(VehicleSpeed.key("car")), null, null);
+        IllegalArgumentException ret = assertThrows(IllegalArgumentException.class,
+                helper::calcMaxSpeed);
+        assertEquals("speed has to be >=0 but can be negative (-0.5)" ,ret.getMessage());
     }
 }

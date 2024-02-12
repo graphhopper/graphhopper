@@ -35,6 +35,10 @@ public class CHProfile {
         // default constructor needed for jackson
     }
 
+    public CHProfile(CHProfile profile) {
+        this.profile = profile.profile;
+    }
+
     public CHProfile(String profile) {
         setProfile(profile);
     }
