@@ -3149,6 +3149,11 @@
         ],
         "DK": [
             {
+                "name": "pedestrian",
+                "tags": {
+                    "maxspeed": "walk"
+                }
+            },{
                 "name": "living street",
                 "tags": {
                     "maxspeed": "15"
