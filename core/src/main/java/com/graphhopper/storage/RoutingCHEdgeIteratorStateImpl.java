@@ -41,7 +41,7 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     }
 
     boolean init(int edge, int expectedAdjNode) {
-        if (Integer.toUnsignedLong(edge) >= baseGraph.getEdges() + store.getShortcuts())
+        if (edge == NO_EDGE || Integer.toUnsignedLong(edge) >= baseGraph.getEdges() + store.getShortcuts())
             throw new IllegalArgumentException("invalid edge: " + edge + ", base edges: " + baseGraph.getEdges() + ", shortcuts: " + store.getShortcuts());
         edgeId = edge;
         if (isShortcut()) {

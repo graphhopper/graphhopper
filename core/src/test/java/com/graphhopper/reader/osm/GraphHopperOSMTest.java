@@ -698,7 +698,7 @@ public class GraphHopperOSMTest {
                 if (shortcutCount == null)
                     shortcutCountMap.put(name, chGraph.getValue().getShortcuts());
                 else
-                    assertEquals((long) shortcutCount, chGraph.getValue().getShortcuts());
+                    assertEquals(shortcutCount, chGraph.getValue().getShortcuts());
 
                 String keyError = Parameters.CH.PREPARE + "error." + name;
                 String valueError = hopper.getProperties().get(keyError);

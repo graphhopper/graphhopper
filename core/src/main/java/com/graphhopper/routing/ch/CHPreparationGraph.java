@@ -179,9 +179,9 @@ public class CHPreparationGraph {
     }
 
     public int getShortcutForPrepareEdge(int prepareEdge) {
-        if (prepareEdge < edges)
-            return prepareEdge;
         long index = Integer.toUnsignedLong(prepareEdge) - edges;
+        if (index < 0)
+            return prepareEdge;
         int intIndex = Math.toIntExact(index / 2);
         long curr = shortcutsByPrepareEdges.get(intIndex);
         if (index % 2 == 0)
