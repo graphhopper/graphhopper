@@ -43,12 +43,12 @@ public class RoutingCHGraphImpl implements RoutingCHGraph {
     }
 
     @Override
-    public int getEdges() {
+    public long getEdges() {
         return baseGraph.getEdges() + chStorage.getShortcuts();
     }
 
     @Override
-    public int getShortcuts() {
+    public long getShortcuts() {
         return chStorage.getShortcuts();
     }
 

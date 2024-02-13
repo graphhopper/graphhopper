@@ -325,8 +325,8 @@ public class NodeBasedNodeContractorTest {
             fail("was given duplicate shortcuts");
         }
         Set<Shortcut> given = new HashSet<>();
-        for (int i = 0; i < store.getShortcuts(); i++) {
-            long ptr = store.toShortcutPointer(i);
+        for (long i = 0; i < store.getShortcuts(); i++) {
+            long ptr = store.toShortcutPointer((int) i);
             given.add(new Shortcut(
                     store.getNodeA(ptr), store.getNodeB(ptr), store.getWeight(ptr),
                     store.getFwdAccess(ptr), store.getBwdAccess(ptr),

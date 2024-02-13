@@ -18,15 +18,13 @@
 
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntContainer;
-import com.carrotsearch.hppc.IntScatterSet;
-import com.carrotsearch.hppc.IntSet;
+import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.sorting.IndirectComparator;
 import com.carrotsearch.hppc.sorting.IndirectSort;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.ArrayUtil.zero;
@@ -51,13 +49,14 @@ public class CHPreparationGraph {
     //       and because basegraph has multi-edges. the advantage of storing the skipped node is that we could just write
     //       it to one of the skipped edges fields temporarily, so we would not need this array and save memory during
     //       the preparation.
-    private IntArrayList shortcutsByPrepareEdges;
+    private LongArrayList shortcutsByPrepareEdges;
     // todo: maybe we can get rid of this
     private int[] degrees;
     private IntSet neighborSet;
     private OrigGraph origGraph;
     private OrigGraph.Builder origGraphBuilder;
     private int nextShortcutId;
+    public static final long MAX_PREPARE_EDGE_COUNT = (1L << 32) - 1;
     private boolean ready;
 
     public static CHPreparationGraph nodeBased(int nodes, int edges) {
@@ -80,7 +79,7 @@ public class CHPreparationGraph {
         this.edgeBased = edgeBased;
         prepareEdgesOut = new PrepareEdge[nodes];
         prepareEdgesIn = new PrepareEdge[nodes];
-        shortcutsByPrepareEdges = new IntArrayList();
+        shortcutsByPrepareEdges = new LongArrayList();
         degrees = new int[nodes];
         origGraphBuilder = edgeBased ? new OrigGraph.Builder() : null;
         neighborSet = new IntScatterSet();
@@ -145,6 +144,8 @@ public class CHPreparationGraph {
 
     public int addShortcut(int from, int to, int origEdgeKeyFirst, int origEdgeKeyLast, int skipped1,
                            int skipped2, double weight, int origEdgeCount) {
+        if (Integer.toUnsignedLong(nextShortcutId) == MAX_PREPARE_EDGE_COUNT)
+            throw new IllegalStateException("Maximum CH prepare graph size exceeded: " + MAX_PREPARE_EDGE_COUNT);
         checkReady();
         PrepareEdge prepareEdge = edgeBased
                 ? new EdgeBasedPrepareShortcut(nextShortcutId, from, to, origEdgeKeyFirst, origEdgeKeyLast, weight, skipped1, skipped2, origEdgeCount)
@@ -163,17 +164,28 @@ public class CHPreparationGraph {
     }
 
     public void setShortcutForPrepareEdge(int prepareEdge, int shortcut) {
-        int index = prepareEdge - edges;
-        if (index >= shortcutsByPrepareEdges.size())
-            shortcutsByPrepareEdges.resize(index + 1);
-        shortcutsByPrepareEdges.set(index, shortcut);
+        long index = Integer.toUnsignedLong(prepareEdge) - edges;
+        int intIndex = Math.toIntExact(index / 2);
+        if (intIndex >= shortcutsByPrepareEdges.size())
+            // todonow: maybe this performs rather badly
+            shortcutsByPrepareEdges.resize(intIndex + 1);
+        long curr = shortcutsByPrepareEdges.get(intIndex);
+        if (index % 2 == 0)
+            shortcutsByPrepareEdges.set(intIndex, BitUtil.LITTLE.toLong(shortcut, BitUtil.LITTLE.getIntHigh(curr)));
+        else
+            shortcutsByPrepareEdges.set(intIndex, BitUtil.LITTLE.toLong(BitUtil.LITTLE.getIntLow(curr), shortcut));
     }
 
     public int getShortcutForPrepareEdge(int prepareEdge) {
-        if (prepareEdge < edges)
+        long index = Integer.toUnsignedLong(prepareEdge) - edges;
+        if (index < 0)
             return prepareEdge;
-        int index = prepareEdge - edges;
-        return shortcutsByPrepareEdges.get(index);
+        int intIndex = Math.toIntExact(index / 2);
+        long curr = shortcutsByPrepareEdges.get(intIndex);
+        if (index % 2 == 0)
+            return BitUtil.LITTLE.getIntLow(curr);
+        else
+            return BitUtil.LITTLE.getIntHigh(curr);
     }
 
     public PrepareGraphEdgeExplorer createOutEdgeExplorer() {

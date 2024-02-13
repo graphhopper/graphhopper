@@ -1281,8 +1281,8 @@ public class EdgeBasedNodeContractorTest {
 
     private Set<Shortcut> getCurrentShortcuts() {
         Set<Shortcut> shortcuts = new HashSet<>();
-        for (int i = 0; i < chStore.getShortcuts(); i++) {
-            long ptr = chStore.toShortcutPointer(i);
+        for (long i = 0; i < chStore.getShortcuts(); i++) {
+            long ptr = chStore.toShortcutPointer((int) i);
             shortcuts.add(new Shortcut(
                     chStore.getNodeA(ptr), chStore.getNodeB(ptr),
                     chStore.getOrigEdgeKeyFirst(ptr), chStore.getOrigEdgeKeyLast(ptr),

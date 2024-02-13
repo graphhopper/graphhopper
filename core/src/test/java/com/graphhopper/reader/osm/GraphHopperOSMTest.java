@@ -667,7 +667,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testMultipleCHPreparationsInParallel() {
-        HashMap<String, Integer> shortcutCountMap = new HashMap<>();
+        HashMap<String, Long> shortcutCountMap = new HashMap<>();
         // try all parallelization modes
         for (int threadCount = 1; threadCount < 6; threadCount++) {
             GraphHopper hopper = new GraphHopper().
@@ -694,11 +694,11 @@ public class GraphHopperOSMTest {
             assertEquals(4, hopper.getCHGraphs().size());
             for (Map.Entry<String, RoutingCHGraph> chGraph : hopper.getCHGraphs().entrySet()) {
                 String name = chGraph.getKey();
-                Integer shortcutCount = shortcutCountMap.get(name);
+                Long shortcutCount = shortcutCountMap.get(name);
                 if (shortcutCount == null)
                     shortcutCountMap.put(name, chGraph.getValue().getShortcuts());
                 else
-                    assertEquals((long) shortcutCount, chGraph.getValue().getShortcuts());
+                    assertEquals(shortcutCount, chGraph.getValue().getShortcuts());
 
                 String keyError = Parameters.CH.PREPARE + "error." + name;
                 String valueError = hopper.getProperties().get(keyError);

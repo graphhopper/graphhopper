@@ -69,12 +69,12 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     @Override
-    public int getEdges() {
+    public long getEdges() {
         return routingCHGraph.getEdges() + queryOverlay.getNumVirtualEdges();
     }
 
     @Override
-    public int getShortcuts() {
+    public long getShortcuts() {
         return routingCHGraph.getShortcuts();
     }
 
@@ -237,11 +237,12 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     private int shiftVirtualEdgeIDForCH(int edge) {
-        return edge + routingCHGraph.getEdges() - routingCHGraph.getBaseGraph().getEdges();
+        // todo4bsc: we need to limit the max shortcut number such that there is still room for virtual edges
+        return (int) (Integer.toUnsignedLong(edge) + routingCHGraph.getEdges() - routingCHGraph.getBaseGraph().getEdges());
     }
 
     private int getInternalVirtualEdgeId(int edge) {
-        return 2 * (edge - routingCHGraph.getEdges());
+        return Math.toIntExact(2 * (Integer.toUnsignedLong(edge) - routingCHGraph.getEdges()));
     }
 
     private boolean isVirtualNode(int node) {
@@ -249,7 +250,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     private boolean isVirtualEdge(int edge) {
-        return edge >= routingCHGraph.getEdges();
+        return Integer.toUnsignedLong(edge) >= routingCHGraph.getEdges();
     }
 
     private static class VirtualCHEdgeIteratorState implements RoutingCHEdgeIteratorState {
