@@ -74,13 +74,15 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
             // note that the u-turn costs overwrite any turn costs set in TurnCostStorage
             tCost = uTurnCosts;
         } else {
-            if (turnRestrictionEnc != null)
-                tCost = turnCostStorage.get(turnRestrictionEnc, edgeFrom, nodeVia, edgeTo) ? Double.POSITIVE_INFINITY : 0;
-            else {
-                RoadClass roadClassFrom = graph.getEdgeIteratorState(edgeFrom, nodeVia).get(roadClassEnc);
-                RoadClass roadClassTo = graph.getEdgeIteratorState(edgeTo, nodeVia).getReverse(roadClassEnc);
-                if (roadClassFrom != roadClassTo)
-                    tCost = 5;
+            if (turnRestrictionEnc != null) {
+                if (turnCostStorage.get(turnRestrictionEnc, edgeFrom, nodeVia, edgeTo))
+                    tCost = Double.POSITIVE_INFINITY;
+                else {
+                    RoadClass roadClassFrom = graph.getEdgeIteratorState(edgeFrom, nodeVia).get(roadClassEnc);
+                    RoadClass roadClassTo = graph.getEdgeIteratorState(edgeTo, nodeVia).getReverse(roadClassEnc);
+                    if (roadClassFrom != roadClassTo)
+                        tCost = 5;
+                }
             }
         }
         return tCost;
