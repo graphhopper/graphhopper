@@ -81,7 +81,7 @@ public class DefaultTurnCostProvider implements TurnCostProvider {
                     RoadClass roadClassFrom = graph.getEdgeIteratorState(edgeFrom, nodeVia).get(roadClassEnc);
                     RoadClass roadClassTo = graph.getEdgeIteratorState(edgeTo, nodeVia).getReverse(roadClassEnc);
                     if (roadClassFrom != roadClassTo)
-                        tCost = 5;
+                        tCost = 10;
                 }
             }
         }
