@@ -191,6 +191,9 @@ public class CHStorage {
         return shortcut(nodeA, nodeB, accessFlags, weight, skip1, skip2);
     }
 
+    /**
+     * @see #shortcutNodeBased
+     */
     public int shortcutEdgeBased(int nodeA, int nodeB, int accessFlags, double weight, int skip1, int skip2, int origKeyFirst, int origKeyLast) {
         if (!edgeBased)
             throw new IllegalArgumentException("Cannot add edge-based shortcuts to node-based CH");
@@ -203,7 +206,7 @@ public class CHStorage {
         if (shortcutCount == Integer.MAX_VALUE)
             throw new IllegalStateException("Maximum shortcut count exceeded: " + shortcutCount);
         if (lowShortcutWeightConsumer != null && weight < MIN_WEIGHT)
-            lowShortcutWeightConsumer.accept(new LowWeightShortcut(nodeA, nodeB, shortcutCount, weight, MIN_WEIGHT));
+            lowShortcutWeightConsumer.accept(new LowWeightShortcut(nodeA, nodeB, weight, MIN_WEIGHT));
         long shortcutPointer = (long) shortcutCount * shortcutEntryBytes;
         shortcutCount++;
         shortcuts.ensureCapacity((long) shortcutCount * shortcutEntryBytes);
@@ -240,7 +243,8 @@ public class CHStorage {
      * To use the shortcut getters/setters you need to convert shortcut IDs to an shortcutPointer first
      */
     public long toShortcutPointer(int shortcut) {
-        assert shortcut < shortcutCount : "shortcut " + shortcut + " not in bounds [0, " + shortcutCount + "[";
+        if (shortcut >= shortcutCount)
+            throw new IllegalArgumentException("shortcut " + shortcut + " not in bounds [0, " + shortcutCount + "[");
         return (long) shortcut * shortcutEntryBytes;
     }
 
@@ -347,7 +351,8 @@ public class CHStorage {
         System.out.format(Locale.ROOT, formatNodes, "#", "N_LAST_SC", "N_LEVEL");
         for (int i = 0; i < Math.min(nodeCount, printMax); ++i) {
             long ptr = toNodePointer(i);
-            System.out.format(Locale.ROOT, formatNodes, i, getLastShortcut(ptr), getLevel(ptr));
+            int lastShortcut = getLastShortcut(ptr);
+            System.out.format(Locale.ROOT, formatNodes, i, lastShortcut, getLevel(ptr));
         }
         if (nodeCount > printMax) {
             System.out.format(Locale.ROOT, " ... %d more nodes", nodeCount - printMax);
@@ -427,14 +432,12 @@ public class CHStorage {
     public static class LowWeightShortcut {
         int nodeA;
         int nodeB;
-        int shortcut;
         double weight;
         double minWeight;
 
-        public LowWeightShortcut(int nodeA, int nodeB, int shortcut, double weight, double minWeight) {
+        public LowWeightShortcut(int nodeA, int nodeB, double weight, double minWeight) {
             this.nodeA = nodeA;
             this.nodeB = nodeB;
-            this.shortcut = shortcut;
             this.weight = weight;
             this.minWeight = minWeight;
         }

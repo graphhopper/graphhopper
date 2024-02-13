@@ -18,19 +18,15 @@
 
 package com.graphhopper.routing.ch;
 
-import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntContainer;
+import com.carrotsearch.hppc.IntScatterSet;
+import com.carrotsearch.hppc.IntSet;
 import com.carrotsearch.hppc.sorting.IndirectComparator;
 import com.carrotsearch.hppc.sorting.IndirectSort;
-import com.graphhopper.routing.ev.DecimalEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
-import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.TurnCostStorage;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
 
 import static com.graphhopper.util.ArrayUtil.zero;
