@@ -22,6 +22,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 
+import static com.graphhopper.util.EdgeIterator.NO_EDGE;
+
 /**
  * Builds a {@link Path} from the two fwd- and bwd-shortest path tree entries of a bidirectional search
  *
@@ -83,7 +85,7 @@ public class DefaultBidirPathExtractor implements BidirPathExtractor {
     protected SPTEntry followParentsUntilRoot(SPTEntry sptEntry, boolean reverse) {
         SPTEntry currEntry = sptEntry;
         SPTEntry parentEntry = currEntry.parent;
-        while (EdgeIterator.Edge.isValid(currEntry.edge)) {
+        while (currEntry.edge != NO_EDGE) {
             onEdge(currEntry.edge, currEntry.adjNode, reverse, getIncEdge(parentEntry));
             currEntry = parentEntry;
             parentEntry = currEntry.parent;
