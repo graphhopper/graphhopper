@@ -157,6 +157,17 @@ graphhopper:
   prepare.min_network_size: 200
   prepare.subnetworks.threads: 1
 
+  #### Custom Turn Access ####
+
+  # There are default restrictions defined like car|osm=motorcar;motor_vehicle;vehicle;access that
+  # can be used in the turn_costs configuration of the profile svia
+  #
+  # turn_costs:
+  #   restriction: car
+  #
+  # but also custom access restrictions are possible with:
+  #
+  # graph.turn_restrictions: emergency|osm=emergency;motor_car;motor_vehicle;vehicle;access
 
   #### Routing ####
 

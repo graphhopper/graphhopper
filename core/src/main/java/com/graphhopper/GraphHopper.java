@@ -617,7 +617,7 @@ public class GraphHopper {
 
     protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps,
                                          Map<String, ImportUnit> activeImportUnits,
-                                         Set<String> turnCostRestrictions,
+                                         Map<String, List<String>> turnCostRestrictions,
                                          List<String> ignoredHighways, String dateRangeParserString) {
         ImportUnitSorter sorter = new ImportUnitSorter(activeImportUnits);
         Map<String, ImportUnit> sortedImportUnits = new LinkedHashMap<>();
@@ -646,10 +646,10 @@ public class GraphHopper {
         if (encodingManager.hasEncodedValue(FootNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
 
-        turnCostRestrictions.forEach(restriction -> {
-            List<String> osmRestrictions = getOSMRestrictions(restriction);
+        turnCostRestrictions.forEach((key, restrictions) -> {
+            List<String> osmRestrictions = restrictions.isEmpty() ? getOSMRestrictions(key) : restrictions;
             osmParsers.addRestrictionTagParser(new RestrictionTagParser(
-                    osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(restriction))));
+                    osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(key))));
         });
         return osmParsers;
     }
@@ -671,11 +671,11 @@ public class GraphHopper {
         return encodedValuesWithProps;
     }
 
-    public static Set<String> getTurnCostsRestrictions(Collection<Profile> profiles) {
-        Set<String> turnCostRestrictions = new LinkedHashSet<>();
+    public static Map<String, List<String>> getTurnCostsRestrictions(Collection<Profile> profiles) {
+        Map<String, List<String>> turnCostRestrictions = new LinkedHashMap<>();
         for (Profile profile : profiles)
             if (profile.hasTurnCosts())
-                turnCostRestrictions.add(profile.getTurnCostsConfig().getRestriction());
+                turnCostRestrictions.put(profile.getTurnCostsConfig().getRestriction(), Collections.emptyList());
         return turnCostRestrictions;
     }
 
@@ -843,12 +843,10 @@ public class GraphHopper {
         encodedValuesWithProps.putIfAbsent(RoadClassLink.KEY, new PMap());
         encodedValuesWithProps.putIfAbsent(MaxSpeed.KEY, new PMap());
 
-        Set<String> turnCostsRestrictions = getTurnCostsRestrictions(profilesByName.values());
-        // TODO NOW support custom OSM restrictions
-        //  graph.turn_restrictions: emergency|restrictions=emergency;motor_car;motor_vehicle;vehicle;access
+        Map<String, List<String>> turnCostsRestrictions = getTurnCostsRestrictions(profilesByName.values());
         Arrays.stream(turnRestrictionsString.split(","))
                 .filter(tcrStr -> !tcrStr.isBlank())
-                .forEach(evStr -> turnCostsRestrictions.add(evStr.trim().split("\\|")[0]));
+                .forEach(trStr -> turnCostsRestrictions.put(trStr.trim().split("\\|")[0], Arrays.asList(new PMap(trStr.trim()).getString("osm", "").split(";"))));
 
         if (urbanDensityCalculationThreads > 0)
             encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());
@@ -865,7 +863,7 @@ public class GraphHopper {
             if (activeImportUnits.put(ev, importUnit) == null)
                 deque.addAll(importUnit.getRequiredImportUnits());
         }
-        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, turnCostsRestrictions);
+        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, turnCostsRestrictions.keySet());
         osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, turnCostsRestrictions, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
     }
 
