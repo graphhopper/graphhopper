@@ -59,7 +59,7 @@ public class PtIsochroneTest {
                 .putObject("graph.location", GRAPH_LOC)
                 .putObject("gtfs.file", "../reader-gtfs/files/sample-feed")
                 .putObject("import.osm.ignored_highways", "").
-                setProfiles(Collections.singletonList(new Profile("foot").setVehicle("foot").setCustomModel(Helper.createBaseModel("foot"))));
+                setProfiles(Collections.singletonList(new Profile("foot").setCustomModel(Helper.createBaseModel("foot"))));
         Helper.removeDir(new File(GRAPH_LOC));
         return config;
     }

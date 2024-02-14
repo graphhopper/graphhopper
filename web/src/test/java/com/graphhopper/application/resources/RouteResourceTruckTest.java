@@ -37,7 +37,7 @@ public class RouteResourceTruckTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("custom_models.directory", "./src/test/resources/com/graphhopper/application/resources").
                 setProfiles(Arrays.asList(new Profile("truck").setCustomModel(null).
-                        setVehicle("hgv").putHint("custom_model_files", Arrays.asList("test_truck.json")))).
+                        putHint("custom_model_files", Arrays.asList("test_truck.json")))).
                 setCHProfiles(Arrays.asList(new CHProfile("truck")));
         return config;
     }

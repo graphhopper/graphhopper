@@ -1,9 +1,7 @@
 // to use this custom model you set the following option in the config.yml:
-// graph.encoded_values: hike_rating,average_slope,max_slope
 // graph.elevation.provider: srtm   # enables elevation
 // profiles:
 //    - name: racingbike
-//      vehicle: roads
 //      custom_model_files: [racingbike.json, bike_elevation.json]
 
 {

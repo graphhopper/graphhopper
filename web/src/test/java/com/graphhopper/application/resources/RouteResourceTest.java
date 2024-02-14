@@ -90,7 +90,7 @@ public class RouteResourceTest {
                 putObject("graph.location", DIR)
                 // adding this so the corresponding check is not just skipped...
                 .putObject(MAX_NON_CH_POINT_DISTANCE, 10e6)
-                .setProfiles(Collections.singletonList(new Profile("my_car").setVehicle("car").setCustomModel(Helper.createBaseModel("car"))))
+                .setProfiles(Collections.singletonList(new Profile("my_car").setCustomModel(Helper.createBaseModel("car"))))
                 .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }

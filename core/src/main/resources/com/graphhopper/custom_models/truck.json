@@ -1,9 +1,8 @@
 // to use this custom model you need to set the following option in the config.yml
-// graph.encoded_values: toll,hgv,surface,max_width,max_height
 // profiles:
 //    - name: truck
-//      vehicle: hgv
-//      weighting: custom
+//      turn_costs:
+//        restriction: car
 //      custom_model_files: [truck.json]
 
 {

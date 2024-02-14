@@ -61,7 +61,7 @@ public class RouteResourceLeipzigTest {
                 putObject("graph.location", DIR)
                 .setProfiles(Collections.singletonList(new Profile("my_car").
                         setCustomModel(Helper.createBaseModel("car").
-                                addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1"))).setVehicle("car")))
+                                addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1")))))
                 .setCHProfiles(Collections.singletonList(new CHProfile("my_car")));
         return config;
     }

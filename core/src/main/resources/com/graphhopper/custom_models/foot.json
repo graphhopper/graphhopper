@@ -1,9 +1,7 @@
 // to use this custom model you need to set the following option in the config.yml
-// graph.encoded_values: average_slope,max_slope
 // graph.elevation.provider: srtm   # enables elevation
 // profiles:
 //    - name: foot
-//      vehicle: roads
 //      custom_model_files: [foot.json, foot_elevation.json]
 
 {

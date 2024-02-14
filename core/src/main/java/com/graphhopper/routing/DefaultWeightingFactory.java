@@ -19,7 +19,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.config.Profile;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.TurnRestriction;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
@@ -32,7 +33,6 @@ import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
 import static com.graphhopper.routing.weighting.TurnCostProvider.NO_TURN_COST_PROVIDER;
-import static com.graphhopper.routing.weighting.Weighting.INFINITE_U_TURN_COSTS;
 import static com.graphhopper.util.Helper.toLowerCase;
 
 public class DefaultWeightingFactory implements WeightingFactory {
@@ -54,13 +54,13 @@ public class DefaultWeightingFactory implements WeightingFactory {
         hints.putAll(profile.getHints());
         hints.putAll(requestHints);
 
-        final String vehicle = profile.getVehicle();
         TurnCostProvider turnCostProvider;
-        if (profile.isTurnCosts() && !disableTurnCosts) {
-            BooleanEncodedValue turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(vehicle));
+        if (profile.hasTurnCosts() && !disableTurnCosts) {
+            final String trRestriction = profile.getTurnCostsConfig().getRestriction();
+            BooleanEncodedValue turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(trRestriction));
             if (turnRestrictionEnc == null)
-                throw new IllegalArgumentException("Vehicle " + vehicle + " does not support turn costs");
-            int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, INFINITE_U_TURN_COSTS);
+                throw new IllegalArgumentException("Cannot find turn restriction " + trRestriction);
+            int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, profile.getTurnCostsConfig().getUTurnCosts());
             turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), uTurnCosts);
         } else {
             turnCostProvider = NO_TURN_COST_PROVIDER;

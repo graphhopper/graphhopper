@@ -54,7 +54,7 @@ public class NearestResourceWithEleTest {
                 putObject("datareader.file", "../core/files/monaco.osm.gz").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", dir).
-                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setCustomModel(Helper.createBaseModel("car"))));
+                setProfiles(Collections.singletonList(new Profile("car").setCustomModel(Helper.createBaseModel("car"))));
         return config;
     }
 

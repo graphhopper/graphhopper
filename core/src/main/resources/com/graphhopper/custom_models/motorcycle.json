@@ -2,8 +2,6 @@
 // graph.urban_density.threads: 4 # expensive to calculate but very useful
 // profiles:
 //    - name: motorcycle
-//      vehicle: motorcycle
-//      weighting: custom
 //      custom_model_files: [motorcycle.json,curvature.json]
 
 {

@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperTest;
 import com.graphhopper.config.Profile;
+import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
@@ -712,9 +713,9 @@ public class OSMReaderTest {
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
-                        new Profile("bike").setVehicle("bike").setCustomModel(Helper.createBaseModel("bike")).setTurnCosts(true),
-                        new Profile("car").setVehicle("car").setCustomModel(Helper.createBaseModel("car")).setTurnCosts(true),
-                        new Profile("truck").setVehicle("hgv").setCustomModel(Helper.createBaseModel("car")).setTurnCosts(true)
+                        new Profile("bike").setCustomModel(Helper.createBaseModel("bike")).setTurnCostsConfig(new TurnCostsConfig("bike")),
+                        new Profile("car").setCustomModel(Helper.createBaseModel("car")).setTurnCostsConfig(new TurnCostsConfig("car")),
+                        new Profile("truck").setCustomModel(Helper.createBaseModel("car")).setTurnCostsConfig(new TurnCostsConfig("hgv"))
                 ).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
@@ -1005,11 +1006,11 @@ public class OSMReaderTest {
             String str = "max_width,max_height,max_weight";
             setEncodedValuesString(str);
             setProfiles(
-                    new Profile("foot").setVehicle("foot").setCustomModel(Helper.createBaseModel("foot")),
-                    new Profile("car").setVehicle("car").setCustomModel(Helper.createBaseModel("car")).setTurnCosts(turnCosts),
-                    new Profile("bike").setVehicle("bike").setCustomModel(Helper.createBaseModel("bike")).setTurnCosts(turnCosts),
-                    new Profile("roads").setVehicle("hgv").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "100"))).setTurnCosts(turnCosts)
-            );
+                    new Profile("foot").setCustomModel(Helper.createBaseModel("foot")),
+                    new Profile("car").setCustomModel(Helper.createBaseModel("car")).setTurnCostsConfig(turnCosts ? new TurnCostsConfig("car") : null),
+                    new Profile("bike").setCustomModel(Helper.createBaseModel("bike")).setTurnCostsConfig(turnCosts ? new TurnCostsConfig("bike") : null),
+                    new Profile("roads").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "100"))).setTurnCostsConfig(turnCosts ? new TurnCostsConfig("hgv") : null)
+                    );
             getReaderConfig().setPreferredLanguage(prefLang);
         }
 

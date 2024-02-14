@@ -14,12 +14,12 @@ graphhopper:
   #
   # In general a profile consists of the following
   # - name (required): a unique string identifier for the profile
-  # - vehicle (required): refers to the turn restriction defaults
-  # - weighting (required): the weighting used for this profile like custom
-  # - turn_costs (true/false, default: false): whether or not turn restrictions should be applied for this profile.
+  # - weighting (optional): by default 'custom'
+  # - turn_costs (optional):
+  #     restriction: car (required turn restriction type)
+  #     u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
   #
   # Depending on the above fields there are other properties that can be used, e.g.
-  # - u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
   # - custom_model_files: when you specified "weighting: custom" you need to set one or more json files which are searched in
   #   custom_models.directory or the working directory that defines the custom_model. If you want an empty model you can
   #   set "custom_model_files: []
@@ -30,23 +30,18 @@ graphhopper:
 
   profiles:
    - name: car
-     vehicle: car
      custom_model_files: [car.json]
 
 #    - name: foot
-#      vehicle: roads
 #      custom_model_files: [foot.json, foot_elevation.json]
 #
 #    - name: bike
-#      vehicle: roads
 #      custom_model_files: [bike.json, bike_elevation.json]
 #
 #    - name: racingbike
-#      vehicle: roads
 #      custom_model_files: [racingbike.json, bike_elevation.json]
 #
 #    - name: mtb
-#      vehicle: roads
 #      custom_model_files: [mtb.json, bike_elevation.json]
 
   # instead of the inbuilt custom models (see ./core/src/main/resources/com/graphhopper/custom_models)

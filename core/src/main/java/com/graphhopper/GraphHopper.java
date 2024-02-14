@@ -131,6 +131,7 @@ public class GraphHopper {
 
     private String dateRangeParserString = "";
     private String encodedValuesString = "";
+    private String turnRestrictionsString = "";
 
     public GraphHopper setEncodedValuesString(String encodedValuesString) {
         this.encodedValuesString = encodedValuesString;
@@ -243,8 +244,8 @@ public class GraphHopper {
      * <pre>
      * {@code
      *   hopper.setProfiles(
-     *     new Profile("my_car").setVehicle("car"),
-     *     new Profile("your_bike").setVehicle("bike")
+     *     new Profile("my_car"),
+     *     new Profile("your_bike")
      *   );
      *   hopper.getCHPreparationHandler().setCHProfiles(
      *     new CHProfile("my_car"),
@@ -509,11 +510,12 @@ public class GraphHopper {
         setProfiles(GraphHopper.resolveCustomModelFiles(customModelFolder, ghConfig.getProfiles(), globalAreas));
 
         if (ghConfig.has("graph.vehicles"))
-            logger.warn("The option graph.vehicles is deprecated and will be removed.");
+            throw new IllegalArgumentException("The option graph.vehicles is no longer supported. Use the appropriate turn_costs and custom_model instead, see issue #2938.");
         if (ghConfig.has("graph.flag_encoders"))
             throw new IllegalArgumentException("The option graph.flag_encoders is no longer supported.");
 
         encodedValuesString = ghConfig.getString("graph.encoded_values", encodedValuesString);
+        turnRestrictionsString = ghConfig.getString("graph.turn_restrictions", turnRestrictionsString);
         dateRangeParserString = ghConfig.getString("datareader.date_range_parser_day", dateRangeParserString);
 
         if (ghConfig.getString("graph.locktype", "native").equals("simple"))
@@ -590,7 +592,7 @@ public class GraphHopper {
 
     protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps,
                                                    Map<String, ImportUnit> activeImportUnits,
-                                                   Set<String> turnCostVehicles) {
+                                                   Set<String> turnCostRestrictions) {
         List<EncodedValue> encodedValues = new ArrayList<>(activeImportUnits.entrySet().stream()
                 .map(e -> {
                     Function<PMap, EncodedValue> f = e.getValue().getCreateEncodedValue();
@@ -605,7 +607,7 @@ public class GraphHopper {
 
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         encodedValues.forEach(emBuilder::add);
-        turnCostVehicles.forEach(v -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(v)));
+        turnCostRestrictions.forEach(tr -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(tr)));
         return emBuilder.build();
     }
 
@@ -613,7 +615,9 @@ public class GraphHopper {
         return Collections.emptyList();
     }
 
-    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps, Map<String, ImportUnit> activeImportUnits, Set<String> turnCostVehicles,
+    protected OSMParsers buildOSMParsers(Map<String, PMap> encodedValuesWithProps,
+                                         Map<String, ImportUnit> activeImportUnits,
+                                         Set<String> turnCostRestrictions,
                                          List<String> ignoredHighways, String dateRangeParserString) {
         ImportUnitSorter sorter = new ImportUnitSorter(activeImportUnits);
         Map<String, ImportUnit> sortedImportUnits = new LinkedHashMap<>();
@@ -642,21 +646,20 @@ public class GraphHopper {
         if (encodingManager.hasEncodedValue(FootNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
 
-        turnCostVehicles.forEach(v -> {
-            List<String> osmRestrictions = getTurnRestrictionsForVehicle(v);
+        turnCostRestrictions.forEach(restriction -> {
+            List<String> osmRestrictions = getOSMRestrictions(restriction);
             osmParsers.addRestrictionTagParser(new RestrictionTagParser(
-                    osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(v))));
+                    osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(restriction))));
         });
         return osmParsers;
     }
 
-    protected List<String> getTurnRestrictionsForVehicle(String vehicle) {
-        return switch (vehicle) {
+    protected List<String> getOSMRestrictions(String restriction) {
+        return switch (restriction) {
             case "mtb", "racingbike" ->
                     OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE);
-            case "roads" -> OSMRoadAccessParser.toOSMRestrictions(TransportationMode.VEHICLE);
             default ->
-                    OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(vehicle.toUpperCase(Locale.ROOT)));
+                    OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(restriction.toUpperCase(Locale.ROOT)));
         };
     }
 
@@ -668,12 +671,12 @@ public class GraphHopper {
         return encodedValuesWithProps;
     }
 
-    public static Set<String> getTurnCostVehicles(Collection<Profile> profiles) {
-        Set<String> turnCostVehicles = new LinkedHashSet<>();
+    public static Set<String> getTurnCostsRestrictions(Collection<Profile> profiles) {
+        Set<String> turnCostRestrictions = new LinkedHashSet<>();
         for (Profile profile : profiles)
-            if (profile.isTurnCosts())
-                turnCostVehicles.add(profile.getVehicle().trim());
-        return turnCostVehicles;
+            if (profile.hasTurnCosts())
+                turnCostRestrictions.add(profile.getTurnCostsConfig().getRestriction());
+        return turnCostRestrictions;
     }
 
     private static ElevationProvider createElevationProvider(GraphHopperConfig ghConfig) {
@@ -840,7 +843,12 @@ public class GraphHopper {
         encodedValuesWithProps.putIfAbsent(RoadClassLink.KEY, new PMap());
         encodedValuesWithProps.putIfAbsent(MaxSpeed.KEY, new PMap());
 
-        Set<String> turnCostVehicles = getTurnCostVehicles(profilesByName.values());
+        Set<String> turnCostsRestrictions = getTurnCostsRestrictions(profilesByName.values());
+        // TODO NOW support custom OSM restrictions
+        //  graph.turn_restrictions: emergency|restrictions=emergency;motor_car;motor_vehicle;vehicle;access
+        Arrays.stream(turnRestrictionsString.split(","))
+                .filter(tcrStr -> !tcrStr.isBlank())
+                .forEach(evStr -> turnCostsRestrictions.add(evStr.trim().split("\\|")[0]));
 
         if (urbanDensityCalculationThreads > 0)
             encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());
@@ -857,8 +865,8 @@ public class GraphHopper {
             if (activeImportUnits.put(ev, importUnit) == null)
                 deque.addAll(importUnit.getRequiredImportUnits());
         }
-        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, turnCostVehicles);
-        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, turnCostVehicles, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
+        encodingManager = buildEncodingManager(encodedValuesWithProps, activeImportUnits, turnCostsRestrictions);
+        osmParsers = buildOSMParsers(encodedValuesWithProps, activeImportUnits, turnCostsRestrictions, osmReaderConfig.getIgnoredHighways(), dateRangeParserString);
     }
 
     protected void postImportOSM() {
@@ -1112,7 +1120,7 @@ public class GraphHopper {
         List<CHConfig> chConfigs = new ArrayList<>();
         for (CHProfile chProfile : chProfiles) {
             Profile profile = profilesByName.get(chProfile.getProfile());
-            if (profile.isTurnCosts()) {
+            if (profile.hasTurnCosts()) {
                 chConfigs.add(CHConfig.edgeBased(profile.getName(), createWeighting(profile, new PMap())));
             } else {
                 chConfigs.add(CHConfig.nodeBased(profile.getName(), createWeighting(profile, new PMap())));

@@ -55,7 +55,7 @@ public class RouteResourceWithEleTest {
                 putObject("graph.location", dir).
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Collections.singletonList(
-                        new Profile("profile").setVehicle("car").setCustomModel(Helper.createBaseModel("car"))
+                        new Profile("profile").setCustomModel(Helper.createBaseModel("car"))
                 ));
         return config;
     }
