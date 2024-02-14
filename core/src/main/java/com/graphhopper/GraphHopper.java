@@ -590,7 +590,7 @@ public class GraphHopper {
 
     protected EncodingManager buildEncodingManager(Map<String, PMap> encodedValuesWithProps,
                                                    Map<String, ImportUnit> activeImportUnits,
-                                                   Set<String> turnCostRestrictions) {
+                                                   Set<String> profiles) {
         List<EncodedValue> encodedValues = new ArrayList<>(activeImportUnits.entrySet().stream()
                 .map(e -> {
                     Function<PMap, EncodedValue> f = e.getValue().getCreateEncodedValue();
@@ -605,7 +605,7 @@ public class GraphHopper {
 
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
         encodedValues.forEach(emBuilder::add);
-        turnCostRestrictions.forEach(tr -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(tr)));
+        profiles.forEach(tr -> emBuilder.addTurnCostEncodedValue(TurnRestriction.create(tr)));
         return emBuilder.build();
     }
 
@@ -644,9 +644,9 @@ public class GraphHopper {
         if (encodingManager.hasEncodedValue(FootNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
 
-        turnCostRestrictions.forEach((key, osmRestrictions) -> {
+        turnCostRestrictions.forEach((profile, osmRestrictions) -> {
             osmParsers.addRestrictionTagParser(new RestrictionTagParser(
-                    osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(key))));
+                    osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile))));
         });
         return osmParsers;
     }

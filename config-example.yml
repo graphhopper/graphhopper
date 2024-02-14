@@ -17,7 +17,7 @@ graphhopper:
   # - weighting (optional): by default 'custom'
   # - turn_costs (optional):
   #     restrictions: [motorcar, motor_vehicle] (required turn restrictions)
-  #     u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
+  #     u_turn_costs: 60 (time-penalty for doing a u-turn in seconds)
   #
   # Depending on the above fields there are other properties that can be used, e.g.
   # - custom_model_files: when you specified "weighting: custom" you need to set one or more json files which are searched in
