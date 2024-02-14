@@ -644,21 +644,11 @@ public class GraphHopper {
         if (encodingManager.hasEncodedValue(FootNetwork.KEY))
             osmParsers.addRelationTagParser(relConfig -> new OSMFootNetworkTagParser(encodingManager.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class), relConfig));
 
-        turnCostRestrictions.forEach((key, restrictions) -> {
-            List<String> osmRestrictions = restrictions.isEmpty() ? getOSMRestrictions(key) : restrictions;
+        turnCostRestrictions.forEach((key, osmRestrictions) -> {
             osmParsers.addRestrictionTagParser(new RestrictionTagParser(
                     osmRestrictions, encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(key))));
         });
         return osmParsers;
-    }
-
-    protected List<String> getOSMRestrictions(String restriction) {
-        return switch (restriction) {
-            case "mtb", "racingbike" ->
-                    OSMRoadAccessParser.toOSMRestrictions(TransportationMode.BIKE);
-            default ->
-                    OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(restriction.toUpperCase(Locale.ROOT)));
-        };
     }
 
     public static Map<String, PMap> parseEncodedValueString(String encodedValuesStr) {

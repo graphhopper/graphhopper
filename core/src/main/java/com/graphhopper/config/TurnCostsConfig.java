@@ -36,6 +36,8 @@ public class TurnCostsConfig {
     }
 
     List<String> check(List<String> restrictions) {
+        if (restrictions.isEmpty())
+            throw new IllegalArgumentException("turn restrictions cannot be empty");
         for (String r : restrictions) {
             if (!ALL_SUPPORTED.contains(r))
                 throw new IllegalArgumentException("Currently we do not support the restriction: " + r);
