@@ -101,9 +101,8 @@ public class MiniGraphUI {
         args.putObject("datareader.file", args.getString("datareader.file", "core/files/monaco.osm.gz"));
         args.putObject("graph.location", args.getString("graph.location", "tools/target/mini-graph-ui-gh"));
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
-        ghConfig.setProfiles(Arrays.asList(
-                new Profile("profile").setTurnCostsConfig(new TurnCostsConfig(VEHICLE))
-        )).putObject("import.osm.ignored_highways", "");
+        ghConfig.setProfiles(Arrays.asList(Profile.create(VEHICLE, true).setName("profile"))).
+                putObject("import.osm.ignored_highways", "");
         ghConfig.setCHProfiles(Arrays.asList(
                 new CHProfile("profile")
         ));

@@ -90,7 +90,7 @@ public class CHMeasurement {
         String profile = "car_profile";
         if (withTurnCosts) {
             ghConfig.setProfiles(Collections.singletonList(
-                    new Profile(profile).setCustomModel(Helper.createBaseModel("car")).setTurnCostsConfig(new TurnCostsConfig("car", uTurnCosts))
+                    new Profile(profile).setCustomModel(Helper.createBaseModel("car")).setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"), uTurnCosts))
             ));
             ghConfig.setCHProfiles(Collections.singletonList(
                     new CHProfile(profile)

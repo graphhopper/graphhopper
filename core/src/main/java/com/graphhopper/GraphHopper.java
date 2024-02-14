@@ -131,7 +131,6 @@ public class GraphHopper {
 
     private String dateRangeParserString = "";
     private String encodedValuesString = "";
-    private String turnRestrictionsString = "";
 
     public GraphHopper setEncodedValuesString(String encodedValuesString) {
         this.encodedValuesString = encodedValuesString;
@@ -515,7 +514,6 @@ public class GraphHopper {
             throw new IllegalArgumentException("The option graph.flag_encoders is no longer supported.");
 
         encodedValuesString = ghConfig.getString("graph.encoded_values", encodedValuesString);
-        turnRestrictionsString = ghConfig.getString("graph.turn_restrictions", turnRestrictionsString);
         dateRangeParserString = ghConfig.getString("datareader.date_range_parser_day", dateRangeParserString);
 
         if (ghConfig.getString("graph.locktype", "native").equals("simple"))
@@ -675,7 +673,7 @@ public class GraphHopper {
         Map<String, List<String>> turnCostRestrictions = new LinkedHashMap<>();
         for (Profile profile : profiles)
             if (profile.hasTurnCosts())
-                turnCostRestrictions.put(profile.getTurnCostsConfig().getRestriction(), Collections.emptyList());
+                turnCostRestrictions.put(profile.getName(), profile.getTurnCostsConfig().getRestrictions());
         return turnCostRestrictions;
     }
 
@@ -844,9 +842,6 @@ public class GraphHopper {
         encodedValuesWithProps.putIfAbsent(MaxSpeed.KEY, new PMap());
 
         Map<String, List<String>> turnCostsRestrictions = getTurnCostsRestrictions(profilesByName.values());
-        Arrays.stream(turnRestrictionsString.split(","))
-                .filter(tcrStr -> !tcrStr.isBlank())
-                .forEach(trStr -> turnCostsRestrictions.put(trStr.trim().split("\\|")[0], Arrays.asList(new PMap(trStr.trim()).getString("osm", "").split(";"))));
 
         if (urbanDensityCalculationThreads > 0)
             encodedValuesWithProps.put(UrbanDensity.KEY, new PMap());

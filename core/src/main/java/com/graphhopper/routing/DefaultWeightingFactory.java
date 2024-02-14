@@ -56,10 +56,9 @@ public class DefaultWeightingFactory implements WeightingFactory {
 
         TurnCostProvider turnCostProvider;
         if (profile.hasTurnCosts() && !disableTurnCosts) {
-            final String trRestriction = profile.getTurnCostsConfig().getRestriction();
-            BooleanEncodedValue turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(trRestriction));
+            BooleanEncodedValue turnRestrictionEnc = encodingManager.getTurnBooleanEncodedValue(TurnRestriction.key(profile.getName()));
             if (turnRestrictionEnc == null)
-                throw new IllegalArgumentException("Cannot find turn restriction " + trRestriction);
+                throw new IllegalArgumentException("Cannot find turn restriction encoded value for " + profile.getName());
             int uTurnCosts = hints.getInt(Parameters.Routing.U_TURN_COSTS, profile.getTurnCostsConfig().getUTurnCosts());
             turnCostProvider = new DefaultTurnCostProvider(turnRestrictionEnc, graph.getTurnCostStorage(), uTurnCosts);
         } else {

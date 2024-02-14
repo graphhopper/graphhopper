@@ -43,6 +43,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 
 import static com.graphhopper.application.util.TestUtils.clientTarget;
 import static org.junit.jupiter.api.Assertions.*;
@@ -59,8 +60,8 @@ public class IsochroneResourceTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("fast_car").setTurnCostsConfig(new TurnCostsConfig("car")).setCustomModel(Helper.createBaseModel("car")),
-                        new Profile("short_car").setCustomModel(Helper.createBaseModel("car").setDistanceInfluence(1_000d)).setTurnCostsConfig(new TurnCostsConfig("car")),
+                        Profile.create("car", true).setName("fast_car"),
+                        new Profile("short_car").setCustomModel(Helper.createBaseModel("car").setDistanceInfluence(1_000d)).setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"))),
                         new Profile("fast_car_no_turn_restrictions").setCustomModel(Helper.createBaseModel("car"))
                 ));
         return config;

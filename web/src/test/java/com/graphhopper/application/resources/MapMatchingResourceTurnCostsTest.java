@@ -62,7 +62,7 @@ public class MapMatchingResourceTurnCostsTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
                 setProfiles(Arrays.asList(
-                        new Profile("car").setTurnCostsConfig(new TurnCostsConfig("car")).setCustomModel(Helper.createBaseModel("car")),
+                        Profile.create("car", true),
                         new Profile("car_no_tc").setCustomModel(Helper.createBaseModel("car")),
                         new Profile("bike").setCustomModel(Helper.createBaseModel("bike")))
                 ).

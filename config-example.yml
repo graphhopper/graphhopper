@@ -16,7 +16,7 @@ graphhopper:
   # - name (required): a unique string identifier for the profile
   # - weighting (optional): by default 'custom'
   # - turn_costs (optional):
-  #     restriction: car (required turn restriction type)
+  #     restrictions: [motorcar, motor_vehicle] (required turn restrictions)
   #     u_turn_costs: 60 (time-penalty for doing a u-turn in seconds (only possible when `turn_costs: true`)).
   #
   # Depending on the above fields there are other properties that can be used, e.g.
@@ -156,18 +156,6 @@ graphhopper:
   # of cases where a connection between locations might not be found.
   prepare.min_network_size: 200
   prepare.subnetworks.threads: 1
-
-  #### Custom Turn Access ####
-
-  # There are default restrictions defined like car|osm=motorcar;motor_vehicle that
-  # can be used in the turn_costs configuration of the profile via
-  #
-  # turn_costs:
-  #   restriction: car
-  #
-  # but also custom access restrictions are possible with:
-  #
-  # graph.turn_restrictions: emergency|osm=emergency;motor_car;motor_vehicle
 
   #### Routing ####
 

@@ -25,6 +25,8 @@ import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
+import java.util.List;
+
 /**
  * Corresponds to an entry of the `profiles` section in `config.yml` and specifies the properties of a routing profile.
  * The name used here needs to be used when setting up CH/LM preparations. See also the documentation in
@@ -59,6 +61,20 @@ public class Profile {
         setTurnCostsConfig(p.getTurnCostsConfig());
         setWeighting(p.getWeighting());
         hints = new PMap(p.getHints());
+    }
+
+    public static Profile create(String name, boolean turnCosts) {
+        Profile profile = new Profile(name);
+        if (turnCosts) {
+            if (name.equals("car"))
+                profile.setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle")));
+            else if (name.equals("bike"))
+                profile.setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle")));
+            else
+                throw new IllegalArgumentException("no turn costs restrictions found for " + name);
+        }
+        profile.setCustomModel(Helper.createBaseModel(name));
+        return profile;
     }
 
     public String getName() {

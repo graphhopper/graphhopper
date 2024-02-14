@@ -630,10 +630,10 @@ public class OSMReaderTest {
         int edge3_8 = GHUtility.getEdge(graph, n3, n8).getEdge();
 
         BooleanEncodedValue carTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("car"));
-        BooleanEncodedValue roadsTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("hgv"));
+        BooleanEncodedValue truckTCEnc = hopper.getEncodingManager().getTurnBooleanEncodedValue(TurnRestriction.key("truck"));
 
         assertFalse(tcStorage.get(carTCEnc, edge9_3, n3, edge3_8));
-        assertTrue(tcStorage.get(roadsTCEnc, edge9_3, n3, edge3_8));
+        assertTrue(tcStorage.get(truckTCEnc, edge9_3, n3, edge3_8));
     }
 
     @Test
@@ -713,14 +713,14 @@ public class OSMReaderTest {
         hopper.setOSMFile(getClass().getResource("test-multi-profile-turn-restrictions.xml").getFile()).
                 setGraphHopperLocation(dir).
                 setProfiles(
-                        new Profile("bike").setCustomModel(Helper.createBaseModel("bike")).setTurnCostsConfig(new TurnCostsConfig("bike")),
-                        new Profile("car").setCustomModel(Helper.createBaseModel("car")).setTurnCostsConfig(new TurnCostsConfig("car")),
-                        new Profile("truck").setCustomModel(Helper.createBaseModel("car")).setTurnCostsConfig(new TurnCostsConfig("hgv"))
+                        Profile.create("bike", true),
+                        Profile.create("car", true),
+                        new Profile("truck").setCustomModel(Helper.createBaseModel("car")).setTurnCostsConfig(new TurnCostsConfig(List.of("hgv", "motor_vehicle")))
                 ).
                 importOrLoad();
         EncodingManager manager = hopper.getEncodingManager();
         BooleanEncodedValue carTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("car"));
-        BooleanEncodedValue truckTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("hgv"));
+        BooleanEncodedValue truckTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("truck"));
         BooleanEncodedValue bikeTCEnc = manager.getTurnBooleanEncodedValue(TurnRestriction.key("bike"));
 
         Graph graph = hopper.getBaseGraph();
@@ -1006,11 +1006,11 @@ public class OSMReaderTest {
             String str = "max_width,max_height,max_weight";
             setEncodedValuesString(str);
             setProfiles(
-                    new Profile("foot").setCustomModel(Helper.createBaseModel("foot")),
-                    new Profile("car").setCustomModel(Helper.createBaseModel("car")).setTurnCostsConfig(turnCosts ? new TurnCostsConfig("car") : null),
-                    new Profile("bike").setCustomModel(Helper.createBaseModel("bike")).setTurnCostsConfig(turnCosts ? new TurnCostsConfig("bike") : null),
-                    new Profile("roads").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "100"))).setTurnCostsConfig(turnCosts ? new TurnCostsConfig("hgv") : null)
-                    );
+                    Profile.create("foot", false),
+                    Profile.create("car", true),
+                    Profile.create("bike", true),
+                    new Profile("truck").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "100"))).setTurnCostsConfig(turnCosts ? new TurnCostsConfig(List.of("hgv", "motor_vehicle")) : null)
+            );
             getReaderConfig().setPreferredLanguage(prefLang);
         }
 

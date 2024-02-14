@@ -32,6 +32,7 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.routing.weighting.Weighting;
 
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
@@ -303,6 +304,7 @@ public class Measurement {
         boolean useLM = args.getBool("measurement.lm", true);
         String customModelFile = args.getString("measurement.custom_model_file", "");
         List<Profile> profiles = new ArrayList<>();
+        List<String> restrictions = OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(vehicle.toUpperCase(Locale.ROOT)));
         if (!customModelFile.isEmpty()) {
             if (!weighting.equals(CustomWeighting.NAME))
                 throw new IllegalArgumentException("To make use of a custom model you need to set measurement.weighting to 'custom'");
@@ -310,12 +312,12 @@ public class Measurement {
             CustomModel customModel = loadCustomModel(customModelFile);
             profiles.add(new Profile("profile_no_tc").setCustomModel(customModel));
             if (turnCosts)
-                profiles.add(new Profile("profile_tc").setCustomModel(customModel).setTurnCostsConfig(new TurnCostsConfig(vehicle, uTurnCosts)));
+                profiles.add(new Profile("profile_tc").setCustomModel(customModel).setTurnCostsConfig(new TurnCostsConfig(restrictions, uTurnCosts)));
         } else {
             // use standard profiles
             profiles.add(new Profile("profile_no_tc").setCustomModel(Helper.createBaseModel(vehicle)));
             if (turnCosts)
-                profiles.add(new Profile("profile_tc").setCustomModel(Helper.createBaseModel(vehicle)).setTurnCostsConfig(new TurnCostsConfig(vehicle, uTurnCosts)));
+                profiles.add(new Profile("profile_tc").setCustomModel(Helper.createBaseModel(vehicle)).setTurnCostsConfig(new TurnCostsConfig(restrictions, uTurnCosts)));
         }
         ghConfig.setProfiles(profiles);
 

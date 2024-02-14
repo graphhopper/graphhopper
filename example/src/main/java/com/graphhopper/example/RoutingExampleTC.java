@@ -12,6 +12,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 
 import java.util.Arrays;
+import java.util.List;
 
 import static com.graphhopper.util.Parameters.Curbsides.CURBSIDE_ANY;
 import static com.graphhopper.util.Parameters.Curbsides.CURBSIDE_RIGHT;
@@ -72,9 +73,9 @@ public class RoutingExampleTC {
         Profile profile = new Profile("car")
                 // define a custom model
                 .setCustomModel(Helper.createBaseModel("car"))
-                // enabling turn costs means OSM turn restriction constraints like 'no_left_turn' will be taken into account
+                // enabling turn costs means OSM turn restriction constraints like 'no_left_turn' will be taken into account for the specified access restrictions
                 // we can also set u_turn_costs (in seconds). i.e. we will consider u-turns at all junctions with a 40s time penalty
-                .setTurnCostsConfig(new TurnCostsConfig("car", 40));
+                .setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"), 40));
         hopper.setProfiles(profile);
         // enable CH for our profile. since turn costs are enabled this will take more time and memory to prepare than
         // without turn costs.
