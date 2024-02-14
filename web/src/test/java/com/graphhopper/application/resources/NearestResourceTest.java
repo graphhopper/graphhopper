@@ -52,7 +52,7 @@ public class NearestResourceTest {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("graph.location", dir).
                 putObject("import.osm.ignored_highways", "").
-                setProfiles(Collections.singletonList(new Profile("car").setCustomModel(Helper.createBaseModel("car"))));
+                setProfiles(Collections.singletonList(Profile.create("car", false)));
         return config;
     }
 
