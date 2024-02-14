@@ -2,11 +2,11 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
-import com.graphhopper.routing.util.VehicleEncodedValues;
-import com.graphhopper.routing.util.VehicleTagParsers;
+import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.weighting.custom.CustomModelParser;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.BaseGraph;
@@ -14,7 +14,6 @@ import com.graphhopper.util.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.InputStreamReader;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -29,18 +28,26 @@ public class HikeCustomModelTest {
     public void setup() {
         IntEncodedValue hikeRating = HikeRating.create();
         em = new EncodingManager.Builder().
-                add(VehicleEncodedValues.roads(new PMap())).
-                add(VehicleEncodedValues.foot(new PMap())).
+                add(VehicleAccess.create("roads")).
+                add(VehicleSpeed.create("roads", 7, 2, true)).
+                add(VehicleAccess.create("foot")).
+                add(VehicleSpeed.create("foot", 4, 1, false)).
+                add(VehiclePriority.create("foot", 4, PriorityCode.getFactor(1), false)).
+                add(FerrySpeed.create()).
+                add(RouteNetwork.create(FootNetwork.KEY)).
+                add(RoadAccess.create()).
                 add(hikeRating).build();
 
         roadsSpeedEnc = em.getDecimalEncodedValue(VehicleSpeed.key("roads"));
         parsers = new OSMParsers().
                 addWayTagParser(new OSMHikeRatingParser(hikeRating));
 
-        for (TagParser p : VehicleTagParsers.foot(em, new PMap()).getTagParsers())
-            parsers.addWayTagParser(p);
-        for (TagParser p : VehicleTagParsers.roads(em, new PMap()).getTagParsers())
-            parsers.addWayTagParser(p);
+        parsers.addWayTagParser(new FootAccessParser(em, new PMap()).init(new DateRangeParser()));
+        parsers.addWayTagParser(new FootAverageSpeedParser(em));
+        parsers.addWayTagParser(new FootPriorityParser(em));
+
+        parsers.addWayTagParser(new RoadsAccessParser(em));
+        parsers.addWayTagParser(new RoadsAverageSpeedParser(em));
     }
 
     EdgeIteratorState createEdge(ReaderWay way) {
@@ -65,17 +72,17 @@ public class HikeCustomModelTest {
         ReaderWay way = new ReaderWay(0L);
         way.setTag("highway", "track");
         EdgeIteratorState edge = createEdge(way);
-        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, 30, null);
+        CustomWeighting.Parameters p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, null);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("motor_vehicle", "private");
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, 30, null);
+        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, null);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("sac_scale", "alpine_hiking");
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, 30, null);
+        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, null);
         assertEquals(1.2, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
         assertEquals(2, p.getEdgeToSpeedMapping().get(edge, false), 0.01);
 
@@ -83,12 +90,12 @@ public class HikeCustomModelTest {
         way.setTag("highway", "track");
         way.setTag("access", "private");
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, 30, null);
+        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, null);
         assertEquals(0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
 
         way.setTag("sac_scale", "alpine_hiking");
         edge = createEdge(way);
-        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, 30, null);
+        p = CustomModelParser.createWeightingParameters(getCustomModel("hike.json"), em, roadsSpeedEnc, null);
         // TODO this would be wrong tagging but still we should exclude the way - will be fixed with #2819
         // assertEquals(0, p.getEdgeToPriorityMapping().get(edge, false), 0.01);
     }

@@ -136,9 +136,9 @@ public abstract class Entity implements Serializable, Cloneable {
             } else try {
                 val = Integer.parseInt(str);
                 if (mapping != null) {
-                    Integer mappedVal = mapping.get(new Integer(val));
+                    Integer mappedVal = mapping.get(val);
                     if (mappedVal != null)
-                        val = mappedVal.intValue();
+                        val = mappedVal;
                 }
                 checkRangeInclusive(min, max, val);
             } catch (NumberFormatException nfe) {

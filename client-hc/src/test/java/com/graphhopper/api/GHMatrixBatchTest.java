@@ -10,19 +10,19 @@ import java.io.IOException;
 public class GHMatrixBatchTest extends AbstractGHMatrixWebTester {
 
     @Override
-    GraphHopperMatrixWeb createMatrixClient(final String jsonTmp) {
+    GraphHopperMatrixWeb createMatrixClient(final String jsonTmp, int statusCode) {
         return new GraphHopperMatrixWeb(new GHMatrixBatchRequester("") {
 
             private final String json = jsonTmp;
 
             @Override
-            protected String postJson(String url, JsonNode data) throws IOException {
-                return "{\"job_id\": \"1\"}";
+            protected JsonResult postJson(String url, JsonNode data) {
+                return new JsonResult("{\"job_id\": \"1\"}", statusCode);
             }
 
             @Override
-            protected String getJson(String url) throws IOException {
-                return json;
+            protected JsonResult getJson(String url) {
+                return new JsonResult(json, statusCode);
             }
         }.setSleepAfterGET(0));
     }

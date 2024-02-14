@@ -21,7 +21,6 @@ package com.graphhopper.routing;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.routing.weighting.DefaultTurnCostProvider;
 import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
@@ -109,7 +108,4 @@ public class DefaultWeightingFactory implements WeightingFactory {
         return weighting;
     }
 
-    public boolean isOutdoorVehicle(String name) {
-        return VehicleEncodedValues.OUTDOOR_VEHICLES.contains(name);
-    }
 }

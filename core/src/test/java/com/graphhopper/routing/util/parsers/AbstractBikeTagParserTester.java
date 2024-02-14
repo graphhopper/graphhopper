@@ -24,7 +24,6 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.OSMParsers;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -54,12 +53,12 @@ public abstract class AbstractBikeTagParserTester {
     @BeforeEach
     public void setUp() {
         encodingManager = createEncodingManager();
-        VehicleTagParsers parsers = createBikeTagParsers(encodingManager, new PMap("block_fords=true"));
-        accessParser = (BikeCommonAccessParser) parsers.getAccessParser();
-        speedParser = (BikeCommonAverageSpeedParser) parsers.getSpeedParser();
-        priorityParser = (BikeCommonPriorityParser) parsers.getPriorityParser();
+        accessParser = createAccessParser(encodingManager, new PMap("block_fords=true"));
+        speedParser = createAverageSpeedParser(encodingManager);
+        priorityParser = createPriorityParser(encodingManager);
         osmParsers = new OSMParsers()
                 .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
+                .addRelationTagParser(relConfig -> new OSMMtbNetworkTagParser(encodingManager.getEnumEncodedValue(MtbNetwork.KEY, RouteNetwork.class), relConfig))
                 .addWayTagParser(new OSMSmoothnessParser(encodingManager.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
                 .addWayTagParser(accessParser).addWayTagParser(speedParser).addWayTagParser(priorityParser);
         priorityEnc = priorityParser.getPriorityEnc();
@@ -69,7 +68,11 @@ public abstract class AbstractBikeTagParserTester {
 
     protected abstract EncodingManager createEncodingManager();
 
-    protected abstract VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap);
+    protected abstract BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup, PMap pMap);
+
+    protected abstract BikeCommonAverageSpeedParser createAverageSpeedParser(EncodedValueLookup lookup);
+
+    protected abstract BikeCommonPriorityParser createPriorityParser(EncodedValueLookup lookup);
 
     protected void assertPriority(PriorityCode expectedPrio, ReaderWay way) {
         IntsRef relFlags = osmParsers.handleRelationTags(new ReaderRelation(0), osmParsers.createRelationFlags());
@@ -527,7 +530,7 @@ public abstract class AbstractBikeTagParserTester {
     @Test
     void privateAndFords() {
         // defaults: do not block fords, block private
-        BikeCommonAccessParser bike = (BikeCommonAccessParser) createBikeTagParsers(encodingManager, new PMap()).getAccessParser();
+        BikeCommonAccessParser bike = createAccessParser(encodingManager, new PMap());
         assertFalse(bike.isBlockFords());
         assertTrue(bike.restrictedValues.contains("private"));
         assertFalse(bike.intendedValues.contains("private"));
@@ -536,7 +539,7 @@ public abstract class AbstractBikeTagParserTester {
         assertTrue(bike.isBarrier(node));
 
         // block fords, unblock private
-        bike = (BikeCommonAccessParser) createBikeTagParsers(encodingManager, new PMap("block_fords=true|block_private=false")).getAccessParser();
+        bike = createAccessParser(encodingManager, new PMap("block_fords=true|block_private=false"));
         assertTrue(bike.isBlockFords());
         assertFalse(bike.restrictedValues.contains("private"));
         assertTrue(bike.intendedValues.contains("private"));
@@ -664,7 +667,6 @@ public abstract class AbstractBikeTagParserTester {
     private void assertAccess(ReaderWay way, boolean fwd, boolean bwd) {
         EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
         int edge = 0;
-        IntsRef edgeFlags = new IntsRef(1);
         IntsRef relationFlags = new IntsRef(1);
         accessParser.handleWayTags(edge, edgeIntAccess, way, relationFlags);
         if (fwd) assertTrue(accessEnc.getBool(false, edge, edgeIntAccess));

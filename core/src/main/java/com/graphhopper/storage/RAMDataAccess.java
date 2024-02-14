@@ -24,7 +24,7 @@ import java.util.Arrays;
 
 /**
  * This is an in-memory byte-based data structure with the possibility to be stored on flush().
- * Thread safe.
+ * Read thread-safe.
  * <p>
  *
  * @author Peter Karich

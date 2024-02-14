@@ -84,6 +84,7 @@ public class DefaultMaxSpeedParser implements TagParser {
             String key = entry.getKey();
             if (speeds.isRelevantTagKey(key)
                     || key.equals("country")
+                    || key.equals("country_state")
                     // the :conditional tags are not yet necessary for us and expensive in the speeds library
                     // see https://github.com/westnordost/osm-legal-default-speeds/issues/7
                     || key.startsWith("maxspeed:") && !key.endsWith(":conditional"))

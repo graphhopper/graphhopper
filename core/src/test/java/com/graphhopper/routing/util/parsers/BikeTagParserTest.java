@@ -20,11 +20,10 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
-import com.graphhopper.routing.util.VehicleEncodedValues;
-import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
@@ -42,12 +41,31 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Override
     protected EncodingManager createEncodingManager() {
-        return new EncodingManager.Builder().add(VehicleEncodedValues.bike(new PMap())).build();
+        return new EncodingManager.Builder()
+                .add(VehicleAccess.create("bike"))
+                .add(VehicleSpeed.create("bike", 4, 2, false))
+                .add(VehiclePriority.create("bike", 4, PriorityCode.getFactor(1), false))
+                .add(Roundabout.create())
+                .add(Smoothness.create())
+                .add(FerrySpeed.create())
+                .add(RouteNetwork.create(BikeNetwork.KEY))
+                .add(RouteNetwork.create(MtbNetwork.KEY))
+                .build();
     }
 
     @Override
-    protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap) {
-        return VehicleTagParsers.bike(lookup, pMap);
+    protected BikeCommonAccessParser createAccessParser(EncodedValueLookup lookup, PMap pMap) {
+        return (BikeCommonAccessParser) new BikeAccessParser(lookup, pMap).init(new DateRangeParser());
+    }
+
+    @Override
+    protected BikeCommonAverageSpeedParser createAverageSpeedParser(EncodedValueLookup lookup) {
+        return new BikeAverageSpeedParser(lookup);
+    }
+
+    @Override
+    protected BikeCommonPriorityParser createPriorityParser(EncodedValueLookup lookup) {
+        return new BikePriorityParser(lookup);
     }
 
     @Test
