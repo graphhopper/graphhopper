@@ -80,8 +80,7 @@ public class CustomModelParser {
                                                     EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
             throw new IllegalStateException("CustomModel cannot be null");
-        double maxSpeed = speedEnc.getMaxOrMaxStorableDecimal();
-        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, speedEnc, maxSpeed, priorityEnc);
+        CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup, speedEnc, priorityEnc);
         return new CustomWeightingX(accessEnc, speedEnc, turnCostProvider, parameters);
     }
 

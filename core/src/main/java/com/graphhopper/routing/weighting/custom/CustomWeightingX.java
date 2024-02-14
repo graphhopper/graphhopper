@@ -35,8 +35,8 @@ public final class CustomWeightingX extends AbstractWeighting {
     }
 
     @Override
-    public double getMinWeight(double distance) {
-        return 1 * distance;
+    public double calcMinWeightPerDistance() {
+        return 1;
     }
 
     @Override
