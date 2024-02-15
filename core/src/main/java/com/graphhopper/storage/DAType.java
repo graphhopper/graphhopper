@@ -137,17 +137,7 @@ public class DAType {
 
     @Override
     public String toString() {
-        String str;
-        if (getMemRef() == MemRef.MMAP)
-            str = "MMAP";
-        else
-            str = "RAM";
-
-        if (isInteg())
-            str += "_INT";
-        if (isStoring())
-            str += "_STORE";
-        return str;
+        return memRef.toString() + "|integ=" + integ + "|storing=" + storing + "|write=" + allowWrites;
     }
 
     @Override
