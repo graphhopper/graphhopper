@@ -28,13 +28,14 @@ import com.graphhopper.config.Profile;
 import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.TurnRestriction;
+import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.parsers.OSMRoadAccessParser;
 import com.graphhopper.routing.weighting.Weighting;
-
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -304,7 +305,9 @@ public class Measurement {
         boolean useLM = args.getBool("measurement.lm", true);
         String customModelFile = args.getString("measurement.custom_model_file", "");
         List<Profile> profiles = new ArrayList<>();
-        List<String> restrictions = OSMRoadAccessParser.toOSMRestrictions(TransportationMode.valueOf(vehicle.toUpperCase(Locale.ROOT)));
+        if (turnCosts && !vehicle.equals("car"))
+            throw new IllegalArgumentException("turn costs not yet supported for: " + vehicle);
+        List<String> restrictions = List.of("motorcar", "motor_vehicle");
         if (!customModelFile.isEmpty()) {
             if (!weighting.equals(CustomWeighting.NAME))
                 throw new IllegalArgumentException("To make use of a custom model you need to set measurement.weighting to 'custom'");
