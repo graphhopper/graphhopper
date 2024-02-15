@@ -222,7 +222,8 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     public void close() {
-        lineIntIndex.close();
+        if(!lineIntIndex.isClosed())
+            lineIntIndex.close();
     }
 
     public boolean isClosed() {
