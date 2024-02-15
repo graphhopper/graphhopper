@@ -58,7 +58,7 @@ public class MVTResourceTest {
                 putObject("datareader.file", "../core/files/andorra.osm.pbf").
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR).
-                setProfiles(Collections.singletonList(new Profile("car").setVehicle("car").setCustomModel(Helper.createBaseModel("car"))));
+                setProfiles(Collections.singletonList(Profile.create("car", false)));
         return config;
     }
 

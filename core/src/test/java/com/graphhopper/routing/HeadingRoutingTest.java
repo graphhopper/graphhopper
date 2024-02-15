@@ -350,7 +350,7 @@ class HeadingRoutingTest {
         LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
         locationIndex.prepareIndex();
         Map<String, Profile> profilesByName = new HashMap<>();
-        profilesByName.put("profile", new Profile("profile").setVehicle("car").setCustomModel(Helper.createBaseModel("car")));
+        profilesByName.put("profile", new Profile("profile").setCustomModel(Helper.createBaseModel("car")));
         return new Router(graph.getBaseGraph(), encodingManager, locationIndex, profilesByName, new PathDetailsBuilderFactory(), new TranslationMap().doImport(), new RouterConfig(),
                 new DefaultWeightingFactory(graph.getBaseGraph(), encodingManager), Collections.emptyMap(), Collections.emptyMap());
     }

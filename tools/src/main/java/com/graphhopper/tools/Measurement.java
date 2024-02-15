@@ -25,14 +25,17 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.routing.ev.Subnetwork;
+import com.graphhopper.routing.ev.TurnRestriction;
+import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.lm.LMConfig;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
-
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -61,7 +64,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import static com.graphhopper.util.GHUtility.readCountries;
 import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
-import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
 
 /**
  * Used to run performance benchmarks for routing and other functionalities of GraphHopper
@@ -303,19 +305,22 @@ public class Measurement {
         boolean useLM = args.getBool("measurement.lm", true);
         String customModelFile = args.getString("measurement.custom_model_file", "");
         List<Profile> profiles = new ArrayList<>();
+        if (turnCosts && !vehicle.equals("car"))
+            throw new IllegalArgumentException("turn costs not yet supported for: " + vehicle);
+        List<String> restrictions = List.of("motorcar", "motor_vehicle");
         if (!customModelFile.isEmpty()) {
             if (!weighting.equals(CustomWeighting.NAME))
                 throw new IllegalArgumentException("To make use of a custom model you need to set measurement.weighting to 'custom'");
             // use custom profile(s) as specified in the given custom model file
             CustomModel customModel = loadCustomModel(customModelFile);
-            profiles.add(new Profile("profile_no_tc").setCustomModel(customModel).setVehicle(vehicle).setTurnCosts(false));
+            profiles.add(new Profile("profile_no_tc").setCustomModel(customModel));
             if (turnCosts)
-                profiles.add(new Profile("profile_tc").setCustomModel(customModel).setVehicle(vehicle).setTurnCosts(true).putHint(U_TURN_COSTS, uTurnCosts));
+                profiles.add(new Profile("profile_tc").setCustomModel(customModel).setTurnCostsConfig(new TurnCostsConfig(restrictions, uTurnCosts)));
         } else {
             // use standard profiles
-            profiles.add(new Profile("profile_no_tc").setVehicle(vehicle).setCustomModel(Helper.createBaseModel(vehicle)).setTurnCosts(false));
+            profiles.add(new Profile("profile_no_tc").setCustomModel(Helper.createBaseModel(vehicle)));
             if (turnCosts)
-                profiles.add(new Profile("profile_tc").setVehicle(vehicle).setCustomModel(Helper.createBaseModel(vehicle)).setTurnCosts(true).putHint(U_TURN_COSTS, uTurnCosts));
+                profiles.add(new Profile("profile_tc").setCustomModel(Helper.createBaseModel(vehicle)).setTurnCostsConfig(new TurnCostsConfig(restrictions, uTurnCosts)));
         }
         ghConfig.setProfiles(profiles);
 

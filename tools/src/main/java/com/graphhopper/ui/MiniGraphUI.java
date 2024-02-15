@@ -25,6 +25,7 @@ import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.DecimalEncodedValue;
@@ -93,17 +94,15 @@ public class MiniGraphUI {
     private Snap fromRes;
     private Snap toRes;
     private QueryGraph qGraph;
+    private static String VEHICLE = "car";
 
     public static void main(String[] strs) {
         PMap args = PMap.read(strs);
         args.putObject("datareader.file", args.getString("datareader.file", "core/files/monaco.osm.gz"));
         args.putObject("graph.location", args.getString("graph.location", "tools/target/mini-graph-ui-gh"));
         GraphHopperConfig ghConfig = new GraphHopperConfig(args);
-        ghConfig.setProfiles(Arrays.asList(
-                new Profile("profile")
-                        .setVehicle("car")
-                        .setTurnCosts(true)
-        )).putObject("import.osm.ignored_highways", "");
+        ghConfig.setProfiles(Arrays.asList(Profile.create(VEHICLE, true).setName("profile"))).
+                putObject("import.osm.ignored_highways", "");
         ghConfig.setCHProfiles(Arrays.asList(
                 new CHProfile("profile")
         ));
@@ -119,9 +118,8 @@ public class MiniGraphUI {
     public MiniGraphUI(GraphHopper hopper, boolean debug, boolean useCH) {
         this.graph = hopper.getBaseGraph();
         this.na = graph.getNodeAccess();
-        String vehicle = hopper.getProfiles().get(0).getVehicle();
-        accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(VehicleAccess.key(vehicle));
-        avSpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key(vehicle));
+        accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(VehicleAccess.key(VEHICLE));
+        avSpeedEnc = hopper.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key(VEHICLE));
         this.useCH = useCH;
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug);

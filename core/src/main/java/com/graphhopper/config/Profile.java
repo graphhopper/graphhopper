@@ -20,9 +20,12 @@ package com.graphhopper.config;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
+
+import java.util.List;
 
 /**
  * Corresponds to an entry of the `profiles` section in `config.yml` and specifies the properties of a routing profile.
@@ -33,10 +36,9 @@ import com.graphhopper.util.PMap;
  * @see LMProfile
  */
 public class Profile {
-    private String name = "car";
-    private String vehicle = "car";
+    private String name;
+    private TurnCostsConfig turnCostsConfig;
     private String weighting = "custom";
-    private boolean turnCosts = false;
     private PMap hints = new PMap();
 
     public static void validateProfileName(String profileName) {
@@ -56,10 +58,23 @@ public class Profile {
 
     public Profile(Profile p) {
         setName(p.getName());
-        setVehicle(p.getVehicle());
+        setTurnCostsConfig(p.getTurnCostsConfig());
         setWeighting(p.getWeighting());
-        setTurnCosts(p.isTurnCosts());
         hints = new PMap(p.getHints());
+    }
+
+    public static Profile create(String name, boolean turnCosts) {
+        Profile profile = new Profile(name);
+        if (turnCosts) {
+            if (name.equals("car"))
+                profile.setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle")));
+            else if (name.equals("bike"))
+                profile.setTurnCostsConfig(new TurnCostsConfig(List.of("bicycle")));
+            else
+                throw new IllegalArgumentException("no turn costs restrictions found for " + name);
+        }
+        profile.setCustomModel(Helper.createBaseModel(name));
+        return profile;
     }
 
     public String getName() {
@@ -72,13 +87,14 @@ public class Profile {
         return this;
     }
 
-    public String getVehicle() {
-        return vehicle;
+    public Profile setTurnCostsConfig(TurnCostsConfig turnCostsConfig) {
+        this.turnCostsConfig = turnCostsConfig;
+        return this;
     }
 
-    public Profile setVehicle(String vehicle) {
-        this.vehicle = vehicle;
-        return this;
+    @JsonProperty("turn_costs")
+    public TurnCostsConfig getTurnCostsConfig() {
+        return turnCostsConfig;
     }
 
     public String getWeighting() {
@@ -101,13 +117,8 @@ public class Profile {
         return getHints().getObject(CustomModel.KEY, null);
     }
 
-    public boolean isTurnCosts() {
-        return turnCosts;
-    }
-
-    public Profile setTurnCosts(boolean turnCosts) {
-        this.turnCosts = turnCosts;
-        return this;
+    public boolean hasTurnCosts() {
+        return turnCostsConfig != null;
     }
 
     @JsonIgnore
@@ -117,6 +128,8 @@ public class Profile {
 
     @JsonAnySetter
     public Profile putHint(String key, Object value) {
+        if (key.equals("u_turn_costs"))
+            throw new IllegalArgumentException("u_turn_costs no longer accepted. Use the turn costs configuration instead.");
         this.hints.putObject(key, value);
         return this;
     }
@@ -136,7 +149,7 @@ public class Profile {
 
     private String createContentString() {
         // used to check against stored custom models, see #2026
-        return "name=" + name + "|vehicle=" + vehicle + "|weighting=" + weighting + "|turnCosts=" + turnCosts + "|hints=" + hints;
+        return "name=" + name + "|turn_costs={" + turnCostsConfig + "}|weighting=" + weighting + "|hints=" + hints;
     }
 
     @Override

@@ -1,5 +1,6 @@
 ### 9.0 [not yet released]
 
+- u_turn_costs information is no longer stored in profile. Use the TurnCostsConfig instead
 - the custom models do no longer include the speed, access and priority encoded values only implicitly, see #2938 for a migration guide. You have to specify an initial statement like `{ "if": "true", "limit_to": "car_average_speed" }` for `speed` and `{ "if": "!car_access", "multiply_by": "0" }` for `priority`
 - replaced (Vehicle)EncodedValueFactory and (Vehicle)TagParserFactory with ImportRegistry, #2935
 - encoded values used in custom models are added automatically, no need to add them to graph.encoded_values anymore, #2935

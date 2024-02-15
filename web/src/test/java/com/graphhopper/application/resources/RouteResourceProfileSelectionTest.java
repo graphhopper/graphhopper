@@ -57,9 +57,9 @@ public class RouteResourceProfileSelectionTest {
                 putObject("import.osm.ignored_highways", "").
                 putObject("graph.location", DIR)
                 .setProfiles(Arrays.asList(
-                        new Profile("my_car").setVehicle("car").setCustomModel(Helper.createBaseModel("car")),
-                        new Profile("my_bike").setCustomModel(Helper.createBaseModel("bike").setDistanceInfluence(200d)).setVehicle("bike"),
-                        new Profile("my_feet").setVehicle("foot").setCustomModel(Helper.createBaseModel("foot"))
+                        new Profile("my_car").setCustomModel(Helper.createBaseModel("car")),
+                        new Profile("my_bike").setCustomModel(Helper.createBaseModel("bike").setDistanceInfluence(200d)),
+                        new Profile("my_feet").setCustomModel(Helper.createBaseModel("foot"))
                 ))
                 .setCHProfiles(Arrays.asList(
                         new CHProfile("my_car"),

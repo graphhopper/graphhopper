@@ -40,7 +40,7 @@ public class NavigateResponseConverterTest {
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(graphFolder).
-                setProfiles(new Profile(profile).setVehicle("car").setCustomModel(Helper.createBaseModel("car")).setTurnCosts(false)).
+                setProfiles(new Profile(profile).setCustomModel(Helper.createBaseModel("car"))).
                 importOrLoad();
     }
 

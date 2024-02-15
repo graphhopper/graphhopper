@@ -34,7 +34,7 @@ public class HeadingExample {
         GraphHopper hopper = new GraphHopper();
         hopper.setOSMFile(ghLoc);
         hopper.setGraphHopperLocation("target/heading-graph-cache");
-        hopper.setProfiles(new Profile("car").setVehicle("car").
+        hopper.setProfiles(new Profile("car").
                 setCustomModel(new CustomModel().
                         addToSpeed(If("true", LIMIT, "car_average_speed")).
                         addToPriority(If("!car_access", MULTIPLY, "0")).

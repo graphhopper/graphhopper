@@ -25,6 +25,7 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.LMProfile;
 
 import com.graphhopper.config.Profile;
+import com.graphhopper.config.TurnCostsConfig;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
@@ -89,7 +90,7 @@ public class CHMeasurement {
         String profile = "car_profile";
         if (withTurnCosts) {
             ghConfig.setProfiles(Collections.singletonList(
-                    new Profile(profile).setVehicle("car").setCustomModel(Helper.createBaseModel("car")).setTurnCosts(true).putHint(Parameters.Routing.U_TURN_COSTS, uTurnCosts)
+                    new Profile(profile).setCustomModel(Helper.createBaseModel("car")).setTurnCostsConfig(new TurnCostsConfig(List.of("motorcar", "motor_vehicle"), uTurnCosts))
             ));
             ghConfig.setCHProfiles(Collections.singletonList(
                     new CHProfile(profile)
@@ -102,7 +103,7 @@ public class CHMeasurement {
             }
         } else {
             ghConfig.setProfiles(Collections.singletonList(
-                    new Profile(profile).setVehicle("car").setCustomModel(Helper.createBaseModel("car")).setTurnCosts(false)
+                    new Profile(profile).setCustomModel(Helper.createBaseModel("car"))
             ));
         }
 

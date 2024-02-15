@@ -52,8 +52,8 @@ public class ExtendedRouteTypeIT {
         ghConfig.putObject("gtfs.file", "files/another-sample-feed-extended-route-type.zip");
         ghConfig.putObject("import.osm.ignored_highways", "");
         ghConfig.setProfiles(Arrays.asList(
-                new Profile("foot").setVehicle("foot").setCustomModel(Helper.createBaseModel("foot")),
-                new Profile("car").setVehicle("car").setCustomModel(Helper.createBaseModel("car"))));
+                Profile.create("foot", false),
+                Profile.create("car", false)));
         Helper.removeDir(new File(GRAPH_LOC));
         graphHopperGtfs = new GraphHopperGtfs(ghConfig);
         graphHopperGtfs.init(ghConfig);

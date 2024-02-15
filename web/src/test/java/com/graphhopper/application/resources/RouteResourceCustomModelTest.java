@@ -65,32 +65,29 @@ public class RouteResourceCustomModelTest {
                 putObject("custom_areas.directory", "./src/test/resources/com/graphhopper/application/resources/areas").
                 putObject("import.osm.ignored_highways", "").
                 setProfiles(Arrays.asList(
-                        new Profile("roads").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "120"))).setVehicle("roads"),
-                        new Profile("car").setCustomModel(Helper.createBaseModel("car").setDistanceInfluence(70d)).setVehicle("car"),
-                        new Profile("car_with_area").setCustomModel(Helper.createBaseModel("car").addToPriority(If("in_external_area52", MULTIPLY, "0.05"))).setVehicle("car"),
-                        new Profile("bike").setCustomModel(Helper.createBaseModel("bike").setDistanceInfluence(0d)).setVehicle("bike"),
-                        new Profile("bike_fastest").setCustomModel(Helper.createBaseModel("bike")).setVehicle("bike"),
-                        new Profile("bus").setVehicle("hgv").setCustomModel(null).putHint("custom_model_files", Arrays.asList("bus.json")),
-                        new Profile("cargo_bike").setVehicle("bike").setCustomModel(null).putHint("custom_model_files", Arrays.asList("cargo_bike.json")),
-                        new Profile("json_bike").setVehicle("bike").setCustomModel(null).putHint("custom_model_files", Arrays.asList("bike.json", "bike_elevation.json")),
-                        new Profile("foot_profile").setVehicle("foot").setCustomModel(Helper.createBaseModel("foot")),
+                        new Profile("roads").setCustomModel(new CustomModel().addToSpeed(If("true", LIMIT, "120"))),
+                        new Profile("car").setCustomModel(Helper.createBaseModel("car").setDistanceInfluence(70d)),
+                        new Profile("car_with_area").setCustomModel(Helper.createBaseModel("car").addToPriority(If("in_external_area52", MULTIPLY, "0.05"))),
+                        new Profile("bike").setCustomModel(Helper.createBaseModel("bike").setDistanceInfluence(0d)),
+                        new Profile("bike_fastest").setCustomModel(Helper.createBaseModel("bike")),
+                        new Profile("bus").setCustomModel(null).putHint("custom_model_files", Arrays.asList("bus.json")),
+                        new Profile("cargo_bike").setCustomModel(null).putHint("custom_model_files", Arrays.asList("cargo_bike.json")),
+                        new Profile("json_bike").setCustomModel(null).putHint("custom_model_files", Arrays.asList("bike.json", "bike_elevation.json")),
+                        new Profile("foot_profile").setCustomModel(Helper.createBaseModel("foot")),
                         new Profile("car_no_unclassified").setCustomModel(Helper.createBaseModel("car").
-                                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0"))).
-                                setVehicle("car"),
+                                                addToPriority(If("road_class == UNCLASSIFIED", LIMIT, "0"))),
                         new Profile("custom_bike").
                                 setCustomModel(Helper.createBaseModel("bike").
                                         addToSpeed(If("road_class == PRIMARY", LIMIT, "28")).
-                                        addToPriority(If("max_width < 1.2", MULTIPLY, "0"))).
-                                setVehicle("bike"),
+                                        addToPriority(If("max_width < 1.2", MULTIPLY, "0"))),
                         new Profile("custom_bike2").setCustomModel(
                                         Helper.createBaseModel("bike").setDistanceInfluence(70d).
-                                                addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0"))).
-                                setVehicle("bike"),
+                                                addToPriority(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "0"))),
                         new Profile("custom_bike3").setCustomModel(
                                         Helper.createBaseModel("bike").
                                                 addToSpeed(If("road_class == TERTIARY || road_class == TRACK", MULTIPLY, "10")).
-                                                addToSpeed(If("true", LIMIT, "40"))).
-                                setVehicle("bike"))).
+                                                addToSpeed(If("true", LIMIT, "40")))
+                )).
                 setCHProfiles(Arrays.asList(new CHProfile("bus"), new CHProfile("car_no_unclassified")));
         return config;
     }
