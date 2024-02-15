@@ -12,10 +12,11 @@ public class TurnCostsConfig {
     // ensure that no typos can occur like motor_car vs motorcar or bike vs bicycle
     private static final Set<String> ALL_SUPPORTED = Set.of(
             "agricultural", "atv", "auto_rickshaw",
-            "bdouble", "bicycle", "bus", "caravan", "carpool", "coach",
-            "emergency", "foot", "golf_cart", "goods", "hazmat", "hgv", "hov",
+            "bdouble", "bicycle", "bus", "caravan", "carpool", "coach", "delivery", "destination",
+            "emergency", "foot", "golf_cart", "goods", "hazmat", "hgv", "hgv:trailer", "hov",
             "minibus", "mofa", "moped", "motorcar", "motorcycle", "motor_vehicle", "motorhome",
-            "nev", "ohv", "psv", "share_taxi", "small_electric_vehicle", "speed_pedelec",
+            "nev", "ohv", "psv", "residents",
+            "share_taxi", "small_electric_vehicle", "speed_pedelec",
             "taxi", "trailer", "tourist_bus");
 
     // jackson

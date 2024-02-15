@@ -3,34 +3,33 @@
 GraphHopper lets you customize how different kinds of roads shall be prioritized during its route calculations. For
 example when travelling long distances with a car you typically want to use the highway to minimize your travelling
 time. However, if you are going by bike you certainly do not want to use the highway and rather take some shorter route,
-use designated bike lanes and so on. GraphHopper provides built-in vehicle types that cover some standard use cases,
+use designated bike lanes and so on. GraphHopper provides built-in vehicle profiles that cover some standard use cases,
 which can be modified by a custom model for fine-grained control over GraphHopper's road prioritization to
 e.g. change the travelling speed for certain road types.
 
-A profile is defined by a vehicle, its turn restrictions and a custom model. All profiles are specified
+A profile is defined by a custom model and its turn restrictions. All profiles are specified
 in the 'profiles' section of `config.yml` and there has to be at least one profile. Here is an example:
 
 ```yaml
 profiles:
   - name: car
-    vehicle: car
-    custom_model_files: []
+    custom_model_files: [car.json]
   - name: my_bike
-    vehicle: bike
     custom_model_files: [bike_elevation.json]
 ```
 
-The vehicle field must correspond to one of GraphHopper's built-in vehicle types:
+By choosing a custom model file GraphHopper determines the accessibility and a default travel speed for the different road types.
 
-- foot
-- bike
-- racingbike
-- mtb
-- car
+Another important profile setting is the `turn_costs` configuration. Use this to enable turn restrictions for each profile:
 
-By choosing a vehicle GraphHopper determines the accessibility and a default travel speed for the different road types.
+```yaml
+profiles:
+  - name: car
+    turn_costs:
+      restrictions: [motorcar, motor_vehicle]
+    custom_model_files: [car.json]
+```
 
-Another important profile setting is `turn_costs: true/false`. Use this to enable turn restrictions for each profile. 
 You can learn more about this setting [here](./turn-restrictions.md)
 
 The profile name is used to select the profile when executing routing queries. To do this use the `profile` request

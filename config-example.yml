@@ -30,6 +30,9 @@ graphhopper:
 
   profiles:
    - name: car
+#     turn_costs:
+#       restrictions: [motorcar, motor_vehicle]
+#       u_turn_costs: 60
      custom_model_files: [car.json]
 
 #    - name: foot

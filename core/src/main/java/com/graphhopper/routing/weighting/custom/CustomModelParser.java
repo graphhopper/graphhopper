@@ -87,9 +87,9 @@ public class CustomModelParser {
     }
 
     /**
-     * This method creates a weighting from a CustomModel that must already contain base parsers. E.g.
-     * <code>{ "if": "true", "limit_to": "car_average_speed" }<code/> for speed and
-     * <code>{ "if": "!car_access", "multiply_by": "0" }</code> for priority.
+     * This method creates a weighting from a CustomModel that must limit the speed. Either as an
+     * unconditional statement <code>{ "if": "true", "limit_to": "car_average_speed" }<code/> or as
+     * an if-else block.
      */
     public static CustomWeighting createWeighting(EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
         if (customModel == null)
