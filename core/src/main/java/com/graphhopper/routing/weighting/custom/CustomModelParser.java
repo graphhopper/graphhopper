@@ -68,24 +68,6 @@ public class CustomModelParser {
         // utility class
     }
 
-    @Deprecated
-    public static CustomWeighting createLegacyWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
-                                                        EncodedValueLookup lookup, TurnCostProvider turnCostProvider, CustomModel customModel) {
-        if (customModel == null)
-            throw new IllegalStateException("CustomModel cannot be null");
-        CustomModel tmp = new CustomModel();
-        if (priorityEnc != null) {
-            tmp.addToPriority(Statement.If(accessEnc.getName(), Statement.Op.MULTIPLY, priorityEnc.getName()));
-            tmp.addToPriority(Statement.Else(Statement.Op.MULTIPLY, "0"));
-        } else {
-            tmp.addToPriority(Statement.If("!" + accessEnc.getName(), Statement.Op.MULTIPLY, "0"));
-        }
-        tmp.addToSpeed(Statement.If("true", Statement.Op.LIMIT, speedEnc.getName()));
-
-        CustomWeighting.Parameters parameters = createWeightingParameters(CustomModel.merge(tmp, customModel), lookup);
-        return new CustomWeighting(turnCostProvider, parameters);
-    }
-
     /**
      * This method creates a weighting from a CustomModel that must limit the speed. Either as an
      * unconditional statement <code>{ "if": "true", "limit_to": "car_average_speed" }<code/> or as
@@ -96,11 +78,6 @@ public class CustomModelParser {
             throw new IllegalStateException("CustomModel cannot be null");
         CustomWeighting.Parameters parameters = createWeightingParameters(customModel, lookup);
         return new CustomWeighting(turnCostProvider, parameters);
-    }
-
-    public static CustomWeighting createFastestWeighting(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EncodingManager lookup) {
-        CustomModel cm = new CustomModel();
-        return createLegacyWeighting(accessEnc, speedEnc, null, lookup, TurnCostProvider.NO_TURN_COST_PROVIDER, cm);
     }
 
     /**
