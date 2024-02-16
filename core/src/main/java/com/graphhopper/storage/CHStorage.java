@@ -177,8 +177,10 @@ public class CHStorage {
     }
 
     public void close() {
-        nodesCH.close();
-        shortcuts.close();
+        if (!nodesCH.isClosed())
+            nodesCH.close();
+        if (!shortcuts.isClosed())
+            shortcuts.close();
     }
 
     /**
