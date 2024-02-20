@@ -22,6 +22,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.ResponsePath;
 import com.graphhopper.config.Profile;
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.BaseGraph;
@@ -350,7 +351,11 @@ class HeadingRoutingTest {
         LocationIndexTree locationIndex = new LocationIndexTree(graph, new RAMDirectory());
         locationIndex.prepareIndex();
         Map<String, Profile> profilesByName = new HashMap<>();
-        profilesByName.put("profile", new Profile("profile").setCustomModel(Helper.createBaseModel("car")));
+        profilesByName.put("profile", new Profile("profile").setCustomModel(
+                new CustomModel()
+                        .addToSpeed(Statement.If("true", Statement.Op.LIMIT, "36"))
+                        .addToSpeed(Statement.If("!car_access", Statement.Op.LIMIT, "0"))
+        ));
         return new Router(graph.getBaseGraph(), encodingManager, locationIndex, profilesByName, new PathDetailsBuilderFactory(), new TranslationMap().doImport(), new RouterConfig(),
                 new DefaultWeightingFactory(graph.getBaseGraph(), encodingManager), Collections.emptyMap(), Collections.emptyMap());
     }

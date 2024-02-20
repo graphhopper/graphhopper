@@ -58,7 +58,7 @@ public class GraphHopperLandmarksTest {
                 // force landmark creation even for tiny networks
                 .putObject("prepare.lm.min_network_size", 2)
                 .setProfiles(Collections.singletonList(
-                        new Profile("car_profile").setCustomModel(Helper.createBaseModel("car"))
+                        Profile.createTestProfile("car_profile")
                 ))
                 .setCHProfiles(Collections.singletonList(
                         new CHProfile("car_profile")
