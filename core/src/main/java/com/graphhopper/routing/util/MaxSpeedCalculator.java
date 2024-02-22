@@ -159,7 +159,7 @@ public class MaxSpeedCalculator {
             if (maxSpeed != MaxSpeed.UNSET_SPEED) {
                 RoadClass rc = iter.get(rcEnc);
                 if ((rc == RoadClass.MOTORWAY || rc == RoadClass.TRUNK) && isUrban && maxSpeed < 80) {
-                    // ignore mostly urban motorways
+                    // ignore too slow urban motorways, see https://github.com/westnordost/osm-legal-default-speeds/discussions/17
                     iter.set(maxSpeedEnc, MaxSpeed.UNSET_SPEED, MaxSpeed.UNSET_SPEED);
                 } else if (maxSpeed == 0) {
                     // TODO fix properly: RestrictionSetter adds artificial edges for which
