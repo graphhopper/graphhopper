@@ -21,6 +21,7 @@ package com.graphhopper.util.details;
 import com.graphhopper.coll.MapEntry;
 import com.graphhopper.util.EdgeIteratorState;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -54,7 +55,7 @@ public class ConstantDetailsBuilder extends AbstractPathDetailsBuilder {
     public Map.Entry<String, List<PathDetail>> build() {
         if (firstEdge)
             // #2915 if there was no edge at all we need to add a single entry manually here
-            return new MapEntry<>(getName(), List.of(new PathDetail(value)));
+            return new MapEntry<>(getName(), new ArrayList<>(List.of(new PathDetail(value))));
         return super.build();
     }
 }
