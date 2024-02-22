@@ -24,6 +24,10 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import static com.graphhopper.search.KVStorage.KeyValue.*;
 
 /**
@@ -273,7 +277,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                             uTurnType = Instruction.U_TURN_RIGHT;
                         }
                     }
-
                 }
 
                 if (isUTurn) {
@@ -286,6 +289,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     prevInstructionName = prevName;
                     ways.add(prevInstruction);
                 }
+                prevInstruction.setLanes(getLanesInfo((String) prevEdge.getValue(TURN_LANES), sign));
                 prevInstruction.setExtraInfo(STREET_REF, ref);
                 prevInstruction.setExtraInfo(STREET_DESTINATION, destination);
                 prevInstruction.setExtraInfo(STREET_DESTINATION_REF, destinationRef);
@@ -314,6 +318,28 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevEdge = edge;
     }
 
+    private List<LanesInfo> getLanesInfo(String turnLaneKVString, int sign) {
+        if (turnLaneKVString == null) return Collections.emptyList();
+
+        List<LanesInfo> lanes = new ArrayList<>();
+        for (String lane : turnLaneKVString.split("\\|")) {
+            lanes.add(new LanesInfo(lane));
+        }
+
+        for (LanesInfo lane : lanes) {
+            if (lanes.size() == 1) {
+                lane.setActive(true);
+            } else if (sign < 0 && !"merge_to_left".equals(lane.getDirection()) && lane.getDirection().contains("left")) {
+                lane.setActive(true);
+            } else if (sign == 0 && lane.getDirection().contains("through")) {
+                lane.setActive(true);
+            } else if (sign > 0 && !"merge_to_right".equals(lane.getDirection()) && lane.getDirection().contains("right")) {
+                lane.setActive(true);
+            }
+        }
+        return lanes;
+    }
+
     @Override
     public void finish() {
         if (prevInRoundabout) {
@@ -322,7 +348,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             orientation = AngleCalc.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
             double delta = (orientation - prevOrientation);
             ((RoundaboutInstruction) prevInstruction).setRadian(delta);
-
         }
 
         Instruction finishInstruction = new FinishInstruction(nodeAccess, prevEdge.getAdjNode());

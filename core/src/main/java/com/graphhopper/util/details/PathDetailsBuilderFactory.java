@@ -25,6 +25,7 @@ import com.graphhopper.storage.Graph;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.graphhopper.search.KVStorage.KeyValue.TURN_LANES;
 import static com.graphhopper.util.Parameters.Details.*;
 
 /**
@@ -50,6 +51,8 @@ public class PathDetailsBuilderFactory {
             builders.add(new KVStringDetails(STREET_REF));
         if (requestedPathDetails.contains(STREET_DESTINATION))
             builders.add(new KVStringDetails(STREET_DESTINATION));
+        if (requestedPathDetails.contains(TURN_LANES))
+            builders.add(new KVStringDetails(TURN_LANES));
 
         if (requestedPathDetails.contains(AVERAGE_SPEED))
             builders.add(new AverageSpeedDetails(weighting));

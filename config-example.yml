@@ -197,6 +197,8 @@ graphhopper:
 
   # will write way names in the preferred language (language code as defined in ISO 639-1 or ISO 639-2):
   # datareader.preferred_language: en
+  # enable turn lane support in instructions
+  # datareader.turn_lanes: true
 
   #### Custom Areas ####
 

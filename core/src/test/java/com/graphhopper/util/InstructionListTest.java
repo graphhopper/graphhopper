@@ -42,8 +42,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
-import static com.graphhopper.search.KVStorage.KeyValue.createKV;
+import static com.graphhopper.search.KVStorage.KeyValue.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -519,6 +518,47 @@ public class InstructionListTest {
 
         // too far away
         assertNull(Instructions.find(wayList, 50.8, 50.25, 1000));
+    }
+
+    @Test
+    public void getLanesInfoSingleLaneNone() {
+        Graph g = createTestGraph();
+        Weighting weighting = new SpeedWeighting(speedEnc);
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(1, 5);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        assertTrue(wayList.get(0).getLanes().isEmpty());
+    }
+
+    @Test
+    public void getLanesInfoSingleLaneRight() {
+        BaseGraph g = new BaseGraph.Builder(carManager).create();
+        // 0-1-2
+        // | | |
+        // 3-4-5
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(0, 1.2, 1.0);
+        na.setNode(1, 1.2, 1.1);
+        na.setNode(2, 1.2, 1.2);
+        na.setNode(3, 1.1, 1.0);
+        na.setNode(4, 1.1, 1.1);
+        na.setNode(5, 1.1, 1.2);
+        g.edge(0, 1).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "0-1", TURN_LANES, "through|right"));
+        g.edge(1, 2).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "1-2"));
+        g.edge(0, 3).setDistance(11000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "0-3"));
+        g.edge(1, 4).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "1-4"));
+        g.edge(2, 5).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "2-5"));
+        g.edge(3, 4).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "3-4"));
+        g.edge(4, 5).setDistance(10000).set(speedEnc, 60, 60).setKeyValues(createKV(STREET_NAME, "4-5"));
+
+        Weighting weighting = new SpeedWeighting(speedEnc);
+        Path p = new Dijkstra(g, weighting, tMode).calcPath(0, 4);
+        InstructionList wayList = InstructionsFromEdges.calcInstructions(p, g, weighting, carManager, usTR);
+        assertEquals(3, wayList.size());
+        assertEquals("continue onto 0-1", wayList.get(0).getTurnDescription(usTR));
+        assertEquals("[]", wayList.get(0).getLanes().toString());
+        assertEquals("turn right onto 1-4", wayList.get(1).getTurnDescription(usTR));
+        assertEquals("[{direction:through, active:false}, {direction:right, active:true}]", wayList.get(1).getLanes().toString());
+        assertEquals("[]", wayList.get(2).getLanes().toString());
     }
 
     private void compare(List<List<Double>> expected, List<List<Double>> actual) {

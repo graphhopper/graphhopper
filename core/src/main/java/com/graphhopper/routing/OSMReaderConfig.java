@@ -25,6 +25,7 @@ public class OSMReaderConfig {
     private List<String> ignoredHighways = new ArrayList<>();
     private boolean parseWayNames = true;
     private String preferredLanguage = "";
+    private boolean withTurnLanes = false;
     private double maxWayPointDistance = 1;
     private double elevationMaxWayPointDistance = Double.MAX_VALUE;
     private String smoothElevation = "";
@@ -64,6 +65,14 @@ public class OSMReaderConfig {
     public OSMReaderConfig setPreferredLanguage(String preferredLanguage) {
         this.preferredLanguage = preferredLanguage;
         return this;
+    }
+
+    public void setTurnLanes(boolean withTurnLanes) {
+        this.withTurnLanes = withTurnLanes;
+    }
+
+    public boolean withTurnLanes() {
+        return withTurnLanes;
     }
 
     public boolean isParseWayNames() {

@@ -17,7 +17,9 @@
  */
 package com.graphhopper.util;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.graphhopper.util.Parameters.Details.*;
@@ -51,6 +53,7 @@ public class Instruction {
     protected double distance;
     protected long time;
     protected Map<String, Object> extraInfo = new HashMap<>(3);
+    protected List<LanesInfo> lanes = new ArrayList<>();
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
@@ -229,5 +232,13 @@ public class Instruction {
         } else if (destRef != null)
             return tr.tr("toward_destination_ref_only", str, destRef);
         return str;
+    }
+
+    public List<LanesInfo> getLanes() {
+        return lanes;
+    }
+
+    public void setLanes(List<LanesInfo> lanes) {
+        this.lanes = lanes;
     }
 }

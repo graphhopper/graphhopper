@@ -109,7 +109,8 @@ public class KVStorage {
 
     public boolean loadExisting() {
         if (vals.loadExisting()) {
-            if (!keys.loadExisting()) throw new IllegalStateException("Loaded values but cannot load keys");
+            if (!keys.loadExisting())
+                throw new IllegalStateException("Loaded values but cannot load keys");
             bytePointer = bitUtil.toLong(vals.getHeader(0), vals.getHeader(4));
             GHUtility.checkDAVersion(vals.getName(), Constants.VERSION_KV_STORAGE, vals.getHeader(8));
             GHUtility.checkDAVersion(keys.getName(), Constants.VERSION_KV_STORAGE, keys.getHeader(0));
@@ -151,7 +152,8 @@ public class KVStorage {
             String key = entry.key;
             if (key == null) throw new IllegalArgumentException("key cannot be null");
             Object value = entry.value;
-            if (value == null) throw new IllegalArgumentException("value for key " + key + " cannot be null");
+            if (value == null)
+                throw new IllegalArgumentException("value for key " + key + " cannot be null");
             if (!entry.fwd && !entry.bwd)
                 throw new IllegalArgumentException("Do not add KeyValue pair where fwd and bwd is false");
             Integer keyIndex = keyToIndex.get(key);
@@ -478,6 +480,7 @@ public class KVStorage {
         public static final String STREET_REF = "street_ref";
         public static final String STREET_DESTINATION = "street_destination";
         public static final String STREET_DESTINATION_REF = "street_destination_ref";
+        public static final String TURN_LANES = "turn_lanes";
 
         public String key;
         public Object value;
@@ -507,6 +510,16 @@ public class KVStorage {
 
         public static List<KeyValue> createKV(String key, Object value) {
             return Collections.singletonList(new KeyValue(key, value));
+        }
+
+        public static List<KeyValue> createKV(String... kv) {
+            if (kv.length % 2 != 0)
+                throw new IllegalArgumentException("only even numbers accepted, but was " + kv.length);
+            List<KeyValue> list = new ArrayList<>();
+            for (int i = 0; i < kv.length; i += 2) {
+                list.add(new KeyValue(kv[i], kv[i + 1]));
+            }
+            return list;
         }
 
         @Override

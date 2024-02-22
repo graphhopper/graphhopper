@@ -570,6 +570,7 @@ public class GraphHopper {
                 .split(",")).map(String::trim).collect(Collectors.toList()));
         osmReaderConfig.setParseWayNames(ghConfig.getBool("datareader.instructions", osmReaderConfig.isParseWayNames()));
         osmReaderConfig.setPreferredLanguage(ghConfig.getString("datareader.preferred_language", osmReaderConfig.getPreferredLanguage()));
+        osmReaderConfig.setTurnLanes(ghConfig.getBool("datareader.turn_lanes", osmReaderConfig.withTurnLanes()));
         osmReaderConfig.setMaxWayPointDistance(ghConfig.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, osmReaderConfig.getMaxWayPointDistance()));
         osmReaderConfig.setWorkerThreads(ghConfig.getInt("datareader.worker_threads", osmReaderConfig.getWorkerThreads()));
 
